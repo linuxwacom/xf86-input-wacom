@@ -912,6 +912,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			 * smoothly along screen edges */
 			else if (priv->oldProximity)
 			{
+				DBG(11, ErrorF("Fallback to tool id=%d for %s\n",
+					id, common->wcmDevices[idx]->name));
 				pDev = common->wcmDevices[idx];
 			}
 		}

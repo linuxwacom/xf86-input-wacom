@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -984,7 +984,7 @@ static void serialInitPenPartner(WacomCommonPtr common, int fd,
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
 
-	common->wcmMaxZ = 256;
+	common->wcmMaxZ = 255;
 	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
 	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
 }
@@ -1001,7 +1001,7 @@ static void serialInitGraphire(WacomCommonPtr common, int fd,
 	/* Graphire models don't answer WC_COORD requests */
 	common->wcmMaxX = 5103;
 	common->wcmMaxY = 3711;
-	common->wcmMaxZ = 512;
+	common->wcmMaxZ = 511;
 	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
 	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
 }

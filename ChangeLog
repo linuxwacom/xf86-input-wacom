@@ -1,3 +1,7 @@
+2005-02-02    Ping Cheng <pingc@wacom.com>
+	* Added missing routine in src/2.6.8/wacom.c
+	* Fixed maxZ in wcmSerial.c for penpartner
+
 2004-12-01    Ping Cheng <pingc@wacom.com>
 	* Removed src/2.6.x/Makefile.am to build .ko locally (Jens Georg)
 	* Updated src/2.6.x/Makefile.in (Jens Georg)

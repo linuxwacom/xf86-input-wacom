@@ -298,8 +298,8 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 
 	input_regs(dev, regs);
 	input_report_key(dev, BTN_TOOL_PEN, 1);
-	input_report_abs(dev, ABS_X, le16_to_cpu(*(u16 *) &data[1])));
-	input_report_abs(dev, ABS_Y, le16_to_cpu(*(u16 *) &data[3])));
+	input_report_abs(dev, ABS_X, le16_to_cpu(*(u16 *) &data[1]));
+	input_report_abs(dev, ABS_Y, le16_to_cpu(*(u16 *) &data[3]));
 	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
 	input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -80) && !(data[5] & 0x20));
 	input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
