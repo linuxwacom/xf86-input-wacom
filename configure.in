@@ -394,7 +394,7 @@ AC_ARG_ENABLE(modver,
 if test "$enable_modver" = "no"; then
 	WCM_OPTION_MODVER=no
 	WCM_MODVER=""
-elif test "$enable-modver" = "yes"; then
+elif test "$enable_modver" = "yes"; then
 	WCM_OPTION_MODVER=yes
 	WCM_MODVER="-DCONFIG_MODVERSIONS"
 else

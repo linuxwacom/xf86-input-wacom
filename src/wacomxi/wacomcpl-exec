@@ -578,18 +578,9 @@ proc initialButton {} {
 	}
     }
 
-    addMenu 1
-    if { [ string compare $type "eraser" ] } {
-	addMenu 2
-	if { [string compare -nocase -length \
-		5 $model "isdv4" ] } {
-	    addMenu 3
-	    if { [ string compare $type "stylus" ] } {
-		addMenu 4
-		addMenu 5
-	    }
-	}
-    }    
+    for { set i 1 } { $i < $t } { incr i 1 } {
+	addMenu $i
+    }
 }
 
 proc displaySubWindow { okF deF initial i} {
