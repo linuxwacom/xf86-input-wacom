@@ -200,11 +200,12 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 	int button, mask, bsent = 0;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
+	DBG(6, ErrorF("xf86WcmSendButtons buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
 	if ( common->wcmTPCButton && !IsCursor(priv))
 	{
-		if ( rz >= common->wcmThreshold )
+		if ( buttons & 1 )
 		{
 			if ( !(priv->flags & TPCBUTTONS_FLAG) )
 			{
@@ -239,21 +240,24 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			}
 			else
 			{
-				/* Send button one up before any button down is sent.
-				 * There is a bug in XFree86 for combined left click and 
-				 * other button. It'll lost left up when releases.
-				 * This should be removed if XFree86 fixes the problem.
-				 */
-				if (priv->flags & TPCBUTTONONE_FLAG)
-				{
-					priv->flags &= ~TPCBUTTONONE_FLAG;
-					sendAButton(local, 1, 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
-				}
+				bsent = 0;
 				for (button=2; button<=16; button++)
 				{
 					mask = 1 << (button-1);
 					if ((mask & priv->oldButtons) != (mask & buttons))
 					{
+						/* Send button one up before any button down is sent.
+						 * There is a bug in XFree86 for combined left click and 
+						 * other button. It'll lost left up when releases.
+						 * This should be removed if XFree86 fixes the problem.
+						 */
+						if (priv->flags & TPCBUTTONONE_FLAG && !bsent)
+						{
+							priv->flags &= ~TPCBUTTONONE_FLAG;
+							sendAButton(local, 1, 0, rx, ry, rz, 
+								rtx, rty, rrot, rth, rwheel);
+							bsent = 1;
+						}
 						/* set to the configured buttons */
 						sendAButton(local, priv->button[button-1], mask & buttons, 
 							rx, ry, rz, rtx, rty, rrot, rth, rwheel);

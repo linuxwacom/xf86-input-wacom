@@ -832,7 +832,8 @@ proc initialTip {} {
     set value 4
 
     if { $curve != "" } {
-	scan $curve %d,%d,%d,%d p0 p1 p2 p3
+	set p0 [ lindex $curve 0 ]
+	set p1 [ lindex $curve 1 ]
 	if { $p1 > 5 && $p1 < 35 } {
 	    set value 3
 	}

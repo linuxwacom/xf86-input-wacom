@@ -994,7 +994,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		else
 		{
 			xf86WcmSetPressureCurve(priv,a,b,c,d);
-			xf86Msg(X_CONFIG, "WACOM: PressCurve %d,%d %d,%d\n",
+			xf86Msg(X_CONFIG, "WACOM: PressCurve %d,%d,%d,%d\n",
 				a,b,c,d);
 		}
 	}

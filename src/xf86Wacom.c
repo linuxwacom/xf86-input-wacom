@@ -751,7 +751,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			int y1 = value & 0xFF;
 			if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
 			    return BadValue;
-			snprintf(chBuf,sizeof(chBuf),"%d %d %d %d",x0,y0,x1,y1);
+			snprintf(chBuf,sizeof(chBuf),"%d,%d,%d,%d",x0,y0,x1,y1);
 			xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
 			xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
 		}
@@ -842,7 +842,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 	char 		fileName[80] = "/etc/X11/wcm.";
 	char		command[256];
 	FILE		*fp = 0;
-	int		value;
+	int		value, p1,p2,p3,p4;
 	double		speed;
 	char		*s;
 
@@ -890,7 +890,11 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 
         	s = xf86FindOptionValue(local->options, "PressCurve");
 		if ( s && !IsCursor(priv) )
-			fprintf(fp, "xsetwacom set %s PressCurve %s\n", local->name, s);
+		{
+			sscanf(s, "%d,%d,%d,%d", &p1, &p2, &p3, &p4);
+			fprintf(fp, "xsetwacom set %s PressCurve %d %d %d %d\n", 
+				local->name, p1, p2, p3, p4);
+		}
 
         	s = xf86FindOptionValue(local->options, "Mode");
 		if ( s && (((priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
