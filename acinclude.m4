@@ -91,6 +91,7 @@ AC_ARG_WITH(kernel,
 	else
 		AC_MSG_RESULT(missing input.h)
 		AC_MSG_ERROR("Unable to find $WCM_KERNELDIR/include/linux/input.h")
+		WCM_ENV_KERNEL=no
 	fi
 ],
 [
@@ -107,6 +108,8 @@ AC_ARG_WITH(kernel,
 			AC_MSG_RESULT($WCM_KERNELDIR)
 		else
 			AC_MSG_RESULT(not found)
+			WCM_KERNELDIR=""
+			WCM_ENV_KERNEL=no
 			echo "***"
 			echo "*** WARNING:"
 			echo "*** Unable to guess kernel source directory"
@@ -117,38 +120,53 @@ AC_ARG_WITH(kernel,
 		fi
 	fi
 ])])
+dnl
 AC_DEFUN(AC_WCM_CHECK_MODVER,[
 dnl Guess modversioning
 AC_MSG_CHECKING(for kernel module versioning)
 if test x$WCM_ENV_KERNEL = xyes; then
-	WCM_OPTION_MODVER=yes
-	AC_MSG_RESULT(yes)
-	moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
-	ISVER=`echo $moduts | grep -c "2.4.22"` 
-	if test "$ISVER" -gt 0; then
-		WCM_KERNEL_VER="2.4.22"
-	else
-		ISVER=`echo $moduts | grep -c "2.4"` 
+	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
+		WCM_OPTION_MODVER=yes
+		AC_MSG_RESULT(yes)
+		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
+		ISVER=`echo $moduts | grep -c "2.4.22"` 
 		if test "$ISVER" -gt 0; then
-			WCM_KERNEL_VER="2.4"
+			WCM_KERNEL_VER="2.4.22"
 		else
-			ISVER=`echo $moduts | grep -c "2.6"` 
+			ISVER=`echo $moduts | grep -c "2.4"` 
 			if test "$ISVER" -gt 0; then
-				WCM_KERNEL_VER="2.6"
+				WCM_KERNEL_VER="2.4"
 			else
-				echo "***"
-				echo "*** WARNING:"
-				echo "*** $moduts is not supportted by this pachage"
-				echo "*** Kernel modules will not be built"
-				echo "***"
-				WCM_OPTION_MODVER=no
-				AC_MSG_RESULT(no)
-				WCM_ENV_KERNEL=no
+				ISVER=`echo $moduts | grep -c "2.6"` 
+				if test "$ISVER" -gt 0; then
+					WCM_KERNEL_VER="2.6"
+				else
+					echo "***"
+					echo "*** WARNING:"
+					echo "*** $moduts is not supportted by this pachage"
+					echo "*** Kernel modules will not be built"
+					echo "***"
+					WCM_OPTION_MODVER=no
+					AC_MSG_RESULT(no)
+					WCM_ENV_KERNEL=no
+				fi
 			fi
 		fi
+	else
+		echo "***"
+		echo "*** WARNING:"
+		echo "*** version.h is not in $WCM_KERNELDIR/include/linux"
+		echo "*** Kernel modules will not be built"
+		echo "***"
+		WCM_KERNELDIR=""
+		WCM_ENV_KERNEL=no
+		WCM_OPTION_MODVER=no
+		AC_MSG_RESULT(no)
+		
 	fi
 fi
 ])
+dnl
 AC_DEFUN(AC_WCM_CHECK_XFREE86SOURCE,[
 dnl Check for XFree86 build environment
 if test -d x-includes; then

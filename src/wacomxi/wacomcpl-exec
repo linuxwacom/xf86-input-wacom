@@ -526,12 +526,13 @@ proc updateButton {} {
     }
 
     if { [string compare -nocase -length 6 $model \
-		"cintiq"] && ![string compare -nocase \
-		-length 7 $model "CintiqP" ] || 
-		[string compare -nocase -length 5 \
+		"cintiq"] || ![string compare -nocase \
+		-length 7 $model "CintiqP" ] } { 
+	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
-	set mode [ .subW.f.mode cget -text ]
-	exec xsetwacom set $device mode $mode
+	    set mode [ .subW.f.mode cget -text ]
+	    exec xsetwacom set $device mode $mode
+	}
     }
     updateXinitrc
     closeSubWindow
@@ -566,14 +567,15 @@ proc initialButton {} {
 
     if { [string compare -nocase -length 6 $model \
 		"cintiq"] || ![string compare -nocase \
-		-length 7 $model "CintiqP" ] && 
-		[string compare -nocase -length 5 \
+		-length 7 $model "CintiqP" ] } {
+	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
-	set dmode $getOption($device,Mode)
-	label .subW.f.modeL -text "Mode: "
-	tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
-	grid .subW.f.mode -row 0 -column 2 -columnspan 15
-	grid .subW.f.modeL -row 0 -column 2
+	    set dmode $getOption($device,Mode)
+	    label .subW.f.modeL -text "Mode: "
+	    tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
+	    grid .subW.f.mode -row 0 -column 2 -columnspan 15
+	    grid .subW.f.modeL -row 0 -column 2
+	}
     }
 
     addMenu 1

@@ -982,6 +982,7 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 	{
 		while(localDevices) 
 		{
+DBG(10, ErrorF("xf86WcmModelToFile in localDevices\n"));
 			m3 = xf86FindOptionValue(localDevices->options, "Type");
 			if (m3 && (strstr(m3, "eraser") || strstr(m3, "stylus") 
 					|| strstr(m3, "cursor")))
@@ -1000,6 +1001,7 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 			}
 			localDevices = localDevices->next;
 		}
+DBG(10, ErrorF("xf86WcmModelToFile twinview\n"));
 		/* write TwinView ScreenInfo */
 		if (priv->twinview == TV_ABOVE_BELOW)
 		{

@@ -398,13 +398,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		rth = throttle - priv->oldThrottle;
 		rw = wheel - priv->oldWheel;
 	}
-DBG(6, ErrorF("xf86WcmSetScreen calling\n"));
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
 	xf86WcmSetScreen(local, &rx, &ry);
 
-DBG(6, ErrorF("xf86WcmSetScreen back\n"));
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
@@ -443,8 +441,6 @@ DBG(6, ErrorF("xf86WcmSetScreen back\n"));
 			ry = priv->oldClickY;
 		}
 
-DBG(6, ErrorF("calling xf86PostMotionEvent\n"));
-
 		if(!(priv->flags & BUTTONS_ONLY_FLAG))
 		{
 			if (IsCursor(priv))
@@ -456,7 +452,6 @@ DBG(6, ErrorF("calling xf86PostMotionEvent\n"));
 					is_absolute, 0, 6, rx, ry, rz,
 					rtx, rty, rw);
 		}
-DBG(6, ErrorF("calling xf86WcmSendButtons\n"));
 
 		if (priv->oldButtons != buttons)
 		{

@@ -136,16 +136,20 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMaxZ = 0;               /* max Z value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
-	common->wcmChannelCnt = 1;             /* number of channels */
-	common->wcmProtocolLevel = 4;          /* protocol level */
+	common->wcmChannelCnt = 1;         /* number of channels */
+	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmInitialized = FALSE; /* device is not initialized */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
-	common->wcmGimp = 1;		/* enabled (=1) to support Gimp when Xinerama Enabled in multi-monitor desktop. Needs to be disabled (=0) for Cintiq calibration */
-	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitors by default. disabled (=0) when user doesn't want to move from one screen to the other */
-	common->wcmTPCButton = 0;       /* set Tablet PC button on/off default is off */
+	common->wcmGimp = 1;	/* enabled (=1) to support Gimp when Xinerama is */
+				/* enabled for multi-monitor desktop. */
+				/* To calibrate Cintiq and ISDV4, it should be disabled (=0) */
+	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitor desktop. */
+					/* disabled (=0) when user doesn't want to move the */
+					/* cursor from one screen to another screen */
+	common->wcmTPCButton = 0;       /* set Tablet PC button on/off, default is off */
 	return local;
 }
 
