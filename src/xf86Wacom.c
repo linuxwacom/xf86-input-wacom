@@ -527,7 +527,7 @@ static KeySym wacom_map[] =
     XK_F6,	/* 0x0d */
     XK_F7,	/* 0x0e */
     XK_F8,	/* 0x0f */
-    XK_F8,	/* 0x10 */
+    XK_F9,	/* 0x10 */
     XK_F10,	/* 0x11 */
     XK_F11,	/* 0x12 */
     XK_F12,	/* 0x13 */
@@ -3387,6 +3387,7 @@ xf86WcmProc(DeviceIntPtr       pWcm,
 	    DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=ON\n", pWcm));
 
 	    if ((local->fd < 0) && (!xf86WcmOpenDevice(pWcm))) {
+		pWcm->inited = FALSE;
 		return !Success;
 	    }
 #ifdef XFREE86_V4	    
