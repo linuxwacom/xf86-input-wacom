@@ -33,6 +33,7 @@
 #include "xf86.h"
 #include "keysym.h"
 #include "xf86_OSproc.h"
+#include "xf86_libc.h"
 #include "xf86Xinput.h"
 #include "exevents.h"
 
@@ -506,6 +507,12 @@ static int wacomOpenDevice(DeviceIntPtr pInt)
 	ScreenPtr pScreen;
 
 	xf86Msg(X_INFO, "wacomOpenDevice\n");
+
+	if (0)
+	{
+		int i=xf86execl("/home/jej/proj/linuxwacom-dev/src/wcm-client","wcm-client","/tmp/jej1",NULL);
+		xf86Msg(X_INFO, "ok %d\n",i);
+	}
 
 #if 0
 	{
