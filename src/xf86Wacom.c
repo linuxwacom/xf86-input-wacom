@@ -2487,7 +2487,7 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
     int			abs[5];
     unsigned long	bit[EV_MAX][NBITS(KEY_MAX)];
     int			i, j;
-    
+
 #ifdef XFREE86_V4
     local->fd = xf86OpenSerial(local->options);
 #else
@@ -3871,6 +3871,10 @@ xf86WcmInit(InputDriverPtr	drv,
 
 #ifdef LINUX_INPUT
     if (xf86SetBoolOption(local->options, "USB", (common->wcmOpen == xf86WcmUSBOpen))) {
+	/* best effort attempt at loading the wacom and evdev kernel modules */
+	(void)xf86LoadKernelModule("wacom");
+	(void)xf86LoadKernelModule("evdev");
+    
 	local->read_input=xf86WcmReadUSBInput;
 	common->wcmOpen=xf86WcmUSBOpen;
 	xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);

@@ -17,6 +17,7 @@
  *
  ****************************************************************************/
 
+#include <unistd.h>
 #include "wcm-beta.h"
 
 /*****************************************************************************
@@ -34,6 +35,11 @@
 #include "xf86_OSproc.h"
 #include "xf86Xinput.h"
 #include "exevents.h"
+
+#ifdef LINUX_INPUT
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
 
 /****************************************************************************
 ** Defines
@@ -500,6 +506,30 @@ static int wacomOpenDevice(DeviceIntPtr pInt)
 	ScreenPtr pScreen;
 
 	xf86Msg(X_INFO, "wacomOpenDevice\n");
+
+#if 0
+	{
+	pid_t pid;
+	switch (pid=fork())
+	{
+		case 0: /* child */
+			exit(0xdeadbeef);
+			break;
+
+		case -1: /* fork failed*/
+			break;
+
+		default: /* parent */
+		{
+			int count=0, p, status;
+			do { p=waitpid(pid,&status,0); }
+			while (p == -1 && count++ < 4);
+			xf86Msg(X_INFO,"wacomOpenDevice: joined (%d,%08X,%X,%X)\n",
+					p,status,WIFEXITED(status),WEXITSTATUS(status));
+		}
+	}
+	}
+#endif
     
 	/* open device as serial line */
 	if (pDevice->fd < 0)
