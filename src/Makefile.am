@@ -4,7 +4,7 @@ noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
 AM_CFLAGS = -Wall
 
 EXTRA_PROGRAMS = wacdump xidump
-EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o wacom_drv-v3.o
+EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o wacom_drv.o wacom_drv-v3.o
 
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
@@ -14,7 +14,8 @@ wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 xidump_SOURCES = xidump.c
 
 wacdump_LDADD = -lncurses
-EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c xf86Wacom.c usbmouse.c \
+EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c \
+		xf86Wacom.c usbmouse.c \
 		wcm-beta.c wcm-beta.h
 
 KERNEL_DIR=@WCM_KERNELDIR@
@@ -61,6 +62,10 @@ usbmouse.o: usbmouse.c Makefile
 	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
 		-DKBUILD_BASENAME=usbmouse -c \
 		-o usbmouse.o usbmouse.c
+
+evdev.o: evdev.c Makefile
+	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
+		-DKBUILD_BASENAME=evdev -c -o evdev.o evdev.c
 
 xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
 	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
