@@ -126,7 +126,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			else if (event->code == ABS_Y)
 				ds.y = event->value;
 			else if (event->code == ABS_RZ)
-				ds.rz = event->value;
+				ds.rotation = event->value;
 			else if (event->code == ABS_TILT_X)
 				ds.tiltx = event->value;
 			else if (event->code ==  ABS_TILT_Y)
@@ -219,7 +219,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		}
 	} /* next event */
 
-	/* handle throttle */
+	/* dispatch event */
 	xf86WcmEvent(common,0,&ds);
 }
 
@@ -289,7 +289,7 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 								break;
 
 							case ABS_PRESSURE:
-								if (common->wcmMaxZ == DEFAULT_MAXZ)
+								if (common->wcmMaxZ == 0)
 									common->wcmMaxZ = abs[2];
 								break;
 						}

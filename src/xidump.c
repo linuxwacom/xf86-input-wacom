@@ -23,6 +23,7 @@
 **   2003-03-08 0.0.3 - added curses code
 **   2003-03-21 0.0.4 - added conditional curses code
 **   2003-03-21 0.5.0 - released in development branch
+**   2003-04-07 0.5.1 - added pressure bar
 **
 ****************************************************************************/
 
@@ -33,7 +34,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define XIDUMP_VERSION "0.5.0"
+#define XIDUMP_VERSION "0.5.1"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -398,7 +399,9 @@ static int CursesInit(void)
 static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 {
 	int i, j, k, bDown, nBtn;
-	int nRow=0, nProxRow, nFocusRow, nButtonRow, nKeyRow, nValRow;
+	int nRow=0, nPressRow, nProxRow, nFocusRow, nButtonRow,
+       		nKeyRow, nValRow;
+	int nMaxPress=100, nMinPress=0;
 	char chBuf[1024];
 	XEvent event;
 	XAnyEvent* pAny;
@@ -449,6 +452,10 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 		wacscrn_output(nValRow+3 ,0,"      max:");
 		wacscrn_output(nValRow+4 ,0,"      res:");
 
+		/* retain pressure range for pressure bar */
+		nMaxPress = pValInfo->axes[2].max_value;
+		nMinPress = pValInfo->axes[2].min_value;
+
 		for (k=0; k<pValInfo->num_axes && k<6; ++k)
 		{
 			wacscrn_output(nValRow,12 + k * 10,
@@ -469,6 +476,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 	}
 	else nValRow = 0;
 
+	nPressRow = nRow++;
 	nProxRow = nRow++;
 	nFocusRow = nRow++;
 	nButtonRow = nRow++;
@@ -519,6 +527,38 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 			{
 				snprintf(chBuf,sizeof(chBuf),"%+06d",pMove->axis_data[k]);
 				wacscrn_output(nValRow+1,12 + k * 10, chBuf);
+
+			}
+
+			/* pressure bar */
+			{
+				char* c;
+				int s, nPos;
+				wacscrn_standout();
+				nPos = pMove->axis_data[2];
+
+				if (nPos < nMinPress)
+				{
+					c = "<";
+					nPos = 78; /* want full bar */
+				}
+				else if (nPos > nMaxPress)
+				{
+					c = ">";
+					nPos = 78; /* want full bar */
+				}
+				else
+				{
+					c = "*";
+					nPos = (nPos - nMinPress) * 78;
+					nPos /= (nMaxPress - nMinPress);
+				}
+
+				for (s=0; s<nPos; ++s)
+					wacscrn_output(nPressRow,s,c);
+				wacscrn_normal();
+				for (; s<78; ++s)
+					wacscrn_output(nPressRow,s," ");
 			}
 		}
 		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||

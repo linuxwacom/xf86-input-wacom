@@ -320,11 +320,23 @@ static void xf86WcmISDV4Read(LocalDevicePtr local)
 				DBG(10, ErrorF((DEVICE_ID(priv->flags) ==
 					ERASER_ID) ?  "Eraser\n" : "Stylus\n"));
 				
-				xf86WcmSendEvents(common->wcmDevices[idx],
-						curDevice, 0, is_stylus,
-						is_button, is_proximity,
-						x, y, z, buttons, tx, ty,
-						wheel);
+		/* HACKED */
+		{
+			/* hack, we'll get this whole function working later */
+			WacomDeviceState ds = { 0 };
+			ds.device_type = curDevice;
+			ds.buttons = buttons;
+			ds.proximity = is_proximity;
+			ds.x = x;
+			ds.y = y;
+			ds.pressure = z;
+			ds.tiltx = tx;
+			ds.tilty = ty;
+			ds.wheel = wheel;
+
+			xf86WcmSendEvents(common->wcmDevices[idx],&ds);
+		}
+
 			}
 		} /* full packet */
 	} /* next data */

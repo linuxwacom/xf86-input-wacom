@@ -168,7 +168,7 @@
 
 #define DEBUG 1
 #if DEBUG
-#define DBG(lvl, f) {if ((lvl) <= gWacomModule.debugLevel) f;}
+#define DBG(lvl, f) do { if ((lvl) <= gWacomModule.debugLevel) f; } while (0)
 #else
 #define DBG(lvl, f)
 #endif
@@ -183,7 +183,6 @@
 /*****************************************************************************
  * General Defines
  ****************************************************************************/
-#define DEFAULT_MAXZ 240        /* default MaxZ when nothing is configured */
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
 #define MAX_SUPPRESS 6          /* max value of suppress */
@@ -362,7 +361,6 @@ struct _WacomDeviceState
 	int y;
 	int buttons;
 	int pressure;
-	int rz;
 	int tiltx;
 	int tilty;
 	int rotation;
@@ -407,6 +405,7 @@ struct _WacomDeviceClass
 #define ROTATE_CW 1
 #define ROTATE_CCW 2
 
+#define MAX_CHANNELS 2
 #define MAX_USB_EVENTS 11
 
 struct _WacomCommonRec 
@@ -432,7 +431,7 @@ struct _WacomCommonRec
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
-	WacomDeviceState wcmDevStat[2]; /* device state for each tool */
+	WacomDeviceState wcmDevStat[MAX_CHANNELS]; /* channel device state */
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 	WacomDeviceClassPtr pDevCls; /* device functions */
@@ -499,18 +498,13 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 
-int xf86WcmSuppress(int suppress, WacomDeviceState* ds1,
-	WacomDeviceState* ds2);
+	void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
+		const WacomDeviceState* ds);
+	/* handles suppression, filtering, and dispatch */
 
-void xf86WcmDirectEvents(WacomCommonPtr common, const WacomDeviceState* ds);
-
-void xf86WcmSendEvents(LocalDevicePtr local, int type,
-	unsigned int serial, int is_stylus, int is_button,
-	int is_proximity, int x, int y, int z, int buttons,
-	int tx, int ty, int wheel);
-
-void xf86WcmEvent(WacomCommonPtr common, int tool_index,
-	const WacomDeviceState* ds);
+	void xf86WcmSendEvents(LocalDevicePtr local,
+		const WacomDeviceState* ds);
+	/* dispatches data to XInput event system */
 
 /****************************************************************************/
 #endif /* __XF86_XF86WACOM_H */

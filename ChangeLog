@@ -1,6 +1,8 @@
 2003-04-07    John E. Joganic <john@joganic.com>
 
 	* Fixed bug in tilt filter.
+	* MaxZ determined at tablet detection
+	* Changed pressure code; all values positive.
 
 2003-04-07    Jimmy Yen <jimmy@yen.tp>
 

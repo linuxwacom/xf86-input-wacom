@@ -44,6 +44,79 @@ static const char * pl_setup_string = WC_UPPER_ORIGIN WC_RATE WC_STREAM_MODE;
 static const char * penpartner_setup_string = WC_PRESSURE_MODE WC_START;
 static const char * intuos_setup_string = WC_V_MULTI WC_V_ID WC_RATE WC_START;
 
+	/* PROTOCOL 4 */
+
+	/* Format of 7 bytes data packet for Wacom Tablets
+	Byte 1
+	bit 7  Sync bit always 1
+	bit 6  Pointing device detected
+	bit 5  Cursor = 0 / Stylus = 1
+	bit 4  Reserved
+	bit 3  1 if a button on the pointing device has been pressed
+	bit 2  Reserved
+	bit 1  X15
+	bit 0  X14
+
+	Byte 2
+	bit 7  Always 0
+	bits 6-0 = X13 - X7
+
+	Byte 3
+	bit 7  Always 0
+	bits 6-0 = X6 - X0
+
+	Byte 4
+	bit 7  Always 0
+	bit 6  B3
+	bit 5  B2
+	bit 4  B1
+	bit 3  B0
+	bit 2  P0
+	bit 1  Y15
+	bit 0  Y14
+
+	Byte 5
+	bit 7  Always 0
+	bits 6-0 = Y13 - Y7
+
+	Byte 6
+	bit 7  Always 0
+	bits 6-0 = Y6 - Y0
+
+	Byte 7
+	bit 7 Always 0
+	bit 6  Sign of pressure data
+	bit 5  P6
+	bit 4  P5
+	bit 3  P4
+	bit 2  P3
+	bit 1  P2
+	bit 0  P1
+
+	byte 8 and 9 are optional and present only
+	in tilt mode.
+
+	Byte 8
+	bit 7 Always 0
+	bit 6 Sign of tilt X
+	bit 5  Xt6
+	bit 4  Xt5
+	bit 3  Xt4
+	bit 2  Xt3
+	bit 1  Xt2
+	bit 0  Xt1
+
+	Byte 9
+	bit 7 Always 0
+	bit 6 Sign of tilt Y
+	bit 5  Yt6
+	bit 4  Yt5
+	bit 3  Yt4
+	bit 2  Yt3
+	bit 1  Yt2
+	bit 0  Yt1
+	*/
+
 /*****************************************************************************
  * xf86WcmSendRequest --
  *   send a request and wait for the answer.
@@ -199,12 +272,6 @@ char* xf86WcmSendRequest(int fd, char* request, char* answer, int maxlen)
 	return answer;
 }
 
-/*****************************************************************************
- * xf86WcmIntuosFilter --
- *   Correct some hardware defects we've been seeing in Intuos pads,
- *   but also cuts down quite a bit on jitter.
- ****************************************************************************/
-
 static Bool xf86WcmSerialDetect(LocalDevicePtr pDev)
 {
 	return 1;
@@ -229,7 +296,9 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 		return !Success;
     
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
+		strlen(WC_RESET_BAUD)));
+
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -433,7 +502,7 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 				break;
 		}
 	} /* End PL */
- 
+
 	/* Tilt works on ROM 1.4 and above */
 	DBG(2, ErrorF("wacom flags=%d ROM version=%f buffer=%s\n",
 	common->wcmFlags, version, buffer+loop+1));
@@ -517,6 +586,24 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 			ErrorF("WACOM: unable to parse max coordinates. "
 				"Use the MaxX and MaxY options.\n");
 			return !Success;
+		}
+
+	}
+
+	/* If no maxZ is set, determine from version and protocol */
+	if (!common->wcmMaxZ)
+	{
+		if (common->wcmProtocolLevel == 4)
+		{
+			/* the rom version determines the max z */
+			if (version >= (float)1.2)
+				common->wcmMaxZ = 255;
+			else
+				common->wcmMaxZ = 120;
+		}
+		else
+		{
+			common->wcmMaxZ = 1024;
 		}
 	}
     
@@ -698,12 +785,12 @@ static void WacomProtocol5(WacomCommonPtr common);
 
 static void xf86WcmSerialRead(LocalDevicePtr local)
 {
-	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
+	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	int len, loop;
 	unsigned char buffer[BUFFER_SIZE];
-  
+
 	DBG(7, ErrorF("xf86WcmSerialRead BEGIN device=%s fd=%d\n",
-	common->wcmDevice, local->fd));
+		common->wcmDevice, local->fd));
 
 	SYSCALL(len = xf86WcmRead(local->fd, buffer, sizeof(buffer)));
 
@@ -715,7 +802,7 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 
 	DBG(10, ErrorF("xf86WcmSerialRead read %d bytes\n", len));
 
-	for(loop=0; loop<len; loop++)
+	for (loop=0; loop<len; loop++)
 	{
 		/* magic bit is not OK */
 		if ((common->wcmIndex == 0) && !(buffer[loop] & HEADER_BIT))
@@ -744,7 +831,7 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 			if (common->wcmProtocolLevel == 4)
 				WacomProtocol4(common);
 			else if (common->wcmProtocolLevel == 5)
-				WacomProtocol5(common);
+				WacomProtocol5(common); 
 		}
 	} /* next data */
 
@@ -756,78 +843,6 @@ static void WacomProtocol4(WacomCommonPtr common)
 {
 	int x, y, z, idx, buttons, tx = 0, ty = 0;
 	int is_stylus, is_button, wheel=0;
-
-	/* Format of 7 bytes data packet for Wacom Tablets
-	Byte 1
-	bit 7  Sync bit always 1
-	bit 6  Pointing device detected
-	bit 5  Cursor = 0 / Stylus = 1
-	bit 4  Reserved
-	bit 3  1 if a button on the pointing device has been pressed
-	bit 2  Reserved
-	bit 1  X15
-	bit 0  X14
-
-	Byte 2
-	bit 7  Always 0
-	bits 6-0 = X13 - X7
-
-	Byte 3
-	bit 7  Always 0
-	bits 6-0 = X6 - X0
-
-	Byte 4
-	bit 7  Always 0
-	bit 6  B3
-	bit 5  B2
-	bit 4  B1
-	bit 3  B0
-	bit 2  P0
-	bit 1  Y15
-	bit 0  Y14
-
-	Byte 5
-	bit 7  Always 0
-	bits 6-0 = Y13 - Y7
-
-	Byte 6
-	bit 7  Always 0
-	bits 6-0 = Y6 - Y0
-
-	Byte 7
-	bit 7 Always 0
-	bit 6  Sign of pressure data
-	bit 5  P6
-	bit 4  P5
-	bit 3  P4
-	bit 2  P3
-	bit 1  P2
-	bit 0  P1
-
-	byte 8 and 9 are optional and present only
-	in tilt mode.
-
-	Byte 8
-	bit 7 Always 0
-	bit 6 Sign of tilt X
-	bit 5  Xt6
-	bit 4  Xt5
-	bit 3  Xt4
-	bit 2  Xt3
-	bit 1  Xt2
-	bit 0  Xt1
-
-	Byte 9
-	bit 7 Always 0
-	bit 6 Sign of tilt Y
-	bit 5  Yt6
-	bit 4  Yt5
-	bit 3  Yt4
-	bit 2  Yt3
-	bit 1  Yt2
-	bit 0  Yt1
-
-	*/
 
 	int is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
 	int is_graphire = common->wcmFlags & GRAPHIRE_FLAG;
@@ -846,27 +861,24 @@ static void WacomProtocol4(WacomCommonPtr common)
 	is_stylus = (common->wcmData[0] & POINTER_BIT);
 	if (common->wcmMaxZ > 350)
 	{
+		/* which tablets use this? */
+		/* PL550, PL800, and Graphire apparently */
 		z = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
 			((common->wcmData[3]&ZAXIS_BIT) >> 1) +
-			((common->wcmData[3]&PROXIMITY_BIT) >> 6);
-
-		if (common->wcmData[6] & ZAXIS_SIGN_BIT)
-			z = (z | ~0xFF);
+			((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
+			((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 	}
 	else if (common->wcmMaxZ > 150)
 	{
-		z = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) +
-			((common->wcmData[3] & ZAXIS_BIT) >> 2);
-		if (common->wcmData[6] & ZAXIS_SIGN_BIT)
-			z = (z | ~0x7F);
+		z = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
+			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
+			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
 	}
 	else
 	{
-		z = (common->wcmData[6] & ZAXIS_BITS);
-		if (common->wcmData[6] & ZAXIS_SIGN_BIT)
-			z = (z | ~0x3F);
+		z = (common->wcmData[6] & ZAXIS_BITS) |
+			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
 	}
-	z += ((common->wcmMaxZ + 1)/ 2);
 
 	if (is_graphire)
 	{
@@ -1093,13 +1105,21 @@ static void WacomProtocol4(WacomCommonPtr common)
 			}
 		}
 
-		xf86WcmSendEvents(common->wcmDevices[idx],
-				curDevice, 0,
-				is_stylus,
-				is_button,
-				temp_is_proximity,
-				x, y, z, temp_buttons,
-				tx, ty, wheel);
+		{
+			/* hack, we'll get this whole function working later */
+			WacomDeviceState ds = { 0 };
+			ds.device_type = curDevice;
+			ds.buttons = temp_buttons;
+			ds.proximity = temp_is_proximity;
+			ds.x = x;
+			ds.y = y;
+			ds.pressure = z;
+			ds.tiltx = tx;
+			ds.tilty = ty;
+			ds.wheel = wheel;
+			
+			xf86WcmSendEvents(common->wcmDevices[idx],&ds);
+		}
 
 		if (!priv->oldProximity && temp_is_proximity )
 		{
@@ -1114,17 +1134,16 @@ static void WacomProtocol4(WacomCommonPtr common)
 
 static void WacomProtocol5(WacomCommonPtr common)
 {
-	int is_stylus=0, have_data;
-	int tool_index;
+	int is_stylus=0, have_data=0;
+	int channel;
 	WacomDeviceState ds;
 
 	/* reset count for read of next packet */
 	common->wcmIndex = 0;
 
 	/* start with previous state */
-	tool_index = common->wcmData[0] & 0x01;
-	ds = common->wcmDevStat[tool_index];
-	have_data = 0;
+	channel = common->wcmData[0] & 0x01;
+	ds = common->wcmDevStat[channel];
 
 	DBG(7, ErrorF("packet header = 0x%x\n",
 			(unsigned int)common->wcmData[0]));
@@ -1132,7 +1151,9 @@ static void WacomProtocol5(WacomCommonPtr common)
 	/* Device ID packet */
 	if ((common->wcmData[0] & 0xfc) == 0xc0)
 	{
+		/* reset channel */
 		memset(&ds, 0, sizeof(ds));
+
 		ds.proximity = 1;
 		ds.device_id = (((common->wcmData[1] & 0x7f) << 5) |
 				((common->wcmData[2] & 0x7c) >> 2));
@@ -1201,7 +1222,7 @@ static void WacomProtocol5(WacomCommonPtr common)
 		have_data = 1;
 	} /* end pen packet */
 
-     /* 4D mouse 1st packet or Lens cursor packet or 2D mouse packet*/
+	/* 4D mouse 1st packet or Lens cursor packet or 2D mouse packet*/
 	else if (((common->wcmData[0] & 0xbe) == 0xa8) ||
 			((common->wcmData[0] & 0xbe) == 0xb0))
 	{
@@ -1254,10 +1275,9 @@ static void WacomProtocol5(WacomCommonPtr common)
 		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
 			((common->wcmData[4] & 0x7f) << 4) |
 			((common->wcmData[5] & 0x78) >> 3));
-		ds.tilty = 0;
 		ds.rotation = (((common->wcmData[6] & 0x0f) << 7) |
 			(common->wcmData[7] & 0x7f));
-		ds.tiltx = ((900 - ((ds.rotation + 900) % 1800)) >> 1);
+		ds.rotation = ((900 - ((ds.rotation + 900) % 1800)) >> 1);
 		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
 		ds.discard_first = 0;
@@ -1268,7 +1288,11 @@ static void WacomProtocol5(WacomCommonPtr common)
 				common->wcmData[0]));
 	}
 
+	/* if new data is available, send it */
 	if (have_data)
-		xf86WcmEvent(common,tool_index,&ds);
+	       	xf86WcmEvent(common,channel,&ds);
 
+	/* otherwise, save state for next packet */
+	else
+		common->wcmDevStat[channel] = ds;
 }

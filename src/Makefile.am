@@ -89,8 +89,8 @@ XF86V3OBJS = xf86Wacom-v3.o wcmSerial-v3.o wcmUSB-v3.o \
 		wcmISDV4-v3.o wcmCommon-v3.o wcmCompat-v3.o \
 		wcmConfig-v3.o
 
-xf86Wacom.o: xf86Wacom.c Makefile
-xf86Wacom-v3.o: xf86Wacom.c Makefile
+xf86Wacom.o: xf86Wacom.c xf86Wacom.h Makefile
+xf86Wacom-v3.o: xf86Wacom.c xf86Wacom.h Makefile
 wcmSerial.o: wcmSerial.c wcmSerial.h xf86Wacom.h
 wcmSerial-v3.o: wcmSerial.c wcmSerial.h xf86Wacom.h
 wcmISDV4.o: wcmISDV4.c wcmSerial.h xf86Wacom.h

@@ -123,11 +123,21 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
  *   (YHJ - interface may change later since only local is really needed)
  ****************************************************************************/
 
-void xf86WcmSendEvents(LocalDevicePtr local, int type,
-		unsigned int serial, int is_stylus, int is_button,
-		int is_proximity, int x, int y, int z, int buttons,
-		int tx, int ty, int wheel)
+void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
+	int type = ds->device_type;
+	int is_stylus = (ds->device_type == STYLUS_ID ||
+				ds->device_type == ERASER_ID);
+	int is_button = !!(ds->buttons);
+	int is_proximity = ds->proximity;
+	int x = ds->x;
+	int y = ds->y;
+	int z = ds->pressure;
+	int buttons = ds->buttons;
+	int tx = ds->tiltx;
+	int ty = ds->tilty;
+	int wheel = ds->wheel;
+
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int rx, ry, rz, rtx, rty, rwheel;
@@ -305,6 +315,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, int type,
 	priv->oldTiltY = ty;
 }
 
+/*****************************************************************************
+ * xf86WcmIntuosFilter --
+ *   Correct some hardware defects we've been seeing in Intuos pads,
+ *   but also cuts down quite a bit on jitter.
+ ****************************************************************************/
+
 #if 0
 static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
 {
@@ -393,178 +409,27 @@ static int ThrottleToRate(int x)
 #endif
 
 /*****************************************************************************
- * xf86WcmDirectEvents --
- *   Handles device selection and directs events to the right devices
- *   (YHJ - interface may change later since only common is really needed)
- ****************************************************************************/
-
-void xf86WcmDirectEvents(WacomCommonPtr common, const WacomDeviceState* ds)
-{
-	int type = ds->device_type;
-	unsigned int serial = ds->serial_num;
-	int is_proximity = ds->proximity;
-	int x = ds->x;
-	int y = ds->y;
-	int pressure = ds->pressure;
-	int buttons = ds->buttons;
-	int tilt_x = ds->tiltx;
-	int tilt_y = ds->tilty;
-	int wheel = ds->wheel;
-	int is_stylus = (type == STYLUS_ID || type == ERASER_ID);
-	int is_button = !!(buttons);
-	int found_device = -1;
-	int idx;
-	int sampleTime;
-
-	/* get the sample time */
-	sampleTime = GetTimeInMillis();
-	
-	/* Find the device the current events are meant for */
-	for (idx=0; idx<common->wcmNumDevices; idx++)
-	{
-		WacomDevicePtr priv = common->wcmDevices[idx]->private;
-		int id;
-
-		id = DEVICE_ID(priv->flags);
-		if (id == type &&
-			((!priv->serial) || (serial == priv->serial)) &&
-			(priv->topX <= x && priv->bottomX >= x &&
-			priv->topY <= y && priv->bottomY >= y))
-		{
-			DBG(11, ErrorF("tool id=%d for %s\n",
-				id, common->wcmDevices[idx]->name));
-			found_device = idx;
-			idx = common->wcmNumDevices;
-		}
-	}
-
-	/* send to appropriate device */
-	for (idx=0; idx<common->wcmNumDevices; idx++)
-	{
-		int id;
-		WacomDevicePtr priv = common->wcmDevices[idx]->private;
-
-		if (idx == found_device)
-			continue;
-
-		id = DEVICE_ID(priv->flags);
-		if (id == type &&
-			((!priv->serial) || (serial == priv->serial)) &&
-			priv->oldProximity)
-		{
-			if (found_device == -1)
-			{
-				/* Outside every mapped area, so fall
-				 * back to this, the previous one */
-				found_device = idx;
-			}
-			else
-			{
-				/* Multiple mapped areas support:
-				 * Send a fake proximity out to the device
-				 * sharing the same physical tool, but
-				 * mapped on another tablet area */
-				DBG(6, ErrorF("Setting device %s fake "
-					"proximity out\n",
-					common->wcmDevices[idx]->name));
-				xf86WcmSendEvents(common->wcmDevices[idx],
-					type, serial, is_stylus,
-					0, 0, 0, 0, 0, 0, 0, 0, 0);
-			}
-			idx = common->wcmNumDevices;
-		}
-	} /* next device */
-
-	if (found_device != -1)
-	{
-		/* WacomDevicePtr priv = common->wcmDevices[idx]->private; */
-
-		/* The if-else statement should be used after the device is 
-	 	* selected since is_absolute = priv->flags | ABSOLUTE_FLAG
-	 	* I removed the declaration of is_absolute at the beginning
-	 	* of this routine */
-
-		#if 0
-		/* Intuos filter */
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
-				ds->tiltx);
-			y = xf86WcmIntuosFilter (&ds->y_filter, ds->y,
-				ds->tilty);
-		} 
-		else
-		{
-			x = ds->x;
-			y = ds->y;
-		}
-		#endif
-
-		#if 0
-		/* throttle filter */
-		if ((priv->throttleStart > sampleTime) ||
-			(!priv->throttleStart))
-		{
-			priv->throttleStart = sampleTime;
-			priv->throttleLimit = -1;
-		}
-	
-		ticks = ThrottleToRate(ds->throttle);
-		priv->throttleLimit = ticks ?  priv->throttleStart + ticks : -1;
-
-		if ((priv->throttleLimit >= 0) &&
-			(priv->throttleLimit < sampleTime))
-		{
-			DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d "
-				"N=%d\n", priv->throttleStart,
-				priv->throttleLimit, sampleTime,
-				priv->throttleValue,
-				sampleTime +
-					ThrottleToRate(priv->throttleValue)));
-
-			ds.wheel += (priv->throttleValue > 0) ? 1 :
-					(priv->throttleValue < 0) ? -1 : 0;
-		}
-
-		priv->throttleStart = sampleTime;
-		priv->throttleLimit = sampleTime +
-			ThrottleToRate(priv->throttleValue);
-		#endif /* throttle */
-
-		xf86WcmSendEvents(common->wcmDevices[found_device],
-			type, serial, is_stylus, is_button, is_proximity,
-			x, y, pressure, buttons, tilt_x, tilt_y, wheel);
-	}
-
-	/* might be useful for detecting new devices */
-	else
-	{
-		DBG(11, ErrorF("no device matches with id=%d, serial=%d\n",
-				type, serial));
-	}
-}
-
-/*****************************************************************************
  * xf86WcmSuppress --
  *  Determine whether device state has changed enough - return 1
  *  if not.
  ****************************************************************************/
 
-int xf86WcmSuppress(int suppress, WacomDeviceState* ds1, WacomDeviceState* ds2)
+static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
+	const WacomDeviceState* dsNew)
 {
-	if (ds1->buttons != ds2->buttons) return 0;
-	if (ds1->proximity != ds2->proximity) return 0;
-	if (ABS(ds1->x - ds2->x) >= suppress) return 0;
-	if (ABS(ds1->y - ds2->y) >= suppress) return 0;
-	if (ABS(ds1->pressure - ds2->pressure) >= suppress) return 0;
-	if ((1800 + ds1->rotation - ds2->rotation) % 1800 >= suppress &&
-		(1800 + ds2->rotation - ds1->rotation) % 1800 >= suppress)
+	if (dsOrig->buttons != dsNew->buttons) return 0;
+	if (dsOrig->proximity != dsNew->proximity) return 0;
+	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
+	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
+	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
+	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 >= suppress &&
+		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
 		return 0;
 
 	/* We don't want to miss the wheel's relative value */
 	/* may need to check if it's a tool with relative wheel? */
-	if ((ABS(ds1->wheel - ds2->wheel) >= suppress) ||
-		(ABS(ds1->wheel - ds2->wheel) == 1)) return 0;
+	if ((ABS(dsOrig->wheel - dsNew->wheel) >= suppress) ||
+		(ABS(dsOrig->wheel - dsNew->wheel) == 1)) return 0;
 
 	return 1;
 }
@@ -603,17 +468,172 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	return common->pDevCls->Init(local);
 }
 
-void xf86WcmEvent(WacomCommonPtr common, int tool_index,
+/*****************************************************************************
+ * xf86WcmEvent -
+ *   Handles suppression, filtering, and event dispatch.
+ ****************************************************************************/
+
+void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	const WacomDeviceState* ds)
 {
+	WacomDevicePtr priv;
+	int found_device = -1;
+	int id, idx;
+
+	/* sanity check the channel */
+	if (channel >= MAX_CHANNELS)
+		return;
+
+	DBG(10, ErrorF("xf86WcmEvent: i=%d t=%d s=%u x=%d y=%d b=0x%X\n"
+		"  p=%d rz=%d tx=%d ty=%d w=%d t=%d df=%d px=%d\n",
+		ds->device_id,
+		ds->device_type,
+		ds->serial_num,
+		ds->x, ds->y, ds->buttons,
+		ds->pressure, ds->rotation, ds->tiltx,
+		ds->tilty, ds->wheel, ds->throttle,
+		ds->discard_first, ds->proximity));
+
+	/* Check suppression */
 	if (xf86WcmSuppress(common->wcmSuppress,
-		common->wcmDevStat + tool_index, /* original */
+		common->wcmDevStat + channel,    /* original */
 		ds))                             /* new data */
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
 		return;
 	}
 
-	xf86WcmDirectEvents(common,ds);
-	common->wcmDevStat[tool_index] = *ds;
+	/* pre-filtering */
+
+	/* Find the device the current events are meant for */
+	for (idx=0; idx<common->wcmNumDevices; idx++)
+	{
+		priv = common->wcmDevices[idx]->private;
+		id = DEVICE_ID(priv->flags);
+
+		if (id == ds->device_type &&
+			((!priv->serial) || (ds->serial_num == priv->serial)) &&
+			(priv->topX <= ds->x && priv->bottomX >= ds->x &&
+			priv->topY <= ds->y && priv->bottomY >= ds->y))
+		{
+			DBG(11, ErrorF("tool id=%d for %s\n",
+				id, common->wcmDevices[idx]->name));
+			found_device = idx;
+			break;
+		}
+	}
+
+	/* locate other devices of same type and serial, send proximity out */
+	for (idx=0; idx<common->wcmNumDevices; idx++)
+	{
+		/* skip found device, if any */
+		if (idx == found_device)
+			continue;
+
+		priv = common->wcmDevices[idx]->private;
+		id = DEVICE_ID(priv->flags);
+
+		if (id == ds->device_type &&
+			((!priv->serial) || (ds->serial_num == priv->serial)) &&
+			priv->oldProximity)
+		{
+			if (found_device == -1)
+			{
+				/* Outside every mapped area, so fall
+				 * back to this, the first one */
+				found_device = idx;
+			}
+			else
+			{
+				/* report an out-of-proximity for devices
+				 * sharing same tool, but different regions */
+				WacomDeviceState out = { 0 };
+				out.device_type = ds->device_type;
+				out.serial_num = ds->serial_num;
+
+				DBG(6, ErrorF("Setting device %s fake "
+					"proximity out\n",
+					common->wcmDevices[idx]->name));
+
+				xf86WcmSendEvents(common->wcmDevices[idx],&out);
+			}
+			break;
+		}
+	} /* next device */
+
+	/* if a device matched criteria, handle filtering per device
+	 * settings, and send event to XInput */
+	if (found_device != -1)
+	{
+		WacomDeviceState filtered = *ds;
+
+		/* WacomDevicePtr priv = common->wcmDevices[idx]->private; */
+
+		/* The if-else statement should be used after the device is 
+	 	* selected since is_absolute = priv->flags | ABSOLUTE_FLAG
+	 	* I removed the declaration of is_absolute at the beginning
+	 	* of this routine */
+
+		#if 0
+		/* Intuos filter */
+		if (priv->flags & ABSOLUTE_FLAG)
+		{
+			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
+				ds->tiltx);
+			y = xf86WcmIntuosFilter (&ds->y_filter, ds->y,
+				ds->tilty);
+		} 
+		else
+		{
+			x = ds->x;
+			y = ds->y;
+		}
+		#endif
+
+		#if 0
+		/* get the sample time */
+		sampleTime = GetTimeInMillis(); 
+	
+		/* throttle filter */
+		if ((priv->throttleStart > sampleTime) ||
+			(!priv->throttleStart))
+		{
+			priv->throttleStart = sampleTime;
+			priv->throttleLimit = -1;
+		}
+	
+		ticks = ThrottleToRate(ds->throttle);
+		priv->throttleLimit = ticks ?  priv->throttleStart + ticks : -1;
+
+		if ((priv->throttleLimit >= 0) &&
+			(priv->throttleLimit < sampleTime))
+		{
+			DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d "
+				"N=%d\n", priv->throttleStart,
+				priv->throttleLimit, sampleTime,
+				priv->throttleValue,
+				sampleTime +
+					ThrottleToRate(priv->throttleValue)));
+
+			ds.wheel += (priv->throttleValue > 0) ? 1 :
+					(priv->throttleValue < 0) ? -1 : 0;
+		}
+
+		priv->throttleStart = sampleTime;
+		priv->throttleLimit = sampleTime +
+			ThrottleToRate(priv->throttleValue);
+		#endif /* throttle */
+
+		xf86WcmSendEvents(common->wcmDevices[found_device],&filtered);
+	}
+
+	/* otherwise, if no device matched... */
+	else
+	{
+		DBG(11, ErrorF("no device matches with id=%d, serial=%d\n",
+				ds->device_type, ds->serial_num));
+	}
+
+	/* save channel device state */
+	common->wcmDevStat[channel] = *ds;
 }

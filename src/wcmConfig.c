@@ -120,7 +120,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmPktLength = 7;          /* length of a packet */
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
-	common->wcmMaxZ = DEFAULT_MAXZ;    /* max Z value */
+	common->wcmMaxZ = 0;               /* max Z value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
 	common->wcmResolZ = 1;             /* Z resolution in points/inch */
@@ -941,13 +941,13 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
 		common->wcmMaxY);
 	if (common->wcmMaxY != 0)
-		xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
+		xf86Msg(X_CONFIG, "%s: max y = %d\n", dev->identifier,
 			common->wcmMaxY);
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 		common->wcmMaxZ);
-	if (common->wcmMaxZ != DEFAULT_MAXZ)
-		xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
+	if (common->wcmMaxZ != 0)
+		xf86Msg(X_CONFIG, "%s: max z = %d\n", dev->identifier,
 			common->wcmMaxZ);
 
 	common->wcmResolX = xf86SetIntOption(local->options, "ResolutionX",
