@@ -1,3 +1,6 @@
+2003-07-24    Ping Cheng <pingc@wacom.com>
+	* Added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
+
 2003-07-19    Ping Cheng <pingc@wacom.com>
 	* Fixed Intuos tilt filter
 	* Send raw values of tilt, pressure, rotation and 4D mouse

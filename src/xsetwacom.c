@@ -78,49 +78,55 @@ struct _PARAMINFO
 	{
 		{ "TopX",
 			"Bounding rect left coordinate in tablet units",
-			XWACOM_PARAM_TOPX },
+			XWACOM_PARAM_TOPX, VALUE_REQUIRED },
 
 		{ "TopY",
 			"Bounding rect top coordinate in tablet units",
-			XWACOM_PARAM_TOPY },
+			XWACOM_PARAM_TOPY, VALUE_REQUIRED },
 
 		{ "BottomX",
 			"Bounding rect right coordinate in tablet units",
-			XWACOM_PARAM_BOTTOMX },
+			XWACOM_PARAM_BOTTOMX, VALUE_REQUIRED },
 
 		{ "BottomY",
 			"Bounding rect bottom coordinate in tablet units",
-			XWACOM_PARAM_BOTTOMY },
+			XWACOM_PARAM_BOTTOMY, VALUE_REQUIRED },
 
 		{ "Button1",
 			"Button number to which button 1 should be mapped",
 			XWACOM_PARAM_BUTTON1,
-			VALUE_REQUIRED, RANGE, 1, 5 },
+			VALUE_OPTIONAL, RANGE, 
+			1, 5, SINGLE_VALUE, 1 },
 
 		{ "Button2",
 			"Button number to which button 2 should be mapped",
 			XWACOM_PARAM_BUTTON2,
-			VALUE_REQUIRED, RANGE, 1, 5 },
+			VALUE_OPTIONAL, RANGE, 
+			1, 5, SINGLE_VALUE, 2 },
 
 		{ "Button3",
 			"Button number to which button 3 should be mapped",
 			XWACOM_PARAM_BUTTON3,
-			VALUE_REQUIRED, RANGE, 1, 5 },
+			VALUE_OPTIONAL, RANGE, 
+			1, 5, SINGLE_VALUE, 3 },
 
 		{ "Button4",
 			"Button number to which button 4 should be mapped",
 			XWACOM_PARAM_BUTTON4,
-			VALUE_REQUIRED, RANGE, 1, 5 },
+			VALUE_OPTIONAL, RANGE, 
+			1, 5, SINGLE_VALUE, 4 },
 
 		{ "Button5",
 			"Button number to which button 5 should be mapped",
 			XWACOM_PARAM_BUTTON5,
-			VALUE_REQUIRED, RANGE, 1, 5 },
+			VALUE_OPTIONAL, RANGE, 
+			1, 5, SINGLE_VALUE, 5 },
 
 		{ "DebugLevel",
 			"Level of debugging trace, default is 0",
 			XWACOM_PARAM_DEBUGLEVEL,
-			VALUE_REQUIRED, RANGE, 0, 100 },
+			VALUE_OPTIONAL, RANGE, 
+			0, 100, SINGLE_VALUE, 0 },
 
 		{ "PressCurve",
 			"Bezier curve for pressure (default is 0 0 100 100)",
@@ -132,23 +138,44 @@ struct _PARAMINFO
 			"Enables and disables filtering of raw data, "
 			"default is true.",
 			XWACOM_PARAM_RAWFILTER,
-			VALUE_OPTIONAL, RANGE, 0, 1, BOOLEAN_VALUE, 1 },	
+			VALUE_OPTIONAL, RANGE, 
+			0, 1, BOOLEAN_VALUE, 1 },	
 
-		{ "xydefault",
+		{ "Mode",
+			"Switches cursor movement mode (default is absolute mode)",
+			XWACOM_PARAM_MODE,
+			VALUE_OPTIONAL, RANGE, 
+			0, 1, BOOLEAN_VALUE, 1 },	
+
+		{ "SpeedLevel",
+			"Sets relative cursor movement speed "
+			"(default is 5)",
+			XWACOM_PARAM_SPEEDLEVEL,
+			VALUE_OPTIONAL, RANGE, 
+			0, 10, SINGLE_VALUE, 5 },	
+
+		{ "ClickForce",
+			"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100"
+			"(default is 6)",
+			XWACOM_PARAM_CLICKFORCE,
+			VALUE_OPTIONAL, RANGE, 
+			0, 20, SINGLE_VALUE, 6 },	
+
+		{ "xyDefault",
 			"Resets the bounding coordinates to default in tablet units",
 			XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
 
 		{ "gimp",
-			"turns on/off Gimp support in Xinerama-enabled "
+			"Turns on/off Gimp support in Xinerama-enabled "
 			"multi-monitor desktop, default is on",
 			XWACOM_PARAM_GIMP, VALUE_OPTIONAL, 
 			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
-		{ "Filemodel",
+		{ "FileModel",
 			"Writes tablet models to /etc/wacom.dat",
 			XWACOM_PARAM_FILEMODEL, VALUE_OPTIONAL },
 
-		{ "Fileoption",
+		{ "FileOption",
 			"Writes configuration options to /etc/X11/wcm.dev_name",
 			XWACOM_PARAM_FILEOPTION, VALUE_OPTIONAL },
 
@@ -348,11 +375,13 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 		{
 			if ((p->nType == BOOLEAN_VALUE) &&
 				(!strcasecmp(pszValues[i],"on") ||
-				!strcasecmp(pszValues[i],"true")))
+				!strcasecmp(pszValues[i],"true") ||
+				!strcasecmp(pszValues[i],"absolute")))
 					nValues[i] = 1;
 			else if ((p->nType == BOOLEAN_VALUE) &&
 				(!strcasecmp(pszValues[i],"off") ||
-				!strcasecmp(pszValues[i],"false")))
+				!strcasecmp(pszValues[i],"false") ||
+				!strcasecmp(pszValues[i],"relative")))
 					nValues[i] = 0;
 			else
 			{
@@ -380,11 +409,11 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 	}
 	else if (p->nType == BOOLEAN_VALUE)
 	{
-		nValue = nCount ? nValues[0] : 0;
+		nValue = nCount ? nValues[0] : p->nDefault;
 	}
 	else if (p->nType == SINGLE_VALUE)
 	{
-		nValue = nCount ? nValues[0] : 0;
+		nValue = nCount ? nValues[0] : p->nDefault;
 	}
 
 	/* Looks good, send it. */

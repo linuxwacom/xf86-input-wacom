@@ -75,10 +75,11 @@
  * 2003-06-19 26-j0.5.16 - added Intuos2 6x8 id 0x47, suppress of 0 disables
  * 2003-06-25 26-j0.5.17 - support TwinView and kernel 2.5 for USB tablet 
  * 2003-07-10 26-j0.5.18 - fix to Intuos filter, ignores first samples
- * 2003-07-10 26-j0.5.19 - added noise reducing filter, improved USB relative mode
+ * 2003-07-16 26-j0.5.19 - added noise reducing filter, improved USB relative mode
+ * 2003-07-24 26-j0.5.20 - added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
  */
 
-static const char identification[] = "$Identification: 26-j0.5.19 $";
+static const char identification[] = "$Identification: 26-j0.5.20 $";
 
 /****************************************************************************/
 
@@ -721,6 +722,24 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
 		break;
 	    }
+	    case XWACOM_PARAM_MODE:
+		if ((value < 0) || (value > 1)) return BadValue;
+		xf86ReplaceIntOption(local->options, "Mode", value);
+		if (value) priv->flags |= ABSOLUTE_FLAG;
+		else priv->flags &= ~(ABSOLUTE_FLAG);
+		break;
+	    case XWACOM_PARAM_SPEEDLEVEL:
+		if ((value < 0) || (value > 10)) return BadValue;
+		if (value > 5) priv->speed = 2.0*((double)value - 5.0);
+		else priv->speed = ((double)value + 1.0) / 6.0;
+		xf86SetRealOption(local->options, "Speed", priv->speed);
+		break;
+	    case XWACOM_PARAM_CLICKFORCE:
+		if ((value < 0) || (value > 20)) return BadValue;
+		priv->common->wcmThreshold = (int)(value*priv->common->wcmMaxZ/100);
+		xf86ReplaceIntOption(local->options, "Threshold", 
+				priv->common->wcmThreshold);
+		break;
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86ReplaceIntOption(local->options, "TopX", 0);
 		priv->topX = xf86SetIntOption(local->options, "TopX", 0);
@@ -757,6 +776,8 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 	char 		fileName[80] = "/etc/X11/wcm.";
 	char		command[256];
 	FILE		*fp = 0;
+	int		value;
+	double		speed;
 
 	strcat(fileName, local->name);
 	fp = fopen(fileName, "w+");
@@ -767,8 +788,6 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		/* write user defined options as xsetwacom commands into fp */
 		while (optList) 
 		{
-			sprintf(command, "xsetwacom set %s %s %s\n", 
-				local->name, optList->opt_name, optList->opt_val);
 			if ( (!strcasecmp(optList->opt_name,"TopX") && priv->topX) 
 			    ||(!strcasecmp(optList->opt_name, "TopY") && priv->topY)  
 			    ||(!strcasecmp(optList->opt_name,"BottomX") &&
@@ -787,8 +806,33 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 					priv->button[4] != 5) 
 			    ||(!strcasecmp(optList->opt_name,"DebugLevel"))
 			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
+			    ||(!strcasecmp(optList->opt_name, "Mode")) 
 			    ||(!strcasecmp(optList->opt_name, "RawFilter")) )
+			{
+				sprintf(command, "xsetwacom set %s %s %s\n", 
+					local->name, optList->opt_name, 
+					optList->opt_val);
 				fprintf(fp, "%s", command);
+			}
+			else if(!strcasecmp(optList->opt_name, "Speed")) 
+			{
+				speed = strtod(optList->opt_val, NULL);
+				if(speed > 10.0) value = 10;
+				else if(speed >= 1.0) value = (int)(speed/2.0 + 5.0);
+				else if(speed < (double)(1.0/6.0)) value = 0;
+				else value = (int)(speed*6.0 - 0.5);
+				sprintf(command, "xsetwacom set %s %s %d\n", 
+					local->name, "SpeedLevel", value);
+				fprintf(fp, "%s", command);
+			}
+			else if(!strcasecmp(optList->opt_name, "Threshold")) 
+			{
+				value = atoi(optList->opt_val);
+				value = (int)(value*100/priv->common->wcmMaxZ);
+				sprintf(command, "xsetwacom set %s %s %d\n", 
+					local->name, "ClickForce", value);
+				fprintf(fp, "%s", command);
+			}
 			optList = optList->list.next;
 		}
 		fclose(fp);
