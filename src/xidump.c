@@ -19,6 +19,7 @@
 **
 ** REVISION HISTORY
 **   2003-02-23 0.0.1 - created for GTK1.2
+**   2003-03-07 0.0.2 - added input device code
 **
 ****************************************************************************/
 
@@ -27,7 +28,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define XIDUMP_VERSION "0.0.1"
+#define XIDUMP_VERSION "0.0.2"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,10 +42,36 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XIproto.h>
 
+	enum
+	{
+		INPUTEVENT_KEY_PRESS,
+		INPUTEVENT_KEY_RELEASE,
+		INPUTEVENT_FOCUS_IN,
+		INPUTEVENT_FOCUS_OUT,
+		INPUTEVENT_BTN_PRESS,
+		INPUTEVENT_BTN_RELEASE,
+		INPUTEVENT_PROXIMITY_IN,
+		INPUTEVENT_PROXIMITY_OUT,
+		INPUTEVENT_MOTION_NOTIFY,
+		INPUTEVENT_DEVICE_STATE_NOTIFY,
+		INPUTEVENT_DEVICE_MAPPING_NOTIFY,
+		INPUTEVENT_CHANGE_DEVICE_NOTIFY,
+		INPUTEVENT_DEVICE_POINTER_MOTION_HINT,
+		INPUTEVENT_DEVICE_BUTTON_MOTION,
+		INPUTEVENT_DEVICE_BUTTON1_MOTION,
+		INPUTEVENT_DEVICE_BUTTON2_MOTION,
+		INPUTEVENT_DEVICE_BUTTON3_MOTION,
+		INPUTEVENT_DEVICE_BUTTON4_MOTION,
+		INPUTEVENT_DEVICE_BUTTON5_MOTION,
+
+		INPUTEVENT_MAX
+	};
+
 	int gnDevListCnt = 0;
 	XDeviceInfoPtr gpDevList = NULL;
 	int gnLastXError = 0;
 	int gnVerbose = 0;
+	int gnInputEvent[INPUTEVENT_MAX] = { 0 };
 
 int ErrorHandler(Display* pDisp, XErrorEvent* pEvent)
 {
@@ -86,7 +113,7 @@ Display* InitXInput(void)
 	return pDisp;
 }
 
-int ListDevices(Display* pDisp)
+int ListDevices(Display* pDisp, const char* pszDeviceName)
 {
 	int i, j, k;
 	XDeviceInfoPtr pDev;
@@ -107,8 +134,11 @@ int ListDevices(Display* pDisp)
 	{
 		pDev = gpDevList + i;
 
-		printf("%2lu %-30s %s\n",
-				pDev->id,
+		/* if device name is specified, skip other devices */
+		if (pszDeviceName && strcasecmp(pDev->name, pszDeviceName))
+			continue;
+
+		printf("%-30s %s\n",
 				pDev->name,
 				(pDev->use == 0) ? "disabled" :
 				(pDev->use == IsXKeyboard) ? "keyboard" :
@@ -149,10 +179,11 @@ int ListDevices(Display* pDisp)
 					case ValuatorClass:
 					{
 						XValuatorInfoPtr pVal = (XValuatorInfoPtr)pClass;
-						printf("    val: axes=%d mode=%s buf=%s\n",
+						printf("    val: axes=%d mode=%s buf=%ld\n",
 								pVal->num_axes,
-								pVal->mode ? "abs" : "rel",
-								pVal->motion_buffer ? "yes" : "no");
+								pVal->mode == Absolute ? "abs" :
+								pVal->mode == Relative ? "rel" : "unk",
+								pVal->motion_buffer);
 						for (k=0; k<pVal->num_axes; ++k)
 						{
 							printf("    axis[%d]: res=%d, max=%d, max=%d\n",
@@ -276,8 +307,141 @@ static void RawTerm(void)
 {
 }
 
+static const char* GetEventName(int nType)
+{
+	static char xchBuf[64];
+
+	switch (nType)
+	{
+		case KeyPress: return "KeyPress";
+		case KeyRelease: return "KeyRelease";
+		case ButtonPress: return "ButtonPress";
+		case ButtonRelease: return "ButtonRelease";
+		case MotionNotify: return "MotionNotify";
+		case EnterNotify: return "EnterNotify";
+		case LeaveNotify: return "LeaveNotify";
+		case FocusIn: return "FocusIn";
+		case FocusOut: return "FocusOut";
+		case KeymapNotify: return "KeymapNotify";
+		case Expose: return "Expose";
+		case GraphicsExpose: return "GraphicsExpose";
+		case NoExpose: return "NoExpose";
+		case VisibilityNotify: return "VisibilityNotify";
+		case CreateNotify: return "CreateNotify";
+		case DestroyNotify: return "DestroyNotify";
+		case UnmapNotify: return "UnmapNotify";
+		case MapNotify: return "MapNotify";
+		case MapRequest: return "MapRequest";
+		case ReparentNotify: return "ReparentNotify";
+		case ConfigureNotify: return "ConfigureNotify";
+		case ConfigureRequest: return "ConfigureRequest";
+		case GravityNotify: return "GravityNotify";
+		case ResizeRequest: return "ResizeRequest";
+		case CirculateNotify: return "CirculateNotify";
+		case CirculateRequest: return "CirculateRequest";
+		case PropertyNotify: return "PropertyNotify";
+		case SelectionClear: return "SelectionClear";
+		case SelectionRequest: return "SelectionRequest";
+		case SelectionNotify: return "SelectionNotify";
+		case ColormapNotify: return "ColormapNotify";
+		case ClientMessage: return "ClientMessage";
+		case MappingNotify: return "MappingNotify";
+
+		default:
+		if (nType == gnInputEvent[INPUTEVENT_KEY_PRESS])
+			return "XIKeyPress";
+		else if (nType == gnInputEvent[INPUTEVENT_KEY_RELEASE])
+			return "XIKeyRelease";
+		else if (nType == gnInputEvent[INPUTEVENT_FOCUS_IN])
+			return "XIFocusIn";
+		else if (nType == gnInputEvent[INPUTEVENT_FOCUS_OUT])
+			return "XIFocusOut";
+		else if (nType == gnInputEvent[INPUTEVENT_BTN_PRESS])
+			return "XIButtonPress";
+		else if (nType == gnInputEvent[INPUTEVENT_BTN_RELEASE])
+			return "XIButtonRelease";
+		else if (nType == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
+			return "XIProximityIn";
+		else if (nType == gnInputEvent[INPUTEVENT_PROXIMITY_OUT])
+			return "XIProximityOut";
+		else if (nType == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
+			return "XIMotionNotify";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_STATE_NOTIFY])
+			return "XIDeviceStateNotify";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_MAPPING_NOTIFY])
+			return "XIDeviceMappingNotify";
+		else if (nType == gnInputEvent[INPUTEVENT_CHANGE_DEVICE_NOTIFY])
+			return "XIChangeDeviceNotify";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_POINTER_MOTION_HINT])
+			return "XIDevicePointerMotionHint";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON_MOTION])
+			return "XIDeviceButtonMotion";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON1_MOTION])
+			return "XIDeviceButton1Motion";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON2_MOTION])
+			return "XIDeviceButton2Motion";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON3_MOTION])
+			return "XIDeviceButton3Motion";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON4_MOTION])
+			return "XIDeviceButton4Motion";
+		else if (nType == gnInputEvent[INPUTEVENT_DEVICE_BUTTON5_MOTION])
+			return "XIDeviceButton5Motion";
+	}
+
+	snprintf(xchBuf,sizeof(xchBuf),"Event_%d",nType);
+	return xchBuf;
+}
+
 static int RawRun(Display* pDisp, XDevice* pDev)
 {
+	XEvent event;
+	XAnyEvent* pAny;
+
+	while (1)
+	{
+		XNextEvent(pDisp,&event);
+
+		pAny = (XAnyEvent*)&event;
+		/* printf("event: type=%s\n",GetEventName(pAny->type)); */
+
+		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
+			printf("Proximity In\n");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_OUT])
+			printf("Proximity Out\n");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_IN])
+			printf("Focus In\n");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_OUT])
+			printf("Focus Out\n");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
+		{
+			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
+			printf("Motion: x=%+6d y=%+6d p=%4d tx=%+4d ty=%+4d w=%+5d\n",
+					pMove->axis_data[0],
+					pMove->axis_data[1],
+					pMove->axis_data[2],
+					pMove->axis_data[3],
+					pMove->axis_data[4],
+					pMove->axis_data[5]);
+		}
+		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
+				(pAny->type == gnInputEvent[INPUTEVENT_BTN_RELEASE]))
+		{
+			XDeviceButtonEvent* pBtn = (XDeviceButtonEvent*)pAny;
+			printf("Button: %s %s\n",
+					(pBtn->button == 1) ? "1-LEFT" :
+					(pBtn->button == 2) ? "2-MIDDLE" :
+					(pBtn->button == 3) ? "3-RIGHT" :
+					(pBtn->button == 4) ? "4-EXTRA" :
+					(pBtn->button == 5) ? "5-SIDE" : "?-ERROR",
+					pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS] ?
+						"DOWN" : "UP");
+		}
+		else
+		{
+			printf("Event: %s\n",GetEventName(pAny->type));
+		}
+	}
+
 	return 0;
 }
 
@@ -322,7 +486,7 @@ void Fatal(const char* pszFmt, ...)
 
 int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 {
-	int nRtn, nType;
+	int nRtn;
 	XDevice* pDev;
 	XDeviceInfoPtr pDevInfo;
 	Window wnd;
@@ -333,13 +497,16 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 	/* create a window to receive events */
 	wnd = XCreateWindow(pDisp,
 			DefaultRootWindow(pDisp), /* parent */
-			0,0,1,1, /* placement */
+			0,0,100,100, /* placement */
 			0, /* border width */
 			0, /* depth */
 			InputOnly, /* class */
 			CopyFromParent, /* visual */
 			0, /* valuemask */
 			NULL); /* attributes */
+
+	/* mapping appears to be necessary */
+	XMapWindow(pDisp,wnd);
 
 	/* get the device by name */
 	pDevInfo = GetDevice(pDisp,pszDeviceName);
@@ -359,21 +526,78 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 		return 1;
 	}
 
-	/* determine which classes to use */
-	DeviceButtonPress(pDev,nType,cls);
+	/* key events */
+	DeviceKeyPress(pDev,gnInputEvent[INPUTEVENT_KEY_PRESS],cls);
 	if (cls) eventList[nEventListCnt++] = cls;
-	DeviceButtonPressGrab(pDev,nType,cls);
-	if (cls) eventList[nEventListCnt++] = cls;
-	DeviceButtonRelease(pDev,nType,cls);
-	if (cls) eventList[nEventListCnt++] = cls;
-	DeviceMotionNotify(pDev,nType,cls);
+	DeviceKeyRelease(pDev,gnInputEvent[INPUTEVENT_KEY_RELEASE],cls);
 	if (cls) eventList[nEventListCnt++] = cls;
 
-	/* grab device */
+	/* focus events */
+	DeviceFocusIn(pDev,gnInputEvent[INPUTEVENT_FOCUS_IN],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceFocusOut(pDev,gnInputEvent[INPUTEVENT_FOCUS_OUT],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* button events */
+	DeviceButtonPress(pDev,gnInputEvent[INPUTEVENT_BTN_PRESS],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButtonRelease(pDev,gnInputEvent[INPUTEVENT_BTN_RELEASE],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* proximity events */
+	ProximityIn(pDev,gnInputEvent[INPUTEVENT_PROXIMITY_IN],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	ProximityOut(pDev,gnInputEvent[INPUTEVENT_PROXIMITY_OUT],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* motion events */
+	DeviceMotionNotify(pDev,gnInputEvent[INPUTEVENT_MOTION_NOTIFY],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* device state */
+	DeviceStateNotify(pDev,gnInputEvent[INPUTEVENT_DEVICE_STATE_NOTIFY],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceMappingNotify(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_MAPPING_NOTIFY],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	ChangeDeviceNotify(pDev,gnInputEvent[INPUTEVENT_CHANGE_DEVICE_NOTIFY],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+#if 0
+	/* this cuts the motion data down - not sure if this is useful */
+	DevicePointerMotionHint(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_POINTER_MOTION_HINT],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+#endif
+
+	/* button motion */
+	DeviceButtonMotion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButton1Motion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON1_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButton2Motion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON2_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButton3Motion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON3_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButton4Motion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON4_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButton5Motion(pDev,
+			gnInputEvent[INPUTEVENT_DEVICE_BUTTON5_MOTION],cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* specify which events to report */
+	/* XSelectInput(pDisp,wnd,0x00FFFFFF ^ PointerMotionHintMask); */
+	/* XSelectExtensionEvent(pDisp,wnd,eventList,nEventListCnt); */
+
+	/* grab device - work whether pointer is in active window or not */
 	XGrabDevice(pDisp,pDev,wnd,
 			0, /* no owner events */
-			sizeof(eventList) / sizeof(*eventList),
-			eventList,
+			nEventListCnt, eventList, /* events */
 			GrabModeAsync, /* don't queue, give me whatever you got */
 			GrabModeAsync, /* same */
 			CurrentTime);
@@ -388,6 +612,7 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 		pUI->Term();
 	}
 
+	XUngrabDevice(pDisp,pDev,CurrentTime);
 	XCloseDevice(pDisp,pDev);
 	XDestroyWindow(pDisp,wnd);
 
@@ -472,7 +697,7 @@ int main(int argc, char** argv)
 	if (!pDisp) exit(1);
 
 	if (bList)
-		nRtn = ListDevices(pDisp);
+		nRtn = ListDevices(pDisp,pszDeviceName);
 	else
 		nRtn = Run(pDisp,pUI,pszDeviceName);
 

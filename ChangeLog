@@ -2,6 +2,7 @@
 
 	* Added tabletdev.c framework (based on mousedev.c)
 	* Added device list to xidump.c including class info
+	* Added raw event notification
 
 2003-03-06    John E. Joganic <john@joganic.com>
 
