@@ -57,9 +57,10 @@
  * 2003-01-01 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
  * 2003-01-25 26-j0.3.7 - cleaned up usb conditions for FreeBSD
  * 2003-01-31 26-j0.5.0 - new release
+ * 2003-01-31 26-j0.5.1 - Ping Cheng's PL code
  */
 
-static const char identification[] = "$Identification: 26-j0.5.0 $";
+static const char identification[] = "$Identification: 26-j0.5.1 $";
 
 #include "xf86Version.h"
 
@@ -241,6 +242,8 @@ static int      debug_level = 0;
  *****************************************************************************/
 #define TILT_FLAG	1
 #define GRAPHIRE_FLAG	2
+#define INTUOS2_FLAG	4
+#define PL_FLAG		8
 
 typedef struct
 {
@@ -321,7 +324,7 @@ typedef struct _WacomCommonRec
     int			wcmMaxZ;	/* max Z value */
     int			wcmResolX;	/* X resolution in points/inch */
     int			wcmResolY;	/* Y resolution in points/inch */
-    int			wcmResolZ;	/* Z resolution in points/inch */
+    int			wcmResolZ;	/* pressure resolution of tablet */
     LocalDevicePtr	*wcmDevices;	/* array of all devices sharing the same port */
     int			wcmNumDevices;	/* number of devices */
     int			wcmIndex;	/* number of bytes read */
@@ -465,6 +468,8 @@ static SymTabRec ModeTabRec[] = {
 
 static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
  WC_ALL_MACRO WC_NO_MACRO1 WC_RATE WC_NO_INCREMENT WC_STREAM_MODE WC_ZFILTER;
+
+static const char * pl_setup_string = WC_UPPER_ORIGIN WC_RATE WC_STREAM_MODE;
 
 static const char * penpartner_setup_string = WC_PRESSURE_MODE WC_START;
 
@@ -1074,16 +1079,20 @@ flush_input_fd(int	fd)
  */
 /*
  * send a request and wait for the answer.
- * the answer must begin with the first two chars of the request and must end
- * with \r. The last character in the answer string (\r) is replaced by a \0.
+ * the answer must begin with the first two chars of the request.
+ * The last character in the answer string is replaced by a \0.
  */
 static char *
 send_request(int	fd,
 	     char	*request,
-	     char	*answer)
+	     char	*answer,
+		 int maxlen)
 {
     int	len, nr;
     int	maxtry = MAXTRY;
+
+	if (maxlen < 3)
+		return NULL;
   
     /* send request string */
     do {
@@ -1156,8 +1165,7 @@ send_request(int	fd,
     } while ((answer[0] != request[0]) &&
 	     (answer[1] != request[1]));
 
-    /* Read until carriage return or timeout (to handle broken protocol
-     * implementations which don't end with a <cr>).
+    /* Read until we don't get anything or timeout.
      */
     len = 2;
     maxtry = MAXTRY;
@@ -1172,13 +1180,17 @@ send_request(int	fd,
 		DBG(10, ErrorF("%c err=%d [%d]\n", answer[len], nr, len));
 	    }
 	    else {
-		DBG(10, ErrorF("timeout remains %d tries\n", maxtry));
-		maxtry--;
+		if (len == 2) {
+		   DBG(10, ErrorF("timeout remains %d tries\n", maxtry));
+		   maxtry--;
+		}
 	    }
-	} while ((nr <= 0) && maxtry);
+	} while ((nr <= 0) && len == 2 && maxtry);
 
 	if (nr > 0) {
 	    len += nr;
+		if (len >= (maxlen - 1))
+			return NULL;
 	}
 	
 	if (maxtry == 0) {
@@ -1186,7 +1198,7 @@ send_request(int	fd,
 		   request[0], request[1], MAXTRY);
 	    break;
 	}
-    } while (answer[len-1] != '\r');
+    } while (nr > 0);
 
     if (len <= 3)
 	return NULL;
@@ -1244,6 +1256,7 @@ xf86WcmConvert(LocalDevicePtr	local,
     }
 #endif
     
+DBG(6, ErrorF("bottomY =%d bottomX=%d \n",priv->bottomY,priv->bottomX));
     *x = v0 * priv->factorX + 0.5;
     *y = v1 * priv->factorY + 0.5;
 
@@ -1374,39 +1387,6 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 		  is_button ? "true" : "false", buttons,
 		  tx, ty, wheel));
 
-    /* Translate coordinates according to Top and Bottom points
-     * if we are outside the zone do as a ProximityOut event.
-     */
-
-    if (x > priv->bottomX) {
-	is_proximity = FALSE;
-	buttons = 0;
-	x = priv->bottomX;
-    }
-	    
-    if (y > priv->bottomY) {
-	is_proximity = FALSE;
-	buttons = 0;
-	y = priv->bottomY;
-    }
-
-    DBG(10, ErrorF("topX=%d topY=%d\n", priv->topX, priv->topY));
-
-    x = x - priv->topX;
-    y = y - priv->topY;
-
-    if (x < 0) {
-	is_proximity = FALSE;
-	buttons = 0;
-	x = 0;
-    }
-    
-    if (y < 0) {
-	is_proximity = FALSE;
-	buttons = 0;
-	y = 0;
-    }
-    
     is_absolute = (priv->flags & ABSOLUTE_FLAG);
     is_core_pointer = xf86IsCorePointer(local->dev);
 
@@ -1485,7 +1465,7 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 	     */
 	    if (is_stylus) {
 		if (buttons == 4) {
-		    buttons = (priv->oldProximity == ERASER_PROX) ? 0 : 3;
+		    buttons = (priv->oldProximity == ERASER_PROX) ? 0 : 4;
 		}
 		else {
 		    if (priv->oldProximity == ERASER_PROX && buttons == 5) {
@@ -1810,6 +1790,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 	
 	common->wcmData[common->wcmIndex++] = buffer[loop];
 
+	is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
 	if (common->wcmProtocolLevel == 4 &&
 	    common->wcmIndex == common->wcmPktLength) {
 	    int	is_graphire = common->wcmFlags & GRAPHIRE_FLAG;
@@ -1828,27 +1809,32 @@ xf86WcmReadInput(LocalDevicePtr         local)
 
 	    /* check which device we have */
 	    is_stylus = (common->wcmData[0] & POINTER_BIT);
-	      
-	    z = ((common->wcmData[6] & ZAXIS_BITS) * 2) +
-		((common->wcmData[3] & ZAXIS_BIT) >> 2);
+            if (common->wcmMaxZ > 350) {
+                z = ((common->wcmData[6] & ZAXIS_BITS) << 2 ) +
+	            ((common->wcmData[3] & ZAXIS_BIT) >> 1) +
+	            ((common->wcmData[3] & PROXIMITY_BIT) >> 6);
 
-	    if (common->wcmMaxZ == 512) {
-		z = z*4 + ((common->wcmData[0] & ZAXIS_BIT) >> 1);
-
-		if (!(common->wcmData[6] & ZAXIS_SIGN_BIT)) {
-		    z += 256;
-		}
-		DBG(10, ErrorF("graphire pressure(%c)=%d\n",
-			       (common->wcmData[6] & ZAXIS_SIGN_BIT) ? '-' : '+', z));
-	    }
-	    else {
-		if (!(common->wcmData[6] & ZAXIS_SIGN_BIT)) {
-		    z += (common->wcmMaxZ / 2);
-		}
-	    }
-	    
-	    is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
-
+	        if (common->wcmData[6] & ZAXIS_SIGN_BIT) {
+	            z = (z | ~0xFF);
+	        }
+            }
+            else {
+      	        if (common->wcmMaxZ > 150) {
+            	    z = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) +
+	            	((common->wcmData[3] & ZAXIS_BIT) >> 2);
+	            if (common->wcmData[6] & ZAXIS_SIGN_BIT) {
+	                z = (z | ~0x7F);
+	            }
+	        }
+	        else {
+                    z = (common->wcmData[6] & ZAXIS_BITS);
+	            if (common->wcmData[6] & ZAXIS_SIGN_BIT) {
+	                z = (z | ~0x3F);
+	            }
+	        }
+            }
+            z += ((common->wcmMaxZ + 1)/ 2);
+	      	    
 	    if (is_graphire) {
 		if (is_stylus) {
 		    buttons = ((common->wcmData[3] & 0x30) >> 3) |
@@ -1869,7 +1855,12 @@ xf86WcmReadInput(LocalDevicePtr         local)
 	    }
 	    else {
 		is_button = (common->wcmData[0] & BUTTON_FLAG);
-		buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+	        if(common->wcmFlags & PL_FLAG) {
+	            buttons = (common->wcmData[3] & 0x38) >> 3;
+	        }
+	        else {
+	            buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+	        }
 	    }
 	    
 	    /* The stylus reports button 4 for the second side
@@ -1945,7 +1936,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 			 * button 4 isn't reported so we must check the
 			 * previous proximity device.
 			 */
-			if (common->wcmHasEraser && (priv->oldProximity == ERASER_PROX)) {
+			if (common->wcmHasEraser && (!common->wcmStylusSide)) {
 			    curDevice = ERASER_ID;
 			} else {
 			    curDevice = STYLUS_ID;
@@ -1965,6 +1956,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 			    curDevice = DEVICE_ID(priv->flags);
 			    temp_buttons = 0;
 			    temp_is_proximity = 0;
+			    common->wcmStylusSide = 1;
 			    DBG(10, ErrorF("eraser and stylus mix\n"));
 			} else 
 			    continue;
@@ -2787,7 +2779,7 @@ xf86WcmOpen(LocalDevicePtr	local)
 #endif
 
     DBG(2, ErrorF("reading model\n"));
-    if (!send_request(local->fd, WC_MODEL, buffer)) {
+    if (!send_request(local->fd, WC_MODEL, buffer, sizeof(buffer))) {
 	return !Success;
     }
     DBG(2, ErrorF("%s\n", buffer));
@@ -2813,14 +2805,77 @@ xf86WcmOpen(LocalDevicePtr	local)
 	common->wcmMaxZ = 1023;		/* max Z value */
 	common->wcmResolX = 2540;	/* X resolution in points/inch */
 	common->wcmResolY = 2540;	/* Y resolution in points/inch */
-	common->wcmResolZ = 2540;	/* Z resolution in points/inch */
+	common->wcmResolZ = 1;		/* pressure resolution of tablet */
 	common->wcmPktLength = 9;	/* length of a packet */
+	if (buffer[2] == 'X') {
+	    common->wcmFlags |= INTUOS2_FLAG;
+	}
 	if (common->wcmThreshold == INVALID_THRESHOLD) {
 	    common->wcmThreshold = -480; /* Threshold for counting pressure as a button */
 	    if (xf86Verbose) {
 		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
 		       XCONFIG_PROBED, common->wcmThreshold);
 	    }
+	}
+    }
+
+    if (buffer[2] == 'P' && buffer[3] == 'L') {
+	common->wcmFlags |= PL_FLAG;
+	common->wcmResolX = 508;	/* X resolution in points/inch */
+	common->wcmResolY = 508;	/* Y resolution in points/inch */
+	common->wcmResolZ = 1;		/* pressure resolution of tablet */
+	switch ( buffer[5] ) { 
+	    case '2': 
+		if ( buffer[6] == '5' ) { /* PL-250  */
+	    	    common->wcmMaxX = 9700;
+	    	    common->wcmMaxY = 7300;
+	    	    common->wcmMaxZ = 255;
+		}
+		else {      /* PL-270  */
+	    	    common->wcmMaxX = 10560;
+	    	    common->wcmMaxY = 7920;
+	    	    common->wcmMaxZ = 255;
+		}
+	    break;
+	    case '3':     /* PL-300  */
+	        common->wcmMaxX = 10560;
+	    	common->wcmMaxY = 7920;
+	    	common->wcmMaxZ = 255;
+	    break;
+	    case '4':     /* PL-400  */
+	        common->wcmMaxX = 13590;
+	        common->wcmMaxY = 10240;
+	        common->wcmMaxZ = 255;
+	    break;
+	    case '5': 
+		if ( buffer[6] == '5' ) { /* PL-550  */
+	    	    common->wcmMaxX = 15360;
+	    	    common->wcmMaxY = 11520;
+	    	    common->wcmMaxZ = 511;
+		}
+		else {      /* PL-500  */
+	    	    common->wcmMaxX = 15360;
+	    	    common->wcmMaxY = 11520;
+	    	    common->wcmMaxZ = 255;
+		}
+	    break;
+	    case '6': 
+		if ( buffer[8] == 'S' ) { /* PL-600SX  */
+	    	    common->wcmMaxX = 15650;
+	    	    common->wcmMaxY = 12540;
+	    	    common->wcmMaxZ = 255;
+		}
+		else {      /* PL-600  */
+	    	    common->wcmMaxX = 15315;
+	    	    common->wcmMaxY = 11510;
+	    	    common->wcmMaxZ = 255;
+		}
+	    break;
+	    case '8':     /* PL-800  */
+	        common->wcmMaxX = 18050;
+	        common->wcmMaxY = 14450;
+	        common->wcmMaxZ = 511;
+	    break;
 	}
     }
 	
@@ -2855,7 +2910,7 @@ xf86WcmOpen(LocalDevicePtr	local)
     }
     else if (common->wcmProtocolLevel == 4 && !(common->wcmResolX && common->wcmResolY)) {
 	DBG(2, ErrorF("reading config\n"));
-	if (send_request(local->fd, WC_CONFIG, buffer)) {
+	if (send_request(local->fd, WC_CONFIG, buffer, sizeof(buffer))) {
 	    DBG(2, ErrorF("%s\n", buffer));
 	    /* The header string is simply a place to put the unwanted
 	     * config header don't use buffer+xx because the header size
@@ -2877,7 +2932,7 @@ xf86WcmOpen(LocalDevicePtr	local)
 
     if (!(common->wcmFlags & GRAPHIRE_FLAG) && !(common->wcmMaxX && common->wcmMaxY)) {
 	DBG(2, ErrorF("reading max coordinates\n"));
-	if (!send_request(local->fd, WC_COORD, buffer)) {
+	if (!send_request(local->fd, WC_COORD, buffer, sizeof(buffer))) {
 	    ErrorF("WACOM: unable to read max coordinates. Use the MaxX and MaxY options.\n");
 	    return !Success;
 	}
@@ -2892,38 +2947,7 @@ xf86WcmOpen(LocalDevicePtr	local)
 		  common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
 		  common->wcmResolY));
 
-    /* We can't change the resolution on PenPartner and Graphire models */
     if (!is_a_penpartner && common->wcmProtocolLevel == 4) {
-	int resolX = common->wcmResolX, resolY = common->wcmResolY;
-	
-	/* Force the resolution.
-	 */
-        if (((float)version) >= 1.2) {
-	    resolX = resolY = 2540;
-	}
-	sprintf(buffer, "%s%d\r", WC_NEW_RESOLUTION, resolX);
-	SYSCALL(err = write(local->fd, buffer, strlen(buffer)));
-	
-	/* Verify the resolution change.
-	 */
-	DBG(2, ErrorF("rereading config\n"));
-	if (send_request(local->fd, WC_CONFIG, buffer)) {
-	    DBG(2, ErrorF("%s\n", buffer));
-	    /* The header string is simply a place to put the unwanted
-	     * config header don't use buffer+xx because the header size
-	     * varies on different tablets
-	     */
-	    if (sscanf(buffer, "%[^,],%d,%d,%d,%d", header, &a, &b, &common->wcmResolX, &common->wcmResolY) == 5) {
-		DBG(6, ErrorF("WC_CONFIG Header = %s\n", header));
-	    }
-	    else {
-		ErrorF("WACOM: unable to reparse resolution. Using previous values.\n");
-	    }
-	}
-	else {
-	    ErrorF("WACOM: unable to reread resolution. Using previous values.\n");
-	}
-	
 	/* The following couple of lines convert the MaxX and MaxY returned by
 	 * the Wacom from 1270lpi to the Wacom's active resolution.
 	 */
@@ -2943,7 +2967,12 @@ xf86WcmOpen(LocalDevicePtr	local)
     else if (common->wcmProtocolLevel == 4) {
         SYSCALL(err = write(local->fd, WC_RESET, strlen(WC_RESET)));
 	WAIT(75);
-	SYSCALL(err = write(local->fd, setup_string, strlen(setup_string)));
+	if (common->wcmFlags & PL_FLAG) {
+	    SYSCALL(err = write(local->fd, pl_setup_string, strlen(pl_setup_string)));
+	}
+	else {
+	    SYSCALL(err = write(local->fd, setup_string, strlen(setup_string)));
+	}
     }
     else {
 	SYSCALL(err = write(local->fd, intuos_setup_string,
@@ -3012,7 +3041,7 @@ xf86WcmOpen(LocalDevicePtr	local)
 #endif
 	    DBG(1, ErrorF("Switching serial link to %d\n", common->wcmLinkSpeed));
 
-	    if (common->wcmLinkSpeed == 38400 && version < 2.0) {
+	    if (common->wcmLinkSpeed == 38400 && version < 2.0 && !(common->wcmFlags&INTUOS2_FLAG)) {
 		ErrorF("Wacom: 38400 speed not supported with this Intuos firmware (%f)\n", version);
 		ErrorF("Switching to 19200\n");
 		common->wcmLinkSpeed = 19200;
@@ -3120,27 +3149,23 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
 
 	/* Verify Box validity */
 
-	if (priv->topX > common->wcmMaxX ||
-	    priv->topX < 0) {
+	if (priv->topX > common->wcmMaxX) {
 	    ErrorF("Wacom invalid TopX (%d) reseting to 0\n", priv->topX);
 	    priv->topX = 0;
 	}
 
-	if (priv->topY > common->wcmMaxY ||
-	    priv->topY < 0) {
+	if (priv->topY > common->wcmMaxY) {
 	    ErrorF("Wacom invalid TopY (%d) reseting to 0\n", priv->topY);
 	    priv->topY = 0;
 	}
 
-	if (priv->bottomX > common->wcmMaxX ||
-	    priv->bottomX < priv->topX) {
+	if (priv->bottomX < priv->topX) {
 	    ErrorF("Wacom invalid BottomX (%d) reseting to %d\n",
 		   priv->bottomX, common->wcmMaxX);
 	    priv->bottomX = common->wcmMaxX;
 	}
 
-	if (priv->bottomY > common->wcmMaxY ||
-	    priv->bottomY < priv->topY) {
+	if (priv->bottomY < priv->topY) {
 	    ErrorF("Wacom invalid BottomY (%d) reseting to %d\n",
 		   priv->bottomY, common->wcmMaxY);
 	    priv->bottomY = common->wcmMaxY;
@@ -3387,7 +3412,6 @@ xf86WcmProc(DeviceIntPtr       pWcm,
 	    DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=ON\n", pWcm));
 
 	    if ((local->fd < 0) && (!xf86WcmOpenDevice(pWcm))) {
-		pWcm->inited = FALSE;
 		return !Success;
 	    }
 #ifdef XFREE86_V4	    
@@ -3552,7 +3576,6 @@ xf86WcmAllocate(char *  name,
     priv->oldTiltX = -1;		/* previous tilt in x direction */
     priv->oldTiltY = -1;		/* previous tilt in y direction */
     priv->oldButtons = 0;		/* previous buttons state */
-    priv->oldProximity = 1;		/* previous proximity */
     priv->oldWheel = 0;			/* previous wheel */
     priv->topX = 0;			/* X top */
     priv->topY = 0;			/* Y top */
@@ -3584,7 +3607,7 @@ xf86WcmAllocate(char *  name,
     common->wcmMaxZ = DEFAULT_MAXZ;	/* max Z value */
     common->wcmResolX = 0;		/* X resolution in points/inch */
     common->wcmResolY = 0;		/* Y resolution in points/inch */
-    common->wcmResolZ = 1270;		/* Z resolution in points/inch */
+    common->wcmResolZ = 1;		/* Z resolution in points/inch */
     common->wcmHasEraser = (flag & ERASER_ID) ? TRUE : FALSE;	/* True if an eraser has been configured */
     common->wcmStylusSide = TRUE;	/* eraser or stylus ? */
     common->wcmStylusProximity = FALSE;	/* a stylus is in proximity ? */

@@ -277,6 +277,14 @@ static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...);
 
 	static SERIALSUBTYPE xCintiq[] =
 	{
+		WACOM_SUBTYPE("PL-250", "Wacom PL-250",     1),
+		WACOM_SUBTYPE("PL-270", "Wacom PL-270",     2),
+		WACOM_SUBTYPE("PL-400", "Wacom PL-400",     3),
+		WACOM_SUBTYPE("PL-500", "Wacom PL-500",     4),
+		WACOM_SUBTYPE("PL-550", "Wacom PL-550",     5),
+		WACOM_SUBTYPE("PL-600", "Wacom PL-600",     6),
+		WACOM_SUBTYPE("PL-600SX", "Wacom PL-600SX", 7),
+		WACOM_SUBTYPE("PL-800", "Wacom PL-800",     8),
 		{ NULL }
 	};
 
@@ -591,7 +599,11 @@ static int SerialConfigTTY(SERIALTABLET* pSerial)
 	{
 		/* set up default port parameters */
 		if (tcgetattr (pSerial->fd, &tios))
-			{ perror("tcgetattr"); return 1; }
+		{
+			SerialError(pSerial,"Failed to get port params: %s",
+					strerror(errno));
+			return 1;
+		}
 
 		tios.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 		tios.c_oflag &= ~OPOST;
@@ -607,7 +619,11 @@ static int SerialConfigTTY(SERIALTABLET* pSerial)
 		tios.c_cc[VTIME] = 0;		/* vtime value */
 
 		if (tcsetattr (pSerial->fd, TCSANOW, &tios))
-			{ perror("tcsetattr"); return 1; }
+		{
+			SerialError(pSerial,"Failed to set port params: %s",
+					strerror(errno));
+			return 1;
+		}
 
 		/* get minumum baud rate for given device, if specified */
 		if (pSerial->pDevice)
@@ -738,7 +754,7 @@ static int SerialInitWacom(SERIALTABLET* pSerial)
 			&pSerial->state.values[WACOMFIELD_POSITION_Y].nMax) != 2)
 	{
 		errno=EINVAL;
-		perror("bad dim response");
+		SerialError(pSerial,"Bad dimension response [%s]",chResp);
 		return 1;
 	}
 
@@ -1294,8 +1310,11 @@ static int SerialSendRaw(SERIALTABLET* pSerial, const unsigned char* puchData,
 	while (uCnt < uSize)
 	{
 		nXfer = write(pSerial->fd,puchData+uCnt,uSize-uCnt);
-		if (!nXfer) { perror("sendraw confused"); return 1; }
-		if (nXfer < 0) { perror("sendraw bad"); return 1; }
+		if (nXfer <= 0)
+		{
+			SerialError(pSerial,"Failed to write to port: %s",strerror(errno));
+			return 1;
+		}
 		uCnt += nXfer;
 	}
 
@@ -1338,7 +1357,13 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 	if (SerialSendRaw(pSerial,pszRequest,uLen)) return 1;
 	--uLen;
 
-	if (uSize < uLen) { errno=EINVAL; perror("bad size"); return 1; }
+	if (uSize < uLen)
+	{
+		errno=EINVAL;
+		SerialError(pSerial,"Invalid size to SerialSendRequest: %u < %u",
+				uSize,uLen);
+		return 1;
+	}
 
 	/* read until first header character */
 	while (1)
@@ -1355,7 +1380,11 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 		}
 
 		nXfer = read(pSerial->fd,pchResponse,1);
-		if (nXfer <= 0) { perror("trunc response header"); return 1; }
+		if (nXfer <= 0)
+		{
+			SerialError(pSerial,"Truncated response header");
+			return 1;
+		}
 		if (*pchResponse == *pszRequest) break;
 		SerialWarn(pSerial,"Discarding %02X", *((unsigned char*)pchResponse));
 	}
@@ -1364,18 +1393,30 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 	for (uCnt=1; uCnt<uLen; uCnt+=nXfer)
 	{
 		nXfer = read(pSerial->fd,pchResponse+uCnt,uLen-uCnt);
-		if (nXfer <= 0) { perror("trunc response header"); return 1; }
+		if (nXfer <= 0)
+		{
+			SerialError(pSerial,"Truncated response header (2)");
+			return 1;
+		}
 	}
 
 	/* check the header */
 	if (strncmp(pszRequest,pchResponse,uLen) != 0)
-		{ perror("bad response header"); return 1; }
+	{
+		SerialError(pSerial,"Incorrect response [%s,%s]",
+				pszRequest,pchResponse);
+		return 1;
+	}
 
 	/* get the rest of the response */
 	for (uCnt=0; uCnt<uSize; ++uCnt)
 	{
 		nXfer = read(pSerial->fd,pchResponse+uCnt,1);
-		if (nXfer <= 0) { perror("bad response read"); return 1; }
+		if (nXfer <= 0)
+		{
+			SerialError(pSerial,"Failed to read response: %s",strerror(errno));
+			return 1;
+		}
 
 		/* stop on CR */
 		if (pchResponse[uCnt] == '\r')
@@ -1386,52 +1427,9 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 	}
 
 	errno = EINVAL;
-	perror("bad response");
+	SerialError(pSerial,"Invalid response");
 	return 1;
 }
-
-#if 0
-static void WacomDump(int fd)
-{
-	int x, r;
-	unsigned char uch[16];
-	while (1)
-	{
-		x = read(fd,&uch,sizeof(uch));
-		if (x == 0) break;
-		if (x < 0) { perror("WacomDump"); return; }
-		for (r=0; r<sizeof(uch); ++r)
-		{
-			if (r<x) fprintf(stderr,"%02X ",uch[r]);
-			else fprintf(stderr,"   ");
-		}
-		fprintf(stderr," - ");
-		for (r=0; r<sizeof(uch); ++r)
-		{
-			if (r<x) fprintf(stderr,"%c",isprint(uch[r]) ? uch[r] : '.');
-			else fprintf(stderr," ");
-		}
-		fprintf(stderr,"\n");
-	}
-}
-
-static void WacomTest(int fd)
-{
-	fprintf(stderr,"SENDING\n");
-	write(fd,"1234567890",10);
-	write(fd,"1234567890",10);
-	write(fd,"1234567890",10);
-	write(fd,"1234567890",10);
-	write(fd,"1234567890",10);
-	fprintf(stderr,"SENT\n");
-	write(fd,"\r$\r",3);
-	usleep(250000);
-	write(fd,"#\r",2);
-	usleep(250000);
-	write(fd,"~#\r",3);
-	WacomDump(fd);
-}
-#endif
 
 /*****************************************************************************
 ** Virtual Functions
