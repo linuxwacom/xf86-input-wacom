@@ -8,6 +8,7 @@ wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
 AM_CFLAGS = -Wall
+DEPFLAGS = @WCM_DEPFLAGS@
 
 # These identify which programs, libraries, and headers could
 # potentially be built or installed depending on the results of
@@ -126,7 +127,7 @@ wcmFilter.o: wcmFilter.c xf86Wacom.h
 wcmFilter-v3.o: wcmFilter.c xf86Wacom.h
 
 $(XF86OBJS): xf86Wacom.c Makefile
-	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
+	gcc -O2 $(DEPFLAGS) -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
 		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \

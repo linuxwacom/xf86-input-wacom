@@ -380,6 +380,15 @@ if test "$WCM_OPTION_HID" = "yes"; then
 	fi
 fi
 
+dnl Check for depflags
+WCM_DEPFLAGS=
+AC_ARG_ENABLE(mkxincludes,
+[  --enable-mkxincludes  Enable mkxincludes, XF86 dependency builder   default=no],
+	, enable_mkxincludes=no)
+if test "x$enable_mkxincludes" == "xyes"; then
+	WCM_DEPFLAGS="-MMD"
+fi
+
 dnl Check for -fno-merge-constants if using gcc
 if test "x$GCC" = "xyes"; then
     AC_MSG_CHECKING(if gcc accepts -fno-merge-constants)
@@ -422,8 +431,13 @@ AC_SUBST(WCM_XIDUMP_LIBS)
 AC_SUBST(WCM_LIBWACOMCFG_LIBS)
 AC_SUBST(WCM_WACOMXI_LIBS)
 AC_SUBST(WCM_XSETWACOM_LIBS)
+AC_SUBST(WCM_DEPFLAGS)
 
-AC_OUTPUT(Makefile src/Makefile src/wacomxi/Makefile src/wacomxi/wacomcpl)
+AC_OUTPUT(Makefile
+	mkxincludes
+	src/Makefile
+	src/wacomxi/Makefile
+	src/wacomxi/wacomcpl)
 
 echo ""
 echo "----------------------------------------"

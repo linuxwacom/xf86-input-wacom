@@ -29,7 +29,7 @@ WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
-XF86SUBDIR=xc/programs/Xserver/include
+XF86SUBDIR=xc/programs/Xserver/hw/xfree86/common
 XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
 WCM_ENV_NCURSES=no
 dnl Check architecture
@@ -149,10 +149,13 @@ AC_ARG_WITH(kernel,
 ])])
 AC_DEFUN(AC_WCM_CHECK_XFREE86SOURCE,[
 dnl Check for XFree86 build environment
+if test -d x-includes; then
+	WCM_XF86DIR=x-includes
+fi
 AC_ARG_WITH(xf86,
 [  --with-xf86=dir   Specify XF86 build directory],
-[
-	WCM_XF86DIR="$withval";
+[ WCM_XF86DIR="$withval"; ])
+if test -n "$WCM_XF86DIR"; then
 	AC_MSG_CHECKING(for valid XFree86 build environment)
 	if test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
 		WCM_ENV_XF86=yes
@@ -162,7 +165,8 @@ AC_ARG_WITH(xf86,
 		AC_MSG_ERROR("Unable to find $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h")
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
-])])
+fi
+])
 AC_DEFUN(AC_WCM_CHECK_XFREE86V3SOURCE,[
 dnl Check for XFree86 V3 build environment
 AC_ARG_WITH(xf86v3,

@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# mkxincludes
+#
+# Copyright (C) 2003 - John Joganic
+#
+# Based on code by Jonathan Paisley
+#
+# mkxinc takes an existing XFree86 build tree, grabs the important
+# header files, moves them to a new directory, and makes a tarball out
+# of it.
+#
+
+XF86_DIR=@WCM_XF86DIR@/xc
+XF86MODS="@WCM_XF86MODULES@"
+DEPFLAGS=@WCM_DEPFLAGS@
+
+X_INCLUDES=x-includes
+
+FILES="wcmCommon.d wcmCompat.d wcmConfig.d wcmFilter.d wcmISDV4.d wcmSerial.d wcmUSB.d xf86Wacom.d"
+
+if test -z "$DEPFLAGS" || test -z "$XF86MODS"; then
+	echo "Either mkxincludes or wacomdrv was not enabled..."
+	echo "Please reconfigure with --enable-mkxincludes and"
+	echo "     --enable-wacomdrv options enabled.  You will"
+	echo "     also need to specify --with-xf86=path_to_original_xf86"
+	exit 1
+fi
+
+echo "mkxincludes: using $XF86_DIR"
+
+# Build wacom_drv.o
+(
+	cd src
+
+	echo "Building wacom_drv.o..."
+	make wacom_drv.o 2>&1 >/dev/null
+	if test $? != 0; then
+		echo "Failed to build wacom_drv.o.  Sorry."
+		exit 1;
+	fi
+
+	echo "Examining dependencies..."
+	DEPS=`cat $FILES | \
+		sed -e 's/\\\\//' -e 's/.*://' | \
+		tr ' ' '\n' | \
+		sort -u | \
+		sed -e "s:$XF86_DIR:xc:" | \
+		grep xc/`
+	if test $? != 0; then
+		echo "Failed to find the dependency files.  Sorry."
+		exit 1;
+	fi
+
+	cd ..
+
+	echo "Building directory..."
+	rm -rf $X_INCLUDES
+	mkdir -p $X_INCLUDES
+	echo `uname -a` > $X_INCLUDES/environ
+	echo `gcc --version | head -1` > $X_INCLUDES/gcc_version
+	(cd $XF86_DIR/.. && tar chf - $DEPS) | (cd $X_INCLUDES && tar xf -)
+
+	echo "Building package... ($X_INCLUDES.tar.gz)"
+	tar -c $X_INCLUDES | gzip -9 > $X_INCLUDES.tar.gz
+)
