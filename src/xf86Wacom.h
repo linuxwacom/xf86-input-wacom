@@ -27,7 +27,6 @@
 /****************************************************************************/
 
 #include <xf86Version.h>
-#include <xf86Optrec.h>  /* for XF86OptionPtr */
 #include <Xwacom.h>
 
 /* This driver can be compiled for the 4.x API (technically versions
@@ -521,6 +520,7 @@ struct _WacomCommonRec
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
+	int wcmTPCButton;		/* set Tablet PC button on/off */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

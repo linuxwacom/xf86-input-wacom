@@ -144,6 +144,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmGimp = 1;		/* enabled (=1) to support Gimp when Xinerama Enabled in multi-monitor desktop. Needs to be disabled (=0) for Cintiq calibration */
 	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitors by default. disabled (=0) when user doesn't want to move from one screen to the other */
+	common->wcmTPCButton = 0;       /* set Tablet PC button on/off default is off */
 	return local;
 }
 
@@ -887,7 +888,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		/* stylus/eraser defaults to absolute mode 
 		 * cursor defaults to relative mode 
 		 */
-		if (priv->flags & CURSOR_ID) 
+		if (IsCursor(priv)) 
 			priv->flags &= ~ABSOLUTE_FLAG;
 		else
 			priv->flags |= ABSOLUTE_FLAG;
@@ -1089,6 +1090,10 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->flags |= BUTTONS_ONLY_FLAG;
 		xf86Msg(X_CONFIG, "%s: buttons only\n", dev->identifier);
 	}
+
+	common->wcmTPCButton = xf86SetBoolOption(local->options, "TPCButton", 0);
+	if ( common->wcmTPCButton )
+		xf86Msg(X_CONFIG, "Tablet PC buttons on \n");
 
 	for (i=0; i<16; i++)
 	{

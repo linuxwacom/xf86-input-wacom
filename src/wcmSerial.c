@@ -778,9 +778,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 		{
 			ds->pressure = (((data[5] & 0x07) << 7) |
 				(data[6] & 0x7f));
-			ds->buttons = (((data[0]) & 0x06) |
-				(ds->pressure >= common->wcmThreshold));
-			/* pressure button should go down stream */
+			ds->buttons = (((data[0]) & 0x06));
 		}
 		else
 		{

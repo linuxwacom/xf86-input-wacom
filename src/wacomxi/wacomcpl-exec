@@ -36,7 +36,7 @@ set screenHeight [ winfo screenheight . ]
 set screenX_org 0
 set screenY_org 0
 set swapThresh 100
-set size 50
+set size 100
 set circle_size 10
 set line_size 30
 

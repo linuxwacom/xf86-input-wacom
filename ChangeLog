@@ -1,6 +1,28 @@
+2003-11-26    Ping Cheng <pingc@wacom.com>
+        * Support Tablet PC Buttons. Deault is off.
+          Usage:
+                xsetwacom set $device tpcbutton 1  (to turn it on)
+                xsetwacom set $device tpcbutton 0  (to turn it off)
+        * Turned configure option "--disable-wacom" as default
+	* Added wacom_drv.o into the install script so wacom_drv.o
+                will be installed along with the other executables  
+		and libs when "make install" is issued.
+                This enables the systems "identical" to the development 
+		system to install the Wacom X driver related items 
+		without rebuilding them on the targeted system.
+		Where "identical" means both systems have the same version
+                of XFree86, tcl, and tk. 
+          Usage:
+                After building and testing the package on the development
+                system, copy the whole package directory onto the
+                "identical" system, then
+                cd $package_home_dir
+                su
+                make install
+
 2003-11-18    Ping Cheng <pingc@wacom.com>
 	* Support general Tablet PC (ISDV4) 
-	* added a new xsetwacom command for mult-monitor setup:
+	* Added a new xsetwacom command for mult-monitor setup:
 		xsetwacom set $device mmmonitor $value
 		$value  0: let cursor move across monitors (default)
 			1: cursor will stay in the monitor it was

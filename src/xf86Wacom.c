@@ -532,8 +532,8 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	DBG(2, ErrorF("BEGIN xf86WcmProc dev=0x%x priv=0x%x "
 			"type=%s flags=%d what=%d\n",
 			pWcm, priv,
-			(DEVICE_ID(priv->flags) == STYLUS_ID) ? "stylus" :
-			(DEVICE_ID(priv->flags) == CURSOR_ID) ? "cursor" :
+			IsStylus(priv) ? "stylus" :
+			IsCursor(priv) ? "cursor" :
 			"eraser", priv->flags, what));
 
 	switch (what)
@@ -802,6 +802,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ((value != 0) && (value != 1)) return BadValue;
 		priv->common->wcmMMonitor = value;
 		break;
+	    case XWACOM_PARAM_TPCBUTTON:
+		if ((value != 0) && (value != 1)) return BadValue;
+		priv->common->wcmTPCButton = value;
+		break;
 	    default:
     		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
@@ -816,79 +820,100 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	XF86OptionPtr	optList;
 	char 		fileName[80] = "/etc/X11/wcm.";
 	char		command[256];
 	FILE		*fp = 0;
 	int		value;
 	double		speed;
+	char		*s;
 
     	DBG(10, ErrorF("xf86WcmOptionCommandToFile for %s\n", local->name));
 	strcat(fileName, local->name);
 	fp = fopen(fileName, "w+");
 	if ( fp )
 	{
-		optList = (XF86OptionPtr)local->options;
-
 		/* write user defined options as xsetwacom commands into fp */
-		while (optList) 
+        	s = xf86FindOptionValue(local->options, "TopX");
+		if ( s && priv->topX )
+			fprintf(fp, "xsetwacom set %s TopX %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "TopY");
+		if ( s && priv->topY )
+			fprintf(fp, "xsetwacom set %s TopY %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "BottomX");
+		if ( s && priv->bottomX != priv->common->wcmMaxX )
+			fprintf(fp, "xsetwacom set %s BottomX %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "BottomY");
+		if ( s && priv->bottomY != priv->common->wcmMaxY )
+			fprintf(fp, "xsetwacom set %s BottomY %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Button1");
+		if ( s && priv->button[0] != 1 )
+			fprintf(fp, "xsetwacom set %s Button1 %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Button2");
+		if ( s && priv->button[1] != 2 )
+			fprintf(fp, "xsetwacom set %s Button2 %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Button3");
+		if ( s && priv->button[2] != 3 )
+			fprintf(fp, "xsetwacom set %s Button3 %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Button4");
+		if ( s && priv->button[3] != 4 )
+			fprintf(fp, "xsetwacom set %s Button4 %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Button5");
+		if ( s && priv->button[4] != 5 )
+			fprintf(fp, "xsetwacom set %s Button5 %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "PressCurve");
+		if ( s && !IsCursor(priv) )
+			fprintf(fp, "xsetwacom set %s PressCurve %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Mode");
+		if ( s && (((priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
+			 || (!(priv->flags & ABSOLUTE_FLAG) && !IsCursor(priv))))
+			fprintf(fp, "xsetwacom set %s Mode %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "RawFilter");
+		if ( s )
+			fprintf(fp, "xsetwacom set %s RawFilter %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Accel");
+		if ( s && priv->accel )
+			fprintf(fp, "xsetwacom set %s Accel %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Suppress");
+		if ( s )
+			fprintf(fp, "xsetwacom set %s Suppress %s\n", local->name, s);
+
+        	s = xf86FindOptionValue(local->options, "Speed");
+		if ( s && priv->speed != DEFAULT_SPEED )
 		{
-			if ((!strcasecmp(optList->opt_name,"TopX") && priv->topX)
-			    ||(!strcasecmp(optList->opt_name, "TopY") && priv->topY)
-			    ||(!strcasecmp(optList->opt_name,"BottomX") && 
-					priv->bottomX != priv->common->wcmMaxX)
-			    ||(!strcasecmp(optList->opt_name, "BottomY") &&
-					priv->bottomY != priv->common->wcmMaxY) 
-			    ||(!strcasecmp(optList->opt_name, "Button1") &&
-					priv->button[0] != 1)
-			    ||(!strcasecmp(optList->opt_name, "Button2") &&
-					priv->button[1] != 2) 
-			    ||(!strcasecmp(optList->opt_name, "Button3") &&
-					priv->button[2] != 3) 
-			    ||(!strcasecmp(optList->opt_name, "Button4") && 
-					priv->button[3] != 4) 
-			    ||(!strcasecmp(optList->opt_name, "Button5") &&
-					priv->button[4] != 5) 
-			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
-			    ||(!strcasecmp(optList->opt_name, "Mode") &&
-					(((priv->flags & ABSOLUTE_FLAG) && 
-					(priv->flags & CURSOR_ID)) ||  
-				 	(!(priv->flags & ABSOLUTE_FLAG) && 
-					!(priv->flags & CURSOR_ID))))
-			    ||(!strcasecmp(optList->opt_name, "RawFilter"))
-			    ||(!strcasecmp(optList->opt_name, "Accel") && 
-					priv->accel)
-			    ||(!strcasecmp(optList->opt_name, "Suppress")) )
-			{
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, 
-					optList->opt_val);
-			}
-			else if(!strcasecmp(optList->opt_name, "Speed") &&
-					priv->speed != DEFAULT_SPEED) 
-			{
-				speed = strtod(optList->opt_val, NULL);
-				if(speed > 10.00) value = 10;
-				else if(speed >= 1.00) value = (int)(speed/2.00 + 5.00);
-				else if(speed < (double)(1.00/6.00)) value = 0;
-				else value = (int)(speed*6.00 - 0.50);
-				fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", 
-					local->name, value);
-			}
-			else if(!strcasecmp(optList->opt_name, "Threshold")) 
-			{
-				value = atoi(optList->opt_val);
-				value = (int)((double)value*100.00/(double)priv->common->wcmMaxZ+0.5);
-				fprintf(fp, "xsetwacom set %s ClickForce %d\n", 
-					local->name, value);
-			}
-			optList = optList->list.next;
+			speed = strtod(s, NULL);
+			if(speed > 10.00) value = 10;
+			else if(speed >= 1.00) value = (int)(speed/2.00 + 5.00);
+			else if(speed < (double)(1.00/6.00)) value = 0;
+			else value = (int)(speed*6.00 - 0.50);
+			fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", local->name, value);
 		}
+
+        	s = xf86FindOptionValue(local->options, "Threshold");
+		if ( s )
+		{
+			value = atoi(s);
+			value = (int)((double)value*100.00/(double)priv->common->wcmMaxZ+0.5);
+			fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
+		}
+
 		fprintf(fp, "%s", "default TopX 0\n");
 		fprintf(fp, "%s", "default TopY 0\n");
 		fprintf(fp, "default BottomX %d\n", priv->common->wcmMaxX);
 		fprintf(fp, "default BottomY %d\n", priv->common->wcmMaxY);
-		if (priv->flags & CURSOR_ID)
+		if (IsCursor(priv))
 			sprintf(command, "default Mode Relative\n");
 		else
 			sprintf(command, "default Mode Absolute\n");
@@ -1156,6 +1181,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
+	DBG(6, ErrorF("xf86WcmDevReverseConvert\n"));
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
 #ifdef PANORAMIX

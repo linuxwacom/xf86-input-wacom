@@ -1,6 +1,6 @@
 AC_INIT(src/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.5.3-beta)
+AM_INIT_AUTOMAKE(linuxwacom, 0.5.4-beta)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -50,8 +50,8 @@ AC_WCM_CHECK_NCURSES
 dnl Check for wacom build
 WCM_OPTION_WACOM=no
 AC_ARG_ENABLE(wacom,
-[  --enable-wacom  Enable building wacom.o                  default=yes],
-	, enable_wacom=$WCM_KERNEL_WACOM_DEFAULT)
+[  --enable-wacom  Enable building wacom.o                  default=no],
+	, enable_wacom=no)
 if test "$enable_wacom" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
 		echo "***"; echo "*** WARNING:";

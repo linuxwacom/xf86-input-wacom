@@ -43,5 +43,6 @@
 #define XWACOM_PARAM_FILEOPTION 101
 #define XWACOM_PARAM_GIMP       102
 #define XWACOM_PARAM_MMT        103
+#define XWACOM_PARAM_TPCBUTTON  104
 
 #endif /* __XF86_XWACOM_H */

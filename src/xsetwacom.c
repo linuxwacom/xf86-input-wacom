@@ -184,6 +184,13 @@ struct _PARAMINFO
 			XWACOM_PARAM_MMT, VALUE_OPTIONAL, 
 			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
+		{ "TPCButton",
+			"Turns on/off Tablet PC buttons."
+			"default is off for regular tablets, "
+			"on for Tablet PC. ",
+			XWACOM_PARAM_TPCBUTTON, VALUE_OPTIONAL, 
+			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
 		{ "FileModel",
 			"Writes tablet models to /etc/wacom.dat",
 			XWACOM_PARAM_FILEMODEL, VALUE_OPTIONAL },

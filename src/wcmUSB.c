@@ -512,9 +512,6 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			else if (event->code == ABS_PRESSURE)
 			{
 				ds->pressure = event->value;
-				MOD_BUTTONS (1, event->value >
-					common->wcmThreshold ? 1 : 0);
-				/* pressure button should be downstream */
 			}
 			else if (event->code == ABS_DISTANCE)
 				ds->distance = event->value;
@@ -566,8 +563,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			}
 			else if (event->code == BTN_TOUCH)
 			{
-				/* we use the pressure to determine
-				 * the button 1 for now */
+				/* we use the pressure to determine the button 1 */
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))

@@ -70,12 +70,14 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	if (screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
 	{
 		/* set the current sreen in multi-monitor setup */
-		if (!priv->common->wcmMMonitor)
+		screenToSet = 0;
+		if (!priv->common->wcmMMonitor && priv->twinview == TV_NONE)
 		{
-			priv->currentScreen = miPointerCurrentScreen()->myNum;
+			screenToSet = priv->currentScreen = 
+				miPointerCurrentScreen()->myNum;
 		}
-		priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
-		priv->factorY = screenInfo.screens[priv->currentScreen]->height / sizeY;
+		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
+		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
 		return;
 	}
 
@@ -171,6 +173,8 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 {
 	int button, newb;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common = priv->common;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	for (button=1; button<=16; button++)
 	{
@@ -194,36 +198,38 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 				{
 					/* Left button down */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, 
-							(priv->flags & ABSOLUTE_FLAG), newb, 1,
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 1,
 							0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, 
-							(priv->flags & ABSOLUTE_FLAG), newb, 1,
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 1,
 							0, 6, rx, ry, rz, rtx, rty, rwheel);
 					/* Left button up */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, 
-							(priv->flags & ABSOLUTE_FLAG), newb, 0,
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 0,
 							0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, 
-							(priv->flags & ABSOLUTE_FLAG), newb, 0,
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 0,
 							0, 6, rx, ry, rz, rtx, rty, rwheel);
 				}
 			}
-			if (newb <= 17)
+			if (newb < 17)
 			{
 				if (IsCursor(priv))
-					xf86PostButtonEvent(local->dev, 
-						(priv->flags & ABSOLUTE_FLAG),
+					xf86PostButtonEvent(local->dev, is_absolute,
 						newb, (buttons & mask) != 0,
 						0, 6, rx, ry, rz, rrot, rth, rwheel);
 				else
-					xf86PostButtonEvent(local->dev, 
-						(priv->flags & ABSOLUTE_FLAG),
+				{
+					/* deal with Tablet PC buttons. */
+					if ( common->wcmTPCButton )
+					{
+						if (rz <= 0 && (buttons & mask) ) 
+							continue;
+					}
+					xf86PostButtonEvent(local->dev, is_absolute,
 						newb, (buttons & mask) != 0,
 						0, 6, rx, ry, rz, rtx, rty, rwheel);
+				}
 			}
 		}
 	}
@@ -726,6 +732,16 @@ static void commonDispatchDevice(WacomCommonPtr common,
 
 		/* Device transformations come first */
 
+		/* button 1 Threshold test */
+		int button = 1;
+		if ( !IsCursor(priv) )
+		{
+			if (filtered.pressure < common->wcmThreshold )
+				filtered.buttons &= ~button;
+			else
+				filtered.buttons |= button;
+		}
+
 		/* transform pressure */
 		transPressureCurve(priv,&filtered);
 
@@ -780,7 +796,7 @@ static void commonDispatchDevice(WacomCommonPtr common,
 		 * This only applies to USB protocol V tablets
 		 * which aimed at improving relative movement support. 
 		 */
-		if (ds->distance > 112 && !(priv->flags & ABSOLUTE_FLAG))
+		if (filtered.distance > 112 && !(priv->flags & ABSOLUTE_FLAG))
 		{
 			ds->proximity = 0;
 			filtered.proximity = 0;

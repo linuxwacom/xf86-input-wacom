@@ -7,6 +7,9 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
+x86moduledir = /usr/X11R6/lib/modules/input
+x86module_DATA = @WCM_XF86MODULES@
+
 AM_CFLAGS = -Wall -pedantic
 DEPFLAGS = @WCM_DEPFLAGS@
 
