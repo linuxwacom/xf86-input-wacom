@@ -429,6 +429,15 @@ static void usbParseEvent(WacomCommonPtr common,
 	/* otherwise, find the channel */
 	else
 	{
+		/* clear out channels */
+		for (i=0; i<common->wcmChannelCnt; ++i)
+		{
+			if (common->wcmChannel[i].work.proximity == 0)
+			{
+				memset(&common->wcmChannel[i],0,
+						sizeof(WacomChannel));
+			}
+		}
 		/* find existing channel */
 		for (i=0; i<common->wcmChannelCnt; ++i)
 		{
@@ -446,9 +455,6 @@ static void usbParseEvent(WacomCommonPtr common,
 			{
 				if (common->wcmChannel[i].work.proximity == 0)
 				{
-					/* clear out channel */
-					memset(&common->wcmChannel[i],0,
-						sizeof(WacomChannel));
 					channel = i;
 					break;
 				}
@@ -519,7 +525,6 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			else if (event->code == ABS_THROTTLE)
 				ds->throttle = event->value;
 		}
-
 		else if (event->type == EV_REL)
 		{
 			if (event->code == REL_WHEEL)

@@ -942,7 +942,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		fprintf(fp, "default SpeedLevel 5\n");
 		fprintf(fp, "default ClickForce 6\n");
 		fprintf(fp, "default Accel 0\n");
-		s = xf86FindOptionValue(local->options, "ISDV4");
+		s = xf86FindOptionValue(local->options, "ForceDevice");
 		if ( s )
 			fprintf(fp, "default TPCButton on\n");
 		else
@@ -983,7 +983,7 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 				if ( lprv->common->wcmEraserID )
 					fprintf(fp, "%s %s %s %s\n", localDevices->name, m2, m3, lprv->common->wcmEraserID);
 				else
-					fprintf(fp, "%s %s %s\n", localDevices->name, m2, m3);
+					fprintf(fp, "%s %s %s %s\n", localDevices->name, m2, m3, localDevices->name);
 				if (lprv->twinview != TV_NONE)
 				{
 					priv = lprv;

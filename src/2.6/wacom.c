@@ -329,7 +329,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
         if (data[0] == 99)
                 goto exit;
 
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
 
 	x = data[2] | ((__u32)data[3] << 8);

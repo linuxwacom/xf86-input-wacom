@@ -1,3 +1,9 @@
+2004-05-24    Ping Cheng <pingc@wacom.com>
+        * Merged changes from 2.6.6 kernel Dan Bullok <dan.devel@bullok.com>
+	* Support protocol V dual input for both serial and USB
+	* Fixed wacomcpl-exec Feel window bug
+	* Released version 0.6.3
+
 2004-05-18    Ping Cheng <pingc@wacom.com>
 	* Fixed Relative Speed bug
 	* Added a workaround for TPCButton to deal with XFree86 button

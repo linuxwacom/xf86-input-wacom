@@ -140,7 +140,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
-	common->wcmEraserID = "";	/* eraser id associated with the stylus */
+	common->wcmEraserID = 0;	/* eraser id associated with the stylus */
 	common->wcmGimp = 1;	/* enabled (=1) to support Gimp when Xinerama is */
 				/* enabled for multi-monitor desktop. */
 				/* To calibrate Cintiq and ISDV4, it should be disabled (=0) */

@@ -161,10 +161,12 @@ proc calibrationSequence {which xDev yDev} {
 	    exec xsetwacom set $device bottomy $yDevMax
 	    # send the same data to the associated eraser
 	    set eraser $getDeviceModel($device,eraser)
-	    exec xsetwacom set $eraser topx $xDevMin
-	    exec xsetwacom set $eraser topy $yDevMin
-	    exec xsetwacom set $eraser bottomx $xDevMax
-	    exec xsetwacom set $eraser bottomy $yDevMax
+	    if { [ string compare $eraser $device ] } {
+		exec xsetwacom set $eraser topx $xDevMin
+		exec xsetwacom set $eraser topy $yDevMin
+		exec xsetwacom set $eraser bottomx $xDevMax
+		exec xsetwacom set $eraser bottomy $yDevMax
+	    }
 	    updateXinitrc
 	}
 
@@ -547,7 +549,6 @@ proc updateButton {} {
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
 	    set smode [ .subW.f.smode cget -text ]
 	    if { [string compare -nocase $smode $sm(2)] } {
-puts "$smode to TPCButton on"
 		exec xsetwacom set $device TPCButton on
 	    } else {
 		exec xsetwacom set $device TPCButton off
@@ -596,7 +597,6 @@ proc initialButton {} {
 
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
 	set smode $getOption($device,TPCButton)
-puts "TPCButton is $smode"
 	if { [string compare -nocase -length 3 $smode "off"] } {
 	    set smode $sm(1)
 	} else {
@@ -830,25 +830,25 @@ proc initialTip {} {
     set curve $getOption($device,PressCurve)
     #default curve value
     set value 4
+
     if { $curve != "" } {
-	set p0 [ lindex $curve 0 ]
-	set p1 [ lindex $curve 1 ]
-	if { [ expr $p1 > 5 && $p1 < 35 ] } {
+	scan $curve %d,%d,%d,%d p0 p1 p2 p3
+	if { $p1 > 5 && $p1 < 35 } {
 	    set value 3
 	}
-	if { [ expr $p1 >= 35 && $p1 < 65 ] } {
+	if { $p1 >= 35 && $p1 < 65 } {
 	    set value 2
 	}
-	if { [ expr $p1 >= 65 && $p1 < 95 ] } {
+	if { $p1 >= 65 && $p1 < 95 } {
 	    set value 1
 	}
-	if { [ expr $p0 > 5 && $p0 < 35 ] } {
+	if { $p0 > 5 && $p0 < 35 } {
 	    set value 5
 	}
-	if { [ expr $p0 >= 35 && $p0 < 65 ] } {
+	if { $p0 >= 35 && $p0 < 65 } {
 	    set value 6
 	}
-	if { [ expr $p0 >= 65 && $p0 < 95 ] } {
+	if { $p0 >= 65 && $p0 < 95 } {
 	    set value 7
 	}
     }

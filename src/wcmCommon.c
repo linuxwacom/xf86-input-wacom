@@ -368,9 +368,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		else
 			xf86PostButtonEvent(local->dev, is_absolute, button,
 				mask != 0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
-
-DBG(4, ErrorF("xf86WcmSendButtons sent TPCButton(%s) button=%d state=%d, for %s\n", 
-		common->wcmTPCButton ? "on" : "off", button, mask != 0, local->name));
 	}
 }
 
@@ -516,13 +513,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
-	xf86WcmSetScreen(local, &rx, &ry);
+	if( !((priv->flags & BUTTONS_ONLY_FLAG) || channel) )
+	{
+		xf86WcmSetScreen(local, &rx, &ry);
+	}
 
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
 		if (!priv->oldProximity)
 		{
+DBG(6, ErrorF("[%s] type=%s\n",
+		local->name, (IsCursor(priv)) ? "cursor" : "stylus"));
 			if (IsCursor(priv))
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
@@ -541,7 +543,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		 * the cursor or both tools can move the cursor will be 
 		 * supported when needed
 		 */
-		if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
+		if( !((priv->flags & BUTTONS_ONLY_FLAG) || channel) )
 		{
 			if (IsCursor(priv))
 				xf86PostMotionEvent(local->dev,
@@ -815,9 +817,13 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
-	commonDispatchDevice(common,channel,pChannel);
+	/* don't send the first sample due to the first USB package issue*/
+	if ( pChannel->nSamples != 1 )
+	{
+		commonDispatchDevice(common,channel,pChannel);
 
-	resetSampleCounter(pChannel);
+		resetSampleCounter(pChannel);
+	}
 }
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
@@ -886,10 +892,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				filtered.buttons &= ~button;
 			else
 				filtered.buttons |= button;
+			/* transform pressure */
+			transPressureCurve(priv,&filtered);
 		}
-
-		/* transform pressure */
-		transPressureCurve(priv,&filtered);
 
 		/* User-requested filtering comes next */
 
@@ -942,7 +947,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		 * This only applies to USB protocol V tablets
 		 * which aimed at improving relative movement support. 
 		 */
-		if (filtered.distance > 112 && !(priv->flags & ABSOLUTE_FLAG))
+		if (filtered.distance > 112 && !(priv->flags & ABSOLUTE_FLAG) && !channel )
 		{
 			ds->proximity = 0;
 			filtered.proximity = 0;
