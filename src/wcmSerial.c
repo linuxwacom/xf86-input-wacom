@@ -61,8 +61,6 @@ static int serialParseProtocol4(WacomCommonPtr common,
 	const unsigned char* data);
 static int serialParseProtocol5(WacomCommonPtr common,
 	const unsigned char* data);
-static int serialFilterGraphire(WacomCommonPtr common,
-	WacomChannelPtr pChannel, WacomDeviceStatePtr ds);
 static void serialParseP4Common(WacomCommonPtr common,
 	const unsigned char* data, WacomDeviceState* last,
 	WacomDeviceState* ds);
@@ -124,6 +122,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseCintiq,
+		xf86WcmFilterCoord,
 	};
 
 	static WacomModel serialPenPartner =
@@ -138,6 +137,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,              /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseProtocol4,
+		xf86WcmFilterCoord,
 	};	
 
 	static WacomModel serialGraphire =
@@ -152,7 +152,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,                    /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseGraphire,
-		serialFilterGraphire,
+		xf86WcmFilterCoord,
 	};
 
 	static WacomModel serialProtocol4 =
@@ -167,6 +167,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseProtocol4,
+		xf86WcmFilterCoord,
 	};
 
 /*****************************************************************************
@@ -1263,18 +1264,6 @@ static int serialStartTablet(WacomCommonPtr common, int fd)
 	}
 
 	return Success;
-}
-
-static int serialFilterGraphire(WacomCommonPtr common, WacomChannelPtr pChannel,
-	WacomDeviceStatePtr ds)
-{
-	/* Only error correction should happen here. If there's a problem that
-	 * cannot be fixed, return 1 such that the data is discarded. */
-
-	/* JEJ - Graphire filtering appears to be nothing
-	 *       more than suppression so it's been removed. */
-
-	return 0; /* everything's groovy */
 }
 
 static void serialParseP4Common(WacomCommonPtr common,

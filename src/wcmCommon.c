@@ -42,6 +42,7 @@
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common,
 	const WacomChannelPtr pChannel);
+static void resetSampleCounter(const WacomChannelPtr pChannel);
  
 /*****************************************************************************
  * xf86WcmSetScreen --
@@ -454,125 +455,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 }
 
 /*****************************************************************************
- * xf86WcmIntuosFilter --
- *   Correct some hardware defects we've been seeing in Intuos pads,
- *   but also cuts down quite a bit on jitter.
- ****************************************************************************/
-
-#if 0
-static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
-{
-	int tilt_filtered;
-	int ts;
-	int x0_pred;
-	int x0_pred1;
-	int x0, x1, x2, x3;
-	int x;
-    
-	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
-	state->tilt[2] = state->tilt[1];
-	state->tilt[1] = state->tilt[0];
-	state->tilt[0] = tilt;
-    
-	x0 = coord;
-	x1 = state->coord[0];
-	x2 = state->coord[1];
-	x3 = state->coord[2];
-	state->coord[0] = x0;
-	state->coord[1] = x1;
-	state->coord[2] = x2;
-    
-	ts = tilt_filtered >= 0 ? 1 : -1;
-    
-	if (state->state == 0 || state->state == 3)
-	{
-		x0_pred = 2 * x1 - x2;
-		x0_pred1 = 3 * x2 - 2 * x3;
-		if (ts * (x0 - x0_pred) > 12 && ts * (x0 - x0_pred1) > 12)
-		{
-			/* detected a jump at x0 */
-			state->state = 1;
-			x = x1;
-		}
-		else if (state->state == 0)
-		{
-			x = (7 * x0 + 14 * x1 + 15 * x2 - 4 * x3 + 16) >> 5;
-		}
-		else
-		{
-			/* state->state == 3 
-			 * a jump at x3 was detected */
-			x = (x0 + 2 * x1 + x2 + 2) >> 2;
-			state->state = 0;
-		}
-	}
-	else if (state->state == 1)
-	{
-		/* a jump at x1 was detected */
-		x = (3 * x0 + 7 * x2 - 2 * x3 + 4) >> 3;
-		state->state = 2;
-	}
-	else
-	{
-		/* state->state == 2 
-		 * a jump at x2 was detected */
-		x = x1;
-		state->state = 3;
-	}
-
-	return x;
-}
-#endif
-
-/*****************************************************************************
- * xf86WcmGraphireFilter --
- *   Suppression for graphire (may be unnecessary with new suppression code)
- ****************************************************************************/
-
-#if 0
-static int xf86WcmGraphireFilter(WacomFilterState* state, int coord, int tilt)
-{
-	/* Hardware filtering isn't working on Graphire so
-	 * we do it here. */
-	if (((temp_is_proximity && priv->oldProximity) ||
-		((temp_is_proximity == 0) &&
-			(priv->oldProximity == 0))) &&
-			(temp_buttons == priv->oldButtons) &&
-			(ABS(x - priv->oldX) <= common->wcmSuppress) &&
-			(ABS(y - priv->oldY) <= common->wcmSuppress) &&
-			(ABS(z - priv->oldZ) < 3) &&
-			(ABS(tx - priv->oldTiltX) < 3) &&
-			(ABS(ty - priv->oldTiltY) < 3))
-	{
-		DBG(10, ErrorF("Graphire filtered\n"));
-		return;
-	}
-}
-#endif
-
-/*****************************************************************************
- * ThrottleToRate - converts throttle position to wheel rate
- ****************************************************************************/
-
-#if 0
-static int ThrottleToRate(int x)
-{
-	if (x<0) x=-x;
-
-	/* piece-wise exponential function */
-	
-	if (x < 128) return 0;		/* infinite */
-	if (x < 256) return 1000;	/* 1 second */
-	if (x < 512) return 500;	/* 0.5 seconds */
-	if (x < 768) return 250;	/* 0.25 seconds */
-	if (x < 896) return 100;	/* 0.1 seconds */
-	if (x < 960) return 50;		/* 0.05 seconds */
-	if (x < 1024) return 25;	/* 0.025 seconds */
-	return 0;			/* infinite */
-}
-#endif
-
-/*****************************************************************************
  * xf86WcmSuppress --
  *  Determine whether device state has changed enough - return 1
  *  if not.
@@ -636,6 +518,19 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	return common->wcmDevCls->Init(local);
 }
 
+/* reset raw data counters for filters */
+static void resetSampleCounter(const WacomChannelPtr pChannel)
+{
+	/* if out of proximity, reset hardware filter */
+	if (!pChannel->valid.state.proximity)
+	{
+		pChannel->nSamples = 0;
+		pChannel->rawFilter.npoints = 0;
+		pChannel->rawFilter.statex = 0;
+		pChannel->rawFilter.statey = 0;
+	}
+}
+
 /*****************************************************************************
  * xf86WcmEvent -
  *   Handles suppression, transformation, filtering, and event dispatch.
@@ -673,23 +568,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
 		ds.discard_first, ds.proximity, ds.sample));
 
-	/* Discard unwanted data */
-	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
-	{
-		DBG(10, ErrorF("Suppressing data according to filter\n"));
-
-		/* If throttle is not in use, discard data. */
-		if (ABS(ds.throttle) < common->wcmSuppress) return;
-
-		/* Otherwise, we need this event for time-rate-of-change
-		 * values like the throttle-to-relative-wheel filter.
-		 * To eliminate position change events, we reset all values
-		 * to last unsuppressed position. */
-
-		ds = *pLast;
-		RESET_RELATIVE(ds);
-	}
-
 	DBG(11, ErrorF("filter %d, %p\n",RAW_FILTERING(common),
 		common->wcmModel->FilterRaw));
 
@@ -699,8 +577,30 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 		{
 			DBG(10, ErrorF("Raw filtering discarded data.\n"));
+			resetSampleCounter(pChannel);
 			return; /* discard */
 		}
+	}
+
+	/* Discard unwanted data */
+	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
+	{
+		DBG(10, ErrorF("Suppressing data according to filter\n"));
+
+		/* If throttle is not in use, discard data. */
+		if (ABS(ds.throttle) < common->wcmSuppress)
+		{
+			resetSampleCounter(pChannel);
+			return;
+		}
+
+		/* Otherwise, we need this event for time-rate-of-change
+		 * values like the throttle-to-relative-wheel filter.
+		 * To eliminate position change events, we reset all values
+		 * to last unsuppressed position. */
+
+		ds = *pLast;
+		RESET_RELATIVE(ds);
 	}
 
 	/* JEJ - Do not move this code without discussing it with me.
@@ -718,12 +618,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	commonDispatchDevice(common,pChannel);
 
-	/* if out of proximity, reset hardware filter */
-	if (!pChannel->valid.state.proximity)
-	{
-		pChannel->filter_x.npoints = 0;
-		pChannel->filter_y.npoints = 0;
-	}
+	resetSampleCounter(pChannel);
 }
 
 static void commonDispatchDevice(WacomCommonPtr common,
@@ -834,16 +729,15 @@ static void commonDispatchDevice(WacomCommonPtr common,
 
 		#endif /* throttle */
 
-		#if 0
-		/* Intuos filter */
-		if (priv->flags & ABSOLUTE_FLAG)
+		/* force out-prox when height is greater than 112. 
+		 * This only applies to USB protocol V tablets
+		 * which aimed at improving relative movement support. 
+		 */
+		if (ds->distance > 112 && !(priv->flags & ABSOLUTE_FLAG))
 		{
-			filtered.x = xf86WcmIntuosFilter(&ds->x_filter, ds->x,
-				ds->tiltx);
-			filtered.y = xf86WcmIntuosFilter(&ds->y_filter, ds->y,
-				ds->tilty);
-		} 
-		#endif
+			ds->proximity = 0;
+			filtered.proximity = 0;
+		}
 
 		xf86WcmSendEvents(pDev, &filtered);
 	}

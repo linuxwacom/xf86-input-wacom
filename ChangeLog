@@ -1,3 +1,9 @@
+2003-07-16    Ping Cheng <pingc@wacom.com>
+	* Fixed Intuos filter to ignore the first sample
+	* Added noise reducing filter for all tablets
+	* Cleaned up old filters
+	* Improved USB relative movement
+
 2003-07-10    John E. Joganic <john@joganic.com>
 	* Fixed Intuos filter to ignore first couple samples.
 	* Added pedantic to compiler options

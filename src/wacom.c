@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.17 2003/06/19 15:28:44 jjoganic Exp $
+ * $Id: wacom.c,v 1.18 2003/07/16 20:38:51 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -446,7 +446,7 @@ static void wacom_intuos_irq(struct urb *urb)
 
 	input_report_abs(dev, ABS_X, ((__u32)data[2] << 8) | data[3]);
 	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 8) | data[5]);
-	input_report_abs(dev, ABS_DISTANCE, data[9] >> 4);
+	input_report_abs(dev, ABS_DISTANCE, data[9]);
 	
 	/* general pen packet */
 	if ((data[1] & 0xb8) == 0xa0)

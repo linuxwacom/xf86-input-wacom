@@ -50,6 +50,7 @@
 
 #define WC_V_SINGLE "MT0\r"
 #define WC_V_MULTI "MT1\r"
+#define WC_V_HEIGHT "HT1\r"
 #define WC_V_ID  "ID1\r"
 #define WC_V_19200 "BA19\r"
 #define WC_V_38400 "BA38\r"

@@ -73,7 +73,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbGraphire =
@@ -88,7 +88,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbGraphire2 =
@@ -103,7 +103,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbGraphire3 =
@@ -118,7 +118,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbCintiq =
@@ -133,7 +133,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbCintiqPartner =
@@ -148,7 +148,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 	static WacomModel usbIntuos =
@@ -193,7 +193,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 
@@ -512,8 +512,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				/* pressure button should be downstream */
 			}
 			else if (event->code == ABS_DISTANCE)
-			{
-			}
+				ds->distance = event->value;
 			else if (event->code == ABS_WHEEL)
 				ds->abswheel = event->value;
 			else if (event->code == ABS_THROTTLE)

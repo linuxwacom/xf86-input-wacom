@@ -33,6 +33,9 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
+static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds);
+static void filterIntuosCoord(int* coord, int* current, int tilt, int* state);
+static void filterIntuosTilt(int* state, int* tilt);
 
 /*****************************************************************************
  * xf86WcmSetPressureCurve -- apply user-defined curve to pressure values
@@ -209,85 +212,175 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1)
 }
 
 /*****************************************************************************
- * filterIntuosCoord --
+ * filterIntuosStylus --
  *   Correct some hardware defects we've been seeing in Intuos pads,
  *   but also cuts down quite a bit on jitter.
  ****************************************************************************/
 
-static int filterIntuosCoord(WacomFilterState* state, int coord, int tilt)
+static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds)
 {
-	int tilt_filtered;
+	if (!state->npoints)
+	{
+		++state->npoints;
+		DBG(2,ErrorF("filterIntuosStylus: first sample NO_FILTER\n"));
+		state->x[0] = state->x[1] = state->x[2] = ds->x;
+		state->y[0] = state->y[1] = state->y[2] = ds->y;
+		state->tiltx[0] = state->tiltx[1] = state->tiltx[2] = ds->tiltx;
+		state->tilty[0] = state->tilty[1] = state->tilty[2] = ds->tilty;
+		return;
+	}
+
+	/* filter x */
+	filterIntuosCoord(state->x, &ds->x, ds->tiltx, &state->statex);
+	/* filter y */
+	filterIntuosCoord(state->y, &ds->y, ds->tilty, &state->statey);
+	/* filter tiltx */
+	filterIntuosTilt(state->tiltx, &ds->tiltx);
+	/* filter tilty */
+	filterIntuosTilt(state->tilty, &ds->tilty);
+}
+
+static void filterIntuosCoord(int* coord, int* current, int tilt, int* state)
+{
 	int ts;
 	int x0_pred;
 	int x0_pred1;
 	int x0, x1, x2, x3;
-	int x;
-    
-	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
-	state->tilt[2] = state->tilt[1];
-	state->tilt[1] = state->tilt[0];
-	state->tilt[0] = tilt;
-    
-	x0 = coord;
-	x1 = state->coord[0];
-	x2 = state->coord[1];
-	x3 = state->coord[2];
-	state->coord[0] = x0;
-	state->coord[1] = x1;
-	state->coord[2] = x2;
-    
-	ts = tilt_filtered >= 0 ? 1 : -1;
 
-	/* must have at least 4 points */
-	++state->npoints;
-	if (state->npoints < 4)
-	{
-		DBG(2,ErrorF("filterIntuosCoord: NO_FILTER %d\n",
-			state->npoints));
-		return coord;
-	}
+	x0 = *current;
+	x1 = coord[0];
+	x2 = coord[1];
+	x3 = coord[2];
+	coord[0] = x0;
+	coord[1] = x1;
+	coord[2] = x2;
     
-	if (state->state == 0 || state->state == 3)
+	ts = tilt >= 0 ? 1 : -1;
+    
+	if (*state == 0 || *state == 3)
 	{
-		x0_pred = 2 * x1 - x2;
-		x0_pred1 = 3 * x2 - 2 * x3;
-		if (ts * (x0 - x0_pred) > 12 && ts * (x0 - x0_pred1) > 12)
+		if (ts * (x0 - 2 * x1 - x2) > 12 && 
+			ts * (x0 - 3 * x2 - 2 * x3) > 12)
 		{
 			/* detected a jump at x0 */
-			state->state = 1;
-			x = x1;
+			*state = 1;
+			*current = x1;
 		}
-		else if (state->state == 0)
+		else if (*state == 0)
 		{
-			x = (7 * x0 + 14 * x1 + 15 * x2 - 4 * x3 + 16) >> 5;
+			x0_pred = 7 * x0 + 14 * x1 + 15 * x2 + 16;
+			x0_pred1 = 4 * x3;
+			if (x0_pred > x0_pred1)
+				*current = ((__u32)(x0_pred - x0_pred1)) >> 5;
+			else
+				*current = 0;
 		}
 		else
 		{
-			/* state->state == 3 
+			/* state == 3 
 			 * a jump at x3 was detected */
-			x = (x0 + 2 * x1 + x2 + 2) >> 2;
-			state->state = 0;
+			*current = (x0 + 2 * x1 + x2 + 2) >> 2;
+			*state = 0;
 		}
 	}
-	else if (state->state == 1)
+	else if (*state == 1)
 	{
 		/* a jump at x1 was detected */
-		x = (3 * x0 + 7 * x2 - 2 * x3 + 4) >> 3;
-		state->state = 2;
+		x0_pred = 3 * x0 + 7 * x2 + 4;
+		x0_pred1 = 2 * x3;
+		if (x0_pred > x0_pred1)
+			*current = ((__u32)(x0_pred - x0_pred1)) >> 3;
+		else
+			*current = 0;
+		*state = 2;
 	}
 	else
 	{
-		/* state->state == 2 
+		/* state == 2 
 		 * a jump at x2 was detected */
-		x = x1;
-		state->state = 3;
+		*current = x1;
+		*state = 3;
 	}
-
-	return x;
 }
 
 /*****************************************************************************
- * xf86WcmFilterIntuos -- provide error correction to Intuos and Intuos2
+ * filterIntuosTilt --
+ *   Correct some hardware defects we've been seeing in Intuos pads,
+ *   but also cuts down quite a bit on jitter.
+ ****************************************************************************/
+
+static void filterIntuosTilt(int* state, int* tilt)
+{
+	int tx;
+
+	tx = *tilt + state[0] + state[1] + state[2];
+
+	state[2] = state[1];
+	state[1] = state[0];
+	state[0] = *tilt;
+
+	tx /= MAX_SAMPLES;
+	tx >>= 8;
+
+	if (tx > 60)
+   		tx = 60;	
+	else if (tx < -60)
+		tx = -60;
+
+	*tilt = tx;
+}
+
+/*****************************************************************************
+ * xf86WcmFilterIntuos -- provide error correction to all transducers except Intuos
+ ****************************************************************************/
+
+int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds)
+{
+	/* Only noise correction should happen here. If there's a problem that
+	 * cannot be fixed, return 1 such that the data is discarded. */
+
+	WacomDeviceState* pLast;
+	int *x, *y; 
+	int filter_x, filter_y;
+
+	x = pChannel->rawFilter.x;
+	y = pChannel->rawFilter.y;
+	if (!pChannel->rawFilter.npoints)
+	{
+		++pChannel->rawFilter.npoints;
+		DBG(2,ErrorF("xf86WcmFilterCoord: first sample NO_FILTER\n"));
+		x[0] = x[1] = x[2] = ds->x;
+		y[0] = y[1] = y[2] = ds->y;
+		return 0;
+	}
+
+	pLast = &pChannel->valid.state;
+	filter_x = (ds->x + x[0] + x[1] + x[2])/4;
+	filter_y = (ds->y + y[0] + y[1] + y[2])/4;
+
+	x[2] = x[1];
+	y[2] = y[1];
+	x[1] = x[0];
+	y[1] = y[0];
+	x[0] = ds->x;
+	y[0] = ds->y;
+
+	if (abs(filter_x - pLast->x) > 4)
+		ds->x = filter_x;
+	else
+		ds->x = pLast->x;
+
+	if (abs(filter_y - pLast->y) > 4)
+		ds->y = filter_y;
+	else
+		ds->y = pLast->y;
+
+	return 0; /* lookin' good */
+}
+
+/*****************************************************************************
+ * xf86WcmFilterCoord -- provide error correction to Intuos and Intuos2
  ****************************************************************************/
 
 int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
@@ -296,20 +389,12 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	/* Only error correction should happen here. If there's a problem that
 	 * cannot be fixed, return 1 such that the data is discarded. */
 
-	int x, y;
-	x = filterIntuosCoord(&pChannel->filter_x,ds->x,ds->tiltx);
-	y = filterIntuosCoord(&pChannel->filter_y,ds->y,ds->tilty);
-
-	if ((x != ds->x) || (y != ds->y))
-		DBG(2,ErrorF("xf86FilterIntuos: CHG %d,%d => %d,%d\n",
-			x,y,ds->x,ds->y));
+	if (ds->device_type != CURSOR_ID)
+		filterIntuosStylus(&pChannel->rawFilter, ds);
 	else
-		DBG(10,ErrorF("xf86FilterIntuos:  OK %d,%d => %d,%d\n",
-			x,y,ds->x,ds->y));
-
-	ds->x = x;
-	ds->y = y;
+		xf86WcmFilterCoord(common, pChannel, ds);
 
 	return 0; /* lookin' good */
 }
+
 

@@ -404,6 +404,7 @@ struct _WacomDeviceState
 	int rotation;
 	int abswheel;
 	int relwheel;
+	int distance;
 	int throttle;
 	int discard_first;
 	int proximity;
@@ -412,10 +413,13 @@ struct _WacomDeviceState
 
 struct _WacomFilterState
 {
-	int npoints;
-	int tilt[3];
-	int coord[3];
-	int state;
+        int npoints;
+        int x[3];
+        int y[3];
+        int tiltx[3];
+        int tilty[3];
+        int statex;
+        int statey;
 };
 
 struct _WacomChannel
@@ -426,6 +430,10 @@ struct _WacomChannel
 	 * the work stage and the valid state. */
 
 	WacomDeviceState work;                         /* next state */
+
+	/* the following struct contains the current known state of the
+	 * device channel, as well as the previous MAX_SAMPLES states
+	 * for use in detecting hardware defects, jitter, trends, etc. */
 
 	/* the following union contains the current known state of the
 	 * device channel, as well as the previous MAX_SAMPLES states
@@ -438,7 +446,7 @@ struct _WacomChannel
 
 	int nSamples;
 	LocalDevicePtr pDev;    /* device associated with this channel */
-	WacomFilterState filter_x, filter_y;
+	WacomFilterState rawFilter;
 };
 
 /******************************************************************************

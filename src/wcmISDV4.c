@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 #include "wcmSerial.h"
+#include "wcmFilter.h"
 
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr);
@@ -49,7 +50,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		isdv4Parse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterCoord,   /* input filtering */
 	};
 
 /*****************************************************************************
