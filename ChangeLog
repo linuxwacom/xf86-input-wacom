@@ -1,3 +1,8 @@
+2003-01-09    John E. Joganic <john@joganic.com>
+
+	* Fixed Intuos2 4x5 maximum Y value
+	* Added Gilbert Ramirez's no-merge-constants patch
+
 2003-01-01    John E. Joganic <john@joganic.com>
 
 	* Added volito to hid-core.c.

@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.5 2003/01/07 03:44:07 jjoganic Exp $
+ * $Id: wacom.c,v 1.6 2003/01/09 23:36:02 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -69,6 +69,7 @@
  *    v1.30-j0.3.5 - thread for resetting tablet on bad report
  *    v1.30-j0.3.6 - fixed volito ranges, thanks to Pasi Savolainen
  *    v1.30-j0.3.7 - unknown reports are now info, rather than error
+ *    v1.30-j0.3.8 - fixed I2 4x5 Y max value, thanks to John New
  */
 
 /*
@@ -99,7 +100,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.7"
+#define DRIVER_VERSION "v1.30-j0.3.8"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -534,7 +535,8 @@ struct wacom_features wacom_features[] = {
 			wacom_pl_irq, 0,  0, 0, 0 },
 
 	/* Intuos2 */
-	/* 15 */ { "Wacom Intuos2 4x5",   10,  12700, 10360,  1023, 15,
+	/* JEJ - confirmed X and Y range from J.N. tablet */
+	/* 15 */ { "Wacom Intuos2 4x5",   10,  12700, 10600,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 	/* JEJ - confirmed X and Y range from R.T. and J.S. tablets */
@@ -545,7 +547,7 @@ struct wacom_features wacom_features[] = {
 	/* 17 */ { "Wacom Intuos2 9x12",  10,  30480, 24060,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/* JEJ - confirmed X and Y range from tablet */
+	/* JEJ - confirmed X and Y range from J.J. tablet */
 	/* 18 */ { "Wacom Intuos2 12x12", 10,  30480, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },

@@ -25,6 +25,8 @@ KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
 		-mpreferred-stack-boundary=2 \
 		-march=$(ARCHITECTURE)
 
+NO_MERGE_CONSTANTS=@WAC_NO_MERGE_CONSTANTS@
+
 wacom.o: wacom.c Makefile
 	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
 		-DKBUILD_BASENAME=wacom -c -o wacom.o wacom.c
@@ -54,7 +56,7 @@ usbmouse.o: usbmouse.c Makefile
 
 xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
 	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
-		-pedantic -Wall -Wpointer-arith -fno-merge-constants \
+		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
 		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
 		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
@@ -78,7 +80,7 @@ xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
 
 wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
 	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
-		-pedantic -Wall -Wpointer-arith -fno-merge-constants \
+		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
 		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
 		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
