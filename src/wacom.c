@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.6 2003/01/09 23:36:02 jjoganic Exp $
+ * $Id: wacom.c,v 1.7 2003/01/10 01:41:25 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -70,6 +70,7 @@
  *    v1.30-j0.3.6 - fixed volito ranges, thanks to Pasi Savolainen
  *    v1.30-j0.3.7 - unknown reports are now info, rather than error
  *    v1.30-j0.3.8 - fixed I2 4x5 Y max value, thanks to John New
+ *    v1.30-j0.3.9 - fixed Intuos and Intuos2 sizes, values from Wacom
  */
 
 /*
@@ -503,20 +504,20 @@ struct wacom_features wacom_features[] = {
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, BIT(REL_WHEEL), 0 },
 
 	/* Intuos */
-	/*  4 */ { "Wacom Intuos 4x5",    10,  12700, 10360,  1023, 15,
+	/*  4 */ { "Wacom Intuos 4x5",    10,  12700, 10600,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 	/* JEJ - confirmed X and Y range from test tablet */
 	/*  5 */ { "Wacom Intuos 6x8",    10,  20320, 16240,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/*  6 */ { "Wacom Intuos 9x12",   10,  30670, 24130,  1023, 15,
+	/*  6 */ { "Wacom Intuos 9x12",   10,  30480, 24060,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/*  7 */ { "Wacom Intuos 12x12",  10,  30670, 31600,  1023, 15,
+	/*  7 */ { "Wacom Intuos 12x12",  10,  30480, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/*  8 */ { "Wacom Intuos 12x18",  10,  45860, 31600,  1023, 15,
+	/*  8 */ { "Wacom Intuos 12x18",  10,  45720, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 
@@ -551,7 +552,7 @@ struct wacom_features wacom_features[] = {
 	/* 18 */ { "Wacom Intuos2 12x12", 10,  30480, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/* 19 */ { "Wacom Intuos2 12x18", 10,  45860, 31600,  1023, 15,
+	/* 19 */ { "Wacom Intuos2 12x18", 10,  45720, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 

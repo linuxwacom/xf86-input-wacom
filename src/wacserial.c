@@ -125,10 +125,8 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 				DIGITIZERII_CAPS },
 		{ "CT-0405-R", WACOMDEVICE_PENPARTNER, "Wacom PenPartner", 7, 4 },
 		{ "ET-0405-R", WACOMDEVICE_GRAPHIRE, "Wacom Graphire", 7, 4 },
-	/*
-		{ "?D-0405-R", WACOMDEVICE_GRAPHIRE2, "Wacom Graphire2 4x5", 7, 4 },
-		{ "?D-0507-R", WACOMDEVICE_GRAPHIRE2, "Wacom Graphire2 5x7", 7, 4 },
-	*/
+
+		/* There are no serial Graphire 2's */
 
 		{ "GD-0405-R", WACOMDEVICE_INTUOS, "Wacom Intuos 4x5", 9, 5,
 				INTUOS_CAPS },
@@ -151,6 +149,8 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 				INTUOS2_CAPS },
 		{ "XD-1218-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 12x18", 9, 5,
 				INTUOS2_CAPS },
+
+		/* There are no serial Volito's */
 
 		{ NULL }
 	};
