@@ -1,3 +1,8 @@
+2003-04-21    Ping Cheng <pingc@wacom.com>
+
+	* Added Cintiq Partner, Graphire3 4x5 and 6x8
+	* Added a few new xsetwacom commands
+
 2003-05-04    John E. Joganic <john@joganic.com>
 
 	* Overhauled device reading.
