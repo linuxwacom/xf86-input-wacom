@@ -1,6 +1,7 @@
 2003-03-22    John E. Joganic <john@joganic.com>
 
 	* Added ncurses detection.
+	* Cleaned up output of xidump.
 
 2003-03-08    John E. Joganic <john@joganic.com>
 
