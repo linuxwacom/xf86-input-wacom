@@ -205,70 +205,6 @@ char* xf86WcmSendRequest(int fd, char* request, char* answer, int maxlen)
  *   but also cuts down quite a bit on jitter.
  ****************************************************************************/
 
-static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
-{
-	int tilt_filtered;
-	int ts;
-	int x0_pred;
-	int x0_pred1;
-	int x0, x1, x2, x3;
-	int x;
-    
-	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
-	state->tilt[2] = state->tilt[1];
-	state->tilt[1] = state->tilt[0];
-	state->tilt[0] = tilt;
-    
-	x0 = coord;
-	x1 = state->coord[0];
-	x2 = state->coord[1];
-	x3 = state->coord[2];
-	state->coord[0] = x0;
-	state->coord[1] = x1;
-	state->coord[2] = x2;
-    
-	ts = tilt_filtered >= 0 ? 1 : -1;
-    
-	if (state->state == 0 || state->state == 3)
-	{
-		x0_pred = 2 * x1 - x2;
-		x0_pred1 = 3 * x2 - 2 * x3;
-		if (ts * (x0 - x0_pred) > 12 && ts * (x0 - x0_pred1) > 12)
-		{
-			/* detected a jump at x0 */
-			state->state = 1;
-			x = x1;
-		}
-		else if (state->state == 0)
-		{
-			x = (7 * x0 + 14 * x1 + 15 * x2 - 4 * x3 + 16) >> 5;
-		}
-		else
-		{
-			/* state->state == 3 
-			 * a jump at x3 was detected */
-			x = (x0 + 2 * x1 + x2 + 2) >> 2;
-			state->state = 0;
-		}
-	}
-	else if (state->state == 1)
-	{
-		/* a jump at x1 was detected */
-		x = (3 * x0 + 7 * x2 - 2 * x3 + 4) >> 3;
-		state->state = 2;
-	}
-	else
-	{
-		/* state->state == 2 
-		 * a jump at x2 was detected */
-		x = x1;
-		state->state = 3;
-	}
-
-	return x;
-}
-
-
 static Bool xf86WcmSerialDetect(LocalDevicePtr pDev)
 {
 	return 1;
@@ -757,13 +693,12 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
  *   Read the new events from the device, and enqueue them.
  ****************************************************************************/
 
-static void WacomProtocol4(WacomDevicePtr priv);
-static void WacomProtocol5(WacomDevicePtr priv);
+static void WacomProtocol4(WacomCommonPtr common);
+static void WacomProtocol5(WacomCommonPtr common);
 
 static void xf86WcmSerialRead(LocalDevicePtr local)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common = priv->common;
+	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
 	int len, loop;
 	unsigned char buffer[BUFFER_SIZE];
   
@@ -807,19 +742,18 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		if (common->wcmIndex == common->wcmPktLength)
 		{
 			if (common->wcmProtocolLevel == 4)
-				WacomProtocol4(priv);
+				WacomProtocol4(common);
 			else if (common->wcmProtocolLevel == 5)
-				WacomProtocol5(priv);
+				WacomProtocol5(common);
 		}
 	} /* next data */
 
-	DBG(7, ErrorF("xf86WcmSerialRead END   local=0x%x priv=0x%x index=%d\n",
-		local, priv, common->wcmIndex));
+	DBG(7, ErrorF("xf86WcmSerialRead END   local=0x%x index=%d\n",
+		local, common->wcmIndex));
 }
 
-static void WacomProtocol4(WacomDevicePtr priv)
+static void WacomProtocol4(WacomCommonPtr common)
 {
-	WacomCommonPtr common = priv->common;
 	int x, y, z, idx, buttons, tx = 0, ty = 0;
 	int is_stylus, is_button, wheel=0;
 
@@ -1000,12 +934,11 @@ static void WacomProtocol4(WacomDevicePtr priv)
 			ty -= (TILT_BITS + 1);
 	}
 
+	/* split data amonst devices */
 	for(idx=0; idx<common->wcmNumDevices; idx++)
 	{
-		LocalDevicePtr local_dev =
-			common->wcmDevices[idx];
-		WacomDevicePtr priv=
-			(WacomDevicePtr)local_dev->private;
+		LocalDevicePtr local_dev = common->wcmDevices[idx];
+		WacomDevicePtr priv= (WacomDevicePtr)local_dev->private;
 		int temp_buttons = buttons;
 		int temp_is_proximity = is_proximity;
 		int curDevice;
@@ -1179,16 +1112,16 @@ static void WacomProtocol4(WacomDevicePtr priv)
 	} /* next device */
 }
 
-static void WacomProtocol5(WacomDevicePtr priv)
+static void WacomProtocol5(WacomCommonPtr common)
 {
-	WacomCommonPtr common = priv->common;
-	int is_stylus=0, have_data, x, y;
+	int is_stylus=0, have_data;
 	int tool_index;
 	WacomDeviceState ds;
 
 	/* reset count for read of next packet */
 	common->wcmIndex = 0;
 
+	/* start with previous state */
 	tool_index = common->wcmData[0] & 0x01;
 	ds = common->wcmDevStat[tool_index];
 	have_data = 0;
@@ -1199,7 +1132,7 @@ static void WacomProtocol5(WacomDevicePtr priv)
 	/* Device ID packet */
 	if ((common->wcmData[0] & 0xfc) == 0xc0)
 	{
-		memset(ds, 0, sizeof(*ds));
+		memset(&ds, 0, sizeof(ds));
 		ds.proximity = 1;
 		ds.device_id = (((common->wcmData[1] & 0x7f) << 5) |
 				((common->wcmData[2] & 0x7c) >> 2));
@@ -1213,12 +1146,9 @@ static void WacomProtocol5(WacomDevicePtr priv)
 		if ((ds.device_id & 0xf06) != 0x802)
 			ds.discard_first = 1;
 
-		if (PEN(ds) || STROKING_PEN(ds) || INKING_PEN(ds) ||
-			AIRBRUSH(ds))
-		{
+		if (STYLUS_TOOL(&ds))
 			ds.device_type = STYLUS_ID;
-		}
-		else if (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
+		else if (CURSOR_TOOL(&ds))
 			ds.device_type = CURSOR_ID;
 		else
 			ds.device_type = ERASER_ID;
@@ -1285,7 +1215,7 @@ static void WacomProtocol5(WacomDevicePtr priv)
 		ds.tilty = 0;
 
 		/* 4D mouse */
-		if (MOUSE_4D(ds))
+		if (MOUSE_4D(&ds))
 		{
 			ds.wheel = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
@@ -1296,14 +1226,14 @@ static void WacomProtocol5(WacomDevicePtr priv)
 		}
 
 		/* Lens cursor */
-		else if (LENS_CURSOR(ds))
+		else if (LENS_CURSOR(&ds))
 		{
 			ds.buttons = common->wcmData[8];
 			have_data = 1;
 		}
 
 		/* 2D mouse */
-		else
+		else if (MOUSE_2D(&ds))
 		{
 			ds.buttons = (common->wcmData[8] & 0x1C) >> 2;
 			ds.wheel = - (common->wcmData[8] & 1) +
@@ -1330,52 +1260,34 @@ static void WacomProtocol5(WacomDevicePtr priv)
 		ds.tiltx = ((900 - ((ds.rotation + 900) % 1800)) >> 1);
 		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
-		ds. discard_first = 0;
+		ds.discard_first = 0;
 	}
 	else
 	{
 		DBG(10, ErrorF("unknown wacom V packet 0x%x\n",
 				common->wcmData[0]));
 	}
-     
-	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
-	if (have_data &&
-		xf86WcmSuppress(common->wcmSuppress,
-			common->wcmDevStat + tool_index, /* original */
-			&ds))                            /* new data */
-	{
-		DBG(10, ErrorF("Suppressing data according to filter\n"));
-		have_data = 0;
-	}
 
 	if (have_data)
-	{
-		/* The if-else statement should be used after the device is 
-		 * selected since is_absolute = priv->flags | ABSOLUTE_FLAG
-		 * I removed the declaration of is_absolute at the beginning
-		 * of this routine */
-
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			x = xf86WcmIntuosFilter (&ds.x_filter, ds.x,
-				ds.tiltx);
-			y = xf86WcmIntuosFilter (&ds.y_filter, ds.y,
-				ds.tilty);
-		} 
-		else
-		{
-			x = ds.x;
-			y = ds.y;
-		}
-
-		xf86WcmDirectEvents(common,
-			ds.device_type, ds.serial_num,
-			ds.proximity, x, y,
-			ds.pressure, ds.buttons,
-			ds.tiltx, ds.tilty,
-			ds.wheel);
-
-		/* set the new state */
-		common->wcmDevStat[tool_index] = ds;
-	}
+		xf86WcmEvent(common,tool_index,&ds);
 }
+
+void xf86WcmEvent(WacomCommonPtr common, int tool_index,
+	WacomDeviceState* ds)
+{
+	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
+	if (xf86WcmSuppress(common->wcmSuppress,
+			common->wcmDevStat + tool_index, /* original */
+			ds))                             /* new data */
+	{
+		DBG(10, ErrorF("Suppressing data according to filter\n"));
+		return;
+	}
+
+	xf86WcmDirectEvents(common,tool_index,ds);
+
+	/* set the new state */
+	common->wcmDevStat[tool_index] = *ds;
+}
+
+     

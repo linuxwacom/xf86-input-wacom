@@ -333,15 +333,18 @@ struct _WacomDeviceRec
  * WacomDeviceState
  *****************************************************************************/
 
-#define PEN(ds)         (((ds->device_id) & 0x07ff) == 0x0022 || \
-                         ((ds->device_id) & 0x07ff) == 0x0042 || \
-                         ((ds->device_id) & 0x07ff) == 0x0052)
-#define STROKING_PEN(ds) (((ds->device_id) & 0x07ff) == 0x0032)
-#define AIRBRUSH(ds)    (((ds->device_id) & 0x07ff) == 0x0112)
-#define MOUSE_4D(ds)    (((ds->device_id) & 0x07ff) == 0x0094)
-#define MOUSE_2D(ds)    (((ds->device_id) & 0x07ff) == 0x0007)
-#define LENS_CURSOR(ds) (((ds->device_id) & 0x07ff) == 0x0096)
-#define INKING_PEN(ds)  (((ds->device_id) & 0x07ff) == 0x0012)
+#define PEN(ds)         ((((ds)->device_id) & 0x07ff) == 0x0022 || \
+                         (((ds)->device_id) & 0x07ff) == 0x0042 || \
+                         (((ds)->device_id) & 0x07ff) == 0x0052)
+#define STROKING_PEN(ds) ((((ds)->device_id) & 0x07ff) == 0x0032)
+#define AIRBRUSH(ds)    ((((ds)->device_id) & 0x07ff) == 0x0112)
+#define MOUSE_4D(ds)    ((((ds)->device_id) & 0x07ff) == 0x0094)
+#define MOUSE_2D(ds)    ((((ds)->device_id) & 0x07ff) == 0x0007)
+#define LENS_CURSOR(ds) ((((ds)->device_id) & 0x07ff) == 0x0096)
+#define INKING_PEN(ds)  ((((ds)->device_id) & 0x07ff) == 0x0012)
+#define STYLUS_TOOL(ds) (PEN(ds) || STROKING_PEN(ds) || INKING_PEN(ds) || \
+			AIRBRUSH(ds))
+#define CURSOR_TOOL(ds) (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
 
 struct _WacomFilterState
 {
@@ -497,14 +500,16 @@ Bool xf86WcmOpen(LocalDevicePtr local);
 int xf86WcmSuppress(int suppress, WacomDeviceState* ds1,
 	WacomDeviceState* ds2);
 
-void xf86WcmDirectEvents(WacomCommonPtr common, int type, unsigned int serial,
-	int is_proximity, int x, int y, int pressure, int buttons,
-	int tilt_x, int tilt_y, int wheel);
+void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
+	WacomDeviceState* ds);
 
 void xf86WcmSendEvents(LocalDevicePtr local, int type,
 	unsigned int serial, int is_stylus, int is_button,
 	int is_proximity, int x, int y, int z, int buttons,
 	int tx, int ty, int wheel);
+
+void xf86WcmEvent(WacomCommonPtr common, int tool_index,
+	WacomDeviceState* ds);
 
 /****************************************************************************/
 #endif /* __XF86_XF86WACOM_H */

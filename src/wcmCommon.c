@@ -305,28 +305,100 @@ void xf86WcmSendEvents(LocalDevicePtr local, int type,
 	priv->oldTiltY = ty;
 }
 
+static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
+{
+	int tilt_filtered;
+	int ts;
+	int x0_pred;
+	int x0_pred1;
+	int x0, x1, x2, x3;
+	int x;
+    
+	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
+	state->tilt[2] = state->tilt[1];
+	state->tilt[1] = state->tilt[0];
+	state->tilt[0] = tilt;
+    
+	x0 = coord;
+	x1 = state->coord[0];
+	x2 = state->coord[1];
+	x3 = state->coord[2];
+	state->coord[0] = x0;
+	state->coord[1] = x1;
+	state->coord[2] = x2;
+    
+	ts = tilt_filtered >= 0 ? 1 : -1;
+    
+	if (state->state == 0 || state->state == 3)
+	{
+		x0_pred = 2 * x1 - x2;
+		x0_pred1 = 3 * x2 - 2 * x3;
+		if (ts * (x0 - x0_pred) > 12 && ts * (x0 - x0_pred1) > 12)
+		{
+			/* detected a jump at x0 */
+			state->state = 1;
+			x = x1;
+		}
+		else if (state->state == 0)
+		{
+			x = (7 * x0 + 14 * x1 + 15 * x2 - 4 * x3 + 16) >> 5;
+		}
+		else
+		{
+			/* state->state == 3 
+			 * a jump at x3 was detected */
+			x = (x0 + 2 * x1 + x2 + 2) >> 2;
+			state->state = 0;
+		}
+	}
+	else if (state->state == 1)
+	{
+		/* a jump at x1 was detected */
+		x = (3 * x0 + 7 * x2 - 2 * x3 + 4) >> 3;
+		state->state = 2;
+	}
+	else
+	{
+		/* state->state == 2 
+		 * a jump at x2 was detected */
+		x = x1;
+		state->state = 3;
+	}
+
+	return x;
+}
+
 /*****************************************************************************
  * xf86WcmDirectEvents --
  *   Handles device selection and directs events to the right devices
  *   (YHJ - interface may change later since only common is really needed)
  ****************************************************************************/
 
-void xf86WcmDirectEvents(WacomCommonPtr common, int type,
-		unsigned int serial, int is_proximity, int x, int y,
-		int pressure, int buttons, int tilt_x, int tilt_y, int wheel)
+void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
+	WacomDeviceState* ds)
 {
+	int type = ds->device_type;
+	unsigned int serial = ds->serial_num;
+	int is_proximity = ds->proximity;
+	int x = ds->x;
+	int y = ds->y;
+	int pressure = ds->pressure;
+	int buttons = ds->buttons;
+	int tilt_x = ds->tiltx;
+	int tilt_y = ds->tilty;
+	int wheel = ds->wheel;
 	int is_stylus = (type == STYLUS_ID || type == ERASER_ID);
 	int is_button = !!(buttons);
 	int found_device = -1;
 	int idx;
 	
+	/* Find the device the current events are meant for */
 	for (idx=0; idx<common->wcmNumDevices; idx++)
 	{
 		WacomDevicePtr priv = common->wcmDevices[idx]->private;
 		int id;
 
 		id = DEVICE_ID(priv->flags);
-		/* Find the device the current events are meant for */
 		if (id == type &&
 			((!priv->serial) || (serial == priv->serial)) &&
 			(priv->topX <= x && priv->bottomX >= x &&
@@ -339,6 +411,7 @@ void xf86WcmDirectEvents(WacomCommonPtr common, int type,
 		}
 	}
 
+	/* send to appropriate device */
 	for (idx=0; idx<common->wcmNumDevices; idx++)
 	{
 		int id;
@@ -377,6 +450,26 @@ void xf86WcmDirectEvents(WacomCommonPtr common, int type,
 
 	if (found_device != -1)
 	{
+		WacomDevicePtr priv = common->wcmDevices[idx]->private;
+
+		/* The if-else statement should be used after the device is 
+	 	* selected since is_absolute = priv->flags | ABSOLUTE_FLAG
+	 	* I removed the declaration of is_absolute at the beginning
+	 	* of this routine */
+
+		if (priv->flags & ABSOLUTE_FLAG)
+		{
+			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
+				ds->tiltx);
+			y = xf86WcmIntuosFilter (&ds->y_filter, ds->y,
+				ds->tilty);
+		} 
+		else
+		{
+			x = ds->x;
+			y = ds->y;
+		}
+
 		xf86WcmSendEvents(common->wcmDevices[found_device],
 			type, serial, is_stylus, is_button, is_proximity,
 			x, y, pressure, buttons, tilt_x, tilt_y, wheel);

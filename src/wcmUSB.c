@@ -309,18 +309,8 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 	}
 	else
 	{
-		xf86WcmDirectEvents(common,
-			ds->device_type,
-			ds->serial_num,
-			ds->proximity,
-			ds->x,
-			ds->y,
-			ds->pressure,
-			ds->buttons,
-			ds->tiltx,
-			ds->tilty,
-			ds->wheel);
-	} /* next group of events */
+		xf86WcmDirectEvents(common,0,ds);
+	}
 }
 
 /*
