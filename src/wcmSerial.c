@@ -920,7 +920,7 @@ static void serialParseCintiq(WacomCommonPtr common)
 {
 	WacomDeviceState* orig = &common->wcmChannel[0].state;
 	WacomDeviceState ds = *orig;
-	int is_stylus;
+	int is_stylus, cur_type;
 
 	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
      
@@ -953,8 +953,24 @@ static void serialParseCintiq(WacomCommonPtr common)
 
 	/* If stylus comes into focus, use button to determine if eraser */
 	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (is_stylus && !orig->proximity && ds.proximity)
-		ds.device_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+	if (is_stylus)
+	{
+		/* first time into prox */
+		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+		if (!orig->proximity)
+		{
+ 			if(ds.proximity) 
+				ds.device_type = cur_type;
+		}
+		/* we fooled by tip and second sideswitch when comes to the prox */
+		else if (ds.device_type != cur_type && ds.device_type == ERASER_ID)
+		{
+			/* send a prox-out for old device */
+			ds.proximity = 0;
+			ds.buttons = 0;
+			ds.device_type = 0;
+		}
+	}
 
 	/* If it is not a stylus, it's a cursor */
 	else if (!is_stylus && !orig->proximity && ds.proximity)
@@ -989,7 +1005,7 @@ static void serialParseProtocol4(WacomCommonPtr common)
 {
 	WacomDeviceState* orig = &common->wcmChannel[0].state;
 	WacomDeviceState ds = *orig;
-	int is_stylus;
+	int is_stylus, cur_type;
 
 	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
      
@@ -1015,8 +1031,24 @@ static void serialParseProtocol4(WacomCommonPtr common)
 
 	/* If stylus comes into focus, use button to determine if eraser */
 	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (is_stylus && !orig->proximity && ds.proximity)
-		ds.device_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+	if (is_stylus)
+	{
+		/* first time into prox */
+		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+		if (!orig->proximity)
+		{
+ 			if(ds.proximity) 
+			ds.device_type = cur_type;
+		}
+		/* we fooled by tip and second sideswitch when comes to the prox */
+		else if (ds.device_type != cur_type && ds.device_type == ERASER_ID)
+		{
+			/* send a prox-out for old device */
+			ds.proximity = 0;
+			ds.buttons = 0;
+			ds.device_type = 0;
+		}
+	}
 
 	/* If it is not a stylus, it's a cursor */
 	else if (!is_stylus && !orig->proximity && ds.proximity)
@@ -1261,30 +1293,22 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 		/* PL-250  */
 		if ( id[6] == '5' )
 		{
-			common->wcmMaxX = 9700;
-			common->wcmMaxY = 7300;
 			common->wcmMaxZ = 255;
 		}
 		/* PL-270  */
 		else
 		{
-			common->wcmMaxX = 10560;
-			common->wcmMaxY = 7920;
 			common->wcmMaxZ = 255;
 		}
 	}
 	else if (id[5] == '3')
 	{
 		/* PL-300  */
-		common->wcmMaxX = 10560;
-		common->wcmMaxY = 7920;
 		common->wcmMaxZ = 255;
 	}
 	else if (id[5] == '4')
 	{
 		/* PL-400  */
-		common->wcmMaxX = 13590;
-		common->wcmMaxY = 10240;
 		common->wcmMaxZ = 255;
 	}
 	else if (id[5] == '5')
@@ -1292,15 +1316,11 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 		/* PL-550  */
 		if ( id[6] == '5' )
 		{
-			common->wcmMaxX = 15360;
-			common->wcmMaxY = 11520;
 			common->wcmMaxZ = 511;
 		}
 		/* PL-500  */
 		else
 		{
-			common->wcmMaxX = 15360;
-			common->wcmMaxY = 11520;
 			common->wcmMaxZ = 255;
 		}
 	}
@@ -1309,23 +1329,17 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 		/* PL-600SX  */
 		if ( id[8] == 'S' )
 		{
-			common->wcmMaxX = 15650;
-			common->wcmMaxY = 12540;
 			common->wcmMaxZ = 255;
 		}
 		/* PL-600  */
 		else
 		{
-			common->wcmMaxX = 15315;
-			common->wcmMaxY = 11510;
 			common->wcmMaxZ = 255;
 		}
 	}
 	else if (id[5] == '8')
 	{
 		/* PL-800  */
-		common->wcmMaxX = 18050;
-		common->wcmMaxY = 14450;
 		common->wcmMaxZ = 511;
 	}
 
