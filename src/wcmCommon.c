@@ -229,7 +229,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int rx, ry;
+	int rx, ry, rz, rtx, rty, rrot, rth, rw;
 	int is_core_pointer, is_absolute;
 	int aboveBelowSwitch = (priv->twinview == TV_ABOVE_BELOW)
 		? ((y < priv->topY) ? -1 : ((priv->bottomY < y) ? 1 : 0)) : 0;
@@ -295,6 +295,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			rx = x;
 			ry = y;
 		}
+		rz = z;
+		rtx = tx;
+		rty = ty;
+		rrot = rot;
+		rth = throttle;
+		rw = wheel;
 	}
 	else
 	{
@@ -320,6 +326,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (ABS(ry) > no_jitter)
 				ry *= priv->speed;
 		}
+		rz = z - priv->oldZ;
+		rtx = tx - priv->oldTiltX;
+		rty = ty - priv->oldTiltY;
+		rrot = rot - priv->oldRot;
+		rth = throttle - priv->oldThrottle;
+		rw = wheel - priv->oldWheel;
 	}
 
 	/* for multiple monitor support, we need to set the proper 
@@ -334,24 +346,24 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (IsCursor(priv))
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
-					rx, ry, z, rot,
-					throttle, wheel);
+					rx, ry, rz, rrot,
+					rth, rw);
 			else
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
-					rx, ry, z, tx, ty,
-					wheel);
+					rx, ry, rz, rtx, rty,
+					rw);
 		}
 		if(!(priv->flags & BUTTONS_ONLY_FLAG))
 		{
 			if (IsCursor(priv))
 				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, z,
-					rot, throttle, wheel);
+					is_absolute, 0, 6, rx, ry, rz,
+					rrot, rth, rw);
 			else
 				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, z,
-					tx, ty, wheel);
+					is_absolute, 0, 6, rx, ry, rz,
+					rtx, rty, rw);
 		}
 
 		/* simulate button 4 and 5 for relative wheel */
@@ -363,19 +375,19 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			{
 				xf86PostButtonEvent(local->dev, 
 					is_absolute,
-					fakeButton, 1, 0, 6, rx, ry, z, rot,
-					throttle, wheel);
+					fakeButton, 1, 0, 6, rx, ry, rz, 
+					rrot, rth, rw);
 				xf86PostButtonEvent(local->dev, 
 					is_absolute,
-					fakeButton, 0, 0, 6, rx, ry, z, rot,
-					throttle, wheel);
+					fakeButton, 0, 0, 6, rx, ry, rz, 
+					rrot, rth, rw);
 			}
 		}
 
 		if (priv->oldButtons != buttons)
 		{
-			xf86WcmSendButtons (local, buttons, rx, ry, z,
-					tx, ty, rot, throttle, wheel);
+			xf86WcmSendButtons (local, buttons, rx, ry, rz,
+					rtx, rty, rrot, rth, rw);
 		}
 	}
 
@@ -387,8 +399,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		if (priv->oldButtons)
 		{
 			buttons = 0;
-			xf86WcmSendButtons (local, buttons, rx, ry, z,
-				tx, ty, rot, throttle, wheel);
+			xf86WcmSendButtons (local, buttons, rx, ry, rz,
+				rtx, rty, rrot, rth, rw);
 		}
 		if (!is_core_pointer)
 		{
@@ -409,23 +421,23 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				if (IsCursor(priv))
 					xf86PostKeyEvent(local->dev,macro+7,1,
 						is_absolute,0,6,
-						0,0,buttons,rot,throttle,
-						wheel);
+						0,0,buttons,rrot,rth,
+						rw);
 				else
 					xf86PostKeyEvent(local->dev,macro+7,1,
 						is_absolute,0,6,
-						0,0,buttons,tx,ty,wheel);
+						0,0,buttons,rtx,rty,rw);
 
 				/* key up */
 				if (IsCursor(priv))
 					xf86PostKeyEvent(local->dev,macro+7,0,
 						is_absolute,0,6,
-						0,0,buttons,rot,throttle,
-						wheel);
+						0,0,buttons,rrot,rth,
+						rw);
 				else
 					xf86PostKeyEvent(local->dev,macro+7,0,
 						is_absolute,0,6,
-						0,0,buttons,tx,ty,wheel);
+						0,0,buttons,rtx,rty,rw);
 
 			}
 		}
@@ -433,12 +445,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		{
 			if (IsCursor(priv))
 				xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, z,
-						rot, throttle, wheel);
+						0, 0, 6, rx, ry, rz,
+						rrot, rth, rw);
 			else
 				xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, z,
-						tx, ty, wheel);
+						0, 0, 6, rx, ry, rz,
+						rtx, rty, rw);
 		}
 	} /* not in proximity */
 

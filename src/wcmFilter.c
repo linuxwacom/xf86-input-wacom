@@ -320,12 +320,11 @@ static void filterIntuosTilt(int* state, int* tilt)
 	state[0] = *tilt;
 
 	tx /= MAX_SAMPLES;
-	tx >>= 8;
 
-	if (tx > 60)
-   		tx = 60;	
-	else if (tx < -60)
-		tx = -60;
+	if (tx > 63)
+   		tx = 63;	
+	else if (tx < -64)
+		tx = -64;
 
 	*tilt = tx;
 }
