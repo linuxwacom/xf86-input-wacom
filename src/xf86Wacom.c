@@ -63,9 +63,10 @@
  * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
  * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
  * 2003-02-22 26-j0.5.6 - applied J. Yen's origin patch
+ * 2003-02-22 26-j0.5.7 - added Ping Cheng's "suppress" patch
  */
 
-static const char identification[] = "$Identification: 26-j0.5.6 $";
+static const char identification[] = "$Identification: 26-j0.5.7 $";
 
 #include "xf86Version.h"
 
@@ -444,6 +445,8 @@ static SymTabRec ModeTabRec[] = {
  *****************************************************************************/
 #define DEFAULT_MAXZ 240	/* default value of MaxZ when nothing is configured */
 #define DEFAULT_SPEED 1.0	/* default relative cursor speed */
+#define DEFAULT_SUPPRESS 2	/* default suppress */
+#define MAX_SUPPRESS 6  	/* max value of suppress */
 #define BUFFER_SIZE 256		/* size of reception buffer */
 #define XI_STYLUS "STYLUS"	/* X device name for the stylus */
 #define XI_CURSOR "CURSOR"	/* X device name for the cursor */
@@ -709,6 +712,9 @@ xf86WcmConfig(LocalDevicePtr    *array,
 	    if (xf86GetToken(NULL) != NUMBER)
 		xf86ConfigError("Option number expected");
 	    common->wcmSuppress = val->num;
+	    if (common->wcmSuppress > MAX_SUPPRESS || 
+			common->wcmSuppress < DEFAULT_SUPPRESS) 
+		common->wcmSuppress = DEFAULT_SUPPRESS;
 	    if (xf86Verbose)
 		ErrorF("%s Wacom suppress value is %d\n", XCONFIG_GIVEN,
 		       common->wcmSuppress);      
@@ -1332,8 +1338,8 @@ set_screen(LocalDevicePtr   local,
                 /(double) (priv->bottomY - priv->topY);
     }
 
-    x = v0 * priv->factorX + 0.5;
-    y = v1 * priv->factorY + 0.5;
+    x = (v0 - priv->topX) * priv->factorX + 0.5;
+    y = (v1 - priv->topY) * priv->factorY + 0.5;
     xf86XInputSetScreen(local, screenToSet, x, y);
 DBG(10, ErrorF("set_screen current=%d ToSet=%d\n", 
 			  priv->currentScreen, screenToSet));
@@ -2527,7 +2533,6 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 static Bool
 xf86WcmUSBOpen(LocalDevicePtr	local)
 {
-    int			err = 0;
     WacomDevicePtr	priv = (WacomDevicePtr)local->private;
     WacomCommonPtr	common = priv->common;
     char		name[256] = "Unknown";
@@ -2593,32 +2598,13 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
        * command to the tablet. Any other solutions ? */
 	DBG(2, ErrorF("Sending tilt mode order\n"));
     }
-  
-    if (common->wcmSuppress < 0) {
-	int	xratio = common->wcmMaxX/screenInfo.screens[priv->currentScreen]->width;
-	int	yratio = common->wcmMaxY/screenInfo.screens[priv->currentScreen]->height;
-	
-	common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
-    }
-    
-    if (common->wcmSuppress > 100) {
-	common->wcmSuppress = 99;
-    }
-    /* Cannot send WC_SUPPRESS to the table. Will have to do
-     * this manually. */
-    
+
     if (xf86Verbose)
 	ErrorF("%s Wacom tablet maximum X=%d maximum Y=%d "
 	       "X resolution=%d Y resolution=%d suppress=%d%s\n",
 	       XCONFIG_PROBED, common->wcmMaxX, common->wcmMaxY,
 	       common->wcmResolX, common->wcmResolY, common->wcmSuppress,
 	       HANDLE_TILT(common) ? " Tilt" : "");
-  
-    if (err < 0) {
-        ErrorF("ERROR: %d\n", err);
-	SYSCALL(close(local->fd));
-	return !Success;
-    }
 
     return Success;
 }
@@ -3022,17 +3008,6 @@ xf86WcmOpen(LocalDevicePtr	local)
 	    ErrorF("Wacom write error : %s\n", strerror(errno));
 	    return !Success;
 	}
-    }
-  
-    if (common->wcmSuppress < 0) {
-	int xratio = common->wcmMaxX/screenInfo.screens[priv->currentScreen]->width;
-	int yratio = common->wcmMaxY/screenInfo.screens[priv->currentScreen]->height;
-	
-	common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
-    }
-    
-    if (common->wcmSuppress > 100) {
-	common->wcmSuppress = 99;
     }
 
     if (common->wcmProtocolLevel == 4) {
@@ -3633,7 +3608,7 @@ xf86WcmAllocate(char *  name,
 	priv->throttleLimit = -1;
     
     common->wcmDevice = "";		/* device file name */
-    common->wcmSuppress = -1;		/* transmit position if increment is superior */
+    common->wcmSuppress = DEFAULT_SUPPRESS; /* transmit position if increment is superior */
     common->wcmFlags = 0;		/* various flags */
     common->wcmDevices = (LocalDevicePtr*) xalloc(sizeof(LocalDevicePtr));
     common->wcmDevices[0] = local;
@@ -3941,10 +3916,10 @@ xf86WcmInit(InputDriverPtr	drv,
 	    (priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");	    
 
     common->wcmSuppress = xf86SetIntOption(local->options, "Suppress", common->wcmSuppress);
-    if (common->wcmSuppress != -1) {
-	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", XCONFIG_GIVEN,
+    if (common->wcmSuppress > MAX_SUPPRESS || common->wcmSuppress < DEFAULT_SUPPRESS) 
+	common->wcmSuppress = DEFAULT_SUPPRESS;
+    xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", XCONFIG_GIVEN,
 		common->wcmSuppress);      
-    }
     
     if (xf86SetBoolOption(local->options, "Tilt", (common->wcmFlags & TILT_FLAG))) {
 	common->wcmFlags |= TILT_FLAG;
@@ -4158,5 +4133,6 @@ XF86ModuleData wacomModuleData = {&xf86WcmVersionRec,
  * End:
  */
 /* end of xf86Wacom.c */
+
 
 
