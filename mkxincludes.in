@@ -59,6 +59,7 @@ echo "mkxincludes: using $XF86_DIR"
 	mkdir -p $X_INCLUDES
 	echo `uname -a` > $X_INCLUDES/environ
 	echo `gcc --version | head -1` > $X_INCLUDES/gcc_version
+	echo "$XF86_DIR" > $X_INCLUDES/xf86_version
 	(cd $XF86_DIR/.. && tar chf - $DEPS) | (cd $X_INCLUDES && tar xf -)
 
 	echo "Building package... ($X_INCLUDES.tar.gz)"
