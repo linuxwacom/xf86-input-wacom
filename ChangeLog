@@ -1,3 +1,9 @@
+2003-04-14    Jimmy Yen <jimmy@yen.tp>
+
+	* Small KeepShape fix.
+	* Cleaned up xf86WcmSendEvents.
+	* Fallback case in device selection code.
+
 2003-04-08    John E. Joganic <john@joganic.com>
 
 	* Fixed USB tilt ranges.
