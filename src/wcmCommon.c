@@ -526,20 +526,22 @@ static int ThrottleToRate(int x)
 static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	const WacomDeviceState* dsNew)
 {
+	/* NOTE: Suppression value of zero disables suppression. */
+
 	if (dsOrig->buttons != dsNew->buttons) return 0;
 	if (dsOrig->proximity != dsNew->proximity) return 0;
-	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
-	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
-	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
-	if (ABS(dsOrig->throttle - dsNew->throttle) >= suppress) return 0;
+	if (ABS(dsOrig->x - dsNew->x) > suppress) return 0;
+	if (ABS(dsOrig->y - dsNew->y) > suppress) return 0;
+	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) return 0;
+	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) return 0;
 
-	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 >= suppress &&
-		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
+	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 > suppress &&
+		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 > suppress)
 		return 0;
 
 	/* look for change in absolute wheel
 	 * position or any relative wheel movement */
-	if ((ABS(dsOrig->abswheel - dsNew->abswheel) >= suppress) ||
+	if ((ABS(dsOrig->abswheel - dsNew->abswheel) > suppress) ||
 		(dsNew->relwheel != 0)) return 0;
 
 	return 1;

@@ -329,8 +329,9 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 			if (xf86GetToken(NULL) != NUMBER)
 				xf86ConfigError("Option number expected");
 			common->wcmSuppress = val->num;
-			if (common->wcmSuppress > MAX_SUPPRESS || 
-				common->wcmSuppress < DEFAULT_SUPPRESS)
+			if ((common->wcmSuppress > MAX_SUPPRESS || 
+				common->wcmSuppress < DEFAULT_SUPPRESS) &&
+				(common->wcmSuppress != 0) /* disabled */)
 			{
 				common->wcmSuppress = DEFAULT_SUPPRESS;
 			}
@@ -862,8 +863,9 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
 			common->wcmSuppress);
-	if (common->wcmSuppress > MAX_SUPPRESS ||
-			common->wcmSuppress < DEFAULT_SUPPRESS) 
+	if ((common->wcmSuppress != 0) && /* 0 disables suppression */
+		(common->wcmSuppress > MAX_SUPPRESS ||
+			common->wcmSuppress < DEFAULT_SUPPRESS))
 	{
 		common->wcmSuppress = DEFAULT_SUPPRESS;
 	}

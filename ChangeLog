@@ -1,5 +1,6 @@
 2003-06-19    John E. Joganic <john@joganic.com>
 	* Reapplied patch for tablets reporting as 0x47.
+	* Suppress value of 0 disables suppression.
 
 2003-06-16    John E. Joganic <john@joganic.com>
 	* Added mkxincludes, automatic check for x-includes in configure
