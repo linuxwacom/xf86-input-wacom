@@ -603,7 +603,7 @@ Bool xf86WcmOpen(LocalDevicePtr local);
 	/* handles suppression, filtering, and dispatch. */
 
 	void xf86WcmSendEvents(LocalDevicePtr local,
-		const WacomDeviceState* ds);
+		const WacomDeviceState* ds, unsigned int channel);
 	/* dispatches data to XInput event system */
 
 /****************************************************************************/

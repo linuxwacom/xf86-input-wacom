@@ -40,7 +40,7 @@
  ****************************************************************************/
  
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
-static void commonDispatchDevice(WacomCommonPtr common,
+static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel);
 static void resetSampleCounter(const WacomChannelPtr pChannel);
 static void sendAButton(LocalDevicePtr local, int button, int mask,
@@ -219,24 +219,17 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 					if ( buttons & mask ) 
 					{
 						bsent = 1;
-						/* Send button one up before any button down is sent.
-						 * There is a bug in XFree86 for combined left click and 
-						 * other button. It'll lost left up when releases.
-						 * This should be removed if XFree86 fixes the problem.
-						 */
-						if ( (buttons & 1) )
-						{
-							priv->flags &= ~TPCBUTTONONE_FLAG;
-							sendAButton(local, 1, 0,  
-								rx, ry, rz, rtx, rty, rrot, rth, rwheel);
-						}
 						/* set to the configured button */
 						sendAButton(local, priv->button[button-1], 1, rx, ry, 
 							rz, rtx, rty, rrot, rth, rwheel);
 					}
 				}
 				
-				/* only send button one when nothing else was sent */
+				/* only send button one when nothing else was sent 
+				 * There is a bug in XFree86 for combined left click and 
+				 * other button. It'll lost left up when releases.
+				 * This should be removed if XFree86 fixes the problem.
+				 */
 				if ( !bsent && (buttons & 1) )
 				{
 					priv->flags |= TPCBUTTONONE_FLAG;
@@ -246,22 +239,21 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			}
 			else
 			{
+				/* Send button one up before any button down is sent.
+				 * There is a bug in XFree86 for combined left click and 
+				 * other button. It'll lost left up when releases.
+				 * This should be removed if XFree86 fixes the problem.
+				 */
+				if (priv->flags & TPCBUTTONONE_FLAG)
+				{
+					priv->flags &= ~TPCBUTTONONE_FLAG;
+					sendAButton(local, 1, 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+				}
 				for (button=2; button<=16; button++)
 				{
 					mask = 1 << (button-1);
 					if ((mask & priv->oldButtons) != (mask & buttons))
 					{
-						/* Send button one up before any button down is sent.
-						 * There is a bug in XFree86 for combined left click and 
-						 * other button. It'll lost left up when releases.
-						 * This should be removed if XFree86 fixes the problem.
-						 */
-						if ((mask & buttons) && (priv->flags & TPCBUTTONONE_FLAG))
-						{
-							priv->flags &= ~TPCBUTTONS_FLAG;
-							sendAButton(local, 1, 0,  
-								rx, ry, rz, rtx, rty, rrot, rth, rwheel);
-						}
 						/* set to the configured buttons */
 						sendAButton(local, priv->button[button-1], mask & buttons, 
 							rx, ry, rz, rtx, rty, rrot, rth, rwheel);
@@ -387,7 +379,7 @@ DBG(4, ErrorF("xf86WcmSendButtons sent TPCButton(%s) button=%d state=%d, for %s\
  *   Send events according to the device state.
  ****************************************************************************/
 
-void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
+void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel)
 {
 	int type = ds->device_type;
 	int is_button = !!(ds->buttons);
@@ -500,7 +492,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			{
 				/* don't apply acceleration when too fast. */
 				param += priv->accel > 0 ? rx/relacc : 0;
-				if (param > 20.00)
+				if (param < 20.00)
 				{
 					rx *= param;
 				}
@@ -508,7 +500,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (ABS(ry) > no_jitter)
 			{
 				param += priv->accel > 0 ? ry/relacc : 0;
-				if (param > 20.00)
+				if (param < 20.00)
 				{
 					ry *= param;
 				}
@@ -543,7 +535,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					rw);
 		}
 
-		if(!(priv->flags & BUTTONS_ONLY_FLAG))
+		/* don't move the cursor if it only supports buttons or
+		 * if it's the second tool in dual input case.
+		 * More complicated dual input, such as only sylus/puck moves 
+		 * the cursor or both tools can move the cursor will be 
+		 * supported when needed
+		 */
+		if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
 		{
 			if (IsCursor(priv))
 				xf86PostMotionEvent(local->dev,
@@ -817,12 +815,12 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
-	commonDispatchDevice(common,pChannel);
+	commonDispatchDevice(common,channel,pChannel);
 
 	resetSampleCounter(pChannel);
 }
 
-static void commonDispatchDevice(WacomCommonPtr common,
+static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel)
 {
 	int id, idx;
@@ -868,7 +866,7 @@ static void commonDispatchDevice(WacomCommonPtr common,
 		(pLast->serial_num == ds->serial_num))
 	{
 		pLast->proximity = 0;
-		xf86WcmSendEvents(pLastDev, pLast);
+		xf86WcmSendEvents(pLastDev, pLast, channel);
 	}
 
 	/* if a device matched criteria, handle filtering per device
@@ -950,7 +948,7 @@ static void commonDispatchDevice(WacomCommonPtr common,
 			filtered.proximity = 0;
 		}
 
-		xf86WcmSendEvents(pDev, &filtered);
+		xf86WcmSendEvents(pDev, &filtered, channel);
 	}
 
 	/* otherwise, if no device matched... */

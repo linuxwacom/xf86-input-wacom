@@ -1,3 +1,9 @@
+2004-05-18    Ping Cheng <pingc@wacom.com>
+	* Fixed Relative Speed bug
+	* Added a workaround for TPCButton to deal with XFree86 button
+	  bug (occasionally unreleased left click when simultaneously
+	  pressed with another button)
+
 2004-05-14    Ping Cheng <pingc@wacom.com>
 	* Removed DoubleSpeed and DoubleRadius options (use system default instead)
 	* Fixed tool on tablet when driver starts issue

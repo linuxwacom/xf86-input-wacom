@@ -1106,9 +1106,13 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: buttons only\n", dev->identifier);
 	}
 
-	common->wcmTPCButton = xf86SetBoolOption(local->options, "TPCButton", 0);
-	if ( common->wcmTPCButton )
-		xf86Msg(X_CONFIG, "Tablet PC buttons on \n");
+	/* Tablet PC button applied to the whole tablet. Not just one tool */
+	if ( !common->wcmTPCButton )
+	{
+		common->wcmTPCButton = xf86SetBoolOption(local->options, "TPCButton", 0);
+		if ( common->wcmTPCButton )
+			xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
+	}
 
 	for (i=0; i<16; i++)
 	{
