@@ -673,27 +673,27 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 		break;
 	    case XWACOM_PARAM_BUTTON1:
-		if ((value < 0) || (value > 5)) return BadValue;
+		if ((value < 0) || (value > 18)) return BadValue;
 		xf86ReplaceIntOption(local->options,"Button1",value);
 		priv->button[0] = xf86SetIntOption(local->options,"Button1",1);
 		break;
 	    case XWACOM_PARAM_BUTTON2:
-		if ((value < 0) || (value > 5)) return BadValue;
+		if ((value < 0) || (value > 18)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button2", value);
 		priv->button[1] = xf86SetIntOption(local->options,"Button2",2);
 		break;
 	    case XWACOM_PARAM_BUTTON3:
-		if ((value < 0) || (value > 5)) return BadValue;
+		if ((value < 0) || (value > 18)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button3", value);
 		priv->button[2] = xf86SetIntOption(local->options,"Button3",3);
 		break;
 	    case XWACOM_PARAM_BUTTON4:
-		if ((value < 0) || (value > 5)) return BadValue;
+		if ((value < 0) || (value > 18)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button4", value);
 		priv->button[3] = xf86SetIntOption(local->options,"Button4",4);
 		break;
 	    case XWACOM_PARAM_BUTTON5:
-		if ((value < 0) || (value > 5)) return BadValue;
+		if ((value < 0) || (value > 18)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button5", value);
 		priv->button[4] = xf86SetIntOption(local->options,"Button5",5);
 		break;
@@ -795,9 +795,9 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		/* write user defined options as xsetwacom commands into fp */
 		while (optList) 
 		{
-			if ( (!strcasecmp(optList->opt_name,"TopX") && priv->topX) 
-			    ||(!strcasecmp(optList->opt_name, "TopY") && priv->topY)  
-			    ||(!strcasecmp(optList->opt_name,"BottomX") &&
+			if ((!strcasecmp(optList->opt_name,"TopX") && priv->topX)
+			    ||(!strcasecmp(optList->opt_name, "TopY") && priv->topY)
+			    ||(!strcasecmp(optList->opt_name,"BottomX") && 
 					priv->bottomX != priv->common->wcmMaxX)
 			    ||(!strcasecmp(optList->opt_name, "BottomY") &&
 					priv->bottomY != priv->common->wcmMaxY) 
@@ -811,17 +811,18 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 					priv->button[3] != 4) 
 			    ||(!strcasecmp(optList->opt_name, "Button5") &&
 					priv->button[4] != 5) 
-			    ||(!strcasecmp(optList->opt_name,"DebugLevel"))
 			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
 			    ||(!strcasecmp(optList->opt_name, "Mode")) 
-			    ||(!strcasecmp(optList->opt_name, "RawFilter")) )
+			    ||(!strcasecmp(optList->opt_name, "RawFilter"))
+			    ||(!strcasecmp(optList->opt_name, "Suppress")) )
 			{
 				sprintf(command, "xsetwacom set %s %s %s\n", 
 					local->name, optList->opt_name, 
 					optList->opt_val);
 				fprintf(fp, "%s", command);
 			}
-			else if(!strcasecmp(optList->opt_name, "Speed")) 
+			else if(!strcasecmp(optList->opt_name, "Speed") &&
+				priv->speed != DEFAULT_SPEED) 
 			{
 				speed = strtod(optList->opt_val, NULL);
 				if(speed > 10.0) value = 10;
@@ -842,6 +843,15 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			}
 			optList = optList->list.next;
 		}
+		sprintf(command, "default %s %d\n", "BottomX", priv->common->wcmMaxX);
+		fprintf(fp, "%s", command);
+		sprintf(command, "default %s %d\n", "BottomY", priv->common->wcmMaxY);
+		fprintf(fp, "%s", command);
+		if (priv->flags & CURSOR_ID) 
+			sprintf(command, "default %s Relative\n", "Mode");
+		else
+			sprintf(command, "default %s Absolute\n", "Mode");
+		fprintf(fp, "%s", command);
 		fclose(fp);
 	}
 	return(Success);

@@ -874,13 +874,21 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	s = xf86FindOptionValue(local->options, "Mode");
 
 	if (s && (xf86NameCmp(s, "absolute") == 0))
-		priv->flags = priv->flags | ABSOLUTE_FLAG;
+		priv->flags |= ABSOLUTE_FLAG;
 	else if (s && (xf86NameCmp(s, "relative") == 0))
-		priv->flags = priv->flags & ~ABSOLUTE_FLAG;
+		priv->flags &= ~ABSOLUTE_FLAG;
 	else if (s)
 	{
 		xf86Msg(X_ERROR, "%s: invalid Mode (should be absolute or "
 			"relative). Using default.\n", dev->identifier);
+
+		/* stylus/eraser defaults to absolute mode 
+		 * cursor defaults to relative mode 
+		 */
+		if (priv->flags & CURSOR_ID) 
+			priv->flags &= ~ABSOLUTE_FLAG;
+		else
+			priv->flags |= ABSOLUTE_FLAG;
 	}
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,

@@ -193,16 +193,45 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			if (priv->button[button-1] != button)
 				newb = priv->button[button-1];
 
-			if (IsCursor(priv))
-				xf86PostButtonEvent(local->dev, 
-					(priv->flags & ABSOLUTE_FLAG),
-					newb, (buttons & mask) != 0,
-					0, 6, rx, ry, rz, rrot, rth, rwheel);
-			else
-				xf86PostButtonEvent(local->dev, 
-					(priv->flags & ABSOLUTE_FLAG),
-					newb, (buttons & mask) != 0,
-					0, 6, rx, ry, rz, rtx, rty, rwheel);
+			/* translate into Left Double Click */
+			if (newb == 17)
+			{
+				newb = 1;
+				if (buttons & mask)
+				{
+					/* Left button down */
+					if (IsCursor(priv))
+						xf86PostButtonEvent(local->dev, 
+							(priv->flags & ABSOLUTE_FLAG), newb, 1,
+							0, 6, rx, ry, rz, rrot, rth, rwheel);
+					else
+						xf86PostButtonEvent(local->dev, 
+							(priv->flags & ABSOLUTE_FLAG), newb, 1,
+							0, 6, rx, ry, rz, rtx, rty, rwheel);
+					/* Left button up */
+					if (IsCursor(priv))
+						xf86PostButtonEvent(local->dev, 
+							(priv->flags & ABSOLUTE_FLAG), newb, 0,
+							0, 6, rx, ry, rz, rrot, rth, rwheel);
+					else
+						xf86PostButtonEvent(local->dev, 
+							(priv->flags & ABSOLUTE_FLAG), newb, 0,
+							0, 6, rx, ry, rz, rtx, rty, rwheel);
+				}
+			}
+			if (newb <= 17)
+			{
+				if (IsCursor(priv))
+					xf86PostButtonEvent(local->dev, 
+						(priv->flags & ABSOLUTE_FLAG),
+						newb, (buttons & mask) != 0,
+						0, 6, rx, ry, rz, rrot, rth, rwheel);
+				else
+					xf86PostButtonEvent(local->dev, 
+						(priv->flags & ABSOLUTE_FLAG),
+						newb, (buttons & mask) != 0,
+						0, 6, rx, ry, rz, rtx, rty, rwheel);
+			}
 		}
 	}
 }
@@ -787,7 +816,7 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 	if (common->wcmThreshold <= 0)
 	{
 		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = common->wcmMaxZ / 32;
+		common->wcmThreshold = common->wcmMaxZ * 3 / 50;
 		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
 			XCONFIG_PROBED, common->wcmThreshold);
 	}
