@@ -27,11 +27,11 @@
 	{
 		/* Current USB implementation requires LINUX_INPUT */
 		#ifdef LINUX_INPUT
-		&wcmUSBDevice,
+		&gWacomUSBDevice,
 		#endif
 
-		&wcmISDV4Device,
-		&wcmSerialDevice,
+		&gWacomISDV4Device,
+		&gWacomSerialDevice,
 		NULL
 	};
 
@@ -459,13 +459,13 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	{
 		if ((*ppDevCls)->Detect(local))
 		{
-			common->pDevCls = *ppDevCls;
+			common->wcmDevCls = *ppDevCls;
 			break;
 		}
 	}
 
 	/* Initialize the tablet */
-	return common->pDevCls->Init(local);
+	return common->wcmDevCls->Init(local);
 }
 
 /*****************************************************************************

@@ -29,7 +29,7 @@ static Bool xf86WcmUSBDetect(LocalDevicePtr);
 static Bool xf86WcmUSBInit(LocalDevicePtr pDev);
 static void xf86WcmUSBRead(LocalDevicePtr pDev);
 
-	WacomDeviceClass wcmUSBDevice =
+	WacomDeviceClass gWacomUSBDevice =
 	{
 		xf86WcmUSBDetect,
 		xf86WcmUSBInit,
@@ -128,9 +128,9 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			else if (event->code == ABS_RZ)
 				ds.rotation = event->value;
 			else if (event->code == ABS_TILT_X)
-				ds.tiltx = event->value;
+				ds.tiltx = event->value - 64;
 			else if (event->code ==  ABS_TILT_Y)
-				ds.tilty = event->value;
+				ds.tilty = event->value - 64;
 			else if (event->code == ABS_PRESSURE)
 			{
 				ds.pressure = event->value;
@@ -302,7 +302,7 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 	DBG(2, ErrorF("setup is max X=%d(%d) Y=%d(%d) Z=%d(%d)\n",
 			common->wcmMaxX, common->wcmResolX,
 			common->wcmMaxY, common->wcmResolY,
-			common->wcmMaxZ, common->wcmResolZ));
+			common->wcmMaxZ, common->wcmMaxZ));
   
 	/* send the tilt mode command after setup because it must be enabled */
 	/* after multi-mode to take precedence */

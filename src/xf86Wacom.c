@@ -342,8 +342,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	/* pressure */
 	InitValuatorAxisStruct(pWcm, 2, 0,
 	common->wcmMaxZ, /* max val */
-	mils(common->wcmResolZ), /* resolution */
-	0, mils(common->wcmResolZ)); /* max_res */
+	mils(common->wcmMaxZ), /* resolution - 100% pressure = 1 mil */
+	0, mils(common->wcmMaxZ)); /* max_res - 100% pressure = 1 mil */
 
 	if (IsCursor(priv))
 	{
@@ -372,7 +372,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 static void xf86WcmDevReadInput(LocalDevicePtr local)
 {
 	/* Dispatch device-specific read */
-	((WacomDevicePtr)local->private)->common->pDevCls->Read(local);
+	((WacomDevicePtr)local->private)->common->wcmDevCls->Read(local);
 }
 
 /*****************************************************************************

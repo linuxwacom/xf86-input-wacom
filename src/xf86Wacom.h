@@ -26,7 +26,7 @@
 
 /****************************************************************************/
 
-#include "xf86Version.h"
+#include <xf86Version.h>
 
 /* This driver can be compiled for the 4.x API (technically versions
  * beginning at 3.9) or the older API which ended around version 3.3. */
@@ -79,21 +79,21 @@
 #include <errno.h>
 #endif
 
-#include "misc.h"
-#include "xf86.h"
+#include <misc.h>
+#include <xf86.h>
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
-#include "xf86_ansic.h"
-#include "xisb.h"
+#include <xf86_ansic.h>
+#include <xisb.h>
 #endif
-#include "xf86_OSproc.h"
-#include "xf86Xinput.h"
-#include "exevents.h"           /* Needed for InitValuator/Proximity stuff */
-#include "keysym.h"
-#include "mipointer.h"
+#include <xf86_OSproc.h>
+#include <xf86Xinput.h>
+#include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
+#include <keysym.h>
+#include <mipointer.h>
 
 #ifdef XFree86LOADER
-#include "xf86Module.h"
+#include <xf86Module.h>
 #endif
 
 /*****************************************************************************
@@ -102,19 +102,19 @@
 
 #elif XFREE86_V3
 
-#include "Xos.h"
+#include <Xos.h>
 #include <signal.h>
 #include <stdio.h>
 
 #define NEED_EVENTS
-#include "X.h"
-#include "Xproto.h"
-#include "misc.h"
-#include "inputstr.h"
-#include "scrnintstr.h"
-#include "XI.h"
-#include "XIproto.h"
-#include "keysym.h"
+#include <X.h>
+#include <Xproto.h>
+#include <misc.h>
+#include <inputstr.h>
+#include <scrnintstr.h>
+#include <XI.h>
+#include <XIproto.h>
+#include <keysym.h>
 
 #if defined(sun) && !defined(i386)
 #define POSIX_TTY
@@ -123,26 +123,22 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <extio.h>
 
-#include "extio.h"
 #else /* not sun or i386 */
-#include "compiler.h"
 
-#include "xf86.h"
-#include "xf86Procs.h"
-#include "xf86_OSlib.h"
-#include "xf86_Config.h"
-#include "xf86Xinput.h"
-#include "atKeynames.h"
-#include "xf86Version.h"
-#endif /* not sun or i386 */
-
-#if !defined(sun) || defined(i386)
-#include "osdep.h"
-#include "exevents.h"
-
-#include "extnsionst.h"
-#include "extinit.h"
+#include <compiler.h>
+#include <xf86.h>
+#include <xf86Procs.h>
+#include <xf86_OSlib.h>
+#include <xf86_Config.h>
+#include <xf86Xinput.h>
+#include <atKeynames.h>
+#include <xf86Version.h>
+#include <osdep.h>
+#include <exevents.h>
+#include <extnsionst.h>
+#include <extinit.h>
 #endif /* not sun or i386 */
 
 #endif /* XFREE86_V3 */
@@ -218,6 +214,7 @@
 typedef struct _WacomModule WacomModule;
 typedef struct _WacomModule4 WacomModule4;
 typedef struct _WacomModule3 WacomModule3;
+typedef struct _WacomModel WacomModel, *WacomModelPtr;
 typedef struct _WacomDeviceRec WacomDeviceRec, *WacomDevicePtr;
 typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
 typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
@@ -272,6 +269,25 @@ struct _WacomModule
 };
 
 	extern WacomModule gWacomModule;
+
+/******************************************************************************
+ * WacomModel - model-specific device capabilities
+ *****************************************************************************/
+
+struct _WacomModel
+{
+	const char* name;
+
+	void (*Initialize)(WacomCommonPtr common, int fd, const char* id, float version);
+	void (*GetResolution)(WacomCommonPtr common, int fd);
+	int (*GetRanges)(WacomCommonPtr common, int fd);
+	int (*Reset)(WacomCommonPtr common, int fd);
+	int (*EnableTilt)(WacomCommonPtr common, int fd);
+	int (*EnableSuppress)(WacomCommonPtr common, int fd);
+	int (*SetLinkSpeed)(WacomCommonPtr common, int fd);
+	int (*Start)(WacomCommonPtr common, int fd);
+	void (*Parse)(WacomCommonPtr common);
+};
 
 /******************************************************************************
  * WacomDeviceRec
@@ -390,20 +406,21 @@ struct _WacomDeviceClass
 };
 
 #ifdef LINUX_INPUT
-	extern WacomDeviceClass wcmUSBDevice;
+	extern WacomDeviceClass gWacomUSBDevice;
 #endif
 
-	extern WacomDeviceClass wcmISDV4Device;
-	extern WacomDeviceClass wcmSerialDevice;
+	extern WacomDeviceClass gWacomISDV4Device;
+	extern WacomDeviceClass gWacomSerialDevice;
 
 /******************************************************************************
  * WacomCommonRec
  *****************************************************************************/
 
-#define TILT_FLAG       1
-#define GRAPHIRE_FLAG   2
-#define INTUOS2_FLAG    4
-#define PL_FLAG         8
+#define TILT_REQUEST_FLAG       1
+#define TILT_ENABLED_FLAG       2
+#define GRAPHIRE_FLAG           4
+#define INTUOS2_FLAG            8
+#define PL_FLAG                 16
 
 #define DEVICE_ISDV4 0x000C
 
@@ -419,12 +436,23 @@ struct _WacomCommonRec
 	char* wcmDevice;             /* device file name */
 	int wcmSuppress;             /* transmit position on delta > supress */
 	unsigned char wcmFlags;      /* various flags (handle tilt) */
-	int wcmMaxX;                 /* max X value */
-	int wcmMaxY;                 /* max Y value */
-	int wcmMaxZ;                 /* max Z value */
-	int wcmResolX;               /* X resolution in points/inch */
-	int wcmResolY;               /* Y resolution in points/inch */
-	int wcmResolZ;               /* pressure resolution of tablet */
+
+	/* These values are in tablet coordinates */
+	int wcmMaxX;                 /* tablet max X value */
+	int wcmMaxY;                 /* tablet max Y value */
+	int wcmMaxZ;                 /* tablet max Z value */
+	int wcmResolX;               /* tablet X resolution in points/inch */
+	int wcmResolY;               /* tablet Y resolution in points/inch */
+	                             /* tablet Z resolution is equivalent
+	                              * to wcmMaxZ which is equal to 100%
+	                              * pressure */
+
+	/* These values are in user coordinates */
+	int wcmUserResolX;           /* user-defined X resolution */
+	int wcmUserResolY;           /* user-defined Y resolution */
+	int wcmUserResolZ;           /* user-defined Z resolution,
+	                              * value equal to 100% pressure */
+
 	LocalDevicePtr* wcmDevices;  /* array of devices sharing same port */
 	int wcmNumDevices;           /* number of devices */
 	int wcmIndex;                /* number of bytes read */
@@ -441,7 +469,9 @@ struct _WacomCommonRec
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
-	WacomDeviceClassPtr pDevCls; /* device functions */
+
+	WacomDeviceClassPtr wcmDevCls; /* device class functions */
+	WacomModelPtr wcmModel;        /* model-specific functions */
 
 	void (*Parse)(WacomCommonPtr common);    /* parses packet data */
 
@@ -451,7 +481,7 @@ struct _WacomCommonRec
 #endif
 };
 
-#define HANDLE_TILT(comm) ((comm)->wcmPktLength == 9)
+#define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
 
 /*****************************************************************************
  * XFree86 V4 Inlined Functions and Prototypes

@@ -21,8 +21,10 @@
  *
  */
 
-#ifndef __WCMSERIAL_H
-#define __WCMSERIAL_H
+#ifndef __XF86_WCMSERIAL_H
+#define __XF86_WCMSERIAL_H
+
+#include "xf86Wacom.h"
 
 #define WC_RESET "\r#"           /* reset wacom IV or wacom V command set */
 #define WC_RESET_BAUD "\r$"      /* reset baud rate to default (wacom V) ors
@@ -59,5 +61,5 @@
 
 char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen);
 
-#endif /* __WCMSERIAL_H */
+#endif /* __XF86_WCMSERIAL_H */
 

@@ -25,29 +25,151 @@
 #include "wcmSerial.h"
 
 /* Serial Support */
-static Bool xf86WcmSerialDetect(LocalDevicePtr pDev);
-static Bool xf86WcmSerialInit(LocalDevicePtr pDev);
-static void xf86WcmSerialRead(LocalDevicePtr pDev);
+static Bool serialDetect(LocalDevicePtr pDev);
+static Bool serialInit(LocalDevicePtr pDev);
+static void serialRead(LocalDevicePtr pDev);
 
-	WacomDeviceClass wcmSerialDevice =
+static int serialInitTablet(WacomCommonPtr common, int fd);
+static void serialInitIntuos(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialInitIntuos2(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialInitCintiq(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialInitPenPartner(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialInitGraphire(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialInitProtocol4(WacomCommonPtr common, int fd,
+	const char* id, float version);
+static void serialGetResolution(WacomCommonPtr common, int fd);
+static int serialGetRanges(WacomCommonPtr common, int fd);
+static int serialResetIntuos(WacomCommonPtr common, int fd);
+static int serialResetCintiq(WacomCommonPtr common, int fd);
+static int serialResetPenPartner(WacomCommonPtr common, int fd);
+static int serialResetProtocol4(WacomCommonPtr common, int fd);
+static int serialEnableTiltProtocol4(WacomCommonPtr common, int fd);
+static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd);
+static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd);
+static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd);
+static int serialStartTablet(WacomCommonPtr common, int fd);
+static void serialParseCintiq(WacomCommonPtr common);
+static void serialParseGraphire(WacomCommonPtr common);
+static void serialParseProtocol4(WacomCommonPtr common);
+static void serialParseProtocol5(WacomCommonPtr common);
+
+/*****************************************************************************
+ * Global Structures
+ ****************************************************************************/
+
+	WacomDeviceClass gWacomSerialDevice =
 	{
-		xf86WcmSerialDetect,
-		xf86WcmSerialInit,
-		xf86WcmSerialRead,
+		serialDetect,
+		serialInit,
+		serialRead,
 	};
 
-static Bool InitTablet(LocalDevicePtr local, const char* buffer, float version);
-static void ParseGraphire(WacomCommonPtr common);
-static void ParseP4(WacomCommonPtr common);
-static void ParseP5(WacomCommonPtr common);
+/*****************************************************************************
+ * Static Structures
+ ****************************************************************************/
 
-static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
+	static WacomModel serialIntuos =
+	{
+		"Intuos",
+		serialInitIntuos,
+		NULL,           /* resolution not queried */
+		serialGetRanges,
+		serialResetIntuos,
+		NULL,           /* tilt automatically enabled */
+		NULL,           /* suppress implemented in software */
+		serialSetLinkSpeedIntuos,
+		serialStartTablet,
+		serialParseProtocol5,
+	};
+
+	static WacomModel serialIntuos2 =
+	{
+		"Intuos2",
+		serialInitIntuos2,
+		NULL,                 /* resolution not queried */
+		serialGetRanges,
+		serialResetIntuos,    /* same as Intuos */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		serialSetLinkSpeedProtocol5,
+		serialStartTablet,
+		serialParseProtocol5,
+	};
+
+	static WacomModel serialCintiq =
+	{
+		"Cintiq",
+		serialInitCintiq,
+		serialGetResolution,
+		serialGetRanges,
+		serialResetCintiq,
+		serialEnableTiltProtocol4,
+		serialEnableSuppressProtocol4,
+		NULL,               /* link speed cannot be changed */
+		serialStartTablet,
+		serialParseCintiq,
+	};
+
+	static WacomModel serialPenPartner =
+	{
+		"PenPartner",
+		serialInitPenPartner,
+		NULL,               /* resolution not queried */
+		serialGetRanges,
+		serialResetPenPartner,
+		serialEnableTiltProtocol4,
+		serialEnableSuppressProtocol4,
+		NULL,              /* link speed cannot be changed */
+		serialStartTablet,
+		serialParseProtocol4,
+	};	
+
+	static WacomModel serialGraphire =
+	{
+		"Graphire",
+		serialInitGraphire,
+		NULL,                     /* resolution not queried */
+		NULL,                     /* ranges not supported */
+		serialResetPenPartner,    /* functionally very similar */
+		serialEnableTiltProtocol4,
+		serialEnableSuppressProtocol4,
+		NULL,                    /* link speed cannot be changed */
+		serialStartTablet,
+		serialParseGraphire,
+	};
+
+	static WacomModel serialProtocol4 =
+	{
+		"Protocol4",
+		serialInitProtocol4,
+		serialGetResolution,
+		serialGetRanges,
+		serialResetProtocol4,
+		serialEnableTiltProtocol4,
+		serialEnableSuppressProtocol4,
+		NULL,               /* link speed cannot be changed */
+		serialStartTablet,
+		serialParseProtocol4,
+	};
+
+/*****************************************************************************
+ * Setup strings
+ ****************************************************************************/
+
+	static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
 		WC_ALL_MACRO WC_NO_MACRO1 WC_RATE WC_NO_INCREMENT
 		WC_STREAM_MODE WC_ZFILTER;
-
-static const char * pl_setup_string = WC_UPPER_ORIGIN WC_RATE WC_STREAM_MODE;
-static const char * penpartner_setup_string = WC_PRESSURE_MODE WC_START;
-static const char * intuos_setup_string = WC_V_MULTI WC_V_ID WC_RATE WC_START;
+	static const char * pl_setup_string = WC_UPPER_ORIGIN WC_RATE
+		WC_STREAM_MODE;
+	static const char * penpartner_setup_string = WC_PRESSURE_MODE
+		WC_START;
+	static const char * intuos_setup_string = WC_V_MULTI WC_V_ID WC_RATE
+		WC_START;
 
 	/* PROTOCOL 4 */
 
@@ -277,17 +399,15 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 	return answer;
 }
 
-static Bool xf86WcmSerialDetect(LocalDevicePtr pDev)
+static Bool serialDetect(LocalDevicePtr pDev)
 {
 	return 1;
 }
 
-static Bool xf86WcmSerialInit(LocalDevicePtr local)
+static Bool serialInit(LocalDevicePtr local)
 {
-	char buffer[256];
 	int err;
-	int loop, idx;
-	float version = 0.0;
+	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
     
 	DBG(1, ErrorF("initializing serial tablet\n"));    
 
@@ -326,7 +446,9 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 		return !Success;
     
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
+		strlen(WC_RESET_BAUD)));
+
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -378,27 +500,7 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 
 	xf86WcmFlushTablet(local->fd);
 
-	DBG(2, ErrorF("reading model\n"));
-	if (!xf86WcmSendRequest(local->fd, WC_MODEL, buffer, sizeof(buffer)))
-		return !Success;
-
-	DBG(2, ErrorF("%s\n", buffer));
-  
-	if (xf86Verbose)
-		ErrorF("%s Wacom tablet model : %s\n",
-				XCONFIG_PROBED, buffer+2);
-    
-	/* Answer is in the form ~#Tablet-Model VRom_Version */
-	/* look for the first V from the end of the string */
-	/* this seems to be the better way to find the version of the ROM */
-	for(loop=strlen(buffer); loop>=0 && *(buffer+loop) != 'V'; loop--);
-	for(idx=loop; idx<strlen(buffer) && *(buffer+idx) != '-'; idx++);
-	*(buffer+idx) = '\0';
-
-	/* Extract version numbers */
-	sscanf(buffer+loop+1, "%f", &version);
-
-	if (InitTablet(local,buffer,version) == !Success)
+	if (serialInitTablet(common,local->fd) == !Success)
 	{
 		SYSCALL(xf86WcmClose(local->fd));
 		local->fd = -1;
@@ -408,652 +510,18 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
 	return Success;
 }
 
-typedef struct _WACOMMODEL WACOMMODEL, *WACOMMODELPTR;
-
-struct _WACOMMODEL
-{
-	const char* name;
-	float coordRes;
-	void (*Initialize)(LocalDevicePtr local, const char* id, float version);
-	void (*EnableTilt)(LocalDevicePtr local);
-	void (*GetResolution)(LocalDevicePtr local);
-	int (*GetRanges)(WACOMMODELPTR model, LocalDevicePtr local);
-	int (*Reset)(LocalDevicePtr local);
-};
-
-static void InitIntuos(LocalDevicePtr local, const char* id, float version);
-static void InitIntuos2(LocalDevicePtr local, const char* id, float version);
-static void InitCintiq(LocalDevicePtr local, const char* id, float version);
-static void InitPenPartner(LocalDevicePtr local, const char* id, float version);
-static void InitGraphire(LocalDevicePtr local, const char* id, float version);
-static void InitProtocol4(LocalDevicePtr local, const char* id, float version);
-static void EnableTilt(LocalDevicePtr local);
-static void GetResolution(LocalDevicePtr local);
-static int GetRanges(WACOMMODELPTR model, LocalDevicePtr local);
-static int ResetIntuos(LocalDevicePtr local);
-static int ResetCintiq(LocalDevicePtr local);
-static int ResetPenPartner(LocalDevicePtr local);
-static int ResetProtocol4(LocalDevicePtr local);
-
-	WACOMMODEL modelIntuos =
-	{
-		"Intuos",
-		1.0,            /* ranges reported in correct units */
-		InitIntuos,
-		NULL,           /* tilt automatically enabled */
-		NULL,           /* resolution not queried */
-		GetRanges,
-		ResetIntuos,
-	};
-
-	WACOMMODEL modelIntuos2 =
-	{
-		"Intuos2",
-		1.0,            /* ranges reported in correct units */
-		InitIntuos2,
-		NULL,           /* tilt automatically enabled */
-		NULL,           /* resolution not queried */
-		GetRanges,
-		ResetIntuos,    /* same as Intuos */
-	};
-
-	WACOMMODEL modelCintiq =
-	{
-		"Cintiq",
-		1270.0,         /* ranges report in 1270 lpi */
-		InitCintiq,
-		EnableTilt,
-		GetResolution,
-		GetRanges,
-		ResetCintiq,
-	};
-
-	WACOMMODEL modelPenPartner =
-	{
-		"PenPartner",
-		1.0,            /* ranges reported in correct units */
-		InitPenPartner,
-		EnableTilt,
-		NULL,           /* resolution not supported */
-		GetRanges,
-		ResetPenPartner,
-	};	
-
-	WACOMMODEL modelGraphire =
-	{
-		"Graphire",
-		1.0,                    /* ranges reported in correct units */
-		InitGraphire,
-		EnableTilt,
-		NULL,                   /* resolution not supported */
-		NULL,                   /* ranges not supported */
-		ResetPenPartner,        /* functionally very similar */
-	};
-
-	WACOMMODEL modelProtocol4 =
-	{
-		"Protocol4",
-		1270.0,         /* ranges report in 1270 lpi */
-		InitProtocol4,
-		EnableTilt,
-		GetResolution,
-		GetRanges,
-		ResetProtocol4,
-	};
-
-static void InitIntuos(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected an Intuos model\n"));
-
-	common->Parse = ParseP5;
-	common->wcmProtocolLevel = 5;
-	common->wcmVersion = version;
-
-	common->wcmMaxZ = 1023;  /* max Z value */
-	common->wcmResolX = 2540; /* X resolution in points/inch */
-	common->wcmResolY = 2540; /* Y resolution in points/inch */
-	common->wcmResolZ = 1;  /* pressure resolution of tablet */
-	common->wcmPktLength = 9; /* length of a packet */
-
-	if (common->wcmThreshold == INVALID_THRESHOLD)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = -480;
-		if (xf86Verbose)
-		{
-			ErrorF("%s Wacom using pressure threshold of "
-				"%d for button 1\n",
-				XCONFIG_PROBED, common->wcmThreshold);
-		}
-	}
-}
-
-static void InitIntuos2(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected an Intuos2 model\n"));
-
-	common->Parse = ParseP5;
-	common->wcmFlags |= INTUOS2_FLAG;
-	common->wcmProtocolLevel = 5;
-	common->wcmVersion = version;
-
-	common->wcmMaxZ = 1023;  /* max Z value */
-	common->wcmResolX = 2540; /* X resolution in points/inch */
-	common->wcmResolY = 2540; /* Y resolution in points/inch */
-	common->wcmResolZ = 1;  /* pressure resolution of tablet */
-	common->wcmPktLength = 9; /* length of a packet */
-
-	if (common->wcmThreshold == INVALID_THRESHOLD)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = -480;
-		if (xf86Verbose)
-		{
-			ErrorF("%s Wacom using pressure threshold of "
-				"%d for button 1\n",
-				XCONFIG_PROBED, common->wcmThreshold);
-		}
-	}
-}
-
-static void InitCintiq(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected a Cintiq model\n"));
-
-	common->Parse = ParseP4;
-	common->wcmFlags |= PL_FLAG;
-	common->wcmProtocolLevel = 4;
-	common->wcmVersion = version;
-
-	common->wcmResolX = 508; /* X resolution in points/inch */
-	common->wcmResolY = 508; /* Y resolution in points/inch */
-	common->wcmResolZ = 1;  /* pressure resolution of tablet */
-
-	if (id[5] == '2')
-	{
-		/* PL-250  */
-		if ( id[6] == '5' )
-		{
-			common->wcmMaxX = 9700;
-			common->wcmMaxY = 7300;
-			common->wcmMaxZ = 255;
-		}
-		/* PL-270  */
-		else
-		{
-			common->wcmMaxX = 10560;
-			common->wcmMaxY = 7920;
-			common->wcmMaxZ = 255;
-		}
-	}
-	else if (id[5] == '3')
-	{
-		/* PL-300  */
-		common->wcmMaxX = 10560;
-		common->wcmMaxY = 7920;
-		common->wcmMaxZ = 255;
-	}
-	else if (id[5] == '4')
-	{
-		/* PL-400  */
-		common->wcmMaxX = 13590;
-		common->wcmMaxY = 10240;
-		common->wcmMaxZ = 255;
-	}
-	else if (id[5] == '5')
-	{
-		/* PL-550  */
-		if ( id[6] == '5' )
-		{
-			common->wcmMaxX = 15360;
-			common->wcmMaxY = 11520;
-			common->wcmMaxZ = 511;
-		}
-		/* PL-500  */
-		else
-		{
-			common->wcmMaxX = 15360;
-			common->wcmMaxY = 11520;
-			common->wcmMaxZ = 255;
-		}
-	}
-	else if (id[5] == '6')
-	{
-		/* PL-600SX  */
-		if ( id[8] == 'S' )
-		{
-			common->wcmMaxX = 15650;
-			common->wcmMaxY = 12540;
-			common->wcmMaxZ = 255;
-		}
-		/* PL-600  */
-		else
-		{
-			common->wcmMaxX = 15315;
-			common->wcmMaxY = 11510;
-			common->wcmMaxZ = 255;
-		}
-	}
-	else if (id[5] == '8')
-	{
-		/* PL-800  */
-		common->wcmMaxX = 18050;
-		common->wcmMaxY = 14450;
-		common->wcmMaxZ = 511;
-	}
-}
-
-static void InitPenPartner(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected a PenPartner model\n"));
-
-	common->Parse = ParseP4;
-	common->wcmProtocolLevel = 4;
-	common->wcmVersion = version;
-
-	common->wcmMaxZ = 256;
-	common->wcmResolX = 1000;
-	common->wcmResolY = 1000;
-}
-
-static void InitGraphire(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected a Graphire model\n"));
-
-	common->Parse = ParseGraphire;
-	common->wcmFlags |= GRAPHIRE_FLAG;
-	common->wcmProtocolLevel = 4;
-	common->wcmVersion = version;
-
-	/* Graphire models don't answer WC_COORD requests */
-	common->wcmMaxX = 5103;
-	common->wcmMaxY = 3711;
-	common->wcmMaxZ = 512;
-	common->wcmResolX = 1000;
-	common->wcmResolY = 1000;
-}
-
-static void InitProtocol4(LocalDevicePtr local, const char* id, float version)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	DBG(2, ErrorF("detected a Protocol4 model\n"));
-
-	common->Parse = ParseP4;
-	common->wcmProtocolLevel = 4;
-	common->wcmVersion = version;
-
-	/* If no maxZ is set, determine from version */
-	if (!common->wcmMaxZ)
-	{
-		/* the rom version determines the max z */
-		if (version >= (float)1.2)
-			common->wcmMaxZ = 255;
-		else
-			common->wcmMaxZ = 120;
-	}
-}
-
-static void EnableTilt(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	/* Tilt works on ROM 1.4 and above */
-	if (common->wcmVersion >= 1.4F)
-	{
-		common->wcmPktLength = 9;
-		DBG(2, ErrorF("EnableTilt\n"));
-	}
-}
-
-static void GetResolution(LocalDevicePtr local)
-{
-	int a, b;
-	char buffer[BUFFER_SIZE], header[BUFFER_SIZE];
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	if (!(common->wcmResolX && common->wcmResolY))
-	{
-		DBG(2, ErrorF("reading config\n"));
-		if (xf86WcmSendRequest(local->fd, WC_CONFIG, buffer,
-			sizeof(buffer)))
-		{
-			DBG(2, ErrorF("%s\n", buffer));
-			/* The header string is simply a place to put the
-			 * unwanted config header don't use buffer+xx because
-			 * the header size varies on different tablets */
-
-			if (sscanf(buffer, "%[^,],%d,%d,%d,%d", header,
-				 &a, &b, &common->wcmResolX,
-				 &common->wcmResolY) == 5)
-			{
-				DBG(6, ErrorF("WC_CONFIG Header = %s\n",
-					header));
-			}
-			else
-			{
-				ErrorF("WACOM: unable to parse resolution. "
-					"Using default.\n");
-				common->wcmResolX = common->wcmResolY = 1270;
-			}
-		}
-		else
-		{
-			ErrorF("WACOM: unable to read resolution. "
-				"Using default.\n");
-			common->wcmResolX = common->wcmResolY = 1270;
-		}
-	}
-
-	DBG(2, ErrorF("GetResolution: ResolX=%d ResolY=%d\n",
-		common->wcmResolX, common->wcmResolY));
-}
-
-static int GetRanges(WACOMMODELPTR model, LocalDevicePtr local)
-{
-	char buffer[BUFFER_SIZE];
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	if (!(common->wcmMaxX && common->wcmMaxY))
-	{
-		DBG(2, ErrorF("reading max coordinates\n"));
-		if (!xf86WcmSendRequest(local->fd, WC_COORD, buffer,
-			sizeof(buffer)))
-		{
-			ErrorF("WACOM: unable to read max coordinates. "
-				"Use the MaxX and MaxY options.\n");
-			return !Success;
-		}
-		DBG(2, ErrorF("%s\n", buffer));
-		if (sscanf(buffer+2, "%d,%d", &common->wcmMaxX,
-			&common->wcmMaxY) != 2)
-		{
-			ErrorF("WACOM: unable to parse max coordinates. "
-				"Use the MaxX and MaxY options.\n");
-			return !Success;
-		}
-
-		/* Adjust the resolution for tablets reporting in units
-		 * other than points. Typical value is 1270.0 lpi. */
-
-		if (model->coordRes != 1.0)
-		{
-			DBG(2, ErrorF("GetRanges adjusting %d,%d by %g to "
-				"%d,%d\n",
-				common->wcmMaxX, common->wcmMaxY,
-				model->coordRes,
-				(common->wcmMaxX / model->coordRes) *
-					common->wcmResolX,
-				(common->wcmMaxY / model->coordRes) *
-					common->wcmResolY));
-
-			common->wcmMaxX = (common->wcmMaxX / MAX_COORD_RES) *
-				common->wcmResolX;
-			common->wcmMaxY = (common->wcmMaxY / MAX_COORD_RES) *
-				common->wcmResolY;
-		}
-	}
-
-	DBG(2, ErrorF("GetRanges: maxX=%d maxY=%d\n",
-		common->wcmMaxX, common->wcmMaxY));
-
-	return Success;
-}
-
-static int ResetIntuos(LocalDevicePtr local)
-{
-	int err;
-	SYSCALL(err = xf86WcmWrite(local->fd, intuos_setup_string,
-		strlen(intuos_setup_string)));
-	return (err == -1) ? !Success : Success;
-}
-
-static int ResetCintiq(LocalDevicePtr local)
-{
-	int err;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
-  
-	if (xf86WcmWait(75)) return !Success;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, pl_setup_string,
-		strlen(pl_setup_string)));
-	if (err == -1) return !Success;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
-
-	return (err == -1) ? !Success : Success;
-}
-
-static int ResetPenPartner(LocalDevicePtr local)
-{
-	int err;
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
-	return (err == -1) ? !Success : Success;
-}
-
-static int ResetProtocol4(LocalDevicePtr local)
-{
-	int err;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
-  
-	if (xf86WcmWait(75)) return !Success;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, setup_string,
-		strlen(setup_string)));
-	if (err == -1) return !Success;
-
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
-	return (err == -1) ? !Success : Success;
-}
-
-static Bool InitTablet(LocalDevicePtr local, const char* id, float version)
-{
-	int err;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
-	int is_a_penpartner = 0;
-	WACOMMODEL* model = NULL;
-
-	/* Intuos */
-	if (id[2] == 'G' && id[3] == 'D')
-		model = &modelIntuos;
-
-	/* Intuos2 */
-	else if (id[2] == 'X' && id[3] == 'D')
-		model = &modelIntuos2;
-
-	/* Cintiq */
-	else if (id[2] == 'P' && id[3] == 'L')
-		model = &modelCintiq;
-
-	/* PenPartner */
-	else if (id[2] == 'C' && id[3] == 'T')
-	{
-		model = &modelPenPartner;
-		is_a_penpartner = 1;
-	}
-
-	/* Graphire */
-	else if (id[2] == 'E' && id[3] == 'T')
-	{
-		model = &modelGraphire;
-		is_a_penpartner = 1;
-	}
-
-	/* everything else */
-	else
-		model = &modelProtocol4;
-
-	/* INITIALIZATION */
-
-	if (model->Initialize)
-		model->Initialize(local,id,version);
-
-	if (model->EnableTilt && common->wcmFlags & TILT_FLAG)
-		model->EnableTilt(local);
-
-	if (model->GetResolution)
-		model->GetResolution(local);
-
-	if (model->GetRanges)
-		if (model->GetRanges(model,local) != Success)
-			return !Success;
-
-	DBG(2, ErrorF("setup is maxX=%d maxY=%d resolX=%d resolY=%d\n",
-			common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
-			common->wcmResolY));
-
-	/* RESET TABLET */
-
-	if (model->Reset && (model->Reset(local) != Success))
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-
-	/* Send the tilt mode command after setup because it must be enabled
-	 * after multi-mode to take precedence */
-	if (common->wcmProtocolLevel == 4 && HANDLE_TILT(common))
-	{
-		DBG(2, ErrorF("Sending tilt mode order\n"));
- 
-		SYSCALL(err = xf86WcmWrite(local->fd, WC_TILT_MODE,
-			strlen(WC_TILT_MODE)));
-		if (err == -1)
-		{
-			ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-			return !Success;
-		}
-	}
-
-	if (common->wcmProtocolLevel == 4)
-	{
-		char buf[20];
-      
-		sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
-		SYSCALL(err = xf86WcmWrite(local->fd, buf, strlen(buf)));
-
-		if (err == -1)
-		{
-			ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-			return !Success;
-		}
-	}
-    
-	if (xf86Verbose)
-		ErrorF("%s Wacom %s tablet maximum X=%d maximum Y=%d "
-			"X resolution=%d Y resolution=%d suppress=%d%s\n",
-			XCONFIG_PROBED, common->wcmProtocolLevel == 4 ?
-				"IV" : "V",
-			common->wcmMaxX, common->wcmMaxY,
-			common->wcmResolX, common->wcmResolY,
-			common->wcmSuppress,
-			HANDLE_TILT(common) ? " Tilt" : "");
-  
-	/* change the serial speed if requested */
-	if (common->wcmLinkSpeed > 9600)
-	{
-		if (common->wcmProtocolLevel == 5)
-		{
-			char *speed_init_string = WC_V_19200;
-			DBG(1, ErrorF("Switching serial link to %d\n",
-				common->wcmLinkSpeed));
-
-			if (common->wcmLinkSpeed == 38400 &&
-				version < 2.0 &&
-				!(common->wcmFlags&INTUOS2_FLAG))
-			{
-				ErrorF("Wacom: 38400 speed not supported "
-					"with this Intuos firmware (%f)\n",
-					version);
-				ErrorF("Switching to 19200\n");
-				common->wcmLinkSpeed = 19200;
-			}
-
-			switch (common->wcmLinkSpeed)
-			{
-				case 38400:
-					speed_init_string = WC_V_38400;
-					break;
-
-				case 19200:
-					speed_init_string = WC_V_19200;
-					break;
-			}
-			/* Switch the tablet to the requested speed */
-			SYSCALL(err = xf86WcmWrite(local->fd, speed_init_string,
-				strlen(speed_init_string)));
-			if (err == -1)
-			{
-				ErrorF("Wacom xf86WcmWrite error : %s\n",
-					strerror(errno));
-				return !Success;
-			}
-     
-			/* Wait 75 mSecs */
-			if (xf86WcmWait(75))
-				return !Success;
-    
-			/* Set speed of serial link to requested speed */
-			if (xf86WcmSetSerialSpeed(local->fd, common->wcmLinkSpeed) < 0)
-			return !Success;
-		} /* protocol 5 */
-		else
-		{
-			ErrorF("Changing the speed of a wacom IV "
-				"device is not yet implemented\n");
-		}
-	} /* change link speed */
-
-	/* Tell the tablet to start sending coordinates */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_START, strlen(WC_START)));
-
-	if (err == -1)
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-
-	return Success;
-}
-
 /*****************************************************************************
- * xf86WcmSerialRead --
+ * serialRead --
  *   Read the new events from the device, and enqueue them.
  ****************************************************************************/
 
-static void xf86WcmSerialRead(LocalDevicePtr local)
+static void serialRead(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	int len, loop;
 	unsigned char buffer[BUFFER_SIZE];
 
-	DBG(7, ErrorF("xf86WcmSerialRead BEGIN device=%s fd=%d\n",
+	DBG(7, ErrorF("serialRead BEGIN device=%s fd=%d\n",
 		common->wcmDevice, local->fd));
 
 	SYSCALL(len = xf86WcmRead(local->fd, buffer, sizeof(buffer)));
@@ -1064,14 +532,14 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		return;
 	}
 
-	DBG(10, ErrorF("xf86WcmSerialRead read %d bytes\n", len));
+	DBG(10, ErrorF("serialRead read %d bytes\n", len));
 
 	for (loop=0; loop<len; loop++)
 	{
 		/* magic bit is not OK */
 		if ((common->wcmIndex == 0) && !(buffer[loop] & HEADER_BIT))
 		{
-			DBG(6, ErrorF("xf86WcmSerialRead bad magic "
+			DBG(6, ErrorF("serialRead bad magic "
 				"number 0x%x (pktlength=%d) %d\n",
 				buffer[loop], common->wcmPktLength, loop));
 			continue;
@@ -1080,7 +548,7 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		/* magic bit at wrong place */
 		else if ((common->wcmIndex != 0) && (buffer[loop] & HEADER_BIT))
 		{
-			DBG(6, ErrorF("xf86WcmSerialRead magic "
+			DBG(6, ErrorF("serialRead magic "
 				"number 0x%x detetected at index %d loop=%d\n",
 				(unsigned int)buffer[loop],common->wcmIndex,
 				loop));
@@ -1092,21 +560,148 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		/* if there are enough bytes, parse */
 		if (common->wcmIndex == common->wcmPktLength)
 		{
-			if (common->Parse)
-				common->Parse(common);
+			if (common->wcmModel)
+				common->wcmModel->Parse(common);
 
 			/* reset for next packet */
 			common->wcmIndex = 0;
 		}
 	} /* next data */
 
-	DBG(7, ErrorF("xf86WcmSerialRead END   local=0x%x index=%d\n",
+	DBG(7, ErrorF("serialRead END   local=0x%x index=%d\n",
 		local, common->wcmIndex));
+}
+
+/*****************************************************************************
+ * serialInitTablet --
+ *   Read the new events from the device, and enqueue them.
+ ****************************************************************************/
+
+
+static int serialInitTablet(WacomCommonPtr common, int fd)
+{
+	int loop, idx;
+	char id[BUFFER_SIZE];
+	float version;
+
+	WacomModelPtr model = NULL;
+
+	/* if model is forced, initialize */
+	if (model != NULL)
+	{
+		model->Initialize(common,fd,"",0.0F);
+	}
+
+	/* otherwise, query and initialize */
+	else
+	{
+		DBG(2, ErrorF("reading model\n"));
+		if (!xf86WcmSendRequest(fd, WC_MODEL, id, sizeof(id)))
+			return !Success;
+
+		DBG(2, ErrorF("%s\n", id));
+  
+		if (xf86Verbose)
+			ErrorF("%s Wacom tablet model : %s\n",
+					XCONFIG_PROBED, id+2);
+    
+		/* Answer is in the form ~#Tablet-Model VRom_Version 
+		 * look for the first V from the end of the string
+		 * this seems to be the better way to find the version
+		 * of the ROM */
+		for(loop=strlen(id); loop>=0 && *(id+loop) != 'V'; loop--);
+		for(idx=loop; idx<strlen(id) && *(id+idx) != '-'; idx++);
+		*(id+idx) = '\0';
+
+		/* Extract version numbers */
+		sscanf(id+loop+1, "%f", &version);
+
+		/* Detect tablet model based on identifier */
+		if (id[2] == 'G' && id[3] == 'D')
+			model = &serialIntuos;
+		else if (id[2] == 'X' && id[3] == 'D')
+			model = &serialIntuos2;
+		else if (id[2] == 'P' && id[3] == 'L')
+			model = &serialCintiq;
+		else if (id[2] == 'C' && id[3] == 'T')
+			model = &serialPenPartner;
+		else if (id[2] == 'E' && id[3] == 'T')
+			model = &serialGraphire;
+		else
+			model = &serialProtocol4;
+
+		/* Initialize the tablet */
+		model->Initialize(common,fd,id,version);
+	}
+
+	/* Get tablet resolution */
+	if (model->GetResolution)
+		model->GetResolution(common,fd);
+
+	/* Get tablet range */
+	if (model->GetRanges && (model->GetRanges(common,fd) != Success))
+		return !Success;
+
+	/* Reset tablet to known state */
+	if (model->Reset && (model->Reset(common,fd) != Success))
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		return !Success;
+	}
+
+	/* Enable tilt mode, if requested and available */
+	if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
+	{
+		if (model->EnableTilt(common,fd) != Success)
+			return !Success;
+	}
+
+	/* Enable hardware suppress, if requested and available */
+	if ((common->wcmSuppress != 0) && model->EnableSuppress)
+	{
+		if (model->EnableSuppress(common,fd) != Success)
+			return !Success;
+	}
+
+	/* change the serial speed, if requested */
+	if (common->wcmLinkSpeed != 9600)
+	{
+		if (model->SetLinkSpeed)
+		{
+			if (model->SetLinkSpeed(common,fd) != Success)
+				return !Success;
+		}
+		else
+		{
+			ErrorF("Tablet does not support setting link "
+				"speed, or not yet implemented\n");
+		}
+	}
+
+	/* output tablet state as probed */
+	if (xf86Verbose)
+		ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+			"resX=%d resY=%d suppress=%d tilt=%s\n",
+			XCONFIG_PROBED,
+			model->name, common->wcmLinkSpeed,
+			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
+			common->wcmResolX, common->wcmResolY,
+			common->wcmSuppress,
+			HANDLE_TILT(common) ? "enabled" : "disabled");
+  
+	/* start the tablet data */
+	if (model->Start && (model->Start(common,fd) != Success))
+		return !Success;
+
+	/* save model for use in parsing */
+	common->wcmModel = model;
+
+	return Success;
 }
 
 /* ugly kludge - temporarily exploded out */
 
-static void ParseGraphire(WacomCommonPtr common)
+static void serialParseGraphire(WacomCommonPtr common)
 {
 	int x, y, z, idx, buttons, tx = 0, ty = 0;
 	int is_stylus, is_button, wheel=0;
@@ -1162,12 +757,12 @@ static void ParseGraphire(WacomCommonPtr common)
 			common->wcmStylusSide = !(common->wcmData[3] & 0x40);
 	}
 
-	DBG(8, ErrorF("xf86WcmSerialRead %s side\n",
+	DBG(8, ErrorF("serialRead %s side\n",
 		common->wcmStylusSide ? "stylus" : "eraser"));
 		common->wcmStylusProximity = is_proximity;
 
 	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common))
+	if (HANDLE_TILT(common) && is_stylus)
 	{
 		tx = (common->wcmData[7] & TILT_BITS);
 		ty = (common->wcmData[8] & TILT_BITS);
@@ -1186,7 +781,7 @@ static void ParseGraphire(WacomCommonPtr common)
 		int temp_is_proximity = is_proximity;
 		int curDevice; 
 
-		DBG(7, ErrorF("xf86WcmSerialRead trying "
+		DBG(7, ErrorF("serialRead trying "
 			"to send to %s\n", local_dev->name));
 
 		/* check for device type (STYLUS, ERASER
@@ -1260,7 +855,7 @@ static void ParseGraphire(WacomCommonPtr common)
   
 		if (DEVICE_ID(priv->flags) != curDevice)
 		{
-			DBG(7, ErrorF("xf86WcmSendEvents not the same "
+			DBG(7, ErrorF("sendEvents not the same "
 				"device type (%u,%u)\n",
 				DEVICE_ID(priv->flags), curDevice));
 			continue;
@@ -1309,7 +904,9 @@ static void ParseGraphire(WacomCommonPtr common)
 	} /* next device */
 }
 
-static void ParseP4(WacomCommonPtr common)
+/* temporarily exploded out */
+
+static void serialParseCintiq(WacomCommonPtr common)
 {
 	WacomDeviceState* orig = &common->wcmChannel[0].state;
 	WacomDeviceState ds = *orig;
@@ -1324,10 +921,14 @@ static void ParseP4(WacomCommonPtr common)
 		(common->wcmData[4] << 7) +
 		common->wcmData[5]);
 
-	/* how about using the protocol version, rather than
-	 * a user configurable value, eh? */
-
-	if (common->wcmMaxZ > 350)
+	/* get pressure */
+	if (common->wcmMaxZ == 255)
+	{
+		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
+			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
+			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+	}
+	else
 	{
 		/* which tablets use this? */
 		/* PL550, PL800, and Graphire apparently */
@@ -1336,22 +937,9 @@ static void ParseP4(WacomCommonPtr common)
 			((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
 			((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 	}
-	else if (common->wcmMaxZ > 150)
-	{
-		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
-			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
-			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
-	}
-	else
-	{
-		ds.pressure = (common->wcmData[6] & ZAXIS_BITS) |
-			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
-	}
 
-	if (common->wcmFlags & PL_FLAG)
-		ds.buttons = (common->wcmData[3] & 0x38) >> 3;
-	else
-		ds.buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+	/* get buttons */
+	ds.buttons = (common->wcmData[3] & 0x38) >> 3;
 
 	/* If stylus comes into focus, use button to determine if eraser */
 	is_stylus = (common->wcmData[0] & POINTER_BIT);
@@ -1366,13 +954,13 @@ static void ParseP4(WacomCommonPtr common)
 	else if (!ds.proximity)
 		ds.device_type = 0;
 
-	DBG(8, ErrorF("ParseP4 %s\n",
+	DBG(8, ErrorF("serialParseCintiq %s\n",
 		ds.device_type == CURSOR_ID ? "CURSOR" :
 		ds.device_type == ERASER_ID ? "ERASER " :
 		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 
 	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common))
+	if (HANDLE_TILT(common) && is_stylus)
 	{
 		ds.tiltx = (common->wcmData[7] & TILT_BITS);
 		ds.tilty = (common->wcmData[8] & TILT_BITS);
@@ -1385,7 +973,69 @@ static void ParseP4(WacomCommonPtr common)
 	xf86WcmEvent(common,0,&ds);
 }
 
-static void ParseP5(WacomCommonPtr common)
+/* temporarily exploded out - used by most older tablets */
+
+static void serialParseProtocol4(WacomCommonPtr common)
+{
+	WacomDeviceState* orig = &common->wcmChannel[0].state;
+	WacomDeviceState ds = *orig;
+	int is_stylus;
+
+	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
+     
+	ds.x = (((common->wcmData[0] & 0x3) << 14) +
+		(common->wcmData[1] << 7) +
+		common->wcmData[2]);
+	ds.y = (((common->wcmData[3] & 0x3) << 14) +
+		(common->wcmData[4] << 7) +
+		common->wcmData[5]);
+
+	/* get pressure */
+	if (common->wcmMaxZ == 255)
+		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
+			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
+			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+
+	else
+		ds.pressure = (common->wcmData[6] & ZAXIS_BITS) |
+			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
+
+	/* get button state */
+	ds.buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+
+	/* If stylus comes into focus, use button to determine if eraser */
+	is_stylus = (common->wcmData[0] & POINTER_BIT);
+	if (is_stylus && !orig->proximity && ds.proximity)
+		ds.device_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+
+	/* If it is not a stylus, it's a cursor */
+	else if (!is_stylus && !orig->proximity && ds.proximity)
+		ds.device_type = CURSOR_ID;
+
+	/* If it is out of proximity, there is no device type */
+	else if (!ds.proximity)
+		ds.device_type = 0;
+
+	DBG(8, ErrorF("serialParseProtocol4 %s\n",
+		ds.device_type == CURSOR_ID ? "CURSOR" :
+		ds.device_type == ERASER_ID ? "ERASER " :
+		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+
+	/* handle tilt values only for stylus */
+	if (HANDLE_TILT(common) && is_stylus)
+	{
+		ds.tiltx = (common->wcmData[7] & TILT_BITS);
+		ds.tilty = (common->wcmData[8] & TILT_BITS);
+		if (common->wcmData[7] & TILT_SIGN_BIT)
+			ds.tiltx -= 64;
+		if (common->wcmData[8] & TILT_SIGN_BIT)
+			ds.tilty -= 64;
+	}
+
+	xf86WcmEvent(common,0,&ds);
+}
+
+static void serialParseProtocol5(WacomCommonPtr common)
 {
 	int is_stylus=0, have_data=0;
 	int channel;
@@ -1549,3 +1199,436 @@ static void ParseP5(WacomCommonPtr common)
 		common->wcmChannel[channel].pDev = NULL;
 	}
 }
+
+/*****************************************************************************
+ * Model-specific functions
+ ****************************************************************************/
+
+static void serialInitIntuos(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected an Intuos model\n"));
+
+	common->wcmProtocolLevel = 5;
+	common->wcmVersion = version;
+
+	common->wcmMaxZ = 1023;   /* max Z value */
+	common->wcmResolX = 2540; /* tablet X resolution in points/inch */
+	common->wcmResolY = 2540; /* tablet Y resolution in points/inch */
+	common->wcmPktLength = 9; /* length of a packet */
+	common->wcmFlags |= TILT_ENABLED_FLAG;
+
+	if (common->wcmThreshold == INVALID_THRESHOLD)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = -480;
+		if (xf86Verbose)
+		{
+			ErrorF("%s Wacom using pressure threshold of "
+				"%d for button 1\n",
+				XCONFIG_PROBED, common->wcmThreshold);
+		}
+	}
+}
+
+static void serialInitIntuos2(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected an Intuos2 model\n"));
+
+	common->wcmFlags |= INTUOS2_FLAG;
+	common->wcmProtocolLevel = 5;
+	common->wcmVersion = version;
+
+	common->wcmMaxZ = 1023;       /* max Z value */
+	common->wcmResolX = 2540;     /* tablet X resolution in points/inch */
+	common->wcmResolY = 2540;     /* tablet Y resolution in points/inch */
+	common->wcmPktLength = 9;     /* length of a packet */
+	common->wcmFlags |= TILT_ENABLED_FLAG;
+
+	if (common->wcmThreshold == INVALID_THRESHOLD)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = -480;
+		if (xf86Verbose)
+		{
+			ErrorF("%s Wacom using pressure threshold of "
+				"%d for button 1\n",
+				XCONFIG_PROBED, common->wcmThreshold);
+		}
+	}
+}
+
+static void serialInitCintiq(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected a Cintiq model\n"));
+
+	common->wcmFlags |= PL_FLAG;
+	common->wcmProtocolLevel = 4;
+	common->wcmPktLength = 7;
+	common->wcmVersion = version;
+
+	if (id[5] == '2')
+	{
+		/* PL-250  */
+		if ( id[6] == '5' )
+		{
+			common->wcmMaxX = 9700;
+			common->wcmMaxY = 7300;
+			common->wcmMaxZ = 255;
+		}
+		/* PL-270  */
+		else
+		{
+			common->wcmMaxX = 10560;
+			common->wcmMaxY = 7920;
+			common->wcmMaxZ = 255;
+		}
+	}
+	else if (id[5] == '3')
+	{
+		/* PL-300  */
+		common->wcmMaxX = 10560;
+		common->wcmMaxY = 7920;
+		common->wcmMaxZ = 255;
+	}
+	else if (id[5] == '4')
+	{
+		/* PL-400  */
+		common->wcmMaxX = 13590;
+		common->wcmMaxY = 10240;
+		common->wcmMaxZ = 255;
+	}
+	else if (id[5] == '5')
+	{
+		/* PL-550  */
+		if ( id[6] == '5' )
+		{
+			common->wcmMaxX = 15360;
+			common->wcmMaxY = 11520;
+			common->wcmMaxZ = 511;
+		}
+		/* PL-500  */
+		else
+		{
+			common->wcmMaxX = 15360;
+			common->wcmMaxY = 11520;
+			common->wcmMaxZ = 255;
+		}
+	}
+	else if (id[5] == '6')
+	{
+		/* PL-600SX  */
+		if ( id[8] == 'S' )
+		{
+			common->wcmMaxX = 15650;
+			common->wcmMaxY = 12540;
+			common->wcmMaxZ = 255;
+		}
+		/* PL-600  */
+		else
+		{
+			common->wcmMaxX = 15315;
+			common->wcmMaxY = 11510;
+			common->wcmMaxZ = 255;
+		}
+	}
+	else if (id[5] == '8')
+	{
+		/* PL-800  */
+		common->wcmMaxX = 18050;
+		common->wcmMaxY = 14450;
+		common->wcmMaxZ = 511;
+	}
+
+	common->wcmResolX = 508; /* tablet X resolution in points/inch */
+	common->wcmResolY = 508; /* tablet Y resolution in points/inch */
+
+}
+
+static void serialInitPenPartner(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected a PenPartner model\n"));
+
+	common->wcmProtocolLevel = 4;
+	common->wcmPktLength = 7;
+	common->wcmVersion = version;
+
+	common->wcmMaxZ = 256;
+	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
+	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
+}
+
+static void serialInitGraphire(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected a Graphire model\n"));
+
+	common->wcmFlags |= GRAPHIRE_FLAG;
+	common->wcmProtocolLevel = 4;
+	common->wcmPktLength = 7;
+	common->wcmVersion = version;
+
+	/* Graphire models don't answer WC_COORD requests */
+	common->wcmMaxX = 5103;
+	common->wcmMaxY = 3711;
+	common->wcmMaxZ = 512;
+	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
+	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
+}
+
+static void serialInitProtocol4(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("detected a Protocol4 model\n"));
+
+	common->wcmProtocolLevel = 4;
+	common->wcmPktLength = 7;
+	common->wcmVersion = version;
+
+	/* If no maxZ is set, determine from version */
+	if (!common->wcmMaxZ)
+	{
+		/* the rom version determines the max z */
+		if (version >= (float)1.2)
+			common->wcmMaxZ = 255;
+		else
+			common->wcmMaxZ = 120;
+	}
+}
+
+static void serialGetResolution(WacomCommonPtr common, int fd)
+{
+	int a, b;
+	char buffer[BUFFER_SIZE], header[BUFFER_SIZE];
+
+	if (!(common->wcmResolX && common->wcmResolY))
+	{
+		DBG(2, ErrorF("Requesting resolution from device\n"));
+		if (xf86WcmSendRequest(fd, WC_CONFIG, buffer,
+			sizeof(buffer)))
+		{
+			DBG(2, ErrorF("%s\n", buffer));
+			/* The header string is simply a place to put the
+			 * unwanted config header don't use buffer+xx because
+			 * the header size varies on different tablets */
+
+			if (sscanf(buffer, "%[^,],%d,%d,%d,%d", header,
+				 &a, &b, &common->wcmResolX,
+				 &common->wcmResolY) == 5)
+			{
+				DBG(6, ErrorF("WC_CONFIG Header = %s\n",
+					header));
+			}
+			else
+			{
+				ErrorF("WACOM: unable to parse resolution. "
+					"Using default.\n");
+				common->wcmResolX = common->wcmResolY = 1270;
+			}
+		}
+		else
+		{
+			ErrorF("WACOM: unable to read resolution. "
+				"Using default.\n");
+			common->wcmResolX = common->wcmResolY = 1270;
+		}
+	}
+
+	DBG(2, ErrorF("serialGetResolution: ResolX=%d ResolY=%d\n",
+		common->wcmResolX, common->wcmResolY));
+}
+
+static int serialGetRanges(WacomCommonPtr common, int fd)
+{
+	char buffer[BUFFER_SIZE];
+
+	if (!(common->wcmMaxX && common->wcmMaxY))
+	{
+		DBG(2, ErrorF("Requesting max coordinates\n"));
+		if (!xf86WcmSendRequest(fd, WC_COORD, buffer,
+			sizeof(buffer)))
+		{
+			ErrorF("WACOM: unable to read max coordinates. "
+				"Use the MaxX and MaxY options.\n");
+			return !Success;
+		}
+		DBG(2, ErrorF("%s\n", buffer));
+		if (sscanf(buffer+2, "%d,%d", &common->wcmMaxX,
+			&common->wcmMaxY) != 2)
+		{
+			ErrorF("WACOM: unable to parse max coordinates. "
+				"Use the MaxX and MaxY options.\n");
+			return !Success;
+		}
+	}
+
+	DBG(2, ErrorF("serialGetRanges: maxX=%d maxY=%d (%g,%g in)\n",
+		common->wcmMaxX, common->wcmMaxY,
+		(double)common->wcmMaxX / common->wcmResolX,
+		(double)common->wcmMaxY / common->wcmResolY));
+
+	return Success;
+}
+
+static int serialResetIntuos(WacomCommonPtr common, int fd)
+{
+	int err;
+	SYSCALL(err = xf86WcmWrite(fd, intuos_setup_string,
+		strlen(intuos_setup_string)));
+	return (err == -1) ? !Success : Success;
+}
+
+static int serialResetCintiq(WacomCommonPtr common, int fd)
+{
+	int err;
+
+	SYSCALL(err = xf86WcmWrite(fd, WC_RESET, strlen(WC_RESET)));
+  
+	if (xf86WcmWait(75)) return !Success;
+
+	SYSCALL(err = xf86WcmWrite(fd, pl_setup_string,
+		strlen(pl_setup_string)));
+	if (err == -1) return !Success;
+
+	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+		strlen(penpartner_setup_string)));
+
+	return (err == -1) ? !Success : Success;
+}
+
+static int serialResetPenPartner(WacomCommonPtr common, int fd)
+{
+	int err;
+	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+		strlen(penpartner_setup_string)));
+	return (err == -1) ? !Success : Success;
+}
+
+static int serialResetProtocol4(WacomCommonPtr common, int fd)
+{
+	int err;
+
+	SYSCALL(err = xf86WcmWrite(fd, WC_RESET, strlen(WC_RESET)));
+  
+	if (xf86WcmWait(75)) return !Success;
+
+	SYSCALL(err = xf86WcmWrite(fd, setup_string,
+		strlen(setup_string)));
+	if (err == -1) return !Success;
+
+	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+		strlen(penpartner_setup_string)));
+	return (err == -1) ? !Success : Success;
+}
+
+static int serialEnableTiltProtocol4(WacomCommonPtr common, int fd)
+{
+	int err;
+
+	/* Send the tilt mode command after reset and setup because
+	 * it must be enabled after multi-mode to take precedence */
+
+	/* Tilt works on ROM 1.4 and above */
+	if (common->wcmVersion >= 1.4F)
+	{
+		DBG(2, ErrorF("Sending tilt mode order\n"));
+
+		common->wcmPktLength = 9;
+		common->wcmFlags |= TILT_ENABLED_FLAG;
+ 
+		SYSCALL(err = xf86WcmWrite(fd, WC_TILT_MODE,
+			strlen(WC_TILT_MODE)));
+
+		if (err == -1)
+		{
+			ErrorF("Wacom xf86WcmWrite error : %s\n",
+				strerror(errno));
+			return !Success;
+		}
+	}
+
+	return Success;
+}
+
+static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd)
+{
+	char buf[20];
+	int err;
+
+	sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
+	SYSCALL(err = xf86WcmWrite(fd, buf, strlen(buf)));
+
+	if (err == -1)
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n",
+			strerror(errno));
+		return !Success;
+	}
+	return Success;
+}
+
+static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd)
+{
+	if ((common->wcmLinkSpeed == 38400) &&
+		(common->wcmVersion < 2.0F))
+	{
+		ErrorF("Wacom: 38400 speed not supported with this Intuos "
+			"firmware (%f)\n", common->wcmVersion);
+		ErrorF("Switching to 19200\n");
+		common->wcmLinkSpeed = 19200;
+	}
+	return serialSetLinkSpeedProtocol5(common,fd);
+}
+
+static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd)
+{
+	int err;
+	char* speed_init_string;
+
+	DBG(1, ErrorF("Switching serial link to %d\n",
+		common->wcmLinkSpeed));
+
+	/* set init string according to speed */
+	speed_init_string = (common->wcmLinkSpeed == 38400) ?
+		WC_V_38400 : WC_V_19200;
+
+	/* Switch the tablet to the requested speed */
+	SYSCALL(err = xf86WcmWrite(fd, speed_init_string,
+		strlen(speed_init_string)));
+
+	if (err == -1)
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		return !Success;
+	}
+
+	/* Wait 75 mSecs */
+	if (xf86WcmWait(75))
+		return !Success;
+
+	/* Set speed of serial link to requested speed */
+	if (xf86WcmSetSerialSpeed(fd, common->wcmLinkSpeed) < 0)
+		return !Success;
+
+	return Success;
+}
+
+static int serialStartTablet(WacomCommonPtr common, int fd)
+{
+	int err;
+
+	/* Tell the tablet to start sending coordinates */
+	SYSCALL(err = xf86WcmWrite(fd, WC_START, strlen(WC_START)));
+
+	if (err == -1)
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		return !Success;
+	}
+
+	return Success;
+}
+

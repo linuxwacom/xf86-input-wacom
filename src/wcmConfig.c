@@ -119,13 +119,11 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevices[0] = local;
 	common->wcmNumDevices = 1;         /* number of devices */
 	common->wcmIndex = 0;              /* number of bytes read */
-	common->wcmPktLength = 7;          /* length of a packet */
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
 	common->wcmMaxZ = 0;               /* max Z value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
-	common->wcmResolZ = 1;             /* Z resolution in points/inch */
 	common->wcmHasEraser = (flag & ERASER_ID) ? TRUE : FALSE;
 	common->wcmStylusSide = TRUE;          /* eraser or stylus ? */
 	common->wcmStylusProximity = FALSE;    /* a stylus is in proximity ? */
@@ -133,7 +131,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmThreshold = INVALID_THRESHOLD;
 	common->wcmInitNumber = 0;      /* magic number for the init phases */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
-	common->pDevCls = &wcmSerialDevice; /* device-specific functions */
+	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
+	common->wcmModel = NULL;                 /* model-specific functions */
 	return local;
 }
 
@@ -357,7 +356,7 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 			break;
 
 		case TILT_MODE:
-			common->wcmFlags |= TILT_FLAG;
+			common->wcmFlags |= TILT_REQUEST_FLAG;
 			break;
 
 		case HISTORY_SIZE:
@@ -492,28 +491,28 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 		case RESOLUTION_X:
 			if (xf86GetToken(NULL) != NUMBER)
 				xf86ConfigError("Option number expected");
-			common->wcmResolX = val->num;
+			common->wcmUserResolX = val->num;
 			if (xf86Verbose)
 				ErrorF("%s Wacom resolution x = %d\n",
-					XCONFIG_GIVEN, common->wcmResolX);
+					XCONFIG_GIVEN, common->wcmUserResolX);
 			break;
 
 		case RESOLUTION_Y:
 			if (xf86GetToken(NULL) != NUMBER)
 				xf86ConfigError("Option number expected");
-			common->wcmResolY = val->num;
+			common->wcmUserResolY = val->num;
 			if (xf86Verbose)
 				ErrorF("%s Wacom resolution y = %d\n",
-					XCONFIG_GIVEN, common->wcmResolY);
+					XCONFIG_GIVEN, common->wcmUserResolY);
 			break;
 
 		case RESOLUTION_Z:
 			if (xf86GetToken(NULL) != NUMBER)
 				xf86ConfigError("Option number expected");
-			common->wcmResolZ = val->num;
+			common->wcmUserResolZ = val->num;
 			if (xf86Verbose)
 				ErrorF("%s Wacom resolution z = %d\n",
-					XCONFIG_GIVEN, common->wcmResolZ);
+					XCONFIG_GIVEN, common->wcmUserResolZ);
 			break;
 
 		case USB:
@@ -839,7 +838,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (s && (xf86NameCmp(s, "ISDV4") == 0))
 	{
 		common->wcmForceDevice=DEVICE_ISDV4;
-		common->pDevCls = &wcmISDV4Device;
+		common->wcmDevCls = &gWacomISDV4Device;
 		xf86Msg(X_CONFIG, "%s: forcing TabletPC ISD V4 protocol\n",
 			dev->identifier);
 	}
@@ -867,20 +866,21 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmSuppress);      
     
 	if (xf86SetBoolOption(local->options, "Tilt",
-			(common->wcmFlags & TILT_FLAG)))
+			(common->wcmFlags & TILT_REQUEST_FLAG)))
 	{
-		common->wcmFlags |= TILT_FLAG;
+		common->wcmFlags |= TILT_REQUEST_FLAG;
 	}
 
 #ifdef LINUX_INPUT
 	if (xf86SetBoolOption(local->options, "USB",
-			(common->pDevCls == &wcmUSBDevice)))
+			(common->wcmDevCls == &gWacomUSBDevice)))
 	{
-		/* best effort attempt at loading the wacom and evdev kernel modules */
+		/* best effort attempt at loading the wacom and evdev
+		 * kernel modules */
 		(void)xf86LoadKernelModule("wacom");
 		(void)xf86LoadKernelModule("evdev");
     
-		common->pDevCls = &wcmUSBDevice;
+		common->wcmDevCls = &gWacomUSBDevice;
 		xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);
 	}
 #else
@@ -951,23 +951,23 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: max z = %d\n", dev->identifier,
 			common->wcmMaxZ);
 
-	common->wcmResolX = xf86SetIntOption(local->options, "ResolutionX",
-		common->wcmResolX);
-	if (common->wcmResolX != 0)
+	common->wcmUserResolX = xf86SetIntOption(local->options, "ResolutionX",
+		common->wcmUserResolX);
+	if (common->wcmUserResolX != 0)
 		xf86Msg(X_CONFIG, "%s: resol x = %d\n", dev->identifier,
-			common->wcmResolX);
+			common->wcmUserResolX);
 
-	common->wcmResolY = xf86SetIntOption(local->options, "ResolutionY",
-		common->wcmResolY);
-	if (common->wcmResolY != 0)
+	common->wcmUserResolY = xf86SetIntOption(local->options, "ResolutionY",
+		common->wcmUserResolY);
+	if (common->wcmUserResolY != 0)
 		xf86Msg(X_CONFIG, "%s: resol y = %d\n", dev->identifier,
-			common->wcmResolY);
+			common->wcmUserResolY);
 
-	common->wcmResolZ = xf86SetIntOption(local->options, "ResolutionZ",
-		common->wcmResolZ);
-	if (common->wcmResolZ != 0)
+	common->wcmUserResolZ = xf86SetIntOption(local->options, "ResolutionZ",
+		common->wcmUserResolZ);
+	if (common->wcmUserResolZ != 0)
 		xf86Msg(X_CONFIG, "%s: resol z = %d\n", dev->identifier,
-			common->wcmResolZ);
+			common->wcmUserResolZ);
 
 	if (xf86SetBoolOption(local->options, "ButtonsOnly", 0))
 	{

@@ -28,7 +28,7 @@ static Bool xf86WcmISDV4Detect(LocalDevicePtr);
 static Bool xf86WcmISDV4Init(LocalDevicePtr);
 static void xf86WcmISDV4Read(LocalDevicePtr);
 
-	WacomDeviceClass wcmISDV4Device =
+	WacomDeviceClass gWacomISDV4Device =
 	{
 		xf86WcmISDV4Detect,
 		xf86WcmISDV4Init,
@@ -125,7 +125,6 @@ static Bool xf86WcmISDV4Init(LocalDevicePtr local)
 	common->wcmMaxZ = 255;          /* max Z value (pressure)*/
 	common->wcmResolX = 2570;       /* X resolution in points/inch */
 	common->wcmResolY = 2570;       /* Y resolution in points/inch */
-	common->wcmResolZ = 1;          /* pressure resolution of tablet */
 	common->wcmPktLength = 9;       /* length of a packet */
 
 	if (common->wcmRotate==ROTATE_NONE)
