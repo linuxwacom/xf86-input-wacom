@@ -81,9 +81,10 @@
  * 2004-03-02 26-j0.6.1  - new release
  * 2004-04-04 26-j0.6.2  - new release
  * 2004-05-25 26-j0.6.3  - new release
+ * 2004-10-05 26-j0.6.5  - new release
 */
 
-static const char identification[] = "$Identification: 26-j0.6.4 $";
+static const char identification[] = "$Identification: 26-j0.6.5 $";
 
 /****************************************************************************/
 
@@ -357,6 +358,12 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		InitValuatorAxisStruct(pWcm, 3, -900, 899, 1, 1, 1);
 		InitValuatorAxisStruct(pWcm, 4, -1023, 1023, 1, 1, 1);
 	}
+	else if (IsPad(priv))
+	{
+		/* strip-x and strip-y */
+		InitValuatorAxisStruct(pWcm, 3, 0, 4097, 1, 1, 1);
+		InitValuatorAxisStruct(pWcm, 4, 0, 4097, 1, 1, 1);
+	}
 	else
 	{
 		/* tilt-x and tilt-y */
@@ -364,8 +371,12 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 1, 1);
 	}
 
-	/* wheel */
-	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
+	if (IsStylus(priv))
+		/* absulate wheel */
+		InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
+	else
+		/* Intuos3 Marker Pen rotation */
+		InitValuatorAxisStruct(pWcm, 5, -900, 899, 1, 1, 1);
 	return TRUE;
 }
 
@@ -407,7 +418,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
-	DBG(7, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
+	DBG(12, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
 		"pos=%d remaining=%d\n",
 		common->wcmDevice, local->fd,
 		common->bufpos, remaining));
@@ -424,7 +435,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
+	DBG(12, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
 		common->bufpos));
 
 	pos = 0;
@@ -516,6 +527,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			(void *)pWcm, (void *)priv,
 			IsStylus(priv) ? "stylus" :
 			IsCursor(priv) ? "cursor" :
+			IsPad(priv) ? "pad" :
 			"eraser", priv->flags, what));
 
 	switch (what)
@@ -920,7 +932,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		fprintf(fp, "default TopY 0\n");
 		fprintf(fp, "default BottomX %d\n", priv->common->wcmMaxX);
 		fprintf(fp, "default BottomY %d\n", priv->common->wcmMaxY);
-		if (IsCursor(priv))
+		if (IsCursor(priv) || IsPad(priv))
 			sprintf(command, "default Mode Relative\n");
 		else
 			sprintf(command, "default Mode Absolute\n");
@@ -1262,8 +1274,6 @@ static Bool xf86WcmInitDevice(LocalDevicePtr local)
 		DBG(1,ErrorF("already initialized\n"));
 		return TRUE;
 	}
-
-	DBG(1,ErrorF("initializing\n"));
 
 	/* attempt to open the device */
 	if ((xf86WcmOpen(local) != Success) || (local->fd < 0))

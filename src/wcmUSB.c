@@ -180,6 +180,21 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		xf86WcmFilterIntuos,  /* input filtering recommended */
 	};
 
+	static WacomModel usbIntuos3 =
+	{
+		"USB Intuos3",
+		usbInitProtocol5,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterIntuos,  /* input filtering recommended */
+	};
+
 	static WacomModel usbVolito =
 	{
 		"USB Volito",
@@ -212,10 +227,10 @@ static Bool usbDetect(LocalDevicePtr local)
     
 	if (!err)
 	{
-		ErrorF("%s Wacom Kernel Input driver version is %d.%d.%d\n",
+/*		ErrorF("%s Wacom Kernel Input driver version is %d.%d.%d\n",
 				XCONFIG_PROBED, version >> 16,
 				(version >> 8) & 0xff, version & 0xff);
-		return 1;
+*/		return 1;
 	}
 
 	return 0;
@@ -287,6 +302,11 @@ static Bool usbInit(LocalDevicePtr local)
 
 			case 0x60: /* Volito */
 				model = &usbVolito; break;
+
+			case 0xB0: /* Intuos3 4x5 */
+			case 0xB1: /* Intuos3 6x8 */
+			case 0xB2: /* Intuos3 9x12 */
+				model = &usbIntuos3; break;
 		}
 	}
 
@@ -300,9 +320,17 @@ static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
-	common->wcmResolX = common->wcmResolY = 2540;
 	common->wcmProtocolLevel = 5;
-	common->wcmChannelCnt = 2;
+	if ( strstr(id, "Intuos3") )
+	{
+		common->wcmChannelCnt = 1;
+		common->wcmResolX = common->wcmResolY = 5080;
+	}
+	else
+	{
+		common->wcmChannelCnt = 2;
+		common->wcmResolX = common->wcmResolY = 2540;
+	}
 	common->wcmPktLength = sizeof(struct input_event);
 }
 
@@ -410,7 +438,8 @@ static void usbParseEvent(WacomCommonPtr common,
 	{
 #ifdef EV_SYN
 		/* none serial number tools fall here */
-		if ((event->type == EV_SYN) && (event->code == SYN_REPORT) && (common->wcmChannelCnt == 1))
+		if ((event->type == EV_SYN) && (event->code == SYN_REPORT) 
+			&& (common->wcmChannelCnt == 1))
 		{
 			usbParseChannel(common,0,0);
 			common->wcmEventCnt = 0;
@@ -422,9 +451,26 @@ static void usbParseEvent(WacomCommonPtr common,
 	serial = event->value;
 	channel = -1;
 
-	/* one channel only? must be it. */
+	/* one channel only? */
 	if (common->wcmChannelCnt == 1)
-		channel = 0;
+	{
+		/* Intuos3 Pad */
+		if (serial == 0xffffffff)
+		{
+			channel = 1;
+			(&common->wcmChannel[channel].work)->device_type = PAD_ID;
+			(&common->wcmChannel[channel].work)->proximity = 1;
+		}
+		else   /* must be it. */
+		{
+			channel = 0;
+			if (common->wcmChannel[0].work.proximity == 0)
+			{
+				memset(&common->wcmChannel[0],0,
+						sizeof(WacomChannel));
+			}
+		}
+	}
 
 	/* otherwise, find the channel */
 	else
@@ -478,13 +524,14 @@ static void usbParseEvent(WacomCommonPtr common,
 
 static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 {
-	int i;
+	int i, shift;
 	WacomDeviceState* ds;
 	struct input_event* event;
 
 	#define MOD_BUTTONS(bit, value) do { \
+		shift = 1<<bit; \
 		ds->buttons = (((value) != 0) ? \
-		(ds->buttons | (bit)) : (ds->buttons & ~(bit))); \
+		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
 		} while (0)
 
 	/* all USB data operates from previous context except relative values*/
@@ -496,7 +543,6 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 	for (i=0; i<common->wcmEventCnt; ++i)
 	{
 		event = common->wcmEvents + i;
-
 		DBG(11, ErrorF("usbParseChannel event[%d]->type=%d "
 			"code=%d value=%d\n", i, event->type,
 			event->code, event->value));
@@ -508,6 +554,10 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				ds->x = event->value;
 			else if (event->code == ABS_Y)
 				ds->y = event->value;
+			else if (event->code == ABS_RX)
+				ds->stripx = event->value; 
+			else if (event->code == ABS_RY)
+				ds->stripy = event->value;
 			else if (event->code == ABS_RZ)
 				ds->rotation = event->value;
 			else if (event->code == ABS_TILT_X)
@@ -515,9 +565,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			else if (event->code ==  ABS_TILT_Y)
 				ds->tilty = event->value - 64;
 			else if (event->code == ABS_PRESSURE)
-			{
 				ds->pressure = event->value;
-			}
 			else if (event->code == ABS_DISTANCE)
 				ds->distance = event->value;
 			else if (event->code == ABS_WHEEL)
@@ -530,10 +578,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			if (event->code == REL_WHEEL)
 				ds->relwheel = event->value;
 			else
-			{
-				ErrorF("wacom: rel event recv'd (%d)!\n",
-					event->code);
-			}
+				ErrorF("wacom: rel event recv'd (%d)!\n", event->code);
 		}
 
 		else if (event->type == EV_KEY)
@@ -567,7 +612,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			}
 			else if (event->code == BTN_TOOL_FINGER)
 			{
-				DBG(6, ErrorF("USB Pad detected %x\n",
+				DBG(6, ErrorF("USB Intuos3 Pad detected %x\n",
 					event->code));
 				ds->device_type = PAD_ID;
 				ds->proximity = (event->value != 0);
@@ -579,19 +624,35 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))
 			{
-				MOD_BUTTONS (2, event->value);
+				MOD_BUTTONS (1, event->value);
 			}
 			else if ((event->code == BTN_STYLUS2) ||
 				(event->code == BTN_RIGHT))
 			{
-				MOD_BUTTONS (4, event->value);
+				MOD_BUTTONS (2, event->value);
 			}
 			else if (event->code == BTN_LEFT)
-				MOD_BUTTONS (1, event->value);
+				MOD_BUTTONS (0, event->value);
 			else if (event->code == BTN_SIDE)
-				MOD_BUTTONS (8, event->value);
+				MOD_BUTTONS (3, event->value);
 			else if (event->code == BTN_EXTRA)
-				MOD_BUTTONS (16, event->value);
+				MOD_BUTTONS (4, event->value);
+			else if (event->code == BTN_0)
+				MOD_BUTTONS (8, event->value);
+			else if (event->code == BTN_1)
+				MOD_BUTTONS (9, event->value);
+			else if (event->code == BTN_2)
+				MOD_BUTTONS (10, event->value);
+			else if (event->code == BTN_3)
+				MOD_BUTTONS (11, event->value);
+			else if (event->code == BTN_4)
+				MOD_BUTTONS (12, event->value);
+			else if (event->code == BTN_5)
+				MOD_BUTTONS (13, event->value);
+			else if (event->code == BTN_6)
+				MOD_BUTTONS (14, event->value);
+			else if (event->code == BTN_7)
+				MOD_BUTTONS (15, event->value);
 		}
 	} /* next event */
 

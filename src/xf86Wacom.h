@@ -129,6 +129,7 @@
 #define XI_STYLUS "STYLUS"      /* X device name for the stylus */
 #define XI_CURSOR "CURSOR"      /* X device name for the cursor */
 #define XI_ERASER "ERASER"      /* X device name for the eraser */
+#define XI_PAD    "PAD"         /* X device name for the I3 Pad */
 #define MAX_VALUE 100           /* number of positions */
 #define MAXTRY 3                /* max number of try to receive magic number */
 #define MAX_COORD_RES 1270.0    /* Resolution of the returned MaxX and MaxY */
@@ -222,7 +223,7 @@ struct _WacomModel
  * WacomDeviceRec
  *****************************************************************************/
 
-#define DEVICE_ID(flags) ((flags) & 0x07)
+#define DEVICE_ID(flags) ((flags) & 0x0f)
 
 #define STYLUS_ID               1
 #define CURSOR_ID               2
@@ -239,6 +240,7 @@ struct _WacomModel
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
+#define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
 
 typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 
@@ -274,6 +276,8 @@ struct _WacomDeviceRec
 	int oldTiltY;           /* previous tilt in y direction */    
 	int oldWheel;           /* previous wheel value */    
 	int oldRot;             /* previous rotation value */
+	int oldStripX;          /* previous left strip value */
+	int oldStripY;          /* previous right strip value */
 	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
@@ -326,6 +330,8 @@ struct _WacomDeviceState
 	int pressure;
 	int tiltx;
 	int tilty;
+	int stripx;
+	int stripy;
 	int rotation;
 	int abswheel;
 	int relwheel;

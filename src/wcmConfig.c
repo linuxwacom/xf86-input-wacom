@@ -177,6 +177,20 @@ LocalDevicePtr xf86WcmAllocateEraser(void)
 	return local;
 }
 
+/* xf86WcmAllocatePad */
+
+LocalDevicePtr xf86WcmAllocatePad(void)
+{
+	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER,
+			ABSOLUTE_FLAG|PAD_ID);
+
+	if (local)
+		local->type_name = "Wacom Pad";
+
+	return local;
+}
+
+
 /******************************************************************************
  * XFree86 V4 Module Configuration
  *****************************************************************************/
@@ -293,6 +307,8 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		local = xf86WcmAllocateCursor();
 	else if (s && (xf86NameCmp(s, "eraser") == 0))
 		local = xf86WcmAllocateEraser();
+	else if (s && (xf86NameCmp(s, "pad") == 0))
+		local = xf86WcmAllocatePad();
 	else
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
@@ -368,9 +384,13 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		 */
 		if (IsCursor(priv)) 
 			priv->flags &= ~ABSOLUTE_FLAG;
-		else
+		else 
 			priv->flags |= ABSOLUTE_FLAG;
 	}
+
+	/* pad always in relative mode since it doesn't move the cursor */
+	if (IsPad(priv)) 
+			priv->flags &= ~ABSOLUTE_FLAG;
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");

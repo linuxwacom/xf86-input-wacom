@@ -150,31 +150,31 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xGraphire[] =
 	{
-		{ "MODEL_G_0405", "Wacom Graphire", 1, 0x10 },
+		{ "ET_0405", "Wacom Graphire", 1, 0x10 },
 		{ NULL }
 	};
 
 	static USBSUBTYPE xGraphire2[] =
 	{
-		{ "MODEL_G2_0405", "Wacom Graphire2 4x5", 1, 0x11 },
-		{ "MODEL_G2_0507", "Wacom Graphire2 5x7", 1, 0x12 },
+		{ "ET_0405", "Wacom Graphire2 4x5", 1, 0x11 },
+		{ "ET_0507", "Wacom Graphire2 5x7", 1, 0x12 },
 		{ NULL }
 	};
 
 	static USBSUBTYPE xGraphire3[] =
 	{
-		{ "MODEL_G3_0405", "Wacom Graphire2 4x5", 1, 0x13 },
-		{ "MODEL_G3_0608", "Wacom Graphire2 6x8", 1, 0x14 },
+		{ "ET_0405", "Wacom Graphire3 4x5", 1, 0x13 },
+		{ "ET_0608", "Wacom Graphire3 6x8", 1, 0x14 },
 		{ NULL }
 	};
 
 	static USBSUBTYPE xIntuos[] =
 	{
-		{ "MODEL_I_0405", "Wacom Intuos 4x5", 1, 0x20 },
-		{ "MODEL_I_0608", "Wacom Intuos 6x8", 2, 0x21 },
-		{ "MODEL_I_0912", "Wacom Intuos 9x12", 3, 0x22 },
-		{ "MODEL_I_1212", "Wacom Intuos 12x12", 4, 0x23 },
-		{ "MODEL_I_1218", "Wacom Intuos 12x18", 5, 0x24 },
+		{ "GD_0405-U", "Wacom Intuos 4x5", 1, 0x20 },
+		{ "GD_0608-U", "Wacom Intuos 6x8", 2, 0x21 },
+		{ "GD_0912-U", "Wacom Intuos 9x12", 3, 0x22 },
+		{ "GD_1212-U", "Wacom Intuos 12x12", 4, 0x23 },
+		{ "GD_1218-U", "Wacom Intuos 12x18", 5, 0x24 },
 		{ NULL }
 	};
 
@@ -191,9 +191,9 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xIntuos2[] =
 	{
-		{ "XD-0405-U", "Wacom Intuos2 4x5", 1, 0x41 },
-		{ "XD-0608-U", "Wacom Intuos2 6x8", 2, 0x42 },
-		{ "XD-0912-U", "Wacom Intuos2 9x12", 3, 0x43 },
+		{ "XD-0405-U", "Wacom Intuos2 4x5",   1, 0x41 },
+		{ "XD-0608-U", "Wacom Intuos2 6x8",   2, 0x42 },
+		{ "XD-0912-U", "Wacom Intuos2 9x12",  3, 0x43 },
 		{ "XD-1212-U", "Wacom Intuos2 12x12", 4, 0x44 },
 		{ "XD-1218-U", "Wacom Intuos2 12x18", 5, 0x45 },
 
@@ -215,6 +215,14 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xIntuos3[] =
+	{
+		{ "PTZ-430", "Wacom Intuos3 4x5",  1, 0xB0 },
+		{ "PTZ-630", "Wacom Intuos3 6x8",  2, 0xB1 },
+		{ "PTZ-930", "Wacom Intuos3 9x12", 3, 0xB2 },
+		{ NULL }
+	};
+
 	static USBDEVICE xWacomDevices[] =
 	{
 		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner },
@@ -223,6 +231,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "gr3", "Graphire3", WACOMDEVICE_GRAPHIRE3, xGraphire3 },
 		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
 		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
+		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3 },
 		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
 		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner },
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },

@@ -9,8 +9,8 @@
  * advertising or publicity pertaining to distribution of the software without
  * specific,  written      prior  permission.     Frederic  Lepied   makes  no
  * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.		   
- *									    
+ * is provided "as is" without express or implied warranty.
+ *
  * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
  * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
  * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
@@ -201,7 +201,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 	DBG(6, ErrorF("xf86WcmSendButtons buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv))
+	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) )
 	{
 		if ( buttons & 1 )
 		{
@@ -403,10 +403,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int leftRightSwitch = (priv->twinview == TV_LEFT_RIGHT)
 		? ((x < priv->topX) ? -1 : ((priv->bottomX < x) ? 1 : 0)) : 0;
 
+	/* use tx and ty to report stripx and stripy */
+	if (type == PAD_ID)
+	{
+		tx = ds->stripx;
+		ty = ds->stripy;
+	}
+
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
 		(type == STYLUS_ID) ? "stylus" :
-			(type == CURSOR_ID) ? "cursor" : "eraser",
+			(type == CURSOR_ID) ? "cursor" : 
+			(type == ERASER_ID) ? "eraser" : "pad",
 		is_proximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
@@ -551,7 +559,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		 * More complicated dual input, such as only sylus/puck moves 
 		 * the cursor or both tools can move the cursor will be 
 		 * supported when needed */
-		if( !((priv->flags & BUTTONS_ONLY_FLAG) || channel) )
+		if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
 		{
 			if (IsCursor(priv))
 				xf86PostMotionEvent(local->dev,
@@ -659,6 +667,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	priv->oldZ = z;
 	priv->oldTiltX = tx;
 	priv->oldTiltY = ty;
+	priv->oldStripX = ds->stripx;
+	priv->oldStripY = ds->stripy;
 	priv->oldRot = rot;
 	priv->oldThrottle = throttle;
 }
@@ -678,11 +688,15 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (dsOrig->proximity != dsNew->proximity) return 0;
 	if (ABS(dsOrig->x - dsNew->x) > suppress) return 0;
 	if (ABS(dsOrig->y - dsNew->y) > suppress) return 0;
+	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) return 0;
+	if (ABS(dsOrig->tilty - dsNew->tilty) > suppress) return 0;
+	if (ABS(dsOrig->stripx - dsNew->stripx) > suppress) return 0;
+	if (ABS(dsOrig->stripy - dsNew->stripy) > suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) return 0;
 
-	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 > suppress &&
-		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 > suppress)
+	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress ||
+		(1800 - ABS(dsNew->rotation - dsOrig->rotation)) > suppress)
 		return 0;
 
 	/* look for change in absolute wheel

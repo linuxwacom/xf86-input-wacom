@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.5 2004/08/06 18:08:27 pingc Exp $
+ * $Id: wacom.c,v 1.6 2004/10/07 18:36:35 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -80,6 +80,7 @@
  *    v1.30-j0.6.2 - new release
  *    v1.30-j0.6.3 - new release
  *    v1.30-j0.6.4 - new release
+ *    v1.30-j0.6.5 - added Intuos3
  */
 
 /*
@@ -110,7 +111,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.6.4"
+#define DRIVER_VERSION "v1.30-j0.6.5"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -156,7 +157,7 @@ struct wacom {
 	__u32 serial[2];
 	
 	struct list_head event_list;
-    struct semaphore kwacomd_sem;
+	struct semaphore kwacomd_sem;
 	unsigned int ifnum;
 };
 
@@ -181,14 +182,14 @@ static void wacom_pl_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
+	if (data[0] != 2 && data[0] != 5)
 	{
 		printk(KERN_INFO "wacom_pl_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
 	
-	/* Cheng proximity and pressure code */
+	/* proximity and pressure */
 	prox = data[1] & 0x40;
 		
 	if (prox) {
@@ -242,7 +243,7 @@ static void wacom_pl_irq(struct urb *urb)
 	}
 
 	wacom->tool[0] = prox; /* Save proximity state */
-	/* end Cheng proximity code */
+	/* end of proximity code */
 	
 	input_event(dev, EV_MSC, MSC_SERIAL, 0);
 }
@@ -255,7 +256,7 @@ static void wacom_ptu_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
+	if (data[0] != 2 && data[0] != 5)
 	{
 		printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
@@ -291,6 +292,13 @@ static void wacom_penpartner_irq(struct urb *urb)
 
 	if (urb->status) return;
 
+	if (data[0] != 2 && data[0] != 5)
+	{
+		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
+		return;
+	}
+
 	input_report_key(dev, BTN_TOOL_PEN, 1);
 	input_report_abs(dev, ABS_X, data[2] << 8 | data[1]);
 	input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]);
@@ -313,7 +321,7 @@ static void wacom_graphire_irq(struct urb *urb)
 	/* check if we can handle the data */
 	if (data[0] == 99) /* some sort of clock for Volito? */
 		return;
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
+	if (data[0] != 2 && data[0] != 5 )
 	{
 		printk(KERN_INFO "wacom_graphire_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
@@ -482,9 +490,9 @@ static void wacom_intuos_irq(struct urb *urb)
 		/* Rotation packet */
 		if (data[1] & 0x02)
 		{
+			t = ((__u32)data[6] << 3) | ((data[7] >> 5) & 7);
 			input_report_abs(dev, ABS_RZ, (data[7] & 0x20) ?
-				((__u32)data[6] << 3) | ((data[7] >> 5) & 7):
-				(-(((__u32)data[6] << 3) | ((data[7] >> 5) & 7))) - 1);
+				((t - 1) / 2) : -t / 2);
 		}
 
 		/* 4D mouse packets */
@@ -496,9 +504,8 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, BTN_SIDE,   data[8] & 0x20);
 			input_report_key(dev, BTN_EXTRA,  data[8] & 0x10);
 			/* JEJ - throttle is positive when rolled backwards */
-			input_report_abs(dev, ABS_THROTTLE, - ((data[8] & 0x08) ?
-					((__u32)data[6] << 2) | ((data[7] >> 6) & 3) :
-					-((__u32)data[6] << 2) | ((data[7] >> 6) & 3)));
+			t = ((__u32)data[6] << 2) | ((data[7] >> 6) & 3);
+			input_report_abs(dev, ABS_THROTTLE, (data[8] & 0x08) ? -t : t);
 		}
 
 		/* 2D mouse packets */	
@@ -509,8 +516,8 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 			input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
 			/* JEJ - mouse wheel is positive when rolled backwards */
-			input_report_rel(dev, REL_WHEEL, - (((__u32)(data[8] & 0x01)) -
-					((__u32)((data[8] & 0x02) >> 1))));
+			input_report_rel(dev, REL_WHEEL, (__u32)((data[8] & 0x02) >> 1)
+					 - (__u32)(data[8] & 0x01));
 		}
 
 		/* lens cursor packets */
@@ -528,7 +535,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 }
 
-static void wacom_pad_irq(struct urb *urb)
+static void wacom_intuos3_irq(struct urb *urb)
 {
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
@@ -539,15 +546,38 @@ static void wacom_pad_irq(struct urb *urb)
 	if (urb->status) return;
 
 	/* check for valid report */
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6 && data[0] != 12 )
+	if (data[0] != 2 && data[0] != 5 && data[0] != 12)
 	{
-		printk(KERN_INFO "wacom_pad_irq: received unknown report #%d\n", data[0]);
+		printk(KERN_INFO "wacom_intuos3_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
 
-	/* tool index */
+	/* tool index is always 0 here since there is no dual input tool */
 	idx = data[1] & 0x01;
+
+	/* pad packets. Works as a second tool and is alway in prox */
+	if (data[0] == 12)
+	{
+		/* initiate the pad as a device */
+		if (wacom->tool[1] != BTN_TOOL_FINGER)
+		{
+			wacom->tool[1] = BTN_TOOL_FINGER;
+			input_report_key(dev, wacom->tool[1], 1);
+		}
+		input_report_key(dev, BTN_0, (data[5] & 0x01));
+		input_report_key(dev, BTN_1, (data[5] & 0x02));
+		input_report_key(dev, BTN_2, (data[5] & 0x04));
+		input_report_key(dev, BTN_3, (data[5] & 0x08));
+		input_report_key(dev, BTN_4, (data[6] & 0x01));
+		input_report_key(dev, BTN_5, (data[6] & 0x02));
+		input_report_key(dev, BTN_6, (data[6] & 0x04));
+		input_report_key(dev, BTN_7, (data[6] & 0x08));
+		input_report_abs(dev, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
+		input_report_abs(dev, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
+		input_event(dev, EV_MSC, MSC_SERIAL, 0xffffffff);
+		return;
+	}
 
 	/* Enter report */
 	if ((data[1] & 0xfc) == 0xc0)
@@ -558,31 +588,33 @@ static void wacom_pad_irq(struct urb *urb)
 				((__u32)data[6] << 4) + ((__u32)data[7] >> 4);
 
 		#ifdef __JEJ_DEBUG
-		printk(KERN_INFO "wacom_intuos_irq: tool change 0x%03X\n",
+		printk(KERN_INFO "wacom_intuos3_irq: tool change 0x%03X\n",
 				(((__u32)data[2] << 4) | (data[3] >> 4)));
 		#endif
 
 		switch ((((__u32)data[2] << 4) | (data[3] >> 4)))
 		{
-			case 0x801: /* inking pen */
+			case 0x801: /* Ink pen */
 				wacom->tool[idx] = BTN_TOOL_PENCIL; break;
 
-			case 0x823: /* Pen */
-			case 0x885: /* Rotation Pen */
+			case 0x823: /* Grip Pen */
+			case 0x813: /* Classic Pen */
+			case 0x885: /* Marker Pen */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 
 			case 0x017: /* 2D Mouse */
 				wacom->tool[idx] = BTN_TOOL_MOUSE; break;
 
-			case 0x82A:
-			case 0x85A:
-			case 0x91A:
-			case 0xD1A:
-			case 0x0FA: /* Eraser */
+			case 0x82B: /* Grip Pen Eraser */
+			case 0x81B: /* Classic Pen Eraser */
+			case 0x91B: /* Airbrush Eraser */
 				wacom->tool[idx] = BTN_TOOL_RUBBER; break;
 
 			case 0x913: /* Airbrush */
 				wacom->tool[idx] = BTN_TOOL_AIRBRUSH; break;
+
+			case 0x097: /* Lens cursor */
+				wacom->tool[idx] = BTN_TOOL_LENS; break;
 
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
@@ -599,14 +631,14 @@ static void wacom_pad_irq(struct urb *urb)
 		return;
 	}
 
-	input_report_abs(dev, ABS_X, ((__u32)data[2] << 16) | ((__u32)data[3] << 8) | (data[9] >> 1 & 1));
-	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 16) | ((__u32)data[5] << 8) | (data[9] & 1));
-	input_report_abs(dev, ABS_DISTANCE, ((data[9] >> 1) & 0x3f));
+	input_report_abs(dev, ABS_X, ((__u32)data[2] << 9) | ((__u32)data[3] << 1) | ((data[9] >> 1) & 1));
+	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 9) | ((__u32)data[5] << 1) | (data[9] & 1));
+	input_report_abs(dev, ABS_DISTANCE, ((data[9] >> 2) & 0x3f));
 	
 	/* general pen packet */
 	if ((data[1] & 0xb8) == 0xa0)
 	{
-		t = ((__u32)data[6] << 2) | ((data[7] >> 6) & 3);
+		t = ((__u32)data[6]) | ((data[7] >> 6) & 3);
 		input_report_abs(dev, ABS_PRESSURE, t);
 		input_report_abs(dev, ABS_TILT_X,
 				((data[7] << 1) & 0x7e) | (data[8] >> 7));
@@ -626,24 +658,29 @@ static void wacom_pad_irq(struct urb *urb)
 		input_report_abs(dev, ABS_TILT_Y, data[8] & 0x7f);
 	}
 
-	/* 2D mouse packets */
 	if ((data[1] & 0xbc) == 0xa8 || (data[1] & 0xbe) == 0xb0)
 	{
+		/* Marker pen rotation packet. Reported as wheel due to valuator limitation */
+		if (data[1] & 0x02)
+		{
+			t = ((__u32)data[6] << 3) | ((data[7] >> 5) & 7);
+			t = (data[7] & 0x20) ? ((t > 900) ? ((t-1) / 2 - 1350) :
+				((t-1) / 2 + 450)) : (450 - t / 2) ;
+			input_report_abs(dev, ABS_WHEEL, t);
+		}
+
+		/* 2D mouse packets */
 		if (wacom->tool[idx] == BTN_TOOL_MOUSE)
 		{
 			input_report_key(dev, BTN_LEFT,   data[8] & 0x04);
 			input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 			input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
+			input_report_key(dev, BTN_SIDE,   data[8] & 0x40);
+			input_report_key(dev, BTN_EXTRA,  data[8] & 0x20);
 			/* mouse wheel is positive when rolled backwards */
-			input_report_rel(dev, REL_WHEEL, - (((__u32)(data[8] & 0x01)) -
-					((__u32)((data[8] & 0x02) >> 1))));
+			input_report_rel(dev, REL_WHEEL, (__u32)((data[8] & 0x02) >> 1)
+					 - (__u32)(data[8] & 0x01));
 		}
-	}
-
-	/* pad packets */
-	if (data[0] == 12)
-	{
-		wacom->tool[idx] = BTN_TOOL_FINGER;
 	}
 
 	input_report_key(dev, wacom->tool[idx], 1);
@@ -653,10 +690,13 @@ static void wacom_pad_irq(struct urb *urb)
 #define WACOM_GRAPHIRE_BITS	(BIT(EV_REL))
 #define WACOM_GRAPHIRE_REL	(BIT(REL_WHEEL))
 #define WACOM_INTUOS_TOOLS	(BIT(BTN_TOOL_BRUSH) | BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS))
+#define WACOM_INTUOS3_TOOLS	(WACOM_INTUOS_TOOLS | BIT(BTN_TOOL_FINGER))
 #define WACOM_INTUOS_BUTTONS	(BIT(BTN_SIDE) | BIT(BTN_EXTRA))
+#define WACOM_INTUOS3_BUTTONS	(WACOM_INTUOS_BUTTONS | BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3) | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7))
 #define WACOM_INTUOS_BITS	(BIT(EV_REL))
 #define WACOM_INTUOS_REL	(BIT(REL_WHEEL))
 #define WACOM_INTUOS_ABS	(BIT(ABS_TILT_X) | BIT(ABS_TILT_Y) | BIT(ABS_RZ) | BIT(ABS_THROTTLE))
+#define WACOM_INTUOS3_ABS	(WACOM_INTUOS_ABS | BIT(ABS_RX) | BIT(ABS_RY))
 
 struct wacom_features wacom_features[] = {
 
@@ -733,15 +773,16 @@ struct wacom_features wacom_features[] = {
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/* 23 */ { "Wacom Cintiq Partner", 8,   20480,  15360, 511, 32,
 			wacom_ptu_irq, 0, 0, 0, 0 },
-	/* 24 */ { "Wacom pad 4x5",   10,  12700, 10600,  1023, 15,
-			wacom_pad_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
-			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/* 25 */ { "Wacom pad 6x8",   10,  20320, 16240,  1023, 15,
-			wacom_pad_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
-			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/* 26 */ { "Wacom pad 9x12",  10,  30480, 24060,  1023, 15,
-			wacom_pad_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
-			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
+	/* Intuos3 */
+	/* 24 */ { "Wacom Intuos3 4x5",   10,  25400, 20320,  1023, 15,
+			wacom_intuos3_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
+			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
+	/* 25 */ { "Wacom Intuos3 6x8",   10,  40640, 30480,  1023, 15,
+			wacom_intuos3_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
+			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
+	/* 26 */ { "Wacom Intuos3 9x12",  10,  60960, 45720,  1023, 15,
+			wacom_intuos3_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
+			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
 
 	{ NULL , 0 }
 };
@@ -808,17 +849,23 @@ static void wacom_close(struct input_dev *dev)
 
 static void wacom_reset(struct wacom* wacom)
 {
-	char rep_data[2] = {0x02, 0x02};
-
+	unsigned char rdata[2], limit=0;
 	#ifdef __JEJ_DEBUG
 	printk(KERN_INFO __FILE__ ": Setting tablet report for tablet data\n");
 	#endif
 
-	/* ask the tablet to report tablet data */
-	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rep_data, 2);
-	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 5, rep_data, 0);
-	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 6, rep_data, 0);
-	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 12, rep_data, 0);
+	/* ask the tablet to report tablet data. repeats until it succeeds */
+	do {
+		rdata[0] = 2;
+		rdata[1] = 2;
+		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
+		usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
+	} while (rdata[1] != 2 && limit++ < 5);
+
+	/* make sure normal rotation is reported */
+	rdata[0] = 11;
+	rdata[1] = 0;
+	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 11, rdata, 2);
 }
 
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)
@@ -838,8 +885,8 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.relbit[0] |= wacom->features->relbit;
 	wacom->dev.keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) |
 			BIT(BTN_MIDDLE) | wacom->features->btnbit;
-	wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) |
-			BIT(BTN_TOOL_RUBBER) | BIT(BTN_TOOL_MOUSE) |
+	wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) | 
+			BIT(BTN_TOOL_RUBBER) | BIT(BTN_TOOL_MOUSE) | 
 			BIT(BTN_TOUCH) | BIT(BTN_STYLUS) | BIT(BTN_STYLUS2) |
 			wacom->features->digibit;
 	wacom->dev.mscbit[0] |= BIT(MSC_SERIAL);
@@ -857,6 +904,8 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.absmax[ABS_TILT_Y] = 127;
 	wacom->dev.absmax[ABS_WHEEL] = 1023;
 
+	wacom->dev.absmin[ABS_RX] = 4097;
+	wacom->dev.absmax[ABS_RY] = 4097;
 	wacom->dev.absmin[ABS_RZ] = -900;
 	wacom->dev.absmax[ABS_RZ] = 899;
 	wacom->dev.absmin[ABS_THROTTLE] = -1023;

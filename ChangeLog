@@ -1,3 +1,7 @@
+2004-10-06    Ping Cheng <pingc@wacom.com>
+	* Added Intuos3 support
+	* Fixed z-rot valuator initialization error
+
 2004-08-06    Ping Cheng <pingc@wacom.com>
 	* Fixed USB tablet protocol V dual input for kernel 2.6
 	* Updated wacusb.c to fix wacdump ParseData error

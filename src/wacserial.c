@@ -767,6 +767,7 @@ static int SerialInitWacom(SERIALTABLET* pSerial)
 			break;
 
 		case WACOMDEVICE_INTUOS:
+		case WACOMDEVICE_INTUOS2:
 			/* multi-mode, max-rate */ 
 			SerialSend(pSerial, "MT1\rID1\rIT0\r");
 	}
