@@ -101,6 +101,7 @@ typedef struct _USBTABLET USBTABLET;
 struct _USBTABLET
 {
 	WACOMTABLET_PRIV tablet;
+	WACOMENGINE hEngine;
 	int fd;
 	USBVENDOR* pVendor;
 	USBDEVICE* pDevice;
@@ -299,7 +300,7 @@ unsigned int WacomGetUSBDeviceFromName(const char* pszName)
 	return 0;
 }
 
-WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
+WACOMTABLET WacomOpenUSBTablet(WACOMENGINE hEngine, int fd, WACOMMODEL* pModel)
 {
 	USBTABLET* pUSB = NULL;
 
@@ -319,11 +320,17 @@ WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
 	pUSB->tablet.GetFD = USBGetFD;
 	pUSB->tablet.ReadRaw = USBReadRaw;
 	pUSB->tablet.ParseData = USBParseData;
+	pUSB->hEngine = hEngine;
 	pUSB->fd = fd;
 
 	/* Identify and initialize the model */
 	if (USBIdentifyModel(pUSB))
-		{ perror("identify"); close(fd); free(pUSB); return NULL; }
+	{
+		WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+			"Failed to identify model: %s",strerror(errno));
+		free(pUSB);
+		return NULL;
+	}
 
 	return (WACOMTABLET)pUSB;
 }
@@ -439,14 +446,24 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 
 	/* Get event types supported */
 	nCnt = ioctl(pUSB->fd,EVIOCGBIT(0 /*EV*/,sizeof(evbits)),evbits);
-	if (nCnt < 0) { perror("Failed to CGBIT ev"); return 1; }
+	if (nCnt < 0)
+	{
+		WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+			"Failed to CGBIT ev: %s",strerror(errno));
+		return 1;
+	}
 	assert(nCnt == sizeof(evbits));
 
 	/* absolute events */
 	if (ISBITSET(evbits,EV_ABS))
 	{
 		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_ABS,sizeof(absbits)),absbits);
-		if (nCnt < 0) { perror("Failed to CGBIT abs"); return 1; }
+		if (nCnt < 0)
+		{
+			WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+				"Failed to CGBIT abs: %s",strerror(errno));
+			return 1;
+		}
 		assert(nCnt == sizeof(absbits));
 
 		if (USBGetRange(pUSB,absbits,ABS_X,WACOMFIELD_POSITION_X) ||
@@ -465,7 +482,12 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	if (ISBITSET(evbits,EV_REL))
 	{
 		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_REL,sizeof(relbits)),relbits);
-		if (nCnt < 0) { perror("Failed to CGBIT rel"); return 1; }
+		if (nCnt < 0)
+		{
+			WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+				"Failed to CGBIT rel: %s",strerror(errno));
+			return 1;
+		}
 		assert(nCnt == sizeof(relbits));
 
 		if (ISBITSET(relbits,REL_WHEEL))
@@ -480,7 +502,12 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	if (ISBITSET(evbits,EV_KEY))
 	{
 		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits);
-		if (nCnt < 0) { perror("Failed to CGBIT key"); return 1; }
+		if (nCnt < 0)
+		{
+			WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+				"Failed to CGBIT key: %s",strerror(errno));
+			return 1;
+		}
 		assert(nCnt == sizeof(keybits));
 
 		/* button events */

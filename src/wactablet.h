@@ -22,6 +22,9 @@
 #ifndef __LINUXWACOM_WACTABLET_H
 #define __LINUXWACOM_WACTABLET_H
 
+#include <stdarg.h>
+#include <sys/time.h>
+
 #define WACOMVENDOR_UNKNOWN     0x0000
 #define WACOMVENDOR_WACOM       0x056A
 #define WACOMVENDOR_ACER        0xFFFFFF01
@@ -122,15 +125,45 @@ typedef struct
 	WACOMMODEL model;
 } WACOMDEVICEREC;
 
+typedef enum
+{
+	WACOMLOGLEVEL_NONE,
+	WACOMLOGLEVEL_CRITICAL,
+	WACOMLOGLEVEL_ERROR,
+	WACOMLOGLEVEL_WARN,
+	WACOMLOGLEVEL_INFO,
+	WACOMLOGLEVEL_DEBUG,
+	WACOMLOGLEVEL_TRACE,
+	WACOMLOGLEVEL_MAX
+} WACOMLOGLEVEL;
+
+typedef void (*WACOMLOGFUNC)(struct timeval tv, WACOMLOGLEVEL level,
+	const char* pszLog);
+
 /*****************************************************************************
 ** Public structures
 *****************************************************************************/
 
+typedef struct { int __unused; } *WACOMENGINE;
 typedef struct { int __unused; } *WACOMTABLET;
 
 /*****************************************************************************
 ** Public API
 *****************************************************************************/
+
+	WACOMENGINE WacomInitEngine(void);
+	/* Initialize the tablet engine */
+
+	void WacomTermEngine(WACOMENGINE hEngine);
+	/* Shutdown the tablet engine */
+
+	void WacomSetLogFunc(WACOMENGINE hEngine, WACOMLOGFUNC pfnLog);
+	void WacomSetLogLevel(WACOMENGINE hEngine, WACOMLOGLEVEL level);
+	void WacomLogV(WACOMENGINE hEngine, WACOMLOGLEVEL level,
+			const char* pszFmt, va_list args);
+	void WacomLog(WACOMENGINE hEngine, WACOMLOGLEVEL level,
+			const char* pszFmt, ...);
+	/* Logging functions. Default log function does nothing. */
 
 	int WacomGetSupportedClassList(WACOMCLASSREC** ppList, int* pnSize);
 	/* Returns 0 on success.  Pointer to class record list is returned to
@@ -161,7 +194,8 @@ typedef struct { int __unused; } *WACOMTABLET;
 	 * device class is specified, only that class will be searched.
 	 * Returns 0, if unknown. */
 
-	WACOMTABLET WacomOpenTablet(const char* pszDevice, WACOMMODEL* pModel);
+	WACOMTABLET WacomOpenTablet(WACOMENGINE hEngine,
+		const char* pszDevice, WACOMMODEL* pModel);
 	/* Returns tablet handle on success, NULL otherwise.
 	 * pszDevice is pathname to device.  Model may be NULL; if any model
 	 * parameters are 0, detection is automatic. */

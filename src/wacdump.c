@@ -24,6 +24,7 @@
 **   2003-01-01 0.3.5 - moved refresh to start display immediately
 **   2003-01-25 0.3.6 - moved usb code to wacusb.c
 **   2003-01-26 0.3.7 - applied Dean Townsley's Acer C100 patch
+**   2003-01-27 0.3.8 - added logging, better error recovery
 **
 ****************************************************************************/
 
@@ -36,12 +37,13 @@
 #include <ctype.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "wacdump v0.3.7"
+#define WACDUMP_VER "wacdump v0.3.8"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -72,6 +74,8 @@ struct KEY_STATE
 	struct ABS_STATE gAbsState[WACOMFIELD_MAX];
 	struct KEY_STATE gKeyState[WACOMBUTTON_MAX];
 	int gnSerialDataRow = 0;
+	int gbCursesRunning = 0;
+	FILE* gLogFile = NULL;
 
 void Usage(void)
 {
@@ -86,6 +90,8 @@ void Usage(void)
 		"  -c, --class              - use specified class (see below)\n"
 		"  -f, --force device_name  - use specified device (see below)\n"
 		"  -l, --list               - list all supported devices\n"
+		"  -v, --verbose            - increase log output; multiple OK\n"
+		"  --logfile log_file       - output log to file\n"
 		"\n"
 		"Example devices:\n"
 #ifdef WCM_ENABLE_LINUXINPUT
@@ -384,13 +390,59 @@ void FetchTablet(WACOMTABLET hTablet)
 	}
 }
 
+void LogCallback(struct timeval tv, WACOMLOGLEVEL level, const char* psz)
+{
+	int i;
+	struct tm* pTM;
+
+	static const char* xszLog[WACOMLOGLEVEL_MAX] =
+	{
+		"", "CRITICAL", "ERROR", "WARN",
+		"INFO", "DEBUG", "TRACE"
+	};
+
+	if ((level < WACOMLOGLEVEL_CRITICAL) || (level >= WACOMLOGLEVEL_MAX))
+		level = WACOMLOGLEVEL_NONE;
+
+	/* get the time */
+	pTM = localtime((time_t*)&tv.tv_sec);
+
+	if (gbCursesRunning)
+	{
+		static char chBuf[1024];
+		snprintf(chBuf,sizeof(chBuf),"%02d:%02d:%02d.%03d %s: %s",
+			pTM->tm_hour,pTM->tm_min,pTM->tm_min,
+			(int)(tv.tv_usec / 1000),xszLog[level],psz);
+		for (i=0; i<78; ++i) wacscrn_output(24,i," ");
+		wacscrn_output(24,0,chBuf);
+		wacscrn_refresh();
+	}
+	else
+	{
+		fprintf(stderr,"%02d:%02d:%02d.%03d %s: %s\n",
+			pTM->tm_hour,pTM->tm_min,pTM->tm_min,
+			(int)(tv.tv_usec / 1000), xszLog[level], psz);
+	}
+
+	if (gLogFile)
+	{
+		fprintf(gLogFile,"%02d:%02d:%02d.%03d %s: %s\n",
+			pTM->tm_hour,pTM->tm_min,pTM->tm_min,
+			(int)(tv.tv_usec / 1000), xszLog[level], psz);
+		fflush(gLogFile);
+	}
+}
+
 int main(int argc, char** argv)
 {
 	const char* pszFile = NULL;
 	const char* arg;
+	WACOMENGINE hEngine = NULL;
 	WACOMTABLET hTablet = NULL;
+	int nLevel = (int)WACOMLOGLEVEL_WARN;
 	const char* pszDeviceCls = NULL;
 	const char* pszDeviceType = NULL;
+	const char* pszLogFile = NULL;
 	WACOMMODEL model = { 0 };
 
 	/* parse args */
@@ -426,6 +478,19 @@ int main(int argc, char** argv)
 				pszDeviceCls = arg;
 			}
 
+			/* log file */
+			else if (strcmp(arg,"--logfile") == 0)
+			{
+				arg = *(argv++);
+				if (arg == NULL)
+					{ fprintf(stderr,"Missing log file\n"); exit(1); }
+				pszLogFile = arg;
+			}
+			else if ((strcmp(arg,"-v") == 0) || (strcmp(arg,"--verbose") == 0))
+			{
+				++nLevel;
+			}
+
 			/* unknown options */
 			else
 				{ fprintf(stderr,"Unknown option %s\n",arg); exit(1); }
@@ -446,6 +511,17 @@ int main(int argc, char** argv)
 	{
 		Usage();
 		exit(1);
+	}
+
+	/* check for log file */
+	if (pszLogFile)
+	{
+		gLogFile = fopen(pszLogFile,"w");
+		if (!gLogFile)
+		{
+			perror("failed to open log file for writing");
+			exit(1);
+		}
 	}
 
 	/* set device class, if provided */
@@ -469,13 +545,25 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 	}
+
+	/* open engine */
+	hEngine = WacomInitEngine();
+	if (!hEngine)
+	{
+		perror("failed to open tablet engine");
+		exit(1);
+	}
+
+	WacomSetLogFunc(hEngine,LogCallback);
+	WacomSetLogLevel(hEngine,(WACOMLOGLEVEL)nLevel);
+
+	WacomLog(hEngine,WACOMLOGLEVEL_INFO,"Opening log");
    
 	/* open tablet */
-	hTablet = WacomOpenTablet(pszFile,&model);
+	hTablet = WacomOpenTablet(hEngine,pszFile,&model);
 	if (!hTablet)
 	{
-		fprintf(stderr,"failed to open %s for read/writing: %s\n",
-			pszFile, strerror(errno));
+		perror("WacomOpenTablet");
 		exit(1);
 	}
 
@@ -483,11 +571,13 @@ int main(int argc, char** argv)
 	wacscrn_init();
 	atexit(termscr);
 
+	gbCursesRunning = 1;
+
 	/* get device capabilities, build screen */
 	if (InitTablet(hTablet))
 	{
+		perror("InitTablet");
 		WacomCloseTablet(hTablet);
-		fprintf(stderr,"failed to initialize input\n");
 		exit(1);
 	}
 
@@ -496,6 +586,11 @@ int main(int argc, char** argv)
 
 	/* close device */
 	WacomCloseTablet(hTablet);
+	WacomTermEngine(hEngine);
+
+	/* close log file, if open */
+	if (gLogFile)
+		fclose(gLogFile);
 
 	return 0;
 }

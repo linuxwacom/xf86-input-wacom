@@ -47,6 +47,7 @@ typedef int (*PARSEFUNC)(SERIALTABLET* pSerial, const unsigned char* puchData,
 struct _SERIALTABLET
 {
 	WACOMTABLET_PRIV tablet;
+	WACOMENGINE hEngine;
 	int fd;
 	SERIALVENDOR* pVendor;
 	SERIALDEVICE* pDevice;
@@ -58,6 +59,8 @@ struct _SERIALTABLET
 	PARSEFUNC pfnParse;
 	int nToolID;
 	WACOMSTATE state;
+	int nBitErrors;
+	WACOMMODEL modelRequested;
 };
 
 /*****************************************************************************
@@ -116,7 +119,8 @@ static int SerialParseData(WACOMTABLET_PRIV* pTablet,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
 
-int SerialConfigTTY(SERIALTABLET* pSerial);
+static int SerialReset(SERIALTABLET* pSerial, WACOMMODEL* pModel);
+static int SerialConfigTTY(SERIALTABLET* pSerial);
 static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
 		int nBaud);
 static int SerialSetDevice(SERIALTABLET* pSerial, SERIALVENDOR* pVendor,
@@ -143,6 +147,16 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 static int SerialParseAcerC100(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
+
+static void SerialError(SERIALTABLET* pSerial, const char* pszFmt, ...);
+static void SerialWarn(SERIALTABLET* pSerial, const char* pszFmt, ...);
+static void SerialInfo(SERIALTABLET* pSerial, const char* pszFmt, ...);
+static void SerialDump(SERIALTABLET* pSerial, const void* pvData, int nCnt);
+/* NOT USED, YET
+static void SerialCritical(SERIALTABLET* pSerial, const char* pszFmt, ...);
+static void SerialDebug(SERIALTABLET* pSerial, const char* pszFmt, ...);
+static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...);
+*/
 
 /*****************************************************************************
 ** Defines
@@ -492,16 +506,10 @@ static int SerialFindModel(WACOMMODEL* pModel, SERIALVENDOR** ppVendor,
 	return 1;
 }
 
-WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel)
+WACOMTABLET WacomOpenSerialTablet(WACOMENGINE hEngine, int fd,
+	WACOMMODEL* pModel)
 {
 	SERIALTABLET* pSerial = NULL;
-	SERIALVENDOR* pVendor = NULL;
-	SERIALDEVICE* pDevice = NULL;
-	SERIALSUBTYPE* pSubType = NULL;
-
-	/* If model is specified, break it down into vendor, device, and subtype */
-	if (pModel && SerialFindModel(pModel,&pVendor,&pDevice,&pSubType))
-		return NULL;
 
 	/* Allocate tablet */
 	pSerial = (SERIALTABLET*)malloc(sizeof(SERIALTABLET));
@@ -520,36 +528,60 @@ WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel)
 	pSerial->tablet.ReadRaw = SerialReadRaw;
 	pSerial->tablet.ParseData = SerialParseData;
 
+	pSerial->hEngine = hEngine;
 	pSerial->fd = fd;
 	pSerial->state.uValueCnt = WACOMFIELD_MAX;
 
+	/* remember what model was request */
+	if (pModel)
+		pSerial->modelRequested = *pModel;
+
+	if (SerialReset(pSerial,pModel))
+	{
+		free(pSerial);
+		return NULL;
+	}
+
+	return (WACOMTABLET)pSerial;
+}
+
+static int SerialReset(SERIALTABLET* pSerial, WACOMMODEL* pModel)
+{
+	SERIALVENDOR* pVendor = NULL;
+	SERIALDEVICE* pDevice = NULL;
+	SERIALSUBTYPE* pSubType = NULL;
+
+	/* If model is specified, break it down into vendor, device, and subtype */
+	if (pModel && SerialFindModel(pModel,&pVendor,&pDevice,&pSubType))
+		return 1;
+
 	/* Set the tablet device */
 	if (SerialSetDevice(pSerial,pVendor,pDevice,pSubType))
-		{ free(pSerial); return NULL; }
+		return 1;
 
 	/* configure the TTY for initial operation */
 	if (SerialConfigTTY(pSerial))
-		{ free(pSerial); return NULL; }
+		return 1;
 
 	/* Identify the tablet */
 	if (!pSerial->pfnIdent || pSerial->pfnIdent(pSerial))
-		{ perror("ident"); free(pSerial); return NULL; }
+		return 1;
 
 	/* Initialize the tablet */
 	if (!pSerial->pfnInit || pSerial->pfnInit(pSerial))
-		{ perror("init"); free(pSerial); return NULL; }
+		return 1;
 
 	/* Send start */
 	SerialSendStart(pSerial);
 
-	return (WACOMTABLET)pSerial;
+	return 0;
 }
 
 /*****************************************************************************
 ** Serial Tablet Functions
 *****************************************************************************/
 
-int SerialConfigTTY(SERIALTABLET* pSerial)
+static int SerialConfigTTY(SERIALTABLET* pSerial)
 {
 	struct termios tios;
 	int nBaudRate = 9600;
@@ -679,7 +711,7 @@ static int SerialIdentWacom(SERIALTABLET* pSerial)
 						&pSerial->nVerMinor) != 2)
 					{
 						errno = EINVAL;
-						fprintf(stderr,"bad version number: %s\n",pszPos);
+						SerialError(pSerial,"bad version number: %s",pszPos);
 						return 1;
 					}
 				}
@@ -688,7 +720,7 @@ static int SerialIdentWacom(SERIALTABLET* pSerial)
 		}
 	}
 
-	fprintf(stderr,"UNIDENTIFIED TABLET: %s\n",chResp);
+	SerialError(pSerial,"UNIDENTIFIED TABLET: %s",chResp);
 	return 1;
 }
 
@@ -1223,7 +1255,7 @@ static int SerialParseAcerC100(SERIALTABLET* pSerial,
 
 static int SerialSendReset(SERIALTABLET* pSerial)
 {
-	fprintf(stderr,"Sending reset\n");
+	SerialInfo(pSerial,"Sending reset");
 
 	/* reset to Wacom II-S command set, and factory defaults */
 	if (SerialSend(pSerial,"\r$\r")) return 1;
@@ -1325,7 +1357,7 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 		nXfer = read(pSerial->fd,pchResponse,1);
 		if (nXfer <= 0) { perror("trunc response header"); return 1; }
 		if (*pchResponse == *pszRequest) break;
-		fprintf(stderr,"Discarding %02X\n", *((unsigned char*)pchResponse));
+		SerialWarn(pSerial,"Discarding %02X", *((unsigned char*)pchResponse));
 	}
 
 	/* read response header */
@@ -1485,18 +1517,63 @@ static int SerialReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 		unsigned int uSize)
 {
 	int nXfer;
+	fd_set fdsRead;
+	unsigned char* pPos, *pEnd;
+	struct timeval timeout;
 	unsigned int uCnt, uPacketLength;
 	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+
 	if (!pSerial) { errno=EBADF; return 0; }
 	uPacketLength = pSerial->uPacketLength;
 
 	/* check size of buffer */
 	if (uSize < uPacketLength) { errno=EINVAL; return 0; }
-	
+
+	/* check for errors, reset after 3 */
+	if (pSerial->nBitErrors > 3)
+	{
+		pSerial->nBitErrors = 0;
+		SerialWarn(pSerial,"Resetting tablet due to bit errors");
+		(void)SerialReset(pSerial,&pSerial->modelRequested);
+	}
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 500000; /* 0.5 seconds for now */
+
 	for (uCnt=0; uCnt<uPacketLength; uCnt+=nXfer)
 	{
+		FD_ZERO(&fdsRead);
+		FD_SET(pSerial->fd, &fdsRead);
+		if (select(FD_SETSIZE,&fdsRead,NULL,NULL,&timeout) <= 0)
+			break;
+
 		nXfer = read(pSerial->fd,puchData+uCnt,uPacketLength-uCnt);
 		if (nXfer <= 0) return nXfer;
+
+		/* look for high-bit */
+		pEnd = puchData + nXfer;
+		for (pPos=puchData; pPos<pEnd; ++pPos)
+		{
+			if (*pPos & 0x80) break;
+		}
+
+		/* not where it was expected? fix it. */
+		if (pPos != puchData) 
+		{
+			++pSerial->nBitErrors;
+			SerialWarn(pSerial,"Bad high bit, discarding %d bytes",
+				pPos - puchData);
+
+			/* copy remaining bytes down, if any */
+			memmove(puchData,pPos,(nXfer - (pPos-puchData)));
+			nXfer -= pPos - puchData;
+		}
+	}
+
+	if (uCnt < uPacketLength)
+	{
+		errno = ETIMEDOUT;
+		return -1;
 	}
 
 	return (signed)uCnt;
@@ -1511,13 +1588,27 @@ static int SerialParseData(WACOMTABLET_PRIV* pTablet,
 	if (!pSerial) { errno=EBADF; return 1; }
 
 	/* check synchronization */
-	if (!puchData[0] & 0x80)
-		{ errno=EINVAL; return 1; }
+	if (!(puchData[0] & 0x80))
+	{
+		++pSerial->nBitErrors;
+		SerialError(pSerial,"HIBIT FAIL");
+		errno=EINVAL;
+		return 1;
+	}
 	for (i=1; i<uLength; ++i)
 	{
 		if (puchData[i] & 0x80)
-			{ errno=EINVAL; return 1; }
+		{
+			++pSerial->nBitErrors;
+			SerialError(pSerial,"LOBIT FAIL");
+			SerialDump(pSerial,puchData,uLength);
+			errno=EINVAL;
+			return 1;
+		}
 	}
+
+	/* reset bit error count */
+	pSerial->nBitErrors = 0;
 
 	/* dispatch to parser */
 	if (pSerial->pfnParse)
@@ -1542,7 +1633,7 @@ static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
 		case 1200: baudRate = B1200; break; /* for testing, maybe */
 	}
 
-	fprintf(stderr,"Setting baud rate to %d\n",nBaud);
+	SerialInfo(pSerial,"Setting baud rate to %d",nBaud);
 
 	/* change baud rate */
 	cfsetispeed(pTIOS, baudRate);
@@ -1553,3 +1644,67 @@ static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
 	/* send reset command */
 	return SerialSendReset(pSerial);
 }
+
+/*****************************************************************************
+** Log Functions
+*****************************************************************************/
+
+#define SERIALLOG(l) do { \
+	va_list a; \
+	va_start(a,pszFmt); \
+	WacomLogV(pSerial->hEngine,l,pszFmt,a); \
+	va_end(a); } while (0)
+
+static void SerialError(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_ERROR); }
+static void SerialWarn(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_WARN); }
+static void SerialInfo(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_INFO); }
+
+static void SerialDump(SERIALTABLET* pSerial, const void* pvData, int nCnt)
+{
+	int i;
+	const unsigned char* pData = (const unsigned char*)pvData;
+	unsigned char chLine[80];
+	unsigned int uAddr = 0;
+	int nPos = 0;
+
+	while (nCnt > 0)
+	{
+		nPos = 0;
+		for (i=0; i<16; ++i)
+		{
+			if (i < nCnt)
+				nPos += snprintf(chLine+nPos,sizeof(chLine)-nPos,
+						"%02X",pData[i]);
+			else
+				nPos += snprintf(chLine+nPos,sizeof(chLine)-nPos,
+						"  ");
+		}
+		nPos += snprintf(chLine+nPos,sizeof(chLine)-nPos," - ");
+		for (i=0; i<16; ++i)
+		{
+			if (i < nCnt)
+				nPos += snprintf(chLine+nPos,sizeof(chLine)-nPos,
+						"%c",isprint(pData[i]) ? pData[i] : '.');
+			else
+				nPos += snprintf(chLine+nPos,sizeof(chLine)-nPos,
+						" ");
+		}
+
+		WacomLog(pSerial->hEngine,WACOMLOGLEVEL_DEBUG,"%04X: %s",uAddr,chLine);
+		uAddr += 16;
+		nCnt -= 16;
+		pData += 16;
+	}
+}
+
+/* NOT USED, YET
+static void SerialCritical(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_CRITICAL); }
+static void SerialDebug(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_DEBUG); }
+static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...)
+	{ SERIALLOG(WACOMLOGLEVEL_TRACE); }
+*/

@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,10 +54,76 @@ typedef struct
 	FREEFUNC pfnFree;
 } DEVICELIST_INTERNAL;
 
+typedef struct _ENGINE_PRIV ENGINE_PRIV;
+
+struct _ENGINE_PRIV
+{
+	WACOMLOGFUNC pfnLog;
+	WACOMLOGLEVEL level;
+	char chLogBuf[1024];
+};
 
 /*****************************************************************************
 ** Implementation
 *****************************************************************************/
+
+WACOMENGINE WacomInitEngine(void)
+{
+	ENGINE_PRIV* pEngine = NULL;
+	pEngine = (ENGINE_PRIV*)malloc(sizeof(ENGINE_PRIV));
+	memset(pEngine,0,sizeof(*pEngine));
+	pEngine->level = WACOMLOGLEVEL_WARN;
+	return (WACOMENGINE)pEngine;
+}
+
+void WacomTermEngine(WACOMENGINE hEngine)
+{
+	ENGINE_PRIV* pEngine = (ENGINE_PRIV*)hEngine;
+	if (!pEngine) return;
+
+	free(pEngine);
+}
+
+void WacomSetLogFunc(WACOMENGINE hEngine, WACOMLOGFUNC pfnLog)
+{
+	ENGINE_PRIV* pEngine = (ENGINE_PRIV*)hEngine;
+	if (!pEngine) return;
+	pEngine->pfnLog = pfnLog;
+}
+
+void WacomSetLogLevel(WACOMENGINE hEngine, WACOMLOGLEVEL level)
+{
+	ENGINE_PRIV* pEngine = (ENGINE_PRIV*)hEngine;
+	if (!pEngine) return;
+
+	if (level < WACOMLOGLEVEL_CRITICAL)
+		level = WACOMLOGLEVEL_CRITICAL;
+	if (level > WACOMLOGLEVEL_TRACE)
+		level = WACOMLOGLEVEL_TRACE;
+	
+	pEngine->level = level;
+}
+
+void WacomLogV(WACOMENGINE hEngine, WACOMLOGLEVEL level, const char* pszFmt,
+	va_list args)
+{
+	struct timeval tv;
+	ENGINE_PRIV* pEngine = (ENGINE_PRIV*)hEngine;
+	if (!pEngine || !pEngine->pfnLog || (pEngine->level < level)) return;
+
+	gettimeofday(&tv,NULL);
+
+	vsnprintf(pEngine->chLogBuf,sizeof(pEngine->chLogBuf),pszFmt,args);
+	pEngine->pfnLog(tv,level,pEngine->chLogBuf);
+}
+
+void WacomLog(WACOMENGINE hEngine, WACOMLOGLEVEL level, const char* pszFmt, ...)
+{
+	va_list args;
+	va_start(args, pszFmt);
+	WacomLogV(hEngine,level,pszFmt,args);
+	va_end(args);
+}
 
 static void FreeClassList(void* pv)
 {
@@ -215,7 +282,8 @@ static int WacomIsUSB(int fd)
 #endif
 }
 
-WACOMTABLET WacomOpenTablet(const char* pszDevice, WACOMMODEL* pModel)
+WACOMTABLET WacomOpenTablet(WACOMENGINE hEngine, const char* pszDevice,
+	WACOMMODEL* pModel)
 {
 	int fd, e;
 	WACOMTABLET hTablet = NULL;
@@ -224,19 +292,25 @@ WACOMTABLET WacomOpenTablet(const char* pszDevice, WACOMMODEL* pModel)
 	/* open device for read/write access */
 	fd = open(pszDevice,O_RDWR);
 	if (fd < 0) 
-		{ perror("open"); return NULL; }
+	{
+		e = errno;
+		WacomLog(hEngine,WACOMLOGLEVEL_ERROR,"Failed to open %s: %s",
+			pszDevice, strerror(errno));
+		errno = e;
+		return NULL;
+	}
 
 	/* configure serial */
 	if ((!uClass || (uClass == WACOMCLASS_SERIAL)) && WacomIsSerial(fd))
 	{
-		hTablet = WacomOpenSerialTablet(fd,pModel);
+		hTablet = WacomOpenSerialTablet(hEngine,fd,pModel);
 		if (!hTablet) { e=errno; close(fd); errno=e; return NULL; }
 	}
 
 	/* configure usb */
 	else if ((!uClass || (uClass == WACOMCLASS_USB)) && WacomIsUSB(fd))
 	{
-		hTablet = WacomOpenUSBTablet(fd,pModel);
+		hTablet = WacomOpenUSBTablet(hEngine,fd,pModel);
 		if (!hTablet) { e=errno; close(fd); errno=e; return NULL; }
 	}
 

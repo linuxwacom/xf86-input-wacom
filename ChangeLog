@@ -2,6 +2,8 @@
 
 	* Changed macros from WAC_ to WCM_ due to bug in Mandrake 9 autoconf.
 	* Added timeout for reset and tablet detection in wacserial.c
+	* Added logging to wacdump.
+	* Added serial reset on bit errors.
 
 2003-01-26    John E. Joganic <john@joganic.com>
 

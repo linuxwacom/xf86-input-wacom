@@ -26,6 +26,7 @@
 
 int WacomGetSupportedSerialDeviceList(WACOMDEVICEREC** ppList, int* pnSize);
 unsigned int WacomGetSerialDeviceFromName(const char* pszName);
-WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel);
+WACOMTABLET WacomOpenSerialTablet(WACOMENGINE hEngine, int fd,
+	WACOMMODEL* pModel);
 
 #endif /* __LINUXWACOM_WACSERIAL_H */
