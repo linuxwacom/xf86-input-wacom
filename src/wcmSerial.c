@@ -780,6 +780,7 @@ static Bool xf86WcmSerialInit(LocalDevicePtr local)
  *   Read the new events from the device, and enqueue them.
  ****************************************************************************/
 
+static void WacomProtocol4Graphire(WacomCommonPtr common);
 static void WacomProtocol4(WacomCommonPtr common);
 static void WacomProtocol5(WacomCommonPtr common);
 
@@ -829,9 +830,17 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		if (common->wcmIndex == common->wcmPktLength)
 		{
 			if (common->wcmProtocolLevel == 4)
-				WacomProtocol4(common);
+			{
+				if (common->wcmFlags & GRAPHIRE_FLAG)
+					WacomProtocol4Graphire(common);
+				else
+					WacomProtocol4(common);
+			}
 			else if (common->wcmProtocolLevel == 5)
 				WacomProtocol5(common); 
+
+			/* reset for next packet */
+			common->wcmIndex = 0;
 		}
 	} /* next data */
 
@@ -839,13 +848,14 @@ static void xf86WcmSerialRead(LocalDevicePtr local)
 		local, common->wcmIndex));
 }
 
-static void WacomProtocol4(WacomCommonPtr common)
+/* ugly kludge - temporarily exploded out */
+
+static void WacomProtocol4Graphire(WacomCommonPtr common)
 {
 	int x, y, z, idx, buttons, tx = 0, ty = 0;
 	int is_stylus, is_button, wheel=0;
 
 	int is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
-	int is_graphire = common->wcmFlags & GRAPHIRE_FLAG;
      
 	/* reset char count for next read */
 	common->wcmIndex = 0;
@@ -859,57 +869,29 @@ static void WacomProtocol4(WacomCommonPtr common)
 
 	/* check which device we have */
 	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (common->wcmMaxZ > 350)
+	z = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
+		((common->wcmData[3]&ZAXIS_BIT) >> 1) +
+		((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
+		((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
+
+	if (is_stylus)
 	{
-		/* which tablets use this? */
-		/* PL550, PL800, and Graphire apparently */
-		z = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
-			((common->wcmData[3]&ZAXIS_BIT) >> 1) +
-			((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
-			((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
-	}
-	else if (common->wcmMaxZ > 150)
-	{
-		z = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
-			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
-			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+		buttons = ((common->wcmData[3] & 0x30) >> 3) |
+			(z >= common->wcmThreshold ? 1 : 0);
 	}
 	else
 	{
-		z = (common->wcmData[6] & ZAXIS_BITS) |
-			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
+		buttons = (common->wcmData[3] & 0x38) >> 3;
+		wheel = (common->wcmData[6] & 0x30) >> 4;
+
+		if (common->wcmData[6] & 0x40)
+			wheel = -wheel;
 	}
+	is_button = (buttons != 0);
 
-	if (is_graphire)
-	{
-		if (is_stylus)
-		{
-			buttons = ((common->wcmData[3] & 0x30) >> 3) |
-				(z >= common->wcmThreshold ? 1 : 0);
-		}
-		else
-		{
-			buttons = (common->wcmData[3] & 0x38) >> 3;
-			wheel = (common->wcmData[6] & 0x30) >> 4;
-
-			if (common->wcmData[6] & 0x40)
-				wheel = -wheel;
-		}
-		is_button = (buttons != 0);
-
-		DBG(10, ErrorF("graphire buttons=%d prox=%d "
-			"wheel=%d\n", buttons, is_proximity,
-			wheel));
-	} /* graphire */
-
-	else
-	{
-		is_button = (common->wcmData[0] & BUTTON_FLAG);
-		if(common->wcmFlags & PL_FLAG)
-			buttons = (common->wcmData[3] & 0x38) >> 3;
-		else
-			buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
-	}
+	DBG(10, ErrorF("graphire buttons=%d prox=%d "
+		"wheel=%d\n", buttons, is_proximity,
+		wheel));
 
 	/* The stylus reports button 4 for the second side
 	 * switch and button 4/5 for the eraser tip. We know
@@ -921,14 +903,7 @@ static void WacomProtocol4(WacomCommonPtr common)
 	if (is_stylus)
 	{
 		if (!common->wcmStylusProximity && is_proximity)
-		{
-			if (is_graphire)
-				common->wcmStylusSide =
-					!(common->wcmData[3] & 0x40);
-			else
-				common->wcmStylusSide =
-					(buttons != 4);
-		}
+			common->wcmStylusSide = !(common->wcmData[3] & 0x40);
 	}
 
 	DBG(8, ErrorF("xf86WcmSerialRead %s side\n",
@@ -949,11 +924,11 @@ static void WacomProtocol4(WacomCommonPtr common)
 	/* split data amonst devices */
 	for(idx=0; idx<common->wcmNumDevices; idx++)
 	{
-		LocalDevicePtr local_dev = common->wcmDevices[idx];
+	 	LocalDevicePtr local_dev = common->wcmDevices[idx]; 
 		WacomDevicePtr priv= (WacomDevicePtr)local_dev->private;
 		int temp_buttons = buttons;
 		int temp_is_proximity = is_proximity;
-		int curDevice;
+		int curDevice; 
 
 		DBG(7, ErrorF("xf86WcmSerialRead trying "
 			"to send to %s\n", local_dev->name));
@@ -971,27 +946,10 @@ static void WacomProtocol4(WacomCommonPtr common)
 
 			if (is_proximity)
 			{
-				if (is_graphire)
-				{
-					if (common->wcmData[3] & 0x40)
-						curDevice = ERASER_ID;
-					else
-						curDevice = STYLUS_ID;
-				}
+				if (common->wcmData[3] & 0x40)
+					curDevice = ERASER_ID;
 				else
-				{
-					if ((buttons & 4) &&
-						common->wcmHasEraser &&
-						((!priv->oldProximity ||
-						!(common->wcmStylusSide))))
-					{
-						curDevice = ERASER_ID;
-					}
-					else
-					{
-						curDevice = STYLUS_ID;
-					}
-				}
+					curDevice = STYLUS_ID;
 			}
 			else
 			{
@@ -1054,8 +1012,7 @@ static void WacomProtocol4(WacomCommonPtr common)
 
 		/* Hardware filtering isn't working on Graphire so
 		 * we do it here. */
-		if ((common->wcmFlags & GRAPHIRE_FLAG) &&
-			((temp_is_proximity && priv->oldProximity) ||
+		if (((temp_is_proximity && priv->oldProximity) ||
 			((temp_is_proximity == 0) &&
 				(priv->oldProximity == 0))) &&
 				(temp_buttons == priv->oldButtons) &&
@@ -1067,42 +1024,6 @@ static void WacomProtocol4(WacomCommonPtr common)
 		{
 			DBG(10, ErrorF("Graphire filtered\n"));
 			return;
-		}
-
-		if (!(priv->flags & FIRST_TOUCH_FLAG) &&
-				!(common->wcmFlags & GRAPHIRE_FLAG))
-		{
-
-		/* The stylus reports button 4 for the second side
-		 * switch and button 4/5 for the eraser tip. We know
-		 * how to choose when we come in proximity for the
-		 * first time. If we are in proximity and button 4 then
-		 * we have the eraser else we have the second side
-		 * switch.  */
-			if (is_stylus)
-			{
-				if (temp_buttons == 4)
-				{
-					temp_buttons = (priv->oldProximity == ERASER_PROX) ? 0 : 4;
-				}
-				else
-				{
-					if (priv->oldProximity == ERASER_PROX && temp_buttons == 5)
-					{
-						temp_buttons = ((DEVICE_ID(priv->flags) == ERASER_ID) ? 1 : 4 );
-					}
-				}
-			}
-			else
-			{
-				/* If the button flag is pressed,
-				 * but the switch state is zero, this means
-				 * that cursor button 16 was pressed */
-				if (is_button && temp_buttons == 0)
-				{
-					temp_buttons = 16;
-				}
-			}
 		}
 
 		{
@@ -1132,18 +1053,95 @@ static void WacomProtocol4(WacomCommonPtr common)
 	} /* next device */
 }
 
+/* ugly kludge - temporarily exploded out */
+
+static void WacomProtocol4(WacomCommonPtr common)
+{
+#if 1
+	WacomDeviceState* orig = &common->wcmChannel[0].state;
+	WacomDeviceState ds = *orig;
+	int is_stylus;
+
+	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
+     
+	ds.x = (((common->wcmData[0] & 0x3) << 14) +
+		(common->wcmData[1] << 7) +
+		common->wcmData[2]);
+	ds.y = (((common->wcmData[3] & 0x3) << 14) +
+		(common->wcmData[4] << 7) +
+		common->wcmData[5]);
+
+	/* how about using the protocol version, rather than
+	 * a user configurable value, eh? */
+
+	if (common->wcmMaxZ > 350)
+	{
+		/* which tablets use this? */
+		/* PL550, PL800, and Graphire apparently */
+		ds.pressure = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
+			((common->wcmData[3]&ZAXIS_BIT) >> 1) +
+			((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
+			((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
+	}
+	else if (common->wcmMaxZ > 150)
+	{
+		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
+			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
+			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+	}
+	else
+	{
+		ds.pressure = (common->wcmData[6] & ZAXIS_BITS) |
+			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
+	}
+
+	if (common->wcmFlags & PL_FLAG)
+		ds.buttons = (common->wcmData[3] & 0x38) >> 3;
+	else
+		ds.buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+
+	/* If stylus comes into focus, use button to determine if eraser */
+	is_stylus = (common->wcmData[0] & POINTER_BIT);
+	if (is_stylus && !orig->proximity && ds.proximity)
+		ds.device_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+
+	/* If it is not a stylus, it's a cursor */
+	else if (!is_stylus && !orig->proximity && ds.proximity)
+		ds.device_type = CURSOR_ID;
+
+	/* If it is out of proximity, there is no device type */
+	else if (!ds.proximity)
+		ds.device_type = 0;
+
+	DBG(8, ErrorF("WacomProtocol4 %s\n",
+		ds.device_type == CURSOR_ID ? "CURSOR" :
+		ds.device_type == ERASER_ID ? "ERASER " :
+		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+
+	/* handle tilt values only for stylus */
+	if (HANDLE_TILT(common))
+	{
+		ds.tiltx = (common->wcmData[7] & TILT_BITS);
+		ds.tilty = (common->wcmData[8] & TILT_BITS);
+		if (common->wcmData[7] & TILT_SIGN_BIT)
+			ds.tiltx -= 64;
+		if (common->wcmData[8] & TILT_SIGN_BIT)
+			ds.tilty -= 64;
+	}
+
+	xf86WcmEvent(common,0,&ds);
+#endif
+}
+
 static void WacomProtocol5(WacomCommonPtr common)
 {
 	int is_stylus=0, have_data=0;
 	int channel;
 	WacomDeviceState ds;
 
-	/* reset count for read of next packet */
-	common->wcmIndex = 0;
-
 	/* start with previous state */
 	channel = common->wcmData[0] & 0x01;
-	ds = common->wcmDevStat[channel];
+	ds = common->wcmChannel[channel].state;
 
 	DBG(7, ErrorF("packet header = 0x%x\n",
 			(unsigned int)common->wcmData[0]));
@@ -1292,7 +1290,10 @@ static void WacomProtocol5(WacomCommonPtr common)
 	if (have_data)
 	       	xf86WcmEvent(common,channel,&ds);
 
-	/* otherwise, save state for next packet */
+	/* otherwise, initialize channel and wait for next packet */
 	else
-		common->wcmDevStat[channel] = ds;
+	{
+		common->wcmChannel[channel].state = ds;
+		common->wcmChannel[channel].pDev = NULL;
+	}
 }

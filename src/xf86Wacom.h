@@ -220,6 +220,7 @@ typedef struct _WacomModule4 WacomModule4;
 typedef struct _WacomModule3 WacomModule3;
 typedef struct _WacomDeviceRec WacomDeviceRec, *WacomDevicePtr;
 typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
+typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
 typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
 typedef struct _WacomFilterState WacomFilterState, *WacomFilterStatePtr;
 typedef struct _WacomDeviceClass WacomDeviceClass, *WacomDeviceClassPtr;
@@ -325,7 +326,6 @@ struct _WacomDeviceRec
 	int throttleStart;      /* time in ticks for last wheel movement */
 	int throttleLimit;      /* time in ticks for next wheel movement */
 	int throttleValue;      /* current throttle value */
-
 };
 
 /******************************************************************************
@@ -370,6 +370,12 @@ struct _WacomDeviceState
 	int proximity;
 	WacomFilterState x_filter;
 	WacomFilterState y_filter;
+};
+
+struct _WacomChannel
+{
+	WacomDeviceState state;
+	LocalDevicePtr pDev;
 };
 
 /******************************************************************************
@@ -431,7 +437,7 @@ struct _WacomCommonRec
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
-	WacomDeviceState wcmDevStat[MAX_CHANNELS]; /* channel device state */
+	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 	WacomDeviceClassPtr pDevCls; /* device functions */
@@ -498,8 +504,8 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 
-	void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
-		const WacomDeviceState* ds);
+	void xf86WcmEvent(WacomCommonPtr common,
+		unsigned int channel, const WacomDeviceState* ds);
 	/* handles suppression, filtering, and dispatch */
 
 	void xf86WcmSendEvents(LocalDevicePtr local,

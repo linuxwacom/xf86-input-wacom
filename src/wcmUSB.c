@@ -75,7 +75,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 	struct input_event *event, *readevent, eventbuf[MAX_EVENTS];
 
 	/* start from previous state */
-	ds = common->wcmDevStat[0];
+	ds = common->wcmChannel[0].state;
 
 	#define MOD_BUTTONS(bit, value) do { \
 		ds.buttons = (((value) != 0) ? \

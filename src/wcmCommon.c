@@ -476,16 +476,22 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	const WacomDeviceState* ds)
 {
+	WacomDeviceState* pOrigState;
+	LocalDevicePtr pOrigDev;
+	LocalDevicePtr pDev = NULL;
 	WacomDevicePtr priv;
-	int found_device = -1;
 	int id, idx;
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
 		return;
 
-	DBG(10, ErrorF("xf86WcmEvent: i=%d t=%d s=%u x=%d y=%d b=0x%X\n"
-		"  p=%d rz=%d tx=%d ty=%d w=%d t=%d df=%d px=%d\n",
+	pOrigState = &common->wcmChannel[channel].state;
+	pOrigDev = common->wcmChannel[channel].pDev;
+
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=0x%X "
+		"p=%d rz=%d tx=%d ty=%d w=%d t=%d df=%d px=%d\n",
+		channel,
 		ds->device_id,
 		ds->device_type,
 		ds->serial_num,
@@ -495,9 +501,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds->discard_first, ds->proximity));
 
 	/* Check suppression */
-	if (xf86WcmSuppress(common->wcmSuppress,
-		common->wcmDevStat + channel,    /* original */
-		ds))                             /* new data */
+	if (xf86WcmSuppress(common->wcmSuppress, pOrigState, ds))
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
 		return;
@@ -518,52 +522,22 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		{
 			DBG(11, ErrorF("tool id=%d for %s\n",
 				id, common->wcmDevices[idx]->name));
-			found_device = idx;
+			pDev = common->wcmDevices[idx];
 			break;
 		}
 	}
 
-	/* locate other devices of same type and serial, send proximity out */
-	for (idx=0; idx<common->wcmNumDevices; idx++)
+	/* if the channel device has changed and proximity out has not
+	 * yet been sent, do it now. */
+	if (pOrigState->proximity && pOrigDev && (pOrigDev != pDev))
 	{
-		/* skip found device, if any */
-		if (idx == found_device)
-			continue;
-
-		priv = common->wcmDevices[idx]->private;
-		id = DEVICE_ID(priv->flags);
-
-		if (id == ds->device_type &&
-			((!priv->serial) || (ds->serial_num == priv->serial)) &&
-			priv->oldProximity)
-		{
-			if (found_device == -1)
-			{
-				/* Outside every mapped area, so fall
-				 * back to this, the first one */
-				found_device = idx;
-			}
-			else
-			{
-				/* report an out-of-proximity for devices
-				 * sharing same tool, but different regions */
-				WacomDeviceState out = { 0 };
-				out.device_type = ds->device_type;
-				out.serial_num = ds->serial_num;
-
-				DBG(6, ErrorF("Setting device %s fake "
-					"proximity out\n",
-					common->wcmDevices[idx]->name));
-
-				xf86WcmSendEvents(common->wcmDevices[idx],&out);
-			}
-			break;
-		}
-	} /* next device */
+		pOrigState->proximity = 0;
+		xf86WcmSendEvents(pOrigDev,pOrigState);
+	}
 
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */
-	if (found_device != -1)
+	if (pDev)
 	{
 		WacomDeviceState filtered = *ds;
 
@@ -624,7 +598,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			ThrottleToRate(priv->throttleValue);
 		#endif /* throttle */
 
-		xf86WcmSendEvents(common->wcmDevices[found_device],&filtered);
+		xf86WcmSendEvents(pDev,&filtered);
 	}
 
 	/* otherwise, if no device matched... */
@@ -634,6 +608,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 				ds->device_type, ds->serial_num));
 	}
 
-	/* save channel device state */
-	common->wcmDevStat[channel] = *ds;
+	/* save channel device state and device to which last event went */
+	common->wcmChannel[channel].state = *ds;
+	common->wcmChannel[channel].pDev = pDev;
 }

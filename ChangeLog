@@ -3,6 +3,7 @@
 	* Fixed bug in tilt filter.
 	* MaxZ determined at tablet detection
 	* Changed pressure code; all values positive.
+	* Added channel code, device proximity bound to channel
 
 2003-04-07    Jimmy Yen <jimmy@yen.tp>
 

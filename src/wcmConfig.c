@@ -132,7 +132,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmInitNumber = 0;      /* magic number for the init phases */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->pDevCls = &wcmSerialDevice; /* device-specific functions */
-	memset(common->wcmDevStat, 0, sizeof(common->wcmDevStat));
+	memset(common->wcmChannel, 0, sizeof(common->wcmChannel));
 	return local;
 }
 
