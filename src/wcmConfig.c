@@ -133,6 +133,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
+	common->wcmGimp = 1;		/* enabled (=1) to support Gimp when Xinerama Enabled in multi-monitor desktop. Needs to be disabled (=0) for Cintiq calibration */
 	return local;
 }
 

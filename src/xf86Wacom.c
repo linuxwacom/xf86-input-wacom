@@ -70,7 +70,7 @@
  * 2003-04-29 26-j0.5.11 - all devices using same data path
  * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
  * 2003-05-02 26-j0.5.13 - added parameter configuration code
- * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5 
+ * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5
  */
 
 static const char identification[] = "$Identification: 26-j0.5.14 $";
@@ -720,18 +720,22 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    }
 	    case XWACOM_PARAM_XYDEFAULT:
-                xf86ReplaceIntOption(local->options, "TopX", 0);
-                priv->topX = xf86SetIntOption(local->options, "TopX", 0);
-                xf86ReplaceIntOption(local->options, "TopY", 0);
-                priv->topY = xf86SetIntOption(local->options, "TopY", 0);
-                xf86ReplaceIntOption(local->options,
-                                "BottomX", priv->common->wcmMaxX);
-                priv->bottomX = xf86SetIntOption(local->options,
-                                "BottomX", priv->common->wcmMaxX);
-                xf86ReplaceIntOption(local->options,
-                                "BottomY", priv->common->wcmMaxY);
-                priv->bottomY = xf86SetIntOption(local->options,
-                                "BottomY", priv->common->wcmMaxY);
+		xf86ReplaceIntOption(local->options, "TopX", 0);
+		priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+		xf86ReplaceIntOption(local->options, "TopY", 0);
+		priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+		xf86ReplaceIntOption(local->options,
+				"BottomX", priv->common->wcmMaxX);
+		priv->bottomX = xf86SetIntOption(local->options,
+				"BottomX", priv->common->wcmMaxX);
+		xf86ReplaceIntOption(local->options,
+				"BottomY", priv->common->wcmMaxY);
+		priv->bottomY = xf86SetIntOption(local->options,
+				"BottomY", priv->common->wcmMaxY);
+		break;
+	    case XWACOM_PARAM_GIMP:
+		if ((value != 0) && (value != 1)) return BadValue;
+		priv->common->wcmGimp = value;
 		break;
 	    default:
     		DBG(3, ErrorF("xf86WcmSetParam invalid param %d\n",param));
@@ -746,9 +750,11 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 
 static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 {
-	FILE                    *fp = 0;
-	XF86OptionPtr           optList;
-	char                    fileName[80] = "/etc/X11/wcm.";
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	XF86OptionPtr	optList;
+	char 		fileName[80] = "/etc/X11/wcm.";
+	char		command[256];
+	FILE		*fp = 0;
 
 	strcat(fileName, local->name);
 	fp = fopen(fileName, "w+");
@@ -759,42 +765,28 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		/* write user defined options as xsetwacom commands into fp */
 		while (optList) 
 		{
-			if (!strcasecmp(optList->opt_name,"TopX"))
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "TopY")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name,"BottomX"))
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "BottomY")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name,"Button1"))
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "Button2")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name,"Button3"))
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "Button4")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "Button5")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name,"DebugLevel"))
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "PressCurve")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
-			else if (!strcasecmp(optList->opt_name, "RawFilter")) 
-				fprintf(fp, "xsetwacom set %s %s %s\n", 
-					local->name, optList->opt_name, optList->opt_val);
+			sprintf(command, "xsetwacom set %s %s %s\n", 
+				local->name, optList->opt_name, optList->opt_val);
+			if ( (!strcasecmp(optList->opt_name,"TopX") && priv->topX) 
+			    ||(!strcasecmp(optList->opt_name, "TopY") && priv->topY)  
+			    ||(!strcasecmp(optList->opt_name,"BottomX") &&
+					priv->bottomX != priv->common->wcmMaxX)
+			    ||(!strcasecmp(optList->opt_name, "BottomY") &&
+					priv->bottomY != priv->common->wcmMaxY) 
+			    ||(!strcasecmp(optList->opt_name, "Button1") &&
+					priv->button[0] != 1)
+			    ||(!strcasecmp(optList->opt_name, "Button2") &&
+					priv->button[1] != 2) 
+			    ||(!strcasecmp(optList->opt_name, "Button3") &&
+					priv->button[2] != 3) 
+			    ||(!strcasecmp(optList->opt_name, "Button4") && 
+					priv->button[3] != 4) 
+			    ||(!strcasecmp(optList->opt_name, "Button5") &&
+					priv->button[4] != 5) 
+			    ||(!strcasecmp(optList->opt_name,"DebugLevel"))
+			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
+			    ||(!strcasecmp(optList->opt_name, "RawFilter")) )
+				fprintf(fp, "%s", command);
 			optList = optList->list.next;
 		}
 		fclose(fp);
@@ -809,8 +801,10 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 
 static int xf86WcmModelToFile(LocalDevicePtr local)
 {
-	FILE                    *fp = 0;
-	LocalDevicePtr          localDevices = xf86FirstLocalDevice();
+	FILE		*fp = 0;
+	LocalDevicePtr	localDevices = xf86FirstLocalDevice();
+	char		m1[32], m2[32];			
+	int 		i = 0;
 
 	fp = fopen("/etc/wacom.dat", "w+");
 	if ( fp )
@@ -819,10 +813,17 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 		{
 			if (((WacomDevicePtr)localDevices->private)->common) 
 			{
-				fprintf(fp, "%s	%s\n", localDevices->name, 
-					((WacomDevicePtr)localDevices->private)->common->wcmModel->name);
+				sscanf((char*)(((WacomDevicePtr)localDevices->private)->
+					common->wcmModel)->name, "%s %s", m1, m2);
+				fprintf(fp, "%s %s %s\n", localDevices->name, m2, 
+				     xf86FindOptionValue(localDevices->options, "Type"));
 			}
 			localDevices = localDevices->next;
+		}
+		for (i = 0; i<screenInfo.numScreens; i++)
+		{
+			fprintf(fp, "Screen%d %d %d\n", i, screenInfo.screens[i]->width,
+				screenInfo.screens[i]->height);
 		}
 		fclose(fp);
 	} 
@@ -909,7 +910,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	if (first != 0 || num == 1)
 		return FALSE;
 #ifdef PANORAMIX
-	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG))
+	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
+		priv->common->wcmGimp)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
@@ -941,7 +943,8 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
 #ifdef PANORAMIX
-	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG))
+	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
+		priv->common->wcmGimp)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)

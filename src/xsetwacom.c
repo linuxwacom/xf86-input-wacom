@@ -138,6 +138,12 @@ struct _PARAMINFO
 			"Resets the bounding coordinates to default in tablet units",
 			XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
 
+		{ "gimp",
+			"turns on/off Gimp support in Xinerama-enabled "
+			"multi-monitor desktop, default is on",
+			XWACOM_PARAM_GIMP, VALUE_OPTIONAL, 
+			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
 		{ "Filemodel",
 			"Writes tablet models to /etc/wacom.dat",
 			XWACOM_PARAM_FILEMODEL, VALUE_OPTIONAL },

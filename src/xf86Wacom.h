@@ -397,7 +397,7 @@ struct _WacomDeviceState
 	int throttle;
 	int discard_first;
 	int proximity;
-	int sample;     /* wraps every 24 days */
+	int sample;	/* wraps every 24 days */
 };
 
 struct _WacomChannel
@@ -493,6 +493,7 @@ struct _WacomCommonRec
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
+	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

@@ -97,7 +97,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 		}
 	}
 #ifdef PANORAMIX
-	else if (!noPanoramiXExtension)
+	else if (!noPanoramiXExtension && priv->common->wcmGimp)
 	{
 		screenToSet = priv->screen_no;
 		for (i = 0; i < screenToSet; i++)
@@ -109,7 +109,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 			(double)maxHeight + 0.5;
 	}
 
-	if (!noPanoramiXExtension)
+	if (!noPanoramiXExtension && priv->common->wcmGimp)
 	{
 		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
 		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
@@ -601,7 +601,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = GetTimeInMillis();
 
-	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=0x%X "
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=0x%X x=%d y=%d b=0x%X "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,

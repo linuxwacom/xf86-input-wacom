@@ -14,6 +14,8 @@ WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
 WCM_ENV_GTK=no
+WCM_ENV_TCLLIB=no
+WCM_TCLDIR_DEFAULT=/usr
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
@@ -292,6 +294,32 @@ if test "$WCM_XLIBDIR" != "no"; then
 		echo "*** unable to find X11/Xlib.h; are the X11 development"
 		echo "*** packages installed?  XLib dependencies will not be built."
 		echo "***"
+	fi
+fi
+])
+AC_DEFUN(AC_WCM_CHECK_TCL,[
+dnl Check for TCL development environment
+WCM_TCLDIR=
+AC_ARG_WITH(tcl,
+[  --with-tcl=dir   uses a specified TCL directory],
+[WCM_TKDIR=$withval])
+
+dnl handle default case
+if test "$WCM_TCLDIR" == "" || test "$WCM_TCLDIR" == "yes"; then
+	AC_MSG_CHECKING(for TCL library directory)
+	if test -d $WCM_TCLDIR_DEFAULT/local/lib/tcl; then
+		WCM_TCLDIR=$WCM_TCLDIR_DEFAULT/local/lib
+		AC_MSG_RESULT(found)
+		WCM_ENV_TCLLIB=yes
+	else
+		if test -d $WCM_TCLDIR_DEFAULT/lib/tcl; then
+			WCM_TCLDIR=$WCM_TCLDIR_DEFAULT/lib
+			AC_MSG_RESULT(found)
+			WCM_ENV_TCLLIB=yes
+		else
+			AC_MSG_RESULT(not found, tried $WCM_TCLDIR_DEFAULT and $WCM_TCLDIR_DEFAULT/local)
+			WCM_TCLDIR=no
+		fi
 	fi
 fi
 ])

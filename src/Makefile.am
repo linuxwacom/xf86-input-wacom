@@ -6,12 +6,18 @@ wacomcfgdir = $(includedir)/wacomcfg
 lib_LTLIBRARIES = libwacomcfg.la
 wacomcfg_HEADERS = wacomcfg.h
 
+tcllibdir = @WCM_TCLDIR@/TkXInput
+tcllib_LTLIBRARIES = libwacomxi.la
+cpldir = $(bindir)
+cpl_SCRIPTS = wacomcpl
+
 AM_CFLAGS = -Wall
 
-EXTRA_PROGRAMS = wacdump xidump xsetwacom
+EXTRA_PROGRAMS = wacdump xidump xsetwacom 
+
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o \
 		tabletdev.o \
-		wacom_drv.o wacom_drv-v3.o
+		wacom_drv.o wacom_drv-v3.o wacomcpl
 
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
@@ -29,6 +35,10 @@ libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
+
+libwacomxi_la_SOURCES = wacomxi.c wacomxi.h
+libwacomxi_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMXI_VER@
+libwacomxi_la_LIBADD = @WCM_LIBWACOMXI_LIBS@
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
 		input.c tabletdev.c usbmouse.c xf86Wacom.c \
@@ -172,4 +182,3 @@ $(XF86V3OBJS):
 
 wacom_drv-v3.o: $(XF86V3OBJS)
 	ld -r $(XF86V3OBJS) -o wacom_drv-v3.o
-

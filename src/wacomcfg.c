@@ -180,11 +180,11 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 		nPos += nLen + 1;
 
 		/* guess type for now - don't discard unknowns */
-		if (strncmp(pInfo->pszName,"cursor",6) == 0)
+		if (strncasecmp(pInfo->pszName,"cursor",6) == 0)
 			pInfo->type = WACOMDEVICETYPE_CURSOR;
-		else if (strncmp(pInfo->pszName,"stylus",6) == 0)
+		else if (strncasecmp(pInfo->pszName,"stylus",6) == 0)
 			pInfo->type = WACOMDEVICETYPE_STYLUS;
-		else if (strncmp(pInfo->pszName,"eraser",6) == 0)
+		else if (strncasecmp(pInfo->pszName,"eraser",6) == 0)
 			pInfo->type = WACOMDEVICETYPE_ERASER;
 		else
 			pInfo->type = WACOMDEVICETYPE_UNKNOWN;

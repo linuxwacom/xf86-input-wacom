@@ -158,7 +158,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 
 	static WacomModel serialProtocol4 =
 	{
-		"Unknown Serial",
+		"Serial UD",
 		serialInitProtocol4,
 		serialGetResolution,
 		serialGetRanges,
