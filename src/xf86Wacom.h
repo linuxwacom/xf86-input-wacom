@@ -434,6 +434,7 @@ struct _WacomCommonRec
 	Bool wcmStylusSide;          /* eraser or stylus ? */
 	Bool wcmStylusProximity;     /* the stylus is in proximity ? */
 	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
+	float wcmVersion;            /* ROM version */
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
@@ -441,6 +442,8 @@ struct _WacomCommonRec
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 	WacomDeviceClassPtr pDevCls; /* device functions */
+
+	void (*Parse)(WacomCommonPtr common);    /* parses packet data */
 
 #ifdef LINUX_INPUT
 	/* data used by USB driver */

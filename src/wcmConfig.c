@@ -81,6 +81,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	local->old_x = -1;
 	local->old_y = -1;
 	
+	memset(priv,0,sizeof(*priv));
 	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
 	priv->oldX = -1;             /* previous X position */
 	priv->oldY = -1;             /* previous Y position */
@@ -110,6 +111,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleStart = 0;
 	priv->throttleLimit = -1;
 	
+	memset(common,0,sizeof(*common));
 	common->wcmDevice = "";                  /* device file name */
 	common->wcmSuppress = DEFAULT_SUPPRESS;  /* transmit position if increment is superior */
 	common->wcmFlags = 0;                    /* various flags */
@@ -132,7 +134,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmInitNumber = 0;      /* magic number for the init phases */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->pDevCls = &wcmSerialDevice; /* device-specific functions */
-	memset(common->wcmChannel, 0, sizeof(common->wcmChannel));
 	return local;
 }
 

@@ -57,7 +57,7 @@
 #define WC_RESET_19200 "\r$"     /* reset to 9600 baud */
 #define WC_RESET_19200_IV "\r#"
 
-char* xf86WcmSendRequest(int fd, char* request, char* answer, int maxlen);
+char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen);
 
 #endif /* __WCMSERIAL_H */
 
