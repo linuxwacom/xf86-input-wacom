@@ -60,9 +60,10 @@
  * 2003-01-31 26-j0.5.1 - added Ping Cheng's PL code
  * 2003-01-31 26-j0.5.2 - fixed serial number code for Intuos and Intuos2
  * 2003-02-12 26-j0.5.3 - added Ping Cheng's USB patch
+ * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
  */
 
-static const char identification[] = "$Identification: 26-j0.5.3 $";
+static const char identification[] = "$Identification: 26-j0.5.4 $";
 
 #include "xf86Version.h"
 
@@ -3383,6 +3384,7 @@ xf86WcmProc(DeviceIntPtr       pWcm,
 	    DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=ON\n", pWcm));
 
 	    if ((local->fd < 0) && (!xf86WcmOpenDevice(pWcm))) {
+		pWcm->inited = FALSE;
 		return !Success;
 	    }
 #ifdef XFREE86_V4	    

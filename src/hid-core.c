@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.4 2003/01/27 23:26:49 jjoganic Exp $
+ * $Id: hid-core.c,v 1.5 2003/02/13 01:34:23 jjoganic Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -1369,7 +1369,7 @@ static struct usb_driver hid_driver = {
 static int __init hid_init(void)
 {
 #ifdef __JEJ_DEBUG
-	printk(KERN_INFO __FILE__ ": hid_init (MODIFIED DEBUG)\n");
+	printk(KERN_INFO __FILE__ ": hid_init (LINUXWACOM DEBUG)\n");
 #endif
 	hiddev_init();
 	usb_register(&hid_driver);

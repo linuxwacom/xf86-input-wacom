@@ -1,5 +1,5 @@
 /*
- * $Id: usbmouse.c,v 1.1 2002/12/23 02:44:46 jjoganic Exp $
+ * $Id: usbmouse.c,v 1.2 2003/02/13 01:34:23 jjoganic Exp $
  *
  *  Copyright (c) 1999-2000 Vojtech Pavlik
  *
@@ -214,7 +214,7 @@ static struct usb_driver usb_mouse_driver = {
 static int __init usb_mouse_init(void)
 {
 #ifdef __JEJ_DEBUG
-	printk(KERN_INFO __FILE__ ": usb_mouse_init (MODIFIED DEBUG)\n");
+	printk(KERN_INFO __FILE__ ": usb_mouse_init (LINUXWACOM DEBUG)\n");
 #endif
 	usb_register(&usb_mouse_driver);
 	info(DRIVER_VERSION ":" DRIVER_DESC);
