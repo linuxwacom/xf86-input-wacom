@@ -196,6 +196,10 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "XD-0912-U", "Wacom Intuos2 9x12", 3, 0x43 },
 		{ "XD-1212-U", "Wacom Intuos2 12x12", 4, 0x44 },
 		{ "XD-1218-U", "Wacom Intuos2 12x18", 5, 0x45 },
+
+		/* fix for I2 6x8's reporting as 0x47 */
+		{ "XD-0608-U", "Wacom Intuos2 6x8", 2, 0x47 },
+
 		{ NULL }
 	};
 

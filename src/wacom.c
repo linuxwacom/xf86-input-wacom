@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.16 2003/06/13 00:35:05 pingc Exp $
+ * $Id: wacom.c,v 1.17 2003/06/19 15:28:44 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -74,6 +74,7 @@
  *    v1.30-j0.5.0 - new release
  *    v1.30-j0.5.1 - fixed serial number code for Intuos and Intuos2
  *    v1.30-j0.5.2 - applied Ping Cheng's eraser patch for PL
+ *    v1.30-j0.5.3 - reapplied patch for Intuos2 6x8's reportings as (0x47)
  */
 
 /*
@@ -634,6 +635,11 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13), driver_info: 21 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14), driver_info: 22 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03), driver_info: 23 },
+
+	/* some Intuos2 6x8's erroneously report as 0x47;
+	 * multiple confirmed examples exist. */
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47), driver_info: 16 },
+
 	{ }
 };
 
