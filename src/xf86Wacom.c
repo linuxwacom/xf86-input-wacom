@@ -724,9 +724,16 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    }
 	    case XWACOM_PARAM_MODE:
 		if ((value < 0) || (value > 1)) return BadValue;
-		xf86ReplaceIntOption(local->options, "Mode", value);
-		if (value) priv->flags |= ABSOLUTE_FLAG;
-		else priv->flags &= ~(ABSOLUTE_FLAG);
+		if (value) 
+		{
+			priv->flags |= ABSOLUTE_FLAG;
+			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+		}
+		else 
+		{
+			priv->flags &= ~(ABSOLUTE_FLAG);
+			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+		}
 		break;
 	    case XWACOM_PARAM_SPEEDLEVEL:
 		if ((value < 0) || (value > 10)) return BadValue;
