@@ -1,3 +1,5 @@
+	* Updated serial UD and PL code for the refactored src
+
 2003-04-19    Jimmy Yen <jimmy@yen.tp>
 
 	* Fixed throttle code.
