@@ -2,6 +2,7 @@
 
 	* Applied Ping Cheng's suppress patch
 	* Added evdev.c to project, contains Jonathan Paisley's oops patch
+	* Added input.c to project
 
 2003-02-23    John E. Joganic <john@joganic.com>
 
