@@ -783,7 +783,7 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 
 #else /* WCM_ENABLE_LINUXWACOM */
 
-WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
+WACOMTABLET WacomOpenUSBTablet(WACOMENGINE hEngine, int fd, WACOMMODEL* pModel)
 {
 	errno = EPERM;
 	return NULL;
