@@ -1,0 +1,604 @@
+#!/bin/bash
+#\
+exec wish -f "$0" ${1+"$@"}
+#
+# wacomcpl -- Wacom Control Panel Utility to Change Configuration Setting.
+#
+# Author	: Ping Cheng
+# Creation date	: 04/05/2003
+#
+# Based on calibrate 1998-99 Patrick Lecoanet --
+#
+# This code is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Library General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This code is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Library General Public License for more details.
+#
+# You should have received a copy of the GNU Library General Public
+# License along with this code; if not, write to the Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#
+
+
+
+package require WACOMXI
+
+set numScreens 1
+set currentScreen 0
+set desktopWidth [ winfo screenwidth . ]
+set desktopHeight [ winfo screenheight . ]
+set screenWidth [ winfo screenwidth . ]
+set screenHeight [ winfo screenheight . ]
+set screenX_org 0
+set screenY_org 0
+set swapThresh 100
+set size 50
+set circle_size 10
+set line_size 30
+
+set origin_x [ expr ($desktopWidth/2) - ($desktopWidth/4) ]
+set origin_y [ expr ($desktopHeight/2) - ($desktopHeight/4) ]
+set windowSize "450x300"
+
+set device ""
+set deviceIndex 0
+set showHelp 0
+
+#
+# The error handler is used to catch failed attempt to open
+# a declared device or to change 
+# 
+proc catchError {type resourceId serial errorCode requestCode minorCode} {
+    global xErrorCode
+    set xErrorCode $errorCode 
+}
+set xErrorCode 0
+
+proc updateCurrentScreenInfo {} {
+    global numScreens currentScreen
+    global screenWidth screenHeight screenX_org screenY_org 
+    global getScreenInfo
+
+    if { $numScreens != 1 } {
+        set screenInfo $getScreenInfo(Screen$currentScreen)
+	set screenWidth [ lindex $screenInfo 0 ]
+        scan $screenInfo "%s %s %s %s" $screenWidth \
+		$screenHeight $screenX_org $screenY_org
+	set screenHeight [ lindex $screenInfo 1 ]
+	set screenX_org [ lindex $screenInfo 2 ]
+ 	set screenY_org [ lindex $screenInfo 3 ]
+   }
+}
+
+proc pad {name geometry} {
+    global size circle_size line_size
+
+    set circleox [ expr $size/2-$circle_size/2 ]
+    set circleoy $circleox
+    set circlecx [ expr $circleox+$circle_size ]
+    set circlecy $circlecx
+    set vertx [ expr $size/2 ]
+    set vertoy [ expr ($size-$line_size)/2 ]
+    set vertcy [ expr $vertoy+$line_size ]
+    set horizox [ expr ($size-$line_size)/2 ]
+    set horizcx [ expr $horizox+$line_size ]
+    set horizy [ expr $size/2 ]
+
+    toplevel $name
+    wm geometry $name $geometry
+    wm overrideredirect $name true
+    canvas $name.m -height $size -width $size -bg "#505075"
+    $name.m create oval $circleox $circleoy $circlecx $circlecy -outline white
+    $name.m create line $vertx $vertoy $vertx $vertcy -fill white
+    $name.m create line $horizox $horizy $horizcx $horizy -fill white
+    pack $name.m
+}
+
+proc updateXinitrc {} {
+    global device
+
+    exec xsetwacom set $device Fileoption
+
+    if { ![ file exists ~/.xinitrc ] } {
+	file copy -force /etc/X11/wcm.$device ~/.xinitrc
+	exec echo "# run the primary system script" >> ~/.xinitrc 
+	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc 
+    } else {
+	file copy -force ~/.xinitrc ~/.xinitrc.bak
+	file copy -force ~/.xinitrc /tmp/xinitrc1
+	file copy -force /etc/X11/wcm.$device /tmp/xinitrc
+	exec sed -e "/xsetwacom set $device /d" /tmp/xinitrc1 > /tmp/wacom
+	exec cat /tmp/wacom >> /tmp/xinitrc
+	file copy -force /tmp/xinitrc ~/.xinitrc
+	file delete -force /tmp/xinitrc /tmp/xinitrc1 
+    }
+}
+
+proc calibrationSequence {which xDev yDev} {
+    global device calibResults screenY_org screenX_org
+    global workingTags screenTags size numScreens
+    global swapThresh screenWidth screenHeight
+
+    set calibResults(xDev,$which) $xDev
+    set calibResults(yDev,$which) $yDev
+    if { $which == 0 } {
+	.topleft.m configure -background "#505075"
+	wacomxi::bindevent .topleft.m $device <ButtonRelease> ""
+	.bottomright.m configure -background "#df94df"
+	wacomxi::bindevent .bottomright.m $device <ButtonRelease> \
+		{calibrationSequence 1 %0 %1}
+    } elseif { $which == 1 } {
+	.bottomright.m configure -background "#505075"
+	wacomxi::bindevent .bottomright.m $device <ButtonRelease> ""	
+	set borderOffset [expr ($size / 2 )]
+	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
+ 	set heightDev [expr abs($calibResults(yDev,1) - $calibResults(yDev,0))]
+ 	set widthX [expr $screenWidth - (2 * $borderOffset)]
+ 	set heightX [expr $screenHeight - (2 * $borderOffset)]
+
+	#
+	# A rough verification of the click
+	set clickCheck 0
+	if { $calibResults(xDev,1) < $calibResults(xDev,0) } {
+	    set clickCheck 1
+	}
+	if { $calibResults(yDev,1) < $calibResults(yDev,0) } {
+	    set clickCheck 1
+	}
+
+	if { $clickCheck == 1 } {
+	    messageWindow "Warning !!!" \
+		"\n\nYou need to click on the center\n\
+		of the pink crosshair. Please try again"
+	} else {
+	    set xDevMin [expr $calibResults(xDev,0) - \
+		    ($borderOffset * $widthDev / $widthX)]
+	    set xDevMax [expr $calibResults(xDev,1) + \
+		    ($borderOffset * $widthDev / $widthX)]
+	    set yDevMin [expr $calibResults(yDev,0) - \
+		    ($borderOffset * $heightDev / $heightX)]
+	    set yDevMax [expr $calibResults(yDev,1) + \
+		    ($borderOffset * $heightDev / $heightX)]
+	
+	    exec xsetwacom set $device topx $xDevMin
+	    exec xsetwacom set $device topy $yDevMin
+	    exec xsetwacom set $device bottomx $xDevMax
+	    exec xsetwacom set $device bottomy $yDevMax
+	    updateXinitrc
+	}
+
+	exec xsetwacom set $device gimp 1
+	destroy .topleft .bottomright
+ 	bindtags .workingDev.list $workingTags
+	if { $numScreens > 1 } {
+ 	    bindtags .screen.list.list $screenTags
+	}
+	.panel.calibrate configure -state normal
+	.panel.button configure -state normal
+    }
+}
+
+proc Calibration {} {
+    global numScreens device
+    global workingTags screenTags
+
+    set workingTags [ bindtags .workingDev.list]
+    if { $numScreens > 1 } {
+	set screenTags [ bindtags .screen.list.list]
+    }
+
+    if { $numScreens > 1 } {
+	.screen.list.title configure -text "Select $device associated Screen:"
+	wm state .screen normal
+    } else {
+	updateCurrentScreenInfo
+	startCalibration
+    }
+    .panel.calibrate configure -state disabled
+    .panel.button configure -state disabled
+}
+
+proc startCalibration {} {
+    global device workingTags screenTags calibResults
+    global screenX_org screenY_org size numScreens
+    global screenWidth screenHeight
+    
+    #
+    # Suppress tags on listboxes to prevent changing the
+    # device and disable other controls
+    bindtags .workingDev.list .
+    if { $numScreens > 1 } {
+	bindtags .screen.list.list .
+    }
+    .panel.calibrate configure -state disabled
+    .panel.button configure -state disabled
+    
+    set y_coor [ expr $screenY_org+$screenHeight-$size ]
+    set x_coor [ expr $screenX_org+$screenWidth-$size ]
+    pad .topleft +$screenX_org+$screenY_org
+    pad .bottomright +$x_coor+$y_coor
+    update
+    #
+    # Start calib sequence
+    catch {unset calibResults}
+    exec xsetwacom set $device xydefault
+    exec xsetwacom set $device gimp 0
+    .topleft.m configure -background "#df94df"
+    wacomxi::bindevent .topleft.m $device <ButtonRelease> \
+		{calibrationSequence 0 %0 %1}
+    helpWindow "Help Window " \
+		"\n\nPlease click on the center of \n\
+		the pink crosshair using $device \n\
+		Please don't click on anything else \n\
+		by $device before you finish"
+}
+
+proc helpWindow { tString mString } {
+    global showHelp
+
+    if { $showHelp }  {
+	messageWindow $tString $mString
+    }
+}
+
+proc messageWindow { tString mString } {
+    toplevel .mWindow
+    wm title .mWindow $tString
+    wm transient .mWindow .
+    text .mWindow.text -background gray -width 40 -height 10
+    button .mWindow.dismiss -text "Dismiss" \
+		-command "destroy .mWindow; set ok 1"
+    .mWindow.text insert end $mString
+    pack .mWindow.text .mWindow.dismiss
+    #
+    # Do some spiffy animation to draw attention !
+    for { set i 0 } { $i < 10 } { incr i } {
+	after 100
+	.mWindow.text configure -background white
+	update
+	after 100
+	.mWindow.text configure -background gray
+	update
+    }
+    tkwait variable ok 
+}
+
+proc updateScreenList {} {
+    global currentScreen numScreens screenWidth screenHeight
+    global screenX_org screenY_org origin_x origin_y
+
+    if { $numScreens > 1 } {
+	set cScreen [ .screen.list.list get anchor ]
+	for { set i 0 } { $i < $numScreens } { incr i 1 } {
+	    if { $cScreen == "Screen$i" } {
+		set currentScreen $i
+		set i $numScreens
+	    }
+	}
+    }
+    updateCurrentScreenInfo
+    set origin_x [ expr $screenX_org+$screenWidth/2-$screenWidth/4 ]
+    set origin_y [ expr $screenY_org+$screenHeight/2-$screenHeight/4 ]
+    wm geometry . =+$origin_x+$origin_y
+    .screen.list.label configure -text $cScreen
+    set o_x [ expr $origin_x+100 ]
+    set o_y [ expr $origin_y+20 ]
+    wm geometry .screen =+$o_x+$o_y
+    startCalibration
+}
+
+proc updateDevice {} {
+    global device deviceIndex
+    global numScreens getDeviceOption
+
+    if { $device != "" } {
+	#
+	# Clear old state related to preceding device
+	#
+	wacomxi::bindevent . $device <ButtonPress> ""
+	wacomxi::bindevent . $device <ButtonRelease> ""
+	.panel.calibrate configure -state disabled
+	.panel.button configure -state disabled
+    }
+    
+    set device [ .workingDev.list get anchor ]
+    set deviceIndex [ .workingDev.list index anchor ]
+
+    if { $device != "" } {
+	#
+	# Update the entry indicator
+	#
+	.workingDev.label configure -text $device
+	set model $getDeviceOption($device,model)
+	set type $getDeviceOption($device,type)
+	if { ![string compare -nocase -length 6 $model \
+		"cintiq"] && [string compare -nocase \
+		-length 7 $model "CintiqP" ] } {
+	    .panel.calibrate configure -state normal
+	}
+	if { [ string compare $type "eraser" ] } {
+	    .panel.button configure -state normal
+	}
+    } else {
+	#
+	# Update the entry indicator
+	#
+	.workingDev.label configure -text $device
+	.panel.calibrate configure -state disabled
+	.panel.button configure -state disabled
+    }
+}
+
+proc createDeviceList {infoString} {
+    global xErrorCode 
+    global getDeviceOption
+
+    set index 0
+    set devices ""
+    set s1 [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set s2 [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set s3 [ lindex $infoString $index ]
+    while { $s1 != "" } {
+	if { [string compare -length 6 $s1 "Screen" ] } {
+	    set getDeviceOption($s1,model) $s2
+	    set getDeviceOption($s1,type) $s3
+	    if { [string first $devices $s1] == -1 } {
+		set devices "$devices $s1"
+	    }
+	    set index [expr $index+1]
+	    set s1 [ lindex $infoString $index ]
+	    set index [ expr $index+1 ]
+	    set s2 [ lindex $infoString $index ]
+	    set index [ expr $index+1 ]
+	    set s3 [ lindex $infoString $index ]
+	} else {
+	    set s1 ""
+	}
+    }
+    frame .workingDev
+    label .workingDev.title -text "Select the Device:"
+    label .workingDev.label -background gray
+    listbox .workingDev.list -width 16 -height 12 \
+	    -yscrollcommand ".workingDev.sb set"
+    scrollbar .workingDev.sb -width 10 \
+	    -command ".workingDev.list yview"
+    grid .workingDev.title -row 0 -column 0 -columnspan 3 -sticky we
+    grid .workingDev.label -row 1 -column 0 -columnspan 3 -sticky we
+    grid .workingDev.list -row 2 -column 0 
+    grid .workingDev.sb -row 2 -sticky nse
+    set flag 0
+    foreach dev $devices {
+	set xErrorCode 0
+	.workingDev.list insert end $dev
+#	    catch {set mode [wacomxi::device mode $dev]}
+#	    if { !$xErrorCode && $mode == "absolute" } {
+#		.workingDev.list insert end $dev
+#	    }
+    }
+    bind .workingDev.list <ButtonRelease-1> updateDevice
+}
+
+proc createScreenList {infoString} {
+    global xErrorCode numScreens currentScreen
+    global desktopHeight desktopWidth
+    global getScreenInfo
+
+    set index 0
+    set numS 0
+    set org_x 0
+    set org_y 0
+    set s1 [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set s2 [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set s3 [ lindex $infoString $index ]
+    while { $s1 != "" } {
+	if { ![string compare -length 6 $s1 "Screen" ] } {
+	    set getScreenInfo($s1) "$s2 $s3 $org_x $org_y"
+	    set org_x [ expr $org_x+$s2 ]
+	    set numS [expr $numS+1]
+	}
+	set index [ expr $index+1 ]
+	set s1 [ lindex $infoString $index ]
+	set index [ expr $index+1 ]
+	set s2 [ lindex $infoString $index ]
+	set index [ expr $index+1 ]
+	set s3 [ lindex $infoString $index ]
+    }
+    set numScreens $numS
+}
+
+proc screenCancel {} {
+    global workingTags screenTags
+
+    wm state .screen withdraw
+    .panel.calibrate configure -state normal
+    .panel.button configure -state normal
+    destroy .topleft .bottomright
+    .screen.list.label configure -text ""
+    bindtags .workingDev.list $workingTags
+    bindtags .screen.list.list $screenTags
+}
+
+proc displayScreenList {} {
+    global numScreens currentScreen 
+
+    if {  $numScreens <= 1  } {
+	return
+    }
+    toplevel .screen
+    wm title .screen "Screen List Window"
+    wm transient .screen .
+    wm geometry .screen =250x200
+    wm state .screen withdraw
+    button .screen.cancel -text "Close" -command screenCancel
+
+    frame .screen.list
+    label .screen.list.title -text "Select the Screen:"
+    label .screen.list.label -background gray
+    listbox .screen.list.list -width 12 -height 5 -yscrollcommand ".screen.list.sb set"
+    scrollbar .screen.list.sb -width 10 -command ".screen.list yview"
+    grid .screen.list.title -row 2 -column 0 -columnspan 3 -sticky we
+    grid .screen.list.label -row 3 -column 0 -columnspan 3 -sticky we
+    grid .screen.list.list -row 4 -column 0
+    grid .screen.list.sb -row 4 -column 1 -sticky nse
+    for { set i 0 } { $i < $numScreens } { incr i } {
+	.screen.list.list insert end "Screen$i"
+    }
+    bind .screen.list.list <ButtonRelease-1> updateScreenList
+    grid .screen.cancel -row 10
+    pack .screen.list .screen.cancel
+}
+
+proc updateButton {} {
+    global device getDeviceOption
+
+    set type $getDeviceOption($device,type)
+    if { [ string compare $type "stylus" ] } {
+	set k 6
+    } else {
+	set k 4
+    }
+    for { set i 1 } { $i < $k } { incr i 1 } {
+	switch [ .puckB.f.$i cget -text ] {
+	    "Left"
+		{ set j 1 }
+	    "Middle"
+		{ set j 2 }
+	    "Right"
+		{ set j 3 }
+	    "Fourth"
+		{ set j 4 }
+	    "Fifth"
+		{ set j 5 }
+	}
+	exec xsetwacom set $device button$i $j 
+    }
+    updateXinitrc
+    destroy .puckB
+}
+
+proc displayPuckButtons {} {
+    global numScreens currentScreen 
+    global device getDeviceOption
+
+    toplevel .puckB
+    wm title .puckB "Button Tool Window"
+    wm transient .puckB .
+    wm geometry .puckB =350x200
+    wm state .puckB normal
+    frame .puckB.f 
+    button .puckB.f.ok -text "Ok" -command updateButton
+    button .puckB.f.cancel -text "Cancel" -command \
+		"destroy .puckB"
+
+    addMenu 1
+    addMenu 2
+    addMenu 3
+    set type $getDeviceOption($device,type)
+    if { [ string compare $type "stylus" ] } {
+	addMenu 4
+	addMenu 5
+    }
+    grid .puckB.f -row 2 -column 0 -columnspan 40 -sticky news
+    grid .puckB.f.ok -row 15 -column 3 -columnspan 3 -padx 10 
+    grid .puckB.f.cancel -row 15 -column 7 -columnspan 3 -padx 10
+
+    pack .puckB.f 
+}
+
+proc addMenu {t} {
+    tk_optionMenu .puckB.f.$t .puckB.f.$t.m "Left" "Middle" "Right" "Fourth" "Fifth"
+    label .puckB.f.name$t -text "Button $t: "
+    if { $t < 3 } {
+	set t1 $t
+	set t2 1
+    } else {
+	if { $t < 5 } {
+	    set t1 [expr $t-2]
+	    set t2 2
+	} else {
+	    set t1 [expr $t-4]
+	    set t2 4
+	}
+    }
+    grid .puckB.f.$t -row $t2 -column [expr ($t1-1)*6+3] -columnspan 3 -padx 3 -pady 3
+    grid .puckB.f.name$t -row $t2 -column [expr ($t1-1)*6] -columnspan 3 -padx 3 -pady 3
+}
+
+proc createControls {} {
+    global xErrorCode numScreens currentScreen
+    global desktopHeight desktopWidth
+
+    set infoString [exec xsetwacom list]
+    set index 0
+    set dev [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set type [ lindex $infoString $index ]
+    while { $type != "" } {
+	if { ![string compare -nocase -length 6 $type "stylus"] \
+		|| ![string compare -nocase -length 6 $type "cursor"] \
+		|| ![string compare -nocase -length 6 $type "eraser"] } {
+	    set type ""
+	} else {
+	    set index [ expr $index+1 ]
+	    set dev [ lindex $infoString $index ]
+	    set index [ expr $index+1 ]
+	    set type [ lindex $infoString $index ]
+	}
+    }
+    if { $dev == "" } {
+	messageWindow "Warning " "\n\nWe didn't find any Wacom device. \n\
+		Please make sure the device's \n\
+		type (stylus, eraser, or cursor) \n\
+		is embeded into its identifier string"
+	return
+    }
+    exec xsetwacom set $dev Filemodel
+    set channelId [open /etc/wacom.dat]
+    set info [read -nonewline $channelId]
+    close $channelId
+
+    createDeviceList $info
+    createScreenList $info
+    displayScreenList
+
+    frame .panel
+    button .panel.calibrate -text "Calibrate" \
+	    -command Calibration -state disabled
+    button .panel.button -text "Tool Button" -state disabled -command displayPuckButtons
+    grid .panel.calibrate -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
+    grid .panel -row 2 -rowspan 20 -column 2 -sticky nw -padx 30
+   
+    checkbutton .showHelp -text "Turn Help on" -anchor w \
+	    -variable showHelp -state normal
+
+    button .exit -text "Exit" -command "exit 0" -padx 40
+    
+    grid .showHelp -row 0 -column 2 -sticky nw -padx 30
+    grid .exit -row 20 -column 2 
+    grid .workingDev -row 0 -rowspan 25 -column 0 -sticky news -padx 40
+
+    grid columnconfigure . 1 -weight 1
+    grid rowconfigure . 7 -weight 5
+}
+
+createControls
+
+wm title . "Wacom Control Panel"
+wm geometry . =$windowSize+$origin_x+$origin_y
+
+#
+# Local Variables:
+# mode: tcl
+# End:
+#
