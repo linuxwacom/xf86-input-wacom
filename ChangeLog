@@ -7,6 +7,8 @@
 	* Modified wacomcpl to install and run regardless of install prefix
 	* Added Intuos filter code back into data path
 	* Nixed Graphire filter code because suppression code does same thing
+	* Raw filtering is enabled by default
+	* Intuos filter code works for both serial and USB tablets
 
 2003-06-03    Ping Cheng <pingc@wacom.com>
 	* Added calibration tool and made it install as default

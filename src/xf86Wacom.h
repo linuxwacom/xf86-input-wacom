@@ -329,7 +329,6 @@ struct _WacomDeviceRec
 	double factorX;         /* X factor */
 	double factorY;         /* Y factor */
 	unsigned int serial;    /* device serial number */
-	int initNumber;         /* magic number for the init phasis */
 	int screen_no;          /* associated screen */
  	int button[16];         /* buttons */
    
@@ -497,7 +496,7 @@ struct _WacomCommonRec
 	int wcmThreshold;            /* Threshold for button pressure */
 	int wcmChannelCnt;           /* number of channels available */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
-	int wcmInitNumber;           /* magic number for the init phasis */
+	int wcmInitialized;          /* device is initialized */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */

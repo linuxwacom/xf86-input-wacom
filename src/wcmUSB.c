@@ -22,6 +22,7 @@
  */
 
 #include "xf86Wacom.h"
+#include "wcmFilter.h"
 
 #if LINUX_INPUT
 
@@ -162,7 +163,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterIntuos,  /* input filtering recommended */
 	};
 
 	static WacomModel usbIntuos2 =
@@ -177,7 +178,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		NULL,                 /* input filtering not needed */
+		xf86WcmFilterIntuos,  /* input filtering recommended */
 	};
 
 	static WacomModel usbVolito =

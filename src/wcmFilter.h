@@ -30,6 +30,8 @@
 
 void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	int x1, int y1);
+int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds);
 
 /****************************************************************************/
 #endif /* __XF86_WCMFILTER_H */

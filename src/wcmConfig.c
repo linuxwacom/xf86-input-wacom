@@ -101,7 +101,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->common = common;       /* common info pointer */
 	priv->oldProximity = 0;      /* previous proximity */
 	priv->serial = 0;            /* serial number */
-	priv->initNumber = 0;        /* magic number for the init phasis */
 	priv->screen_no = -1;        /* associated screen */
 	priv->speed = DEFAULT_SPEED; /* rel. mode acceleration */
 	for (i=0; i<16; i++)
@@ -118,7 +117,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	memset(common->wcmChannel, 0, sizeof(common->wcmChannel));
 	common->wcmDevice = "";                  /* device file name */
 	common->wcmSuppress = DEFAULT_SUPPRESS;  /* transmit position if increment is superior */
-	common->wcmFlags = 0;                    /* various flags */
+	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = (LocalDevicePtr*) xalloc(sizeof(LocalDevicePtr));
 	common->wcmDevices[0] = local;
 	common->wcmNumDevices = 1;         /* number of devices */
@@ -130,6 +129,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmChannelCnt = 1;             /* number of channels */
 	common->wcmProtocolLevel = 4;          /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
+	common->wcmInitialized = FALSE; /* device is not initialized */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */

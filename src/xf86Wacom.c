@@ -71,7 +71,7 @@
  * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
  * 2003-05-02 26-j0.5.13 - added parameter configuration code
  * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5
- * 2003-05-15 26-j0.5.15 - reapplying intuos filter code
+ * 2003-05-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
  */
 
 static const char identification[] = "$Identification: 26-j0.5.15 $";
@@ -95,6 +95,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
+static Bool xf86WcmInitDevice(LocalDevicePtr local);
 
 /*****************************************************************************
  * Keyboard symbol data
@@ -195,37 +196,19 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	WacomCommonPtr common = priv->common;
 	int totalWidth = 0, maxHeight = 0;
 	double screenRatio, tabletRatio;
-	int loop;
 
 	/* open file, if not already open */
 	if (local->fd < 0)
 	{
-		if ((common->wcmInitNumber > 2) ||
-				(priv->initNumber == common->wcmInitNumber))
+		if (!xf86WcmInitDevice(local) || (local->fd < 0))
 		{
-			if (xf86WcmOpen(local) != Success)
-			{
-				if (local->fd >= 0)
-					SYSCALL(xf86WcmClose(local->fd));
-				local->fd = -1;
-			}
-			else
-			{
-				/* report the file descriptor to all devices */
-				for(loop=0; loop<common->wcmNumDevices; loop++)
-				common->wcmDevices[loop]->fd = local->fd;
-			}
-			common->wcmInitNumber++;
-			priv->initNumber = common->wcmInitNumber;
-		}
-		else
-		{
-			priv->initNumber = common->wcmInitNumber;
+			DBG(1,ErrorF("Failed to initialize device\n"));
+			return FALSE;
 		}
 	}
 
 	/* if factorX is set, initialize bounding rect */
-	if (local->fd != -1 && priv->factorX == 0.0)
+	if (priv->factorX == 0.0)
 	{
 
 		if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
@@ -361,7 +344,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	/* wheel */
 	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
 
-	return (local->fd != -1);
+	return TRUE;
 }
 
 /*****************************************************************************
@@ -483,7 +466,11 @@ static void xf86WcmDevClose(LocalDevicePtr local)
 	DBG(4, ErrorF("Wacom number of open devices = %d\n", num));
 
 	if (num == 1)
+	{
+		DBG(1,ErrorF("Closing device; uninitializing.\n"));
 		SYSCALL(xf86WcmClose(local->fd));
+		common->wcmInitialized = FALSE;
+	}
 
 	local->fd = -1;
 }
@@ -601,7 +588,8 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			break; 
 
 		case DEVICE_ON:
-			DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=ON\n", pWcm));
+			DBG(1, ErrorF("xf86WcmProc fd=%d pWcm=0x%x what=ON\n",
+				local->fd, pWcm));
 
 			if ((local->fd < 0) && (!xf86WcmDevOpen(pWcm)))
 			{
@@ -958,6 +946,49 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 #endif
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));
+
+	return TRUE;
+}
+
+/*****************************************************************************
+ * xf86WcmInitDevice --
+ *   Open and initialize the tablet
+ ****************************************************************************/
+
+static Bool xf86WcmInitDevice(LocalDevicePtr local)
+{
+	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
+	int loop;
+
+	DBG(1,ErrorF("xf86WcmInitDevice: "));
+	if (common->wcmInitialized)
+	{
+		DBG(1,ErrorF("already initialized\n"));
+		return TRUE;
+	}
+
+	DBG(1,ErrorF("initializing\n"));
+
+	/* attempt to open the device */
+	if ((xf86WcmOpen(local) != Success) || (local->fd < 0))
+	{
+		DBG(1,ErrorF("Failed to open device (fd=%d)\n",local->fd));
+		if (local->fd >= 0)
+		{
+			DBG(1,ErrorF("Closing device\n"));
+			SYSCALL(xf86WcmClose(local->fd));
+		}
+		local->fd = -1;
+		return FALSE;
+	}
+
+	/* on success, mark all other local devices as open and initialized */
+	common->wcmInitialized = TRUE;
+
+	DBG(1,ErrorF("Marking all devices open\n"));
+	/* report the file descriptor to all devices */
+	for (loop=0; loop<common->wcmNumDevices; loop++)
+		common->wcmDevices[loop]->fd = local->fd;
 
 	return TRUE;
 }
