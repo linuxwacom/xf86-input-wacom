@@ -351,9 +351,19 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 	ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
 	ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED, name);
 
+	if (strstr(name, "Intuos"))
+	{
+		common->wcmResolX = common->wcmResolY = 2540;
+	}
+	else
+	/* Graphire2 */
+	{
+		common->wcmResolX = common->wcmResolY = 1016;
+	}
+
 	memset(bit, 0, sizeof(bit));
 	ioctl(local->fd, EVIOCGBIT(0, EV_MAX), bit[0]);
-
+	
 	for (i = 0; i < EV_MAX; i++)
 	{
 		if (test_bit(i, bit[0]))
