@@ -1,4 +1,4 @@
-2003-06-19    John E. Joganic <john@joganic.com>
+2003-07-10    John E. Joganic <john@joganic.com>
 	* Fixed Intuos filter to ignore first couple samples.
 	* Added pedantic to compiler options
 	* Fixed minor warnings caused by pedantic setting.
