@@ -1,184 +1,83 @@
 <HTML>
 <HEAD>
-<TITLE>John's Linux USB Wacom Page</TITLE>
-</HEAD>
-<STYLE>
+<TITLE>The Linux Wacom Project</TITLE>
+<STYLE><!--
+	BODY { background: #FFFFFF; font: 10pt helvetica; color: black }
+	.motd { color: navy }
+	.allhead { font: bold 24pt helvetica; }
+	.allsub { font: bold 16pt helvetica; }
+	.tit { font: bold 24pt helvetica; color: navy }
 	.diff { background: #EEEEFF }
 	.nav { background: #EEEEEE }
-</STYLE>
-<BODY>
-<CENTER><H1>John's Linux USB Wacom Page</H1>Last Modified: December 22, 2002 18:12<BR><A HREF="#changelog">Changelog</A></CENTER><BR><CENTER CLASS=nav>Navigation: 
-<A HREF="/wacom/index.php/id/book">MAIN</A>&nbsp;&nbsp;&nbsp;<A HREF="/wacom/index.php/id/intro">NEXT</A>&nbsp;&nbsp;&nbsp;<A HREF="/wacom/index.php/toc">INDEX</A>&nbsp;&nbsp;&nbsp;<A HREF="/wacom/index.php/all"><B>ALL</B></A>&nbsp;&nbsp;&nbsp;</CENTER><BR><BR>
+	DIV.copy { font: 8pt helvetica; color: gray }
+	TD.blkhead { font: bold 10pt helvetica; color: gray }
+	TD.blkbody { font: 10pt helvetica; color: black }
+	TD.head { background: #000000 }
+	.title { font: bold 16pt helvetica; color: white }
+	.menu { font: bold 8pt helvetica; color: white; background: #000066 }
+	A.menu { text-decoration: none }
+	A.menu:link { color: #FFFFFF }
+	A.menu:hover { color: #FFFF00 }
+	A.copy:link { color: gray }
+	A.copy:visited { color: gray }
+--></STYLE>
+</HEAD>
+<BODY TOPMARGIN=0 LEFTMARGIN=0 RIGHTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=100%>
+<TR><TD VALIGN=MIDDLE ALIGN=CENTER CLASS=head>
+<DIV CLASS=title>The Linux Wacom Project (DEV)</DIV>
+
+</TD><TD VALIGN=MIDDLE ALIGN=RIGHT CLASS=head WIDTH=125><A HREF="http://sourceforge.net"><IMG BORDER=0 SRC="/images/sflogo.png"WIDTH=125 HEIGHT=37 ALT="SourceForge.net Logo"></A></TD></TR>
+</TABLE>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=100%>
+<TR><TD COLSPAN=2 BGCOLOR=white><IMG WIDTH=1 HEIGHT=1 SRC=/images/null.gif></TD></TR>
+<TR><TD COLSPAN=2 BGCOLOR=#000066><IMG WIDTH=1 HEIGHT=4 SRC=/images/null.gif></TD></TR>
+<TR><TD CLASS=menu ALIGN=CENTER>
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/main>Main</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/news>News</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/faq>FAQ</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/dl>Downloads</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/doc>Documentation</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/help>Help</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=http://sourceforge.net/projects/linuxwacom>Development</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/toc>TOC</A>&nbsp;&nbsp; |
+	&nbsp;&nbsp;<A CLASS=menu HREF=/index.php/all>All</A>&nbsp;&nbsp;
+</TD><TD CLASS=menu ALIGN=RIGHT>Jan 06, 2003</TD></TR>
+<TR><TD COLSPAN=2 BGCOLOR=#000066><IMG WIDTH=1 HEIGHT=4 SRC=/images/null.gif></TD></TR>
+<TR><TD COLSPAN=2 BGCOLOR=#AAAAAA><IMG WIDTH=1 HEIGHT=2 SRC=/images/null.gif></TD></TR>
+</TABLE>
+
+<BR>
+
+<CENTER><TABLE BORDER=0 WIDTH=80%><TR><TD>
+<CENTER><H1>Linux Wacom Project USB HOWTO</H1></CENTER><BR><CENTER CLASS=nav>Navigation: 
+<A HREF="/index.php/usb-howto/usb">MAIN</A>&nbsp;&nbsp;&nbsp;<A HREF="/index.php/usb-howto/copy">NEXT</A>&nbsp;&nbsp;&nbsp;<A HREF="/index.php/usb-howto/toc">INDEX</A>&nbsp;&nbsp;&nbsp;<A HREF="/index.php/usb-howto/all"><B>ALL</B></A>&nbsp;&nbsp;&nbsp;</CENTER><BR><BR>
+<A NAME="copy">
+<CENTER>
+Copyright (C) 2002-2003 - John E. Joganic<BR>
+<BR>
+Permission is granted to copy, distribute and/or modify this document<BR>
+under the terms of the GNU Free Documentation License, Version 1.2<BR>
+or any later version published by the Free Software Foundation;<BR>
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.<BR>
+A copy of the license is included in the section entitled
+<A HREF="#lic">GNU<BR>Free Documentation License</A>.<BR>
+</CENTER>
+<BR>
+<BR>
 <A NAME="intro">
 <H1>1.0 - Introduction</H1>
-<P>This document was written for three reasons: 1) to remind myself
-how I got my brand-new Wacom Intuos2 running on my Redhat 8.0 Linux box in
-case I have to do it again from scratch, 2) to help other people do the same,
-and 3) to help de-mystify the process by explaining why things work as they
-do, and where to look when things seem to be going wrong. 
-
-<P>If you find an error, have a question, or have something to add, please
-contact me directly at
+<P>This document began in November 2002 as a HOWTO for setting up a USB
+Wacom Intuos2 on Redhat 8.0.  It has since grown to cover all USB Wacom
+tablets and various different Linux distributions.  As of December 2002,
+this project has transformed into the Linux Wacom Project.  Work on this
+document is on going so if you find an error, have a question, or have
+something to add, please contact me directly at
 <A HREF="mailto:jej@j-arkadia.com?subject=WACOM">jej@j-arkadia.com</A>.
 Furthermore, please add the word "WACOM" to the subject line.  I get hundreds
 of messages a day, so that'll help me see your message amidst the spam.
-<A NAME="expect">
-<H2>1.1 - Expectations</H2>
-<H2>What You Can Expect Today</H2>
-
-<P>Depending on whether you are using serial or USB tablets, your experience
-will differ, but for the moment at least, the serial tablets have a generally
-simpler configuration.  This document currently addresses only the USB
-tablets, but that will change in the future.  Mr. Lepied's
-<A HREF="http://people.mandrakesoft.com/~flepied/projects/wacom/">XInput driver for XFree86</A> web page
-has a good description of the serial configuration process.  The goal of
-this website is to make configuration and use of both tablet types as
-simple as possible.  Here is what you can expect now:
-
-<H3>You Should Be Able to Get Your Tablet Working</H3>
-
-<P>Most all serial and USB tablets are working to a reasonably functional
-degree.  I have an old ArtPad (1997) that does not initialize with the
-XFree86 driver, and USB Cintiq users are having a little trouble with the
-kernel drivers.  Everyone else should be up and running, namely:
-
-<UL>
-<LI>PenPartner,
-<LI>Graphire,
-<LI>Graphire2,
-<LI>Intuos, and
-<LI>Intuos2
-</UL>
-
-<H3>All Your Fancy Styluses and Pointers Should Work</H3>
-
-<P>I have a collection of pointers, pens, and brushes to test; all of them
-work completely as one would expect.  Users have reported success with
-their tools as well.  I have not tested the airbrush yet, but presumably
-it works just fine.  Tools that are known to work include:
-
-<UL>
-<LI>Graphire2 2D mouse (EC-120-0K),
-<LI>Intuos Pen (GP-300E-01H),
-<LI>Intuos2 2D mouse,
-<LI>Intuos2 4D mouse,
-<LI>Intuos2 Lens cursor,
-<LI>Intuos2 grip pen (XP-501E-00A),
-<LI>Intuos2 stroke pen (XP-120-00A),
-<LI>Intuos2 ink pen (XP-110-00A),
-</UL>
-
-<H3>You Will Need to Modify Your XF86Config File</H3>
-
-<P>This project is actively working to become a turn-key system.  It will be
-awhile before major distributions like Redhat include these settings
-automatically for you.  Until that time, you will need to make some changes
-to your XFree86 configuration files by hand.
-
-<H3>You May Need to Update Your Kernel</H3>
-
-<P>This project assumes that you have a kernel version of at least 2.4.18.
-While it may be possible to use this document with older kernels, the
-likelihood of success diminishes the farther back you go.  Redhat 8.0
-ships with this kernel, and most of the major distributions are already
-past this point.
-
-<H3>You Will Need to Work With the Command Line</H3>
-
-<P>This document details a step-by-step process for setting up and diagnosing
-the tablet.  There are no GUI tools to help you through this process- at
-least not today.  Some familiarity with the command line is recommended
-since I provide enough information to get the task accomplished, but I do
-not explain how the command line itself operates.  Any good book on UNIX
-will do, and I use the bash shell for all my work.  If you are not using
-bash, you presumably know what you are doing already.
-
-<H2>What You Can Expect Soon</H2>
-
-<P>I have a near-term design goal to get all the tablets and their respective
-tools functioning using the original driver design.  This currently includes
-the airbrush (which may work already), the Cintiq, and if possible and time
-permits, the lowly ArtPad.  If there are any outstanding problems with the
-original driver, I will take care of them as they come up.
-
-<P>While the current way of configuring the tablet is sub-par in my opinion,
-it is also the established way of doing things.  Merging large-scale changes
-back into either the Linux kernel or the XFree86 code tree will be difficult,
-if for no other reason than insufficient multi-platform testing.  To solve
-this problem, the new functionality described below will be implemented in
-a separate project and accessed through the original driver as an advanced
-option.  This will allow all the various platforms to use the new code or not
-depending on their own constraints and circumstances.  It also allows for
-people to write their own tablet libraries without mucking around in the
-XFree86 code.
-
-<H2>The Next Steps</H2>
-
-<P>First and foremost, the tablet needs to be configurable without restarting
-X.  By separating the tablet code from the low-level X code, it will be
-possible to talk directly to the tablet engine without interfering
-with the X server's operation.  Additionally, it will be possible to use
-either the XInput configuration API or the tablet engine's API to access
-that functionality.  The preferred way would probably be an X server
-extension, but today at least, that is outside of the scope of my interest.
-Ask me again in another month.
-
-<P>The next issue is plug and play.  The USB tablets have the
-unfriendly habit of being unaccessible when they are unplugged and replugged.
-Since the X server holds the device open, the tablets cannot reconnect to
-their original position and get bumped to another event slot.  The new
-tablet engine will address the problem, and can probably even auto-probe
-for the USB tablets.
-
-<P>Third, a GUI-based configuration tool should cap things off nicely.  I
-intend to replicate the functionality of the Windows configuration tool.
-This includes diagnostics, pressure mappings, button settings, keyboard
-mappings, etc.
-
-<H2>Your Role</H2>
-
-I have some expectations as well.  If you have a Wacom tablet and you
-use this code, I would appreciate it if you could test the beta releases
-whenever a feature or issue that might affect you comes up.  The sooner
-that problems are resolved, the less likely you will be impacted by a
-buggy production release.  If you only use the stable builds, none of
-the new features will be available to you until after they have been
-thoroughly hammered out which could be awhile.  Of course, nothing is
-stopping you from using the stable builds; they are purposefully
-made available for people and companies who need the tablet drivers as
-stable as possible.
-<A NAME="updates">
-<H2>1.2 - Most Recent Updates</H2>
-
-<P>This is a list of the updates for the past month or so.  The <A HREF="#changelog">Changelog</A> has a more complete
-list.
-
-<P>December 22, 2002 - Added support for the serial Intuos2 under xf86Wacom.c.
-Fixed the sign convention on the mouse wheel for USB Intuos mice.  Graphire
-should be fixed, too.  Added preliminary support for Volito to kernel driver.
-Cleaned up wacdump and hid-core to compile on Debian Woody without
-warnings.  Added build help for Debian Stable users.  Added ability to read
-serial devices using wacdump.  New package is 0.3.3-beta.
-
-<P>December 15, 2002 - Added initial framework for new driver code.  Fixed
-the mouse wheel for 4D mice.  Fairly responsive, almost too responsive, in
-fact. (Updated: quick fix to xf86Wacom.c to remove some debugging code that
-got left in accidentally; new driver version is 0.3.2a, but the package is
-the same.)
-
-<P>December 13, 2002 - Added development page.  New beta build has fix for
-2D mouse wheel.  Wacdump displays relative data now.  Build environment for
-wacom_drv.o set up for new code.
-
-<P>December 9, 2002 - Added more information about the parameters accepted
-by the InputDevice section, including the man pages.
-
-<P>November 24, 2002 - Moved beta tree to version 0.2.0.  Added complete
-configure-based environment.  wacom.o and wacdump are built by default;
-wacom_drv.o is available in binary and source form.
-
 <A NAME="success">
-<H2>1.3 - Success Stories</H2>
+<H2>1.1 - Success Stories</H2>
 <P>Originally, this document dealt only with Redhat 8.0.  I will extend this
 to cover as many different distributions as possible, but I can personally
 only test on machines at my disposal.  At present, that means Redhat 7.2 and
@@ -188,6 +87,7 @@ let me know so I can update the document.
 <UL>
 	<LI> Redhat
 	<UL>
+		<LI> Redhat 8.0 - tested on kernel 2.4.18-19.8.0
 		<LI> Redhat 8.0 - tested on kernel 2.4.18-18.8.0
 		<LI> Redhat 8.0 - tested on kernel 2.4.18-17.8.0
 		<LI> Redhat 7.3 - tested on kernel 2.4.18-17.7.x
@@ -217,7 +117,7 @@ let me know so I can update the document.
 	</UL>
 </UL>
 <A NAME="howto">
-<H2>1.4 - How To Use This Document</H2>
+<H2>1.2 - How To Use This Document</H2>
 <BLOCKQUOTE><DIV CLASS=diff>
 Where the guide differs between distributions or packages, I have added a
 comment like this to help distinguish between versions.
@@ -225,12 +125,13 @@ comment like this to help distinguish between versions.
 
 <P>In terms of document organization, if you have not figured it out already,
 you can browse the document one page at a time, or you can click on the
-ALL link and view the entire thing in one long page.
+<A HREF="/index.php/usb-howto/all">ALL</A> link and view the entire
+thing in one long page.
 
 <P>Next, this document was written with the
 assumption that you are starting from
 scratch with a relatively recent distribution of the Linux kernel.  Also,
-if you have already added lines to your X11 configuration file (XF86Config),
+if you have already added lines to your XFree86 configuration file (XF86Config),
 you should comment them out and restart X.  Since we'll be stepping through
 the entire process, we need X to ignore the tablet until we're ready.
 Otherwise, X will just get in the way.
@@ -242,7 +143,7 @@ document in the documentation directory.  And of course, there's always
 <A HREF=http://lynx.isc.org/>lynx</A> for the gurus out there, which is
 why this document is written out in plain vanilla HTML.
 <A NAME="resources">
-<H2>1.5 - Resources and References</H2>
+<H2>1.3 - Resources and References</H2>
 
 <TABLE BORDER=0 CELLSPACING=5>
 <TR><TD VALIGN=TOP><A HREF="http://people.mandrakesoft.com/~flepied/projects/wacom/">Lepied's Wacom XInput driver for XFree86</A></TD><TD>This page contains the original driver and help for serial tablet users.</TD></TR>
@@ -263,168 +164,8 @@ me when I started.</TD></TR>
 <TR><TD><A HREF="http://www.wacomeng.com/devsupport/index.html">Wacom Software Developer Support</A></TD><TD>This page contains some documentation for the
 older tablets.</TD></TR>
 </TABLE>
-<A NAME="faq">
-<H2>1.6 - Frequently Asked Questions</H2>
-
-<P>This FAQ is based on the questions that I receive in email.  If you have
-a question that is not answered here, <A HREF="mailto:jej@j-arkadia.com?subject=WACOM">send me email directly.</A>  Please add
-the word "WACOM" to the subject line to help me distinguish your message from
-the spam I normally receive.</P>
-
-<H2>Index</H2>
-<UL>
-<LI><A HREF=#WHO>Who is responsible for this code?</A>
-<LI><A HREF=#SUPPORT>Is my tablet supported?  What about my special stylus?</A>
-<LI><A HREF=#OTHERS>What about my Penpartner/Graphire/Cintiq?</A>
-<LI><A HREF=#SPURIOUS>How do I get my stylus to stop clicking randomly whenever I use it?</A>
-<LI><A HREF=#FILTER>The old drivers had filtering, how do I enable it now?</A>
-<LI><A HREF=#FEATURE>What happened to feature XYZ?</A>
-<LI><A HREF=#BUSTED>How do I get the special features of my stylus to work?</A>
-</UL>
-
-<BR>
-<BR>
-<BR>
-
-<A NAME=WHO>
-<H3>Who is responsible for this code?</H3>
-
-<P>We are.  That is, Linux users with Wacom tablets are responsible for
-the development of this code.  The source code
-was written by at least two dozen individuals, none of whom still seem to
-be directly involved in the project.  I, John Joganic, took up the code in
-November of 2002, largely to satisfy my own needs, but also because I believe
-Linux needs to be more useful in the graphic and video industries.  What I
-ask of you, is to use the drivers and report the problems you encounter.
-
-<A NAME=SUPPORT>
-<H3>Is my tablet supported?  What about my special stylus?</H3>
-
-<P>Most recent tablets are supported as well all the styluses.  The
-<A HREF="#expect">Expectations</A> page has a
-list of all the tablets and styluses that are known to work as well
-as what you can expect out of these drivers now and in the future.
-
-<A NAME=OTHERS>
-<H3>What about my Penpartner/Graphire/Cintiq?</H3>
-
-The USB kernel driver currently seems to support Penpartner, Graphire,
-Graphire2, Intuos, Intuos2, and PL400-800.  Based on user reports, the
-Cintiqs may identify themselves as PL series tablets.
-There is no kernel driver necessary for serial tablets.
-The XFree86 wacom driver supports both USB and serial devices.  It has
-support for all the USB devices as well as virtually all of the older
-tablet models as well.  Depending on how the Cintiq identifies itself,
-it may potentially work with the XFree86 driver as a serial device.  There
-are no guarantees as of yet, so I would not buy one (currently over $3000
-USD) on the assumption that it will work without doing some actual research.
-
-<A NAME=SPURIOUS>
-<H3>How do I get my stylus to stop clicking randomly whenever I use it?</H3>
-
-<P>The "Threshold" setting in the InputDevice section of the XFree86
-configuration file determines the minimum pressure value before a touch
-event is detected.  Wacdump can show you what pressure values are actually
-being received from the tablet, and setting the threshold to a value higher
-than that should solve the problem.  My stylus oscillates between 0 and 6,
-even if the stylus is not touching the tablet.  I use a threshold of 10.</P>
-
-<A NAME=FILTER>
-<H3>The old drivers had filtering, how do I enable it now?</H3>
-
-<P>At some point, the maintainers of the wacom kernel driver ripped out
-all the good features and moved them into the xf86Wacom driver.  Not
-everything works as well as one might like.  The "Suppress" setting in
-the InputDevice section specifies the tablet sensitivity.
-
-<A NAME=FEATURE>
-<H3>What happened to feature XYZ?</H3>
-
-<P>As mentioned above, many of the features in the original kernel driver
-were removed and transferred to the xf86Wacom driver.  Not all the features
-made the trip.  The goal of this website is to have all the original features
-working again as well as all the features available for the windows driver.
-If your favorite feature is not working, drop me a line.  I prioritize my
-work based on my perception of user need.
-
-<A NAME=BUSTED>
-<H3>How do I get the special features of my stylus to work?</H3>
-
-<P>There are many different types of stylus, mice, and cursors.  All of them
-work to varying degrees, so if you are running into trouble, send me email.
-There are presently known issues with the mouse wheel on 2D mice (fixed in
-0.3.1-beta), and some of the extra buttons on the 4D mice.  While the values
-are generally reported correctly to the driver, the xf86Wacom driver does not
-interpret the information properly.  The 4D mouse wheel for instance behaves
-completely contrary to expectation (fixed in 0.3.2-beta).  These problems will
-be addressed in future production releases (and are available now in the beta
-releases).
-
-<P>I do not have an airbrush tool at my disposal.  If you have one and it
-does not work for you, let me know.  You could be beta-testing the code that
-gets this working.
-<A NAME="dev">
-<H2>1.7 - Development</H2>
-<H2>CURRENT DEVELOPMENT</H2>
-
-<TABLE BORDER=0>
-<TR><TD ALIGN=RIGHT>Date:&nbsp;&nbsp;</TD>
-<TD>2002-12-22 (Sunday)</TD></TR>
-<TR><TD ALIGN=RIGHT>Status:&nbsp;&nbsp;</TD>
-<TD>Moving over to SourceForge, and testing new serial driver.
-</TD></TR>
-<TR><TD ALIGN=RIGHT>Estimated Time:&nbsp;&nbsp;</TD>
-<TD>Ready on 2002-12-29 (Sunday)</TD></TR>
-</TABLE>
-
-<H3>Completed</H3>
-<UL>
-<LI>Added Intuos2 serial to xf86Wacom.c.
-<LI>Added serial tablet code to wacdump.c.
-<LI>Added experimental Volito code to kernel.
-<LI>Split ncurses and Linux input code to avoid namespace collision on Debian.
-<LI>Corrected wheel sign for USB mice.
-</UL>
-
-<H3>Immediate</H3>
-<UL>
-<LI>Get code onto SourceForge.
-<LI>Intuos2 2D mouse does not work correctly under xf86Wacom.c
-</UL>
-
-<H3>Secondary</H3>
-<UL>
-<LI>Getting test application for XF86 driver together
-<LI>Testing ability to create new pointer devices on the fly
-<LI>Testing ability to fork out new server process
-</UL>
-
-<BR><BR><BR>
-
-<H2>KNOWN ISSUES</H2>
-
-There are plenty of known issues.  If you have one, and it is not listed,
-check the FAQ, and if it's not there either, let me know.
-
-<H3>wacom.o</H3>
-
-<UL>
-<LI>2002-12-13: Tablet does not reinitialize properly when replugged (report #1).
-</UL>
-
-<H3>wacdump</H3>
-
-<UL>
-<LI>Nothing outstanding.
-</UL>
-
-<H3>wacom_drv.o</H3>
-
-<UL>
-<LI>2002-12-22: Intuos2 2D mouse does not work correctly under xf86Wacom.c
-</UL>
 <A NAME="theory">
-<H2>1.8 - Wacom Driver Theory of Operation</H2>
+<H2>1.4 - Wacom Driver Theory of Operation</H2>
 <P>Initially at least, the Wacom tablet is an HID compliant device, and when
 first connected to the computer, will identify itself as such.
 Unfortunately, this is not what you want because in this mode, you will not
@@ -523,9 +264,9 @@ tilt, pressure, and buttons.  It can also track at least two different tools
 simultaneously (Intuos2).<BR>
 <A NAME="download">
 <H2>2.2 - Downloading the Code</H2>
-The file <A HREF="/wacom/wacpack-0.2.0.tar.gz">wacpack-0.2.0.tar.gz</A> is the stable package and contains
+The file <A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.2.1.tar.gz">linuxwacom-0.2.1.tar.gz</A> is the stable package and contains
 files that you will need to get the tablet working.  The current beta
-package <A HREF="/wacom/wacpack-0.3.3-beta.tar.gz">wacpack-0.3.3-beta.tar.gz</A> is also available and may be
+package <A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.3.6-beta.tar.gz">linuxwacom-0.3.6-beta.tar.gz</A> is also available and may be
 used by people who are willing to risk an occasional kernel panic to help
 test new features.  I will never put a beta package on this site that I am
 not running myself on my primary development machine, so you can be certain
@@ -533,63 +274,69 @@ that if there are any obvious show stoppers, they will be fixed before you
 get to see them.
 
 
-<H3>Stable files included for wacpack-0.2.0:</H3>
+<H3>Stable files included for linuxwacom-0.2.1:</H3>
 <TABLE BORDER=0 CELLSPACING=5>
 <TR><TH ALIGN=LEFT>File</TH><TH ALIGN=LEFT>Comment</TH></TR>
-<TR><TD VALIGN=TOP>configure</TD><TD>- configure script for distribution independent builds</TD></TR>
-<TR><TD VALIGN=TOP>prebuilt/wacom_drv.o</TD><TD>- binary X11 driver for the wacom (26-j0.2.0)</TD></TR>
-<TR><TD VALIGN=TOP>src/wacom.c</TD><TD>- a stable, working kernel driver (1.30-j0.2.0)</TD></TR>
-<TR><TD VALIGN=TOP>src/wacdump.c</TD><TD>- a simple program for displaying tablet event data directly using ncurses; current version is 0.2.0</TD></TR>
-<TR><TD VALIGN=TOP>src/usbmouse.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hid-core.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hiddev.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hid-input.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/xf86Wacom.c</TD><TD>- source for wacom_drv.o; requires XF86 build environment to compile. Binary available in prebuilt directory.</TD></TR>
-<TR><TD VALIGN=TOP>GPL</TD><TD>- the GNU General Public License, in case you did not already have twenty or more lying around</TD></TR>
+<TR><TD VALIGN=TOP>configure</TD><TD VALIGN=TOP>- configure script for distribution independent builds</TD></TR>
+<TR><TD VALIGN=TOP>prebuilt/wacom_drv.o</TD><TD VALIGN=TOP>- binary XFree86 driver for the wacom (26-j0.2.0)</TD></TR>
+<TR><TD VALIGN=TOP>src/wacom.c</TD><TD VALIGN=TOP>- a stable, working kernel driver (1.30-j0.2.0)</TD></TR>
+<TR><TD VALIGN=TOP>src/wacdump.c</TD><TD VALIGN=TOP>- a simple program for displaying tablet event data directly using ncurses; current version is 0.2.1</TD></TR>
+<TR><TD VALIGN=TOP>src/usbmouse.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hid-core.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hiddev.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hid-input.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/xf86Wacom.c</TD><TD VALIGN=TOP>- source for wacom_drv.o; requires XF86 build environment to compile. Binary available in prebuilt directory.</TD></TR>
+<TR><TD VALIGN=TOP>GPL</TD><TD VALIGN=TOP>- the GNU General Public License, in case you did not already have twenty or more lying around</TD></TR>
 </TABLE>
 
-<H3>Beta files included for wacpack-0.3.2-beta:</H3>
+<H3>Beta files included for linuxwacom-0.3.6-beta:</H3>
 <TABLE BORDER=0 CELLSPACING=5>
 <TR><TH ALIGN=LEFT>File</TH><TH ALIGN=LEFT>Comment</TH></TR>
-<TR><TD VALIGN=TOP>configure</TD><TD>- configure script for distribution independent builds</TD></TR>
-<TR><TD VALIGN=TOP>prebuilt/wacom_drv.o</TD><TD>- binary X11 driver for the wacom (26-j0.3.2a)</TD></TR>
-<TR><TD VALIGN=TOP>src/wacom.c</TD><TD>- a stable, working kernel driver (1.30-j0.3.1)</TD></TR>
-<TR><TD VALIGN=TOP>src/wacdump.c</TD><TD>- a simple program for displaying tablet event data directly using ncurses; current version is 0.3.2</TD></TR>
-<TR><TD VALIGN=TOP>src/usbmouse.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hid-core.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hiddev.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/hid-input.c</TD><TD>- replacement kernel driver (2.4.19), use only if needed</TD></TR>
-<TR><TD VALIGN=TOP>src/xf86Wacom.c</TD><TD>- legacy source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
-<TR><TD VALIGN=TOP>src/wcm-beta.c</TD><TD>- beta source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
-<TR><TD VALIGN=TOP>src/wcm-beta.h</TD><TD>- beta source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
-<TR><TD VALIGN=TOP>GPL</TD><TD>- the GNU General Public License, in case you did not already have twenty or more lying around</TD></TR>
+<TR><TD VALIGN=TOP>configure</TD><TD VALIGN=TOP>- configure script for distribution independent builds</TD></TR>
+<TR><TD VALIGN=TOP>prebuilt/wacom_drv.o</TD><TD VALIGN=TOP>- binary XFree86 driver for the wacom (26-j0.3.6)</TD></TR>
+<TR><TD VALIGN=TOP>src/wacom.c</TD><TD VALIGN=TOP>- a stable, working kernel driver (1.30-j0.3.7)</TD></TR>
+<TR><TD VALIGN=TOP>src/wacdump.c</TD><TD VALIGN=TOP>- a simple program for displaying tablet event data directly using ncurses; current version is 0.3.5</TD></TR>
+<TR><TD VALIGN=TOP>src/wacscrn.c</TD><TD VALIGN=TOP>- curses library for wacdump</TD></TR>
+<TR><TD VALIGN=TOP>src/wacserial.c</TD><TD VALIGN=TOP>- wacom serial protocol library for wacdump</TD></TR>
+<TR><TD VALIGN=TOP>src/usbmouse.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hid-core.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hiddev.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/hid-input.c</TD><TD VALIGN=TOP>- replacement kernel driver (2.4.19/20), use only if needed</TD></TR>
+<TR><TD VALIGN=TOP>src/xf86Wacom.c</TD><TD VALIGN=TOP>- legacy source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
+<TR><TD VALIGN=TOP>src/wcm-beta.c</TD><TD VALIGN=TOP>- beta source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
+<TR><TD VALIGN=TOP>src/wcm-beta.h</TD><TD VALIGN=TOP>- beta source for wacom_drv.o; requires XF86 build environment to compile.</TD></TR>
+<TR><TD VALIGN=TOP>GPL</TD><TD VALIGN=TOP>- the GNU General Public License, in case you did not already have twenty or more lying around</TD></TR>
 </TABLE>
 
 <H3>Stable Packages by Version and Date:</H3>
 <TABLE BORDER=0 CELLSPACING=5>
-<TR><TH ALIGN=LEFT>File</TH><TH ALIGN=LEFT>Date</TH><TH ALIGN=LEFT>Comment</TH></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.2.0.tar.gz">wacpack-0.2.0.tar.gz</A></TD><TD> - 2002-11-24</TD><TD>Configure-based package</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1b.tar.gz">wacpack-0.1b.tar.gz</A></TD><TD> - 2002-11-06</TD><TD></TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1a.tar.gz">wacpack-0.1a.tar.gz</A></TD><TD> - 2002-11-05</TD><TD></TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1.tar.gz">wacpack-0.1.tar.gz</A></TD><TD> - 2002-11-04</TD><TD></TD></TR>
+<TR><TH ALIGN=LEFT>File</TH><TH></TH><TH ALIGN=LEFT>Date</TH><TH ALIGN=LEFT>Comment</TH></TR>
+<TR><TD VALIGN=TOP><A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.2.1.tar.gz">linuxwacom-0.2.1.tar.gz</A></TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-31</TD><TD VALIGN=TOP>back ported fixes for build</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.2.0.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-24</TD><TD VALIGN=TOP>Configure-based package</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1b.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-06</TD><TD VALIGN=TOP></TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1a.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-05</TD><TD VALIGN=TOP></TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-04</TD><TD VALIGN=TOP></TD></TR>
 </TABLE>
 <H3>Beta Packages by Version and Date:</H3>
 <TABLE BORDER=0 CELLSPACING=5>
-<TR><TH ALIGN=LEFT>File</TH><TH ALIGN=LEFT>Date</TH><TH ALIGN=LEFT>Comment</TH></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.3.3-beta.tar.gz">wacpack-0.3.3-beta.tar.gz</A></TD><TD> - 2002-12-22</TD><TD>Serial Intuos2, serial wacdump, Volito added, USB mouse wheel direction fixed, kernel 2.4.20 friendly</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.3.2-beta.tar.gz">wacpack-0.3.2-beta.tar.gz</A></TD><TD> - 2002-12-15</TD><TD>Fix for 4D mice and working beta driver shell</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.3.1-beta.tar.gz">wacpack-0.3.1-beta.tar.gz</A></TD><TD> - 2002-12-13</TD><TD>Fix for 2D mice and relative events in wacdump</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.3.0-beta.tar.gz">wacpack-0.3.0-beta.tar.gz</A></TD><TD> - 2002-11-24</TD><TD>Configure-based package</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1g-beta.tar.gz">wacpack-0.1g-beta.tar.gz</A></TD><TD> - 2002-11-14</TD><TD>wacdump updated; displays ranges, cleaner output</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1f-beta.tar.gz">wacpack-0.1f-beta.tar.gz</A></TD><TD> - 2002-11-14</TD><TD>build environment for xf86Wacom added</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1e-beta.tar.gz">wacpack-0.1e-beta.tar.gz</A></TD><TD> - 2002-11-11</TD><TD>fixed range for I2-6x8</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1d-beta.tar.gz">wacpack-0.1d-beta.tar.gz</A></TD><TD> - 2002-11-10</TD><TD>updated wacdump, fixed range for I2-12x12</TD></TR>
-<TR><TD VALIGN=TOP><A HREF="/wacom/wacpack-0.1c-beta.tar.gz">wacpack-0.1c-beta.tar.gz</A></TD><TD> - 2002-11-09</TD><TD>updates to range, pressure, and mouse events</TD></TR>
+<TR><TH ALIGN=LEFT>File</TH><TH></TH><TH ALIGN=LEFT>Date</TH><TH ALIGN=LEFT>Comment</TH></TR>
+<TR><TD VALIGN=TOP><A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.3.6-beta.tar.gz">linuxwacom-0.3.6-beta.tar.gz</A></TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2003-01-06</TD><TD VALIGN=TOP>Fixed unknown report #99, cleaner wacdump refresh fixed 2D mouse buttons for serial Intuos, updated volito ranges, unknown report no longer error.</TD></TR>
+<TR><TD VALIGN=TOP><A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.3.5-beta.tar.gz">linuxwacom-0.3.5-beta.tar.gz</A></TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-31</TD><TD VALIGN=TOP>Fixed unknown report #1, added modprobe, new ID's</TD></TR>
+<TR><TD VALIGN=TOP><A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.3.4-beta.tar.gz">linuxwacom-0.3.4-beta.tar.gz</A></TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-22</TD><TD VALIGN=TOP>New name, same as wacpack-0.3.3-beta</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.3.3-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-22</TD><TD VALIGN=TOP>Serial Intuos2, serial wacdump, Volito added, USB mouse wheel direction fixed, kernel 2.4.20 friendly</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.3.2-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-15</TD><TD VALIGN=TOP>Fix for 4D mice and working beta driver shell</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.3.1-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-12-13</TD><TD VALIGN=TOP>Fix for 2D mice and relative events in wacdump</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.3.0-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-24</TD><TD VALIGN=TOP>Configure-based package</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1g-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-14</TD><TD VALIGN=TOP>wacdump updated; displays ranges, cleaner output</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1f-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-14</TD><TD VALIGN=TOP>build environment for xf86Wacom added</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1e-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-11</TD><TD VALIGN=TOP>fixed range for I2-6x8</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1d-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-10</TD><TD VALIGN=TOP>updated wacdump, fixed range for I2-12x12</TD></TR>
+<TR><TD VALIGN=TOP>wacpack-0.1c-beta.tar.gz</TD><TD VALIGN=TOP>-</TD><TD VALIGN=TOP>2002-11-09</TD><TD VALIGN=TOP>updates to range, pressure, and mouse events</TD></TR>
 </TABLE>
 <A NAME="config">
 <H2>2.3 - Configuring the Package</H2>
 
-Versions of wacpack-0.2.0 and greater are based on GNU's configure script
+Versions of linuxwacom-0.2.1 and greater are based on GNU's configure script
 based build environment.  The upside is that more details are guessed by
 default.  The downside is that the default configuration builds only the
 kernel driver and wacdump programs (which should cover almost everybody),
@@ -631,7 +378,7 @@ any options and have it execute correctly.  Here is a sample output of the
 script on a Redhat 8.0 system:
 
 <BLOCKQUOTE><PRE>
-[jej@ayukawa wacpack]$ ./configure
+[jej@ayukawa linuxwacom]$ ./configure
 checking for a BSD-compatible install... /usr/bin/install -c
 checking whether build environment is sane... yes
 ...
@@ -682,7 +429,7 @@ change in future releases.
 while disabling module versioning:
 
 <BLOCKQUOTE><PRE>
-[jej@ayukawa wacpack]$ ./configure --enable-hid --enable-usbmouse \
+[jej@ayukawa linuxwacom]$ ./configure --enable-hid --enable-usbmouse \
 	--enable-wacomdrv --with-xf86=/usr/src/redhat/BUILD/XFree86-4.2.0 \
 	--disable-modver --disable-wacdump
 checking for a BSD-compatible install... /usr/bin/install -c
@@ -748,7 +495,7 @@ Redhat will "back-port" the fixes to older kernels, so keep an eye out
 for the change.  Your driver may already be fixed.</P>
 <A NAME="newwacom">
 <H2>3.1 - Updated wacom.c</H2>
-The wacom.c driver that is available in <A HREF="/wacom/wacpack-0.2.0.tar.gz">wacpack-0.2.0.tar.gz</A> has a
+The wacom.c driver that is available in <A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.2.1.tar.gz">linuxwacom-0.2.1.tar.gz</A> has a
 number of updates which cannot be found in many distributions yet.
 
 <P>First and foremost, it fixes an error that shipped with
@@ -776,13 +523,13 @@ kernel-source-2.4.18-18.8.0<BR>
 
 On a Redhat 8.0 machine, the kernel source is installed to /usr/src/linux-2.4.  You
 will need to know where your source is installed to continue with the next
-step.  After unpacking the <A HREF="/wacom/wacpack-0.2.0.tar.gz">wacpack-0.2.0.tar.gz</A> file, configure the
+step.  After unpacking the <A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.2.1.tar.gz">linuxwacom-0.2.1.tar.gz</A> file, configure the
 package.  If your kernel is not located at either /usr/src/linux-2.4 or
 /usr/src/linux, use the --with-kernel option as shown below.  Otherwise,
 just run <I>configure</I> without any options.
 
 <BLOCKQUOTE><PRE>
-[jej@ayukawa wacpack]$ ./configure --with-kernel=/home/jej/src/linux
+[jej@ayukawa linuxwacom]$ ./configure --with-kernel=/home/jej/src/linux
 ...
 checking for valid kernel source tree... <B>ok</B>
 ...
@@ -861,7 +608,7 @@ unglued in other ways), it would be nice to reboot and have the original
 drivers load instead.
 
 <P>When should I install the driver?  When you're comfortable that the
-driver will not crash your system.  The wacpack tarballs will be marked
+driver will not crash your system.  The linuxwacom tarballs will be marked
 as beta if I am not absolutely convinced that they are stable.  On the
 other hand, the new features will be in beta tarballs before they are
 marked stable, so there you have it.  For the first time through this document,
@@ -958,9 +705,9 @@ Here's a copy of the messages from my version of the driver.
 
 <BLOCKQUOTE><PRE>
 [jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Dec 22 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Dec 22 21:23:35 ayukawa kernel: wacom.c: <B>v1.30-j0.2.0</B> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 22 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Jan 06 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Jan 06 21:23:35 ayukawa kernel: wacom.c: <B>v1.30-j0.2.0</B> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 06 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </PRE></BLOCKQUOTE>
 
 <P>The original driver was version 1.21.3.  This version number
@@ -986,21 +733,21 @@ exact output depends a lot on your particular kernel and distribution.
 <BLOCKQUOTE><PRE>
 This is Redhat 8.0 (2.4.18-17.8.0):<BR>
 [jej@ayukawa usb]# tail /var/log/messages
-Dec 22 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Dec 22 21:26:11 ayukawa kernel: <B>input0: Wacom Intuos2 12x12</B> on usb2:2.0
-Dec 22 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product 56a/44/115
-Dec 22 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup <B>mousedev</B> for USB product 56a/44/115
+Jan 06 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Jan 06 21:26:11 ayukawa kernel: <B>input0: Wacom Intuos2 12x12</B> on usb2:2.0
+Jan 06 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product 56a/44/115
+Jan 06 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup <B>mousedev</B> for USB product 56a/44/115
 </PRE>
 <PRE CLASS=diff>
 And here it is again on Redhat 7.2 (2.4.18-17.7.x):<BR>
 [jej@sasami root]# tail /var/log/messages
-Dec 22 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Dec 22 21:28:38 sasami kernel: <B>input0: Wacom Intuos2 12x12</B> on usb1:2.0
-Dec 22 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Dec 22 21:28:39 sasami kernel: usb.c: registered new driver hid
-Dec 22 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 22 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Dec 22 21:28:39 sasami kernel: mice: <B>PS/2 mouse</B> device common for all mice
+Jan 06 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Jan 06 21:28:38 sasami kernel: <B>input0: Wacom Intuos2 12x12</B> on usb1:2.0
+Jan 06 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Jan 06 21:28:39 sasami kernel: usb.c: registered new driver hid
+Jan 06 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 06 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Jan 06 21:28:39 sasami kernel: mice: <B>PS/2 mouse</B> device common for all mice
 </PRE>
 </BLOCKQUOTE>
 
@@ -1043,15 +790,15 @@ up-to-date distributions.  Now let's fix it.
 <A NAME="buildhid">
 <H3>3.6.3 - Building usbmouse.o and hid.o</H3>
 
-<P>In the <A HREF="/wacom/wacpack-0.2.0.tar.gz">wacpack-0.2.0.tar.gz</A> file, you will find the 2.4.19 versions
+<P>In the <A HREF="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.2.1.tar.gz">linuxwacom-0.2.1.tar.gz</A> file, you will find the 2.4.19 versions
 of usbmouse.c and hid-core.c files which have special exceptions for wacom.
 These files are not built by default, so you will need to reconfigure the
 package and run make again.
 
 <DIV CLASS=diff>
-At least one person has reported errors building these files on Debian Woody
-running kernel version 2.4.20.  This is not surprising since the
-source code came from 2.4.19, but I will do what I can to get these drivers updated in the near future.
+Previous versions of the stable package generated build errors on Debian
+Woody running kernel 2.4.20.  Code to fix this problem was back-ported to
+linuxwacom-0.2.1; if you still have problems compiling, let me know.
 </DIV>
 
 <BLOCKQUOTE><PRE>
@@ -1064,16 +811,14 @@ source code came from 2.4.19, but I will do what I can to get these drivers upda
 [jej@ayukawa wacom]$ make
 [jej@ayukawa wacom]$ cd src
 [jej@ayukawa src]$ ls -la hid.o usbmouse.o
--rw-rw-r--    1 jej      jej         26590 Dec 22 18:56 hid.o
--rw-rw-r--    1 jej      jej          4848 Dec 22 18:56 usbmouse.o
+-rw-rw-r--    1 jej      jej         26590 Jan 06 18:56 hid.o
+-rw-rw-r--    1 jej      jej          4848 Jan 06 18:56 usbmouse.o
 </PRE></BLOCKQUOTE>
 
 <P> First off, if the code does not build, and you cannot chase the problem
 down yourself, send me a line.  If your kernel is much older than 2.4.18,
 then you may have to resign yourself to the fact that the 2.4.19 drivers
-are not going to work for you.  I would recommend upgrading your kernel.  Some
-people are already running kernel version 2.4.20 and have encountered 
-problems building as well.  I will update these drivers to 2.4.20 as soon as possible.
+are not going to work for you.  I would recommend upgrading your kernel.
 
 <P>Rather than copy these files to the kernel modules directory right
 away, it would be wise to test whether they get the job done. We should also
@@ -1094,16 +839,16 @@ and try again.  Now let's check how the wacom driver managed:
 
 <BLOCKQUOTE><PRE>
 [jej@ayukawa wacom]# tail -15 /var/log/messages
-Dec 22 21:07:38 ayukawa kernel: usbmouse.c: <B>mouse_init (MODIFIED DEBUG)</B>
-Dec 22 21:07:38 ayukawa kernel: usb.c: registered new driver usb_mouse
-Dec 22 21:07:39 ayukawa kernel: hid-core.c: <B>hid_init (MODIFIED DEBUG)</B>
-Dec 22 21:07:39 ayukawa kernel: usb.c: registered new driver hiddev
-Dec 22 21:07:39 ayukawa kernel: usb.c: registered new driver hid
-Dec 22 21:07:44 ayukawa kernel: usb.c: registered new driver wacom
-Dec 22 21:07:44 ayukawa kernel: usbmouse.c: <B>usb_mouse_probe: ignoring wacom</B>
-Dec 22 21:07:44 ayukawa kernel: input0: <B>Wacom Intuos2 12x12</B> on usb2:8.0
-Dec 22 21:07:44 ayukawa kernel: wacom.c: v1.30-j0.2.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 22 21:07:44 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver <B>(MODIFIED-DEBUG)</B>
+Jan 06 21:07:38 ayukawa kernel: usbmouse.c: <B>mouse_init (MODIFIED DEBUG)</B>
+Jan 06 21:07:38 ayukawa kernel: usb.c: registered new driver usb_mouse
+Jan 06 21:07:39 ayukawa kernel: hid-core.c: <B>hid_init (MODIFIED DEBUG)</B>
+Jan 06 21:07:39 ayukawa kernel: usb.c: registered new driver hiddev
+Jan 06 21:07:39 ayukawa kernel: usb.c: registered new driver hid
+Jan 06 21:07:44 ayukawa kernel: usb.c: registered new driver wacom
+Jan 06 21:07:44 ayukawa kernel: usbmouse.c: <B>usb_mouse_probe: ignoring wacom</B>
+Jan 06 21:07:44 ayukawa kernel: input0: <B>Wacom Intuos2 12x12</B> on usb2:8.0
+Jan 06 21:07:44 ayukawa kernel: wacom.c: v1.30-j0.2.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 06 21:07:44 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver <B>(MODIFIED-DEBUG)</B>
 </PRE></BLOCKQUOTE>
 <P>If everything is working correctly, the log should look similar to the
 lines above.  I removed some of the extraneous information, so if you have
@@ -1131,7 +876,7 @@ compiled in debug mode, you may see a line similar to the following in the
 log:
 
 <BLOCKQUOTE><PRE>
-Dec 22 21:11:44 ayukawa kernel: usb_hid_configure: configuring device 56A.44 (WACOM), quirk is 4 (IGNORE)
+Jan 06 21:11:44 ayukawa kernel: usb_hid_configure: configuring device 56A.44 (WACOM), quirk is 4 (IGNORE)
 </PRE></BLOCKQUOTE>
 
 If you get this message, but with a different quirk, or if the wacom driver
@@ -1146,8 +891,8 @@ the device identifier.  It can be discovered by doing the following:
 
 <BLOCKQUOTE><PRE>
 [root@ayukawa root]# grep -i 56a /var/log/messages | tail -10
-Dec 22 21:03:09 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <B>56a/44/115</B>
-Dec 22 21:27:48 ayukawa kernel: usb.c: USB device 2 (vend/prod <B>0x56a/0x44</B>) is not claimed by any active driver.
+Jan 06 21:03:09 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <B>56a/44/115</B>
+Jan 06 21:27:48 ayukawa kernel: usb.c: USB device 2 (vend/prod <B>0x56a/0x44</B>) is not claimed by any active driver.
 </PRE></BLOCKQUOTE>
 
 <P>In this case, the tablet identifier is 56a/44 (also written 0x56a/0x44).
@@ -1197,8 +942,8 @@ file for the following line:
 
 <BLOCKQUOTE><PRE>
 [jej@sasami root]# tail /var/log/messages
-Dec 22 17:31:06 sasami kernel: <B>wacom_intuos_irq: received unknown report #1</B>
-Dec 22 17:31:09 sasami last message repeated 195 times
+Jan 06 17:31:06 sasami kernel: <B>wacom_intuos_irq: received unknown report #1</B>
+Jan 06 17:31:09 sasami last message repeated 195 times
 </PRE></BLOCKQUOTE>
 
 This is a common failure mode of the driver, and I am investigated the cause.
@@ -1209,10 +954,10 @@ able to get it to work.  Simply unload and reload the driver.
 [jej@sasami root]# rmmod wacom
 [jej@sasami root]# modprobe wacom
 [jej@sasami root]# tail /var/log/messages
-Dec 22 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Dec 22 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Dec 22 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Dec 22 17:31:35 sasami kernel: wacom.c: v1.30-j0.2.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 06 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Jan 06 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Jan 06 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Jan 06 17:31:35 sasami kernel: wacom.c: v1.30-j0.2.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </PRE></BLOCKQUOTE>
 
 <P>Apparently, the device driver and the tablet occassionally get out of
@@ -1243,7 +988,7 @@ but it's best if X has not be configured for the tablet yet.
 wacdump is enabled by default in the configure script, so it should be
 built automatically when you run <I>make</I>.
 
-<P>The command line usage of wacdump (wacpack-0.2.0) is pretty simple:
+<P>The command line usage of wacdump (linuxwacom-0.2.0) is pretty simple:
 
 <BLOCKQUOTE><PRE>
 Usage: wacdump [-d device]
@@ -1316,7 +1061,7 @@ a useful tool for determine exactly what is coming from the tablet.  You can
 run it in conjunction with X or without.  The display is constrained to 80x25
 so it can also be used on the main console terminal.
 <A NAME="x11">
-<H1>5.0 - Configuring X11</H1>
+<H1>5.0 - Configuring XFree86</H1>
 Two steps must be completed to get X to recognize the Wacom.  First,
 you need to add some lines to XF86Config to inform X of the tablet's
 existence.  Second, you need to update the XInput driver that pertains
@@ -1340,6 +1085,13 @@ X.  This should be fixed in the future.
 <P>For now however, add the InputDevice sections to your XF86Config file.  This
 assumes you are running XFree86 4.x.  <SPAN CLASS=diff>On some distributions,
 this file is called XF86Config-4</SPAN>.
+
+<BLOCKQUOTE><DIV CLASS=diff>
+<P>People using serial tablets will need different settings.
+Please see <A HREF="http://people.mandrakesoft.com/~flepied/projects/wacom/">Lepied's Wacom Site</A> for
+an example.  All the driver options are listed in the manual page reproduced
+below.
+</DIV></BLOCKQUOTE>
 
 <BLOCKQUOTE><PRE>
 Section "InputDevice"
@@ -1406,10 +1158,6 @@ exceeds that value, a "TOUCH" event is sent to the XInput system.  If this
 is too hard, you may want to reduce it.  If the value is too low, you will
 encounter the reviled "spurious touch" problem where the stylus clicks
 randomly as you move it around the screen.
-
-<P>Also, people using serial tablets will need completely different settings.
-Please see <A HREF="http://people.mandrakesoft.com/~flepied/projects/wacom/">Lepied's Wacom Site</A> for
-more details.
 
 <P>I am including a copy of the man page for the driver.  Some of the fields
 pertain only to the serial device, and some of the fields may be deprecated
@@ -1605,7 +1353,7 @@ version 23.  Redhat 8.0 is shipping version 25.  Lepied's page has the
 source code for 26, but the binary identifies itself as 23ss1.  The
 <A HREF="#download">Downloading the Code</A> page currently
 offers source and binary for 26-j0.2.0 in the stable package
-and 26-j0.3.2a in the beta version.  In total, I recommend
+and 26-j0.3.6 in the beta version.  In total, I recommend
 using the drivers in the packages that I provide since they correspond with
 what is shown in this document.  Any new functionality that gets added will
 be built on top of these files as well.
@@ -1618,7 +1366,7 @@ Instructions for rebuilding from source are available in the Appendix
 under <A HREF="#builddrv">Building wacom_drv.o From Scratch</A>.
 
 <P>With that said, locate and replace wacom_drv.o.  Using <i>locate</i> again, we find
-the driver in the X11 tree.  This directory is pretty standard, so it is
+the driver in the XFree86 tree.  This directory is pretty standard, so it is
 unlikely that your file will be located elsewhere.  Note the assumption is
 that you are using XFree86 4.x.  Anything from the 3.x version probably won't
 work.
@@ -1671,7 +1419,7 @@ suppress=0
 </PRE></BLOCKQUOTE>
 
 Notice the driver version 26-j0.2.0 above.  This is the new stable
-wacom_drv.o driver.  The beta driver is currently 26-j0.3.2a.
+wacom_drv.o driver.  The beta driver is currently 26-j0.3.6.
 
 <P>First things first, you should lift the mouse off the tablet and place it
 back down.  This seems to help reset things internally.  When you replace the
@@ -1722,130 +1470,20 @@ rather than "Window."
 <P>I have successfully been able to use gimp with several different pens,
 including the tips and erasers.  Tilt does not appear to be used by gimp
 at present, but pressure works fine.
-<A NAME="changelog">
-<H1>7.0 - Changelog</H1>
-<UL>
-<LI>2002-12-22 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Added serial code to wacdump<BR>
-* Added serial protocols IV 1.0 - 1.4.<BR>
-* Added serial protocol V 1.0 - 1.1.<BR>
-* Intuos mouse wheels are now positive when rolled backwards per PS/2
-      Intellimouse convention<BR>
-* Added Intuos2 to xf86Wacom.c<BR>
-* Added build help for Debian Stable users<BR>
-</BLOCKQUOTE>
-
-<LI>2002-12-17 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Merged code from 2.4.20 hid-core.c<BR>
-* Added configuration code to handle kernels still at 2.4.19<BR>
-* Split wacdump curses code into wacscrn.c to solve namespace collision<BR>
-* Added volito to wacom.c<BR>
-</BLOCKQUOTE>
-
-<LI>2002-12-16 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* House cleaning on the website.<BR>
-* Dropped the Intuos constraint from the document name.<BR>
-* Added the expectations page.<BR>
-* Changed the internal indexing to identifier rather than chapter.
-</BLOCKQUOTE>
-<LI>2002-12-15 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Removed some debugging code, redeployed package with wacom_drv.o version
-	0.3.2a.<BR>
-* New build has fix for 4D mouse wheel.<BR>
-* wcm-beta.c fleshed out with new driver code.<BR>
-</BLOCKQUOTE>
-<LI>2002-12-13 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Added development page.<BR>
-* New build has relative events and fix for 2D mouse wheel.<BR>
-* wcm-beta.c added to build.<BR>
-</BLOCKQUOTE>
-<LI>2002-12-09 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Added detail on "Threshold" parameter.<BR>
-* Included man page.
-</BLOCKQUOTE>
-<LI>2002-11-24 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Updated docs for version 0.2.0.<BR>
-* Package uses configure-based scripts.<BR>
-</BLOCKQUOTE>
-<LI>2002-11-14 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Moved wacom_drv.o to prebuilt directory.<BR>
-* Added xf86Wacom.c (version 26) to package along with changes to Makefile<BR>
-* Extended documentation on X11 setup including caveat over Mouse1 device.<BR>
-* Added xf86Wacom.c build instructions.<BR>
-* Updated wacdump (0.2) to display identifiers, maximum values, and all
-  registered event types.<BR>
-* Added highlighting in wacdump to display button down state.<BR>
-</BLOCKQUOTE>
-
-<LI>2002-11-11 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* wacom.c - fixed ranges for intuos2 6x8<BR>
-</BLOCKQUOTE>
-
-<LI>2002-11-10 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* wacdump.c - updated display to identify values<BR>
-* wacom.c - fixed ranges for intuos2 12x12<BR>
-</BLOCKQUOTE>
-
-<LI>2002-11-09 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* wacom.c - merged some of Cheng's changes, fixes to the
-pressure calculation, device ranges.<BR>
-* wacom.c - added an extra device (0x47) for M. T.<BR>
-* wacdump.c - added text messages for event types<BR>
-* wacdump.c - added usage and device override option<BR>
-* wacdump.c - exits when channel is closed.<BR>
-* Fixed module dependency problem in wacom.o and hid.o<BR>
-* Added clarification for devfs and Mandrake 9.0<BR>
-</BLOCKQUOTE>
-
-<LI>2002-11-06 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Busted page out into discrete chapters.<BR>
-* Added some php magic to turn it into an active book.<BR>
-* Added Mandrake 9.0<BR>
-* Gimp may need to be compiled from source (1.2.3)
-</BLOCKQUOTE>
-<LI>2002-11-05 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-<BLOCKQUOTE>
-* Updated wacom driver with Christer Nilsson's 2.4.20 patch<BR>
-* Added RedHat 7.3 success<BR>
-* Added more discussion on the device driver election.<BR>
-* Added more discussion on HID mode 1 and the correct mode 2.<BR>
-* Added usbmouse.c and hid-core.c to wacpack-0.1b.<BR>
-</BLOCKQUOTE>
-<LI>2002-11-04 - John E. Joganic &lt;jej@j-arkadia.com&gt;<BR>
-
-<BLOCKQUOTE>
-* Added update section.<BR>
-* Added success stories.<BR>
-* Added RedHat 7.2 specific information<BR>
-* Added more information about "unknown report #1"<BR>
-</BLOCKQUOTE>
-</UL>
 <A NAME="contact">
-<H1>8.0 - Contacts</H1>
+<H1>7.0 - Contacts</H1>
 <P>John Joganic can be contacted at the following email address:
 <A HREF="mailto: jej@j-arkadia.com?SUBJECT=WACOM">jej@j-arkadia.com</A>.
 If at all possible, please include the word "WACOM" in the subject line.
 I receive hundreds of messages a day, and this little addition will help
 me find your message in the tons of spam.
 <A NAME="appendix">
-<H1>9.0 - Appendix</H1>
+<H1>8.0 - Appendix</H1>
 <P>This section is for everything that is either not critical or simply
 too complex to describe in the document above without becoming overly
 distracting.
 <A NAME="builddrv">
-<H2>9.1 - Building wacom_drv.o From Scratch</H2>
+<H2>8.1 - Building wacom_drv.o From Scratch</H2>
 <H3>Introduction</H3>
 
 <P>I should tell you out-right that this is an ugly, time consuming process.
@@ -2080,7 +1718,7 @@ file into the wacom_drv.o driver from outside the X build tree.  If you
 have any comments, questions, or suggestions regarding this process,
 please send email to <A HREF="mailto:jej@j-arkadia.com?SUBJECT=WACOM_DRV">jej@j-arkadia.com</A> with a subject of "WACOM_DRV".
 <A NAME="debwcmdrv">
-<H2>9.2 - Building wacom_drv.o On Debian Stable</H2>
+<H2>8.2 - Building wacom_drv.o On Debian Stable</H2>
 The following documentation for building wacom_drv.o on Debian Stable
 was written by Timothy Klein.  If you have any problems or questions,
 go ahead and post them to the list, or send email to me directly.  If
@@ -2088,6 +1726,8 @@ I cannot provide a satisfactory answer, I'll forward your email on to
 Timothy.
 
 <BR><BR><BR><BR>
+
+Copyright (C) 2002 Timothy Klein<BR><BR>
 
 <PRE>
 Just thought I would give you some brief notes on compiling wacom_drv.o
@@ -2188,7 +1828,7 @@ since it also contains the wcm-beta.c and wcm-beta.h files.  You can
 solve this by updating the Makefile, or proceed to step five
 on the <A HREF="#builddrv">Building wacom_drv.o From Scratch</A> page.
 The command line options for building the driver will undoubtably have
-changed, so be prepared to update the Makefile in the wacpack/src directory.
+changed, so be prepared to update the Makefile in the linuxwacom/src directory.
 </DIV></BLOCKQUOTE>
 
 <PRE>
@@ -2211,7 +1851,158 @@ HTH,
 
 Tim
 </PRE>
+<A NAME="lic">
+<H2>8.3 - GNU Free Document License</H2>
+Version 1.2, November 2002<BR>
+<BR>
+Copyright (C) 2000,2001,2002  Free Software Foundation, Inc.<BR>
+59 Temple Place, Suite 330, Boston, MA  02111-1307  USA<BR>
+Everyone is permitted to copy and distribute verbatim copies<BR>
+of this license document, but changing it is not allowed.<BR>
+<BR>
+0. PREAMBLE<BR>
+<BR>
+<P>The purpose of this License is to make a manual, textbook, or other functional and useful document "free" in the sense of freedom: to assure everyone the effective freedom to copy and redistribute it, with or without modifying it, either commercially or noncommercially. Secondarily, this License preserves for the author and publisher a way to get credit for their work, while not being considered responsible for modifications made by others.
 
-<CENTER><B>Copyright (C) 2002 - John E. Joganic</B></CENTER>
-</BODY>
-</HTML>
+<P>This License is a kind of "copyleft", which means that derivative works of the document must themselves be free in the same sense. It complements the GNU General Public License, which is a copyleft license designed for free software.
+
+<P>We have designed this License in order to use it for manuals for free software, because free software needs free documentation: a free program should come with manuals providing the same freedoms that the software does. But this License is not limited to software manuals; it can be used for any textual work, regardless of subject matter or whether it is published as a printed book. We recommend this License principally for works whose purpose is instruction or reference.
+
+<P>1. APPLICABILITY AND DEFINITIONS
+
+<P>This License applies to any manual or other work, in any medium, that contains a notice placed by the copyright holder saying it can be distributed under the terms of this License. Such a notice grants a world-wide, royalty-free license, unlimited in duration, to use that work under the conditions stated herein. The "Document", below, refers to any such manual or work. Any member of the public is a licensee, and is addressed as "you". You accept the license if you copy, modify or distribute the work in a way requiring permission under copyright law.
+
+<P>A "Modified Version" of the Document means any work containing the Document or a portion of it, either copied verbatim, or with modifications and/or translated into another language.
+
+<P>A "Secondary Section" is a named appendix or a front-matter section of the Document that deals exclusively with the relationship of the publishers or authors of the Document to the Document's overall subject (or to related matters) and contains nothing that could fall directly within that overall subject. (Thus, if the Document is in part a textbook of mathematics, a Secondary Section may not explain any mathematics.) The relationship could be a matter of historical connection with the subject or with related matters, or of legal, commercial, philosophical, ethical or political position regarding them.
+
+<P>The "Invariant Sections" are certain Secondary Sections whose titles are designated, as being those of Invariant Sections, in the notice that says that the Document is released under this License. If a section does not fit the above definition of Secondary then it is not allowed to be designated as Invariant. The Document may contain zero Invariant Sections. If the Document does not identify any Invariant Sections then there are none.
+
+<P>The "Cover Texts" are certain short passages of text that are listed, as Front-Cover Texts or Back-Cover Texts, in the notice that says that the Document is released under this License. A Front-Cover Text may be at most 5 words, and a Back-Cover Text may be at most 25 words.
+
+<P>A "Transparent" copy of the Document means a machine-readable copy, represented in a format whose specification is available to the general public, that is suitable for revising the document straightforwardly with generic text editors or (for images composed of pixels) generic paint programs or (for drawings) some widely available drawing editor, and that is suitable for input to text formatters or for automatic translation to a variety of formats suitable for input to text formatters. A copy made in an otherwise Transparent file format whose markup, or absence of markup, has been arranged to thwart or discourage subsequent modification by readers is not Transparent. An image format is not Transparent if used for any substantial amount of text. A copy that is not "Transparent" is called "Opaque".
+
+<P>Examples of suitable formats for Transparent copies include plain ASCII without markup, Texinfo input format, LaTeX input format, SGML or XML using a publicly available DTD, and standard-conforming simple HTML, PostScript or PDF designed for human modification. Examples of transparent image formats include PNG, XCF and JPG. Opaque formats include proprietary formats that can be read and edited only by proprietary word processors, SGML or XML for which the DTD and/or processing tools are not generally available, and the machine-generated HTML, PostScript or PDF produced by some word processors for output purposes only.
+
+<P>The "Title Page" means, for a printed book, the title page itself, plus such following pages as are needed to hold, legibly, the material this License requires to appear in the title page. For works in formats which do not have any title page as such, "Title Page" means the text near the most prominent appearance of the work's title, preceding the beginning of the body of the text.
+
+<P>A section "Entitled XYZ" means a named subunit of the Document whose title either is precisely XYZ or contains XYZ in parentheses following text that translates XYZ in another language. (Here XYZ stands for a specific section name mentioned below, such as "Acknowledgements", "Dedications", "Endorsements", or "History".) To "Preserve the Title" of such a section when you modify the Document means that it remains a section "Entitled XYZ" according to this definition.
+
+<P>The Document may include Warranty Disclaimers next to the notice which states that this License applies to the Document. These Warranty Disclaimers are considered to be included by reference in this License, but only as regards disclaiming warranties: any other implication that these Warranty Disclaimers may have is void and has no effect on the meaning of this License.
+
+<P>2. VERBATIM COPYING
+
+<P>You may copy and distribute the Document in any medium, either commercially or noncommercially, provided that this License, the copyright notices, and the license notice saying this License applies to the Document are reproduced in all copies, and that you add no other conditions whatsoever to those of this License. You may not use technical measures to obstruct or control the reading or further copying of the copies you make or distribute. However, you may accept compensation in exchange for copies. If you distribute a large enough number of copies you must also follow the conditions in section 3.
+
+<P>You may also lend copies, under the same conditions stated above, and you may publicly display copies.
+
+<P>3. COPYING IN QUANTITY
+
+<P>If you publish printed copies (or copies in media that commonly have printed covers) of the Document, numbering more than 100, and the Document's license notice requires Cover Texts, you must enclose the copies in covers that carry, clearly and legibly, all these Cover Texts: Front-Cover Texts on the front cover, and Back-Cover Texts on the back cover. Both covers must also clearly and legibly identify you as the publisher of these copies. The front cover must present the full title with all words of the title equally prominent and visible. You may add other material on the covers in addition. Copying with changes limited to the covers, as long as they preserve the title of the Document and satisfy these conditions, can be treated as verbatim copying in other respects.
+
+<P>If the required texts for either cover are too voluminous to fit legibly, you should put the first ones listed (as many as fit reasonably) on the actual cover, and continue the rest onto adjacent pages.
+
+<P>If you publish or distribute Opaque copies of the Document numbering more than 100, you must either include a machine-readable Transparent copy along with each Opaque copy, or state in or with each Opaque copy a computer-network location from which the general network-using public has access to download using public-standard network protocols a complete Transparent copy of the Document, free of added material. If you use the latter option, you must take reasonably prudent steps, when you begin distribution of Opaque copies in quantity, to ensure that this Transparent copy will remain thus accessible at the stated location until at least one year after the last time you distribute an Opaque copy (directly or through your agents or retailers) of that edition to the public.
+
+<P>It is requested, but not required, that you contact the authors of the Document well before redistributing any large number of copies, to give them a chance to provide you with an updated version of the Document.
+
+<P>4. MODIFICATIONS
+
+<P>You may copy and distribute a Modified Version of the Document under the conditions of sections 2 and 3 above, provided that you release the Modified Version under precisely this License, with the Modified Version filling the role of the Document, thus licensing distribution and modification of the Modified Version to whoever possesses a copy of it. In addition, you must do these things in the Modified Version:
+
+<UL>
+<LI>A. Use in the Title Page (and on the covers, if any) a title distinct from that of the Document, and from those of previous versions (which should, if there were any, be listed in the History section of the Document). You may use the same title as a previous version if the original publisher of that version gives permission.
+<LI>B. List on the Title Page, as authors, one or more persons or entities responsible for authorship of the modifications in the Modified Version, together with at least five of the principal authors of the Document (all of its principal authors, if it has fewer than five), unless they release you from this requirement.
+<LI>C. State on the Title page the name of the publisher of the Modified Version, as the publisher.
+<LI>D. Preserve all the copyright notices of the Document.
+<LI>E. Add an appropriate copyright notice for your modifications adjacent to the other copyright notices.
+<LI>F. Include, immediately after the copyright notices, a license notice giving the public permission to use the Modified Version under the terms of this License, in the form shown in the Addendum below.
+<LI>G. Preserve in that license notice the full lists of Invariant Sections and required Cover Texts given in the Document's license notice.
+<LI>H. Include an unaltered copy of this License.
+<LI>I. Preserve the section Entitled "History", Preserve its Title, and add to it an item stating at least the title, year, new authors, and publisher of the Modified Version as given on the Title Page. If there is no section Entitled "History" in the Document, create one stating the title, year, authors, and publisher of the Document as given on its Title Page, then add an item describing the Modified Version as stated in the previous sentence.
+<LI>J. Preserve the network location, if any, given in the Document for public access to a Transparent copy of the Document, and likewise the network locations given in the Document for previous versions it was based on. These may be placed in the "History" section. You may omit a network location for a work that was published at least four years before the Document itself, or if the original publisher of the version it refers to gives permission.
+<LI>K. For any section Entitled "Acknowledgements" or "Dedications", Preserve the Title of the section, and preserve in the section all the substance and tone of each of the contributor acknowledgements and/or dedications given therein.
+<LI>L. Preserve all the Invariant Sections of the Document, unaltered in their text and in their titles. Section numbers or the equivalent are not considered part of the section titles.
+<LI>M. Delete any section Entitled "Endorsements". Such a section may not be included in the Modified Version.
+<LI>N. Do not retitle any existing section to be Entitled "Endorsements" or to conflict in title with any Invariant Section.
+<LI>O. Preserve any Warranty Disclaimers.
+</UL>
+
+<P>If the Modified Version includes new front-matter sections or appendices that qualify as Secondary Sections and contain no material copied from the Document, you may at your option designate some or all of these sections as invariant. To do this, add their titles to the list of Invariant Sections in the Modified Version's license notice. These titles must be distinct from any other section titles.
+
+<P>You may add a section Entitled "Endorsements", provided it contains nothing but endorsements of your Modified Version by various parties--for example, statements of peer review or that the text has been approved by an organization as the authoritative definition of a standard.
+
+<P>You may add a passage of up to five words as a Front-Cover Text, and a passage of up to 25 words as a Back-Cover Text, to the end of the list of Cover Texts in the Modified Version. Only one passage of Front-Cover Text and one of Back-Cover Text may be added by (or through arrangements made by) any one entity. If the Document already includes a cover text for the same cover, previously added by you or by arrangement made by the same entity you are acting on behalf of, you may not add another; but you may replace the old one, on explicit permission from the previous publisher that added the old one.
+
+<P>The author(s) and publisher(s) of the Document do not by this License give permission to use their names for publicity for or to assert or imply endorsement of any Modified Version.
+
+<P>5. COMBINING DOCUMENTS
+
+<P>You may combine the Document with other documents released under this License, under the terms defined in section 4 above for modified versions, provided that you include in the combination all of the Invariant Sections of all of the original documents, unmodified, and list them all as Invariant Sections of your combined work in its license notice, and that you preserve all their Warranty Disclaimers.
+
+<P>The combined work need only contain one copy of this License, and multiple identical Invariant Sections may be replaced with a single copy. If there are multiple Invariant Sections with the same name but different contents, make the title of each such section unique by adding at the end of it, in parentheses, the name of the original author or publisher of that section if known, or else a unique number. Make the same adjustment to the section titles in the list of Invariant Sections in the license notice of the combined work.
+
+<P>In the combination, you must combine any sections Entitled "History" in the various original documents, forming one section Entitled "History"; likewise combine any sections Entitled "Acknowledgements", and any sections Entitled "Dedications". You must delete all sections Entitled "Endorsements."
+
+<P>6. COLLECTIONS OF DOCUMENTS
+
+<P>You may make a collection consisting of the Document and other documents released under this License, and replace the individual copies of this License in the various documents with a single copy that is included in the collection, provided that you follow the rules of this License for verbatim copying of each of the documents in all other respects.
+
+<P>You may extract a single document from such a collection, and distribute it individually under this License, provided you insert a copy of this License into the extracted document, and follow this License in all other respects regarding verbatim copying of that document.
+
+<P>7. AGGREGATION WITH INDEPENDENT WORKS
+
+<P>A compilation of the Document or its derivatives with other separate and independent documents or works, in or on a volume of a storage or distribution medium, is called an "aggregate" if the copyright resulting from the compilation is not used to limit the legal rights of the compilation's users beyond what the individual works permit. When the Document is included an aggregate, this License does not apply to the other works in the aggregate which are not themselves derivative works of the Document.
+
+<P>If the Cover Text requirement of section 3 is applicable to these copies of the Document, then if the Document is less than one half of the entire aggregate, the Document's Cover Texts may be placed on covers that bracket the Document within the aggregate, or the electronic equivalent of covers if the Document is in electronic form. Otherwise they must appear on printed covers that bracket the whole aggregate.
+
+<P>8. TRANSLATION
+
+<P>Translation is considered a kind of modification, so you may distribute translations of the Document under the terms of section 4. Replacing Invariant Sections with translations requires special permission from their copyright holders, but you may include translations of some or all Invariant Sections in addition to the original versions of these Invariant Sections. You may include a translation of this License, and all the license notices in the Document, and any Warrany Disclaimers, provided that you also include the original English version of this License and the original versions of those notices and disclaimers. In case of a disagreement between the translation and the original version of this License or a notice or disclaimer, the original version will prevail.
+
+<P>If a section in the Document is Entitled "Acknowledgements", "Dedications", or "History", the requirement (section 4) to Preserve its Title (section 1) will typically require changing the actual title.
+
+<P>9. TERMINATION
+
+<P>You may not copy, modify, sublicense, or distribute the Document except as expressly provided for under this License. Any other attempt to copy, modify, sublicense or distribute the Document is void, and will automatically terminate your rights under this License. However, parties who have received copies, or rights, from you under this License will not have their licenses terminated so long as such parties remain in full compliance.
+
+<P>10. FUTURE REVISIONS OF THIS LICENSE
+
+<P>The Free Software Foundation may publish new, revised versions of the GNU Free Documentation License from time to time. Such new versions will be similar in spirit to the present version, but may differ in detail to address new problems or concerns. See http://www.gnu.org/copyleft/.
+
+<P>Each version of the License is given a distinguishing version number. If the Document specifies that a particular numbered version of this License "or any later version" applies to it, you have the option of following the terms and conditions either of that specified version or of any later version that has been published (not as a draft) by the Free Software Foundation. If the Document does not specify a version number of this License, you may choose any version ever published (not as a draft) by the Free Software Foundation.
+
+<P>HOW TO USE THIS LICENSE FOR YOUR DOCUMENTS
+
+<P>To use this License in a document you have written, include a copy of the License in the document and put the following copyright and license notices just after the title page:
+
+<BLOCKQUOTE><PRE>
+      Copyright (c)  YEAR  YOUR NAME.
+      Permission is granted to copy, distribute and/or modify this document
+      under the terms of the GNU Free Documentation License, Version 1.2
+      or any later version published by the Free Software Foundation;
+      with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+      A copy of the license is included in the section entitled "GNU
+      Free Documentation License".
+</PRE></BLOCKQUOTE>
+
+<P>If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts, replace the "with...Texts." line with this:
+
+<BLOCKQUOTE><PRE>
+    with the Invariant Sections being LIST THEIR TITLES, with the
+    Front-Cover Texts being LIST, and with the Back-Cover Texts being LIST.
+</PRE></BLOCKQUOTE>
+
+<P>If you have Invariant Sections without Cover Texts, or some other combination of the three, merge those two alternatives to suit the situation.
+
+<P>If your document contains nontrivial examples of program code, we recommend releasing these examples in parallel under your choice of free software license, such as the GNU General Public License, to permit their use in free software.
+</TD></TR></TABLE></CENTER>
+
+<BR><BR>
+
+<DIV CLASS=copy ALIGN=CENTER>
+	Copyright (C) 2002-2003 - John E. Joganic<BR>
+	This website and its contents are
+	<A CLASS=copy HREF=/index.php/lic>licensed under the GNU FDL</A>.<BR>
+</DIV>
+</BODY></HTML>
