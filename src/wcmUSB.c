@@ -453,7 +453,7 @@ static void usbParseEvent(WacomCommonPtr common,
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	/* packet terminated by MSC_SERIAL on kernel 2.4 and SYN_REPORT on kernel 2.5 */
+	/* packet terminated by MSC_SERIAL on kernel 2.4 and SYN_REPORT on kernel 2.6 */
 	if ((event->type != EV_MSC) || (event->code != MSC_SERIAL))
 	{
 #ifdef EV_SYN

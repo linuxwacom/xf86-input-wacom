@@ -1,5 +1,5 @@
 README
-Nov. 02, 2004
+Dec. 01, 2004
 
 ==============================================================================
 
@@ -146,12 +146,13 @@ for kernels older than 2.4.22:
     [root@haku linuxwacom-dev] # cp src/2.4/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
 
 for kernel 2.6.x
-
-    [root@haku linuxwacom-dev] # cd kernel_src_dir
-    [root@haku linuxwacom-dev] # make install
-    [root@haku linuxwacom-dev] # make modules_install
+    [root@haku linuxwacom-dev] # cp src/2.6.x/hid.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
+    [root@haku linuxwacom-dev] # cp src/2.6.x/wacom.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
+    [root@haku linuxwacom-dev] # cp src/2.6.x/usbmouse.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
+    [root@haku linuxwacom-dev] # cp src/2.6.x/evdev.ko /lib/modules/your_kernel_version/kernel/drivers/input 
+    [root@haku linuxwacom-dev] # cp src/2.6.x/mousedev.ko /lib/modules/your_kernel_version/kernel/drivers/input 
 
 ==============================================================================
 
 WEBSITE: http://linuxwacom.sf.net
-   HELP: jej@j-arkadia.com
+

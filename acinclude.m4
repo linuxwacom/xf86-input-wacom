@@ -130,7 +130,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
 		ISVER=`echo $moduts | grep -c "2.4"` 
 		if test "$ISVER" -gt 0; then
-			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\"`
+			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
 			if test $MINOR -ge 22; then
 				WCM_KERNEL_VER="2.4.22"
 			else
@@ -139,8 +139,10 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		else
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
-				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\"`
-				if test $MINOR -ge 9; then
+				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
+				if test $MINOR -ge 10; then
+					WCM_KERNEL_VER="2.6.10"
+				elif test $MINOR -eq 9; then
 					WCM_KERNEL_VER="2.6.9"
 				elif test $MINOR -eq 8; then
 					WCM_KERNEL_VER="2.6.8"
@@ -162,7 +164,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			else
 				echo "***"
 				echo "*** WARNING:"
-				echo "*** $moduts is not supportted by this pachage"
+				echo "*** $moduts is not supported by this pachage"
 				echo "*** Kernel modules will not be built"
 				echo "***"
 				WCM_OPTION_MODVER=no

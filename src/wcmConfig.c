@@ -168,8 +168,7 @@ LocalDevicePtr xf86WcmAllocateCursor(void)
 
 LocalDevicePtr xf86WcmAllocateEraser(void)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER,
-			ABSOLUTE_FLAG|ERASER_ID);
+	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
 
 	if (local)
 		local->type_name = "Wacom Eraser";
@@ -181,19 +180,13 @@ LocalDevicePtr xf86WcmAllocateEraser(void)
 
 LocalDevicePtr xf86WcmAllocatePad(void)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER,
-			ABSOLUTE_FLAG|PAD_ID);
+	LocalDevicePtr local = xf86WcmAllocate(XI_PAD, PAD_ID);
 
 	if (local)
 		local->type_name = "Wacom Pad";
 
 	return local;
 }
-
-
-/******************************************************************************
- * XFree86 V4 Module Configuration
- *****************************************************************************/
 
 /* 
  * Be sure to set vmin appropriately for your device's protocol. You want to

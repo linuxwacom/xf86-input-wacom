@@ -232,10 +232,9 @@ struct _WacomModel
 #define ABSOLUTE_FLAG           16
 #define KEEP_SHAPE_FLAG         32
 #define BAUD_19200_FLAG         64
-#define BETA_FLAG               128
-#define BUTTONS_ONLY_FLAG       256
-#define TPCBUTTONS_FLAG		512
-#define TPCBUTTONONE_FLAG	1024
+#define BUTTONS_ONLY_FLAG       128
+#define TPCBUTTONS_FLAG		256
+#define TPCBUTTONONE_FLAG	512
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)

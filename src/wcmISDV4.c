@@ -50,7 +50,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
 		NULL,                 /* link speed unsupported */
-		isdv4StartTablet,     /* start not supported */
+		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
 		xf86WcmHysteresisFilter,   /* input filtering */
 	};

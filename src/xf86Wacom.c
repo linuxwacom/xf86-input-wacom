@@ -82,9 +82,10 @@
  * 2004-04-04 26-j0.6.2  - new release
  * 2004-05-25 26-j0.6.3  - new release
  * 2004-10-05 26-j0.6.5  - new release
+ * 2004-11-22 42-j0.6.6  - new release
 */
 
-static const char identification[] = "$Identification: 26-j0.6.5 $";
+static const char identification[] = "$Identification: 42-j0.6.6 $";
 
 /****************************************************************************/
 
@@ -196,7 +197,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	WacomCommonPtr common = priv->common;
 	int totalWidth = 0, maxHeight = 0, tabletSize = 0;
 	double screenRatio, tabletRatio;
-
+	char m1[32], m2[32];			
+ 
 	/* open file, if not already open */
 	if (local->fd < 0)
 	{
@@ -371,12 +373,13 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 1, 1);
 	}
 
-	if (IsStylus(priv))
-		/* absulate wheel */
-		InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
-	else
+	sscanf((char*)(common->wcmModel)->name, "%s %s", m1, m2);
+	if (strstr(m2, "Intuos3") && IsStylus(priv))
 		/* Intuos3 Marker Pen rotation */
 		InitValuatorAxisStruct(pWcm, 5, -900, 899, 1, 1, 1);
+	else
+		/* absolute wheel */
+		InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
 	return TRUE;
 }
 
@@ -794,8 +797,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmMMonitor = 0;
-		if (value) priv->common->wcmMMonitor = value;
+		priv->common->wcmMMonitor = value;
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
 		if ((value != 0) && (value != 1)) return BadValue;

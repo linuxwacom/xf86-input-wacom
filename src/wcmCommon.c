@@ -884,8 +884,10 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			{
 				priv = common->wcmDevices[idx]->private;
 				if (ds->serial_num == priv->serial)
+				{
 					ds->device_type = DEVICE_ID(priv->flags);
-				break;
+					break;
+				}
 			}
 	}
 

@@ -705,7 +705,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	const unsigned char* data)
 {
 	int n;
-	int is_stylus=0, have_data=0;
+	int have_data=0;
 	int channel;
 	WacomDeviceState* ds;
 
@@ -766,7 +766,6 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	else if (((data[0] & 0xb8) == 0xa0) ||
 			((data[0] & 0xbe) == 0xb4))
 	{
-		is_stylus = 1;
 		ds->x = (((data[1] & 0x7f) << 9) |
 				((data[2] & 0x7f) << 2) |
 				((data[3] & 0x60) >> 5));
@@ -777,7 +776,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 		{
 			ds->pressure = (((data[5] & 0x07) << 7) |
 				(data[6] & 0x7f));
-			ds->buttons = (((data[0]) & 0x06));
+			ds->buttons = (data[0] & 0x06);
 		}
 		else
 		{
@@ -799,7 +798,6 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	else if (((data[0] & 0xbe) == 0xa8) ||
 			((data[0] & 0xbe) == 0xb0))
 	{
-		is_stylus = 0;
 		ds->x = (((data[1] & 0x7f) << 9) |
 				((data[2] & 0x7f) << 2) |
 				((data[3] & 0x60) >> 5));
@@ -842,7 +840,6 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	/* 4D mouse 2nd packet */
 	else if ((data[0] & 0xbe) == 0xaa)
 	{
-		is_stylus = 0;
 		ds->x = (((data[1] & 0x7f) << 9) |
 			((data[2] & 0x7f) << 2) |
 			((data[3] & 0x60) >> 5));
@@ -1257,10 +1254,6 @@ static void serialParseP4Common(WacomCommonPtr common,
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 
 		ds->device_type = cur_type;
-
-	/* out of prox */
-	else if (!ds->proximity)
-		memset(ds,0,sizeof(*ds));
 
 	/* check on previous proximity */
 	else if (is_stylus)

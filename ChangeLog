@@ -1,3 +1,12 @@
+2004-12-01    Ping Cheng <pingc@wacom.com>
+	* Removed src/2.6.x/Makefile.am to build .ko locally (Jens Georg)
+	* Updated src/2.6.x/Makefile.in (Jens Georg)
+	* Added support for kernel 2.6.10
+	* Fixed a P4 bug in wcmSerial.c
+	* Added wacom.man to dev
+	* Released 0.6.6
+	* Updated web pages
+
 2004-11-05    Ping Cheng <pingc@wacom.com>
 	* Updated configure script  Kristian Høgsberg <krh@redhat.com>
 	* Removed XFree86v3 support

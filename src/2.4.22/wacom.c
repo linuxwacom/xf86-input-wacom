@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.8 2004/11/06 04:55:03 pingc Exp $
+ * $Id: wacom.c,v 1.9 2004/12/02 00:36:11 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -81,6 +81,7 @@
  *    v1.30-j0.6.3 - new release
  *    v1.30-j0.6.4 - new release
  *    v1.30-j0.6.5 - added Intuos3
+ *    v1.30-j0.6.6 - new release
  */
 
 /*
@@ -111,7 +112,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.6.5"
+#define DRIVER_VERSION "v1.30-j0.6.6"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -369,25 +370,14 @@ static void wacom_graphire_irq(struct urb *urb)
 	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
 }
 
-static void wacom_intuos_irq(struct urb *urb)
+static int wacom_intuos_inout(struct urb *urb)
 {
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	unsigned int t;
 	int idx;
 
-	if (urb->status) return;
-
-	/* check for valid report */
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
-	{
-		printk(KERN_INFO "wacom_intuos_irq: received unknown report #%d\n", data[0]);
-		wacom_request_reset(wacom);
-		return;
-	}
-	
-	/* tool index */
+	/* tool number */
 	idx = data[1] & 0x01;
 
 	/* Enter report */
@@ -406,12 +396,16 @@ static void wacom_intuos_irq(struct urb *urb)
 		switch ((((__u32)data[2] << 4) | (data[3] >> 4)))
 		{
 			case 0x812: /* Intuos2 ink pen XP-110-00A */
+			case 0x801: /* Intuos3 Inking pen */
 			case 0x012: /* Inking pen */
 				wacom->tool[idx] = BTN_TOOL_PENCIL; break;
 
 			case 0x822: /* Intuos Pen GP-300E-01H */
 			case 0x852: /* Intuos2 Grip Pen XP-501E-00A */
 			case 0x842: /* Designer Pen */
+			case 0x823: /* Intuos3 Grip Pen */
+			case 0x813: /* Intuos3 Classic Pen */
+			case 0x885: /* Intuos3 Marker Pen */
 			case 0x022:
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 
@@ -422,9 +416,11 @@ static void wacom_intuos_irq(struct urb *urb)
 			case 0x007: /* 2D Mouse */
 			case 0x09C: /* ?? Mouse - not a valid code according to Wacom */
 			case 0x094: /* 4D Mouse */
+			case 0x017: /* Intuos3 2D Mouse */
 				wacom->tool[idx] = BTN_TOOL_MOUSE; break;
 
 			case 0x096: /* Lens cursor */
+			case 0x097: /* Intuos3 Lens cursor */
 				wacom->tool[idx] = BTN_TOOL_LENS; break;
 
 			case 0x82A:
@@ -432,18 +428,22 @@ static void wacom_intuos_irq(struct urb *urb)
 			case 0x91A:
 			case 0xD1A:
 			case 0x0FA: /* Eraser */
+			case 0x82B: /* Intuos3 Grip Pen Eraser */
+			case 0x81B: /* Intuos3 Classic Pen Eraser */
+			case 0x91B: /* Intuos3 Airbrush Eraser */
 				wacom->tool[idx] = BTN_TOOL_RUBBER; break;
 
 			case 0x112: /* Airbrush */
 			case 0x912: /* Intuos2 Airbrush */
 			case 0xD12: /* Intuos Airbrush */
+			case 0x913: /* Intuos3 Airbrush */
 				wacom->tool[idx] = BTN_TOOL_AIRBRUSH; break;
 
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		return;
+		return 1;
 	}
 
 	/* Exit report */
@@ -451,13 +451,19 @@ static void wacom_intuos_irq(struct urb *urb)
 	{
 		input_report_key(dev, wacom->tool[idx], 0);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		return;
+		return 1;
 	}
 
-	input_report_abs(dev, ABS_X, ((__u32)data[2] << 8) | data[3]);
-	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 8) | data[5]);
-	input_report_abs(dev, ABS_DISTANCE, data[9]);
-	
+	return 0;
+}
+
+static void wacom_intuos_general(struct urb *urb)
+{
+	struct wacom *wacom = urb->context;
+	unsigned char *data = wacom->data;
+	struct input_dev *dev = &wacom->dev;
+	unsigned int t;
+
 	/* general pen packet */
 	if ((data[1] & 0xb8) == 0xa0)
 	{
@@ -480,6 +486,39 @@ static void wacom_intuos_irq(struct urb *urb)
 				((data[7] << 1) & 0x7e) | (data[8] >> 7));
 		input_report_abs(dev, ABS_TILT_Y, data[8] & 0x7f);
 	}
+	return;
+}
+
+static void wacom_intuos_irq(struct urb *urb)
+{
+	struct wacom *wacom = urb->context;
+	unsigned char *data = wacom->data;
+	struct input_dev *dev = &wacom->dev;
+	unsigned int t;
+	int idx;
+
+	if (urb->status) return;
+
+	/* check for valid report */
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
+	{
+		printk(KERN_INFO "wacom_intuos_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
+		return;
+	}
+	
+	/* tool index */
+	idx = data[1] & 0x01;
+
+	/* process in/out prox events */
+	if (wacom_intuos_inout(urb)) return;
+
+	input_report_abs(dev, ABS_X, ((__u32)data[2] << 8) | data[3]);
+	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 8) | data[5]);
+	input_report_abs(dev, ABS_DISTANCE, data[9]);
+
+	/* process general packets */
+	wacom_intuos_general(urb);
 	
 	/* 4D mouse, 2D mouse, or Lens cursor packets */
 	if ((data[1] & 0xbc) == 0xa8 || (data[1] & 0xbe) == 0xb0)
@@ -576,84 +615,15 @@ static void wacom_intuos3_irq(struct urb *urb)
 		return;
 	}
 
-	/* Enter report */
-	if ((data[1] & 0xfc) == 0xc0)
-	{
-		/* serial number of the tool */
-		wacom->serial[idx] = ((__u32)(data[3] & 0x0f) << 28) +
-				((__u32)data[4] << 20) + ((__u32)data[5] << 12) +
-				((__u32)data[6] << 4) + ((__u32)data[7] >> 4);
-
-		#ifdef __JEJ_DEBUG
-		printk(KERN_INFO "wacom_intuos3_irq: tool change 0x%03X\n",
-				(((__u32)data[2] << 4) | (data[3] >> 4)));
-		#endif
-
-		switch ((((__u32)data[2] << 4) | (data[3] >> 4)))
-		{
-			case 0x801: /* Ink pen */
-				wacom->tool[idx] = BTN_TOOL_PENCIL; break;
-
-			case 0x823: /* Grip Pen */
-			case 0x813: /* Classic Pen */
-			case 0x885: /* Marker Pen */
-				wacom->tool[idx] = BTN_TOOL_PEN; break;
-
-			case 0x017: /* 2D Mouse */
-				wacom->tool[idx] = BTN_TOOL_MOUSE; break;
-
-			case 0x82B: /* Grip Pen Eraser */
-			case 0x81B: /* Classic Pen Eraser */
-			case 0x91B: /* Airbrush Eraser */
-				wacom->tool[idx] = BTN_TOOL_RUBBER; break;
-
-			case 0x913: /* Airbrush */
-				wacom->tool[idx] = BTN_TOOL_AIRBRUSH; break;
-
-			case 0x097: /* Lens cursor */
-				wacom->tool[idx] = BTN_TOOL_LENS; break;
-
-			default: /* Unknown tool */
-				wacom->tool[idx] = BTN_TOOL_PEN; break;
-		}
-		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		return;
-	}
-
-	/* Exit report */
-	if ((data[1] & 0xfe) == 0x80)
-	{
-		input_report_key(dev, wacom->tool[idx], 0);
-		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		return;
-	}
+	/* process in/out prox events */
+	if (wacom_intuos_inout(urb)) return;
 
 	input_report_abs(dev, ABS_X, ((__u32)data[2] << 9) | ((__u32)data[3] << 1) | ((data[9] >> 1) & 1));
 	input_report_abs(dev, ABS_Y, ((__u32)data[4] << 9) | ((__u32)data[5] << 1) | (data[9] & 1));
 	input_report_abs(dev, ABS_DISTANCE, ((data[9] >> 2) & 0x3f));
 	
-	/* general pen packet */
-	if ((data[1] & 0xb8) == 0xa0)
-	{
-		t = ((__u32)data[6] << 2) | ((data[7] >> 6) & 3);
-		input_report_abs(dev, ABS_PRESSURE, t);
-		input_report_abs(dev, ABS_TILT_X,
-				((data[7] << 1) & 0x7e) | (data[8] >> 7));
-		input_report_abs(dev, ABS_TILT_Y, data[8] & 0x7f);
-		input_report_key(dev, BTN_STYLUS, data[1] & 2);
-		input_report_key(dev, BTN_STYLUS2, data[1] & 4);
-		input_report_key(dev, BTN_TOUCH, t > 10);
-	}
-
-	/* airbrush second packet */
-	if ((data[1] & 0xbc) == 0xb4)
-	{
-		input_report_abs(dev, ABS_WHEEL,
-				((__u32)data[6] << 2) | ((data[7] >> 6) & 3));
-		input_report_abs(dev, ABS_TILT_X,
-				((data[7] << 1) & 0x7e) | (data[8] >> 7));
-		input_report_abs(dev, ABS_TILT_Y, data[8] & 0x7f);
-	}
+	/* process general packets */
+	wacom_intuos_general(urb);
 
 	if ((data[1] & 0xbc) == 0xa8 || (data[1] & 0xbe) == 0xb0)
 	{
@@ -846,18 +816,18 @@ static void wacom_close(struct input_dev *dev)
 
 static void wacom_reset(struct wacom* wacom)
 {
-	unsigned char read, rdata[2], limit=0;
+	unsigned char edata[2], limit=0;
 	#ifdef __JEJ_DEBUG
 	printk(KERN_INFO __FILE__ ": Setting tablet report for tablet data\n");
 	#endif
 
 	/* ask the tablet to report tablet data. repeats until it succeeds */
 	do {
-		rdata[0] = 2;
-		rdata[1] = 2;
-		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
-		read = usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
-	} while (rdata[1] != 2 && limit++ < 5);
+		edata[0] = 2;
+		edata[1] = 2;
+		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, edata, 2);
+		usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, edata, 2);
+	} while (edata[1] != 2 && limit++ < 5);
 }
 
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)
@@ -884,7 +854,7 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.mscbit[0] |= BIT(MSC_SERIAL);
 
 	#ifdef __JEJ_DEBUG
-	printk(KERN_INFO "Reporting max %d, %d\n",
+	printk(KERN_INFO __FILE__ ": Reporting max %d, %d\n",
 		wacom->features->x_max, wacom->features->y_max);
 	#endif
 
@@ -933,7 +903,7 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 
 	wacom_reset(wacom);
 
-	printk(KERN_INFO "input%d: %s on usb%d:%d.%d\n",
+	printk(KERN_INFO __FILE__ ": input%d: %s on usb%d:%d.%d\n",
 			wacom->dev.number, wacom->features->name, dev->bus->busnum,
 			dev->devnum, ifnum);
 
