@@ -31,6 +31,9 @@ dnl Check for GTK and XLib
 AC_WCM_CHECK_GTK
 AC_WCM_CHECK_XLIB
 
+dnl Check for ncurses
+AC_WCM_CHECK_NCURSES
+
 dnl Check for wacom build
 WCM_OPTION_WACOM=no
 AC_ARG_ENABLE(wacom,
@@ -54,16 +57,30 @@ AC_ARG_ENABLE(wacdump,
 [  --enable-wacdump   Enable building wacdump               default=yes],
 	, enable_wacdump=yes)
 if test "$enable_wacdump" != "no"; then
-	WCM_OPTION_WACDUMP=yes
-	WCM_PROGS="$WCM_PROGS wacdump"
+	if test x$WCM_ENV_NCURSES != xyes; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile wacdump without ncurses environment"
+		echo "*** wacdump will not be built"
+		echo "***"
+	else
+		WCM_OPTION_WACDUMP=yes
+		WCM_PROGS="$WCM_PROGS wacdump"
+	fi
 fi
 
 dnl Check for xidump build
+WCM_PATCH_XIDUMP=
 WCM_OPTION_XIDUMP=no
 AC_ARG_ENABLE(xidump,
 [  --enable-xidump   Enable building xidump               default=yes],
 	, enable_xidump=$WCM_XIDUMP_DEFAULT)
 if test "$enable_xidump" != "no"; then
+	if test x$WCM_ENV_NCURSES != xyes; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** xidump will build without ncurses support."
+		echo "***"
+		WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
+	fi
 	WCM_OPTION_XIDUMP=yes
 	WCM_PROGS="$WCM_PROGS xidump"
 fi
@@ -309,12 +326,13 @@ echo "            XFree86 - $WCM_ENV_XF86"
 if test -n "$WCM_ENV_XF86V3"; then
 	echo "          XFree86v3 - $WCM_ENV_XF86V3"
 fi
+echo "            ncurses - $WCM_ENV_NCURSES"
 echo "                GTK - $WCM_ENV_GTK"
 echo ""
 echo "  BUILD OPTIONS:"
 echo "            wacom.o - $WCM_OPTION_WACOM"
 echo "            wacdump - $WCM_OPTION_WACDUMP $WCM_PATCH_WACDUMP"
-echo "             xidump - $WCM_OPTION_XIDUMP"
+echo "             xidump - $WCM_OPTION_XIDUMP $WCM_PATCH_XIDUMP"
 echo "              hid.o - $WCM_OPTION_HID $WCM_PATCH_HID"
 echo "         usbmouse.o - $WCM_OPTION_USBMOUSE"
 echo "            evdev.o - $WCM_OPTION_EVDEV"

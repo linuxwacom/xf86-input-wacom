@@ -21,6 +21,7 @@
 **   2003-02-23 0.0.1 - created for GTK1.2
 **   2003-03-07 0.0.2 - added input device code
 **   2003-03-08 0.0.3 - added curses code
+**   2003-03-21 0.0.4 - added conditional curses code
 **
 ****************************************************************************/
 
@@ -366,6 +367,8 @@ static int GTKRun(Display* pDisp, XDeviceInfo* pDevInfo)
 ** Curses UI
 *****************************************************************************/
 
+#if WCM_ENABLE_NCURSES
+#define USE_NCURSES 1
 #include <wacscrn.h>
 
 	int gbCursesInit = 0;
@@ -549,6 +552,10 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 
 	UI gCursesUI = { "curses", CursesInit, CursesTerm, CursesRun };
 
+#else /* WCM_ENABLE_NCURSES */
+#define USE_NCURSES 0
+#endif /* !WCM_ENABLE_NCURSES */
+
 /*****************************************************************************
 ** Raw UI
 *****************************************************************************/
@@ -619,10 +626,32 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 
 /****************************************************************************/
 
+	UI* gpUIs[] =
+	{
+		/* GTK UI */
+		#if USE_GTK
+	/*	&gGTKUI, */ /* not ready yet */
+		#endif
+
+		/* Curses UI */
+		#if USE_NCURSES
+		&gCursesUI,
+		#endif
+
+		/* Raw UI is always available */
+		&gRawUI,
+		NULL
+	};
+
+/****************************************************************************/
+
 void Usage(int rtn)
 {
-	fprintf(rtn ? stderr : stdout,
-			"Usage: xidump [options] input_device\n"
+	UI** ppUI;
+	int nCnt;
+	FILE* f = rtn ? stderr : stdout;
+
+	fprintf(f, "Usage: xidump [options] input_device\n"
 			"  -h, --help          - usage\n"
 			"  -v, --verbose       - verbose\n"
 			"  -V, --version       - version\n"
@@ -630,11 +659,13 @@ void Usage(int rtn)
 			"  -u, --ui ui_type    - use specified ui, see below\n"
 			"\n"
 			"Use --list option for input_device choices\n"
-			"UI types: "
-			#if USE_GTK
-				"gtk, "
-			#endif
-			"curses, raw\n");
+			"UI types: ");
+
+	/* output UI types */
+	for (ppUI=gpUIs, nCnt=0; *ppUI!=NULL; ++ppUI, ++nCnt)
+		fprintf(f, "%s%s", nCnt ? ", " : "", (*ppUI)->pszName);
+
+	fprintf(f,"\n");
 	exit(rtn);
 }
 
@@ -797,7 +828,7 @@ int main(int argc, char** argv)
 {
 	int nRtn;
 	int bList = 0;
-	UI* pUI = NULL;
+	UI* pUI=NULL, **ppUI;
 	const char* pa;
 	Display* pDisp = NULL;
 	const char* pszDeviceName = NULL;
@@ -819,20 +850,18 @@ int main(int argc, char** argv)
 			{
 				pa = *(argv++);
 				if (!pa) Fatal("Missing ui argument\n");
-				if (strcmp(pa,"gtk") == 0)
+
+				/* find ui by name */
+				pUI = NULL;
+				for (ppUI = gpUIs; *ppUI!=NULL; ++ppUI)
 				{
-					#if USE_GTK
-					pUI = &gGTKUI;
-					#else
-					Fatal("Not configured for GTK.\n");
-					#endif
+					if (strcmp(pa,(*ppUI)->pszName) == 0)
+						pUI = *ppUI;
 				}
-				else if (strcmp(pa,"curses") == 0)
-					pUI = &gCursesUI;
-				else if (strcmp(pa,"raw") == 0)
-					pUI = &gRawUI;
-				else
-					Fatal("Unknown ui option %s\n",pa);
+
+				/* bad ui type, die */
+				if (!pUI)
+					Fatal("Unknown ui option %s; was it configured?\n",pa);
 			}
 			else
 				Fatal("Unknown option %s\n",pa);
@@ -850,18 +879,9 @@ int main(int argc, char** argv)
 		Usage(1);
 	}
 
-	/* default to a given UI */
+	/* default to first valid UI, if not specified */
 	if (pUI == NULL)
-	{
-		pUI = &gCursesUI;
-
-/*		#if USE_GTK
-		pUI = &gGTKUI;
-		#else
-		pUI = &gCursesUI;
-		#endif
-*/
-	}
+		pUI = gpUIs[0];
 	
 	/* open connection to XServer with XInput */
 	pDisp = InitXInput();

@@ -19,8 +19,14 @@
 **
 ****************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+
+#if WCM_ENABLE_NCURSES
 #include <ncurses.h>
 
 /****************************************************************************/
@@ -37,3 +43,5 @@ void wacscrn_normal(void)
 	{ attrset(A_NORMAL); }
 void wacscrn_refresh(void)
 	{ refresh(); }
+
+#endif /* WCM_ENABLE_NCURSES */

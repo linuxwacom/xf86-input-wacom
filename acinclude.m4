@@ -19,6 +19,7 @@ WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
 XF86SUBDIR=xc/programs/Xserver/include
 XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
+WCM_ENV_NCURSES=no
 dnl Check architecture
 AC_MSG_CHECKING(for processor type)
 WCM_ARCH=`uname -m`
@@ -292,5 +293,20 @@ if test "$WCM_XLIBDIR" != "no"; then
 		echo "*** packages installed?  XLib dependencies will not be built."
 		echo "***"
 	fi
+fi
+])
+AC_DEFUN(AC_WCM_CHECK_NCURSES,[
+dnl Check for ncurses development environment
+AC_CHECK_HEADER(ncurses.h, [WCM_ENV_NCURSES=yes])
+if test x$WCM_ENV_NCURSES != xyes; then
+	echo "***"; echo "*** WARNING:"
+	echo "*** The ncurses development library does not appear to be installed."
+	echo "*** The header file ncurses.h does not appear in the include path."
+	echo "*** Do you have the ncurses-devel rpm or equivalent package"
+	echo "*** properly installed?  Some build features will be unavailable."
+	echo "***"
+	AC_DEFINE(WCM_ENABLE_NCURSES,0,[ncurses header files available])
+else
+	AC_DEFINE(WCM_ENABLE_NCURSES,1,[ncurses header files available])
 fi
 ])
