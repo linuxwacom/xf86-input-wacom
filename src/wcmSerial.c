@@ -214,7 +214,7 @@ static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
 	int x0, x1, x2, x3;
 	int x;
     
-	tilt_filtered = tilt + state->tilt[1] + state->tilt[2] + state->tilt[3];
+	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
 	state->tilt[2] = state->tilt[1];
 	state->tilt[1] = state->tilt[0];
 	state->tilt[0] = tilt;
@@ -1183,14 +1183,14 @@ static void WacomProtocol5(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
 	int is_stylus=0, have_data, x, y;
-	WacomDeviceState *ds;
-	WacomDeviceState old_ds;
+	int tool_index;
+	WacomDeviceState ds;
 
 	/* reset count for read of next packet */
 	common->wcmIndex = 0;
 
-	ds = &common->wcmDevStat[common->wcmData[0] & 0x01];
-	old_ds = *ds;
+	tool_index = common->wcmData[0] & 0x01;
+	ds = common->wcmDevStat[tool_index];
 	have_data = 0;
 
 	DBG(7, ErrorF("packet header = 0x%x\n",
@@ -1200,40 +1200,40 @@ static void WacomProtocol5(WacomDevicePtr priv)
 	if ((common->wcmData[0] & 0xfc) == 0xc0)
 	{
 		memset(ds, 0, sizeof(*ds));
-		ds->proximity = 1;
-		ds->device_id = (((common->wcmData[1] & 0x7f) << 5) |
+		ds.proximity = 1;
+		ds.device_id = (((common->wcmData[1] & 0x7f) << 5) |
 				((common->wcmData[2] & 0x7c) >> 2));
-		ds->serial_num = (((common->wcmData[2] & 0x03) << 30) |
+		ds.serial_num = (((common->wcmData[2] & 0x03) << 30) |
 				((common->wcmData[3] & 0x7f) << 23) |
 				((common->wcmData[4] & 0x7f) << 16) |
 				((common->wcmData[5] & 0x7f) << 9) |
 				((common->wcmData[6] & 0x7f) << 2) |
 				((common->wcmData[7] & 0x60) >> 5));
 
-		if ((ds->device_id & 0xf06) != 0x802)
-			ds->discard_first = 1;
+		if ((ds.device_id & 0xf06) != 0x802)
+			ds.discard_first = 1;
 
 		if (PEN(ds) || STROKING_PEN(ds) || INKING_PEN(ds) ||
 			AIRBRUSH(ds))
 		{
-			ds->device_type = STYLUS_ID;
+			ds.device_type = STYLUS_ID;
 		}
 		else if (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
-			ds->device_type = CURSOR_ID;
+			ds.device_type = CURSOR_ID;
 		else
-			ds->device_type = ERASER_ID;
+			ds.device_type = ERASER_ID;
   
 		DBG(6, ErrorF("device_id=0x%x serial_num=%u type=%s\n",
-			ds->device_id, ds->serial_num,
-			(ds->device_type == STYLUS_ID) ? "stylus" :
-			(ds->device_type == CURSOR_ID) ? "cursor" :
+			ds.device_id, ds.serial_num,
+			(ds.device_type == STYLUS_ID) ? "stylus" :
+			(ds.device_type == CURSOR_ID) ? "cursor" :
 			"eraser"));
 	}
 
 	/* Out of proximity packet */
 	else if ((common->wcmData[0] & 0xfe) == 0x80)
 	{
-		ds->proximity = 0;
+		ds.proximity = 0;
 		have_data = 1;
 	}
 
@@ -1243,31 +1243,31 @@ static void WacomProtocol5(WacomDevicePtr priv)
 			((common->wcmData[0] & 0xbe) == 0xb4))
 	{
 		is_stylus = 1;
-		ds->x = (((common->wcmData[1] & 0x7f) << 9) |
+		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
 				((common->wcmData[2] & 0x7f) << 2) |
 				((common->wcmData[3] & 0x60) >> 5));
-		ds->y = (((common->wcmData[3] & 0x1f) << 11) |
+		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
 				((common->wcmData[4] & 0x7f) << 4) |
 				((common->wcmData[5] & 0x78) >> 3));
 		if ((common->wcmData[0] & 0xb8) == 0xa0)
 		{
-			ds->pressure = (((common->wcmData[5] & 0x07) << 7) |
+			ds.pressure = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
-				ds->buttons = (((common->wcmData[0]) & 0x06) |
-				(ds->pressure >= common->wcmThreshold));
+				ds.buttons = (((common->wcmData[0]) & 0x06) |
+				(ds.pressure >= common->wcmThreshold));
 		}
 		else
 		{
-			ds->wheel = (((common->wcmData[5] & 0x07) << 7) |
+			ds.wheel = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
 		}
-		ds->tiltx = (common->wcmData[7] & TILT_BITS);
-		ds->tilty = (common->wcmData[8] & TILT_BITS);
+		ds.tiltx = (common->wcmData[7] & TILT_BITS);
+		ds.tilty = (common->wcmData[8] & TILT_BITS);
 		if (common->wcmData[7] & TILT_SIGN_BIT)
-			ds->tiltx -= (TILT_BITS + 1);
+			ds.tiltx -= (TILT_BITS + 1);
 		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ds->tilty -= (TILT_BITS + 1);
-		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
+			ds.tilty -= (TILT_BITS + 1);
+		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
 	} /* end pen packet */
 
@@ -1276,61 +1276,61 @@ static void WacomProtocol5(WacomDevicePtr priv)
 			((common->wcmData[0] & 0xbe) == 0xb0))
 	{
 		is_stylus = 0;
-		ds->x = (((common->wcmData[1] & 0x7f) << 9) |
+		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
 				((common->wcmData[2] & 0x7f) << 2) |
 				((common->wcmData[3] & 0x60) >> 5));
-		ds->y = (((common->wcmData[3] & 0x1f) << 11) |
+		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
 				((common->wcmData[4] & 0x7f) << 4) |
 				((common->wcmData[5] & 0x78) >> 3));
-		ds->tilty = 0;
+		ds.tilty = 0;
 
 		/* 4D mouse */
 		if (MOUSE_4D(ds))
 		{
-			ds->wheel = (((common->wcmData[5] & 0x07) << 7) |
+			ds.wheel = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
-			if (common->wcmData[8] & 0x08) ds->wheel = -ds->wheel;
-			ds->buttons = (((common->wcmData[8] & 0x70) >> 1) |
+			if (common->wcmData[8] & 0x08) ds.wheel = -ds.wheel;
+			ds.buttons = (((common->wcmData[8] & 0x70) >> 1) |
 				(common->wcmData[8] & 0x07));
-			have_data = !ds->discard_first;
+			have_data = !ds.discard_first;
 		}
 
 		/* Lens cursor */
 		else if (LENS_CURSOR(ds))
 		{
-			ds->buttons = common->wcmData[8];
+			ds.buttons = common->wcmData[8];
 			have_data = 1;
 		}
 
 		/* 2D mouse */
 		else
 		{
-			ds->buttons = (common->wcmData[8] & 0x1C) >> 2;
-			ds->wheel = - (common->wcmData[8] & 1) +
+			ds.buttons = (common->wcmData[8] & 0x1C) >> 2;
+			ds.wheel = - (common->wcmData[8] & 1) +
 					((common->wcmData[8] & 2) >> 1);
 			have_data = 1;
 		}
 
-		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 	} /* end 4D mouse 1st packet */
 
 	/* 4D mouse 2nd packet */
 	else if ((common->wcmData[0] & 0xbe) == 0xaa)
 	{
 		is_stylus = 0;
-		ds->x = (((common->wcmData[1] & 0x7f) << 9) |
+		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
 			((common->wcmData[2] & 0x7f) << 2) |
 			((common->wcmData[3] & 0x60) >> 5));
-		ds->y = (((common->wcmData[3] & 0x1f) << 11) |
+		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
 			((common->wcmData[4] & 0x7f) << 4) |
 			((common->wcmData[5] & 0x78) >> 3));
-		ds->tilty = 0;
-		ds->rotation = (((common->wcmData[6] & 0x0f) << 7) |
+		ds.tilty = 0;
+		ds.rotation = (((common->wcmData[6] & 0x0f) << 7) |
 			(common->wcmData[7] & 0x7f));
-		ds->tiltx = ((900 - ((ds->rotation + 900) % 1800)) >> 1);
-		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds.tiltx = ((900 - ((ds.rotation + 900) % 1800)) >> 1);
+		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
-		ds-> discard_first = 0;
+		ds. discard_first = 0;
 	}
 	else
 	{
@@ -1340,10 +1340,11 @@ static void WacomProtocol5(WacomDevicePtr priv)
      
 	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
 	if (have_data &&
-		xf86WcmSuppress(common->wcmSuppress, &old_ds, ds))
+		xf86WcmSuppress(common->wcmSuppress,
+			common->wcmDevStat + tool_index, /* original */
+			&ds))                            /* new data */
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
-		*ds = old_ds;
 		have_data = 0;
 	}
 
@@ -1356,22 +1357,25 @@ static void WacomProtocol5(WacomDevicePtr priv)
 
 		if (priv->flags & ABSOLUTE_FLAG)
 		{
-			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
-				ds->tiltx);
-			y = xf86WcmIntuosFilter (&ds->y_filter, ds->y,
-				ds->tilty);
+			x = xf86WcmIntuosFilter (&ds.x_filter, ds.x,
+				ds.tiltx);
+			y = xf86WcmIntuosFilter (&ds.y_filter, ds.y,
+				ds.tilty);
 		} 
 		else
 		{
-			x = ds->x;
-			y = ds->y;
+			x = ds.x;
+			y = ds.y;
 		}
 
 		xf86WcmDirectEvents(common,
-			ds->device_type, ds->serial_num,
-			ds->proximity, x, y,
-			ds->pressure, ds->buttons,
-			ds->tiltx, ds->tilty,
-			ds->wheel);
+			ds.device_type, ds.serial_num,
+			ds.proximity, x, y,
+			ds.pressure, ds.buttons,
+			ds.tiltx, ds.tilty,
+			ds.wheel);
+
+		/* set the new state */
+		common->wcmDevStat[tool_index] = ds;
 	}
 }
