@@ -78,9 +78,11 @@
  * 2003-07-16 26-j0.5.19 - added noise reducing filter, improved USB relative mode
  * 2003-07-24 26-j0.5.20 - added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
  * 2003-08-13 26-j0.5.21 - added speed acceleration xsetwacom commands (Accel)
+ * 2003-09-30 26-j0.5.22 - added TwinView with different resolution support and
+			 - enabled ScreenNo option for TwinView
  */
 
-static const char identification[] = "$Identification: 26-j0.5.21 $";
+static const char identification[] = "$Identification: 26-j0.5.22 $";
 
 /****************************************************************************/
 
@@ -939,7 +941,7 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 			fprintf(fp, "Screen0 %d %d %d %d\n", priv->tvResolution[0], 
 				priv->tvResolution[1], 0, 0);
 			fprintf(fp, "Screen1 %d %d %d %d\n", priv->tvResolution[2], 
-				priv->tvResolution[3], priv->tvResolution[2], 0);
+				priv->tvResolution[3], priv->tvResolution[0], 0);
 		}
 		/* write other screen setup info */
 		else
@@ -1049,7 +1051,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			/ (double)totalWidth + 0.5;
 	}
 #endif
-	if (priv->twinview != TV_NONE)
+	if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
 		v0 -= priv->topX;
 		v1 -= priv->topY;
@@ -1057,86 +1059,69 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		{
 			if (v0 > priv->bottomX)
 			{
+				v0 -= priv->bottomX;
+				priv->currentScreen = 1;
 				if (priv->screen_no == 0)
 				{
 					priv->currentScreen = 0;
-					*x = priv->tvResolution[0] * (v0 - priv->bottomX)
-						 / (priv->bottomX - priv->topX);
-					*y = (v1 - priv->topY) * priv->tvResolution[1] /
-						(priv->bottomY - priv->topY) + 0.5;
-				}
-				else
-				{
-					priv->currentScreen = 1;
-					*x = priv->tvResolution[0] + priv->tvResolution[2]
-						 * (v0 - priv->bottomX)
-						 / (priv->bottomX - priv->topX);
-					*y = (v1 - priv->topY) * priv->tvResolution[3] /
-						(priv->bottomY - priv->topY) + 0.5;
 				}
 			}
 			else
 			{
+				priv->currentScreen = 0;
 				if (priv->screen_no == 1)
 				{
 					priv->currentScreen = 1;
-                        		*x = priv->tvResolution[0] + priv->tvResolution[2]
-						* (v0 - priv->topX) / 
-						(priv->bottomX - priv->topX);
-					*y = (v1 - priv->topY) * priv->tvResolution[3] /
-						(priv->bottomY - priv->topY) + 0.5;
 				}
-				else
-				{
-					*x = priv->tvResolution[0] * (v0 - priv->topX)
-						 / (priv->bottomX - priv->topX);
-					priv->currentScreen = 0;
-					*y = (v1 - priv->topY) * priv->tvResolution[1] /
-						(priv->bottomY - priv->topY) + 0.5;
-				}
+			}
+			if (priv->currentScreen == 1)
+			{
+                       		*x = priv->tvResolution[0] + priv->tvResolution[2]
+					* v0 / (priv->bottomX - priv->topX);
+				*y = v1 * priv->tvResolution[3] /
+					(priv->bottomY - priv->topY) + 0.5;
+			}
+			else
+			{
+				*x = priv->tvResolution[0] * v0 
+					 / (priv->bottomX - priv->topX);
+				*y = v1 * priv->tvResolution[1] /
+					(priv->bottomY - priv->topY) + 0.5;
 			}
 		}
                 if (priv->twinview == TV_ABOVE_BELOW)
 		{
 			if (v1 > priv->bottomY)
 			{
+				v1 -= priv->bottomY;
+				priv->currentScreen = 1;
 				if (priv->screen_no == 0)
 				{
 					priv->currentScreen = 0;
-					*x = (v0 - priv->topX) * priv->tvResolution[0] /
-						(priv->bottomX - priv->topX) + 0.5;
-					*y = priv->tvResolution[1] * (v1 - priv->bottomY)
-						 / (priv->bottomY - priv->topY);
-				}
-				else
-				{
-					priv->currentScreen = 1;
-					*y = priv->tvResolution[1] + 
-						priv->tvResolution[3] * (v1 - priv->bottomY)
-						 / (priv->bottomY - priv->topY);
-					*x = (v0 - priv->topX) * priv->tvResolution[2] /
-						(priv->bottomX - priv->topX) + 0.5;
 				}
 			}
 			else
 			{
+				priv->currentScreen = 0;
 				if (priv->screen_no == 1)
 				{
 					priv->currentScreen = 1;
-                        		*y = priv->tvResolution[1] + 
-						priv->tvResolution[3] * (v1 - priv->topY) 
-						/ (priv->bottomY - priv->topY);
-					*x = (v0 - priv->topX) * priv->tvResolution[2] /
-						(priv->bottomX - priv->topX) + 0.5;
 				}
-				else
-				{
-					priv->currentScreen = 0;
-					*y = priv->tvResolution[1] * (v1 - priv->topY)
-						 / (priv->bottomY - priv->topY);
-					*x = (v0 - priv->topX) * priv->tvResolution[0] /
-						(priv->bottomX - priv->topX) + 0.5;
-				}
+			}
+			if (priv->currentScreen == 1)
+			{
+ 				*x = v0 * priv->tvResolution[2] /
+					(priv->bottomX - priv->topX) + 0.5;
+				*y = priv->tvResolution[1] + 
+					priv->tvResolution[3] * v1 
+					/ (priv->bottomY - priv->topY);
+			}
+			else
+			{
+				*x = v0 * priv->tvResolution[0] /
+					(priv->bottomX - priv->topX) + 0.5;
+				*y = priv->tvResolution[1] * v1 
+					 / (priv->bottomY - priv->topY);
 			}
 		}
 	}
@@ -1176,85 +1161,76 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 			* leftPadding / (double)totalWidth + 0.5;
 	}
 #endif
-	if (priv->twinview != TV_NONE)
+	if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
                 if (priv->twinview == TV_LEFT_RIGHT)
 		{
 			if (x > priv->tvResolution[0])
 			{
-				valuators[0] = (priv->bottomX - priv->topX) * 
-					(x - priv->tvResolution[0])
-					 / priv->tvResolution[2];
+				x -= priv->tvResolution[0];
+				priv->currentScreen = 1;
 				if (priv->screen_no == 0)
 				{
 					priv->currentScreen = 0;
-					valuators[1] = y * (priv->bottomY - priv->topY) /
-						priv->tvResolution[1] + 0.5;
-				}
-				else
-				{
-					priv->currentScreen = 1;
-					valuators[0] += priv->bottomX - priv->topX;
-					valuators[1] = y * (priv->bottomY - priv->topY) /
-						priv->tvResolution[3] + 0.5;
 				}
 			}
 			else
 			{
-				valuators[0] = x * (priv->bottomX - priv->topX)
-					 / priv->tvResolution[0];
+				priv->currentScreen = 0;
 				if (priv->screen_no == 1)
 				{
 					priv->currentScreen = 1;
-                        		valuators[0] += priv->bottomX - priv->topX;
-					valuators[1] = y * (priv->bottomY - priv->topY) /
-						priv->tvResolution[3] + 0.5;
 				}
-				else
-				{
-					priv->currentScreen = 0;
-					valuators[0] = x * (priv->bottomY - priv->topY) /
-						priv->tvResolution[1] + 0.5;
-				}
+			}
+			if (priv->currentScreen == 1)
+			{
+				valuators[0] = x * (priv->bottomX - priv->topX)
+				 	/ priv->tvResolution[2] +
+					priv->bottomX - priv->topX + 0.5;
+				valuators[1] = y * (priv->bottomY - priv->topY) /
+					priv->tvResolution[3] + 0.5;
+			}
+			else
+			{
+				valuators[0] = x * (priv->bottomX - priv->topX)
+					 / priv->tvResolution[0] + 0.5;
+				valuators[1] = y * (priv->bottomY - priv->topY) /
+					priv->tvResolution[1] + 0.5;
 			}
 		}
                 if (priv->twinview == TV_ABOVE_BELOW)
 		{
 			if (y > priv->tvResolution[1])
 			{
-				valuators[1] = y * (priv->bottomY - priv->topY) /
-					 priv->tvResolution[3];
+				y -= priv->tvResolution[1];
+				priv->currentScreen = 1;
 				if (priv->screen_no == 0)
 				{
 					priv->currentScreen = 0;
-					valuators[0] = x * (priv->bottomX - priv->topX) /
-						priv->tvResolution[0] + 0.5;
-				}
-				else
-				{
-					priv->currentScreen = 1;
-					valuators[1] += priv->bottomY - priv->topY;
-					valuators[0] = x * (priv->bottomX - priv->topX) /
-						priv->tvResolution[2] + 0.5;
 				}
 			}
 			else
 			{
-				valuators[1] = y *(priv->bottomY - priv->topY)
-					 / priv->tvResolution[1];
+				priv->currentScreen = 0;
 				if (priv->screen_no == 1)
 				{
 					priv->currentScreen = 1;
-                        		valuators[0] += priv->bottomY - priv->topY;
-					valuators[1] = x * (priv->bottomX - priv->topX) /
-						priv->tvResolution[2] + 0.5;
 				}
-				else
-				{
-					priv->currentScreen = 0;
-					valuators[0] = x * (priv->bottomX - priv->topX) /
-						priv->tvResolution[0] + 0.5;
-				}
+			}
+			if (priv->currentScreen == 1)
+			{
+				valuators[0] = x * (priv->bottomX - priv->topX) /
+					priv->tvResolution[2] + 0.5;
+				valuators[1] = y *(priv->bottomY - priv->topY)
+					/ priv->tvResolution[3] +
+					priv->bottomY - priv->topY + 0.5;
+			}
+			else
+			{
+				valuators[0] = x * (priv->bottomX - priv->topX) /
+					priv->tvResolution[0] + 0.5;
+				valuators[1] = y *(priv->bottomY - priv->topY)
+					/ priv->tvResolution[1] + 0.5;
 			}
 		}
 		valuators[0] += priv->topX;

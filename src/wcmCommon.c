@@ -71,11 +71,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		priv->factorX = screenInfo.screens[0]->width / sizeX;
 		priv->factorY = screenInfo.screens[0]->height / sizeY;
-		if (priv->twinview != TV_NONE)
-		{
-			priv->factorX = priv->tvResolution[2*priv->currentScreen] / sizeX;
-			priv->factorY = priv->tvResolution[2*priv->currentScreen+1] / sizeY;
-		}
 		return;
 	}
 

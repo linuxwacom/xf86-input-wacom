@@ -29,7 +29,7 @@
 #endif
 
 #include <stdio.h> /* debugging only, we've got no business output text */
-
+#include <ctype.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
