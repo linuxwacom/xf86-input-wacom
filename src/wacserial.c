@@ -123,10 +123,9 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 				DIGITIZERII_CAPS },
 		{ "UD-1825-R", WACOMDEVICE_DIGITIZERII, "Wacom DigitizerII 18x25", 7, 4,
 				DIGITIZERII_CAPS },
-	/*
 		{ "CT-0405-R", WACOMDEVICE_PENPARTNER, "Wacom PenPartner", 7, 4 },
 		{ "ET-0405-R", WACOMDEVICE_GRAPHIRE, "Wacom Graphire", 7, 4 },
-
+	/*
 		{ "?D-0405-R", WACOMDEVICE_GRAPHIRE2, "Wacom Graphire2 4x5", 7, 4 },
 		{ "?D-0507-R", WACOMDEVICE_GRAPHIRE2, "Wacom Graphire2 5x7", 7, 4 },
 	*/
