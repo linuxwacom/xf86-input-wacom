@@ -96,7 +96,8 @@ void Usage(void)
 		"  -v, --verbose            - increase log output; multiple OK\n"
 		"  -V, --version            - display version number\n"
 		"  --logfile log_file       - output log to file\n"
-		"\n"
+		"\n");
+	fprintf(stderr,
 		"Example devices:\n"
 #ifdef WCM_ENABLE_LINUXINPUT
 		"  /dev/input/event0        - usb tablet device\n"

@@ -376,7 +376,7 @@ static WACOMMODEL USBGetModel(WACOMTABLET_PRIV* pTablet)
 	return model;
 }
 
-static int USBGetRange(USBTABLET* pUSB, long* pBits, int nAbsField,
+static int USBGetRange(USBTABLET* pUSB, unsigned long* pBits, int nAbsField,
 		unsigned int uField)
 {
 	int nAbs[5];

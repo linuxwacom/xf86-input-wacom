@@ -717,6 +717,13 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
 	commonDispatchDevice(common,pChannel);
+
+	/* if out of proximity, reset hardware filter */
+	if (!pChannel->valid.state.proximity)
+	{
+		pChannel->filter_x.npoints = 0;
+		pChannel->filter_y.npoints = 0;
+	}
 }
 
 static void commonDispatchDevice(WacomCommonPtr common,

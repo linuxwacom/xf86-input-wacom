@@ -74,9 +74,10 @@
  * 2003-05-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
  * 2003-06-19 26-j0.5.16 - added Intuos2 6x8 id 0x47, suppress of 0 disables
  * 2003-06-25 26-j0.5.17 - support TwinView and kernel 2.5 for USB tablet 
+ * 2003-07-10 26-j0.5.18 - fix to Intuos filter, ignores first samples
  */
 
-static const char identification[] = "$Identification: 26-j0.5.17 $";
+static const char identification[] = "$Identification: 26-j0.5.18 $";
 
 /****************************************************************************/
 

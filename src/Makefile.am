@@ -7,7 +7,7 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -pedantic
 DEPFLAGS = @WCM_DEPFLAGS@
 
 # These identify which programs, libraries, and headers could

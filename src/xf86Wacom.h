@@ -412,6 +412,7 @@ struct _WacomDeviceState
 
 struct _WacomFilterState
 {
+	int npoints;
 	int tilt[3];
 	int coord[3];
 	int state;

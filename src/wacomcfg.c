@@ -260,9 +260,11 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 {
 	int nReturn;
 	DEVICE* pInt = (DEVICE*)hDevice;
-	int nValues[2] = { nParam, nValue };
+	int nValues[2];
 	XDeviceResolutionControl c;
 
+	nValues[0] = nParam;
+	nValues[1] = nValue;
 	if (!pInt || !nParam) { errno=EINVAL; return -1; }
 
 	c.control = DEVICE_RESOLUTION;

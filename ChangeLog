@@ -1,3 +1,8 @@
+2003-06-19    John E. Joganic <john@joganic.com>
+	* Fixed Intuos filter to ignore first couple samples.
+	* Added pedantic to compiler options
+	* Fixed minor warnings caused by pedantic setting.
+
 2003-07-08    Ping Cheng <pingc@wacom.com>
 	* Changed src/Makefile.am for kernel 2.5 (Kris Verbeeck)
 

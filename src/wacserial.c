@@ -347,7 +347,7 @@ static int SerialSendStop(SERIALTABLET* pSerial);
 static int SerialSendStart(SERIALTABLET* pSerial);
 
 static int SerialSend(SERIALTABLET* pSerial, const char* pszData);
-static int SerialSendRaw(SERIALTABLET* pSerial, const unsigned char* puchData,
+static int SerialSendRaw(SERIALTABLET* pSerial, const void* pvData,
 		unsigned int uSize);
 static int WacomFlush(SERIALTABLET* pSerial);
 static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
@@ -1298,14 +1298,15 @@ static int SerialSendStart(SERIALTABLET* pSerial)
  
 static int SerialSend(SERIALTABLET* pSerial, const char* pszMsg)
 {
-	return SerialSendRaw(pSerial,pszMsg,strlen(pszMsg));
+	return SerialSendRaw(pSerial,pszMsg,(unsigned)strlen(pszMsg));
 }
 
-static int SerialSendRaw(SERIALTABLET* pSerial, const unsigned char* puchData,
+static int SerialSendRaw(SERIALTABLET* pSerial, const void* pvData,
 		unsigned int uSize)
 {
 	int nXfer;
 	unsigned int uCnt=0;
+	unsigned char* puchData = (unsigned char*)pvData;
 
 	while (uCnt < uSize)
 	{
@@ -1664,7 +1665,7 @@ static void SerialDump(SERIALTABLET* pSerial, const void* pvData, int nCnt)
 {
 	int i;
 	const unsigned char* pData = (const unsigned char*)pvData;
-	unsigned char chLine[80];
+	char chLine[80];
 	unsigned int uAddr = 0;
 	int nPos = 0;
 

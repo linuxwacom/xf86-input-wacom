@@ -237,6 +237,15 @@ static int filterIntuosCoord(WacomFilterState* state, int coord, int tilt)
 	state->coord[2] = x2;
     
 	ts = tilt_filtered >= 0 ? 1 : -1;
+
+	/* must have at least 4 points */
+	++state->npoints;
+	if (state->npoints < 4)
+	{
+		DBG(2,ErrorF("filterIntuosCoord: NO_FILTER %d\n",
+			state->npoints));
+		return coord;
+	}
     
 	if (state->state == 0 || state->state == 3)
 	{
