@@ -1,3 +1,6 @@
+2004-10-15    Ping Cheng <pingc@wacom.com>
+	* Fixed Intuos3 pressure bug
+
 2004-10-06    Ping Cheng <pingc@wacom.com>
 	* Added Intuos3 support
 	* Fixed z-rot valuator initialization error

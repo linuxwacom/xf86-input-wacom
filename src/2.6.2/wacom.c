@@ -676,7 +676,7 @@ static void wacom_intuos3_irq(struct urb *urb, struct pt_regs *regs)
 	/* general pen packet */
 	if ((data[1] & 0xb8) == 0xa0)
 	{
-		t = ((__u32)data[6]) | ((data[7] >> 6) & 3);
+		t = ((__u32)data[6] << 2) | ((data[7] >> 6) & 3);
 		input_report_abs(dev, ABS_PRESSURE, t);
 		input_report_abs(dev, ABS_TILT_X,
 				((data[7] << 1) & 0x7e) | (data[8] >> 7));
