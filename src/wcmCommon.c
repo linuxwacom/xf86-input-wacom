@@ -552,8 +552,8 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
 	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
-	if (ABS(dsNew->throttle) >= suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) >= suppress) return 0;
+
 	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 >= suppress &&
 		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
 		return 0;
@@ -636,7 +636,16 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (xf86WcmSuppress(common->wcmSuppress, pOrigState, ds))
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
-		return;
+
+		/* If throttle is not in use, discard data. */
+		if (ABS(ds->throttle) < common->wcmSuppress) return;
+
+		/* Otherwise, we need this event for time-rate-of-change
+		 * values like the throttle-to-relative-wheel filter.
+		 * To eliminate position change events, we reset all values
+		 * to last unsuppressed position. */
+
+		*ds = *pOrigState;
 	}
 
 	/* pre-filtering which may effect the device

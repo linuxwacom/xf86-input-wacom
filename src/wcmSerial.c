@@ -771,12 +771,12 @@ static void serialParseGraphire(WacomCommonPtr common)
 		ds.device_type == ERASER_ID ? "ERASER " :
 		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 
-	/* handle absolute wheel for non-stylus device */
+	/* handle relative wheel for non-stylus device */
 	if (!is_stylus && ds.proximity)
 	{
-		ds.abswheel = (common->wcmData[6] & 0x30) >> 4;
+		ds.relwheel = (common->wcmData[6] & 0x30) >> 4;
 		if (common->wcmData[6] & 0x40)
-			ds.abswheel = -ds.abswheel;
+			ds.relwheel = -ds.relwheel;
 	}
 
 	/* handle tilt values only for stylus */

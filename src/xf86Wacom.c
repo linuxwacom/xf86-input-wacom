@@ -68,6 +68,7 @@
  * 2003-04-02 26-j0.5.9 - added J. Yen's "misc fixes" patch
  * 2003-04-02 26-j0.5.10 - refactoring
  * 2003-04-02 26-j0.5.11 - all devices using same data path
+ * 2003-04-02 26-j0.5.12 - changed graphire wheel to report relative
  */
 
 static const char identification[] = "$Identification: 26-j0.5.11 $";
