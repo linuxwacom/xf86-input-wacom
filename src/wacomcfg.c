@@ -137,10 +137,11 @@ void WacomConfigTerm(WACOMCONFIG hConfig)
 int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 	unsigned int* puCount)
 {
-	int i, nSize, nPos, nLen, nCount;
+	int i, j, nSize, nPos, nLen, nCount;
 	unsigned char* pReq;
 	WACOMDEVICEINFO* pInfo;
 	CONFIG* pCfg = (CONFIG*)hConfig;
+	char devName[64];
 
 	if (!pCfg || !ppInfo || !puCount)
 		{ errno=EINVAL; return -1; }
@@ -180,11 +181,14 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 		nPos += nLen + 1;
 
 		/* guess type for now - don't discard unknowns */
-		if (strncasecmp(pInfo->pszName,"cursor",6) == 0)
+		for (j=0; j<strlen(pInfo->pszName); j++)
+			devName[j] = tolower(pInfo->pszName[j]);
+		devName[j] = '\0';
+		if (strstr(devName,"cursor") != NULL)
 			pInfo->type = WACOMDEVICETYPE_CURSOR;
-		else if (strncasecmp(pInfo->pszName,"stylus",6) == 0)
+		else if (strstr(devName,"stylus") != NULL)
 			pInfo->type = WACOMDEVICETYPE_STYLUS;
-		else if (strncasecmp(pInfo->pszName,"eraser",6) == 0)
+		else if (strstr(devName,"eraser") != NULL)
 			pInfo->type = WACOMDEVICETYPE_ERASER;
 		else
 			pInfo->type = WACOMDEVICETYPE_UNKNOWN;

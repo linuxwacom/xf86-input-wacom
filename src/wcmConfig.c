@@ -535,8 +535,6 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 
 		case USB:
 #ifdef LINUX_INPUT
-			dev->read_input=xf86WcmReadUSBInput;
-			common->wcmOpen=xf86WcmUSBOpen;
 			ErrorF("%s Wacom reading USB link\n", XCONFIG_GIVEN);
 #else
 			ErrorF("The USB version of the driver isn't available "
@@ -1117,6 +1115,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->accel);
 
 	s = xf86FindOptionValue(local->options, "Twinview");
+	if (s) xf86Msg(X_CONFIG, "%s: Twinview = %s\n", dev->identifier, s);
 	if (s && xf86NameCmp(s, "none") == 0) 
 	{
 		priv->twinview = TV_NONE;

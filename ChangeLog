@@ -1,3 +1,8 @@
+2003-09-22    Ping Cheng <pingc@wacom.com>
+	* Support TwinView Cintiq calibration
+	* Enable Screenno Option for TwinView setup
+	* Minor serial tablet and kernel 2.6 support fixes
+
 2003-08-13    Ping Cheng <pingc@wacom.com>
 	* Added relative movement acceleration
 	* Added Mapping, Tip Feel, and Movement Controls in wacomcpl

@@ -262,17 +262,21 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			(priv->screen_no >= priv->numScreen ||
 			priv->screen_no < 0))
 		{
-			ErrorF("%s: invalid screen number %d, resetting to 0\n",
+			if (priv->twinview == TV_NONE || priv->screen_no != 1)
+			{
+				ErrorF("%s: invalid screen number %d, resetting to 0\n",
 					local->name, priv->screen_no);
-			priv->screen_no = 0;
+				priv->screen_no = 0;
+			}
 		}
 
 		/* Calculate the ratio according to KeepShape, TopX and TopY */
 		if (priv->screen_no != -1)
 		{
-			priv->currentScreen = priv->screen_no;
-			totalWidth = screenInfo.screens[priv->screen_no]->width;
-			maxHeight = screenInfo.screens[priv->screen_no]->height;
+			if (priv->twinview == TV_NONE)
+				priv->currentScreen = priv->screen_no;
+			totalWidth = screenInfo.screens[priv->currentScreen]->width;
+			maxHeight = screenInfo.screens[priv->currentScreen]->height;
 		}
 		else
 		{
@@ -284,6 +288,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 					maxHeight=screenInfo.screens[i]->height;
 			}
 		}
+
+ErrorF("aaaaa: invalid screen number, resetting to 0\n");
 
 		/* Maintain aspect ratio */
 		if (priv->flags & KEEP_SHAPE_FLAG)
@@ -358,6 +364,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 	/* wheel */
 	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
+ErrorF("-------: invalid screen number, resetting to 0\n");
 
 	return TRUE;
 }
@@ -794,6 +801,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 	int		value;
 	double		speed;
 
+    	DBG(10, ErrorF("xf86WcmOptionCommandToFile for %s\n", local->name));
 	strcat(fileName, local->name);
 	fp = fopen(fileName, "w+");
 	if ( fp )
@@ -876,25 +884,31 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 {
 	FILE		*fp = 0;
 	LocalDevicePtr	localDevices = xf86FirstLocalDevice();
-	WacomDevicePtr	priv = (WacomDevicePtr)local->private;
-	char		m1[32], m2[32];			
+	WacomDevicePtr	priv = NULL, lprv;
+	char		m1[32], m2[32], *m3;			
 	int 		i = 0, x = 0, y = 0;
 
+    	DBG(10, ErrorF("xf86WcmModelToFile \n"));
 	fp = fopen("/etc/wacom.dat", "w+");
 	if ( fp )
 	{
 		while(localDevices) 
 		{
-			if (((WacomDevicePtr)localDevices->private)->common) 
+			m3 = xf86FindOptionValue(localDevices->options, "Type");
+			if (m3 && (strstr(m3, "eraser") || strstr(m3, "stylus") 
+					|| strstr(m3, "cursor")))
+				lprv = (WacomDevicePtr)localDevices->private;
+			else
+				lprv = NULL;
+			if (lprv && lprv->common) 
 			{
-				sscanf((char*)(((WacomDevicePtr)localDevices->private)->
-					common->wcmModel)->name, "%s %s", m1, m2);
-				fprintf(fp, "%s %s %s\n", localDevices->name, m2, 
-					xf86FindOptionValue(localDevices->options, "Type"));
-			}
-			if (((WacomDevicePtr)localDevices->private)->twinview != TV_NONE)
-			{
-				priv = (WacomDevicePtr)localDevices->private;
+				sscanf((char*)(lprv->common->wcmModel)->name, "%s %s", m1, m2);
+				fprintf(fp, "%s %s %s\n", localDevices->name, m2, m3);
+				if (lprv->twinview != TV_NONE)
+				{
+					priv = lprv;
+				}
+				if( !priv ) priv = lprv;
 			}
 			localDevices = localDevices->next;
 		}
@@ -1028,6 +1042,23 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	}
 	*x = v0 * priv->factorX + 0.5;
 	*y = v1 * priv->factorY + 0.5;
+	if (priv->twinview != TV_NONE)
+	{
+                if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			if (priv->screen_no == 1 && *x < screenInfo.screens[0]->width/2 + 3)
+                        	*x += (screenInfo.screens[0]->width/2 + 3);
+			if (priv->screen_no == 0 && *x > screenInfo.screens[0]->width/2 - 3 )
+				*x -= (screenInfo.screens[0]->width/2 + 3);
+		}
+                if (priv->twinview == TV_ABOVE_BELOW)
+		{
+			if (priv->screen_no == 1 && *y < screenInfo.screens[0]->height/2 + 3)
+                       		*y += (screenInfo.screens[0]->height/2 + 3);
+			if (priv->screen_no == 0 && *y > screenInfo.screens[0]->height/2 - 3)
+                       		*y -= (screenInfo.screens[0]->height/2 + 3);
+		}
+	}
 
 	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
 		v0, v1, *x, *y));

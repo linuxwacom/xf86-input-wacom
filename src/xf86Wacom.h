@@ -58,11 +58,6 @@
 #define MSC_SERIAL 0x00
 #endif
 
-/* 2.5.x input.h support */
-#ifndef EV_SYN
-#define KERNEL24 1
-#endif
-
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50
 

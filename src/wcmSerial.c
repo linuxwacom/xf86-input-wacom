@@ -1329,20 +1329,22 @@ static void serialParseP4Common(WacomCommonPtr common,
 
 int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 {
-	int i, bad = -1;
+	int i, bad = 0;
 
 	/* check magic */
 	for (i=0; i<common->wcmPktLength; ++i)
 	{
-		if ( ((i==0) && !(data[i] & HEADER_BIT)) ||
-		     ((i!=0) && (data[i] & HEADER_BIT)))
+		if ( ((i==0) && !(data[i] & HEADER_BIT)) || 
+				((i!=0) && (data[i] & HEADER_BIT)) )
 		{
-			DBG(6, ErrorF("xf86WcmSerialValidate: bad magic at %d "
-				"v=0x%x l=%d\n", bad,
+			bad = 1;
+			DBG(10, ErrorF("xf86WcmSerialValidate: bad magic at %d "
+				"v=0x%x l=%d\n", i,
 				data, common->wcmPktLength));
-			break;
+			if (i!=0 && (data[i] & HEADER_BIT)) return i;
 		}
 	}
-	return (bad + 1);
+	if (bad) return common->wcmPktLength;
+	else return 0;
 }
 

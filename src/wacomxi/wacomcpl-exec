@@ -42,7 +42,7 @@ set line_size 30
 
 set origin_x [ expr ($desktopWidth/2) - ($desktopWidth/4) ]
 set origin_y [ expr ($desktopHeight/2) - ($desktopHeight/4) ]
-set windowSize "450x300"
+set windowSize "480x300"
 
 set device ""
 set deviceIndex 0

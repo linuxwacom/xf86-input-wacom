@@ -407,13 +407,18 @@ static void usbParseEvent(WacomCommonPtr common,
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
 	/* packet terminated by MSC_SERIAL on kernel 2.4 and SYN_REPORT on kernel 2.5 */
-#ifdef KERNEL24
 	if ((event->type != EV_MSC) || (event->code != MSC_SERIAL))
-#else
-	if ((event->type != EV_SYN) || (event->code != SYN_REPORT))
+	{
+#ifdef EV_SYN
+		/* none serial number tools fall here */
+		if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+		{
+			usbParseChannel(common,0,0);
+			common->wcmEventCnt = 0;
+		}
 #endif
 		return;
-
+	}
 	/* serial number is key for channel */
 	serial = event->value;
 	channel = -1;
