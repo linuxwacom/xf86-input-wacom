@@ -641,6 +641,15 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 	/* Get tablet range */
 	if (model->GetRanges && (model->GetRanges(common,fd) != Success))
 		return !Success;
+	
+	/* Default threshold value if not set */
+	if (common->wcmThreshold <= 0)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = common->wcmMaxZ / 32;
+		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
+			XCONFIG_PROBED, common->wcmThreshold);
+	}
 
 	/* Reset tablet to known state */
 	if (model->Reset && (model->Reset(common,fd) != Success))
@@ -729,6 +738,7 @@ static void serialParseGraphire(WacomCommonPtr common)
 	{
 		buttons = ((common->wcmData[3] & 0x30) >> 3) |
 			(z >= common->wcmThreshold ? 1 : 0);
+		/* pressure button should go down stream */
 	}
 	else
 	{
@@ -1104,8 +1114,9 @@ static void serialParseProtocol5(WacomCommonPtr common)
 		{
 			ds.pressure = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
-				ds.buttons = (((common->wcmData[0]) & 0x06) |
+			ds.buttons = (((common->wcmData[0]) & 0x06) |
 				(ds.pressure >= common->wcmThreshold));
+			/* pressure button should go down stream */
 		}
 		else
 		{
@@ -1138,9 +1149,10 @@ static void serialParseProtocol5(WacomCommonPtr common)
 		/* 4D mouse */
 		if (MOUSE_4D(&ds))
 		{
-			ds.wheel = (((common->wcmData[5] & 0x07) << 7) |
+			ds.throttle = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
-			if (common->wcmData[8] & 0x08) ds.wheel = -ds.wheel;
+			if (common->wcmData[8] & 0x08)
+				ds.throttle = -ds.throttle;
 			ds.buttons = (((common->wcmData[8] & 0x70) >> 1) |
 				(common->wcmData[8] & 0x07));
 			have_data = !ds.discard_first;
@@ -1177,7 +1189,8 @@ static void serialParseProtocol5(WacomCommonPtr common)
 			((common->wcmData[5] & 0x78) >> 3));
 		ds.rotation = (((common->wcmData[6] & 0x0f) << 7) |
 			(common->wcmData[7] & 0x7f));
-		ds.rotation = ((900 - ((ds.rotation + 900) % 1800)) >> 1);
+		if (ds.rotation < 900) ds.rotation = -ds.rotation;
+		else ds.rotation = 1799 - ds.rotation;
 		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
 		ds.discard_first = 0;
@@ -1217,18 +1230,6 @@ static void serialInitIntuos(WacomCommonPtr common, int fd,
 	common->wcmResolY = 2540; /* tablet Y resolution in points/inch */
 	common->wcmPktLength = 9; /* length of a packet */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
-
-	if (common->wcmThreshold == INVALID_THRESHOLD)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = -480;
-		if (xf86Verbose)
-		{
-			ErrorF("%s Wacom using pressure threshold of "
-				"%d for button 1\n",
-				XCONFIG_PROBED, common->wcmThreshold);
-		}
-	}
 }
 
 static void serialInitIntuos2(WacomCommonPtr common, int fd,
@@ -1245,18 +1246,6 @@ static void serialInitIntuos2(WacomCommonPtr common, int fd,
 	common->wcmResolY = 2540;     /* tablet Y resolution in points/inch */
 	common->wcmPktLength = 9;     /* length of a packet */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
-
-	if (common->wcmThreshold == INVALID_THRESHOLD)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = -480;
-		if (xf86Verbose)
-		{
-			ErrorF("%s Wacom using pressure threshold of "
-				"%d for button 1\n",
-				XCONFIG_PROBED, common->wcmThreshold);
-		}
-	}
 }
 
 static void serialInitCintiq(WacomCommonPtr common, int fd,
@@ -1264,7 +1253,6 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 {
 	DBG(2, ErrorF("detected a Cintiq model\n"));
 
-	common->wcmFlags |= PL_FLAG;
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
@@ -1344,7 +1332,6 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 
 	common->wcmResolX = 508; /* tablet X resolution in points/inch */
 	common->wcmResolY = 508; /* tablet Y resolution in points/inch */
-
 }
 
 static void serialInitPenPartner(WacomCommonPtr common, int fd,

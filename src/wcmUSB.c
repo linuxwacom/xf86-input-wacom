@@ -136,6 +136,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 				ds.pressure = event->value;
 				MOD_BUTTONS (1, event->value >
 					common->wcmThreshold ? 1 : 0);
+				/* pressure button should be downstream */
 			}
 			else if (event->code == ABS_DISTANCE)
 			{
@@ -299,20 +300,20 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 		}
 	}
     
+	/* Default threshold value if not set */
+	if (common->wcmThreshold <= 0)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = common->wcmMaxZ / 32;
+		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
+			XCONFIG_PROBED, common->wcmThreshold);
+	}
+
 	DBG(2, ErrorF("setup is max X=%d(%d) Y=%d(%d) Z=%d(%d)\n",
 			common->wcmMaxX, common->wcmResolX,
 			common->wcmMaxY, common->wcmResolY,
 			common->wcmMaxZ, common->wcmMaxZ));
   
-	/* send the tilt mode command after setup because it must be enabled */
-	/* after multi-mode to take precedence */
-	if (HANDLE_TILT(common))
-	{
-		/* Unfortunately, the USB driver doesn't allow to send this
-		 * command to the tablet. Any other solutions ? */
-		DBG(2, ErrorF("Sending tilt mode order\n"));
-	}
-
 	if (xf86Verbose)
 	ErrorF("%s Wacom tablet maximum X=%d maximum Y=%d "
 			"X resolution=%d Y resolution=%d suppress=%d%s\n",

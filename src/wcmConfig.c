@@ -128,7 +128,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmStylusSide = TRUE;          /* eraser or stylus ? */
 	common->wcmStylusProximity = FALSE;    /* a stylus is in proximity ? */
 	common->wcmProtocolLevel = 4;          /* protocol level */
-	common->wcmThreshold = INVALID_THRESHOLD;
+	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmInitNumber = 0;      /* magic number for the init phases */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
@@ -929,7 +929,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
-	if (common->wcmThreshold != INVALID_THRESHOLD)
+	if (common->wcmThreshold > 0)
 		xf86Msg(X_CONFIG, "%s: threshold = %d\n", dev->identifier,
 			common->wcmThreshold);
 

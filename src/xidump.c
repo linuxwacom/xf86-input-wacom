@@ -402,6 +402,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 	int nRow=0, nPressRow, nProxRow, nFocusRow, nButtonRow,
        		nKeyRow, nValRow;
 	int nMaxPress=100, nMinPress=0;
+	int bStylus = 0;
 	char chBuf[1024];
 	XEvent event;
 	XAnyEvent* pAny;
@@ -456,21 +457,29 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 		nMaxPress = pValInfo->axes[2].max_value;
 		nMinPress = pValInfo->axes[2].min_value;
 
+		/* should be a better way to identify the stylus */
+		if ((pValInfo->axes[3].min_value == -64) &&
+			(pValInfo->axes[4].min_value == -64))
+			bStylus = 1;
+
 		for (k=0; k<pValInfo->num_axes && k<6; ++k)
 		{
 			wacscrn_output(nValRow,12 + k * 10,
 				k == 0 ? " x-axis " :
 				k == 1 ? " y-axis " :
 				k == 2 ? "pressure" :
-				k == 3 ? " x-tilt " :
-				k == 4 ? " y-tilt " :
+				k == 3 ? (bStylus ? " x-tilt " : "rotation" ) :
+				k == 4 ? (bStylus ? " y-tilt " : "throttle" ) :
 				k == 5 ? "  wheel " : "  error ");
 
-			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].min_value);
+			snprintf(chBuf,sizeof(chBuf),"%+06d",
+				pValInfo->axes[k].min_value);
 			wacscrn_output(nValRow+2,12 + k * 10, chBuf);
-			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].max_value);
+			snprintf(chBuf,sizeof(chBuf),"%+06d",
+				pValInfo->axes[k].max_value);
 			wacscrn_output(nValRow+3,12 + k * 10, chBuf);
-			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].resolution);
+			snprintf(chBuf,sizeof(chBuf),"%+06d",
+				pValInfo->axes[k].resolution);
 			wacscrn_output(nValRow+4,12 + k * 10, chBuf);
 		}
 	}

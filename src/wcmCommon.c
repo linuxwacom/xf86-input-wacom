@@ -95,7 +95,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
  ****************************************************************************/
 
 static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
-		int rx, int ry, int rz, int rtx, int rty, int rwheel)
+		int rx, int ry, int rz, int rtx, int rty, int rrot,
+		int rth, int rwheel)
 {
 	int button;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
@@ -109,10 +110,16 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			DBG(4, ErrorF("xf86WcmSendButtons button=%d "
 				"state=%d, for %s\n", 
 				button, (buttons & mask) != 0, local->name));
-			xf86PostButtonEvent(local->dev, 
-				(priv->flags & ABSOLUTE_FLAG),
-				button, (buttons & mask) != 0,
-				0, 6, rx, ry, rz, rtx, rty, rwheel);
+			if (IsCursor(priv))
+				xf86PostButtonEvent(local->dev, 
+					(priv->flags & ABSOLUTE_FLAG),
+					button, (buttons & mask) != 0,
+					0, 6, rx, ry, rz, rrot, rth, rwheel);
+			else
+				xf86PostButtonEvent(local->dev, 
+					(priv->flags & ABSOLUTE_FLAG),
+					button, (buttons & mask) != 0,
+					0, 6, rx, ry, rz, rtx, rty, rwheel);
 		}
 	}
 }
@@ -136,22 +143,23 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int buttons = ds->buttons;
 	int tx = ds->tiltx;
 	int ty = ds->tilty;
+	int rot = ds->rotation;
+	int throttle = ds->throttle;
 	int wheel = ds->wheel;
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int rx, ry, rz, rtx, rty, rwheel;
+	int rx, ry, rz, rtx, rty, rwheel, rrot, rthrottle;
 	int is_core_pointer, is_absolute;
 	int set_screen_called = 0;
 
-	DBG(7, ErrorF("[%s] prox=%s\tx=%d\ty=%d\tz=%d\t"
-		"button=%s\tbuttons=%d\ttx=%d ty=%d\twl=%d\n",
-		(type == STYLUS_ID) ? "stylus" : (type == CURSOR_ID) ?
-			"cursor" : "eraser",
+	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
+		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
+		(type == STYLUS_ID) ? "stylus" :
+			(type == CURSOR_ID) ? "cursor" : "eraser",
 		is_proximity ? "true" : "false",
-		x, y, z,
-		is_button ? "true" : "false", buttons,
-		tx, ty, wheel));
+		x, y, z, is_button ? "true" : "false", buttons,
+		tx, ty, wheel, rot, throttle));
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
@@ -175,6 +183,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		rtx = tx;
 		rty = ty;
 		rwheel = wheel;
+		rrot = rot;
+		rthrottle = throttle;
 	}
 	else
 	{
@@ -195,6 +205,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		rtx = tx - priv->oldTiltX;
 		rty = ty - priv->oldTiltY;
 		rwheel = wheel - priv->oldWheel;
+		rrot = rot - priv->oldRot;
+		rthrottle = throttle - priv->oldThrottle;
 	}
 
 	/* coordinates are ready we can send events */
@@ -229,14 +241,24 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 						rtx = 0;
 						rty = 0;
 						rwheel = 0;
+						rrot = 0;
+						rthrottle = 0;
 					}
 					/* to support multi-monitors, we need
 					 * to set the proper screen before posting
 					 * any events */
 					xf86WcmSetScreen(local, rx, ry);
 					set_screen_called = 1;
-					xf86PostProximityEvent(local->dev, 1, 0, 6,
-						rx, ry, z, tx, ty, rwheel);
+					if (IsCursor(priv))
+						xf86PostProximityEvent(
+							local->dev, 1, 0, 6,
+							rx, ry, z, rrot,
+							rthrottle, rwheel);
+					else
+						xf86PostProximityEvent(
+							local->dev, 1, 0, 6,
+							rx, ry, z, tx, ty,
+							rwheel);
 				}
 			}
 		}
@@ -254,13 +276,19 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			}
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86PostMotionEvent(local->dev, is_absolute,
-					0, 6, rx, ry, rz, rtx, rty, rwheel);
+				if (IsCursor(priv))
+					xf86PostMotionEvent(local->dev,
+						is_absolute, 0, 6, rx, ry, rz,
+						rrot, rthrottle, rwheel);
+				else
+					xf86PostMotionEvent(local->dev,
+						is_absolute, 0, 6, rx, ry, rz,
+						rtx, rty, rwheel);
 			}
 			if (priv->oldButtons != buttons)
 			{
 				xf86WcmSendButtons (local, buttons, rx, ry, rz,
-					rtx, rty, rwheel);
+					rtx, rty, rrot, rthrottle, rwheel);
 			}
 		}
 	}
@@ -273,7 +301,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		if (priv->oldButtons)
 		{
 			xf86WcmSendButtons (local, 0, rx, ry, rz,
-				rtx, rty, rwheel);
+				rtx, rty, rrot, rthrottle, rwheel);
 			buttons = 0;
 		}
 		if (!is_core_pointer)
@@ -290,17 +318,40 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 				/* First available Keycode begins at 8
 				 * therefore macro+7 */
-				xf86PostKeyEvent(local->dev, macro+7, 1,
-					is_absolute, 0, 6,
-					0, 0, buttons, rtx, rty, rwheel);
-				xf86PostKeyEvent(local->dev, macro+7, 0,
-					 is_absolute, 0, 6,
-					 0, 0, buttons, rtx, rty, rwheel);
+
+				/* key down */
+				if (IsCursor(priv))
+					xf86PostKeyEvent(local->dev,macro+7,1,
+						is_absolute,0,6,
+						0,0,buttons,rrot,rthrottle,
+						rwheel);
+				else
+					xf86PostKeyEvent(local->dev,macro+7,1,
+						is_absolute,0,6,
+						0,0,buttons,rtx,rty,rwheel);
+
+				/* key up */
+				if (IsCursor(priv))
+					xf86PostKeyEvent(local->dev,macro+7,0,
+						is_absolute,0,6,
+						0,0,buttons,rrot,rthrottle,
+						rwheel);
+				else
+					xf86PostKeyEvent(local->dev,macro+7,0,
+						is_absolute,0,6,
+						0,0,buttons,rtx,rty,rwheel);
+
 			}
 			if (priv->oldProximity)
 			{
-				xf86PostProximityEvent(local->dev, 0, 0, 6,
-					rx, ry, rz, rtx, rty, rwheel);
+				if (IsCursor(priv))
+					xf86PostProximityEvent(local->dev,
+						0, 0, 6, rx, ry, rz,
+						rrot, rthrottle, rwheel);
+				else
+					xf86PostProximityEvent(local->dev,
+						0, 0, 6, rx, ry, rz,
+						rtx, rty, rwheel);
 			}
 		}
 	} /* not in proximity */
@@ -313,6 +364,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	priv->oldZ = z;
 	priv->oldTiltX = tx;
 	priv->oldTiltY = ty;
+	priv->oldRot = rot;
+	priv->oldThrottle = throttle;
 }
 
 /*****************************************************************************
@@ -422,6 +475,7 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
 	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
+	if (ABS(dsOrig->throttle - dsNew->throttle) >= suppress) return 0;
 	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 >= suppress &&
 		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
 		return 0;

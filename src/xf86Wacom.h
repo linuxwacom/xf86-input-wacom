@@ -189,8 +189,6 @@
 #define MAX_VALUE 100           /* number of positions */
 #define MAXTRY 3                /* max number of try to receive magic number */
 #define MAX_COORD_RES 1270.0    /* Resolution of the returned MaxX and MaxY */
-#define INVALID_THRESHOLD 30000 /* Invalid threshold used to test if the user
-                                 * configured it or not */
 
 #define HEADER_BIT      0x80
 #define ZAXIS_SIGN_BIT  0x40
@@ -332,6 +330,8 @@ struct _WacomDeviceRec
 	int oldTiltX;           /* previous tilt in x direction */
 	int oldTiltY;           /* previous tilt in y direction */    
 	int oldWheel;           /* previous wheel value */    
+	int oldRot;             /* previous rotation value */
+	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
 	double speed;           /* relative mode acceleration */
@@ -420,7 +420,6 @@ struct _WacomDeviceClass
 #define TILT_ENABLED_FLAG       2
 #define GRAPHIRE_FLAG           4
 #define INTUOS2_FLAG            8
-#define PL_FLAG                 16
 
 #define DEVICE_ISDV4 0x000C
 

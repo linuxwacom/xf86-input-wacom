@@ -138,6 +138,16 @@ static Bool xf86WcmISDV4Init(LocalDevicePtr local)
 		common->wcmMaxY = 21136;
 	}
 
+	/* Default threshold value if not set */
+	if (common->wcmThreshold <= 0)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = common->wcmMaxZ / 32;
+		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
+			XCONFIG_PROBED, common->wcmThreshold);
+	}
+
+
 	DBG(2, ErrorF("setup is max X=%d max Y=%d resol X=%d resol Y=%d\n",
 		  common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
 		  common->wcmResolY));

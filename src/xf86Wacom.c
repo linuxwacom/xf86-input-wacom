@@ -309,57 +309,37 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		priv->factorX, priv->factorY));
 	} /* end bounding rect */
 
-	/* Check threshold correctness */
-	DBG(2, ErrorF("Threshold=%d\n", common->wcmThreshold));
-
-	if (common->wcmThreshold > common->wcmMaxZ ||
-			common->wcmThreshold < 0)
-	{
-		if (((common->wcmProtocolLevel == 5) ||
-				(common->wcmFlags & GRAPHIRE_FLAG)) &&
-				xf86Verbose &&
-				common->wcmThreshold != INVALID_THRESHOLD)
-		{
-			ErrorF("%s Wacom invalid threshold %d. Reset to %d\n",
-					XCONFIG_PROBED, common->wcmThreshold,
-					common->wcmMaxZ / 3);
-			common->wcmThreshold = common->wcmMaxZ / 3;
-		}
-		DBG(2, ErrorF("New threshold=%d\n", common->wcmThreshold));    
-	}
-
 	/* x and y axes */
 	InitValuatorAxisStruct(pWcm, 0, 0,
-	priv->bottomX - priv->topX, /* max val */
-	mils(common->wcmResolX), /* resolution */
-	0, mils(common->wcmResolX)); /* max_res */
+		priv->bottomX - priv->topX, /* max val */
+		mils(common->wcmResolX), /* tablet resolution */
+		0, mils(common->wcmResolX)); /* max_res */
 
 	InitValuatorAxisStruct(pWcm, 1, 0,
-	priv->bottomY - priv->topY, /* max val */
-	mils(common->wcmResolY), /* resolution */
-	0, mils(common->wcmResolY)); /* max_res */
+		priv->bottomY - priv->topY, /* max val */
+		mils(common->wcmResolY), /* tablet resolution */
+		0, mils(common->wcmResolY)); /* max_res */
 
 	/* pressure */
 	InitValuatorAxisStruct(pWcm, 2, 0,
-	common->wcmMaxZ, /* max val */
-	mils(common->wcmMaxZ), /* resolution - 100% pressure = 1 mil */
-	0, mils(common->wcmMaxZ)); /* max_res - 100% pressure = 1 mil */
+		common->wcmMaxZ, /* max val */
+		1, 1, 1);
 
 	if (IsCursor(priv))
 	{
-		/* z-rot and unused */
-		InitValuatorAxisStruct(pWcm, 3, -900, 899, 1, 0, 1800);
-		InitValuatorAxisStruct(pWcm, 4, 0, 0, 1, 0, 0);
+		/* z-rot and throttle */
+		InitValuatorAxisStruct(pWcm, 3, -900, 899, 1, 1, 1);
+		InitValuatorAxisStruct(pWcm, 4, -1023, 1023, 1, 1, 1);
 	}
 	else
 	{
 		/* tilt-x and tilt-y */
-		InitValuatorAxisStruct(pWcm, 3, -64, 63, 1, 0, 128);
-		InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 0, 1);
+		InitValuatorAxisStruct(pWcm, 3, -64, 63, 1, 1, 1);
+		InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 1, 1);
 	}
 
 	/* wheel */
-	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 0, 1024);
+	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
 
 	return (local->fd != -1);
 }

@@ -818,8 +818,8 @@ static int SerialInitWacom(SERIALTABLET* pSerial)
 		pSerial->pfnParse = SerialParseWacomV;
 		pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 1023;
 		pSerial->state.values[WACOMFIELD_ABSWHEEL].nMax = 1023;
-		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMin = -899;
-		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMax = 900;
+		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMin = -900;
+		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMax = 899;
 		pSerial->state.values[WACOMFIELD_THROTTLE].nMin = -1023;
 		pSerial->state.values[WACOMFIELD_THROTTLE].nMax = 1023;
 		pSerial->state.values[WACOMFIELD_TILT_X].nMin = -64;
@@ -1047,7 +1047,7 @@ static int SerialParseWacomV(SERIALTABLET* pSerial,
 
 		/* FIX ROT */
 		if (rot < 900) rot = -rot;
-		else rot = 1800 - rot;
+		else rot = 1799 - rot;
 
 		pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
 		pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
