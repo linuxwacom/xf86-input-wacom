@@ -62,10 +62,10 @@
  * 2003-02-12 26-j0.5.3 - added Ping Cheng's USB patch
  * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
  * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
- *                        applied J. Yen's origin patch
+ * 2003-02-22 26-j0.5.6 - applied J. Yen's origin patch
  */
 
-static const char identification[] = "$Identification: 26-j0.5.5 $";
+static const char identification[] = "$Identification: 26-j0.5.6 $";
 
 #include "xf86Version.h"
 
