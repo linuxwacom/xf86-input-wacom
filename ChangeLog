@@ -1,3 +1,7 @@
+2003-04-17    Jimmy Yen <jimmy@yen.tp>
+
+	* Software solution of dual channel input for USB devices.
+
 2003-04-16    Jimmy Yen <jimmy@yen.tp>
 
 	* Basic Xinerama setup support. Works with horizontal, non-overlapping

@@ -607,24 +607,22 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	if (first != 0 || num == 1)
 		return FALSE;
 
-	if ((priv->flags & ABSOLUTE_FLAG) &&
-			(priv->XineramaEnabled || priv->screen_no == -1))
+	if ((priv->flags & ABSOLUTE_FLAG) && priv->XineramaEnabled)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
 			leftPadding += screenInfo.screens[i]->width;
 		for (totalWidth = leftPadding; i < priv->numScreen; i++)
 			totalWidth += screenInfo.screens[i]->width;
-		if (priv->XineramaEnabled)
-			v0 -= (priv->bottomX - priv->topX) * leftPadding
-				/ (double)totalWidth + 0.5;
+		v0 -= (priv->bottomX - priv->topX) * leftPadding
+			/ (double)totalWidth + 0.5;
 	}
     
 	*x = v0 * priv->factorX + 0.5;
 	*y = v1 * priv->factorY + 0.5;
 
 	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
-			v0, v1, *x, *y));
+		v0, v1, *x, *y));
 	return TRUE;
 }
 
@@ -641,17 +639,15 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
 
-	if ((priv->flags & ABSOLUTE_FLAG) &&
-			(priv->XineramaEnabled || priv->screen_no == -1))
+	if ((priv->flags & ABSOLUTE_FLAG) && priv->XineramaEnabled)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
 			leftPadding += screenInfo.screens[i]->width;
 		for (totalWidth = leftPadding; i < priv->numScreen; i++)
 			totalWidth += screenInfo.screens[i]->width;
-		if (priv->XineramaEnabled)
-			valuators[0] += (priv->bottomX - priv->topX)
-				* leftPadding / (double)totalWidth + 0.5;
+		valuators[0] += (priv->bottomX - priv->topX)
+			* leftPadding / (double)totalWidth + 0.5;
 	}
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));

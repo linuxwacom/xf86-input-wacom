@@ -453,7 +453,7 @@ struct _WacomCommonRec
 
 	LocalDevicePtr* wcmDevices;  /* array of devices sharing same port */
 	int wcmNumDevices;           /* number of devices */
-	int wcmIndex;                /* number of bytes read */
+	int wcmIndex;                /* number of bytes/events read */
 	int wcmPktLength;            /* length of a packet */
 	unsigned char wcmData[9];    /* data read on the device */
 	Bool wcmHasEraser;           /* True if eraser has been configured */

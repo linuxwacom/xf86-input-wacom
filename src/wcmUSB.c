@@ -69,13 +69,11 @@ static Bool xf86WcmUSBDetect(LocalDevicePtr local)
 static void xf86WcmUSBRead(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
-	WacomDeviceState ds;
+	WacomDeviceState ds = { 0 };
+	int channel = -1;
 	ssize_t len;
-	int loop;
+	int i;
 	struct input_event *event, *readevent, eventbuf[MAX_EVENTS];
-
-	/* start from previous state */
-	ds = common->wcmChannel[0].state;
 
 	#define MOD_BUTTONS(bit, value) do { \
 		ds.buttons = (((value) != 0) ? \
@@ -93,7 +91,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		return;
 	}
 
-	common->wcmIndex = 0; /* wcmIndex means bytes not events. Purposely misused here? */
+	common->wcmIndex = 0;
 	for (readevent = eventbuf; readevent < (eventbuf+len); readevent++)
 	{
 		/* sanity check */
@@ -102,20 +100,56 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			DBG(11, ErrorF("xf86WcmUSBRead resetting buf index\n"));
 			common->wcmIndex = 0;
 		}
-		    
-		common->wcmEvent[common->wcmIndex++] = *readevent;
 		
 		/* MSC_SERIAL is the event terminator */
-		if (!(readevent->type == EV_MSC && readevent->code == MSC_SERIAL))
-	    continue;
+		if ((readevent->type == EV_MSC
+			&& readevent->code == MSC_SERIAL))
+		{
+			WacomDeviceState *temp_ds;
+			
+			ds.serial_num = readevent->value;
+			DBG(10, ErrorF("wacom tool serial number=%d\n",
+				ds.serial_num));
+
+			for (i = 0; i < MAX_CHANNELS; i++)
+			{
+				temp_ds = &common->wcmChannel[i].state;
+				if(ds.serial_num == temp_ds->serial_num)
+				{
+					channel = i;
+					ds = *temp_ds;
+					break;
+				}
+			}
+			break;
+		}
+		common->wcmEvent[common->wcmIndex++] = *readevent;
 	}
 
-	for (loop=0; loop<common->wcmIndex; loop++)
+	/* select device state channel */
+	if (channel == -1)
 	{
-		event = common->wcmEvent + loop;
+		for (i = 0; i < MAX_CHANNELS; i++)
+		{
+			if(!common->wcmChannel[i].state.proximity)
+			{
+				channel = i;
+				break;
+			}
+		}
+	}
+	if (channel == -1)
+	{
+		ErrorF("wacom: too many tools in use; ignoring event!\n");
+		return;
+	}
+
+	for (i = 0; i < common->wcmIndex; i++)
+	{
+		event = common->wcmEvent + i;
 
 		DBG(11, ErrorF("xf86WcmUSBRead event[%d]->type=%d "
-			"code=%d value=%d\n", loop, event->type,
+			"code=%d value=%d\n", i, event->type,
 			event->code, event->value));
 
 		/* absolute events */
@@ -182,7 +216,8 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			else if ((event->code == BTN_TOOL_MOUSE) ||
 				(event->code == BTN_TOOL_LENS))
 			{
-				DBG(6, ErrorF("USB mouse detected %x\n",						event->code));
+				DBG(6, ErrorF("USB mouse detected %x\n",
+					event->code));
 				ds.device_type = CURSOR_ID;
 				ds.proximity = (event->value != 0);
 			}
@@ -214,14 +249,13 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			if (event->code == MSC_SERIAL)
 			{
 				ds.serial_num = event->value;
-				DBG(10, ErrorF("wacom tool serial number=%d\n",
-					ds.serial_num));
+
 			}
 		}
 	} /* next event */
 
 	/* dispatch event */
-	xf86WcmEvent(common,0,&ds);
+	xf86WcmEvent(common, channel, &ds);
 }
 
 /*
@@ -250,16 +284,19 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 	DBG(1, ErrorF("initializing USB tablet\n"));    
 
 	ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
-	ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED, name);
+	ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED,
+		name);
 
 	if (strstr(name, "Intuos"))
 	{
 		common->wcmResolX = common->wcmResolY = 2540;
+		common->wcmProtocolLevel = 5;
 	}
 	else
 	/* Graphire2 */
 	{
 		common->wcmResolX = common->wcmResolY = 1016;
+		common->wcmProtocolLevel = 4;
 	}
 
 	memset(bit, 0, sizeof(bit));

@@ -607,12 +607,13 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
-	/* if the channel device has changed and proximity out has not
-	 * yet been sent, do it now. */
-	if (pOrigState->proximity && pOrigDev && (pOrigDev != pDev))
+	/* if the logical device of the same physical tool has changed,
+	 * send proximity out to the previous one */
+	if (pOrigDev && (pOrigDev != pDev) &&
+		(pOrigState->serial_num == ds->serial_num))
 	{
 		pOrigState->proximity = 0;
-		xf86WcmSendEvents(pOrigDev,pOrigState);
+		xf86WcmSendEvents(pOrigDev, pOrigState);
 	}
 
 	/* if a device matched criteria, handle filtering per device
