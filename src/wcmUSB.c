@@ -471,8 +471,9 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 		(ds->buttons | (bit)) : (ds->buttons & ~(bit))); \
 		} while (0)
 
-	/* all USB data operates from previous context */
+	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
+	ds->relwheel = 0;
 	ds->serial_num = serial;
 
 	/* loop through all events in group */

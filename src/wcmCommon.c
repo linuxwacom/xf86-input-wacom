@@ -205,11 +205,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int ty = ds->tilty;
 	int rot = ds->rotation;
 	int throttle = ds->throttle;
-	int wheel = ds->abswheel + ds->relwheel;
+	int wheel = ds->abswheel;
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int rx, ry, rz, rtx, rty, rwheel, rrot, rthrottle;
+	int rx, ry;
 	int is_core_pointer, is_absolute;
 
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
@@ -238,18 +238,20 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			x < priv->topX ? 0 : x - priv->topX;
 		ry = y > priv->bottomY ? priv->bottomY - priv->topY :
 			y < priv->topY ? 0 : y - priv->topY;
-		rz = z;
-		rtx = tx;
-		rty = ty;
-		rwheel = wheel;
-		rrot = rot;
-		rthrottle = throttle;
 	}
 	else
 	{
-		/* unify acceleration in both directions */
-		rx = (x - priv->oldX) * priv->factorY / priv->factorX;
-		ry = y - priv->oldY;
+		if (priv->oldProximity)
+		{
+			/* unify acceleration in both directions */
+			rx = (x - priv->oldX) * priv->factorY / priv->factorX;
+			ry = y - priv->oldY;
+		}
+		else
+		{
+			rx = 0;
+			ry = 0;
+		}
 		if (priv->speed != DEFAULT_SPEED )
 		{
 			/* don't apply acceleration for fairly small
@@ -261,100 +263,59 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (ABS(ry) > no_jitter)
 				ry *= priv->speed;
 		}
-		rz = z - priv->oldZ;
-		rtx = tx - priv->oldTiltX;
-		rty = ty - priv->oldTiltY;
-		rwheel = wheel - priv->oldWheel;
-		rrot = rot - priv->oldRot;
-		rthrottle = throttle - priv->oldThrottle;
 	}
+
+	/* for multiple monitor support, we need to set the proper 
+	 * screen and modify the axes before posting events */
+	xf86WcmSetScreen(local, &rx, &ry);
 
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
-
 		if (!priv->oldProximity)
 		{
-			priv->flags |= FIRST_TOUCH_FLAG;
-			DBG(4, ErrorF("xf86WcmSendEvents FIRST_TOUCH_FLAG "
-				"set for %s\n", local->name));
-		}
-		/* don't send anything the first time we get data 
-		 * since the x and y values may be invalid */
-		else if (priv->flags & FIRST_TOUCH_FLAG)
-		{
-			priv->flags ^= FIRST_TOUCH_FLAG;
-			DBG(4, ErrorF("xf86WcmSendEvents "
-				"FIRST_TOUCH_FLAG unset for %s\n",
-				local->name));
-			if (!is_absolute)
-			{
-				/* don't move the cursor the
-				 * first time we send motion event */
-				rx = 0;
-				ry = 0;
-				rz = 0;
-				rtx = 0;
-				rty = 0;
-				rwheel = 0;
-				rrot = 0;
-				rthrottle = 0;
-			}
-			/* to support multi-monitors, we need
-			 * to set the proper screen before posting
-			 * any events */
-			xf86WcmSetScreen(local, &rx, &ry);
 			if (IsCursor(priv))
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
-					rx, ry, z, rrot,
-					rthrottle, rwheel);
+					rx, ry, z, rot,
+					throttle, wheel);
 			else
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
 					rx, ry, z, tx, ty,
-					rwheel);
+					wheel);
 		}
-		else
-		{
-			/* to support multi-monitors, we need to set the proper 
-			* screen before posting any events */
-			xf86WcmSetScreen(local, &rx, &ry);
-			if(!(priv->flags & BUTTONS_ONLY_FLAG))
-			{
-				if (IsCursor(priv))
-					xf86PostMotionEvent(local->dev,
-						is_absolute, 0, 6, rx, ry, rz,
-						rrot, rthrottle, rwheel);
-				else
-					xf86PostMotionEvent(local->dev,
-						is_absolute, 0, 6, rx, ry, rz,
-						rtx, rty, rwheel);
-			}
 
-			/* JEJ - This should be done up stream; also, it
-			 * fails to take into account that rwheel is
-			 * generally an absolute value. */
-#if 0
-			/* simulate button 4 and 5 */
-			if (rwheel && (priv->flags & FAKE_MOUSEWHEEL_FLAG))
-			{
-				int fakeButton = rwheel < 0 ? 4 : 5;
-				xf86PostButtonEvent(local->dev, 
+		if(!(priv->flags & BUTTONS_ONLY_FLAG))
+		{
+			if (IsCursor(priv))
+				xf86PostMotionEvent(local->dev,
+					is_absolute, 0, 6, rx, ry, z,
+					rot, throttle, wheel);
+			else
+				xf86PostMotionEvent(local->dev,
+					is_absolute, 0, 6, rx, ry, z,
+					tx, ty, wheel);
+		}
+
+		/* simulate button 4 and 5 for relative wheel */
+		if ( ds->relwheel )
+		{
+			int fakeButton = ds->relwheel > 0 ? 5 : 4;
+			xf86PostButtonEvent(local->dev, 
 					is_absolute,
-					fakeButton, 1, 0, 6, rx, ry, rz, rrot,
-					rthrottle, rwheel);
-				xf86PostButtonEvent(local->dev, 
+					fakeButton, 1, 0, 6, rx, ry, z, rot,
+					throttle, wheel);
+			xf86PostButtonEvent(local->dev, 
 					is_absolute,
-					fakeButton, 0, 0, 6, rx, ry, rz, rrot,
-					rthrottle, rwheel);
-			}
-#endif
-			if (priv->oldButtons != buttons)
-			{
-				xf86WcmSendButtons (local, buttons, rx, ry, rz,
-					rtx, rty, rrot, rthrottle, rwheel);
-			}
+					fakeButton, 0, 0, 6, rx, ry, z, rot,
+					throttle, wheel);
+		}
+
+		if (priv->oldButtons != buttons)
+		{
+			xf86WcmSendButtons (local, buttons, rx, ry, z,
+					tx, ty, rot, throttle, wheel);
 		}
 	}
 
@@ -365,9 +326,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		 * down and becomes out of proximity */
 		if (priv->oldButtons)
 		{
-			xf86WcmSendButtons (local, 0, rx, ry, rz,
-				rtx, rty, rrot, rthrottle, rwheel);
 			buttons = 0;
+			xf86WcmSendButtons (local, buttons, rx, ry, z,
+				tx, ty, rot, throttle, wheel);
 		}
 		if (!is_core_pointer)
 		{
@@ -388,36 +349,36 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				if (IsCursor(priv))
 					xf86PostKeyEvent(local->dev,macro+7,1,
 						is_absolute,0,6,
-						0,0,buttons,rrot,rthrottle,
-						rwheel);
+						0,0,buttons,rot,throttle,
+						wheel);
 				else
 					xf86PostKeyEvent(local->dev,macro+7,1,
 						is_absolute,0,6,
-						0,0,buttons,rtx,rty,rwheel);
+						0,0,buttons,tx,ty,wheel);
 
 				/* key up */
 				if (IsCursor(priv))
 					xf86PostKeyEvent(local->dev,macro+7,0,
 						is_absolute,0,6,
-						0,0,buttons,rrot,rthrottle,
-						rwheel);
+						0,0,buttons,rot,throttle,
+						wheel);
 				else
 					xf86PostKeyEvent(local->dev,macro+7,0,
 						is_absolute,0,6,
-						0,0,buttons,rtx,rty,rwheel);
+						0,0,buttons,tx,ty,wheel);
 
 			}
-			if (priv->oldProximity)
-			{
-				if (IsCursor(priv))
-					xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, rz,
-						rrot, rthrottle, rwheel);
-				else
-					xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, rz,
-						rtx, rty, rwheel);
-			}
+		}
+		if (priv->oldProximity)
+		{
+			if (IsCursor(priv))
+				xf86PostProximityEvent(local->dev,
+						0, 0, 6, rx, ry, z,
+						rot, throttle, wheel);
+			else
+				xf86PostProximityEvent(local->dev,
+						0, 0, 6, rx, ry, z,
+						tx, ty, wheel);
 		}
 	} /* not in proximity */
 

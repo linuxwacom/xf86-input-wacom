@@ -85,7 +85,8 @@ static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 static void xf86WcmDevClose(LocalDevicePtr local);
 static int xf86WcmDevProc(DeviceIntPtr pWcm, int what);
 static int xf86WcmSetParam(LocalDevicePtr local, int param, int value);
-static int xf86WcmWriteOptionToFile(LocalDevicePtr local, int type);
+static int xf86WcmOptionCommandToFile(LocalDevicePtr local);
+static int xf86WcmModelToFile(LocalDevicePtr local);
 static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
@@ -858,18 +859,16 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 
 static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 {
-	xDeviceResolutionCtl    *res;
-	LocalDevicePtr          localDevices;
-  
-	res = (xDeviceResolutionCtl *)control;
+	xDeviceResolutionCtl* res = (xDeviceResolutionCtl *)control;
+	int* r = (int*)(res+1);
+	int param = r[0], value = r[1];
+
 	DBG(2, ErrorF("xf86WcmChangeControl firstValuator=%d\n",
 		res->first_valuator));
 	
 	if (control->control != DEVICE_RESOLUTION || !res->num_valuators)
 		return BadMatch;
 
-	int* r = (int*)(res+1);
-	int param = r[0], value = r[1];
 	r[0] = 1, r[1] = 1;
 	switch (res->first_valuator)
 	{

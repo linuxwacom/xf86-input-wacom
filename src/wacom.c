@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.14 2003/05/10 00:14:08 pingc Exp $
+ * $Id: wacom.c,v 1.15 2003/05/13 00:15:06 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -431,8 +431,6 @@ static void wacom_intuos_irq(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
-
-		input_report_key(dev, wacom->tool[idx], 1);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		return;
 	}
@@ -519,7 +517,8 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, BTN_EXTRA,  data[8] & 0x08);
 		}
 	}
-	
+
+	input_report_key(dev, wacom->tool[idx], 1);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 }
 
