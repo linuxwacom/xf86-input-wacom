@@ -114,6 +114,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->doffsetX = 0;			/* dual screen offset X */
 	priv->doffsetY = 0;			/* dual screen offset Y */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
+	for (i=0; i<4; i++)
+		priv->tvResolution[i] = 0;	/* unconfigured twinview resolution */
 
 	/* JEJ - throttle sampling code */
 	priv->throttleValue = 0;
@@ -979,6 +981,29 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 				a,b,c,d);
 		}
 	}
+
+	/* Config Monitors' resoluiton in TwinView setup.
+	 * The value is in the form of "1024x768,1280x1024" 
+	 * for a desktop of monitor 1 at 1024x768 and 
+	 * monitor 2 at 1280x1024
+	 */
+	s = xf86FindOptionValue(local->options, "TVResolution");
+	if (s)
+	{
+		int a,b,c,d;
+		if ((sscanf(s,"%dx%d,%dx%d",&a,&b,&c,&d) != 4) ||
+			(a <= 0) || (b <= 0) || (c <= 0) || (d <= 0))
+			xf86Msg(X_CONFIG, "WACOM: TVResolution not valid\n");
+		else
+		{
+			priv->tvResolution[0] = a;
+			priv->tvResolution[1] = b;
+			priv->tvResolution[2] = c;
+			priv->tvResolution[3] = d;
+			xf86Msg(X_CONFIG, "WACOM: TVResolution %d,%d %d,%d\n",
+				a,b,c,d);
+		}
+	}
     
 	priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", -1);
 	if (priv->screen_no != -1)
@@ -1131,6 +1156,14 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->dscaleY = 1.0;
 		priv->doffsetX = 0;
 		priv->doffsetY = 0;
+		/* default resolution */
+		if(!priv->tvResolution[0])
+		{
+			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
+			priv->tvResolution[1] = screenInfo.screens[0]->height;
+			priv->tvResolution[2] = priv->tvResolution[0];
+			priv->tvResolution[3] = priv->tvResolution[1];
+		}
 	}
 	else if (s && xf86NameCmp(s, "vertical") == 0) 
 	{
@@ -1139,6 +1172,14 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->dscaleY = 2.0;
 		priv->doffsetX = 0;
 		priv->doffsetY = 0;
+		/* default resolution */
+		if(!priv->tvResolution[0])
+		{
+			priv->tvResolution[0] = screenInfo.screens[0]->width;
+			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
+			priv->tvResolution[2] = priv->tvResolution[0];
+			priv->tvResolution[3] = priv->tvResolution[1];
+		}
 	}
 	else if (s) 
 	{

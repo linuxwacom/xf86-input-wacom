@@ -220,8 +220,18 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			&& priv->bottomY == 0 && priv->topX == 0
 			&& priv->topY == 0) 
 		{
-			priv->topX = common->wcmMaxX / 100;
-			priv->topY = common->wcmMaxY / 100;
+			if (IsCursor(priv))
+			{
+				/* for absolute cursor */
+				priv->topX = 80;
+				priv->topY = 80;
+			}
+			else
+			{
+				/* for absolute stylus and eraser */
+				priv->topX = 50;
+				priv->topY = 50;
+			}
 			priv->bottomX = common->wcmMaxX - priv->topX;
 			priv->bottomY = common->wcmMaxY - priv->topY;
 		}
@@ -273,10 +283,17 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		/* Calculate the ratio according to KeepShape, TopX and TopY */
 		if (priv->screen_no != -1)
 		{
+			priv->currentScreen = priv->screen_no;
 			if (priv->twinview == TV_NONE)
-				priv->currentScreen = priv->screen_no;
-			totalWidth = screenInfo.screens[priv->currentScreen]->width;
-			maxHeight = screenInfo.screens[priv->currentScreen]->height;
+			{
+				totalWidth = screenInfo.screens[priv->currentScreen]->width;
+				maxHeight = screenInfo.screens[priv->currentScreen]->height;
+			}
+			else
+			{
+				totalWidth = priv->tvResolution[2*priv->currentScreen];
+				maxHeight = priv->tvResolution[2*priv->currentScreen+1];
+			}
 		}
 		else
 		{
@@ -288,8 +305,6 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 					maxHeight=screenInfo.screens[i]->height;
 			}
 		}
-
-ErrorF("aaaaa: invalid screen number, resetting to 0\n");
 
 		/* Maintain aspect ratio */
 		if (priv->flags & KEEP_SHAPE_FLAG)
@@ -325,9 +340,9 @@ ErrorF("aaaaa: invalid screen number, resetting to 0\n");
 		if (priv->numScreen == 1)
 		{
 			priv->factorX = totalWidth
-				/ (double)((priv->bottomX - priv->topX) * priv->dscaleX);
+				/ (double)(priv->bottomX - priv->topX);
 			priv->factorY = maxHeight
-				/ (double)((priv->bottomY - priv->topY) * priv->dscaleY);
+				/ (double)(priv->bottomY - priv->topY);
 			DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
 				priv->factorX, priv->factorY));
 		}
@@ -364,7 +379,6 @@ ErrorF("aaaaa: invalid screen number, resetting to 0\n");
 
 	/* wheel */
 	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
-ErrorF("-------: invalid screen number, resetting to 0\n");
 
 	return TRUE;
 }
@@ -915,17 +929,17 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 		/* write TwinView ScreenInfo */
 		if (priv->twinview == TV_ABOVE_BELOW)
 		{
-			x = screenInfo.screens[0]->width;
-			y = screenInfo.screens[0]->height/2;
-			fprintf(fp, "Screen0 %d %d %d %d\n", x, y, 0, 0);
-			fprintf(fp, "Screen1 %d %d %d %d\n", x, y, 0, y);
+			fprintf(fp, "Screen0 %d %d %d %d\n", priv->tvResolution[0], 
+				priv->tvResolution[1], 0, 0);
+			fprintf(fp, "Screen1 %d %d %d %d\n", priv->tvResolution[2], 
+				priv->tvResolution[3], 0, priv->tvResolution[1]);
 		}
 		else if (priv->twinview == TV_LEFT_RIGHT)
 		{
-			x = screenInfo.screens[0]->width/2;
-			y = screenInfo.screens[0]->height;
-			fprintf(fp, "Screen0 %d %d %d %d\n", x, y, 0, 0);
-			fprintf(fp, "Screen1 %d %d %d %d\n", x, y, x, 0);
+			fprintf(fp, "Screen0 %d %d %d %d\n", priv->tvResolution[0], 
+				priv->tvResolution[1], 0, 0);
+			fprintf(fp, "Screen1 %d %d %d %d\n", priv->tvResolution[2], 
+				priv->tvResolution[3], priv->tvResolution[2], 0);
 		}
 		/* write other screen setup info */
 		else
@@ -1039,25 +1053,97 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	{
 		v0 -= priv->topX;
 		v1 -= priv->topY;
-	}
-	*x = v0 * priv->factorX + 0.5;
-	*y = v1 * priv->factorY + 0.5;
-	if (priv->twinview != TV_NONE)
-	{
                 if (priv->twinview == TV_LEFT_RIGHT)
 		{
-			if (priv->screen_no == 1 && *x < screenInfo.screens[0]->width/2 + 3)
-                        	*x += (screenInfo.screens[0]->width/2 + 3);
-			if (priv->screen_no == 0 && *x > screenInfo.screens[0]->width/2 - 3 )
-				*x -= (screenInfo.screens[0]->width/2 + 3);
+			if (v0 > priv->bottomX)
+			{
+				if (priv->screen_no == 0)
+				{
+					priv->currentScreen = 0;
+					*x = priv->tvResolution[0] * (v0 - priv->bottomX)
+						 / (priv->bottomX - priv->topX);
+					*y = (v1 - priv->topY) * priv->tvResolution[1] /
+						(priv->bottomY - priv->topY) + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 1;
+					*x = priv->tvResolution[0] + priv->tvResolution[2]
+						 * (v0 - priv->bottomX)
+						 / (priv->bottomX - priv->topX);
+					*y = (v1 - priv->topY) * priv->tvResolution[3] /
+						(priv->bottomY - priv->topY) + 0.5;
+				}
+			}
+			else
+			{
+				if (priv->screen_no == 1)
+				{
+					priv->currentScreen = 1;
+                        		*x = priv->tvResolution[0] + priv->tvResolution[2]
+						* (v0 - priv->topX) / 
+						(priv->bottomX - priv->topX);
+					*y = (v1 - priv->topY) * priv->tvResolution[3] /
+						(priv->bottomY - priv->topY) + 0.5;
+				}
+				else
+				{
+					*x = priv->tvResolution[0] * (v0 - priv->topX)
+						 / (priv->bottomX - priv->topX);
+					priv->currentScreen = 0;
+					*y = (v1 - priv->topY) * priv->tvResolution[1] /
+						(priv->bottomY - priv->topY) + 0.5;
+				}
+			}
 		}
                 if (priv->twinview == TV_ABOVE_BELOW)
 		{
-			if (priv->screen_no == 1 && *y < screenInfo.screens[0]->height/2 + 3)
-                       		*y += (screenInfo.screens[0]->height/2 + 3);
-			if (priv->screen_no == 0 && *y > screenInfo.screens[0]->height/2 - 3)
-                       		*y -= (screenInfo.screens[0]->height/2 + 3);
+			if (v1 > priv->bottomY)
+			{
+				if (priv->screen_no == 0)
+				{
+					priv->currentScreen = 0;
+					*x = (v0 - priv->topX) * priv->tvResolution[0] /
+						(priv->bottomX - priv->topX) + 0.5;
+					*y = priv->tvResolution[1] * (v1 - priv->bottomY)
+						 / (priv->bottomY - priv->topY);
+				}
+				else
+				{
+					priv->currentScreen = 1;
+					*y = priv->tvResolution[1] + 
+						priv->tvResolution[3] * (v1 - priv->bottomY)
+						 / (priv->bottomY - priv->topY);
+					*x = (v0 - priv->topX) * priv->tvResolution[2] /
+						(priv->bottomX - priv->topX) + 0.5;
+				}
+			}
+			else
+			{
+				if (priv->screen_no == 1)
+				{
+					priv->currentScreen = 1;
+                        		*y = priv->tvResolution[1] + 
+						priv->tvResolution[3] * (v1 - priv->topY) 
+						/ (priv->bottomY - priv->topY);
+					*x = (v0 - priv->topX) * priv->tvResolution[2] /
+						(priv->bottomX - priv->topX) + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 0;
+					*y = priv->tvResolution[1] * (v1 - priv->topY)
+						 / (priv->bottomY - priv->topY);
+					*x = (v0 - priv->topX) * priv->tvResolution[0] /
+						(priv->bottomX - priv->topX) + 0.5;
+				}
+			}
 		}
+	}
+	else
+	{
+		*x = v0 * priv->factorX + 0.5;
+		*y = v1 * priv->factorY + 0.5;
 	}
 
 	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
@@ -1092,6 +1178,85 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 #endif
 	if (priv->twinview != TV_NONE)
 	{
+                if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			if (x > priv->tvResolution[0])
+			{
+				valuators[0] = (priv->bottomX - priv->topX) * 
+					(x - priv->tvResolution[0])
+					 / priv->tvResolution[2];
+				if (priv->screen_no == 0)
+				{
+					priv->currentScreen = 0;
+					valuators[1] = y * (priv->bottomY - priv->topY) /
+						priv->tvResolution[1] + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 1;
+					valuators[0] += priv->bottomX - priv->topX;
+					valuators[1] = y * (priv->bottomY - priv->topY) /
+						priv->tvResolution[3] + 0.5;
+				}
+			}
+			else
+			{
+				valuators[0] = x * (priv->bottomX - priv->topX)
+					 / priv->tvResolution[0];
+				if (priv->screen_no == 1)
+				{
+					priv->currentScreen = 1;
+                        		valuators[0] += priv->bottomX - priv->topX;
+					valuators[1] = y * (priv->bottomY - priv->topY) /
+						priv->tvResolution[3] + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 0;
+					valuators[0] = x * (priv->bottomY - priv->topY) /
+						priv->tvResolution[1] + 0.5;
+				}
+			}
+		}
+                if (priv->twinview == TV_ABOVE_BELOW)
+		{
+			if (y > priv->tvResolution[1])
+			{
+				valuators[1] = y * (priv->bottomY - priv->topY) /
+					 priv->tvResolution[3];
+				if (priv->screen_no == 0)
+				{
+					priv->currentScreen = 0;
+					valuators[0] = x * (priv->bottomX - priv->topX) /
+						priv->tvResolution[0] + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 1;
+					valuators[1] += priv->bottomY - priv->topY;
+					valuators[0] = x * (priv->bottomX - priv->topX) /
+						priv->tvResolution[2] + 0.5;
+				}
+			}
+			else
+			{
+				valuators[1] = y *(priv->bottomY - priv->topY)
+					 / priv->tvResolution[1];
+				if (priv->screen_no == 1)
+				{
+					priv->currentScreen = 1;
+                        		valuators[0] += priv->bottomY - priv->topY;
+					valuators[1] = x * (priv->bottomX - priv->topX) /
+						priv->tvResolution[2] + 0.5;
+				}
+				else
+				{
+					priv->currentScreen = 0;
+					valuators[0] = x * (priv->bottomX - priv->topX) /
+						priv->tvResolution[0] + 0.5;
+				}
+			}
+		}
 		valuators[0] += priv->topX;
 		valuators[1] += priv->topY;
 	}

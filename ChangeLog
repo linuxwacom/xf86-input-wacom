@@ -1,3 +1,7 @@
+2003-09-24    Ping Cheng <pingc@wacom.com>
+	* Support TwinView with different Screen resolutions
+	* Added a new option, "TVResolution", to configure each resolution
+
 2003-09-22    Ping Cheng <pingc@wacom.com>
 	* Support TwinView Cintiq calibration
 	* Enable Screenno Option for TwinView setup

@@ -357,6 +357,7 @@ struct _WacomDeviceRec
 	int doffsetX;		/* offset in X for dual screens */
 	int doffsetY;		/* offset in Y for dual screens */
 	tvMode twinview;	/* using twinview mode of gfx card */
+	int tvResolution[4];	/* twinview screens' resultion */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */

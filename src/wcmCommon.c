@@ -59,8 +59,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
 	int i, x, y;
-	int sizeX = (priv->bottomX - priv->topX) * priv->dscaleX;
-	int sizeY = (priv->bottomY - priv->topY) * priv->dscaleY;
+	double sizeX = priv->bottomX - priv->topX;
+	double sizeY = priv->bottomY - priv->topY;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
 
@@ -69,10 +69,13 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	 */
 	if (screenInfo.numScreens == 1)
 	{
-		priv->factorX = screenInfo.screens[priv->currentScreen]->width
-			/ (double)sizeX;
-		priv->factorY = screenInfo.screens[priv->currentScreen]->height
-			/ (double)sizeY;
+		priv->factorX = screenInfo.screens[0]->width / sizeX;
+		priv->factorY = screenInfo.screens[0]->height / sizeY;
+		if (priv->twinview != TV_NONE)
+		{
+			priv->factorX = priv->tvResolution[2*priv->currentScreen] / sizeX;
+			priv->factorY = priv->tvResolution[2*priv->currentScreen+1] / sizeY;
+		}
 		return;
 	}
 
@@ -81,10 +84,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		/* screenToSet lags by one event, but not that important */
 		screenToSet = miPointerCurrentScreen()->myNum;
-		priv->factorX = screenInfo.screens[screenToSet]->width
-			/ (double)sizeX;
-		priv->factorY = screenInfo.screens[screenToSet]->height
-			/ (double)sizeY;
+		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
+		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
 		priv->currentScreen = screenToSet;
 		return;
 	}
@@ -101,9 +102,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		for (i = 0; i < priv->numScreen; i++)
 		{
-			if (*v0 * totalWidth <=
-				(leftPadding + screenInfo.screens[i]->width)
-				* (priv->bottomX - priv->topX))
+			if (*v0 * totalWidth <= (leftPadding + 
+				screenInfo.screens[i]->width) * sizeX)
 			{
 				screenToSet = i;
 				break;
@@ -126,8 +126,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 
 	if (!noPanoramiXExtension && priv->common->wcmGimp)
 	{
-		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
-		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
+		priv->factorX = totalWidth/sizeX;
+		priv->factorY = maxHeight/sizeY;
 		x = (*v0 - sizeX
 			* leftPadding / totalWidth) * priv->factorX + 0.5;
 		y = *v1 * priv->factorY + 0.5;
@@ -145,16 +145,9 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 				/ screenInfo.screens[screenToSet]->width;
 		else
 			screenToSet = priv->screen_no;
-		priv->factorX = screenInfo.screens[screenToSet]->width
-			/ (double)sizeX;
-		priv->factorY = screenInfo.screens[screenToSet]->height
-			/ (double)sizeY;
+		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
+		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
 
-		if (priv->twinview != TV_NONE)
-		{
-			*v0 -= priv->topX;
-			*v1 -= priv->topY;
-		}
 		x = *v0 * priv->factorX + 0.5;
 		y = *v1 * priv->factorY + 0.5;
 	}
