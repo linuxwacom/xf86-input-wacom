@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.13 2003/05/03 09:35:14 jjoganic Exp $
+ * $Id: wacom.c,v 1.14 2003/05/10 00:14:08 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -241,6 +241,41 @@ static void wacom_pl_irq(struct urb *urb)
 	input_event(dev, EV_MSC, MSC_SERIAL, 0);
 }
 
+static void wacom_ptu_irq(struct urb *urb)
+{
+	struct wacom *wacom = urb->context;
+	unsigned char *data = wacom->data;
+	struct input_dev *dev = &wacom->dev;
+
+	if (urb->status) return;
+
+	if (data[0] != 2)
+	{
+		printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
+		return;
+	}
+	
+	if (data[1] & 0x04) 
+	{
+		input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
+		input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
+	}
+	else
+	{
+		input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
+		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
+	}
+	input_report_abs(dev, ABS_X, data[3] << 8 | data[2]);
+	input_report_abs(dev, ABS_Y, data[5] << 8 | data[4]);
+	input_report_abs(dev, ABS_PRESSURE, (data[6]|data[7] << 8));
+	input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
+	input_report_key(dev, BTN_STYLUS2, data[1] & 0x10);
+
+	input_event(dev, EV_MSC, MSC_SERIAL, 0);
+}
+
+
 static void wacom_penpartner_irq(struct urb *urb)
 {
 	struct wacom *wacom = urb->context;
@@ -444,8 +479,8 @@ static void wacom_intuos_irq(struct urb *urb)
 		if (data[1] & 0x02)
 		{
 			input_report_abs(dev, ABS_RZ, (data[7] & 0x20) ?
-				((__u32)data[6] << 2) | ((data[7] >> 6) & 3):
-				(-(((__u32)data[6] << 2) | ((data[7] >> 6) & 3))) - 1);
+				((__u32)data[6] << 3) | ((data[7] >> 5) & 7):
+				(-(((__u32)data[6] << 3) | ((data[7] >> 5) & 7))) - 1);
 		}
 
 		/* 4D mouse packets */
@@ -562,10 +597,15 @@ struct wacom_features wacom_features[] = {
 	/* 19 */ { "Wacom Intuos2 12x18", 10,  45720, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-
 	/* Volito - (Graphire2 4x5 no mouse wheel) */
 	/* 20 */ { "Wacom Volito",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
+	/* 21 */ { "Wacom Graphire3 4x5",  8,   10206, 7422,   511, 32,
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
+	/* 22 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
+	/* 23 */ { "Wacom Cintiq Partner", 8,   20480,  15360, 511, 32,
+			wacom_ptu_irq, 0, 0, 0, 0 },
 
 	{ NULL , 0 }
 };
@@ -592,6 +632,9 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x44), driver_info: 18 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x45), driver_info: 19 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x60), driver_info: 20 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13), driver_info: 21 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14), driver_info: 22 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03),  driver_info: 23 },
 	{ }
 };
 

@@ -161,6 +161,13 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xGraphire3[] =
+	{
+		{ "MODEL_G3_0405", "Wacom Graphire2 4x5", 1, 0x13 },
+		{ "MODEL_G3_0608", "Wacom Graphire2 6x8", 1, 0x14 },
+		{ NULL }
+	};
+
 	static USBSUBTYPE xIntuos[] =
 	{
 		{ "MODEL_I_0405", "Wacom Intuos 4x5", 1, 0x20 },
@@ -198,14 +205,22 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xCintiqPartner[] =
+	{
+		{ "PTU-600", "Wacom Cintiq Partner", 1, 0x03 },
+		{ NULL }
+	};
+
 	static USBDEVICE xWacomDevices[] =
 	{
 		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner },
 		{ "gr", "Graphire", WACOMDEVICE_GRAPHIRE, xGraphire },
 		{ "gr2", "Graphire2", WACOMDEVICE_GRAPHIRE2, xGraphire2 },
+		{ "gr3", "Graphire3", WACOMDEVICE_GRAPHIRE3, xGraphire3 },
 		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
 		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
 		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
+		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner },
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },
 		{ NULL }
 	};

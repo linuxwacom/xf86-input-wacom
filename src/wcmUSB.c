@@ -105,9 +105,39 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* input filtering not needed */
 	};
 
+	static WacomModel usbGraphire3 =
+	{
+		"USB Graphire3",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
 	static WacomModel usbCintiq =
 	{
-		"USB Intuos",
+		"USB Cintiq",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbCintiqPartner =
+	{
+		"USB CintiqPartner",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbGetRanges,
@@ -225,12 +255,19 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x12: /* Graphire2 5x7 */
 				model = &usbGraphire2; break;
 
+			case 0x13: /* Graphire2 4x5 */
+			case 0x14: /* Graphire2 6x8 */
+				model = &usbGraphire3; break;
+
 			case 0x20: /* Intuos 4x5 */
 			case 0x21: /* Intuos 6x8 */
 			case 0x22: /* Intuos 9x12 */
 			case 0x23: /* Intuos 12x12 */
 			case 0x24: /* Intuos 12x18 */
 				model = &usbIntuos; break;
+
+			case 0x03: /* PTU600 */
+				model = &usbCintiqPartner; break;
 
 			case 0x30: /* PL400 */
 			case 0x31: /* PL500 */

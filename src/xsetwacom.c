@@ -48,7 +48,7 @@ typedef enum
 {
 	COMMAND_NONE,
 	COMMAND_LIST,
-	COMMAND_SET,
+	COMMAND_SET
 } COMMAND;
 
 struct _PARAMINFO
@@ -132,7 +132,19 @@ struct _PARAMINFO
 			"Enables and disables filtering of raw data, "
 			"default is true.",
 			XWACOM_PARAM_RAWFILTER,
-			VALUE_OPTIONAL, RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+			VALUE_OPTIONAL, RANGE, 0, 1, BOOLEAN_VALUE, 1 },	
+
+		{ "xydefault",
+			"Resets the bounding coordinates to default in tablet units",
+			XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
+
+		{ "Filemodel",
+			"Writes tablet models to /etc/wacom.dat",
+			XWACOM_PARAM_FILEMODEL, VALUE_OPTIONAL },
+
+		{ "Fileoption",
+			"Writes configuration options to /etc/X11/wcm.dev_name",
+			XWACOM_PARAM_FILEOPTION, VALUE_OPTIONAL },
 
 		{ NULL }
 	};

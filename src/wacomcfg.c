@@ -266,7 +266,9 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 	XDeviceResolutionControl c;
 	c.control = DEVICE_RESOLUTION;
 	c.length = sizeof(c);
-	c.first_valuator = 4;
+	if ( nParam == XWACOM_PARAM_FILEOPTION ) c.first_valuator = 0;
+	else if ( nParam == XWACOM_PARAM_FILEMODEL ) c.first_valuator = 1;
+	else c.first_valuator = 4;
 	c.num_valuators = 2;
 	c.resolutions = nValues;
 
