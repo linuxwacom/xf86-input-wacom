@@ -1,5 +1,5 @@
 /*
- * $Id: usbmouse.c,v 1.2 2005/03/18 18:17:46 pingc Exp $
+ * $Id: usbmouse.c,v 1.1 2005/03/18 18:17:44 pingc Exp $
  *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
@@ -36,7 +36,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.6 - 2.6.9-pc-0.1"
+#define DRIVER_VERSION "v1.6 - 2.6.11.3-pc-0.1"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB HID Boot Protocol mouse driver"
 #define DRIVER_LICENSE "GPL"
@@ -118,7 +118,7 @@ static void usb_mouse_close(struct input_dev *dev)
 	struct usb_mouse *mouse = dev->private;
 
 	if (!--mouse->open)
-		usb_unlink_urb(mouse->irq);
+		usb_kill_urb(mouse->irq);
 }
 
 static int usb_mouse_probe(struct usb_interface * intf, const struct usb_device_id * id)
@@ -186,9 +186,9 @@ static int usb_mouse_probe(struct usb_interface * intf, const struct usb_device_
 	mouse->dev.name = mouse->name;
 	mouse->dev.phys = mouse->phys;
 	mouse->dev.id.bustype = BUS_USB;
-	mouse->dev.id.vendor = dev->descriptor.idVendor;
-	mouse->dev.id.product = dev->descriptor.idProduct;
-	mouse->dev.id.version = dev->descriptor.bcdDevice;
+	mouse->dev.id.vendor = le16_to_cpu(dev->descriptor.idVendor);
+	mouse->dev.id.product = le16_to_cpu(dev->descriptor.idProduct);
+	mouse->dev.id.version = le16_to_cpu(dev->descriptor.bcdDevice);
 	mouse->dev.dev = &intf->dev;
 
 	if (!(buf = kmalloc(63, GFP_KERNEL))) {
@@ -229,7 +229,7 @@ static void usb_mouse_disconnect(struct usb_interface *intf)
 	
 	usb_set_intfdata(intf, NULL);
 	if (mouse) {
-		usb_unlink_urb(mouse->irq);
+		usb_kill_urb(mouse->irq);
 		input_unregister_device(&mouse->dev);
 		usb_free_urb(mouse->irq);
 		usb_buffer_free(interface_to_usbdev(intf), 8, mouse->data, mouse->data_dma);

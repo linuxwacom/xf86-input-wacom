@@ -1,5 +1,5 @@
 /*
- * $Id: usbmouse.c,v 1.1 2005/03/02 18:08:33 pingc Exp $
+ * $Id: usbmouse.c,v 1.2 2005/03/18 18:17:44 pingc Exp $
  *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
@@ -36,7 +36,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.6 - 2.6.9-pc-0.1"
+#define DRIVER_VERSION "v1.6 - 2.6.10-pc-0.2"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB HID Boot Protocol mouse driver"
 #define DRIVER_LICENSE "GPL"
@@ -145,7 +145,7 @@ static int usb_mouse_probe(struct usb_interface * intf, const struct usb_device_
 	/* Wacom tablets match. Let wacom driver take care of it. */
 	if (dev->descriptor.idVendor == 0x056a)
 	{
-		return 0;
+		return -ENODEV;
 	}
 
 	pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);

@@ -146,7 +146,9 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
 				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
-				if test $MINOR -ge 10; then
+				if test $MINOR -ge 11; then
+					WCM_KERNEL_VER="2.6.11"
+				elif test $MINOR -eq 10; then
 					WCM_KERNEL_VER="2.6.10"
 				elif test $MINOR -eq 9; then
 					WCM_KERNEL_VER="2.6.9"
@@ -398,7 +400,7 @@ if test "$WCM_TCLDIR" = "yes" || test "$WCM_TCLDIR" == ""; then
 
 dnl handle specified case
 elif test "$WCM_TCLDIR" != "no"; then
-	AC_MSG_CHECKING(for tcl header files)
+	AC_MSG_CHECKING([for tcl header files])
 	if test -f "$WCM_TCLDIR/include/tcl.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TCL=yes
@@ -412,7 +414,7 @@ elif test "$WCM_TCLDIR" != "no"; then
 			CFLAGS="$CFLAGS -I$WCM_TCLDIR"
 		fi
 	else
-		AC_MSG_RESULT(not found; tried $WCM_TCLDIR/include/tcl.h and $WCM_TCLDIR/tcl.h)
+		AC_MSG_RESULT([not found; tried $WCM_TCLDIR/include/tcl.h and $WCM_TCLDIR/tcl.h])
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -432,7 +434,7 @@ AS_HELP_STRING([--with-tk=dir], [uses a specified tk directory  ]),
 
 dnl handle default case
 if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
-	AC_MSG_CHECKING(for tk header files)
+	AC_MSG_CHECKING([for tk header files])
 	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
@@ -442,7 +444,7 @@ if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 		WCM_ENV_TK=yes
 		WCM_TKDIR="$WCM_TCLDIR"
 	else
-		AC_MSG_RESULT(not found; tried $WCM_TCLTKDIR_DEFAULT/include/tk.h and $WCM_TCLDIR/include/tk.h)
+		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include/tk.h and $WCM_TCLDIR/include/tk.h])
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk development environment does not appear to"
 		echo "*** be installed. The header file tk.h does not appear"
@@ -453,7 +455,7 @@ if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 	fi
 dnl handle specified case
 elif test "$WCM_TKDIR" != "no"; then
-	AC_MSG_CHECKING(for tk header files)
+	AC_MSG_CHECKING([for tk header files])
 	if test -f "$WCM_TKDIR/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
