@@ -3,13 +3,15 @@ noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
 
 AM_CFLAGS = -Wall
 
-EXTRA_PROGRAMS = wacdump
+EXTRA_PROGRAMS = wacdump xidump
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o wacom_drv-v3.o
 
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
 		wacserial.c wacserial.h \
 		wacusb.c wacusb.h
+
+xidump_SOURCES = xidump.c
 
 wacdump_LDADD = -lncurses
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c xf86Wacom.c usbmouse.c \

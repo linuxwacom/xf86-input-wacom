@@ -2,6 +2,10 @@
 
 	* Applied Ping Cheng's suppress patch
 
+2003-02-23    John E. Joganic <john@joganic.com>
+
+	* Added xidump and gtk config options
+
 2003-02-22    John E. Joganic <john@joganic.com>
 
 	* Applied Ping Cheng's multi-monitor patch

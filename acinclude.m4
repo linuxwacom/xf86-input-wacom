@@ -13,6 +13,10 @@ WCM_ENV_XF86V3=no
 WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
+WCM_ENV_GTK=no
+WCM_XIDUMP_DEFAULT=no
+WCM_ENV_XLIB=no
+WCM_XLIBDIR_DEFAULT=/usr/X11R6
 XF86SUBDIR=xc/programs/Xserver/include
 XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
 dnl Check architecture
@@ -162,3 +166,131 @@ AC_ARG_WITH(xf86v3,
 	fi
 	WCM_XF86V3DIR=`(cd $WCM_XF86V3DIR; pwd)`
 ])])
+AC_DEFUN(AC_WCM_CHECK_GTK,[
+dnl Check for GTK development environment
+AC_ARG_WITH(gtk,
+[  --with-gtk={1.2|2.0|yes|no}   Uses GTK 1.2 or 2.0 API],
+[WCM_USE_GTK=$withval],[WCM_USE_GTK=yes])
+
+if test "$WCM_USE_GTK" == "yes" || test "$WCM_USE_GTK" == "1.2"; then
+	AC_CHECK_PROG(gtk12config,gtk-config,yes,no)
+fi
+if test "$WCM_USE_GTK" == "yes" || test "$WCM_USE_GTK" == "2.0"; then
+	AC_CHECK_PROG(pkgconfig,pkg-config,yes,no)
+	if test x$pkgconfig == xyes; then
+		AC_MSG_CHECKING(pkg-config for gtk+-2.0)
+		gtk20config=`pkg-config --exists gtk+-2.0 && echo yes`
+		if test "$gtk20config" == "yes"; then
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+		fi
+	fi
+fi
+
+dnl Default to best GTK available
+if test "$WCM_USE_GTK" == "yes"; then
+	if test "$gtk20config" == "yes"; then
+		WCM_USE_GTK=2.0
+	elif test "$gtk12config" == "yes"; then
+		WCM_USE_GTK=1.2
+	else
+		echo "***"; echo "*** WARNING:"
+		echo "*** unable to find any gtk development environment; are the "
+		echo "*** development packages installed?  gtk will not be used."
+		echo "***"
+		WCM_USE_GTK=no
+	fi
+fi
+
+dnl Handle GTK 1.2
+if test "$WCM_USE_GTK" == "1.2"; then
+	if test "$gtk12config" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** unable to find gtk-config in path; are the development"
+		echo "*** packages installed?  gtk will not be used."
+		echo "***"
+	else
+		AC_MSG_CHECKING(for GTK version)
+		gtk12ver=`gtk-config --version`
+		if test $? != 0; then
+			AC_MSG_RESULT(unknown)
+			AC_MSG_ERROR(gtk-config failed)
+		fi
+		AC_MSG_RESULT($gtk12ver)
+		WCM_ENV_GTK=$gtk12ver
+		AC_DEFINE(WCM_ENABLE_GTK12,1,Use GTK 1.2 API)
+		CFLAGS="$CFLAGS `gtk-config --cflags`"
+		LIBS="$LIBS `gtk-config --libs`"
+	fi
+fi
+
+dnl Handle GTK 2.0
+if test "$WCM_USE_GTK" == "2.0"; then
+	if test "$pkgconfig" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** unable to find pkg-config in path; gtk 2.0 requires"
+		echo "*** pkg-config to locate the proper development environment."
+		echo "*** gtk will not be used."
+		echo "***"
+	elif test "$gtk20config" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** unable to find gtk 2.0 registered with pkg-config;"
+		echo "*** are the development packages installed?"
+		echo "*** pkg-config is not very smart; if gtk has dependencies"
+		echo "*** that are not installed, you might still get this error."
+		echo "*** Try using pkg-config --debug gtk+-2.0  to see what it is"
+		echo "*** complaining about.  Misconfigured systems may choke"
+		echo "*** looking for gnome-config; if this is the case, you will"
+		echo "*** need to install the Gnome development libraries even"
+		echo "*** though we will not use them."
+		echo "***"
+	else
+		AC_MSG_CHECKING(for GTK version)
+		gtk20ver=`pkg-config --modversion gtk+-2.0`
+		if test $? != 0; then
+			AC_MSG_RESULT(unknown)
+			AC_MSG_ERROR(pkg-config failed)
+		fi
+		AC_MSG_RESULT($gtk20ver)
+		WCM_ENV_GTK=$gtk20ver
+		AC_DEFINE(WCM_ENABLE_GTK20,1,Use GTK 2.0 API)
+		CFLAGS="$CFLAGS `pkg-config --cflags gtk+-2.0`"
+		LIBS="$LIBS `pkg-config --libs gtk+-2.0`"
+	fi
+fi
+])
+AC_DEFUN(AC_WCM_CHECK_XLIB,[
+dnl Check for XLib development environment
+WCM_XLIBDIR=
+AC_ARG_WITH(xlib,
+[  --with-xlib=dir   uses a specified X11R6 directory],
+[WCM_XLIBDIR=$withval])
+
+dnl handle default case
+if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
+	AC_MSG_CHECKING(for XLib include directory)
+	if test -d $WCM_XLIBDIR_DEFAULT/include; then
+		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
+		AC_MSG_RESULT(found)
+	else
+		AC_MSG_RESULT(not found, tried $WCM_XLIBDIR_DEFAULT/include)
+		WCM_XLIBDIR=no
+	fi
+fi
+
+dnl check for header files
+if test "$WCM_XLIBDIR" != "no"; then
+	AC_MSG_CHECKING(for XLib header files)
+	if test -f "$WCM_XLIBDIR/include/X11/Xlib.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_XLIB=yes
+	else
+		AC_MSG_RESULT(not found; tried $WCM_XLIBDIR/include/X11/Xlib.h)
+		echo "***"; echo "*** WARNING:"
+		echo "*** unable to find X11/Xlib.h; are the X11 development"
+		echo "*** packages installed?  XLib dependencies will not be built."
+		echo "***"
+	fi
+fi
+])
