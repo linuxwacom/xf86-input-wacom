@@ -1,5 +1,5 @@
 README
-December 15, 2003
+January 13, 2004
 
 This package is not currently sanctioned by the original driver developers
 although several attempts to contact them have been made.  Hopefully, this
@@ -7,7 +7,7 @@ work will be rolled back into the main development trees.  Until that time,
 I will be taking responsibility for this code.  If you have any questions,
 comments, problems, patches, or complaints, send them to jej@j-arkadia.com 
 or pingc@wacom.com.
-Please include the word WACOM in the subject to help me differentiate your
+Please include the word WACOM in the subject to help us differentiate your
 email from the spam I usually receive.
 
 John E.Joganic
@@ -84,20 +84,46 @@ BUILDING wacom_drv.o FROM SCRATCH
 
 You will need the XFree86 source code, and you will need to actually build
 it.  The file xf86Version.h is generated during the build process and is a
-required dependency for building wacom_drv.o.  The configure script will
-*not* attempt to build wacom-drv.o by default, but if you provide the
---enable-wacomdrv and --with-xf86=<xf86_directory> options, configure will
-build wacom_drv.o during the normal build process.
+required dependency for building wacom_drv.o.  The configure script will 
+attempt to build wacom-drv.o by default, but you need to provide the --with-xf86=<xf86_directory> option. If you don't want to build wacom-drv.o, the 
+option --disable-wacomdrv needs to be provided.
 
 If the xf86Version.h file is located at:
 	/usr/local/src/XFree86-4.2.0/xc/programs/Xserver/include/xf86Version.h
 
-Then the correct configure options would be:
-	--enable-wacomdrv --with-xf86=/usr/local/src/XFree86-4.2.0
+Then the correct configure option to build wacom_drv.o would be:
+	--with-xf86=/usr/local/src/XFree86-4.2.0
 
 INSTALL wacomcpl 
 
-wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed.
+wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed. 
+The configure script will attempt to build wacomxi libs by searching /usr/include 
+and /usr/lib for tcl and tk hearders and libs. You can override the directories
+using the --with-tcl=<directory> and --with-tk=<directory> options.
+
+If the tcl.h is located at /usr/local/tcl8.4/include and the libtcl8.4.so at 
+/usr/local/tcl8.4/lib, you need to:
+
+First link /usr/local/tcl8.4/lib/libtcl8.4.so to /usr/lib/libtcl.so.0:
+	ln -s /usr/local/tcl8.4/lib/libtcl8.4.so /usr/lib/libtcl.so.0
+
+Then use the configure option:
+	--with-tcl=/usr/local/tcl8.4
+
+If the tk.h is located at /usr/local/tk8.4/include and the libtk8.4.so at 
+/usr/local/tk8.4/lib, then the correct steps would be:
+	ln -s /usr/local/tk8.4/lib/libtk8.4.so /usr/lib/libtk.so.0
+
+Then use the configure option:
+	--with-tk=/usr/local/tk8.4
+
+If both tcl and tk under the same directory, say /usr/local/tcl8.4, then the steps are:
+	ln -s /usr/local/tcl8.4/lib/libtcl8.4.so /usr/lib/libtcl.so.0
+	ln -s /usr/local/tcl8.4/lib/libtk8.4.so /usr/lib/libtk.so.0
+
+And use the configure option:
+	--with-tcl=/usr/local/tcl8.4
+
 
 INSTALL kernel pieces
 

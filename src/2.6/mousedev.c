@@ -28,7 +28,7 @@
 #endif
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
-MODULE_DESCRIPTION("Mouse (ExplorerPS/2) device interfaces");
+MODULE_DESCRIPTION("Mouse (ExplorerPS/2) device interfaces - pc-0.1");
 MODULE_LICENSE("GPL");
 
 #ifndef CONFIG_INPUT_MOUSEDEV_SCREEN_X

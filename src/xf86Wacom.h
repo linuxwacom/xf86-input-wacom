@@ -521,6 +521,7 @@ struct _WacomCommonRec
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
+	char * wcmEraserID;	     /* eraser associated with the stylus */
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;		/* set Tablet PC button on/off */

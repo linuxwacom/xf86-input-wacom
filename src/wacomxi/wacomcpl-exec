@@ -159,6 +159,12 @@ proc calibrationSequence {which xDev yDev} {
 	    exec xsetwacom set $device topy $yDevMin
 	    exec xsetwacom set $device bottomx $xDevMax
 	    exec xsetwacom set $device bottomy $yDevMax
+	    # send the same data to the associated eraser
+	    set eraser $getDeviceModel($device,eraser)
+	    exec xsetwacom set $eraser topx $xDevMin
+	    exec xsetwacom set $eraser topy $yDevMin
+	    exec xsetwacom set $eraser bottomx $xDevMax
+	    exec xsetwacom set $eraser bottomy $yDevMax
 	    updateXinitrc
 	}
 
@@ -362,7 +368,8 @@ proc updateDevice {} {
 		createEPanel
 	    }
 	} else {
-	    if { [ string compare $type "cursor" ] } {
+	    if { [ string compare -nocase -length 6 \
+		$type "cursor" ] } {
 		createSPanel
 	    } else {
 		createCPanel
@@ -386,10 +393,13 @@ proc createDeviceList {infoString} {
     set s2 [ lindex $infoString $index ]
     set index [ expr $index+1 ]
     set s3 [ lindex $infoString $index ]
+    set index [ expr $index+1 ]
+    set s4 [ lindex $infoString $index ]
     while { $s1 != "" } {
 	if { [string compare -length 6 $s1 "Screen" ] } {
 	    set getDeviceModel($s1,model) $s2
 	    set getDeviceModel($s1,type) $s3
+	    set getDeviceModel($s1,eraser) $s4
 	    if { [string first $devices $s1] == -1 } {
 		set devices "$devices $s1"
 	    }
@@ -399,6 +409,8 @@ proc createDeviceList {infoString} {
 	    set s2 [ lindex $infoString $index ]
 	    set index [ expr $index+1 ]
 	    set s3 [ lindex $infoString $index ]
+	    set index [ expr $index+1 ]
+	    set s4 [ lindex $infoString $index ]
 	} else {
 	    set s1 ""
 	}
@@ -439,7 +451,7 @@ proc createScreenList {infoString} {
 	    set s0 [ lindex $infoString $index ]
 	    set numS [expr $numS+1]
 	} else {
-	    set index [ expr $index+3 ]
+	    set index [ expr $index+4 ]
 	    set s0 [ lindex $infoString $index ]
 	}
     }
@@ -491,10 +503,10 @@ proc updateButton {} {
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
-    if { ![string compare $type "cursor"] } {
+    if { ![string compare -nocase -length 6 $type "cursor"] } {
 	set k 6
     }
-    if { ![string compare $type "stylus"] } {
+    if { ![string compare -nocase -length 6 $type "stylus"] } {
 	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
 	    set k 4
@@ -502,7 +514,7 @@ proc updateButton {} {
 	    set k 3
 	}
     }
-    if { ![string compare $type "eraser"] }  {
+    if { ![string compare -nocase -length 6 $type "eraser"] }  {
 	set k 2
     }
     for { set i 1 } { $i < $k } { incr i 1 } {
@@ -549,14 +561,14 @@ proc initialButton {} {
     set Option(2) "Button1"
     set model $getDeviceModel($device,model)
     set t 2
-    if { [ string compare $type "eraser" ] } {
+    if { [ string compare -nocase -length 6 $type "eraser" ] } {
 	set Option(3) "Button2"
 	set t 3
 	if { [string compare -nocase -length \
 		5 $model "isdv4" ] } {
 	    set Option(4) "Button3"
 	    set t 4
-	    if { [ string compare $type "stylus" ] } {
+	    if { [ string compare -nocase -length 6 $type "stylus" ] } {
 		set Option(5) "Button4"
 		set Option(6) "Button5"
 		set t 6
@@ -587,9 +599,9 @@ proc displaySubWindow { okF deF initial i} {
     global wName
 
     toplevel .subW
-    wm title .subW "$wName($i) Window"
+    wm title .subW "$wName($i)"
     wm transient .subW .
-    wm geometry .subW =450x250
+    wm geometry .subW =500x250
     wm state .subW normal
     frame .subW.f
     button .subW.f.ok -text "Ok" -command $okF
@@ -600,9 +612,9 @@ proc displaySubWindow { okF deF initial i} {
     $initial
 
     grid .subW.f -row 0 -column 0 -sticky nw
-    grid .subW.f.ok -row 4 -column 0 -columnspan 3 -padx 10 -pady 10
+    grid .subW.f.ok -row 4 -column 8 -columnspan 3 -padx 10 -pady 10
     grid .subW.f.cancel -row 4 -column 4 -columnspan 3 -padx 10 -pady 10
-    grid .subW.f.default -row 4 -column 8 -columnspan 3 -padx 10 -pady 10
+    grid .subW.f.default -row 4 -column 0 -columnspan 3 -padx 10 -pady 10
 
     #
     # Suppress tags on listboxes to prevent changing the
@@ -641,7 +653,7 @@ proc defaultButton {} {
 	set db$i $db($i)
     }
     set type $getDeviceModel($device,type)
-    if { [ string compare $type "cursor" ] } {
+    if { [ string compare -nocase -length 6 $type "cursor" ] } {
 	set dmode $dm(2)
     } else {
 	set dmode $dm(1)
@@ -780,7 +792,7 @@ proc initialTip {} {
     getDeviceOptionProc $device 2
 
     frame .subW.f.group -bd 10 -bg beige -width 150 -height 150
-    label .subW.f.group.groupl1 -text "Tip Feel: "
+    label .subW.f.group.groupl1 -text "Sensitivity: "
     grid .subW.f.group.groupl1 -row 0 -column 0
     scale .subW.f.group.scale1 -orient horizontal -length 100 \
 		-from 1 -to 7
@@ -813,13 +825,15 @@ proc initialTip {} {
     .subW.f.group.scale1 set $value
     label .subW.f.group.l2 -text "Soft"
     grid .subW.f.group.l2 -row 1 -column 7
-    label .subW.f.group.l3 -text "Hard"
+    label .subW.f.group.l3 -text "Firm"
     grid .subW.f.group.l3 -row 1 -column 9
 
-    label .subW.f.group.groupl2 -text "Click Force: "
+    label .subW.f.group.groupl2 -text "Click Threshold: "
     grid .subW.f.group.groupl2 -row 3 -column 0
-    label .subW.f.group.l4 -text "(%)"
-    grid .subW.f.group.l4 -row 3 -column 7
+    label .subW.f.group.l4 -text "Low"
+    grid .subW.f.group.l4 -row 4 -column 7
+    label .subW.f.group.l5 -text "High"
+    grid .subW.f.group.l5 -row 4 -column 9
     scale .subW.f.group.scale2 -orient horizontal -length 100 \
 		-from 0 -to 20
     grid .subW.f.group.scale2 -row 3 -column 8
@@ -861,7 +875,7 @@ proc createCPanel {} {
     global bName
 
     frame .panel
-    button .panel.button -text "Tool Button" \
+    button .panel.button -text "Tool Buttons" \
 	    -state normal -command "displaySubWindow \
 	    updateButton defaultButton initialButton 2"
     button .panel.mapping -text "Tracking" \
@@ -883,7 +897,7 @@ proc createSPanel {} {
     button .panel.pressure -text "Feel"\
 	    -state normal -command "displaySubWindow \
 	    updateTip defaultTip initialTip 1"
-    button .panel.button -text "Tool Button" \
+    button .panel.button -text "Tool Buttons" \
 	    -state normal -command "displaySubWindow \
 	    updateButton defaultButton initialButton 2"
     button .panel.mapping -text "Tracking" \
@@ -906,7 +920,7 @@ proc createEPanel {} {
     button .panel.pressure -text "Feel"\
 	    -state normal -command "displaySubWindow \
 	    updateTip defaultTip initialTip 1"
-    button .panel.button -text "Tool Button" \
+    button .panel.button -text "Tool Buttons" \
 	    -state normal -command "displaySubWindow \
 	    updateButton defaultButton initialButton 2"
     set bName(pressure) 1
@@ -927,7 +941,7 @@ proc createLPanel {} {
 	    updateTip defaultTip initialTip 1"
     button .panel.calibrate -text "Calibrate" \
 	    -command Calibration -state normal
-    button .panel.button -text "Tool Button" \
+    button .panel.button -text "Tool Buttons" \
 	    -state normal -command "displaySubWindow \
 	    updateButton defaultButton initialButton 2"
     set bName(pressure) 1
@@ -989,7 +1003,7 @@ proc createControls {} {
     set dm(2) "Absolute"
 
     set wName(1) "Feel"
-    set wName(2) "Tool Button"
+    set wName(2) "Tool Buttons"
     set wName(3) "Tracking"
 
     checkbutton .showHelp -text "Turn Help on" -anchor w \

@@ -255,8 +255,8 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x12: /* Graphire2 5x7 */
 				model = &usbGraphire2; break;
 
-			case 0x13: /* Graphire2 4x5 */
-			case 0x14: /* Graphire2 6x8 */
+			case 0x13: /* Graphire3 4x5 */
+			case 0x14: /* Graphire3 6x8 */
 				model = &usbGraphire3; break;
 
 			case 0x20: /* Intuos 4x5 */

@@ -1,6 +1,6 @@
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.5.4-beta)
+AM_INIT_AUTOMAKE(linuxwacom, 0.6.0)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -173,7 +173,7 @@ if test "$enable_libwacomxi" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_LIBWACOMXI=yes
-		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi -L$WCM_TCLLIBDIR/tcl -L$WCM_TKLIBDIR/tk"
+		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi"
 		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
 		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
 	fi
@@ -530,11 +530,11 @@ echo "  BUILD ENVIRONMENT:"
 echo "       architecture - $WCM_ARCH"
 echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
 echo "  module versioning - $WCM_OPTION_MODVER"
-echo "      kernel source - $WCM_ENV_KERNEL"
-echo "            XFree86 - $WCM_ENV_XF86"
-echo "               XLib - $WCM_ENV_XLIB"
-echo "                TCL - $WCM_ENV_TCL"
-echo "                 TK - $WCM_ENV_TK"
+echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
+echo "            XFree86 - $WCM_ENV_XF86 $WCM_XF86DIR"
+echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"
+echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
+echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
 if test -n "$WCM_ENV_XF86V3"; then
 	echo "          XFree86v3 - $WCM_ENV_XF86V3"
 fi

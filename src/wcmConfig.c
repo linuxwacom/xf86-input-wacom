@@ -143,6 +143,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
+	common->wcmEraserID = "";	/* eraser id associated with the stylus */
 	common->wcmGimp = 1;	/* enabled (=1) to support Gimp when Xinerama is */
 				/* enabled for multi-monitor desktop. */
 				/* To calibrate Cintiq and ISDV4, it should be disabled (=0) */
@@ -288,13 +289,25 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pDev,
 	WacomDevicePtr privMatch = (WacomDevicePtr)(pMatch->private);
 	WacomDevicePtr priv= (WacomDevicePtr)(pDev->private);
 	WacomCommonPtr common = priv->common;
+	char * type;
 
 	if ((pMatch->device_config == xf86WcmConfig) &&
 		(!strcmp(privMatch->common->wcmDevice, name)))
 	{
 		DBG(2, ErrorF("xf86WcmConfig wacom port share between "
 			"%s and %s\n", pDev->name, pMatch->name));
-		privMatch->common->wcmHasEraser |= common->wcmHasEraser;
+		type = xf86FindOptionValue(privMatch->options, "Type");
+		if ( type && (strstr(type, "eraser")) )
+			privMatch->common->wcmEraserID=pMatch->name;
+		else
+		{
+			type = xf86FindOptionValue(priv->options, "Type");
+			if ( type && (strstr(type, "eraser")) )
+			{
+				privMatch->common->wcmEraserID=pDev->name;
+			}
+		}
+
 		xfree(common->wcmDevices);
 		xfree(common);
 		common = priv->common = privMatch->common;
@@ -754,6 +767,7 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
+	char * type;
 
 	if ((pLocal != pMatch) &&
 		(pMatch->device_control == gWacomModule.DevProc) &&
@@ -761,6 +775,19 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	{
 		DBG(2, ErrorF("xf86WcmInit wacom port share between"
 				" %s and %s\n", pLocal->name, pMatch->name));
+		type = xf86FindOptionValue(pMatch->options, "Type");
+DBG(2, ErrorF("xf86WcmConfig eraser ID was %s \n", privMatch->common->wcmEraserID));
+		if ( type && (strstr(type, "eraser")) )
+			privMatch->common->wcmEraserID=pMatch->name;
+		else
+		{
+			type = xf86FindOptionValue(pLocal->options, "Type");
+			if ( type && (strstr(type, "eraser")) )
+			{
+				privMatch->common->wcmEraserID=pLocal->name;
+			}
+		}
+DBG(2, ErrorF("xf86WcmConfig eraser is %s \n", privMatch->common->wcmEraserID));
 		xfree(common->wcmDevices);
 		xfree(common);
 		common = priv->common = privMatch->common;

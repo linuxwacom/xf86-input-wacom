@@ -489,5 +489,5 @@ module_init(evdev_init);
 module_exit(evdev_exit);
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
-MODULE_DESCRIPTION("Input driver event char devices");
+MODULE_DESCRIPTION("Input driver event char devices - pc-0.1");
 MODULE_LICENSE("GPL");

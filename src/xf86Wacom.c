@@ -982,7 +982,6 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 	{
 		while(localDevices) 
 		{
-DBG(10, ErrorF("xf86WcmModelToFile in localDevices\n"));
 			m3 = xf86FindOptionValue(localDevices->options, "Type");
 			if (m3 && (strstr(m3, "eraser") || strstr(m3, "stylus") 
 					|| strstr(m3, "cursor")))
@@ -992,7 +991,10 @@ DBG(10, ErrorF("xf86WcmModelToFile in localDevices\n"));
 			if (lprv && lprv->common) 
 			{
 				sscanf((char*)(lprv->common->wcmModel)->name, "%s %s", m1, m2);
-				fprintf(fp, "%s %s %s\n", localDevices->name, m2, m3);
+				if ( lprv->common->wcmEraserID )
+					fprintf(fp, "%s %s %s %s\n", localDevices->name, m2, m3, lprv->common->wcmEraserID);
+				else
+					fprintf(fp, "%s %s %s\n", localDevices->name, m2, m3);
 				if (lprv->twinview != TV_NONE)
 				{
 					priv = lprv;
@@ -1001,7 +1003,6 @@ DBG(10, ErrorF("xf86WcmModelToFile in localDevices\n"));
 			}
 			localDevices = localDevices->next;
 		}
-DBG(10, ErrorF("xf86WcmModelToFile twinview\n"));
 		/* write TwinView ScreenInfo */
 		if (priv->twinview == TV_ABOVE_BELOW)
 		{
@@ -1087,7 +1088,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		}
 		case 4: /* JEJ - test */
 		{
-			DBG(10,ErrorF("xf86WcmChangeControl: %P,%P\n",
+			DBG(10,ErrorF("xf86WcmChangeControl: %p,%p\n",
 				param,value));
 			return xf86WcmSetParam(local,param,value);
 		}

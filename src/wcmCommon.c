@@ -656,7 +656,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = GetTimeInMillis();
 
-	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%P x=%d y=%d b=%P "
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%p x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,

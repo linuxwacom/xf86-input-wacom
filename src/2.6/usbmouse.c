@@ -1,5 +1,5 @@
 /*
- * $Id: usbmouse.c,v 1.1 2003/12/10 01:13:44 pingc Exp $
+ * $Id: usbmouse.c,v 1.2 2004/01/14 01:28:30 pingc Exp $
  *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
@@ -36,7 +36,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.6"
+#define DRIVER_VERSION "v1.6- pc-0.1"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB HID Boot Protocol mouse driver"
 #define DRIVER_LICENSE "GPL"

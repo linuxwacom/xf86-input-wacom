@@ -1,3 +1,8 @@
+December 23, 2003 - Ping Cheng
+
+This linuxwacom release supports kernel 2.4.x & 2.6.0, XFree86 4.3 or earlier. 
+The configuration and installation details are updated in README.
+
 December 22, 2002 - John E. Joganic
 
 The wacpack project is being hosted on SourceForge as the Linux Wacom Project.

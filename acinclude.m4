@@ -333,17 +333,18 @@ fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TCL,[
 dnl Check for TCL development environment
-WCM_TCLLIBDIR=
+WCM_TCLDIR=
 AC_ARG_WITH(tcl, 
 [  --with-tcl=dir  uses a specified tcl directory  ],
-[ WCM_TCLLIBDIR=$withval ])
+[ WCM_TCLDIR=$withval ])
 
 dnl handle default case
-if test "$WCM_TCLLIBDIR" = "yes" || test "$WCM_TCLLIBDIR" == ""; then
+if test "$WCM_TCLDIR" = "yes" || test "$WCM_TCLDIR" == ""; then
 	AC_MSG_CHECKING(for tcl header files)
 	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tcl.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TCL=yes
+		WCM_TCLDIR="$WCM_TCLTKDIR_DEFAULT"
 	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
@@ -355,11 +356,14 @@ if test "$WCM_TCLLIBDIR" = "yes" || test "$WCM_TCLLIBDIR" == ""; then
 	fi
 
 dnl handle specified case
-elif test "$WCM_TCLLIBDIR" != "no"; then
+elif test "$WCM_TCLDIR" != "no"; then
 	AC_MSG_CHECKING(for tcl header files)
-	if test -f "$WCM_TCLLIBDIR/include/tcl.h"; then
+	if test -f "$WCM_TCLDIR/include/tcl.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TCL=yes
+		if test "$WCM_TCLDIR" != "/usr"; then
+			CFLAGS="$CFLAGS -I$WCM_TCLDIR/include"
+		fi
 	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
@@ -373,16 +377,21 @@ fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TK,[
 dnl Check for TK development environment
-WCM_TKLIBDIR=
+WCM_TKDIR=
 AC_ARG_WITH(tk,
 [  --with-tk=dir uses a specified tk directory  ], 
-[ WCM_TKLIBDIR=$withval ])
+[ WCM_TKDIR=$withval ])
 
 dnl handle default case
-if test "$WCM_TKLIBDIR" = "yes" || test "$WCM_TKLIBDIR" == ""; then
+if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
+		WCM_TKDIR="$WCM_TCLTKDIR_DEFAULT"
+	elif test -f "$WCM_TCLDIR/include/tk.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TK=yes
+		WCM_TKDIR="$WCM_TCLDIR"
 	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk development environment does not appear to"
@@ -393,11 +402,14 @@ if test "$WCM_TKLIBDIR" = "yes" || test "$WCM_TKLIBDIR" == ""; then
 		echo "***"
 	fi
 dnl handle specified case
-elif test "$WCM_TKLIBDIR" != "no"; then
+elif test "$WCM_TKDIR" != "no"; then
 	AC_MSG_CHECKING(for tk header files)
-	if test -f "$WCM_TKLIBDIR/include/tk.h"; then
+	if test -f "$WCM_TKDIR/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
+		if test "$WCM_TCLDIR" != "$WCM_TKDIR" && "$WCM_TKDIR" != "/usr"; then
+			CFLAGS="$CFLAGS -I$WCM_TKDIR/include"
+		fi
 	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk library does not appear to be installed."

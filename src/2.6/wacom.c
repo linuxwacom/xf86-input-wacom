@@ -68,7 +68,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30"
+#define DRIVER_VERSION "v1.30 - pc-0.2"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -497,7 +497,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 					input_report_key(dev, BTN_LEFT,   data[8] & 0x04);
 					input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 					input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
-					input_report_abs(dev, REL_WHEEL, 
+					input_report_rel(dev, REL_WHEEL, 
 					    (-(__u32)(data[8] & 0x01) + (__u32)((data[8] & 0x02) >> 1)));
 				}
 				else {     /* Lens cursor packets */
@@ -646,6 +646,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 		case 2:
 			wacom->dev.evbit[0] |= BIT(EV_MSC);
+			wacom->dev.relbit[0] |= BIT(REL_WHEEL);
 			wacom->dev.mscbit[0] |= BIT(MSC_SERIAL);
 			wacom->dev.keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE) | BIT(BTN_SIDE) | BIT(BTN_EXTRA);
  			wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER) | BIT(BTN_TOOL_MOUSE)	| BIT(BTN_TOOL_BRUSH)

@@ -1,3 +1,9 @@
+2004-01-13    Ping Cheng <pingc@wacom.com>
+	* Fixed relative wheel bug in wacom.c for 2.6
+	* Modified tcl and tk configuration options
+	* Rearranged wacomcpl windows for Tablet PC
+	* Updated README
+
 2003-12-15    Ping Cheng <pingc@wacom.com>
 	* Fixed a wacom.c bug for 2.6
 	* Added evdev.c to src/2.6 to attach replugged device
