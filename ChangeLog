@@ -1,3 +1,8 @@
+2003-05-02    John E. Joganic <john@joganic.com>
+
+	* Added xsetwacom, libwacomcfg, and Xwacom.h; work in progress
+	* xsetwacom, wacdump, libwacomcfg, and xidump now install by default.
+
 2003-05-02    Jimmy Yen <jimmy@yen.tp>
 
 	* Cleanup, removed FIRST_TOUCH_FLAG.

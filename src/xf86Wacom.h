@@ -28,6 +28,7 @@
 
 #include <xf86Version.h>
 #include <xf86Optrec.h>  /* for XF86OptionPtr */
+#include <Xwacom.h>
 
 /* This driver can be compiled for the 4.x API (technically versions
  * beginning at 3.9) or the older API which ended around version 3.3. */

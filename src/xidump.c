@@ -855,6 +855,24 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 			GrabModeAsync, /* don't queue, give me whatever you got */
 			GrabModeAsync, /* same */
 			CurrentTime);
+
+#if 0
+	{
+		int foo[2] = { 0x01234567, 0x89ABCDEF };
+		XDeviceResolutionControl c;
+		c.control = DEVICE_RESOLUTION;
+		c.length = sizeof(c);
+		c.first_valuator = 4;
+		c.num_valuators = 2;
+		c.resolutions = foo;
+
+		nRtn = XChangeDeviceControl(pDisp,
+				pDev,DEVICE_RESOLUTION,(XDeviceControl*)&c);
+		printf("result=%d",nRtn);
+	}
+
+#else
+
 	
 	/* fire up the UI */
 	if ((nRtn=pUI->Init()) != 0)
@@ -865,6 +883,7 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 			fprintf(stderr,"failed to run UI\n");
 		pUI->Term();
 	}
+#endif
 
 	XUngrabDevice(pDisp,pDev,CurrentTime);
 	XCloseDevice(pDisp,pDev);

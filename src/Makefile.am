@@ -1,9 +1,14 @@
-noinst_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
+bin_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
 noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
+
+wacomcfgdir = $(includedir)/wacomcfg
+
+lib_LTLIBRARIES = libwacomcfg.la
+wacomcfg_HEADERS = wacomcfg.h
 
 AM_CFLAGS = -Wall
 
-EXTRA_PROGRAMS = wacdump xidump
+EXTRA_PROGRAMS = wacdump xidump xsetwacom
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o \
 		tabletdev.o \
 		wacom_drv.o wacom_drv-v3.o
@@ -15,7 +20,15 @@ wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 wacdump_LDADD = -lncurses
 
 xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
+xidump_LDFLAGS = @WCM_XIDUMP_LIBS@
 xidump_LDADD = -lncurses
+
+libwacomcfg_la_SOURCES = wacomcfg.c wacomcfg.h Xwacom.h
+libwacomcfg_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMCFG_VER@
+libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
+
+xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
+xsetwacom_LDADD = libwacomcfg.la
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
 		input.c tabletdev.c usbmouse.c xf86Wacom.c \
