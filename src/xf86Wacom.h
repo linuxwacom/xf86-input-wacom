@@ -418,8 +418,6 @@ struct _WacomDeviceClass
 
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
-#define GRAPHIRE_FLAG           4
-#define INTUOS2_FLAG            8
 
 #define DEVICE_ISDV4 0x000C
 

@@ -1237,7 +1237,6 @@ static void serialInitIntuos2(WacomCommonPtr common, int fd,
 {
 	DBG(2, ErrorF("detected an Intuos2 model\n"));
 
-	common->wcmFlags |= INTUOS2_FLAG;
 	common->wcmProtocolLevel = 5;
 	common->wcmVersion = version;
 
@@ -1353,7 +1352,6 @@ static void serialInitGraphire(WacomCommonPtr common, int fd,
 {
 	DBG(2, ErrorF("detected a Graphire model\n"));
 
-	common->wcmFlags |= GRAPHIRE_FLAG;
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
