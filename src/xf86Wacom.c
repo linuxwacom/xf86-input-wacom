@@ -63,7 +63,7 @@
  * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
  * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
  * 2003-02-22 26-j0.5.6 - applied J. Yen's origin patch
- * 2003-02-22 26-j0.5.7 - added Ping Cheng's "suppress" patch
+ * 2003-03-06 26-j0.5.7 - added Ping Cheng's "suppress" patch
  */
 
 static const char identification[] = "$Identification: 26-j0.5.7 $";
@@ -242,6 +242,10 @@ static int      debug_level = 0;
 #define	KEEP_SHAPE_FLAG		32
 #define BAUD_19200_FLAG		64
 #define BETA_FLAG		    128
+
+#define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
+#define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
+#define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 
 /******************************************************************************
  * WacomCommonRec flags
@@ -3237,49 +3241,38 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
     }
     DBG(2, ErrorF("New threshold=%d\n", common->wcmThreshold));    
 
-    /* Set the real values */
-    InitValuatorAxisStruct(pWcm,
-			   0,
-			   0,		/* min val */
-			   priv->bottomX - priv->topX, /* max val */
-			   mils(common->wcmResolX), /* resolution */
-			   0,		/* min_res */
-			   mils(common->wcmResolX)); /* max_res */
-    InitValuatorAxisStruct(pWcm,
-			   1,
-			   0,		/* min val */
-			   priv->bottomY - priv->topY, /* max val */
-			   mils(common->wcmResolY), /* resolution */
-			   0,		/* min_res */
-			   mils(common->wcmResolY)); /* max_res */
-    InitValuatorAxisStruct(pWcm,
-			   2,
-			   0,		/* min val */
-			   common->wcmMaxZ, /* max val */
-			   mils(common->wcmResolZ), /* resolution */
-			   0,		/* min_res */
-			   mils(common->wcmResolZ)); /* max_res */
-    InitValuatorAxisStruct(pWcm,
-			   3,
-			   -64,		/* min val */
-			   63,		/* max val */
-			   128,		/* resolution ??? */
-			   0,
-			   128);
-    InitValuatorAxisStruct(pWcm,
-			   4,
-			   -64,		/* min val */
-			   63,		/* max val */
-			   128,		/* resolution ??? */
-			   0,
-			   128);
-    InitValuatorAxisStruct(pWcm,
-			   5,
-			   0,		/* min val */
-			   1023,        /* max val */
-			   128,		/* resolution ??? */
-			   0,
-			   128);
+	/* x and y axes */
+    InitValuatorAxisStruct(pWcm, 0, 0,
+			priv->bottomX - priv->topX, /* max val */
+			mils(common->wcmResolX), /* resolution */
+			0, mils(common->wcmResolX)); /* max_res */
+
+    InitValuatorAxisStruct(pWcm, 1, 0,
+			priv->bottomY - priv->topY, /* max val */
+			mils(common->wcmResolY), /* resolution */
+			0, mils(common->wcmResolY)); /* max_res */
+
+	/* pressure */
+    InitValuatorAxisStruct(pWcm, 2, 0,
+			common->wcmMaxZ, /* max val */
+			mils(common->wcmResolZ), /* resolution */
+			0, mils(common->wcmResolZ)); /* max_res */
+
+	if (IsCursor(priv))
+	{
+		/* z-rot and unused */
+    	InitValuatorAxisStruct(pWcm, 3, -900, 899, 1, 0, 1800);
+    	InitValuatorAxisStruct(pWcm, 4, 0, 0, 1, 0, 0);
+	}
+	else
+	{
+		/* tilt-x and tilt-y */
+    	InitValuatorAxisStruct(pWcm, 3, -64, 63, 1, 0, 128);
+    	InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 0, 1);
+	}
+
+	/* wheel */
+    InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 0, 1024);
     
     return (local->fd != -1);
 }
@@ -3336,7 +3329,7 @@ xf86WcmProc(DeviceIntPtr       pWcm,
 		  pWcm, priv, (DEVICE_ID(priv->flags) == STYLUS_ID) ? "stylus" :
 		  (DEVICE_ID(priv->flags) == CURSOR_ID) ? "cursor" : "eraser",
 		  priv->flags, what));
-  
+
     switch (what)
 	{
 	case DEVICE_INIT: 
