@@ -1,7 +1,12 @@
+2003-03-31    John E. Joganic <john@joganic.com>
+
+	* Added mousedev.c with fix to ignore wacom
+
 2003-03-22    John E. Joganic <john@joganic.com>
 
 	* Added ncurses detection.
 	* Cleaned up output of xidump.
+	* Added Dean Townsley's ISDV4 patch.
 
 2003-03-08    John E. Joganic <john@joganic.com>
 

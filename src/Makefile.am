@@ -4,7 +4,7 @@ noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
 AM_CFLAGS = -Wall
 
 EXTRA_PROGRAMS = wacdump xidump
-EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o \
+EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o \
 		tabletdev.o \
 		wacom_drv.o wacom_drv-v3.o
 
@@ -17,7 +17,8 @@ wacdump_LDADD = -lncurses
 xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
 xidump_LDADD = -lncurses
 
-EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c input.o \
+EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
+		input.o \
 		tabletdev.o \
 		xf86Wacom.c usbmouse.c \
 		wcm-beta.c wcm-beta.h
@@ -70,6 +71,10 @@ usbmouse.o: usbmouse.c Makefile
 evdev.o: evdev.c Makefile
 	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
 		-DKBUILD_BASENAME=evdev -c -o evdev.o evdev.c
+
+mousedev.o: mousedev.c Makefile
+	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
+		-DKBUILD_BASENAME=mousedev -c -o mousedev.o mousedev.c
 
 input.o: input.c Makefile
 	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
