@@ -233,7 +233,7 @@ if test "$enable_usbmouse" != "no"; then
 				cp $WCM_KERNELDIR/drivers/usb/usbmouse.c src/2.4.22
 			else
 				if test "$WCM_KERNEL_VER" = "2.6"; then
-					if test ! -f $WCM_KERNELDIR/drivers/usb/input/usbmouse.cq; then
+					if test ! -f $WCM_KERNELDIR/drivers/usb/input/usbmouse.c.2.6; then
 						cp $WCM_KERNELDIR/drivers/usb/input/usbmouse.c \
 							$WCM_KERNELDIR/drivers/usb/input/usbmouse.c.2.6
 						cp src/2.6/usbmouse.c $WCM_KERNELDIR/drivers/usb/input
@@ -396,7 +396,7 @@ if test "$enable_modver" = "no"; then
 	WCM_MODVER=""
 elif test "$enable_modver" = "yes"; then
 	WCM_OPTION_MODVER=yes
-	WCM_MODVER="-DCONFIG_MODVERSIONS"
+	WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
 else
 	dnl not explicitly set, go with default
 	WCM_MODVER=""
@@ -529,7 +529,7 @@ echo "----------------------------------------"
 echo "  BUILD ENVIRONMENT:"
 echo "       architecture - $WCM_ARCH"
 echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
-echo "  module versioning - $WCM_OPTION_MODVER"
+echo "  module versioning - $WCM_OPTION_MODVER" $WCM_MODVER
 echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
 echo "            XFree86 - $WCM_ENV_XF86 $WCM_XF86DIR"
 echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"

@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.1 2003/11/10 20:00:02 pingc Exp $
+ * $Id: hid-core.c,v 1.2 2004/02/25 18:33:08 pingc Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -28,6 +28,15 @@
  * e-mail - mail your message to <vojtech@suse.cz>, or by paper mail:
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
+
+#include <linux/autoconf.h>
+#if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
+#   define MODVERSIONS
+#endif
+
+#ifdef MODVERSIONS
+#include <linux/modversions.h>
+#endif
 
 #include <linux/module.h>
 #include <linux/slab.h>

@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.2 2004/02/05 01:03:13 pingc Exp $
+ * $Id: wacom.c,v 1.3 2004/02/25 18:33:08 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -76,6 +76,7 @@
  *    v1.30-j0.5.2 - applied Ping Cheng's eraser patch for PL
  *    v1.30-j0.5.3 - reapplied patch for Intuos2 6x8's reportings as (0x47)
  *    v1.30-j0.6.0 - new release
+ *    v1.30-j0.6.1 - new release
  */
 
 /*
@@ -106,7 +107,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.5.2"
+#define DRIVER_VERSION "v1.30-j0.6.1"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -601,7 +602,7 @@ struct wacom_features wacom_features[] = {
 	/* Volito - (Graphire2 4x5 no mouse wheel) */
 	/* 20 */ { "Wacom Volito",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
-	/* 21 */ { "Wacom Graphire3 4x5",  8,   10206, 7422,   511, 32,
+	/* 21 */ { "Wacom Graphire3 4x5",  8,   10208, 7424,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/* 22 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
@@ -766,7 +767,7 @@ static void wacom_disconnect(struct usb_device *dev, void *ptr)
 	struct wacom *wacom = ptr;
 	if (wacom)
 	{
-    	spin_lock_irqsave(&wacom_event_lock, flags);
+		spin_lock_irqsave(&wacom_event_lock, flags);
 		list_del(&wacom->event_list);
 		INIT_LIST_HEAD(&wacom->event_list);
 		spin_unlock_irqrestore(&wacom_event_lock, flags);
@@ -803,7 +804,7 @@ static void wacom_events(void)
 		list_del(tmp); /* dequeue tablet */
 		INIT_LIST_HEAD(tmp);
 
-		down(&wacom->kwacomd_sem); /* never blocks */
+		if (down_trylock(&wacom->kwacomd_sem) != 0) BUG(); /* never blocks */
 		spin_unlock_irqrestore(&wacom_event_lock, flags);
 
 		wacom_reset(wacom);
@@ -815,7 +816,6 @@ static void wacom_events(void)
 
 static int wacom_thread(void* pv)
 {
-	lock_kernel();
 	daemonize();
 	reparent_to_init();
 
@@ -831,7 +831,6 @@ static int wacom_thread(void* pv)
 
 	printk(KERN_INFO "wacom_thread exiting\n");
 
-	unlock_kernel();
 	complete_and_exit(&kwacomd_exited, 0);
 }
 
@@ -851,25 +850,25 @@ static int __init wacom_init(void)
 	info(DRIVER_VERSION " " DRIVER_AUTHOR);
 	info(DRIVER_DESC);
 
-    pid = kernel_thread(wacom_thread, NULL,
+	pid = kernel_thread(wacom_thread, NULL,
 			CLONE_FS | CLONE_FILES | CLONE_SIGHAND);
 
-    if (pid >= 0)
+	if (pid >= 0)
 	{
 		kwacomd_pid = pid;
 		return 0;
 	}
 
-    /* Fall through if kernel_thread failed */
-    usb_deregister(&wacom_driver);
-    err("failed to start wacom_thread");
+	/* Fall through if kernel_thread failed */
+	usb_deregister(&wacom_driver);
+	err("failed to start wacom_thread");
 
-    return -1;
+	return -1;
 }
 
 static void __exit wacom_exit(void)
 {
-    int ret;
+	int ret;
 
 	/* Kill the thread */
 	ret = kill_proc(kwacomd_pid, SIGTERM, 1);

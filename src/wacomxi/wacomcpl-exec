@@ -531,6 +531,8 @@ proc updateButton {} {
 		{ set j 5 }
 	    "Left Double"
 		{ set j 17 }
+	    "Mode Toggle"
+		{ set j 19 }
 	    "Ignore"
 		{ set j 18 }
 	}
@@ -668,7 +670,7 @@ proc addMenu {t} {
     if { $opt == "" } { set opt $t }
     set db$t $db($opt) 
 
-    tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(18)
+    tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(19) $db(18)
 
     label .subW.f.name$t -text "Button $t: "
     if { $t < 3 } {
@@ -998,6 +1000,7 @@ proc createControls {} {
     set db(4) "Fourth"
     set db(5) "Fifth"
     set db(17) "Left Double"
+    set db(19) "Mode Toggle"
     set db(18) "Ignore"
     set dm(1) "Relative"
     set dm(2) "Absolute"

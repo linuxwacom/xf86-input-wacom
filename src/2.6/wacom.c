@@ -8,7 +8,7 @@
  *  Copyright (c) 2000 James E. Blair		<corvus@gnu.org>
  *  Copyright (c) 2000 Daniel Egger		<egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied		<flepied@mandrakesoft.com>
- *  Copyright (c) 2002 Ping Cheng		<pingc@wacom.com>
+ *  Copyright (c) 2002-2004 Ping Cheng		<pingc@wacom.com>
  *
  *  ChangeLog:
  *      v0.1 (vp)  - Initial release
@@ -174,7 +174,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
                                 input_report_key(dev, wacom->tool[1], 0);
                                 input_sync(dev);
                                 wacom->tool[1] = BTN_TOOL_PEN;
-                                return;
+                                goto exit;
                         }
                 }
                 if (wacom->tool[1] != BTN_TOOL_RUBBER) {
@@ -326,7 +326,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
         /* check if we can handle the data */
         if (data[0] == 99)
-                return;
+                goto exit;
 
 	if (data[0] != 2)
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
@@ -534,7 +534,7 @@ struct wacom_features wacom_features[] = {
         { "Wacom Graphire",      8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
 	{ "Wacom Graphire2 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
  	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 32, 1, wacom_graphire_irq },
-        { "Wacom Graphire3 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
+        { "Wacom Graphire3 4x5", 8,  10208,  7424,  511, 32, 1, wacom_graphire_irq },
         { "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, 1, wacom_graphire_irq },
   	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 15, 2, wacom_intuos_irq },
  	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 15, 2, wacom_intuos_irq },

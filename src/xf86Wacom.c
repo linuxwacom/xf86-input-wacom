@@ -711,27 +711,27 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 		break;
 	    case XWACOM_PARAM_BUTTON1:
-		if ((value < 0) || (value > 18)) return BadValue;
+		if ((value < 0) || (value > 19)) return BadValue;
 		xf86ReplaceIntOption(local->options,"Button1",value);
 		priv->button[0] = xf86SetIntOption(local->options,"Button1",1);
 		break;
 	    case XWACOM_PARAM_BUTTON2:
-		if ((value < 0) || (value > 18)) return BadValue;
+		if ((value < 0) || (value > 19)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button2", value);
 		priv->button[1] = xf86SetIntOption(local->options,"Button2",2);
 		break;
 	    case XWACOM_PARAM_BUTTON3:
-		if ((value < 0) || (value > 18)) return BadValue;
+		if ((value < 0) || (value > 19)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button3", value);
 		priv->button[2] = xf86SetIntOption(local->options,"Button3",3);
 		break;
 	    case XWACOM_PARAM_BUTTON4:
-		if ((value < 0) || (value > 18)) return BadValue;
+		if ((value < 0) || (value > 19)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button4", value);
 		priv->button[3] = xf86SetIntOption(local->options,"Button4",4);
 		break;
 	    case XWACOM_PARAM_BUTTON5:
-		if ((value < 0) || (value > 18)) return BadValue;
+		if ((value < 0) || (value > 19)) return BadValue;
 		xf86ReplaceIntOption(local->options, "Button5", value);
 		priv->button[4] = xf86SetIntOption(local->options,"Button5",5);
 		break;

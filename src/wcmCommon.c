@@ -198,18 +198,33 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 				{
 					/* Left button down */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 1,
-							0, 6, rx, ry, rz, rrot, rth, rwheel);
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+							1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 1,
-							0, 6, rx, ry, rz, rtx, rty, rwheel);
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+							1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
 					/* Left button up */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 0,
-							0, 6, rx, ry, rz, rrot, rth, rwheel);
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+							0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 0,
-							0, 6, rx, ry, rz, rtx, rty, rwheel);
+						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+							0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+				}
+				/* the other left button click will be executed in newb < 17 */
+			}
+			/* switch absolute or relative (Mode Toggle) */
+			if ( newb == 19 && (buttons & mask) )
+			{
+				if (is_absolute)
+				{
+					priv->flags &= ~ABSOLUTE_FLAG;
+			 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
+				}
+				else
+				{
+					priv->flags |= ABSOLUTE_FLAG;
+					xf86ReplaceStrOption(local->options, "Mode", "Absolute");
 				}
 			}
 			if (newb < 17)
@@ -255,6 +270,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 						0, 6, rx, ry, rz, rtx, rty, rwheel);
 				}
 			}
+			
 		}
 	}
 }

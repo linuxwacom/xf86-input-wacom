@@ -1,3 +1,7 @@
+2004-02-24    Ping Cheng <pingc@wacom.com>
+	* Support module versioning for kernel 2.4.22 and later (Adrian Secord)
+	* Added "Mode Toggle" to button functions to switch mode
+
 2004-02-05    Ping Cheng <pingc@wacom.com>
 	* Work around for 2.4.24 support (Marek Olszewski)
 
@@ -126,7 +130,7 @@
 	* Applied conditional build and install to wacomxi
 	* Modified wacomcpl to install and run regardless of install prefix
 	* Added Intuos filter code back into data path
-	* Nixed Graphire filter code because suppression code does same thing
+	* Fixed Graphire filter code because suppression code does same thing
 	* Raw filtering is enabled by default
 	* Intuos filter code works for both serial and USB tablets
 
