@@ -1131,13 +1131,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (first != 0 || num == 1)
 		return FALSE;
-	if (priv->twinview == TV_NONE && !priv->common->wcmGimp )
-	{
-		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
-			v0 < priv->topX ? 0 : v0 - priv->topX;
-		v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY :
-			v1 < priv->topY ? 0 : v1 - priv->topY;
-	}
+
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
 		priv->common->wcmGimp && priv->common->wcmMMonitor)
@@ -1227,15 +1221,14 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 /*****************************************************************************
  * xf86WcmDevReverseConvert --
  *  Convert X and Y to valuators. Only used by core events.
+ *  Handdle relatve screen to tablet convert
  ****************************************************************************/
 
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
 {
-    
-	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
-#ifdef NEVER /* The following is unnecessary since we kept valuators in priv */ 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
 
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
@@ -1297,9 +1290,9 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		valuators[0] += priv->topX + priv->tvoffsetX;
 		valuators[1] += priv->topY + priv->tvoffsetY;
 	}
-	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
-		valuators[0], valuators[1]));
-#endif
+	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d v2=%d v3=%d v4=%d v5=%d\n", x, y,
+		valuators[0], valuators[1], valuators[2], valuators[3], valuators[4], valuators[5]));
+
 	return TRUE;
 }
 

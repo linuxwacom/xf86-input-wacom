@@ -1,3 +1,7 @@
+2005-03-28    Ping Cheng <pingc@wacom.com>
+	* Updated linuxwacom.sf.net website
+	* Released linuxwacom-0.6.7 as beta
+
 2005-03-18    Ping Cheng <pingc@wacom.com>
 	* Added support to kernel 2.6.11
 	* Cleaned wacom_graphire_irq routine

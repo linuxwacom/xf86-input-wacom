@@ -349,7 +349,7 @@ static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
 {
 	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
 	common->wcmProtocolLevel = 5;
-	if ( strstr(id, "Intuos3") )
+	if ( strstr(id, "Intuos3") || strstr(id, "21UX") )
 	{
 		common->wcmChannelCnt = 1;
 		common->wcmResolX = common->wcmResolY = 5080;

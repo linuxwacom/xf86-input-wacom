@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.12 2005/03/18 18:17:44 pingc Exp $
+ * $Id: wacom.c,v 1.13 2005/03/28 23:10:03 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -353,19 +353,20 @@ static void wacom_graphire_irq(struct urb *urb)
 				break;
 		}
 	}
-	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
 
 	if (data[1] & 0x80) {
 		x = data[2] | ((__u32)data[3] << 8);
 		y = data[4] | ((__u32)data[5] << 8);
 		input_report_abs(dev, ABS_X, x);
 		input_report_abs(dev, ABS_Y, y);
-
+	}
+	if (wacom->tool[0] != BTN_TOOL_MOUSE) {
 		input_report_abs(dev, ABS_PRESSURE, data[6] | ((__u32)data[7] << 8));
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
 		input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
 		input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 	}
+	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
 	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
 }
 
@@ -499,7 +500,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	if (urb->status) return;
 
 	/* check for valid report */
-	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6 && data[0] != 12)
 	{
 		printk(KERN_INFO "wacom_intuos_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);

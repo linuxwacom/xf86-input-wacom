@@ -458,7 +458,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
 	{
-		if (priv->twinview == TV_NONE && priv->common->wcmGimp)
+		if (priv->twinview == TV_NONE)
 		{
 			rx = x > priv->bottomX ? priv->bottomX - priv->topX :
 				x < priv->topX ? 0 : x - priv->topX;
@@ -483,6 +483,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		{
 			/* unify acceleration in both directions */
 			rx = (x - priv->oldX) * priv->factorY / priv->factorX;
+
+			rx = (x - priv->oldX);
 			ry = y - priv->oldY;
 		}
 		else
@@ -533,7 +535,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
-	if( !(priv->flags & BUTTONS_ONLY_FLAG) && is_core_pointer )
+	if( !(priv->flags & BUTTONS_ONLY_FLAG) )
 	{
 		xf86WcmSetScreen(local, &rx, &ry);
 	}
@@ -795,8 +797,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample));
 
 #ifdef LINUX_INPUT
- 	/* Discard the first 2 USB packages due to events delay */
-	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
+ 	/* Discard the first USB packages due to events delay */
+	if ( (pChannel->nSamples < 1) && (common->wcmDevCls == &gWacomUSBDevice) )
 	{
 		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
 		/* store channel device state for later use */
@@ -860,9 +862,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	int id, idx;
 	WacomDevicePtr priv;
 	LocalDevicePtr pDev = NULL;
-	LocalDevicePtr pLastDev = pChannel->pDev;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
-	WacomDeviceState* pLast = &pChannel->valid.states[1];
 
 	DBG(10, ErrorF("commonDispatchEvents\n"));
 
@@ -892,29 +892,14 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		if (id == ds->device_type &&
 			((!priv->serial) || (ds->serial_num == priv->serial)))
 		{
-			/* Gimp desn't want values outside of defined area */
-			if ((priv->topX <= ds->x && priv->bottomX > ds->x &&
-				priv->topY <= ds->y && priv->bottomY > ds->y)
-				|| !priv->common->wcmGimp) 
-			{
-				DBG(11, ErrorF("tool id=%d for %s\n",
+			DBG(11, ErrorF("tool id=%d for %s\n",
 					id, common->wcmDevices[idx]->name));
-				pDev = common->wcmDevices[idx];
-				break;
-			}
+			pDev = common->wcmDevices[idx];
+			break;
 		}
 	}
 
-	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",(void *)pDev,(void *)pLastDev));
-
-	/* if the logical device of the same physical tool has changed,
-	 * send proximity out to the previous one */
-	if (pLastDev && (pLastDev != pDev) &&
-		(pLast->serial_num == ds->serial_num))
-	{
-		pLast->proximity = 0;
-		xf86WcmSendEvents(pLastDev, pLast, channel);
-	}
+	DBG(11, ErrorF("commonDispatchEvents: %p \n",(void *)pDev));
 
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */
@@ -927,7 +912,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		/* button 1 Threshold test */
 		int button = 1;
-		if ( !IsCursor(priv) )
+		if ( IsStylus(priv) || IsEraser(priv))
 		{
 			if (filtered.pressure < common->wcmThreshold )
 				filtered.buttons &= ~button;
@@ -984,14 +969,16 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		/* force out-prox when height is greater than 13 for GD & XD;
-		 * 21 for PTZ. This only applies to USB protocol V tablets
+		/* force out-prox when height is greater than 13 
+		 * (use 112 for history reason for now) for GD & XD;
+		 * 28 for PTZ. This only applies to USB protocol V tablets
 		 * which aimed at improving relative movement support. 
 		 */
-		if (!(priv->flags & ABSOLUTE_FLAG))
+		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
 		{
-			if ((filtered.distance > 21 && strstr(common->wcmModel->name, "Intuos3")) 
-			|| (filtered.distance > 13 && !strstr(common->wcmModel->name, "Intuos3")) )
+			DBG(11, ErrorF("Distance over the tablet: %d \n", filtered.distance));
+			if ((filtered.distance > 28 && strstr(common->wcmModel->name, "Intuos3")) 
+			|| (filtered.distance > 112 && !strstr(common->wcmModel->name, "Intuos3")) )
 			{
 				ds->proximity = 0;
 				filtered.proximity = 0;

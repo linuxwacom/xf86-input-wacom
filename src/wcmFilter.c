@@ -34,7 +34,7 @@ static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
 static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds);
-static void filterIntuosCoord(int* coord, int* current, int tilt, int* state);
+static void filterIntuosCoord(int* state, int* current);
 static void filterIntuosTilt(int* state, int* tilt);
 
 /*****************************************************************************
@@ -227,76 +227,26 @@ static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds
 	}
 
 	/* filter x */
-	filterIntuosCoord(state->x, &ds->x, ds->tiltx, &state->statex);
+	filterIntuosCoord(state->x, &ds->x);
 	/* filter y */
-	filterIntuosCoord(state->y, &ds->y, ds->tilty, &state->statey);
+	filterIntuosCoord(state->y, &ds->y);
 	/* filter tiltx */
 	filterIntuosTilt(state->tiltx, &ds->tiltx);
 	/* filter tilty */
 	filterIntuosTilt(state->tilty, &ds->tilty);
 }
 
-static void filterIntuosCoord(int* coord, int* current, int tilt, int* state)
+static void filterIntuosCoord(int* state, int* current)
 {
-	int ts;
-	int x0_pred;
-	int x0_pred1;
-	int x0, x1, x2, x3;
+	int x;
 
-	x0 = *current;
-	x1 = coord[0];
-	x2 = coord[1];
-	x3 = coord[2];
-	coord[0] = x0;
-	coord[1] = x1;
-	coord[2] = x2;
-    
-	ts = tilt >= 0 ? 1 : -1;
-    
-	if (*state == 0 || *state == 3)
-	{
-		if (ts * (x0 - 2 * x1 - x2) > 12 && 
-			ts * (x0 - 3 * x2 - 2 * x3) > 12)
-		{
-			/* detected a jump at x0 */
-			*state = 1;
-			*current = x1;
-		}
-		else if (*state == 0)
-		{
-			x0_pred = 7 * x0 + 14 * x1 + 15 * x2 + 16;
-			x0_pred1 = 4 * x3;
-			if (x0_pred > x0_pred1)
-				*current = ((CARD32)(x0_pred - x0_pred1)) >> 5;
-			else
-				*current = 0;
-		}
-		else
-		{
-			/* state == 3 
-			 * a jump at x3 was detected */
-			*current = (x0 + 2 * x1 + x2 + 2) >> 2;
-			*state = 0;
-		}
-	}
-	else if (*state == 1)
-	{
-		/* a jump at x1 was detected */
-		x0_pred = 3 * x0 + 7 * x2 + 4;
-		x0_pred1 = 2 * x3;
-		if (x0_pred > x0_pred1)
-			*current = ((CARD32)(x0_pred - x0_pred1)) >> 3;
-		else
-			*current = 0;
-		*state = 2;
-	}
-	else
-	{
-		/* state == 2 
-		 * a jump at x2 was detected */
-		*current = x1;
-		*state = 3;
-	}
+	x = *current + state[0] + state[1] + state[2];
+
+	state[2] = state[1];
+	state[1] = state[0];
+	state[0] = *current;
+
+	*current = x / MAX_SAMPLES;
 }
 
 /*****************************************************************************
