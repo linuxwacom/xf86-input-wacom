@@ -1,3 +1,7 @@
+2003-03-07    John E. Joganic <john@joganic.com>
+
+	* Added tabletdev.c framework (based on mousedev.c)
+
 2003-03-06    John E. Joganic <john@joganic.com>
 
 	* Applied Ping Cheng's suppress patch

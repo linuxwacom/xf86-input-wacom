@@ -136,6 +136,23 @@ if test "$enable_input" != "no"; then
 	fi
 fi
 
+dnl Check for tabletdev build
+WCM_OPTION_TABLETDEV=no
+AC_ARG_ENABLE(tabletdev,
+[  --enable-tabletdev  Enable building tabletdev.o           default=no],
+	, enable_tabletdev=no)
+if test "$enable_tabletdev" != "no"; then
+	if test "$WCM_ENV_KERNEL" != "yes"; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile tabletdev.o without kernel build environment"
+		echo "*** tabletdev.o will not be built"
+		echo "***"
+	else
+		WCM_OPTION_TABLETDEV=yes
+		WCM_MODULES="$WCM_MODULES tabletdev.o"
+	fi
+fi
+
 dnl Check for wacomdrv build
 WCM_OPTION_WACOMDRV=no
 AC_ARG_ENABLE(wacomdrv,
@@ -302,6 +319,7 @@ echo "              hid.o - $WCM_OPTION_HID $WCM_PATCH_HID"
 echo "         usbmouse.o - $WCM_OPTION_USBMOUSE"
 echo "            evdev.o - $WCM_OPTION_EVDEV"
 echo "            input.o - $WCM_OPTION_INPUT"
+echo "        tabletdev.o - $WCM_OPTION_TABLETDEV"
 echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_PATCH_WACOMDRV"
 if test -n "$WCM_OPTION_WACOMDRVV3"; then
 	echo "     wacom_drv-v3.o - $WCM_OPTION_WACOMDRVV3 $WCM_PATCH_WACOMDRVV3"
