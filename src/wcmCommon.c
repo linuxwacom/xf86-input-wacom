@@ -81,7 +81,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 			leftPadding += screenInfo.screens[i]->width;
 		}
 	}
-	else if (priv->XineramaEnabled)
+#ifdef PANORAMIX
+	else if (!noPanoramiXExtension)
 	{
 		screenToSet = priv->screen_no;
 		for (i = 0; i < screenToSet; i++)
@@ -94,14 +95,21 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 
 	}
 
-	if (priv->XineramaEnabled)
+	if (!noPanoramiXExtension)
 	{
 		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
 		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
 		x = (*v0 - (priv->bottomX - priv->topX)
 			* leftPadding / totalWidth) * priv->factorX + 0.5;
+		y = *v1 * priv->factorY + 0.5;
+		
+		if (x >= screenInfo.screens[screenToSet]->width)
+			x = screenInfo.screens[screenToSet]->width - 1;
+		if (y >= screenInfo.screens[screenToSet]->height)
+			y = screenInfo.screens[screenToSet]->height - 1;
 	}
 	else
+#endif
 	{
 		if (priv->screen_no == -1)
 			*v0 = (*v0 * totalWidth - (priv->bottomX - priv->topX)
@@ -114,8 +122,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 		priv->factorY = screenInfo.screens[screenToSet]->height
 			/ (double)(priv->bottomY - priv->topY);
 		x = *v0 * priv->factorX + 0.5;
+		y = *v1 * priv->factorY + 0.5;
 	}
-	y = *v1 * priv->factorY + 0.5;
 
 	xf86XInputSetScreen(local, screenToSet, x, y);
 	DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
@@ -507,6 +515,7 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
 	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
+	if (ABS(dsNew->throttle) >= suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) >= suppress) return 0;
 	if ((1800 + dsOrig->rotation - dsNew->rotation) % 1800 >= suppress &&
 		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
@@ -641,33 +650,36 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 		/* get the sample time */
 		sampleTime = GetTimeInMillis(); 
-	
+
+		ticks = ThrottleToRate(ds->throttle);
+
 		/* throttle filter */
-		if ((priv->throttleStart > sampleTime) ||
-			(!priv->throttleStart))
+		if (!ticks)
 		{
-			priv->throttleStart = sampleTime;
 			priv->throttleLimit = -1;
 		}
-	
-		ticks = ThrottleToRate(ds->throttle);
-		priv->throttleLimit = ticks ?  priv->throttleStart + ticks : -1;
-
-		if ((priv->throttleLimit >= 0) &&
-			(priv->throttleLimit < sampleTime))
+		else if ((priv->throttleStart > sampleTime) ||
+			(priv->throttleLimit == -1))
+		{
+			priv->throttleStart = sampleTime;
+			priv->throttleLimit = sampleTime + ticks;
+		}
+		else if (priv->throttleLimit < sampleTime)
 		{
 			DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d "
 				"N=%d\n", priv->throttleStart,
 				priv->throttleLimit, sampleTime,
-				ds->throttle, sampleTime +
-					ThrottleToRate(ds->throttle)));
+				ds->throttle, sampleTime + ticks));
 
-			ds->wheel += (ds->throttle > 0) ? 8 :
-					(ds->throttle < 0) ? -8 : 0;
+			ds->wheel += (ds->throttle > 0) ? 1 :
+					(ds->throttle < 0) ? -1 : 0;
+
+			priv->throttleStart = sampleTime;
+			priv->throttleLimit = sampleTime + ticks;
 		}
+		else
+			priv->throttleLimit = priv->throttleStart + ticks;
 
-		priv->throttleStart = sampleTime;
-		priv->throttleLimit = sampleTime + ThrottleToRate(ds->throttle);
 		#endif /* throttle */
 
 		filtered = *ds;

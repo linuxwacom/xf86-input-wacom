@@ -615,8 +615,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (first != 0 || num == 1)
 		return FALSE;
-
-	if ((priv->flags & ABSOLUTE_FLAG) && priv->XineramaEnabled)
+#ifdef PANORAMIX
+	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG))
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
@@ -626,7 +626,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		v0 -= (priv->bottomX - priv->topX) * leftPadding
 			/ (double)totalWidth + 0.5;
 	}
-    
+#endif
 	*x = v0 * priv->factorX + 0.5;
 	*y = v1 * priv->factorY + 0.5;
 
@@ -647,8 +647,8 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
     
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
-
-	if ((priv->flags & ABSOLUTE_FLAG) && priv->XineramaEnabled)
+#ifdef PANORAMIX
+	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG))
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
@@ -658,6 +658,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		valuators[0] += (priv->bottomX - priv->topX)
 			* leftPadding / (double)totalWidth + 0.5;
 	}
+#endif
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));
 

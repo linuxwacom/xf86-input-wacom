@@ -1,3 +1,10 @@
+2003-04-19    Jimmy Yen <jimmy@yen.tp>
+
+	* Fixed throttle code.
+	* Slightly refined Xinerama code. Use X's own global variable instead
+	  for Xinerama detection.
+	* Disallow pointers to enter dead areas, causing setting screen to fail.
+
 2003-04-18    Jimmy Yen <jimmy@yen.tp>
 
 	* Extra checking to set screen only when the device sends core events.
