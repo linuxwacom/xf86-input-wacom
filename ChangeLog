@@ -1,6 +1,7 @@
 2003-04-02    John E. Joganic <john@joganic.com>
 
 	* Added J. Yen's "misc fixes" patch to xf86Wacom.c
+	* Added J. Paisley's "reattach" patch to evdev.c
 
 2003-03-31    John E. Joganic <john@joganic.com>
 

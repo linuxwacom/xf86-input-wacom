@@ -1,5 +1,5 @@
 /*
- * $Id: evdev.c,v 1.1 2003/03/07 05:24:44 jjoganic Exp $
+ * $Id: evdev.c,v 1.2 2003/04/03 03:13:54 jjoganic Exp $
  *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *  Copyright (c) 2003 John Joganic         <john@joganic.com>
@@ -11,10 +11,10 @@
  *  Revision History - AS BRANCH FROM LINUX WACOM PROJECT
  *  2003-03-06  2.4.20-j0.5.0  - Added to Linux Wacom project
  *                               Applied Jonathan Paisley's oops patch
- * 
+ *  2003-04-02  2.4.20-j0.5.1  - Added J. Paisley's reattach patch
  */
 
-#define EVDEV_VERSION "2.4.20-j0.5.0"
+#define EVDEV_VERSION "2.4.20-j0.5.1"
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -350,7 +350,23 @@ static struct input_handle *evdev_connect(struct input_handler *handler, struct 
 	struct evdev *evdev;
 	int minor;
 
-	for (minor = 0; minor < EVDEV_MINORS && evdev_table[minor]; minor++);
+	for (minor = 0; minor < EVDEV_MINORS && evdev_table[minor]; minor++)
+	{
+
+            if (!evdev_table[minor]->exist && evdev_table[minor]->open) /* reuse */ 
+            {
+                evdev = evdev_table[minor];
+                evdev->handle.dev = dev;
+                evdev->handle.handler = handler;
+                evdev->handle.private = evdev; /* should already be */
+                evdev->exist = 1;
+                printk(KERN_INFO "evdev: reusing event%d for input%d\n", minor, dev->number);
+		input_open_device(&evdev->handle);
+		wake_up_interruptible(&evdev->wait);
+                return &evdev->handle;
+            }
+	}
+
 	if (minor == EVDEV_MINORS) {
 		printk(KERN_ERR "evdev: no more free evdev devices\n");
 		return NULL;
