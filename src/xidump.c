@@ -22,6 +22,7 @@
 **   2003-03-07 0.0.2 - added input device code
 **   2003-03-08 0.0.3 - added curses code
 **   2003-03-21 0.0.4 - added conditional curses code
+**   2003-03-21 0.5.0 - released in development branch
 **
 ****************************************************************************/
 
@@ -30,8 +31,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include <sys/time.h>
 
-#define XIDUMP_VERSION "0.0.3"
+#define XIDUMP_VERSION "0.5.0"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -492,19 +494,19 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
 		{
 			wacscrn_standout();
-			wacscrn_output(nProxRow,12,"In ");
+			wacscrn_output(nProxRow,12,"IN ");
 			wacscrn_normal();
 		}
 		else if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_OUT])
-			wacscrn_output(nProxRow,12,"Out ");
+			wacscrn_output(nProxRow,12,"OUT ");
 		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_IN])
 		{
 			wacscrn_standout();
-			wacscrn_output(nFocusRow,12,"In ");
+			wacscrn_output(nFocusRow,12,"IN ");
 			wacscrn_normal();
 		}
 		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_OUT])
-			wacscrn_output(nFocusRow,12,"Out ");
+			wacscrn_output(nFocusRow,12,"OUT ");
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
 			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
@@ -526,14 +528,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
 			bDown = (pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]);
 			nBtn = pBtn->button;
 			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
-			snprintf(chBuf,sizeof(chBuf),
-					"%d-%s",
-					pBtn->button,
-					(nBtn == 1) ? "LEFT  " :
-					(nBtn == 2) ? "MIDDLE" :
-					(nBtn == 3) ? "RIGHT " :
-					(nBtn == 4) ? "EXTRA " :
-					(nBtn == 5) ? "SIDE  " : "ERROR ");
+			snprintf(chBuf,sizeof(chBuf),"%d-%s",pBtn->button,
+					bDown ? "DOWN" : "UP  ");
 			if (bDown) wacscrn_standout();
 			wacscrn_output(nButtonRow,12 + (nBtn-1) * 10,chBuf);
 			if (bDown) wacscrn_normal();
@@ -573,6 +569,11 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 {
 	XEvent event;
 	XAnyEvent* pAny;
+	struct timeval tv;
+	double dStart, dNow;
+
+	gettimeofday(&tv,NULL);
+	dStart = tv.tv_sec + (double)tv.tv_usec / 1E6;
 
 	while (1)
 	{
@@ -580,6 +581,11 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 
 		pAny = (XAnyEvent*)&event;
 		/* printf("event: type=%s\n",GetEventName(pAny->type)); */
+
+		/* display time */
+		gettimeofday(&tv,NULL);
+		dNow = tv.tv_sec + (double)tv.tv_usec / 1E6;
+		printf("%.8f: ",(dNow - dStart));
 
 		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
 			printf("Proximity In\n");
@@ -604,12 +610,7 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 				(pAny->type == gnInputEvent[INPUTEVENT_BTN_RELEASE]))
 		{
 			XDeviceButtonEvent* pBtn = (XDeviceButtonEvent*)pAny;
-			printf("Button: %s %s\n",
-					(pBtn->button == 1) ? "1-LEFT" :
-					(pBtn->button == 2) ? "2-MIDDLE" :
-					(pBtn->button == 3) ? "3-RIGHT" :
-					(pBtn->button == 4) ? "4-EXTRA" :
-					(pBtn->button == 5) ? "5-SIDE" : "?-ERROR",
+			printf("Button: %d %s\n",pBtn->button,
 					pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS] ?
 						"DOWN" : "UP");
 		}
@@ -617,6 +618,9 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 		{
 			printf("Event: %s\n",GetEventName(pAny->type));
 		}
+
+		/* flush data to terminal */
+		fflush(stdout);
 	}
 
 	return 0;
