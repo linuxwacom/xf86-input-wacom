@@ -1,6 +1,8 @@
-2003-04-26    Jimmy Yen <jimmy@yen.tp>
+2003-04-29    John E. Joganic <john@joganic.com>
 
-	* Fixed USB protocol 4 bustage.
+	* Expanded graphire parsing; all devices use same data path
+	* Disabled throttle/wheel correlation for now; needs work and
+	  option for enabling/disabling.
 
 2003-04-21    Ping Cheng <pingc@wacom.com>
 
@@ -41,6 +43,9 @@
 
 	* Fixed USB tilt ranges.
 	* Exploded out serial tablet initialization.
+	* Reporting throttle on cursor valuator 4
+	* Fixed serial 4D mouse rotation value
+	* Default threshold to 1/32 maximum pressure
 
 2003-04-07    John E. Joganic <john@joganic.com>
 

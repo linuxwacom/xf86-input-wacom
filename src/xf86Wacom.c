@@ -67,9 +67,10 @@
  * 2003-03-22 26-j0.5.8 - added Dean Townsley's ISDV4 patch
  * 2003-04-02 26-j0.5.9 - added J. Yen's "misc fixes" patch
  * 2003-04-02 26-j0.5.10 - refactoring
+ * 2003-04-02 26-j0.5.11 - all devices using same data path
  */
 
-static const char identification[] = "$Identification: 26-j0.5.10 $";
+static const char identification[] = "$Identification: 26-j0.5.11 $";
 
 /****************************************************************************/
 

@@ -193,7 +193,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int ty = ds->tilty;
 	int rot = ds->rotation;
 	int throttle = ds->throttle;
-	int wheel = ds->wheel;
+	int wheel = ds->abswheel + ds->relwheel;
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
@@ -487,10 +487,36 @@ static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
 #endif
 
 /*****************************************************************************
+ * xf86WcmGraphireFilter --
+ *   Suppression for graphire (may be unnecessary with new suppression code)
+ ****************************************************************************/
+
+#if 0
+static int xf86WcmGraphireFilter(WacomFilterState* state, int coord, int tilt)
+{
+	/* Hardware filtering isn't working on Graphire so
+	 * we do it here. */
+	if (((temp_is_proximity && priv->oldProximity) ||
+		((temp_is_proximity == 0) &&
+			(priv->oldProximity == 0))) &&
+			(temp_buttons == priv->oldButtons) &&
+			(ABS(x - priv->oldX) <= common->wcmSuppress) &&
+			(ABS(y - priv->oldY) <= common->wcmSuppress) &&
+			(ABS(z - priv->oldZ) < 3) &&
+			(ABS(tx - priv->oldTiltX) < 3) &&
+			(ABS(ty - priv->oldTiltY) < 3))
+	{
+		DBG(10, ErrorF("Graphire filtered\n"));
+		return;
+	}
+}
+#endif
+
+/*****************************************************************************
  * ThrottleToRate - converts throttle position to wheel rate
  ****************************************************************************/
 
-#if 1
+#if 0
 static int ThrottleToRate(int x)
 {
 	if (x<0) x=-x;
@@ -528,10 +554,10 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 		(1800 + dsNew->rotation - dsOrig->rotation) % 1800 >= suppress)
 		return 0;
 
-	/* We don't want to miss the wheel's relative value */
-	/* may need to check if it's a tool with relative wheel? */
-	if ((ABS(dsOrig->wheel - dsNew->wheel) >= suppress) ||
-		(ABS(dsOrig->wheel - dsNew->wheel) == 1)) return 0;
+	/* look for change in absolute wheel
+	 * position or any relative wheel movement */
+	if ((ABS(dsOrig->abswheel - dsNew->abswheel) >= suppress) ||
+		(dsNew->relwheel != 0)) return 0;
 
 	return 1;
 }
@@ -592,14 +618,14 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pOrigDev = common->wcmChannel[channel].pDev;
 
 	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=0x%X "
-		"p=%d rz=%d tx=%d ty=%d w=%d t=%d df=%d px=%d\n",
+		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d\n",
 		channel,
 		ds->device_id,
 		ds->device_type,
 		ds->serial_num,
 		ds->x, ds->y, ds->buttons,
 		ds->pressure, ds->rotation, ds->tiltx,
-		ds->tilty, ds->wheel, ds->throttle,
+		ds->tilty, ds->abswheel, ds->relwheel, ds->throttle,
 		ds->discard_first, ds->proximity));
 
 	/* Check suppression */
@@ -651,13 +677,20 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (pDev)
 	{
 		WacomDeviceState filtered;
+
+		#if 0
 		WacomDevicePtr priv = pDev->private;
-		#if 1
+
+		/* not quite ready for prime-time;
+		 * it needs to be possible to disable,
+		 * and returning throttle to zero does
+		 * not reset the wheel, yet. */
+
 		int sampleTime, ticks;
 
 		/* get the sample time */
 		sampleTime = GetTimeInMillis(); 
-
+		
 		ticks = ThrottleToRate(ds->throttle);
 
 		/* throttle filter */
@@ -678,7 +711,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 				priv->throttleLimit, sampleTime,
 				ds->throttle, sampleTime + ticks));
 
-			ds->wheel += (ds->throttle > 0) ? 1 :
+			ds->relwheel = (ds->throttle > 0) ? 1 :
 					(ds->throttle < 0) ? -1 : 0;
 
 			priv->throttleStart = sampleTime;
@@ -693,6 +726,18 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		/* YHJ - If we enable the filter, I think we should store
 		 * filtered values back to ds as the filter is supposed to deal
 		 * with hardware defects. */
+
+		/* JEJ - I would tend to agree.  My concern is that by losing
+		 * the original "bad" value, it will be difficult to determine
+		 * whether the next value is also bad.  It's possible that the
+		 * filter will walk the point across the screen, ie. each
+		 * successive call to the filter returns a pointer to the left
+		 * or right of the previous value.  The suppression filter
+		 * could be confused by this.  I think that it would be useful
+		 * to try both and see what happens.  Also, a filter that
+		 * could simulate certain types of hardware noise might be
+		 * useful for testing this code. */
+
 		#if 0
 		/* Intuos filter */
 		if (priv->flags & ABSOLUTE_FLAG)

@@ -382,7 +382,8 @@ struct _WacomDeviceState
 	int tiltx;
 	int tilty;
 	int rotation;
-	int wheel;
+	int abswheel;
+	int relwheel;
 	int throttle;
 	int discard_first;
 	int proximity;

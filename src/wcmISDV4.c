@@ -192,7 +192,7 @@ static void xf86WcmISDV4Read(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int len, loop, idx;
-	int is_stylus = 1, is_button, is_proximity, wheel=0;
+	int is_stylus = 1, is_button, is_proximity;
 	int x, y, z, tmp_coord, buttons, tx = 0, ty = 0;
 	unsigned char buffer[BUFFER_SIZE];
   
@@ -341,7 +341,6 @@ static void xf86WcmISDV4Read(LocalDevicePtr local)
 			ds.pressure = z;
 			ds.tiltx = tx;
 			ds.tilty = ty;
-			ds.wheel = wheel;
 
 			xf86WcmSendEvents(common->wcmDevices[idx],&ds);
 		}

@@ -712,206 +712,85 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 
 static void serialParseGraphire(WacomCommonPtr common)
 {
-	int x, y, z, idx, buttons, tx = 0, ty = 0;
-	int is_stylus, is_button, wheel=0;
+	WacomDeviceState* orig = &common->wcmChannel[0].state;
+	WacomDeviceState ds = *orig;
+	int is_stylus, cur_type;
 
-	int is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
+	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
      
-	/* reset char count for next read */
-	common->wcmIndex = 0;
-
-	x = (((common->wcmData[0] & 0x3) << 14) +
+	ds.x = (((common->wcmData[0] & 0x3) << 14) +
 		(common->wcmData[1] << 7) +
 		common->wcmData[2]);
-	y = (((common->wcmData[3] & 0x3) << 14) +
+	ds.y = (((common->wcmData[3] & 0x3) << 14) +
 		(common->wcmData[4] << 7) +
 		common->wcmData[5]);
 
-	/* check which device we have */
-	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	z = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
+	/* get pressure */
+	ds.pressure = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
 		((common->wcmData[3]&ZAXIS_BIT) >> 1) +
 		((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
 		((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 
+	/* get buttons */
+	ds.buttons = (common->wcmData[3] & 0x38) >> 3;
+
+	/* check which device we have */
+	is_stylus = (common->wcmData[0] & POINTER_BIT);
 	if (is_stylus)
 	{
-		buttons = ((common->wcmData[3] & 0x30) >> 3) |
-			(z >= common->wcmThreshold ? 1 : 0);
-		/* pressure button should go down stream */
-	}
-	else
-	{
-		buttons = (common->wcmData[3] & 0x38) >> 3;
-		wheel = (common->wcmData[6] & 0x30) >> 4;
+		/* first time into prox */
+		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
+		if (!orig->proximity)
+		{
+ 			if (ds.proximity) 
+				ds.device_type = cur_type;
+		}
 
+		/* we were fooled by tip and second
+		 * sideswitch when it came into prox */
+		else if ((ds.device_type != cur_type) &&
+			(ds.device_type == ERASER_ID))
+		{
+			/* send a prox-out for old device */
+			ds.proximity = 0;
+			ds.buttons = 0;
+			ds.device_type = 0;
+		}
+	}
+
+	/* If it is not a stylus, it's a cursor */
+	else if (!is_stylus && !orig->proximity && ds.proximity)
+		ds.device_type = CURSOR_ID;
+
+	/* If it is out of proximity, there is no device type */
+	else if (!ds.proximity)
+		ds.device_type = 0;
+
+	DBG(8, ErrorF("serialParseGraphire %s\n",
+		ds.device_type == CURSOR_ID ? "CURSOR" :
+		ds.device_type == ERASER_ID ? "ERASER " :
+		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+
+	/* handle absolute wheel for non-stylus device */
+	if (!is_stylus && ds.proximity)
+	{
+		ds.abswheel = (common->wcmData[6] & 0x30) >> 4;
 		if (common->wcmData[6] & 0x40)
-			wheel = -wheel;
+			ds.abswheel = -ds.abswheel;
 	}
-	is_button = (buttons != 0);
-
-	DBG(10, ErrorF("graphire buttons=%d prox=%d "
-		"wheel=%d\n", buttons, is_proximity,
-		wheel));
-
-	/* The stylus reports button 4 for the second side
-	 * switch and button 4/5 for the eraser tip. We know
-	 * how to choose when we come in proximity for the
-	 * first time. If we are in proximity and button 4 then
-	 * we have the eraser else we have the second side
-	 * switch.
-	 */
-	if (is_stylus)
-	{
-		if (!common->wcmStylusProximity && is_proximity)
-			common->wcmStylusSide = !(common->wcmData[3] & 0x40);
-	}
-
-	DBG(8, ErrorF("serialRead %s side\n",
-		common->wcmStylusSide ? "stylus" : "eraser"));
-		common->wcmStylusProximity = is_proximity;
 
 	/* handle tilt values only for stylus */
 	if (HANDLE_TILT(common) && is_stylus)
 	{
-		tx = (common->wcmData[7] & TILT_BITS);
-		ty = (common->wcmData[8] & TILT_BITS);
+		ds.tiltx = (common->wcmData[7] & TILT_BITS);
+		ds.tilty = (common->wcmData[8] & TILT_BITS);
 		if (common->wcmData[7] & TILT_SIGN_BIT)
-			tx -= (TILT_BITS + 1);
+			ds.tiltx -= 64;
 		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ty -= (TILT_BITS + 1);
+			ds.tilty -= 64;
 	}
 
-	/* split data amonst devices */
-	for(idx=0; idx<common->wcmNumDevices; idx++)
-	{
-	 	LocalDevicePtr local_dev = common->wcmDevices[idx]; 
-		WacomDevicePtr priv= (WacomDevicePtr)local_dev->private;
-		int temp_buttons = buttons;
-		int temp_is_proximity = is_proximity;
-		int curDevice; 
-
-		DBG(7, ErrorF("serialRead trying "
-			"to send to %s\n", local_dev->name));
-
-		/* check for device type (STYLUS, ERASER
-		 * or CURSOR) */
-
-		if (is_stylus)
-		{
-			/* The eraser is reported as button 4
-			 * and 5 of the stylus.  If we haven't
-			 * an independent device for the
-			 * eraser report the button as
-			 * button 3 of the stylus. */
-
-			if (is_proximity)
-			{
-				if (common->wcmData[3] & 0x40)
-					curDevice = ERASER_ID;
-				else
-					curDevice = STYLUS_ID;
-			}
-			else
-			{
-				/* When we are out of proximity with
-				 * the eraser the button 4 isn't reported
-				 * so we must check the previous proximity
-				 * device. */
-				if (common->wcmHasEraser &&
-					(!common->wcmStylusSide))
-				{
-					curDevice = ERASER_ID;
-				}
-				else
-				{
-					curDevice = STYLUS_ID;
-				}
-			}
-      
-	/* We check here to see if we changed between eraser and stylus
-	 * without leaving proximity. The most likely cause is that
-	 * we were fooled by the second side switch into thinking the
-	 * stylus was the eraser. If this happens, we send
-	 * a proximity-out for the old device.  */
-
-			if (curDevice != DEVICE_ID(priv->flags))
-			{
-				if (priv->oldProximity)
-				{
-					if (is_proximity && DEVICE_ID(priv->flags) == ERASER_ID)
-					{
-						curDevice = DEVICE_ID(priv->flags);
-						temp_buttons = 0;
-						temp_is_proximity = 0;
-						common->wcmStylusSide = 1;
-						DBG(10, ErrorF("eraser and stylus mix\n"));
-					}
-				}
-				else 
-					continue;
-			}
-      
-			DBG(10, ErrorF((DEVICE_ID(priv->flags) == ERASER_ID) ? 
-					"Eraser\n" : "Stylus\n"));
-		}
-		else
-		{
-			if (DEVICE_ID(priv->flags) != CURSOR_ID)
-				continue; 
-			DBG(10, ErrorF("Cursor\n"));
-			curDevice = CURSOR_ID;
-		}
-  
-		if (DEVICE_ID(priv->flags) != curDevice)
-		{
-			DBG(7, ErrorF("sendEvents not the same "
-				"device type (%u,%u)\n",
-				DEVICE_ID(priv->flags), curDevice));
-			continue;
-		}
-
-		/* Hardware filtering isn't working on Graphire so
-		 * we do it here. */
-		if (((temp_is_proximity && priv->oldProximity) ||
-			((temp_is_proximity == 0) &&
-				(priv->oldProximity == 0))) &&
-				(temp_buttons == priv->oldButtons) &&
-				(ABS(x - priv->oldX) <= common->wcmSuppress) &&
-				(ABS(y - priv->oldY) <= common->wcmSuppress) &&
-				(ABS(z - priv->oldZ) < 3) &&
-				(ABS(tx - priv->oldTiltX) < 3) &&
-				(ABS(ty - priv->oldTiltY) < 3))
-		{
-			DBG(10, ErrorF("Graphire filtered\n"));
-			return;
-		}
-
-		{
-			/* hack, we'll get this whole function working later */
-			WacomDeviceState ds = { 0 };
-			ds.device_type = curDevice;
-			ds.buttons = temp_buttons;
-			ds.proximity = temp_is_proximity;
-			ds.x = x;
-			ds.y = y;
-			ds.pressure = z;
-			ds.tiltx = tx;
-			ds.tilty = ty;
-			ds.wheel = wheel;
-			
-			xf86WcmSendEvents(common->wcmDevices[idx],&ds);
-		}
-
-		if (!priv->oldProximity && temp_is_proximity )
-		{
-			/* handle the two sides switches in the stylus */
-			if (is_stylus && (temp_buttons == 4))
-				priv->oldProximity = ERASER_PROX;
-			else
-				priv->oldProximity = OTHER_PROX;
-		}
-	} /* next device */
+	xf86WcmEvent(common,0,&ds);
 }
 
 /* temporarily exploded out */
@@ -959,10 +838,12 @@ static void serialParseCintiq(WacomCommonPtr common)
 		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
 		if (!orig->proximity)
 		{
- 			if(ds.proximity) 
+ 			if (ds.proximity) 
 				ds.device_type = cur_type;
 		}
-		/* we fooled by tip and second sideswitch when comes to the prox */
+
+		/* we were fooled by tip and second
+		 * sideswitch when it came into prox */
 		else if (ds.device_type != cur_type && ds.device_type == ERASER_ID)
 		{
 			/* send a prox-out for old device */
@@ -1040,8 +921,10 @@ static void serialParseProtocol4(WacomCommonPtr common)
  			if(ds.proximity) 
 			ds.device_type = cur_type;
 		}
-		/* we fooled by tip and second sideswitch when comes to the prox */
-		else if (ds.device_type != cur_type && ds.device_type == ERASER_ID)
+		/* we were fooled by tip and second
+		 * sideswitch when it came into prox */
+		else if ((ds.device_type != cur_type) &&
+			(ds.device_type == ERASER_ID))
 		{
 			/* send a prox-out for old device */
 			ds.proximity = 0;
@@ -1152,7 +1035,7 @@ static void serialParseProtocol5(WacomCommonPtr common)
 		}
 		else
 		{
-			ds.wheel = (((common->wcmData[5] & 0x07) << 7) |
+			ds.relwheel = (((common->wcmData[5] & 0x07) << 7) |
 				(common->wcmData[6] & 0x7f));
 		}
 		ds.tiltx = (common->wcmData[7] & TILT_BITS);
@@ -1201,7 +1084,7 @@ static void serialParseProtocol5(WacomCommonPtr common)
 		else if (MOUSE_2D(&ds))
 		{
 			ds.buttons = (common->wcmData[8] & 0x1C) >> 2;
-			ds.wheel = - (common->wcmData[8] & 1) +
+			ds.relwheel = - (common->wcmData[8] & 1) +
 					((common->wcmData[8] & 2) >> 1);
 			have_data = 1;
 		}

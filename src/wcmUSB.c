@@ -180,7 +180,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			{
 			}
 			else if (event->code == ABS_WHEEL)
-				ds.wheel = event->value;
+				ds.abswheel = event->value;
 			else if (event->code == ABS_THROTTLE)
 				ds.throttle = event->value;
 		}
@@ -188,7 +188,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		else if (event->type == EV_REL)
 		{
 			if (event->code == REL_WHEEL)
-				ds.wheel += event->value;
+				ds.relwheel = event->value;
 			else
 			{
 				ErrorF("wacom: rel event recv'd (%d)!\n",
