@@ -1,3 +1,8 @@
+2003-02-22    John E. Joganic <john@joganic.com>
+
+	* Applied Ping Cheng's multi-monitor patch
+	* Added build option for Xfree86 v3.x; testing only
+
 2003-02-12    John E. Joganic <john@joganic.com>
 
 	* Applied Ping Cheng's eraser patch for PL in wacom.c

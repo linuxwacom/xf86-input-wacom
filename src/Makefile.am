@@ -4,7 +4,7 @@ noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
 AM_CFLAGS = -Wall
 
 EXTRA_PROGRAMS = wacdump
-EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o
+EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o wacom_drv-v3.o
 
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
@@ -17,6 +17,7 @@ EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c xf86Wacom.c usbmouse.c \
 
 KERNEL_DIR=@WCM_KERNELDIR@
 XF86_DIR=@WCM_XF86DIR@/xc
+XF86_V3_DIR=@WCM_XF86V3DIR@/xc
 DEBUG_FLAGS = -D__JEJ_DEBUG
 MODS = @WCM_MODVER@
 ARCHITECTURE=@WCM_ARCH@
@@ -109,4 +110,30 @@ wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
 
 wacom_drv.o: xf86Wacom.o wcm-beta.o
 	ld -r xf86Wacom.o wcm-beta.o -o wacom_drv.o
+
+xf86Wacom-v3.o: xf86Wacom.c Makefile
+	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -fno-strength-reduce -ansi \
+		-pedantic \
+		-I. -I$(XF86_V3_DIR)/programs/Xserver/hw/xfree86/common \
+		-I$(XF86_V3_DIR)/programs/Xserver/hw/xfree86/os-support \
+		-I$(XF86_V3_DIR)/programs/Xserver/hw/xfree86 \
+		-I$(XF86_V3_DIR)/programs/Xserver/mfb \
+		-I$(XF86_V3_DIR)/programs/Xserver/mi \
+		-I$(XF86_V3_DIR)/programs/Xserver/include \
+		-I$(XF86_V3_DIR)/programs/Xserver/os \
+		-I$(XF86_V3_DIR)/exports/include/X11 \
+		-I$(XF86_V3_DIR)/include/extensions \
+		-I \ -I$(XF86_V3_DIR) \
+		-I$(XF86_V3_DIR)/exports/include \
+		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L \
+		-D_POSIX_SOURCE -D_XOPEN_SOURCE=500L -D_BSD_SOURCE \
+		-D_SVID_SOURCE -DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP \
+		-DXCSECURITY -DDPMSExtension -DPIXPRIV  -DGCCUSESGAS \
+		-DSTATIC_COLOR -DAVOID_GLYPHBLT -DPIXPRIV  -DXFreeXDGA \
+		-DNDEBUG -DFUNCPROTO=15 -DNARROWPROTO -DPNP_MOUSE -fPIC \
+		-DDYNAMIC_MODULE -DDEFAULT_MODULE_PATH=\"/usr/X11R6/lib/modules\" \
+		-o xf86Wacom-v3.o -c xf86Wacom.c
+
+wacom_drv-v3.o: xf86Wacom-v3.o
+	ld -r xf86Wacom-v3.o -o wacom_drv-v3.o
 

@@ -28,7 +28,7 @@
  * This driver is only able to handle the Wacom IV and Wacom V protocols.
  *
  * Wacom V protocol work done by Raph Levien <raph@gtk.org> and
- * Frédéric Lepied <lepied@xfree86.org>.
+ * FrÃ©dÃ©ric Lepied <lepied@xfree86.org>.
  *
  * Many thanks to Dave Fleck from Wacom for the help provided to
  * build this driver.
@@ -61,9 +61,10 @@
  * 2003-01-31 26-j0.5.2 - fixed serial number code for Intuos and Intuos2
  * 2003-02-12 26-j0.5.3 - added Ping Cheng's USB patch
  * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
+ * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
  */
 
-static const char identification[] = "$Identification: 26-j0.5.4 $";
+static const char identification[] = "$Identification: 26-j0.5.5 $";
 
 #include "xf86Version.h"
 
@@ -309,6 +310,9 @@ typedef struct
     int			oldWheel;	/* previous wheel value */    
     int			oldButtons;	/* previous buttons state */
     int			oldProximity;	/* previous proximity */
+    double		speed;          /* relative mode acceleration */
+    int			numScreen;	/* number of configured screens */
+    int			currentScreen;	/* current screen in display */
 
 	/* JEJ - throttle */
 	int			throttleStart;	/* time in ticks for last wheel movement */
@@ -438,6 +442,7 @@ static SymTabRec ModeTabRec[] = {
  * constant and macros declarations
  *****************************************************************************/
 #define DEFAULT_MAXZ 240	/* default value of MaxZ when nothing is configured */
+#define DEFAULT_SPEED 1.0	/* default relative cursor speed */
 #define BUFFER_SIZE 256		/* size of reception buffer */
 #define XI_STYLUS "STYLUS"	/* X device name for the stylus */
 #define XI_CURSOR "CURSOR"	/* X device name for the cursor */
@@ -1241,37 +1246,16 @@ xf86WcmConvert(LocalDevicePtr	local,
     if (first != 0 || num == 1)
       return FALSE;
 
-#ifdef XFREE86_V4
-    {
-	ScreenPtr	pscr;
-	
-	if (priv->screen_no != -1) {
-	    pscr = screenInfo.screens[priv->screen_no];
-	} else {
-	    pscr = miPointerCurrentScreen();
-	}
-    
-	if (pscr == NULL)
-	    return FALSE;
-	
-	priv->factorX = ((double) pscr->width)
-	    / (priv->bottomX - priv->topX);
-	priv->factorY = ((double) pscr->height)
-	    / (priv->bottomY - priv->topY);
+    if ( (priv->flags & ABSOLUTE_FLAG) && priv->screen_no == -1) {
+        v0 -= priv->currentScreen * 
+		(priv->bottomX - priv->topX) / priv->numScreen;
     }
-#endif
     
-DBG(6, ErrorF("bottomY =%d bottomX=%d \n",priv->bottomY,priv->bottomX));
     *x = v0 * priv->factorX + 0.5;
     *y = v1 * priv->factorY + 0.5;
 
     DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
 		  v0, v1, *x, *y));
-#ifdef XFREE86_V4
-    if (priv->screen_no != -1) {
-	xf86XInputSetScreen(local, priv->screen_no, *x, *y);
-    }
-#endif
     return TRUE;
 }
 
@@ -1290,21 +1274,70 @@ xf86WcmReverseConvert(LocalDevicePtr	local,
 		      int		*valuators)
 {
     WacomDevicePtr	priv = (WacomDevicePtr) local->private;
-
-#ifdef XFREE86_V4
-    priv->factorX = ((double) miPointerCurrentScreen()->width)
-	/ (priv->bottomX - priv->topX);
-    priv->factorY = ((double) miPointerCurrentScreen()->height)
-	/ (priv->bottomY - priv->topY);
-#endif
     
     valuators[0] = x / priv->factorX + 0.5;
     valuators[1] = y / priv->factorY + 0.5;
 
+    if ( (priv->flags & ABSOLUTE_FLAG) && priv->screen_no == -1) {
+        valuators[0] += priv->currentScreen * 
+		(priv->bottomX - priv->topX) / priv->numScreen;
+    }
     DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		  valuators[0], valuators[1]));
 
     return TRUE;
+}
+ 
+/*
+ ***************************************************************************
+ *
+ * set_screen --
+ *      set to the proper screen according to the converted (x,y).
+ *      this only supports for horizontal setup now.
+ *      need to know screen's origin (x,y) to support 
+ *      combined horizontal and vertical setups
+ *
+ ***************************************************************************
+ */
+static void
+set_screen(LocalDevicePtr   local,
+               int          v0,
+               int          v1)
+{
+#ifdef XFREE86_V4
+    WacomDevicePtr      priv = (WacomDevicePtr) local->private;
+    int                 screenToSet = miPointerCurrentScreen()->myNum;
+    int                 i;
+    int 		x, y;
+    DBG(6, ErrorF("set_screen\n"));
+
+    if (priv->screen_no != -1) {
+        screenToSet = priv->screen_no;
+        priv->factorX = (double) screenInfo.screens[screenToSet]->width
+                /(double) (priv->bottomX - priv->topX);
+        priv->factorY = (double) screenInfo.screens[screenToSet]->height
+                /(double) (priv->bottomY - priv->topY);
+    } else if (priv->flags & ABSOLUTE_FLAG) {
+        for (i=0; i< priv->numScreen; i++ ) {
+            if ( v0 <= (priv->bottomX - priv->topX) /priv->numScreen * (i+1) ) {
+                v0 = v0 - (int)(((priv->bottomX - priv->topX) * i) / priv->numScreen);
+                screenToSet = i;
+                i = priv->numScreen;
+            }
+        }
+        priv->factorX = (double) (screenInfo.screens[screenToSet]->width *
+                priv->numScreen) /(double) (priv->bottomX - priv->topX);
+        priv->factorY = (double) screenInfo.screens[screenToSet]->height
+                /(double) (priv->bottomY - priv->topY);
+    }
+
+    x = v0 * priv->factorX + 0.5;
+    y = v1 * priv->factorY + 0.5;
+    xf86XInputSetScreen(local, screenToSet, x, y);
+DBG(10, ErrorF("set_screen current=%d ToSet=%d\n", 
+			  priv->currentScreen, screenToSet));
+    priv->currentScreen = screenToSet;
+#endif
 }
  
 /*
@@ -1371,6 +1404,7 @@ xf86WcmSendEvents(LocalDevicePtr	local,
     WacomCommonPtr	common = priv->common;
     int			rx, ry, rz, rtx, rty, rwheel;
     int			is_core_pointer, is_absolute;
+    int			set_screen_called = 0;
 
     DBG(7, ErrorF("[%s] prox=%s\tx=%d\ty=%d\tz=%d\tbutton=%s\tbuttons=%d\ttx=%d ty=%d\twl=%d\n",
 		  (type == STYLUS_ID) ? "stylus" : (type == CURSOR_ID) ? "cursor" : "eraser",
@@ -1400,6 +1434,16 @@ xf86WcmSendEvents(LocalDevicePtr	local,
     } else {
 	rx = x - priv->oldX;
 	ry = y - priv->oldY;
+        if (priv->speed != DEFAULT_SPEED ) {
+            /* don't apply acceleration for fairly small
+             * increments (but larger than speed setting).
+             */
+            int no_jitter = priv->speed*3;
+            if (ABS(rx) > no_jitter)
+                rx *=  priv->speed;
+            if (ABS(ry) > no_jitter)
+                ry *= priv->speed;
+        }
 	rz = z - priv->oldZ;  
 	rtx = tx - priv->oldTiltX;
 	rty = ty - priv->oldTiltY;
@@ -1423,6 +1467,21 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 		if ( priv->oldProximity ) {
 		    priv->flags -= FIRST_TOUCH_FLAG;
 		    DBG(4, ErrorF("xf86WcmSendEvents FIRST_TOUCH_FLAG unset\n"));
+		    if (!is_absolute) {
+			/* don't move the cursor the first time we send motion event 
+		 	 */
+		    	rx = 0;
+		    	ry = 0;
+		    	rz = 0;
+		    	rtx = 0;
+		    	rty = 0;
+		   	rwheel = 0;
+		    }
+    		    /* to support multi-monitors, we need to set the proper 
+     		     * screen before posting any events 
+		     */
+    		    set_screen(local, rx, ry);
+		    set_screen_called = 1;
 	    	    xf86PostProximityEvent(local->dev, 1, 0, 6, rx, ry, z, tx, ty, rwheel);
 		}
 	    }
@@ -1432,6 +1491,11 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 	 * since the x and y values may be invalid 
 	 */
 	if ( !(priv->flags & FIRST_TOUCH_FLAG)) {
+    	    /* to support multi-monitors, we need to set the proper 
+     	    * screen before posting any events */
+	    if (!set_screen_called) {
+    	        set_screen(local, rx, ry);
+	    }
 	    xf86PostMotionEvent(local->dev, is_absolute, 0, 6, rx, ry, rz,
 				    rtx, rty, rwheel); 
 	    if (priv->oldButtons != buttons) {
@@ -2362,25 +2426,25 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 	    }
 	    break; /* EV_MSC */
 	} /* switch event->type */
-	
-	/* handle throttle */
-	if ((priv->throttleLimit >= 0) && (priv->throttleLimit < sampleTime))
-	{
-		DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d N=%d\n",
+    }
+    /* handle throttle */
+    if ((priv->throttleLimit >= 0) && (priv->throttleLimit < sampleTime))
+    {
+	DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d N=%d\n",
 				priv->throttleStart,
 				priv->throttleLimit,
 				sampleTime,
 				priv->throttleValue,
 				sampleTime + ThrottleToRate(priv->throttleValue)));
 
-		wheel += (priv->throttleValue > 0) ? 1 :
+	wheel += (priv->throttleValue > 0) ? 1 :
 				(priv->throttleValue < 0) ? -1 : 0;
 
-		priv->throttleStart = sampleTime;
-		priv->throttleLimit = sampleTime + ThrottleToRate(priv->throttleValue);
-	}
+	priv->throttleStart = sampleTime;
+	priv->throttleLimit = sampleTime + ThrottleToRate(priv->throttleValue);
+    }
 
-	if ((is_proximity == priv->oldProximity) &&
+    if ((is_proximity == priv->oldProximity) &&
 	    (buttons == priv->oldButtons) &&
 	    (wheel == priv->oldWheel) &&
 	    (ABS(x - priv->oldX) <= common->wcmSuppress) &&
@@ -2397,9 +2461,7 @@ xf86WcmReadUSBInput(LocalDevicePtr         local)
 			   wheel, priv->oldWheel,
 			   tilt_x, priv->oldTiltX,
 			   tilt_y, priv->oldTiltY));
-	    continue;
-	}
-
+    }else {
 	DBG(10, ErrorF("sending event %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		       x, priv->oldX,
 		       y, priv->oldY,
@@ -2532,8 +2594,8 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
     }
   
     if (common->wcmSuppress < 0) {
-	int	xratio = common->wcmMaxX/screenInfo.screens[0]->width;
-	int	yratio = common->wcmMaxY/screenInfo.screens[0]->height;
+	int	xratio = common->wcmMaxX/screenInfo.screens[priv->currentScreen]->width;
+	int	yratio = common->wcmMaxY/screenInfo.screens[priv->currentScreen]->height;
 	
 	common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
     }
@@ -2962,8 +3024,8 @@ xf86WcmOpen(LocalDevicePtr	local)
     }
   
     if (common->wcmSuppress < 0) {
-	int	xratio = common->wcmMaxX/screenInfo.screens[0]->width;
-	int	yratio = common->wcmMaxY/screenInfo.screens[0]->height;
+	int xratio = common->wcmMaxX/screenInfo.screens[priv->currentScreen]->width;
+	int yratio = common->wcmMaxY/screenInfo.screens[priv->currentScreen]->height;
 	
 	common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
     }
@@ -3080,7 +3142,6 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
     double		screenRatio, tabletRatio;
     int			gap;
     int			loop;
-    int			screen_idx = 0;
     
     if (local->fd < 0) {
         if (common->wcmInitNumber > 2 ||
@@ -3137,7 +3198,7 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
 	}
 
 	if (priv->screen_no != -1 &&
-	    (priv->screen_no >= screenInfo.numScreens ||
+	    (priv->screen_no >= priv->numScreen ||
 	     priv->screen_no < 0)) {
 	    ErrorF("%s: invalid screen number %d, resetting to 0\n",
 		   local->name, priv->screen_no);
@@ -3147,12 +3208,12 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
 	/* Calculate the ratio according to KeepShape, TopX and TopY */
 
 	if (priv->screen_no != -1) {
-	    screen_idx = priv->screen_no;
+	    priv->currentScreen = priv->screen_no;
 	}
 	
 	if (priv->flags & KEEP_SHAPE_FLAG) {
-	    screenRatio = ((double) screenInfo.screens[screen_idx]->width)
-		/ screenInfo.screens[screen_idx]->height;
+	    screenRatio = ((double) screenInfo.screens[priv->currentScreen]->width)
+		/ screenInfo.screens[priv->currentScreen]->height;
 
 	    tabletRatio = ((double) (common->wcmMaxX - priv->topX))
 		/ (common->wcmMaxY - priv->topY);
@@ -3170,9 +3231,9 @@ xf86WcmOpenDevice(DeviceIntPtr       pWcm)
 		priv->bottomY = common->wcmMaxY;
 	    }
 	}
-	priv->factorX = ((double) screenInfo.screens[0]->width)
+	priv->factorX = ((double) screenInfo.screens[priv->currentScreen]->width)
 	    / (priv->bottomX - priv->topX);
-	priv->factorY = ((double) screenInfo.screens[0]->height)
+	priv->factorY = ((double) screenInfo.screens[priv->currentScreen]->height)
 	    / (priv->bottomY - priv->topY);
     
 	if (xf86Verbose)
@@ -3561,6 +3622,9 @@ xf86WcmAllocate(char *  name,
     priv->serial = 0;		        /* serial number */
     priv->initNumber = 0;	        /* magic number for the init phasis */
     priv->screen_no = -1;		/* associated screen */
+    priv->speed = DEFAULT_SPEED;	/* rel. mode acceleration */
+    priv->numScreen = screenInfo.numScreens; /* number of configureed screens */
+    priv->currentScreen = 0;		/* current screen in display */
 
 	/* JEJ - throttle sampling code */
 	priv->throttleValue = 0;
@@ -3993,6 +4057,11 @@ xf86WcmInit(InputDriverPtr	drv,
 	    xf86Msg(X_CONFIG, "%s: serial speed %u\n", dev->identifier,
 		    val);
     }
+    priv->speed = xf86SetRealOption(local->options, "Speed", DEFAULT_SPEED);
+    if (priv->speed != DEFAULT_SPEED) {
+	xf86Msg(X_CONFIG, "%s: speed = %.3f\n", dev->identifier,
+		priv->speed);
+    }
     /* mark the device configured */
     local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
 
@@ -4088,4 +4157,5 @@ XF86ModuleData wacomModuleData = {&xf86WcmVersionRec,
  * End:
  */
 /* end of xf86Wacom.c */
+
 

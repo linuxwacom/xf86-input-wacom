@@ -9,9 +9,12 @@ WCM_OPTION_MODVER=no
 WCM_ENV_KERNEL=no
 WCM_KERNEL_WACOM_DEFAULT=no
 WCM_ENV_XF86=no
+WCM_ENV_XF86V3=no
 WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
+XF86SUBDIR=xc/programs/Xserver/include
+XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
 dnl Check architecture
 AC_MSG_CHECKING(for processor type)
 WCM_ARCH=`uname -m`
@@ -134,12 +137,28 @@ AC_ARG_WITH(xf86,
 [
 	WCM_XF86DIR="$withval";
 	AC_MSG_CHECKING(for valid XFree86 build environment)
-	if test -f $WCM_XF86DIR/$XF86SUBDIR/include/xf86Version.h; then
+	if test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
 		WCM_ENV_XF86=yes
 		AC_MSG_RESULT(ok)
 	else
 		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Unable to find $WCM_XF86DIR/$XF86SUBDIR/include/xf86Version.h")
+		AC_MSG_ERROR("Unable to find $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h")
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
+])])
+AC_DEFUN(AC_WCM_CHECK_XFREE86V3SOURCE,[
+dnl Check for XFree86 V3 build environment
+AC_ARG_WITH(xf86v3,
+[  --with-xf86v3=dir   Specify XF86 V3 build directory],
+[
+	WCM_XF86V3DIR="$withval";
+	AC_MSG_CHECKING(for valid XFree86 V3 build environment)
+	if test -f $WCM_XF86V3DIR/$XF86V3SUBDIR/xf86Version.h; then
+		WCM_ENV_XF86V3=yes
+		AC_MSG_RESULT(ok)
+	else
+		AC_MSG_RESULT("xf86Version.h missing")
+		AC_MSG_ERROR("Unable to find $WCM_XF86V3DIR/$XF86V3SUBDIR/xf86Version.h")
+	fi
+	WCM_XF86V3DIR=`(cd $WCM_XF86V3DIR; pwd)`
 ])])
