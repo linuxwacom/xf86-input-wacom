@@ -397,6 +397,8 @@ static void FetchUSB(int fd)
 
 	while (1)
 	{
+		wacscrn_refresh();
+
 		/* read one whole event record */
 		nCnt=0;
 		while (nCnt < sizeof(ev))
@@ -432,8 +434,6 @@ static void FetchUSB(int fd)
 			gRelState[ev.code].nValue += ev.value;
 			DisplayRel(ev.code);
 		}
-		
-		wacscrn_refresh();
 	}
 }
 
@@ -574,6 +574,8 @@ void FetchSerial(WACOMTABLET hTablet)
 
 	while (1)
 	{
+		wacscrn_refresh();
+
 		nLength = WacomReadRaw(hTablet,uchBuf,sizeof(uchBuf));
 		if (nLength < 0) break;
 
@@ -641,8 +643,6 @@ void FetchSerial(WACOMTABLET hTablet)
 					uchBuf[i] : '.');
 			wacscrn_output(nRow,60 + i,chOut);
 		}
-
-		wacscrn_refresh();
 	}
 }
 

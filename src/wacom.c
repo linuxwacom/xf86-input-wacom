@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.3 2003/01/01 01:59:54 jjoganic Exp $
+ * $Id: wacom.c,v 1.4 2003/01/02 02:19:39 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -67,6 +67,7 @@
  *    v1.30-j0.3.3 - added volito, thanks to Pasi Savolainen; fixed wheel sign
  *    v1.30-j0.3.4 - added Ping Cheng's new tool IDs
  *    v1.30-j0.3.5 - thread for resetting tablet on bad report
+ *    v1.30-j0.3.6 - fixed volito ranges, thanks to Pasi Savolainen
  */
 
 /*
@@ -97,7 +98,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.5"
+#define DRIVER_VERSION "v1.30-j0.3.6"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -258,6 +259,9 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
+	/* check if we can handle the data */
+	if (data[0] == 0x63) /* some sort of clock for Volito? */
+		return;
 	if (data[0] != 2)
 	{
 		printk(KERN_ERR "wacom_graphire_irq: received unknown report #%d\n", data[0]);
@@ -279,12 +283,14 @@ static void wacom_graphire_irq(struct urb *urb)
 			break;
 
 		case 2: /* Mouse with wheel */
+			input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
 			input_report_rel(dev, REL_WHEEL, (signed char) data[6]);
+			/* fall through */
+
 		case 3: /* Mouse without wheel */
 			input_report_key(dev, BTN_TOOL_MOUSE, data[7] > 24);
 			input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 			input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
-			input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
 			input_report_abs(dev, ABS_DISTANCE, data[7]);
 
 			input_report_abs(dev, ABS_X, x);
@@ -547,7 +553,7 @@ struct wacom_features wacom_features[] = {
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 
 	/* Volito - (Graphire2 4x5 no mouse wheel) */
-	/* 20 */ { "Wacom Volito",         8,  10206,  7422,   511, 32,
+	/* 20 */ { "Wacom Volito",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 
 	{ NULL , 0 }
