@@ -1,3 +1,7 @@
+2003-04-02    John E. Joganic <john@joganic.com>
+
+	* Added J. Yen's "misc fixes" patch to xf86Wacom.c
+
 2003-03-31    John E. Joganic <john@joganic.com>
 
 	* Added mousedev.c with fix to ignore wacom
