@@ -172,7 +172,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 {
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
-	int n, is_stylus, cur_type, tmp_coord;
+	int n, cur_type, tmp_coord;
 
 	if ((n = xf86WcmSerialValidate(common,data)) > 0)
 		return n;
@@ -206,15 +206,33 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 	/* pressure */
 	ds->pressure = ((data[6] & 0x01) << 7) | (data[5] & 0x7F);
 
+	/* button order is slightly amiss so that styluses with only
+	 * one side button have buttons 1 and 3 */
+
 	/* report touch as button 1 */
 	ds->buttons = (data[0] & 0x01) ? 1 : 0 ;
 
 	/* report side switch as button 3 */
 	ds->buttons |= (data[0] & 0x02) ? 0x04 : 0 ;
 
+	/* report as button 2 (subject eraser check below) */
+	ds->buttons |= (data[0] & 0x04) ? 0x02 : 0 ;
+
+	/* the bit used for button 2 is also used to ID the
+	 * eraser.  If the tool comes into proximity with this bit
+	 * set, it is assumed to be the eraser.  If the tool was
+	 * previously in proximity, it is assumed to be the button.
+	 * The mistaken identity case is handled with proximity
+	 * below. */
+
 	/* check which device we have */
-	is_stylus = (data[0] & 0x04) ? 0 : 1;
-	cur_type = is_stylus ? STYLUS_ID : ERASER_ID;
+	cur_type = (data[0] & 0x04) ? ERASER_ID : STYLUS_ID;
+
+	/* If there's no eraser configured, let's not even try to
+	 * report an eraser (handy for making button 2 action more
+	 * definite) */
+	if ( common->wcmNumDevices == 1 && cur_type == ERASER_ID )
+		cur_type = STYLUS_ID;
 
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 
@@ -223,6 +241,21 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 	/* out of prox */
 	else if (!ds->proximity)
 		memset(ds,0,sizeof(*ds));
+
+	/* check on previous proximity */
+	else
+	{
+		/* we were fooled by tip and second
+		 * sideswitch when it came into prox */
+		if ((ds->device_type != cur_type) &&
+			(ds->device_type == ERASER_ID))
+		{
+			/* send a prox-out for old device */
+			WacomDeviceState out = { 0 };
+			xf86WcmEvent(common,0,&out);
+			ds->device_type = cur_type;
+		}
+	}
 
 	DBG(8, ErrorF("isdv4Parse %s\n",
 		ds->device_type == ERASER_ID ? "ERASER " :
