@@ -370,8 +370,14 @@ elif test "$WCM_TCLDIR" != "no"; then
 		if test "$WCM_TCLDIR" != "/usr"; then
 			CFLAGS="$CFLAGS -I$WCM_TCLDIR/include"
 		fi
+	elif test -f "$WCM_TCLDIR/tcl.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TCL=yes
+		if test "$WCM_TCLDIR" != "/usr"; then
+			CFLAGS="$CFLAGS -I$WCM_TCLDIR"
+		fi
 	else
-		AC_MSG_RESULT(not found; tried $WCM_TCLDIR/include/tcl.h)
+		AC_MSG_RESULT(not found; tried $WCM_TCLDIR/include/tcl.h and $WCM_TCLDIR/tcl.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -396,7 +402,7 @@ if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
 		WCM_TKDIR="$WCM_TCLTKDIR_DEFAULT"
-	elif test -f "$WCM_TCLDIR/include/tk.h"; then
+	elif test -f "$WCM_TCLDIR/include/tk.h" || test -f "$WCM_TCLDIR/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
 		WCM_TKDIR="$WCM_TCLDIR"
@@ -419,8 +425,14 @@ elif test "$WCM_TKDIR" != "no"; then
 		if test "$WCM_TCLDIR" != "$WCM_TKDIR" && "$WCM_TKDIR" != "/usr"; then
 			CFLAGS="$CFLAGS -I$WCM_TKDIR/include"
 		fi
+	elif test -f "$WCM_TKDIR/tk.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TK=yes
+		if test "$WCM_TCLDIR" != "$WCM_TKDIR" && test "$WCM_TKDIR" != "/usr"; then
+			CFLAGS="$CFLAGS -I$WCM_TKDIR"
+		fi
 	else
-		AC_MSG_RESULT(not found; tried $WCM_TKDIR/include/tk.h)
+		AC_MSG_RESULT(not found; tried $WCM_TKDIR/include/tk.h and $WCM_TKDIR/tk.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk library does not appear to be installed."
 		echo "*** Do you have the tk rpm or equivalent package properly"

@@ -85,8 +85,9 @@ BUILDING wacom_drv.o FROM SCRATCH
 You will need the XFree86 source code, and you will need to actually build
 it.  The file xf86Version.h is generated during the build process and is a
 required dependency for building wacom_drv.o.  The configure script will 
-attempt to build wacom-drv.o by default, but you need to provide the --with-xf86=<xf86_directory> option. If you don't want to build wacom-drv.o, the 
-option --disable-wacomdrv needs to be provided.
+attempt to build wacom-drv.o by default,  but you need to provide the 
+--with-xf86=<xf86_directory> option.  If you don't want to build wacom-drv.o, 
+the option --disable-wacomdrv needs to be provided.
 
 If the xf86Version.h file is located at:
 	/usr/local/src/XFree86-4.2.0/xc/programs/Xserver/include/xf86Version.h
