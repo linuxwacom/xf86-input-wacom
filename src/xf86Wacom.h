@@ -298,7 +298,7 @@ struct _WacomModel
 #define CURSOR_ID               2
 #define ERASER_ID               4
 #define ABSOLUTE_FLAG           8
-#define FIRST_TOUCH_FLAG        16
+
 #define KEEP_SHAPE_FLAG         32
 #define BAUD_19200_FLAG         64
 #define BETA_FLAG               128

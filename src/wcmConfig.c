@@ -145,7 +145,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 LocalDevicePtr xf86WcmAllocateStylus(void)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS, STYLUS_ID);
+	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS,
+		ABSOLUTE_FLAG | STYLUS_ID);
 
 	if (local)
 		local->type_name = "Wacom Stylus";
@@ -170,7 +171,7 @@ LocalDevicePtr xf86WcmAllocateCursor(void)
 LocalDevicePtr xf86WcmAllocateEraser(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER,
-			ABSOLUTE_FLAG|ERASER_ID);
+		ABSOLUTE_FLAG | ERASER_ID);
 
 	if (local)
 		local->type_name = "Wacom Eraser";

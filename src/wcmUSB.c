@@ -113,7 +113,8 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			for (i = 0; i < MAX_CHANNELS; i++)
 			{
 				temp_ds = &common->wcmChannel[i].state;
-				if(readevent->value == temp_ds->serial_num)
+				if(readevent->value == temp_ds->serial_num ||
+					!temp_ds->serial_num)
 				{
 					channel = i;
 					break;
@@ -139,11 +140,11 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 				break;
 			}
 		}
-	}
-	if (channel == -1)
-	{
-		ErrorF("wacom: too many tools in use; ignoring event!\n");
-		return;
+		if (channel == -1)
+		{
+			ErrorF("wacom: no free channel; ignoring event!\n");
+			return;
+		}
 	}
 
 	ds = common->wcmChannel[channel].state;
@@ -170,12 +171,7 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			else if (event->code ==  ABS_TILT_Y)
 				ds.tilty = event->value - 64;
 			else if (event->code == ABS_PRESSURE)
-			{
 				ds.pressure = event->value;
-				MOD_BUTTONS (1, event->value >
-					common->wcmThreshold ? 1 : 0);
-				/* pressure button should be downstream */
-			}
 			else if (event->code == ABS_DISTANCE)
 			{
 			}

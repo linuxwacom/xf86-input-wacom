@@ -1,3 +1,9 @@
+2003-05-02    Jimmy Yen <jimmy@yen.tp>
+
+	* Cleanup, removed FIRST_TOUCH_FLAG.
+	* Moved pressure button and set-screen into xf86WcmEvent.
+	* Combined x and y suppression to reduce "jagged-line" effect.
+
 2003-05-01    John E. Joganic <john@joganic.com>
 
 	* Changed Graphire from absolute wheel to relative.

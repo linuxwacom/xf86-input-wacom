@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.11 2003/02/12 17:52:54 jjoganic Exp $
+ * $Id: wacom.c,v 1.12 2003/05/02 11:16:43 haoto Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -396,9 +396,6 @@ static void wacom_intuos_irq(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
-
-		input_report_key(dev, wacom->tool[idx], 1);
-		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		return;
 	}
 
@@ -484,7 +481,9 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, BTN_EXTRA,  data[8] & 0x08);
 		}
 	}
-	
+	/* proximity event gets filtered if its value doesn't change. this is
+	 * undesireable. why is it a key event? */
+	input_report_key(dev, wacom->tool[idx], 1);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 }
 
