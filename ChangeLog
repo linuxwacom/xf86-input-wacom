@@ -1,5 +1,7 @@
-2003-06-14    John E. Joganic <john@joganic.com>
+2003-06-15    John E. Joganic <john@joganic.com>
+	* Released version 0.5.1-beta
 
+2003-06-14    John E. Joganic <john@joganic.com>
 	* Fixed wacomcpl/wacomxi to run on systems with tcl and tk installed
 	* Moved wacomxi into subdirectory
 	* Modified checks for tcl and tk to search include and library paths

@@ -9,6 +9,8 @@ cpldir = @WCM_WACOMXI_BINDIR@
 cpl_SCRIPTS = wacomcpl wacomcpl-exec
 endif
 
+EXTRA_DIST = wacomcpl-exec
+
 # Source dependencies
 libwacomxi_la_SOURCES = wacomxi.c wacomxi.h
 libwacomxi_la_LDFLAGS = -no-undefined

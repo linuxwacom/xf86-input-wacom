@@ -36,10 +36,10 @@ xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
-		input.c tabletdev.c usbmouse.c xf86Wacom.c \
+		input.c tabletdev.c usbmouse.c xf86Wacom.c xf86Wacom.h \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
 		wcmCommon.c wcmCompat.c wcmConfig.c \
-		wcmFilter.c
+		wcmFilter.c wcmFilter.h wcmSerial.h
 
 KERNEL_DIR=@WCM_KERNELDIR@
 XF86_DIR=@WCM_XF86DIR@/xc
