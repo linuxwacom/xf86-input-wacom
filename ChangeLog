@@ -3,6 +3,7 @@
 	* Expanded graphire parsing; all devices use same data path
 	* Disabled throttle/wheel correlation for now; needs work and
 	  option for enabling/disabling.
+	* Split absolute and relative wheel at early data path stage
 
 2003-04-21    Ping Cheng <pingc@wacom.com>
 
