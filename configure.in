@@ -1,0 +1,262 @@
+AC_INIT(src/wacom.c)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(linuxwacom, 0.3.4-beta)
+AM_MAINTAINER_MODE
+AC_PROG_CC
+AC_PROG_AWK
+
+XF86SUBDIR=xc/programs/Xserver
+
+dnl Targets
+WAC_PROGS=""
+WAC_MODULES=""
+WAC_XF86PROGS=""
+WAC_XF86MODULES=""
+WAC_EXPPROGS=""
+WAC_EXPMODULES=""
+WAC_PATCH_HID=""
+
+dnl Check architecture
+AC_MSG_CHECKING(for processor type)
+WAC_ARCH=`uname -m`
+AC_MSG_RESULT($WAC_ARCH)
+
+dnl Guess modversioning
+WAC_OPTION_MODVER=no
+AC_MSG_CHECKING(for kernel module versioning)
+kernelrel=`uname -r`
+moddir="/lib/modules/$kernelrel/kernel/drivers/usb"
+if test -f "$moddir/hid.o"; then
+	printk=`nm $moddir/hid.o | grep printk_R`
+	if test -n "$printk"; then
+		WAC_OPTION_MODVER=yes
+		AC_MSG_RESULT(yes)
+	else
+		printk=`nm $moddir/hid.o | grep printk`
+		if test -n "$printk"; then
+			AC_MSG_RESULT(no)
+		else
+			AC_MSG_RESULT(confused; assuming no)
+			WAC_OPTION_MODVER="unknown"
+			echo "***"; echo "*** WARNING:"
+			echo "*** printk symbol in hid.o not present"
+			echo "***"
+		fi
+	fi
+else
+	AC_MSG_RESULT(unknown; assuming no)
+	WAC_OPTION_MODVER="unknown"
+fi
+
+dnl Check for kernel build environment
+WAC_ENV_KERNEL=no
+AC_ARG_WITH(kernel,
+[  --with-kernel=dir   Specify kernel source directory],
+[
+	WAC_KERNELDIR="$withval"
+	AC_MSG_CHECKING(for valid kernel source tree)
+	if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
+		AC_MSG_RESULT(ok)
+		WAC_ENV_KERNEL=yes
+	else
+		AC_MSG_RESULT(missing input.h)
+		AC_MSG_ERROR("Unable to find $WAC_KERNELDIR/include/linux/input.h")
+	fi
+],
+[
+	dnl guess directory
+	AC_MSG_CHECKING(for kernel sources)
+	WAC_KERNELDIR="/usr/src/linux-2.4"
+	if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
+		WAC_ENV_KERNEL=yes
+		AC_MSG_RESULT($WAC_KERNELDIR)
+	else
+		WAC_KERNELDIR="/usr/src/linux"
+		if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
+			WAC_ENV_KERNEL=yes
+			AC_MSG_RESULT($WAC_KERNELDIR)
+		else
+			AC_MSG_RESULT(not found)
+			echo "***"
+			echo "*** WARNING:"
+			echo "*** Unable to guess kernel source directory"
+			echo "*** Looked at /usr/src/linux-2.4"
+			echo "*** Looked at /usr/src/linux"
+			echo "*** Kernel modules will not be built"
+			echo "***"
+		fi
+	fi
+])
+
+dnl Check for XFree86 build environment
+WAC_ENV_XF86=no
+AC_ARG_WITH(xf86,
+[  --with-xf86=dir   Specify XF86 build directory],
+[
+	WAC_XF86DIR="$withval";
+	AC_MSG_CHECKING(for valid XFree86 build environment)
+	if test -f $WAC_XF86DIR/$XF86SUBDIR/include/xf86Version.h; then
+		WAC_ENV_XF86=yes
+		AC_MSG_RESULT(ok)
+	else
+		AC_MSG_RESULT("xf86Version.h missing")
+		AC_MSG_ERROR("Unable to find $WAC_XF86DIR/$XF86SUBDIR/include/xf86Version.h")
+	fi
+	WAC_XF86DIR=`(cd $WAC_XF86DIR; pwd)`
+])
+
+dnl Check for wacom build
+WAC_OPTION_WACOM=no
+AC_ARG_ENABLE(wacom,
+[  --enable-wacom  Enable building wacom.o                  default=yes],
+	, enable_wacom=yes)
+if test "$enable_wacom" != "no"; then
+	if test "$WAC_ENV_KERNEL" != "yes"; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile wacom.o without kernel build environment"
+		echo "*** wacom.o will not be built"
+		echo "***"
+	else
+		WAC_OPTION_WACOM=yes
+		WAC_MODULES="$WAC_MODULES wacom.o"
+	fi
+fi
+
+dnl Check for wacdump build
+WAC_OPTION_WACDUMP=no
+AC_ARG_ENABLE(wacdump,
+[  --enable-wacdump   Enable building wacdump               default=yes],
+	, enable_wacdump=yes)
+if test "$enable_wacdump" != "no"; then
+	WAC_OPTION_WACDUMP=yes
+	WAC_PROGS="$WAC_PROGS wacdump"
+fi
+
+dnl Check for hid build
+WAC_OPTION_HID=no
+AC_ARG_ENABLE(hid,
+[  --enable-hid    Enable building hid.o                    default=no],
+	, enable_hid=no)
+if test "$enable_hid" != "no"; then
+	if test "$WAC_ENV_KERNEL" != "yes"; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile hid.o without kernel build environment"
+		echo "*** hid.o will not be built"
+		echo "***"
+	else
+		WAC_OPTION_HID=yes
+		WAC_MODULES="$WAC_MODULES hid.o"
+	fi
+fi
+
+dnl Check for usbmouse build
+WAC_OPTION_USBMOUSE=no
+AC_ARG_ENABLE(usbmouse,
+[  --enable-usbmouse  Enable building usbmouse.o               default=no],
+	, enable_usbmouse=no)
+if test "$enable_usbmouse" != "no"; then
+	if test "$WAC_ENV_KERNEL" != "yes"; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile usbmouse.o without kernel build environment"
+		echo "*** usbmouse.o will not be built"
+		echo "***"
+	else
+		WAC_OPTION_USBMOUSE=yes
+		WAC_MODULES="$WAC_MODULES usbmouse.o"
+	fi
+fi
+
+dnl Check for wacomdrv build
+WAC_OPTION_WACOMDRV=no
+AC_ARG_ENABLE(wacomdrv,
+[  --enable-wacomdrv  Enable building wacom_drv.o            default=no],
+	, enable_wacomdrv=no)
+if test "$enable_wacomdrv" != "no"; then
+	if test "$WAC_ENV_XF86" != "yes"; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** Unable to compile wacom_drv.o without XF86 build environment"
+		echo "*** wacom_drv.o will not be built"
+		echo "***"
+	else
+		WAC_OPTION_WACOMDRV=yes
+		WAC_XF86MODULES="$WAC_XF86MODULES wacom_drv.o"
+		WAC_EXPMODULES="$WAC_EXPMODULES wacom_drv.o"
+	fi
+fi
+
+dnl Check for arch
+AC_ARG_WITH(arch,
+[  --with-arch      Use specified architecture],
+[
+	WAC_ARCH=$withval
+])
+
+dnl Check for modver
+AC_ARG_ENABLE(modver,
+[  --enable-modver  Enable kernel module versioning        default=usually],
+	, enable_modver=$WAC_MODVER)
+if test "$enable_modver" = "no"; then
+	WAC_OPTION_MODVER=no
+	WAC_MODVER=""
+elif test "$enable-modver" = "yes"; then
+	WAC_OPTION_MODVER=yes
+	WAC_MODVER="-DCONFIG_MODVERSIONS"
+else
+	dnl not explicitly set, go with default
+	WAC_MODVER=""
+fi
+
+dnl Check for changed field names in hid-core.c
+if test "$WAC_OPTION_HID" = "yes"; then
+	AC_MSG_CHECKING(for updated field names in hid-core.c)
+	HIDCORE="$WAC_KERNELDIR/drivers/usb/hid-core.c"
+	if test -f "$HIDCORE"; then
+		PATCH_DRVALUE=`grep 'dr\\.wValue' "$HIDCORE" | wc -l`
+		if test "$PATCH_DRVALUE" -gt 0; then
+			AC_MSG_RESULT([yes, using 2.4.20])
+			AC_DEFINE(WAC_PATCH_DRVALUE,1,[Need the dr.wValue patch])
+			WAC_PATCH_HID="(value_patch) $WAC_PATCH_HID"
+		else
+			AC_MSG_RESULT([no, using 2.4.19])
+			AC_DEFINE(WAC_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
+		fi
+	else
+		AC_MSG_RESULT([missing, using 2.4.19])
+		AC_DEFINE(WAC_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
+		echo "***"
+		echo "*** Warning: unable to find hid-core.c in kernel tree"
+		echo "*** It was not possible to detect whether patches needed to be"
+		echo "*** applied.  If the hid-core.c in this project does not build"
+		echo "*** correctly, you should resolve this problem first."
+		echo "***"
+	fi
+fi
+
+AC_SUBST(WAC_PROGS)
+AC_SUBST(WAC_MODULES)
+AC_SUBST(WAC_XF86PROGS)
+AC_SUBST(WAC_XF86MODULES)
+AC_SUBST(WAC_EXPPROGS)
+AC_SUBST(WAC_EXPMODULES)
+AC_SUBST(WAC_ARCH)
+AC_SUBST(WAC_MODVER)
+AC_SUBST(WAC_KERNELDIR)
+AC_SUBST(WAC_XF86DIR)
+
+AC_OUTPUT(Makefile src/Makefile)
+
+echo ""
+echo "----------------------------------------"
+echo "  BUILD ENVIRONMENT:"
+echo "       architecture - $WAC_ARCH"
+echo "  module versioning - $WAC_OPTION_MODVER"
+echo "             kernel - $WAC_ENV_KERNEL"
+echo "            XFree86 - $WAC_ENV_XF86"
+echo ""
+echo "  BUILD OPTIONS:"
+echo "            wacom.o - $WAC_OPTION_WACOM"
+echo "            wacdump - $WAC_OPTION_WACDUMP"
+echo "              hid.o - $WAC_OPTION_HID $WAC_PATCH_HID"
+echo "         usbmouse.o - $WAC_OPTION_USBMOUSE"
+echo "        wacom_drv.o - $WAC_OPTION_WACOMDRV"
+echo "----------------------------------------"

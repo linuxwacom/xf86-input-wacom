@@ -1,0 +1,96 @@
+README
+November 24, 2002
+
+This package is not currently sanctioned by the original driver developers
+although several attempts to contact them have been made.  Hopefully, this
+work will be rolled back into the main development trees.  Until that time,
+I will be taking responsibility for this code.  If you have any questions,
+comments, problems, patches, or complaints, send them to jej@j-arkadia.com.
+Please include the word WACOM in the subject to help me differentiate your
+email from the spam I usually receive.
+
+John E.Joganic
+jej@j-arkadia.com
+
+==============================================================================
+
+BUILDING FROM CVS:
+
+You should run bootstrap from the main directory to correctly initialize
+the project.  From there, run configure as you would normally.  Installation
+is not automatic so there is no make install target.  Configure options are
+explained below.
+
+    $ ./bootstrap && ./configure && make
+
+==============================================================================
+
+BUILDING FROM TARBALL:
+
+As you would expect, run configure and make.  Installation is not automatic
+so there is no make install target.  Configure options are explained below.
+
+    $ ./configure && make
+
+==============================================================================
+
+CONFIGURE OPTIONS:
+
+This file contains hints for building the sources.  There are a number of
+build targets, some of which are not built automatically.  Here is the
+breakdown.
+
+      wacom.o: built by default (--enable-wacom, --disable-wacom)
+      wacdump: built by default (--enable-wacdump, --disable-wacdump)
+        hid.o: not built by default (--enable-hid, --disable-hid)
+   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse)
+  wacom_drv.o: not built by default (--enable-wacomdrv, --disable-wacomdrv)
+
+BUILDING:
+
+Generally, you run the configure script followed by make.  This package
+will not attempt to install the drivers.  Please see the documentation on
+the website for more information on where specific drivers belong.
+
+    [root@haku linuxwacom-dev] # ./configure
+    [root@haku linuxwacom-dev] # make
+
+There are many options, and configure will attempt to guess the correct
+values for most of them.  By default, only the kernel driver and wacdump
+program are built.
+
+REQUIREMENTS:
+
+wacom.o, hid.o, and usbmouse are kernel modules and require the kernel
+sources to be present.  On a Redhat 8.0 system with the kernel-sources
+RPM installed, the source directory is located at /usr/src/linux-2.4.
+The wacdump configuration script will search for this directory
+automatically as well as /usr/src/linux.  You can override the directory
+using the --with-kernel=<directory> option.
+
+wacom_drv.o requires the XFree86 sources as well as a functional XF86
+build environment.  Since this is a more complicated setup and few people
+are going to want to rebuild this driver from source, the wacom_drv.o file
+is supplied with the wacdump package in the prebuilt directory.  It is
+compiled with gcc 3.2 under Redhat 8.0.  If the prebuilt wacom_drv.o module
+will not work for you, see the section "Building wacom_drv.o From Scratch."
+	
+BUILDING wacom_drv.o FROM SCRATCH
+
+You will need the XFree86 source code, and you will need to actually build
+it.  The file xf86Version.h is generated during the build process and is a
+required dependency for building wacom_drv.o.  The configure script will
+*not* attempt to build wacom-drv.o by default, but if you provide the
+--enable-wacomdrv and --with-xf86=<xf86_directory> options, configure will
+build wacom_drv.o during the normal build process.
+
+If the xf86Version.h file is located at:
+	/usr/local/src/XFree86-4.2.0/xc/programs/Xserver/include/xf86Version.h
+
+Then the correct configure options would be:
+	--enable-wacomdrv --with-xf86=/usr/local/src/XFree86-4.2.0
+
+==============================================================================
+
+WEBSITE: http://linux.joganic.com/wacom
+   HELP: jej@j-arkadia.com

@@ -1,0 +1,43 @@
+2002-12-21    John E. Joganic <john@joganic.com>
+
+	* Moved project to SourceForge as linuxwacom.
+
+2002-12-21    John E. Joganic <john@joganic.com>
+
+	* Added serial code to wacdump
+	* Added serial protocols IV 1.0 - 1.4.
+	* Added serial protocol V 1.0 - 1.1.
+	* Intuos mouse wheels are now positive when rolled backwards per PS/2
+	  Intellimouse convention
+	* Added Intuos2 to xf86Wacom.c
+
+2002-12-17    John E. Joganic <john@joganic.com>
+
+	* Merged code from 2.4.20 hid-core.c
+	* Added configuration code to handle kernels still at 2.4.19
+	* Split wacdump curses code into wacscrn.c to solve namespace collision
+	* Added volito to wacom.c
+
+2002-12-15    John E. Joganic <john@joganic.com>
+
+	* Last minute fix to debugging level on 4D mouse wheel
+	* Added framework for new driver
+	* Added code for 4D mouse wheel in xf86Wacom.c
+
+2002-12-13    John E. Joganic <john@joganic.com>
+
+	* Added pen model numbers for Intuos2 grip pen and Intuos pen
+	* Added wcm-beta.c and wcm-beta.h shell
+	* Added relative events to wacdump
+	* Added relative bit to Intuos and Intuos2 reporting in wacom.c
+	* Fixed relative 2D mouse wheel reporting in wacom.c
+
+2002-11-27    John E. Joganic <john@joganic.com>
+
+	* Added exp subdirectory for experimental work
+	* Isolated xf86Wacom.c declarations to header file
+
+2002-11-24    John E. Joganic <john@joganic.com>
+
+	* Branched at 0.2.0
+	* Created configure-based build environment

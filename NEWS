@@ -1,0 +1,10 @@
+December 22, 2002 - John E. Joganic
+
+The wacpack project is being hosted on SourceForge as the Linux Wacom Project.
+This build is now distributed under linuxwacom.
+
+November 24, 2002 - John E. Joganic
+
+This marks the first release of wacpack with a configure-based build
+environment.  Though it will not install anything, it is capable of
+building all the major drivers including wacom.o and wacom_drv.o.
