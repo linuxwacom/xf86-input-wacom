@@ -527,6 +527,10 @@ WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel)
 	if (SerialSetDevice(pSerial,pVendor,pDevice,pSubType))
 		{ free(pSerial); return NULL; }
 
+	/* configure the TTY for initial operation */
+	if (SerialConfigTTY(pSerial))
+		{ free(pSerial); return NULL; }
+
 	/* Identify the tablet */
 	if (!pSerial->pfnIdent || pSerial->pfnIdent(pSerial))
 		{ perror("ident"); free(pSerial); return NULL; }
@@ -640,7 +644,13 @@ static int SerialIdentWacom(SERIALTABLET* pSerial)
 
 	/* send wacom identification request */
 	if (SerialSendRequest(pSerial,"~#\r",chResp,sizeof(chResp)))
-		return 1;
+	{
+		if (errno != ETIMEDOUT) return 1;
+
+		/* try again, sometimes the first one gets garbled */
+		if (SerialSendRequest(pSerial,"~#\r",chResp,sizeof(chResp)))
+			return 1;
+	}
 
 	/* look through device table for information */
 	for (pDev=pVendor->pDevices; pDev->pszName; ++pDev)
@@ -1213,6 +1223,8 @@ static int SerialParseAcerC100(SERIALTABLET* pSerial,
 
 static int SerialSendReset(SERIALTABLET* pSerial)
 {
+	fprintf(stderr,"Sending reset\n");
+
 	/* reset to Wacom II-S command set, and factory defaults */
 	if (SerialSend(pSerial,"\r$\r")) return 1;
 	usleep(250000); /* 250 milliseconds */
@@ -1286,7 +1298,9 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 		char* pchResponse, unsigned int uSize)
 {
 	int nXfer;
+	fd_set fdsRead;
 	unsigned int uLen, uCnt;
+	struct timeval timeout;
 
 	uLen = strlen(pszRequest);
 	if (SerialSendRaw(pSerial,pszRequest,uLen)) return 1;
@@ -1297,6 +1311,17 @@ static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
 	/* read until first header character */
 	while (1)
 	{
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 500000;
+
+		FD_ZERO(&fdsRead);
+		FD_SET(pSerial->fd, &fdsRead);
+		if (select(FD_SETSIZE,&fdsRead,NULL,NULL,&timeout) <= 0)
+		{
+			errno = ETIMEDOUT;
+			return 1;
+		}
+
 		nXfer = read(pSerial->fd,pchResponse,1);
 		if (nXfer <= 0) { perror("trunc response header"); return 1; }
 		if (*pchResponse == *pszRequest) break;
@@ -1516,6 +1541,8 @@ static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
 		case 2400: baudRate = B2400; break; /* for testing, maybe */
 		case 1200: baudRate = B1200; break; /* for testing, maybe */
 	}
+
+	fprintf(stderr,"Setting baud rate to %d\n",nBaud);
 
 	/* change baud rate */
 	cfsetispeed(pTIOS, baudRate);
