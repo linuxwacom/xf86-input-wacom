@@ -292,7 +292,7 @@ static int SerialParseAcerC100(SERIALTABLET* pSerial,
 	/* This one is reverse engineered at this point */
 	static SERIALSUBTYPE xAcerC100[] =
 	{
-		ACER_SUBTYPE("C100-EX", "C100-experimental", 1),
+		ACER_SUBTYPE("C100", "Acer C100 Tablet PC Screen", 1),
 		{ NULL }
 	};
 
