@@ -302,18 +302,21 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			}
 		} /* end keep shape */
 
-		/* determine scaling factor */
-		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
-		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
-
 		if (xf86Verbose)
-			ErrorF("%s Wacom tablet top X=%d top Y=%d "
+			ErrorF("%s Wacom device \"%s\" top X=%d top Y=%d "
 				"bottom X=%d bottom Y=%d\n",
-				XCONFIG_PROBED, priv->topX, priv->topY,
-				priv->bottomX, priv->bottomY);
+				XCONFIG_PROBED, local->name, priv->topX,
+				priv->topY, priv->bottomX, priv->bottomY);
 
-		DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
-			priv->factorX, priv->factorY));
+		if (priv->numScreen == 1)
+		{
+			priv->factorX = totalWidth
+				/ (double)(priv->bottomX - priv->topX);
+			priv->factorY = maxHeight
+				/ (double)(priv->bottomY - priv->topY);
+			DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
+				priv->factorX, priv->factorY));
+		}
 	} /* end bounding rect */
 
 	/* x and y axes */

@@ -69,7 +69,7 @@ static Bool xf86WcmUSBDetect(LocalDevicePtr local)
 static void xf86WcmUSBRead(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
-	WacomDeviceState ds = { 0 };
+	WacomDeviceState ds;
 	int channel = -1;
 	ssize_t len;
 	int i;
@@ -100,41 +100,41 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			DBG(11, ErrorF("xf86WcmUSBRead resetting buf index\n"));
 			common->wcmIndex = 0;
 		}
-		
+		common->wcmEvent[common->wcmIndex++] = *readevent;
 		/* MSC_SERIAL is the event terminator */
-		if ((readevent->type == EV_MSC
-			&& readevent->code == MSC_SERIAL))
+		if (readevent->type == EV_MSC && readevent->code == MSC_SERIAL
+			&& common->wcmProtocolLevel == 5)
 		{
 			WacomDeviceState *temp_ds;
 			
-			ds.serial_num = readevent->value;
 			DBG(10, ErrorF("wacom tool serial number=%d\n",
-				ds.serial_num));
+				readevent->value));
 
 			for (i = 0; i < MAX_CHANNELS; i++)
 			{
 				temp_ds = &common->wcmChannel[i].state;
-				if(ds.serial_num == temp_ds->serial_num)
+				if(readevent->value == temp_ds->serial_num)
 				{
 					channel = i;
-					ds = *temp_ds;
 					break;
 				}
 			}
 			break;
 		}
-		common->wcmEvent[common->wcmIndex++] = *readevent;
 	}
-	if (common->wcmProtocolLevel == 4)
+	if (common->wcmProtocolLevel != 5)
 		channel = 0;
 
-	/* select device state channel */
-	if (channel == -1)
+	/* fall back to unused channel */
+	else if (channel == -1)
 	{
 		for (i = 0; i < MAX_CHANNELS; i++)
 		{
 			if(!common->wcmChannel[i].state.proximity)
 			{
+				/* reset channel data */
+				memset(&common->wcmChannel[i].state, 0,
+					sizeof(common->wcmChannel[i].state));
 				channel = i;
 				break;
 			}
@@ -145,6 +145,8 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		ErrorF("wacom: too many tools in use; ignoring event!\n");
 		return;
 	}
+
+	ds = common->wcmChannel[channel].state;
 
 	for (i = 0; i < common->wcmIndex; i++)
 	{

@@ -112,6 +112,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleLimit = -1;
 	
 	memset(common,0,sizeof(*common));
+	memset(common->wcmChannel, 0, sizeof(common->wcmChannel));
 	common->wcmDevice = "";                  /* device file name */
 	common->wcmSuppress = DEFAULT_SUPPRESS;  /* transmit position if increment is superior */
 	common->wcmFlags = 0;                    /* various flags */

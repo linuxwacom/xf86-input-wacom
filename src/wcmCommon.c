@@ -47,14 +47,21 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 {
 #if XFREE86_V4
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int screenToSet = miPointerCurrentScreen()->myNum;
+	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
 	int i, x, y;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
-	if (screenInfo.numScreens == 1 || !(priv->flags & ABSOLUTE_FLAG) ||
-		!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER)))
+	if (screenInfo.numScreens == 1) return;
+	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
+	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
+		/* screenToSet lags by one event, but not that important */
+		screenToSet = miPointerCurrentScreen()->myNum;
+		priv->factorX = screenInfo.screens[screenToSet]->width
+			/ (double)(priv->bottomX - priv->topX);
+		priv->factorY = screenInfo.screens[screenToSet]->height
+			/ (double)(priv->bottomY - priv->topY);
 		priv->currentScreen = screenToSet;
 		return;
 	}
@@ -317,11 +324,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			{
 				int fakeButton = rwheel < 0 ? 4 : 5;
 				xf86PostButtonEvent(local->dev, 
-					(priv->flags & ABSOLUTE_FLAG),
+					is_absolute,
 					fakeButton, 1, 0, 6, rx, ry, rz, rrot,
 					rthrottle, rwheel);
 				xf86PostButtonEvent(local->dev, 
-					(priv->flags & ABSOLUTE_FLAG),
+					is_absolute,
 					fakeButton, 0, 0, 6, rx, ry, rz, rrot,
 					rthrottle, rwheel);
 			}
@@ -613,8 +620,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (id == ds->device_type &&
 			((!priv->serial) || (ds->serial_num == priv->serial)))
 		{
-			if ((priv->topX <= ds->x && priv->bottomX >= ds->x &&
-			priv->topY <= ds->y && priv->bottomY >= ds->y))
+			if ((priv->topX <= ds->x && priv->bottomX > ds->x &&
+				priv->topY <= ds->y && priv->bottomY > ds->y))
 			{
 				DBG(11, ErrorF("tool id=%d for %s\n",
 					id, common->wcmDevices[idx]->name));
