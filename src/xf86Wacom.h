@@ -502,14 +502,15 @@ Bool xf86WcmOpen(LocalDevicePtr local);
 int xf86WcmSuppress(int suppress, WacomDeviceState* ds1,
 	WacomDeviceState* ds2);
 
-void xf86WcmDirectEvents(WacomCommonPtr common, WacomDeviceState* ds);
+void xf86WcmDirectEvents(WacomCommonPtr common, const WacomDeviceState* ds);
 
 void xf86WcmSendEvents(LocalDevicePtr local, int type,
 	unsigned int serial, int is_stylus, int is_button,
 	int is_proximity, int x, int y, int z, int buttons,
 	int tx, int ty, int wheel);
 
-void xf86WcmEvent(WacomCommonPtr common, int tool_index, WacomDeviceState* ds);
+void xf86WcmEvent(WacomCommonPtr common, int tool_index,
+	const WacomDeviceState* ds);
 
 /****************************************************************************/
 #endif /* __XF86_XF86WACOM_H */

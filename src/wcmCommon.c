@@ -398,7 +398,7 @@ static int ThrottleToRate(int x)
  *   (YHJ - interface may change later since only common is really needed)
  ****************************************************************************/
 
-void xf86WcmDirectEvents(WacomCommonPtr common, WacomDeviceState* ds)
+void xf86WcmDirectEvents(WacomCommonPtr common, const WacomDeviceState* ds)
 {
 	int type = ds->device_type;
 	unsigned int serial = ds->serial_num;
@@ -604,19 +604,16 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 }
 
 void xf86WcmEvent(WacomCommonPtr common, int tool_index,
-	WacomDeviceState* ds)
+	const WacomDeviceState* ds)
 {
-	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
 	if (xf86WcmSuppress(common->wcmSuppress,
-			common->wcmDevStat + tool_index, /* original */
-			ds))                             /* new data */
+		common->wcmDevStat + tool_index, /* original */
+		ds))                             /* new data */
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
 		return;
 	}
 
 	xf86WcmDirectEvents(common,ds);
-
-	/* set the new state */
 	common->wcmDevStat[tool_index] = *ds;
 }
