@@ -2,6 +2,7 @@
 	* Fixed USB tablet protocol V dual input for kernel 2.6
 	* Updated wacusb.c to fix wacdump ParseData error
 	* Fixed speed and acceleration bug
+	* Released version 0.6.4
 
 2004-06-04    Ping Cheng <pingc@wacom.com>
 	* Updated configure.in for option verification
