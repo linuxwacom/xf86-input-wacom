@@ -62,6 +62,7 @@
  * 2003-02-12 26-j0.5.3 - added Ping Cheng's USB patch
  * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
  * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
+ *                        applied J. Yen's origin patch
  */
 
 static const char identification[] = "$Identification: 26-j0.5.5 $";
@@ -1251,8 +1252,8 @@ xf86WcmConvert(LocalDevicePtr	local,
 		(priv->bottomX - priv->topX) / priv->numScreen;
     }
     
-    *x = v0 * priv->factorX + 0.5;
-    *y = v1 * priv->factorY + 0.5;
+    *x = (v0 - priv->topX) * priv->factorX + 0.5;
+    *y = (v1 - priv->topY) * priv->factorY + 0.5;
 
     DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
 		  v0, v1, *x, *y));
@@ -1275,8 +1276,8 @@ xf86WcmReverseConvert(LocalDevicePtr	local,
 {
     WacomDevicePtr	priv = (WacomDevicePtr) local->private;
     
-    valuators[0] = x / priv->factorX + 0.5;
-    valuators[1] = y / priv->factorY + 0.5;
+    valuators[0] = x / priv->factorX + priv->topX + 0.5;
+    valuators[1] = y / priv->factorY + priv->topY + 0.5;
 
     if ( (priv->flags & ABSOLUTE_FLAG) && priv->screen_no == -1) {
         valuators[0] += priv->currentScreen * 

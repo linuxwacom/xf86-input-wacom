@@ -2,6 +2,7 @@
 
 	* Applied Ping Cheng's multi-monitor patch
 	* Added build option for Xfree86 v3.x; testing only
+	* Applied Jimmy Yen's origin patch
 
 2003-02-12    John E. Joganic <john@joganic.com>
 
