@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacusb.c
 **
-** Copyright (C) 2002 - 2004 - John E. Joganic
+** Copyright (C) 2002 - 2005 - John E. Joganic and Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -802,11 +802,11 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 		case EV_SYN: /* kernel 2.6 */
 #endif
 		case EV_MSC: /* kernel 2.4 */
-			     if (USBParseMSC(pUSB,pEv)) return 1; break;
-		case EV_KEY: if (USBParseKEY(pUSB,pEv)) return 1; break;
-		case EV_ABS: if (USBParseABS(pUSB,pEv)) return 1; break;
-		case EV_REL: if (USBParseREL(pUSB,pEv)) return 1; break;
-		default: errno = EINVAL; return 1;
+			     if (USBParseMSC(pUSB,pEv)) return pEv->type; break;
+		case EV_KEY: if (USBParseKEY(pUSB,pEv)) return pEv->type; break;
+		case EV_ABS: if (USBParseABS(pUSB,pEv)) return pEv->type; break;
+		case EV_REL: if (USBParseREL(pUSB,pEv)) return pEv->type; break;
+		default: errno = EINVAL; return pEv->type;
 	}
 
 	return pState ? WacomCopyState(pState,&pUSB->state) : 0;

@@ -204,7 +204,7 @@ int ListDevices(Display* pDisp, const char* pszDeviceName)
 					}
 	
 					default:
-						printf("  unk: class=%lu\n",pClass->class);
+						printf("  unknown class\n" );
 				}
 	
 				/* skip to next record */

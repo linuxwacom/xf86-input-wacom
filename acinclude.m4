@@ -332,8 +332,8 @@ AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
 [WCM_XLIBDIR=$withval])
 
 dnl handle default case
+AC_MSG_CHECKING(for X lib directory)
 if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
-	AC_MSG_CHECKING(for X lib directory)
 	if test -d $WCM_XLIBDIR_DEFAULT/X11; then
 		WCM_ENV_XLIB=yes
 		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
@@ -342,6 +342,12 @@ if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
 		AC_MSG_RESULT(not found, tried $WCM_XLIBDIR_DEFAULT/X11)
 		WCM_ENV_XLIB=no
 	fi
+elif test -d $WCM_XLIBDIR; then
+	WCM_ENV_XLIB=yes
+	AC_MSG_RESULT(found)
+else
+	AC_MSG_RESULT(not found, tried $WCM_XLIBDIR)
+	WCM_ENV_XLIB=no
 fi
 ])
 AC_DEFUN([AC_WCM_CHECK_TCL],[
@@ -351,15 +357,30 @@ AC_ARG_WITH(tcl,
 AS_HELP_STRING([--with-tcl=dir], [uses a specified tcl directory  ]),
 [ WCM_TCLDIR=$withval ])
 
+dnl get tcl version
+AC_PATH_PROG([TCLSH],[tclsh],[no])
+if test "x$TCLSH" != "xno"; then
+	AC_MSG_CHECKING([for tcl version])
+	version=$(echo ["puts [set tcl_version]"] | $TCLSH)
+	AC_MSG_RESULT([$version])
+fi
+
 dnl handle default case
 if test "$WCM_TCLDIR" = "yes" || test "$WCM_TCLDIR" == ""; then
-	AC_MSG_CHECKING(for tcl header files)
-	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tcl.h"; then
-		AC_MSG_RESULT(found)
-		WCM_ENV_TCL=yes
-		WCM_TCLDIR="$WCM_TCLTKDIR_DEFAULT"
-	else
-		AC_MSG_RESULT(not found; tried $WCM_TCLTKDIR_DEFAULT/include/tcl.h)
+	AC_MSG_CHECKING([for tcl header files])
+	dir="$WCM_TCLTKDIR_DEFAULT/include";
+	for i in "" tcl/ "tcl$version/"; do
+		if test "x$WCM_ENV_TCL" != "xyes"; then
+			if test -f "$dir/$i/tcl.h"; then
+				AC_MSG_RESULT([$dir/$i])
+				WCM_ENV_TCL=yes
+				WCM_TCLDIR="$dir/$i"
+				CFLAGS="$CFLAGS -I$WCM_TCLDIR"
+			fi
+		fi
+	done
+	if test "x$WCM_ENV_TCL" != "xyes"; then
+		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include/tcl.h])		
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"

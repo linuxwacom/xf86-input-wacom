@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacdump.c
 **
-** Copyright (C) 2002, 2003 - John E. Joganic
+** Copyright (C) 2002 - 2005 - John E. Joganic and Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -28,6 +28,7 @@
 **   2003-01-31 0.5.0 - new release
 **   2003-02-12 0.5.1 - added version option and fixed usage
 **   2003-06-19 0.5.2 - added patch for I2 6x8 id 0x47
+**   2005-02-17 0.6.6 - added I3 and support 64-bit system
 **
 ****************************************************************************/
 
@@ -338,7 +339,7 @@ static void DisplaySerialButton(unsigned int uButton)
 void FetchTablet(WACOMTABLET hTablet)
 {
 	char chOut[128];
-	unsigned char uchBuf[16];
+	unsigned char uchBuf[64];
 	int i, nLength, nRow=gnSerialDataRow, nErrors=0;
 	WACOMSTATE state = WACOMSTATE_INIT;
 
@@ -369,11 +370,11 @@ void FetchTablet(WACOMTABLET hTablet)
 			wacscrn_output(nRow,60 + i,chOut);
 		}
 
-		if (WacomParseData(hTablet,uchBuf,nLength,&state))
+		if ((i=WacomParseData(hTablet,uchBuf,nLength,&state)))
 		{
 			snprintf(chOut,sizeof(chOut),
 				"ParseData: %10d %-40s (%d)",
-				errno,strerror(errno),++nErrors);
+				i,strerror(errno),++nErrors);
 			wacscrn_output(23,0,chOut);
 			wacscrn_refresh();
 			continue;

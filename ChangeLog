@@ -1,3 +1,11 @@
+2005-02-28    Ping Cheng <pingc@wacom.com>
+	* Fixed Graphire/Volito button bug
+	* Added xserver64 option to configure
+	* Added EVIOCGRAB to wcmUSB.c as suggested by Vojtech Pavlik to
+	  grab the USB tablet event so nothing else can get the data
+	  (I don't see the effect though)
+	* Modified acinclude.m4 for tcl.h default checking (Jens Georg)
+
 2005-02-02    Ping Cheng <pingc@wacom.com>
 	* Added missing routine in src/2.6.8/wacom.c
 	* Fixed maxZ in wcmSerial.c for penpartner

@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.10 2004/12/02 00:36:11 pingc Exp $
+ * $Id: wacom.c,v 1.11 2005/02/28 22:10:59 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -9,7 +9,7 @@
  *  Copyright (c) 2000 Daniel Egger         <egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied      <flepied@mandrakesoft.com>
  *  Copyright (c) 2002 Christer Nilsson     <christer.nilsson@kretskompaniet.se>
- *  Copyright (c) 2002-2004 Ping Cheng      <pingc@wacom.com>
+ *  Copyright (c) 2002-2005 Ping Cheng      <pingc@wacom.com>
  *  Copyright (c) 2002 John Joganic         <john@joganic.com>
  *
  *  USB Wacom Graphire and Intuos tablet support
@@ -82,6 +82,7 @@
  *    v1.30-j0.6.4 - new release
  *    v1.30-j0.6.5 - added Intuos3
  *    v1.30-j0.6.6 - new release
+ *    v1.30-j0.6.7 - fixed a graphire bug
  */
 
 /*
@@ -112,7 +113,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.6.6"
+#define DRIVER_VERSION "v1.30-j0.6.7"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -319,48 +320,50 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2 && data[0] != 5 )
+	if (data[0] != 2)
 	{
 		printk(KERN_INFO "wacom_graphire_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
-	
+
+	if ( data[1] & 0x10 ) /* in prox */
+	{
+		switch ((data[1] >> 5) & 3) {
+
+			case 0:	/* Pen */
+				input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x10);
+				wacom->tool[0] = BTN_TOOL_PEN;
+				break;
+
+			case 1: /* Rubber */
+				input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x10);
+				wacom->tool[0] = BTN_TOOL_RUBBER;
+				break;
+
+			case 2: /* Mouse with wheel */
+				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
+				input_report_rel(dev, REL_WHEEL, (signed char) data[6]);
+				/* fall through */
+
+			case 3: /* Mouse without wheel */
+				input_report_key(dev, BTN_TOOL_MOUSE, data[1] & 0x10);
+				wacom->tool[0] = BTN_TOOL_MOUSE;
+				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
+				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
+				input_report_abs(dev, ABS_DISTANCE, data[7]);
+				break;
+		}
+	}
+	else /* out prox */
+	{
+		input_report_key(dev, wacom->tool[0], data[1] & 0x10);
+	}
+
 	x = data[2] | ((__u32)data[3] << 8);
 	y = data[4] | ((__u32)data[5] << 8);
-
-	switch ((data[1] >> 5) & 3) {
-
-		case 0:	/* Pen */
-			input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x80);
-			break;
-
-		case 1: /* Rubber */
-			input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x80);
-			break;
-
-		case 2: /* Mouse with wheel */
-			input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
-			input_report_rel(dev, REL_WHEEL, (signed char) data[6]);
-			/* fall through */
-
-		case 3: /* Mouse without wheel */
-			input_report_key(dev, BTN_TOOL_MOUSE, data[7] > 24);
-			input_report_key(dev, BTN_LEFT, data[1] & 0x01);
-			input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
-			input_report_abs(dev, ABS_DISTANCE, data[7]);
-
-			input_report_abs(dev, ABS_X, x);
-			input_report_abs(dev, ABS_Y, y);
-
-			input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
-			return;
-	}
-
-	if (data[1] & 0x80) {
-		input_report_abs(dev, ABS_X, x);
-		input_report_abs(dev, ABS_Y, y);
-	}
+	input_report_abs(dev, ABS_X, x);
+	input_report_abs(dev, ABS_Y, y);
 
 	input_report_abs(dev, ABS_PRESSURE, data[6] | ((__u32)data[7] << 8));
 	input_report_key(dev, BTN_TOUCH, data[1] & 0x01);

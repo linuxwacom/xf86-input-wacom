@@ -1269,6 +1269,13 @@ static void serialParseP4Common(WacomCommonPtr common,
 			ds->device_type = cur_type;
 		}
 	}
+	else if (ds->device_type != cur_type) /* missed out-prox event*/
+	{
+		/* send a prox-out for old device */
+		WacomDeviceState out = { 0 };
+		xf86WcmEvent(common,0,&out);
+		ds->device_type = cur_type;
+	}
 
 	DBG(8, ErrorF("serialParseP4Common %s\n",
 		ds->device_type == CURSOR_ID ? "CURSOR" :

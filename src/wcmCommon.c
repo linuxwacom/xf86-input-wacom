@@ -615,10 +615,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			{
 				int macro = z / 2;
 
-				DBG(6, ErrorF("macro=%d buttons=%d "
-					"wacom_map[%d]=%lx\n",
-					macro, buttons, macro,
-					gWacomModule.keymap[macro]));
+				DBG(6, ErrorF("macro=%d buttons=%d \n",
+					macro, buttons));
 
 				/* First available Keycode begins at 8
 				 * therefore macro+7 */
@@ -800,9 +798,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
 		ds.discard_first, ds.proximity, ds.sample));
 
-	DBG(11, ErrorF("filter %d, %p\n",RAW_FILTERING(common),
-		(void *)common->wcmModel->FilterRaw));
-
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
 	{
@@ -812,7 +807,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			pChannel->valid.states,
 			sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 		++pChannel->nSamples;
-		return; /* discard */
+		return; 
 	}
 
 	/* Filter raw data, fix hardware defects, perform error correction */
@@ -876,19 +871,18 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (!ds->device_type)
 	{
-		/* defaults to cursor if tool is on the tablet when X starts */
-		ds->device_type = CURSOR_ID;
-		ds->proximity = 1;
-		if (ds->serial_num)
-			for (idx=0; idx<common->wcmNumDevices; idx++)
-			{
-				priv = common->wcmDevices[idx]->private;
-				if (ds->serial_num == priv->serial)
-				{
-					ds->device_type = DEVICE_ID(priv->flags);
-					break;
-				}
-			}
+		if ( pLast ) /* might be an out of bound event */
+		{
+			/* fall back to last device to move
+			 * smoothly along screen edges */
+			ds->device_type = pLast->device_type;
+		}
+		else
+		{
+			/* defaults to cursor if tool is on the tablet when X starts */
+			ds->device_type = CURSOR_ID;
+			ds->proximity = 1;
+		}
 	}
 
 	/* Find the device the current events are meant for */
@@ -921,10 +915,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",(void *)pDev,(void *)pLastDev));
 
-	/* if the logical device of the same physical tool has changed,
-	 * send proximity out to the previous one */
+	/* if the logical device of the same physical tool has changed
+	 * or tool changed without a out-prox for last tool, send 
+	 * proximity out to the previous one */
 	if (pLastDev && (pLastDev != pDev) &&
-		(pLast->serial_num == ds->serial_num))
+		((pLast->serial_num == ds->serial_num) ||
+		(pLast->device_type != ds->device_type)) 
+		&& pLast->proximity )
 	{
 		pLast->proximity = 0;
 		xf86WcmSendEvents(pLastDev, pLast, channel);

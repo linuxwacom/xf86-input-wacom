@@ -1,6 +1,7 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -83,9 +84,10 @@
  * 2004-05-25 26-j0.6.3  - new release
  * 2004-10-05 26-j0.6.5  - new release
  * 2004-11-22 42-j0.6.6  - new release
+ * 2005-02-17 42-j0.6.7  - added 64-bit support
 */
 
-static const char identification[] = "$Identification: 42-j0.6.6 $";
+static const char identification[] = "$Identification: 42-j0.6.7 $";
 
 /****************************************************************************/
 
