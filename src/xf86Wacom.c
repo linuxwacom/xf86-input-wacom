@@ -54,6 +54,7 @@
  *
  * 2002-12-17 26-j0.3.3 - added Intuos2
  * 2002-12-17 26-j0.3.5 - added module loading for usb wacom and evdev
+ * 2002-12-17 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
  */
 
 static const char identification[] = "$Identification: 26-j0.3.5 $";
@@ -269,6 +270,7 @@ typedef struct
 #define STROKING_PEN(ds) (((ds->device_id) & 0x07ff) == 0x0032)
 #define AIRBRUSH(ds)    (((ds->device_id) & 0x07ff) == 0x0112)
 #define MOUSE_4D(ds)    (((ds->device_id) & 0x07ff) == 0x0094)
+#define MOUSE_2D(ds)    (((ds->device_id) & 0x07ff) == 0x0007)
 #define LENS_CURSOR(ds) (((ds->device_id) & 0x07ff) == 0x0096)
 #define INKING_PEN(ds)  (((ds->device_id) & 0x07ff) == 0x0012)
 
@@ -2012,7 +2014,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 
 		if (PEN(ds) || STROKING_PEN(ds) || INKING_PEN(ds) || AIRBRUSH(ds))
 		    ds->device_type = STYLUS_ID;
-		else if (MOUSE_4D(ds) || LENS_CURSOR(ds))
+		else if (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
 		    ds->device_type = CURSOR_ID;
 		else
 		    ds->device_type = ERASER_ID;
@@ -2079,8 +2081,16 @@ xf86WcmReadInput(LocalDevicePtr         local)
 		    have_data = !ds->discard_first;
 		}
 		/* Lens cursor */
-		else {
+		else if (LENS_CURSOR(ds)) {
 		    ds->buttons = common->wcmData[8];
+		    have_data = 1;
+		}
+		/* 2D mouse */
+		else {
+
+		    ds->buttons = (common->wcmData[8] & 0x1C) >> 2;
+			ds->wheel = - (common->wcmData[8] & 1) +
+					((common->wcmData[8] & 2) >> 1);
 		    have_data = 1;
 		}
 		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);

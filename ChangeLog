@@ -1,3 +1,9 @@
+2003-01-01    John E. Joganic <john@joganic.com>
+
+	* Updated volito ranges.
+	* Fixed wacdump refresh
+	* Fixed 2D mouse buttons in xf86Wacom.c
+
 2002-12-31    John E. Joganic <john@joganic.com>
 
 	* Added Ping Cheng's new tool IDs.
