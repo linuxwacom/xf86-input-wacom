@@ -1354,7 +1354,7 @@ static void WacomProtocol5(WacomDevicePtr priv)
 		 * I removed the declaration of is_absolute at the beginning
 		 * of this routine */
 
-		if (priv->flags | ABSOLUTE_FLAG)
+		if (priv->flags & ABSOLUTE_FLAG)
 		{
 			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
 				ds->tiltx);
