@@ -71,10 +71,11 @@
  * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
  * 2003-05-02 26-j0.5.13 - added parameter configuration code
  * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5
- * 2003-05-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
+ * 2003-06-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
+ * 2003-06-19 26-j0.5.16 - added Intuos2 6x8 id 0x47
  */
 
-static const char identification[] = "$Identification: 26-j0.5.15 $";
+static const char identification[] = "$Identification: 26-j0.5.16 $";
 
 /****************************************************************************/
 

@@ -283,6 +283,7 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x43: /* Intuos2 9x12 */
 			case 0x44: /* Intuos2 12x12 */
 			case 0x45: /* Intuos2 12x18 */
+			case 0x47: /* Intuos2 6x8 (verified in the field) */
 				model = &usbIntuos2; break;
 
 			case 0x60: /* Volito */
