@@ -1,3 +1,7 @@
+2003-01-31    John E. Joganic <john@joganic.com>
+
+	* Branched 0.4.0 production.  Updated version to 0.5.0-beta.
+
 2003-01-27    John E. Joganic <john@joganic.com>
 
 	* Changed macros from WAC_ to WCM_ due to bug in Mandrake 9 autoconf.

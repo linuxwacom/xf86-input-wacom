@@ -56,9 +56,10 @@
  * 2002-12-31 26-j0.3.5 - added module loading for usb wacom and evdev
  * 2003-01-01 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
  * 2003-01-25 26-j0.3.7 - cleaned up usb conditions for FreeBSD
+ * 2003-01-31 26-j0.5.0 - new release
  */
 
-static const char identification[] = "$Identification: 26-j0.3.7 $";
+static const char identification[] = "$Identification: 26-j0.5.0 $";
 
 #include "xf86Version.h"
 

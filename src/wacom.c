@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.8 2003/01/10 23:05:10 jjoganic Exp $
+ * $Id: wacom.c,v 1.9 2003/02/01 02:42:33 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -71,6 +71,7 @@
  *    v1.30-j0.3.7 - unknown reports are now info, rather than error
  *    v1.30-j0.3.8 - fixed I2 4x5 Y max value, thanks to John New
  *                   fixed Intuos and Intuos2 sizes, values from Wacom
+ *    v1.30-j0.5.0 - new release
  */
 
 /*
@@ -101,7 +102,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.8"
+#define DRIVER_VERSION "v1.30-j0.5.0"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"

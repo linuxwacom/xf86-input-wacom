@@ -25,6 +25,7 @@
 **   2003-01-25 0.3.6 - moved usb code to wacusb.c
 **   2003-01-26 0.3.7 - applied Dean Townsley's Acer C100 patch
 **   2003-01-27 0.3.8 - added logging, better error recovery
+**   2003-01-31 0.5.0 - new release
 **
 ****************************************************************************/
 
@@ -43,7 +44,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "wacdump v0.3.8"
+#define WACDUMP_VER "wacdump v0.5.0"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
