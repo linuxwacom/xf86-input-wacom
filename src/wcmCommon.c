@@ -258,7 +258,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int rx, ry, rz, rtx, rty, rrot, rth, rw;
-	int is_core_pointer, is_absolute;
+	int is_core_pointer, is_absolute, doffsetX=0, doffsetY=0;
 	int aboveBelowSwitch = (priv->twinview == TV_ABOVE_BELOW)
 		? ((y < priv->topY) ? -1 : ((priv->bottomY < y) ? 1 : 0)) : 0;
 	int leftRightSwitch = (priv->twinview == TV_LEFT_RIGHT)
@@ -280,25 +280,25 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		switch ( leftRightSwitch )
 		{
 			case -1:
-				priv->doffsetX = 0;
+				doffsetX = 0;
 				break;
 			case 1:
-				priv->doffsetX = priv->bottomX - priv->topX;
+				doffsetX = common->wcmMaxX;
 				break;
 		}
 		switch ( aboveBelowSwitch )
 		{
 			case -1:
-				priv->doffsetY = 0;
+				doffsetY = 0;
 				break;
 			case 1:
-				priv->doffsetY = priv->bottomY - priv->topY;
+				doffsetY = common->wcmMaxY;
 				break;
 		}
 	}
 
-	x += priv->doffsetX;
-	y += priv->doffsetY;
+	x += doffsetX;
+	y += doffsetY;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
 		"button=%s\tbuttons=%d\n",

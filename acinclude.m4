@@ -14,10 +14,10 @@ AC_DEFUN(AC_WCM_CHECK_ENVIRON,[
 dnl Variables for various checks
 WCM_ARCH=unknown
 WCM_KERNEL=unknown
-WCM_KERNEL_VER="2.4"
+WCM_KERNEL_VER=2.4
 WCM_ISLINUX=no
-WCM_OPTION_MODVER=no
 WCM_ENV_KERNEL=no
+WCM_OPTION_MODVER=no
 WCM_KERNEL_WACOM_DEFAULT=no
 WCM_ENV_XF86=no
 WCM_ENV_XF86V3=no
@@ -33,6 +33,7 @@ WCM_XLIBDIR_DEFAULT=/usr/X11R6
 WCM_TCLTKDIR_DEFAULT=/usr
 XF86SUBDIR=xc/programs/Xserver/hw/xfree86/common
 XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
+WCM_LINUXWACOMDIR=`pwd`
 WCM_ENV_NCURSES=no
 dnl Check architecture
 AC_MSG_CHECKING(for processor type)
@@ -77,39 +78,6 @@ fi
 dnl
 dnl
 dnl
-AC_DEFUN(AC_WCM_CHECK_MODVER,[
-dnl Guess modversioning
-AC_MSG_CHECKING(for kernel module versioning)
-kernelrel=`uname -r`
-moddir="/lib/modules/$kernelrel/kernel/drivers/usb"
-
-if test -f "$moddir/hid.o.gz"; then
-	zcat $moddir/hid.o.gz >config.hid.o
-	printk=`nm config.hid.o | grep printk`
-	rm config.hid.o
-elif test -f "$moddir/hid.o"; then
-	printk=`nm $moddir/hid.o | grep printk`
-else
-	echo "***"; echo "*** WARNING:"
-	echo "*** unable to find hid.o or hid.o.gz in kernel module"
-	echo "*** directory.  Unable to determine kernel module versioning."
-	echo "***"
-	printk=""
-fi
-
-if test -n "$printk"; then
-	printk=`echo "$printk" | grep printk_R`
-	if test -n "$printk"; then
-		WCM_OPTION_MODVER=yes
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-	fi
-else
-	AC_MSG_RESULT([unknown; assuming no])
-	WCM_OPTION_MODVER="unknown (assuming no)"
-fi
-])
 AC_DEFUN(AC_WCM_CHECK_KERNELSOURCE,[
 dnl Check for kernel build environment
 AC_ARG_WITH(kernel,
@@ -120,10 +88,6 @@ AC_ARG_WITH(kernel,
 	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 		AC_MSG_RESULT(ok)
 		WCM_ENV_KERNEL=yes
-		ISVER=`echo $WCM_KERNELDIR | grep -c "2.4.22"` 
-		if test "$ISVER" -gt 0; then
-			WCM_KERNEL_VER="2.4.22"
-		fi
 	else
 		AC_MSG_RESULT(missing input.h)
 		AC_MSG_ERROR("Unable to find $WCM_KERNELDIR/include/linux/input.h")
@@ -136,21 +100,11 @@ AC_ARG_WITH(kernel,
 	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 		WCM_ENV_KERNEL=yes
 		AC_MSG_RESULT($WCM_KERNELDIR)
-		RUNNINGVER=`uname -r`
-		ISVER=`echo $RUNNINGVER | grep -c "2.4.22"` 
-		if test "$ISVER" -gt 0; then
-			WCM_KERNEL_VER="2.4.22"
-		fi			
 	else
 		WCM_KERNELDIR="/usr/src/linux"
 		if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 			WCM_ENV_KERNEL=yes
 			AC_MSG_RESULT($WCM_KERNELDIR)
-			RUNNINGVER=`uname -r`
-			ISVER=`echo $RUNNINGVER | grep -c "2.4.22"` 
-			if test "$ISVER" -gt 0; then
-				WCM_KERNEL_VER="2.4.22"
-			fi			
 		else
 			AC_MSG_RESULT(not found)
 			echo "***"
@@ -163,6 +117,38 @@ AC_ARG_WITH(kernel,
 		fi
 	fi
 ])])
+AC_DEFUN(AC_WCM_CHECK_MODVER,[
+dnl Guess modversioning
+AC_MSG_CHECKING(for kernel module versioning)
+if test x$WCM_ENV_KERNEL = xyes; then
+	WCM_OPTION_MODVER=yes
+	AC_MSG_RESULT(yes)
+	moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
+	ISVER=`echo $moduts | grep -c "2.4.22"` 
+	if test "$ISVER" -gt 0; then
+		WCM_KERNEL_VER="2.4.22"
+	else
+		ISVER=`echo $moduts | grep -c "2.4"` 
+		if test "$ISVER" -gt 0; then
+			WCM_KERNEL_VER="2.4"
+		else
+			ISVER=`echo $moduts | grep -c "2.6"` 
+			if test "$ISVER" -gt 0; then
+				WCM_KERNEL_VER="2.6"
+			else
+				echo "***"
+				echo "*** WARNING:"
+				echo "*** $moduts is not supportted by this pachage"
+				echo "*** Kernel modules will not be built"
+				echo "***"
+				WCM_OPTION_MODVER=no
+				AC_MSG_RESULT(no)
+				WCM_ENV_KERNEL=no
+			fi
+		fi
+	fi
+fi
+])
 AC_DEFUN(AC_WCM_CHECK_XFREE86SOURCE,[
 dnl Check for XFree86 build environment
 if test -d x-includes; then

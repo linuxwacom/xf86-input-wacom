@@ -719,8 +719,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	DBG(7, ErrorF("packet header = 0x%x\n",
-			(unsigned int)data[0]));
+	DBG(7, ErrorF("packet header = %p\n", (unsigned int)data[0]));
      
 	/* Device ID packet */
 	if ((data[0] & 0xfc) == 0xc0)
@@ -748,7 +747,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 		else
 			ds->device_type = ERASER_ID;
   
-		DBG(6, ErrorF("device_id=0x%x serial_num=%u type=%s\n",
+		DBG(6, ErrorF("device_id=%p serial_num=%u type=%s\n",
 			ds->device_id, ds->serial_num,
 			(ds->device_type == STYLUS_ID) ? "stylus" :
 			(ds->device_type == CURSOR_ID) ? "cursor" :
@@ -860,7 +859,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
 	}
 	else
 	{
-		DBG(10, ErrorF("unknown wacom V packet 0x%x\n",
+		DBG(10, ErrorF("unknown wacom V packet %p\n",
 				data[0]));
 	}
 
@@ -1313,8 +1312,7 @@ int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 		{
 			bad = 1;
 			DBG(10, ErrorF("xf86WcmSerialValidate: bad magic at %d "
-				"v=0x%x l=%d\n", i,
-				data[i], common->wcmPktLength));
+				"v=%p l=%d\n", i, data[i], common->wcmPktLength));
 			if (i!=0 && (data[i] & HEADER_BIT)) return i;
 		}
 	}

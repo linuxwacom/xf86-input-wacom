@@ -40,23 +40,24 @@ This file contains hints for building the sources.  There are a number of
 build targets, some of which are not built automatically.  Here is the
 breakdown.
 
-      wacom.o: built by default (--enable-wacom, --disable-wacom)
+      wacom.o: not built by default (--enable-wacom, --disable-wacom)
       wacdump: built by default (--enable-wacdump, --disable-wacdump)
         hid.o: not built by default (--enable-hid, --disable-hid)
    usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse)
-  wacom_drv.o: not built by default (--enable-wacomdrv, --disable-wacomdrv)
+  wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
 BUILDING:
 
 Generally, you run the configure script followed by make.  This package
-will not attempt to install the drivers.  Please see the documentation on
+will not attempt to install the kernel drivers.  Please see the documentation on
 the website for more information on where specific drivers belong.
 
     [root@haku linuxwacom-dev] # ./configure
     [root@haku linuxwacom-dev] # make
+    [root@haku linuxwacom-dev] # make install (will install wacom_drv.o and wacomcpl)
 
 There are many options, and configure will attempt to guess the correct
-values for most of them.  By default, only the kernel driver and wacdump
+values for most of them.  By default, only wacom_drv.o and wacdump
 program are built.
 
 REQUIREMENTS:
@@ -90,7 +91,11 @@ If the xf86Version.h file is located at:
 Then the correct configure options would be:
 	--enable-wacomdrv --with-xf86=/usr/local/src/XFree86-4.2.0
 
+INSTALL wacomcpl 
+
+wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed.
+
 ==============================================================================
 
-WEBSITE: http://linux.joganic.com/wacom
+WEBSITE: http://linuxwacom.sf.net
    HELP: jej@j-arkadia.com

@@ -351,10 +351,6 @@ struct _WacomDeviceRec
 	int accel;              /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
-	double dscaleX;		/* scale in X for dual screens */
-	double dscaleY;		/* scale in Y for dual screens */
-	int doffsetX;		/* offset in X for dual screens */
-	int doffsetY;		/* offset in Y for dual screens */
 	tvMode twinview;	/* using twinview mode of gfx card */
 	int tvResolution[4];	/* twinview screens' resultion */
 

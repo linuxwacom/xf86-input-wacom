@@ -1,5 +1,8 @@
+2003-12-10    Ping Cheng <pingc@wacom.com>
+	* Support kernel 2.6.0
+
 2003-11-26    Ping Cheng <pingc@wacom.com>
-        * Support Tablet PC Buttons. Deault is off.
+        * Support Tablet PC Buttons. Default is off.
           Usage:
                 xsetwacom set $device tpcbutton 1  (to turn it on)
                 xsetwacom set $device tpcbutton 0  (to turn it off)

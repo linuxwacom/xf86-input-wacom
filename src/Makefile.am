@@ -1,7 +1,7 @@
-SUBDIRS = . wacomxi
+SUBDIRS = . wacomxi @WCM_KERNEL_VER@
 
 bin_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
-noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
+noinst_SCRIPTS = @WCM_XF86MODULES@
 lib_LTLIBRARIES = libwacomcfg.la
 
 wacomcfgdir = $(includedir)/wacomcfg
@@ -17,9 +17,7 @@ DEPFLAGS = @WCM_DEPFLAGS@
 # potentially be built or installed depending on the results of
 # the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
-EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o \
-		tabletdev.o \
-		wacom_drv.o wacom_drv-v3.o wacomcpl wacomcpl-exec
+EXTRA_SCRIPTS = wacom_drv.o wacom_drv-v3.o wacomcpl wacomcpl-exec
 
 # Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
@@ -39,8 +37,7 @@ libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
 
-EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
-		input.c tabletdev.c usbmouse.c xf86Wacom.c xf86Wacom.h \
+EXTRA_DIST = xf86Wacom.c xf86Wacom.h \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
 		wcmCommon.c wcmCompat.c wcmConfig.c \
 		wcmFilter.c wcmFilter.h wcmSerial.h
@@ -49,62 +46,10 @@ KERNEL_DIR=@WCM_KERNELDIR@
 XF86_DIR=@WCM_XF86DIR@/xc
 XF86_V3_DIR=@WCM_XF86V3DIR@/xc
 DEBUG_FLAGS = -D__JEJ_DEBUG
-MODS = @WCM_MODVER@
 ARCHITECTURE=@WCM_ARCH@
-USBDIR=$(KERNEL_DIR)/drivers/usb
-KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
-		-DMODULE -DEXPORT_SYMTAB $(MODS) \
-		-Wstrict-prototypes -Wno-trigraphs -O2 \
-		-fno-strict-aliasing \
-		-fno-common -fomit-frame-pointer -pipe \
-		-mpreferred-stack-boundary=2 \
-		-march=$(ARCHITECTURE)
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
 LINUX_INPUT=@WCM_LINUX_INPUT@ -I$(KERNEL_DIR)/include
-
-wacom.o: wacom.c Makefile
-	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
-		-DKBUILD_BASENAME=wacom -c -o wacom.o wacom.c
-
-HID_OBJS = hid-core.o hiddev.o hid-input.o
-
-hid.o: $(HID_OBJS) Makefile
-	$(LD) -r -o $@ $(HID_OBJS)
-
-hid-core.o: hid-core.c Makefile
-	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
-		-DKBUILD_BASENAME=hid-core -c -o hid-core.o hid-core.c
-
-hiddev.o: $(USBDIR)/hiddev.c Makefile
-	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
-		-DKBUILD_BASENAME=hiddev -c -o hiddev.o hiddev.c
-
-hid-input.o: $(USBDIR)/hid-input.c Makefile
-	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
-		-DKBUILD_BASENAME=hid-input -c \
-		-o hid-input.o hid-input.c
-
-usbmouse.o: usbmouse.c Makefile
-	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
-		-DKBUILD_BASENAME=usbmouse -c \
-		-o usbmouse.o usbmouse.c
-
-evdev.o: evdev.c Makefile
-	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
-		-DKBUILD_BASENAME=evdev -c -o evdev.o evdev.c
-
-mousedev.o: mousedev.c Makefile
-	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
-		-DKBUILD_BASENAME=mousedev -c -o mousedev.o mousedev.c
-
-input.o: input.c Makefile
-	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
-		-DKBUILD_BASENAME=input -c -o input.o input.c
-
-tabletdev.o: tabletdev.c Makefile
-	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
-		-DKBUILD_BASENAME=tabletdev -c -o tabletdev.o tabletdev.c
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o

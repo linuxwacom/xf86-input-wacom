@@ -82,9 +82,10 @@
 			 - enabled ScreenNo option for TwinView
  * 2003-11-10 26-j0.5.23 - support kernel 2.4.22 and user specified tcl/tk src dir
  * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
+ * 2003-12-10 26-j0.5.25 - support kernel 2.6
  */
 
-static const char identification[] = "$Identification: 26-j0.5.24 $";
+static const char identification[] = "$Identification: 26-j0.5.25 $";
 
 /****************************************************************************/
 
@@ -204,7 +205,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 	WacomCommonPtr common = priv->common;
-	int totalWidth = 0, maxHeight = 0;
+	int totalWidth = 0, maxHeight = 0, tabletSize = 0;
 	double screenRatio, tabletRatio;
 
 	/* open file, if not already open */
@@ -353,13 +354,21 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	} /* end bounding rect */
 
 	/* x and y axes */
-	InitValuatorAxisStruct(pWcm, 0, 0,
-		((priv->bottomX - priv->topX) * priv->dscaleX), /* max val */
+	if (priv->twinview == TV_LEFT_RIGHT)
+		tabletSize = common->wcmMaxX + priv->bottomX - priv->topX;
+	else
+		tabletSize = priv->bottomX - priv->topX;
+
+	InitValuatorAxisStruct(pWcm, 0, 0, tabletSize, /* max val */
 		mils(common->wcmResolX), /* tablet resolution */
 		0, mils(common->wcmResolX)); /* max_res */
 
-	InitValuatorAxisStruct(pWcm, 1, 0,
-		((priv->bottomY - priv->topY) * priv->dscaleY), /* max val */
+	if (priv->twinview == TV_ABOVE_BELOW)
+		tabletSize = common->wcmMaxY + priv->bottomY - priv->topY;
+	else
+		tabletSize = priv->bottomY - priv->topY;
+
+	InitValuatorAxisStruct(pWcm, 1, 0, tabletSize, /* max val */
 		mils(common->wcmResolY), /* tablet resolution */
 		0, mils(common->wcmResolY)); /* max_res */
 
@@ -529,7 +538,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 
-	DBG(2, ErrorF("BEGIN xf86WcmProc dev=0x%x priv=0x%x "
+	DBG(2, ErrorF("BEGIN xf86WcmProc dev=%p priv=%p "
 			"type=%s flags=%d what=%d\n",
 			pWcm, priv,
 			IsStylus(priv) ? "stylus" :
@@ -539,7 +548,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	switch (what)
 	{
 		case DEVICE_INIT: 
-			DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=INIT\n", pWcm));
+			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=INIT\n", pWcm));
 
 			nbaxes = 6;  /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 
@@ -616,11 +625,11 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			{
 				/* Sometimes PL does not open the first time */
 				DBG(1, ErrorF("xf86WcmProc try to open "
-						"pWcm=0x%x again\n", pWcm));
+						"pWcm=%p again\n", pWcm));
 				if (!xf86WcmDevOpen(pWcm))
 				{
 					DBG(1, ErrorF("xf86WcmProc "
-						"pWcm=0x%x what=INIT FALSE\n",
+						"pWcm=%p what=INIT FALSE\n",
 						pWcm));
 					return !Success;
 				}
@@ -628,7 +637,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			break; 
 
 		case DEVICE_ON:
-			DBG(1, ErrorF("xf86WcmProc fd=%d pWcm=0x%x what=ON\n",
+			DBG(1, ErrorF("xf86WcmProc fd=%d pWcm=%p what=ON\n",
 				local->fd, pWcm));
 
 			if ((local->fd < 0) && (!xf86WcmDevOpen(pWcm)))
@@ -646,7 +655,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 
 		case DEVICE_OFF:
 		case DEVICE_CLOSE:
-			DBG(1, ErrorF("xf86WcmProc pWcm=0x%x what=%s\n", pWcm,
+			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=%s\n", pWcm,
 				(what == DEVICE_CLOSE) ?  "CLOSE" : "OFF"));
 
 			if (local->fd >= 0)
@@ -666,7 +675,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			return !Success;
 	} /* end switch */
 
-	DBG(2, ErrorF("END xf86WcmProc Success what=%d dev=0x%x priv=0x%x\n",
+	DBG(2, ErrorF("END xf86WcmProc Success what=%d dev=%p priv=%p\n",
 			what, pWcm, priv));
 
 	return Success;
@@ -1003,7 +1012,7 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	LocalDevicePtr local = (LocalDevicePtr)dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(3, ErrorF("xf86WcmSwitchMode dev=0x%x mode=%d\n", dev, mode));
+	DBG(3, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", dev, mode));
 
 	if (mode == Absolute)
 		priv->flags |= ABSOLUTE_FLAG;
@@ -1011,7 +1020,7 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 		priv->flags &= ~ABSOLUTE_FLAG; 
 	else
 	{
-		DBG(10, ErrorF("xf86WcmSwitchMode dev=0x%x invalid mode=%d\n",
+		DBG(10, ErrorF("xf86WcmSwitchMode dev=%p invalid mode=%d\n",
 				dev, mode));
 		return BadMatch;
 	}
@@ -1094,7 +1103,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		{
 			if (v0 > priv->bottomX)
 			{
-				v0 -= priv->bottomX;
+				v0 -= priv->common->wcmMaxX;
 				priv->currentScreen = 1;
 				if (priv->screen_no == 0)
 				{
@@ -1221,8 +1230,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 			if (priv->currentScreen == 1)
 			{
 				valuators[0] = x * (priv->bottomX - priv->topX)
-				 	/ priv->tvResolution[2] +
-					priv->bottomX - priv->topX + 0.5;
+				 	/ priv->tvResolution[2] + priv->common->wcmMaxX +0.5;
 				valuators[1] = y * (priv->bottomY - priv->topY) /
 					priv->tvResolution[3] + 0.5;
 			}

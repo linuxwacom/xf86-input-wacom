@@ -24,8 +24,7 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
-#if LINUX_INPUT
-
+#ifdef LINUX_INPUT
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbInit(LocalDevicePtr pDev);
 

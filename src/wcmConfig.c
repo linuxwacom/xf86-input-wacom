@@ -109,10 +109,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
-	priv->dscaleX = 1.0;			/* dual screen scale X factor */
-	priv->dscaleY = 1.0;			/* dual screen scale Y factor */
-	priv->doffsetX = 0;			/* dual screen offset X */
-	priv->doffsetY = 0;			/* dual screen offset Y */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
 	for (i=0; i<4; i++)
 		priv->tvResolution[i] = 0;	/* unconfigured twinview resolution */
@@ -570,24 +566,12 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 				switch (mtoken) {
 					case TV_ABOVE_BELOW:
 						priv->twinview = mtoken;
-						priv->dscaleX = 1.0;
-						priv->dscaleY = 2.0;
-						priv->doffsetX = 0;
-						priv->doffsetY = 0;
 						break;
 					case TV_LEFT_RIGHT:
 						priv->twinview = mtoken;
-						priv->dscaleX = 2.0;
-						priv->dscaleY = 1.0;
-						priv->doffsetX = 0;
-						priv->doffsetY = 0;
 						break;
 					case TV_NONE:
 						priv-twinview = TV_NONE;
-						priv->dscaleX = 1.0;
-						priv->dscaleY = 1.0;
-						priv->doffsetX = 0;
-						priv->doffsetY = 0;
 						break;
 					default:
 						xf86ConfigError("Illegal TwinView type");
@@ -1150,18 +1134,10 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (s && xf86NameCmp(s, "none") == 0) 
 	{
 		priv->twinview = TV_NONE;
-		priv->dscaleX = 1.0;
-		priv->dscaleY = 1.0;
-		priv->doffsetX = 0;
-		priv->doffsetY = 0;
 	}
 	else if (s && xf86NameCmp(s, "horizontal") == 0) 
 	{
 		priv->twinview = TV_LEFT_RIGHT;
-		priv->dscaleX = 2.0;
-		priv->dscaleY = 1.0;
-		priv->doffsetX = 0;
-		priv->doffsetY = 0;
 		/* default resolution */
 		if(!priv->tvResolution[0])
 		{
@@ -1174,10 +1150,6 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	else if (s && xf86NameCmp(s, "vertical") == 0) 
 	{
 		priv->twinview = TV_ABOVE_BELOW;
-		priv->dscaleX = 1.0;
-		priv->dscaleY = 2.0;
-		priv->doffsetX = 0;
-		priv->doffsetY = 0;
 		/* default resolution */
 		if(!priv->tvResolution[0])
 		{
@@ -1192,10 +1164,6 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical or horizontal). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
-		priv->dscaleX = 1.0;
-		priv->dscaleY = 1.0;
-		priv->doffsetX = 0;
-		priv->doffsetY = 0;
 	}
 
 	/* mark the device configured */

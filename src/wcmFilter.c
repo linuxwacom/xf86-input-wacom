@@ -271,7 +271,7 @@ static void filterIntuosCoord(int* coord, int* current, int tilt, int* state)
 			x0_pred = 7 * x0 + 14 * x1 + 15 * x2 + 16;
 			x0_pred1 = 4 * x3;
 			if (x0_pred > x0_pred1)
-				*current = ((__u32)(x0_pred - x0_pred1)) >> 5;
+				*current = ((CARD32)(x0_pred - x0_pred1)) >> 5;
 			else
 				*current = 0;
 		}
@@ -289,7 +289,7 @@ static void filterIntuosCoord(int* coord, int* current, int tilt, int* state)
 		x0_pred = 3 * x0 + 7 * x2 + 4;
 		x0_pred1 = 2 * x3;
 		if (x0_pred > x0_pred1)
-			*current = ((__u32)(x0_pred - x0_pred1)) >> 3;
+			*current = ((CARD32)(x0_pred - x0_pred1)) >> 3;
 		else
 			*current = 0;
 		*state = 2;
