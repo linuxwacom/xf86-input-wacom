@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
- *                                                                            
+ *									    
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
  * the  above copyright   notice appear  in   all  copies and  that both  that
@@ -9,8 +9,8 @@
  * advertising or publicity pertaining to distribution of the software without
  * specific,  written      prior  permission.     Frederic  Lepied   makes  no
  * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.                   
- *                                                                            
+ * is provided "as is" without express or implied warranty.		   
+ *									    
  * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
  * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
  * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
@@ -51,6 +51,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	int i, x, y;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
+	DBG(1, ErrorF("xf86WcmSetScreen screenInfo.numScreens = %d\n",
+				screenInfo.numScreens));
 
 	if (priv->screen_no != -1)
 	{
@@ -127,14 +129,11 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 /*****************************************************************************
  * xf86WcmSendEvents --
  *   Send events according to the device state.
- *   (YHJ - interface may change later since only local is really needed)
  ****************************************************************************/
 
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
 	int type = ds->device_type;
-	int is_stylus = (ds->device_type == STYLUS_ID ||
-				ds->device_type == ERASER_ID);
 	int is_button = !!(ds->buttons);
 	int is_proximity = ds->proximity;
 	int x = ds->x;
@@ -188,7 +187,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	else
 	{
-		rx = x - priv->oldX;
+		/* unify acceleration in both directions */
+		rx = (x - priv->oldX) * priv->factorY / priv->factorX;
 		ry = y - priv->oldY;
 		if (priv->speed != DEFAULT_SPEED )
 		{
@@ -219,54 +219,44 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			DBG(4, ErrorF("xf86WcmSendEvents FIRST_TOUCH_FLAG "
 				"set for %s\n", local->name));
 		}
-		else if ((priv->oldX != x) || (priv->oldY != y) ||
-			(priv->oldZ != z) || (is_stylus && HANDLE_TILT(common) &&
-			(tx != priv->oldTiltX || ty != priv->oldTiltY)))
-		{
-			if (priv->flags & FIRST_TOUCH_FLAG)
-			{
-				if (priv->oldProximity)
-				{
-					priv->flags ^= FIRST_TOUCH_FLAG;
-					DBG(4, ErrorF("xf86WcmSendEvents "
-						"FIRST_TOUCH_FLAG unset for %s\n",
-						local->name));
-					if (!is_absolute)
-					{
-						/* don't move the cursor the
-						 * first time we send motion event */
-						rx = 0;
-						ry = 0;
-						rz = 0;
-						rtx = 0;
-						rty = 0;
-						rwheel = 0;
-						rrot = 0;
-						rthrottle = 0;
-					}
-					/* to support multi-monitors, we need
-					 * to set the proper screen before posting
-					 * any events */
-					xf86WcmSetScreen(local, rx, ry);
-					set_screen_called = 1;
-					if (IsCursor(priv))
-						xf86PostProximityEvent(
-							local->dev, 1, 0, 6,
-							rx, ry, z, rrot,
-							rthrottle, rwheel);
-					else
-						xf86PostProximityEvent(
-							local->dev, 1, 0, 6,
-							rx, ry, z, tx, ty,
-							rwheel);
-				}
-			}
-		}
-
 		/* don't send anything the first time we get data 
-		 * since the x and y values may be invalid 
-		 */
-		if ( !(priv->flags & FIRST_TOUCH_FLAG))
+		 * since the x and y values may be invalid */
+		else if (priv->flags & FIRST_TOUCH_FLAG)
+		{
+			priv->flags ^= FIRST_TOUCH_FLAG;
+			DBG(4, ErrorF("xf86WcmSendEvents "
+				"FIRST_TOUCH_FLAG unset for %s\n",
+				local->name));
+			if (!is_absolute)
+			{
+				/* don't move the cursor the
+				 * first time we send motion event */
+				rx = 0;
+				ry = 0;
+				rz = 0;
+				rtx = 0;
+				rty = 0;
+				rwheel = 0;
+				rrot = 0;
+				rthrottle = 0;
+			}
+			/* to support multi-monitors, we need
+			 * to set the proper screen before posting
+			 * any events */
+			xf86WcmSetScreen(local, rx, ry);
+			set_screen_called = 1;
+			if (IsCursor(priv))
+				xf86PostProximityEvent(
+					local->dev, 1, 0, 6,
+					rx, ry, z, rrot,
+					rthrottle, rwheel);
+			else
+				xf86PostProximityEvent(
+					local->dev, 1, 0, 6,
+					rx, ry, z, tx, ty,
+					rwheel);
+		}
+		else
 		{
 			/* to support multi-monitors, we need to set the proper 
 			* screen before posting any events */
@@ -450,14 +440,14 @@ static int ThrottleToRate(int x)
 
 	/* piece-wise exponential function */
 	
-	if (x < 128) return 0;          /* infinite */
-	if (x < 256) return 1000;       /* 1 second */
-	if (x < 512) return 500;        /* 0.5 seconds */
-	if (x < 768) return 250;        /* 0.25 seconds */
-	if (x < 896) return 100;        /* 0.1 seconds */
-	if (x < 960) return 50;         /* 0.05 seconds */
-	if (x < 1024) return 25;        /* 0.025 seconds */
-	return 0;                       /* infinite */
+	if (x < 128) return 0;		/* infinite */
+	if (x < 256) return 1000;	/* 1 second */
+	if (x < 512) return 500;	/* 0.5 seconds */
+	if (x < 768) return 250;	/* 0.25 seconds */
+	if (x < 896) return 100;	/* 0.1 seconds */
+	if (x < 960) return 50;		/* 0.05 seconds */
+	if (x < 1024) return 25;	/* 0.025 seconds */
+	return 0;			/* infinite */
 }
 #endif
 
@@ -570,14 +560,22 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		id = DEVICE_ID(priv->flags);
 
 		if (id == ds->device_type &&
-			((!priv->serial) || (ds->serial_num == priv->serial)) &&
-			(priv->topX <= ds->x && priv->bottomX >= ds->x &&
-			priv->topY <= ds->y && priv->bottomY >= ds->y))
+			((!priv->serial) || (ds->serial_num == priv->serial)))
 		{
-			DBG(11, ErrorF("tool id=%d for %s\n",
-				id, common->wcmDevices[idx]->name));
-			pDev = common->wcmDevices[idx];
-			break;
+			if ((priv->topX <= ds->x && priv->bottomX >= ds->x &&
+			priv->topY <= ds->y && priv->bottomY >= ds->y))
+			{
+				DBG(11, ErrorF("tool id=%d for %s\n",
+					id, common->wcmDevices[idx]->name));
+				pDev = common->wcmDevices[idx];
+				break;
+			}
+			/* Fallback to allow the cursor to move
+			 * smoothly along screen edges */
+			else if (priv->oldProximity)
+			{
+				pDev = common->wcmDevices[idx];
+			}
 		}
 	}
 

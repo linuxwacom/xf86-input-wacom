@@ -185,7 +185,6 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 	WacomCommonPtr common = priv->common;
 	double screenRatio, tabletRatio;
-	int gap;
 	int loop;
 
 	/* open file, if not already open */
@@ -279,14 +278,14 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 			if (screenRatio > tabletRatio)
 			{
-				gap = common->wcmMaxY * (1 - tabletRatio/screenRatio);
 				priv->bottomX = common->wcmMaxX;
-				priv->bottomY = common->wcmMaxY - gap;
+				priv->bottomY = (common->wcmMaxY - priv->topY) *
+					tabletRatio / screenRatio + priv->topY;
 			}
 			else
 			{
-				gap = common->wcmMaxX * (1 - screenRatio/tabletRatio);
-				priv->bottomX = common->wcmMaxX - gap;
+				priv->bottomX = (common->wcmMaxX - priv->topX) *
+					screenRatio / tabletRatio + priv->topX;
 				priv->bottomY = common->wcmMaxY;
 			}
 		} /* end keep shape */
