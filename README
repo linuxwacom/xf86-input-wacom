@@ -1,5 +1,5 @@
 README
-January 13, 2004
+March 1, 2004
 
 This package is not currently sanctioned by the original driver developers
 although several attempts to contact them have been made.  Hopefully, this
@@ -127,13 +127,21 @@ And use the configure option:
 
 INSTALL kernel pieces
 
-for kernel 2.4: 
-    [root@haku linuxwacom-dev] # cp src/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
-    [root@haku linuxwacom-dev] # cp src/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
-    [root@haku linuxwacom-dev] # cp src/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
-    [root@haku linuxwacom-dev] # cp src/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
+for kernel 2.4.22 or newer: 
+    [root@haku linuxwacom-dev] # cp src/2.4.22/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/2.4.22/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
+    [root@haku linuxwacom-dev] # cp src/2.4.22/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/2.4.22/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
+    [root@haku linuxwacom-dev] # cp src/2.4.22/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
+    [root@haku linuxwacom-dev] # cp src/2.4.22/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
+
+for kernels older than 2.4.22: 
+    [root@haku linuxwacom-dev] # cp src/2.4/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/2.4/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
+    [root@haku linuxwacom-dev] # cp src/2.4/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/2.4/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
+    [root@haku linuxwacom-dev] # cp src/2.4/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
+    [root@haku linuxwacom-dev] # cp src/2.4/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
 
 for kernel 2.6
     [root@haku linuxwacom-dev] # cd kernel_src_dir

@@ -140,7 +140,12 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		else
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
-				WCM_KERNEL_VER="2.6"
+				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\"`
+				if test $MINOR -ge 2; then
+					WCM_KERNEL_VER="2.6.2"
+				else
+					WCM_KERNEL_VER="2.6"
+				fi
 			else
 				echo "***"
 				echo "*** WARNING:"

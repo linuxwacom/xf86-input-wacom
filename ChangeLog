@@ -1,3 +1,7 @@
+2004-03-02    Ping Cheng <pingc@wacom.com>
+	* Support 2.6.2/3 (Ned Konz)
+	* Released version 0.6.1
+
 2004-02-24    Ping Cheng <pingc@wacom.com>
 	* Support module versioning for kernel 2.4.22 and later (Adrian Secord)
 	* Added "Mode Toggle" to button functions to switch mode
