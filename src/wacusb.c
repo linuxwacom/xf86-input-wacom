@@ -38,7 +38,7 @@
 ** Begin USB Linux Input Subsystem
 *****************************************************************************/
 
-#ifdef WAC_ENABLE_LINUXINPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 #include <linux/input.h>
 
 #ifndef EV_MSC
@@ -754,7 +754,7 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 ** End USB Linux Input Subsystem
 *****************************************************************************/
 
-#else /* WAC_ENABLE_LINUXWACOM */
+#else /* WCM_ENABLE_LINUXWACOM */
 
 WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
 {
@@ -776,4 +776,4 @@ int WacomGetSupportedUSBDeviceList(WACOMDEVICEREC** ppList, int* pnSize)
 	return 0;
 }
 
-#endif /* WAC_ENABLE_LINUXWACOM */
+#endif /* WCM_ENABLE_LINUXWACOM */

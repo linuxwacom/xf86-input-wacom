@@ -1,3 +1,7 @@
+2003-01-27    John E. Joganic <john@joganic.com>
+
+	* Changed macros from WAC_ to WCM_ due to bug in Mandrake 9 autoconf.
+
 2003-01-26    John E. Joganic <john@joganic.com>
 
 	* Merged Dean Townsley's Acer C100 patch

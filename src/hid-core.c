@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.3 2003/01/10 01:17:21 jjoganic Exp $
+ * $Id: hid-core.c,v 1.4 2003/01/27 23:26:49 jjoganic Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -1008,7 +1008,7 @@ int hid_find_field(struct hid_device *hid, unsigned int type, unsigned int code,
 
 static int hid_submit_out(struct hid_device *hid)
 {
-#if WAC_PATCH_DRVALUE
+#if WCM_PATCH_DRVALUE
 	hid->urbout.transfer_buffer_length = le16_to_cpup(&hid->out[hid->outtail].dr.wLength);
 #else
 	hid->urbout.transfer_buffer_length = le16_to_cpup(&hid->out[hid->outtail].dr.length);
@@ -1043,7 +1043,7 @@ void hid_write_report(struct hid_device *hid, struct hid_report *report)
 {
 	hid_output_report(report, hid->out[hid->outhead].buffer);
 
-#if WAC_PATCH_DRVALUE
+#if WCM_PATCH_DRVALUE
 	hid->out[hid->outhead].dr.wValue = cpu_to_le16(0x200 | report->id);
 	hid->out[hid->outhead].dr.wLength = cpu_to_le16((report->size + 7) >> 3);
 #else
@@ -1119,7 +1119,7 @@ void hid_init_reports(struct hid_device *hid)
 #define USB_DEVICE_ID_ATEN_4PORTKVM	0x2205
 
 /* JEJ - added for 2.4.18 compatibility */
-#if WAC_PATCH_NOQUIRK
+#if WCM_PATCH_NOQUIRK
 #define HID_QUIRK_INVERT	0x01
 #define HID_QUIRK_NOTOUCH	0x02
 #define HID_QUIRK_IGNORE	0x04
@@ -1255,7 +1255,7 @@ static struct hid_device *usb_hid_configure(struct usb_device *dev, int ifnum)
 	hid->ifnum = interface->bInterfaceNumber;
 
 	for (n = 0; n < HID_CONTROL_FIFO_SIZE; n++) {
-#if WAC_PATCH_DRVALUE
+#if WCM_PATCH_DRVALUE
 		hid->out[n].dr.bRequestType = USB_TYPE_CLASS | USB_RECIP_INTERFACE;
 		hid->out[n].dr.bRequest = USB_REQ_SET_REPORT;
 		hid->out[n].dr.wIndex = cpu_to_le16(hid->ifnum);

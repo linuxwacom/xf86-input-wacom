@@ -35,7 +35,7 @@
 #include "config.h"
 #endif
 
-#ifdef WAC_ENABLE_LINUXINPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 #include <linux/input.h>
 #endif
 
@@ -76,7 +76,7 @@ int WacomGetSupportedClassList(WACOMCLASSREC** ppList, int* pnSize)
 	++nCnt;
 
 	/* USB */
-	#ifdef WAC_ENABLE_LINUXINPUT
+	#ifdef WCM_ENABLE_LINUXINPUT
 	++nCnt;
 	#endif
 
@@ -94,7 +94,7 @@ int WacomGetSupportedClassList(WACOMCLASSREC** ppList, int* pnSize)
 	++nIndex;
 
 	/* USB */
-	#ifdef WAC_ENABLE_LINUXINPUT
+	#ifdef WCM_ENABLE_LINUXINPUT
 	pRec[nIndex].pszName = "usb";
 	pRec[nIndex].pszDesc = "Linux USB event interface";
 	pRec[nIndex].uDeviceClass = WACOMCLASS_USB;
@@ -206,7 +206,7 @@ static int WacomIsSerial(int fd)
 
 static int WacomIsUSB(int fd)
 {
-#ifdef WAC_ENABLE_LINUXINPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	short sID[4];
 	if (ioctl(fd,EVIOCGID,sID) < 0) return 0;
 	return 1;

@@ -88,7 +88,7 @@ void Usage(void)
 		"  -l, --list               - list all supported devices\n"
 		"\n"
 		"Example devices:\n"
-#ifdef WAC_ENABLE_LINUXINPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 		"  /dev/input/event0        - usb tablet device\n"
 #endif
 		"  /dev/ttyS0               - serial tablet on com1\n"
