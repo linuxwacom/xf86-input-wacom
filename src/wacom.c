@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.7 2003/01/10 01:41:25 jjoganic Exp $
+ * $Id: wacom.c,v 1.8 2003/01/10 23:05:10 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -70,7 +70,7 @@
  *    v1.30-j0.3.6 - fixed volito ranges, thanks to Pasi Savolainen
  *    v1.30-j0.3.7 - unknown reports are now info, rather than error
  *    v1.30-j0.3.8 - fixed I2 4x5 Y max value, thanks to John New
- *    v1.30-j0.3.9 - fixed Intuos and Intuos2 sizes, values from Wacom
+ *                   fixed Intuos and Intuos2 sizes, values from Wacom
  */
 
 /*
@@ -497,11 +497,11 @@ struct wacom_features wacom_features[] = {
 
 	/* Graphire */
 	/*  1 */ { "Wacom Graphire",       8,  10206,  7422,   511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, BIT(REL_WHEEL), 0 },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/*  2 */ { "Wacom Graphire2 4x5",  8,  10206,  7422,   511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, BIT(REL_WHEEL), 0 },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/*  3 */ { "Wacom Graphire2 5x7",  8,  13918, 10206,   511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, BIT(REL_WHEEL), 0 },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 
 	/* Intuos */
 	/*  4 */ { "Wacom Intuos 4x5",    10,  12700, 10600,  1023, 15,
