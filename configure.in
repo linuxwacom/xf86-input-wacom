@@ -184,6 +184,8 @@ if test "$enable_hid" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_HID=yes
+		cp $WCM_KERNELDIR/drivers/usb/hid-input.c src
+		cp $WCM_KERNELDIR/drivers/usb/hiddev.c src
 		WCM_MODULES="$WCM_MODULES hid.o"
 	fi
 fi
@@ -252,6 +254,7 @@ if test "$enable_input" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_INPUT=yes
+		cp $WCM_KERNELDIR/drivers/input/input.c src
 		WCM_MODULES="$WCM_MODULES input.o"
 	fi
 fi
@@ -338,12 +341,22 @@ if test "$WCM_OPTION_HID" = "yes"; then
 	if test -f "$HIDCORE"; then
 		PATCH_DRVALUE=`grep 'dr\\.wValue' "$HIDCORE" | wc -l`
 		if test "$PATCH_DRVALUE" -gt 0; then
-			AC_MSG_RESULT([yes, using 2.4.20])
+			AC_MSG_RESULT([yes, using 2.4.20 or later])
 			AC_DEFINE(WCM_PATCH_DRVALUE,1,[Need the dr.wValue patch])
 			WCM_PATCH_HID="(value_patch) $WCM_PATCH_HID"
 		else
 			AC_MSG_RESULT([no, using 2.4.19])
 			AC_DEFINE(WCM_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
+		fi
+
+		PATCH_COLLECTION=`grep 'HID_DEFAULT_NUM_COLLECTIONS' "$HIDCORE" | wc -l`
+		if test "$PATCH_COLLECTION" -gt 0; then
+			AC_MSG_RESULT([yes, using 2.4.22])
+			AC_DEFINE(WCM_PATCH_COLLECTION,1,[Need the collection patch])
+			WCM_PATCH_HID="(collection_patch) $WCM_PATCH_HID"
+		else
+			AC_MSG_RESULT([no, using 2.4.20 or earlier])
+			AC_DEFINE(WCM_PATCH_COLLECTION,0,[Do not need the collection patch])
 		fi
 	else
 		AC_MSG_RESULT([missing, using 2.4.19])

@@ -1,3 +1,6 @@
+2003-10-09    Ping Cheng <pingc@wacom.com>
+	* Support kernel-2.4.22
+
 2003-09-30    Ping Cheng <pingc@wacom.com>
 	* Fixed TwinView relative mapping error
 
