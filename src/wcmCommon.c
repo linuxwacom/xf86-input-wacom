@@ -43,53 +43,86 @@
  *   combined horizontal and vertical setups
  ****************************************************************************/
 
-static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
+static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 {
 #if XFREE86_V4
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int screenToSet = miPointerCurrentScreen()->myNum;
+	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
 	int i, x, y;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
-	DBG(1, ErrorF("xf86WcmSetScreen screenInfo.numScreens = %d\n",
-				screenInfo.numScreens));
+	if (!(priv->flags & ABSOLUTE_FLAG))
+	{
+		priv->currentScreen = screenToSet;
+		return;
+	}
 
-	if (priv->screen_no != -1)
+	/* YHJ - these don't need to be calculated every time */
+	for (i = 0; i < priv->numScreen; i++)
+	{
+		totalWidth += screenInfo.screens[i]->width;
+		if (maxHeight < screenInfo.screens[i]->height)
+			maxHeight = screenInfo.screens[i]->height;
+	}
+	/* YHJ - looks nasty. sorry. */	
+	if (priv->screen_no == -1)
+	{
+		for (i = 0; i < priv->numScreen; i++)
+		{
+			if (*v0 * totalWidth <=
+				(leftPadding + screenInfo.screens[i]->width)
+				* (priv->bottomX - priv->topX))
+			{
+				screenToSet = i;
+				break;
+			}
+			leftPadding += screenInfo.screens[i]->width;
+		}
+	}
+	else if (priv->XineramaEnabled)
 	{
 		screenToSet = priv->screen_no;
-		priv->factorX = (double)screenInfo.screens[screenToSet]->width /
-			(double) (priv->bottomX - priv->topX);
-		priv->factorY = (double)screenInfo.screens[screenToSet]->height/
-			(double) (priv->bottomY - priv->topY);
-	}
-	else if (priv->flags & ABSOLUTE_FLAG)
-	{
-		for (i=0; i< priv->numScreen; i++ )
-		{
-			if ( v0 <= (priv->bottomX - priv->topX) /
-					priv->numScreen * (i+1) )
-			{
-				v0 = v0 - (int)(((priv->bottomX -
-					priv->topX) * i) / priv->numScreen);
-				screenToSet = i;
-				i = priv->numScreen;
-			}
-		}
-		priv->factorX=(double)(screenInfo.screens[screenToSet]->width *
-			priv->numScreen)/(double)(priv->bottomX - priv->topX);
-		priv->factorY=(double)screenInfo.screens[screenToSet]->height /
-			(double)(priv->bottomY - priv->topY);
+		for (i = 0; i < screenToSet; i++)
+			leftPadding += screenInfo.screens[i]->width;
+		*v0 = ((priv->bottomX - priv->topX) * leftPadding + *v0
+			* screenInfo.screens[screenToSet]->width) /
+			(double)totalWidth + 0.5;
+		*v1 = *v1 * screenInfo.screens[screenToSet]->height /
+			(double)maxHeight + 0.5;
+
 	}
 
-	x = v0 * priv->factorX + 0.5;
-	y = v1 * priv->factorY + 0.5;
+	if (priv->XineramaEnabled)
+	{
+		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
+		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
+		x = (*v0 - (priv->bottomX - priv->topX)
+			* leftPadding / totalWidth) * priv->factorX + 0.5;
+	}
+	else
+	{
+		if (priv->screen_no == -1)
+			*v0 = (*v0 * totalWidth - (priv->bottomX - priv->topX)
+				* leftPadding)
+				/ screenInfo.screens[screenToSet]->width;
+		else
+			screenToSet = priv->screen_no;
+		priv->factorX = screenInfo.screens[screenToSet]->width
+			/ (double)(priv->bottomX - priv->topX);
+		priv->factorY = screenInfo.screens[screenToSet]->height
+			/ (double)(priv->bottomY - priv->topY);
+		x = *v0 * priv->factorX + 0.5;
+	}
+	y = *v1 * priv->factorY + 0.5;
+
 	xf86XInputSetScreen(local, screenToSet, x, y);
 	DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
-			  priv->currentScreen, screenToSet));
+		priv->currentScreen, screenToSet));
 	priv->currentScreen = screenToSet;
 #endif
 }
- 
+
 /*****************************************************************************
  * xf86WcmSendButtons --
  *   Send button events by comparing the current button mask with the
@@ -150,7 +183,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	WacomCommonPtr common = priv->common;
 	int rx, ry, rz, rtx, rty, rwheel, rrot, rthrottle;
 	int is_core_pointer, is_absolute;
-	int set_screen_called = 0;
 
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
@@ -243,8 +275,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* to support multi-monitors, we need
 			 * to set the proper screen before posting
 			 * any events */
-			xf86WcmSetScreen(local, rx, ry);
-			set_screen_called = 1;
+			xf86WcmSetScreen(local, &rx, &ry);
 			if (IsCursor(priv))
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
@@ -260,10 +291,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		{
 			/* to support multi-monitors, we need to set the proper 
 			* screen before posting any events */
-			if (!set_screen_called)
-			{
-				xf86WcmSetScreen(local, rx, ry);
-			}
+			xf86WcmSetScreen(local, &rx, &ry);
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
 				if (IsCursor(priv))

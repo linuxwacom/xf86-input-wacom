@@ -105,6 +105,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
+	priv->XineramaEnabled = 0;
 
 	/* JEJ - throttle sampling code */
 	priv->throttleValue = 0;
@@ -973,6 +974,12 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	{
 		priv->flags |= BUTTONS_ONLY_FLAG;
 		xf86Msg(X_CONFIG, "%s: buttons only\n", dev->identifier);
+	}
+
+	if (xf86SetBoolOption(local->options, "Xinerama", 0))
+	{
+		priv->XineramaEnabled = 1;
+		xf86Msg(X_CONFIG, "%s: Xinerama enabled\n", dev->identifier);
 	}
 
 	/* baud rate */

@@ -1,3 +1,9 @@
+2003-04-16    Jimmy Yen <jimmy@yen.tp>
+
+	* Basic Xinerama setup support. Works with horizontal, non-overlapping
+	  screen combinations with different resoluions. Users need to specify
+	  'Option Xinerama "on"' for each absolute device.
+
 2003-04-14    Jimmy Yen <jimmy@yen.tp>
 
 	* Small KeepShape fix.

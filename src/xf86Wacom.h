@@ -337,6 +337,7 @@ struct _WacomDeviceRec
 	double speed;           /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
+	int XineramaEnabled;
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
