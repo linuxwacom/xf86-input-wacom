@@ -305,6 +305,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, int type,
 	priv->oldTiltY = ty;
 }
 
+#if 0
 static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
 {
 	int tilt_filtered;
@@ -367,6 +368,29 @@ static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
 
 	return x;
 }
+#endif
+
+/*****************************************************************************
+ * ThrottleToRate - converts throttle position to wheel rate
+ ****************************************************************************/
+
+#if 0
+static int ThrottleToRate(int x)
+{
+	if (x<0) x=-x;
+
+	/* piece-wise exponential function */
+	
+	if (x < 128) return 0;          /* infinite */
+	if (x < 256) return 1000;       /* 1 second */
+	if (x < 512) return 500;        /* 0.5 seconds */
+	if (x < 768) return 250;        /* 0.25 seconds */
+	if (x < 896) return 100;        /* 0.1 seconds */
+	if (x < 960) return 50;         /* 0.05 seconds */
+	if (x < 1024) return 25;        /* 0.025 seconds */
+	return 0;                       /* infinite */
+}
+#endif
 
 /*****************************************************************************
  * xf86WcmDirectEvents --
@@ -374,8 +398,7 @@ static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
  *   (YHJ - interface may change later since only common is really needed)
  ****************************************************************************/
 
-void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
-	WacomDeviceState* ds)
+void xf86WcmDirectEvents(WacomCommonPtr common, WacomDeviceState* ds)
 {
 	int type = ds->device_type;
 	unsigned int serial = ds->serial_num;
@@ -391,6 +414,10 @@ void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
 	int is_button = !!(buttons);
 	int found_device = -1;
 	int idx;
+	int sampleTime;
+
+	/* get the sample time */
+	sampleTime = GetTimeInMillis();
 	
 	/* Find the device the current events are meant for */
 	for (idx=0; idx<common->wcmNumDevices; idx++)
@@ -450,13 +477,15 @@ void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
 
 	if (found_device != -1)
 	{
-		WacomDevicePtr priv = common->wcmDevices[idx]->private;
+		/* WacomDevicePtr priv = common->wcmDevices[idx]->private; */
 
 		/* The if-else statement should be used after the device is 
 	 	* selected since is_absolute = priv->flags | ABSOLUTE_FLAG
 	 	* I removed the declaration of is_absolute at the beginning
 	 	* of this routine */
 
+		#if 0
+		/* Intuos filter */
 		if (priv->flags & ABSOLUTE_FLAG)
 		{
 			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
@@ -469,6 +498,38 @@ void xf86WcmDirectEvents(WacomCommonPtr common, int tool_index,
 			x = ds->x;
 			y = ds->y;
 		}
+		#endif
+
+		#if 0
+		/* throttle filter */
+		if ((priv->throttleStart > sampleTime) ||
+			(!priv->throttleStart))
+		{
+			priv->throttleStart = sampleTime;
+			priv->throttleLimit = -1;
+		}
+	
+		ticks = ThrottleToRate(ds->throttle);
+		priv->throttleLimit = ticks ?  priv->throttleStart + ticks : -1;
+
+		if ((priv->throttleLimit >= 0) &&
+			(priv->throttleLimit < sampleTime))
+		{
+			DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d "
+				"N=%d\n", priv->throttleStart,
+				priv->throttleLimit, sampleTime,
+				priv->throttleValue,
+				sampleTime +
+					ThrottleToRate(priv->throttleValue)));
+
+			ds.wheel += (priv->throttleValue > 0) ? 1 :
+					(priv->throttleValue < 0) ? -1 : 0;
+		}
+
+		priv->throttleStart = sampleTime;
+		priv->throttleLimit = sampleTime +
+			ThrottleToRate(priv->throttleValue);
+		#endif /* throttle */
 
 		xf86WcmSendEvents(common->wcmDevices[found_device],
 			type, serial, is_stylus, is_button, is_proximity,
@@ -542,3 +603,20 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	return common->pDevCls->Init(local);
 }
 
+void xf86WcmEvent(WacomCommonPtr common, int tool_index,
+	WacomDeviceState* ds)
+{
+	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
+	if (xf86WcmSuppress(common->wcmSuppress,
+			common->wcmDevStat + tool_index, /* original */
+			ds))                             /* new data */
+	{
+		DBG(10, ErrorF("Suppressing data according to filter\n"));
+		return;
+	}
+
+	xf86WcmDirectEvents(common,ds);
+
+	/* set the new state */
+	common->wcmDevStat[tool_index] = *ds;
+}

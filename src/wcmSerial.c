@@ -1270,24 +1270,5 @@ static void WacomProtocol5(WacomCommonPtr common)
 
 	if (have_data)
 		xf86WcmEvent(common,tool_index,&ds);
+
 }
-
-void xf86WcmEvent(WacomCommonPtr common, int tool_index,
-	WacomDeviceState* ds)
-{
-	/* Suppress data (YHJ - move into xf86WcmDirectEvents?) */
-	if (xf86WcmSuppress(common->wcmSuppress,
-			common->wcmDevStat + tool_index, /* original */
-			ds))                             /* new data */
-	{
-		DBG(10, ErrorF("Suppressing data according to filter\n"));
-		return;
-	}
-
-	xf86WcmDirectEvents(common,tool_index,ds);
-
-	/* set the new state */
-	common->wcmDevStat[tool_index] = *ds;
-}
-
-     

@@ -61,22 +61,6 @@ static Bool xf86WcmUSBDetect(LocalDevicePtr local)
 	return 0;
 }
 
-static int ThrottleToRate(int x)
-{
-	if (x<0) x=-x;
-
-	/* piece-wise exponential function */
-	
-	if (x < 128) return 0;          /* infinite */
-	if (x < 256) return 1000;       /* 1 second */
-	if (x < 512) return 500;        /* 0.5 seconds */
-	if (x < 768) return 250;        /* 0.25 seconds */
-	if (x < 896) return 100;        /* 0.1 seconds */
-	if (x < 960) return 50;         /* 0.05 seconds */
-	if (x < 1024) return 25;        /* 0.025 seconds */
-	return 0;                       /* infinite */
-}
-
 /*****************************************************************************
  * xf86WcmUSBRead --
  *   Read the new events from the device, and enqueue them.
@@ -84,33 +68,20 @@ static int ThrottleToRate(int x)
 
 static void xf86WcmUSBRead(LocalDevicePtr local)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-			/* YHJ - to be removed once throttle code
-			 * is moved into xf86WcmSendEvents */
 	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
-	WacomDeviceState* ds = common->wcmDevStat;
-	WacomDeviceState old_ds = *ds;
-	int sampleTime, ticks;
+	WacomDeviceState ds;
 	ssize_t len;
 	int loop;
 	struct input_event *event, *readevent, eventbuf[MAX_EVENTS];
 
-	#define MOD_BUTTONS(bit, value) \
-		{ int _b=bit, _v=value; \
-			ds->buttons = (((_v) != 0) ? \
-			(ds->buttons | _b) : (ds->buttons & ~ _b)); }
+	/* start from previous state */
+	ds = common->wcmDevStat[0];
 
-	/* get the sample time */
-	sampleTime = GetTimeInMillis();
+	#define MOD_BUTTONS(bit, value) do { \
+		ds.buttons = (((value) != 0) ? \
+		(ds.buttons | (bit)) : (ds.buttons & ~(bit))); \
+		} while (0)
 
-	/* account for roll overs and initialization */
-	/* YHJ - Warning: priv is incorrect! */
-	if ((priv->throttleStart > sampleTime) || (!priv->throttleStart))
-	{
-		priv->throttleStart = sampleTime;
-		priv->throttleLimit = -1;
-	}
-	
 	SYSCALL(len = xf86WcmRead(local->fd, eventbuf,
 			sizeof(eventbuf))/sizeof(struct input_event));
 
@@ -139,178 +110,117 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 	    continue;
 	}
 
-	for(loop=0; loop<common->wcmIndex; loop++)
+	for (loop=0; loop<common->wcmIndex; loop++)
 	{
 		event = common->wcmEvent + loop;
+
 		DBG(11, ErrorF("xf86WcmUSBRead event[%d]->type=%d "
 			"code=%d value=%d\n", loop, event->type,
 			event->code, event->value));
 
-		switch (event->type)
+		/* absolute events */
+		if (event->type == EV_ABS)
 		{
-			case EV_ABS:
-				switch (event->code)
-				{
-					case ABS_X:
-						ds->x = event->value;
-						break;
+			if (event->code == ABS_X)
+				ds.x = event->value;
+			else if (event->code == ABS_Y)
+				ds.y = event->value;
+			else if (event->code == ABS_RZ)
+				ds.rz = event->value;
+			else if (event->code == ABS_TILT_X)
+				ds.tiltx = event->value;
+			else if (event->code ==  ABS_TILT_Y)
+				ds.tilty = event->value;
+			else if (event->code == ABS_PRESSURE)
+			{
+				ds.pressure = event->value;
+				MOD_BUTTONS (1, event->value >
+					common->wcmThreshold ? 1 : 0);
+			}
+			else if (event->code == ABS_DISTANCE)
+			{
+			}
+			else if (event->code == ABS_WHEEL)
+				ds.wheel = event->value;
+			else if (event->code == ABS_THROTTLE)
+				ds.throttle = event->value;
+		}
 
-					case ABS_Y:
-						ds->y = event->value;
-						break;
+		else if (event->type == EV_REL)
+		{
+			if (event->code == REL_WHEEL)
+				ds.wheel += event->value;
+			else
+			{
+				ErrorF("wacom: rel event recv'd (%d)!\n",
+					event->code);
+			}
+		}
 
-					case ABS_TILT_X:
-					case ABS_RZ:
-						ds->tiltx = event->value;
-						break;
+		else if (event->type == EV_KEY)
+		{
+			if ((event->code == BTN_TOOL_PEN) ||
+				(event->code == BTN_TOOL_PENCIL) ||
+				(event->code == BTN_TOOL_BRUSH) ||
+				(event->code == BTN_TOOL_AIRBRUSH))
+			{
+				ds.device_type = STYLUS_ID;
+				ds.proximity = (event->value != 0);
+				DBG(6, ErrorF("USB stylus detected %x\n",
+					event->code));
+			}
+			else if (event->code == BTN_TOOL_RUBBER)
+			{
+				ds.device_type = ERASER_ID;
+				ds.proximity = (event->value != 0);
+				if (ds.proximity) 
+					ds.proximity = ERASER_PROX;
+				DBG(6, ErrorF("USB eraser detected %x\n",
+					event->code));
+			}
+			else if ((event->code == BTN_TOOL_MOUSE) ||
+				(event->code == BTN_TOOL_LENS))
+			{
+				DBG(6, ErrorF("USB mouse detected %x\n",						event->code));
+				ds.device_type = CURSOR_ID;
+				ds.proximity = (event->value != 0);
+			}
+			else if (event->code == BTN_TOUCH)
+			{
+				/* we use the pressure to determine
+				 * the button 1 */
+			}
+			else if ((event->code == BTN_STYLUS) ||
+				(event->code == BTN_MIDDLE))
+			{
+				MOD_BUTTONS (2, event->value);
+			}
+			else if ((event->code == BTN_STYLUS2) ||
+				(event->code == BTN_RIGHT))
+			{
+				MOD_BUTTONS (4, event->value);
+			}
+			else if (event->code == BTN_LEFT)
+				MOD_BUTTONS (1, event->value);
+			else if (event->code == BTN_SIDE)
+				MOD_BUTTONS (8, event->value);
+			else if (event->code == BTN_EXTRA)
+				MOD_BUTTONS (16, event->value);
+		}
 
-					case ABS_TILT_Y:
-						ds->tilty = event->value;
-						break;
-
-					case ABS_PRESSURE:
-						ds->pressure = event->value;
-						MOD_BUTTONS (1, event->value >
-							common->wcmThreshold ?
-							1 : 0);
-						break;
-
-					case ABS_DISTANCE:
-						/* This is not sent by the driver */
-						/* JEJ - actually it is, but it's not very useful */
-						break;
-
-					case ABS_MISC:
-						/* This is not sent by the driver */
-						break;
-
-					case ABS_WHEEL:
-						ds->wheel = event->value;
-						break;
-
-					case ABS_THROTTLE:
-						priv->throttleValue = event->value;
-						ticks = ThrottleToRate(event->value);
-						/* YHJ - priv is incorrect, but might do anyways */
-						priv->throttleLimit = ticks ?
-							priv->throttleStart +
-								ticks : -1;
-						break;
-				}
-				break; /* EV_ABS */
-
-			case EV_REL:
-				switch (event->code)
-				{
-					case REL_WHEEL:
-						ds->wheel += event->value;
-						break;
-					default:
-						ErrorF("wacom: relative event "
-							"received (%d)!!!\n",
-							event->code);
-						break;
-				}
-				break; /* EV_REL */
-
-			case EV_KEY:
-				switch (event->code)
-				{
-					case BTN_TOOL_PEN:
-					case BTN_TOOL_PENCIL:
-					case BTN_TOOL_BRUSH:
-					case BTN_TOOL_AIRBRUSH:
-						ds->device_type = STYLUS_ID;
-						ds->proximity = (event->value != 0);
-						DBG(6, ErrorF("USB stylus detected %x\n", event->code));
-						break;
-
-					case BTN_TOOL_RUBBER:
-						ds->device_type = ERASER_ID;
-						ds->proximity = (event->value != 0);
-						if (ds->proximity) 
-							ds->proximity = ERASER_PROX;
-						DBG(6, ErrorF("USB eraser detected %x\n", event->code));
-					break;
-
-					case BTN_TOOL_MOUSE:
-					case BTN_TOOL_LENS:
-						DBG(6, ErrorF("USB mouse detected %x\n", event->code));
-						ds->device_type = CURSOR_ID;
-						ds->proximity = (event->value != 0);
-						break;
-
-					case BTN_TOUCH:
-						/* we use the pressure to determine the button 1 */
-						break;
-
-					case BTN_STYLUS:
-					case BTN_MIDDLE:
-						MOD_BUTTONS (2, event->value);
-						break;
-
-					case BTN_STYLUS2:
-					case BTN_RIGHT:
-						MOD_BUTTONS (4, event->value);
-						break;
-
-					case BTN_LEFT:
-						MOD_BUTTONS (1, event->value);
-						break;
-
-					case BTN_SIDE:
-						MOD_BUTTONS (8, event->value);
-						break;
-
-					case BTN_EXTRA:
-						MOD_BUTTONS (16, event->value);
-						break;
-				}
-				break; /* EV_KEY */
-
-			case EV_MSC:
-				switch (event->code)
-				{
-					case MSC_SERIAL:
-						ds->serial_num = event->value;
-						DBG(10, ErrorF("wacom tool serial number=%d\n", ds->serial_num));
-						break;
-				}
-				break; /* EV_MSC */
-		} /* switch event->type */
+		else if (event->type == EV_MSC)
+		{
+			if (event->code == MSC_SERIAL)
+			{
+				ds.serial_num = event->value;
+				DBG(10, ErrorF("wacom tool serial number=%d\n",
+					ds.serial_num));
+			}
+		}
 	} /* next event */
 
 	/* handle throttle */
-	/* YHJ - Warning: priv is incorrect! Better move into xf86WcmSendEvents */
-	if ((priv->throttleLimit >= 0) && (priv->throttleLimit < sampleTime))
-	{
-		DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d N=%d\n",
-				priv->throttleStart,
-				priv->throttleLimit,
-				sampleTime,
-				priv->throttleValue,
-				sampleTime + ThrottleToRate(priv->throttleValue)));
-
-		ds->wheel += (priv->throttleValue > 0) ? 1 :
-				(priv->throttleValue < 0) ? -1 : 0;
-
-		priv->throttleStart = sampleTime;
-		priv->throttleLimit = sampleTime + ThrottleToRate(priv->throttleValue);
-	}
-
-	/* Suppress data */
-	/* YHJ - may be better off moved into xf86WcmDirectEvents
-	 * to ease maintenance */
-
-	if (xf86WcmSuppress(common->wcmSuppress, &old_ds, ds))
-	{
-		DBG(10, ErrorF("Suppressing data according to filter\n"));
-		*ds = old_ds;
-	}
-	else
-	{
-		xf86WcmDirectEvents(common,0,ds);
-	}
+	xf86WcmEvent(common,0,&ds);
 }
 
 /*
