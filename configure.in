@@ -75,14 +75,20 @@ AC_ARG_ENABLE(xidump,
 [  --enable-xidump   Enable building xidump               default=yes],
 	, enable_xidump=$WCM_XIDUMP_DEFAULT)
 if test "$enable_xidump" != "no"; then
-	if test x$WCM_ENV_NCURSES != xyes; then
+	if test x$WCM_ENV_XLIB != xyes; then
 		echo "***"; echo "*** WARNING:";
-		echo "*** xidump will build without ncurses support."
+		echo "*** xidump requires XLib environment; xidump will not be built."
 		echo "***"
-		WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
+	else
+		if test x$WCM_ENV_NCURSES != xyes; then
+			echo "***"; echo "*** WARNING:";
+			echo "*** xidump will build without ncurses support."
+			echo "***"
+			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
+		fi
+		WCM_OPTION_XIDUMP=yes
+		WCM_PROGS="$WCM_PROGS xidump"
 	fi
-	WCM_OPTION_XIDUMP=yes
-	WCM_PROGS="$WCM_PROGS xidump"
 fi
 
 dnl Check for hid build
@@ -323,6 +329,7 @@ echo "       linux kernel - $WCM_ISLINUX"
 echo "  module versioning - $WCM_OPTION_MODVER"
 echo "      kernel source - $WCM_ENV_KERNEL"
 echo "            XFree86 - $WCM_ENV_XF86"
+echo "               XLib - $WCM_ENV_XLIB"
 if test -n "$WCM_ENV_XF86V3"; then
 	echo "          XFree86v3 - $WCM_ENV_XF86V3"
 fi
