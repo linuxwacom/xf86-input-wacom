@@ -1,6 +1,6 @@
 AC_INIT(src/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.3.4-beta)
+AM_INIT_AUTOMAKE(linuxwacom, 0.3.5-beta)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK

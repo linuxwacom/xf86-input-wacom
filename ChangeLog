@@ -2,6 +2,7 @@
 
 	* Added Ping Cheng's new tool IDs.
 	* Fix for unknown report #1 using simple kernel thread
+	* Added automatic module loading for usb wacom and evdev
 
 2002-12-26    John E. Joganic <john@joganic.com>
 

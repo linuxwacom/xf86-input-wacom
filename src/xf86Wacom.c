@@ -53,9 +53,10 @@
  * REVISION HISTORY
  *
  * 2002-12-17 26-j0.3.3 - added Intuos2
+ * 2002-12-17 26-j0.3.5 - added module loading for usb wacom and evdev
  */
 
-static const char identification[] = "$Identification: 26-j0.3.3 $";
+static const char identification[] = "$Identification: 26-j0.3.5 $";
 
 #include "xf86Version.h"
 
