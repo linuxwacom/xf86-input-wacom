@@ -1,6 +1,7 @@
 2002-12-31    John E. Joganic <john@joganic.com>
 
 	* Added Ping Cheng's new tool IDs.
+	* Fix for unknown report #1 using simple kernel thread
 
 2002-12-26    John E. Joganic <john@joganic.com>
 

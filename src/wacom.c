@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.2 2003/01/01 00:54:17 jjoganic Exp $
+ * $Id: wacom.c,v 1.3 2003/01/01 01:59:54 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -66,6 +66,7 @@
  *    v1.30-j0.3.1 - fixed pen identifers, 2D mouse handling
  *    v1.30-j0.3.3 - added volito, thanks to Pasi Savolainen; fixed wheel sign
  *    v1.30-j0.3.4 - added Ping Cheng's new tool IDs
+ *    v1.30-j0.3.5 - thread for resetting tablet on bad report
  */
 
 /*
@@ -90,11 +91,13 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/usb.h>
+#include <linux/smp_lock.h>
+#include <linux/list.h>
 
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.4"
+#define DRIVER_VERSION "v1.30-j0.3.5"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -107,6 +110,12 @@ MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
 #define USB_VENDOR_ID_WACOM	0x056a
+
+static int kwacomd_pid = 0;			/* PID of kwacomd */
+static DECLARE_COMPLETION(kwacomd_exited);
+static DECLARE_WAIT_QUEUE_HEAD(kwacomd_wait);
+static LIST_HEAD(wacom_event_list);   /* List of tablets needing servicing */
+static spinlock_t wacom_event_lock = SPIN_LOCK_UNLOCKED;
 
 struct wacom_features {
 	char *name;
@@ -132,7 +141,23 @@ struct wacom {
 	int tool[2];
 	int open;
 	__u32 serial[2];
+	
+	struct list_head event_list;
+    struct semaphore kwacomd_sem;
+	unsigned int ifnum;
 };
+
+static void wacom_request_reset(struct wacom* wacom)
+{
+	unsigned long flags;
+	spin_lock_irqsave(&wacom_event_lock, flags);
+	if (list_empty(&wacom->event_list))
+	{
+		list_add(&wacom->event_list, &wacom_event_list);
+		wake_up(&kwacomd_wait);
+	}
+	spin_unlock_irqrestore(&wacom_event_lock, flags);
+}
 
 static void wacom_pl_irq(struct urb *urb)
 {
@@ -143,8 +168,10 @@ static void wacom_pl_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2) {
+	if (data[0] != 2)
+	{
 		printk(KERN_ERR "wacom_pl_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
 		return;
 	}
 	
@@ -231,8 +258,10 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2) {
+	if (data[0] != 2)
+	{
 		printk(KERN_ERR "wacom_graphire_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
 		return;
 	}
 	
@@ -291,13 +320,8 @@ static void wacom_intuos_irq(struct urb *urb)
 	/* check for valid report */
 	if (data[0] != 2)
 	{
-		#ifndef __JEJ_DEBUG
-		printk(KERN_ERR "wacom_intuos_irq: received unknown report #%d\n",
-				data[0]);
-		#else
-		printk(KERN_ERR "wacom_intuos_irq: unknown report "
-				"%02X %02X %02X %02X\n",data[0], data[1], data[2], data[3]);
-		#endif
+		printk(KERN_ERR "wacom_intuos_irq: received unknown report #%d\n", data[0]);
+		wacom_request_reset(wacom);
 		return;
 	}
 	
@@ -578,11 +602,24 @@ static void wacom_close(struct input_dev *dev)
 		usb_unlink_urb(&wacom->irq);
 }
 
+static void wacom_reset(struct wacom* wacom)
+{
+	char rep_data[2] = {0x02, 0x02};
+
+	#ifdef __JEJ_DEBUG
+	printk(KERN_INFO __FILE__ ": Setting tablet report for tablet data\n");
+	#endif
+
+	/* ask the tablet to report tablet data */
+	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rep_data, 2);
+	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 5, rep_data, 0);
+	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 6, rep_data, 0);
+}
+
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)
 {
 	struct usb_endpoint_descriptor *endpoint;
 	struct wacom *wacom;
-	char rep_data[2] = {0x02, 0x02};
 
 	if (!(wacom = kmalloc(sizeof(struct wacom), GFP_KERNEL))) return NULL;
 	memset(wacom, 0, sizeof(struct wacom));
@@ -633,6 +670,10 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.idproduct = dev->descriptor.idProduct;
 	wacom->dev.idversion = dev->descriptor.bcdDevice;
 	wacom->usbdev = dev;
+	wacom->ifnum = ifnum;
+
+	INIT_LIST_HEAD(&wacom->event_list);
+	init_MUTEX(&wacom->kwacomd_sem);
 
 	endpoint = dev->config[0].interface[ifnum].altsetting[0].endpoint + 0;
 
@@ -644,15 +685,8 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 
 	input_register_device(&wacom->dev);
 
-	#ifdef __JEJ_DEBUG
-	printk(KERN_INFO __FILE__ ": Setting tablet report for tablet data\n");
-	#endif
+	wacom_reset(wacom);
 
-	/* ask the tablet to report tablet data */
-	usb_set_report(dev, ifnum, 3, 2, rep_data, 2);
-	usb_set_report(dev, ifnum, 3, 5, rep_data, 0);
-	usb_set_report(dev, ifnum, 3, 6, rep_data, 0);
-	
 	printk(KERN_INFO "input%d: %s on usb%d:%d.%d\n",
 			wacom->dev.number, wacom->features->name, dev->bus->busnum,
 			dev->devnum, ifnum);
@@ -662,13 +696,79 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 
 static void wacom_disconnect(struct usb_device *dev, void *ptr)
 {
+	unsigned int flags;
 	struct wacom *wacom = ptr;
-	if (wacom) {
+	if (wacom)
+	{
+    	spin_lock_irqsave(&wacom_event_lock, flags);
+		list_del(&wacom->event_list);
+		INIT_LIST_HEAD(&wacom->event_list);
+		spin_unlock_irqrestore(&wacom_event_lock, flags);
+
+		/* Wait for kwacomd to leave this tablet alone. */
+		down(&wacom->kwacomd_sem);
+		up(&wacom->kwacomd_sem);
+
 		usb_unlink_urb(&wacom->irq);
 		input_unregister_device(&wacom->dev);
 		kfree(wacom);
 	}
 }
+
+static void wacom_events(void)
+{
+	struct wacom* wacom;
+	unsigned int flags;
+	struct list_head *tmp;
+
+	printk(KERN_INFO "wacom_events\n");
+
+	while (1)
+	{
+		spin_lock_irqsave(&wacom_event_lock, flags);
+
+		if (list_empty(&wacom_event_list))
+			break;
+
+		/* Grab the next entry from the beginning of the list */
+		tmp = wacom_event_list.next;
+		wacom = list_entry(tmp, struct wacom, event_list);
+
+		list_del(tmp); /* dequeue tablet */
+		INIT_LIST_HEAD(tmp);
+
+		down(&wacom->kwacomd_sem); /* never blocks */
+		spin_unlock_irqrestore(&wacom_event_lock, flags);
+
+		wacom_reset(wacom);
+
+		up(&wacom->kwacomd_sem); /* mark tablet free */
+	}
+	spin_unlock_irqrestore(&wacom_event_lock, flags);
+}
+
+static int wacom_thread(void* pv)
+{
+	lock_kernel();
+	daemonize();
+	reparent_to_init();
+
+	/* Setup a nice name */
+	strcpy(current->comm, "kwacomd");
+
+	/* Send me a signal to get me die (for debugging) */
+	while (!signal_pending(current))
+	{
+		wacom_events();
+		wait_event_interruptible(kwacomd_wait, !list_empty(&wacom_event_list));
+	}
+
+	printk(KERN_INFO "wacom_thread exiting\n");
+
+	unlock_kernel();
+	complete_and_exit(&kwacomd_exited, 0);
+}
+
 
 static struct usb_driver wacom_driver = {
 	name:		"wacom",
@@ -679,14 +779,36 @@ static struct usb_driver wacom_driver = {
 
 static int __init wacom_init(void)
 {
+	int pid;
+
 	usb_register(&wacom_driver);
 	info(DRIVER_VERSION " " DRIVER_AUTHOR);
 	info(DRIVER_DESC);
-	return 0;
+
+    pid = kernel_thread(wacom_thread, NULL,
+			CLONE_FS | CLONE_FILES | CLONE_SIGHAND);
+
+    if (pid >= 0)
+	{
+		kwacomd_pid = pid;
+		return 0;
+	}
+
+    /* Fall through if kernel_thread failed */
+    usb_deregister(&wacom_driver);
+    err("failed to start wacom_thread");
+
+    return -1;
 }
 
 static void __exit wacom_exit(void)
 {
+    int ret;
+
+	/* Kill the thread */
+	ret = kill_proc(kwacomd_pid, SIGTERM, 1);
+	wait_for_completion(&kwacomd_exited);
+
 	usb_deregister(&wacom_driver);
 }
 
