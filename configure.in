@@ -230,6 +230,29 @@ if test "$WAC_OPTION_HID" = "yes"; then
 		echo "*** correctly, you should resolve this problem first."
 		echo "***"
 	fi
+
+	AC_MSG_CHECKING(for HID_QUIRK)
+	HID_H="$WAC_KERNELDIR/drivers/usb/hid.h"
+	if test -f "$HID_H"; then
+		PATCH_QUIRK=`grep 'HID_QUIRK' "$HID_H" | wc -l`
+		if test "$PATCH_QUIRK" -gt 0; then
+			AC_MSG_RESULT(yes)
+			AC_DEFINE(WAC_PATCH_NOQUIRK,0,[Missing quirks])
+		else
+			AC_MSG_RESULT(no)
+			AC_DEFINE(WAC_PATCH_NOQUIRK,1,[Missing quirks])
+			WAC_PATCH_HID="(quirk_patch) $WAC_PATCH_HID"
+		fi
+	else
+		AC_MSG_RESULT([missing, assuming quirks are OK])
+		AC_DEFINE(WAC_PATCH_NOQUIRK,0,[Missing quirks])
+		echo "***"
+		echo "*** Warning: unable to find hid.h in kernel tree"
+		echo "*** It was not possible to detect whether patches needed to be"
+		echo "*** applied.  If the hid-core.c in this project does not build"
+		echo "*** correctly, you should resolve this problem first."
+		echo "***"
+	fi
 fi
 
 dnl Check for -fno-merge-constants if using gcc
@@ -244,7 +267,7 @@ if test "x$GCC" = "xyes"; then
 
     if test "$has_no_merge_constants" = "yes" ; then
         AC_MSG_RESULT(yes)
-        WAC_NO_MERGE_CONSTANTS="-fnomerge-constants"
+        WAC_NO_MERGE_CONSTANTS="-fno-merge-constants"
     else
         AC_MSG_RESULT(no)
         WAC_NO_MERGE_CONSTANTS=""

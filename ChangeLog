@@ -2,6 +2,7 @@
 
 	* Fixed Intuos2 4x5 maximum Y value
 	* Added Gilbert Ramirez's no-merge-constants patch
+	* Added patch for HID_QUIRK on 2.4.18
 
 2003-01-01    John E. Joganic <john@joganic.com>
 

@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.2 2003/01/07 03:57:20 jjoganic Exp $
+ * $Id: hid-core.c,v 1.3 2003/01/10 01:17:21 jjoganic Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -37,6 +37,7 @@
  *
  *    v1.8.1-j0    - merged changes from 2.4.20 with conditional 2.4.19 code
  *    v1.8.1-j1    - added patch for volito
+ *    v1.8.1-j2    - added patch for quirks (2.4.18 has none)
  */
 
 #include <linux/autoconf.h>
@@ -72,7 +73,7 @@
  * Version Information
  */
 
-#define DRIVER_VERSION "v1.8.1-j1"
+#define DRIVER_VERSION "v1.8.1-j2"
 #define DRIVER_AUTHOR "Andreas Gal, Vojtech Pavlik <vojtech@suse.cz>"
 #define DRIVER_DESC "USB HID support drivers"
 
@@ -1116,6 +1117,14 @@ void hid_init_reports(struct hid_device *hid)
 #define USB_DEVICE_ID_ATEN_CS124U	0x2202
 #define USB_DEVICE_ID_ATEN_2PORTKVM	0x2204
 #define USB_DEVICE_ID_ATEN_4PORTKVM	0x2205
+
+/* JEJ - added for 2.4.18 compatibility */
+#if WAC_PATCH_NOQUIRK
+#define HID_QUIRK_INVERT	0x01
+#define HID_QUIRK_NOTOUCH	0x02
+#define HID_QUIRK_IGNORE	0x04
+#define HID_QUIRK_NOGET		0x08
+#endif
 
 struct hid_blacklist {
 	__u16 idVendor;
