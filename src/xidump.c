@@ -43,6 +43,22 @@
 
 	int gnDevListCnt = 0;
 	XDeviceInfoPtr gpDevList = NULL;
+	int gnLastXError = 0;
+	int gnVerbose = 0;
+
+int ErrorHandler(Display* pDisp, XErrorEvent* pEvent)
+{
+	char chBuf[64];
+	XGetErrorText(pDisp,pEvent->error_code,chBuf,sizeof(chBuf));
+	fprintf(stderr,"X Error: %d %s\n", pEvent->error_code, chBuf);
+	gnLastXError  = pEvent->error_code;
+	return 0;
+}
+
+int GetLastXError(void)
+{
+	return gnLastXError;
+}
 
 Display* InitXInput(void)
 {
@@ -56,7 +72,9 @@ Display* InitXInput(void)
 		return NULL;
 	}
 
-	XSynchronize(pDisp,1);
+	XSetErrorHandler(ErrorHandler);
+
+	XSynchronize(pDisp,1 /*sync on*/);
 	
 	if (!XQueryExtension(pDisp,INAME,&nMajor,&nFEV,&nFER))
 	{
@@ -70,7 +88,9 @@ Display* InitXInput(void)
 
 int ListDevices(Display* pDisp)
 {
-	int i, j;
+	int i, j, k;
+	XDeviceInfoPtr pDev;
+	XAnyClassPtr pClass;
 
 	/* get list of devices */
 	if (!gpDevList)
@@ -85,17 +105,73 @@ int ListDevices(Display* pDisp)
 
 	for (i=0; i<gnDevListCnt; ++i)
 	{
-		printf("%3lu %-15s %s\n",
-				gpDevList[i].id,
-				gpDevList[i].name,
-				(gpDevList[i].use == 0) ? "(disabled)" :
-				(gpDevList[i].use == IsXKeyboard) ? "keyboard" :
-				(gpDevList[i].use == IsXPointer) ? "pointer" :
-				(gpDevList[i].use == IsXExtensionDevice) ? "extension" :
+		pDev = gpDevList + i;
+
+		printf("%2lu %-30s %s\n",
+				pDev->id,
+				pDev->name,
+				(pDev->use == 0) ? "disabled" :
+				(pDev->use == IsXKeyboard) ? "keyboard" :
+				(pDev->use == IsXPointer) ? "pointer" :
+				(pDev->use == IsXExtensionDevice) ? "extension" :
 					"unknown");
 
-		for (j=0; j<gpDevList[i].num_classes; ++j)
+		if (gnVerbose)
 		{
+			pClass = pDev->inputclassinfo;
+			for (j=0; j<pDev->num_classes; ++j)
+			{
+				switch (pClass->class)
+				{
+					case ButtonClass:
+					{
+						XButtonInfo* pBtn = (XButtonInfo*)pClass;
+						printf("    btn: num=%d\n",pBtn->num_buttons);
+						break;
+					}
+	
+					case FocusClass:
+					{
+						printf("  focus:\n");
+						break;
+					}
+
+					case KeyClass:
+					{
+						XKeyInfo* pKey = (XKeyInfo*)pClass;
+						printf("    key: min=%d, max=%d, num=%d\n",
+								pKey->min_keycode,
+								pKey->max_keycode,
+								pKey->num_keys);
+						break;
+					}
+
+					case ValuatorClass:
+					{
+						XValuatorInfoPtr pVal = (XValuatorInfoPtr)pClass;
+						printf("    val: axes=%d mode=%s buf=%s\n",
+								pVal->num_axes,
+								pVal->mode ? "abs" : "rel",
+								pVal->motion_buffer ? "yes" : "no");
+						for (k=0; k<pVal->num_axes; ++k)
+						{
+							printf("    axis[%d]: res=%d, max=%d, max=%d\n",
+								k, /* index */
+								pVal->axes[k].resolution,
+								pVal->axes[k].min_value,
+								pVal->axes[k].max_value);
+						}
+						break;
+					}
+	
+					default:
+						printf("  unk: class=%lu\n",pClass->class);
+				}
+	
+				/* skip to next record */
+				pClass = (XAnyClassPtr)((char*)pClass + pClass->length);
+			}
+			printf("\n");
 		}
 	}
 
@@ -246,15 +322,31 @@ void Fatal(const char* pszFmt, ...)
 
 int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 {
-	int nRtn;
+	int nRtn, nType;
 	XDevice* pDev;
 	XDeviceInfoPtr pDevInfo;
+	Window wnd;
+	int nEventListCnt = 0;
+	XEventClass eventList[32];
+	XEventClass cls;
+
+	/* create a window to receive events */
+	wnd = XCreateWindow(pDisp,
+			DefaultRootWindow(pDisp), /* parent */
+			0,0,1,1, /* placement */
+			0, /* border width */
+			0, /* depth */
+			InputOnly, /* class */
+			CopyFromParent, /* visual */
+			0, /* valuemask */
+			NULL); /* attributes */
 
 	/* get the device by name */
 	pDevInfo = GetDevice(pDisp,pszDeviceName);
 	if (!pDevInfo)
 	{
 		fprintf(stderr,"Unable to find input device '%s'\n",pszDeviceName);
+		XDestroyWindow(pDisp,wnd);
 		return 1;
 	}
 
@@ -263,8 +355,28 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 	if (!pDev)
 	{
 		fprintf(stderr,"Unable to open input device '%s'\n",pszDeviceName);
+		XDestroyWindow(pDisp,wnd);
 		return 1;
 	}
+
+	/* determine which classes to use */
+	DeviceButtonPress(pDev,nType,cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButtonPressGrab(pDev,nType,cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceButtonRelease(pDev,nType,cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+	DeviceMotionNotify(pDev,nType,cls);
+	if (cls) eventList[nEventListCnt++] = cls;
+
+	/* grab device */
+	XGrabDevice(pDisp,pDev,wnd,
+			0, /* no owner events */
+			sizeof(eventList) / sizeof(*eventList),
+			eventList,
+			GrabModeAsync, /* don't queue, give me whatever you got */
+			GrabModeAsync, /* same */
+			CurrentTime);
 	
 	/* fire up the UI */
 	if ((nRtn=pUI->Init()) != 0)
@@ -277,6 +389,7 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 	}
 
 	XCloseDevice(pDisp,pDev);
+	XDestroyWindow(pDisp,wnd);
 
 	return nRtn;
 }
@@ -290,7 +403,6 @@ int main(int argc, char** argv)
 	int nRtn;
 	int bList = 0;
 	UI* pUI = NULL;
-	int nVerbose = 0;
 	const char* pa;
 	Display* pDisp = NULL;
 	const char* pszDeviceName = NULL;
@@ -303,7 +415,7 @@ int main(int argc, char** argv)
 			if ((strcmp(pa,"-h") == 0) || (strcmp(pa,"--help") == 0))
 				Usage(0);
 			else if ((strcmp(pa,"-v") == 0) || (strcmp(pa,"--verbose") == 0))
-				++nVerbose;
+				++gnVerbose;
 			else if ((strcmp(pa,"-V") == 0) || (strcmp(pa,"--version") == 0))
 				{ Version(); exit(0); }
 			else if ((strcmp(pa,"-l") == 0) || (strcmp(pa,"--list") == 0))
