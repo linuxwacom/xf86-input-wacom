@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
- *									    
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
  * the  above copyright   notice appear  in   all  copies and  that both  that
@@ -395,7 +395,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int rx, ry, rz, rtx, rty, rrot, rth, rw;
+	int rx, ry, rz, rtx, rty, rrot, rth, rw, no_jitter;
+	double param, relacc;
 	int is_core_pointer, is_absolute, doffsetX=0, doffsetY=0;
 	int aboveBelowSwitch = (priv->twinview == TV_ABOVE_BELOW)
 		? ((y < priv->topY) ? -1 : ((priv->bottomY < y) ? 1 : 0)) : 0;
@@ -481,24 +482,32 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			rx = 0;
 			ry = 0;
 		}
-		if (priv->speed != DEFAULT_SPEED )
+		/* don't apply speed for fairly small increments */
+		no_jitter = priv->speed * 3;
+		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
+		if (ABS(rx) > no_jitter)
 		{
-			/* don't apply speed for fairly small increments */
-			int no_jitter = priv->speed * 3;
-			double param = priv->speed;
-			double relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
-			if (ABS(rx) > no_jitter)
+			param = priv->speed;
+
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
 			{
-				/* don't apply acceleration when too fast. */
 				param += priv->accel > 0 ? abs(rx)/relacc : 0;
+				/* don't apply acceleration when too fast. */
 				if (param < 20.00)
 				{
 					rx *= param;
 				}
 			}
-			if (ABS(ry) > no_jitter)
+		}
+		if (ABS(ry) > no_jitter)
+		{
+			param = priv->speed;
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
 			{
 				param += priv->accel > 0 ? abs(ry)/relacc : 0;
+				/* don't apply acceleration when too fast. */
 				if (param < 20.00)
 				{
 					ry *= param;
@@ -541,8 +550,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		 * if it's the second tool in dual input case.
 		 * More complicated dual input, such as only sylus/puck moves 
 		 * the cursor or both tools can move the cursor will be 
-		 * supported when needed
-		 */
+		 * supported when needed */
 		if( !((priv->flags & BUTTONS_ONLY_FLAG) || channel) )
 		{
 			if (IsCursor(priv))
@@ -568,13 +576,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			int i;
 			for (i=0; i<abs(ds->relwheel); i++)
 			{
-				xf86PostButtonEvent(local->dev, 
+				xf86PostButtonEvent(local->dev,
 					is_absolute,
-					fakeButton, 1, 0, 6, rx, ry, rz, 
+					fakeButton, 1, 0, 6, rx, ry, rz,
 					rrot, rth, rw);
-				xf86PostButtonEvent(local->dev, 
+				xf86PostButtonEvent(local->dev,
 					is_absolute,
-					fakeButton, 0, 0, 6, rx, ry, rz, 
+					fakeButton, 0, 0, 6, rx, ry, rz,
 					rrot, rth, rw);
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.2 2004/02/05 01:03:13 pingc Exp $
+ * $Id: hid-core.c,v 1.3 2004/08/06 18:08:27 pingc Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -1113,6 +1113,7 @@ void hid_init_reports(struct hid_device *hid)
 #define USB_DEVICE_ID_WACOM_INTUOS2	0x0040
 #define USB_DEVICE_ID_WACOM_VOLITO	0x0060
 #define USB_DEVICE_ID_WACOM_PTU		0x0003
+#define USB_DEVICE_ID_WACOM_PAD		0x00B0
 
 #define USB_VENDOR_ID_ATEN		0x0557
 #define USB_DEVICE_ID_ATEN_UC100KM	0x2004

@@ -1,3 +1,8 @@
+2004-08-06    Ping Cheng <pingc@wacom.com>
+	* Fixed USB tablet protocol V dual input for kernel 2.6
+	* Updated wacusb.c to fix wacdump ParseData error
+	* Fixed speed and acceleration bug
+
 2004-06-04    Ping Cheng <pingc@wacom.com>
 	* Updated configure.in for option verification
 	* Removed XFree86/xorg.conf 3.x code

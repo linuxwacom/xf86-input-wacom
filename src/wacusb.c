@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacusb.c
 **
-** Copyright (C) 2002, 2003 - John E. Joganic
+** Copyright (C) 2002 - 2004 - John E. Joganic
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -789,7 +789,11 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 	/* dispatch event */
 	switch (pEv->type)
 	{
-		case EV_MSC: if (USBParseMSC(pUSB,pEv)) return 1; break;
+#ifdef EV_SYN
+		case EV_SYN: /* kernel 2.6 */
+#endif
+		case EV_MSC: /* kernel 2.4 */
+			     if (USBParseMSC(pUSB,pEv)) return 1; break;
 		case EV_KEY: if (USBParseKEY(pUSB,pEv)) return 1; break;
 		case EV_ABS: if (USBParseABS(pUSB,pEv)) return 1; break;
 		case EV_REL: if (USBParseREL(pUSB,pEv)) return 1; break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -410,7 +410,7 @@ static void usbParseEvent(WacomCommonPtr common,
 	{
 #ifdef EV_SYN
 		/* none serial number tools fall here */
-		if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+		if ((event->type == EV_SYN) && (event->code == SYN_REPORT) && (common->wcmChannelCnt == 1))
 		{
 			usbParseChannel(common,0,0);
 			common->wcmEventCnt = 0;
@@ -563,6 +563,13 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				DBG(6, ErrorF("USB mouse detected %x\n",
 					event->code));
 				ds->device_type = CURSOR_ID;
+				ds->proximity = (event->value != 0);
+			}
+			else if (event->code == BTN_TOOL_FINGER)
+			{
+				DBG(6, ErrorF("USB Pad detected %x\n",
+					event->code));
+				ds->device_type = PAD_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOUCH)
