@@ -24,6 +24,8 @@
 
 #include "wactablet.h"
 
-WACOMTABLET WacomOpenUSBTablet(int fd);
+int WacomGetSupportedUSBDeviceList(WACOMDEVICEREC** ppList, int* pnSize);
+unsigned int WacomGetUSBDeviceFromName(const char* pszName);
+WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel);
 
 #endif /* __LINUXWACOM_WACUSB_H */

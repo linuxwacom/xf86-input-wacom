@@ -1,3 +1,8 @@
+2003-01-26    John E. Joganic <john@joganic.com>
+
+	* Merged Dean Townsley's Acer C100 patch
+	* Changed internal device identification model to handle new tablets
+
 2003-01-25    John E. Joganic <john@joganic.com>
 
 	* Added configuration option to disable non-linux code

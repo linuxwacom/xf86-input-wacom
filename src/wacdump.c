@@ -18,11 +18,12 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 **
 ** REVISION HISTORY
-**   2003-01-25 0.3.6 - moved usb code to wacusb.c
-**   2003-01-01 0.3.5 - moved refresh to start display immediately
-**   2002-12-21 0.3.4 - changed to FILE* to file descriptors
 **   2002-12-17 0.3.3 - split ncurses from main file to avoid namespace
 **                      collision in linux/input.h
+**   2002-12-21 0.3.4 - changed to FILE* to file descriptors
+**   2003-01-01 0.3.5 - moved refresh to start display immediately
+**   2003-01-25 0.3.6 - moved usb code to wacusb.c
+**   2003-01-26 0.3.7 - applied Dean Townsley's Acer C100 patch
 **
 ****************************************************************************/
 
@@ -34,12 +35,13 @@
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "wacdump v0.3.6"
+#define WACDUMP_VER "wacdump v0.3.7"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -52,13 +54,6 @@ static int InitTablet(WACOMTABLET hTablet);
 void FetchTablet(WACOMTABLET hTablet);
 static void DisplaySerialValue(unsigned int uField);
 static void DisplaySerialButton(unsigned int uCode);
-
-struct REL_STATE
-{
-	int bValid;
-	int nRow, nCol;
-	int nValue;
-};
 
 struct ABS_STATE
 {
@@ -74,22 +69,74 @@ struct KEY_STATE
 	int nValue;
 };
 
-struct SERIAL_STATE
-{
-	int nRow;
-	int nSerial;
-};
-
 	struct ABS_STATE gAbsState[WACOMFIELD_MAX];
 	struct KEY_STATE gKeyState[WACOMBUTTON_MAX];
-	struct SERIAL_STATE gSerialState;
 	int gnSerialDataRow = 0;
 
 void Usage(void)
 {
-	fprintf(stderr,"Usage: wacdump [-d device]\n"
-		"  -?, -h, --help       - usage\n"
-		"  -d, --device device  - use specified device\n");
+	int i, j, nClsSize, nDevSize;
+	unsigned int uDeviceCls;
+	WACOMCLASSREC* pCls;
+	WACOMDEVICEREC* pDev;
+
+	fprintf(stderr,"Usage: wacdump [options] device\n"
+		"Options:\n"
+		"  -h, --help               - usage\n"
+		"  -c, --class              - use specified class (see below)\n"
+		"  -f, --force device_name  - use specified device (see below)\n"
+		"  -l, --list               - list all supported devices\n"
+		"\n"
+		"Example devices:\n"
+#ifdef WAC_ENABLE_LINUXINPUT
+		"  /dev/input/event0        - usb tablet device\n"
+#endif
+		"  /dev/ttyS0               - serial tablet on com1\n"
+		"  /dev/ttyUSB0             - serial tablet on USB adapter\n"
+		"\n"
+		"Supported device classes:\n");
+
+	if (!WacomGetSupportedClassList(&pCls,&nClsSize))
+	{
+		fprintf(stderr,"  ");
+		for (i=0; i<nClsSize; ++i)
+			fprintf(stderr,"%s%s", i ? ", " : "", pCls[i].pszName);
+		fprintf(stderr,"\n");
+
+		fprintf(stderr,"Supported device names:\n");
+		for (i=0; i<nClsSize; ++i)
+		{
+			fprintf(stderr,"  %s: ",pCls[i].pszName);
+			uDeviceCls = pCls[i].uDeviceClass;
+			if (!WacomGetSupportedDeviceList(uDeviceCls,&pDev,&nDevSize))
+			{
+				for (j=0; j<nDevSize; ++j)
+					fprintf(stderr,"%s%s", j ? ", " : "", pDev[j].pszName);
+				fprintf(stderr,"\n");
+				WacomFreeList(pDev);
+			}
+		}
+		WacomFreeList(pCls);
+	}
+}
+
+void ListSupportedDevices(void)
+{
+	int i, nListSize;
+	WACOMDEVICEREC* pList;
+
+	if (!WacomGetSupportedDeviceList(0,&pList,&nListSize))
+	{
+		for (i=0; i<nListSize; ++i)
+		{
+			fprintf(stdout,"%s\t%s\t%s\t\"%s\"\n",
+				pList[i].pszName,
+				pList[i].pszVendorName,
+				pList[i].pszClass,
+				pList[i].pszDesc);
+		}
+		WacomFreeList(pList);
+	}
 }
 
 static void termscr(void)
@@ -108,6 +155,7 @@ static int InitTablet(WACOMTABLET hTablet)
 	const char* pszClass = "UNK_CLS";
 	const char* pszVendor = "UNK_VNDR";
 	const char* pszDevice = "UNK_DEV";
+	const char* pszSub = "UNK_SUB";
 
 	/* Identify program and version */
 	wacscrn_standout();
@@ -118,44 +166,20 @@ static int InitTablet(WACOMTABLET hTablet)
 
 	/* get model */
 	model = WacomGetModel(hTablet);
-
-	/* vendor */
-	switch (WACOMVENDOR(model))
-	{
-		case WACOMVENDOR_WACOM: pszVendor = "WACOM"; break;
-	}
-
-	/* class */
-	switch (WACOMCLASS(model))
-	{
-		case WACOMCLASS_SERIAL: pszClass = "SERIAL"; break;
-		case WACOMCLASS_USB: pszClass = "USB"; break;
-	}
-
-	/* device */
-	switch (WACOMDEVICE(model))
-	{
-		case WACOMDEVICE_ARTPAD: pszDevice = "ARTPAD"; break;
-		case WACOMDEVICE_ARTPADII: pszDevice = "ARTPADII"; break;
-		case WACOMDEVICE_DIGITIZER: pszDevice = "DIGITIZER"; break;
-		case WACOMDEVICE_DIGITIZERII: pszDevice = "DIGITIZERII"; break;
-		case WACOMDEVICE_PENPARTNER: pszDevice = "PENPARTNER"; break;
-		case WACOMDEVICE_GRAPHIRE: pszDevice = "GRAPHIRE"; break;
-		case WACOMDEVICE_GRAPHIRE2: pszDevice = "GRAPHIRE2"; break;
-		case WACOMDEVICE_INTUOS: pszDevice = "INTUOS"; break;
-		case WACOMDEVICE_INTUOS2: pszDevice = "INTUOS2"; break;
-		case WACOMDEVICE_CINTIQ: pszDevice = "CINTIQ"; break;
-		case WACOMDEVICE_VOLITO: pszDevice = "VOLITO"; break;
-	}
-
-	/* get name, rom version */
+	pszVendor = WacomGetVendorName(hTablet);
+	pszClass = WacomGetClassName(hTablet);
+	pszDevice = WacomGetDeviceName(hTablet);
+	pszSub = WacomGetSubTypeName(hTablet);
 	pszName = WacomGetModelName(hTablet);
 	WacomGetROMVersion(hTablet,&nMajor,&nMinor,&nRelease);
-	wacscrn_output(nRow,0,pszName);
-
-	snprintf(chBuf,sizeof(chBuf),"%s %s %s 0x%X ROM=%d.%d-%d",
-			pszVendor, pszClass, pszDevice, model, nMajor, nMinor, nRelease);
-	wacscrn_output(nRow,30,chBuf);
+	snprintf(chBuf,sizeof(chBuf),"MODEL=%s",pszName);
+	wacscrn_output(nRow,0,chBuf);
+	snprintf(chBuf,sizeof(chBuf),"ROM=%d.%d-%d",nMajor, nMinor, nRelease);
+	wacscrn_output(nRow,40,chBuf);
+	++nRow;
+	snprintf(chBuf,sizeof(chBuf),"CLS=%s  VNDR=%s  DEV=%s  SUB=%s",
+			pszClass, pszVendor, pszDevice, pszSub);
+	wacscrn_output(nRow,0,chBuf);
 	nRow += 2;
 
 	gnSerialDataRow = nRow++; /* data */
@@ -299,7 +323,7 @@ void FetchTablet(WACOMTABLET hTablet)
 {
 	char chOut[128];
 	unsigned char uchBuf[16];
-	int i, nLength, nRow=gnSerialDataRow;
+	int i, nLength, nRow=gnSerialDataRow, nErrors=0;
 	WACOMSTATE state = WACOMSTATE_INIT;
 
 	while (1)
@@ -309,10 +333,12 @@ void FetchTablet(WACOMTABLET hTablet)
 		nLength = WacomReadRaw(hTablet,uchBuf,sizeof(uchBuf));
 		if (nLength < 0)
 		{
-			snprintf(chOut,sizeof(chOut),"ReadRaw returned %d",nLength);
-			wacscrn_output(23,0,chOut);
+			snprintf(chOut,sizeof(chOut),"ReadRaw: %10d (%d)",
+					nLength,++nErrors);
+			wacscrn_output(22,0,chOut);
 			wacscrn_refresh();
-			break;
+			sleep(1);
+			continue;
 		}
 
 		for (i=0; i<nLength; ++i)
@@ -329,11 +355,12 @@ void FetchTablet(WACOMTABLET hTablet)
 
 		if (WacomParseData(hTablet,uchBuf,nLength,&state))
 		{
-			snprintf(chOut,sizeof(chOut),"ParseData returned error %s %d",
-				strerror(errno),errno);
+			snprintf(chOut,sizeof(chOut),
+				"ParseData: %10d %-40s (%d)",
+				errno,strerror(errno),++nErrors);
 			wacscrn_output(23,0,chOut);
 			wacscrn_refresh();
-			break;
+			continue;
 		}
 
 		for (i=WACOMFIELD_TOOLTYPE; i<WACOMFIELD_MAX; ++i)
@@ -362,43 +389,89 @@ int main(int argc, char** argv)
 	const char* pszFile = NULL;
 	const char* arg;
 	WACOMTABLET hTablet = NULL;
+	const char* pszDeviceCls = NULL;
+	const char* pszDeviceType = NULL;
+	WACOMMODEL model = { 0 };
 
 	/* parse args */
 	++argv;
 	while (*argv)
 	{
 		arg = *(argv++);
-		if ((strcmp(arg,"-?") == 0) || (strcmp(arg,"-h") == 0) ||
-			(strcmp(arg,"--help")==0))
+
+		/* handle options */
+		if (arg[0] == '-')
 		{
-			Usage();
-			exit(0);
+			/* information */
+			if ((strcmp(arg,"-h") == 0) || (strcmp(arg,"--help")==0))
+				{ Usage(); exit(0); }
+			else if ((strcmp(arg,"-l") == 0) || (strcmp(arg,"--list") == 0))
+				{ ListSupportedDevices(); exit(0); }
+
+			/* force device type */
+			else if ((strcmp(arg,"-f") == 0) || (strcmp(arg,"--force") == 0))
+			{
+				arg = *(argv++);
+				if (arg == NULL)
+					{ fprintf(stderr,"Missing device\n"); exit(1); }
+				pszDeviceType = arg;
+			}
+
+			/* serial and usb class overrides */
+			else if ((strcmp(arg,"-c") == 0) || (strcmp(arg,"--class") == 0))
+			{
+				arg = *(argv++);
+				if (arg == NULL)
+					{ fprintf(stderr,"Missing class\n"); exit(1); }
+				pszDeviceCls = arg;
+			}
+
+			/* unknown options */
+			else
+				{ fprintf(stderr,"Unknown option %s\n",arg); exit(1); }
 		}
-		if ((strcmp(arg,"-d") == 0) || (strcmp(arg,"--device") == 0))
-		{
-			arg = *(argv++);
-			if (arg == NULL) { fprintf(stderr,"Missing device\n"); exit(1); }
-			pszFile = arg;
-		}
+
+		/* device name */
 		else
 		{
-			fprintf(stderr,"Unknown argument %s\n",arg);
+			if (pszFile)
+				{ fprintf(stderr,"Extra argument %s\n",arg); exit(1); }
+
+			pszFile = arg;
+		}
+	}
+
+	/* check for device */
+	if (!pszFile)
+	{
+		Usage();
+		exit(1);
+	}
+
+	/* set device class, if provided */
+	if (pszDeviceCls)
+	{
+		model.uClass = WacomGetClassFromName(pszDeviceCls);
+		if (!model.uClass)
+		{
+			fprintf(stderr, "Unrecognized class: %s\n",pszDeviceCls);
 			exit(1);
 		}
 	}
 
-	/* default device if not specified */
-	if (!pszFile)
+	/* set device type, if provided */
+	if (pszDeviceType)
 	{
-		fprintf(stderr,"Please specify a device using -d parameter. Examples:\n"
-			"  wacdump -d /dev/input/event0 - usb tablet device\n"
-			"  wacdump -d /dev/ttyS0        - serial tablet on com1\n"
-			"  wacdump -d /dev/ttyUSB0      - serial tablet on USB adapter\n");
-		exit(1);
+		model.uDevice = WacomGetDeviceFromName(pszDeviceType,model.uClass);
+		if (!model.uDevice)
+		{
+			fprintf(stderr, "Unrecognized device: %s\n",pszDeviceType);
+			exit(1);
+		}
 	}
    
 	/* open tablet */
-	hTablet = WacomOpenTablet(pszFile);
+	hTablet = WacomOpenTablet(pszFile,&model);
 	if (!hTablet)
 	{
 		fprintf(stderr,"failed to open %s for read/writing: %s\n",

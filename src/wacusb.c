@@ -64,11 +64,33 @@
 ** Structures
 *****************************************************************************/
 
-typedef struct
+typedef struct _USBSUBTYPE USBSUBTYPE;
+typedef struct _USBDEVICE USBDEVICE;
+typedef struct _USBVENDOR USBVENDOR;
+
+struct _USBSUBTYPE
 {
-	int nProduct;
-	unsigned int uDeviceType;
-} USB_MODEL_INFO;
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uSubType;
+	unsigned int uProduct;
+};
+
+struct _USBDEVICE
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uDevice;
+	USBSUBTYPE* pSubTypes;
+};
+
+struct _USBVENDOR
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uVendor;
+	USBDEVICE* pDevices;
+};
 
 /*****************************************************************************
 ** USB Tablet object
@@ -80,12 +102,10 @@ struct _USBTABLET
 {
 	WACOMTABLET_PRIV tablet;
 	int fd;
-	unsigned int uDeviceType;
-	const char* pszVendorName;
-	char chName[64];
+	USBVENDOR* pVendor;
+	USBDEVICE* pDevice;
+	USBSUBTYPE* pSubType;
 	int nBus;
-	int nVendor;
-	int nProduct;
 	int nVersion;
 	WACOMSTATE state;
 	int nToolProx;
@@ -98,60 +118,188 @@ struct _USBTABLET
 static void USBClose(WACOMTABLET_PRIV* pTablet);
 static WACOMMODEL USBGetModel(WACOMTABLET_PRIV* pTablet);
 static const char* USBGetVendorName(WACOMTABLET_PRIV* pTablet);
+static const char* USBGetClassName(WACOMTABLET_PRIV* pTablet);
+static const char* USBGetDeviceName(WACOMTABLET_PRIV* pTablet);
+static const char* USBGetSubTypeName(WACOMTABLET_PRIV* pTablet);
 static const char* USBGetModelName(WACOMTABLET_PRIV* pTablet);
 static int USBGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
 		int* pnMinor, int* pnRelease);
 static int USBGetCaps(WACOMTABLET_PRIV* pTablet);
 static int USBGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState);
+static int USBGetFD(WACOMTABLET_PRIV* pTablet);
 static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 		unsigned int uSize);
 static int USBParseData(WACOMTABLET_PRIV* pTablet,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
 
+static int USBFindModel(USBTABLET* pUSB, unsigned int uVendor,
+		unsigned int uProduct);
 static int USBIdentifyModel(USBTABLET* pUSB);
 
 /*****************************************************************************
 ** Globals
 *****************************************************************************/
 
-	static USB_MODEL_INFO xWacomModels[] =
+	static USBSUBTYPE xPenPartner[] =
 	{
-		{ 0x00, WACOMDEVICE_PENPARTNER },
+		{ "MODEL_PP_0405", "Wacom PenPartner", 1, 0x00 },
+		{ NULL }
+	};
 
-		{ 0x10, WACOMDEVICE_GRAPHIRE },
-		{ 0x11, WACOMDEVICE_GRAPHIRE },
-		{ 0x12, WACOMDEVICE_GRAPHIRE },
+	static USBSUBTYPE xGraphire[] =
+	{
+		{ "MODEL_G_0405", "Wacom Graphire", 1, 0x10 },
+		{ NULL }
+	};
 
-		{ 0x20, WACOMDEVICE_INTUOS },
-		{ 0x21, WACOMDEVICE_INTUOS },
-		{ 0x22, WACOMDEVICE_INTUOS },
-		{ 0x23, WACOMDEVICE_INTUOS },
-		{ 0x24, WACOMDEVICE_INTUOS },
+	static USBSUBTYPE xGraphire2[] =
+	{
+		{ "MODEL_G2_0405", "Wacom Graphire2 4x5", 1, 0x11 },
+		{ "MODEL_G2_0507", "Wacom Graphire2 5x7", 1, 0x12 },
+		{ NULL }
+	};
 
-		{ 0x30, WACOMDEVICE_CINTIQ },
-		{ 0x31, WACOMDEVICE_CINTIQ },
-		{ 0x32, WACOMDEVICE_CINTIQ },
-		{ 0x33, WACOMDEVICE_CINTIQ },
-		{ 0x34, WACOMDEVICE_CINTIQ },
-		{ 0x35, WACOMDEVICE_CINTIQ },
+	static USBSUBTYPE xIntuos[] =
+	{
+		{ "MODEL_I_0405", "Wacom Intuos 4x5", 1, 0x20 },
+		{ "MODEL_I_0608", "Wacom Intuos 6x8", 2, 0x21 },
+		{ "MODEL_I_0912", "Wacom Intuos 9x12", 3, 0x22 },
+		{ "MODEL_I_1212", "Wacom Intuos 12x12", 4, 0x23 },
+		{ "MODEL_I_1218", "Wacom Intuos 12x18", 5, 0x24 },
+		{ NULL }
+	};
 
-		{ 0x41, WACOMDEVICE_INTUOS2 },
-		{ 0x42, WACOMDEVICE_INTUOS2 },
-		{ 0x43, WACOMDEVICE_INTUOS2 },
-		{ 0x44, WACOMDEVICE_INTUOS2 },
-		{ 0x45, WACOMDEVICE_INTUOS2 },
+	static USBSUBTYPE xCintiq[] =
+	{
+		{ "MODEL_PL400", "Wacom PL400", 1, 0x30 },
+		{ "MODEL_PL500", "Wacom PL500", 2, 0x31 },
+		{ "MODEL_PL600", "Wacom PL600", 3, 0x32 },
+		{ "MODEL_PL600SX", "Wacom PL600SX", 4, 0x33 },
+		{ "MODEL_PL550", "Wacom PL550", 5, 0x34 },
+		{ "MODEL_PL800", "Wacom PL800", 6, 0x35 },
+		{ NULL }
+	};
 
-		{ 0x60, WACOMDEVICE_VOLITO },
+	static USBSUBTYPE xIntuos2[] =
+	{
+		{ "XD-0405-U", "Wacom Intuos2 4x5", 1, 0x41 },
+		{ "XD-0608-U", "Wacom Intuos2 6x8", 2, 0x42 },
+		{ "XD-0912-U", "Wacom Intuos2 9x12", 3, 0x43 },
+		{ "XD-1212-U", "Wacom Intuos2 12x12", 4, 0x44 },
+		{ "XD-1218-U", "Wacom Intuos2 12x18", 5, 0x45 },
+		{ NULL }
+	};
 
-		{ 0, 0 }
+	static USBSUBTYPE xVolito[] =
+	{
+		{ "MODEL-VOL", "Wacom Volito", 1, 0x60 },
+		{ NULL }
+	};
+
+	static USBDEVICE xWacomDevices[] =
+	{
+		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner },
+		{ "gr", "Graphire", WACOMDEVICE_GRAPHIRE, xGraphire },
+		{ "gr2", "Graphire2", WACOMDEVICE_GRAPHIRE2, xGraphire2 },
+		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
+		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
+		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
+		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },
+		{ NULL }
+	};
+
+	static USBVENDOR xVendors[] =
+	{
+		{ "wacom", "Wacom", WACOMVENDOR_WACOM, xWacomDevices },
+		{ NULL },
 	};
 
 /*****************************************************************************
 ** Public Functions
 *****************************************************************************/
 
-WACOMTABLET WacomOpenUSBTablet(int fd)
+typedef struct
+{
+	void (*pfnFree)(void* pv);
+} DEVLIST_INTERNAL;
+
+static void USBFreeDeviceList(void* pv)
+{
+	DEVLIST_INTERNAL* pInt = ((DEVLIST_INTERNAL*)pv) - 1;
+	free(pInt);
+}
+
+int WacomGetSupportedUSBDeviceList(WACOMDEVICEREC** ppList, int* pnSize)
+{
+	int nIndex=0, nCnt=0;
+	DEVLIST_INTERNAL* pInt;
+	USBDEVICE* pDev;
+	USBVENDOR* pVendor;
+	WACOMDEVICEREC* pRec;
+
+	if (!ppList || !pnSize) { errno = EINVAL; return 1; }
+
+	/* for each vendor, count up devices */
+	for (pVendor=xVendors; pVendor->pszName; ++pVendor)
+	{
+		/* count up devices */
+		for (pDev=pVendor->pDevices; pDev->pszName; ++pDev, ++nCnt) ;
+	}
+   
+	/* allocate enough memory to hold internal structure and all records */
+	pInt = (DEVLIST_INTERNAL*)malloc(sizeof(DEVLIST_INTERNAL) +
+					(sizeof(WACOMDEVICEREC) * nCnt));
+
+	pInt->pfnFree = USBFreeDeviceList;
+	pRec = (WACOMDEVICEREC*)(pInt + 1);
+
+	/* for each vendor, add devices */
+	for (pVendor=xVendors; pVendor->pszName; ++pVendor)
+	{
+		for (pDev=pVendor->pDevices; pDev->pszName; ++pDev, ++nIndex)
+		{
+			pRec[nIndex].pszName = pDev->pszName;
+			pRec[nIndex].pszDesc = pDev->pszDesc;
+			pRec[nIndex].pszVendorName = pVendor->pszName;
+			pRec[nIndex].pszVendorDesc = pVendor->pszDesc;
+			pRec[nIndex].pszClass = "usb";
+			pRec[nIndex].model.uClass = WACOMCLASS_USB;
+			pRec[nIndex].model.uVendor = pVendor->uVendor;
+			pRec[nIndex].model.uDevice = pDev->uDevice;
+			pRec[nIndex].model.uSubType = 0;
+		}
+	}
+	assert(nIndex == nCnt);
+
+	*ppList = pRec;
+	*pnSize = nCnt;
+	return 0;
+}
+
+unsigned int WacomGetUSBDeviceFromName(const char* pszName)
+{
+	USBDEVICE* pDev;
+	USBVENDOR* pVendor;
+
+	if (!pszName) { errno = EINVAL; return 0; }
+
+	/* for each vendor, look for device */
+	for (pVendor=xVendors; pVendor->pszName; ++pVendor)
+	{
+		/* count up devices */
+		for (pDev=pVendor->pDevices; pDev->pszName; ++pDev)
+		{
+			if (strcasecmp(pszName,pDev->pszName) == 0)
+				return pDev->uDevice;
+		}
+	}
+
+	errno = ENOENT;
+	return 0;
+}
+
+WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
 {
 	USBTABLET* pUSB = NULL;
 
@@ -161,10 +309,14 @@ WACOMTABLET WacomOpenUSBTablet(int fd)
 	pUSB->tablet.Close = USBClose;
 	pUSB->tablet.GetModel = USBGetModel;
 	pUSB->tablet.GetVendorName = USBGetVendorName;
+	pUSB->tablet.GetClassName = USBGetClassName;
+	pUSB->tablet.GetDeviceName = USBGetDeviceName;
+	pUSB->tablet.GetSubTypeName = USBGetSubTypeName;
 	pUSB->tablet.GetModelName = USBGetModelName;
 	pUSB->tablet.GetROMVer = USBGetROMVer;
 	pUSB->tablet.GetCaps = USBGetCaps;
 	pUSB->tablet.GetState = USBGetState;
+	pUSB->tablet.GetFD = USBGetFD;
 	pUSB->tablet.ReadRaw = USBReadRaw;
 	pUSB->tablet.ParseData = USBParseData;
 	pUSB->fd = fd;
@@ -189,9 +341,13 @@ static void USBClose(WACOMTABLET_PRIV* pTablet)
 
 static WACOMMODEL USBGetModel(WACOMTABLET_PRIV* pTablet)
 {
+	WACOMMODEL model = { 0 };
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
-	if (!pUSB) { errno=EBADF; return 0; }
-	return WACOM_MAKEMODEL(pUSB->nVendor,WACOMCLASS_USB,pUSB->uDeviceType);
+	model.uClass = WACOMCLASS_USB;
+	model.uVendor = pUSB->pVendor->uVendor;
+	model.uDevice = pUSB->pDevice->uDevice;
+	model.uSubType = pUSB->pSubType->uSubType;
+	return model;
 }
 
 static int USBGetRange(USBTABLET* pUSB, long* pBits, int nAbsField,
@@ -210,19 +366,71 @@ static int USBGetRange(USBTABLET* pUSB, long* pBits, int nAbsField,
 	return 0;
 }
 
+static int USBFindModel(USBTABLET* pUSB, unsigned int uVendor,
+		unsigned int uProduct)
+{
+	USBVENDOR* pVendor = NULL;
+	USBDEVICE* pDev = NULL;
+	USBSUBTYPE* pSub = NULL;
+
+	static USBSUBTYPE xUnkSub[] =
+	{
+		{ "UNKNOWN", "Unknown", 1, 0x00 },
+		{ NULL }
+	};
+
+	static USBDEVICE xUnkDev[] =
+	{
+		{ "unk", "Unknown", WACOMDEVICE_UNKNOWN, xUnkSub },
+		{ NULL }
+	};
+
+	static USBVENDOR xUnkVendor =
+	{ "unknown", "Unknown", WACOMVENDOR_UNKNOWN, xUnkDev };
+
+	for (pVendor=xVendors; pVendor->pszName; ++pVendor)
+	{
+		if (pVendor->uVendor == uVendor)
+		{
+			for (pDev=pVendor->pDevices; pDev->pszName; ++pDev)
+			{
+				for (pSub=pDev->pSubTypes; pSub->pszName; ++pSub)
+				{
+					if (pSub->uProduct == uProduct)
+					{
+						pUSB->pVendor = pVendor;
+						pUSB->pDevice = pDev;
+						pUSB->pSubType = pSub;
+						return 0;
+					}
+				}
+			}
+
+			/* only one vendor of this type, so we're done */
+			break;
+		}
+	}
+
+	/* unknown vendor */
+	pUSB->pVendor = &xUnkVendor;
+	pUSB->pDevice = pUSB->pVendor->pDevices;
+	pUSB->pSubType = pUSB->pDevice->pSubTypes;
+	return 0;
+}
+
+
+
 static int USBIdentifyModel(USBTABLET* pUSB)
 {
 	int nCnt;
 	short sID[4];
-	USB_MODEL_INFO* pInfo = NULL;
+	unsigned int uVendor, uProduct;
 	unsigned long evbits[NBITS(EV_MAX)];
 	unsigned long absbits[NBITS(ABS_MAX)];
 	unsigned long relbits[NBITS(REL_MAX)];
 	unsigned long keybits[NBITS(KEY_MAX)];
 
 	/* Get device name and id */
-	if (ioctl(pUSB->fd,EVIOCGNAME(sizeof(pUSB->chName)),
-		pUSB->chName) < 0) return 1;
 	if (ioctl(pUSB->fd,EVIOCGID,sID) < 0)
 		return 1;
 
@@ -298,33 +506,15 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 
 	/* set identification */
 	pUSB->nBus = sID[0];
-	pUSB->nVendor = sID[1];
-	pUSB->nProduct = sID[2];
+	uVendor = sID[1];
+	uProduct = sID[2];
 	pUSB->nVersion = sID[3];
 
-	/* set vendor */
-	if (pUSB->nVendor == WACOMVENDOR_WACOM)
-	{
-		pUSB->pszVendorName = "Wacom";
-		pInfo = xWacomModels;
-	}
-	else
-	{
-		pUSB->pszVendorName = "Unknown";
-	}
-
-	/* find device in vendor's model table */
-	for (; pInfo && pInfo->uDeviceType; ++pInfo)
-	{
-		if (pUSB->nProduct == pInfo->nProduct)
-		{
-			pUSB->uDeviceType = pInfo->uDeviceType;
-			break;
-		}
-	}
+	if (USBFindModel(pUSB,uVendor,uProduct))
+		return 1;
 
 	/* add additional capabilities by device type */
-	switch (pUSB->uDeviceType)
+	switch (pUSB->pDevice->uDevice)
 	{
 		case WACOMDEVICE_INTUOS:
 		case WACOMDEVICE_INTUOS2:
@@ -338,13 +528,30 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 static const char* USBGetVendorName(WACOMTABLET_PRIV* pTablet)
 {
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
-	return pUSB->pszVendorName;
+	return pUSB->pVendor->pszDesc;
+}
+
+static const char* USBGetClassName(WACOMTABLET_PRIV* pTablet)
+{
+	return "USB";
+}
+
+static const char* USBGetDeviceName(WACOMTABLET_PRIV* pTablet)
+{
+	USBTABLET* pUSB = (USBTABLET*)pTablet;
+	return pUSB->pDevice->pszDesc;
+}
+
+static const char* USBGetSubTypeName(WACOMTABLET_PRIV* pTablet)
+{
+	USBTABLET* pUSB = (USBTABLET*)pTablet;
+	return pUSB->pSubType->pszName;
 }
 
 static const char* USBGetModelName(WACOMTABLET_PRIV* pTablet)
 {
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
-	return pUSB->chName;
+	return pUSB->pSubType->pszDesc;
 }
 
 static int USBGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
@@ -371,6 +578,12 @@ static int USBGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState)
 {
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
 	return WacomCopyState(pState,&pUSB->state);
+}
+
+static int USBGetFD(WACOMTABLET_PRIV* pTablet)
+{
+	USBTABLET* pUSB = (USBTABLET*)pTablet;
+	return pUSB->fd;
 }
 
 static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
@@ -531,6 +744,7 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 		case EV_KEY: if (USBParseKEY(pUSB,pEv)) return 1; break;
 		case EV_ABS: if (USBParseABS(pUSB,pEv)) return 1; break;
 		case EV_REL: if (USBParseREL(pUSB,pEv)) return 1; break;
+		default: errno = EINVAL; return 1;
 	}
 
 	return pState ? WacomCopyState(pState,&pUSB->state) : 0;
@@ -542,10 +756,24 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 
 #else /* WAC_ENABLE_LINUXWACOM */
 
-WACOMTABLET WacomOpenUSBTablet(int fd)
+WACOMTABLET WacomOpenUSBTablet(int fd, WACOMMODEL* pModel)
 {
 	errno = EPERM;
 	return NULL;
+}
+
+unsigned int WacomGetUSBDeviceFromName(const char* pszName)
+{
+	errno = ENOENT;
+	return 0;
+}
+
+int WacomGetSupportedUSBDeviceList(WACOMDEVICEREC** ppList, int* pnSize)
+{
+	if (!ppList || !pnSize) { errno = EINVAL; return 1; }
+	*ppList = NULL;
+	*pnSize = 0;
+	return 0;
 }
 
 #endif /* WAC_ENABLE_LINUXWACOM */

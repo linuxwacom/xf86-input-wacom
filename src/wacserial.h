@@ -24,6 +24,8 @@
 
 #include "wactablet.h"
 
-WACOMTABLET WacomOpenSerialTablet(int fd);
+int WacomGetSupportedSerialDeviceList(WACOMDEVICEREC** ppList, int* pnSize);
+unsigned int WacomGetSerialDeviceFromName(const char* pszName);
+WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel);
 
 #endif /* __LINUXWACOM_WACSERIAL_H */

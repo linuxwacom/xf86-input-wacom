@@ -28,27 +28,19 @@
 #include <termios.h>
 #include <ctype.h>
 #include <unistd.h>
-
-/*****************************************************************************
-** Structures
-*****************************************************************************/
-
-typedef struct
-{
-	const char* pszID;
-	unsigned int uDeviceType;
-	const char* pszName;
-	unsigned int uPacketLength;
-	int nProtocol;
-	unsigned int uCaps;
-} MODEL_INFO;
+#include <assert.h>
 
 /*****************************************************************************
 ** Serial Tablet Object
 *****************************************************************************/
 
 typedef struct _SERIALTABLET SERIALTABLET;
+typedef struct _SERIALSUBTYPE SERIALSUBTYPE;
+typedef struct _SERIALDEVICE SERIALDEVICE;
+typedef struct _SERIALVENDOR SERIALVENDOR;
 
+typedef int (*IDENTFUNC)(SERIALTABLET* pSerial);
+typedef int (*INITFUNC)(SERIALTABLET* pSerial);
 typedef int (*PARSEFUNC)(SERIALTABLET* pSerial, const unsigned char* puchData,
 		unsigned int uLength, WACOMSTATE* pState);
 
@@ -56,30 +48,85 @@ struct _SERIALTABLET
 {
 	WACOMTABLET_PRIV tablet;
 	int fd;
-	MODEL_INFO* pInfo;
+	SERIALVENDOR* pVendor;
+	SERIALDEVICE* pDevice;
+	SERIALSUBTYPE* pSubType;
 	unsigned int uPacketLength;
 	int nVerMajor, nVerMinor, nVerRelease;
+	IDENTFUNC pfnIdent;
+	INITFUNC pfnInit;
 	PARSEFUNC pfnParse;
 	int nToolID;
 	WACOMSTATE state;
 };
 
+/*****************************************************************************
+** Internal structures
+*****************************************************************************/
+
+struct _SERIALSUBTYPE
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uSubType;
+	const char* pszIdent;
+	INITFUNC pfnInit;
+};
+
+struct _SERIALDEVICE
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uDevice;
+	SERIALSUBTYPE* pSubTypes;
+	int nProtocol;
+	unsigned int uPacketLength;
+	unsigned int uCaps;
+	int nMinBaudRate;
+	IDENTFUNC pfnIdent;
+};
+
+struct _SERIALVENDOR
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uVendor;
+	SERIALDEVICE* pDevices;
+};
+
+/*****************************************************************************
+** Static operations
+*****************************************************************************/
+
 static void SerialClose(WACOMTABLET_PRIV* pTablet);
 static WACOMMODEL SerialGetModel(WACOMTABLET_PRIV* pTablet);
 static const char* SerialGetVendorName(WACOMTABLET_PRIV* pTablet);
+static const char* SerialGetClassName(WACOMTABLET_PRIV* pTablet);
+static const char* SerialGetDeviceName(WACOMTABLET_PRIV* pTablet);
+static const char* SerialGetSubTypeName(WACOMTABLET_PRIV* pTablet);
 static const char* SerialGetModelName(WACOMTABLET_PRIV* pTablet);
 static int SerialGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
 		int* pnMinor, int* pnRelease);
 static int SerialGetCaps(WACOMTABLET_PRIV* pTablet);
 static int SerialGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState);
+static int SerialGetFD(WACOMTABLET_PRIV* pTablet);
 static int SerialReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 		unsigned int uSize);
 static int SerialParseData(WACOMTABLET_PRIV* pTablet,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
 
-static int SerialIdentifyModel(SERIALTABLET* pSerial);
-static int SerialInitializeModel(SERIALTABLET* pSerial);
+int SerialConfigTTY(SERIALTABLET* pSerial);
+static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
+		int nBaud);
+static int SerialSetDevice(SERIALTABLET* pSerial, SERIALVENDOR* pVendor,
+		SERIALDEVICE* pDevice, SERIALSUBTYPE* pSubType);
+
+static int SerialIdentDefault(SERIALTABLET* pSerial);
+static int SerialIdentAcerC100(SERIALTABLET* pSerial);
+static int SerialInitAcerC100(SERIALTABLET* pSerial);
+static int SerialIdentWacom(SERIALTABLET* pSerial);
+static int SerialInitWacom(SERIALTABLET* pSerial);
 
 static int SerialParseWacomV(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
@@ -93,8 +140,13 @@ static int SerialParseWacomIV_1_3(SERIALTABLET* pSerial,
 static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
+static int SerialParseAcerC100(SERIALTABLET* pSerial,
+		const unsigned char* puchData, unsigned int uLength,
+		WACOMSTATE* pState);
 
-/*static void WacomTest(int fd);*/
+/*****************************************************************************
+** Defines
+*****************************************************************************/
 
 #ifndef BIT
 #undef BIT
@@ -103,11 +155,31 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 
 #define WACOMVALID(x) BIT(WACOMFIELD_##x)
 
+#define ARTPAD_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
+		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
+		WACOMVALID(PRESSURE))
+
 #define ARTPADII_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
 		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
 		WACOMVALID(PRESSURE))
 
+#define DIGITIZER_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
+		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
+		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y))
+
 #define DIGITIZERII_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
+		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
+		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y))
+
+#define PENPARTNER_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
+		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
+		WACOMVALID(PRESSURE))
+
+#define GRAPHIRE_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
+		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
+		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y))
+
+#define CINTIQ_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(PROXIMITY)| \
 		WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)|WACOMVALID(POSITION_Y)| \
 		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y))
 
@@ -117,156 +189,319 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y)| \
 		WACOMVALID(ABSWHEEL)|WACOMVALID(RELWHEEL)|WACOMVALID(THROTTLE))
 
+#define ACERC100_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(SERIAL)| \
+		WACOMVALID(PROXIMITY)|WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)| \
+		WACOMVALID(POSITION_Y)|WACOMVALID(PRESSURE))
+
 #define INTUOS2_CAPS INTUOS_CAPS
+
+#define PROTOCOL_4 4
+#define PROTOCOL_5 5
+
+#define WACOM_SUBTYPE(id,d,s) \
+	{ id, d, s, id, SerialInitWacom }
+#define ACER_SUBTYPE(id,d,s) \
+	{ id, d, s, id, SerialInitAcerC100 }
+
+#define WACOM_DEVICE_P4(n,d,i,s,c) \
+	{ n, d, i, s, PROTOCOL_4, 7, c, 9600, SerialIdentWacom }
+#define WACOM_DEVICE_P5(n,d,i,s,c) \
+	{ n, d, i, s, PROTOCOL_5, 9, c, 9600, SerialIdentWacom }
+#define ACER_DEVICE(n,d,i,s,c) \
+	{ n, d, i, s, 0, 9, c, 19200, SerialIdentAcerC100 }
 
 /*****************************************************************************
 ** Globals
 *****************************************************************************/
 
-	static MODEL_INFO xModels[] =
+	static SERIALSUBTYPE xArtPadII[] =
 	{
-		{ "KT-0405-R", WACOMDEVICE_ARTPADII, "Wacom ArtPadII 4x5", 7, 4,
-				ARTPADII_CAPS },
-
-		{ "UD-0608-R", WACOMDEVICE_DIGITIZERII, "Wacom DigitizerII 6x8", 7, 4,
-				DIGITIZERII_CAPS },
-		{ "UD-1212-R", WACOMDEVICE_DIGITIZERII, "Wacom DigitizerII 12x12", 7, 4,
-				DIGITIZERII_CAPS },
-		{ "UD-1218-R", WACOMDEVICE_DIGITIZERII, "Wacom DigitizerII 12x18", 7, 4,
-				DIGITIZERII_CAPS },
-		{ "UD-1825-R", WACOMDEVICE_DIGITIZERII, "Wacom DigitizerII 18x25", 7, 4,
-				DIGITIZERII_CAPS },
-		{ "CT-0405-R", WACOMDEVICE_PENPARTNER, "Wacom PenPartner", 7, 4 },
-		{ "ET-0405-R", WACOMDEVICE_GRAPHIRE, "Wacom Graphire", 7, 4 },
-
-		/* There are no serial Graphire 2's */
-
-		{ "GD-0405-R", WACOMDEVICE_INTUOS, "Wacom Intuos 4x5", 9, 5,
-				INTUOS_CAPS },
-		{ "GD-0608-R", WACOMDEVICE_INTUOS, "Wacom Intuos 6x8", 9, 5,
-				INTUOS_CAPS },
-		{ "GD-0912-R", WACOMDEVICE_INTUOS, "Wacom Intuos 9x12", 9, 5,
-				INTUOS_CAPS },
-		{ "GD-1212-R", WACOMDEVICE_INTUOS, "Wacom Intuos 12x12", 9, 5,
-				INTUOS_CAPS },
-		{ "GD-1218-R", WACOMDEVICE_INTUOS, "Wacom Intuos 12x18", 9, 5,
-				INTUOS_CAPS },
-
-		{ "XD-0405-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 4x5", 9, 5,
-				INTUOS2_CAPS },
-		{ "XD-0608-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 6x8", 9, 5,
-				INTUOS2_CAPS },
-		{ "XD-0912-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 9x12", 9, 5,
-				INTUOS2_CAPS },
-		{ "XD-1212-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 12x12", 9, 5,
-				INTUOS2_CAPS },
-		{ "XD-1218-R", WACOMDEVICE_INTUOS2, "Wacom Intuos2 12x18", 9, 5,
-				INTUOS2_CAPS },
-
-		/* There are no serial Volito's */
-
+		WACOM_SUBTYPE("KT-0405-R", "Wacom ArtPadII 4x5", 1),
 		{ NULL }
+	};
+
+	static SERIALSUBTYPE xDigitizerII[] =
+	{
+		WACOM_SUBTYPE("UD-0608-R", "Wacom DigitizerII 6x8",   1),
+		WACOM_SUBTYPE("UD-1212-R", "Wacom DigitizerII 12x12", 2),
+		WACOM_SUBTYPE("UD-1218-R", "Wacom DigitizerII 12x18", 3),
+		WACOM_SUBTYPE("UD-1825-R", "Wacom DigitizerII 18x25", 4),
+		{ NULL }
+	};
+
+	static SERIALSUBTYPE xPenPartner[] =
+	{
+		WACOM_SUBTYPE("CT-0405-R", "Wacom PenPartner", 1),
+		{ NULL }
+	};
+
+	static SERIALSUBTYPE xGraphire[] =
+	{
+		WACOM_SUBTYPE("ET-0405-R", "Wacom Graphire", 1),
+		{ NULL }
+	};
+
+	static SERIALSUBTYPE xIntuos[] =
+	{
+		WACOM_SUBTYPE("GD-0405-R", "Wacom Intuos 4x5",   1),
+		WACOM_SUBTYPE("GD-0608-R", "Wacom Intuos 6x8",   2),
+		WACOM_SUBTYPE("GD-0912-R", "Wacom Intuos 9x12",  3),
+		WACOM_SUBTYPE("GD-1212-R", "Wacom Intuos 12x12", 4),
+		WACOM_SUBTYPE("GD-1218-R", "Wacom Intuos 12x18", 5),
+		{ NULL }
+	};
+
+	static SERIALSUBTYPE xIntuos2[] =
+	{
+		WACOM_SUBTYPE("XD-0405-R", "Wacom Intuos2 4x5",   1),
+		WACOM_SUBTYPE("XD-0608-R", "Wacom Intuos2 6x8",   2),
+		WACOM_SUBTYPE("XD-0912-R", "Wacom Intuos2 9x12",  3),
+		WACOM_SUBTYPE("XD-1212-R", "Wacom Intuos2 12x12", 4),
+		WACOM_SUBTYPE("XD-1218-R", "Wacom Intuos2 12x18", 5),
+		{ NULL }
+	};
+
+	static SERIALSUBTYPE xCintiq[] =
+	{
+		{ NULL }
+	};
+
+	static SERIALDEVICE xWacomDevices[] =
+	{
+		WACOM_DEVICE_P4("art", "ArtPad", WACOMDEVICE_ARTPAD,
+				NULL, ARTPAD_CAPS),
+		WACOM_DEVICE_P4("art2", "ArtPadII", WACOMDEVICE_ARTPADII,
+				xArtPadII, ARTPADII_CAPS),
+		WACOM_DEVICE_P4("dig", "Digitizer", WACOMDEVICE_DIGITIZER,
+				NULL, DIGITIZERII_CAPS),
+		WACOM_DEVICE_P4("dig2", "Digitizer II", WACOMDEVICE_DIGITIZERII,
+				xDigitizerII, DIGITIZERII_CAPS),
+		WACOM_DEVICE_P4("pp", "PenPartner", WACOMDEVICE_PENPARTNER,
+				xPenPartner, PENPARTNER_CAPS),
+		WACOM_DEVICE_P4("gr", "Graphire", WACOMDEVICE_GRAPHIRE,
+				xGraphire, GRAPHIRE_CAPS),
+		WACOM_DEVICE_P4("pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ,
+				xCintiq, CINTIQ_CAPS),
+		WACOM_DEVICE_P5("int", "Intuos", WACOMDEVICE_INTUOS,
+				xIntuos, INTUOS_CAPS),
+		WACOM_DEVICE_P5("int2", "Intuos2", WACOMDEVICE_INTUOS2,
+				xIntuos2, INTUOS2_CAPS),
+		{ NULL }
+	};
+
+	/* This one is reverse engineered at this point */
+	static SERIALSUBTYPE xAcerC100[] =
+	{
+		ACER_SUBTYPE("C100-EX", "C100-experimental", 1),
+		{ NULL }
+	};
+
+	static SERIALDEVICE xAcerDevices[] =
+	{
+		ACER_DEVICE("c100", "C100", WACOMDEVICE_ACERC100,
+				xAcerC100, ACERC100_CAPS),
+		{ NULL }
+	};
+
+	static SERIALVENDOR xWacomVendor =
+	{ "wacom", "Wacom", WACOMVENDOR_WACOM, xWacomDevices };
+
+	static SERIALVENDOR xAcerVendor =
+	{ "acer", "Acer", WACOMVENDOR_ACER, xAcerDevices };
+
+	static SERIALVENDOR* xVendors[] =
+	{
+		&xWacomVendor,
+		&xAcerVendor,
+		NULL
 	};
 
 /*****************************************************************************
 ** Static Prototypes
 *****************************************************************************/
 
-static int WacomSendReset(int fd);
-static int WacomSendStop(int fd);
-static int WacomSendStart(int fd);
+static int SerialSendReset(SERIALTABLET* pSerial);
+static int SerialSendStop(SERIALTABLET* pSerial);
+static int SerialSendStart(SERIALTABLET* pSerial);
 
-static int WacomSend(int fd, const char* pszData);
-static int WacomSendRaw(int fd, const unsigned char* puchData,
+static int SerialSend(SERIALTABLET* pSerial, const char* pszData);
+static int SerialSendRaw(SERIALTABLET* pSerial, const unsigned char* puchData,
 		unsigned int uSize);
-static int WacomFlush(int fd);
-static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
-		unsigned int uSize);
+static int WacomFlush(SERIALTABLET* pSerial);
+static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
+		char* pchResponse, unsigned int uSize);
 
 /*****************************************************************************
 ** Public Functions
 *****************************************************************************/
 
-WACOMTABLET WacomOpenSerialTablet(int fd)
+typedef struct
 {
-	struct termios tios;
+	void (*pfnFree)(void* pv);
+} DEVLIST_INTERNAL;
+
+static void SerialFreeDeviceList(void* pv)
+{
+	DEVLIST_INTERNAL* pInt = ((DEVLIST_INTERNAL*)pv) - 1;
+	free(pInt);
+}
+
+int WacomGetSupportedSerialDeviceList(WACOMDEVICEREC** ppList, int* pnSize)
+{
+	int nIndex=0, nCnt=0;
+	DEVLIST_INTERNAL* pInt;
+	SERIALDEVICE* pDev;
+	SERIALVENDOR** ppVendor;
+	WACOMDEVICEREC* pRec;
+
+	if (!ppList || !pnSize) { errno = EINVAL; return 1; }
+
+	/* for each vendor, count up devices */
+	for (ppVendor=xVendors; *ppVendor; ++ppVendor)
+	{
+		/* count up devices */
+		for (pDev=(*ppVendor)->pDevices; pDev->pszName; ++pDev, ++nCnt) ;
+	}
+   
+	/* allocate enough memory to hold internal structure and all records */
+	pInt = (DEVLIST_INTERNAL*)malloc(sizeof(DEVLIST_INTERNAL) +
+					(sizeof(WACOMDEVICEREC) * nCnt));
+
+	pInt->pfnFree = SerialFreeDeviceList;
+	pRec = (WACOMDEVICEREC*)(pInt + 1);
+
+	/* for each vendor, add devices */
+	for (ppVendor=xVendors; *ppVendor; ++ppVendor)
+	{
+		for (pDev=(*ppVendor)->pDevices; pDev->pszName; ++pDev, ++nIndex)
+		{
+			pRec[nIndex].pszName = pDev->pszName;
+			pRec[nIndex].pszDesc = pDev->pszDesc;
+			pRec[nIndex].pszVendorName = (*ppVendor)->pszName;
+			pRec[nIndex].pszVendorDesc = (*ppVendor)->pszDesc;
+			pRec[nIndex].pszClass = "serial";
+			pRec[nIndex].model.uClass = WACOMCLASS_SERIAL;
+			pRec[nIndex].model.uVendor = (*ppVendor)->uVendor;
+			pRec[nIndex].model.uDevice = pDev->uDevice;
+			pRec[nIndex].model.uSubType = 0;
+		}
+	}
+	assert(nIndex == nCnt);
+
+	*ppList = pRec;
+	*pnSize = nCnt;
+	return 0;
+}
+
+unsigned int WacomGetSerialDeviceFromName(const char* pszName)
+{
+	SERIALDEVICE* pDev;
+	SERIALVENDOR** ppVendor;
+
+	if (!pszName) { errno = EINVAL; return 0; }
+
+	/* for each vendor, look for device */
+	for (ppVendor=xVendors; *ppVendor; ++ppVendor)
+	{
+		/* count up devices */
+		for (pDev=(*ppVendor)->pDevices; pDev->pszName; ++pDev)
+		{
+			if (strcasecmp(pszName,pDev->pszName) == 0)
+				return pDev->uDevice;
+		}
+	}
+
+	errno = ENOENT;
+	return 0;
+}
+
+static int SerialFindModel(WACOMMODEL* pModel, SERIALVENDOR** ppVendor,
+		SERIALDEVICE** ppDevice, SERIALSUBTYPE** ppSubType)
+{
+	SERIALVENDOR** ppPos;
+	SERIALDEVICE* pDev;
+	SERIALSUBTYPE* pSub;
+
+	/* device type must be specified */
+	if (!pModel)
+		{ errno = EINVAL; return 1; }
+
+	/* no device specified, nothing found. */
+	if (!pModel->uDevice)
+	{
+		*ppVendor = NULL;
+		*ppDevice = NULL;
+		*ppSubType = NULL;
+		return 0;
+	}
+
+	/* for each vendor */
+	for (ppPos=xVendors; *ppPos; ++ppPos)
+	{
+		/* check vendor */
+		if (!pModel->uVendor || (pModel->uVendor == (*ppPos)->uVendor))
+		{
+			/* for each device */
+			for (pDev=(*ppPos)->pDevices; pDev->pszName; ++pDev)
+			{
+				/* if device matches */
+				if (pModel->uDevice == pDev->uDevice)
+				{
+					/* no subtype specified, use it */
+					if (!pModel->uSubType)
+					{
+						*ppVendor = *ppPos;
+						*ppDevice = pDev;
+						*ppSubType = NULL;
+						return 0;
+					}
+					
+					/* for each subtype */
+					for (pSub=pDev->pSubTypes; pSub->pszName; ++pSub)
+					{
+						/* if subtype matches */
+						if (pModel->uSubType == pSub->uSubType)
+						{
+							*ppVendor = *ppPos;
+							*ppDevice = pDev;
+							*ppSubType = pSub;
+							return 0;
+						}
+					}
+
+					/* wrong subtype? maybe try another vendor */
+					if (!pModel->uVendor) break;
+
+					/* otherwise, no match. */
+					errno = ENOENT;
+					return 1;
+				}
+			} /* next device */
+
+			/* if vendor matches, but device does not, no match. */
+			if (pModel->uVendor)
+			{
+				errno = ENOENT;
+				return 1;
+			}
+		}
+	} /* next vendor */
+
+	/* no match */
+	errno = ENOENT;
+	return 1;
+}
+
+WACOMTABLET WacomOpenSerialTablet(int fd, WACOMMODEL* pModel)
+{
 	SERIALTABLET* pSerial = NULL;
+	SERIALVENDOR* pVendor = NULL;
+	SERIALDEVICE* pDevice = NULL;
+	SERIALSUBTYPE* pSubType = NULL;
 
-	/* configure tty */
-	if (isatty(fd))
-	{
-		/* set up default port parameters */
-		if (tcgetattr (fd, &tios))
-			{ perror("tcgetattr"); close(fd); return NULL; }
-
-		tios.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
-		tios.c_oflag &= ~OPOST;
-		tios.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-		tios.c_cflag &= ~(CSIZE|PARENB);
-		tios.c_cflag |= CS8|CLOCAL;
-
-		tios.c_cflag &= ~(CSTOPB); /* 1 stop bit */
-
-		tios.c_cflag &= ~(CSIZE); /* 8 data bits */
-		tios.c_cflag |= CS8;
-	
-    	tios.c_cflag &= ~(PARENB); /* no parity */
-
-		tios.c_iflag |= IXOFF;		/* flow control XOff */
-
-#if 0
-	{
-		int nValue;
-		/* clear DTR */
-		nValue = TIOCCDTR;
-		if (ioctl(fd, TIOCMBIC, &nValue))
-			{ perror("clear dtr"); close(fd); return NULL; }
-
-		/* clear RTS */
-		nValue = TIOCM_RTS;
-		if (ioctl(fd, TIOCMBIC, &nValue))
-			{ perror("clear rts"); close(fd); return NULL; }
-	}
-#endif
-
-		tios.c_cc[VMIN] = 1;		/* vmin value */
-		tios.c_cc[VTIME] = 0;		/* vtime value */
-
-		if (tcsetattr (fd, TCSANOW, &tios))
-			{ perror("tcsetattr"); close(fd); return NULL; }
-
-		/* set 38400 baud and reset */
-		cfsetispeed(&tios, B38400);
-		cfsetospeed(&tios, B38400);
-		if (tcsetattr (fd, TCSANOW, &tios))
-			{ perror("tcsetattr"); close(fd); return NULL; }
-		if (WacomSendReset(fd)) { close(fd); return NULL; }
-
-		/* set 19200 baud and reset */
-		cfsetispeed(&tios, B19200);
-		cfsetospeed(&tios, B19200);
-		if (tcsetattr (fd, TCSANOW, &tios))
-			{ perror("tcsetattr"); close(fd); return NULL; }
-		if (WacomSendReset(fd)) { close(fd); return NULL; }
-
-		/* set 9600 baud and reset */
-		cfsetispeed(&tios, B9600);
-		cfsetospeed(&tios, B9600);
-		if (tcsetattr (fd, TCSANOW, &tios))
-			{ perror("tcsetattr"); close(fd); return NULL; }
-		if (WacomSendReset(fd)) { close(fd); return NULL; }
-	}
-	else /* not tty */
-	{
-		if (WacomSendReset(fd)) { close(fd); return NULL; }
-	}
-
-	/* Test */
-	/* WacomTest(fd); */
-
-	/* Send stop */
-	if (WacomSendStop(fd) || WacomFlush(fd))
-		{ perror("stop"); close(fd); return NULL; }
+	/* If model is specified, break it down into vendor, device, and subtype */
+	if (pModel && SerialFindModel(pModel,&pVendor,&pDevice,&pSubType))
+		return NULL;
 
 	/* Allocate tablet */
 	pSerial = (SERIALTABLET*)malloc(sizeof(SERIALTABLET));
@@ -274,24 +509,34 @@ WACOMTABLET WacomOpenSerialTablet(int fd)
 	pSerial->tablet.Close = SerialClose;
 	pSerial->tablet.GetModel = SerialGetModel;
 	pSerial->tablet.GetVendorName = SerialGetVendorName;
+	pSerial->tablet.GetClassName = SerialGetClassName;
+	pSerial->tablet.GetDeviceName = SerialGetDeviceName;
+	pSerial->tablet.GetSubTypeName = SerialGetSubTypeName;
 	pSerial->tablet.GetModelName = SerialGetModelName;
 	pSerial->tablet.GetROMVer = SerialGetROMVer;
 	pSerial->tablet.GetCaps = SerialGetCaps;
 	pSerial->tablet.GetState = SerialGetState;
+	pSerial->tablet.GetFD = SerialGetFD;
 	pSerial->tablet.ReadRaw = SerialReadRaw;
 	pSerial->tablet.ParseData = SerialParseData;
 
 	pSerial->fd = fd;
 	pSerial->state.uValueCnt = WACOMFIELD_MAX;
 
-	/* Identify and initialize the model */
-	if (SerialIdentifyModel(pSerial))
-		{ perror("identify"); close(fd); free(pSerial); return NULL; }
-	if (SerialInitializeModel(pSerial))
-		{ perror("init_model"); close(fd); free(pSerial); return NULL; }
+	/* Set the tablet device */
+	if (SerialSetDevice(pSerial,pVendor,pDevice,pSubType))
+		{ free(pSerial); return NULL; }
+
+	/* Identify the tablet */
+	if (!pSerial->pfnIdent || pSerial->pfnIdent(pSerial))
+		{ perror("ident"); free(pSerial); return NULL; }
+
+	/* Initialize the tablet */
+	if (!pSerial->pfnInit || pSerial->pfnInit(pSerial))
+		{ perror("init"); free(pSerial); return NULL; }
 
 	/* Send start */
-	WacomSendStart(fd);
+	SerialSendStart(pSerial);
 
 	return (WACOMTABLET)pSerial;
 }
@@ -300,41 +545,136 @@ WACOMTABLET WacomOpenSerialTablet(int fd)
 ** Serial Tablet Functions
 *****************************************************************************/
 
-static int SerialIdentifyModel(SERIALTABLET* pSerial)
+int SerialConfigTTY(SERIALTABLET* pSerial)
 {
-	char* pszPos;
-	MODEL_INFO* pInfo;
-	char chResp[64];
+	struct termios tios;
+	int nBaudRate = 9600;
 
-	if (WacomSendRequest(pSerial->fd,"~#\r",chResp,sizeof(chResp)))
+	/* configure tty */
+	if (isatty(pSerial->fd))
+	{
+		/* set up default port parameters */
+		if (tcgetattr (pSerial->fd, &tios))
+			{ perror("tcgetattr"); return 1; }
+
+		tios.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+		tios.c_oflag &= ~OPOST;
+		tios.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+		tios.c_cflag &= ~(CSIZE|PARENB);
+		tios.c_cflag |= CS8|CLOCAL;
+		tios.c_cflag &= ~(CSTOPB); /* 1 stop bit */
+		tios.c_cflag &= ~(CSIZE); /* 8 data bits */
+		tios.c_cflag |= CS8;
+    	tios.c_cflag &= ~(PARENB); /* no parity */
+		tios.c_iflag |= IXOFF;		/* flow control XOff */
+		tios.c_cc[VMIN] = 1;		/* vmin value */
+		tios.c_cc[VTIME] = 0;		/* vtime value */
+
+		if (tcsetattr (pSerial->fd, TCSANOW, &tios))
+			{ perror("tcsetattr"); return 1; }
+
+		/* get minumum baud rate for given device, if specified */
+		if (pSerial->pDevice)
+			nBaudRate = pSerial->pDevice->nMinBaudRate;
+
+		/* set 38400 baud and reset */
+		if (SerialResetAtBaud(pSerial,&tios,38400))
+			return 1;
+
+		/* if valid, set 19200 baud and reset */
+		if ((nBaudRate <= 19200) && (SerialResetAtBaud(pSerial,&tios,19200)))
+			return 1;
+		
+		/* if valid, set 9600 baud and reset */
+		if ((nBaudRate <= 9600) && (SerialResetAtBaud(pSerial,&tios,9600)))
+			return 1;
+
+		/* lower than 9600 baud? for testing, maybe */
+		if ((nBaudRate < 9600) && (SerialResetAtBaud(pSerial,&tios,nBaudRate)))
+			return 1;
+	}
+	else /* not tty */
+	{
+		if (SerialSendReset(pSerial)) return 1;
+	}
+
+	/* Send stop */
+	if (SerialSendStop(pSerial) || WacomFlush(pSerial))
 		return 1;
 
-	/* look through model table for information */
-	for (pInfo=xModels; pInfo->pszID; ++pInfo)
-	{
-		if (strncmp(chResp,pInfo->pszID,strlen(pInfo->pszID)) == 0)
-		{
-			pSerial->pInfo = pInfo;
-			pSerial->state.uValid = pInfo->uCaps;
-			pSerial->uPacketLength = pInfo->uPacketLength;
+	return 0;
+}
 
-			/* get version number */
-			pszPos = chResp;
-			while (*pszPos) ++pszPos;
-			while ((pszPos > chResp) && (pszPos[-1] != 'V')) --pszPos;
-			if (sscanf(pszPos,"%d.%d-%d",&pSerial->nVerMajor,
-					&pSerial->nVerMinor,&pSerial->nVerRelease) != 3)
+
+static int SerialSetDevice(SERIALTABLET* pSerial, SERIALVENDOR* pVendor,
+		SERIALDEVICE* pDevice, SERIALSUBTYPE* pSubType)
+{
+	pSerial->pVendor = pVendor;
+	pSerial->pDevice = pDevice;
+	pSerial->pSubType = pSubType;
+
+	/* if we know the device, use its functions */
+	if (pSerial->pDevice)
+	{
+		pSerial->pfnIdent = pSerial->pDevice->pfnIdent;
+		if (!pSerial->pfnIdent) { errno = EPERM; return 1; }
+	}
+	else
+		pSerial->pfnIdent = SerialIdentDefault;
+
+	return 0;
+}
+
+static int SerialIdentDefault(SERIALTABLET* pSerial)
+{
+	return SerialIdentWacom(pSerial);
+}
+
+static int SerialIdentWacom(SERIALTABLET* pSerial)
+{
+	char* pszPos;
+	SERIALVENDOR* pVendor = &xWacomVendor;
+	SERIALDEVICE* pDev;
+	SERIALSUBTYPE* pSub;
+	char chResp[64];
+
+	/* send wacom identification request */
+	if (SerialSendRequest(pSerial,"~#\r",chResp,sizeof(chResp)))
+		return 1;
+
+	/* look through device table for information */
+	for (pDev=pVendor->pDevices; pDev->pszName; ++pDev)
+	{
+		for (pSub=pDev->pSubTypes; pSub && pSub->pszName; ++pSub)
+		{
+			if (strncmp(chResp,pSub->pszIdent, strlen(pSub->pszIdent)) == 0)
 			{
-				pSerial->nVerRelease = 0;
-				if (sscanf(pszPos,"%d.%d",&pSerial->nVerMajor,
-						&pSerial->nVerMinor) != 2)
+				pSerial->pVendor = pVendor;
+				pSerial->pDevice = pDev;
+				pSerial->pSubType = pSub;
+				pSerial->state.uValid = pDev->uCaps;
+				pSerial->uPacketLength = pDev->uPacketLength;
+				pSerial->pfnInit = pSub->pfnInit ?
+						pSub->pfnInit : SerialInitWacom;
+	
+				/* get version number */
+				pszPos = chResp;
+				while (*pszPos) ++pszPos;
+				while ((pszPos > chResp) && (pszPos[-1] != 'V')) --pszPos;
+				if (sscanf(pszPos,"%d.%d-%d",&pSerial->nVerMajor,
+						&pSerial->nVerMinor,&pSerial->nVerRelease) != 3)
 				{
-					errno = EINVAL;
-					fprintf(stderr,"bad version number: %s\n",pszPos);
-					return 1;
+					pSerial->nVerRelease = 0;
+					if (sscanf(pszPos,"%d.%d",&pSerial->nVerMajor,
+						&pSerial->nVerMinor) != 2)
+					{
+						errno = EINVAL;
+						fprintf(stderr,"bad version number: %s\n",pszPos);
+						return 1;
+					}
 				}
+				return 0;
 			}
-			return 0;
 		}
 	}
 
@@ -342,12 +682,12 @@ static int SerialIdentifyModel(SERIALTABLET* pSerial)
 	return 1;
 }
 
-static int SerialInitializeModel(SERIALTABLET* pSerial)
+static int SerialInitWacom(SERIALTABLET* pSerial)
 {
 	char chResp[32];
 
 	/* Request tablet dimensions */
-	if (WacomSendRequest(pSerial->fd,"~C\r",chResp,sizeof(chResp)))
+	if (SerialSendRequest(pSerial,"~C\r",chResp,sizeof(chResp)))
 		return 1;
 
 	/* parse position range */
@@ -361,25 +701,25 @@ static int SerialInitializeModel(SERIALTABLET* pSerial)
 	}
 
 	/* tablet specific initialization */
-	switch (pSerial->pInfo->uDeviceType)
+	switch (pSerial->pDevice->uDevice)
 	{
 		case WACOMDEVICE_PENPARTNER:
 			/* pressure mode */
-			WacomSend(pSerial->fd, "PH1\r");
+			SerialSend(pSerial, "PH1\r");
 			break;
 
 		case WACOMDEVICE_INTUOS:
 			/* multi-mode, max-rate */ 
-			WacomSend(pSerial->fd, "MT1\rID1\rIT0\r");
+			SerialSend(pSerial, "MT1\rID1\rIT0\r");
 	}
 	
-	if (pSerial->pInfo->nProtocol == 4)
+	if (pSerial->pDevice->nProtocol == PROTOCOL_4)
 	{
 		/* multi-mode (MU), upper-origin (OC), all-macro (M0),
 		 * no-macro1 (M1), max-rate (IT), no-inc (IN),
 		 * stream-mode (SR), Z-filter (ZF) */
 
-/*		if (WacomSend(pSerial->fd, "MU1\rOC1\r~M0\r~M1\rIT0\rIN0\rSR\rZF1\r"))
+/*		if (SerialSend(pSerial->fd, "MU1\rOC1\r~M0\r~M1\rIT0\rIN0\rSR\rZF1\r"))
 			return 1;
 			*/
 
@@ -388,7 +728,7 @@ static int SerialInitializeModel(SERIALTABLET* pSerial)
 			if (pSerial->nVerMinor >= 4)
 			{
 				/* enable tilt mode */
-				if (WacomSend(pSerial->fd,"FM1\r")) return 1;
+				if (SerialSend(pSerial,"FM1\r")) return 1;
 
 				pSerial->pfnParse = SerialParseWacomIV_1_4;
 				pSerial->uPacketLength = 9;
@@ -415,7 +755,7 @@ static int SerialInitializeModel(SERIALTABLET* pSerial)
 			}
 		}
 	}
-	else if (pSerial->pInfo->nProtocol == 5)
+	else if (pSerial->pDevice->nProtocol == PROTOCOL_5)
 	{
 		pSerial->pfnParse = SerialParseWacomV;
 		pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 1023;
@@ -431,6 +771,38 @@ static int SerialInitializeModel(SERIALTABLET* pSerial)
 	}
 	else { errno=EINVAL; return 1; }
 
+	return 0;
+}
+
+
+static int SerialIdentAcerC100(SERIALTABLET* pSerial)
+{
+	/* sanity check */
+	if ((pSerial->pVendor != &xAcerVendor) ||
+		(pSerial->pDevice == NULL)) { return EPERM; return 1; }
+
+	/* use first one */
+	pSerial->pSubType = pSerial->pDevice->pSubTypes;
+
+	/* sanity check again */
+	if (pSerial->pSubType->pszName == NULL) { return EPERM; return 1; }
+
+	pSerial->state.uValid = pSerial->pDevice->uCaps;
+	pSerial->uPacketLength = pSerial->pDevice->uPacketLength;
+	pSerial->pfnInit = pSerial->pSubType->pfnInit;
+	pSerial->nVerMajor = 0;
+	pSerial->nVerMinor = 0;
+	pSerial->nVerRelease = 0;
+
+	return 0;
+}
+
+static int SerialInitAcerC100(SERIALTABLET* pSerial)
+{
+	pSerial->pfnParse = SerialParseAcerC100;
+	pSerial->state.values[WACOMFIELD_POSITION_X].nMax = 21136;
+	pSerial->state.values[WACOMFIELD_POSITION_Y].nMax = 15900;
+	pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 255;
 	return 0;
 }
 
@@ -782,41 +1154,94 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 	return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 }
 
+static int SerialParseAcerC100(SERIALTABLET* pSerial,
+		const unsigned char* puchData, unsigned int uLength,
+		WACOMSTATE* pState)
+{
+	int x=0, y=0, prox=0, tool=WACOMTOOLTYPE_NONE,
+			button=0, press=0, eraser;
+
+	/* Acer C100 Tablet PC (reverse-engineered)
+	 * Supports: 256 pressure, eraser, 1 side-switch
+	 * Limitation: no tilt (is all zeros, planned?)*/
+
+	if (uLength != 9) { errno=EINVAL; return 1; }
+
+	prox = puchData[0] & 0x20 ? 1 : 0;
+	if (prox)
+	{
+		eraser = (puchData[0] & 0x04) ? 1 : 0;
+		press = ((puchData[6] & 0x01) << 7) | (puchData[5] & 0x7F);
+
+		/* tools are distinguishable */
+		if (eraser) tool = WACOMTOOLTYPE_ERASER;
+		else tool = WACOMTOOLTYPE_PEN;
+		
+		button = (puchData[0] & 0x01) ? BIT(WACOMBUTTON_TOUCH) : 0;
+
+		/* pen has 1 side-switch, eraser has none */
+		if (tool == WACOMTOOLTYPE_PEN)
+		{
+			button |= (puchData[0] & 0x02) ?
+					BIT(WACOMBUTTON_STYLUS) : 0;
+		}
+
+		x = (((int)puchData[6] & 0x60) >> 5) |
+			((int)puchData[2] << 2) |
+			((int)puchData[1] << 9);
+		y = (((int)puchData[6] & 0x18) >> 3) |
+			((int)puchData[4] << 2) |
+			((int)puchData[3] << 9);
+	}
+
+	/* set valid fields */
+	pSerial->state.values[WACOMFIELD_PROXIMITY].nValue = prox;
+	pSerial->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
+	pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+	pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+	pSerial->state.values[WACOMFIELD_PRESSURE].nValue = press;
+	pSerial->state.values[WACOMFIELD_BUTTONS].nValue = button;
+
+	return pState ? WacomCopyState(pState,&pSerial->state) : 0;
+}
+
+
+
 /*****************************************************************************
 ** Internal Functions
 *****************************************************************************/
 
-static int WacomSendReset(int fd)
+static int SerialSendReset(SERIALTABLET* pSerial)
 {
 	/* reset to Wacom II-S command set, and factory defaults */
-	if (WacomSend(fd,"\r$\r")) return 1;
+	if (SerialSend(pSerial,"\r$\r")) return 1;
 	usleep(250000); /* 250 milliseconds */
 
 	/* reset tablet to Wacom IV command set */
-	if (WacomSend(fd,"#\r")) return 1;
+	if (SerialSend(pSerial,"#\r")) return 1;
 	usleep(75000); /* 75 milliseconds */
 
 	return 0;
 }
 
-static int WacomSendStop(int fd)
+static int SerialSendStop(SERIALTABLET* pSerial)
 {
-	if (WacomSend(fd,"\rSP\r")) return 1;
+	if (SerialSend(pSerial,"\rSP\r")) return 1;
 	usleep(100000);
 	return 0;
 }
 
-static int WacomSendStart(int fd)
+static int SerialSendStart(SERIALTABLET* pSerial)
 {
-	return WacomSend(fd,"ST\r");
+	return SerialSend(pSerial,"ST\r");
 }
  
-static int WacomSend(int fd, const char* pszMsg)
+static int SerialSend(SERIALTABLET* pSerial, const char* pszMsg)
 {
-	return WacomSendRaw(fd,pszMsg,strlen(pszMsg));
+	return SerialSendRaw(pSerial,pszMsg,strlen(pszMsg));
 }
 
-static int WacomSendRaw(int fd, const unsigned char* puchData,
+static int SerialSendRaw(SERIALTABLET* pSerial, const unsigned char* puchData,
 		unsigned int uSize)
 {
 	int nXfer;
@@ -824,7 +1249,7 @@ static int WacomSendRaw(int fd, const unsigned char* puchData,
 
 	while (uCnt < uSize)
 	{
-		nXfer = write(fd,puchData+uCnt,uSize-uCnt);
+		nXfer = write(pSerial->fd,puchData+uCnt,uSize-uCnt);
 		if (!nXfer) { perror("sendraw confused"); return 1; }
 		if (nXfer < 0) { perror("sendraw bad"); return 1; }
 		uCnt += nXfer;
@@ -833,13 +1258,13 @@ static int WacomSendRaw(int fd, const unsigned char* puchData,
 	return 0;
 }
 
-static int WacomFlush(int fd)
+static int WacomFlush(SERIALTABLET* pSerial)
 {
 	char ch[16];
 	fd_set fdsRead;
 	struct timeval timeout;
 
-	if (tcflush(fd, TCIFLUSH) == 0)
+	if (tcflush(pSerial->fd, TCIFLUSH) == 0)
 		return 0;
 
 	timeout.tv_sec = 0;
@@ -848,23 +1273,23 @@ static int WacomFlush(int fd)
 	while (1)
 	{
 		FD_ZERO(&fdsRead);
-		FD_SET(fd, &fdsRead);
+		FD_SET(pSerial->fd, &fdsRead);
 		if (select(FD_SETSIZE,&fdsRead,NULL,NULL,&timeout) <= 0)
 			break;
-		read(fd,&ch,sizeof(ch));
+		read(pSerial->fd,&ch,sizeof(ch));
 	}
 
 	return 0;
 }
 
-static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
-		unsigned int uSize)
+static int SerialSendRequest(SERIALTABLET* pSerial, const char* pszRequest,
+		char* pchResponse, unsigned int uSize)
 {
 	int nXfer;
 	unsigned int uLen, uCnt;
 
 	uLen = strlen(pszRequest);
-	if (WacomSendRaw(fd,pszRequest,uLen)) return 1;
+	if (SerialSendRaw(pSerial,pszRequest,uLen)) return 1;
 	--uLen;
 
 	if (uSize < uLen) { errno=EINVAL; perror("bad size"); return 1; }
@@ -872,7 +1297,7 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 	/* read until first header character */
 	while (1)
 	{
-		nXfer = read(fd,pchResponse,1);
+		nXfer = read(pSerial->fd,pchResponse,1);
 		if (nXfer <= 0) { perror("trunc response header"); return 1; }
 		if (*pchResponse == *pszRequest) break;
 		fprintf(stderr,"Discarding %02X\n", *((unsigned char*)pchResponse));
@@ -881,7 +1306,7 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 	/* read response header */
 	for (uCnt=1; uCnt<uLen; uCnt+=nXfer)
 	{
-		nXfer = read(fd,pchResponse+uCnt,uLen-uCnt);
+		nXfer = read(pSerial->fd,pchResponse+uCnt,uLen-uCnt);
 		if (nXfer <= 0) { perror("trunc response header"); return 1; }
 	}
 
@@ -892,7 +1317,7 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 	/* get the rest of the response */
 	for (uCnt=0; uCnt<uSize; ++uCnt)
 	{
-		nXfer = read(fd,pchResponse+uCnt,1);
+		nXfer = read(pSerial->fd,pchResponse+uCnt,1);
 		if (nXfer <= 0) { perror("bad response read"); return 1; }
 
 		/* stop on CR */
@@ -964,20 +1389,42 @@ static void SerialClose(WACOMTABLET_PRIV* pTablet)
 
 static WACOMMODEL SerialGetModel(WACOMTABLET_PRIV* pTablet)
 {
+	WACOMMODEL model = { 0 };
 	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
-	return WACOM_MAKEMODEL(WACOMVENDOR_WACOM,WACOMCLASS_SERIAL,
-			pSerial->pInfo->uDeviceType);
+	model.uClass = WACOMCLASS_SERIAL;
+	model.uVendor = pSerial->pVendor->uVendor;
+	model.uDevice = pSerial->pDevice->uDevice;
+	model.uSubType = pSerial->pSubType->uSubType;
+	return model;
 }
 
 static const char* SerialGetVendorName(WACOMTABLET_PRIV* pTablet)
 {
-	return "Wacom";
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->pVendor->pszDesc;
+}
+
+static const char* SerialGetClassName(WACOMTABLET_PRIV* pTablet)
+{
+	return "Serial";
+}
+
+static const char* SerialGetDeviceName(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->pDevice->pszDesc;
+}
+
+static const char* SerialGetSubTypeName(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->pSubType->pszName;
 }
 
 static const char* SerialGetModelName(WACOMTABLET_PRIV* pTablet)
 {
 	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
-	return pSerial->pInfo->pszName;
+	return pSerial->pSubType->pszDesc;
 }
 
 static int SerialGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
@@ -994,13 +1441,19 @@ static int SerialGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
 static int SerialGetCaps(WACOMTABLET_PRIV* pTablet)
 {
 	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
-	return pSerial->pInfo->uCaps;
+	return pSerial->pDevice->uCaps;
 }
 
 static int SerialGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState)
 {
 	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
 	return WacomCopyState(pState,&pSerial->state);
+}
+
+static int SerialGetFD(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->fd;
 }
 
 static int SerialReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
@@ -1049,3 +1502,27 @@ static int SerialParseData(WACOMTABLET_PRIV* pTablet,
 	return 1;
 }
 
+static int SerialResetAtBaud(SERIALTABLET* pSerial, struct termios* pTIOS,
+		int nBaud)
+{
+	/* conver baud rate to tios macro */
+	int baudRate = B9600;
+	switch (nBaud)
+	{
+		case 38400: baudRate = B38400; break;
+		case 19200: baudRate = B19200; break;
+		case 9600: baudRate = B9600; break;
+		case 4800: baudRate = B4800; break; /* for testing, maybe */
+		case 2400: baudRate = B2400; break; /* for testing, maybe */
+		case 1200: baudRate = B1200; break; /* for testing, maybe */
+	}
+
+	/* change baud rate */
+	cfsetispeed(pTIOS, baudRate);
+	cfsetospeed(pTIOS, baudRate);
+	if (tcsetattr (pSerial->fd, TCSANOW, pTIOS))
+		return 1;
+
+	/* send reset command */
+	return SerialSendReset(pSerial);
+}

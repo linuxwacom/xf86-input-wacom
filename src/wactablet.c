@@ -29,6 +29,7 @@
 #include <memory.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <assert.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,9 +39,165 @@
 #include <linux/input.h>
 #endif
 
+typedef void (*FREEFUNC)(void* pv);
+
+typedef struct
+{
+	FREEFUNC pfnFree;
+} CLSLIST_INTERNAL;
+
+typedef struct
+{
+	WACOMDEVICEREC* pSerialList;
+	WACOMDEVICEREC* pUSBList;
+	FREEFUNC pfnFree;
+} DEVICELIST_INTERNAL;
+
+
 /*****************************************************************************
 ** Implementation
 *****************************************************************************/
+
+static void FreeClassList(void* pv)
+{
+	CLSLIST_INTERNAL* pInt = ((CLSLIST_INTERNAL*)pv) - 1;
+	free(pInt);
+}
+
+int WacomGetSupportedClassList(WACOMCLASSREC** ppList, int* pnSize)
+{
+	int nIndex=0, nCnt=0;
+	CLSLIST_INTERNAL* pInt;
+	WACOMCLASSREC* pRec;
+
+	if (!ppList || !pnSize) { errno = EINVAL; return 1; }
+
+	/* serial */
+	++nCnt;
+
+	/* USB */
+	#ifdef WAC_ENABLE_LINUXINPUT
+	++nCnt;
+	#endif
+
+	/* allocate enough memory to hold internal structure and all records */
+	pInt = (CLSLIST_INTERNAL*)malloc(sizeof(CLSLIST_INTERNAL) +
+					(sizeof(WACOMCLASSREC) * nCnt));
+
+	pInt->pfnFree = FreeClassList;
+	pRec = (WACOMCLASSREC*)(pInt + 1);
+
+	/* serial */
+	pRec[nIndex].pszName = "serial";
+	pRec[nIndex].pszDesc = "Serial TTY interface";
+	pRec[nIndex].uDeviceClass = WACOMCLASS_SERIAL;
+	++nIndex;
+
+	/* USB */
+	#ifdef WAC_ENABLE_LINUXINPUT
+	pRec[nIndex].pszName = "usb";
+	pRec[nIndex].pszDesc = "Linux USB event interface";
+	pRec[nIndex].uDeviceClass = WACOMCLASS_USB;
+	++nIndex;
+	#endif
+
+	assert(nIndex == nCnt);
+	*ppList = pRec;
+	*pnSize = nCnt;
+	return 0;
+}
+
+static void FreeDeviceList(void* pv)
+{
+	DEVICELIST_INTERNAL* pInt = ((DEVICELIST_INTERNAL*)pv) - 1;
+	WacomFreeList(pInt->pSerialList);
+	WacomFreeList(pInt->pUSBList);
+	free(pInt);
+}
+
+int WacomGetSupportedDeviceList(unsigned int uDeviceClass,
+		WACOMDEVICEREC** ppList, int* pnSize)
+{
+	int nSerialCnt=0, nUSBCnt=0, nTotalBytes;
+	WACOMDEVICEREC* pSerial=NULL, *pUSB=NULL, *pList;
+	DEVICELIST_INTERNAL* pInt;
+
+	if (!ppList || !pnSize) { errno = EINVAL; return 1; }
+
+	/* get serial list */
+	if (((!uDeviceClass) || (uDeviceClass == WACOMCLASS_SERIAL)) &&
+		WacomGetSupportedSerialDeviceList(&pSerial, &nSerialCnt)) return 1;
+
+	/* get usb list */
+	if (((!uDeviceClass) || (uDeviceClass == WACOMCLASS_USB)) &&
+		WacomGetSupportedUSBDeviceList(&pUSB, &nUSBCnt))
+	{
+		if (pSerial) WacomFreeList(pSerial);
+		return 1;
+	}
+
+	/* need memory for duplicate records and list internal structure */
+	nTotalBytes = sizeof(WACOMDEVICEREC) * (nSerialCnt + nUSBCnt) +
+			sizeof(DEVICELIST_INTERNAL);
+
+	/* allocate memory */
+	pInt = (DEVICELIST_INTERNAL*)malloc(nTotalBytes);
+
+	/* copy initial list pointers */
+	pInt->pSerialList = pSerial;
+	pInt->pUSBList = pUSB;
+	pInt->pfnFree = FreeDeviceList;
+
+	/* copy records */
+	pList = (WACOMDEVICEREC*)(pInt + 1);
+	if (pSerial)
+		memcpy(pList,pSerial,sizeof(WACOMDEVICEREC) * nSerialCnt);
+	if (pUSB)
+		memcpy(pList + nSerialCnt, pUSB, sizeof(WACOMDEVICEREC) * nUSBCnt);
+
+	*ppList = pList;
+	*pnSize = nSerialCnt + nUSBCnt;
+
+	return 0;
+}
+
+void WacomFreeList(void* pvList)
+{
+	FREEFUNC pfnFree;
+	if (!pvList) return;
+	pfnFree = ((FREEFUNC*)pvList)[-1];
+	(*pfnFree)(pvList);
+}
+
+unsigned int WacomGetClassFromName(const char* pszName)
+{
+	if (strcasecmp(pszName, "serial") == 0)
+		return WACOMCLASS_SERIAL;
+	else if (strcasecmp(pszName, "usb") == 0)
+		return WACOMCLASS_USB;
+	return 0;
+}
+
+unsigned int WacomGetDeviceFromName(const char* pszName,
+		unsigned int uDeviceClass)
+{
+	unsigned int uDeviceType = 0;
+
+	if (!uDeviceClass || (uDeviceClass == WACOMCLASS_SERIAL))
+	{
+		uDeviceType = WacomGetSerialDeviceFromName(pszName);
+		if (uDeviceType) return uDeviceType;
+	}
+
+	if (!uDeviceClass || (uDeviceClass == WACOMCLASS_USB))
+	{
+		uDeviceType = WacomGetUSBDeviceFromName(pszName);
+		if (uDeviceType) return uDeviceType;
+	}
+
+	errno = ENOENT;
+	return 0;
+}
 
 static int WacomIsSerial(int fd)
 {
@@ -58,10 +215,11 @@ static int WacomIsUSB(int fd)
 #endif
 }
 
-WACOMTABLET WacomOpenTablet(const char* pszDevice)
+WACOMTABLET WacomOpenTablet(const char* pszDevice, WACOMMODEL* pModel)
 {
 	int fd, e;
 	WACOMTABLET hTablet = NULL;
+	unsigned int uClass = pModel ? pModel->uClass : 0;
 
 	/* open device for read/write access */
 	fd = open(pszDevice,O_RDWR);
@@ -69,16 +227,16 @@ WACOMTABLET WacomOpenTablet(const char* pszDevice)
 		{ perror("open"); return NULL; }
 
 	/* configure serial */
-	if (WacomIsSerial(fd))
+	if ((!uClass || (uClass == WACOMCLASS_SERIAL)) && WacomIsSerial(fd))
 	{
-		hTablet = WacomOpenSerialTablet(fd);
+		hTablet = WacomOpenSerialTablet(fd,pModel);
 		if (!hTablet) { e=errno; close(fd); errno=e; return NULL; }
 	}
 
 	/* configure usb */
-	else if (WacomIsUSB(fd))
+	else if ((!uClass || (uClass == WACOMCLASS_USB)) && WacomIsUSB(fd))
 	{
-		hTablet = WacomOpenUSBTablet(fd);
+		hTablet = WacomOpenUSBTablet(fd,pModel);
 		if (!hTablet) { e=errno; close(fd); errno=e; return NULL; }
 	}
 
@@ -125,8 +283,9 @@ void WacomCloseTablet(WACOMTABLET hTablet)
 
 WACOMMODEL WacomGetModel(WACOMTABLET hTablet)
 {
+	WACOMMODEL xBadModel = { 0 };
 	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
-	if (!pTablet || !pTablet->GetModel) { errno=EBADF; return 0; }
+	if (!pTablet || !pTablet->GetModel) { errno=EBADF; return xBadModel; }
 	return pTablet->GetModel(pTablet);
 }
 
@@ -135,6 +294,27 @@ const char* WacomGetVendorName(WACOMTABLET hTablet)
 	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
 	if (!pTablet || !pTablet->GetVendorName) { errno=EBADF; return NULL; }
 	return pTablet->GetVendorName(pTablet);
+}
+
+const char* WacomGetClassName(WACOMTABLET hTablet)
+{
+	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
+	if (!pTablet || !pTablet->GetClassName) { errno=EBADF; return NULL; }
+	return pTablet->GetClassName(pTablet);
+}
+
+const char* WacomGetDeviceName(WACOMTABLET hTablet)
+{
+	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
+	if (!pTablet || !pTablet->GetDeviceName) { errno=EBADF; return NULL; }
+	return pTablet->GetDeviceName(pTablet);
+}
+
+const char* WacomGetSubTypeName(WACOMTABLET hTablet)
+{
+	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
+	if (!pTablet || !pTablet->GetSubTypeName) { errno=EBADF; return NULL; }
+	return pTablet->GetSubTypeName(pTablet);
 }
 
 const char* WacomGetModelName(WACOMTABLET hTablet)
@@ -164,6 +344,13 @@ int WacomGetState(WACOMTABLET hTablet, WACOMSTATE* pState)
 	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
 	if (!pTablet || !pTablet->GetState) { errno=EBADF; return 0; }
 	return pTablet->GetState(pTablet,pState);
+}
+
+int WacomGetFileDescriptor(WACOMTABLET hTablet)
+{
+	WACOMTABLET_PRIV* pTablet = (WACOMTABLET_PRIV*)hTablet;
+	if (!pTablet || !pTablet->GetFD) { errno=EBADF; return -1; }
+	return pTablet->GetFD(pTablet);
 }
 
 int WacomReadRaw(WACOMTABLET hTablet, unsigned char* puchData,

@@ -22,18 +22,13 @@
 #ifndef __LINUXWACOM_WACTABLET_H
 #define __LINUXWACOM_WACTABLET_H
 
-typedef unsigned int WACOMMODEL;
-
-#define WACOMVENDOR_MASK        0xFFFF
+#define WACOMVENDOR_UNKNOWN     0x0000
 #define WACOMVENDOR_WACOM       0x056A
-#define WACOMVENDOR(x) (((x)>>16)&WACOMVENDOR_MASK)
+#define WACOMVENDOR_ACER        0xFFFFFF01
 
-#define WACOMCLASS_MASK         0x0003
 #define WACOMCLASS_SERIAL       0x0001
 #define WACOMCLASS_USB          0x0002
-#define WACOMCLASS(x) (((x)>>8)&WACOMCLASS_MASK)
 
-#define WACOMDEVICE_MASK        0x00FF
 #define WACOMDEVICE_UNKNOWN     0x0000
 #define WACOMDEVICE_ARTPAD      0x0001
 #define WACOMDEVICE_ARTPADII    0x0002
@@ -46,17 +41,16 @@ typedef unsigned int WACOMMODEL;
 #define WACOMDEVICE_INTUOS2     0x0009
 #define WACOMDEVICE_CINTIQ      0x000A
 #define WACOMDEVICE_VOLITO      0x000B
-#define WACOMDEVICE(x) ((x)&WACOMDEVICE_MASK)
+#define WACOMDEVICE_ACERC100    0x000C
 
-#define WACOM_MAKEMODEL(v,c,d) \
-	(((((WACOMMODEL)(v)) & WACOMVENDOR_MASK) << 16) | \
-	 ((((WACOMMODEL)(c)) & WACOMCLASS_MASK) << 8) | \
-	 ((((WACOMMODEL)(d)) & WACOMDEVICE_MASK)))
-
-#define WACOMMODEL_SERIAL_INTUOS2 \
-	WACOM_MAKEMODEL(WACOMVENDOR_WACOM,WACOMCLASS_SERIAL,WACOMDEVICE_INTUOS2)
-#define WACOMMODEL_USB_INTUOS2 \
-	WACOM_MAKEMODEL(WACOMVENDOR_WACOM,WACOMCLASS_USB,WACOMDEVICE_INTUOS2)
+typedef struct _WACOMMODEL WACOMMODEL;
+struct _WACOMMODEL
+{
+	unsigned int uClass;
+	unsigned int uVendor;
+	unsigned int uDevice;
+	unsigned int uSubType;
+};
 
 #define WACOMTOOLTYPE_NONE      0x00
 #define WACOMTOOLTYPE_PEN       0x01
@@ -104,12 +98,29 @@ typedef struct
 
 typedef struct
 {
-	unsigned int uValueCnt;
-	unsigned int uValid;
+	unsigned int uValueCnt;     /* This MUST be set to WACOMFIELD_MAX. */
+	unsigned int uValid;        /* Bit mask of WACOMFIELD_xxx bits. */
 	WACOMVALUE values[WACOMFIELD_MAX];
 } WACOMSTATE;
 
 #define WACOMSTATE_INIT { WACOMFIELD_MAX }
+
+typedef struct
+{
+	const char* pszName;
+	const char* pszDesc;
+	unsigned int uDeviceClass;
+} WACOMCLASSREC;
+
+typedef struct
+{
+	const char* pszName;
+	const char* pszDesc;
+	const char* pszVendorName;
+	const char* pszVendorDesc;
+	const char* pszClass;
+	WACOMMODEL model;
+} WACOMDEVICEREC;
 
 /*****************************************************************************
 ** Public structures
@@ -117,20 +128,108 @@ typedef struct
 
 typedef struct { int __unused; } *WACOMTABLET;
 
-WACOMTABLET WacomOpenTablet(const char* pszDevice);
-void WacomCloseTablet(WACOMTABLET hTablet);
-WACOMMODEL WacomGetModel(WACOMTABLET hTablet);
-const char* WacomGetVendorName(WACOMTABLET hTablet);
-const char* WacomGetModelName(WACOMTABLET hTablet);
-int WacomGetROMVersion(WACOMTABLET hTablet, int* pnMajor, int* pnMinor,
-		int* pnRelease);
-int WacomGetCapabilities(WACOMTABLET hTablet);
-int WacomGetState(WACOMTABLET hTablet, WACOMSTATE* pState);
-int WacomCopyState(WACOMSTATE* pDest, WACOMSTATE* pSrc);
-int WacomReadRaw(WACOMTABLET hTablet, unsigned char* puchData,
-		unsigned int uSize);
-int WacomParseData(WACOMTABLET hTablet, const unsigned char* puchData,
-		unsigned int uLength, WACOMSTATE* pState);
+/*****************************************************************************
+** Public API
+*****************************************************************************/
+
+	int WacomGetSupportedClassList(WACOMCLASSREC** ppList, int* pnSize);
+	/* Returns 0 on success.  Pointer to class record list is returned to
+	 * ppList, and size of list to pnSize.  Use WacomFreeList to release. */
+
+	int WacomGetSupportedDeviceList(unsigned int uDeviceClass,
+			WACOMDEVICEREC** ppList, int* pnSize);
+	/* Returns 0 on success.  If device class is specified, only devices
+	 * of the request type are returned.  A value of 0 will return all
+	 * devices for all classes.  Pointer to device record list is returned to
+	 * ppList, and size of list to pnSize.  Use WacomFreeList to release. */
+
+	void WacomFreeList(void* pvList);
+	/* Releases list memory. */
+
+	int WacomCopyState(WACOMSTATE* pDest, WACOMSTATE* pSrc);
+	/* Returns 0 on success.  Copies tablet state structures.
+	 * Source and destination structures must be properly initialized,
+	 * particularly the uValueCnt field must be set WACOMFIELD_MAX.
+	 * Returns 0 on success. */
+
+	unsigned int WacomGetClassFromName(const char* pszName);
+	/* Returns the device class for a given name. Returns 0, if unknown. */
+
+	unsigned int WacomGetDeviceFromName(const char* pszName,
+			unsigned int uDeviceClass);
+	/* Returns the device type for a given device name.  If the
+	 * device class is specified, only that class will be searched.
+	 * Returns 0, if unknown. */
+
+	WACOMTABLET WacomOpenTablet(const char* pszDevice, WACOMMODEL* pModel);
+	/* Returns tablet handle on success, NULL otherwise.
+	 * pszDevice is pathname to device.  Model may be NULL; if any model
+	 * parameters are 0, detection is automatic. */
+
+	void WacomCloseTablet(WACOMTABLET hTablet);
+	/* Releases all resource associated with tablet and closes device. */
+
+	WACOMMODEL WacomGetModel(WACOMTABLET hTablet);
+	/* Returns model (vendor, class, and device) of specified tablet. */
+
+	const char* WacomGetVendorName(WACOMTABLET hTablet);
+	/* Returns vendor name as human-readable string.  String is valid as
+	 * long as tablet handle is valid and does not need to be freed. */
+
+	const char* WacomGetClassName(WACOMTABLET hTablet);
+	/* Returns class name as human-readable string.  String is valid as
+	 * long as tablet handle is valid and does not need to be freed. */
+
+	const char* WacomGetDeviceName(WACOMTABLET hTablet);
+	/* Returns device name as human-readable string.  String is valid as
+	 * long as tablet handle is valid and does not need to be freed. */
+
+	const char* WacomGetSubTypeName(WACOMTABLET hTablet);
+	/* Returns subtype name as human-readable string.  This is typically
+	 * the model number (eg. ABC-1234).  String is valid as long as tablet
+	 * handle is valid and does not need to be freed. */
+
+	const char* WacomGetModelName(WACOMTABLET hTablet);
+	/* Returns model name as human-readable string.  This is typically
+	 * the full model name (eg. FooCo FooModel 9x12).  String is valid as
+	 * long as tablet handle is valid and does not need to be freed. */
+
+	int WacomGetROMVersion(WACOMTABLET hTablet, int* pnMajor, int* pnMinor,
+			int* pnRelease);
+	/* Returns 0 on success.  ROM version of the tablet firmware is returned
+	 * in major, minor, and release values.  If the caller needs to
+	 * distinguish between ROM versions to work around a bug, please consider
+	 * submitting a patch to this library.  All tablets should appear
+	 * equivalent through this interface. This call is provided for
+	 * information purposes. */
+
+	int WacomGetCapabilities(WACOMTABLET hTablet);
+	/* Returns bitmask of valid fields.  Use (1 << WACOMFIELD_xxx) to
+	 * translate field identifiers to bit positions.  This API will only
+	 * support 32 capabilities. */
+
+	int WacomGetState(WACOMTABLET hTablet, WACOMSTATE* pState);
+	/* Returns 0 on success.  Tablet state is copied to specified structure.
+	 * Data is only a snapshot of the device and may not accurately reflect
+	 * the position of any specific tool. This is particularly true of
+	 * multi-tool mode tablets.  NOTE: pState must point to an initialized
+	 * structure; the uValueCnt field must be correctly set to
+	 * WACOMFIELD_MAX. */
+
+	int WacomGetFileDescriptor(WACOMTABLET hTablet);
+	/* Returns the file descriptor of the tablet or -1 on error. */
+
+	int WacomReadRaw(WACOMTABLET hTablet, unsigned char* puchData,
+			unsigned int uSize);
+	/* Returns number of bytes read, typically a single packet.  Call will
+	 * block.  uSize should be the maximum size of the given data buffer. */
+
+	int WacomParseData(WACOMTABLET hTablet, const unsigned char* puchData,
+			unsigned int uLength, WACOMSTATE* pState);
+	/* Updates the tablet state from a given packet.  If pState is specified,
+	 * the tablet state is copied to the given structure.  This structure
+	 * must be correctly initialized; the uValueCnt member must be set to
+	 * WACOMFIELD_MAX. Returns 0 on success. */
 
 /*****************************************************************************
 ** Private structures
@@ -143,11 +242,15 @@ struct _WACOMTABLET_PRIV
 	void (*Close)(WACOMTABLET_PRIV* pTablet);
 	WACOMMODEL (*GetModel)(WACOMTABLET_PRIV* pTablet);
 	const char* (*GetVendorName)(WACOMTABLET_PRIV* pTablet);
+	const char* (*GetClassName)(WACOMTABLET_PRIV* pTablet);
+	const char* (*GetDeviceName)(WACOMTABLET_PRIV* pTablet);
+	const char* (*GetSubTypeName)(WACOMTABLET_PRIV* pTablet);
 	const char* (*GetModelName)(WACOMTABLET_PRIV* pTablet);
 	int (*GetROMVer)(WACOMTABLET_PRIV* pTablet, int* pnMajor, int* pnMinor,
 		int* pnRelease);
 	int (*GetCaps)(WACOMTABLET_PRIV* pTablet);
 	int (*GetState)(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState);
+	int (*GetFD)(WACOMTABLET_PRIV* pTablet);
 	int (*ReadRaw)(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 			unsigned int uSize);
 	int (*ParseData)(WACOMTABLET_PRIV* pTablet, const unsigned char* puchData,
