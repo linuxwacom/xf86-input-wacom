@@ -33,15 +33,6 @@
 #include "config.h"
 #endif
 
-typedef struct _UI UI;
-struct _UI
-{
-	const char* pszName;
-	int (*Init)(void);
-	void (*Term)(void);
-	int (*Run)(void);
-};
-
 /*****************************************************************************
 ** XInput
 *****************************************************************************/
@@ -49,6 +40,9 @@ struct _UI
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XIproto.h>
+
+	int gnDevListCnt = 0;
+	XDeviceInfoPtr gpDevList = NULL;
 
 Display* InitXInput(void)
 {
@@ -76,38 +70,75 @@ Display* InitXInput(void)
 
 int ListDevices(Display* pDisp)
 {
-	int i, j, nDeviceCnt;
-	XDeviceInfoPtr pDevices;
+	int i, j;
 
-	/* build list of devices */
-	pDevices = (XDeviceInfoPtr) XListInputDevices(pDisp, &nDeviceCnt);
-	if (!pDevices)
+	/* get list of devices */
+	if (!gpDevList)
 	{
-		fprintf(stderr,"Failed to get input device list.\n");
-		return 1;
+		gpDevList = (XDeviceInfoPtr) XListInputDevices(pDisp, &gnDevListCnt);
+		if (!gpDevList)
+		{
+			fprintf(stderr,"Failed to get input device list.\n");
+			return 1;
+		}
 	}
 
-	// XInternAtom
-
-	for (i=0; i<nDeviceCnt; ++i)
+	for (i=0; i<gnDevListCnt; ++i)
 	{
 		printf("%3lu %-15s %s\n",
-				pDevices[i].id,
-				pDevices[i].name,
-				(pDevices[i].use == 0) ? "(disabled)" :
-				(pDevices[i].use == IsXKeyboard) ? "keyboard" :
-				(pDevices[i].use == IsXPointer) ? "pointer" :
-				(pDevices[i].use == IsXExtensionDevice) ? "extension" :
+				gpDevList[i].id,
+				gpDevList[i].name,
+				(gpDevList[i].use == 0) ? "(disabled)" :
+				(gpDevList[i].use == IsXKeyboard) ? "keyboard" :
+				(gpDevList[i].use == IsXPointer) ? "pointer" :
+				(gpDevList[i].use == IsXExtensionDevice) ? "extension" :
 					"unknown");
 
-		for (j=0; j<pDevices[i].num_classes; ++j)
+		for (j=0; j<gpDevList[i].num_classes; ++j)
 		{
 		}
 	}
 
-	XFreeDeviceList(pDevices);
 	return 0;
 }
+
+XDeviceInfoPtr GetDevice(Display* pDisp, const char* pszDeviceName)
+{
+	int i;
+
+	/* get list of devices */
+	if (!gpDevList)
+	{
+		gpDevList = (XDeviceInfoPtr) XListInputDevices(pDisp, &gnDevListCnt);
+		if (!gpDevList)
+		{
+			fprintf(stderr,"Failed to get input device list.\n");
+			return NULL;
+		}
+	}
+
+	/* find device by name */
+	for (i=0; i<gnDevListCnt; ++i)
+	{
+		if (strcasecmp(gpDevList[i].name,pszDeviceName) == 0)
+			return gpDevList + i;
+	}
+
+	return NULL;
+}
+
+/*****************************************************************************
+** UI
+*****************************************************************************/
+
+typedef struct _UI UI;
+struct _UI
+{
+	const char* pszName;
+	int (*Init)(void);
+	void (*Term)(void);
+	int (*Run)(Display* pDisp, XDevice* pDev);
+};
 
 /*****************************************************************************
 ** GTK UI
@@ -126,7 +157,7 @@ static void GTKTerm(void)
 {
 }
 
-static int GTKRun(void)
+static int GTKRun(Display* pDisp, XDevice* pDev)
 {
 	return 1;
 }
@@ -149,7 +180,7 @@ static void CursesTerm(void)
 {
 }
 
-static int CursesRun(void)
+static int CursesRun(Display* pDisp, XDevice* pDev)
 {
 	return 1;
 }
@@ -169,9 +200,9 @@ static void RawTerm(void)
 {
 }
 
-static int RawRun(void)
+static int RawRun(Display* pDisp, XDevice* pDev)
 {
-	return 1;
+	return 0;
 }
 
 	UI gRawUI = { "raw", RawInit, RawTerm, RawRun };
@@ -181,14 +212,19 @@ static int RawRun(void)
 void Usage(int rtn)
 {
 	fprintf(rtn ? stderr : stdout,
-			"Usage: xidump [options]\n"
+			"Usage: xidump [options] input_device\n"
 			"  -h, --help          - usage\n"
 			"  -v, --verbose       - verbose\n"
 			"  -V, --version       - version\n"
 			"  -l, --list          - list available input devices\n"
 			"  -u, --ui ui_type    - use specified ui, see below\n"
 			"\n"
-			"UI types: gtk, curses, raw\n");
+			"Use --list option for input_device choices\n"
+			"UI types: "
+			#if USE_GTK
+				"gtk, "
+			#endif
+			"curses, raw\n");
 	exit(rtn);
 }
 
@@ -208,20 +244,46 @@ void Fatal(const char* pszFmt, ...)
 
 /****************************************************************************/
 
-int Run(Display* pDisp, UI* pUI)
+int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 {
-	if (pUI->Init())
-		{ perror("failed to initialize UI"); return 1; }
+	int nRtn;
+	XDevice* pDev;
+	XDeviceInfoPtr pDevInfo;
 
-	if (pUI->Run())
+	/* get the device by name */
+	pDevInfo = GetDevice(pDisp,pszDeviceName);
+	if (!pDevInfo)
 	{
-		perror("failed to run UI");
-		pUI->Term();
+		fprintf(stderr,"Unable to find input device '%s'\n",pszDeviceName);
 		return 1;
 	}
-	pUI->Term();
-	return 0;
+
+	/* open device */
+	pDev = XOpenDevice(pDisp,pDevInfo->id);
+	if (!pDev)
+	{
+		fprintf(stderr,"Unable to open input device '%s'\n",pszDeviceName);
+		return 1;
+	}
+	
+	/* fire up the UI */
+	if ((nRtn=pUI->Init()) != 0)
+		fprintf(stderr,"failed to initialize UI\n");
+	else
+	{
+		if ((nRtn=pUI->Run(pDisp,pDev)) != 0)
+			fprintf(stderr,"failed to run UI\n");
+		pUI->Term();
+	}
+
+	XCloseDevice(pDisp,pDev);
+
+	return nRtn;
 }
+
+/*****************************************************************************
+** main
+*****************************************************************************/
 
 int main(int argc, char** argv)
 {
@@ -231,6 +293,7 @@ int main(int argc, char** argv)
 	int nVerbose = 0;
 	const char* pa;
 	Display* pDisp = NULL;
+	const char* pszDeviceName = NULL;
 
 	++argv;
 	while ((pa = *(argv++)) != NULL)
@@ -267,18 +330,29 @@ int main(int argc, char** argv)
 			else
 				Fatal("Unknown option %s\n",pa);
 		}
+		else if (!pszDeviceName)
+			pszDeviceName = pa;
 		else
 			Fatal("Unknown argument %s\n",pa);
+	}
+
+	/* device must be specified */
+	if (!pszDeviceName && !bList)
+	{
+		fprintf(stderr,"input_device not specified\n");
+		Usage(1);
 	}
 
 	/* default to a given UI */
 	if (pUI == NULL)
 	{
-		#if USE_GTK
-		pUI = &gGTKUI;
-		#else
-		pUI = &gCursesUI;
-		#endif
+		pUI = &gRawUI;
+
+//		#if USE_GTK
+//		pUI = &gGTKUI;
+//		#else
+//		pUI = &gCursesUI;
+//		#endif
 	}
 	
 	/* open connection to XServer with XInput */
@@ -288,7 +362,11 @@ int main(int argc, char** argv)
 	if (bList)
 		nRtn = ListDevices(pDisp);
 	else
-		nRtn = Run(pDisp,pUI);
+		nRtn = Run(pDisp,pUI,pszDeviceName);
+
+	/* release device list */
+	if (gpDevList)
+		XFreeDeviceList(gpDevList);
 
 	XCloseDisplay(pDisp);
 
