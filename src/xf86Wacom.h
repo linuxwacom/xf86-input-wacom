@@ -27,6 +27,7 @@
 /****************************************************************************/
 
 #include <xf86Version.h>
+#include <xf86Optrec.h>  /* for XF86OptionPtr */
 
 /* This driver can be compiled for the 4.x API (technically versions
  * beginning at 3.9) or the older API which ended around version 3.3. */
@@ -323,7 +324,8 @@ struct _WacomDeviceRec
 	unsigned int serial;    /* device serial number */
 	int initNumber;         /* magic number for the init phasis */
 	int screen_no;          /* associated screen */
-    
+ 	int button[16];         /* buttons */
+   
 	WacomCommonPtr common;  /* common info pointer */
     
 	/* state fields */
@@ -473,6 +475,7 @@ struct _WacomCommonRec
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
+	char wcmModelName[32];       /* tablet model name */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */

@@ -37,6 +37,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	LocalDevicePtr local;
 	WacomDevicePtr priv;
 	WacomCommonPtr common;
+	int i;
 
 	priv = (WacomDevicePtr) xalloc(sizeof(WacomDeviceRec));
 	if (!priv)
@@ -103,7 +104,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->initNumber = 0;        /* magic number for the init phasis */
 	priv->screen_no = -1;        /* associated screen */
 	priv->speed = DEFAULT_SPEED; /* rel. mode acceleration */
-
+	for (i=0; i<16; i++)
+		priv->button[i] = i+1; /* button i value */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
@@ -135,6 +137,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
+	common->wcmModelName[0] = 0;		/* tablet model name */
 	return local;
 }
 
@@ -739,7 +742,8 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	LocalDevicePtr fakeLocal = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	char* s;
+	char* 		s, b[10];
+	int		i, oldButton;
 	LocalDevicePtr localDevices;
 
 	gWacomModule.v4.wcmDrv = drv;
@@ -1012,6 +1016,18 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->flags |= FAKE_MOUSEWHEEL_FLAG;
 		xf86Msg(X_CONFIG, "%s: mouse scrolling simulation enabled\n",
 			dev->identifier);
+	}
+
+	for (i=0; i<16; i++)
+	{
+		sprintf(b, "Button%d", i+1);
+		oldButton = priv->button[i];
+		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
+		if (oldButton != priv->button[i])
+		{
+			xf86Msg(X_CONFIG, "%s: button%d assigned to %d\n", 
+				dev->identifier, i+1, priv->button[i]);
+		}
 	}
 
 	/* baud rate */

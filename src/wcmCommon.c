@@ -99,7 +99,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 			(double)totalWidth + 0.5;
 		*v1 = *v1 * screenInfo.screens[screenToSet]->height /
 			(double)maxHeight + 0.5;
-
 	}
 
 	if (!noPanoramiXExtension)
@@ -149,7 +148,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 		int rx, int ry, int rz, int rtx, int rty, int rrot,
 		int rth, int rwheel)
 {
-	int button;
+	int button, newb;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 
 	for (button=1; button<=16; button++)
@@ -161,15 +160,20 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			DBG(4, ErrorF("xf86WcmSendButtons button=%d "
 				"state=%d, for %s\n", 
 				button, (buttons & mask) != 0, local->name));
+			/* set to the configured buttons */
+			newb = button;
+			if (priv->button[button-1] != button)
+				newb = priv->button[button-1];
+
 			if (IsCursor(priv))
 				xf86PostButtonEvent(local->dev, 
 					(priv->flags & ABSOLUTE_FLAG),
-					button, (buttons & mask) != 0,
+					newb, (buttons & mask) != 0,
 					0, 6, rx, ry, rz, rrot, rth, rwheel);
 			else
 				xf86PostButtonEvent(local->dev, 
 					(priv->flags & ABSOLUTE_FLAG),
-					button, (buttons & mask) != 0,
+					newb, (buttons & mask) != 0,
 					0, 6, rx, ry, rz, rtx, rty, rwheel);
 		}
 	}

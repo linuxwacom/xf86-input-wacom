@@ -288,6 +288,7 @@ static Bool xf86WcmUSBInit(LocalDevicePtr local)
 	DBG(1, ErrorF("initializing USB tablet\n"));    
 
 	ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
+	sscanf(&name[6], "%s", common->wcmModelName);
 	ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED,
 		name);
 

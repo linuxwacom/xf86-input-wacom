@@ -81,6 +81,8 @@ static void xf86WcmDevReadInput(LocalDevicePtr local);
 static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 static void xf86WcmDevClose(LocalDevicePtr local);
 static int xf86WcmDevProc(DeviceIntPtr pWcm, int what);
+static int xf86WcmParseControlData(LocalDevicePtr local, 
+		xDeviceResolutionCtl * res);
 static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
@@ -554,30 +556,234 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	return Success;
 }
 
+/*
+ ***************************************************************************
+ *
+ * xf86WcmParseControlData -- Parse options sent from wacomcpl
+ *
+ ***************************************************************************
+ */
+static int
+xf86WcmParseControlData(LocalDevicePtr local, xDeviceResolutionCtl * res)
+{
+    WacomDevicePtr 	priv = (WacomDevicePtr)local->private;
+    WacomCommonPtr	common = priv->common;
+    int			*resolutions;
+    int 		returnV = Success;
+    static char 	a[9] = "";
+    static int 		index = 0, signbit = 0;
+    char 		b[3]; 
+    int 		value;
+
+    resolutions = (int *)(res +1);
+
+    /* index: which byte. values from 0-3
+     * resolutions[0]: type of option, default settings use a type > 64; 
+     * resolutions[1]: one byte of value; 
+     * resolutions[2]: 	0 positive sign bit; 	
+     *			1 negative sign bit; 
+     *			2 only one char;
+     *			3 a negatie value
+     *			4 terminator;
+     */
+
+    /* deal with the defaults first */
+    if ( resolutions[0] > 64 )
+    {
+	switch ( resolutions[0] )
+	{
+	    case 65:  /* set X, Y back to defaults */
+		xf86ReplaceIntOption(local->options, "TopX", 0);
+		priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+		xf86ReplaceIntOption(local->options, "TopY", 0);
+		priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+		xf86ReplaceIntOption(local->options, 
+				"BottomX", common->wcmMaxX);
+		priv->bottomX = xf86SetIntOption(local->options, 
+				"BottomX", common->wcmMaxX);
+		xf86ReplaceIntOption(local->options, 
+				"BottomY", common->wcmMaxY);
+		priv->bottomY = xf86SetIntOption(local->options, 
+				"BottomY", common->wcmMaxY);
+		break;
+	    default:
+    		DBG(3, ErrorF("parse_control_data invalid config type=%d\n",
+			resolutions[0]));
+	}
+	return ( returnV );
+    }
+    if ( resolutions[2] < 3 ) 
+    {
+	value = resolutions[1] + resolutions[2]*128;
+	sprintf(b, "%x", value);
+	if ( strlen(b) < 2 )
+	{
+	    if( res->first_valuator == 2 )
+	    {
+		a[2*index] = b[0];
+		a[2*index+1] = 0;
+	    }
+	    else
+	    {
+		a[2*index] = '0';
+		a[2*index+1] = b[0];
+	    }
+	}
+	else
+	{
+	    a[2*index] = b[0];
+	    a[2*index+1] = b[1];
+	}
+	a[2*index+2] = 0;
+	index++;
+    } 
+    else if ( resolutions[2] == 3 )
+    {
+	signbit = 1;
+    }
+    else
+    {
+	value = strtol(a, NULL, 16);
+	if (signbit) value = -value;
+	/* reset input */
+	signbit = 0;
+	index = 0;
+	a[0] = 0;
+	switch ( resolutions[0] ) 
+	{
+	    case 1:  /* TopX */
+		xf86ReplaceIntOption(local->options, "TopX", value);
+		priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+		break;
+	    case 2:  /* TopY */
+		xf86ReplaceIntOption(local->options, "TopY", value);
+		priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+		break;
+	    case 3:  /* BottomX */
+		xf86ReplaceIntOption(local->options, "BottomX", value);
+		priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+		break;
+	    case 4:  /* BottomY */
+		xf86ReplaceIntOption(local->options, "BottomY", value);
+		priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+		break;
+	    case 5: /* button1 */
+		xf86ReplaceIntOption(local->options, "Button1", value);
+		priv->button[0] = xf86SetIntOption(local->options, "Button1", 1);
+		break;
+	    case 6: /* button2 */
+		xf86ReplaceIntOption(local->options, "Button2", value);
+		priv->button[1] = xf86SetIntOption(local->options, "Button2", 2);
+		break;
+	    case 7: /* button3 */
+		xf86ReplaceIntOption(local->options, "Button3", value);
+		priv->button[2] = xf86SetIntOption(local->options, "Button3", 3);
+		break;
+	    case 8: /* button4 */
+		xf86ReplaceIntOption(local->options, "Button4", value);
+		priv->button[3] = xf86SetIntOption(local->options, "Button4", 4);
+		break;
+	    case 9: /* button5 */
+		xf86ReplaceIntOption(local->options, "Button5", value);
+		priv->button[4] = xf86SetIntOption(local->options, "Button5", 5);
+		break;
+	    default:
+    		DBG(3, ErrorF("parse_control_data invalid config type=%d\n",
+			resolutions[0]));
+		returnV = BadMatch;
+	}
+    }
+    return (returnV);
+}
+
 /*****************************************************************************
  * xf86WcmDevChangeControl --
  ****************************************************************************/
 
 static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 {
-	xDeviceResolutionCtl* res;
-	int* resolutions;
-	char str[10];
+    xDeviceResolutionCtl	*res;
+    int				*resolutions;
+    FILE			*fp = 0;
+    XF86OptionPtr		optList;
+    LocalDevicePtr		localDevices;
+    char			fileName[80];
+  
+    res = (xDeviceResolutionCtl *)control;
+    DBG(10, ErrorF("xf86WcmChangeControl firstValuator=%d\n", res->first_valuator));
+	
+    if (control->control != DEVICE_RESOLUTION ||
+		!res->num_valuators)
+	return (BadMatch);
 
-	res = (xDeviceResolutionCtl*)control;
+    resolutions = (int *)(res +1);
 
-	if ((control->control != DEVICE_RESOLUTION) || (res->num_valuators < 1))
-		return (BadMatch);
+    switch (res->first_valuator) {
+	case 0:  /* a new write to wacom.$name */
+	    strcpy(fileName, "/etc/X11/wcm.");
+	    strcat(fileName, local->name);
+	    fp = fopen(fileName, "w+");
+	    break;
+	case 1: /* a new write to wacom.dat */
+	    fp = fopen("/etc/wacom.dat", "w+");
+	    break;
+	case 2: /* parse data received from wacomcpl. only received one hex digit */
+	case 3: /* parse data received from wacomcpl. received two hex digits */
+	    return (xf86WcmParseControlData(local, res));
+	    break;
+	default:
+    	    DBG(3, ErrorF("xf86WcmChangeControl invalid firstValuator=%d\n",
+		res->first_valuator));
+	    return (BadMatch);
+    }
 
-	resolutions = (int *)(res +1);
-
-	DBG(3, ErrorF("xf86WcmChangeControl changing to %d "
-			"(suppressing under)\n",resolutions[0]));
-
-	sprintf(str, "SU%d\r", resolutions[0]);
-	SYSCALL(write(local->fd, str, strlen(str)));
-
-	return Success;
+    if ( res->first_valuator != 1 ) 
+    {
+	fprintf(fp, "Identifier	%s\n", local->name);
+	optList = (XF86OptionPtr)local->options;
+	while (optList) 
+	{
+	    if (strcmp(optList->opt_name, "FlowControl")) 
+	    {
+		optList = optList->list.next;
+	    } 
+	    else 
+	    {
+		optList = optList->list.next;
+		while (optList) 
+		{
+		    if (strcmp(optList->opt_name, "SendCoreEvents") &&
+			strcmp(optList->opt_name, "AlwaysCore")) 
+		    {
+			if (optList->opt_val)
+			    fprintf(fp, "Option    \"%s\" \"%s\"", 
+				optList->opt_name, optList->opt_val);
+			else
+			    fprintf(fp, "Option    \"%s\" \"On\"", 
+				optList->opt_name);
+			fprintf(fp, "\n");
+		    }
+		    optList = optList->list.next;
+		}
+	    }
+	}
+    } 
+    else 
+    {
+	localDevices = xf86FirstLocalDevice();
+    
+	while(localDevices) 
+	{
+	    if (((WacomDevicePtr)localDevices->private)->common) 
+	    {
+		fprintf(fp, "%s	%s\n", localDevices->name, 
+			((WacomDevicePtr)localDevices->private)->common->wcmModelName);
+	    }
+	    localDevices = localDevices->next;
+	}
+    }
+    if ( fp ) fclose(fp);  
+    return(Success);
 }
 
 /*****************************************************************************
