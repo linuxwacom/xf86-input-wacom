@@ -346,14 +346,27 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		}
 		if (priv->speed != DEFAULT_SPEED )
 		{
-			/* don't apply acceleration for fairly small
-			* increments (but larger than speed setting). */
-
+			/* don't apply speed for fairly small increments */
 			int no_jitter = priv->speed * 3;
+			double param = priv->speed;
+			double relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
 			if (ABS(rx) > no_jitter)
-				rx *= priv->speed;
+			{
+				/* don't apply acceleration when too fast. */
+				param += priv->accel > 0 ? rx/relacc : 0;
+				if (param > 20.00)
+				{
+					rx *= param;
+				}
+			}
 			if (ABS(ry) > no_jitter)
-				ry *= priv->speed;
+			{
+				param += priv->accel > 0 ? ry/relacc : 0;
+				if (param > 20.00)
+				{
+					ry *= param;
+				}
+			}
 		}
 		rz = z - priv->oldZ;
 		rtx = tx - priv->oldTiltX;

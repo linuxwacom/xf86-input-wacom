@@ -102,7 +102,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->oldProximity = 0;      /* previous proximity */
 	priv->serial = 0;            /* serial number */
 	priv->screen_no = -1;        /* associated screen */
-	priv->speed = DEFAULT_SPEED; /* rel. mode acceleration */
+	priv->speed = DEFAULT_SPEED; /* rel. mode speed */
+	priv->accel = 0;	     /* rel. mode acceleration */
 	for (i=0; i<16; i++)
 		priv->button[i] = i+1; /* button i value */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
@@ -1109,6 +1110,11 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (priv->speed != DEFAULT_SPEED)
 		xf86Msg(X_CONFIG, "%s: speed = %.3f\n", dev->identifier,
 			priv->speed);
+
+	priv->accel = xf86SetIntOption(local->options, "Accel", 0);
+	if (priv->accel)
+		xf86Msg(X_CONFIG, "%s: Accel = %d\n", dev->identifier,
+			priv->accel);
 
 	s = xf86FindOptionValue(local->options, "Twinview");
 	if (s && xf86NameCmp(s, "none") == 0) 

@@ -161,6 +161,13 @@ struct _PARAMINFO
 			VALUE_OPTIONAL, RANGE, 
 			0, 20, SINGLE_VALUE, 6 },	
 
+		{ "Accel",
+			"Sets relative cursor movement acceleration"
+			"(default is 0)",
+			XWACOM_PARAM_ACCEL,
+			VALUE_OPTIONAL, RANGE, 
+			0, 6, SINGLE_VALUE, 0 },	
+
 		{ "xyDefault",
 			"Resets the bounding coordinates to default in tablet units",
 			XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },

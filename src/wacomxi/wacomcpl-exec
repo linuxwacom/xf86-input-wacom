@@ -48,16 +48,6 @@ set device ""
 set deviceIndex 0
 set showHelp 0
 
-#
-# The error handler is used to catch failed attempt to open
-# a declared device or to change 
-# 
-proc catchError {type resourceId serial errorCode requestCode minorCode} {
-    global xErrorCode
-    set xErrorCode $errorCode 
-}
-set xErrorCode 0
-
 proc updateCurrentScreenInfo {} {
     global numScreens currentScreen
     global screenWidth screenHeight screenX_org screenY_org 
@@ -66,11 +56,9 @@ proc updateCurrentScreenInfo {} {
     if { $numScreens != 1 } {
         set screenInfo $getScreenInfo(Screen$currentScreen)
 	set screenWidth [ lindex $screenInfo 0 ]
-        scan $screenInfo "%s %s %s %s" $screenWidth \
-		$screenHeight $screenX_org $screenY_org
 	set screenHeight [ lindex $screenInfo 1 ]
 	set screenX_org [ lindex $screenInfo 2 ]
- 	set screenY_org [ lindex $screenInfo 3 ]
+	set screenY_org [ lindex $screenInfo 3 ]
    }
 }
 
@@ -101,27 +89,30 @@ proc pad {name geometry} {
 proc updateXinitrc {} {
     global device
 
-    exec xsetwacom set $device Fileoption
+    exec xsetwacom set $device FileOption
 
     if { ![ file exists ~/.xinitrc ] } {
-	file copy -force /etc/X11/wcm.$device ~/.xinitrc
-	exec echo "# run the primary system script" >> ~/.xinitrc 
-	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc 
+	file copy -force /etc/X11/wcm.$device /tmp/wacom
+	exec echo "# run the primary system script" >> /tmp/wacom
+	exec echo ". /etc/X11/xinit/xinitrc" >> /tmp/wacom
     } else {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1
 	file copy -force /etc/X11/wcm.$device /tmp/xinitrc
 	exec sed -e "/xsetwacom set $device /d" /tmp/xinitrc1 > /tmp/wacom
 	exec cat /tmp/wacom >> /tmp/xinitrc
-	file copy -force /tmp/xinitrc ~/.xinitrc
-	file delete -force /tmp/xinitrc /tmp/xinitrc1 
+	file copy -force /tmp/xinitrc /tmp/wacom
+	file delete -force /tmp/xinitrc /tmp/xinitrc1
     }
+    exec sed -e "/default /d" /tmp/wacom > ~/.xinitrc
+    file delete -force /tmp/wacom
 }
 
 proc calibrationSequence {which xDev yDev} {
     global device calibResults screenY_org screenX_org
     global workingTags screenTags size numScreens
     global swapThresh screenWidth screenHeight
+    global getDeviceModel
 
     set calibResults(xDev,$which) $xDev
     set calibResults(yDev,$which) $yDev
@@ -173,20 +164,19 @@ proc calibrationSequence {which xDev yDev} {
 
 	exec xsetwacom set $device gimp 1
 	destroy .topleft .bottomright
- 	bindtags .workingDev.list $workingTags
 	if { $numScreens > 1 } {
+	    .screen.list.label configure -text ""
  	    bindtags .screen.list.list $screenTags
+	} else {
+	    closeTabWindow
 	}
-	.panel.calibrate configure -state normal
-	.panel.button configure -state normal
     }
 }
 
 proc Calibration {} {
-    global numScreens device
-    global workingTags screenTags
+    global numScreens device screenTags
 
-    set workingTags [ bindtags .workingDev.list]
+    bindtags .workingDev.list .
     if { $numScreens > 1 } {
 	set screenTags [ bindtags .screen.list.list]
     }
@@ -194,29 +184,23 @@ proc Calibration {} {
     if { $numScreens > 1 } {
 	.screen.list.title configure -text "Select $device associated Screen:"
 	wm state .screen normal
+	disableButtons
     } else {
 	updateCurrentScreenInfo
 	startCalibration
+	disableButtons
     }
-    .panel.calibrate configure -state disabled
-    .panel.button configure -state disabled
 }
 
 proc startCalibration {} {
-    global device workingTags screenTags calibResults
+    global device calibResults
     global screenX_org screenY_org size numScreens
     global screenWidth screenHeight
     
-    #
-    # Suppress tags on listboxes to prevent changing the
-    # device and disable other controls
-    bindtags .workingDev.list .
     if { $numScreens > 1 } {
 	bindtags .screen.list.list .
     }
-    .panel.calibrate configure -state disabled
-    .panel.button configure -state disabled
-    
+
     set y_coor [ expr $screenY_org+$screenHeight-$size ]
     set x_coor [ expr $screenX_org+$screenWidth-$size ]
     pad .topleft +$screenX_org+$screenY_org
@@ -291,9 +275,45 @@ proc updateScreenList {} {
     startCalibration
 }
 
+proc disableButtons {} {
+	.panel.pressure configure -state disabled
+	.panel.calibrate configure -state disabled
+	.panel.button configure -state disabled
+	.panel.mapping configure -state disabled
+}
+
+proc getDeviceOptionProc { dev i } {
+    global getOption getOptionDefault Option
+
+    exec xsetwacom set $dev FileOption
+    for { set j 1 } { $j < [ expr $i+1 ] } { incr j 1 } {
+	exec awk /$Option($j)/ /etc/X11/wcm.$dev > /tmp/wacom
+	exec awk /$dev/ /tmp/wacom > /tmp/wacom1
+	exec awk /default/ /tmp/wacom > /tmp/wacom2
+	if { [ file exists /tmp/wacom1 ] } {
+	    set channelId [open /tmp/wacom1]
+	    set info [read -nonewline $channelId]
+	    close $channelId
+	    set getOption($dev,$Option($j)) [ lrange $info 4 end ]
+
+	}
+	if { [ file exists /tmp/wacom2 ] } {
+	    set channelId [open /tmp/wacom2]
+	    set info [read -nonewline $channelId]
+	    close $channelId
+	    set getOptionDefault($dev,$Option($j)) [ lindex $info 2 ]
+	}
+	if { $getOption($dev,$Option($j)) == "" } {
+	    set getOption($dev,$Option($j)) $getOptionDefault($dev,$Option($j))
+	}
+    }
+    file delete -force /tmp/wacom /tmp/wacom1 /tmp/wacom2
+}
+
+
 proc updateDevice {} {
-    global device deviceIndex
-    global numScreens getDeviceOption
+    global device deviceIndex getOption
+    global numScreens getDeviceModel Option
 
     if { $device != "" } {
 	#
@@ -301,8 +321,7 @@ proc updateDevice {} {
 	#
 	wacomxi::bindevent . $device <ButtonPress> ""
 	wacomxi::bindevent . $device <ButtonRelease> ""
-	.panel.calibrate configure -state disabled
-	.panel.button configure -state disabled
+	disableButtons
     }
     
     set device [ .workingDev.list get anchor ]
@@ -313,31 +332,37 @@ proc updateDevice {} {
 	# Update the entry indicator
 	#
 	.workingDev.label configure -text $device
-	set model $getDeviceOption($device,model)
-	set type $getDeviceOption($device,type)
+	set model $getDeviceModel($device,model)
+	set type $getDeviceModel($device,type)
+	set Option(1) "Mode"
+	getDeviceOptionProc $device 1
+	set mode $getOption($device,Mode)
 	if { ![string compare -nocase -length 6 $model \
 		"cintiq"] && [string compare -nocase \
 		-length 7 $model "CintiqP" ] || 
 		![string compare -nocase -length 5 \
 		$model "isdv4"] } {
-	    .panel.calibrate configure -state normal
+	    if { ![string compare -nocase -length 8 \
+		$mode "absolute"] } {
+		.panel.calibrate configure -state normal
+	    }
 	}
-	if { [ string compare $type "eraser" ] } {
-	    .panel.button configure -state normal
+	if { [ string compare $type "cursor" ] } {
+	    .panel.pressure configure -state normal
 	}
+	.panel.button configure -state normal
+	.panel.mapping configure -state normal
     } else {
 	#
 	# Update the entry indicator
 	#
 	.workingDev.label configure -text $device
-	.panel.calibrate configure -state disabled
-	.panel.button configure -state disabled
+	disableButtons
     }
 }
 
 proc createDeviceList {infoString} {
-    global xErrorCode 
-    global getDeviceOption
+    global getDeviceModel
 
     set index 0
     set devices ""
@@ -348,8 +373,8 @@ proc createDeviceList {infoString} {
     set s3 [ lindex $infoString $index ]
     while { $s1 != "" } {
 	if { [string compare -length 6 $s1 "Screen" ] } {
-	    set getDeviceOption($s1,model) $s2
-	    set getDeviceOption($s1,type) $s3
+	    set getDeviceModel($s1,model) $s2
+	    set getDeviceModel($s1,type) $s3
 	    if { [string first $devices $s1] == -1 } {
 		set devices "$devices $s1"
 	    }
@@ -376,56 +401,44 @@ proc createDeviceList {infoString} {
     grid .workingDev.sb -row 2 -sticky nse
     set flag 0
     foreach dev $devices {
-	set xErrorCode 0
 	.workingDev.list insert end $dev
-#	    catch {set mode [wacomxi::device mode $dev]}
-#	    if { !$xErrorCode && $mode == "absolute" } {
-#		.workingDev.list insert end $dev
-#	    }
     }
     bind .workingDev.list <ButtonRelease-1> updateDevice
 }
 
 proc createScreenList {infoString} {
-    global xErrorCode numScreens currentScreen
-    global desktopHeight desktopWidth
-    global getScreenInfo
+    global numScreens currentScreen
+    global desktopHeight desktopWidth getScreenInfo
 
     set index 0
     set numS 0
-    set org_x 0
-    set org_y 0
-    set s1 [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set s2 [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set s3 [ lindex $infoString $index ]
-    while { $s1 != "" } {
-	if { ![string compare -length 6 $s1 "Screen" ] } {
-	    set getScreenInfo($s1) "$s2 $s3 $org_x $org_y"
-	    set org_x [ expr $org_x+$s2 ]
+    set s0 [ lindex $infoString $index ]
+    while { $s0 != "" } {
+	if { ![string compare -length 6 $s0 "Screen" ] } {
+    	    for { set i 1 } { $i < 5 } { incr i 1 } {
+		set index [ expr $index+1 ]
+		set s$i [ lindex $infoString $index ]
+	    }
+	    set getScreenInfo($s0) "$s1 $s2 $s3 $s4"
+	    set index [ expr $index+1 ]
+	    set s0 [ lindex $infoString $index ]
 	    set numS [expr $numS+1]
+	} else {
+	    set index [ expr $index+3 ]
+	    set s0 [ lindex $infoString $index ]
 	}
-	set index [ expr $index+1 ]
-	set s1 [ lindex $infoString $index ]
-	set index [ expr $index+1 ]
-	set s2 [ lindex $infoString $index ]
-	set index [ expr $index+1 ]
-	set s3 [ lindex $infoString $index ]
     }
     set numScreens $numS
 }
 
 proc screenCancel {} {
-    global workingTags screenTags
+    global screenTags
 
-    wm state .screen withdraw
-    .panel.calibrate configure -state normal
-    .panel.button configure -state normal
+    closeTabWindow
     destroy .topleft .bottomright
     .screen.list.label configure -text ""
-    bindtags .workingDev.list $workingTags
     bindtags .screen.list.list $screenTags
+    wm state .screen withdraw
 }
 
 proc displayScreenList {} {
@@ -459,16 +472,20 @@ proc displayScreenList {} {
 }
 
 proc updateButton {} {
-    global device getDeviceOption
+    global device getDeviceModel
 
-    set type $getDeviceOption($device,type)
-    if { [ string compare $type "stylus" ] } {
+    set type $getDeviceModel($device,type)
+    if { ![string compare $type "cursor"] } {
 	set k 6
-    } else {
+    }
+    if { ![string compare $type "stylus"] } {
 	set k 4
     }
+    if { ![string compare $type "eraser"] }  {
+	set k 2
+    }
     for { set i 1 } { $i < $k } { incr i 1 } {
-	switch [ .puckB.f.$i cget -text ] {
+	switch [ .subW.f.$i cget -text ] {
 	    "Left"
 		{ set j 1 }
 	    "Middle"
@@ -479,45 +496,141 @@ proc updateButton {} {
 		{ set j 4 }
 	    "Fifth"
 		{ set j 5 }
+	    "Left Double"
+		{ set j 17 }
+	    "Ignore"
+		{ set j 18 }
 	}
 	exec xsetwacom set $device button$i $j 
     }
+    set mode [ .subW.f.mode cget -text ]
+    exec xsetwacom set $device mode $mode
     updateXinitrc
-    destroy .puckB
+    closeSubWindow
 }
 
-proc displayPuckButtons {} {
-    global numScreens currentScreen 
-    global device getDeviceOption
+proc initialButton {} {
+    global device getDeviceModel 
+    global dmode dm getOption Option
 
-    toplevel .puckB
-    wm title .puckB "Button Tool Window"
-    wm transient .puckB .
-    wm geometry .puckB =350x200
-    wm state .puckB normal
-    frame .puckB.f 
-    button .puckB.f.ok -text "Ok" -command updateButton
-    button .puckB.f.cancel -text "Cancel" -command \
-		"destroy .puckB"
+    defaultButton
+    set type $getDeviceModel($device,type)
+
+    set Option(1) "Mode"
+    set Option(2) "Button1"
+    set t 2
+    if { [ string compare $type "eraser" ] } {
+	set Option(3) "Button2"
+	set Option(4) "Button3"
+	set t 4
+	if { [ string compare $type "stylus" ] } {
+	    set Option(5) "Button4"
+	    set Option(6) "Button5"
+	    set t 6
+	}
+    }
+    getDeviceOptionProc $device $t
+    set dmode $getOption($device,Mode)
+    label .subW.f.modeL -text "Mode: "
+    tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
+    grid .subW.f.mode -row 0 -column 2 -columnspan 15
+    grid .subW.f.modeL -row 0 -column 2
 
     addMenu 1
-    addMenu 2
-    addMenu 3
-    set type $getDeviceOption($device,type)
-    if { [ string compare $type "stylus" ] } {
-	addMenu 4
-	addMenu 5
+    if { [ string compare $type "eraser" ] } {
+	addMenu 2
+	addMenu 3
+	if { [ string compare $type "stylus" ] } {
+	    addMenu 4
+	    addMenu 5
+	}
     }
-    grid .puckB.f -row 2 -column 0 -columnspan 40 -sticky news
-    grid .puckB.f.ok -row 15 -column 3 -columnspan 3 -padx 10 
-    grid .puckB.f.cancel -row 15 -column 7 -columnspan 3 -padx 10
+}
 
-    pack .puckB.f 
+proc displaySubWindow { okF deF initial i} {
+    global wName
+
+    toplevel .subW
+    wm title .subW "$wName($i) Window"
+    wm transient .subW .
+    wm geometry .subW =450x250
+    wm state .subW normal
+    frame .subW.f
+    button .subW.f.ok -text "Ok" -command $okF
+    button .subW.f.cancel -text "Cancel" -command closeSubWindow
+    button .subW.f.default -text "Default" -command $deF
+
+    disableButtons
+    $initial
+
+    grid .subW.f -row 0 -column 0 -sticky nw
+    grid .subW.f.ok -row 4 -column 0 -columnspan 3 -padx 10 -pady 10
+    grid .subW.f.cancel -row 4 -column 4 -columnspan 3 -padx 10 -pady 10
+    grid .subW.f.default -row 4 -column 8 -columnspan 3 -padx 10 -pady 10
+
+    #
+    # Suppress tags on listboxes to prevent changing the
+    # device and disable other controls
+    bindtags .workingDev.list .
+}
+
+proc closeSubWindow {} {
+    destroy .subW
+    closeTabWindow
+}
+
+proc closeTabWindow {} {
+    global workingTags device getOption getDeviceModel
+
+    bindtags .workingDev.list $workingTags
+    set model $getDeviceModel($device,model)
+    set type $getDeviceModel($device,type)
+    set Option(1) "Mode"
+    getDeviceOptionProc $device 1
+    set mode $getOption($device,Mode)
+    if { ![string compare -nocase -length 6 $model \
+	"cintiq"] && [string compare -nocase \
+	-length 7 $model "CintiqP" ] || 
+	![string compare -nocase -length 5 \
+	$model "isdv4"] } {
+	if { ![string compare -nocase -length 8 \
+		$mode "absolute"] } {
+	    .panel.calibrate configure -state normal
+	}
+    }
+    if { [ string compare $type "cursor" ] } {
+	.panel.pressure configure -state normal
+    }
+    .panel.button configure -state normal
+    .panel.mapping configure -state normal
+}
+
+proc defaultButton {} {
+    global db db1 db2 db3 db4 db5 dm
+    global getDeviceModel dmode device
+
+    for { set i 1 } { $i < 6 } { incr i 1 } {
+	set db$i $db($i)
+    }
+    set type $getDeviceModel($device,type)
+    if { [ string compare $type "cursor" ] } {
+	set dmode $dm(2)
+    } else {
+	set dmode $dm(1)
+    }
 }
 
 proc addMenu {t} {
-    tk_optionMenu .puckB.f.$t .puckB.f.$t.m "Left" "Middle" "Right" "Fourth" "Fifth"
-    label .puckB.f.name$t -text "Button $t: "
+    global db db1 db2 db3 db4 db5
+    global getOption device
+
+    set opt $getOption($device,Button$t)
+    if { $opt == "" } { set opt $t }
+    set db$t $db($opt) 
+
+    tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(18)
+
+    label .subW.f.name$t -text "Button $t: "
     if { $t < 3 } {
 	set t1 $t
 	set t2 1
@@ -527,16 +640,199 @@ proc addMenu {t} {
 	    set t2 2
 	} else {
 	    set t1 [expr $t-4]
-	    set t2 4
+	    set t2 3
 	}
     }
-    grid .puckB.f.$t -row $t2 -column [expr ($t1-1)*6+3] -columnspan 3 -padx 3 -pady 3
-    grid .puckB.f.name$t -row $t2 -column [expr ($t1-1)*6] -columnspan 3 -padx 3 -pady 3
+
+    grid .subW.f.$t -row $t2 -column [expr ($t1-1)*6+3] -columnspan 3 -padx 3 -pady 3
+    grid .subW.f.name$t -row $t2 -column [expr ($t1-1)*6] -columnspan 3 -padx 3 -pady 3
+}
+
+proc initialT {} {
+    global device getDeviceModel
+    global getOption getOptionDefault Option
+
+    set Option(1) "TopX"
+    set Option(2) "TopY"
+    set Option(3) "BottomX"
+    set Option(4) "BottomY"
+    set Option(5) "SpeedLevel"
+    set Option(6) "Accel"
+    set Option(7) "Mode"
+
+    getDeviceOptionProc $device 7
+
+    set mode $getOption($device,Mode)
+    frame .subW.f.group -bd 10 -bg beige -width 150 -height 150
+
+    if { [ string compare $mode "Relative" ] } {
+	label .subW.f.groupL -text "Mapping: "
+	for { set i 1 } { $i < 5 } { incr i 1 } {
+	    addMapScale $i
+	}
+    } else {
+	label .subW.f.groupL -text "Movement: "
+	label .subW.f.group.l1 -text "SpeedLevel: "
+	grid .subW.f.group.l1 -row 0 -column 6
+	scale .subW.f.group.scale1 -orient horizontal -length 100 \
+		-from 0 -to 10
+	grid .subW.f.group.scale1 -row 0 -column 8
+	.subW.f.group.scale1 set $getOption($device,SpeedLevel)
+	label .subW.f.group.l2 -text "Slow"
+	grid .subW.f.group.l2 -row 1 -column 7
+	label .subW.f.group.l3 -text "Fast"
+	grid .subW.f.group.l3 -row 1 -column 9
+	label .subW.f.group.l4 -text "Acceleration: "
+	grid .subW.f.group.l4 -row 2 -column 6
+	scale .subW.f.group.scale2 -orient horizontal -length 100 \
+		-from 0 -to 6
+	grid .subW.f.group.scale2 -row 2 -column 8
+	.subW.f.group.scale2 set $getOption($device,Accel)
+	label .subW.f.group.l5 -text "Linear"
+	grid .subW.f.group.l5 -row 3 -column 7
+	label .subW.f.group.l6 -text "High"
+	grid .subW.f.group.l6 -row 3 -column 9
+    }
+
+    grid .subW.f.group -row 0 -column 5 
+    grid .subW.f.groupL -row 0 -column 2
+}
+
+proc addMapScale { t } {
+    global getOption Option getOptionDefault device
+
+    label .subW.f.group.l$t -text "$Option($t): "
+    grid .subW.f.group.l$t -row [ expr $t-1 ] -column 6
+    set j $t
+    if { $j < 3 } { set j [expr $j+2] }
+    scale .subW.f.group.scale$t -orient horizontal -length 200 \
+		-from -200 -to [expr $getOptionDefault($device,$Option($j))+200]
+    grid .subW.f.group.scale$t -row [ expr $t-1 ] -column 8
+    .subW.f.group.scale$t set $getOption($device,$Option($t))
+}
+
+proc updateT {} {
+    global getOption getOptionDefault Option device
+
+    set mode $getOption($device,Mode)
+    if { ![ string compare $mode "Absolute" ] } {
+	for { set i 1 } { $i < 5 } { incr i 1 } {
+	    set value [ .subW.f.group.scale$i get ]
+	    exec xsetwacom set $device $Option($i) $value
+	}
+    } else {
+	set value [ .subW.f.group.scale1 get ]
+	exec xsetwacom set $device SpeedLevel $value
+	set value [ .subW.f.group.scale2 get ]
+	exec xsetwacom set $device Accel $value
+    }
+    updateXinitrc
+    closeSubWindow
+}
+
+proc defaultT {} {
+    global getOption getOptionDefault Option device
+
+    set mode $getOption($device,Mode)
+    if { ![ string compare $mode "Absolute" ] } {
+	for { set i 1 } { $i < 5 } { incr i 1 } {
+	    .subW.f.group.scale$i set $getOptionDefault($device,$Option($i))
+	}
+    } else {
+	.subW.f.group.scale1 set $getOptionDefault($device,SpeedLevel)
+	.subW.f.group.scale2 set $getOptionDefault($device,Accel)
+    }
+}
+
+proc initialTip {} {
+    global device getDeviceModel getOption Option
+
+    set Option(1) "PressCurve"
+    set Option(2) "ClickForce"
+    getDeviceOptionProc $device 2
+
+    frame .subW.f.group -bd 10 -bg beige -width 150 -height 150
+    label .subW.f.group.groupl1 -text "Tip Feel: "
+    grid .subW.f.group.groupl1 -row 0 -column 0
+    scale .subW.f.group.scale1 -orient horizontal -length 100 \
+		-from 1 -to 7
+    grid .subW.f.group.scale1 -row 0 -column 8
+    set curve $getOption($device,PressCurve)
+    #default curve value
+    set value 4
+    if { $curve != "" } {
+	set p0 [ lindex $curve 0 ]
+	set p1 [ lindex $curve 1 ]
+	if { [ expr $p1 > 5 && $p1 < 35 ] } {
+	    set value 3
+	}
+	if { [ expr $p1 >= 35 && $p1 < 65 ] } {
+	    set value 2
+	}
+	if { [ expr $p1 >= 65 && $p1 < 95 ] } {
+	    set value 1
+	}
+	if { [ expr $p0 > 5 && $p0 < 35 ] } {
+	    set value 5
+	}
+	if { [ expr $p0 >= 35 && $p0 < 65 ] } {
+	    set value 6
+	}
+	if { [ expr $p0 >= 65 && $p0 < 95 ] } {
+	    set value 7
+	}
+    }
+    .subW.f.group.scale1 set $value
+    label .subW.f.group.l2 -text "Soft"
+    grid .subW.f.group.l2 -row 1 -column 7
+    label .subW.f.group.l3 -text "Hard"
+    grid .subW.f.group.l3 -row 1 -column 9
+
+    label .subW.f.group.groupl2 -text "Click Force: "
+    grid .subW.f.group.groupl2 -row 3 -column 0
+    label .subW.f.group.l4 -text "(%)"
+    grid .subW.f.group.l4 -row 3 -column 7
+    scale .subW.f.group.scale2 -orient horizontal -length 100 \
+		-from 0 -to 20
+    grid .subW.f.group.scale2 -row 3 -column 8
+    .subW.f.group.scale2 set $getOption($device,ClickForce)
+
+    grid .subW.f.group -row 0 -column 5 
+}
+
+proc updateTip {} {
+    global device 
+
+    switch [ .subW.f.group.scale1 get ] {
+	1 
+	    { exec xsetwacom set $device PressCurve 0 75 25 100 }
+	2  
+	    { exec xsetwacom set $device PressCurve 0 50 50 100 }
+	3  
+	    { exec xsetwacom set $device PressCurve 0 25 75 100 }
+	4  
+	    { exec xsetwacom set $device PressCurve 0 0 100 100 }
+	5  
+	    { exec xsetwacom set $device PressCurve 25 1 100 75 }
+	6  
+	    { exec xsetwacom set $device PressCurve 50 0 100 50 }
+	7  
+	    { exec xsetwacom set $device PressCurve 75 0 100 25 }
+    }
+    exec xsetwacom set $device ClickForce [ .subW.f.group.scale2 get ]
+    updateXinitrc
+    closeSubWindow
+}
+
+proc defaultTip {} {
+    .subW.f.group.scale1 set 4
+    .subW.f.group.scale2 set 6
 }
 
 proc createControls {} {
-    global xErrorCode numScreens currentScreen
-    global desktopHeight desktopWidth
+    global numScreens currentScreen
+    global desktopHeight desktopWidth 
+    global workingTags db dm wName
 
     set infoString [exec xsetwacom list]
     set index 0
@@ -562,7 +858,7 @@ proc createControls {} {
 		is embeded into its identifier string"
 	return
     }
-    exec xsetwacom set $dev Filemodel
+    exec xsetwacom set $dev FileModel
     set channelId [open /etc/wacom.dat]
     set info [read -nonewline $channelId]
     close $channelId
@@ -571,22 +867,47 @@ proc createControls {} {
     createScreenList $info
     displayScreenList
 
+    set db(1) "Left"
+    set db(2) "Middle"
+    set db(3) "Right"
+    set db(4) "Fourth"
+    set db(5) "Fifth"
+    set db(17) "Left Double"
+    set db(18) "Ignore"
+    set dm(1) "Relative"
+    set dm(2) "Absolute"
+
     frame .panel
+    set wName(1) "Pen"
+    button .panel.pressure -text "Pen"\
+	    -state disabled -command "displaySubWindow \
+	    updateTip defaultTip initialTip 1"
     button .panel.calibrate -text "Calibrate" \
 	    -command Calibration -state disabled
-    button .panel.button -text "Tool Button" -state disabled -command displayPuckButtons
-    grid .panel.calibrate -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    set wName(2) "Tool Button"
+    button .panel.button -text "Tool Button" \
+	    -state disabled -command "displaySubWindow \
+	    updateButton defaultButton initialButton 2"
+    set wName(3) "Tracking"
+    button .panel.mapping -text "Tracking" \
+	    -state disabled -command "displaySubWindow \
+	    updateT defaultT initialT 3"
+    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    grid .panel.calibrate -row 4 -column 0 -columnspan 2 -padx 10
     grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel -row 2 -rowspan 20 -column 2 -sticky nw -padx 30
-   
-    checkbutton .showHelp -text "Turn Help on" -anchor w \
+    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
+    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+
+     checkbutton .showHelp -text "Turn Help on" -anchor w \
 	    -variable showHelp -state normal
 
     button .exit -text "Exit" -command "exit 0" -padx 40
     
     grid .showHelp -row 0 -column 2 -sticky nw -padx 30
     grid .exit -row 20 -column 2 
-    grid .workingDev -row 0 -rowspan 25 -column 0 -sticky news -padx 40
+    grid .workingDev -row 0 -rowspan 25 -column 0 -sticky news -padx 20
+
+    set workingTags [ bindtags .workingDev.list]
 
     grid columnconfigure . 1 -weight 1
     grid rowconfigure . 7 -weight 5

@@ -187,6 +187,7 @@
  * General Defines
  ****************************************************************************/
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
+#define MAX_ACCEL 7             /* number of acceleration levels */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
 #define MAX_SUPPRESS 6          /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
@@ -352,7 +353,8 @@ struct _WacomDeviceRec
 	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
-	double speed;           /* relative mode acceleration */
+	double speed;           /* relative mode speed */
+	int accel;              /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
 	double dscaleX;		/* scale in X for dual screens */

@@ -77,9 +77,10 @@
  * 2003-07-10 26-j0.5.18 - fix to Intuos filter, ignores first samples
  * 2003-07-16 26-j0.5.19 - added noise reducing filter, improved USB relative mode
  * 2003-07-24 26-j0.5.20 - added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
+ * 2003-08-13 26-j0.5.21 - added speed acceleration xsetwacom commands (Accel)
  */
 
-static const char identification[] = "$Identification: 26-j0.5.20 $";
+static const char identification[] = "$Identification: 26-j0.5.21 $";
 
 /****************************************************************************/
 
@@ -653,6 +654,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	char st[32];
 
 	switch (param) 
 	{
@@ -717,7 +719,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		int y1 = value & 0xFF;
 		if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
 		    return BadValue;
-		snprintf(chBuf,sizeof(chBuf),"%d,%d,%d,%d",x0,y0,x1,y1);
+		snprintf(chBuf,sizeof(chBuf),"%d %d %d %d",x0,y0,x1,y1);
 		xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
 		xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
 		break;
@@ -731,19 +733,25 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		else 
 		{
-			priv->flags &= ~(ABSOLUTE_FLAG);
+			priv->flags &= ~ABSOLUTE_FLAG;
 			xf86ReplaceStrOption(local->options, "Mode", "Relative");
 		}
 		break;
 	    case XWACOM_PARAM_SPEEDLEVEL:
 		if ((value < 0) || (value > 10)) return BadValue;
-		if (value > 5) priv->speed = 2.0*((double)value - 5.0);
-		else priv->speed = ((double)value + 1.0) / 6.0;
-		xf86SetRealOption(local->options, "Speed", priv->speed);
+		if (value > 5) priv->speed = 2.00*((double)value - 5.00);
+		else priv->speed = ((double)value + 1.00) / 6.00;
+		sprintf(st, "%.3f", priv->speed);
+		xf86AddNewOption(local->options, "Speed", st);
+		break;
+	    case XWACOM_PARAM_ACCEL:
+		if ((value < 0) || (value > MAX_ACCEL-1)) return BadValue;
+		priv->accel = value;
+		xf86ReplaceIntOption(local->options, "Accel", priv->accel);
 		break;
 	    case XWACOM_PARAM_CLICKFORCE:
 		if ((value < 0) || (value > 20)) return BadValue;
-		priv->common->wcmThreshold = (int)(value*priv->common->wcmMaxZ/100);
+		priv->common->wcmThreshold = (int)((double)(value*priv->common->wcmMaxZ)/100.00+0.5);
 		xf86ReplaceIntOption(local->options, "Threshold", 
 				priv->common->wcmThreshold);
 		break;
@@ -766,7 +774,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		priv->common->wcmGimp = value;
 		break;
 	    default:
-    		DBG(3, ErrorF("xf86WcmSetParam invalid param %d\n",param));
+    		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
 	}
 	return Success;
@@ -814,44 +822,46 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
 			    ||(!strcasecmp(optList->opt_name, "Mode")) 
 			    ||(!strcasecmp(optList->opt_name, "RawFilter"))
+			    ||(!strcasecmp(optList->opt_name, "Accel") && 
+					priv->accel)
 			    ||(!strcasecmp(optList->opt_name, "Suppress")) )
 			{
-				sprintf(command, "xsetwacom set %s %s %s\n", 
+				fprintf(fp, "xsetwacom set %s %s %s\n", 
 					local->name, optList->opt_name, 
 					optList->opt_val);
-				fprintf(fp, "%s", command);
 			}
 			else if(!strcasecmp(optList->opt_name, "Speed") &&
-				priv->speed != DEFAULT_SPEED) 
+					priv->speed != DEFAULT_SPEED) 
 			{
 				speed = strtod(optList->opt_val, NULL);
-				if(speed > 10.0) value = 10;
-				else if(speed >= 1.0) value = (int)(speed/2.0 + 5.0);
-				else if(speed < (double)(1.0/6.0)) value = 0;
-				else value = (int)(speed*6.0 - 0.5);
-				sprintf(command, "xsetwacom set %s %s %d\n", 
-					local->name, "SpeedLevel", value);
-				fprintf(fp, "%s", command);
+				if(speed > 10.00) value = 10;
+				else if(speed >= 1.00) value = (int)(speed/2.00 + 5.00);
+				else if(speed < (double)(1.00/6.00)) value = 0;
+				else value = (int)(speed*6.00 - 0.50);
+				fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", 
+					local->name, value);
 			}
 			else if(!strcasecmp(optList->opt_name, "Threshold")) 
 			{
 				value = atoi(optList->opt_val);
-				value = (int)(value*100/priv->common->wcmMaxZ);
-				sprintf(command, "xsetwacom set %s %s %d\n", 
-					local->name, "ClickForce", value);
-				fprintf(fp, "%s", command);
+				value = (int)((double)value*100.00/(double)priv->common->wcmMaxZ+0.5);
+				fprintf(fp, "xsetwacom set %s ClickForce %d\n", 
+					local->name, value);
 			}
 			optList = optList->list.next;
 		}
-		sprintf(command, "default %s %d\n", "BottomX", priv->common->wcmMaxX);
-		fprintf(fp, "%s", command);
-		sprintf(command, "default %s %d\n", "BottomY", priv->common->wcmMaxY);
-		fprintf(fp, "%s", command);
-		if (priv->flags & CURSOR_ID) 
-			sprintf(command, "default %s Relative\n", "Mode");
+		fprintf(fp, "%s", "default TopX 0\n");
+		fprintf(fp, "%s", "default TopY 0\n");
+		fprintf(fp, "default BottomX %d\n", priv->common->wcmMaxX);
+		fprintf(fp, "default BottomY %d\n", priv->common->wcmMaxY);
+		if (priv->flags & CURSOR_ID)
+			sprintf(command, "default Mode Relative\n");
 		else
-			sprintf(command, "default %s Absolute\n", "Mode");
-		fprintf(fp, "%s", command);
+			sprintf(command, "default Mode Absolute\n");
+		fprintf(fp, "%s", command);		
+		fprintf(fp, "%s", "default SpeedLevel 5\n");
+		fprintf(fp, "%s", "default ClickForce 6\n");
+		fprintf(fp, "%s", "default Accel 0\n");
 		fclose(fp);
 	}
 	return(Success);
@@ -866,8 +876,9 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 {
 	FILE		*fp = 0;
 	LocalDevicePtr	localDevices = xf86FirstLocalDevice();
+	WacomDevicePtr	priv = (WacomDevicePtr)local->private;
 	char		m1[32], m2[32];			
-	int 		i = 0;
+	int 		i = 0, x = 0, y = 0;
 
 	fp = fopen("/etc/wacom.dat", "w+");
 	if ( fp )
@@ -879,14 +890,39 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 				sscanf((char*)(((WacomDevicePtr)localDevices->private)->
 					common->wcmModel)->name, "%s %s", m1, m2);
 				fprintf(fp, "%s %s %s\n", localDevices->name, m2, 
-				     xf86FindOptionValue(localDevices->options, "Type"));
+					xf86FindOptionValue(localDevices->options, "Type"));
+			}
+			if (((WacomDevicePtr)localDevices->private)->twinview != TV_NONE)
+			{
+				priv = (WacomDevicePtr)localDevices->private;
 			}
 			localDevices = localDevices->next;
 		}
-		for (i = 0; i<screenInfo.numScreens; i++)
+		/* write TwinView ScreenInfo */
+		if (priv->twinview == TV_ABOVE_BELOW)
 		{
-			fprintf(fp, "Screen%d %d %d\n", i, screenInfo.screens[i]->width,
-				screenInfo.screens[i]->height);
+			x = screenInfo.screens[0]->width;
+			y = screenInfo.screens[0]->height/2;
+			fprintf(fp, "Screen0 %d %d %d %d\n", x, y, 0, 0);
+			fprintf(fp, "Screen1 %d %d %d %d\n", x, y, 0, y);
+		}
+		else if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			x = screenInfo.screens[0]->width/2;
+			y = screenInfo.screens[0]->height;
+			fprintf(fp, "Screen0 %d %d %d %d\n", x, y, 0, 0);
+			fprintf(fp, "Screen1 %d %d %d %d\n", x, y, x, 0);
+		}
+		/* write other screen setup info */
+		else
+		{
+			for (i = 0; i<screenInfo.numScreens; i++)
+			{
+				fprintf(fp, "Screen%d %d %d %d %d\n", 
+				i, screenInfo.screens[i]->width,
+				screenInfo.screens[i]->height, x, y);
+				x += screenInfo.screens[i]->width;
+			}
 		}
 		fclose(fp);
 	} 
@@ -905,12 +941,12 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	DBG(3, ErrorF("xf86WcmSwitchMode dev=0x%x mode=%d\n", dev, mode));
 
 	if (mode == Absolute)
-		priv->flags = priv->flags | ABSOLUTE_FLAG;
+		priv->flags |= ABSOLUTE_FLAG;
 	else if (mode == Relative)
-		priv->flags = priv->flags & ~ABSOLUTE_FLAG; 
+		priv->flags &= ~ABSOLUTE_FLAG; 
 	else
 	{
-		DBG(1, ErrorF("xf86WcmSwitchMode dev=0x%x invalid mode=%d\n",
+		DBG(10, ErrorF("xf86WcmSwitchMode dev=0x%x invalid mode=%d\n",
 				dev, mode));
 		return BadMatch;
 	}
@@ -928,7 +964,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 	int* r = (int*)(res+1);
 	int param = r[0], value = r[1];
 
-	DBG(2, ErrorF("xf86WcmChangeControl firstValuator=%d\n",
+	DBG(10, ErrorF("xf86WcmChangeControl firstValuator=%d\n",
 		res->first_valuator));
 	
 	if (control->control != DEVICE_RESOLUTION || !res->num_valuators)
@@ -947,12 +983,12 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		}
 		case 4: /* JEJ - test */
 		{
-			DBG(3,ErrorF("xf86WcmChangeControl: 0x%X,0x%X\n",
+			DBG(10,ErrorF("xf86WcmChangeControl: 0x%X,0x%X\n",
 				param,value));
 			return xf86WcmSetParam(local,param,value);
 		}
 		default:
-			DBG(3,ErrorF("xf86WcmChangeControl invalid "
+			DBG(10,ErrorF("xf86WcmChangeControl invalid "
 				"firstValuator=%d\n",res->first_valuator));
 			return BadMatch;
 	}

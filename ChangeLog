@@ -1,7 +1,12 @@
+2003-08-13    Ping Cheng <pingc@wacom.com>
+	* Added relative movement acceleration
+	* Added Mapping, Tip Feel, and Movement Controls in wacomcpl
+
 2003-07-31    Ping Cheng <pingc@wacom.com>
-	* Added "Left Double Click" and "Ignore Button Event" commands into xsetwacom
-	* Set Mode default values: 	cursor - relative
-					stylus/eraser - absolute
+	* Added "Left Double Click" and "Ignore Button Event" 
+	  commands into xsetwacom
+	* Set Mode default values: cursor - relative
+				   stylus/eraser - absolute
 
 2003-07-24    Ping Cheng <pingc@wacom.com>
 	* Added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
