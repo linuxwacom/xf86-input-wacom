@@ -276,10 +276,20 @@ proc updateScreenList {} {
 }
 
 proc disableButtons {} {
+    global bName
+
+    if { $bName(pressure) == 1 } {
 	.panel.pressure configure -state disabled
+    }
+    if { $bName(calibrate) == 1 } {
 	.panel.calibrate configure -state disabled
+    }
+    if { $bName(button) == 1 } {
 	.panel.button configure -state disabled
+    }
+    if { $bName(mapping) == 1 } {
 	.panel.mapping configure -state disabled
+    }
 }
 
 proc getDeviceOptionProc { dev i } {
@@ -321,7 +331,7 @@ proc updateDevice {} {
 	#
 	wacomxi::bindevent . $device <ButtonPress> ""
 	wacomxi::bindevent . $device <ButtonRelease> ""
-	disableButtons
+#	disableButtons
     }
     
     set device [ .workingDev.list get anchor ]
@@ -337,27 +347,32 @@ proc updateDevice {} {
 	set Option(1) "Mode"
 	getDeviceOptionProc $device 1
 	set mode $getOption($device,Mode)
+	destroy .panel
 	if { ![string compare -nocase -length 6 $model \
 		"cintiq"] && [string compare -nocase \
 		-length 7 $model "CintiqP" ] || 
 		![string compare -nocase -length 5 \
 		$model "isdv4"] } {
-	    if { ![string compare -nocase -length 8 \
-		$mode "absolute"] } {
-		.panel.calibrate configure -state normal
+	    if { ![ string compare $type "stylus" ] } {
+	    	if { ![string compare -nocase -length 8 \
+		    $mode "absolute"] } {
+		    createLPanel
+		}
+	    } else {
+		createEPanel
+	    }
+	} else {
+	    if { [ string compare $type "cursor" ] } {
+		createSPanel
+	    } else {
+		createCPanel
 	    }
 	}
-	if { [ string compare $type "cursor" ] } {
-	    .panel.pressure configure -state normal
-	}
-	.panel.button configure -state normal
-	.panel.mapping configure -state normal
     } else {
 	#
 	# Update the entry indicator
 	#
 	.workingDev.label configure -text $device
-	disableButtons
     }
 }
 
@@ -475,11 +490,17 @@ proc updateButton {} {
     global device getDeviceModel
 
     set type $getDeviceModel($device,type)
+    set model $getDeviceModel($device,model)
     if { ![string compare $type "cursor"] } {
 	set k 6
     }
     if { ![string compare $type "stylus"] } {
-	set k 4
+	if { [string compare -nocase -length 5 \
+		$model "isdv4"] } {
+	    set k 4
+	} else {
+	    set k 3
+	}
     }
     if { ![string compare $type "eraser"] }  {
 	set k 2
@@ -503,8 +524,12 @@ proc updateButton {} {
 	}
 	exec xsetwacom set $device button$i $j 
     }
-    set model $getDeviceModel($device,model)
-    if { [ string compare $model "Cintiq" ] } {
+
+    if { [string compare -nocase -length 6 $model \
+		"cintiq"] && ![string compare -nocase \
+		-length 7 $model "CintiqP" ] || 
+		[string compare -nocase -length 5 \
+		$model "isdv4"] } {
 	set mode [ .subW.f.mode cget -text ]
 	exec xsetwacom set $device mode $mode
     }
@@ -521,21 +546,29 @@ proc initialButton {} {
 
     set Option(1) "Mode"
     set Option(2) "Button1"
+    set model $getDeviceModel($device,model)
     set t 2
     if { [ string compare $type "eraser" ] } {
 	set Option(3) "Button2"
-	set Option(4) "Button3"
-	set t 4
-	if { [ string compare $type "stylus" ] } {
-	    set Option(5) "Button4"
-	    set Option(6) "Button5"
-	    set t 6
+	set t 3
+	if { [string compare -nocase -length \
+		5 $model "isdv4" ] } {
+	    set Option(4) "Button3"
+	    set t 4
+	    if { [ string compare $type "stylus" ] } {
+		set Option(5) "Button4"
+		set Option(6) "Button5"
+		set t 6
+	    }
 	}
     }    
     getDeviceOptionProc $device $t
 
-    set model $getDeviceModel($device,model)
-    if { [ string compare $model "Cintiq" ] } {
+    if { [string compare -nocase -length 6 $model \
+		"cintiq"] || ![string compare -nocase \
+		-length 7 $model "CintiqP" ] && 
+		[string compare -nocase -length 5 \
+		$model "isdv4"] } {
 	set dmode $getOption($device,Mode)
 	label .subW.f.modeL -text "Mode: "
 	tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
@@ -546,12 +579,15 @@ proc initialButton {} {
     addMenu 1
     if { [ string compare $type "eraser" ] } {
 	addMenu 2
-	addMenu 3
-	if { [ string compare $type "stylus" ] } {
-	    addMenu 4
-	    addMenu 5
+	if { [string compare -nocase -length \
+		5 $model "isdv4" ] } {
+	    addMenu 3
+	    if { [ string compare $type "stylus" ] } {
+		addMenu 4
+		addMenu 5
+	    }
 	}
-    }
+    }    
 }
 
 proc displaySubWindow { okF deF initial i} {
@@ -587,29 +623,21 @@ proc closeSubWindow {} {
 }
 
 proc closeTabWindow {} {
-    global workingTags device getOption getDeviceModel
+    global bName workingTags
 
-    bindtags .workingDev.list $workingTags
-    set model $getDeviceModel($device,model)
-    set type $getDeviceModel($device,type)
-    set Option(1) "Mode"
-    getDeviceOptionProc $device 1
-    set mode $getOption($device,Mode)
-    if { ![string compare -nocase -length 6 $model \
-	"cintiq"] && [string compare -nocase \
-	-length 7 $model "CintiqP" ] || 
-	![string compare -nocase -length 5 \
-	$model "isdv4"] } {
-	if { ![string compare -nocase -length 8 \
-		$mode "absolute"] } {
-	    .panel.calibrate configure -state normal
-	}
-    }
-    if { [ string compare $type "cursor" ] } {
+    if { $bName(pressure) == 1 } {
 	.panel.pressure configure -state normal
     }
-    .panel.button configure -state normal
-    .panel.mapping configure -state normal
+    if { $bName(calibrate) == 1 } {
+	.panel.calibrate configure -state normal
+    }
+    if { $bName(button) == 1 } {
+	.panel.button configure -state normal
+    }
+    if { $bName(mapping) == 1 } {
+	.panel.mapping configure -state normal
+    }
+    bindtags .workingDev.list $workingTags
 }
 
 proc defaultButton {} {
@@ -836,6 +864,89 @@ proc defaultTip {} {
     .subW.f.group.scale2 set 6
 }
 
+proc createCPanel {} {
+    global bName
+
+    frame .panel
+    button .panel.button -text "Tool Button" \
+	    -state normal -command "displaySubWindow \
+	    updateButton defaultButton initialButton 2"
+    button .panel.mapping -text "Tracking" \
+	    -state normal -command "displaySubWindow \
+	    updateT defaultT initialT 3"
+    set bName(pressure) 0
+    set bName(button) 1
+    set bName(mapping) 1
+    set bName(calibrate) 0
+    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
+    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
+    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+}
+
+proc createSPanel {} {
+    global bName
+
+    frame .panel
+    button .panel.pressure -text "Feel"\
+	    -state normal -command "displaySubWindow \
+	    updateTip defaultTip initialTip 1"
+    button .panel.button -text "Tool Button" \
+	    -state normal -command "displaySubWindow \
+	    updateButton defaultButton initialButton 2"
+    button .panel.mapping -text "Tracking" \
+	    -state normal -command "displaySubWindow \
+	    updateT defaultT initialT 3"
+    set bName(pressure) 1
+    set bName(button) 1
+    set bName(mapping) 1
+    set bName(calibrate) 0
+    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
+    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
+    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+}
+
+proc createEPanel {} {
+    global bName
+
+    frame .panel
+    button .panel.pressure -text "Feel"\
+	    -state normal -command "displaySubWindow \
+	    updateTip defaultTip initialTip 1"
+    button .panel.button -text "Tool Button" \
+	    -state normal -command "displaySubWindow \
+	    updateButton defaultButton initialButton 2"
+    set bName(pressure) 1
+    set bName(button) 1
+    set bName(mapping) 0
+    set bName(calibrate) 0
+    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
+    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+}
+
+proc createLPanel {} {
+    global bName
+
+    frame .panel
+    button .panel.pressure -text "Feel"\
+	    -state normal -command "displaySubWindow \
+	    updateTip defaultTip initialTip 1"
+    button .panel.calibrate -text "Calibrate" \
+	    -command Calibration -state normal
+    button .panel.button -text "Tool Button" \
+	    -state normal -command "displaySubWindow \
+	    updateButton defaultButton initialButton 2"
+    set bName(pressure) 1
+    set bName(button) 1
+    set bName(mapping) 0
+    set bName(calibrate) 1
+    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
+    grid .panel.calibrate -row 4 -column 0 -columnspan 2 -padx 10
+    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
+    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+}
+
 proc createControls {} {
     global numScreens currentScreen
     global desktopHeight desktopWidth 
@@ -884,28 +995,11 @@ proc createControls {} {
     set dm(1) "Relative"
     set dm(2) "Absolute"
 
-    frame .panel
-    set wName(1) "Pen"
-    button .panel.pressure -text "Pen"\
-	    -state disabled -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1"
-    button .panel.calibrate -text "Calibrate" \
-	    -command Calibration -state disabled
+    set wName(1) "Feel"
     set wName(2) "Tool Button"
-    button .panel.button -text "Tool Button" \
-	    -state disabled -command "displaySubWindow \
-	    updateButton defaultButton initialButton 2"
     set wName(3) "Tracking"
-    button .panel.mapping -text "Tracking" \
-	    -state disabled -command "displaySubWindow \
-	    updateT defaultT initialT 3"
-    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
-    grid .panel.calibrate -row 4 -column 0 -columnspan 2 -padx 10
-    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
-    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
 
-     checkbutton .showHelp -text "Turn Help on" -anchor w \
+    checkbutton .showHelp -text "Turn Help on" -anchor w \
 	    -variable showHelp -state normal
 
     button .exit -text "Exit" -command "exit 0" -padx 40

@@ -410,7 +410,7 @@ static struct input_handle *evdev_connect(struct input_handler *handler, struct 
 			evdev->handle.handler = handler;
 			evdev->handle.private = evdev; /* should already be */
 			evdev->exist = 1;
-			printk(KERN_INFO "evdev: reusing event%d for vendor %d product %d\n", minor, dev->id.vendor, dev->id.product);
+			printk(KERN_INFO "evdev: reusing event%d for vendor/product 0x%x/0x%x\n", minor, dev->id.vendor, dev->id.product);
 			input_open_device(&evdev->handle);
 			wake_up_interruptible(&evdev->wait);
 			return &evdev->handle;

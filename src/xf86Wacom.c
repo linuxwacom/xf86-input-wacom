@@ -953,7 +953,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		else
 			sprintf(command, "default Mode Absolute\n");
 		fprintf(fp, "%s", command);		
-		fprintf(fp, "%default SpeedLevel 5\n");
+		fprintf(fp, "default SpeedLevel 5\n");
 		fprintf(fp, "default DoubleSpeed %d\n", DEFAULT_DOUBLESPEED);
 		fprintf(fp, "default DoubleRadius %d\n", DEFAULT_DOUBLERADIUS);
 		fprintf(fp, "default ClickForce 6\n");
