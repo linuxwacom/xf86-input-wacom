@@ -104,6 +104,11 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->screen_no = -1;        /* associated screen */
 	priv->speed = DEFAULT_SPEED; /* rel. mode speed */
 	priv->accel = 0;	     /* rel. mode acceleration */
+	priv->doubleSpeed = 200;     /* double click delay intervel */
+	priv->oldTime = 0;	     /* time of the first click */
+	priv->doubleRadius = 2;      /* double click effective circle */
+	priv->oldClickX = 0;         /* X position of the first clcik */
+	priv->oldClickY = 0;         /* Y position of the first clcik */
 	for (i=0; i<16; i++)
 		priv->button[i] = i+1; /* button i value */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
@@ -953,7 +958,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * Slightly raised curve might be 0,5,95,100
 	 */
 	s = xf86FindOptionValue(local->options, "PressCurve");
-	if (s)
+	if (s && !IsCursor(priv)) 
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
@@ -1123,6 +1128,18 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (priv->speed != DEFAULT_SPEED)
 		xf86Msg(X_CONFIG, "%s: speed = %.3f\n", dev->identifier,
 			priv->speed);
+
+	priv->doubleSpeed = xf86SetIntOption(local->options, "DoubleSpeed", 
+		DEFAULT_DOUBLESPEED);
+	if (priv->doubleSpeed != DEFAULT_DOUBLESPEED)
+		xf86Msg(X_CONFIG, "%s: double speed = %d\n", dev->identifier,
+			priv->doubleSpeed);
+
+	priv->doubleRadius = xf86SetIntOption(local->options, "DoubleRadius", 
+		DEFAULT_DOUBLERADIUS);
+	if (priv->doubleRadius != DEFAULT_DOUBLERADIUS)
+		xf86Msg(X_CONFIG, "%s: double radius = %d\n", dev->identifier,
+			priv->doubleRadius);
 
 	priv->accel = xf86SetIntOption(local->options, "Accel", 0);
 	if (priv->accel)

@@ -83,9 +83,10 @@
  * 2003-11-10 26-j0.5.23 - support kernel 2.4.22 and user specified tcl/tk src dir
  * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
  * 2003-12-10 26-j0.5.25 - support kernel 2.6
+ * 2003-12-10 26-j0.5.26 - added double click speed and radius
  */
 
-static const char identification[] = "$Identification: 26-j0.5.25 $";
+static const char identification[] = "$Identification: 26-j0.5.26 $";
 
 /****************************************************************************/
 
@@ -746,16 +747,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_PRESSCURVE:
 	    {
-		char chBuf[64];
-		int x0 = (value >> 24) & 0xFF;
-		int y0 = (value >> 16) & 0xFF;
-		int x1 = (value >> 8) & 0xFF;
-		int y1 = value & 0xFF;
-		if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
-		    return BadValue;
-		snprintf(chBuf,sizeof(chBuf),"%d %d %d %d",x0,y0,x1,y1);
-		xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
-		xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
+		if ( !IsCursor(priv) ) 
+		{
+			char chBuf[64];
+			int x0 = (value >> 24) & 0xFF;
+			int y0 = (value >> 16) & 0xFF;
+			int x1 = (value >> 8) & 0xFF;
+			int y1 = value & 0xFF;
+			if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
+			    return BadValue;
+			snprintf(chBuf,sizeof(chBuf),"%d %d %d %d",x0,y0,x1,y1);
+			xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
+			xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
+		}
 		break;
 	    }
 	    case XWACOM_PARAM_MODE:
@@ -777,6 +781,16 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		else priv->speed = ((double)value + 1.00) / 6.00;
 		sprintf(st, "%.3f", priv->speed);
 		xf86AddNewOption(local->options, "Speed", st);
+		break;
+	    case XWACOM_PARAM_DOUBLESPEED:
+		if ((value < 100) || (value > 1000)) return BadValue;
+		priv->doubleSpeed = value;
+		xf86ReplaceIntOption(local->options, "DoubleSpeed", priv->doubleSpeed);
+		break;
+	    case XWACOM_PARAM_DOUBLERADIUS:
+		if ((value < 0) || (value > 25)) return BadValue;
+		priv->doubleRadius = value;
+		xf86ReplaceIntOption(local->options, "DoubleRadius", priv->doubleRadius);
 		break;
 	    case XWACOM_PARAM_ACCEL:
 		if ((value < 0) || (value > MAX_ACCEL-1)) return BadValue;
@@ -910,6 +924,18 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", local->name, value);
 		}
 
+        	s = xf86FindOptionValue(local->options, "DoubleSpeed");
+		if ( s && priv->doubleSpeed != DEFAULT_DOUBLESPEED )
+		{
+			fprintf(fp, "xsetwacom set %s DoubleSpeed %d\n", local->name, s);
+		}
+
+        	s = xf86FindOptionValue(local->options, "DoubleRadius");
+		if ( s && priv->doubleRadius != DEFAULT_DOUBLERADIUS )
+		{
+			fprintf(fp, "xsetwacom set %s DoubleRadius %d\n", local->name, s);
+		}
+
         	s = xf86FindOptionValue(local->options, "Threshold");
 		if ( s )
 		{
@@ -918,8 +944,8 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
 		}
 
-		fprintf(fp, "%s", "default TopX 0\n");
-		fprintf(fp, "%s", "default TopY 0\n");
+		fprintf(fp, "default TopX 0\n");
+		fprintf(fp, "default TopY 0\n");
 		fprintf(fp, "default BottomX %d\n", priv->common->wcmMaxX);
 		fprintf(fp, "default BottomY %d\n", priv->common->wcmMaxY);
 		if (IsCursor(priv))
@@ -927,9 +953,11 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		else
 			sprintf(command, "default Mode Absolute\n");
 		fprintf(fp, "%s", command);		
-		fprintf(fp, "%s", "default SpeedLevel 5\n");
-		fprintf(fp, "%s", "default ClickForce 6\n");
-		fprintf(fp, "%s", "default Accel 0\n");
+		fprintf(fp, "%default SpeedLevel 5\n");
+		fprintf(fp, "default DoubleSpeed %d\n", DEFAULT_DOUBLESPEED);
+		fprintf(fp, "default DoubleRadius %d\n", DEFAULT_DOUBLERADIUS);
+		fprintf(fp, "default ClickForce 6\n");
+		fprintf(fp, "default Accel 0\n");
 		fclose(fp);
 	}
 	return(Success);
@@ -1057,7 +1085,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		}
 		case 4: /* JEJ - test */
 		{
-			DBG(10,ErrorF("xf86WcmChangeControl: 0x%X,0x%X\n",
+			DBG(10,ErrorF("xf86WcmChangeControl: %P,%P\n",
 				param,value));
 			return xf86WcmSetParam(local,param,value);
 		}

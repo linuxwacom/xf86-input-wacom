@@ -1,11 +1,12 @@
 README
-November 24, 2002
+December 15, 2003
 
 This package is not currently sanctioned by the original driver developers
 although several attempts to contact them have been made.  Hopefully, this
 work will be rolled back into the main development trees.  Until that time,
 I will be taking responsibility for this code.  If you have any questions,
-comments, problems, patches, or complaints, send them to jej@j-arkadia.com.
+comments, problems, patches, or complaints, send them to jej@j-arkadia.com 
+or pingc@wacom.com.
 Please include the word WACOM in the subject to help me differentiate your
 email from the spam I usually receive.
 
@@ -38,12 +39,15 @@ CONFIGURE OPTIONS:
 
 This file contains hints for building the sources.  There are a number of
 build targets, some of which are not built automatically.  Here is the
-breakdown.
+breakdown (input.o is only for kernel 2.4).
 
       wacom.o: not built by default (--enable-wacom, --disable-wacom)
       wacdump: built by default (--enable-wacdump, --disable-wacdump)
         hid.o: not built by default (--enable-hid, --disable-hid)
+      evdev.o: not built by default (--enable-evdev, --disable-evdev)
+   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev)
    usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse)
+      input.o: not built by default (--enable-input, --disable-input)
   wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
 BUILDING:
@@ -94,6 +98,21 @@ Then the correct configure options would be:
 INSTALL wacomcpl 
 
 wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed.
+
+INSTALL kernel pieces
+
+for kernel 2.4: 
+    [root@haku linuxwacom-dev] # cp src/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
+    [root@haku linuxwacom-dev] # cp src/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
+    [root@haku linuxwacom-dev] # cp src/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
+    [root@haku linuxwacom-dev] # cp src/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
+    [root@haku linuxwacom-dev] # cp src/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
+
+for kernel 2.6
+    [root@haku linuxwacom-dev] # cd kernel_src_dir
+    [root@haku linuxwacom-dev] # make install
+    [root@haku linuxwacom-dev] # make modules_install
 
 ==============================================================================
 

@@ -181,6 +181,8 @@
  * General Defines
  ****************************************************************************/
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
+#define DEFAULT_DOUBLESPEED 200 /* default double click speed */
+#define DEFAULT_DOUBLERADIUS 2  /* default double click radius */
 #define MAX_ACCEL 7             /* number of acceleration levels */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
 #define MAX_SUPPRESS 6          /* max value of suppress */
@@ -353,6 +355,11 @@ struct _WacomDeviceRec
 	int currentScreen;      /* current screen in display */
 	tvMode twinview;	/* using twinview mode of gfx card */
 	int tvResolution[4];	/* twinview screens' resultion */
+	int doubleSpeed;	/* double click delay intervel */
+	int oldTime;		/* time of the first click */
+	int doubleRadius;	/* double click effective circle */
+	int oldClickX;		/* X position of the first clcik */
+	int oldClickY;		/* Y position of the first clcik */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */

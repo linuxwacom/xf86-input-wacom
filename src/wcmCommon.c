@@ -214,6 +214,30 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			}
 			if (newb < 17)
 			{
+				if ( newb == 1 )
+				{
+					/* deal with double click delays */
+					long sec, usec;
+					if ( !priv->oldTime && (buttons & mask) )
+					{
+						xf86getsecs(&sec, &usec);
+						priv->oldTime = (sec * 1000) + (usec / 1000);
+						priv->oldClickX = rx;
+						priv->oldClickY = ry;
+					}
+					else if (buttons & mask)
+					{
+						priv->oldTime = 0;
+						xf86getsecs(&sec, &usec);
+						if ( ((sec * 1000) + (usec / 1000) - 
+							priv->oldTime > priv->doubleSpeed ) ||
+							( priv->oldClickX * priv->oldClickX + 
+							priv->oldClickY * priv->oldClickY >
+							priv->doubleRadius) )
+						continue;
+					}
+				}
+
 				if (IsCursor(priv))
 					xf86PostButtonEvent(local->dev, is_absolute,
 						newb, (buttons & mask) != 0,
@@ -374,14 +398,17 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		rth = throttle - priv->oldThrottle;
 		rw = wheel - priv->oldWheel;
 	}
+DBG(6, ErrorF("xf86WcmSetScreen calling\n"));
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
 	xf86WcmSetScreen(local, &rx, &ry);
 
+DBG(6, ErrorF("xf86WcmSetScreen back\n"));
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
+		long sec, usec;
 		if (!priv->oldProximity)
 		{
 			if (IsCursor(priv))
@@ -395,6 +422,29 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					rx, ry, rz, rtx, rty,
 					rw);
 		}
+
+		/* deal with double click delays */
+		xf86getsecs(&sec, &usec);
+		if ( (sec * 1000) + (usec / 1000) - 
+				priv->oldTime > priv->doubleSpeed ) 
+			priv->oldTime = 0;
+
+		if ( priv->oldTime ) {
+			if ( (priv->oldClickX - rx ) * (priv->oldClickX - rx ) + 
+				(priv->oldClickY - ry ) * (priv->oldClickY - ry ) >
+				priv->doubleRadius * priv->doubleRadius )
+				priv->oldTime = 0;
+		}
+
+		/* don't move cursor if we are expecting a double click */
+		if (priv->oldTime)
+		{
+			rx = priv->oldClickX;
+			ry = priv->oldClickY;
+		}
+
+DBG(6, ErrorF("calling xf86PostMotionEvent\n"));
+
 		if(!(priv->flags & BUTTONS_ONLY_FLAG))
 		{
 			if (IsCursor(priv))
@@ -405,6 +455,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				xf86PostMotionEvent(local->dev,
 					is_absolute, 0, 6, rx, ry, rz,
 					rtx, rty, rw);
+		}
+DBG(6, ErrorF("calling xf86WcmSendButtons\n"));
+
+		if (priv->oldButtons != buttons)
+		{
+			xf86WcmSendButtons (local, buttons, rx, ry, rz,
+					rtx, rty, rrot, rth, rw);
 		}
 
 		/* simulate button 4 and 5 for relative wheel */
@@ -423,12 +480,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					fakeButton, 0, 0, 6, rx, ry, rz, 
 					rrot, rth, rw);
 			}
-		}
-
-		if (priv->oldButtons != buttons)
-		{
-			xf86WcmSendButtons (local, buttons, rx, ry, rz,
-					rtx, rty, rrot, rth, rw);
 		}
 	}
 
@@ -610,7 +661,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = GetTimeInMillis();
 
-	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=0x%X x=%d y=%d b=0x%X "
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%P x=%d y=%d b=%P "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,

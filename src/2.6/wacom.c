@@ -1,3 +1,4 @@
+
 /*
  *  USB Wacom Graphire and Wacom Intuos tablet support
  *
@@ -526,6 +527,8 @@ struct wacom_features wacom_features[] = {
         { "Wacom Graphire",      8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
 	{ "Wacom Graphire2 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
  	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 32, 1, wacom_graphire_irq },
+        { "Wacom Graphire3 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
+        { "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, 1, wacom_graphire_irq },
   	{ "Wacom Intuos 4x5",   10,  12700, 10360, 1023, 15, 2, wacom_intuos_irq },
  	{ "Wacom Intuos 6x8",   10,  20600, 16450, 1023, 15, 2, wacom_intuos_irq },
  	{ "Wacom Intuos 9x12",  10,  30670, 24130, 1023, 15, 2, wacom_intuos_irq },
@@ -542,16 +545,14 @@ struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos2 9x12",  10, 30670, 24130, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 12x12", 10, 30670, 31040, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 12x18", 10, 45860, 31040, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Intuos2 6x8",   10, 20600, 16450, 1023, 15, 2, wacom_intuos_irq },
         { "Wacom Volito",        8,  10206,  5104, 3712, 32, 1, wacom_graphire_irq },
-        { "Wacom Graphire3 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
-        { "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, 1, wacom_graphire_irq },
         { "Wacom Cintiq Partner",8,  20480, 15360,  511, 32, 3, wacom_ptu_irq },
  	{ }
 };
 
 struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x00) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x10) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x11) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x12) },
@@ -575,6 +576,7 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x45) },
         { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x60) },
+        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
 	{ }
 };
 

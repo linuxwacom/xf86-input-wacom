@@ -142,17 +142,29 @@ struct _PARAMINFO
 			0, 1, BOOLEAN_VALUE, 1 },	
 
 		{ "Mode",
-			"Switches cursor movement mode (default is absolute mode)",
+			"Switches cursor movement mode (default is absolute)",
 			XWACOM_PARAM_MODE,
 			VALUE_OPTIONAL, RANGE, 
 			0, 1, BOOLEAN_VALUE, 1 },	
 
 		{ "SpeedLevel",
-			"Sets relative cursor movement speed "
-			"(default is 5)",
+			"Sets relative cursor movement speed (default is 5)",
 			XWACOM_PARAM_SPEEDLEVEL,
 			VALUE_OPTIONAL, RANGE, 
 			0, 10, SINGLE_VALUE, 5 },	
+
+		{ "DoubleSpeed",
+			"Sets double click delay interval (default is 200 ms)",
+			XWACOM_PARAM_DOUBLESPEED,
+			VALUE_OPTIONAL, RANGE, 
+			100, 1000, SINGLE_VALUE, 200 },	
+
+		{ "DoubleRadius",
+			"Sets double click effective circle radius "
+			"(default is 2 pixels)",
+			XWACOM_PARAM_DOUBLESPEED,
+			VALUE_OPTIONAL, RANGE, 
+			0, 25, SINGLE_VALUE, 2 },	
 
 		{ "ClickForce",
 			"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100"
@@ -166,8 +178,8 @@ struct _PARAMINFO
 			"(default is 0)",
 			XWACOM_PARAM_ACCEL,
 			VALUE_OPTIONAL, RANGE, 
-			0, 6, SINGLE_VALUE, 0 },	
-
+			0, 6, SINGLE_VALUE, 0 },
+	
 		{ "xyDefault",
 			"Resets the bounding coordinates to default in tablet units",
 			XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
