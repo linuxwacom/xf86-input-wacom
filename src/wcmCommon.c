@@ -39,7 +39,9 @@
  * Static functions
  ****************************************************************************/
  
-static int filterPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+static void commonDispatchDevice(WacomCommonPtr common,
+	const WacomChannelPtr pChannel);
  
 /*****************************************************************************
  * xf86WcmSetScreen --
@@ -329,6 +331,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 						is_absolute, 0, 6, rx, ry, rz,
 						rtx, rty, rwheel);
 			}
+
+			/* JEJ - This should be done up stream; also, it
+			 * fails to take into account that rwheel is
+			 * generally an absolute value. */
+#if 0
 			/* simulate button 4 and 5 */
 			if (rwheel && (priv->flags & FAKE_MOUSEWHEEL_FLAG))
 			{
@@ -342,6 +349,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					fakeButton, 0, 0, 6, rx, ry, rz, rrot,
 					rthrottle, rwheel);
 			}
+#endif
 			if (priv->oldButtons != buttons)
 			{
 				xf86WcmSendButtons (local, buttons, rx, ry, rz,
@@ -608,54 +616,94 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 
 /*****************************************************************************
  * xf86WcmEvent -
- *   Handles suppression, filtering, and event dispatch.
+ *   Handles suppression, transformation, filtering, and event dispatch.
  ****************************************************************************/
 
 void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
-	WacomDeviceState* ds)
+	const WacomDeviceState* pState)
 {
-	WacomDeviceState* pOrigState;
-	LocalDevicePtr pOrigDev;
-	LocalDevicePtr pDev = NULL;
-	WacomDevicePtr priv;
-	int id, idx;
+	WacomDeviceState* pLast;
+	WacomDeviceState ds;
+	WacomChannelPtr pChannel;
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
 		return;
+	
+	pChannel = common->wcmChannel + channel;
+	pLast = &pChannel->valid.state;
 
-	pOrigState = &common->wcmChannel[channel].state;
-	pOrigDev = common->wcmChannel[channel].pDev;
+	/* we must copy the state because certain types of filtering
+	 * will need to change the values (ie. for error correction) */
+	ds = *pState;
 
 	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=0x%X "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d\n",
 		channel,
-		ds->device_id,
-		ds->device_type,
-		ds->serial_num,
-		ds->x, ds->y, ds->buttons,
-		ds->pressure, ds->rotation, ds->tiltx,
-		ds->tilty, ds->abswheel, ds->relwheel, ds->throttle,
-		ds->discard_first, ds->proximity));
+		ds.device_id,
+		ds.device_type,
+		ds.serial_num,
+		ds.x, ds.y, ds.buttons,
+		ds.pressure, ds.rotation, ds.tiltx,
+		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
+		ds.discard_first, ds.proximity));
 
-	/* Check suppression */
-	if (xf86WcmSuppress(common->wcmSuppress, pOrigState, ds))
+	/* Discard unwanted data */
+	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
 	{
 		DBG(10, ErrorF("Suppressing data according to filter\n"));
 
 		/* If throttle is not in use, discard data. */
-		if (ABS(ds->throttle) < common->wcmSuppress) return;
+		if (ABS(ds.throttle) < common->wcmSuppress) return;
 
 		/* Otherwise, we need this event for time-rate-of-change
 		 * values like the throttle-to-relative-wheel filter.
 		 * To eliminate position change events, we reset all values
 		 * to last unsuppressed position. */
 
-		*ds = *pOrigState;
+		ds = *pLast;
+		RESET_RELATIVE(ds);
 	}
 
-	/* pre-filtering which may effect the device
-	 * to which the event will be dispatched*/
+	DBG(11, ErrorF("filter %d, %p\n",RAW_FILTERING(common),
+		common->wcmModel->FilterRaw));
+
+	/* Filter raw data, fix hardware defects, perform error correction */
+	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
+	{
+		if (common->wcmModel->FilterRaw(common,pChannel,&ds))
+		{
+			DBG(10, ErrorF("Raw filtering discarded data.\n"));
+			return; /* discard */
+		}
+	}
+
+	/* JEJ - Do not move this code without discussing it with me.
+	 * The device state is invariant of any filtering performed below.
+	 * Changing the device state after this point can and will cause
+	 * a feedback loop resulting in oscillations, error amplification,
+	 * unnecessary quantization, and other annoying effects. */
+
+	/* save channel device state and device to which last event went */
+	memmove(pChannel->valid.states + 1,
+		pChannel->valid.states,
+		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
+	pChannel->valid.state = ds; /*save last raw sample */
+
+	commonDispatchDevice(common,pChannel);
+}
+
+static void commonDispatchDevice(WacomCommonPtr common,
+	const WacomChannelPtr pChannel)
+{
+	int id, idx;
+	WacomDevicePtr priv;
+	LocalDevicePtr pDev = NULL;
+	LocalDevicePtr pLastDev = pChannel->pDev;
+	WacomDeviceState* ds = &pChannel->valid.states[0];
+	WacomDeviceState* pLast = &pChannel->valid.states[1];
+
+	DBG(10, ErrorF("commonDispatchEvents\n"));
 
 	/* Find the device the current events are meant for */
 	for (idx=0; idx<common->wcmNumDevices; idx++)
@@ -683,24 +731,32 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
+	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",pDev,pLastDev));
+
 	/* if the logical device of the same physical tool has changed,
 	 * send proximity out to the previous one */
-	if (pOrigDev && (pOrigDev != pDev) &&
-		(pOrigState->serial_num == ds->serial_num))
+	if (pLastDev && (pLastDev != pDev) &&
+		(pLast->serial_num == ds->serial_num))
 	{
-		pOrigState->proximity = 0;
-		xf86WcmSendEvents(pOrigDev, pOrigState);
+		pLast->proximity = 0;
+		xf86WcmSendEvents(pLastDev, pLast);
 	}
 
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */
 	if (pDev)
 	{
-		WacomDeviceState filtered = *ds;
+		WacomDeviceState filtered = pChannel->valid.state;
 		WacomDevicePtr priv = pDev->private;
 
-		/* if pressure filter is enabled, invoke */
-		if (filterPressureCurve(priv,&filtered) < 0) return;
+		/* Device transformations come first */
+
+		/* transform pressure */
+		transPressureCurve(priv,&filtered);
+
+		/* User-requested filtering comes next */
+
+		/* User-requested transformations come last */
 
 		#if 0
 
@@ -745,21 +801,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		/* YHJ - If we enable the filter, I think we should store
-		 * filtered values back to ds as the filter is supposed to deal
-		 * with hardware defects. */
-
-		/* JEJ - I would tend to agree.  My concern is that by losing
-		 * the original "bad" value, it will be difficult to determine
-		 * whether the next value is also bad.  It's possible that the
-		 * filter will walk the point across the screen, ie. each
-		 * successive call to the filter returns a pointer to the left
-		 * or right of the previous value.  The suppression filter
-		 * could be confused by this.  I think that it would be useful
-		 * to try both and see what happens.  Also, a filter that
-		 * could simulate certain types of hardware noise might be
-		 * useful for testing this code. */
-
 		#if 0
 		/* Intuos filter */
 		if (priv->flags & ABSOLUTE_FLAG)
@@ -781,16 +822,100 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 				ds->device_type, ds->serial_num));
 	}
 
-	/* save channel device state and device to which last event went */
-	common->wcmChannel[channel].state = *ds;
-	common->wcmChannel[channel].pDev = pDev;
+	/* save the last device */
+	pChannel->pDev = pDev;
 }
 
 /*****************************************************************************
-** Filters
+ * xf86WcmInitTablet -- common initialization for all tablets
+ ****************************************************************************/
+
+int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
+	int fd, const char* id, float version)
+{
+	/* Initialize the tablet */
+	model->Initialize(common,fd,id,version);
+
+	/* Get tablet resolution */
+	if (model->GetResolution)
+		model->GetResolution(common,fd);
+
+	/* Get tablet range */
+	if (model->GetRanges && (model->GetRanges(common,fd) != Success))
+		return !Success;
+	
+	/* Default threshold value if not set */
+	if (common->wcmThreshold <= 0)
+	{
+		/* Threshold for counting pressure as a button */
+		common->wcmThreshold = common->wcmMaxZ / 32;
+		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
+			XCONFIG_PROBED, common->wcmThreshold);
+	}
+
+	/* Reset tablet to known state */
+	if (model->Reset && (model->Reset(common,fd) != Success))
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		return !Success;
+	}
+
+	/* Enable tilt mode, if requested and available */
+	if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
+	{
+		if (model->EnableTilt(common,fd) != Success)
+			return !Success;
+	}
+
+	/* Enable hardware suppress, if requested and available */
+	if ((common->wcmSuppress != 0) && model->EnableSuppress)
+	{
+		if (model->EnableSuppress(common,fd) != Success)
+			return !Success;
+	}
+
+	/* change the serial speed, if requested */
+	if (common->wcmLinkSpeed != 9600)
+	{
+		if (model->SetLinkSpeed)
+		{
+			if (model->SetLinkSpeed(common,fd) != Success)
+				return !Success;
+		}
+		else
+		{
+			ErrorF("Tablet does not support setting link "
+				"speed, or not yet implemented\n");
+		}
+	}
+
+	/* output tablet state as probed */
+	if (xf86Verbose)
+		ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+			"resX=%d resY=%d suppress=%d tilt=%s\n",
+			XCONFIG_PROBED,
+			model->name, common->wcmLinkSpeed,
+			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
+			common->wcmResolX, common->wcmResolY,
+			common->wcmSuppress,
+			HANDLE_TILT(common) ? "enabled" : "disabled");
+  
+	/* start the tablet data */
+	if (model->Start && (model->Start(common,fd) != Success))
+		return !Success;
+
+	/*set the model */
+	common->wcmModel = model;
+
+	return Success;
+}
+
+
+/*****************************************************************************
+** Transformations
 *****************************************************************************/
 
-static int filterPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
+static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 {
 	if (pDev->pPressCurve)
 	{
@@ -810,6 +935,4 @@ static int filterPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 		pState->pressure = (p * pDev->common->wcmMaxZ) /
 			FILTER_PRESSURE_RES;
 	}
-
-	return 0; /* data is good */
 }

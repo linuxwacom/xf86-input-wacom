@@ -286,7 +286,9 @@ struct _WacomModel
 	int (*EnableSuppress)(WacomCommonPtr common, int fd);
 	int (*SetLinkSpeed)(WacomCommonPtr common, int fd);
 	int (*Start)(WacomCommonPtr common, int fd);
-	void (*Parse)(WacomCommonPtr common);
+	int (*Parse)(WacomCommonPtr common, const unsigned char* data);
+	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
+		WacomDeviceStatePtr ds);
 };
 
 /******************************************************************************
@@ -365,6 +367,8 @@ struct _WacomDeviceRec
  * WacomDeviceState
  *****************************************************************************/
 
+#define MAX_SAMPLES 4
+
 #define PEN(ds)         ((((ds)->device_id) & 0x07ff) == 0x0022 || \
                          (((ds)->device_id) & 0x07ff) == 0x0042 || \
                          (((ds)->device_id) & 0x07ff) == 0x0052)
@@ -402,14 +406,29 @@ struct _WacomDeviceState
 	int throttle;
 	int discard_first;
 	int proximity;
-	WacomFilterState x_filter;
-	WacomFilterState y_filter;
+/*	WacomFilterState x_filter;
+	WacomFilterState y_filter; */
 };
 
 struct _WacomChannel
 {
-	WacomDeviceState state;
-	LocalDevicePtr pDev;
+	/* data stored in this structure is raw data from the tablet, prior
+	 * to transformation and user-defined filtering. Suppressed values
+	 * will not be included here, and hardware filtering may occur between
+	 * the work stage and the valid state. */
+
+	WacomDeviceState work;                         /* next state */
+
+	/* the following union contains the current known state of the
+	 * device channel, as well as the previous MAX_SAMPLES states
+	 * for use in detecting hardware defects, jitter, trends, etc. */
+	union
+	{
+		WacomDeviceState state;                /* current state */
+		WacomDeviceState states[MAX_SAMPLES];  /* states 0..MAX */
+	} valid;
+
+	LocalDevicePtr pDev;    /* device associated with this channel */
 };
 
 /******************************************************************************
@@ -436,6 +455,7 @@ struct _WacomDeviceClass
 
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
+#define RAW_FILTERING_FLAG      4
 
 #define DEVICE_ISDV4 0x000C
 
@@ -444,7 +464,7 @@ struct _WacomDeviceClass
 #define ROTATE_CCW 2
 
 #define MAX_CHANNELS 2
-#define MAX_USB_EVENTS 11
+#define MAX_USB_EVENTS 32
 
 struct _WacomCommonRec 
 {
@@ -470,18 +490,13 @@ struct _WacomCommonRec
 
 	LocalDevicePtr* wcmDevices;  /* array of devices sharing same port */
 	int wcmNumDevices;           /* number of devices */
-	int wcmIndex;                /* number of bytes/events read */
 	int wcmPktLength;            /* length of a packet */
-	unsigned char wcmData[9];    /* data read on the device */
-	Bool wcmHasEraser;           /* True if eraser has been configured */
-	Bool wcmStylusSide;          /* eraser or stylus ? */
-	Bool wcmStylusProximity;     /* the stylus is in proximity ? */
 	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
 	float wcmVersion;            /* ROM version */
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
-	char wcmModelName[32];       /* tablet model name */
+	int wcmChannelCnt;           /* number of channels available */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	int wcmInitNumber;           /* magic number for the init phasis */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
@@ -489,15 +504,17 @@ struct _WacomCommonRec
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
 
-	void (*Parse)(WacomCommonPtr common);    /* parses packet data */
+	int bufpos;                        /* position with buffer */
+	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
 
-#ifdef LINUX_INPUT
-	/* data used by USB driver */
-	struct input_event  wcmEvent[MAX_USB_EVENTS];
+#if LINUX_INPUT
+	int wcmEventCnt;
+	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
 #endif
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
+#define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
 
 /*****************************************************************************
  * XFree86 V4 Inlined Functions and Prototypes
@@ -543,8 +560,10 @@ int xf86WcmSetSerialSpeed(int fd, int rate);
  ****************************************************************************/
 
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
+#define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 int xf86WcmWait(int t);
+int xf86WcmReady(int fd);
 
 LocalDevicePtr xf86WcmAllocate(char* name, int flag);
 LocalDevicePtr xf86WcmAllocateStylus(void);
@@ -553,9 +572,16 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 
+	int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
+		int fd, const char* id, float version);
+	/* common tablet initialization regime */
+
+	void xf86WcmReadPacket(LocalDevicePtr local);
+	/* standard packet handler */
+
 	void xf86WcmEvent(WacomCommonPtr common,
-		unsigned int channel, WacomDeviceState* ds);
-	/* handles suppression, filtering, and dispatch */
+		unsigned int channel, const WacomDeviceState* ds);
+	/* handles suppression, filtering, and dispatch. */
 
 	void xf86WcmSendEvents(LocalDevicePtr local,
 		const WacomDeviceState* ds);

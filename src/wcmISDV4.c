@@ -24,22 +24,39 @@
 #include "xf86Wacom.h"
 #include "wcmSerial.h"
 
-static Bool xf86WcmISDV4Detect(LocalDevicePtr);
-static Bool xf86WcmISDV4Init(LocalDevicePtr);
-static void xf86WcmISDV4Read(LocalDevicePtr);
+static Bool isdv4Detect(LocalDevicePtr);
+static Bool isdv4Init(LocalDevicePtr);
+static void isdv4InitISDV4(WacomCommonPtr common, int fd, const char* id,
+	float version);
+static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
-		xf86WcmISDV4Detect,
-		xf86WcmISDV4Init,
-		xf86WcmISDV4Read,
+		isdv4Detect,
+		isdv4Init,
+		xf86WcmReadPacket,
+	};
+
+	static WacomModel isdv4General =
+	{
+		"General ISDV4",
+		isdv4InitISDV4,
+		NULL,                 /* resolution not queried */
+		NULL,                 /* ranges not queried */
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		isdv4Parse,
+		NULL,                 /* input filtering not needed */
 	};
 
 /*****************************************************************************
- * xf86WcmISDV4Detect -- Test if the attached device is ISDV4.
+ * isdv4Detect -- Test if the attached device is ISDV4.
  ****************************************************************************/
 
-static Bool xf86WcmISDV4Detect(LocalDevicePtr local)
+static Bool isdv4Detect(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
@@ -47,10 +64,10 @@ static Bool xf86WcmISDV4Detect(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmISDV4Init --
+ * isdv4Init --
  ****************************************************************************/
 
-static Bool xf86WcmISDV4Init(LocalDevicePtr local)
+static Bool isdv4Init(LocalDevicePtr local)
 {
 	int err;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -119,6 +136,17 @@ static Bool xf86WcmISDV4Init(LocalDevicePtr local)
 	xf86WcmFlushTablet(local->fd);
 
 	DBG(2, ErrorF("not reading model -- Wacom TabletPC ISD V4\n"));
+	return xf86WcmInitTablet(common,&isdv4General,local->fd,"unknown",0.0);
+}
+
+/*****************************************************************************
+ * isdv4InitISDV4 -- Setup the device
+ ****************************************************************************/
+
+static void isdv4InitISDV4(WacomCommonPtr common, int fd,
+	const char* id, float version)
+{
+	DBG(2, ErrorF("initializing as ISDV4 model\n"));
   
 	/* set parameters */
 	common->wcmProtocolLevel = 0;
@@ -137,219 +165,70 @@ static Bool xf86WcmISDV4Init(LocalDevicePtr local)
 		common->wcmMaxX = 15900;
 		common->wcmMaxY = 21136;
 	}
-
-	/* Default threshold value if not set */
-	if (common->wcmThreshold <= 0)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = common->wcmMaxZ / 32;
-		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
-			XCONFIG_PROBED, common->wcmThreshold);
-	}
-
-
-	DBG(2, ErrorF("setup is max X=%d max Y=%d resol X=%d resol Y=%d\n",
-		  common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
-		  common->wcmResolY));
-
-	/* suppress is not currently implemented for this device --
-	if (common->wcmSuppress < 0)
-	{
-		int xratio = common->wcmMaxX/screenInfo.screens[0]->width;
-		int yratio = common->wcmMaxY/screenInfo.screens[0]->height;
-		common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
-	}
-    
-	if (common->wcmSuppress > 100)
-		common->wcmSuppress = 99;
-	*/
-
-	if (xf86Verbose)
-		ErrorF("%s Wacom %s tablet maximum X=%d maximum Y=%d "
-			"X resolution=%d Y resolution=%d suppress=%d%s\n",
-			XCONFIG_PROBED, "ISDV4",
-			common->wcmMaxX, common->wcmMaxY,
-			common->wcmResolX, common->wcmResolY,
-			common->wcmSuppress,
-			HANDLE_TILT(common) ? " Tilt" : "");
-  
-	if (err == -1)
-	{
-		SYSCALL(xf86WcmClose(local->fd));
-		local->fd = -1;
-		return !Success;
-	}
-
-	return Success;
 }
 
-/*****************************************************************************
- * xf86WcmISDV4Read -- Read the new events from the device, and enqueue them.
- ****************************************************************************/
-
-static void xf86WcmISDV4Read(LocalDevicePtr local)
+static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common = priv->common;
-	int len, loop, idx;
-	int is_stylus = 1, is_button, is_proximity;
-	int x, y, z, tmp_coord, buttons, tx = 0, ty = 0;
-	unsigned char buffer[BUFFER_SIZE];
-  
-	DBG(7, ErrorF("xf86WcmISDV4Read BEGIN device=%s fd=%d\n",
-			common->wcmDevice, local->fd));
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	WacomDeviceState* ds;
+	int n, is_stylus, cur_type, tmp_coord;
 
-	SYSCALL(len = xf86WcmRead(local->fd, buffer, sizeof(buffer)));
+	if ((n = xf86WcmSerialValidate(common,data)) > 0)
+		return n;
 
-	if (len <= 0)
+	/* pick up where we left off, minus relative values */
+	ds = &common->wcmChannel[0].work;
+	RESET_RELATIVE(*ds);
+
+	ds->proximity = (data[0] & 0x20);
+
+	/* x and y in "normal" orientetion (wide length is X) */
+	ds->x = (((int)data[6] & 0x60) >> 5) | ((int)data[2] << 2) |
+		((int)data[1] << 9);
+	ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
+		((int)data[3] << 9);
+
+	/* rotation mixes x and y up a bit */
+	if (common->wcmRotate == ROTATE_CW)
 	{
-		ErrorF("Error reading wacom device : %s\n", strerror(errno));
-		return;
+		tmp_coord = ds->x;
+		ds->x = ds->y;
+		ds->y = common->wcmMaxY - tmp_coord;
 	}
-	DBG(10, ErrorF("xf86WcmISDV4Read read %d bytes\n", len));
-
-	/* check high bits */
-	for(loop=0; loop<len; loop++)
+	else if (common->wcmRotate == ROTATE_CCW)
 	{
-		/* check high bit in leading byte */
-		if ((common->wcmIndex == 0) && !(buffer[loop] & HEADER_BIT))
-		{
-			DBG(6, ErrorF("xf86WcmISDV4Read bad magic "
-					"number 0x%x (pktlength=%d) %d\n",
-					buffer[loop], common->wcmPktLength,
-					loop));
-			continue;
+		tmp_coord = ds->y;
+		ds->y = ds->x;
+		ds->x = common->wcmMaxX - tmp_coord;
+	}
 
-		}
+	/* pressure */
+	ds->pressure = ((data[6] & 0x01) << 7) | (data[5] & 0x7F);
 
-		/* check high bit in trailing bytes */
-		else if ((common->wcmIndex != 0) && (buffer[loop] & HEADER_BIT))
-		{
-			DBG(6, ErrorF("xf86WcmISDV4Read magic "
-					"number 0x%x detetected at index %d "
-					"loop=%d\n", (unsigned int)buffer[loop],
-					common->wcmIndex, loop));
-			common->wcmIndex = 0;
-		}
-	
-	
-		common->wcmData[common->wcmIndex++] = buffer[loop];
+	/* report touch as button 1 */
+	ds->buttons = (data[0] & 0x01) ? 1 : 0 ;
 
-		if (common->wcmIndex == common->wcmPktLength)
-		{
-			/* we have a full packet */
+	/* report side switch as button 3 */
+	ds->buttons |= (data[0] & 0x02) ? 0x04 : 0 ;
 
-			is_proximity = (common->wcmData[0] & 0x20);
+	/* check which device we have */
+	is_stylus = (data[0] & 0x04) ? 0 : 1;
+	cur_type = is_stylus ? STYLUS_ID : CURSOR_ID;
 
-			/* reset char count for next read */
-			common->wcmIndex = 0;
+	/* first time into prox */
+	if (!last->proximity && ds->proximity) 
+		ds->device_type = cur_type;
 
-			/* x and y in "normal" orientetion (wide length is X) */
-			x = (((int)common->wcmData[6] & 0x60) >> 5) |
-				((int)common->wcmData[2] << 2) |
-				((int)common->wcmData[1] << 9);
-			y = (((int)common->wcmData[6] & 0x18) >> 3) |
-				((int)common->wcmData[4] << 2) |
-				((int)common->wcmData[3] << 9);
+	/* out of prox */
+	else if (!ds->proximity)
+		memset(ds,0,sizeof(*ds));
 
-			/* rotation mixes x and y up a bit */
-			if (common->wcmRotate == ROTATE_CW)
-			{
-				tmp_coord = x;
-				x = y;
-				y = common->wcmMaxY - tmp_coord;
-			}
-			else if (common->wcmRotate == ROTATE_CCW)
-			{
-				tmp_coord = y;
-				y = x;
-				x = common->wcmMaxX - tmp_coord;
-			}
+	DBG(8, ErrorF("isdv4Parse %s\n",
+		ds->device_type == ERASER_ID ? "ERASER " :
+		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 
+	xf86WcmEvent(common,0,ds);
 
-			/* check which device we have */
-			is_stylus = (common->wcmData[0] & 0x04) ? 0 : 1;
-
-			/* pressure */
-			z = ((common->wcmData[6] & 0x01) << 7) |
-				(common->wcmData[5] & 0x7F);
-
-			/* report touch as button 1 */
-			buttons = (common->wcmData[0] & 0x01) ? 1 : 0 ;
-
-			/* report side switch as button 3 */
-			buttons |= (common->wcmData[0] & 0x02) ? 0x04 : 0 ;
-
-			is_button = (buttons != 0);
-	    
-			/* save if we have stylus or eraser for
-			 * future proximity out */
-			common->wcmStylusSide = is_stylus ? 1 : 0;
-
-			DBG(8, ErrorF("xf86WcmISDV4Read %s side\n",
-					common->wcmStylusSide ?
-					"stylus" : "eraser"));
-			common->wcmStylusProximity = is_proximity;
-
-			/* figure out which device(s) to impersonate and send */
-			for(idx=0; idx<common->wcmNumDevices; idx++)
-			{
-				LocalDevicePtr local_dev =
-					common->wcmDevices[idx];
-				WacomDevicePtr priv = (WacomDevicePtr)
-					local_dev->private;
-				int curDevice;
-			
-				DBG(7, ErrorF("xf86WcmISDV4Read trying to "
-					"send to %s\n",local_dev->name));
-
-				if (is_proximity)
-				{
-					/* stylus and eraser are
-					 * distingushable in proximity report
-					 * as eraser if we have one,
-					 * otherwise as stylus */
-
-					if (!is_stylus && common->wcmHasEraser)
-						curDevice = ERASER_ID;
-					else
-						curDevice = STYLUS_ID;
-				}
-				else
-				{
-					/* eraser bit not set when out
-					 * of proximity, check */
-					curDevice = (common->wcmHasEraser &&
-						(!common->wcmStylusSide)) ?
-						ERASER_ID : STYLUS_ID;
-				}
-
-				if (DEVICE_ID(priv->flags) != curDevice)
-					continue;
-				
-				DBG(10, ErrorF((DEVICE_ID(priv->flags) ==
-					ERASER_ID) ?  "Eraser\n" : "Stylus\n"));
-				
-		/* HACKED */
-		{
-			/* hack, we'll get this whole function working later */
-			WacomDeviceState ds = { 0 };
-			ds.device_type = curDevice;
-			ds.buttons = buttons;
-			ds.proximity = is_proximity;
-			ds.x = x;
-			ds.y = y;
-			ds.pressure = z;
-			ds.tiltx = tx;
-			ds.tilty = ty;
-
-			xf86WcmSendEvents(common->wcmDevices[idx],&ds);
-		}
-
-			}
-		} /* full packet */
-	} /* next data */
-	DBG(7, ErrorF("xf86WcmISDV4Read END   local=0x%x priv=0x%x index=%d\n",
-			local, priv, common->wcmIndex));
+	return common->wcmPktLength;
 }
 

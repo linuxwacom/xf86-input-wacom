@@ -27,7 +27,6 @@
 /* Serial Support */
 static Bool serialDetect(LocalDevicePtr pDev);
 static Bool serialInit(LocalDevicePtr pDev);
-static void serialRead(LocalDevicePtr pDev);
 
 static int serialInitTablet(WacomCommonPtr common, int fd);
 static void serialInitIntuos(WacomCommonPtr common, int fd,
@@ -53,10 +52,21 @@ static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd);
 static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd);
 static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd);
 static int serialStartTablet(WacomCommonPtr common, int fd);
-static void serialParseCintiq(WacomCommonPtr common);
-static void serialParseGraphire(WacomCommonPtr common);
-static void serialParseProtocol4(WacomCommonPtr common);
-static void serialParseProtocol5(WacomCommonPtr common);
+static int serialParseCintiq(WacomCommonPtr common,
+	const unsigned char* data);
+static int serialParseGraphire(WacomCommonPtr common,
+	const unsigned char* data);
+static int serialParseProtocol4(WacomCommonPtr common,
+	const unsigned char* data);
+static int serialParseProtocol5(WacomCommonPtr common,
+	const unsigned char* data);
+static int serialFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds);
+static int serialFilterGraphire(WacomCommonPtr common,
+	WacomChannelPtr pChannel, WacomDeviceStatePtr ds);
+static void serialParseP4Common(WacomCommonPtr common,
+	const unsigned char* data, WacomDeviceState* last,
+	WacomDeviceState* ds);
 
 /*****************************************************************************
  * Global Structures
@@ -66,7 +76,7 @@ static void serialParseProtocol5(WacomCommonPtr common);
 	{
 		serialDetect,
 		serialInit,
-		serialRead,
+		xf86WcmReadPacket,
 	};
 
 /*****************************************************************************
@@ -75,7 +85,7 @@ static void serialParseProtocol5(WacomCommonPtr common);
 
 	static WacomModel serialIntuos =
 	{
-		"Intuos",
+		"Serial Intuos",
 		serialInitIntuos,
 		NULL,           /* resolution not queried */
 		serialGetRanges,
@@ -85,11 +95,12 @@ static void serialParseProtocol5(WacomCommonPtr common);
 		serialSetLinkSpeedIntuos,
 		serialStartTablet,
 		serialParseProtocol5,
+		serialFilterIntuos,
 	};
 
 	static WacomModel serialIntuos2 =
 	{
-		"Intuos2",
+		"Serial Intuos2",
 		serialInitIntuos2,
 		NULL,                 /* resolution not queried */
 		serialGetRanges,
@@ -99,11 +110,12 @@ static void serialParseProtocol5(WacomCommonPtr common);
 		serialSetLinkSpeedProtocol5,
 		serialStartTablet,
 		serialParseProtocol5,
+		serialFilterIntuos, /* JEJ _ TESTING ONLY */
 	};
 
 	static WacomModel serialCintiq =
 	{
-		"Cintiq",
+		"Serial Cintiq",
 		serialInitCintiq,
 		serialGetResolution,
 		serialGetRanges,
@@ -117,7 +129,7 @@ static void serialParseProtocol5(WacomCommonPtr common);
 
 	static WacomModel serialPenPartner =
 	{
-		"PenPartner",
+		"Serial PenPartner",
 		serialInitPenPartner,
 		NULL,               /* resolution not queried */
 		serialGetRanges,
@@ -131,7 +143,7 @@ static void serialParseProtocol5(WacomCommonPtr common);
 
 	static WacomModel serialGraphire =
 	{
-		"Graphire",
+		"Serial Graphire",
 		serialInitGraphire,
 		NULL,                     /* resolution not queried */
 		NULL,                     /* ranges not supported */
@@ -141,11 +153,12 @@ static void serialParseProtocol5(WacomCommonPtr common);
 		NULL,                    /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseGraphire,
+		serialFilterGraphire,
 	};
 
 	static WacomModel serialProtocol4 =
 	{
-		"Protocol4",
+		"Unknown Serial",
 		serialInitProtocol4,
 		serialGetResolution,
 		serialGetRanges,
@@ -511,70 +524,8 @@ static Bool serialInit(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * serialRead --
- *   Read the new events from the device, and enqueue them.
- ****************************************************************************/
-
-static void serialRead(LocalDevicePtr local)
-{
-	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
-	int len, loop;
-	unsigned char buffer[BUFFER_SIZE];
-
-	DBG(7, ErrorF("serialRead BEGIN device=%s fd=%d\n",
-		common->wcmDevice, local->fd));
-
-	SYSCALL(len = xf86WcmRead(local->fd, buffer, sizeof(buffer)));
-
-	if (len <= 0)
-	{
-		ErrorF("Error reading wacom device : %s\n", strerror(errno));
-		return;
-	}
-
-	DBG(10, ErrorF("serialRead read %d bytes\n", len));
-
-	for (loop=0; loop<len; loop++)
-	{
-		/* magic bit is not OK */
-		if ((common->wcmIndex == 0) && !(buffer[loop] & HEADER_BIT))
-		{
-			DBG(6, ErrorF("serialRead bad magic "
-				"number 0x%x (pktlength=%d) %d\n",
-				buffer[loop], common->wcmPktLength, loop));
-			continue;
-		}
-
-		/* magic bit at wrong place */
-		else if ((common->wcmIndex != 0) && (buffer[loop] & HEADER_BIT))
-		{
-			DBG(6, ErrorF("serialRead magic "
-				"number 0x%x detetected at index %d loop=%d\n",
-				(unsigned int)buffer[loop],common->wcmIndex,
-				loop));
-			common->wcmIndex = 0;
-		}
- 
-		common->wcmData[common->wcmIndex++] = buffer[loop];
-
-		/* if there are enough bytes, parse */
-		if (common->wcmIndex == common->wcmPktLength)
-		{
-			if (common->wcmModel)
-				common->wcmModel->Parse(common);
-
-			/* reset for next packet */
-			common->wcmIndex = 0;
-		}
-	} /* next data */
-
-	DBG(7, ErrorF("serialRead END   local=0x%x index=%d\n",
-		local, common->wcmIndex));
-}
-
-/*****************************************************************************
  * serialInitTablet --
- *   Read the new events from the device, and enqueue them.
+ *   Initialize the tablet
  ****************************************************************************/
 
 
@@ -589,7 +540,8 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 	/* if model is forced, initialize */
 	if (model != NULL)
 	{
-		model->Initialize(common,fd,"",0.0F);
+		id[0] = '\0';
+		version = 0.0F;
 	}
 
 	/* otherwise, query and initialize */
@@ -630,502 +582,302 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 		else
 			model = &serialProtocol4;
 
-		/* Initialize the tablet */
-		model->Initialize(common,fd,id,version);
 	}
 
-	/* Get tablet resolution */
-	if (model->GetResolution)
-		model->GetResolution(common,fd);
-
-	/* Get tablet range */
-	if (model->GetRanges && (model->GetRanges(common,fd) != Success))
-		return !Success;
-	
-	/* Default threshold value if not set */
-	if (common->wcmThreshold <= 0)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = common->wcmMaxZ / 32;
-		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
-			XCONFIG_PROBED, common->wcmThreshold);
-	}
-
-	/* Reset tablet to known state */
-	if (model->Reset && (model->Reset(common,fd) != Success))
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-
-	/* Enable tilt mode, if requested and available */
-	if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
-	{
-		if (model->EnableTilt(common,fd) != Success)
-			return !Success;
-	}
-
-	/* Enable hardware suppress, if requested and available */
-	if ((common->wcmSuppress != 0) && model->EnableSuppress)
-	{
-		if (model->EnableSuppress(common,fd) != Success)
-			return !Success;
-	}
-
-	/* change the serial speed, if requested */
-	if (common->wcmLinkSpeed != 9600)
-	{
-		if (model->SetLinkSpeed)
-		{
-			if (model->SetLinkSpeed(common,fd) != Success)
-				return !Success;
-		}
-		else
-		{
-			ErrorF("Tablet does not support setting link "
-				"speed, or not yet implemented\n");
-		}
-	}
-
-	/* output tablet state as probed */
-	if (xf86Verbose)
-		ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
-			"resX=%d resY=%d suppress=%d tilt=%s\n",
-			XCONFIG_PROBED,
-			model->name, common->wcmLinkSpeed,
-			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
-			common->wcmResolX, common->wcmResolY,
-			common->wcmSuppress,
-			HANDLE_TILT(common) ? "enabled" : "disabled");
-  
-	/* start the tablet data */
-	if (model->Start && (model->Start(common,fd) != Success))
-		return !Success;
-
-	/* save model for use in parsing */
-	common->wcmModel = model;
-
-	return Success;
+	return xf86WcmInitTablet(common,model,fd,id,version);
 }
 
-/* ugly kludge - temporarily exploded out */
-
-static void serialParseGraphire(WacomCommonPtr common)
+static int serialParseGraphire(WacomCommonPtr common,
+	const unsigned char* data)
 {
-	WacomDeviceState* orig = &common->wcmChannel[0].state;
-	WacomDeviceState ds = *orig;
-	int is_stylus, cur_type;
+	int n;
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	WacomDeviceState* ds;
 
-	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
-     
-	ds.x = (((common->wcmData[0] & 0x3) << 14) +
-		(common->wcmData[1] << 7) +
-		common->wcmData[2]);
-	ds.y = (((common->wcmData[3] & 0x3) << 14) +
-		(common->wcmData[4] << 7) +
-		common->wcmData[5]);
+	/* positive value is skip */
+	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
+
+	/* pick up where we left off, minus relative values */
+	ds = &common->wcmChannel[0].work;
+	RESET_RELATIVE(*ds);
 
 	/* get pressure */
-	ds.pressure = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
-		((common->wcmData[3]&ZAXIS_BIT) >> 1) +
-		((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
-		((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
+	ds->pressure = ((data[6]&ZAXIS_BITS) << 2 ) +
+		((data[3]&ZAXIS_BIT) >> 1) +
+		((data[3]&PROXIMITY_BIT) >> 6) +
+		((data[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 
 	/* get buttons */
-	ds.buttons = (common->wcmData[3] & 0x38) >> 3;
+	ds->buttons = (data[3] & 0x38) >> 3;
 
-	/* check which device we have */
-	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (is_stylus)
-	{
-		/* first time into prox */
-		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
-		if (!orig->proximity)
-		{
- 			if (ds.proximity) 
-				ds.device_type = cur_type;
-		}
-
-		/* we were fooled by tip and second
-		 * sideswitch when it came into prox */
-		else if ((ds.device_type != cur_type) &&
-			(ds.device_type == ERASER_ID))
-		{
-			/* send a prox-out for old device */
-			ds.proximity = 0;
-			ds.buttons = 0;
-			ds.device_type = 0;
-		}
-	}
-
-	/* If it is not a stylus, it's a cursor */
-	else if (!is_stylus && !orig->proximity && ds.proximity)
-		ds.device_type = CURSOR_ID;
-
-	/* If it is out of proximity, there is no device type */
-	else if (!ds.proximity)
-		ds.device_type = 0;
-
-	DBG(8, ErrorF("serialParseGraphire %s\n",
-		ds.device_type == CURSOR_ID ? "CURSOR" :
-		ds.device_type == ERASER_ID ? "ERASER " :
-		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+	/* requires button info, so it goes down here. */
+	serialParseP4Common(common,data,last,ds);
 
 	/* handle relative wheel for non-stylus device */
-	if (!is_stylus && ds.proximity)
+	if (ds->device_type == CURSOR_ID)
 	{
-		ds.relwheel = (common->wcmData[6] & 0x30) >> 4;
-		if (common->wcmData[6] & 0x40)
-			ds.relwheel = -ds.relwheel;
+		ds->relwheel = (data[6] & 0x30) >> 4;
+		if (data[6] & 0x40)
+			ds->relwheel = -ds->relwheel;
+
 	}
 
-	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common) && is_stylus)
-	{
-		ds.tiltx = (common->wcmData[7] & TILT_BITS);
-		ds.tilty = (common->wcmData[8] & TILT_BITS);
-		if (common->wcmData[7] & TILT_SIGN_BIT)
-			ds.tiltx -= 64;
-		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ds.tilty -= 64;
-	}
-
-	xf86WcmEvent(common,0,&ds);
+	xf86WcmEvent(common,0,ds);
+	return common->wcmPktLength;
 }
 
-/* temporarily exploded out */
-
-static void serialParseCintiq(WacomCommonPtr common)
+static int serialParseCintiq(WacomCommonPtr common,
+	const unsigned char* data)
 {
-	WacomDeviceState* orig = &common->wcmChannel[0].state;
-	WacomDeviceState ds = *orig;
-	int is_stylus, cur_type;
+	int n;
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	WacomDeviceState* ds;
 
-	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
-     
-	ds.x = (((common->wcmData[0] & 0x3) << 14) +
-		(common->wcmData[1] << 7) +
-		common->wcmData[2]);
-	ds.y = (((common->wcmData[3] & 0x3) << 14) +
-		(common->wcmData[4] << 7) +
-		common->wcmData[5]);
+	/* positive value is skip */
+	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
+
+	/* pick up where we left off, minus relative values */
+	ds = &common->wcmChannel[0].work;
+	RESET_RELATIVE(*ds);
 
 	/* get pressure */
 	if (common->wcmMaxZ == 255)
 	{
-		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
-			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
-			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+		ds->pressure = ((data[6] & ZAXIS_BITS) << 1 ) |
+			((data[3] & ZAXIS_BIT) >> 2) |
+			((data[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
 	}
 	else
 	{
 		/* which tablets use this? */
 		/* PL550, PL800, and Graphire apparently */
-		ds.pressure = ((common->wcmData[6]&ZAXIS_BITS) << 2 ) +
-			((common->wcmData[3]&ZAXIS_BIT) >> 1) +
-			((common->wcmData[3]&PROXIMITY_BIT) >> 6) +
-			((common->wcmData[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
+		ds->pressure = ((data[6]&ZAXIS_BITS) << 2 ) +
+			((data[3]&ZAXIS_BIT) >> 1) +
+			((data[3]&PROXIMITY_BIT) >> 6) +
+			((data[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 	}
 
 	/* get buttons */
-	ds.buttons = (common->wcmData[3] & 0x38) >> 3;
+	ds->buttons = (data[3] & 0x38) >> 3;
 
-	/* If stylus comes into focus, use button to determine if eraser */
-	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (is_stylus)
-	{
-		/* first time into prox */
-		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
-		if (!orig->proximity)
-		{
- 			if (ds.proximity) 
-				ds.device_type = cur_type;
-		}
+	/* requires button info, so it goes down here. */
+	serialParseP4Common(common,data,last,ds);
 
-		/* we were fooled by tip and second
-		 * sideswitch when it came into prox */
-		else if (ds.device_type != cur_type && ds.device_type == ERASER_ID)
-		{
-			/* send a prox-out for old device */
-			ds.proximity = 0;
-			ds.buttons = 0;
-			ds.device_type = 0;
-		}
-	}
-
-	/* If it is not a stylus, it's a cursor */
-	else if (!is_stylus && !orig->proximity && ds.proximity)
-		ds.device_type = CURSOR_ID;
-
-	/* If it is out of proximity, there is no device type */
-	else if (!ds.proximity)
-		ds.device_type = 0;
-
-	DBG(8, ErrorF("serialParseCintiq %s\n",
-		ds.device_type == CURSOR_ID ? "CURSOR" :
-		ds.device_type == ERASER_ID ? "ERASER " :
-		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
-
-	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common) && is_stylus)
-	{
-		ds.tiltx = (common->wcmData[7] & TILT_BITS);
-		ds.tilty = (common->wcmData[8] & TILT_BITS);
-		if (common->wcmData[7] & TILT_SIGN_BIT)
-			ds.tiltx -= 64;
-		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ds.tilty -= 64;
-	}
-
-	xf86WcmEvent(common,0,&ds);
+	xf86WcmEvent(common,0,ds);
+	return common->wcmPktLength;
 }
 
-/* temporarily exploded out - used by most older tablets */
-
-static void serialParseProtocol4(WacomCommonPtr common)
+static int serialParseProtocol4(WacomCommonPtr common,
+	const unsigned char* data)
 {
-	WacomDeviceState* orig = &common->wcmChannel[0].state;
-	WacomDeviceState ds = *orig;
-	int is_stylus, cur_type;
+	int n;
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	WacomDeviceState* ds;
 
-	ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
-     
-	ds.x = (((common->wcmData[0] & 0x3) << 14) +
-		(common->wcmData[1] << 7) +
-		common->wcmData[2]);
-	ds.y = (((common->wcmData[3] & 0x3) << 14) +
-		(common->wcmData[4] << 7) +
-		common->wcmData[5]);
+	/* positive value is skip */
+	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
+
+	/* pick up where we left off, minus relative values */
+	ds = &common->wcmChannel[0].work;
+	RESET_RELATIVE(*ds);
 
 	/* get pressure */
 	if (common->wcmMaxZ == 255)
-		ds.pressure = ((common->wcmData[6] & ZAXIS_BITS) << 1 ) |
-			((common->wcmData[3] & ZAXIS_BIT) >> 2) |
-			((common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
+		ds->pressure = ((data[6] & ZAXIS_BITS) << 1 ) |
+			((data[3] & ZAXIS_BIT) >> 2) |
+			((data[6] & ZAXIS_SIGN_BIT) ? 0 : 0x80);
 
 	else
-		ds.pressure = (common->wcmData[6] & ZAXIS_BITS) |
-			(common->wcmData[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
+		ds->pressure = (data[6] & ZAXIS_BITS) |
+			(data[6] & ZAXIS_SIGN_BIT) ? 0 : 0x40;
 
 	/* get button state */
-	ds.buttons = (common->wcmData[3] & BUTTONS_BITS) >> 3;
+	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 
-	/* If stylus comes into focus, use button to determine if eraser */
-	is_stylus = (common->wcmData[0] & POINTER_BIT);
-	if (is_stylus)
-	{
-		/* first time into prox */
-		cur_type = (ds.buttons & 4) ? ERASER_ID : STYLUS_ID;
-		if (!orig->proximity)
-		{
- 			if(ds.proximity) 
-			ds.device_type = cur_type;
-		}
-		/* we were fooled by tip and second
-		 * sideswitch when it came into prox */
-		else if ((ds.device_type != cur_type) &&
-			(ds.device_type == ERASER_ID))
-		{
-			/* send a prox-out for old device */
-			ds.proximity = 0;
-			ds.buttons = 0;
-			ds.device_type = 0;
-		}
-	}
+	/* requires button info, so it goes down here. */
+	serialParseP4Common(common,data,last,ds);
 
-	/* If it is not a stylus, it's a cursor */
-	else if (!is_stylus && !orig->proximity && ds.proximity)
-		ds.device_type = CURSOR_ID;
-
-	/* If it is out of proximity, there is no device type */
-	else if (!ds.proximity)
-		ds.device_type = 0;
-
-	DBG(8, ErrorF("serialParseProtocol4 %s\n",
-		ds.device_type == CURSOR_ID ? "CURSOR" :
-		ds.device_type == ERASER_ID ? "ERASER " :
-		ds.device_type == STYLUS_ID ? "STYLUS" : "NONE"));
-
-	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common) && is_stylus)
-	{
-		ds.tiltx = (common->wcmData[7] & TILT_BITS);
-		ds.tilty = (common->wcmData[8] & TILT_BITS);
-		if (common->wcmData[7] & TILT_SIGN_BIT)
-			ds.tiltx -= 64;
-		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ds.tilty -= 64;
-	}
-
-	xf86WcmEvent(common,0,&ds);
+	xf86WcmEvent(common,0,ds);
+	return common->wcmPktLength;
 }
 
-static void serialParseProtocol5(WacomCommonPtr common)
+static int serialParseProtocol5(WacomCommonPtr common,
+	const unsigned char* data)
 {
+	int n;
 	int is_stylus=0, have_data=0;
 	int channel;
-	WacomDeviceState ds;
+	WacomDeviceState* ds;
 
-	/* start with previous state */
-	channel = common->wcmData[0] & 0x01;
-	ds = common->wcmChannel[channel].state;
+	/* positive value is skip */
+	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
+
+	/* Protocol 5 devices support 2 data channels */
+	channel = data[0] & 0x01;
+
+	/* pick up where we left off, minus relative values */
+	ds = &common->wcmChannel[channel].work;
+	RESET_RELATIVE(*ds);
 
 	DBG(7, ErrorF("packet header = 0x%x\n",
-			(unsigned int)common->wcmData[0]));
+			(unsigned int)data[0]));
      
 	/* Device ID packet */
-	if ((common->wcmData[0] & 0xfc) == 0xc0)
+	if ((data[0] & 0xfc) == 0xc0)
 	{
-		/* reset channel */
-		memset(&ds, 0, sizeof(ds));
+		/* start from scratch */
+		memset(ds, 0, sizeof(*ds));
 
-		ds.proximity = 1;
-		ds.device_id = (((common->wcmData[1] & 0x7f) << 5) |
-				((common->wcmData[2] & 0x7c) >> 2));
-		ds.serial_num = (((common->wcmData[2] & 0x03) << 30) |
-				((common->wcmData[3] & 0x7f) << 23) |
-				((common->wcmData[4] & 0x7f) << 16) |
-				((common->wcmData[5] & 0x7f) << 9) |
-				((common->wcmData[6] & 0x7f) << 2) |
-				((common->wcmData[7] & 0x60) >> 5));
+		ds->proximity = 1;
+		ds->device_id = (((data[1] & 0x7f) << 5) |
+				((data[2] & 0x7c) >> 2));
+		ds->serial_num = (((data[2] & 0x03) << 30) |
+				((data[3] & 0x7f) << 23) |
+				((data[4] & 0x7f) << 16) |
+				((data[5] & 0x7f) << 9) |
+				((data[6] & 0x7f) << 2) |
+				((data[7] & 0x60) >> 5));
 
-		if ((ds.device_id & 0xf06) != 0x802)
-			ds.discard_first = 1;
+		if ((ds->device_id & 0xf06) != 0x802)
+			ds->discard_first = 1;
 
-		if (STYLUS_TOOL(&ds))
-			ds.device_type = STYLUS_ID;
-		else if (CURSOR_TOOL(&ds))
-			ds.device_type = CURSOR_ID;
+		if (STYLUS_TOOL(ds))
+			ds->device_type = STYLUS_ID;
+		else if (CURSOR_TOOL(ds))
+			ds->device_type = CURSOR_ID;
 		else
-			ds.device_type = ERASER_ID;
+			ds->device_type = ERASER_ID;
   
 		DBG(6, ErrorF("device_id=0x%x serial_num=%u type=%s\n",
-			ds.device_id, ds.serial_num,
-			(ds.device_type == STYLUS_ID) ? "stylus" :
-			(ds.device_type == CURSOR_ID) ? "cursor" :
+			ds->device_id, ds->serial_num,
+			(ds->device_type == STYLUS_ID) ? "stylus" :
+			(ds->device_type == CURSOR_ID) ? "cursor" :
 			"eraser"));
 	}
 
 	/* Out of proximity packet */
-	else if ((common->wcmData[0] & 0xfe) == 0x80)
+	else if ((data[0] & 0xfe) == 0x80)
 	{
-		ds.proximity = 0;
+		ds->proximity = 0;
 		have_data = 1;
 	}
 
 	/* General pen packet or eraser packet or airbrush first packet
 	 * airbrush second packet */
-	else if (((common->wcmData[0] & 0xb8) == 0xa0) ||
-			((common->wcmData[0] & 0xbe) == 0xb4))
+	else if (((data[0] & 0xb8) == 0xa0) ||
+			((data[0] & 0xbe) == 0xb4))
 	{
 		is_stylus = 1;
-		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
-				((common->wcmData[2] & 0x7f) << 2) |
-				((common->wcmData[3] & 0x60) >> 5));
-		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
-				((common->wcmData[4] & 0x7f) << 4) |
-				((common->wcmData[5] & 0x78) >> 3));
-		if ((common->wcmData[0] & 0xb8) == 0xa0)
+		ds->x = (((data[1] & 0x7f) << 9) |
+				((data[2] & 0x7f) << 2) |
+				((data[3] & 0x60) >> 5));
+		ds->y = (((data[3] & 0x1f) << 11) |
+				((data[4] & 0x7f) << 4) |
+				((data[5] & 0x78) >> 3));
+		if ((data[0] & 0xb8) == 0xa0)
 		{
-			ds.pressure = (((common->wcmData[5] & 0x07) << 7) |
-				(common->wcmData[6] & 0x7f));
-			ds.buttons = (((common->wcmData[0]) & 0x06) |
-				(ds.pressure >= common->wcmThreshold));
+			ds->pressure = (((data[5] & 0x07) << 7) |
+				(data[6] & 0x7f));
+			ds->buttons = (((data[0]) & 0x06) |
+				(ds->pressure >= common->wcmThreshold));
 			/* pressure button should go down stream */
 		}
 		else
 		{
-			ds.relwheel = (((common->wcmData[5] & 0x07) << 7) |
-				(common->wcmData[6] & 0x7f));
+			/* 10 bits for absolute wheel position */
+			ds->abswheel = (((data[5] & 0x07) << 7) |
+				(data[6] & 0x7f));
 		}
-		ds.tiltx = (common->wcmData[7] & TILT_BITS);
-		ds.tilty = (common->wcmData[8] & TILT_BITS);
-		if (common->wcmData[7] & TILT_SIGN_BIT)
-			ds.tiltx -= (TILT_BITS + 1);
-		if (common->wcmData[8] & TILT_SIGN_BIT)
-			ds.tilty -= (TILT_BITS + 1);
-		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->tiltx = (data[7] & TILT_BITS);
+		ds->tilty = (data[8] & TILT_BITS);
+		if (data[7] & TILT_SIGN_BIT)
+			ds->tiltx -= (TILT_BITS + 1);
+		if (data[8] & TILT_SIGN_BIT)
+			ds->tilty -= (TILT_BITS + 1);
+		ds->proximity = (data[0] & PROXIMITY_BIT);
 		have_data = 1;
 	} /* end pen packet */
 
 	/* 4D mouse 1st packet or Lens cursor packet or 2D mouse packet*/
-	else if (((common->wcmData[0] & 0xbe) == 0xa8) ||
-			((common->wcmData[0] & 0xbe) == 0xb0))
+	else if (((data[0] & 0xbe) == 0xa8) ||
+			((data[0] & 0xbe) == 0xb0))
 	{
 		is_stylus = 0;
-		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
-				((common->wcmData[2] & 0x7f) << 2) |
-				((common->wcmData[3] & 0x60) >> 5));
-		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
-				((common->wcmData[4] & 0x7f) << 4) |
-				((common->wcmData[5] & 0x78) >> 3));
-		ds.tilty = 0;
+		ds->x = (((data[1] & 0x7f) << 9) |
+				((data[2] & 0x7f) << 2) |
+				((data[3] & 0x60) >> 5));
+		ds->y = (((data[3] & 0x1f) << 11) |
+				((data[4] & 0x7f) << 4) |
+				((data[5] & 0x78) >> 3));
+		ds->tilty = 0;
 
 		/* 4D mouse */
-		if (MOUSE_4D(&ds))
+		if (MOUSE_4D(ds))
 		{
-			ds.throttle = (((common->wcmData[5] & 0x07) << 7) |
-				(common->wcmData[6] & 0x7f));
-			if (common->wcmData[8] & 0x08)
-				ds.throttle = -ds.throttle;
-			ds.buttons = (((common->wcmData[8] & 0x70) >> 1) |
-				(common->wcmData[8] & 0x07));
-			have_data = !ds.discard_first;
+			ds->throttle = (((data[5] & 0x07) << 7) |
+				(data[6] & 0x7f));
+			if (data[8] & 0x08)
+				ds->throttle = -ds->throttle;
+			ds->buttons = (((data[8] & 0x70) >> 1) |
+				(data[8] & 0x07));
+			have_data = !ds->discard_first;
 		}
 
 		/* Lens cursor */
-		else if (LENS_CURSOR(&ds))
+		else if (LENS_CURSOR(ds))
 		{
-			ds.buttons = common->wcmData[8];
+			ds->buttons = data[8];
 			have_data = 1;
 		}
 
 		/* 2D mouse */
-		else if (MOUSE_2D(&ds))
+		else if (MOUSE_2D(ds))
 		{
-			ds.buttons = (common->wcmData[8] & 0x1C) >> 2;
-			ds.relwheel = - (common->wcmData[8] & 1) +
-					((common->wcmData[8] & 2) >> 1);
-			have_data = 1;
+			ds->buttons = (data[8] & 0x1C) >> 2;
+			ds->relwheel = - (data[8] & 1) +
+					((data[8] & 2) >> 1);
+			have_data = 1; /* must send since relwheel is reset */
 		}
 
-		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->proximity = (data[0] & PROXIMITY_BIT);
 	} /* end 4D mouse 1st packet */
 
 	/* 4D mouse 2nd packet */
-	else if ((common->wcmData[0] & 0xbe) == 0xaa)
+	else if ((data[0] & 0xbe) == 0xaa)
 	{
 		is_stylus = 0;
-		ds.x = (((common->wcmData[1] & 0x7f) << 9) |
-			((common->wcmData[2] & 0x7f) << 2) |
-			((common->wcmData[3] & 0x60) >> 5));
-		ds.y = (((common->wcmData[3] & 0x1f) << 11) |
-			((common->wcmData[4] & 0x7f) << 4) |
-			((common->wcmData[5] & 0x78) >> 3));
-		ds.rotation = (((common->wcmData[6] & 0x0f) << 7) |
-			(common->wcmData[7] & 0x7f));
-		if (ds.rotation < 900) ds.rotation = -ds.rotation;
-		else ds.rotation = 1799 - ds.rotation;
-		ds.proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->x = (((data[1] & 0x7f) << 9) |
+			((data[2] & 0x7f) << 2) |
+			((data[3] & 0x60) >> 5));
+		ds->y = (((data[3] & 0x1f) << 11) |
+			((data[4] & 0x7f) << 4) |
+			((data[5] & 0x78) >> 3));
+		ds->rotation = (((data[6] & 0x0f) << 7) |
+			(data[7] & 0x7f));
+		if (ds->rotation < 900) ds->rotation = -ds->rotation;
+		else ds->rotation = 1799 - ds->rotation;
+		ds->proximity = (data[0] & PROXIMITY_BIT);
 		have_data = 1;
-		ds.discard_first = 0;
+		ds->discard_first = 0;
 	}
 	else
 	{
 		DBG(10, ErrorF("unknown wacom V packet 0x%x\n",
-				common->wcmData[0]));
+				data[0]));
 	}
 
 	/* if new data is available, send it */
 	if (have_data)
-	       	xf86WcmEvent(common,channel,&ds);
+	{
+	       	xf86WcmEvent(common,channel,ds);
+	}
 
 	/* otherwise, initialize channel and wait for next packet */
 	else
 	{
-		common->wcmChannel[channel].state = ds;
 		common->wcmChannel[channel].pDev = NULL;
 	}
+	return common->wcmPktLength;
 }
 
 /*****************************************************************************
@@ -1512,5 +1264,109 @@ static int serialStartTablet(WacomCommonPtr common, int fd)
 	}
 
 	return Success;
+}
+
+static int serialFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds)
+{
+	/* Only error correction should happen here. If there's a problem that
+	 * cannot be fixed, return 1 such that the data is discarded. */
+
+	DBG(10, ErrorF("serialFilterIntuos %d\n",ds->buttons));
+
+
+	if (ds->buttons & 16)
+		return 1; /* strike out data */
+
+	return 0; /* lookin' good */
+}
+
+static int serialFilterGraphire(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds)
+{
+	/* Only error correction should happen here. If there's a problem that
+	 * cannot be fixed, return 1 such that the data is discarded. */
+
+	return 0; /* everything's groovy */
+}
+
+static void serialParseP4Common(WacomCommonPtr common,
+	const unsigned char* data, WacomDeviceState* last,
+	WacomDeviceState* ds)
+{
+	int is_stylus = (data[0] & POINTER_BIT);
+	int cur_type = is_stylus ?
+		((ds->buttons & 4) ? ERASER_ID : STYLUS_ID) :
+		CURSOR_ID;
+
+	/* proximity bit */
+	ds->proximity = (data[0] & PROXIMITY_BIT);
+
+	/* x and y coordinates */
+	ds->x = (((data[0] & 0x3) << 14) + (data[1] << 7) + data[2]);
+	ds->y = (((data[3] & 0x3) << 14) + (data[4] << 7) + data[5]);
+
+	/* first time into prox */
+	if (!last->proximity && ds->proximity) 
+		ds->device_type = cur_type;
+
+	/* out of prox */
+	else if (!ds->proximity)
+		memset(ds,0,sizeof(*ds));
+
+	/* check on previous proximity */
+	else if (is_stylus)
+	{
+		/* we were fooled by tip and second
+		 * sideswitch when it came into prox */
+		if ((ds->device_type != cur_type) &&
+			(ds->device_type == ERASER_ID))
+		{
+			/* send a prox-out for old device */
+			WacomDeviceState out = { 0 };
+			xf86WcmEvent(common,0,&out);
+			ds->device_type = cur_type;
+		}
+	}
+
+	DBG(8, ErrorF("serialParseP4Common %s\n",
+		ds->device_type == CURSOR_ID ? "CURSOR" :
+		ds->device_type == ERASER_ID ? "ERASER " :
+		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+
+	/* handle tilt values only for stylus */
+	if (HANDLE_TILT(common) && is_stylus)
+	{
+		ds->tiltx = (data[7] & TILT_BITS);
+		ds->tilty = (data[8] & TILT_BITS);
+		if (data[7] & TILT_SIGN_BIT)
+			ds->tiltx -= 64;
+		if (data[8] & TILT_SIGN_BIT)
+			ds->tilty -= 64;
+	}
+}
+
+/*****************************************************************************
+ * xf86WcmSerialValidate -- validates serial packet; returns 0 on success,
+ *   positive number of bytes to skip on error.
+ ****************************************************************************/
+
+int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
+{
+	int i, bad = -1;
+
+	/* check magic */
+	for (i=0; i<common->wcmPktLength; ++i)
+	{
+		if ( ((i==0) && !(data[i] & HEADER_BIT)) ||
+		     ((i!=0) && (data[i] & HEADER_BIT)))
+		{
+			DBG(6, ErrorF("xf86WcmSerialValidate: bad magic at %d "
+				"v=0x%x l=%d\n", bad,
+				data, common->wcmPktLength));
+			break;
+		}
+	}
+	return (bad + 1);
 }
 

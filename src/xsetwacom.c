@@ -60,6 +60,7 @@ struct _PARAMINFO
 	int bRange;
 	int nMin, nMax;
 	int nType;
+	int nDefault;
 };
 
 /*****************************************************************************
@@ -71,6 +72,7 @@ struct _PARAMINFO
 	#define RANGE 1
 	#define SINGLE_VALUE 0
 	#define PACKED_CURVE 1
+	#define BOOLEAN_VALUE 2
 
 	static PARAMINFO gParamInfo[] =
 	{
@@ -118,13 +120,19 @@ struct _PARAMINFO
 		{ "DebugLevel",
 			"Level of debugging trace, default is 0",
 			XWACOM_PARAM_DEBUGLEVEL,
-			VALUE_REQUIRED, RANGE, 0, 10 },
+			VALUE_REQUIRED, RANGE, 0, 100 },
 
 		{ "PressCurve",
 			"Bezier curve for pressure (default is 0 0 100 100)",
 			XWACOM_PARAM_PRESSCURVE,
 			VALUE_OPTIONAL, RANGE, 0, 100,
 			PACKED_CURVE },
+
+		{ "RawFilter",
+			"Enables and disables filtering of raw data, "
+			"default is true.",
+			XWACOM_PARAM_RAWFILTER,
+			VALUE_OPTIONAL, RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 		{ NULL }
 	};
@@ -298,6 +306,9 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 		return 1;
 	}
 
+	/* Set case correctly for error messages below. */
+	pszParam = p->pszParam;
+
 	/* If value is empty, do we support this? */
 	if (!nCount && !p->bEmptyOK)
 	{
@@ -317,9 +328,20 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 
 		if ((pszEnd == pszValues[i]) || (*pszEnd != '\0'))
 		{
-			fprintf(stderr,"Set: Value '%s' is invalid.\n",
-				pszValues[i]);
-			return 1;
+			if ((p->nType == BOOLEAN_VALUE) &&
+				(!strcasecmp(pszValues[i],"on") ||
+				!strcasecmp(pszValues[i],"true")))
+					nValues[i] = 1;
+			else if ((p->nType == BOOLEAN_VALUE) &&
+				(!strcasecmp(pszValues[i],"off") ||
+				!strcasecmp(pszValues[i],"false")))
+					nValues[i] = 0;
+			else
+			{
+				fprintf(stderr,"Set: Value '%s' is "
+					"invalid.\n",pszValues[i]);
+				return 1;
+			}
 		}
 
 		/* Is there a range and are we in it? */
@@ -337,6 +359,10 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 	{
 		if (Pack(nCount,nValues,&nValue))
 			return 1;
+	}
+	else if (p->nType == BOOLEAN_VALUE)
+	{
+		nValue = nCount ? nValues[0] : 0;
 	}
 	else if (p->nType == SINGLE_VALUE)
 	{

@@ -25,28 +25,158 @@
 
 #if LINUX_INPUT
 
-static Bool xf86WcmUSBDetect(LocalDevicePtr);
-static Bool xf86WcmUSBInit(LocalDevicePtr pDev);
-static void xf86WcmUSBRead(LocalDevicePtr pDev);
+static Bool usbDetect(LocalDevicePtr);
+static Bool usbInit(LocalDevicePtr pDev);
+
+static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
+	float version);
+static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
+	float version);
+static int usbGetRanges(WacomCommonPtr common, int fd);
+static int usbParse(WacomCommonPtr common, const unsigned char* data);
+static void usbParseEvent(WacomCommonPtr common,
+	const struct input_event* event);
+static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
-		xf86WcmUSBDetect,
-		xf86WcmUSBInit,
-		xf86WcmUSBRead,
+		usbDetect,
+		usbInit,
+		xf86WcmReadPacket,
 	};
 
+	static WacomModel usbUnknown =
+	{
+		"Unknown USB",
+		usbInitProtocol5,     /* assume the best */
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbPenPartner =
+	{
+		"USB PenPartner",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbGraphire =
+	{
+		"USB Graphire",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbGraphire2 =
+	{
+		"USB Graphire2",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbCintiq =
+	{
+		"USB Intuos",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbIntuos =
+	{
+		"USB Intuos",
+		usbInitProtocol5,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbIntuos2 =
+	{
+		"USB Intuos2",
+		usbInitProtocol5,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+	static WacomModel usbVolito =
+	{
+		"USB Volito",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering not needed */
+	};
+
+
 /*****************************************************************************
- * xf86WcmUSBDetect --
+ * usbDetect --
  *   Test if the attached device is USB.
  ****************************************************************************/
 
-static Bool xf86WcmUSBDetect(LocalDevicePtr local)
+static Bool usbDetect(LocalDevicePtr local)
 {
 	int version;
 	int err;
 
-	DBG(1, ErrorF("xf86WcmUSBDetect\n"));
+	DBG(1, ErrorF("usbDetect\n"));
     
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
     
@@ -62,97 +192,258 @@ static Bool xf86WcmUSBDetect(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmUSBRead --
- *   Read the new events from the device, and enqueue them.
+ * usbInit --
  ****************************************************************************/
 
-static void xf86WcmUSBRead(LocalDevicePtr local)
+static Bool usbInit(LocalDevicePtr local)
 {
-	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
-	WacomDeviceState ds;
-	int channel = -1;
-	ssize_t len;
-	int i;
-	struct input_event *event, *readevent, eventbuf[MAX_EVENTS];
+	short sID[4];
+	char id[BUFFER_SIZE];
+	WacomModelPtr model = NULL;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
-	#define MOD_BUTTONS(bit, value) do { \
-		ds.buttons = (((value) != 0) ? \
-		(ds.buttons | (bit)) : (ds.buttons & ~(bit))); \
-		} while (0)
+	DBG(1, ErrorF("initializing USB tablet\n"));    
 
-	SYSCALL(len = xf86WcmRead(local->fd, eventbuf,
-			sizeof(eventbuf))/sizeof(struct input_event));
+	/* fetch vendor, product, and model name */
+	ioctl(local->fd, EVIOCGID, sID);
+	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
 
-	DBG(10, ErrorF("xf86WcmUSBRead read %d events\n", len));
-    
-	if (len <= 0)
+	/* vendor is wacom */
+	if (sID[1] == 0x056A)
 	{
-		ErrorF("Error reading wacom device : %s\n", strerror(errno));
+		/* switch on product */
+		switch (sID[2])
+		{
+			case 0x00: /* PenPartner */
+				model = &usbPenPartner; break;
+
+			case 0x10: /* Graphire */
+				model = &usbGraphire; break;
+
+			case 0x11: /* Graphire2 4x5 */
+			case 0x12: /* Graphire2 5x7 */
+				model = &usbGraphire2; break;
+
+			case 0x20: /* Intuos 4x5 */
+			case 0x21: /* Intuos 6x8 */
+			case 0x22: /* Intuos 9x12 */
+			case 0x23: /* Intuos 12x12 */
+			case 0x24: /* Intuos 12x18 */
+				model = &usbIntuos; break;
+
+			case 0x30: /* PL400 */
+			case 0x31: /* PL500 */
+			case 0x32: /* PL600 */
+			case 0x33: /* PL600SX */
+			case 0x34: /* PL550 */
+			case 0x35: /* PL800 */
+				model = &usbCintiq; break;
+
+			case 0x41: /* Intuos2 4x5 */
+			case 0x42: /* Intuos2 6x8 */
+			case 0x43: /* Intuos2 9x12 */
+			case 0x44: /* Intuos2 12x12 */
+			case 0x45: /* Intuos2 12x18 */
+				model = &usbIntuos2; break;
+
+			case 0x60: /* Volito */
+				model = &usbVolito; break;
+		}
+	}
+
+	if (!model)
+		model = &usbUnknown;
+
+	return xf86WcmInitTablet(common,model,local->fd,id,0.0);
+}
+
+static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
+	float version)
+{
+	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
+	common->wcmResolX = common->wcmResolY = 2540;
+	common->wcmProtocolLevel = 5;
+	common->wcmChannelCnt = 2;
+	common->wcmPktLength = sizeof(struct input_event);
+}
+
+static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
+	float version)
+{
+	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
+	common->wcmResolX = common->wcmResolY = 1016;
+	common->wcmProtocolLevel = 4;
+	common->wcmPktLength = sizeof(struct input_event);
+}
+
+#define BIT(x) (1<<(x))
+#define BITS_PER_LONG (sizeof(long) * 8)
+#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+#define ISBITSET(x,y) ((x)[LONG(y)] & BIT(y))
+#define OFF(x)   ((x)%BITS_PER_LONG)
+#define LONG(x)  ((x)/BITS_PER_LONG)
+
+static int usbGetRanges(WacomCommonPtr common, int fd)
+{
+	int nValues[5];
+	unsigned long ev[NBITS(EV_MAX)];
+	unsigned long abs[NBITS(ABS_MAX)];
+
+	if (ioctl(fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
+	{
+		ErrorF("WACOM: unable to ioctl event bits.\n");
+		return !Success;
+	}
+
+	/* absolute values */
+	if (ISBITSET(ev,EV_ABS))
+	{
+		if (ioctl(fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
+		{
+			ErrorF("WACOM: unable to ioctl abs bits.\n");
+			return !Success;
+		}
+
+		/* max x */
+		if (common->wcmMaxX == 0)
+		{
+			if (ioctl(fd, EVIOCGABS(ABS_X), nValues) < 0)
+			{
+				ErrorF("WACOM: unable to ioctl xmax value.\n");
+				return !Success;
+			}
+			common->wcmMaxX = nValues[2];
+		}
+
+		/* max y */
+		if (common->wcmMaxY == 0)
+		{
+			if (ioctl(fd, EVIOCGABS(ABS_Y), nValues) < 0)
+			{
+				ErrorF("WACOM: unable to ioctl ymax value.\n");
+				return !Success;
+			}
+			common->wcmMaxY = nValues[2];
+		}
+
+		/* max z cannot be configured */
+		if (ioctl(fd, EVIOCGABS(ABS_PRESSURE), nValues) < 0)
+		{
+			ErrorF("WACOM: unable to ioctl press max value.\n");
+			return !Success;
+		}
+		common->wcmMaxZ = nValues[2];
+	}
+
+	return Success;
+}
+
+static int usbParse(WacomCommonPtr common, const unsigned char* data)
+{
+	usbParseEvent(common,(const struct input_event*)data);
+	return common->wcmPktLength;
+}
+
+static void usbParseEvent(WacomCommonPtr common,
+	const struct input_event* event)
+{
+	int i, serial, channel;
+
+	/* store events until we receive the MSC_SERIAL containing
+	 * the serial number; without it we cannot determine the
+	 * correct channel. */
+
+	/* space left? bail if not. */
+	if (common->wcmEventCnt >=
+		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
+	{
+		common->wcmEventCnt = 0;
+		DBG(1, ErrorF("usbParse: Exceeded event queue (%d)\n",
+				common->wcmEventCnt));
 		return;
 	}
 
-	common->wcmIndex = 0;
-	for (readevent = eventbuf; readevent < (eventbuf+len); readevent++)
-	{
-		/* sanity check */
-		if (common->wcmIndex >= MAX_USB_EVENTS)
-		{
-			DBG(11, ErrorF("xf86WcmUSBRead resetting buf index\n"));
-			common->wcmIndex = 0;
-		}
-		common->wcmEvent[common->wcmIndex++] = *readevent;
-		/* MSC_SERIAL is the event terminator */
-		if (readevent->type == EV_MSC && readevent->code == MSC_SERIAL
-			&& common->wcmProtocolLevel == 5)
-		{
-			WacomDeviceState *temp_ds;
-			
-			DBG(10, ErrorF("wacom tool serial number=%d\n",
-				readevent->value));
+	/* save it for later */
+	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-			for (i = 0; i < MAX_CHANNELS; i++)
-			{
-				temp_ds = &common->wcmChannel[i].state;
-				if(readevent->value == temp_ds->serial_num)
-				{
-					channel = i;
-					break;
-				}
-			}
-			break;
-		}
-	}
-	if (common->wcmProtocolLevel != 5)
+	/* is it the all-important MSC_SERIAL? maybe next time. */
+	if ((event->type != EV_MSC) || (event->code != MSC_SERIAL))
+		return;
+
+	/* serial number is key for channel */
+	serial = event->value;
+	channel = -1;
+
+	/* one channel only? must be it. */
+	if (common->wcmChannelCnt == 1)
 		channel = 0;
 
-	/* fall back to unused channel */
-	else if (channel == -1)
+	/* otherwise, find the channel */
+	else
 	{
-		for (i = 0; i < MAX_CHANNELS; i++)
+		/* find existing channel */
+		for (i=0; i<common->wcmChannelCnt; ++i)
 		{
-			if(!common->wcmChannel[i].state.proximity)
+			if (common->wcmChannel[i].work.serial_num == serial)
 			{
-				/* reset channel data */
-				memset(&common->wcmChannel[i].state, 0,
-					sizeof(common->wcmChannel[i].state));
 				channel = i;
 				break;
 			}
 		}
+
+		/* find an empty channel */
+		if (channel < 0)
+		{
+			for (i=0; i<common->wcmChannelCnt; ++i)
+			{
+				if (common->wcmChannel[i].work.proximity == 0)
+				{
+					/* clear out channel */
+					memset(&common->wcmChannel[i],0,
+						sizeof(WacomChannel));
+					channel = i;
+					break;
+				}
+			}
+		}
+
+		/* fresh out of channels */
+		if (channel < 0)
+		{
+			/* this should never happen in normal use */
+			DBG(1, ErrorF("usbParse: Exceeded channel count; "
+				"ignoring.\n"));
+			return;
+		}
 	}
-	if (channel == -1)
+
+	usbParseChannel(common,channel,serial);
+
+	common->wcmEventCnt = 0;
+}
+
+static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
+{
+	int i;
+	WacomDeviceState* ds;
+	struct input_event* event;
+
+	#define MOD_BUTTONS(bit, value) do { \
+		ds->buttons = (((value) != 0) ? \
+		(ds->buttons | (bit)) : (ds->buttons & ~(bit))); \
+		} while (0)
+
+	/* all USB data operates from previous context */
+	ds = &common->wcmChannel[channel].work;
+	ds->serial_num = serial;
+
+	/* loop through all events in group */
+	for (i=0; i<common->wcmEventCnt; ++i)
 	{
-		ErrorF("wacom: too many tools in use; ignoring event!\n");
-		return;
-	}
+		event = common->wcmEvents + i;
 
-	ds = common->wcmChannel[channel].state;
-
-	for (i = 0; i < common->wcmIndex; i++)
-	{
-		event = common->wcmEvent + i;
-
-		DBG(11, ErrorF("xf86WcmUSBRead event[%d]->type=%d "
+		DBG(11, ErrorF("usbParseChannel event[%d]->type=%d "
 			"code=%d value=%d\n", i, event->type,
 			event->code, event->value));
 
@@ -160,18 +451,18 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		if (event->type == EV_ABS)
 		{
 			if (event->code == ABS_X)
-				ds.x = event->value;
+				ds->x = event->value;
 			else if (event->code == ABS_Y)
-				ds.y = event->value;
+				ds->y = event->value;
 			else if (event->code == ABS_RZ)
-				ds.rotation = event->value;
+				ds->rotation = event->value;
 			else if (event->code == ABS_TILT_X)
-				ds.tiltx = event->value - 64;
+				ds->tiltx = event->value - 64;
 			else if (event->code ==  ABS_TILT_Y)
-				ds.tilty = event->value - 64;
+				ds->tilty = event->value - 64;
 			else if (event->code == ABS_PRESSURE)
 			{
-				ds.pressure = event->value;
+				ds->pressure = event->value;
 				MOD_BUTTONS (1, event->value >
 					common->wcmThreshold ? 1 : 0);
 				/* pressure button should be downstream */
@@ -180,15 +471,15 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			{
 			}
 			else if (event->code == ABS_WHEEL)
-				ds.abswheel = event->value;
+				ds->abswheel = event->value;
 			else if (event->code == ABS_THROTTLE)
-				ds.throttle = event->value;
+				ds->throttle = event->value;
 		}
 
 		else if (event->type == EV_REL)
 		{
 			if (event->code == REL_WHEEL)
-				ds.relwheel = event->value;
+				ds->relwheel = event->value;
 			else
 			{
 				ErrorF("wacom: rel event recv'd (%d)!\n",
@@ -203,17 +494,17 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 				(event->code == BTN_TOOL_BRUSH) ||
 				(event->code == BTN_TOOL_AIRBRUSH))
 			{
-				ds.device_type = STYLUS_ID;
-				ds.proximity = (event->value != 0);
+				ds->device_type = STYLUS_ID;
+				ds->proximity = (event->value != 0);
 				DBG(6, ErrorF("USB stylus detected %x\n",
 					event->code));
 			}
 			else if (event->code == BTN_TOOL_RUBBER)
 			{
-				ds.device_type = ERASER_ID;
-				ds.proximity = (event->value != 0);
-				if (ds.proximity) 
-					ds.proximity = ERASER_PROX;
+				ds->device_type = ERASER_ID;
+				ds->proximity = (event->value != 0);
+				if (ds->proximity) 
+					ds->proximity = ERASER_PROX;
 				DBG(6, ErrorF("USB eraser detected %x\n",
 					event->code));
 			}
@@ -222,13 +513,13 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			{
 				DBG(6, ErrorF("USB mouse detected %x\n",
 					event->code));
-				ds.device_type = CURSOR_ID;
-				ds.proximity = (event->value != 0);
+				ds->device_type = CURSOR_ID;
+				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOUCH)
 			{
 				/* we use the pressure to determine
-				 * the button 1 */
+				 * the button 1 for now */
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))
@@ -247,122 +538,10 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 			else if (event->code == BTN_EXTRA)
 				MOD_BUTTONS (16, event->value);
 		}
-
-		else if (event->type == EV_MSC)
-		{
-			if (event->code == MSC_SERIAL)
-			{
-				ds.serial_num = event->value;
-
-			}
-		}
 	} /* next event */
 
 	/* dispatch event */
-	xf86WcmEvent(common, channel, &ds);
+	xf86WcmEvent(common, channel, ds);
 }
 
-/*
- ***************************************************************************
- *
- * xf86WcmUSBInit --
- *
- ***************************************************************************
- */
-
-#define BITS_PER_LONG (sizeof(long) * 8)
-#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
-#define test_bit(bit, array) ((array[LONG(bit)] >> OFF(bit)) & 1)
-#define OFF(x)   ((x)%BITS_PER_LONG)
-#define LONG(x)  ((x)/BITS_PER_LONG)
-
-static Bool xf86WcmUSBInit(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-	char name[256] = "Unknown";
-	int abs[5];
-	unsigned long bit[EV_MAX][NBITS(KEY_MAX)];
-	int i, j;
-
-	DBG(1, ErrorF("initializing USB tablet\n"));    
-
-	ioctl(local->fd, EVIOCGNAME(sizeof(name)), name);
-	sscanf(&name[6], "%s", common->wcmModelName);
-	ErrorF("%s Wacom Kernel Input device name: \"%s\"\n", XCONFIG_PROBED,
-		name);
-
-	if (strstr(name, "Intuos"))
-	{
-		common->wcmResolX = common->wcmResolY = 2540;
-		common->wcmProtocolLevel = 5;
-	}
-	else
-	/* Graphire2 */
-	{
-		common->wcmResolX = common->wcmResolY = 1016;
-		common->wcmProtocolLevel = 4;
-	}
-
-	memset(bit, 0, sizeof(bit));
-	ioctl(local->fd, EVIOCGBIT(0, EV_MAX), bit[0]);
-	
-	for (i = 0; i < EV_MAX; i++)
-	{
-		if (test_bit(i, bit[0]))
-		{
-			ioctl(local->fd, EVIOCGBIT(i, KEY_MAX), bit[i]);
-			for (j = 0; j < KEY_MAX; j++) 
-			{
-				if (test_bit(j, bit[i]))
-				{
-					if (i == EV_ABS)
-					{
-						ioctl(local->fd, EVIOCGABS(j), abs);
-						switch (j)
-						{
-							case ABS_X:
-								if (common->wcmMaxX == 0)
-									common->wcmMaxX = abs[2];
-								break;
-
-							case ABS_Y:
-								if (common->wcmMaxY == 0)
-									common->wcmMaxY = abs[2];
-								break;
-
-							case ABS_PRESSURE:
-								if (common->wcmMaxZ == 0)
-									common->wcmMaxZ = abs[2];
-								break;
-						}
-					}
-				}
-			}
-		}
-	}
-    
-	/* Default threshold value if not set */
-	if (common->wcmThreshold <= 0)
-	{
-		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = common->wcmMaxZ / 32;
-		ErrorF("%s Wacom using pressure threshold of %d for button 1\n",
-			XCONFIG_PROBED, common->wcmThreshold);
-	}
-
-	DBG(2, ErrorF("setup is max X=%d(%d) Y=%d(%d) Z=%d(%d)\n",
-			common->wcmMaxX, common->wcmResolX,
-			common->wcmMaxY, common->wcmResolY,
-			common->wcmMaxZ, common->wcmMaxZ));
-  
-	if (xf86Verbose)
-	ErrorF("%s Wacom tablet maximum X=%d maximum Y=%d "
-			"X resolution=%d Y resolution=%d suppress=%d%s\n",
-			XCONFIG_PROBED, common->wcmMaxX, common->wcmMaxY,
-			common->wcmResolX, common->wcmResolY, common->wcmSuppress,
-			HANDLE_TILT(common) ? " Tilt" : "");
-
-	return Success;
-}
 #endif /* LINUX_INPUT */

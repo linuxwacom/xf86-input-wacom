@@ -35,10 +35,16 @@ int xf86WcmWait(int t)
 	if (err != -1)
 		return Success;
 
-	if (err == -1)
-		ErrorF("Wacom select error : %s\n", strerror(errno));
-
+	ErrorF("Wacom select error : %s\n", strerror(errno));
 	return err;
+}
+
+int xf86WcmReady(int fd)
+{
+	int n = xf86WaitForInput(fd, 0);
+	if (n >= 0) return n ? 1 : 0;
+	ErrorF("Wacom select error : %s\n", strerror(errno));
+	return 0;
 }
 
 /*****************************************************************************
@@ -59,6 +65,20 @@ int xf86WcmWait(int t)
 		ErrorF("Wacom select error : %s\n", strerror(errno));
 
 	return err;
+}
+
+int xf86WcmReady(int fd)
+{
+	fd_set readfds;
+	struct timeval timeout;
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	SYSCALL(n = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout));
+	if (n >= 0) return n ? 1 : 0;
+	ErrorF("Wacom select error : %s\n", strerror(errno));
+	return 0;
 }
 
 int xf86WcmOpenTablet(LocalDevicePtr local)

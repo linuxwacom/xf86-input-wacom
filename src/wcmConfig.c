@@ -122,22 +122,17 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevices = (LocalDevicePtr*) xalloc(sizeof(LocalDevicePtr));
 	common->wcmDevices[0] = local;
 	common->wcmNumDevices = 1;         /* number of devices */
-	common->wcmIndex = 0;              /* number of bytes read */
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
 	common->wcmMaxZ = 0;               /* max Z value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
-	common->wcmHasEraser = (flag & ERASER_ID) ? TRUE : FALSE;
-	common->wcmStylusSide = TRUE;          /* eraser or stylus ? */
-	common->wcmStylusProximity = FALSE;    /* a stylus is in proximity ? */
+	common->wcmChannelCnt = 1;             /* number of channels */
 	common->wcmProtocolLevel = 4;          /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
-	common->wcmInitNumber = 0;      /* magic number for the init phases */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
-	common->wcmModelName[0] = 0;		/* tablet model name */
 	return local;
 }
 
@@ -720,7 +715,6 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	{
 		DBG(2, ErrorF("xf86WcmInit wacom port share between"
 				" %s and %s\n", pLocal->name, pMatch->name));
-		privMatch->common->wcmHasEraser |= common->wcmHasEraser;
 		xfree(common->wcmDevices);
 		xfree(common);
 		common = priv->common = privMatch->common;
@@ -880,6 +874,12 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmFlags |= TILT_REQUEST_FLAG;
 	}
 
+	if (xf86SetBoolOption(local->options, "RawFilter",
+			(common->wcmFlags & RAW_FILTERING_FLAG)))
+	{
+		common->wcmFlags |= RAW_FILTERING_FLAG;
+	}
+
 #ifdef LINUX_INPUT
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
@@ -1007,7 +1007,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	/* YHJ - temporarily enable button 4/5 simulation by default */
-	if (xf86SetBoolOption(local->options, "MouseWheel", 1))
+	if (xf86SetBoolOption(local->options, "MouseWheel", 0 /* JEJ - disabled */))
 	{
 		priv->flags |= FAKE_MOUSEWHEEL_FLAG;
 		xf86Msg(X_CONFIG, "%s: mouse scrolling simulation enabled\n",

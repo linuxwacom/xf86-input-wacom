@@ -60,6 +60,7 @@
 #define WC_RESET_19200_IV "\r#"
 
 char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen);
+int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data);
 
 #endif /* __XF86_WCMSERIAL_H */
 

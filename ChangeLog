@@ -1,3 +1,16 @@
+2003-05-04    John E. Joganic <john@joganic.com>
+
+	* Overhauled device reading.
+	* Consolidated serial data path.
+	* Updated ISDV4 data path, untested.
+	* Added data history buffer and working state.
+	* Added raw data filtering.
+	* Commented out some incomplete features.
+
+2003-05-03    John E. Joganic <john@joganic.com>
+
+	* Fixed USB 4D mouse button mapping to be consistent with serial 4D.
+
 2003-05-02    John E. Joganic <john@joganic.com>
 
 	* Added xsetwacom, libwacomcfg, and Xwacom.h; work in progress

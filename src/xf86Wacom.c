@@ -368,8 +368,89 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 static void xf86WcmDevReadInput(LocalDevicePtr local)
 {
-	/* Dispatch device-specific read */
-	((WacomDevicePtr)local->private)->common->wcmDevCls->Read(local);
+	int loop=0;
+	#define MAX_READ_LOOPS 10
+
+	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
+
+	/* move data until we exhaust the device */
+	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
+	{
+		/* dispatch */
+		common->wcmDevCls->Read(local);
+
+		/* verify that there is still data in pipe */
+		if (!xf86WcmReady(local->fd)) break;
+	}
+
+	/* report how well we're doing */
+	if (loop >= MAX_READ_LOOPS)
+		DBG(1,ErrorF("xf86WcmDevReadInput: Can't keep up!!!\n"));
+	else if (loop > 1)
+		DBG(10,ErrorF("xf86WcmDevReadInput: Read (%d)\n",loop));
+}
+
+void xf86WcmReadPacket(LocalDevicePtr local)
+{
+	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
+	int len, pos, cnt, remaining;
+
+	if (!common->wcmModel) return;
+
+	remaining = sizeof(common->buffer) - common->bufpos;
+
+	DBG(7, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
+		"pos=%d remaining=%d\n",
+		common->wcmDevice, local->fd,
+		common->bufpos, remaining));
+
+	/* fill buffer with as much data as we can handle */
+	SYSCALL(len = xf86WcmRead(local->fd,
+		common->buffer + common->bufpos, remaining));
+
+	if (len <= 0)
+	{
+		ErrorF("Error reading wacom device : %s\n", strerror(errno));
+		return;
+	}
+
+	/* account for new data */
+	common->bufpos += len;
+	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
+		common->bufpos));
+
+	pos = 0;
+
+	/* while there are whole packets present, parse data */
+	while ((common->bufpos - pos) >=  common->wcmPktLength)
+	{
+		/* parse packet */
+		cnt = common->wcmModel->Parse(common, common->buffer + pos);
+		if (cnt <= 0)
+		{
+			DBG(1,ErrorF("Misbehaving parser returned %d\n",cnt));
+			break;
+		}
+		pos += cnt;
+	}
+
+	if (pos)
+	{
+		/* if half a packet remains, move it down */
+		if (pos < common->bufpos)
+		{
+			DBG(7, ErrorF("MOVE %d bytes\n", common->bufpos - pos));
+			memmove(common->buffer,common->buffer+pos,
+				common->bufpos-pos);
+			common->bufpos -= pos;
+		}
+
+		/* otherwise, reset the buffer for next time */
+		else
+		{
+			common->bufpos = 0;
+		}
+	}
 }
 
 /*****************************************************************************
@@ -612,9 +693,15 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		priv->button[4] = xf86SetIntOption(local->options,"Button5",5);
 		break;
 	    case XWACOM_PARAM_DEBUGLEVEL:
-		if ((value < 0) || (value > 10)) return BadValue;
+		if ((value < 0) || (value > 100)) return BadValue;
 		xf86ReplaceIntOption(local->options, "DebugLevel", value);
 		gWacomModule.debugLevel = value;
+		break;
+	    case XWACOM_PARAM_RAWFILTER:
+		if ((value < 0) || (value > 1)) return BadValue;
+		xf86ReplaceIntOption(local->options, "RawFilter", value);
+		if (value) priv->common->wcmFlags |= RAW_FILTERING_FLAG;
+		else priv->common->wcmFlags &= ~(RAW_FILTERING_FLAG);
 		break;
 	    case XWACOM_PARAM_PRESSCURVE:
 	    {
@@ -832,7 +919,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 			if (((WacomDevicePtr)localDevices->private)->common) 
 			{
 				fprintf(fp, "%s	%s\n", localDevices->name, 
-					((WacomDevicePtr)localDevices->private)->common->wcmModelName);
+					((WacomDevicePtr)localDevices->private)->common->wcmModel->name);
 			}
 			localDevices = localDevices->next;
 		}
