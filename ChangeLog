@@ -1,7 +1,8 @@
 2003-02-12    John E. Joganic <john@joganic.com>
 
-	* Applied Ping Cheng's eraser patch for PL in wacom.c.
+	* Applied Ping Cheng's eraser patch for PL in wacom.c
 	* Applied Ping Cheng's USB patch for xf86Wacom.c
+	* Applied Ping Cheng's device_on patch for xf86Wacom.c
 
 2003-01-31    John E. Joganic <john@joganic.com>
 
