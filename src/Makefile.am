@@ -18,10 +18,9 @@ xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
 xidump_LDADD = -lncurses
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
-		input.o \
-		tabletdev.o \
-		xf86Wacom.c usbmouse.c \
-		wcm-beta.c wcm-beta.h
+		input.c tabletdev.c usbmouse.c xf86Wacom.c \
+		wcmSerial.c wcmISDV4.c wcmUSB.c \
+		wcmCommon.c wcmCompat.c wcmConfig.c
 
 KERNEL_DIR=@WCM_KERNELDIR@
 XF86_DIR=@WCM_XF86DIR@/xc
@@ -84,58 +83,55 @@ tabletdev.o: tabletdev.c Makefile
 	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
 		-DKBUILD_BASENAME=tabletdev -c -o tabletdev.o tabletdev.c
 
-xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
-	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
-		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
-		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
-		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
-		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
-		-I$(XF86_DIR)/programs/Xserver/include \
-		-I$(XF86_DIR)/programs/Xserver/mi \
-		-I$(XF86_DIR)/exports/include/X11 \
-		-I$(XF86_DIR)/include/extensions \
-		-I$(XF86_DIR) \
-		-I$(XF86_DIR)/exports/include \
-		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
-		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE  -D_GNU_SOURCE \
-		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
-		-DTOGCUP -DXF86BIGFONT -DDPMSExtension -DPIXPRIV -DPANORAMIX \
-		-DRENDER -DGCCUSESGAS -DAVOID_GLYPHBLT -DPIXPRIV \
-		-DSINGLEDEPTH -DXFreeXDGA -DXvExtension -DXFree86LOADER \
-		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
-		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
-		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
-		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
-		-o xf86Wacom.o -c xf86Wacom.c
+XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
+		wcmCommon.o wcmCompat.o wcmConfig.o
+XF86V3OBJS = xf86Wacom-v3.o wcmSerial-v3.o wcmUSB-v3.o \
+		wcmISDV4-v3.o wcmCommon-v3.o wcmCompat-v3.o \
+		wcmConfig-v3.o
 
-wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
-	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
-		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
-		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
-		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
-		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
-		-I$(XF86_DIR)/programs/Xserver/include \
-		-I$(XF86_DIR)/programs/Xserver/mi \
-		-I$(XF86_DIR)/exports/include/X11 \
-		-I$(XF86_DIR)/include/extensions \
-		-I$(XF86_DIR) \
-		-I$(XF86_DIR)/exports/include \
-		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
-		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE  -D_GNU_SOURCE \
-		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
-		-DTOGCUP -DXF86BIGFONT -DDPMSExtension -DPIXPRIV -DPANORAMIX \
-		-DRENDER -DGCCUSESGAS -DAVOID_GLYPHBLT -DPIXPRIV \
-		-DSINGLEDEPTH -DXFreeXDGA -DXvExtension -DXFree86LOADER \
-		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
-		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
-		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
-		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
-		-o wcm-beta.o -c wcm-beta.c
-
-wacom_drv.o: xf86Wacom.o wcm-beta.o
-	ld -r xf86Wacom.o wcm-beta.o -o wacom_drv.o
-
+xf86Wacom.o: xf86Wacom.c Makefile
 xf86Wacom-v3.o: xf86Wacom.c Makefile
+wcmSerial.o: wcmSerial.c wcmSerial.h xf86Wacom.h
+wcmSerial-v3.o: wcmSerial.c wcmSerial.h xf86Wacom.h
+wcmISDV4.o: wcmISDV4.c wcmSerial.h xf86Wacom.h
+wcmISDV4-v3.o: wcmISDV4.c wcmSerial.h xf86Wacom.h
+wcmUSB.o: wcmUSB.c xf86Wacom.h
+wcmUSB-v3.o: wcmUSB.c xf86Wacom.h
+wcmCommon.o: wcmCommon.c xf86Wacom.h
+wcmCommon-v3.o: wcmCommon.c xf86Wacom.h
+wcmCompat.o: wcmCompat.c xf86Wacom.h
+wcmCompat-v3.o: wcmCompat.c xf86Wacom.h
+wcmConfig.o: wcmConfig.c xf86Wacom.h
+wcmConfig-v3.o: wcmConfig.c xf86Wacom.h
+
+$(XF86OBJS): xf86Wacom.c Makefile
+	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
+		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
+		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
+		-I$(XF86_DIR)/programs/Xserver/include \
+		-I$(XF86_DIR)/programs/Xserver/mi \
+		-I$(XF86_DIR)/exports/include/X11 \
+		-I$(XF86_DIR)/include/extensions \
+		-I$(XF86_DIR) \
+		-I$(XF86_DIR)/exports/include \
+		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
+		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE  -D_GNU_SOURCE \
+		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
+		-DTOGCUP -DXF86BIGFONT -DDPMSExtension -DPIXPRIV -DPANORAMIX \
+		-DRENDER -DGCCUSESGAS -DAVOID_GLYPHBLT -DPIXPRIV \
+		-DSINGLEDEPTH -DXFreeXDGA -DXvExtension -DXFree86LOADER \
+		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
+		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
+		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
+		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
+		-o $@ -c $(subst .o,.c,$@)
+
+wacom_drv.o: $(XF86OBJS)
+	ld -r $(XF86OBJS) -o wacom_drv.o
+
+$(XF86V3OBJS):
 	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -fno-strength-reduce -ansi \
 		-pedantic \
 		-I. -I$(XF86_V3_DIR)/programs/Xserver/hw/xfree86/common \
@@ -156,8 +152,8 @@ xf86Wacom-v3.o: xf86Wacom.c Makefile
 		-DSTATIC_COLOR -DAVOID_GLYPHBLT -DPIXPRIV  -DXFreeXDGA \
 		-DNDEBUG -DFUNCPROTO=15 -DNARROWPROTO -DPNP_MOUSE -fPIC \
 		-DDYNAMIC_MODULE -DDEFAULT_MODULE_PATH=\"/usr/X11R6/lib/modules\" \
-		-o xf86Wacom-v3.o -c xf86Wacom.c
+		-o $@ -c $(subst -v3.o,.c,$@)
 
-wacom_drv-v3.o: xf86Wacom-v3.o
-	ld -r xf86Wacom-v3.o -o wacom_drv-v3.o
+wacom_drv-v3.o: $(XF86V3OBJS)
+	ld -r $(XF86V3OBJS) -o wacom_drv-v3.o
 
