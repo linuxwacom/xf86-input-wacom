@@ -33,35 +33,148 @@
 #include "config.h"
 #endif
 
-typedef struct _GUI GUI;
-struct _GUI
+typedef struct _UI UI;
+struct _UI
 {
 	const char* pszName;
+	int (*Init)(void);
+	void (*Term)(void);
+	int (*Run)(void);
 };
 
 /*****************************************************************************
-** GTK GUI
+** XInput
+*****************************************************************************/
+
+#include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XIproto.h>
+
+Display* InitXInput(void)
+{
+	Display* pDisp;
+	int nMajor, nFEV, nFER;
+
+	pDisp = XOpenDisplay(NULL);
+	if (!pDisp)
+	{
+		fprintf(stderr,"Failed to connect to X server.\n");
+		return NULL;
+	}
+
+	XSynchronize(pDisp,1);
+	
+	if (!XQueryExtension(pDisp,INAME,&nMajor,&nFEV,&nFER))
+	{
+		fprintf(stderr,"Server does not support XInput extension.\n");
+		XCloseDisplay(pDisp);
+		return NULL;
+	}
+
+	return pDisp;
+}
+
+int ListDevices(Display* pDisp)
+{
+	int i, j, nDeviceCnt;
+	XDeviceInfoPtr pDevices;
+
+	/* build list of devices */
+	pDevices = (XDeviceInfoPtr) XListInputDevices(pDisp, &nDeviceCnt);
+	if (!pDevices)
+	{
+		fprintf(stderr,"Failed to get input device list.\n");
+		return 1;
+	}
+
+	// XInternAtom
+
+	for (i=0; i<nDeviceCnt; ++i)
+	{
+		printf("%3lu %-15s %s\n",
+				pDevices[i].id,
+				pDevices[i].name,
+				(pDevices[i].use == 0) ? "(disabled)" :
+				(pDevices[i].use == IsXKeyboard) ? "keyboard" :
+				(pDevices[i].use == IsXPointer) ? "pointer" :
+				(pDevices[i].use == IsXExtensionDevice) ? "extension" :
+					"unknown");
+
+		for (j=0; j<pDevices[i].num_classes; ++j)
+		{
+		}
+	}
+
+	XFreeDeviceList(pDevices);
+	return 0;
+}
+
+/*****************************************************************************
+** GTK UI
 *****************************************************************************/
 
 #if WCM_ENABLE_GTK12 || WCM_ENABLE_GTK20
 #define USE_GTK 1
 #include <gtk/gtk.h>
-	GUI gGTKGUI = { "gtk" };
+
+static int GTKInit(void)
+{
+	return 1;
+}
+
+static void GTKTerm(void)
+{
+}
+
+static int GTKRun(void)
+{
+	return 1;
+}
+
+	UI gGTKUI = { "gtk", GTKInit, GTKTerm, GTKRun };
 #else
 #define USE_GTK 0
 #endif
 
 /*****************************************************************************
-** Curses GUI
+** Curses UI
 *****************************************************************************/
 
-	GUI gCursesGUI = { "curses" };
+static int CursesInit(void)
+{
+	return 1;
+}
+
+static void CursesTerm(void)
+{
+}
+
+static int CursesRun(void)
+{
+	return 1;
+}
+
+	UI gCursesUI = { "curses", CursesInit, CursesTerm, CursesRun };
 
 /*****************************************************************************
-** Raw GUI
+** Raw UI
 *****************************************************************************/
 
-	GUI gRawGUI = { "raw" };
+static int RawInit(void)
+{
+	return 0;
+}
+
+static void RawTerm(void)
+{
+}
+
+static int RawRun(void)
+{
+	return 1;
+}
+
+	UI gRawUI = { "raw", RawInit, RawTerm, RawRun };
 
 /****************************************************************************/
 
@@ -72,9 +185,10 @@ void Usage(int rtn)
 			"  -h, --help          - usage\n"
 			"  -v, --verbose       - verbose\n"
 			"  -V, --version       - version\n"
-			"  -g, --gui gui_type  - use specified gui, see below\n"
+			"  -l, --list          - list available input devices\n"
+			"  -u, --ui ui_type    - use specified ui, see below\n"
 			"\n"
-			"GUI types: gtk, curses, raw\n");
+			"UI types: gtk, curses, raw\n");
 	exit(rtn);
 }
 
@@ -94,11 +208,29 @@ void Fatal(const char* pszFmt, ...)
 
 /****************************************************************************/
 
+int Run(Display* pDisp, UI* pUI)
+{
+	if (pUI->Init())
+		{ perror("failed to initialize UI"); return 1; }
+
+	if (pUI->Run())
+	{
+		perror("failed to run UI");
+		pUI->Term();
+		return 1;
+	}
+	pUI->Term();
+	return 0;
+}
+
 int main(int argc, char** argv)
 {
-	GUI* pGUI = NULL;
+	int nRtn;
+	int bList = 0;
+	UI* pUI = NULL;
 	int nVerbose = 0;
 	const char* pa;
+	Display* pDisp = NULL;
 
 	++argv;
 	while ((pa = *(argv++)) != NULL)
@@ -111,24 +243,26 @@ int main(int argc, char** argv)
 				++nVerbose;
 			else if ((strcmp(pa,"-V") == 0) || (strcmp(pa,"--version") == 0))
 				{ Version(); exit(0); }
-			else if ((strcmp(pa,"-g") == 0) || (strcmp(pa,"--gui") == 0))
+			else if ((strcmp(pa,"-l") == 0) || (strcmp(pa,"--list") == 0))
+				bList = 1;
+			else if ((strcmp(pa,"-u") == 0) || (strcmp(pa,"--ui") == 0))
 			{
 				pa = *(argv++);
-				if (!pa) Fatal("Missing gui argument\n");
+				if (!pa) Fatal("Missing ui argument\n");
 				if (strcmp(pa,"gtk") == 0)
 				{
 					#if USE_GTK
-					pGUI = &gGTKGUI;
+					pUI = &gGTKUI;
 					#else
-					Fatal("Not configured for GTK GUI.\n");
+					Fatal("Not configured for GTK.\n");
 					#endif
 				}
 				else if (strcmp(pa,"curses") == 0)
-					pGUI = &gCursesGUI;
+					pUI = &gCursesUI;
 				else if (strcmp(pa,"raw") == 0)
-					pGUI = &gRawGUI;
+					pUI = &gRawUI;
 				else
-					Fatal("Unknown gui option %s\n",pa);
+					Fatal("Unknown ui option %s\n",pa);
 			}
 			else
 				Fatal("Unknown option %s\n",pa);
@@ -137,17 +271,26 @@ int main(int argc, char** argv)
 			Fatal("Unknown argument %s\n",pa);
 	}
 
-	/* default to a given GUI */
-	if (pGUI == NULL)
+	/* default to a given UI */
+	if (pUI == NULL)
 	{
 		#if USE_GTK
-		pGUI = &gGTKGUI;
+		pUI = &gGTKUI;
 		#else
-		pGUI = &gCursesGUI;
+		pUI = &gCursesUI;
 		#endif
 	}
 	
-	printf("xidump: using %s GUI\n",pGUI->pszName);
-	
-	return 0;
+	/* open connection to XServer with XInput */
+	pDisp = InitXInput();
+	if (!pDisp) exit(1);
+
+	if (bList)
+		nRtn = ListDevices(pDisp);
+	else
+		nRtn = Run(pDisp,pUI);
+
+	XCloseDisplay(pDisp);
+
+	return nRtn;
 }
