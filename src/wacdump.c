@@ -26,6 +26,7 @@
 **   2003-01-26 0.3.7 - applied Dean Townsley's Acer C100 patch
 **   2003-01-27 0.3.8 - added logging, better error recovery
 **   2003-01-31 0.5.0 - new release
+**   2003-02-12 0.5.1 - added version option and fixed usage
 **
 ****************************************************************************/
 
@@ -44,7 +45,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "wacdump v0.5.0"
+#define WACDUMP_VER "0.5.1"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -88,10 +89,11 @@ void Usage(void)
 	fprintf(stderr,"Usage: wacdump [options] device\n"
 		"Options:\n"
 		"  -h, --help               - usage\n"
-		"  -c, --class              - use specified class (see below)\n"
+		"  -c, --class device_cls   - use specified class (see below)\n"
 		"  -f, --force device_name  - use specified device (see below)\n"
 		"  -l, --list               - list all supported devices\n"
 		"  -v, --verbose            - increase log output; multiple OK\n"
+		"  -V, --version            - display version number\n"
 		"  --logfile log_file       - output log to file\n"
 		"\n"
 		"Example devices:\n"
@@ -125,6 +127,11 @@ void Usage(void)
 		}
 		WacomFreeList(pCls);
 	}
+}
+
+void Version(void)
+{
+	fprintf(stdout,"%s\n", WACDUMP_VER);
 }
 
 void ListSupportedDevices(void)
@@ -167,7 +174,7 @@ static int InitTablet(WACOMTABLET hTablet)
 	/* Identify program and version */
 	wacscrn_standout();
 	for (i=0; i<80; ++i) wacscrn_output(nRow,i," ");
-	wacscrn_output(nRow,0,WACDUMP_VER);
+	wacscrn_output(nRow,0,"wacdump v" WACDUMP_VER);
 	wacscrn_normal();
 	nRow += 2;
 
@@ -458,6 +465,8 @@ int main(int argc, char** argv)
 			/* information */
 			if ((strcmp(arg,"-h") == 0) || (strcmp(arg,"--help")==0))
 				{ Usage(); exit(0); }
+			if ((strcmp(arg,"-V") == 0) || (strcmp(arg,"--version")==0))
+				{ Version(); exit(0); }
 			else if ((strcmp(arg,"-l") == 0) || (strcmp(arg,"--list") == 0))
 				{ ListSupportedDevices(); exit(0); }
 
