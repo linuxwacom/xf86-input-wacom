@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <ctype.h>
 
 /*****************************************************************************
 ** Structures
@@ -79,6 +80,8 @@ static int TabletParseWacomIV_1_3(TABLET* pTablet,
 static int TabletParseWacomIV_1_2(TABLET* pTablet,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
+
+/*static void WacomTest(int fd);*/
 
 #ifndef BIT
 #undef BIT
@@ -226,21 +229,34 @@ WACOMTABLET WacomOpenSerial(const char* pszDevice)
 		if (tcsetattr (fd, TCSANOW, &tios))
 			{ perror("tcsetattr"); close(fd); return NULL; }
 
-		/* start high and work down */
+		/* set 38400 baud and reset */
 		cfsetispeed(&tios, B38400);
 		cfsetospeed(&tios, B38400);
+		if (tcsetattr (fd, TCSANOW, &tios))
+			{ perror("tcsetattr"); close(fd); return NULL; }
 		if (WacomSendReset(fd)) { close(fd); return NULL; }
+
+		/* set 19200 baud and reset */
 		cfsetispeed(&tios, B19200);
 		cfsetospeed(&tios, B19200);
+		if (tcsetattr (fd, TCSANOW, &tios))
+			{ perror("tcsetattr"); close(fd); return NULL; }
 		if (WacomSendReset(fd)) { close(fd); return NULL; }
+
+		/* set 9600 baud and reset */
 		cfsetispeed(&tios, B9600);
 		cfsetospeed(&tios, B9600);
+		if (tcsetattr (fd, TCSANOW, &tios))
+			{ perror("tcsetattr"); close(fd); return NULL; }
 		if (WacomSendReset(fd)) { close(fd); return NULL; }
 	}
 	else /* not tty */
 	{
 		if (WacomSendReset(fd)) { close(fd); return NULL; }
 	}
+
+	/* Test */
+	/* WacomTest(fd); */
 
 	/* Send stop */
 	if (WacomSendStop(fd) || WacomFlush(fd))
@@ -855,11 +871,11 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 static int WacomSendReset(int fd)
 {
 	/* reset to Wacom II-S command set, and factory defaults */
-	if (WacomSend(fd,"\r$")) return 1;
+	if (WacomSend(fd,"\r$\r")) return 1;
 	usleep(250000); /* 250 milliseconds */
 
 	/* reset tablet to Wacom IV command set */
-	if (WacomSend(fd,"\r#")) return 1;
+	if (WacomSend(fd,"#\r")) return 1;
 	usleep(75000); /* 75 milliseconds */
 
 	return 0;
@@ -935,8 +951,17 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 
 	if (uSize < uLen) { errno=EINVAL; perror("bad size"); return 1; }
 
+	/* read until first header character */
+	while (1)
+	{
+		nXfer = read(fd,pchResponse,1);
+		if (nXfer <= 0) { perror("trunc response header"); return 1; }
+		if (*pchResponse == *pszRequest) break;
+		fprintf(stderr,"Discarding %02X\n", *((unsigned char*)pchResponse));
+	}
+
 	/* read response header */
-	for (uCnt=0; uCnt<uLen; uCnt+=nXfer)
+	for (uCnt=1; uCnt<uLen; uCnt+=nXfer)
 	{
 		nXfer = read(fd,pchResponse+uCnt,uLen-uCnt);
 		if (nXfer <= 0) { perror("trunc response header"); return 1; }
@@ -964,3 +989,46 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 	perror("bad response");
 	return 1;
 }
+
+#if 0
+static void WacomDump(int fd)
+{
+	int x, r;
+	unsigned char uch[16];
+	while (1)
+	{
+		x = read(fd,&uch,sizeof(uch));
+		if (x == 0) break;
+		if (x < 0) { perror("WacomDump"); return; }
+		for (r=0; r<sizeof(uch); ++r)
+		{
+			if (r<x) fprintf(stderr,"%02X ",uch[r]);
+			else fprintf(stderr,"   ");
+		}
+		fprintf(stderr," - ");
+		for (r=0; r<sizeof(uch); ++r)
+		{
+			if (r<x) fprintf(stderr,"%c",isprint(uch[r]) ? uch[r] : '.');
+			else fprintf(stderr," ");
+		}
+		fprintf(stderr,"\n");
+	}
+}
+
+static void WacomTest(int fd)
+{
+	fprintf(stderr,"SENDING\n");
+	write(fd,"1234567890",10);
+	write(fd,"1234567890",10);
+	write(fd,"1234567890",10);
+	write(fd,"1234567890",10);
+	write(fd,"1234567890",10);
+	fprintf(stderr,"SENT\n");
+	write(fd,"\r$\r",3);
+	usleep(250000);
+	write(fd,"#\r",2);
+	usleep(250000);
+	write(fd,"~#\r",3);
+	WacomDump(fd);
+}
+#endif
