@@ -1,3 +1,7 @@
+2003-01-16    John E. Joganic <john@joganic.com>
+
+	* Added check for Mandrake .o.gz modules in configure
+
 2003-01-10    John E. Joganic <john@joganic.com>
 
 	* Changed bit macros for Graphire

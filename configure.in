@@ -26,26 +26,32 @@ WAC_OPTION_MODVER=no
 AC_MSG_CHECKING(for kernel module versioning)
 kernelrel=`uname -r`
 moddir="/lib/modules/$kernelrel/kernel/drivers/usb"
-if test -f "$moddir/hid.o"; then
-	printk=`nm $moddir/hid.o | grep printk_R`
+
+if test -f "$moddir/hid.o.gz"; then
+	zcat $moddir/hid.o.gz >config.hid.o
+	printk=`nm config.hid.o | grep printk`
+	rm config.hid.o
+elif test -f "$moddir/hid.o"; then
+	printk=`nm $moddir/hid.o | grep printk`
+else
+	echo "***"; echo "*** WARNING:"
+	echo "*** unable to find hid.o or hid.o.gz in kernel module"
+	echo "*** directory.  Unable to determine kernel module versioning."
+	echo "***"
+	printk=""
+fi
+
+if test -n "$printk"; then
+	printk=`echo "$printk" | grep printk_R`
 	if test -n "$printk"; then
 		WAC_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
 	else
-		printk=`nm $moddir/hid.o | grep printk`
-		if test -n "$printk"; then
-			AC_MSG_RESULT(no)
-		else
-			AC_MSG_RESULT(confused; assuming no)
-			WAC_OPTION_MODVER="unknown"
-			echo "***"; echo "*** WARNING:"
-			echo "*** printk symbol in hid.o not present"
-			echo "***"
-		fi
+		AC_MSG_RESULT(no)
 	fi
 else
-	AC_MSG_RESULT(unknown; assuming no)
-	WAC_OPTION_MODVER="unknown"
+	AC_MSG_RESULT([unknown; assuming no])
+	WAC_OPTION_MODVER="unknown (assuming no)"
 fi
 
 dnl Check for kernel build environment
