@@ -171,7 +171,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 		int rx, int ry, int rz, int rtx, int rty, int rrot,
 		int rth, int rwheel)
 {
-	int button, newb;
+	int button, newb, tempb;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
@@ -193,25 +193,42 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			/* translate into Left Double Click */
 			if (newb == 17)
 			{
-				newb = 1;
+				tempb = 1;
 				if (buttons & mask)
 				{
 					/* Left button down */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
 							1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 
-							1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+					{
+						/* deal with Tablet PC buttons. */
+						if ( common->wcmTPCButton && rz < common->wcmThreshold )
+							continue;
+						else
+							xf86PostButtonEvent(local->dev, is_absolute, 
+							tempb, 1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+					}
 					/* Left button up */
 					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
 							0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
 					else
-						xf86PostButtonEvent(local->dev, is_absolute, newb, 
+						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
+							0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+					/* Left button down again */
+					if (IsCursor(priv))
+						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
+							1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
+					else
+						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
+							1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+				}
+				else  /* send left button up */
+				{
+					xf86PostButtonEvent(local->dev, is_absolute, tempb, 
 							0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
 				}
-				/* the other left button click will be executed in newb < 17 */
 			}
 			/* switch absolute or relative (Mode Toggle) */
 			if ( newb == 19 && (buttons & mask) )
@@ -240,16 +257,22 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 						priv->oldClickX = rx;
 						priv->oldClickY = ry;
 					}
-					else if (buttons & mask)
+					else
 					{
-						priv->oldTime = 0;
-						xf86getsecs(&sec, &usec);
-						if ( ((sec * 1000) + (usec / 1000) - 
-							priv->oldTime > priv->doubleSpeed ) ||
-							( priv->oldClickX * priv->oldClickX + 
-							priv->oldClickY * priv->oldClickY >
-							priv->doubleRadius) )
-						continue;
+						if (buttons & mask){
+							xf86getsecs(&sec, &usec);
+							if ( ((sec * 1000) + (usec / 1000) - 
+								priv->oldTime > priv->doubleSpeed ) ||
+								( priv->oldClickX * priv->oldClickX + 
+								priv->oldClickY * priv->oldClickY >
+								priv->doubleRadius) )
+							{
+								priv->oldTime = 0;
+								continue;
+							}
+							else
+								priv->oldTime = 0;
+						}
 					}
 				}
 
@@ -262,7 +285,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 					/* deal with Tablet PC buttons. */
 					if ( common->wcmTPCButton )
 					{
-						if (rz <= 0 && (buttons & mask) ) 
+						if (rz < common->wcmThreshold && (buttons & mask) ) 
 							continue;
 					}
 					xf86PostButtonEvent(local->dev, is_absolute,

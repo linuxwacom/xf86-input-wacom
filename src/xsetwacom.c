@@ -162,7 +162,7 @@ struct _PARAMINFO
 		{ "DoubleRadius",
 			"Sets double click effective circle radius "
 			"(default is 3 pixels)",
-			XWACOM_PARAM_DOUBLESPEED,
+			XWACOM_PARAM_DOUBLERADIUS,
 			VALUE_OPTIONAL, RANGE, 
 			1, 26, SINGLE_VALUE, 3 },	
 

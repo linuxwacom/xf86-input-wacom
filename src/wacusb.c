@@ -483,7 +483,10 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 				"Failed to CGBIT abs: %s",strerror(errno));
 			return 1;
 		}
+
+		/* the following line has problem on Debian systems
 		assert(nCnt == sizeof(absbits));
+		*/
 
 		if (USBGetRange(pUSB,absbits,ABS_X,WACOMFIELD_POSITION_X) ||
 			USBGetRange(pUSB,absbits,ABS_Y,WACOMFIELD_POSITION_Y) ||

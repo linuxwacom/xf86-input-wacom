@@ -1,3 +1,7 @@
+2004-03-11    Ping Cheng <pingc@wacom.com>
+	* Modified wacusb.c for Debian
+	* Fixed DoubleSpeed and DoubleRadius issues
+
 2004-03-05    Ping Cheng <pingc@wacom.com>
 	* Modified tcl and tk configuration options
 	* Updated webpage for kernel 2.6 support
