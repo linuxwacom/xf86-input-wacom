@@ -16,106 +16,23 @@ WAC_EXPPROGS=""
 WAC_EXPMODULES=""
 WAC_PATCH_HID=""
 
-dnl Check architecture
-AC_MSG_CHECKING(for processor type)
-WAC_ARCH=`uname -m`
-AC_MSG_RESULT($WAC_ARCH)
+dnl Check architecture, kernel type
+AC_WAC_CHECK_ENVIRON
 
-dnl Guess modversioning
-WAC_OPTION_MODVER=no
-AC_MSG_CHECKING(for kernel module versioning)
-kernelrel=`uname -r`
-moddir="/lib/modules/$kernelrel/kernel/drivers/usb"
-
-if test -f "$moddir/hid.o.gz"; then
-	zcat $moddir/hid.o.gz >config.hid.o
-	printk=`nm config.hid.o | grep printk`
-	rm config.hid.o
-elif test -f "$moddir/hid.o"; then
-	printk=`nm $moddir/hid.o | grep printk`
-else
-	echo "***"; echo "*** WARNING:"
-	echo "*** unable to find hid.o or hid.o.gz in kernel module"
-	echo "*** directory.  Unable to determine kernel module versioning."
-	echo "***"
-	printk=""
+dnl If linux kernel is detected, check for module versioning and kernel source
+if test x$WAC_ISLINUX = xyes; then
+	AC_WAC_CHECK_MODVER
+	AC_WAC_CHECK_KERNELSOURCE
 fi
 
-if test -n "$printk"; then
-	printk=`echo "$printk" | grep printk_R`
-	if test -n "$printk"; then
-		WAC_OPTION_MODVER=yes
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-	fi
-else
-	AC_MSG_RESULT([unknown; assuming no])
-	WAC_OPTION_MODVER="unknown (assuming no)"
-fi
-
-dnl Check for kernel build environment
-WAC_ENV_KERNEL=no
-AC_ARG_WITH(kernel,
-[  --with-kernel=dir   Specify kernel source directory],
-[
-	WAC_KERNELDIR="$withval"
-	AC_MSG_CHECKING(for valid kernel source tree)
-	if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
-		AC_MSG_RESULT(ok)
-		WAC_ENV_KERNEL=yes
-	else
-		AC_MSG_RESULT(missing input.h)
-		AC_MSG_ERROR("Unable to find $WAC_KERNELDIR/include/linux/input.h")
-	fi
-],
-[
-	dnl guess directory
-	AC_MSG_CHECKING(for kernel sources)
-	WAC_KERNELDIR="/usr/src/linux-2.4"
-	if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
-		WAC_ENV_KERNEL=yes
-		AC_MSG_RESULT($WAC_KERNELDIR)
-	else
-		WAC_KERNELDIR="/usr/src/linux"
-		if test -f "$WAC_KERNELDIR/include/linux/input.h"; then
-			WAC_ENV_KERNEL=yes
-			AC_MSG_RESULT($WAC_KERNELDIR)
-		else
-			AC_MSG_RESULT(not found)
-			echo "***"
-			echo "*** WARNING:"
-			echo "*** Unable to guess kernel source directory"
-			echo "*** Looked at /usr/src/linux-2.4"
-			echo "*** Looked at /usr/src/linux"
-			echo "*** Kernel modules will not be built"
-			echo "***"
-		fi
-	fi
-])
-
-dnl Check for XFree86 build environment
-WAC_ENV_XF86=no
-AC_ARG_WITH(xf86,
-[  --with-xf86=dir   Specify XF86 build directory],
-[
-	WAC_XF86DIR="$withval";
-	AC_MSG_CHECKING(for valid XFree86 build environment)
-	if test -f $WAC_XF86DIR/$XF86SUBDIR/include/xf86Version.h; then
-		WAC_ENV_XF86=yes
-		AC_MSG_RESULT(ok)
-	else
-		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Unable to find $WAC_XF86DIR/$XF86SUBDIR/include/xf86Version.h")
-	fi
-	WAC_XF86DIR=`(cd $WAC_XF86DIR; pwd)`
-])
+dnl Check for XFree86 source
+AC_WAC_CHECK_XFREE86SOURCE
 
 dnl Check for wacom build
 WAC_OPTION_WACOM=no
 AC_ARG_ENABLE(wacom,
 [  --enable-wacom  Enable building wacom.o                  default=yes],
-	, enable_wacom=yes)
+	, enable_wacom=$WAC_KERNEL_WACOM_DEFAULT)
 if test "$enable_wacom" != "no"; then
 	if test "$WAC_ENV_KERNEL" != "yes"; then
 		echo "***"; echo "*** WARNING:";
@@ -294,6 +211,7 @@ AC_SUBST(WAC_MODVER)
 AC_SUBST(WAC_KERNELDIR)
 AC_SUBST(WAC_XF86DIR)
 AC_SUBST(WAC_NO_MERGE_CONSTANTS)
+AC_SUBST(WAC_LINUX_INPUT)
 
 AC_OUTPUT(Makefile src/Makefile)
 
@@ -301,14 +219,15 @@ echo ""
 echo "----------------------------------------"
 echo "  BUILD ENVIRONMENT:"
 echo "       architecture - $WAC_ARCH"
+echo "       linux kernel - $WAC_ISLINUX"
 echo "  module versioning - $WAC_OPTION_MODVER"
-echo "             kernel - $WAC_ENV_KERNEL"
+echo "      kernel source - $WAC_ENV_KERNEL"
 echo "            XFree86 - $WAC_ENV_XF86"
 echo ""
 echo "  BUILD OPTIONS:"
 echo "            wacom.o - $WAC_OPTION_WACOM"
-echo "            wacdump - $WAC_OPTION_WACDUMP"
+echo "            wacdump - $WAC_OPTION_WACDUMP $WAC_PATCH_WACDUMP"
 echo "              hid.o - $WAC_OPTION_HID $WAC_PATCH_HID"
 echo "         usbmouse.o - $WAC_OPTION_USBMOUSE"
-echo "        wacom_drv.o - $WAC_OPTION_WACOMDRV"
+echo "        wacom_drv.o - $WAC_OPTION_WACOMDRV $WAC_PATCH_WACOMDRV"
 echo "----------------------------------------"

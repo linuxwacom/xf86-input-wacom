@@ -6,7 +6,11 @@ AM_CFLAGS = -Wall
 EXTRA_PROGRAMS = wacdump
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o
 
-wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h wacserial.c wacserial.h
+wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
+		wactablet.c wactablet.h \
+		wacserial.c wacserial.h \
+		wacusb.c wacusb.h
+
 wacdump_LDADD = -lncurses
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c xf86Wacom.c usbmouse.c \
 		wcm-beta.c wcm-beta.h
@@ -26,6 +30,7 @@ KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
 		-march=$(ARCHITECTURE)
 
 NO_MERGE_CONSTANTS=@WAC_NO_MERGE_CONSTANTS@
+LINUX_INPUT=@WAC_LINUX_INPUT@
 
 wacom.o: wacom.c Makefile
 	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
@@ -75,7 +80,7 @@ xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
 		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
 		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
 		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
-		-DNARROWPROTO -DIN_MODULE -DXFree86Module -DLINUX_INPUT \
+		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
 		-o xf86Wacom.o -c xf86Wacom.c
 
 wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
@@ -99,7 +104,7 @@ wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
 		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
 		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
 		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
-		-DNARROWPROTO -DIN_MODULE -DXFree86Module -DLINUX_INPUT \
+		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
 		-o wcm-beta.o -c wcm-beta.c
 
 wacom_drv.o: xf86Wacom.o wcm-beta.o

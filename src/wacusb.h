@@ -1,7 +1,7 @@
 /*****************************************************************************
-** wacserial.h
+** wacusb.h
 **
-** Copyright (C) 2002,2003 - John E. Joganic
+** Copyright (C) 2002, 2003 - John E. Joganic
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -19,11 +19,11 @@
 **
 ****************************************************************************/
 
-#ifndef __LINUXWACOM_WACSERIAL_H
-#define __LINUXWACOM_WACSERIAL_H
+#ifndef __LINUXWACOM_WACUSB_H
+#define __LINUXWACOM_WACUSB_H
 
 #include "wactablet.h"
 
-WACOMTABLET WacomOpenSerialTablet(int fd);
+WACOMTABLET WacomOpenUSBTablet(int fd);
 
-#endif /* __LINUXWACOM_WACSERIAL_H */
+#endif /* __LINUXWACOM_WACUSB_H */

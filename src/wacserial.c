@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacserial.c
 **
-** Copyright (C) 2002 - John E. Joganic
+** Copyright (C) 2002, 2003 - John E. Joganic
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -25,10 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <termios.h>
-#include <unistd.h>
 #include <ctype.h>
+#include <unistd.h>
 
 /*****************************************************************************
 ** Structures
@@ -41,43 +40,57 @@ typedef struct
 	const char* pszName;
 	unsigned int uPacketLength;
 	int nProtocol;
-	int nCaps;
+	unsigned int uCaps;
 } MODEL_INFO;
 
 /*****************************************************************************
-** Tablet object
+** Serial Tablet Object
 *****************************************************************************/
 
-typedef struct _TABLET TABLET;
+typedef struct _SERIALTABLET SERIALTABLET;
 
-typedef int (*PARSEFUNC)(TABLET* pTablet, const unsigned char* puchData,
+typedef int (*PARSEFUNC)(SERIALTABLET* pSerial, const unsigned char* puchData,
 		unsigned int uLength, WACOMSTATE* pState);
 
-struct _TABLET
+struct _SERIALTABLET
 {
+	WACOMTABLET_PRIV tablet;
 	int fd;
 	MODEL_INFO* pInfo;
 	unsigned int uPacketLength;
 	int nVerMajor, nVerMinor, nVerRelease;
-	int nCaps;
 	PARSEFUNC pfnParse;
 	int nToolID;
-	WACOMSTATE state, max, min;
+	WACOMSTATE state;
 };
 
-static int TabletIdentifyModel(TABLET* pTablet);
-static int TabletInitializeModel(TABLET* pTablet);
+static void SerialClose(WACOMTABLET_PRIV* pTablet);
+static WACOMMODEL SerialGetModel(WACOMTABLET_PRIV* pTablet);
+static const char* SerialGetVendorName(WACOMTABLET_PRIV* pTablet);
+static const char* SerialGetModelName(WACOMTABLET_PRIV* pTablet);
+static int SerialGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
+		int* pnMinor, int* pnRelease);
+static int SerialGetCaps(WACOMTABLET_PRIV* pTablet);
+static int SerialGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState);
+static int SerialReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
+		unsigned int uSize);
+static int SerialParseData(WACOMTABLET_PRIV* pTablet,
+		const unsigned char* puchData, unsigned int uLength,
+		WACOMSTATE* pState);
 
-static int TabletParseWacomV(TABLET* pTablet,
+static int SerialIdentifyModel(SERIALTABLET* pSerial);
+static int SerialInitializeModel(SERIALTABLET* pSerial);
+
+static int SerialParseWacomV(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
-static int TabletParseWacomIV_1_4(TABLET* pTablet,
+static int SerialParseWacomIV_1_4(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
-static int TabletParseWacomIV_1_3(TABLET* pTablet,
+static int SerialParseWacomIV_1_3(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
-static int TabletParseWacomIV_1_2(TABLET* pTablet,
+static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
 
@@ -174,16 +187,10 @@ static int WacomSendRequest(int fd, const char* pszRequest, char* pchResponse,
 ** Public Functions
 *****************************************************************************/
 
-WACOMTABLET WacomOpenSerial(const char* pszDevice)
+WACOMTABLET WacomOpenSerialTablet(int fd)
 {
-	int fd;
 	struct termios tios;
-	TABLET* pTablet = NULL;
-
-	/* open device for read/write access */
-	fd = open(pszDevice,O_RDWR);
-	if (fd < 0) 
-		{ perror("open"); return NULL; }
+	SERIALTABLET* pSerial = NULL;
 
 	/* configure tty */
 	if (isatty(fd))
@@ -262,130 +269,44 @@ WACOMTABLET WacomOpenSerial(const char* pszDevice)
 		{ perror("stop"); close(fd); return NULL; }
 
 	/* Allocate tablet */
-	pTablet = (TABLET*)malloc(sizeof(TABLET));
-	memset(pTablet,0,sizeof(*pTablet));
-	pTablet->fd = fd;
+	pSerial = (SERIALTABLET*)malloc(sizeof(SERIALTABLET));
+	memset(pSerial,0,sizeof(*pSerial));
+	pSerial->tablet.Close = SerialClose;
+	pSerial->tablet.GetModel = SerialGetModel;
+	pSerial->tablet.GetVendorName = SerialGetVendorName;
+	pSerial->tablet.GetModelName = SerialGetModelName;
+	pSerial->tablet.GetROMVer = SerialGetROMVer;
+	pSerial->tablet.GetCaps = SerialGetCaps;
+	pSerial->tablet.GetState = SerialGetState;
+	pSerial->tablet.ReadRaw = SerialReadRaw;
+	pSerial->tablet.ParseData = SerialParseData;
+
+	pSerial->fd = fd;
+	pSerial->state.uValueCnt = WACOMFIELD_MAX;
 
 	/* Identify and initialize the model */
-	if (TabletIdentifyModel(pTablet))
-		{ perror("identify"); close(fd); free(pTablet); return NULL; }
-	if (TabletInitializeModel(pTablet))
-		{ perror("init_model"); close(fd); free(pTablet); return NULL; }
+	if (SerialIdentifyModel(pSerial))
+		{ perror("identify"); close(fd); free(pSerial); return NULL; }
+	if (SerialInitializeModel(pSerial))
+		{ perror("init_model"); close(fd); free(pSerial); return NULL; }
 
 	/* Send start */
 	WacomSendStart(fd);
 
-	return (WACOMTABLET)pTablet;
-}
-
-void WacomCloseSerial(WACOMTABLET hTablet)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) return;
-
-	close(pTablet->fd);
-	free(pTablet);
-}
-
-WACOMMODEL WacomGetModel(WACOMTABLET hTablet)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-	return pTablet->pInfo->uDeviceType | WACOMCLASS_SERIAL;
-}
-
-const char* WacomGetModelName(WACOMTABLET hTablet)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-	return pTablet->pInfo->pszName;
-}
-
-int WacomGetRomVersion(WACOMTABLET hTablet, int* pnMajor, int* pnMinor,
-		int* pnRelease)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-	if (!pnMajor) { errno=EINVAL; return 1; }
-	*pnMajor = pTablet->nVerMajor;
-	if (pnMinor) *pnMinor = pTablet->nVerMinor;
-	if (pnRelease) *pnRelease = pTablet->nVerRelease;
-	return 0;
-}
-
-int WacomReadRaw(WACOMTABLET hTablet, unsigned char* puchData,
-		unsigned int uSize)
-{
-	int nXfer;
-	unsigned int uCnt, uPacketLength;
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-	uPacketLength = pTablet->uPacketLength;
-
-	/* check size of buffer */
-	if (uSize < uPacketLength) { errno=EINVAL; return 0; }
-	
-	for (uCnt=0; uCnt<uPacketLength; uCnt+=nXfer)
-	{
-		nXfer = read(pTablet->fd,puchData+uCnt,uPacketLength-uCnt);
-		if (nXfer <= 0) return nXfer;
-	}
-
-	return (signed)uCnt;
-}
-
-int WacomGetCapabilities(WACOMTABLET hTablet)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-	return pTablet->pInfo->nCaps;
-}
-
-int WacomGetRanges(WACOMTABLET hTablet, WACOMSTATE* pMin, WACOMSTATE* pMax)
-{
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 0; }
-
-	*pMin = pTablet->min;
-	*pMax = pTablet->max;
-	return 0;
-}
-
-
-int WacomParseData(WACOMTABLET hTablet, const unsigned char* puchData,
-		unsigned int uLength, WACOMSTATE* pState)
-{
-	int i;
-	TABLET* pTablet = (TABLET*)hTablet;
-	if (!pTablet) { errno=EBADF; return 1; }
-
-	/* check synchronization */
-	if (!puchData[0] & 0x80) { errno=EINVAL; return 1; }
-	for (i=1; i<uLength; ++i)
-	{
-		if (puchData[i] & 0x80)
-			{ errno=EINVAL; return 1; }
-	}
-
-	/* dispatch to parser */
-	if (pTablet->pfnParse)
-		return (*pTablet->pfnParse)(pTablet,puchData,uLength,pState);
-
-	errno = EINVAL;
-	return 1;
+	return (WACOMTABLET)pSerial;
 }
 
 /*****************************************************************************
-** Tablet Functions
+** Serial Tablet Functions
 *****************************************************************************/
 
-static int TabletIdentifyModel(TABLET* pTablet)
+static int SerialIdentifyModel(SERIALTABLET* pSerial)
 {
 	char* pszPos;
 	MODEL_INFO* pInfo;
 	char chResp[64];
 
-	if (WacomSendRequest(pTablet->fd,"~#\r",chResp,sizeof(chResp)))
+	if (WacomSendRequest(pSerial->fd,"~#\r",chResp,sizeof(chResp)))
 		return 1;
 
 	/* look through model table for information */
@@ -393,19 +314,20 @@ static int TabletIdentifyModel(TABLET* pTablet)
 	{
 		if (strncmp(chResp,pInfo->pszID,strlen(pInfo->pszID)) == 0)
 		{
-			pTablet->pInfo = pInfo;
-			pTablet->uPacketLength = pInfo->uPacketLength;
+			pSerial->pInfo = pInfo;
+			pSerial->state.uValid = pInfo->uCaps;
+			pSerial->uPacketLength = pInfo->uPacketLength;
 
 			/* get version number */
 			pszPos = chResp;
 			while (*pszPos) ++pszPos;
 			while ((pszPos > chResp) && (pszPos[-1] != 'V')) --pszPos;
-			if (sscanf(pszPos,"%d.%d-%d",&pTablet->nVerMajor,
-					&pTablet->nVerMinor,&pTablet->nVerRelease) != 3)
+			if (sscanf(pszPos,"%d.%d-%d",&pSerial->nVerMajor,
+					&pSerial->nVerMinor,&pSerial->nVerRelease) != 3)
 			{
-				pTablet->nVerRelease = 0;
-				if (sscanf(pszPos,"%d.%d",&pTablet->nVerMajor,
-						&pTablet->nVerMinor) != 2)
+				pSerial->nVerRelease = 0;
+				if (sscanf(pszPos,"%d.%d",&pSerial->nVerMajor,
+						&pSerial->nVerMinor) != 2)
 				{
 					errno = EINVAL;
 					fprintf(stderr,"bad version number: %s\n",pszPos);
@@ -420,96 +342,105 @@ static int TabletIdentifyModel(TABLET* pTablet)
 	return 1;
 }
 
-static int TabletInitializeModel(TABLET* pTablet)
+static int SerialInitializeModel(SERIALTABLET* pSerial)
 {
 	char chResp[32];
 
 	/* Request tablet dimensions */
-	if (WacomSendRequest(pTablet->fd,"~C\r",chResp,sizeof(chResp)))
+	if (WacomSendRequest(pSerial->fd,"~C\r",chResp,sizeof(chResp)))
 		return 1;
-	if (sscanf(chResp,"%d,%d",&pTablet->max.nPosX,&pTablet->max.nPosY) != 2)
-		{ errno=EINVAL; perror("bad dim response"); return 1; }
+
+	/* parse position range */
+	if (sscanf(chResp,"%d,%d",
+			&pSerial->state.values[WACOMFIELD_POSITION_X].nMax,
+			&pSerial->state.values[WACOMFIELD_POSITION_Y].nMax) != 2)
+	{
+		errno=EINVAL;
+		perror("bad dim response");
+		return 1;
+	}
 
 	/* tablet specific initialization */
-	switch (pTablet->pInfo->uDeviceType)
+	switch (pSerial->pInfo->uDeviceType)
 	{
 		case WACOMDEVICE_PENPARTNER:
 			/* pressure mode */
-			WacomSend(pTablet->fd, "PH1\r");
+			WacomSend(pSerial->fd, "PH1\r");
 			break;
 
 		case WACOMDEVICE_INTUOS:
 			/* multi-mode, max-rate */ 
-			WacomSend(pTablet->fd, "MT1\rID1\rIT0\r");
+			WacomSend(pSerial->fd, "MT1\rID1\rIT0\r");
 	}
 	
-	if (pTablet->pInfo->nProtocol == 4)
+	if (pSerial->pInfo->nProtocol == 4)
 	{
 		/* multi-mode (MU), upper-origin (OC), all-macro (M0),
 		 * no-macro1 (M1), max-rate (IT), no-inc (IN),
 		 * stream-mode (SR), Z-filter (ZF) */
 
-/*		if (WacomSend(pTablet->fd, "MU1\rOC1\r~M0\r~M1\rIT0\rIN0\rSR\rZF1\r"))
+/*		if (WacomSend(pSerial->fd, "MU1\rOC1\r~M0\r~M1\rIT0\rIN0\rSR\rZF1\r"))
 			return 1;
 			*/
 
-		if (pTablet->nVerMajor == 1)
+		if (pSerial->nVerMajor == 1)
 		{
-			if (pTablet->nVerMinor >= 4)
+			if (pSerial->nVerMinor >= 4)
 			{
 				/* enable tilt mode */
-				if (WacomSend(pTablet->fd,"FM1\r")) return 1;
+				if (WacomSend(pSerial->fd,"FM1\r")) return 1;
 
-				pTablet->pfnParse = TabletParseWacomIV_1_4;
-				pTablet->uPacketLength = 9;
-				pTablet->max.nPressure = 255;
-				pTablet->min.nTiltX = -64;
-				pTablet->max.nTiltX = 63;
-				pTablet->min.nTiltY = -64;
-				pTablet->max.nTiltY = 63;
+				pSerial->pfnParse = SerialParseWacomIV_1_4;
+				pSerial->uPacketLength = 9;
+				pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 255;
+				pSerial->state.values[WACOMFIELD_TILT_X].nMin = -64;
+				pSerial->state.values[WACOMFIELD_TILT_X].nMax = 63;
+				pSerial->state.values[WACOMFIELD_TILT_Y].nMin = -64;
+				pSerial->state.values[WACOMFIELD_TILT_Y].nMax = 63;
 			}
-			else if (pTablet->nVerMinor == 3)
+			else if (pSerial->nVerMinor == 3)
 			{
-				pTablet->pfnParse = TabletParseWacomIV_1_3;
-				pTablet->max.nPressure = 255;
+				pSerial->pfnParse = SerialParseWacomIV_1_3;
+				pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 255;
 			}
-			else if (pTablet->nVerMinor == 2)
+			else if (pSerial->nVerMinor == 2)
 			{
-				pTablet->pfnParse = TabletParseWacomIV_1_2;
-				pTablet->max.nPressure = 255;
+				pSerial->pfnParse = SerialParseWacomIV_1_2;
+				pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 255;
 			}
-			else if (pTablet->nVerMinor < 2)
+			else if (pSerial->nVerMinor < 2)
 			{
-				pTablet->pfnParse = TabletParseWacomIV_1_2;
-				pTablet->max.nPressure = 120;
+				pSerial->pfnParse = SerialParseWacomIV_1_2;
+				pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 120;
 			}
 		}
 	}
-	else if (pTablet->pInfo->nProtocol == 5)
+	else if (pSerial->pInfo->nProtocol == 5)
 	{
-		pTablet->pfnParse = TabletParseWacomV;
-		pTablet->max.nPressure = 1023;
-		pTablet->max.nAbsWheel = 1023;
-		pTablet->min.nRotZ = -899;
-		pTablet->max.nRotZ = 900;
-		pTablet->min.nThrottle = -1023;
-		pTablet->max.nThrottle = 1023;
-		pTablet->min.nTiltX = -64;
-		pTablet->max.nTiltX = 63;
-		pTablet->min.nTiltY = -64;
-		pTablet->max.nTiltY = 63;
+		pSerial->pfnParse = SerialParseWacomV;
+		pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 1023;
+		pSerial->state.values[WACOMFIELD_ABSWHEEL].nMax = 1023;
+		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMin = -899;
+		pSerial->state.values[WACOMFIELD_ROTATION_Z].nMax = 900;
+		pSerial->state.values[WACOMFIELD_THROTTLE].nMin = -1023;
+		pSerial->state.values[WACOMFIELD_THROTTLE].nMax = 1023;
+		pSerial->state.values[WACOMFIELD_TILT_X].nMin = -64;
+		pSerial->state.values[WACOMFIELD_TILT_X].nMax = 63;
+		pSerial->state.values[WACOMFIELD_TILT_Y].nMin = -64;
+		pSerial->state.values[WACOMFIELD_TILT_Y].nMax = 63;
 	}
 	else { errno=EINVAL; return 1; }
 
 	return 0;
 }
 
-static int TabletParseWacomV(TABLET* pTablet,
+static int SerialParseWacomV(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
 	int x=0, y=0, rot=0, tiltx=0, tilty=0, wheel=0,
-			tool=WACOMTOOLTYPE_NONE, button=0, press=0, throttle=0;
+			tool=WACOMTOOLTYPE_NONE, button=0, press=0, throttle=0,
+			nButtonValue;
 
 	/* Wacom V
 	 * Supports: 1024 pressure, eraser, 2 side-switch, tilt, throttle, wheel
@@ -567,23 +498,20 @@ static int TabletParseWacomV(TABLET* pTablet,
 				tool = WACOMTOOLTYPE_PEN; break;
 		}
 			
-		pTablet->nToolID = toolid;
-		pTablet->state.nValid = pTablet->nCaps;
-		pTablet->state.nProximity = 1;
-		pTablet->state.nSerial = serial;
-		pTablet->state.nToolType = tool;
-		*pState = pTablet->state;
-		return 0;
+		pSerial->nToolID = toolid;
+		pSerial->state.values[WACOMFIELD_PROXIMITY].nValue = 1;
+		pSerial->state.values[WACOMFIELD_SERIAL].nValue = serial;
+		pSerial->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
+		return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 	}
 
 	/* out */
 	if ((puchData[0] & 0xFE) == 0x80)
 	{
-		pTablet->nToolID = 0;
-		memset(&pTablet->state,0,sizeof(pTablet->state));
-		pTablet->state.nValid = pTablet->nCaps;
-		*pState = pTablet->state;
-		return 0;
+		pSerial->nToolID = 0;
+		memset(&pSerial->state.values, 0,
+				pSerial->state.uValueCnt * sizeof(WACOMVALUE));
+		return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 	}
 
 	/* pen data */
@@ -616,16 +544,14 @@ static int TabletParseWacomV(TABLET* pTablet,
 					((int)puchData[6] & 0x7f));
 		}
 
-		pTablet->state.nValid = pTablet->nCaps;
-		pTablet->state.nPosX = x;
-		pTablet->state.nPosY = y;
-		pTablet->state.nTiltX = tiltx;
-		pTablet->state.nTiltY = tilty;
-		pTablet->state.nPressure = press;
-		pTablet->state.nButtons = button;
-		pTablet->state.nAbsWheel = wheel;
-		*pState = pTablet->state;
-		return 0;
+		pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+		pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+		pSerial->state.values[WACOMFIELD_TILT_X].nValue = tiltx;
+		pSerial->state.values[WACOMFIELD_TILT_Y].nValue = tilty;
+		pSerial->state.values[WACOMFIELD_PRESSURE].nValue = press;
+		pSerial->state.values[WACOMFIELD_BUTTONS].nValue = button;
+		pSerial->state.values[WACOMFIELD_ABSWHEEL].nValue = wheel;
+		return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 	}
 
 	/* mouse packet */
@@ -641,12 +567,12 @@ static int TabletParseWacomV(TABLET* pTablet,
 		if (puchData[8] & 0x08) throttle = -throttle;
 
 		/* 4D mouse */
-		if (pTablet->nToolID == 0x094)
+		if (pSerial->nToolID == 0x094)
 		{
 			button = (((puchData[8] & 0x70) >> 1) | (puchData[8] & 0x07));
 		}
 		/* lens cursor */
-		else if (pTablet->nToolID == 0x096)
+		else if (pSerial->nToolID == 0x096)
 		{
 			button = puchData[8] & 0x1F;
 		}
@@ -657,22 +583,24 @@ static int TabletParseWacomV(TABLET* pTablet,
 			wheel = - (puchData[8] & 1) + ((puchData[8] & 2) >> 1);
 		}
 
-		pTablet->state.nValid = pTablet->nCaps;
-		pTablet->state.nPosX = x;
-		pTablet->state.nPosY = y;
-		pTablet->state.nRelWheel = wheel;
-		pTablet->state.nThrottle = throttle;
-		pTablet->state.nButtons &= ~(BIT(WACOMBUTTON_LEFT) |
+		pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+		pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+		pSerial->state.values[WACOMFIELD_RELWHEEL].nValue = wheel;
+		pSerial->state.values[WACOMFIELD_THROTTLE].nValue = throttle;
+
+		/* button values */
+		nButtonValue = pSerial->state.values[WACOMFIELD_BUTTONS].nValue &
+				~(BIT(WACOMBUTTON_LEFT) |
 				BIT(WACOMBUTTON_RIGHT) | BIT(WACOMBUTTON_MIDDLE) |
 				BIT(WACOMBUTTON_EXTRA) | BIT(WACOMBUTTON_SIDE));
-		if (button & 1) pTablet->state.nButtons |= BIT(WACOMBUTTON_LEFT);
-		if (button & 2) pTablet->state.nButtons |= BIT(WACOMBUTTON_MIDDLE);
-		if (button & 4) pTablet->state.nButtons |= BIT(WACOMBUTTON_RIGHT);
-		if (button & 8) pTablet->state.nButtons |= BIT(WACOMBUTTON_EXTRA);
-		if (button & 16) pTablet->state.nButtons |= BIT(WACOMBUTTON_SIDE);
+		if (button & 1) nButtonValue |= BIT(WACOMBUTTON_LEFT);
+		if (button & 2) nButtonValue |= BIT(WACOMBUTTON_MIDDLE);
+		if (button & 4) nButtonValue |= BIT(WACOMBUTTON_RIGHT);
+		if (button & 8) nButtonValue |= BIT(WACOMBUTTON_EXTRA);
+		if (button & 16) nButtonValue |= BIT(WACOMBUTTON_SIDE);
+		pSerial->state.values[WACOMFIELD_BUTTONS].nValue = nButtonValue;
 
-		*pState = pTablet->state;
-		return 0;
+		return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 	}
 
 	/* 2nd 4D mouse packet */
@@ -691,18 +619,17 @@ static int TabletParseWacomV(TABLET* pTablet,
 		if (rot < 900) rot = -rot;
 		else rot = 1800 - rot;
 
-		pTablet->state.nPosX = x;
-		pTablet->state.nPosY = y;
-		pTablet->state.nRotZ = rot;
-		*pState = pTablet->state;
-		return 0;
+		pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+		pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+		pSerial->state.values[WACOMFIELD_ROTATION_Z].nValue = rot;
+		return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 	}
 
 	errno = EINVAL;
 	return 1;
 }
 
-static int TabletParseWacomIV_1_4(TABLET* pTablet,
+static int SerialParseWacomIV_1_4(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
@@ -711,27 +638,33 @@ static int TabletParseWacomIV_1_4(TABLET* pTablet,
 
 	if ((uLength != 7) && (uLength != 9)) { errno=EINVAL; return 1; }
 
-	if (TabletParseWacomIV_1_3(pTablet,puchData,7,pState))
+	if (SerialParseWacomIV_1_3(pSerial,puchData,7,pState))
 		return 1;
 
 	/* tilt mode */
 	if (uLength == 9)
 	{
-		pTablet->state.nValid |= WACOMVALID(TILT_X) | WACOMVALID(TILT_Y);
-		pTablet->state.nTiltX = puchData[7] & 0x3F;
-		pTablet->state.nTiltY = puchData[8] & 0x3F;
-		if (puchData[7] & 0x40) pTablet->state.nTiltX -= 64;
-		if (puchData[8] & 0x40) pTablet->state.nTiltY -= 64;
+		int tiltx, tilty;
 
-		pState->nValid = pTablet->state.nValid;
-		pState->nTiltX = pTablet->state.nTiltX;
-		pState->nTiltY = pTablet->state.nTiltY;
+		tiltx = puchData[7] & 0x3F;
+		tilty = puchData[8] & 0x3F;
+		if (puchData[7] & 0x40) tiltx -= 64;
+		if (puchData[8] & 0x40) tilty -= 64;
+
+		pSerial->state.values[WACOMFIELD_TILT_X].nValue = tiltx;
+		pSerial->state.values[WACOMFIELD_TILT_Y].nValue = tilty;
+		
+		if (pState)
+		{
+			pState->values[WACOMFIELD_TILT_X].nValue = tiltx;
+			pState->values[WACOMFIELD_TILT_Y].nValue = tilty;
+		}
 	}
 
 	return 0;
 }
 
-static int TabletParseWacomIV_1_3(TABLET* pTablet,
+static int SerialParseWacomIV_1_3(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
@@ -755,14 +688,14 @@ static int TabletParseWacomIV_1_3(TABLET* pTablet,
 		if (stylus)
 		{
 			/* if entering proximity, choose eraser or stylus2 for bit */
-			if (pTablet->state.nProximity == 0)
+			if (pSerial->state.values[WACOMFIELD_PROXIMITY].nValue == 0)
 			{
 				if (eraser) tool = WACOMTOOLTYPE_ERASER;
 				else tool = WACOMTOOLTYPE_PEN;
 			}
 
 			/* otherwise, keep the last tool */
-			else tool = pTablet->state.nToolType;
+			else tool = pSerial->state.values[WACOMFIELD_TOOLTYPE].nValue;
 			
 			button = (press > 10) ? BIT(WACOMBUTTON_TOUCH) : 0;
 
@@ -787,24 +720,17 @@ static int TabletParseWacomIV_1_3(TABLET* pTablet,
 	}
 
 	/* set valid fields */
-	pTablet->state.nValid = WACOMVALID(PROXIMITY) |
-			WACOMVALID(TOOLTYPE) | WACOMVALID(POSITION_X) |
-			WACOMVALID(POSITION_Y) | WACOMVALID(PRESSURE) |
-			WACOMVALID(BUTTONS);
+	pSerial->state.values[WACOMFIELD_PROXIMITY].nValue = prox;
+	pSerial->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
+	pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+	pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+	pSerial->state.values[WACOMFIELD_PRESSURE].nValue = press;
+	pSerial->state.values[WACOMFIELD_BUTTONS].nValue = button;
 
-	pTablet->state.nProximity = prox;
-	pTablet->state.nToolType = tool;
-	pTablet->state.nPosX = x;
-	pTablet->state.nPosY = y;
-	pTablet->state.nPressure = press;
-	pTablet->state.nButtons = button;
-
-	*pState = pTablet->state;
-	return 0;
+	return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 }
 
-
-static int TabletParseWacomIV_1_2(TABLET* pTablet,
+static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
@@ -821,7 +747,7 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 	if (prox)
 	{
 		stylus = puchData[0] & 0x20 ? 1 : 0;
-		if (pTablet->nVerMinor == 2)
+		if (pSerial->nVerMinor == 2)
 			press = (puchData[6] & 0x3F) << 1 | ((puchData[3] & 0x4) >> 2) |
 					(puchData[6] & 0x40) ? 0 : 0x80;
 		else
@@ -846,22 +772,15 @@ static int TabletParseWacomIV_1_2(TABLET* pTablet,
 	}
 
 	/* set valid fields */
-	pTablet->state.nValid = WACOMVALID(PROXIMITY) |
-			WACOMVALID(TOOLTYPE) | WACOMVALID(POSITION_X) |
-			WACOMVALID(POSITION_Y) | WACOMVALID(PRESSURE) |
-			WACOMVALID(BUTTONS);
+	pSerial->state.values[WACOMFIELD_PROXIMITY].nValue = prox;
+	pSerial->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
+	pSerial->state.values[WACOMFIELD_POSITION_X].nValue = x;
+	pSerial->state.values[WACOMFIELD_POSITION_Y].nValue = y;
+	pSerial->state.values[WACOMFIELD_PRESSURE].nValue = press;
+	pSerial->state.values[WACOMFIELD_BUTTONS].nValue = button;
 
-	pTablet->state.nProximity = prox;
-	pTablet->state.nToolType = tool;
-	pTablet->state.nPosX = x;
-	pTablet->state.nPosY = y;
-	pTablet->state.nPressure = press;
-	pTablet->state.nButtons = button;
-
-	*pState = pTablet->state;
-	return 0;
+	return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 }
-
 
 /*****************************************************************************
 ** Internal Functions
@@ -1031,3 +950,102 @@ static void WacomTest(int fd)
 	WacomDump(fd);
 }
 #endif
+
+/*****************************************************************************
+** Virtual Functions
+*****************************************************************************/
+
+static void SerialClose(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	close(pSerial->fd);
+	free(pSerial);
+}
+
+static WACOMMODEL SerialGetModel(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return WACOM_MAKEMODEL(WACOMVENDOR_WACOM,WACOMCLASS_SERIAL,
+			pSerial->pInfo->uDeviceType);
+}
+
+static const char* SerialGetVendorName(WACOMTABLET_PRIV* pTablet)
+{
+	return "Wacom";
+}
+
+static const char* SerialGetModelName(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->pInfo->pszName;
+}
+
+static int SerialGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
+		int* pnMinor, int* pnRelease)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	if (!pnMajor) { errno=EINVAL; return 1; }
+	*pnMajor = pSerial->nVerMajor;
+	if (pnMinor) *pnMinor = pSerial->nVerMinor;
+	if (pnRelease) *pnRelease = pSerial->nVerRelease;
+	return 0;
+}
+
+static int SerialGetCaps(WACOMTABLET_PRIV* pTablet)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return pSerial->pInfo->uCaps;
+}
+
+static int SerialGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState)
+{
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	return WacomCopyState(pState,&pSerial->state);
+}
+
+static int SerialReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
+		unsigned int uSize)
+{
+	int nXfer;
+	unsigned int uCnt, uPacketLength;
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	if (!pSerial) { errno=EBADF; return 0; }
+	uPacketLength = pSerial->uPacketLength;
+
+	/* check size of buffer */
+	if (uSize < uPacketLength) { errno=EINVAL; return 0; }
+	
+	for (uCnt=0; uCnt<uPacketLength; uCnt+=nXfer)
+	{
+		nXfer = read(pSerial->fd,puchData+uCnt,uPacketLength-uCnt);
+		if (nXfer <= 0) return nXfer;
+	}
+
+	return (signed)uCnt;
+}
+
+static int SerialParseData(WACOMTABLET_PRIV* pTablet,
+		const unsigned char* puchData, unsigned int uLength,
+		WACOMSTATE* pState)
+{
+	int i;
+	SERIALTABLET* pSerial = (SERIALTABLET*)pTablet;
+	if (!pSerial) { errno=EBADF; return 1; }
+
+	/* check synchronization */
+	if (!puchData[0] & 0x80)
+		{ errno=EINVAL; return 1; }
+	for (i=1; i<uLength; ++i)
+	{
+		if (puchData[i] & 0x80)
+			{ errno=EINVAL; return 1; }
+	}
+
+	/* dispatch to parser */
+	if (pSerial->pfnParse)
+		return (*pSerial->pfnParse)(pSerial,puchData,uLength,pState);
+
+	errno=EINVAL;
+	return 1;
+}
+

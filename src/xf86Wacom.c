@@ -341,6 +341,12 @@ typedef struct _WacomCommonRec
 #endif
 } WacomCommonRec, *WacomCommonPtr;
 
+#ifdef LINUX_INPUT
+#define IS_USB(x) ((x)->wcmOpen == xf86WcmUSBOpen)
+#else
+#define IS_USB(x) (0)
+#endif
+
 /******************************************************************************
  * configuration stuff
  *****************************************************************************/
@@ -1525,16 +1531,16 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 	}
 
 	/* Simulate buttons 4 and 5 for Graphire wheel */
-	if ((((common->wcmProtocolLevel == 4) && (common->wcmFlags & GRAPHIRE_FLAG) && (wheel != 0)) ||
-	     ((common->wcmOpen == xf86WcmUSBOpen) && (wheel != priv->oldWheel))) &&
-	    !is_stylus) {
+	if (!is_stylus && (
+		(IS_USB(common) && (wheel != priv->oldWheel)) ||
+		((common->wcmProtocolLevel == 4) &&
+		 	(common->wcmFlags & GRAPHIRE_FLAG) && (wheel != 0)))) {
 	    int fake_button;
 
-	    if (common->wcmOpen == xf86WcmUSBOpen) {
-		fake_button = (wheel > priv->oldWheel) ? 5 : 4;
-	    } else{
-		fake_button = (wheel > 0) ? 5 : 4;
-	    }
+	    if (IS_USB(common))
+			fake_button = (wheel > priv->oldWheel) ? 5 : 4;
+	    else
+			fake_button = (wheel > 0) ? 5 : 4;
 	    
 	    xf86PostButtonEvent(local->dev,
 				(priv->flags & ABSOLUTE_FLAG),
@@ -3881,7 +3887,7 @@ xf86WcmInit(InputDriverPtr	drv,
     }
 
 #ifdef LINUX_INPUT
-    if (xf86SetBoolOption(local->options, "USB", (common->wcmOpen == xf86WcmUSBOpen))) {
+    if (xf86SetBoolOption(local->options, "USB", IS_USB(common))) {
 	/* best effort attempt at loading the wacom and evdev kernel modules */
 	(void)xf86LoadKernelModule("wacom");
 	(void)xf86LoadKernelModule("evdev");
