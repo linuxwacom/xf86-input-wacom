@@ -1,3 +1,7 @@
+2004-01-19    Ping Cheng <pingc@wacom.com>
+	* Sync wacom.c in kernel 2.6 with wacom.c in kernel 2.4 (Ned Konz)
+	* Work around for 2.4.23 support (Jens Georg)
+
 2004-01-13    Ping Cheng <pingc@wacom.com>
 	* Fixed relative wheel bug in wacom.c for 2.6
 	* Modified tcl and tk configuration options
@@ -5,7 +9,7 @@
 	* Updated README
 
 2003-12-15    Ping Cheng <pingc@wacom.com>
-	* Fixed a wacom.c bug for 2.6
+	* Fixed a wacom.c bug for 2.6 (Martin Renold)
 	* Added evdev.c to src/2.6 to attach replugged device
 	* Updated README
 

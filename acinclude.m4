@@ -129,27 +129,27 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
 		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
-		ISVER=`echo $moduts | grep -c "2.4.22"` 
+		ISVER=`echo $moduts | grep -c "2.4"` 
 		if test "$ISVER" -gt 0; then
-			WCM_KERNEL_VER="2.4.22"
-		else
-			ISVER=`echo $moduts | grep -c "2.4"` 
-			if test "$ISVER" -gt 0; then
-				WCM_KERNEL_VER="2.4"
+			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d.`
+			if test $MINOR -ge 22; then
+				WCM_KERNEL_VER="2.4.22"
 			else
-				ISVER=`echo $moduts | grep -c "2.6"` 
-				if test "$ISVER" -gt 0; then
-					WCM_KERNEL_VER="2.6"
-				else
-					echo "***"
-					echo "*** WARNING:"
-					echo "*** $moduts is not supportted by this pachage"
-					echo "*** Kernel modules will not be built"
-					echo "***"
-					WCM_OPTION_MODVER=no
-					AC_MSG_RESULT(no)
-					WCM_ENV_KERNEL=no
-				fi
+				WCM_KERNEL_VER="2.4"
+			fi
+		else
+			ISVER=`echo $moduts | grep -c "2.6"` 
+			if test "$ISVER" -gt 0; then
+				WCM_KERNEL_VER="2.6"
+			else
+				echo "***"
+				echo "*** WARNING:"
+				echo "*** $moduts is not supportted by this pachage"
+				echo "*** Kernel modules will not be built"
+				echo "***"
+				WCM_OPTION_MODVER=no
+				AC_MSG_RESULT(no)
+				WCM_ENV_KERNEL=no
 			fi
 		fi
 	else
@@ -346,6 +346,7 @@ if test "$WCM_TCLDIR" = "yes" || test "$WCM_TCLDIR" == ""; then
 		WCM_ENV_TCL=yes
 		WCM_TCLDIR="$WCM_TCLTKDIR_DEFAULT"
 	else
+		AC_MSG_RESULT(not found; tried $WCM_TCLTKDIR_DEFAULT/include/tcl.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -365,6 +366,7 @@ elif test "$WCM_TCLDIR" != "no"; then
 			CFLAGS="$CFLAGS -I$WCM_TCLDIR/include"
 		fi
 	else
+		AC_MSG_RESULT(not found; tried $WCM_TCLDIR/include/tcl.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -384,6 +386,7 @@ AC_ARG_WITH(tk,
 
 dnl handle default case
 if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
+	AC_MSG_CHECKING(for tk header files)
 	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
@@ -393,6 +396,7 @@ if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 		WCM_ENV_TK=yes
 		WCM_TKDIR="$WCM_TCLDIR"
 	else
+		AC_MSG_RESULT(not found; tried $WCM_TCLTKDIR_DEFAULT/include/tk.h and $WCM_TCLDIR/include/tk.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk development environment does not appear to"
 		echo "*** be installed. The header file tk.h does not appear"
@@ -411,6 +415,7 @@ elif test "$WCM_TKDIR" != "no"; then
 			CFLAGS="$CFLAGS -I$WCM_TKDIR/include"
 		fi
 	else
+		AC_MSG_RESULT(not found; tried $WCM_TKDIR/include/tk.h)
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk library does not appear to be installed."
 		echo "*** Do you have the tk rpm or equivalent package properly"
