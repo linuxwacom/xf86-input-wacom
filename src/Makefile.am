@@ -1,13 +1,14 @@
 bin_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
 noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
+lib_LTLIBRARIES = libwacomcfg.la
 
 wacomcfgdir = $(includedir)/wacomcfg
-
-lib_LTLIBRARIES = libwacomcfg.la
 wacomcfg_HEADERS = wacomcfg.h
 
-tcllibdir = @WCM_TCLDIR@/TkXInput
 tcllib_LTLIBRARIES = libwacomxi.la
+tcllibdir = @WCM_TCLDIR@/TkXInput
+tcllib_HEADERS = pkgIndex.tcl
+
 cpldir = $(bindir)
 cpl_SCRIPTS = wacomcpl
 
@@ -37,8 +38,8 @@ xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
 
 libwacomxi_la_SOURCES = wacomxi.c wacomxi.h
-libwacomxi_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMXI_VER@
-libwacomxi_la_LIBADD = @WCM_LIBWACOMXI_LIBS@
+libwacomxi_la_LDFLAGS = -no-undefined 
+libwacomxi_la_LIBADD = @WCM_WACOMXI_LIBS@
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
 		input.c tabletdev.c usbmouse.c xf86Wacom.c \

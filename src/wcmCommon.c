@@ -302,14 +302,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		if ( ds->relwheel )
 		{
 			int fakeButton = ds->relwheel > 0 ? 5 : 4;
-			xf86PostButtonEvent(local->dev, 
+			int i;
+			for (i=0; i<abs(ds->relwheel); i++)
+			{
+				xf86PostButtonEvent(local->dev, 
 					is_absolute,
 					fakeButton, 1, 0, 6, rx, ry, z, rot,
 					throttle, wheel);
-			xf86PostButtonEvent(local->dev, 
+				xf86PostButtonEvent(local->dev, 
 					is_absolute,
 					fakeButton, 0, 0, 6, rx, ry, z, rot,
 					throttle, wheel);
+			}
 		}
 
 		if (priv->oldButtons != buttons)

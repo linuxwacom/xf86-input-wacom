@@ -16,6 +16,8 @@ WCM_PATCH_WACOMDRV=
 WCM_ENV_GTK=no
 WCM_ENV_TCLLIB=no
 WCM_TCLDIR_DEFAULT=/usr
+WCM_ENV_TKLIB=no
+WCM_TKDIR_DEFAULT=/usr
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
@@ -302,7 +304,7 @@ dnl Check for TCL development environment
 WCM_TCLDIR=
 AC_ARG_WITH(tcl,
 [  --with-tcl=dir   uses a specified TCL directory],
-[WCM_TKDIR=$withval])
+[WCM_TCLDIR=$withval])
 
 dnl handle default case
 if test "$WCM_TCLDIR" == "" || test "$WCM_TCLDIR" == "yes"; then
@@ -318,7 +320,40 @@ if test "$WCM_TCLDIR" == "" || test "$WCM_TCLDIR" == "yes"; then
 			WCM_ENV_TCLLIB=yes
 		else
 			AC_MSG_RESULT(not found, tried $WCM_TCLDIR_DEFAULT and $WCM_TCLDIR_DEFAULT/local)
-			WCM_TCLDIR=no
+			echo "***"; echo "*** WARNING:"
+			echo "*** unable to find $WCM_TCLDIR_DEFAULT/lib/tcl; are the tcl development"
+			echo "*** package installed?  tcl dependencies will not be built."
+			echo "***"
+		fi
+	fi
+fi
+])
+AC_DEFUN(AC_WCM_CHECK_TK,[
+dnl Check for TK development environment
+WCM_TKDIR=
+AC_ARG_WITH(tk,
+[  --with-tk=dir   uses a specified TK directory],
+[WCM_TKDIR=$withval])
+
+dnl handle default case
+if test "$WCM_TKDIR" == "" || test "$WCM_TKDIR" == "yes"; then
+	AC_MSG_CHECKING(for TK library directory)
+	if test -d $WCM_TKDIR_DEFAULT/local/lib/tk; then
+		WCM_TKDIR=$WCM_TKDIR_DEFAULT/local/lib
+		AC_MSG_RESULT(found)
+		WCM_ENV_TKLIB=yes
+	else
+		if test -d $WCM_TKDIR_DEFAULT/lib/tk; then
+			WCM_TKDIR=$WCM_TKDIR_DEFAULT/lib
+			AC_MSG_RESULT(found)
+			WCM_ENV_TKLIB=yes
+		else
+			AC_MSG_RESULT(not found, tried $WCM_TKDIR_DEFAULT and $WCM_TKDIR_DEFAULT/local)
+			echo "***"; echo "*** WARNING:"
+			echo "*** unable to find $WCM_TKDIR_DEFAULT/lib/tk or $WCM_TKDIR_DEFAULT/local/lib/tk; "
+			echo "*** are the tk development package installed?  "
+			echo " tk dependencies will not be built."
+			echo "***"
 		fi
 	fi
 fi

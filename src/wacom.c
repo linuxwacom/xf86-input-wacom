@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.15 2003/05/13 00:15:06 pingc Exp $
+ * $Id: wacom.c,v 1.16 2003/06/13 00:35:05 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -600,9 +600,9 @@ struct wacom_features wacom_features[] = {
 	/* 20 */ { "Wacom Volito",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 	/* 21 */ { "Wacom Graphire3 4x5",  8,   10206, 7422,   511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/* 22 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/* 23 */ { "Wacom Cintiq Partner", 8,   20480,  15360, 511, 32,
 			wacom_ptu_irq, 0, 0, 0, 0 },
 
@@ -633,7 +633,7 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x60), driver_info: 20 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13), driver_info: 21 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14), driver_info: 22 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03),  driver_info: 23 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03), driver_info: 23 },
 	{ }
 };
 

@@ -25,9 +25,7 @@ exec wish -f "$0" ${1+"$@"}
 #
 #
 
-
-
-package require WACOMXI
+package require LIBWACOMXI
 
 set numScreens 1
 set currentScreen 0

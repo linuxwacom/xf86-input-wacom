@@ -9,8 +9,6 @@ AC_PROG_LIBTOOL
 dnl Library versions
 WCM_LIBWACOMCFG_VER="0:0:0"
 AC_SUBST(WCM_LIBWACOMCFG_VER)
-WCM_LIBWACOMXI_VER="0:0:0"
-AC_SUBST(WCM_LIBWACOMXI_VER)
 
 dnl Targets
 WCM_PROGS=""
@@ -36,10 +34,11 @@ dnl Check for XFree86 source
 AC_WCM_CHECK_XFREE86SOURCE
 AC_WCM_CHECK_XFREE86V3SOURCE
 
-dnl Check for GTK, TCL, and XLib
+dnl Check for GTK, TCL, TK, and XLib
 AC_WCM_CHECK_GTK
 AC_WCM_CHECK_XLIB
 AC_WCM_CHECK_TCL
+AC_WCM_CHECK_TK
 
 dnl Check for ncurses
 AC_WCM_CHECK_NCURSES
@@ -152,9 +151,15 @@ if test "$enable_libwacomxi" != "no"; then
 			echo "*** libwacomxi requires tcl environment; libwacomxi will not be built."
 			echo "***"
 		else
-			WCM_OPTION_LIBWACOMXI=yes
-			WCM_LIBWACOMXI_LIBS="-L$WCM_TCLDIR/lib -L$WCM_XLIBDIR/lib -lX11 -lXi -ltcl -ltk"
-			WCM_TCLLIBS="libwacomxi"
+			if test x$WCM_ENV_TKLIB != xyes; then
+				echo "***"; echo "*** WARNING:";
+				echo "*** libwacomxi requires tk environment; libwacomxi will not be built."
+				echo "***"
+			else
+				WCM_OPTION_LIBWACOMXI=yes
+				WCM_WACOMXI_LIBS="-L$WCM_TCLDIR -L$WCM_TKDIR -L$WCM_XLIBDIR/lib -lX11 -lXi -ltcl -ltk"
+				WCM_TCLLIBS="libwacomxi.la"
+			fi
 		fi
 	fi
 fi
@@ -402,13 +407,14 @@ AC_SUBST(WCM_ARCH)
 AC_SUBST(WCM_MODVER)
 AC_SUBST(WCM_KERNELDIR)
 AC_SUBST(WCM_TCLDIR)
+AC_SUBST(WCM_TKDIR)
 AC_SUBST(WCM_XF86DIR)
 AC_SUBST(WCM_XF86V3DIR)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
 AC_SUBST(WCM_LINUX_INPUT)
 AC_SUBST(WCM_XIDUMP_LIBS)
 AC_SUBST(WCM_LIBWACOMCFG_LIBS)
-AC_SUBST(WCM_LIBWACOMXI_LIBS)
+AC_SUBST(WCM_WACOMXI_LIBS)
 AC_SUBST(WCM_XSETWACOM_LIBS)
 
 AC_OUTPUT(Makefile src/Makefile)
@@ -423,6 +429,7 @@ echo "      kernel source - $WCM_ENV_KERNEL"
 echo "            XFree86 - $WCM_ENV_XF86"
 echo "               XLib - $WCM_ENV_XLIB"
 echo "             TCLLib - $WCM_ENV_TCLLIB"
+echo "             TKLib  - $WCM_ENV_TKLIB"
 if test -n "$WCM_ENV_XF86V3"; then
 	echo "          XFree86v3 - $WCM_ENV_XF86V3"
 fi

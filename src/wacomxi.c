@@ -1968,7 +1968,7 @@ WacomxiBindEventCmd(ClientData	clientData,
 
 
 int
-Wacomxi_Init(Tcl_Interp	*interp)
+Libwacomxi_Init(Tcl_Interp	*interp)
 {
     static int	setup_done = 0;
     int		i;

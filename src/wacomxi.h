@@ -37,6 +37,6 @@ int Tk_CreateXiEventHandler(Tk_Window, Tk_Uid, Tk_Uid, Tk_EventProc *,
 void Tk_DeleteXiEventHandler(Tk_Window, Tk_Uid, Tk_Uid, Tk_EventProc *,
 			     ClientData);
 int Tk_DispatchXiEvent(XEvent *);
-int WacomXi_Init(Tcl_Interp *interp);
+int LibwacomXi_Init(Tcl_Interp *interp);
 
 #endif
