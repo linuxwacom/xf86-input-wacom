@@ -80,9 +80,10 @@
  * 2003-08-13 26-j0.5.21 - added speed acceleration xsetwacom commands (Accel)
  * 2003-09-30 26-j0.5.22 - added TwinView with different resolution support and
 			 - enabled ScreenNo option for TwinView
+ * 2003-11-10 26-j0.5.22 - support kernel 2.4.22 and user specified tcl/tk src dir
  */
 
-static const char identification[] = "$Identification: 26-j0.5.22 $";
+static const char identification[] = "$Identification: 26-j0.5.23 $";
 
 /****************************************************************************/
 
@@ -844,7 +845,11 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			    ||(!strcasecmp(optList->opt_name, "Button5") &&
 					priv->button[4] != 5) 
 			    ||(!strcasecmp(optList->opt_name, "PressCurve")) 
-			    ||(!strcasecmp(optList->opt_name, "Mode")) 
+			    ||(!strcasecmp(optList->opt_name, "Mode") &&
+					(((priv->flags & ABSOLUTE_FLAG) && 
+					(priv->flags & CURSOR_ID)) ||  
+				 	(!(priv->flags & ABSOLUTE_FLAG) && 
+					!(priv->flags & CURSOR_ID))))
 			    ||(!strcasecmp(optList->opt_name, "RawFilter"))
 			    ||(!strcasecmp(optList->opt_name, "Accel") && 
 					priv->accel)

@@ -122,7 +122,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseCintiq,
-		xf86WcmFilterCoord,
+		xf86WcmHysteresisFilter,
 	};
 
 	static WacomModel serialPenPartner =
@@ -167,7 +167,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseProtocol4,
-		xf86WcmFilterCoord,
+		xf86WcmHysteresisFilter,
 	};
 
 /*****************************************************************************

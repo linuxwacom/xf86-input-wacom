@@ -14,6 +14,7 @@ AC_DEFUN(AC_WCM_CHECK_ENVIRON,[
 dnl Variables for various checks
 WCM_ARCH=unknown
 WCM_KERNEL=unknown
+WCM_KERNEL_VER="2.4"
 WCM_ISLINUX=no
 WCM_OPTION_MODVER=no
 WCM_ENV_KERNEL=no
@@ -29,6 +30,7 @@ WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
+WCM_TCLTKDIR_DEFAULT=/usr
 XF86SUBDIR=xc/programs/Xserver/hw/xfree86/common
 XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
 WCM_ENV_NCURSES=no
@@ -118,6 +120,10 @@ AC_ARG_WITH(kernel,
 	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 		AC_MSG_RESULT(ok)
 		WCM_ENV_KERNEL=yes
+		ISVER=`echo $WCM_KERNELDIR | grep -c "2.4.22"` 
+		if test "$ISVER" -gt 0; then
+			WCM_KERNEL_VER="2.4.22"
+		fi
 	else
 		AC_MSG_RESULT(missing input.h)
 		AC_MSG_ERROR("Unable to find $WCM_KERNELDIR/include/linux/input.h")
@@ -130,11 +136,21 @@ AC_ARG_WITH(kernel,
 	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 		WCM_ENV_KERNEL=yes
 		AC_MSG_RESULT($WCM_KERNELDIR)
+		RUNNINGVER=`uname -r`
+		ISVER=`echo $RUNNINGVER | grep -c "2.4.22"` 
+		if test "$ISVER" -gt 0; then
+			WCM_KERNEL_VER="2.4.22"
+		fi			
 	else
 		WCM_KERNELDIR="/usr/src/linux"
 		if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
 			WCM_ENV_KERNEL=yes
 			AC_MSG_RESULT($WCM_KERNELDIR)
+			RUNNINGVER=`uname -r`
+			ISVER=`echo $RUNNINGVER | grep -c "2.4.22"` 
+			if test "$ISVER" -gt 0; then
+				WCM_KERNEL_VER="2.4.22"
+			fi			
 		else
 			AC_MSG_RESULT(not found)
 			echo "***"
@@ -312,12 +328,19 @@ if test "$WCM_XLIBDIR" != "no"; then
 fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TCL,[
-AC_ARG_WITH(tcl,
-[  --with-tcl     Override tcl check], [ WCM_USETCL=$withval ])
-if test "x$WCM_USETCL" = xyes || test "x$WCM_USETCL" == "x"; then
-	dnl Check for TCL development environment
-	AC_CHECK_HEADER(tcl.h,[WCM_ENV_TCL=yes])
-	if test "$WCM_ENV_TCL" != "yes"; then
+dnl Check for TCL development environment
+WCM_TCLLIBDIR=
+AC_ARG_WITH(tcl, 
+[  --with-tcl=dir  uses a specified tcl directory  ],
+[ WCM_TCLLIBDIR=$withval ])
+
+dnl handle default case
+if test "$WCM_TCLLIBDIR" = "yes" || test "$WCM_TCLLIBDIR" == ""; then
+	AC_MSG_CHECKING(for tcl header files)
+	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tcl.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TCL=yes
+	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -326,24 +349,37 @@ if test "x$WCM_USETCL" = xyes || test "x$WCM_USETCL" == "x"; then
 		echo "*** features will be unavailable."
 		echo "***"
 	fi
-	AC_CHECK_LIB(tcl,Tcl_Main,[],[WCM_ENV_TCL=no])
-	if test "$WCM_ENV_TCL" != "yes"; then
+
+dnl handle specified case
+elif test "$WCM_TCLLIBDIR" != "no"; then
+	AC_MSG_CHECKING(for tcl header files)
+	if test -f "$WCM_TCLLIBDIR/include/tcl.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TCL=yes
+	else
 		echo "***"; echo "*** WARNING:"
-		echo "*** The tcl library does not appear to be installed."
-		echo "*** Do you have the tcl rpm or equivalent package"
-		echo "*** properly installed?  Some build features will"
-		echo "*** be unavailable."
+		echo "*** The tcl development environment does not appear to"
+		echo "*** be installed. The header file tcl.h does not appear"
+		echo "*** in the include path. Do you have the tcl rpm or"
+		echo "*** equivalent package properly installed?  Some build"
+		echo "*** features will be unavailable."
 		echo "***"
 	fi
 fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TK,[
+dnl Check for TK development environment
+WCM_TKLIBDIR=
 AC_ARG_WITH(tk,
-[  --with-tk     Override tk check], [ WCM_USETK=$withval ])
-if test "x$WCM_USETK" = xyes || test "x$WCM_USETK" == "x"; then
-	dnl Check for TK development environment
-	AC_CHECK_HEADER(tk.h,[WCM_ENV_TK=yes])
-	if test "$WCM_ENV_TK" != "yes"; then
+[  --with-tk=dir uses a specified tk directory  ], 
+[ WCM_TKLIBDIR=$withval ])
+
+dnl handle default case
+if test "$WCM_TKLIBDIR" = "yes" || test "$WCM_TKLIBDIR" == ""; then
+	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tk.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TK=yes
+	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk development environment does not appear to"
 		echo "*** be installed. The header file tk.h does not appear"
@@ -352,8 +388,13 @@ if test "x$WCM_USETK" = xyes || test "x$WCM_USETK" == "x"; then
 		echo "*** features will be unavailable."
 		echo "***"
 	fi
-	AC_CHECK_LIB(tk,Tk_MainWindow,[],WCM_ENV_TK=no)
-	if test "$WCM_ENV_TK" != "yes"; then
+dnl handle specified case
+elif test "$WCM_TKLIBDIR" != "no"; then
+	AC_MSG_CHECKING(for tk header files)
+	if test -f "$WCM_TKLIBDIR/include/tk.h"; then
+		AC_MSG_RESULT(found)
+		WCM_ENV_TK=yes
+	else
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk library does not appear to be installed."
 		echo "*** Do you have the tk rpm or equivalent package properly"

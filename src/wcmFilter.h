@@ -34,6 +34,8 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
 int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
+int xf86WcmHysteresisFilter(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds);
 
 /****************************************************************************/
 #endif /* __XF86_WCMFILTER_H */

@@ -133,7 +133,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		xf86WcmHysteresisFilter,   /* input filtering */
 	};
 
 	static WacomModel usbCintiqPartner =
@@ -148,7 +148,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		xf86WcmHysteresisFilter,   /* input filtering */
 	};
 
 	static WacomModel usbIntuos =

@@ -1,3 +1,8 @@
+2003-11-10    Ping Cheng <pingc@wacom.com>
+	* Support wacomcpl with user specified tcl/tk src dirs
+	* Moved kernel files to 2.4 and 2.4.22 for easy upgrading
+	* Refined filters
+
 2003-10-09    Ping Cheng <pingc@wacom.com>
 	* Support kernel-2.4.22
 

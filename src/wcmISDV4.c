@@ -50,7 +50,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		isdv4Parse,
-		xf86WcmFilterCoord,   /* input filtering */
+		xf86WcmHysteresisFilter,   /* input filtering */
 	};
 
 /*****************************************************************************

@@ -330,7 +330,7 @@ static void filterIntuosTilt(int* state, int* tilt)
 }
 
 /*****************************************************************************
- * xf86WcmFilterIntuos -- provide error correction to all transducers except Intuos
+ * xf86WcmFilterCoord -- provide noise correction to all transducers
  ****************************************************************************/
 
 int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
@@ -379,7 +379,26 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 }
 
 /*****************************************************************************
- * xf86WcmFilterCoord -- provide error correction to Intuos and Intuos2
+ * xf86WcmHysteresisFilter -- provide noise correction to protocol IV transducers
+ ****************************************************************************/
+
+int xf86WcmHysteresisFilter(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds)
+{
+	WacomDeviceState* pLast;
+	pLast = &pChannel->valid.state;
+
+	if (abs(ds->x - pLast->x) < 4)
+		ds->x = pLast->x;
+
+	if (abs(ds->y - pLast->y) < 4)
+		ds->y = pLast->y;
+
+	return 0;
+}
+
+/*****************************************************************************
+ * xf86WcmFilterIntuos -- provide error correction to Intuos and Intuos2
  ****************************************************************************/
 
 int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
