@@ -888,7 +888,7 @@ static int SerialParseWacomV(SERIALTABLET* pSerial,
 	                (((int)puchData[3] & 0x7f) << 23) |
 	                  (((int)puchData[4] & 0x7f) << 16) |
 	                  (((int)puchData[5] & 0x7f) << 9) |
-	                (((int)puchData[6] & 0x7f) << 23) |
+	                (((int)puchData[6] & 0x7f) << 2) |
                   (((int)puchData[7] & 0x60) >> 5));
 
 		switch (toolid)

@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.9 2003/02/01 02:42:33 jjoganic Exp $
+ * $Id: wacom.c,v 1.10 2003/02/01 06:25:43 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -72,6 +72,7 @@
  *    v1.30-j0.3.8 - fixed I2 4x5 Y max value, thanks to John New
  *                   fixed Intuos and Intuos2 sizes, values from Wacom
  *    v1.30-j0.5.0 - new release
+ *    v1.30-j0.5.1 - fixed serial number code for Intuos and Intuos2
  */
 
 /*
@@ -102,7 +103,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.5.0"
+#define DRIVER_VERSION "v1.30-j0.5.1"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -342,9 +343,9 @@ static void wacom_intuos_irq(struct urb *urb)
 	if ((data[1] & 0xfc) == 0xc0)
 	{
 		/* serial number of the tool */
-		wacom->serial[idx] = ((__u32)(data[3] & 0x0f) << 4) +
-				((__u32)data[4] << 16) + ((__u32)data[5] << 12) +
-				((__u32)data[6] << 4) + (data[7] >> 4);
+		wacom->serial[idx] = ((__u32)(data[3] & 0x0f) << 28) +
+				((__u32)data[4] << 20) + ((__u32)data[5] << 12) +
+				((__u32)data[6] << 4) + ((__u32)data[7] >> 4);
 
 		#ifdef __JEJ_DEBUG
 		printk(KERN_INFO "wacom_intuos_irq: tool change 0x%03X\n",

@@ -57,10 +57,11 @@
  * 2003-01-01 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
  * 2003-01-25 26-j0.3.7 - cleaned up usb conditions for FreeBSD
  * 2003-01-31 26-j0.5.0 - new release
- * 2003-01-31 26-j0.5.1 - Ping Cheng's PL code
+ * 2003-01-31 26-j0.5.1 - added Ping Cheng's PL code
+ * 2003-01-31 26-j0.5.2 - fixed serial number code for Intuos and Intuos2
  */
 
-static const char identification[] = "$Identification: 26-j0.5.1 $";
+static const char identification[] = "$Identification: 26-j0.5.2 $";
 
 #include "xf86Version.h"
 
@@ -2007,7 +2008,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 				  ((common->wcmData[3] & 0x7f) << 23) |
 				  ((common->wcmData[4] & 0x7f) << 16) |
 				  ((common->wcmData[5] & 0x7f) << 9) |
-				  ((common->wcmData[6] & 0x7f) << 23) |
+				  ((common->wcmData[6] & 0x7f) << 2) |
 				  ((common->wcmData[7] & 0x60) >> 5));
 		if ((ds->device_id & 0xf06) != 0x802)
 		  ds->discard_first = 1;

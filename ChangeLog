@@ -2,6 +2,8 @@
 
 	* Branched 0.4.0 production.  Updated version to 0.5.0-beta.
 	* Added Ping Cheng's PL code.
+	* Fixed serial number code in wacom.c, xf86Wacom.c, and wacserial.c such
+	  that they all correspond.
 
 2003-01-27    John E. Joganic <john@joganic.com>
 
