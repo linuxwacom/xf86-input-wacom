@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -589,6 +590,23 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		if ( common->wcmTPCButton )
 			xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
 	}
+
+	/* Turn on/off Gimp support in a multimonitor setup */
+	if ( !common->wcmGimp )
+	{
+		common->wcmGimp = xf86SetBoolOption(local->options, "Gimp", 1);
+		if ( !common->wcmGimp )
+			xf86Msg(X_CONFIG, "%s: Gimp multimonitor mapping isn't supported \n", common->wcmDevice);
+	}
+
+	/* Cursor stays in one monitor in a multimonitor setup */
+	if ( !common->wcmMMonitor )
+	{
+		common->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
+		if ( !common->wcmMMonitor )
+			xf86Msg(X_CONFIG, "%s: Cursor will stay in one monitor \n", common->wcmDevice);
+	}
+
 
 	for (i=0; i<16; i++)
 	{

@@ -84,7 +84,7 @@ wcmFilter.o: wcmFilter.c xf86Wacom.h
 $(XF86OBJS): xf86Wacom.c Makefile
 	gcc $(CFLAGS) $(DEPFLAGS) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
-		-I. $(DRIVER_INCLUDES) -D_XSERVER64 \
+		-I. $(DRIVER_INCLUDES) \
 		-Dlinux -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
 		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE \
 		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \

@@ -365,6 +365,8 @@ proc updateDevice {} {
 	    	if { ![string compare -nocase -length 8 \
 		    $mode "absolute"] } {
 		    createPanel 1 1 0 1
+		} else {
+		    createPanel 1 1 0 0
 		}
 	    } else {
 		createPanel 1 1 0 0

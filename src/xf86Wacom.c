@@ -85,9 +85,10 @@
  * 2004-10-05 26-j0.6.5  - new release
  * 2004-11-22 42-j0.6.6  - new release
  * 2005-02-17 42-j0.6.7  - added 64-bit support
+ * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
 */
 
-static const char identification[] = "$Identification: 42-j0.6.7 $";
+static const char identification[] = "$Identification: 42-j0.6.8 $";
 
 /****************************************************************************/
 
@@ -794,12 +795,27 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_GIMP:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmGimp = 0;
-		if (value) priv->common->wcmGimp = value;
+		priv->common->wcmGimp = value;
+		if (value)
+		{
+			xf86ReplaceStrOption(local->options, "Gimp", "on");
+		}
+		else
+		{
+			xf86ReplaceStrOption(local->options, "Gimp", "off");
+		}
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) return BadValue;
 		priv->common->wcmMMonitor = value;
+		if (value)
+		{
+			xf86ReplaceStrOption(local->options, "MMonitor", "on");
+		}
+		else
+		{
+			xf86ReplaceStrOption(local->options, "MMonitor", "off");
+		}
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
 		if ((value != 0) && (value != 1)) return BadValue;
@@ -919,6 +935,20 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 				fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
 		}
 
+		s = xf86FindOptionValue(local->options, "Gimp");
+		if ( s )
+		{
+			if ( !priv->common->wcmGimp )
+				fprintf(fp, "xsetwacom set %s Gimp off\n", local->name);
+		}
+
+		s = xf86FindOptionValue(local->options, "MMonitor");
+		if ( s )
+		{
+			if ( !priv->common->wcmMMonitor )
+				fprintf(fp, "xsetwacom set %s MMonitor off\n", local->name);
+		}
+
 		s = xf86FindOptionValue(local->options, "ForceDevice");
 		if ( s )
 		{
@@ -944,6 +974,8 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		fprintf(fp, "default SpeedLevel 6\n");
 		fprintf(fp, "default ClickForce 6\n");
 		fprintf(fp, "default Accel 0\n");
+		fprintf(fp, "default Gimp on\n");
+		fprintf(fp, "default Mmonitor on\n");
 		fclose(fp);
 	}
 	return(Success);
@@ -1099,6 +1131,13 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (first != 0 || num == 1)
 		return FALSE;
+	if (priv->twinview == TV_NONE && !priv->common->wcmGimp )
+	{
+		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
+			v0 < priv->topX ? 0 : v0 - priv->topX;
+		v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY :
+			v1 < priv->topY ? 0 : v1 - priv->topY;
+	}
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
 		priv->common->wcmGimp && priv->common->wcmMMonitor)
@@ -1193,9 +1232,11 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
 	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
+#ifdef NEVER /* The following is unnecessary since we kept valuators in priv */ 
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
 #ifdef PANORAMIX
@@ -1258,7 +1299,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	}
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));
-
+#endif
 	return TRUE;
 }
 

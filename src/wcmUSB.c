@@ -210,6 +210,20 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		xf86WcmFilterCoord,   /* input filtering */
 	};
 
+	static WacomModel usbCintiqV5 =
+	{
+		"USB Cintiq 21UX",
+		usbInitProtocol5,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterIntuos,  /* input filtering recommended */
+	};
 
 /*****************************************************************************
  * usbDetect --
@@ -240,9 +254,10 @@ static Bool usbDetect(LocalDevicePtr local)
 
 	if (err < 0) {
 		ErrorF("%s Wacom X driver can't grab event device, errno=%d\n",
-		local->name, errno);
+			local->name, errno);
 	}
 #endif
+
 	return 0;
 }
 
@@ -317,6 +332,9 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0xB1: /* Intuos3 6x8 */
 			case 0xB2: /* Intuos3 9x12 */
 				model = &usbIntuos3; break;
+
+			case 0x3F: /* Cintiq 21UX */
+				model = &usbCintiqV5; break;
 		}
 	}
 
@@ -471,8 +489,6 @@ static void usbParseEvent(WacomCommonPtr common,
 		if ((event->type == EV_SYN) && (event->code == SYN_REPORT) 
 			&& (common->wcmChannelCnt == 1))
 		{
-			memset(&common->wcmChannel[0],0,
-                                                sizeof(WacomChannel));
 			usbParseChannel(common,0,0);
 			common->wcmEventCnt = 0;
 		}
@@ -490,8 +506,6 @@ static void usbParseEvent(WacomCommonPtr common,
 		if (serial == 0xffffffff)
 		{
 			channel = 1;
-			if (common->wcmChannel[1].work.proximity == 0)
-				memset(&common->wcmChannel[1],0,sizeof(WacomChannel));
 			(&common->wcmChannel[channel].work)->device_type = PAD_ID;
 			(&common->wcmChannel[channel].work)->proximity = 1;
 		}
@@ -499,22 +513,31 @@ static void usbParseEvent(WacomCommonPtr common,
 		{
 			channel = 0;
 			if (common->wcmChannel[0].work.proximity == 0)
-				memset(&common->wcmChannel[0],0,sizeof(WacomChannel));
+			{
+				memset(&common->wcmChannel[0],0,
+						sizeof(WacomChannel));
+			}
 		}
 	}
 
 	/* otherwise, find the channel */
 	else
 	{
+		/* clear out channels */
+		for (i=0; i<common->wcmChannelCnt; ++i)
+		{
+			if (common->wcmChannel[i].work.proximity == 0)
+			{
+				memset(&common->wcmChannel[i],0,
+						sizeof(WacomChannel));
+			}
+		}
 		/* find existing channel */
 		for (i=0; i<common->wcmChannelCnt; ++i)
 		{
 			if (common->wcmChannel[i].work.serial_num == serial)
 			{
 				channel = i;
-				if (common->wcmChannel[i].work.proximity == 0)
-					memset(&common->wcmChannel[i],0,
-                                                sizeof(WacomChannel));
 				break;
 			}
 		}
@@ -527,13 +550,14 @@ static void usbParseEvent(WacomCommonPtr common,
 				if (common->wcmChannel[i].work.proximity == 0)
 				{
 					channel = i;
-					memset(&common->wcmChannel[i],0,
-                                                sizeof(WacomChannel));
+					/* the in-prox event was missing */
+					common->wcmChannel[i].work.proximity = 1;
 					break;
 				}
 			}
 		}
 
+		/* fresh out of channels */
 		if (channel < 0)
 		{
 			/* this should never happen in normal use */

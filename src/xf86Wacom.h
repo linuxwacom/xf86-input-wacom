@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom. <L>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that

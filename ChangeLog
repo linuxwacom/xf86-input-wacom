@@ -1,3 +1,16 @@
+2005-03-10    Ping Cheng <pingc@wacom.com>
+	* Merged Jens' 2.6.*/Makefile.in and a few other updates
+	* Added Cintiq 21UX support
+	* Added 2 new X config options: Gimp and MMonitor
+		"Gimp off" reports raw x and y in valuator;
+		"Gimp on" reports modified x and y when Top 
+			and Bottom values are set;
+		default is on to support Gimp;
+		"MMonitor on" moves cursor accross screens;
+		"MMonitor off" cursor stays in the current screen;
+		default is on.
+	* Fixed bug 1146135
+
 2005-02-28    Ping Cheng <pingc@wacom.com>
 	* Fixed Graphire/Volito button bug
 	* Added xserver64 option to configure

@@ -96,27 +96,33 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 [
 	dnl guess directory
 	AC_MSG_CHECKING(for kernel sources)
-	WCM_KERNELDIR="/usr/src/linux-2.4"
-	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
+	WCM_KERNELDIR="/usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 /usr/src/linux-2.6 /lib/modules/`uname -r`/build"
+
+	for i in $WCM_KERNELDIR; do
+		if test -f "$i/include/linux/input.h"; then
+			WCM_ENV_KERNEL=yes
+			WCM_KERNELDIR=$i
+			break
+		fi
+	done
+
+	if test "x$WCM_ENV_KERNEL" = "xyes"; then
 		WCM_ENV_KERNEL=yes
 		AC_MSG_RESULT($WCM_KERNELDIR)
 	else
-		WCM_KERNELDIR="/usr/src/linux"
-		if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
-			WCM_ENV_KERNEL=yes
-			AC_MSG_RESULT($WCM_KERNELDIR)
-		else
-			AC_MSG_RESULT(not found)
-			WCM_KERNELDIR=""
-			WCM_ENV_KERNEL=no
-			echo "***"
-			echo "*** WARNING:"
-			echo "*** Unable to guess kernel source directory"
-			echo "*** Looked at /usr/src/linux-2.4"
-			echo "*** Looked at /usr/src/linux"
-			echo "*** Kernel modules will not be built"
-			echo "***"
-		fi
+		AC_MSG_RESULT(not found)
+		WCM_KERNELDIR=""
+		WCM_ENV_KERNEL=no
+		echo "***"
+		echo "*** WARNING:"
+		echo "*** Unable to guess kernel source directory"
+		echo "*** Looked at /usr/src/linux"
+		echo "*** Looked at /usr/src/linux-`uname -r`"
+		echo "*** Looked at /usr/src/linux-2.4"
+		echo "*** Looked at /usr/src/linux-2.6"
+		echo "*** Looked at /lib/modules/`uname -r`/build"
+		echo "*** Kernel modules will not be built"
+		echo "***"
 	fi
 ])])
 dnl

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -458,7 +458,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
 	{
-		if (priv->twinview == TV_NONE)
+		if (priv->twinview == TV_NONE && priv->common->wcmGimp)
 		{
 			rx = x > priv->bottomX ? priv->bottomX - priv->topX :
 				x < priv->topX ? 0 : x - priv->topX;
@@ -533,7 +533,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
-	if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
+	if( !(priv->flags & BUTTONS_ONLY_FLAG) && is_core_pointer )
 	{
 		xf86WcmSetScreen(local, &rx, &ry);
 	}
@@ -555,12 +555,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 					rw);
 		}
 
-		/* don't move the cursor if it only supports buttons or
-		 * if it's the second tool in dual input case.
-		 * More complicated dual input, such as only sylus/puck moves 
-		 * the cursor or both tools can move the cursor will be 
-		 * supported when needed */
-		if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
+		/* don't move the cursor if it only supports buttons */
+		if( !(priv->flags & BUTTONS_ONLY_FLAG) )
 		{
 			if (IsCursor(priv))
 				xf86PostMotionEvent(local->dev,
@@ -798,7 +794,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
 		ds.discard_first, ds.proximity, ds.sample));
 
-	/* Discard the first 2 USB packages due to events delay */
+#ifdef LINUX_INPUT
+ 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
 	{
 		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
@@ -807,9 +804,9 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			pChannel->valid.states,
 			sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 		++pChannel->nSamples;
-		return; 
+		return; /* discard */
 	}
-
+#endif
 	/* Filter raw data, fix hardware defects, perform error correction */
 	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
 	{
@@ -871,18 +868,19 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (!ds->device_type)
 	{
-		if ( pLast ) /* might be an out of bound event */
-		{
-			/* fall back to last device to move
-			 * smoothly along screen edges */
-			ds->device_type = pLast->device_type;
-		}
-		else
-		{
-			/* defaults to cursor if tool is on the tablet when X starts */
-			ds->device_type = CURSOR_ID;
-			ds->proximity = 1;
-		}
+		/* defaults to cursor if tool is on the tablet when X starts */
+		ds->device_type = CURSOR_ID;
+		ds->proximity = 1;
+		if (ds->serial_num)
+			for (idx=0; idx<common->wcmNumDevices; idx++)
+			{
+				priv = common->wcmDevices[idx]->private;
+				if (ds->serial_num == priv->serial)
+				{
+					ds->device_type = DEVICE_ID(priv->flags);
+					break;
+				}
+			}
 	}
 
 	/* Find the device the current events are meant for */
@@ -894,34 +892,25 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		if (id == ds->device_type &&
 			((!priv->serial) || (ds->serial_num == priv->serial)))
 		{
+			/* Gimp desn't want values outside of defined area */
 			if ((priv->topX <= ds->x && priv->bottomX > ds->x &&
-				priv->topY <= ds->y && priv->bottomY > ds->y))
+				priv->topY <= ds->y && priv->bottomY > ds->y)
+				|| !priv->common->wcmGimp) 
 			{
 				DBG(11, ErrorF("tool id=%d for %s\n",
 					id, common->wcmDevices[idx]->name));
 				pDev = common->wcmDevices[idx];
 				break;
 			}
-			/* Fallback to allow the cursor to move
-			 * smoothly along screen edges */
-			else if (priv->oldProximity)
-			{
-				DBG(11, ErrorF("Fallback to tool id=%d for %s\n",
-					id, common->wcmDevices[idx]->name));
-				pDev = common->wcmDevices[idx];
-			}
 		}
 	}
 
 	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",(void *)pDev,(void *)pLastDev));
 
-	/* if the logical device of the same physical tool has changed
-	 * or tool changed without a out-prox for last tool, send 
-	 * proximity out to the previous one */
+	/* if the logical device of the same physical tool has changed,
+	 * send proximity out to the previous one */
 	if (pLastDev && (pLastDev != pDev) &&
-		((pLast->serial_num == ds->serial_num) ||
-		(pLast->device_type != ds->device_type)) 
-		&& pLast->proximity )
+		(pLast->serial_num == ds->serial_num))
 	{
 		pLast->proximity = 0;
 		xf86WcmSendEvents(pLastDev, pLast, channel);
@@ -995,14 +984,18 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		/* force out-prox when height is greater than 112. 
-		 * This only applies to USB protocol V tablets
+		/* force out-prox when height is greater than 13 for GD & XD;
+		 * 21 for PTZ. This only applies to USB protocol V tablets
 		 * which aimed at improving relative movement support. 
 		 */
-		if (filtered.distance > 112 && !(priv->flags & ABSOLUTE_FLAG) && !channel )
+		if (!(priv->flags & ABSOLUTE_FLAG))
 		{
-			ds->proximity = 0;
-			filtered.proximity = 0;
+			if ((filtered.distance > 21 && strstr(common->wcmModel->name, "Intuos3")) 
+			|| (filtered.distance > 13 && !strstr(common->wcmModel->name, "Intuos3")) )
+			{
+				ds->proximity = 0;
+				filtered.proximity = 0;
+			}
 		}
 
 		xf86WcmSendEvents(pDev, &filtered, channel);
