@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.1 2002/12/23 02:44:48 jjoganic Exp $
+ * $Id: wacom.c,v 1.2 2003/01/01 00:54:17 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -65,6 +65,7 @@
  *    v1.30.1-j2   - updated device ranges for Intuos2 6x8 (0x42)
  *    v1.30-j0.3.1 - fixed pen identifers, 2D mouse handling
  *    v1.30-j0.3.3 - added volito, thanks to Pasi Savolainen; fixed wheel sign
+ *    v1.30-j0.3.4 - added Ping Cheng's new tool IDs
  */
 
 /*
@@ -93,7 +94,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.3"
+#define DRIVER_VERSION "v1.30-j0.3.4"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -324,7 +325,7 @@ static void wacom_intuos_irq(struct urb *urb)
 
 			case 0x822: /* Intuos Pen GP-300E-01H */
 			case 0x852: /* Intuos2 Grip Pen XP-501E-00A */
-			case 0x842: /* added from Cheng */
+			case 0x842: /* Designer Pen */
 			case 0x022:
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 
@@ -333,20 +334,23 @@ static void wacom_intuos_irq(struct urb *urb)
 				wacom->tool[idx] = BTN_TOOL_BRUSH; break;
 
 			case 0x007: /* 2D Mouse */
-			case 0x09C: /* ?? Mouse */
+			case 0x09C: /* ?? Mouse - not a valid code according to Wacom */
 			case 0x094: /* 4D Mouse */
 				wacom->tool[idx] = BTN_TOOL_MOUSE; break;
 
 			case 0x096: /* Lens cursor */
 				wacom->tool[idx] = BTN_TOOL_LENS; break;
 
-			case 0x82a:
-			case 0x85a:
-			case 0x91a:
-			case 0x0fa: /* Eraser */
+			case 0x82A:
+			case 0x85A:
+			case 0x91A:
+			case 0xD1A:
+			case 0x0FA: /* Eraser */
 				wacom->tool[idx] = BTN_TOOL_RUBBER; break;
 
 			case 0x112: /* Airbrush */
+			case 0x912: /* Intuos2 Airbrush */
+			case 0xD12: /* Intuos Airbrush */
 				wacom->tool[idx] = BTN_TOOL_AIRBRUSH; break;
 
 			default: /* Unknown tool */
@@ -579,7 +583,7 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	struct usb_endpoint_descriptor *endpoint;
 	struct wacom *wacom;
 	char rep_data[2] = {0x02, 0x02};
-	
+
 	if (!(wacom = kmalloc(sizeof(struct wacom), GFP_KERNEL))) return NULL;
 	memset(wacom, 0, sizeof(struct wacom));
 
