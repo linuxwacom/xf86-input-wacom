@@ -598,8 +598,11 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	 * will need to change the values (ie. for error correction) */
 	ds = *pState;
 
+	/* timestamp the state for velocity and acceleration analysis */
+	ds.sample = GetTimeInMillis();
+
 	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=0x%X "
-		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d\n",
+		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,
 		ds.device_type,
@@ -607,7 +610,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.x, ds.y, ds.buttons,
 		ds.pressure, ds.rotation, ds.tiltx,
 		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
-		ds.discard_first, ds.proximity));
+		ds.discard_first, ds.proximity, ds.sample));
 
 	/* Discard unwanted data */
 	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))

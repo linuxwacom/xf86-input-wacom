@@ -380,13 +380,6 @@ struct _WacomDeviceRec
 			AIRBRUSH(ds))
 #define CURSOR_TOOL(ds) (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
 
-struct _WacomFilterState
-{
-	int state;
-	int coord[3];
-	int tilt[3];
-};
-
 struct _WacomDeviceState
 {
 	int device_id;
@@ -404,8 +397,7 @@ struct _WacomDeviceState
 	int throttle;
 	int discard_first;
 	int proximity;
-/*	WacomFilterState x_filter;
-	WacomFilterState y_filter; */
+	int sample;     /* wraps every 24 days */
 };
 
 struct _WacomChannel

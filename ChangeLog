@@ -1,3 +1,8 @@
+2003-05-15    John E. Joganic <john@joganic.com>
+
+	* Added timestamp to sample structure
+	* Added acceleration format to raw xidump for viewing jitter
+
 2003-05-12    Ping Cheng <pingc@wacom.com>
 	* Removed FIRST_TOUCH_FLAG (J. Yen's patch for wcmCommon.c)
 	* Cleaned valuator report for relative mode
@@ -5,7 +10,7 @@
 	* Report in-prox after tool is set (J. Yen's patch for wacom.c)
 	* Fixed compile warning for xf86Wacom.c
 
-2003-05-9    Ping Cheng <pingc@wacom.com>
+2003-05-09    Ping Cheng <pingc@wacom.com>
 
 	* Added Cintiq Partner, Graphire3 4x5 and 6x8
 	* Added a few new xsetwacom commands

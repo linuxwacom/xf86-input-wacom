@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <sys/time.h>
+#include <math.h>
 
 #define XIDUMP_VERSION "0.5.1"
 
@@ -77,6 +78,7 @@
 	XDeviceInfoPtr gpDevList = NULL;
 	int gnLastXError = 0;
 	int gnVerbose = 0;
+	int gnSuppress = 4;
 	int gnInputEvent[INPUTEVENT_MAX] = { 0 };
 
 int ErrorHandler(Display* pDisp, XErrorEvent* pEvent)
@@ -327,6 +329,30 @@ static const char* GetEventName(int nType)
 
 
 /*****************************************************************************
+** FORMAT
+*****************************************************************************/
+
+typedef enum
+{
+	FORMATTYPE_DEFAULT,
+	FORMATTYPE_ACCELERATION
+} FORMATTYPE;
+
+typedef struct _FORMAT FORMAT;
+struct _FORMAT
+{
+	const char* pszName;
+	FORMATTYPE type;
+};
+
+	FORMAT gFormats[] =
+	{
+		{ "default", FORMATTYPE_DEFAULT },
+		{ "accel", FORMATTYPE_ACCELERATION },
+		{ NULL }
+	};
+
+/*****************************************************************************
 ** UI
 *****************************************************************************/
 
@@ -336,7 +362,7 @@ struct _UI
 	const char* pszName;
 	int (*Init)(void);
 	void (*Term)(void);
-	int (*Run)(Display* pDisp, XDeviceInfo* pDevInfo);
+	int (*Run)(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt);
 };
 
 /*****************************************************************************
@@ -356,7 +382,7 @@ static void GTKTerm(void)
 {
 }
 
-static int GTKRun(Display* pDisp, XDeviceInfo* pDevInfo)
+static int GTKRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 {
 	return 1;
 }
@@ -396,7 +422,7 @@ static int CursesInit(void)
 	return 0;
 }
 
-static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
+static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 {
 	int i, j, k, bDown, nBtn;
 	int nRow=0, nPressRow, nProxRow, nFocusRow, nButtonRow,
@@ -614,7 +640,7 @@ static void RawTerm(void)
 {
 }
 
-static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
+static int RawRunDefault(Display* pDisp, XDeviceInfo* pDevInfo)
 {
 	XEvent event;
 	XAnyEvent* pAny;
@@ -675,6 +701,93 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 	return 0;
 }
 
+static int RawRunAccel(Display* pDisp, XDeviceInfo* pDevInfo)
+{
+	XEvent event;
+	XAnyEvent* pAny;
+	int prox=0, head=0, tail=0, points=0, prev=-1;
+	int x[16], y[16];
+	double d[16], dd[16], vx[16], vy[16], ax[16], ay[16],
+		dx, dy, dvx, dvy, m, a;
+
+	while (1)
+	{
+		XNextEvent(pDisp,&event);
+		pAny = (XAnyEvent*)&event;
+
+		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
+			prox=1;
+		else if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_OUT])
+			{ prox=head=tail=points=0; prev=-1; }
+		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
+		{
+			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
+			x[head] = pMove->axis_data[0];
+			y[head] = pMove->axis_data[1];
+			d[head] = (double)pMove->time;
+
+			if (prev >= 0)
+			{
+				/* parametric deltas, velocity, and accel */
+				dx = x[head] - x[prev];
+				dy = y[head] - y[prev];
+
+				if ((abs(dx) < gnSuppress) &&
+					(abs(dy) >= gnSuppress)) continue;
+
+				dd[head] = d[head] - d[prev];
+				vx[head] = dd[head] ? (dx/dd[head]) : 0;
+				vy[head] = dd[head] ? (dy/dd[head]) : 0;
+				dvx = vx[head] - vx[prev];
+				dvy = vy[head] - vy[prev];
+				ax[head] = dd[head] ? (dvx/dd[head]) : 0;
+				ay[head] = dd[head] ? (dvy/dd[head]) : 0;
+			}
+			else
+			{
+				dx = dy = 0;
+				vx[head] = vy[head] = 0;
+				ax[head] = ay[head] = 0;
+			}
+
+			++points;
+			prev = head;
+			head = (head + 1) % 16;
+			if (head == tail) tail = (head + 1) % 16;
+
+			/* compute magnitude and angle of velocity */
+			m = sqrt(vx[prev]*vx[prev] + vy[prev]*vy[prev]),
+			a = atan2(vx[prev], -vy[prev]);
+
+			printf("%8.0f: %4.0f "
+				"[%+4d %+4d] [%6.2f %6.2f] "
+				"[%+4.2f %+4.2f] (%6.2f %+3.0f)\n",
+				d[prev], dd[prev],
+				x[prev], y[prev],
+				vx[prev], vy[prev],
+				ax[prev], ay[prev],
+				m, a * 180 / M_PI);
+		}
+
+		/* flush data to terminal */
+		fflush(stdout);
+	}
+
+	return 0;
+}
+
+static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
+{
+	switch (fmt)
+	{
+		case FORMATTYPE_ACCELERATION:
+			return RawRunAccel(pDisp,pDevInfo);
+
+		default:
+			return RawRunDefault(pDisp,pDevInfo);
+	}
+}
+
 	UI gRawUI = { "raw", RawInit, RawTerm, RawRun };
 
 /****************************************************************************/
@@ -700,16 +813,19 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 
 void Usage(int rtn)
 {
-	UI** ppUI;
 	int nCnt;
+	UI** ppUI;
+	FORMAT* pFmt;
 	FILE* f = rtn ? stderr : stdout;
 
 	fprintf(f, "Usage: xidump [options] input_device\n"
-			"  -h, --help          - usage\n"
-			"  -v, --verbose       - verbose\n"
-			"  -V, --version       - version\n"
-			"  -l, --list          - list available input devices\n"
-			"  -u, --ui ui_type    - use specified ui, see below\n"
+			"  -h, --help                - usage\n"
+			"  -v, --verbose             - verbose\n"
+			"  -V, --version             - version\n"
+			"  -l, --list                - list available input devices\n"
+			"  -s, --suppress value      - suppress changes less than value\n"
+			"  -f, --format format_type  - use specified format, see below\n"
+			"  -u, --ui ui_type          - use specified ui, see below\n"
 			"\n"
 			"Use --list option for input_device choices\n"
 			"UI types: ");
@@ -717,6 +833,12 @@ void Usage(int rtn)
 	/* output UI types */
 	for (ppUI=gpUIs, nCnt=0; *ppUI!=NULL; ++ppUI, ++nCnt)
 		fprintf(f, "%s%s", nCnt ? ", " : "", (*ppUI)->pszName);
+
+	fprintf(f,"\nFormat types: ");
+
+	/* output format types */
+	for (pFmt=gFormats, nCnt=0; pFmt->pszName!=NULL; ++pFmt, ++nCnt)
+		fprintf(f, "%s%s", nCnt ? ", " : "", pFmt->pszName);
 
 	fprintf(f,"\n");
 	exit(rtn);
@@ -738,7 +860,7 @@ void Fatal(const char* pszFmt, ...)
 
 /****************************************************************************/
 
-int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
+int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 {
 	int nRtn;
 	XDevice* pDev;
@@ -861,7 +983,7 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 		fprintf(stderr,"failed to initialize UI\n");
 	else
 	{
-		if ((nRtn=pUI->Run(pDisp,pDevInfo)) != 0)
+		if ((nRtn=pUI->Run(pDisp,pDevInfo,fmt)) != 0)
 			fprintf(stderr,"failed to run UI\n");
 		pUI->Term();
 	}
@@ -882,6 +1004,8 @@ int main(int argc, char** argv)
 	int nRtn;
 	int bList = 0;
 	UI* pUI=NULL, **ppUI;
+	FORMAT* pFmt;
+	FORMATTYPE fmt=FORMATTYPE_DEFAULT;
 	const char* pa;
 	Display* pDisp = NULL;
 	const char* pszDeviceName = NULL;
@@ -899,6 +1023,34 @@ int main(int argc, char** argv)
 				{ Version(); exit(0); }
 			else if ((strcmp(pa,"-l") == 0) || (strcmp(pa,"--list") == 0))
 				bList = 1;
+			else if ((strcmp(pa,"-f") == 0) || (strcmp(pa,"--format") == 0))
+			{
+				pa = *(argv++);
+				if (!pa) Fatal("Missing format argument\n");
+
+				/* find format by name */
+				for (pFmt = gFormats; pFmt->pszName!=NULL; ++pFmt)
+				{
+					if (strcmp(pa,pFmt->pszName) == 0)
+					{
+						fmt = pFmt->type;
+						break;
+					}
+				}
+
+				/* bad format type, die */
+				if (!pFmt->pszName)
+					Fatal("Unknown format option %s\n",pa);
+			}
+			else if ((strcmp(pa,"-s") == 0) || (strcmp(pa,"--suppress") == 0))
+			{
+				pa = *(argv++);
+				if (!pa) Fatal("Missing suppress argument\n");
+
+				gnSuppress = atoi(pa);
+				if (gnSuppress <= 0)
+					Fatal("Invalid suppress value\n");
+			}
 			else if ((strcmp(pa,"-u") == 0) || (strcmp(pa,"--ui") == 0))
 			{
 				pa = *(argv++);
@@ -943,7 +1095,7 @@ int main(int argc, char** argv)
 	if (bList)
 		nRtn = ListDevices(pDisp,pszDeviceName);
 	else
-		nRtn = Run(pDisp,pUI,pszDeviceName);
+		nRtn = Run(pDisp,pUI,fmt,pszDeviceName);
 
 	/* release device list */
 	if (gpDevList)

@@ -70,9 +70,10 @@
  * 2003-04-29 26-j0.5.11 - all devices using same data path
  * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
  * 2003-05-02 26-j0.5.13 - added parameter configuration code
+ * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5 
  */
 
-static const char identification[] = "$Identification: 26-j0.5.13 $";
+static const char identification[] = "$Identification: 26-j0.5.14 $";
 
 /****************************************************************************/
 
