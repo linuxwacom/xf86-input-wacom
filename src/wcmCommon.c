@@ -67,10 +67,15 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	/* set factorX and factorY for single screen setup since
 	 * Top X Y and Bottom X Y can be changed while driver is running
 	 */
-	if (screenInfo.numScreens == 1)
+	if (screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
 	{
-		priv->factorX = screenInfo.screens[0]->width / sizeX;
-		priv->factorY = screenInfo.screens[0]->height / sizeY;
+		/* set the current sreen in multi-monitor setup */
+		if (!priv->common->wcmMMonitor)
+		{
+			priv->currentScreen = miPointerCurrentScreen()->myNum;
+		}
+		priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
+		priv->factorY = screenInfo.screens[priv->currentScreen]->height / sizeY;
 		return;
 	}
 

@@ -29,6 +29,8 @@ static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr);
 static void isdv4InitISDV4(WacomCommonPtr common, int fd, const char* id,
 	float version);
+static int isdv4GetRanges(WacomCommonPtr common, int fd);
+static int isdv4StartTablet(WacomCommonPtr common, int fd);
 static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 
 	WacomDeviceClass gWacomISDV4Device =
@@ -43,12 +45,12 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 		"General ISDV4",
 		isdv4InitISDV4,
 		NULL,                 /* resolution not queried */
-		NULL,                 /* ranges not queried */
+		isdv4GetRanges,       /* query ranges */
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
 		NULL,                 /* link speed unsupported */
-		NULL,                 /* start not supported */
+		isdv4StartTablet,     /* start not supported */
 		isdv4Parse,
 		xf86WcmHysteresisFilter,   /* input filtering */
 	};
@@ -76,68 +78,23 @@ static Bool isdv4Init(LocalDevicePtr local)
 
 	DBG(1, ErrorF("initializing ISDV4 tablet\n"));    
 
-	DBG(1, ErrorF("resetting tablet\n"));    
-
-	/* Set the speed of the serial link to 38400 */
-	if (xf86WcmSetSerialSpeed(local->fd, 38400) < 0)
-		return !Success;
-    
-	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
-	if (err == -1)
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-    
-	/* Wait 250 mSecs */
-	if (xf86WcmWait(250))
-		return !Success;
-
-	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
-	if (err == -1)
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-    
-	/* Wait 75 mSecs */
-	if (xf86WcmWait(75))
-		return !Success;
-
 	/* Set the speed of the serial link to 19200 */
 	if (xf86WcmSetSerialSpeed(local->fd, 19200) < 0)
 		return !Success;
-    
-	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+   
+	/* Send stop command to the tablet */
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP)));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
 		return !Success;
 	}
-    
+
 	/* Wait 250 mSecs */
 	if (xf86WcmWait(250))
 		return !Success;
 
-	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
-	if (err == -1)
-	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
-		return !Success;
-	}
-    
-	/* Wait 75 mSecs */
-	if (xf86WcmWait(75))
-		return !Success;
-
-	xf86WcmFlushTablet(local->fd);
-
-	DBG(2, ErrorF("not reading model -- Wacom TabletPC ISD V4\n"));
-	return xf86WcmInitTablet(common,&isdv4General,local->fd,"unknown",0.0);
+	return xf86WcmInitTablet(common,&isdv4General,local->fd,"ISDV4", common->wcmVersion);
 }
 
 /*****************************************************************************
@@ -147,25 +104,102 @@ static Bool isdv4Init(LocalDevicePtr local)
 static void isdv4InitISDV4(WacomCommonPtr common, int fd,
 	const char* id, float version)
 {
+	int temp;
 	DBG(2, ErrorF("initializing as ISDV4 model\n"));
   
 	/* set parameters */
-	common->wcmProtocolLevel = 0;
-	common->wcmMaxZ = 255;          /* max Z value (pressure)*/
-	common->wcmResolX = 2570;       /* X resolution in points/inch */
-	common->wcmResolY = 2570;       /* Y resolution in points/inch */
+	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 9;       /* length of a packet */
+	common->wcmResolX = 2540; 	/* tablet X resolution in points/inch */
+	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
 
-	if (common->wcmRotate==ROTATE_NONE)
+	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
 	{
-		common->wcmMaxX = 21136;
-		common->wcmMaxY = 15900;
+		temp = common->wcmMaxX;
+		common->wcmMaxX = common->wcmMaxY;
+		common->wcmMaxY = temp;
 	}
-	else if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
+
+}
+static int isdv4GetRanges(WacomCommonPtr common, int fd)
+{
+	char data[BUFFER_SIZE];
+	int maxtry = MAXTRY, nr;
+
+	DBG(2, ErrorF("getting ISDV4 Ranges\n"));
+	/* Send query command to the tablet */
+	do
 	{
-		common->wcmMaxX = 15900;
-		common->wcmMaxY = 21136;
+		SYSCALL(nr = xf86WcmWrite(fd, WC_ISDV4_QUERY, strlen(WC_ISDV4_QUERY)));
+		if ((nr == -1) && (errno != EAGAIN))
+		{
+			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
+			return !Success;
+		}
+		maxtry--;
+	} while ((nr == -1) && maxtry);
+
+	if (maxtry == 0)
+	{
+		ErrorF("Wacom unable to xf86WcmWrite request query command "
+				"after %d tries\n", MAXTRY);
+		return !Success;
 	}
+
+	/* Read the control data */
+	maxtry = MAXTRY;
+	do
+	{
+		if ((nr = xf86WcmWaitForTablet(fd)) > 0)
+		{
+			SYSCALL(nr = xf86WcmRead(fd, data, 11));
+			if ((nr == -1) && (errno != EAGAIN))
+			{
+				ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
+				return !Success;
+			}
+		}
+		maxtry--;  
+	} while ( nr <= 0 && maxtry );
+
+	if (maxtry == 0 && nr <= 0 )
+	{
+		ErrorF("Wacom unable to read ISDV4 control data "
+				"after %d tries\n", MAXTRY);
+		return !Success;
+	}
+
+	/* Control data bit check */
+	if ( !(data[0] & 0x40) )
+	{
+		ErrorF("Wacom Query ISDV4 error magic error \n");
+		return !Success;
+	}
+	
+	common->wcmMaxZ = ( data[5] | ((data[6] & 0x07) << 7) );
+	common->wcmMaxX = ( (data[1] << 9) | (data[2] << 2) 
+				| ( (data[6] & 0x60) >> 5) );      
+	common->wcmMaxY = ( (data[3] << 9) | (data[4] << 2 ) 
+				| ( (data[6] & 0x18) >> 3) );
+	common->wcmVersion = ( data[10] | (data[9] << 7) );
+
+	return Success;
+}
+
+static int isdv4StartTablet(WacomCommonPtr common, int fd)
+{
+	int err;
+
+	/* Tell the tablet to start sending coordinates */
+	SYSCALL(err = xf86WcmWrite(fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING))));
+
+	if (err == -1)
+	{
+		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		return !Success;
+	}
+
+	return Success;
 }
 
 static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
@@ -175,8 +209,15 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 	int n, cur_type, tmp_coord;
 
 	if ((n = xf86WcmSerialValidate(common,data)) > 0)
+	{
 		return n;
-
+	}
+	else
+	{
+		/* Coordinate data bit check */
+		if (data[0] & 0x40)
+			return common->wcmPktLength;
+	}
 	/* pick up where we left off, minus relative values */
 	ds = &common->wcmChannel[0].work;
 	RESET_RELATIVE(*ds);
@@ -204,35 +245,13 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 	}
 
 	/* pressure */
-	ds->pressure = ((data[6] & 0x01) << 7) | (data[5] & 0x7F);
+	ds->pressure = (((data[6] & 0x07) << 7) | data[5] );
 
-	/* button order is slightly amiss so that styluses with only
-	 * one side button have buttons 1 and 3 */
-
-	/* report touch as button 1 */
-	ds->buttons = (data[0] & 0x01) ? 1 : 0 ;
-
-	/* report side switch as button 3 */
-	ds->buttons |= (data[0] & 0x02) ? 0x04 : 0 ;
-
-	/* report as button 2 (subject eraser check below) */
-	ds->buttons |= (data[0] & 0x04) ? 0x02 : 0 ;
-
-	/* the bit used for button 2 is also used to ID the
-	 * eraser.  If the tool comes into proximity with this bit
-	 * set, it is assumed to be the eraser.  If the tool was
-	 * previously in proximity, it is assumed to be the button.
-	 * The mistaken identity case is handled with proximity
-	 * below. */
+	/* buttons */
+	ds->buttons = (data[0] & 0x07);
 
 	/* check which device we have */
-	cur_type = (data[0] & 0x04) ? ERASER_ID : STYLUS_ID;
-
-	/* If there's no eraser configured, let's not even try to
-	 * report an eraser (handy for making button 2 action more
-	 * definite) */
-	if ( common->wcmNumDevices == 1 && cur_type == ERASER_ID )
-		cur_type = STYLUS_ID;
+	cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
 
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 

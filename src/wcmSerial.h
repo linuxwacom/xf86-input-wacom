@@ -32,6 +32,9 @@
 #define WC_CONFIG "~R\r"         /* request a configuration string */
 #define WC_COORD "~C\r"          /* request max coordinates */
 #define WC_MODEL "~#\r"          /* request model and ROM version */
+#define WC_ISDV4_QUERY "*"       /* ISDV4 query command */
+#define WC_ISDV4_STOP "0"        /* ISDV4 stop command */
+#define WC_ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
 
 #define WC_MULTI "MU1\r"         /* multi mode input */
 #define WC_UPPER_ORIGIN "OC1\r"  /* origin in upper left */

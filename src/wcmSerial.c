@@ -1160,30 +1160,6 @@ static int serialResetProtocol4(WacomCommonPtr common, int fd)
 
 static int serialEnableTiltProtocol4(WacomCommonPtr common, int fd)
 {
-	int err;
-
-	/* Send the tilt mode command after reset and setup because
-	 * it must be enabled after multi-mode to take precedence */
-
-	/* Tilt works on ROM 1.4 and above */
-	if (common->wcmVersion >= 1.4F)
-	{
-		DBG(2, ErrorF("Sending tilt mode order\n"));
-
-		common->wcmPktLength = 9;
-		common->wcmFlags |= TILT_ENABLED_FLAG;
- 
-		SYSCALL(err = xf86WcmWrite(fd, WC_TILT_MODE,
-			strlen(WC_TILT_MODE)));
-
-		if (err == -1)
-		{
-			ErrorF("Wacom xf86WcmWrite error : %s\n",
-				strerror(errno));
-			return !Success;
-		}
-	}
-
 	return Success;
 }
 
@@ -1340,7 +1316,7 @@ int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 			bad = 1;
 			DBG(10, ErrorF("xf86WcmSerialValidate: bad magic at %d "
 				"v=0x%x l=%d\n", i,
-				data, common->wcmPktLength));
+				data[i], common->wcmPktLength));
 			if (i!=0 && (data[i] & HEADER_BIT)) return i;
 		}
 	}

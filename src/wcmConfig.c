@@ -143,6 +143,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmGimp = 1;		/* enabled (=1) to support Gimp when Xinerama Enabled in multi-monitor desktop. Needs to be disabled (=0) for Cintiq calibration */
+	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitors by default. disabled (=0) when user doesn't want to move from one screen to the other */
 	return local;
 }
 
@@ -150,7 +151,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 LocalDevicePtr xf86WcmAllocateStylus(void)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS, STYLUS_ID);
+	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 
 	if (local)
 		local->type_name = "Wacom Stylus";

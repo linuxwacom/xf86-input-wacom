@@ -520,6 +520,7 @@ struct _WacomCommonRec
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
+	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

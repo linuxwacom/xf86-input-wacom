@@ -178,6 +178,12 @@ struct _PARAMINFO
 			XWACOM_PARAM_GIMP, VALUE_OPTIONAL, 
 			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
+		{ "mmonitor",
+			"Turns on/off across monitor movement in"
+			"multi-monitor desktop, default is on",
+			XWACOM_PARAM_MMT, VALUE_OPTIONAL, 
+			RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
 		{ "FileModel",
 			"Writes tablet models to /etc/wacom.dat",
 			XWACOM_PARAM_FILEMODEL, VALUE_OPTIONAL },

@@ -503,8 +503,11 @@ proc updateButton {} {
 	}
 	exec xsetwacom set $device button$i $j 
     }
-    set mode [ .subW.f.mode cget -text ]
-    exec xsetwacom set $device mode $mode
+    set model $getDeviceModel($device,model)
+    if { [ string compare $model "Cintiq" ] } {
+	set mode [ .subW.f.mode cget -text ]
+	exec xsetwacom set $device mode $mode
+    }
     updateXinitrc
     closeSubWindow
 }
@@ -528,13 +531,17 @@ proc initialButton {} {
 	    set Option(6) "Button5"
 	    set t 6
 	}
-    }
+    }    
     getDeviceOptionProc $device $t
-    set dmode $getOption($device,Mode)
-    label .subW.f.modeL -text "Mode: "
-    tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
-    grid .subW.f.mode -row 0 -column 2 -columnspan 15
-    grid .subW.f.modeL -row 0 -column 2
+
+    set model $getDeviceModel($device,model)
+    if { [ string compare $model "Cintiq" ] } {
+	set dmode $getOption($device,Mode)
+	label .subW.f.modeL -text "Mode: "
+	tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
+	grid .subW.f.mode -row 0 -column 2 -columnspan 15
+	grid .subW.f.modeL -row 0 -column 2
+    }
 
     addMenu 1
     if { [ string compare $type "eraser" ] } {

@@ -1,3 +1,10 @@
+2003-11-18    Ping Cheng <pingc@wacom.com>
+	* Support general Tablet PC (ISDV4) 
+	* added a new xsetwacom command for mult-monitor setup:
+		xsetwacom set $device mmmonitor $value
+		$value  0: let cursor move across monitors (default)
+			1: cursor will stay in the monitor it was
+
 2003-11-10    Ping Cheng <pingc@wacom.com>
 	* Support wacomcpl with user specified tcl/tk src dirs
 	* Moved kernel files to 2.4 and 2.4.22 for easy upgrading

@@ -80,10 +80,11 @@
  * 2003-08-13 26-j0.5.21 - added speed acceleration xsetwacom commands (Accel)
  * 2003-09-30 26-j0.5.22 - added TwinView with different resolution support and
 			 - enabled ScreenNo option for TwinView
- * 2003-11-10 26-j0.5.22 - support kernel 2.4.22 and user specified tcl/tk src dir
+ * 2003-11-10 26-j0.5.23 - support kernel 2.4.22 and user specified tcl/tk src dir
+ * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
  */
 
-static const char identification[] = "$Identification: 26-j0.5.23 $";
+static const char identification[] = "$Identification: 26-j0.5.24 $";
 
 /****************************************************************************/
 
@@ -797,6 +798,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ((value != 0) && (value != 1)) return BadValue;
 		priv->common->wcmGimp = value;
 		break;
+	    case XWACOM_PARAM_MMT:
+		if ((value != 0) && (value != 1)) return BadValue;
+		priv->common->wcmMMonitor = value;
+		break;
 	    default:
     		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
@@ -1045,7 +1050,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		return FALSE;
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
-		priv->common->wcmGimp)
+		priv->common->wcmGimp && priv->common->wcmMMonitor)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
@@ -1155,7 +1160,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	valuators[1] = y / priv->factorY + 0.5;
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
-		priv->common->wcmGimp)
+		priv->common->wcmGimp && priv->common->wcmMMonitor)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)
