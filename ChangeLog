@@ -1,5 +1,6 @@
 2003-01-01    John E. Joganic <john@joganic.com>
 
+	* Added volito to hid-core.c.
 	* Fixed volito report #99.
 	* Updated volito ranges.
 	* Fixed wacdump refresh
