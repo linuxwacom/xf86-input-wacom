@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.10 2003/02/01 06:25:43 jjoganic Exp $
+ * $Id: wacom.c,v 1.11 2003/02/12 17:52:54 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -73,6 +73,7 @@
  *                   fixed Intuos and Intuos2 sizes, values from Wacom
  *    v1.30-j0.5.0 - new release
  *    v1.30-j0.5.1 - fixed serial number code for Intuos and Intuos2
+ *    v1.30-j0.5.2 - applied Ping Cheng's eraser patch for PL
  */
 
 /*
@@ -103,12 +104,12 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.5.1"
+#define DRIVER_VERSION "v1.30-j0.5.2"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
-#define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
+#define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
 #else
-#define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED-DEBUG)"
+#define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM-DEBUG)"
 #endif
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
@@ -194,8 +195,8 @@ static void wacom_pl_irq(struct urb *urb)
 		/*
 		 * if going from out of proximity into proximity select between the eraser
 		 * and the pen based on the state of the stylus2 button, choose eraser if
-		 * pressed else choose pen. if not a proximity change from out to in stay
-		 * with the previously selected tool.
+		 * pressed else choose pen. if not a proximity change from out to in, send
+		 * an out of proximity for previous tool then a in for new tool.
 		 */
 		if (!wacom->tool[0]) {
 			/* Going into proximity select tool */
@@ -204,7 +205,11 @@ static void wacom_pl_irq(struct urb *urb)
 		else {
 			/* was entered with stylus2 pressed */
 			if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[4] & 0x20) ) {
+				/* report out proximity for previous tool */
+				input_report_key(dev, wacom->tool[1], 0);
+				input_event(dev, EV_MSC, MSC_SERIAL, 0);
 				wacom->tool[1] = BTN_TOOL_PEN;
+				return;
 			}
 		}
 		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
