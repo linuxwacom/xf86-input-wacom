@@ -153,19 +153,6 @@ struct _PARAMINFO
 			VALUE_OPTIONAL, RANGE, 
 			1, 11, SINGLE_VALUE, 6 },	
 
-		{ "DoubleSpeed",
-			"Sets double click delay interval (default is 200 ms)",
-			XWACOM_PARAM_DOUBLESPEED,
-			VALUE_OPTIONAL, RANGE, 
-			100, 1000, SINGLE_VALUE, 200 },	
-
-		{ "DoubleRadius",
-			"Sets double click effective circle radius "
-			"(default is 3 pixels)",
-			XWACOM_PARAM_DOUBLERADIUS,
-			VALUE_OPTIONAL, RANGE, 
-			1, 26, SINGLE_VALUE, 3 },	
-
 		{ "ClickForce",
 			"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100"
 			"(default is 6)",

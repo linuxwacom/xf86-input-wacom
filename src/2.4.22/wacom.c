@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.3 2004/02/25 18:33:08 pingc Exp $
+ * $Id: wacom.c,v 1.4 2004/05/14 22:02:59 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -9,7 +9,7 @@
  *  Copyright (c) 2000 Daniel Egger         <egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied      <flepied@mandrakesoft.com>
  *  Copyright (c) 2002 Christer Nilsson     <christer.nilsson@kretskompaniet.se>
- *  Copyright (c) 2002 Ping Cheng           <pingc@wacom.com>
+ *  Copyright (c) 2002-2004 Ping Cheng      <pingc@wacom.com>
  *  Copyright (c) 2002 John Joganic         <john@joganic.com>
  *
  *  USB Wacom Graphire and Intuos tablet support
@@ -77,6 +77,7 @@
  *    v1.30-j0.5.3 - reapplied patch for Intuos2 6x8's reportings as (0x47)
  *    v1.30-j0.6.0 - new release
  *    v1.30-j0.6.1 - new release
+ *    v1.30-j0.6.2 - new release
  */
 
 /*
@@ -107,7 +108,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.6.1"
+#define DRIVER_VERSION "v1.30-j0.6.2"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -178,7 +179,7 @@ static void wacom_pl_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 	{
 		printk(KERN_INFO "wacom_pl_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
@@ -252,7 +253,7 @@ static void wacom_ptu_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 	{
 		printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
@@ -310,7 +311,7 @@ static void wacom_graphire_irq(struct urb *urb)
 	/* check if we can handle the data */
 	if (data[0] == 99) /* some sort of clock for Volito? */
 		return;
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 	{
 		printk(KERN_INFO "wacom_graphire_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
@@ -372,7 +373,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	if (urb->status) return;
 
 	/* check for valid report */
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 	{
 		printk(KERN_INFO "wacom_intuos_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);

@@ -1,6 +1,6 @@
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.6.1)
+AM_INIT_AUTOMAKE(linuxwacom, 0.6.2)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -399,7 +399,10 @@ elif test "$enable_modver" = "yes"; then
 	WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
 else
 	dnl not explicitly set, go with default
-	WCM_MODVER=""
+	if test "$WCM_OPTION_MODVER" = "yes"; then
+		WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
+	else
+		WCM_MODVER=""
 fi
 
 dnl Check for changed field names in hid-core.c

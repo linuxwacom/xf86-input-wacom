@@ -55,6 +55,7 @@
  *    v1.30-pc-0.1   - initial release based on test11
  *    v1.30-pc-0.2   - linuxwacom-beta-0.5.4
  *    v1.30-pc-0.3   - incorporated more changes from wacom.c 2.4 
+ *    v1.30-pc-0.4   - linuxwacom-0.6.2
  */
 
 /*
@@ -74,7 +75,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30 - pc-0.3"
+#define DRIVER_VERSION "v1.30 - pc-0.4"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -143,7 +144,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 		dbg("wacom_pl_irq: received unknown report #%d", data[0]);
 
 	prox = data[1] & 0x40;
@@ -232,7 +233,7 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
                 goto exit;
         }
 
-        if (data[0] != 2)
+        if (data[0] != 2 && data[0] != 5 && data[0] != 6)
         {
                 printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
         }
@@ -407,7 +408,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2)
+	if (data[0] != 2 && data[0] != 5 && data[0] != 6)
 		dbg("wacom_intuos_irq: received unknown report #%d", data[0]);
 
 	input_regs(dev, regs);

@@ -85,9 +85,11 @@
  * 2003-12-10 26-j0.5.25 - support kernel 2.6
  * 2003-12-10 26-j0.5.26 - added double click speed and radius
  * 2004-02-02 26-j0.6.0  - new release
+ * 2004-02-02 26-j0.6.1  - new release
+ * 2004-02-02 26-j0.6.2  - new release
 */
 
-static const char identification[] = "$Identification: 26-j0.6.0 $";
+static const char identification[] = "$Identification: 26-j0.6.2 $";
 
 /****************************************************************************/
 
@@ -223,24 +225,10 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	/* if factorX is not set, initialize bounding rect */
 	if (priv->factorX == 0.0)
 	{
-		if (priv->twinview != TV_NONE && priv->bottomX == 0
-			&& priv->bottomY == 0 && priv->topX == 0
-			&& priv->topY == 0) 
+		if (priv->twinview != TV_NONE && priv->screen_no == -1) 
 		{
-			if (IsCursor(priv))
-			{
-				/* for absolute cursor */
-				priv->topX = 80;
-				priv->topY = 80;
-			}
-			else
-			{
-				/* for absolute stylus and eraser */
-				priv->topX = 50;
-				priv->topY = 50;
-			}
-			priv->bottomX = common->wcmMaxX - priv->topX;
-			priv->bottomY = common->wcmMaxY - priv->topY;
+			priv->tvoffsetX = 60;
+			priv->tvoffsetY = 60;
 		}
 
 		if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
@@ -347,9 +335,9 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		if (priv->numScreen == 1)
 		{
 			priv->factorX = totalWidth
-				/ (double)(priv->bottomX - priv->topX);
+				/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 			priv->factorY = maxHeight
-				/ (double)(priv->bottomY - priv->topY);
+				/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
 				priv->factorX, priv->factorY));
 		}
@@ -357,7 +345,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 	/* x and y axes */
 	if (priv->twinview == TV_LEFT_RIGHT)
-		tabletSize = common->wcmMaxX + priv->bottomX - priv->topX;
+		tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 	else
 		tabletSize = priv->bottomX - priv->topX;
 
@@ -366,7 +354,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		0, mils(common->wcmResolX)); /* max_res */
 
 	if (priv->twinview == TV_ABOVE_BELOW)
-		tabletSize = common->wcmMaxY + priv->bottomY - priv->topY;
+		tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 	else
 		tabletSize = priv->bottomY - priv->topY;
 
@@ -394,7 +382,6 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 	/* wheel */
 	InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
-
 	return TRUE;
 }
 
@@ -423,7 +410,7 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 	/* report how well we're doing */
 	if (loop >= MAX_READ_LOOPS)
 		DBG(1,ErrorF("xf86WcmDevReadInput: Can't keep up!!!\n"));
-	else if (loop > 1)
+	else if (loop > 0)
 		DBG(10,ErrorF("xf86WcmDevReadInput: Read (%d)\n",loop));
 }
 
@@ -790,16 +777,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		sprintf(st, "%.3f", priv->speed);
 		xf86AddNewOption(local->options, "Speed", st);
 		break;
-	    case XWACOM_PARAM_DOUBLESPEED:
-		if ((value < 100) || (value > 1000)) return BadValue;
-		priv->doubleSpeed = value;
-		xf86ReplaceIntOption(local->options, "DoubleSpeed", priv->doubleSpeed);
-		break;
-	    case XWACOM_PARAM_DOUBLERADIUS:
-		if ((value < 0) || (value > 26)) return BadValue;
-		priv->doubleRadius = value-1;
-		xf86ReplaceIntOption(local->options, "DoubleRadius", priv->doubleRadius);
-		break;
 	    case XWACOM_PARAM_ACCEL:
 		if ((value < 0) || (value > MAX_ACCEL)) return BadValue;
 		priv->accel = value-1;
@@ -838,8 +815,15 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmTPCButton = 0;
-		if (value) priv->common->wcmTPCButton = value;
+		priv->common->wcmTPCButton = value;
+		if (value)
+		{
+			xf86ReplaceStrOption(local->options, "TPCButton", "on");
+		}
+		else
+		{
+			xf86ReplaceStrOption(local->options, "TPCButton", "off");
+		}
 		break;
 	    default:
     		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
@@ -932,26 +916,18 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", local->name, value);
 		}
 
-        	s = xf86FindOptionValue(local->options, "DoubleSpeed");
-		if ( s && priv->doubleSpeed != DEFAULT_DOUBLESPEED )
-		{
-			fprintf(fp, "xsetwacom set %s DoubleSpeed %d\n", 
-				local->name, priv->doubleSpeed+1);
-		}
-
-        	s = xf86FindOptionValue(local->options, "DoubleRadius");
-		if ( s && priv->doubleRadius != DEFAULT_DOUBLERADIUS )
-		{
-			fprintf(fp, "xsetwacom set %s DoubleRadius %d\n", 
-				local->name, priv->doubleRadius+1);
-		}
-
-        	s = xf86FindOptionValue(local->options, "Threshold");
+		s = xf86FindOptionValue(local->options, "Threshold");
 		if ( s )
 		{
 			value = atoi(s);
 			value = (int)((double)value*100.00/(double)priv->common->wcmMaxZ+0.5);
 			fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
+		}
+
+		s = xf86FindOptionValue(local->options, "TPCButton");
+		if ( s )
+		{
+			fprintf(fp, "xsetwacom set %s TPCButton %s\n", local->name, s);
 		}
 
 		fprintf(fp, "default TopX 0\n");
@@ -964,10 +940,13 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 			sprintf(command, "default Mode Absolute\n");
 		fprintf(fp, "%s", command);		
 		fprintf(fp, "default SpeedLevel 5\n");
-		fprintf(fp, "default DoubleSpeed %d\n", DEFAULT_DOUBLESPEED);
-		fprintf(fp, "default DoubleRadius %d\n", DEFAULT_DOUBLERADIUS);
 		fprintf(fp, "default ClickForce 6\n");
 		fprintf(fp, "default Accel 0\n");
+		s = xf86FindOptionValue(local->options, "ISDV4");
+		if ( s )
+			fprintf(fp, "default TPCButton on\n");
+		else
+			fprintf(fp, "default TPCButton off\n");
 		fclose(fp);
 	}
 	return(Success);
@@ -998,7 +977,7 @@ static int xf86WcmModelToFile(LocalDevicePtr local)
 				lprv = (WacomDevicePtr)localDevices->private;
 			else
 				lprv = NULL;
-			if (lprv && lprv->common) 
+			if ( lprv && lprv->common && lprv->common->wcmModel ) 
 			{
 				sscanf((char*)(lprv->common->wcmModel)->name, "%s %s", m1, m2);
 				if ( lprv->common->wcmEraserID )
@@ -1138,75 +1117,63 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 #endif
 	if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
-		v0 -= priv->topX;
-		v1 -= priv->topY;
+		v0 -= priv->topX - priv->tvoffsetX;
+		v1 -= priv->topY - priv->tvoffsetY;
                 if (priv->twinview == TV_LEFT_RIGHT)
 		{
-			if (v0 > priv->bottomX)
+			if (v0 > priv->bottomX - priv->tvoffsetX)
 			{
-				v0 -= priv->common->wcmMaxX;
-				priv->currentScreen = 1;
-				if (priv->screen_no == 0)
+				if (priv->currentScreen == 0)
+					v0 = priv->bottomX - priv->tvoffsetX;
+				else
 				{
-					priv->currentScreen = 0;
-				}
-			}
-			else
-			{
-				priv->currentScreen = 0;
-				if (priv->screen_no == 1)
-				{
-					priv->currentScreen = 1;
+					v0 -= priv->bottomX - priv->topX - 2*priv->tvoffsetX;
+					if (v0 > priv->bottomX - priv->tvoffsetX)
+						v0 = 2*(priv->bottomX - priv->tvoffsetX) - v0;
 				}
 			}
 			if (priv->currentScreen == 1)
 			{
                        		*x = priv->tvResolution[0] + priv->tvResolution[2]
-					* v0 / (priv->bottomX - priv->topX);
+					* v0 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 				*y = v1 * priv->tvResolution[3] /
-					(priv->bottomY - priv->topY) + 0.5;
+					(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 			}
 			else
 			{
 				*x = priv->tvResolution[0] * v0 
-					 / (priv->bottomX - priv->topX);
+					 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 				*y = v1 * priv->tvResolution[1] /
-					(priv->bottomY - priv->topY) + 0.5;
+					(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 			}
 		}
                 if (priv->twinview == TV_ABOVE_BELOW)
 		{
-			if (v1 > priv->bottomY)
+			if (v1 > priv->bottomY - priv->tvoffsetY)
 			{
-				v1 -= priv->bottomY;
-				priv->currentScreen = 1;
-				if (priv->screen_no == 0)
+				if (priv->currentScreen == 0)
+					v1 = priv->bottomY - priv->tvoffsetY;
+				else
 				{
-					priv->currentScreen = 0;
-				}
-			}
-			else
-			{
-				priv->currentScreen = 0;
-				if (priv->screen_no == 1)
-				{
-					priv->currentScreen = 1;
+					v1 -= priv->bottomY - priv->topY - 2*priv->tvoffsetY;
+					if (v1 > priv->bottomY - priv->tvoffsetY)
+						v1 = 2*(priv->bottomY - priv->tvoffsetY) - v1;
 				}
 			}
 			if (priv->currentScreen == 1)
 			{
  				*x = v0 * priv->tvResolution[2] /
-					(priv->bottomX - priv->topX) + 0.5;
+					(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
 				*y = priv->tvResolution[1] + 
-					priv->tvResolution[3] * v1 
-					/ (priv->bottomY - priv->topY);
+					priv->tvResolution[3] * v1 / 
+					(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			}
 			else
 			{
 				*x = v0 * priv->tvResolution[0] /
-					(priv->bottomX - priv->topX) + 0.5;
-				*y = priv->tvResolution[1] * v1 
-					 / (priv->bottomY - priv->topY);
+					(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
+				*y = priv->tvResolution[1] * v1 /
+					 (priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			}
 		}
 	}
@@ -1252,74 +1219,45 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
                 if (priv->twinview == TV_LEFT_RIGHT)
 		{
 			if (x > priv->tvResolution[0])
-			{
 				x -= priv->tvResolution[0];
-				priv->currentScreen = 1;
-				if (priv->screen_no == 0)
-				{
-					priv->currentScreen = 0;
-				}
-			}
-			else
-			{
-				priv->currentScreen = 0;
-				if (priv->screen_no == 1)
-				{
-					priv->currentScreen = 1;
-				}
-			}
 			if (priv->currentScreen == 1)
 			{
-				valuators[0] = x * (priv->bottomX - priv->topX)
-				 	/ priv->tvResolution[2] + priv->common->wcmMaxX +0.5;
-				valuators[1] = y * (priv->bottomY - priv->topY) /
+				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX)
+				 	/ priv->tvResolution[2] + (priv->bottomX - priv->topX - 
+					2*priv->tvoffsetX) +0.5;
+				valuators[1] = y * (priv->bottomY - priv->topY - 2*priv->tvoffsetY) /
 					priv->tvResolution[3] + 0.5;
 			}
 			else
 			{
-				valuators[0] = x * (priv->bottomX - priv->topX)
+				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX)
 					 / priv->tvResolution[0] + 0.5;
-				valuators[1] = y * (priv->bottomY - priv->topY) /
+				valuators[1] = y * (priv->bottomY - priv->topY - 2*priv->tvoffsetY) /
 					priv->tvResolution[1] + 0.5;
 			}
 		}
                 if (priv->twinview == TV_ABOVE_BELOW)
 		{
 			if (y > priv->tvResolution[1])
-			{
 				y -= priv->tvResolution[1];
-				priv->currentScreen = 1;
-				if (priv->screen_no == 0)
-				{
-					priv->currentScreen = 0;
-				}
-			}
-			else
-			{
-				priv->currentScreen = 0;
-				if (priv->screen_no == 1)
-				{
-					priv->currentScreen = 1;
-				}
-			}
 			if (priv->currentScreen == 1)
 			{
-				valuators[0] = x * (priv->bottomX - priv->topX) /
+				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX) /
 					priv->tvResolution[2] + 0.5;
-				valuators[1] = y *(priv->bottomY - priv->topY)
+				valuators[1] = y *(priv->bottomY - priv->topY - 2*priv->tvoffsetY)
 					/ priv->tvResolution[3] +
-					priv->bottomY - priv->topY + 0.5;
+					priv->bottomY - priv->topY - 2*priv->tvoffsetY + 0.5;
 			}
 			else
 			{
-				valuators[0] = x * (priv->bottomX - priv->topX) /
+				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX) /
 					priv->tvResolution[0] + 0.5;
-				valuators[1] = y *(priv->bottomY - priv->topY)
+				valuators[1] = y *(priv->bottomY - priv->topY - 2*priv->tvoffsetY)
 					/ priv->tvResolution[1] + 0.5;
 			}
 		}
-		valuators[0] += priv->topX;
-		valuators[1] += priv->topY;
+		valuators[0] += priv->topX + priv->tvoffsetX;
+		valuators[1] += priv->topY + priv->tvoffsetY;
 	}
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));

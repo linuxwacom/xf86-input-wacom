@@ -43,6 +43,9 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common,
 	const WacomChannelPtr pChannel);
 static void resetSampleCounter(const WacomChannelPtr pChannel);
+static void sendAButton(LocalDevicePtr local, int button, int mask,
+		int rx, int ry, int rz, int rtx, int rty, int rrot,
+		int rth, int rwheel);
  
 /*****************************************************************************
  * xf86WcmSetScreen --
@@ -59,8 +62,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
 	int i, x, y;
-	double sizeX = priv->bottomX - priv->topX;
-	double sizeY = priv->bottomY - priv->topY;
+	double sizeX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
+	double sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
 
@@ -69,15 +72,38 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	 */
 	if (screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
 	{
-		/* set the current sreen in multi-monitor setup */
-		screenToSet = 0;
-		if (!priv->common->wcmMMonitor && priv->twinview == TV_NONE)
+		if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 		{
-			screenToSet = priv->currentScreen = 
-				miPointerCurrentScreen()->myNum;
+			if (priv->screen_no == -1)
+			{
+				if (priv->twinview == TV_LEFT_RIGHT)
+				{
+					if (*v0 > priv->bottomX - priv->tvoffsetX && *v0 <= priv->bottomX)
+						priv->currentScreen = 1;
+					if (*v0 > priv->topX && *v0 <= priv->topX + priv->tvoffsetX)
+						priv->currentScreen = 0;
+				}
+				if (priv->twinview == TV_ABOVE_BELOW)
+				{
+					if (*v1 > priv->bottomY - priv->tvoffsetY && *v1 <= priv->bottomY)
+						priv->currentScreen = 1;
+					if (*v1 > priv->topY && *v1 <= priv->topY + priv->tvoffsetY)
+						priv->currentScreen = 0;
+				}
+			}
+			else
+				priv->currentScreen = priv->screen_no;
+			priv->factorX = priv->tvResolution[2*priv->currentScreen] / sizeX;
+			priv->factorY = priv->tvResolution[2*priv->currentScreen+1] / sizeY;
 		}
-		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
-		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
+		else
+		{
+			/* puck is on the tablet when driver starts */
+			if (miPointerCurrentScreen())
+				priv->currentScreen = miPointerCurrentScreen()->myNum;
+			priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
+			priv->factorY = screenInfo.screens[priv->currentScreen]->height / sizeY;
+		}
 		return;
 	}
 
@@ -171,130 +197,188 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 		int rx, int ry, int rz, int rtx, int rty, int rrot,
 		int rth, int rwheel)
 {
-	int button, newb, tempb;
+	int button, mask, bsent = 0;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
-	for (button=1; button<=16; button++)
+	/* Tablet PC buttons. */
+	if ( common->wcmTPCButton && !IsCursor(priv))
 	{
-		int mask = 1 << (button-1);
-	
-		if ((mask & priv->oldButtons) != (mask & buttons))
+		if ( rz >= common->wcmThreshold )
 		{
-			DBG(4, ErrorF("xf86WcmSendButtons button=%d "
-				"state=%d, for %s\n", 
-				button, (buttons & mask) != 0, local->name));
-			/* set to the configured buttons */
-			newb = button;
-			if (priv->button[button-1] != button)
-				newb = priv->button[button-1];
+			if ( !(priv->flags & TPCBUTTONS_FLAG) )
+			{
+				priv->flags |= TPCBUTTONS_FLAG;
 
-			/* translate into Left Double Click */
-			if (newb == 17)
-			{
-				tempb = 1;
-				if (buttons & mask)
+				bsent = 0;
+
+				/* send all pressed buttons down */
+				for (button=2; button<=16; button++)
 				{
-					/* Left button down */
-					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-					else
+					mask = 1 << (button-1);
+					if ( buttons & mask ) 
 					{
-						/* deal with Tablet PC buttons. */
-						if ( common->wcmTPCButton && rz < common->wcmThreshold )
-							continue;
-						else
-							xf86PostButtonEvent(local->dev, is_absolute, 
-							tempb, 1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
-					}
-					/* Left button up */
-					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-					else
-						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
-					/* Left button down again */
-					if (IsCursor(priv))
-						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-					else
-						xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
-				}
-				else  /* send left button up */
-				{
-					xf86PostButtonEvent(local->dev, is_absolute, tempb, 
-							0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
-				}
-			}
-			/* switch absolute or relative (Mode Toggle) */
-			if ( newb == 19 && (buttons & mask) )
-			{
-				if (is_absolute)
-				{
-					priv->flags &= ~ABSOLUTE_FLAG;
-			 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
-				}
-				else
-				{
-					priv->flags |= ABSOLUTE_FLAG;
-					xf86ReplaceStrOption(local->options, "Mode", "Absolute");
-				}
-			}
-			if (newb < 17)
-			{
-				if ( newb == 1 )
-				{
-					/* deal with double click delays */
-					long sec, usec;
-					if ( !priv->oldTime && (buttons & mask) )
-					{
-						xf86getsecs(&sec, &usec);
-						priv->oldTime = (sec * 1000) + (usec / 1000);
-						priv->oldClickX = rx;
-						priv->oldClickY = ry;
-					}
-					else
-					{
-						if (buttons & mask){
-							xf86getsecs(&sec, &usec);
-							if ( ((sec * 1000) + (usec / 1000) - 
-								priv->oldTime > priv->doubleSpeed ) ||
-								( priv->oldClickX * priv->oldClickX + 
-								priv->oldClickY * priv->oldClickY >
-								priv->doubleRadius) )
-							{
-								priv->oldTime = 0;
-								continue;
-							}
-							else
-								priv->oldTime = 0;
+						bsent = 1;
+						/* Send button one up before any button down is sent.
+						 * There is a bug in XFree86 for combined left click and 
+						 * other button. It'll lost left up when releases.
+						 * This should be removed if XFree86 fixes the problem.
+						 */
+						if ( (buttons & 1) )
+						{
+							priv->flags &= ~TPCBUTTONONE_FLAG;
+							sendAButton(local, 1, 0,  
+								rx, ry, rz, rtx, rty, rrot, rth, rwheel);
 						}
+						/* set to the configured button */
+						sendAButton(local, priv->button[button-1], 1, rx, ry, 
+							rz, rtx, rty, rrot, rth, rwheel);
 					}
 				}
-
-				if (IsCursor(priv))
-					xf86PostButtonEvent(local->dev, is_absolute,
-						newb, (buttons & mask) != 0,
-						0, 6, rx, ry, rz, rrot, rth, rwheel);
-				else
+				
+				/* only send button one when nothing else was sent */
+				if ( !bsent && (buttons & 1) )
 				{
-					/* deal with Tablet PC buttons. */
-					if ( common->wcmTPCButton )
-					{
-						if (rz < common->wcmThreshold && (buttons & mask) ) 
-							continue;
-					}
-					xf86PostButtonEvent(local->dev, is_absolute,
-						newb, (buttons & mask) != 0,
-						0, 6, rx, ry, rz, rtx, rty, rwheel);
+					priv->flags |= TPCBUTTONONE_FLAG;
+					sendAButton(local, priv->button[0], 1, rx, ry, 
+						rz, rtx, rty, rrot, rth, rwheel);
 				}
 			}
-			
+			else
+			{
+				for (button=2; button<=16; button++)
+				{
+					mask = 1 << (button-1);
+					if ((mask & priv->oldButtons) != (mask & buttons))
+					{
+						/* Send button one up before any button down is sent.
+						 * There is a bug in XFree86 for combined left click and 
+						 * other button. It'll lost left up when releases.
+						 * This should be removed if XFree86 fixes the problem.
+						 */
+						if ((mask & buttons) && (priv->flags & TPCBUTTONONE_FLAG))
+						{
+							priv->flags &= ~TPCBUTTONS_FLAG;
+							sendAButton(local, 1, 0,  
+								rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+						}
+						/* set to the configured buttons */
+						sendAButton(local, priv->button[button-1], mask & buttons, 
+							rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+					}
+				}
+			}
 		}
+		else if ( priv->flags & TPCBUTTONS_FLAG )
+		{
+			priv->flags &= ~TPCBUTTONS_FLAG;
+
+			/* send all pressed buttons up */
+			for (button=2; button<=16; button++)
+			{
+				mask = 1 << (button-1);
+				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
+				{
+					/* set to the configured button */
+					sendAButton(local, priv->button[button-1], 0, rx, ry, 
+						rz, rtx, rty, rrot, rth, rwheel);
+				}
+			}
+			/* This is also part of the workaround of the XFree86 bug mentioned above
+			 */
+			if (priv->flags & TPCBUTTONONE_FLAG)
+			{
+				priv->flags &= ~TPCBUTTONONE_FLAG;
+				sendAButton(local, 1, 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+			}
+		}
+	}
+	else  /* normal buttons */
+	{
+		for (button=1; button<=16; button++)
+		{
+			mask = 1 << (button-1);
+			if ((mask & priv->oldButtons) != (mask & buttons))
+			{
+				/* set to the configured button */
+				sendAButton(local, priv->button[button-1], mask & buttons, rx, ry, 
+					rz, rtx, rty, rrot, rth, rwheel);
+			}
+		}
+	}
+}
+
+/*****************************************************************************
+ * sendAButton --
+ *   Send one button event, called by xf86WcmSendButtons
+ ****************************************************************************/
+
+static void sendAButton(LocalDevicePtr local, int button, int mask,
+		int rx, int ry, int rz, int rtx, int rty, int rrot,
+		int rth, int rwheel)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common = priv->common;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG, nbutton;
+
+	DBG(4, ErrorF("xf86WcmSendButtons TPCButton(%s) button=%d state=%d, for %s\n", 
+		common->wcmTPCButton ? "on" : "off", button, mask, local->name));
+
+	/* translate into Left Double Click */
+	if (button == 17)
+	{
+		nbutton = 1;
+		if ( mask )
+		{
+			/* Left button down */
+			if (IsCursor(priv))
+				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+					1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
+			else
+				xf86PostButtonEvent(local->dev, is_absolute, nbutton,
+					1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+			/* Left button up */
+			if (IsCursor(priv))
+				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+					0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
+			else
+				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+					0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+		}
+
+		/* Left button down/up upon mask is 1/0 */
+		if (IsCursor(priv))
+			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+				mask != 0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
+		else
+			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+				mask != 0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+	}
+	/* switch absolute or relative (Mode Toggle) */
+	if ( button == 19 && mask )
+	{
+		if (is_absolute)
+		{
+			priv->flags &= ~ABSOLUTE_FLAG;
+			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+		}
+		else
+		{
+			priv->flags |= ABSOLUTE_FLAG;
+			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+		}
+	}
+	if (button < 17)
+	{
+		if (IsCursor(priv))
+			xf86PostButtonEvent(local->dev, is_absolute, button,
+				mask != 0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
+		else
+			xf86PostButtonEvent(local->dev, is_absolute, button,
+				mask != 0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+
+DBG(4, ErrorF("xf86WcmSendButtons sent TPCButton(%s) button=%d state=%d, for %s\n", 
+		common->wcmTPCButton ? "on" : "off", button, mask != 0, local->name));
 	}
 }
 
@@ -346,7 +430,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				doffsetX = 0;
 				break;
 			case 1:
-				doffsetX = common->wcmMaxX;
+				doffsetX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
 				break;
 		}
 		switch ( aboveBelowSwitch )
@@ -355,7 +439,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				doffsetY = 0;
 				break;
 			case 1:
-				doffsetY = common->wcmMaxY;
+				doffsetY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 				break;
 		}
 	}
@@ -445,7 +529,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
-		long sec, usec;
 		if (!priv->oldProximity)
 		{
 			if (IsCursor(priv))
@@ -458,26 +541,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					local->dev, 1, 0, 6,
 					rx, ry, rz, rtx, rty,
 					rw);
-		}
-
-		/* deal with double click delays */
-		xf86getsecs(&sec, &usec);
-		if ( (sec * 1000) + (usec / 1000) - 
-				priv->oldTime > priv->doubleSpeed ) 
-			priv->oldTime = 0;
-
-		if ( priv->oldTime ) {
-			if ( (priv->oldClickX - rx ) * (priv->oldClickX - rx ) + 
-				(priv->oldClickY - ry ) * (priv->oldClickY - ry ) >
-				priv->doubleRadius * priv->doubleRadius )
-				priv->oldTime = 0;
-		}
-
-		/* don't move cursor if we are expecting a double click */
-		if (priv->oldTime)
-		{
-			rx = priv->oldClickX;
-			ry = priv->oldClickY;
 		}
 
 		if(!(priv->flags & BUTTONS_ONLY_FLAG))

@@ -112,7 +112,7 @@ static void isdv4InitISDV4(WacomCommonPtr common, int fd,
 	common->wcmPktLength = 9;       /* length of a packet */
 	common->wcmResolX = 2540; 	/* tablet X resolution in points/inch */
 	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
-	common->wcmTPCButton = 0;	/* May need to turn Tablet PC buttons on by default */
+	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
 
 	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
 	{

@@ -583,6 +583,14 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 		}
 	} /* next event */
 
+	if ( !ds->device_type ){
+		DBG(6, ErrorF("USB tool type missing \n"));
+
+		/* defaults to puck and in prox */
+		ds->device_type = CURSOR_ID;
+		ds->proximity = 1;
+	}
+
 	/* dispatch event */
 	xf86WcmEvent(common, channel, ds);
 }

@@ -1,3 +1,14 @@
+2004-05-14    Ping Cheng <pingc@wacom.com>
+	* Removed DoubleSpeed and DoubleRadius options (use system default instead)
+	* Fixed tool on tablet when driver starts issue
+	* Updated wacomcpl and webpages
+	* Added MODVER string to default option in configure.in
+
+2004-04-02    Ping Cheng <pingc@wacom.com>
+	* Fixed TwinView Absolute mode and DoubleSpeed check
+	* Fixed tool on tablet when driver starts issue
+	* Released version 0.6.2
+
 2004-03-11    Ping Cheng <pingc@wacom.com>
 	* Modified wacusb.c for Debian
 	* Fixed DoubleSpeed and DoubleRadius issues

@@ -36,13 +36,13 @@ set screenHeight [ winfo screenheight . ]
 set screenX_org 0
 set screenY_org 0
 set swapThresh 100
-set size 100
+set size 200
 set circle_size 10
 set line_size 30
 
 set origin_x [ expr ($desktopWidth/2) - ($desktopWidth/4) ]
 set origin_y [ expr ($desktopHeight/2) - ($desktopHeight/4) ]
-set windowSize "480x300"
+set windowSize "540x300"
 
 set device ""
 set deviceIndex 0
@@ -362,17 +362,17 @@ proc updateDevice {} {
 	    if { ![ string compare $type "stylus" ] } {
 	    	if { ![string compare -nocase -length 8 \
 		    $mode "absolute"] } {
-		    createLPanel
+		    createPanel 1 1 0 1
 		}
 	    } else {
-		createEPanel
+		createPanel 1 1 0 0
 	    }
 	} else {
 	    if { [ string compare -nocase -length 6 \
 		$type "cursor" ] } {
-		createSPanel
+		createPanel 1 1 1 0
 	    } else {
-		createCPanel
+		createPanel 0 1 1 0
 	    }
 	}
     } else {
@@ -499,7 +499,7 @@ proc displayScreenList {} {
 }
 
 proc updateButton {} {
-    global device getDeviceModel
+    global device getDeviceModel sm
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
@@ -507,12 +507,7 @@ proc updateButton {} {
 	set k 6
     }
     if { ![string compare -nocase -length 6 $type "stylus"] } {
-	if { [string compare -nocase -length 5 \
-		$model "isdv4"] } {
-	    set k 4
-	} else {
-	    set k 3
-	}
+	set k 4
     }
     if { ![string compare -nocase -length 6 $type "eraser"] }  {
 	set k 2
@@ -548,33 +543,40 @@ proc updateButton {} {
 	    exec xsetwacom set $device mode $mode
 	}
     }
+
+    if { ![ string compare -nocase -length 6 $type "stylus" ] } {
+	    set smode [ .subW.f.smode cget -text ]
+	    if { [string compare -nocase $smode $sm(2)] } {
+puts "$smode to TPCButton on"
+		exec xsetwacom set $device TPCButton on
+	    } else {
+		exec xsetwacom set $device TPCButton off
+	    }
+    }
     updateXinitrc
     closeSubWindow
 }
 
 proc initialButton {} {
-    global device getDeviceModel 
+    global device getDeviceModel sm smode
     global dmode dm getOption Option
 
     defaultButton
     set type $getDeviceModel($device,type)
 
     set Option(1) "Mode"
-    set Option(2) "Button1"
+    set Option(2) "TPCButton"
+    set Option(3) "Button1"
     set model $getDeviceModel($device,model)
-    set t 2
+    set t 3
     if { [ string compare -nocase -length 6 $type "eraser" ] } {
-	set Option(3) "Button2"
-	set t 3
-	if { [string compare -nocase -length \
-		5 $model "isdv4" ] } {
-	    set Option(4) "Button3"
-	    set t 4
-	    if { [ string compare -nocase -length 6 $type "stylus" ] } {
-		set Option(5) "Button4"
-		set Option(6) "Button5"
-		set t 6
-	    }
+	set Option(4) "Button2"
+	set Option(5) "Button3"
+	set t 5
+	if { [ string compare -nocase -length 6 $type "stylus" ] } {
+	    set Option(6) "Button4"
+	    set Option(7) "Button5"
+	    set t 7
 	}
     }    
     getDeviceOptionProc $device $t
@@ -585,14 +587,28 @@ proc initialButton {} {
 	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
 	    set dmode $getOption($device,Mode)
-	    label .subW.f.modeL -text "Mode: "
+	    label .subW.f.modeL -text "Positioning Mode: "
 	    tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
-	    grid .subW.f.mode -row 0 -column 2 -columnspan 15
+	    grid .subW.f.mode -row 0 -column 5 -columnspan 15
 	    grid .subW.f.modeL -row 0 -column 2
 	}
     }
 
-    for { set i 1 } { $i < $t } { incr i 1 } {
+    if { ![ string compare -nocase -length 6 $type "stylus" ] } {
+	set smode $getOption($device,TPCButton)
+puts "TPCButton is $smode"
+	if { [string compare -nocase -length 3 $smode "off"] } {
+	    set smode $sm(1)
+	} else {
+	    set smode $sm(2)
+	}
+	label .subW.f.smodeL -text "Side Switch Mode: "
+	tk_optionMenu .subW.f.smode smode $sm(1) $sm(2)
+	grid .subW.f.smode -row 3 -column 5 -columnspan 15
+	grid .subW.f.smodeL -row 3 -column 2
+    }
+
+    for { set i 1 } { $i < $t-1 } { incr i 1 } {
 	addMenu $i
     }
 }
@@ -648,8 +664,8 @@ proc closeTabWindow {} {
 }
 
 proc defaultButton {} {
-    global db db1 db2 db3 db4 db5 dm
-    global getDeviceModel dmode device
+    global db db1 db2 db3 db4 db5 dm sm
+    global getDeviceModel dmode device smode
 
     for { set i 1 } { $i < 6 } { incr i 1 } {
 	set db$i $db($i)
@@ -660,17 +676,29 @@ proc defaultButton {} {
     } else {
 	set dmode $dm(1)
     }
+
+    set model $getDeviceModel($device,model)
+    if { [string compare -nocase -length 5 $model "isdv4"] } {
+	set smode $sm(2)
+    } else {
+	set smode $sm(1)
+    }
 }
 
 proc addMenu {t} {
     global db db1 db2 db3 db4 db5
-    global getOption device
+    global getOption device getDeviceModel
 
     set opt $getOption($device,Button$t)
     if { $opt == "" } { set opt $t }
     set db$t $db($opt) 
 
-    tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(19) $db(18)
+    set model $getDeviceModel($device,model)
+    if { [string compare -nocase -length 5 $model "isdv4"] } {
+	tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(19) $db(18)
+    } else {
+	tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(18)
+    }
 
     label .subW.f.name$t -text "Button $t: "
     if { $t < 3 } {
@@ -830,7 +858,7 @@ proc initialTip {} {
     label .subW.f.group.l3 -text "Firm"
     grid .subW.f.group.l3 -row 1 -column 9
 
-    label .subW.f.group.groupl2 -text "Click Threshold: "
+    label .subW.f.group.groupl2 -text "Click Force: "
     grid .subW.f.group.groupl2 -row 3 -column 0
     label .subW.f.group.l4 -text "Low"
     grid .subW.f.group.l4 -row 4 -column 7
@@ -873,93 +901,44 @@ proc defaultTip {} {
     .subW.f.group.scale2 set 6
 }
 
-proc createCPanel {} {
+proc createPanel { pressure button mapping calibrate } {
     global bName
 
     frame .panel
-    button .panel.button -text "Tool Buttons" \
+    set bName(pressure) $pressure
+    set bName(button) $button
+    set bName(mapping) $mapping
+    set bName(calibrate) $calibrate
+    if { $pressure } {
+	button .panel.pressure -text "Feel"\
+	    -state normal -command "displaySubWindow \
+	    updateTip defaultTip initialTip 1"
+	grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky news -padx 10
+    }
+    if { $button } {
+	button .panel.button -text "Tool Buttons" \
 	    -state normal -command "displaySubWindow \
 	    updateButton defaultButton initialButton 2"
-    button .panel.mapping -text "Tracking" \
+	grid .panel.button -row 3 -column 3 -columnspan 2 -sticky news -padx 10
+    }
+    if { $mapping } {
+	button .panel.mapping -text "Tracking" \
 	    -state normal -command "displaySubWindow \
 	    updateT defaultT initialT 3"
-    set bName(pressure) 0
-    set bName(button) 1
-    set bName(mapping) 1
-    set bName(calibrate) 0
-    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
-    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
-}
-
-proc createSPanel {} {
-    global bName
-
-    frame .panel
-    button .panel.pressure -text "Feel"\
-	    -state normal -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1"
-    button .panel.button -text "Tool Buttons" \
-	    -state normal -command "displaySubWindow \
-	    updateButton defaultButton initialButton 2"
-    button .panel.mapping -text "Tracking" \
-	    -state normal -command "displaySubWindow \
-	    updateT defaultT initialT 3"
-    set bName(pressure) 1
-    set bName(button) 1
-    set bName(mapping) 1
-    set bName(calibrate) 0
-    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
-    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel.mapping -row 4 -column 3 -columnspan 2 -padx 10
-    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
-}
-
-proc createEPanel {} {
-    global bName
-
-    frame .panel
-    button .panel.pressure -text "Feel"\
-	    -state normal -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1"
-    button .panel.button -text "Tool Buttons" \
-	    -state normal -command "displaySubWindow \
-	    updateButton defaultButton initialButton 2"
-    set bName(pressure) 1
-    set bName(button) 1
-    set bName(mapping) 0
-    set bName(calibrate) 0
-    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
-    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
-}
-
-proc createLPanel {} {
-    global bName
-
-    frame .panel
-    button .panel.pressure -text "Feel"\
-	    -state normal -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1"
-    button .panel.calibrate -text "Calibrate" \
+	grid .panel.mapping -row 4 -column 3 -columnspan 2 -sticky news -padx 10
+    }
+    if { $calibrate } {
+	button .panel.calibrate -text "Calibrate" \
 	    -command Calibration -state normal
-    button .panel.button -text "Tool Buttons" \
-	    -state normal -command "displaySubWindow \
-	    updateButton defaultButton initialButton 2"
-    set bName(pressure) 1
-    set bName(button) 1
-    set bName(mapping) 0
-    set bName(calibrate) 1
-    grid .panel.pressure -row 3 -column 0 -columnspan 2 -sticky we -padx 10
-    grid .panel.calibrate -row 4 -column 0 -columnspan 2 -padx 10
-    grid .panel.button -row 3 -column 3 -columnspan 2 -sticky we -padx 10
-    grid .panel -row 3 -rowspan 20 -column 1 -columnspan 6 -sticky nw -padx 30
+	grid .panel.calibrate -row 4 -column 0 -columnspan 2 -sticky news -padx 10
+    }
+    grid .panel -row 0 -column 1 -columnspan 8 -sticky news -padx 10 -pady 40
 }
 
-proc createControls {} {
+proc createControls { } {
     global numScreens currentScreen
     global desktopHeight desktopWidth 
-    global workingTags db dm wName
+    global workingTags db dm sm wName
 
     set infoString [exec xsetwacom list]
     set index 0
@@ -1005,6 +984,9 @@ proc createControls {} {
     set dm(1) "Relative"
     set dm(2) "Absolute"
 
+    set sm(1) "Side Switch + Tip"
+    set sm(2) "Side Switch Only"
+
     set wName(1) "Feel"
     set wName(2) "Tool Buttons"
     set wName(3) "Tracking"
@@ -1014,8 +996,8 @@ proc createControls {} {
 
     button .exit -text "Exit" -command "exit 0" -padx 40
     
-    grid .showHelp -row 0 -column 2 -sticky nw -padx 30
-    grid .exit -row 20 -column 2 
+#    grid .showHelp -row 0 -column 2 -sticky nw -padx 30
+    grid .exit -row 20 -column 2 -sticky news -padx 20
     grid .workingDev -row 0 -rowspan 25 -column 0 -sticky news -padx 20
 
     set workingTags [ bindtags .workingDev.list]
