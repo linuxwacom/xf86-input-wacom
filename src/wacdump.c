@@ -27,6 +27,7 @@
 **   2003-01-27 0.3.8 - added logging, better error recovery
 **   2003-01-31 0.5.0 - new release
 **   2003-02-12 0.5.1 - added version option and fixed usage
+**   2003-06-19 0.5.2 - added patch for I2 6x8 id 0x47
 **
 ****************************************************************************/
 
@@ -45,7 +46,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "0.5.1"
+#define WACDUMP_VER "0.5.2"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)

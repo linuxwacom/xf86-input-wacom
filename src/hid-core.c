@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.7 2003/06/19 15:28:44 jjoganic Exp $
+ * $Id: hid-core.c,v 1.8 2003/06/19 15:37:23 jjoganic Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -38,6 +38,7 @@
  *    v1.8.1-j0    - merged changes from 2.4.20 with conditional 2.4.19 code
  *    v1.8.1-j1    - added patch for volito
  *    v1.8.1-j2    - added patch for quirks (2.4.18 has none)
+ *    v1.8.1-j3    - added patch for I2 6x8 id 0x47
  */
 
 #include <linux/autoconf.h>
@@ -73,7 +74,7 @@
  * Version Information
  */
 
-#define DRIVER_VERSION "v1.8.1-j2"
+#define DRIVER_VERSION "v1.8.1-j3"
 #define DRIVER_AUTHOR "Andreas Gal, Vojtech Pavlik <vojtech@suse.cz>"
 #define DRIVER_DESC "USB HID support drivers"
 
