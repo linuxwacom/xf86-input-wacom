@@ -22,6 +22,7 @@
  */
 
 #include "xf86Wacom.h"
+#include "wcmFilter.h"
 
 /*****************************************************************************
  * xf86WcmAllocate --
@@ -693,6 +694,10 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	DBG(1, ErrorF("xf86WcmUninit\n"));
 
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
+
+	/* free pressure curve */
+	if (priv->pPressCurve)
+		xfree(priv->pPressCurve);
     
 	xfree(priv);
 	xf86DeleteInput(local, 0);    
@@ -863,8 +868,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	{
 		common->wcmSuppress = DEFAULT_SUPPRESS;
 	}
-	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", XCONFIG_GIVEN,
-			common->wcmSuppress);      
+	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", common->wcmSuppress);      
     
 	if (xf86SetBoolOption(local->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
@@ -892,6 +896,32 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 #endif
 
+	/* pressure curve takes control points x1,y1,x2,y2
+	 * values in range from 0..100.
+	 * Linear curve is 0,0,100,100
+	 * Slightly depressed curve might be 5,0,100,95
+	 * Slightly raised curve might be 0,5,95,100
+	 */
+	s = xf86FindOptionValue(local->options, "PressCurve");
+	if (s)
+	{
+		int a,b,c,d;
+		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
+			(a < 0) || (a > 100) || (b < 0) || (b > 100) ||
+			(c < 0) || (c > 100) || (d < 0) || (d > 100))
+			xf86Msg(X_CONFIG, "WACOM: PressCurve not valid\n");
+		else
+		{
+			priv->nPressCtrl[0] = a;
+			priv->nPressCtrl[1] = b;
+			priv->nPressCtrl[2] = c;
+			priv->nPressCtrl[3] = d;
+			priv->pfnPressFilter = xf86WcmPressureCurveFilter;
+			xf86Msg(X_CONFIG, "WACOM: PressCurve %d,%d %d,%d\n",
+				a,b,c,d);
+		}
+	}
+    
 	priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", -1);
 	if (priv->screen_no != -1)
 		xf86Msg(X_CONFIG, "%s: attached screen number %d\n",

@@ -20,7 +20,8 @@ xidump_LDADD = -lncurses
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
 		input.c tabletdev.c usbmouse.c xf86Wacom.c \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
-		wcmCommon.c wcmCompat.c wcmConfig.c
+		wcmCommon.c wcmCompat.c wcmConfig.c \
+		wcmFilter.c
 
 KERNEL_DIR=@WCM_KERNELDIR@
 XF86_DIR=@WCM_XF86DIR@/xc
@@ -84,10 +85,10 @@ tabletdev.o: tabletdev.c Makefile
 		-DKBUILD_BASENAME=tabletdev -c -o tabletdev.o tabletdev.c
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
-		wcmCommon.o wcmCompat.o wcmConfig.o
+		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
 XF86V3OBJS = xf86Wacom-v3.o wcmSerial-v3.o wcmUSB-v3.o \
 		wcmISDV4-v3.o wcmCommon-v3.o wcmCompat-v3.o \
-		wcmConfig-v3.o
+		wcmConfig-v3.o wcmFilter-v3.o
 
 xf86Wacom.o: xf86Wacom.c xf86Wacom.h Makefile
 xf86Wacom-v3.o: xf86Wacom.c xf86Wacom.h Makefile
@@ -103,6 +104,8 @@ wcmCompat.o: wcmCompat.c xf86Wacom.h
 wcmCompat-v3.o: wcmCompat.c xf86Wacom.h
 wcmConfig.o: wcmConfig.c xf86Wacom.h
 wcmConfig-v3.o: wcmConfig.c xf86Wacom.h
+wcmFilter.o: wcmFilter.c xf86Wacom.h
+wcmFilter-v3.o: wcmFilter.c xf86Wacom.h
 
 $(XF86OBJS): xf86Wacom.c Makefile
 	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \

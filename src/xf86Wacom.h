@@ -308,6 +308,8 @@ struct _WacomModel
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 
+typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+
 struct _WacomDeviceRec
 {
 	/* configuration fields */
@@ -344,6 +346,11 @@ struct _WacomDeviceRec
 	int throttleStart;      /* time in ticks for last wheel movement */
 	int throttleLimit;      /* time in ticks for next wheel movement */
 	int throttleValue;      /* current throttle value */
+
+	/* JEJ - filters */
+	FILTERFUNC pfnPressFilter;      /* if set, pressure will be filtered */
+	int* pPressCurve;               /* pressure curve */
+	int nPressCtrl[4];              /* control points for curve */
 };
 
 /******************************************************************************

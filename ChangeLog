@@ -4,6 +4,7 @@
 	* Disabled throttle/wheel correlation for now; needs work and
 	  option for enabling/disabling.
 	* Split absolute and relative wheel at early data path stage
+	* Added pressure curve; implementation is a bit overkill, but it works
 
 2003-04-21    Ping Cheng <pingc@wacom.com>
 

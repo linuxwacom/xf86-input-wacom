@@ -635,7 +635,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	/* pre-filtering */
+	/* pre-filtering which may effect the device
+	 * to which the event will be dispatched*/
 
 	/* Find the device the current events are meant for */
 	for (idx=0; idx<common->wcmNumDevices; idx++)
@@ -676,10 +677,14 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	 * settings, and send event to XInput */
 	if (pDev)
 	{
-		WacomDeviceState filtered;
+		WacomDeviceState filtered = *ds;
+		WacomDevicePtr priv = pDev->private;
+
+		/* if pressure filter is enabled, invoke */
+		if (priv->pfnPressFilter)
+			(void)(*priv->pfnPressFilter)(priv,&filtered);
 
 		#if 0
-		WacomDevicePtr priv = pDev->private;
 
 		/* not quite ready for prime-time;
 		 * it needs to be possible to disable,
@@ -722,7 +727,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		filtered = *ds;
 		/* YHJ - If we enable the filter, I think we should store
 		 * filtered values back to ds as the filter is supposed to deal
 		 * with hardware defects. */
