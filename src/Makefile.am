@@ -1,10 +1,105 @@
-SUBDIRS = . wacomxi util xdrv @WCM_KERNEL_VER@
+noinst_PROGRAMS = @WAC_PROGS@ @WAC_XF86PROGS@
+noinst_SCRIPTS = @WAC_MODULES@ @WAC_XF86MODULES@
 
-wmanpagedir = @mandir@/man4
-wmanpage_HEADERS = wacom.4x.gz
+AM_CFLAGS = -Wall
 
-EXTRA_DIST = wacom.4x
+EXTRA_PROGRAMS = wacdump
+EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o wacom_drv.o
 
-$(wmanpage_HEADERS): $(EXTRA_DIST)
-	rm -f $(wmanpage_HEADERS)
-	gzip -9c < $(srcdir)/$(EXTRA_DIST) > $(wmanpage_HEADERS)
+wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h wacserial.c wacserial.h
+wacdump_LDADD = -lncurses
+EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c xf86Wacom.c usbmouse.c \
+		wcm-beta.c wcm-beta.h
+
+KERNEL_DIR=@WAC_KERNELDIR@
+XF86_DIR=@WAC_XF86DIR@/xc
+DEBUG_FLAGS = -D__JEJ_DEBUG
+MODS = @WAC_MODVER@
+ARCHITECTURE=@WAC_ARCH@
+USBDIR=$(KERNEL_DIR)/drivers/usb
+KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
+		-DMODULE -DEXPORT_SYMTAB $(MODS) \
+		-Wstrict-prototypes -Wno-trigraphs -O2 \
+		-fno-strict-aliasing \
+		-fno-common -fomit-frame-pointer -pipe \
+		-mpreferred-stack-boundary=2 \
+		-march=$(ARCHITECTURE)
+
+wacom.o: wacom.c Makefile
+	gcc -I$(KERNEL_DIR)/include $(KCFLAGS) \
+		-DKBUILD_BASENAME=wacom -c -o wacom.o wacom.c
+
+HID_OBJS = hid-core.o hiddev.o hid-input.o
+
+hid.o: $(HID_OBJS) Makefile
+	$(LD) -r -o $@ $(HID_OBJS)
+
+hid-core.o: hid-core.c Makefile
+	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
+		-DKBUILD_BASENAME=hid-core -c -o hid-core.o hid-core.c
+
+hiddev.o: $(USBDIR)/hiddev.c Makefile
+	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
+		-DKBUILD_BASENAME=hiddev -c -o hiddev.o hiddev.c
+
+hid-input.o: $(USBDIR)/hid-input.c Makefile
+	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
+		-DKBUILD_BASENAME=hid-input -c \
+		-o hid-input.o hid-input.c
+
+usbmouse.o: usbmouse.c Makefile
+	gcc -I$(KERNEL_DIR)/include -I$(USBDIR) $(KCFLAGS) \
+		-DKBUILD_BASENAME=usbmouse -c \
+		-o usbmouse.o usbmouse.c
+
+xf86Wacom.o: xf86Wacom.c wcm-beta.h Makefile
+	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
+		-pedantic -Wall -Wpointer-arith -fno-merge-constants \
+		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
+		-I$(XF86_DIR)/programs/Xserver/include \
+		-I$(XF86_DIR)/programs/Xserver/mi \
+		-I$(XF86_DIR)/exports/include/X11 \
+		-I$(XF86_DIR)/include/extensions \
+		-I$(XF86_DIR) \
+		-I$(XF86_DIR)/exports/include \
+		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
+		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE  -D_GNU_SOURCE \
+		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
+		-DTOGCUP -DXF86BIGFONT -DDPMSExtension -DPIXPRIV -DPANORAMIX \
+		-DRENDER -DGCCUSESGAS -DAVOID_GLYPHBLT -DPIXPRIV \
+		-DSINGLEDEPTH -DXFreeXDGA -DXvExtension -DXFree86LOADER \
+		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
+		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
+		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
+		-DNARROWPROTO -DIN_MODULE -DXFree86Module -DLINUX_INPUT \
+		-o xf86Wacom.o -c xf86Wacom.c
+
+wcm-beta.o: wcm-beta.c wcm-beta.h Makefile
+	gcc -O2 -march=i386 -mcpu=$(ARCHITECTURE) -pipe -ansi \
+		-pedantic -Wall -Wpointer-arith -fno-merge-constants \
+		-I. -I$(XF86_DIR)/programs/Xserver/hw/xfree86/common \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/loader \
+		-I$(XF86_DIR)/programs/Xserver/hw/xfree86/os-support \
+		-I$(XF86_DIR)/programs/Xserver/include \
+		-I$(XF86_DIR)/programs/Xserver/mi \
+		-I$(XF86_DIR)/exports/include/X11 \
+		-I$(XF86_DIR)/include/extensions \
+		-I$(XF86_DIR) \
+		-I$(XF86_DIR)/exports/include \
+		-Dlinux -D__i386__ -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
+		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE  -D_GNU_SOURCE \
+		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
+		-DTOGCUP -DXF86BIGFONT -DDPMSExtension -DPIXPRIV -DPANORAMIX \
+		-DRENDER -DGCCUSESGAS -DAVOID_GLYPHBLT -DPIXPRIV \
+		-DSINGLEDEPTH -DXFreeXDGA -DXvExtension -DXFree86LOADER \
+		-DXFree86Server -DXF86VIDMODE -DXvMCExtension \
+		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
+		-DX_BYTE_ORDER=X_LITTLE_ENDIAN -DNDEBUG -DFUNCPROTO=15 \
+		-DNARROWPROTO -DIN_MODULE -DXFree86Module -DLINUX_INPUT \
+		-o wcm-beta.o -c wcm-beta.c
+
+wacom_drv.o: xf86Wacom.o wcm-beta.o
+	ld -r xf86Wacom.o wcm-beta.o -o wacom_drv.o
+
