@@ -1,3 +1,7 @@
+2003-04-06    John E. Joganic <john@joganic.com>
+
+	* Refactored xf86Wacom.c into separate files.
+
 2003-04-02    John E. Joganic <john@joganic.com>
 
 	* Added J. Yen's "misc fixes" patch to xf86Wacom.c
