@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.7 2004/10/31 22:59:58 pingc Exp $
+ * $Id: wacom.c,v 1.8 2004/11/06 04:55:03 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -858,10 +858,6 @@ static void wacom_reset(struct wacom* wacom)
 		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
 		read = usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
 	} while (rdata[1] != 2 && limit++ < 5);
-
-	/* ask the tablet to report tool id */
- 	usb_set_report(wacom->intf, 3, 5, 0, 0);
-	usb_set_report(wacom->intf, 3, 6, 0, 0);
 }
 
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)

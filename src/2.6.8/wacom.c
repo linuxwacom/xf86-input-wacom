@@ -146,7 +146,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2 && data[0] != 5) {
+	if (data[0] != 2) {
 		dbg("wacom_pl_irq: received unknown report #%d", data[0]);
 		return;
 	}
@@ -290,7 +290,7 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2 && data[0] != 5) {
+	if (data[0] != 2) {
 		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
 		return;
 	}
@@ -334,7 +334,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2 && data[0] != 5) {
+	if (data[0] != 2) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
 		return;
 	}
@@ -913,10 +913,6 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	usb_set_report(intf, 3, 2, rep_data, 2);
 	/* repeat once (not sure why the first call often fails) */
 	usb_set_report(intf, 3, 2, rep_data, 2);
-
-	/* ask the tablet to report tool id */
- 	usb_set_report(wacom->intf, 3, 5, 0, 0);
-	usb_set_report(wacom->intf, 3, 6, 0, 0);
 
 	printk(KERN_INFO "input: %s on %s\n", wacom->features->name, path);
 

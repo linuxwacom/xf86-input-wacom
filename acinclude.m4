@@ -1,6 +1,6 @@
 dnl Macros for configuring the Linux Wacom package
 dnl
-AC_DEFUN(AC_WCM_SET_PATHS,[
+AC_DEFUN([AC_WCM_SET_PATHS],[
 if test "x$prefix" = xNONE
 then WCM_PREFIX=$ac_default_prefix
 else WCM_PREFIX=$prefix
@@ -10,7 +10,7 @@ then WCM_EXECDIR=$WCM_PREFIX
 else WCM_EXECDIR=$exec_prefix
 fi
 ])
-AC_DEFUN(AC_WCM_CHECK_ENVIRON,[
+AC_DEFUN([AC_WCM_CHECK_ENVIRON],[
 dnl Variables for various checks
 WCM_ARCH=unknown
 WCM_KERNEL=unknown
@@ -20,7 +20,7 @@ WCM_ENV_KERNEL=no
 WCM_OPTION_MODVER=no
 WCM_KERNEL_WACOM_DEFAULT=no
 WCM_ENV_XF86=no
-WCM_ENV_XF86V3=no
+WCM_ENV_XORGSDK=no
 WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
@@ -29,10 +29,9 @@ WCM_ENV_TCL=no
 WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
-WCM_XLIBDIR_DEFAULT=/usr/X11R6
+WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
 WCM_TCLTKDIR_DEFAULT=/usr
 XF86SUBDIR=xc/programs/Xserver/hw/xfree86/common
-XF86V3SUBDIR=xc/programs/Xserver/hw/xfree86
 WCM_LINUXWACOMDIR=`pwd`
 WCM_ENV_NCURSES=no
 dnl Check architecture
@@ -62,7 +61,7 @@ fi
 dnl
 dnl Check for linux kernel override
 AC_ARG_WITH(linux,
-[  --with-linux     Override linux kernel check],
+AS_HELP_STRING([--with-linux], [Override linux kernel check]),
 [ WCM_ISLINUX=$withval ])
 dnl
 dnl Handle linux specific features
@@ -78,10 +77,10 @@ fi
 dnl
 dnl
 dnl
-AC_DEFUN(AC_WCM_CHECK_KERNELSOURCE,[
+AC_DEFUN([AC_WCM_CHECK_KERNELSOURCE],[
 dnl Check for kernel build environment
 AC_ARG_WITH(kernel,
-[  --with-kernel=dir   Specify kernel source directory],
+AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 [
 	WCM_KERNELDIR="$withval"
 	AC_MSG_CHECKING(for valid kernel source tree)
@@ -121,10 +120,10 @@ AC_ARG_WITH(kernel,
 	fi
 ])])
 dnl
-AC_DEFUN(AC_WCM_CHECK_MODVER,[
+AC_DEFUN([AC_WCM_CHECK_MODVER],[
 dnl Guess modversioning
-AC_MSG_CHECKING(for kernel module versioning)
 if test x$WCM_ENV_KERNEL = xyes; then
+	AC_MSG_CHECKING(for kernel module versioning)
 	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
@@ -186,13 +185,35 @@ if test x$WCM_ENV_KERNEL = xyes; then
 fi
 ])
 dnl
-AC_DEFUN(AC_WCM_CHECK_XFREE86SOURCE,[
+AC_DEFUN([AC_WCM_CHECK_XORG_SDK],[
+dnl Check for Xorg sdk environment
+AC_ARG_WITH(xorg-sdk,
+AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
+[ WCM_XORGSDK="$withval"; ])
+if test -n "$WCM_XORGSDK"; then
+	AC_MSG_CHECKING(for valid Xorg SDK)
+	if test -f $WCM_XORGSDK/include/xf86Version.h; then
+		WCM_ENV_XORGSDK=yes
+		AC_MSG_RESULT(ok)
+	elif test -f $WCM_XORGSDK/xc/include/xf86Version.h; then
+		WCM_ENV_XORGSDK=yes
+		$WCM_XORGSDK=$WCM_XORGSDK/xc
+		AC_MSG_RESULT(ok)
+	else
+		AC_MSG_RESULT("xf86Version.h missing")
+		AC_MSG_ERROR("Unable to find xf86Version.h under $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
+	fi
+	WCM_XORGSDK=`(cd $WCM_XORGSDK; pwd)`
+fi
+AM_CONDITIONAL(WCM_ENV_XORGSDK, [test x$WCM_ENV_XORGSDK = xyes])
+])
+AC_DEFUN([AC_WCM_CHECK_XFREE86SOURCE],[
 dnl Check for XFree86 build environment
 if test -d x-includes; then
 	WCM_XF86DIR=x-includes
 fi
 AC_ARG_WITH(xf86,
-[  --with-xf86=dir   Specify XF86 build directory],
+AS_HELP_STRING([--with-xf86=dir], [Specify XF86 build directory]),
 [ WCM_XF86DIR="$withval"; ])
 if test -n "$WCM_XF86DIR"; then
 	AC_MSG_CHECKING(for valid XFree86 build environment)
@@ -205,27 +226,12 @@ if test -n "$WCM_XF86DIR"; then
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
 fi
+AM_CONDITIONAL(WCM_ENV_XF86, [test x$WCM_ENV_XF86 = xyes])
 ])
-AC_DEFUN(AC_WCM_CHECK_XFREE86V3SOURCE,[
-dnl Check for XFree86 V3 build environment
-AC_ARG_WITH(xf86v3,
-[  --with-xf86v3=dir   Specify XF86 V3 build directory],
-[
-	WCM_XF86V3DIR="$withval";
-	AC_MSG_CHECKING(for valid XFree86 V3 build environment)
-	if test -f $WCM_XF86V3DIR/$XF86V3SUBDIR/xf86Version.h; then
-		WCM_ENV_XF86V3=yes
-		AC_MSG_RESULT(ok)
-	else
-		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Unable to find $WCM_XF86V3DIR/$XF86V3SUBDIR/xf86Version.h")
-	fi
-	WCM_XF86V3DIR=`(cd $WCM_XF86V3DIR; pwd)`
-])])
-AC_DEFUN(AC_WCM_CHECK_GTK,[
+AC_DEFUN([AC_WCM_CHECK_GTK],[
 dnl Check for GTK development environment
 AC_ARG_WITH(gtk,
-[  --with-gtk={1.2|2.0|yes|no}   Uses GTK 1.2 or 2.0 API],
+AS_HELP_STRING([--with-gtk={1.2|2.0|yes|no}],[Uses GTK 1.2 or 2.0 API]),
 [WCM_USE_GTK=$withval],[WCM_USE_GTK=yes])
 
 if test "$WCM_USE_GTK" == "yes" || test "$WCM_USE_GTK" == "1.2"; then
@@ -316,45 +322,31 @@ if test "$WCM_USE_GTK" == "2.0"; then
 	fi
 fi
 ])
-AC_DEFUN(AC_WCM_CHECK_XLIB,[
+AC_DEFUN([AC_WCM_CHECK_XLIB],[
 dnl Check for XLib development environment
 WCM_XLIBDIR=
 AC_ARG_WITH(xlib,
-[  --with-xlib=dir   uses a specified X11R6 directory],
+AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
 [WCM_XLIBDIR=$withval])
 
 dnl handle default case
 if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
-	AC_MSG_CHECKING(for XLib include directory)
-	if test -d $WCM_XLIBDIR_DEFAULT/include; then
+	AC_MSG_CHECKING(for X lib directory)
+	if test -d $WCM_XLIBDIR_DEFAULT/X11; then
+		WCM_ENV_XLIB=yes
 		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
 		AC_MSG_RESULT(found)
 	else
-		AC_MSG_RESULT(not found, tried $WCM_XLIBDIR_DEFAULT/include)
-		WCM_XLIBDIR=no
-	fi
-fi
-
-dnl check for header files
-if test "$WCM_XLIBDIR" != "no"; then
-	AC_MSG_CHECKING(for XLib header files)
-	if test -f "$WCM_XLIBDIR/include/X11/Xlib.h"; then
-		AC_MSG_RESULT(found)
-		WCM_ENV_XLIB=yes
-	else
-		AC_MSG_RESULT(not found; tried $WCM_XLIBDIR/include/X11/Xlib.h)
-		echo "***"; echo "*** WARNING:"
-		echo "*** unable to find X11/Xlib.h; are the X11 development"
-		echo "*** packages installed?  XLib dependencies will not be built."
-		echo "***"
+		AC_MSG_RESULT(not found, tried $WCM_XLIBDIR_DEFAULT/X11)
+		WCM_ENV_XLIB=no
 	fi
 fi
 ])
-AC_DEFUN(AC_WCM_CHECK_TCL,[
+AC_DEFUN([AC_WCM_CHECK_TCL],[
 dnl Check for TCL development environment
 WCM_TCLDIR=
 AC_ARG_WITH(tcl, 
-[  --with-tcl=dir  uses a specified tcl directory  ],
+AS_HELP_STRING([--with-tcl=dir], [uses a specified tcl directory  ]),
 [ WCM_TCLDIR=$withval ])
 
 dnl handle default case
@@ -402,11 +394,11 @@ elif test "$WCM_TCLDIR" != "no"; then
 	fi
 fi
 ])
-AC_DEFUN(AC_WCM_CHECK_TK,[
+AC_DEFUN([AC_WCM_CHECK_TK],[
 dnl Check for TK development environment
 WCM_TKDIR=
 AC_ARG_WITH(tk,
-[  --with-tk=dir uses a specified tk directory  ], 
+AS_HELP_STRING([--with-tk=dir], [uses a specified tk directory  ]), 
 [ WCM_TKDIR=$withval ])
 
 dnl handle default case
@@ -455,7 +447,7 @@ elif test "$WCM_TKDIR" != "no"; then
 	fi
 fi
 ])
-AC_DEFUN(AC_WCM_CHECK_NCURSES,[
+AC_DEFUN([AC_WCM_CHECK_NCURSES],[
 dnl Check for ncurses development environment
 AC_CHECK_HEADER(ncurses.h, [WCM_ENV_NCURSES=yes])
 if test x$WCM_ENV_NCURSES != xyes; then

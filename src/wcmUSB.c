@@ -522,6 +522,8 @@ static void usbParseEvent(WacomCommonPtr common,
 				if (common->wcmChannel[i].work.proximity == 0)
 				{
 					channel = i;
+					/* the in-prox event was missing */
+					common->wcmChannel[i].work.proximity = 1;
 					break;
 				}
 			}
@@ -674,15 +676,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			else if (event->code == BTN_7)
 				MOD_BUTTONS (15, event->value);
 		}
-	} /* next event */
-
-	if ( !ds->device_type ){
-		DBG(6, ErrorF("USB tool type missing \n"));
-
-		/* defaults to puck and in prox */
-		ds->device_type = CURSOR_ID;
-		ds->proximity = 1;
-	}
+	} /* next event */	
 
 	/* dispatch event */
 	xf86WcmEvent(common, channel, ds);

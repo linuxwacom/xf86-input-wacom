@@ -1,3 +1,4 @@
+AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(linuxwacom, 0.6.5)
@@ -36,7 +37,7 @@ fi
 
 dnl Check for XFree86 source
 AC_WCM_CHECK_XFREE86SOURCE
-AC_WCM_CHECK_XFREE86V3SOURCE
+AC_WCM_CHECK_XORG_SDK
 
 dnl Check for GTK, TCL, TK, and XLib
 AC_WCM_CHECK_GTK
@@ -50,7 +51,7 @@ AC_WCM_CHECK_NCURSES
 dnl Check for wacom build
 WCM_OPTION_WACOM=no
 AC_ARG_ENABLE(wacom,
-[  --enable-wacom  Enable building wacom.o                  default=no],
+([--enable-wacom], [Enable building wacom.o          default=no]),
 	, enable_wacom=no)
 if test "$enable_wacom" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -78,7 +79,7 @@ fi
 dnl Check for wacdump build
 WCM_OPTION_WACDUMP=no
 AC_ARG_ENABLE(wacdump,
-[  --enable-wacdump   Enable building wacdump               default=yes],
+([--enable-wacdump], [Enable building wacdump          default=yes]),
 	, enable_wacdump=yes)
 if test "$enable_wacdump" != "no"; then
 	if test x$WCM_ENV_NCURSES != xyes; then
@@ -96,7 +97,7 @@ dnl Check for xidump build
 WCM_PATCH_XIDUMP=
 WCM_OPTION_XIDUMP=no
 AC_ARG_ENABLE(xidump,
-[  --enable-xidump   Enable building xidump               default=yes],
+([--enable-xidump], [Enable building xidump          default=yes]),
 	, enable_xidump=$WCM_XIDUMP_DEFAULT)
 if test "$enable_xidump" != "no"; then
 	if test x$WCM_ENV_XLIB != xyes; then
@@ -111,7 +112,7 @@ if test "$enable_xidump" != "no"; then
 			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
 		fi
 		WCM_OPTION_XIDUMP=yes
-		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi -lm"
+		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR -lX11 -lXi -lm"
 		WCM_PROGS="$WCM_PROGS xidump"
 	fi
 fi
@@ -119,7 +120,7 @@ fi
 dnl Check for libwacomcfg build
 WCM_OPTION_LIBWACOMCFG=no
 AC_ARG_ENABLE(libwacomcfg,
-[  --enable-libwacomcfg  Enable building libwacomcfg           default=yes],
+([--enable-libwacomcfg], [Enable building libwacomcfg          default=yes]),
 	, enable_libwacomcfg=yes)
 if test "$enable_libwacomcfg" != "no"; then
 	if test x$WCM_ENV_XLIB != xyes; then
@@ -128,7 +129,7 @@ if test "$enable_libwacomcfg" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_LIBWACOMCFG=yes
-		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi"
+		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
 		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
 	fi
 fi
@@ -136,7 +137,7 @@ fi
 dnl Check for xsetwacom build
 WCM_OPTION_XSETWACOM=no
 AC_ARG_ENABLE(xsetwacom,
-[  --enable-xsetwacom  Enable building xsetwacom             default=yes],
+([--enable-xsetwacom], [Enable building xsetwacom          default=yes]),
 	, enable_xsetwacom=yes)
 if test "$enable_xsetwacom" != "no"; then
 	if test x$WCM_OPTION_LIBWACOMCFG != xyes; then
@@ -145,7 +146,7 @@ if test "$enable_xsetwacom" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_XSETWACOM=yes
-		WCM_XSETWACOM_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi"
+		WCM_XSETWACOM_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
 		WCM_PROGS="$WCM_PROGS xsetwacom"
 	fi
 fi
@@ -157,7 +158,7 @@ AC_SUBST(WCM_WACOMXI_BINDIR)
 AC_SUBST(WCM_WACOMXI_LIBDIR)
 WCM_OPTION_LIBWACOMXI=no
 AC_ARG_ENABLE(libwacomxi,
-[  --enable-libwacomxi  Enable building libwacomxi             default=yes],
+([--enable-libwacomxi], [Enable building libwacomxi          default=yes]),
 	, enable_libwacomxi=yes)
 if test "$enable_libwacomxi" != "no"; then
 	if test x$WCM_ENV_XLIB != xyes; then
@@ -174,7 +175,7 @@ if test "$enable_libwacomxi" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_LIBWACOMXI=yes
-		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi"
+		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
 		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
 		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
 	fi
@@ -185,7 +186,7 @@ AM_CONDITIONAL(WACOMXI_INSTALL, test "$WCM_OPTION_LIBWACOMXI" == "yes")
 dnl Check for hid build
 WCM_OPTION_HID=no
 AC_ARG_ENABLE(hid,
-[  --enable-hid    Enable building hid.o                    default=no],
+([--enable-hid], [Enable building hid.o          default=no]),
 	, enable_hid=no)
 if test "$enable_hid" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -220,7 +221,7 @@ fi
 dnl Check for usbmouse build
 WCM_OPTION_USBMOUSE=no
 AC_ARG_ENABLE(usbmouse,
-[  --enable-usbmouse  Enable building usbmouse.o               default=no],
+([--enable-usbmouse], [Enable building usbmouse.o            default=no]),
 	, enable_usbmouse=no)
 if test "$enable_usbmouse" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -254,7 +255,7 @@ fi
 dnl Check for evdev build
 WCM_OPTION_EVDEV=no
 AC_ARG_ENABLE(evdev,
-[  --enable-evdev  Enable building evdev.o               default=no],
+([--enable-evdev], [Enable building evdev.o               default=no]),
 	, enable_evdev=no)
 if test "$enable_evdev" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -282,7 +283,7 @@ fi
 dnl Check for mousedev build
 WCM_OPTION_MOUSEDEV=no
 AC_ARG_ENABLE(mousedev,
-[  --enable-mousedev  Enable building mousedev.o               default=no],
+([--enable-mousedev], [Enable building mousedev.o               default=no]),
 	, enable_mousedev=no)
 if test "$enable_mousedev" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -310,7 +311,7 @@ fi
 dnl Check for input build
 WCM_OPTION_INPUT=no
 AC_ARG_ENABLE(input,
-[  --enable-input  Enable building input.o               default=no],
+([--enable-input], [Enable building input.o               default=no]),
 	, enable_input=no)
 if test "$enable_input" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -334,7 +335,7 @@ fi
 dnl Check for tabletdev build
 WCM_OPTION_TABLETDEV=no
 AC_ARG_ENABLE(tabletdev,
-[  --enable-tabletdev  Enable building tabletdev.o           default=no],
+([--enable-tabletdev], [Enable building tabletdev.o          default=no]),
 	, enable_tabletdev=no)
 if test "$enable_tabletdev" != "no"; then
 	if test "$WCM_ENV_KERNEL" != "yes"; then
@@ -351,12 +352,13 @@ fi
 dnl Check for wacomdrv build
 WCM_OPTION_WACOMDRV=no
 AC_ARG_ENABLE(wacomdrv,
-[  --enable-wacomdrv  Enable building wacom_drv.o            default=yes],
+([--enable-wacomdrv], [Enable building wacom_drv.o            default=yes]),
 	, enable_wacomdrv=yes)
 if test "$enable_wacomdrv" != "no"; then
-	if test "$WCM_ENV_XF86" != "yes"; then
+	if test "$WCM_ENV_XF86" != "yes" && test "$WCM_ENV_XORGSDK" != "yes"; then
 		echo "***"; echo "*** WARNING:";
 		echo "*** Unable to compile wacom_drv.o without XF86 build environment"
+		echo "*** or Xorg SDK."
 		echo "*** wacom_drv.o will not be built"
 		echo "***"
 	else
@@ -371,34 +373,16 @@ if test "$enable_wacomdrv" != "no"; then
 	fi
 fi
 
-dnl Check for wacomdrvv3 build
-WCM_OPTION_WACOMDRVV3=no
-AC_ARG_ENABLE(wacomdrvv3,
-[  --enable-wacomdrvv3  Enable building wacom_drv-v3.o          default=no],
-	, enable_wacomdrvv3=no)
-if test "$enable_wacomdrvv3" != "no"; then
-	if test "$WCM_ENV_XF86V3" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacom_drv-v3.o without XF86V3 build environment"
-		echo "*** wacom_drv-v3.o will not be built"
-		echo "***"
-	else
-		WCM_OPTION_WACOMDRVV3=yes
-		WCM_XF86MODULES="$WCM_XF86MODULES wacom_drv-v3.o"
-		WCM_EXPMODULES="$WCM_EXPMODULES wacom_drv-v3.o"
-	fi
-fi
-
 dnl Check for arch
 AC_ARG_WITH(arch,
-[  --with-arch      Use specified architecture],
+([--with-arch], [Use specified architecture]),
 [
 	WCM_ARCH=$withval
 ])
 
 dnl Check for modver
 AC_ARG_ENABLE(modver,
-[  --enable-modver  Enable kernel module versioning        default=usually],
+([--enable-modver], [Enable kernel module versioning        default=usually]),
 	, enable_modver=$WCM_MODVER)
 if test "$enable_modver" = "no"; then
 	WCM_OPTION_MODVER=no
@@ -476,7 +460,7 @@ fi
 dnl Check for depflags
 WCM_DEPFLAGS=
 AC_ARG_ENABLE(mkxincludes,
-[  --enable-mkxincludes  Enable mkxincludes, XF86 dependency builder   default=no],
+([--enable-mkxincludes], [Enable mkxincludes, XF86 dependency builder   default=no]),
 	, enable_mkxincludes=no)
 if test "x$enable_mkxincludes" == "xyes"; then
 	WCM_DEPFLAGS="-MMD"
@@ -518,8 +502,9 @@ AC_SUBST(WCM_MODVER)
 AC_SUBST(WCM_KERNELDIR)
 AC_SUBST(WCM_KERNEL_VER)
 AC_SUBST(WCM_LINUXWACOMDIR)
+AC_SUBST(WCM_XORGSDK)
 AC_SUBST(WCM_XF86DIR)
-AC_SUBST(WCM_XF86V3DIR)
+AC_SUBST(WCM_XLIBDIR)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
 AC_SUBST(WCM_LINUX_INPUT)
 AC_SUBST(WCM_XIDUMP_LIBS)
@@ -552,13 +537,15 @@ echo "       architecture - $WCM_ARCH"
 echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
 echo "  module versioning - $WCM_OPTION_MODVER" $WCM_MODVER
 echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
+if test "$WCM_ENV_XF86" == "yes"; then
 echo "            XFree86 - $WCM_ENV_XF86 $WCM_XF86DIR"
+else
+echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK"
+fi
 echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"
 echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
 echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
-if test -n "$WCM_ENV_XF86V3"; then
-	echo "          XFree86v3 - $WCM_ENV_XF86V3"
-fi
+
 echo "            ncurses - $WCM_ENV_NCURSES"
 echo "                GTK - $WCM_ENV_GTK"
 echo ""
@@ -576,7 +563,4 @@ echo "         mousedev.o - $WCM_OPTION_MOUSEDEV"
 echo "            input.o - $WCM_OPTION_INPUT"
 echo "        tabletdev.o - $WCM_OPTION_TABLETDEV"
 echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_PATCH_WACOMDRV"
-if test -n "$WCM_OPTION_WACOMDRVV3"; then
-	echo "     wacom_drv-v3.o - $WCM_OPTION_WACOMDRVV3 $WCM_PATCH_WACOMDRVV3"
-fi
 echo "----------------------------------------"

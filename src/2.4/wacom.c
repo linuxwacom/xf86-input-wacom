@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.8 2004/10/31 22:59:58 pingc Exp $
+ * $Id: wacom.c,v 1.9 2004/11/06 04:55:03 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -846,22 +846,18 @@ static void wacom_close(struct input_dev *dev)
 
 static void wacom_reset(struct wacom* wacom)
 {
-	unsigned char rdata[2], limit=0;
+	unsigned char edata[2], limit=0;
 	#ifdef __JEJ_DEBUG
 	printk(KERN_INFO __FILE__ ": Setting tablet report for tablet data\n");
 	#endif
 
 	/* ask the tablet to report tablet data. repeats until it succeeds */
 	do {
-		rdata[0] = 2;
-		rdata[1] = 2;
-		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
-		usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
-	} while (rdata[1] != 2 && limit++ < 5);
-
-	/* ask the tablet to report tool id */
- 	usb_set_report(wacom->intf, 3, 5, 0, 0);
-	usb_set_report(wacom->intf, 3, 6, 0, 0);
+		edata[0] = 2;
+		edata[1] = 2;
+		usb_set_report(wacom->usbdev, wacom->ifnum, 3, 2, edata, 2);
+		usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, edata, 2);
+	} while (edata[1] != 2 && limit++ < 5);
 }
 
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)
@@ -937,7 +933,7 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 
 	wacom_reset(wacom);
 
-	printk(KERN_INFO "input%d: %s on usb%d:%d.%d\n",
+	printk(KERN_INFO __FILE__ ": input%d: %s on usb%d:%d.%d\n",
 			wacom->dev.number, wacom->features->name, dev->bus->busnum,
 			dev->devnum, ifnum);
 

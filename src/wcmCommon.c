@@ -97,7 +97,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 		}
 		else
 		{
-			/* puck is on the tablet when driver starts */
+			/* tool on the tablet when driver starts */
 			if (miPointerCurrentScreen())
 				priv->currentScreen = miPointerCurrentScreen()->myNum;
 			priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
@@ -490,6 +490,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			rx = 0;
 			ry = 0;
 		}
+
 		/* don't apply speed for fairly small increments */
 		no_jitter = priv->speed * 3;
 		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
@@ -532,7 +533,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
-	if( !((priv->flags & BUTTONS_ONLY_FLAG) || channel) )
+	if( !(priv->flags & BUTTONS_ONLY_FLAG) || !channel )
 	{
 		xf86WcmSetScreen(local, &rx, &ry);
 	}
@@ -766,6 +767,14 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
 
+	/* tool on the tablet when driver starts */
+	if (!miPointerCurrentScreen())
+	{
+		DBG(6, ErrorF("xf86WcmEvent: Wacom driver can not get Current Screen ID\n"));
+		DBG(6, ErrorF("Please remove Wacom tool from the tablet.\n"));
+		return;
+	}
+
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
 		return;
@@ -794,6 +803,18 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	DBG(11, ErrorF("filter %d, %p\n",RAW_FILTERING(common),
 		(void *)common->wcmModel->FilterRaw));
 
+	/* Discard the first 2 USB packages due to events delay */
+	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
+	{
+		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
+		/* store channel device state for later use */
+		memmove(pChannel->valid.states + 1,
+			pChannel->valid.states,
+			sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
+		++pChannel->nSamples;
+		return; /* discard */
+	}
+
 	/* Filter raw data, fix hardware defects, perform error correction */
 	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
 	{
@@ -806,7 +827,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	/* Discard unwanted data */
-	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds) && pChannel->nSamples == 4)
+	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds) && pChannel->rawFilter.npoints == 4)
 	{
 		/* If throttle is not in use, discard data. */
 		if (ABS(ds.throttle) < common->wcmSuppress)
@@ -835,14 +856,10 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-	if (pChannel->nSamples < 4) ++pChannel->nSamples;
+	if (pChannel->rawFilter.npoints < 4) ++pChannel->nSamples;
 
-	/* don't send the first sample due to the first USB package issue*/
-	if ( (pChannel->nSamples != 1) || (common->wcmDevCls != &gWacomUSBDevice) )
-	{
-		commonDispatchDevice(common,channel,pChannel);
-		resetSampleCounter(pChannel);
-	}
+	commonDispatchDevice(common,channel,pChannel);
+	resetSampleCounter(pChannel);
 }
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
@@ -856,6 +873,21 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* pLast = &pChannel->valid.states[1];
 
 	DBG(10, ErrorF("commonDispatchEvents\n"));
+
+	if (!ds->device_type)
+	{
+		/* defaults to cursor if tool is on the tablet when X starts */
+		ds->device_type = CURSOR_ID;
+		ds->proximity = 1;
+		if (ds->serial_num)
+			for (idx=0; idx<common->wcmNumDevices; idx++)
+			{
+				priv = common->wcmDevices[idx]->private;
+				if (ds->serial_num == priv->serial)
+					ds->device_type = DEVICE_ID(priv->flags);
+				break;
+			}
+	}
 
 	/* Find the device the current events are meant for */
 	for (idx=0; idx<common->wcmNumDevices; idx++)

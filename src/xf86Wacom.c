@@ -1091,7 +1091,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
-	DBG(6, ErrorF("xf86WcmDevConvert\n"));
+	DBG(6, ErrorF("xf86WcmDevConvert v0=%d v1=%d \n", v0, v1));
 
 	if (first != 0 || num == 1)
 		return FALSE;
@@ -1191,7 +1191,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
-	DBG(6, ErrorF("xf86WcmDevReverseConvert\n"));
+	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
 	valuators[0] = x / priv->factorX + 0.5;
 	valuators[1] = y / priv->factorY + 0.5;
 #ifdef PANORAMIX
