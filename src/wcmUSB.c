@@ -125,6 +125,8 @@ static void xf86WcmUSBRead(LocalDevicePtr local)
 		}
 		common->wcmEvent[common->wcmIndex++] = *readevent;
 	}
+	if (common->wcmProtocolLevel == 4)
+		channel = 0;
 
 	/* select device state channel */
 	if (channel == -1)
