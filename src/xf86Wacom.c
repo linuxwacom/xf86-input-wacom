@@ -64,9 +64,10 @@
  * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
  * 2003-02-22 26-j0.5.6 - applied J. Yen's origin patch
  * 2003-03-06 26-j0.5.7 - added Ping Cheng's "suppress" patch
+ * 2003-03-22 26-j0.5.8 - added Dean Townsley's ISDV4 patch
  */
 
-static const char identification[] = "$Identification: 26-j0.5.7 $";
+static const char identification[] = "$Identification: 26-j0.5.8 $";
 
 #include "xf86Version.h"
 
@@ -349,6 +350,8 @@ typedef struct _WacomCommonRec
     Bool		wcmStylusSide;	/* eraser or stylus ? */
     Bool		wcmStylusProximity; /* the stylus is in proximity ? */
     int			wcmProtocolLevel; /* 4 for Wacom IV, 5 for Wacom V */
+    int			wcmForceDevice; /* force device type (used by ISD V4) */
+    int			wcmRotate;	/* rotate screen (for TabletPC) */
     int			wcmThreshold;	/* Threshold for counting pressure as a button */
     WacomDeviceState	wcmDevStat[2];	/* device state for each tool */
     int			wcmInitNumber;  /* magic number for the init phasis */
@@ -360,6 +363,11 @@ typedef struct _WacomCommonRec
     struct input_event  wcmEvent[MAX_USB_EVENTS]; /* data used by USB driver */
 #endif
 } WacomCommonRec, *WacomCommonPtr;
+
+#define DEVICE_ISDV4 0x000C
+#define ROTATE_NONE 0
+#define ROTATE_CW 1
+#define ROTATE_CCW 2
 
 #ifdef LINUX_INPUT
 #define IS_USB(x) ((x)->wcmOpen == xf86WcmUSBOpen)
@@ -591,6 +599,9 @@ static void xf86WcmReadUSBInput(LocalDevicePtr);
 static Bool xf86WcmUSBOpen(LocalDevicePtr);
 #endif
 
+/* ISDV4 support */
+static void xf86WcmReadISDV4Input(LocalDevicePtr);
+static Bool xf86WcmISDV4Open(LocalDevicePtr);
 
 #ifndef XFREE86_V4
 
@@ -2618,6 +2629,161 @@ xf86WcmUSBOpen(LocalDevicePtr	local)
 /*
  ***************************************************************************
  *
+ * xf86WcmReadISDV4Input --
+ *	Read the new events from the device, and enqueue them.
+ *
+ ***************************************************************************
+ */
+static void
+xf86WcmReadISDV4Input(LocalDevicePtr         local)
+{
+    WacomDevicePtr	priv = (WacomDevicePtr) local->private;
+    WacomCommonPtr	common = priv->common;
+    int			len, loop, idx;
+    int			is_stylus = 1, is_button, is_proximity, wheel=0;
+    int			x, y, z, tmp_coord, buttons, tx = 0, ty = 0;
+    unsigned char	buffer[BUFFER_SIZE];
+  
+    DBG(7, ErrorF("xf86WcmReadInput BEGIN device=%s fd=%d\n",
+		  common->wcmDevice, local->fd));
+
+    SYSCALL(len = read(local->fd, buffer, sizeof(buffer)));
+
+    if (len <= 0) {
+	ErrorF("Error reading wacom device : %s\n", strerror(errno));
+	return;
+    } else {
+	DBG(10, ErrorF("xf86WcmReadInput read %d bytes\n", len));
+    }
+
+    for(loop=0; loop<len; loop++) {
+
+	if ((common->wcmIndex == 0) && !(buffer[loop] & HEADER_BIT)) { /* magic bit is not OK */
+	    DBG(6, ErrorF("xf86WcmReadInput bad magic number 0x%x (pktlength=%d) %d\n",
+			  buffer[loop], common->wcmPktLength, loop));
+	    continue;
+	}
+	else { /* magic bit at wrong place */
+	    if ((common->wcmIndex != 0) && (buffer[loop] & HEADER_BIT)) {
+		DBG(6, ErrorF("xf86WcmReadInput magic number 0x%x detetected at index %d loop=%d\n",
+			      (unsigned int) buffer[loop], common->wcmIndex, loop));
+		common->wcmIndex = 0;
+	    }
+	}
+	
+	common->wcmData[common->wcmIndex++] = buffer[loop];
+
+	if (common->wcmIndex == common->wcmPktLength) {
+	    /* we have a full packet */
+
+	    is_proximity = (common->wcmData[0] & 0x20);
+
+	    /* reset char count for next read */
+	    common->wcmIndex = 0;
+
+	    /* x and y in "normal" orientetion (wide length is X) */
+	    x = (((int)common->wcmData[6] & 0x60) >> 5) |
+		    ((int)common->wcmData[2] << 2) |
+		    ((int)common->wcmData[1] << 9);
+	    y = (((int)common->wcmData[6] & 0x18) >> 3) |
+		    ((int)common->wcmData[4] << 2) |
+		    ((int)common->wcmData[3] << 9);
+
+	    /* rotation mixes x and y up a bit */
+	    if (common->wcmRotate == ROTATE_CW) {
+		tmp_coord = x;
+		x = y;
+		y = common->wcmMaxY - tmp_coord;
+	    } else if (common->wcmRotate == ROTATE_CCW) {
+		tmp_coord = y;
+		y = x;
+		x = common->wcmMaxX - tmp_coord;
+	    }
+
+
+	    /* check which device we have */
+	    is_stylus = (common->wcmData[0] & 0x04) ? 0 : 1;
+
+	    /* pressure */
+	    z = ((common->wcmData[6] & 0x01) << 7) | (common->wcmData[5] & 0x7F);
+	    /* report touch as button 1 */
+	    buttons = (common->wcmData[0] & 0x01) ? 1 : 0 ;
+	    /* report side switch as button 3 */
+	    buttons |= (common->wcmData[0] & 0x02) ? 0x04 : 0 ;
+
+	    is_button = (buttons != 0);
+	    
+	    /* save whether we have stylus or eraser for future proximity out */
+   	    if (is_stylus) {
+		common->wcmStylusSide = 1;
+	    } else {
+		common->wcmStylusSide = 0; /* is eraser */
+	    }
+	    DBG(8, ErrorF("xf86WcmReadInput %s side\n",
+			      common->wcmStylusSide ? "stylus" : "eraser"));
+	    common->wcmStylusProximity = is_proximity;
+
+	    /* figure out which device(s) to impersonate and send */
+	    for(idx=0; idx<common->wcmNumDevices; idx++) {
+	        LocalDevicePtr  local_dev = common->wcmDevices[idx];
+		WacomDevicePtr	priv = (WacomDevicePtr) local_dev->private;
+		int             curDevice;
+		
+		DBG(7, ErrorF("xf86WcmReadInput trying to send to %s\n",
+			      local_dev->name));
+
+		if (is_proximity) {
+		    /* stylus and eraser are distingushable in proximity */
+		    /* report as eraser if we have one 
+		     * otherwise as stylus */
+		    if (!is_stylus && common->wcmHasEraser) {
+		        curDevice = ERASER_ID;
+		    } else {
+		        curDevice = STYLUS_ID;
+		    }
+		} else {
+		    /* eraser bit not set when out of proximity, check */
+		    if (common->wcmHasEraser && (!common->wcmStylusSide)) {
+		        curDevice = ERASER_ID;
+		    } else {
+		        curDevice = STYLUS_ID;
+		    }
+		}
+		if (DEVICE_ID(priv->flags) != curDevice) continue;
+		
+		DBG(10, ErrorF((DEVICE_ID(priv->flags) == ERASER_ID) ? 
+				   "Eraser\n" : 
+				   "Stylus\n"));
+		
+    		xf86WcmSendEvents(common->wcmDevices[idx],
+				  curDevice, 0,
+				  is_stylus,
+				  is_button,
+				  is_proximity,
+				  x, y, z, buttons,
+				  tx, ty, wheel);
+		((WacomDevicePtr)(common->wcmDevices[idx])->private)->oldProximity=is_proximity;
+	    }
+
+	    /* SendEvents looks here for old values for comparison */
+	    priv->oldX = x;
+	    priv->oldY = y;
+	    priv->oldZ = z;
+	    priv->oldTiltX = 0;
+	    priv->oldTiltY = 0;
+	    priv->oldProximity = is_proximity;
+	    priv->oldButtons = buttons;
+	    priv->oldWheel = wheel;
+	    common->wcmLastSerial = 0;
+	} /* full packet */
+    } /* next data */
+    DBG(7, ErrorF("xf86WcmReadInput END   local=0x%x priv=0x%x index=%d\n",
+		  local, priv, common->wcmIndex));
+}
+
+/*
+ ***************************************************************************
+ *
  * xf86WcmControlProc --
  *
  ***************************************************************************
@@ -2698,7 +2864,21 @@ xf86WcmOpen(LocalDevicePtr	local)
 	return xf86WcmUSBOpen(local);
     }
 #endif
-    
+
+	/* ISDV4 support */
+    if (common->wcmForceDevice == DEVICE_ISDV4) {
+	int	loop;
+
+	SYSCALL(close(local->fd));
+	
+	for(loop=0; loop<common->wcmNumDevices; loop++) {
+	    common->wcmDevices[loop]->read_input=xf86WcmReadISDV4Input;
+	}
+	common->wcmOpen=xf86WcmISDV4Open;
+	
+	return xf86WcmISDV4Open(local);
+    }
+
     DBG(1, ErrorF("initializing tablet\n"));    
 
     /* Set the speed of the serial link to 38400 */
@@ -3099,6 +3279,157 @@ xf86WcmOpen(LocalDevicePtr	local)
 
     if (err == -1) {
 	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+
+    return Success;
+}
+
+/*
+ ***************************************************************************
+ *
+ * xf86WcmISDV4Open --
+ *
+ ***************************************************************************
+ */
+
+static Bool
+xf86WcmISDV4Open(LocalDevicePtr	local)
+{
+#ifndef XFREE86_V4
+    struct timeval	timeout;
+#endif
+    int			err;
+    WacomDevicePtr	priv = (WacomDevicePtr)local->private;
+    WacomCommonPtr	common = priv->common;
+
+    DBG(1, ErrorF("opening %s\n", common->wcmDevice));
+
+#ifdef XFREE86_V4
+    local->fd = xf86OpenSerial(local->options);
+#else
+    SYSCALL(local->fd = open(common->wcmDevice, O_RDWR|O_NDELAY, 0));
+#endif
+    if (local->fd < 0) {
+	ErrorF("Error opening %s : %s\n", common->wcmDevice, strerror(errno));
+	return !Success;
+    }
+
+
+    DBG(1, ErrorF("continuing opening %s\n", common->wcmDevice));
+
+    DBG(1, ErrorF("resetting tablet\n"));    
+
+    /* Set the speed of the serial link to 38400 */
+#ifdef XFREE86_V4
+   if (xf86SetSerialSpeed(local->fd, 38400) < 0) {
+       return !Success;
+   }
+#else
+    if (set_serial_speed(local->fd, B38400) == !Success)
+        return !Success;
+#endif
+    
+    /* Send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* Wait 250 mSecs */
+    WAIT(250);
+
+    /* Send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET, strlen(WC_RESET)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* Wait 75 mSecs */
+    WAIT(75);
+
+    /* Set the speed of the serial link to 19200 */
+#ifdef XFREE86_V4
+   if (xf86SetSerialSpeed(local->fd, 19200) < 0) {
+       return !Success;
+   }
+#else
+    if (set_serial_speed(local->fd, B19200) == !Success)
+        return !Success;
+#endif
+    
+    /* Send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* Wait 250 mSecs */
+    WAIT(250);
+
+    /* Send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET, strlen(WC_RESET)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* Wait 75 mSecs */
+    WAIT(75);
+
+#ifdef XFREE86_V4
+    xf86FlushInput(local->fd);
+#else
+    flush_input_fd(local->fd);
+#endif
+
+    DBG(2, ErrorF("not reading model -- Wacom TabletPC ISD V4\n"));
+  
+    /* set parameters */
+    common->wcmProtocolLevel = 0;
+    common->wcmMaxZ = 255;		/* max Z value (pressure)*/
+    common->wcmResolX = 2570;	/* X resolution in points/inch */
+    common->wcmResolY = 2570;	/* Y resolution in points/inch */
+    common->wcmResolZ = 1;		/* pressure resolution of tablet */
+    common->wcmPktLength = 9;	/* length of a packet */
+    if (common->wcmRotate==ROTATE_NONE) {
+        common->wcmMaxX = 21136;
+        common->wcmMaxY = 15900;
+    } else if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW) {
+    	common->wcmMaxX = 15900;
+	common->wcmMaxY = 21136;
+    }
+
+    DBG(2, ErrorF("setup is max X=%d max Y=%d resol X=%d resol Y=%d\n",
+		  common->wcmMaxX, common->wcmMaxY, common->wcmResolX,
+		  common->wcmResolY));
+
+    /* suppress is not currently implemented for this device --
+    if (common->wcmSuppress < 0) {
+	int	xratio = common->wcmMaxX/screenInfo.screens[0]->width;
+	int	yratio = common->wcmMaxY/screenInfo.screens[0]->height;
+	
+	common->wcmSuppress = (xratio > yratio) ? yratio : xratio;
+    }
+    
+    if (common->wcmSuppress > 100) {
+	common->wcmSuppress = 99;
+    }
+    */
+
+    if (xf86Verbose)
+	ErrorF("%s Wacom %s tablet maximum X=%d maximum Y=%d "
+	       "X resolution=%d Y resolution=%d suppress=%d%s\n",
+	       XCONFIG_PROBED, "ISDV4",
+	       common->wcmMaxX, common->wcmMaxY,
+	       common->wcmResolX, common->wcmResolY, common->wcmSuppress,
+	       HANDLE_TILT(common) ? " Tilt" : "");
+  
+    if (err == -1) {
+	SYSCALL(close(local->fd));
 	return !Success;
     }
 
@@ -3907,6 +4238,28 @@ xf86WcmInit(InputDriverPtr	drv,
     }
     xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 	    (priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");	    
+
+	/* ISDV4 support */
+    s = xf86FindOptionValue(local->options, "ForceDevice");
+
+    if (s && (xf86NameCmp(s, "ISDV4") == 0)) {
+	common->wcmForceDevice=DEVICE_ISDV4;
+	local->read_input=xf86WcmReadISDV4Input;
+	common->wcmOpen=xf86WcmISDV4Open;
+	xf86Msg(X_CONFIG, "%s: forcing TabletPC ISD V4 protocol\n", dev->identifier);
+    }
+
+    common->wcmRotate=ROTATE_NONE;
+
+    s = xf86FindOptionValue(local->options, "Rotate");
+
+    if (s) {
+	if (xf86NameCmp(s, "CW") == 0) {
+	    common->wcmRotate=ROTATE_CW;
+	} else if (xf86NameCmp(s, "CCW") ==0) {
+	    common->wcmRotate=ROTATE_CCW;
+	}
+    }
 
     common->wcmSuppress = xf86SetIntOption(local->options, "Suppress", common->wcmSuppress);
     if (common->wcmSuppress > MAX_SUPPRESS || common->wcmSuppress < DEFAULT_SUPPRESS) 
