@@ -20,6 +20,7 @@
 ** REVISION HISTORY
 **   2003-02-23 0.0.1 - created for GTK1.2
 **   2003-03-07 0.0.2 - added input device code
+**   2003-03-08 0.0.3 - added curses code
 **
 ****************************************************************************/
 
@@ -27,8 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
-#define XIDUMP_VERSION "0.0.2"
+#define XIDUMP_VERSION "0.0.3"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -234,79 +236,6 @@ XDeviceInfoPtr GetDevice(Display* pDisp, const char* pszDeviceName)
 	return NULL;
 }
 
-/*****************************************************************************
-** UI
-*****************************************************************************/
-
-typedef struct _UI UI;
-struct _UI
-{
-	const char* pszName;
-	int (*Init)(void);
-	void (*Term)(void);
-	int (*Run)(Display* pDisp, XDevice* pDev);
-};
-
-/*****************************************************************************
-** GTK UI
-*****************************************************************************/
-
-#if WCM_ENABLE_GTK12 || WCM_ENABLE_GTK20
-#define USE_GTK 1
-#include <gtk/gtk.h>
-
-static int GTKInit(void)
-{
-	return 1;
-}
-
-static void GTKTerm(void)
-{
-}
-
-static int GTKRun(Display* pDisp, XDevice* pDev)
-{
-	return 1;
-}
-
-	UI gGTKUI = { "gtk", GTKInit, GTKTerm, GTKRun };
-#else
-#define USE_GTK 0
-#endif
-
-/*****************************************************************************
-** Curses UI
-*****************************************************************************/
-
-static int CursesInit(void)
-{
-	return 1;
-}
-
-static void CursesTerm(void)
-{
-}
-
-static int CursesRun(Display* pDisp, XDevice* pDev)
-{
-	return 1;
-}
-
-	UI gCursesUI = { "curses", CursesInit, CursesTerm, CursesRun };
-
-/*****************************************************************************
-** Raw UI
-*****************************************************************************/
-
-static int RawInit(void)
-{
-	return 0;
-}
-
-static void RawTerm(void)
-{
-}
-
 static const char* GetEventName(int nType)
 {
 	static char xchBuf[64];
@@ -392,7 +321,248 @@ static const char* GetEventName(int nType)
 	return xchBuf;
 }
 
-static int RawRun(Display* pDisp, XDevice* pDev)
+
+/*****************************************************************************
+** UI
+*****************************************************************************/
+
+typedef struct _UI UI;
+struct _UI
+{
+	const char* pszName;
+	int (*Init)(void);
+	void (*Term)(void);
+	int (*Run)(Display* pDisp, XDeviceInfo* pDevInfo);
+};
+
+/*****************************************************************************
+** GTK UI
+*****************************************************************************/
+
+#if WCM_ENABLE_GTK12 || WCM_ENABLE_GTK20
+#define USE_GTK 1
+#include <gtk/gtk.h>
+
+static int GTKInit(void)
+{
+	return 1;
+}
+
+static void GTKTerm(void)
+{
+}
+
+static int GTKRun(Display* pDisp, XDeviceInfo* pDevInfo)
+{
+	return 1;
+}
+
+	UI gGTKUI = { "gtk", GTKInit, GTKTerm, GTKRun };
+#else
+#define USE_GTK 0
+#endif
+
+/*****************************************************************************
+** Curses UI
+*****************************************************************************/
+
+#include <wacscrn.h>
+
+	int gbCursesInit = 0;
+
+static void CursesTerm(void)
+{
+	if (gbCursesInit)
+	{
+		wacscrn_term();
+		gbCursesInit = 0;
+	}
+}
+
+static int CursesInit(void)
+{
+	if (!gbCursesInit)
+	{
+		gbCursesInit = 1;
+		wacscrn_init();
+		atexit(CursesTerm);
+	}
+	return 0;
+}
+
+static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo)
+{
+	int i, j, k, bDown, nBtn;
+	int nRow=0, nProxRow, nFocusRow, nButtonRow, nKeyRow, nValRow;
+	char chBuf[1024];
+	XEvent event;
+	XAnyEvent* pAny;
+	XValuatorInfoPtr pValInfo = NULL;
+	XAnyClassPtr pClass;
+
+	/* Identify program and version */
+	wacscrn_standout();
+	for (i=0; i<80; ++i) wacscrn_output(nRow,i," ");
+	wacscrn_output(nRow,0,"xidump v" XIDUMP_VERSION);
+	wacscrn_normal();
+	nRow += 2;
+
+	/* get class info */
+	pClass = pDevInfo->inputclassinfo;
+	for (j=0; j<pDevInfo->num_classes; ++j)
+	{
+		switch (pClass->class)
+		{
+			case ValuatorClass:
+				pValInfo = (XValuatorInfoPtr)pClass;
+				break;
+		}
+	
+		/* skip to next record */
+		pClass = (XAnyClassPtr)((char*)pClass + pClass->length);
+	}
+
+	snprintf(chBuf,sizeof(chBuf),"InputDevice: %s",pDevInfo->name);
+	wacscrn_output(nRow,0,chBuf);
+	nRow += 1;
+
+	/* display valuator related info */
+	if (pValInfo)
+	{
+		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   Axes: %d  Buffer: %ld",
+				pValInfo->mode == Absolute ? "Absolute" :
+				pValInfo->mode == Relative ? "Relative" : "Unknown",
+				pValInfo->num_axes,
+				pValInfo->motion_buffer);
+		wacscrn_output(nRow,0,chBuf);
+		nRow += 2;
+		nValRow = nRow;
+		nRow += 6;
+
+		wacscrn_output(nValRow+1 ,0,"     data:");
+		wacscrn_output(nValRow+2 ,0,"      min:");
+		wacscrn_output(nValRow+3 ,0,"      max:");
+		wacscrn_output(nValRow+4 ,0,"      res:");
+
+		for (k=0; k<pValInfo->num_axes && k<6; ++k)
+		{
+			wacscrn_output(nValRow,12 + k * 10,
+				k == 0 ? " x-axis " :
+				k == 1 ? " y-axis " :
+				k == 2 ? "pressure" :
+				k == 3 ? " x-tilt " :
+				k == 4 ? " y-tilt " :
+				k == 5 ? "  wheel " : "  error ");
+
+			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].min_value);
+			wacscrn_output(nValRow+2,12 + k * 10, chBuf);
+			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].max_value);
+			wacscrn_output(nValRow+3,12 + k * 10, chBuf);
+			snprintf(chBuf,sizeof(chBuf),"%+06d",pValInfo->axes[k].resolution);
+			wacscrn_output(nValRow+4,12 + k * 10, chBuf);
+		}
+	}
+	else nValRow = 0;
+
+	nProxRow = nRow++;
+	nFocusRow = nRow++;
+	nButtonRow = nRow++;
+	nKeyRow = nRow++;
+
+	wacscrn_output(nProxRow,  0,"Proximity:");
+	wacscrn_output(nFocusRow, 0,"    Focus:");
+	wacscrn_output(nButtonRow,0,"  Buttons:");
+	wacscrn_output(nKeyRow   ,0,"     Keys:");
+
+
+
+	/* handle events */
+
+	while (1)
+	{
+		wacscrn_refresh();
+		XNextEvent(pDisp,&event);
+
+		pAny = (XAnyEvent*)&event;
+		/* printf("event: type=%s\n",GetEventName(pAny->type)); */
+
+		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
+		{
+			wacscrn_standout();
+			wacscrn_output(nProxRow,12,"In ");
+			wacscrn_normal();
+		}
+		else if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_OUT])
+			wacscrn_output(nProxRow,12,"Out ");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_IN])
+		{
+			wacscrn_standout();
+			wacscrn_output(nFocusRow,12,"In ");
+			wacscrn_normal();
+		}
+		else if (pAny->type == gnInputEvent[INPUTEVENT_FOCUS_OUT])
+			wacscrn_output(nFocusRow,12,"Out ");
+		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
+		{
+			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
+			if (!pValInfo)
+			{
+				wacscrn_output(23,0,"Unexpected valuator data received.");
+			}
+
+			for (k=0; k<pValInfo->num_axes && k<6; ++k)
+			{
+				snprintf(chBuf,sizeof(chBuf),"%+06d",pMove->axis_data[k]);
+				wacscrn_output(nValRow+1,12 + k * 10, chBuf);
+			}
+		}
+		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
+				(pAny->type == gnInputEvent[INPUTEVENT_BTN_RELEASE]))
+		{
+			XDeviceButtonEvent* pBtn = (XDeviceButtonEvent*)pAny;
+			bDown = (pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]);
+			nBtn = pBtn->button;
+			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
+			snprintf(chBuf,sizeof(chBuf),
+					"%d-%s",
+					pBtn->button,
+					(nBtn == 1) ? "LEFT  " :
+					(nBtn == 2) ? "MIDDLE" :
+					(nBtn == 3) ? "RIGHT " :
+					(nBtn == 4) ? "EXTRA " :
+					(nBtn == 5) ? "SIDE  " : "ERROR ");
+			if (bDown) wacscrn_standout();
+			wacscrn_output(nButtonRow,12 + (nBtn-1) * 10,chBuf);
+			if (bDown) wacscrn_normal();
+		}
+		else
+		{
+			snprintf(chBuf,sizeof(chBuf),"%ld - %-60s",
+					time(NULL),
+					GetEventName(pAny->type));
+			wacscrn_output(22,0,chBuf);
+		}
+	}
+
+	return 0;
+}
+
+	UI gCursesUI = { "curses", CursesInit, CursesTerm, CursesRun };
+
+/*****************************************************************************
+** Raw UI
+*****************************************************************************/
+
+static int RawInit(void)
+{
+	return 0;
+}
+
+static void RawTerm(void)
+{
+}
+
+static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo)
 {
 	XEvent event;
 	XAnyEvent* pAny;
@@ -607,7 +777,7 @@ int Run(Display* pDisp, UI* pUI, const char* pszDeviceName)
 		fprintf(stderr,"failed to initialize UI\n");
 	else
 	{
-		if ((nRtn=pUI->Run(pDisp,pDev)) != 0)
+		if ((nRtn=pUI->Run(pDisp,pDevInfo)) != 0)
 			fprintf(stderr,"failed to run UI\n");
 		pUI->Term();
 	}
@@ -683,13 +853,14 @@ int main(int argc, char** argv)
 	/* default to a given UI */
 	if (pUI == NULL)
 	{
-		pUI = &gRawUI;
+		pUI = &gCursesUI;
 
-//		#if USE_GTK
-//		pUI = &gGTKUI;
-//		#else
-//		pUI = &gCursesUI;
-//		#endif
+/*		#if USE_GTK
+		pUI = &gGTKUI;
+		#else
+		pUI = &gCursesUI;
+		#endif
+*/
 	}
 	
 	/* open connection to XServer with XInput */

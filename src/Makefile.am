@@ -12,10 +12,11 @@ wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
 		wacserial.c wacserial.h \
 		wacusb.c wacusb.h
-
-xidump_SOURCES = xidump.c
-
 wacdump_LDADD = -lncurses
+
+xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
+xidump_LDADD = -lncurses
+
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c input.o \
 		tabletdev.o \
 		xf86Wacom.c usbmouse.c \
