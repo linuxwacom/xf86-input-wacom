@@ -1,3 +1,11 @@
+2003-04-18    Jimmy Yen <jimmy@yen.tp>
+
+	* Extra checking to set screen only when the device sends core events.
+	* Made KeepShape compatible with multiple screen setup.
+	* Reenabled throttle and fake button 4/5 code. Can be disabled by
+	  setting 'Option "MouseWheel" "off"'. This still needs work.
+	* Unified cursor acceleration in both directions.
+
 2003-04-17    Jimmy Yen <jimmy@yen.tp>
 
 	* Software solution of dual channel input for USB devices.

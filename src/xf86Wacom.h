@@ -302,6 +302,7 @@ struct _WacomModel
 #define BAUD_19200_FLAG         64
 #define BETA_FLAG               128
 #define BUTTONS_ONLY_FLAG       256
+#define FAKE_MOUSEWHEEL_FLAG    512
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
@@ -536,7 +537,7 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 Bool xf86WcmOpen(LocalDevicePtr local);
 
 	void xf86WcmEvent(WacomCommonPtr common,
-		unsigned int channel, const WacomDeviceState* ds);
+		unsigned int channel, WacomDeviceState* ds);
 	/* handles suppression, filtering, and dispatch */
 
 	void xf86WcmSendEvents(LocalDevicePtr local,

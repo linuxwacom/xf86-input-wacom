@@ -982,6 +982,14 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: Xinerama enabled\n", dev->identifier);
 	}
 
+	/* YHJ - temporarily enable button 4/5 simulation by default */
+	if (xf86SetBoolOption(local->options, "MouseWheel", 1))
+	{
+		priv->flags |= FAKE_MOUSEWHEEL_FLAG;
+		xf86Msg(X_CONFIG, "%s: mouse scrolling simulation enabled\n",
+			dev->identifier);
+	}
+
 	/* baud rate */
 	{
 		int val;

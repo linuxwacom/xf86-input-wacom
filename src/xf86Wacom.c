@@ -183,6 +183,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 	WacomCommonPtr common = priv->common;
+	int totalWidth = 0, maxHeight = 0;
 	double screenRatio, tabletRatio;
 	int loop;
 
@@ -260,20 +261,32 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 		/* Calculate the ratio according to KeepShape, TopX and TopY */
 		if (priv->screen_no != -1)
+		{
 			priv->currentScreen = priv->screen_no;
+			totalWidth = screenInfo.screens[priv->screen_no]->width;
+			maxHeight = screenInfo.screens[priv->screen_no]->height;
+		}
+		else
+		{
+			int i;
+			for (i = 0; i < priv->numScreen; i++)
+			{
+				totalWidth += screenInfo.screens[i]->width;
+				if (maxHeight < screenInfo.screens[i]->height)
+					maxHeight=screenInfo.screens[i]->height;
+			}
+		}
 
 		/* Maintain aspect ratio */
 		if (priv->flags & KEEP_SHAPE_FLAG)
 		{
-			screenRatio = ((double)
-				screenInfo.screens[priv->currentScreen]->width) /
-				screenInfo.screens[priv->currentScreen]->height;
+			screenRatio = totalWidth / (double)maxHeight;
 
-			tabletRatio = ((double) (common->wcmMaxX - priv->topX)) /
+			tabletRatio = ((double)(common->wcmMaxX - priv->topX)) /
 					(common->wcmMaxY - priv->topY);
 
-			DBG(2, ErrorF("screenRatio = %.3g, tabletRatio = %.3g\n",
-					screenRatio, tabletRatio));
+			DBG(2, ErrorF("screenRatio = %.3g, tabletRatio = %.3g\n"
+						, screenRatio, tabletRatio));
 
 			if (screenRatio > tabletRatio)
 			{
@@ -290,12 +303,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		} /* end keep shape */
 
 		/* determine scaling factor */
-		priv->factorX = ((double)
-				screenInfo.screens[priv->currentScreen]->width) /
-				(priv->bottomX - priv->topX);
-		priv->factorY = ((double)
-				screenInfo.screens[priv->currentScreen]->height) /
-				(priv->bottomY - priv->topY);
+		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
+		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
 
 		if (xf86Verbose)
 			ErrorF("%s Wacom tablet top X=%d top Y=%d "
@@ -304,7 +313,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 				priv->bottomX, priv->bottomY);
 
 		DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
-		priv->factorX, priv->factorY));
+			priv->factorX, priv->factorY));
 	} /* end bounding rect */
 
 	/* x and y axes */
@@ -594,7 +603,7 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 
 /*****************************************************************************
  * xf86WcmDevConvert --
- *   Convert valuators to X and Y.
+ *   Convert valuators to X and Y. Only used by core events.
  ****************************************************************************/
 
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
@@ -628,7 +637,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 /*****************************************************************************
  * xf86WcmDevReverseConvert --
- *  Convert X and Y to valuators.
+ *  Convert X and Y to valuators. Only used by core events.
  ****************************************************************************/
 
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,

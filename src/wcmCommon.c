@@ -52,7 +52,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	int i, x, y;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
-	if (!(priv->flags & ABSOLUTE_FLAG))
+	if (screenInfo.numScreens == 1 || !(priv->flags & ABSOLUTE_FLAG) ||
+		!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER)))
 	{
 		priv->currentScreen = screenToSet;
 		return;
@@ -303,6 +304,19 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 						is_absolute, 0, 6, rx, ry, rz,
 						rtx, rty, rwheel);
 			}
+			/* simulate button 4 and 5 */
+			if (rwheel && (priv->flags & FAKE_MOUSEWHEEL_FLAG))
+			{
+				int fakeButton = rwheel < 0 ? 4 : 5;
+				xf86PostButtonEvent(local->dev, 
+					(priv->flags & ABSOLUTE_FLAG),
+					fakeButton, 1, 0, 6, rx, ry, rz, rrot,
+					rthrottle, rwheel);
+				xf86PostButtonEvent(local->dev, 
+					(priv->flags & ABSOLUTE_FLAG),
+					fakeButton, 0, 0, 6, rx, ry, rz, rrot,
+					rthrottle, rwheel);
+			}
 			if (priv->oldButtons != buttons)
 			{
 				xf86WcmSendButtons (local, buttons, rx, ry, rz,
@@ -461,7 +475,7 @@ static int xf86WcmIntuosFilter(WacomFilterState* state, int coord, int tilt)
  * ThrottleToRate - converts throttle position to wheel rate
  ****************************************************************************/
 
-#if 0
+#if 1
 static int ThrottleToRate(int x)
 {
 	if (x<0) x=-x;
@@ -546,7 +560,7 @@ Bool xf86WcmOpen(LocalDevicePtr local)
  ****************************************************************************/
 
 void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
-	const WacomDeviceState* ds)
+	WacomDeviceState* ds)
 {
 	WacomDeviceState* pOrigState;
 	LocalDevicePtr pOrigDev;
@@ -620,32 +634,11 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	 * settings, and send event to XInput */
 	if (pDev)
 	{
-		WacomDeviceState filtered = *ds;
+		WacomDeviceState filtered;
+		WacomDevicePtr priv = pDev->private;
+		#if 1
+		int sampleTime, ticks;
 
-		/* WacomDevicePtr priv = common->wcmDevices[idx]->private; */
-
-		/* The if-else statement should be used after the device is 
-	 	* selected since is_absolute = priv->flags | ABSOLUTE_FLAG
-	 	* I removed the declaration of is_absolute at the beginning
-	 	* of this routine */
-
-		#if 0
-		/* Intuos filter */
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			x = xf86WcmIntuosFilter (&ds->x_filter, ds->x,
-				ds->tiltx);
-			y = xf86WcmIntuosFilter (&ds->y_filter, ds->y,
-				ds->tilty);
-		} 
-		else
-		{
-			x = ds->x;
-			y = ds->y;
-		}
-		#endif
-
-		#if 0
 		/* get the sample time */
 		sampleTime = GetTimeInMillis(); 
 	
@@ -666,20 +659,33 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			DBG(6, ErrorF("LIMIT REACHED: s=%d l=%d n=%d v=%d "
 				"N=%d\n", priv->throttleStart,
 				priv->throttleLimit, sampleTime,
-				priv->throttleValue,
-				sampleTime +
-					ThrottleToRate(priv->throttleValue)));
+				ds->throttle, sampleTime +
+					ThrottleToRate(ds->throttle)));
 
-			ds.wheel += (priv->throttleValue > 0) ? 1 :
-					(priv->throttleValue < 0) ? -1 : 0;
+			ds->wheel += (ds->throttle > 0) ? 8 :
+					(ds->throttle < 0) ? -8 : 0;
 		}
 
 		priv->throttleStart = sampleTime;
-		priv->throttleLimit = sampleTime +
-			ThrottleToRate(priv->throttleValue);
+		priv->throttleLimit = sampleTime + ThrottleToRate(ds->throttle);
 		#endif /* throttle */
 
-		xf86WcmSendEvents(pDev,&filtered);
+		filtered = *ds;
+		/* YHJ - If we enable the filter, I think we should store
+		 * filtered values back to ds as the filter is supposed to deal
+		 * with hardware defects. */
+		#if 0
+		/* Intuos filter */
+		if (priv->flags & ABSOLUTE_FLAG)
+		{
+			filtered.x = xf86WcmIntuosFilter(&ds->x_filter, ds->x,
+				ds->tiltx);
+			filtered.y = xf86WcmIntuosFilter(&ds->y_filter, ds->y,
+				ds->tilty);
+		} 
+		#endif
+
+		xf86WcmSendEvents(pDev, &filtered);
 	}
 
 	/* otherwise, if no device matched... */
