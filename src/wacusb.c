@@ -41,6 +41,14 @@
 #ifdef WAC_ENABLE_LINUXINPUT
 #include <linux/input.h>
 
+#ifndef EV_MSC
+#define EV_MSC 0x04
+#endif
+
+#ifndef MSC_SERIAL
+#define MSC_SERIAL 0x00
+#endif
+
 /*****************************************************************************
 ** Defines
 *****************************************************************************/
