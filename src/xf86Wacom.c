@@ -771,19 +771,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		break;
 	    case XWACOM_PARAM_SPEEDLEVEL:
-		if ((value < 0) || (value > 11)) return BadValue;
+		if ((value < 1) || (value > 11)) return BadValue;
 		if (value > 6) priv->speed = 2.00*((double)value - 6.00);
 		else priv->speed = ((double)value) / 6.00;
 		sprintf(st, "%.3f", priv->speed);
 		xf86AddNewOption(local->options, "Speed", st);
 		break;
 	    case XWACOM_PARAM_ACCEL:
-		if ((value < 0) || (value > MAX_ACCEL)) return BadValue;
+		if ((value < 1) || (value > MAX_ACCEL)) return BadValue;
 		priv->accel = value-1;
 		xf86ReplaceIntOption(local->options, "Accel", priv->accel);
 		break;
 	    case XWACOM_PARAM_CLICKFORCE:
-		if ((value < 0) || (value > 21)) return BadValue;
+		if ((value < 1) || (value > 21)) return BadValue;
 		priv->common->wcmThreshold = (int)((double)
 				(value*priv->common->wcmMaxZ)/100.00+0.5);
 		xf86ReplaceIntOption(local->options, "Threshold", 
@@ -913,11 +913,12 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		if ( s && priv->speed != DEFAULT_SPEED )
 		{
 			speed = strtod(s, NULL);
-			if(speed > 10.00) value = 10;
-			else if(speed >= 1.00) value = (int)(speed/2.00 + 5.00);
-			else if(speed < (double)(1.00/6.00)) value = 0;
-			else value = (int)(speed*6.00 - 0.50);
-			fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", local->name, value);
+			if(speed >= 10.00) value = 11;
+			else if(speed >= 1.00) value = (int)(speed/2.00 + 6.00);
+			else if(speed < (double)(1.00/6.00)) value = 1;
+			else value = (int)(speed*6.00 + 0.50);
+			if ( value != 6 )
+				fprintf(fp, "xsetwacom set %s SpeedLevel %d\n", local->name, value);
 		}
 
 		s = xf86FindOptionValue(local->options, "Threshold");
@@ -925,15 +926,23 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		{
 			value = atoi(s);
 			value = (int)((double)value*100.00/(double)priv->common->wcmMaxZ+0.5);
-			fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
+			if ( value != 6 )
+				fprintf(fp, "xsetwacom set %s ClickForce %d\n", local->name, value);
 		}
 
-		s = xf86FindOptionValue(local->options, "TPCButton");
+		s = xf86FindOptionValue(local->options, "ForceDevice");
 		if ( s )
 		{
-			fprintf(fp, "xsetwacom set %s TPCButton %s\n", local->name, s);
+			if ( !priv->common->wcmTPCButton )
+				fprintf(fp, "xsetwacom set %s TPCButton off\n", local->name);
+			fprintf(fp, "default TPCButton on\n");
 		}
-
+		else
+		{
+			if ( priv->common->wcmTPCButton )
+				fprintf(fp, "xsetwacom set %s TPCButton on\n", local->name);
+			fprintf(fp, "default TPCButton off\n");
+		}
 		fprintf(fp, "default TopX 0\n");
 		fprintf(fp, "default TopY 0\n");
 		fprintf(fp, "default BottomX %d\n", priv->common->wcmMaxX);
@@ -943,14 +952,9 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		else
 			sprintf(command, "default Mode Absolute\n");
 		fprintf(fp, "%s", command);		
-		fprintf(fp, "default SpeedLevel 5\n");
+		fprintf(fp, "default SpeedLevel 6\n");
 		fprintf(fp, "default ClickForce 6\n");
 		fprintf(fp, "default Accel 0\n");
-		s = xf86FindOptionValue(local->options, "ForceDevice");
-		if ( s )
-			fprintf(fp, "default TPCButton on\n");
-		else
-			fprintf(fp, "default TPCButton off\n");
 		fclose(fp);
 	}
 	return(Success);

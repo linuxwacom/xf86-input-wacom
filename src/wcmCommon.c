@@ -492,7 +492,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			if (ABS(rx) > no_jitter)
 			{
 				/* don't apply acceleration when too fast. */
-				param += priv->accel > 0 ? rx/relacc : 0;
+				param += priv->accel > 0 ? abs(rx)/relacc : 0;
 				if (param < 20.00)
 				{
 					rx *= param;
@@ -500,7 +500,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			}
 			if (ABS(ry) > no_jitter)
 			{
-				param += priv->accel > 0 ? ry/relacc : 0;
+				param += priv->accel > 0 ? abs(ry)/relacc : 0;
 				if (param < 20.00)
 				{
 					ry *= param;
@@ -527,8 +527,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	{
 		if (!priv->oldProximity)
 		{
-DBG(6, ErrorF("[%s] type=%s\n",
-		local->name, (IsCursor(priv)) ? "cursor" : "stylus"));
 			if (IsCursor(priv))
 				xf86PostProximityEvent(
 					local->dev, 1, 0, 6,
