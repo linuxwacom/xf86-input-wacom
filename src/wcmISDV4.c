@@ -214,7 +214,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 
 	/* check which device we have */
 	is_stylus = (data[0] & 0x04) ? 0 : 1;
-	cur_type = is_stylus ? STYLUS_ID : CURSOR_ID;
+	cur_type = is_stylus ? STYLUS_ID : ERASER_ID;
 
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 
