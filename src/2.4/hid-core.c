@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.1 2003/11/10 20:00:02 pingc Exp $
+ * $Id: hid-core.c,v 1.2 2004/02/05 01:03:13 pingc Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -29,7 +29,7 @@
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
 
-#include "../config.h"
+#include "../../config.h"
 
 /*
  *   WARNING: THIS IS NOT PART OF THE OFFICIAL KERNEL TREE

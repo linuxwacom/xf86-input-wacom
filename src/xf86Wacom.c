@@ -84,9 +84,10 @@
  * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
  * 2003-12-10 26-j0.5.25 - support kernel 2.6
  * 2003-12-10 26-j0.5.26 - added double click speed and radius
- */
+ * 2004-02-02 26-j0.6.0  - new release
+*/
 
-static const char identification[] = "$Identification: 26-j0.5.26 $";
+static const char identification[] = "$Identification: 26-j0.6.0 $";
 
 /****************************************************************************/
 
@@ -735,15 +736,22 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		priv->button[4] = xf86SetIntOption(local->options,"Button5",5);
 		break;
 	    case XWACOM_PARAM_DEBUGLEVEL:
-		if ((value < 0) || (value > 100)) return BadValue;
+		if ((value < 1) || (value > 100)) return BadValue;
 		xf86ReplaceIntOption(local->options, "DebugLevel", value);
 		gWacomModule.debugLevel = value;
 		break;
 	    case XWACOM_PARAM_RAWFILTER:
 		if ((value < 0) || (value > 1)) return BadValue;
-		xf86ReplaceIntOption(local->options, "RawFilter", value);
-		if (value) priv->common->wcmFlags |= RAW_FILTERING_FLAG;
-		else priv->common->wcmFlags &= ~(RAW_FILTERING_FLAG);
+		if (value) 
+		{
+			priv->common->wcmFlags |= RAW_FILTERING_FLAG;
+			xf86ReplaceStrOption(local->options, "RawFilter", "On");
+		}
+		else 
+		{
+			priv->common->wcmFlags &= ~(RAW_FILTERING_FLAG);
+			xf86ReplaceStrOption(local->options, "RawFilter", "Off");
+		}
 		break;
 	    case XWACOM_PARAM_PRESSCURVE:
 	    {
@@ -776,9 +784,9 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		break;
 	    case XWACOM_PARAM_SPEEDLEVEL:
-		if ((value < 0) || (value > 10)) return BadValue;
-		if (value > 5) priv->speed = 2.00*((double)value - 5.00);
-		else priv->speed = ((double)value + 1.00) / 6.00;
+		if ((value < 0) || (value > 11)) return BadValue;
+		if (value > 6) priv->speed = 2.00*((double)value - 6.00);
+		else priv->speed = ((double)value) / 6.00;
 		sprintf(st, "%.3f", priv->speed);
 		xf86AddNewOption(local->options, "Speed", st);
 		break;
@@ -788,18 +796,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86ReplaceIntOption(local->options, "DoubleSpeed", priv->doubleSpeed);
 		break;
 	    case XWACOM_PARAM_DOUBLERADIUS:
-		if ((value < 0) || (value > 25)) return BadValue;
-		priv->doubleRadius = value;
+		if ((value < 0) || (value > 26)) return BadValue;
+		priv->doubleRadius = value-1;
 		xf86ReplaceIntOption(local->options, "DoubleRadius", priv->doubleRadius);
 		break;
 	    case XWACOM_PARAM_ACCEL:
-		if ((value < 0) || (value > MAX_ACCEL-1)) return BadValue;
-		priv->accel = value;
+		if ((value < 0) || (value > MAX_ACCEL)) return BadValue;
+		priv->accel = value-1;
 		xf86ReplaceIntOption(local->options, "Accel", priv->accel);
 		break;
 	    case XWACOM_PARAM_CLICKFORCE:
-		if ((value < 0) || (value > 20)) return BadValue;
-		priv->common->wcmThreshold = (int)((double)(value*priv->common->wcmMaxZ)/100.00+0.5);
+		if ((value < 0) || (value > 21)) return BadValue;
+		priv->common->wcmThreshold = (int)((double)
+				(value*priv->common->wcmMaxZ)/100.00+0.5);
 		xf86ReplaceIntOption(local->options, "Threshold", 
 				priv->common->wcmThreshold);
 		break;
@@ -819,15 +828,18 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_GIMP:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmGimp = value;
+		priv->common->wcmGimp = 0;
+		if (value) priv->common->wcmGimp = value;
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmMMonitor = value;
+		priv->common->wcmMMonitor = 0;
+		if (value) priv->common->wcmMMonitor = value;
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
 		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmTPCButton = value;
+		priv->common->wcmTPCButton = 0;
+		if (value) priv->common->wcmTPCButton = value;
 		break;
 	    default:
     		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
@@ -907,11 +919,7 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 
         	s = xf86FindOptionValue(local->options, "Accel");
 		if ( s && priv->accel )
-			fprintf(fp, "xsetwacom set %s Accel %s\n", local->name, s);
-
-        	s = xf86FindOptionValue(local->options, "Suppress");
-		if ( s )
-			fprintf(fp, "xsetwacom set %s Suppress %s\n", local->name, s);
+			fprintf(fp, "xsetwacom set %s Accel %d\n", local->name, priv->accel+1);
 
         	s = xf86FindOptionValue(local->options, "Speed");
 		if ( s && priv->speed != DEFAULT_SPEED )
@@ -927,13 +935,15 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
         	s = xf86FindOptionValue(local->options, "DoubleSpeed");
 		if ( s && priv->doubleSpeed != DEFAULT_DOUBLESPEED )
 		{
-			fprintf(fp, "xsetwacom set %s DoubleSpeed %d\n", local->name, s);
+			fprintf(fp, "xsetwacom set %s DoubleSpeed %d\n", 
+				local->name, priv->doubleSpeed+1);
 		}
 
         	s = xf86FindOptionValue(local->options, "DoubleRadius");
 		if ( s && priv->doubleRadius != DEFAULT_DOUBLERADIUS )
 		{
-			fprintf(fp, "xsetwacom set %s DoubleRadius %d\n", local->name, s);
+			fprintf(fp, "xsetwacom set %s DoubleRadius %d\n", 
+				local->name, priv->doubleRadius+1);
 		}
 
         	s = xf86FindOptionValue(local->options, "Threshold");

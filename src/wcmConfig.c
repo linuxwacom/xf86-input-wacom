@@ -776,7 +776,6 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 		DBG(2, ErrorF("xf86WcmInit wacom port share between"
 				" %s and %s\n", pLocal->name, pMatch->name));
 		type = xf86FindOptionValue(pMatch->options, "Type");
-DBG(2, ErrorF("xf86WcmConfig eraser ID was %s \n", privMatch->common->wcmEraserID));
 		if ( type && (strstr(type, "eraser")) )
 			privMatch->common->wcmEraserID=pMatch->name;
 		else
@@ -787,7 +786,6 @@ DBG(2, ErrorF("xf86WcmConfig eraser ID was %s \n", privMatch->common->wcmEraserI
 				privMatch->common->wcmEraserID=pLocal->name;
 			}
 		}
-DBG(2, ErrorF("xf86WcmConfig eraser is %s \n", privMatch->common->wcmEraserID));
 		xfree(common->wcmDevices);
 		xfree(common);
 		common = priv->common = privMatch->common;

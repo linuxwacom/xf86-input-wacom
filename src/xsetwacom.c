@@ -123,10 +123,10 @@ struct _PARAMINFO
 			1, 18, SINGLE_VALUE, 5 },
 
 		{ "DebugLevel",
-			"Level of debugging trace, default is 0",
+			"Level of debugging trace, default is 1",
 			XWACOM_PARAM_DEBUGLEVEL,
 			VALUE_OPTIONAL, RANGE, 
-			0, 100, SINGLE_VALUE, 0 },
+			1, 100, SINGLE_VALUE, 1 },
 
 		{ "PressCurve",
 			"Bezier curve for pressure (default is 0 0 100 100)",
@@ -148,10 +148,10 @@ struct _PARAMINFO
 			0, 1, BOOLEAN_VALUE, 1 },	
 
 		{ "SpeedLevel",
-			"Sets relative cursor movement speed (default is 5)",
+			"Sets relative cursor movement speed (default is 6)",
 			XWACOM_PARAM_SPEEDLEVEL,
 			VALUE_OPTIONAL, RANGE, 
-			0, 10, SINGLE_VALUE, 5 },	
+			1, 11, SINGLE_VALUE, 6 },	
 
 		{ "DoubleSpeed",
 			"Sets double click delay interval (default is 200 ms)",
@@ -161,24 +161,24 @@ struct _PARAMINFO
 
 		{ "DoubleRadius",
 			"Sets double click effective circle radius "
-			"(default is 2 pixels)",
+			"(default is 3 pixels)",
 			XWACOM_PARAM_DOUBLESPEED,
 			VALUE_OPTIONAL, RANGE, 
-			0, 25, SINGLE_VALUE, 2 },	
+			1, 26, SINGLE_VALUE, 3 },	
 
 		{ "ClickForce",
 			"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100"
 			"(default is 6)",
 			XWACOM_PARAM_CLICKFORCE,
 			VALUE_OPTIONAL, RANGE, 
-			0, 20, SINGLE_VALUE, 6 },	
+			1, 21, SINGLE_VALUE, 6 },	
 
 		{ "Accel",
 			"Sets relative cursor movement acceleration"
-			"(default is 0)",
+			"(default is 1)",
 			XWACOM_PARAM_ACCEL,
 			VALUE_OPTIONAL, RANGE, 
-			0, 6, SINGLE_VALUE, 0 },
+			1, 7, SINGLE_VALUE, 1 },
 	
 		{ "xyDefault",
 			"Resets the bounding coordinates to default in tablet units",

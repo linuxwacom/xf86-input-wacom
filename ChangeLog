@@ -1,3 +1,6 @@
+2004-02-04    Ping Cheng <pingc@wacom.com>
+	* Released version 0.6.0
+
 2004-01-19    Ping Cheng <pingc@wacom.com>
 	* Sync wacom.c in kernel 2.6 with wacom.c in kernel 2.4 (Ned Konz)
 	* Work around for 2.4.23 support (Jens Georg)

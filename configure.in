@@ -110,7 +110,7 @@ if test "$enable_xidump" != "no"; then
 			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
 		fi
 		WCM_OPTION_XIDUMP=yes
-		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi"
+		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi -lm"
 		WCM_PROGS="$WCM_PROGS xidump"
 	fi
 fi

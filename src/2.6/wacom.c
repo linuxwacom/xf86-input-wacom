@@ -48,6 +48,13 @@
  *	v1.30 (vp) - Merge 2.4 and 2.5 drivers
  *		   - Since 2.5 now has input_sync(), remove MSC_SERIAL abuse
  *		   - Cleanups here and there
+ *
+ *   WARNING: THIS IS NOT PART OF THE OFFICIAL KERNEL TREE
+ *   THIS IS FOR TESTING PURPOSES
+ *
+ *    v1.30-pc-0.1   - initial release based on test11
+ *    v1.30-pc-0.2   - linuxwacom-beta-0.5.4
+ *    v1.30-pc-0.3   - incorporated more changes from wacom.c 2.4 
  */
 
 /*

@@ -168,7 +168,7 @@ proc calibrationSequence {which xDev yDev} {
 	    updateXinitrc
 	}
 
-	exec xsetwacom set $device gimp 1
+	exec xsetwacom set $device gimp on
 	destroy .topleft .bottomright
 	if { $numScreens > 1 } {
 	    .screen.list.label configure -text ""
@@ -216,7 +216,7 @@ proc startCalibration {} {
     # Start calib sequence
     catch {unset calibResults}
     exec xsetwacom set $device xydefault
-    exec xsetwacom set $device gimp 0
+    exec xsetwacom set $device gimp off
     .topleft.m configure -background "#df94df"
     wacomxi::bindevent .topleft.m $device <ButtonRelease> \
 		{calibrationSequence 0 %0 %1}
@@ -715,7 +715,7 @@ proc initialT {} {
 	label .subW.f.group.l1 -text "SpeedLevel: "
 	grid .subW.f.group.l1 -row 0 -column 6
 	scale .subW.f.group.scale1 -orient horizontal -length 100 \
-		-from 0 -to 10
+		-from 1 -to 11
 	grid .subW.f.group.scale1 -row 0 -column 8
 	.subW.f.group.scale1 set $getOption($device,SpeedLevel)
 	label .subW.f.group.l2 -text "Slow"
@@ -725,7 +725,7 @@ proc initialT {} {
 	label .subW.f.group.l4 -text "Acceleration: "
 	grid .subW.f.group.l4 -row 2 -column 6
 	scale .subW.f.group.scale2 -orient horizontal -length 100 \
-		-from 0 -to 6
+		-from 1 -to 7
 	grid .subW.f.group.scale2 -row 2 -column 8
 	.subW.f.group.scale2 set $getOption($device,Accel)
 	label .subW.f.group.l5 -text "Linear"
@@ -835,7 +835,7 @@ proc initialTip {} {
     label .subW.f.group.l5 -text "High"
     grid .subW.f.group.l5 -row 4 -column 9
     scale .subW.f.group.scale2 -orient horizontal -length 100 \
-		-from 0 -to 20
+		-from 1 -to 21
     grid .subW.f.group.scale2 -row 3 -column 8
     .subW.f.group.scale2 set $getOption($device,ClickForce)
 
@@ -855,7 +855,7 @@ proc updateTip {} {
 	4  
 	    { exec xsetwacom set $device PressCurve 0 0 100 100 }
 	5  
-	    { exec xsetwacom set $device PressCurve 25 1 100 75 }
+	    { exec xsetwacom set $device PressCurve 25 0 100 75 }
 	6  
 	    { exec xsetwacom set $device PressCurve 50 0 100 50 }
 	7  

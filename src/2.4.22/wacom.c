@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.1 2003/12/10 01:13:44 pingc Exp $
+ * $Id: wacom.c,v 1.2 2004/02/05 01:03:13 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -75,6 +75,7 @@
  *    v1.30-j0.5.1 - fixed serial number code for Intuos and Intuos2
  *    v1.30-j0.5.2 - applied Ping Cheng's eraser patch for PL
  *    v1.30-j0.5.3 - reapplied patch for Intuos2 6x8's reportings as (0x47)
+ *    v1.30-j0.6.0 - new release
  */
 
 /*
