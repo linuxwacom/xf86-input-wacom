@@ -57,7 +57,7 @@
  * 2002-12-17 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
  */
 
-static const char identification[] = "$Identification: 26-j0.3.5 $";
+static const char identification[] = "$Identification: 26-j0.3.6 $";
 
 #include "xf86Version.h"
 

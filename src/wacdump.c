@@ -18,6 +18,7 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 **
 ** REVISION HISTORY
+**   2002-12-21 0.3.5 - moved refresh to start display immediately
 **   2002-12-21 0.3.4 - changed to FILE* to file descriptors
 **   2002-12-17 0.3.3 - split ncurses from main file to avoid namespace
 **                      collision in linux/input.h
@@ -37,7 +38,7 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 
-#define WACDUMP_VER "wacdump v0.3.4"
+#define WACDUMP_VER "wacdump v0.3.5"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)

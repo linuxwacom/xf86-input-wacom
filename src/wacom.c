@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.4 2003/01/02 02:19:39 jjoganic Exp $
+ * $Id: wacom.c,v 1.5 2003/01/07 03:44:07 jjoganic Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -68,6 +68,7 @@
  *    v1.30-j0.3.4 - added Ping Cheng's new tool IDs
  *    v1.30-j0.3.5 - thread for resetting tablet on bad report
  *    v1.30-j0.3.6 - fixed volito ranges, thanks to Pasi Savolainen
+ *    v1.30-j0.3.7 - unknown reports are now info, rather than error
  */
 
 /*
@@ -98,7 +99,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.3.6"
+#define DRIVER_VERSION "v1.30-j0.3.7"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)"
@@ -171,7 +172,7 @@ static void wacom_pl_irq(struct urb *urb)
 
 	if (data[0] != 2)
 	{
-		printk(KERN_ERR "wacom_pl_irq: received unknown report #%d\n", data[0]);
+		printk(KERN_INFO "wacom_pl_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
@@ -260,11 +261,11 @@ static void wacom_graphire_irq(struct urb *urb)
 	if (urb->status) return;
 
 	/* check if we can handle the data */
-	if (data[0] == 0x63) /* some sort of clock for Volito? */
+	if (data[0] == 99) /* some sort of clock for Volito? */
 		return;
 	if (data[0] != 2)
 	{
-		printk(KERN_ERR "wacom_graphire_irq: received unknown report #%d\n", data[0]);
+		printk(KERN_INFO "wacom_graphire_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
@@ -326,7 +327,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	/* check for valid report */
 	if (data[0] != 2)
 	{
-		printk(KERN_ERR "wacom_intuos_irq: received unknown report #%d\n", data[0]);
+		printk(KERN_INFO "wacom_intuos_irq: received unknown report #%d\n", data[0]);
 		wacom_request_reset(wacom);
 		return;
 	}
