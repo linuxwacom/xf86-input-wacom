@@ -108,6 +108,12 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
+	priv->dscaleX = 1.0;			/* dual screen scale X factor */
+	priv->dscaleY = 1.0;			/* dual screen scale Y factor */
+	priv->doffsetX = 0;			/* dual screen offset X */
+	priv->doffsetY = 0;			/* dual screen offset Y */
+	priv->twinview = TV_NONE;		/* not using twinview gfx */
+
 	/* JEJ - throttle sampling code */
 	priv->throttleValue = 0;
 	priv->throttleStart = 0;
@@ -210,6 +216,7 @@ LocalDevicePtr xf86WcmAllocateEraser(void)
 #define USB  23
 #define SCREEN_NO 24
 #define BUTTONS_ONLY 25
+#define TWINVIEW 26
 
 #if !defined(sun) || defined(i386)
 static SymTabRec WcmTab[] =
@@ -240,6 +247,7 @@ static SymTabRec WcmTab[] =
 	{ USB,           "usb" },
 	{ SCREEN_NO,     "screenno" },
 	{ BUTTONS_ONLY,  "buttonsonly" },
+	{ TWINVIEW,      "twinview" },
 	{ -1, "" }
 };
 
@@ -251,6 +259,13 @@ static SymTabRec ModeTabRec[] =
 	{ RELATIVE,      "relative" },
 	{ ABSOLUTE,      "absolute" },
 	{ -1,  "" }
+};
+
+static SymTabRec TwinViewTabRec[] = {
+  { TV_NONE,		"none" },
+  { TV_ABOVE_BELOW,	"vertical" },
+  { TV_LEFT_RIGHT,	"horizontal" },
+  { -1,			"" }
 };
 
 #endif /* not sun or i386 */
@@ -542,6 +557,39 @@ static void xf86WcmParseToken(LocalDevicePtr dev, LexPtr val, int token)
 			if (xf86Verbose)
 				ErrorF("%s Wacom set buttons only\n",
 					XCONFIG_GIVEN);
+			break;
+
+		case TWINVIEW:
+			mtoken = xf86GetToken(TwinViewTabRec);
+			if ((mtoken == EOF) || (mtoken == STRING) || (mtoken == NUMBER))
+				xf86ConfigError("TwinView type token expected");
+			else {
+				switch (mtoken) {
+					case TV_ABOVE_BELOW:
+						priv->twinview = mtoken;
+						priv->dscaleX = 1.0;
+						priv->dscaleY = 2.0;
+						priv->doffsetX = 0;
+						priv->doffsetY = 0;
+						break;
+					case TV_LEFT_RIGHT:
+						priv->twinview = mtoken;
+						priv->dscaleX = 2.0;
+						priv->dscaleY = 1.0;
+						priv->doffsetX = 0;
+						priv->doffsetY = 0;
+						break;
+					case TV_NONE:
+						priv-twinview = TV_NONE;
+						priv->dscaleX = 1.0;
+						priv->dscaleY = 1.0;
+						priv->doffsetX = 0;
+						priv->doffsetY = 0;
+						break;
+					default:
+						xf86ConfigError("Illegal TwinView type");
+				}
+			}
 			break;
 
 		case EOF:
@@ -1053,6 +1101,42 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (priv->speed != DEFAULT_SPEED)
 		xf86Msg(X_CONFIG, "%s: speed = %.3f\n", dev->identifier,
 			priv->speed);
+
+	s = xf86FindOptionValue(local->options, "Twinview");
+	if (s && xf86NameCmp(s, "none") == 0) 
+	{
+		priv->twinview = TV_NONE;
+		priv->dscaleX = 1.0;
+		priv->dscaleY = 1.0;
+		priv->doffsetX = 0;
+		priv->doffsetY = 0;
+	}
+	else if (s && xf86NameCmp(s, "horizontal") == 0) 
+	{
+		priv->twinview = TV_LEFT_RIGHT;
+		priv->dscaleX = 2.0;
+		priv->dscaleY = 1.0;
+		priv->doffsetX = 0;
+		priv->doffsetY = 0;
+	}
+	else if (s && xf86NameCmp(s, "vertical") == 0) 
+	{
+		priv->twinview = TV_ABOVE_BELOW;
+		priv->dscaleX = 1.0;
+		priv->dscaleY = 2.0;
+		priv->doffsetX = 0;
+		priv->doffsetY = 0;
+	}
+	else if (s) 
+	{
+		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical or horizontal). Using none.\n",
+			dev->identifier);
+		priv->twinview = TV_NONE;
+		priv->dscaleX = 1.0;
+		priv->dscaleY = 1.0;
+		priv->doffsetX = 0;
+		priv->doffsetY = 0;
+	}
 
 	/* mark the device configured */
 	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;

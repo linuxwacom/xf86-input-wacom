@@ -136,7 +136,7 @@ proc calibrationSequence {which xDev yDev} {
 	wacomxi::bindevent .bottomright.m $device <ButtonRelease> ""	
 	set borderOffset [expr ($size / 2 )]
 	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
- 	set heightDev [expr abs($calibResults(yDev,1) - $calibResults(yDev,0))]
+ 	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
  	set widthX [expr $screenWidth - (2 * $borderOffset)]
  	set heightX [expr $screenHeight - (2 * $borderOffset)]
 
@@ -317,7 +317,9 @@ proc updateDevice {} {
 	set type $getDeviceOption($device,type)
 	if { ![string compare -nocase -length 6 $model \
 		"cintiq"] && [string compare -nocase \
-		-length 7 $model "CintiqP" ] } {
+		-length 7 $model "CintiqP" ] || 
+		![string compare -nocase -length 5 \
+		$model "isdv4"] } {
 	    .panel.calibrate configure -state normal
 	}
 	if { [ string compare $type "eraser" ] } {

@@ -71,11 +71,12 @@
  * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
  * 2003-05-02 26-j0.5.13 - added parameter configuration code
  * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5
- * 2003-06-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
+ * 2003-05-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
  * 2003-06-19 26-j0.5.16 - added Intuos2 6x8 id 0x47, suppress of 0 disables
+ * 2003-06-25 26-j0.5.17 - support TwinView and kernel 2.5 for USB tablet 
  */
 
-static const char identification[] = "$Identification: 26-j0.5.16 $";
+static const char identification[] = "$Identification: 26-j0.5.17 $";
 
 /****************************************************************************/
 
@@ -208,9 +209,18 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		}
 	}
 
-	/* if factorX is set, initialize bounding rect */
+	/* if factorX is not set, initialize bounding rect */
 	if (priv->factorX == 0.0)
 	{
+		if (priv->twinview != TV_NONE && priv->bottomX == 0
+			&& priv->bottomY == 0 && priv->topX == 0
+			&& priv->topY == 0) 
+		{
+			priv->topX = common->wcmMaxX / 100;
+			priv->topY = common->wcmMaxY / 100;
+			priv->bottomX = common->wcmMaxX - priv->topX;
+			priv->bottomY = common->wcmMaxY - priv->topY;
+		}
 
 		if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
 		if (priv->bottomY == 0) priv->bottomY = common->wcmMaxY;
@@ -305,9 +315,9 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		if (priv->numScreen == 1)
 		{
 			priv->factorX = totalWidth
-				/ (double)(priv->bottomX - priv->topX);
+				/ (double)((priv->bottomX - priv->topX) * priv->dscaleX);
 			priv->factorY = maxHeight
-				/ (double)(priv->bottomY - priv->topY);
+				/ (double)((priv->bottomY - priv->topY) * priv->dscaleY);
 			DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
 				priv->factorX, priv->factorY));
 		}
@@ -315,12 +325,12 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 	/* x and y axes */
 	InitValuatorAxisStruct(pWcm, 0, 0,
-		priv->bottomX - priv->topX, /* max val */
+		((priv->bottomX - priv->topX) * priv->dscaleX), /* max val */
 		mils(common->wcmResolX), /* tablet resolution */
 		0, mils(common->wcmResolX)); /* max_res */
 
 	InitValuatorAxisStruct(pWcm, 1, 0,
-		priv->bottomY - priv->topY, /* max val */
+		((priv->bottomY - priv->topY) * priv->dscaleY), /* max val */
 		mils(common->wcmResolY), /* tablet resolution */
 		0, mils(common->wcmResolY)); /* max_res */
 
@@ -912,6 +922,11 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			/ (double)totalWidth + 0.5;
 	}
 #endif
+	if (priv->twinview != TV_NONE)
+	{
+		v0 -= priv->topX;
+		v1 -= priv->topY;
+	}
 	*x = v0 * priv->factorX + 0.5;
 	*y = v1 * priv->factorY + 0.5;
 
@@ -945,6 +960,11 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 			* leftPadding / (double)totalWidth + 0.5;
 	}
 #endif
+	if (priv->twinview != TV_NONE)
+	{
+		valuators[0] += priv->topX;
+		valuators[1] += priv->topY;
+	}
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d\n", x, y,
 		valuators[0], valuators[1]));
 

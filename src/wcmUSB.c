@@ -397,17 +397,21 @@ static void usbParseEvent(WacomCommonPtr common,
 	if (common->wcmEventCnt >=
 		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
 	{
-		common->wcmEventCnt = 0;
 		DBG(1, ErrorF("usbParse: Exceeded event queue (%d)\n",
 				common->wcmEventCnt));
+		common->wcmEventCnt = 0;
 		return;
 	}
 
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	/* is it the all-important MSC_SERIAL? maybe next time. */
+	/* packet terminated by MSC_SERIAL on kernel 2.4 and SYN_REPORT on kernel 2.5 */
+#ifdef KERNEL24
 	if ((event->type != EV_MSC) || (event->code != MSC_SERIAL))
+#else
+	if ((event->type != EV_SYN) || (event->code != SYN_REPORT))
+#endif
 		return;
 
 	/* serial number is key for channel */

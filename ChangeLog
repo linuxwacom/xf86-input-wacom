@@ -1,3 +1,9 @@
+2003-06-25    Ping Cheng <pingc@wacom.com>
+	* Added TwinView support (Ron Woods)
+	* Fixed single screen mapping problem
+	* Added TabletPC calibration
+	* Support 2.5 kernel in X driver (Kris Verbeeck)
+
 2003-06-19    John E. Joganic <john@joganic.com>
 	* Reapplied patch for tablets reporting as 0x47.
 	* Suppress value of 0 disables suppression.

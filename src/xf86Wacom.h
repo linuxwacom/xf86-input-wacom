@@ -58,6 +58,11 @@
 #define MSC_SERIAL 0x00
 #endif
 
+/* 2.5.x input.h support */
+#ifndef EV_SYN
+#define KERNEL24 1
+#endif
+
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50
 
@@ -318,6 +323,8 @@ typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 
 #define FILTER_PRESSURE_RES 2048        /* maximum points in pressure curve */
 
+typedef enum { TV_NONE = 0, TV_ABOVE_BELOW = 1, TV_LEFT_RIGHT = 2 } tvMode;
+
 struct _WacomDeviceRec
 {
 	/* configuration fields */
@@ -348,7 +355,11 @@ struct _WacomDeviceRec
 	double speed;           /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
-	int XineramaEnabled;
+	double dscaleX;		/* scale in X for dual screens */
+	double dscaleY;		/* scale in Y for dual screens */
+	int doffsetX;		/* offset in X for dual screens */
+	int doffsetY;		/* offset in Y for dual screens */
+	tvMode twinview;	/* using twinview mode of gfx card */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */

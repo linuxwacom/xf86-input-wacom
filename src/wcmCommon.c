@@ -58,18 +58,32 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
 	int i, x, y;
+	int sizeX = (priv->bottomX - priv->topX) * priv->dscaleX;
+	int sizeY = (priv->bottomY - priv->topY) * priv->dscaleY;
 
 	DBG(6, ErrorF("xf86WcmSetScreen\n"));
-	if (screenInfo.numScreens == 1) return;
+
+	/* set factorX and factorY for single screen setup since
+	 * Top X Y and Bottom X Y can be changed while driver is running
+	 */
+	if (screenInfo.numScreens == 1)
+	{
+		priv->factorX = screenInfo.screens[priv->currentScreen]->width
+			/ (double)sizeX;
+		priv->factorY = screenInfo.screens[priv->currentScreen]->height
+			/ (double)sizeY;
+		return;
+	}
+
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
 		/* screenToSet lags by one event, but not that important */
 		screenToSet = miPointerCurrentScreen()->myNum;
 		priv->factorX = screenInfo.screens[screenToSet]->width
-			/ (double)(priv->bottomX - priv->topX);
+			/ (double)sizeX;
 		priv->factorY = screenInfo.screens[screenToSet]->height
-			/ (double)(priv->bottomY - priv->topY);
+			/ (double)sizeY;
 		priv->currentScreen = screenToSet;
 		return;
 	}
@@ -102,7 +116,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 		screenToSet = priv->screen_no;
 		for (i = 0; i < screenToSet; i++)
 			leftPadding += screenInfo.screens[i]->width;
-		*v0 = ((priv->bottomX - priv->topX) * leftPadding + *v0
+		*v0 = (sizeX * leftPadding + *v0
 			* screenInfo.screens[screenToSet]->width) /
 			(double)totalWidth + 0.5;
 		*v1 = *v1 * screenInfo.screens[screenToSet]->height /
@@ -113,7 +127,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		priv->factorX = totalWidth/(double)(priv->bottomX - priv->topX);
 		priv->factorY = maxHeight/(double)(priv->bottomY - priv->topY);
-		x = (*v0 - (priv->bottomX - priv->topX)
+		x = (*v0 - sizeX
 			* leftPadding / totalWidth) * priv->factorX + 0.5;
 		y = *v1 * priv->factorY + 0.5;
 		
@@ -126,15 +140,20 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 #endif
 	{
 		if (priv->screen_no == -1)
-			*v0 = (*v0 * totalWidth - (priv->bottomX - priv->topX)
-				* leftPadding)
+			*v0 = (*v0 * totalWidth - sizeX * leftPadding)
 				/ screenInfo.screens[screenToSet]->width;
 		else
 			screenToSet = priv->screen_no;
 		priv->factorX = screenInfo.screens[screenToSet]->width
-			/ (double)(priv->bottomX - priv->topX);
+			/ (double)sizeX;
 		priv->factorY = screenInfo.screens[screenToSet]->height
-			/ (double)(priv->bottomY - priv->topY);
+			/ (double)sizeY;
+
+		if (priv->twinview != TV_NONE)
+		{
+			*v0 -= priv->topX;
+			*v1 -= priv->topY;
+		}
 		x = *v0 * priv->factorX + 0.5;
 		y = *v1 * priv->factorY + 0.5;
 	}
@@ -211,6 +230,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	WacomCommonPtr common = priv->common;
 	int rx, ry;
 	int is_core_pointer, is_absolute;
+	int aboveBelowSwitch = (priv->twinview == TV_ABOVE_BELOW)
+		? ((y < priv->topY) ? -1 : ((priv->bottomY < y) ? 1 : 0)) : 0;
+	int leftRightSwitch = (priv->twinview == TV_LEFT_RIGHT)
+		? ((x < priv->topX) ? -1 : ((priv->bottomX < x) ? 1 : 0)) : 0;
 
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
@@ -223,6 +246,31 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
 
+	if ( is_proximity || x || y || z || buttons || tx || ty || wheel )
+	{
+		switch ( leftRightSwitch )
+		{
+			case -1:
+				priv->doffsetX = 0;
+				break;
+			case 1:
+				priv->doffsetX = priv->bottomX - priv->topX;
+				break;
+		}
+		switch ( aboveBelowSwitch )
+		{
+			case -1:
+				priv->doffsetY = 0;
+				break;
+			case 1:
+				priv->doffsetY = priv->bottomY - priv->topY;
+				break;
+		}
+	}
+
+	x += priv->doffsetX;
+	y += priv->doffsetY;
+
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
 		"button=%s\tbuttons=%d\n",
 		local->name,
@@ -234,10 +282,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
 	{
-		rx = x > priv->bottomX ? priv->bottomX - priv->topX :
-			x < priv->topX ? 0 : x - priv->topX;
-		ry = y > priv->bottomY ? priv->bottomY - priv->topY :
-			y < priv->topY ? 0 : y - priv->topY;
+		if (priv->twinview == TV_NONE)
+		{
+			rx = x > priv->bottomX ? priv->bottomX - priv->topX :
+				x < priv->topX ? 0 : x - priv->topX;
+			ry = y > priv->bottomY ? priv->bottomY - priv->topY :
+				y < priv->topY ? 0 : y - priv->topY;
+		}
+		else
+		{
+			rx = x;
+			ry = y;
+		}
 	}
 	else
 	{
@@ -285,7 +341,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 					rx, ry, z, tx, ty,
 					wheel);
 		}
-
 		if(!(priv->flags & BUTTONS_ONLY_FLAG))
 		{
 			if (IsCursor(priv))
