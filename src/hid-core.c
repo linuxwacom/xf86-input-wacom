@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.1 2002/12/23 02:44:43 jjoganic Exp $
+ * $Id: hid-core.c,v 1.2 2003/01/07 03:57:20 jjoganic Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -36,6 +36,7 @@
  *   THIS IS FOR TESTING PURPOSES
  *
  *    v1.8.1-j0    - merged changes from 2.4.20 with conditional 2.4.19 code
+ *    v1.8.1-j1    - added patch for volito
  */
 
 #include <linux/autoconf.h>
@@ -71,7 +72,7 @@
  * Version Information
  */
 
-#define DRIVER_VERSION "v1.8.1-j0"
+#define DRIVER_VERSION "v1.8.1-j1"
 #define DRIVER_AUTHOR "Andreas Gal, Vojtech Pavlik <vojtech@suse.cz>"
 #define DRIVER_DESC "USB HID support drivers"
 
@@ -1107,7 +1108,8 @@ void hid_init_reports(struct hid_device *hid)
 #define USB_DEVICE_ID_WACOM_GRAPHIRE	0x0010
 #define USB_DEVICE_ID_WACOM_INTUOS	0x0020
 #define USB_DEVICE_ID_WACOM_PL		0x0030
-#define USB_DEVICE_ID_WACOM_INTUOS2	0x0041
+#define USB_DEVICE_ID_WACOM_INTUOS2	0x0040
+#define USB_DEVICE_ID_WACOM_VOLITO	0x0060
 
 #define USB_VENDOR_ID_ATEN		0x0557
 #define USB_DEVICE_ID_ATEN_UC100KM	0x2004
@@ -1135,17 +1137,13 @@ struct hid_blacklist {
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_PL + 3, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_PL + 4, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_PL + 5, HID_QUIRK_IGNORE },
-	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 1, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 2, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 3, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 4, HID_QUIRK_IGNORE },
-
-	/* JEJ - exists in wacom.c, so it should exist here, too */
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 5, HID_QUIRK_IGNORE },
+	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_VOLITO, HID_QUIRK_IGNORE },
 
-	/* JEJ - added as test for M. T. (Intuos2 6x8 model XD-0608-U) */
-	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS2 + 7, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_ATEN, USB_DEVICE_ID_ATEN_UC100KM, HID_QUIRK_NOGET },
 	{ USB_VENDOR_ID_ATEN, USB_DEVICE_ID_ATEN_CS124U, HID_QUIRK_NOGET },
 	{ USB_VENDOR_ID_ATEN, USB_DEVICE_ID_ATEN_2PORTKVM, HID_QUIRK_NOGET },
