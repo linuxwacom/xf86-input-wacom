@@ -28,7 +28,8 @@
 
 /****************************************************************************/
 
-int xf86WcmPressureCurveFilter(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
+	int x1, int y1);
 
 /****************************************************************************/
 #endif /* __XF86_WCMFILTER_H */

@@ -36,6 +36,12 @@
 	};
 
 /*****************************************************************************
+ * Static functions
+ ****************************************************************************/
+ 
+static int filterPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+ 
+/*****************************************************************************
  * xf86WcmSetScreen --
  *   set to the proper screen according to the converted (x,y).
  *   this only supports for horizontal setup now.
@@ -239,29 +245,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	else
 	{
-		if (priv->oldProximity)
-		{
-			/* unify acceleration in both directions */
-			rx = (x - priv->oldX) * priv->factorY / priv->factorX;
-			ry = y - priv->oldY;
-			rz = z - priv->oldZ;
-			rtx = tx - priv->oldTiltX;
-			rty = ty - priv->oldTiltY;
-			rwheel = wheel - priv->oldWheel;
-			rrot = rot - priv->oldRot;
-			rthrottle = throttle - priv->oldThrottle;
-		}
-		else
-		{
-			rx = 0;
-			ry = 0;
-			rz = 0;
-			rtx = 0;
-			rty = 0;
-			rwheel = 0;
-			rrot = 0;
-			rthrottle = 0;
-		}
+		/* unify acceleration in both directions */
+		rx = (x - priv->oldX) * priv->factorY / priv->factorX;
+		ry = y - priv->oldY;
 		if (priv->speed != DEFAULT_SPEED )
 		{
 			/* don't apply acceleration for fairly small
@@ -273,39 +259,94 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (ABS(ry) > no_jitter)
 				ry *= priv->speed;
 		}
+		rz = z - priv->oldZ;
+		rtx = tx - priv->oldTiltX;
+		rty = ty - priv->oldTiltY;
+		rwheel = wheel - priv->oldWheel;
+		rrot = rot - priv->oldRot;
+		rthrottle = throttle - priv->oldThrottle;
 	}
 
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
-		if(!(priv->flags & BUTTONS_ONLY_FLAG))
+
+		if (!priv->oldProximity)
 		{
+			priv->flags |= FIRST_TOUCH_FLAG;
+			DBG(4, ErrorF("xf86WcmSendEvents FIRST_TOUCH_FLAG "
+				"set for %s\n", local->name));
+		}
+		/* don't send anything the first time we get data 
+		 * since the x and y values may be invalid */
+		else if (priv->flags & FIRST_TOUCH_FLAG)
+		{
+			priv->flags ^= FIRST_TOUCH_FLAG;
+			DBG(4, ErrorF("xf86WcmSendEvents "
+				"FIRST_TOUCH_FLAG unset for %s\n",
+				local->name));
+			if (!is_absolute)
+			{
+				/* don't move the cursor the
+				 * first time we send motion event */
+				rx = 0;
+				ry = 0;
+				rz = 0;
+				rtx = 0;
+				rty = 0;
+				rwheel = 0;
+				rrot = 0;
+				rthrottle = 0;
+			}
+			/* to support multi-monitors, we need
+			 * to set the proper screen before posting
+			 * any events */
+			xf86WcmSetScreen(local, &rx, &ry);
 			if (IsCursor(priv))
-				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, rz,
-					rrot, rthrottle, rwheel);
+				xf86PostProximityEvent(
+					local->dev, 1, 0, 6,
+					rx, ry, z, rrot,
+					rthrottle, rwheel);
 			else
-				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, rz,
-					rtx, rty, rwheel);
+				xf86PostProximityEvent(
+					local->dev, 1, 0, 6,
+					rx, ry, z, tx, ty,
+					rwheel);
 		}
-		/* simulate button 4 and 5 */
-		if (rwheel && (priv->flags & FAKE_MOUSEWHEEL_FLAG))
+		else
 		{
-			int fakeButton = rwheel < 0 ? 4 : 5;
-			xf86PostButtonEvent(local->dev, 
-				is_absolute,
-				fakeButton, 1, 0, 6, rx, ry, rz, rrot,
-				rthrottle, rwheel);
-			xf86PostButtonEvent(local->dev, 
-				is_absolute,
-				fakeButton, 0, 0, 6, rx, ry, rz, rrot,
-				rthrottle, rwheel);
-		}
-		if (priv->oldButtons != buttons)
-		{
-			xf86WcmSendButtons (local, buttons, rx, ry, rz,
-				rtx, rty, rrot, rthrottle, rwheel);
+			/* to support multi-monitors, we need to set the proper 
+			* screen before posting any events */
+			xf86WcmSetScreen(local, &rx, &ry);
+			if(!(priv->flags & BUTTONS_ONLY_FLAG))
+			{
+				if (IsCursor(priv))
+					xf86PostMotionEvent(local->dev,
+						is_absolute, 0, 6, rx, ry, rz,
+						rrot, rthrottle, rwheel);
+				else
+					xf86PostMotionEvent(local->dev,
+						is_absolute, 0, 6, rx, ry, rz,
+						rtx, rty, rwheel);
+			}
+			/* simulate button 4 and 5 */
+			if (rwheel && (priv->flags & FAKE_MOUSEWHEEL_FLAG))
+			{
+				int fakeButton = rwheel < 0 ? 4 : 5;
+				xf86PostButtonEvent(local->dev, 
+					is_absolute,
+					fakeButton, 1, 0, 6, rx, ry, rz, rrot,
+					rthrottle, rwheel);
+				xf86PostButtonEvent(local->dev, 
+					is_absolute,
+					fakeButton, 0, 0, 6, rx, ry, rz, rrot,
+					rthrottle, rwheel);
+			}
+			if (priv->oldButtons != buttons)
+			{
+				xf86WcmSendButtons (local, buttons, rx, ry, rz,
+					rtx, rty, rrot, rthrottle, rwheel);
+			}
 		}
 	}
 
@@ -514,8 +555,8 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 {
 	if (dsOrig->buttons != dsNew->buttons) return 0;
 	if (dsOrig->proximity != dsNew->proximity) return 0;
-	if (ABS(dsOrig->x - dsNew->x) + ABS(dsOrig->y - dsNew->y) >= suppress)
-		return 0;
+	if (ABS(dsOrig->x - dsNew->x) >= suppress) return 0;
+	if (ABS(dsOrig->y - dsNew->y) >= suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) >= suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) >= suppress) return 0;
 
@@ -659,17 +700,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		WacomDevicePtr priv = pDev->private;
 
 		/* if pressure filter is enabled, invoke */
-		if (priv->pfnPressFilter)
-			(void)(*priv->pfnPressFilter)(priv,&filtered);
-
-		/* use pressure to determine button 1 event */
-		if (filtered.device_type != CURSOR_ID)
-		{
-			if (filtered.pressure >= common->wcmThreshold)
-				filtered.buttons |= 1;
-			else
-				filtered.buttons &= ~1;
-		}
+		if (filterPressureCurve(priv,&filtered) < 0) return;
 
 		#if 0
 
@@ -729,7 +760,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		 * could simulate certain types of hardware noise might be
 		 * useful for testing this code. */
 
-		/* YHJ - Okay, agree */
 		#if 0
 		/* Intuos filter */
 		if (priv->flags & ABSOLUTE_FLAG)
@@ -741,9 +771,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		} 
 		#endif
 
-		/* to support multiple monitors, we need to set the proper 
-		 * screen and modify the axes before posting events */
-		xf86WcmSetScreen(pDev, &filtered.x, &filtered.y);
 		xf86WcmSendEvents(pDev, &filtered);
 	}
 
@@ -757,4 +784,32 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* save channel device state and device to which last event went */
 	common->wcmChannel[channel].state = *ds;
 	common->wcmChannel[channel].pDev = pDev;
+}
+
+/*****************************************************************************
+** Filters
+*****************************************************************************/
+
+static int filterPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
+{
+	if (pDev->pPressCurve)
+	{
+		int p = pState->pressure;
+
+		/* clip */
+		p = (p < 0) ? 0 : (p > pDev->common->wcmMaxZ) ?
+			pDev->common->wcmMaxZ : p;
+
+		/* rescale pressure to FILTER_PRESSURE_RES */
+		p = (p * FILTER_PRESSURE_RES) / pDev->common->wcmMaxZ;
+
+		/* apply pressure curve function */
+		p = pDev->pPressCurve[p];
+
+		/* scale back to wcmMaxZ */
+		pState->pressure = (p * pDev->common->wcmMaxZ) /
+			FILTER_PRESSURE_RES;
+	}
+
+	return 0; /* data is good */
 }

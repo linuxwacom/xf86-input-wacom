@@ -70,6 +70,32 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
  * Returns 0 on success, -1 on failure.  errno contains error code.
  * Comments: You must free this structure using WacomConfigFree. */
 
+WACOMDEVICE WacomConfigOpenDevice(WACOMCONFIG hConfig,
+	const char* pszDeviceName);
+/* Open a device by name.
+ *   pszDeviceName  - name of XInput device corresponding to wacom device
+ * Returns handle to device on success, NULL on error.
+ *   errno contains error code.
+ * Comments: Close using WacomConfigCloseDevice */
+
+int WacomConfigCloseDevice(WACOMDEVICE hDevice);
+/* Closes a device.
+ * Returns 0 on success, -1 on error.  errno contains error code. */
+
+int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue);
+/* Sets the raw device parameter to specified value.
+ *   nParam         - valid paramters can be found Xwacom.h which is not
+ *                      automatically included.
+ *   nValue         - 32 bit integer value
+ * Returns 0 on success, -1 on error.  errno contains error code.
+ *   EINVAL  - invalid parameter or value
+ *   EIO     - unknown X failure, use XSetErrorHandler to capture complete
+ *             error code and message
+ * Comments: Data is sent to wacom_drv module without any error checking.
+ *   Generally, you should use the more specific handler functions in this
+ *   library, but for some parameters, particularly experimental ones, you
+ *   will probably have to set them directly. */
+
 void WacomConfigFree(void* pvData);
 /* Frees memory allocated by library. */
 

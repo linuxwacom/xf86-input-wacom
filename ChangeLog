@@ -2,17 +2,13 @@
 
 	* Added xsetwacom, libwacomcfg, and Xwacom.h; work in progress
 	* xsetwacom, wacdump, libwacomcfg, and xidump now install by default.
-
-2003-05-02    Jimmy Yen <jimmy@yen.tp>
-
-	* Cleanup, removed FIRST_TOUCH_FLAG.
-	* Moved pressure button and set-screen into xf86WcmEvent.
-	* Combined x and y suppression to reduce "jagged-line" effect.
+	* Added pressure curve, buttons, and bounding rect parameters.
 
 2003-05-01    John E. Joganic <john@joganic.com>
 
 	* Changed Graphire from absolute wheel to relative.
 	* Moved throttle position check out of Suppress.  Need it elsewhere.
+	* Fixed xidump library dependencies for non-gtk build
 
 2003-04-29    John E. Joganic <john@joganic.com>
 

@@ -65,7 +65,7 @@ struct _CONFIG
 
 struct _DEVICE
 {
-	CONFIG* pConfig;
+	CONFIG* pCfg;
 	XDevice* pDev;
 };
 
@@ -81,7 +81,7 @@ static int CfgError(CONFIG* pCfg, int err, const char* pszText)
 
 	/* set and return */
 	errno = err;
-	return err;
+	return -1;
 }
 
 static int CfgGetDevs(CONFIG* pCfg)
@@ -197,6 +197,93 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 	
 	*ppInfo = (WACOMDEVICEINFO*)pReq;
 	*puCount = nCount;
+	return 0;
+}
+
+WACOMDEVICE WacomConfigOpenDevice(WACOMCONFIG hConfig,
+	const char* pszDeviceName)
+{
+	int i;
+	DEVICE* pInt;
+	XDevice* pDev;
+	XDeviceInfoPtr pDevInfo = NULL;
+	CONFIG* pCfg = (CONFIG*)hConfig;
+
+	/* sanity check input */
+	if (!pCfg || !pszDeviceName) { errno=EINVAL; return NULL; }
+
+	/* load devices, if not already in memory */
+	if (!pCfg->pDevs && CfgGetDevs(pCfg))
+		return NULL;
+
+	/* find device in question */
+	for (i=0; i<pCfg->nDevCnt; ++i)
+		if (strcmp(pCfg->pDevs[i].name, pszDeviceName) == 0)
+			pDevInfo = pCfg->pDevs + i;
+
+	/* no device, bail. */
+	if (!pDevInfo)
+	{
+		CfgError(pCfg,ENOENT,"WacomConfigOpenDevice: No such device");
+		return NULL;
+	}
+
+	/* Open the device. */
+	pDev = XOpenDevice(pCfg->pDisp,pDevInfo->id);
+	if (!pDev)
+	{
+		CfgError(pCfg,EIO,"WacomConfigOpenDevice: "
+			"Failed to open device");
+		return NULL;
+	}
+
+	/* allocate device structure and return */
+	pInt = (DEVICE*)malloc(sizeof(DEVICE));
+	memset(pInt,0,sizeof(*pInt));
+	pInt->pCfg = pCfg;
+	pInt->pDev = pDev;
+
+	return (WACOMDEVICE)pInt;
+}
+
+int WacomConfigCloseDevice(WACOMDEVICE hDevice)
+{
+	DEVICE* pInt = (DEVICE*)hDevice;
+	if (!pInt) { errno=EINVAL; return -1; }
+
+	(void)XCloseDevice(pInt->pCfg->pDisp,pInt->pDev);
+	free(pInt);
+	return 0;
+}
+
+int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
+{
+	int nReturn;
+	DEVICE* pInt = (DEVICE*)hDevice;
+	if (!pInt || !nParam) { errno=EINVAL; return -1; }
+
+	int nValues[2] = { nParam, nValue };
+	XDeviceResolutionControl c;
+	c.control = DEVICE_RESOLUTION;
+	c.length = sizeof(c);
+	c.first_valuator = 4;
+	c.num_valuators = 2;
+	c.resolutions = nValues;
+
+	/* Dispatch request */
+	nReturn = XChangeDeviceControl(
+		pInt->pCfg->pDisp,
+		pInt->pDev,
+		DEVICE_RESOLUTION,
+		(XDeviceControl*)&c);
+
+	/* Convert error codes */
+	if (nReturn == BadValue)
+		return CfgError(pInt->pCfg,EINVAL,
+			"WacomConfigSetRawParam: Bad value");
+	else if (nReturn != Success)
+		return CfgError(pInt->pCfg,EIO,
+			"WacomConfigSetRawParam: Unknown X error");
 	return 0;
 }
 

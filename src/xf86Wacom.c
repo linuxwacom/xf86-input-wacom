@@ -66,16 +66,18 @@
  * 2003-03-06 26-j0.5.7 - added Ping Cheng's "suppress" patch
  * 2003-03-22 26-j0.5.8 - added Dean Townsley's ISDV4 patch
  * 2003-04-02 26-j0.5.9 - added J. Yen's "misc fixes" patch
- * 2003-04-02 26-j0.5.10 - refactoring
- * 2003-04-02 26-j0.5.11 - all devices using same data path
- * 2003-04-02 26-j0.5.12 - changed graphire wheel to report relative
+ * 2003-04-06 26-j0.5.10 - refactoring
+ * 2003-04-29 26-j0.5.11 - all devices using same data path
+ * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
+ * 2003-05-02 26-j0.5.13 - added parameter configuration code
  */
 
-static const char identification[] = "$Identification: 26-j0.5.11 $";
+static const char identification[] = "$Identification: 26-j0.5.13 $";
 
 /****************************************************************************/
 
 #include "xf86Wacom.h"
+#include "wcmFilter.h"
 
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
 static void xf86WcmDevReadInput(LocalDevicePtr local);
@@ -609,6 +611,25 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86ReplaceIntOption(local->options, "Button5", value);
 		priv->button[4] = xf86SetIntOption(local->options,"Button5",5);
 		break;
+	    case XWACOM_PARAM_DEBUGLEVEL:
+		if ((value < 0) || (value > 10)) return BadValue;
+		xf86ReplaceIntOption(local->options, "DebugLevel", value);
+		gWacomModule.debugLevel = value;
+		break;
+	    case XWACOM_PARAM_PRESSCURVE:
+	    {
+		char chBuf[64];
+		int x0 = (value >> 24) & 0xFF;
+		int y0 = (value >> 16) & 0xFF;
+		int x1 = (value >> 8) & 0xFF;
+		int y1 = value & 0xFF;
+		if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
+		    return BadValue;
+		snprintf(chBuf,sizeof(chBuf),"%d,%d,%d,%d",x0,y0,x1,y1);
+		xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
+		xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
+		break;
+	    }
 	    default:
     		DBG(3, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;

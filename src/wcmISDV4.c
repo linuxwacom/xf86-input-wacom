@@ -193,7 +193,7 @@ static void xf86WcmISDV4Read(LocalDevicePtr local)
 	WacomCommonPtr common = priv->common;
 	int len, loop, idx;
 	int is_stylus = 1, is_button, is_proximity;
-	int x, y, z, tmp_coord, buttons = 0, tx = 0, ty = 0;
+	int x, y, z, tmp_coord, buttons, tx = 0, ty = 0;
 	unsigned char buffer[BUFFER_SIZE];
   
 	DBG(7, ErrorF("xf86WcmISDV4Read BEGIN device=%s fd=%d\n",
@@ -273,11 +273,10 @@ static void xf86WcmISDV4Read(LocalDevicePtr local)
 			/* pressure */
 			z = ((common->wcmData[6] & 0x01) << 7) |
 				(common->wcmData[5] & 0x7F);
-#if 0
-			/* Is this better than using pressure? */
+
 			/* report touch as button 1 */
 			buttons = (common->wcmData[0] & 0x01) ? 1 : 0 ;
-#endif
+
 			/* report side switch as button 3 */
 			buttons |= (common->wcmData[0] & 0x02) ? 0x04 : 0 ;
 

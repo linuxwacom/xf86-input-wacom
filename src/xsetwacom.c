@@ -59,6 +59,7 @@ struct _PARAMINFO
 	int bEmptyOK;
 	int bRange;
 	int nMin, nMax;
+	int nType;
 };
 
 /*****************************************************************************
@@ -68,6 +69,8 @@ struct _PARAMINFO
 	#define VALUE_REQUIRED 0
 	#define VALUE_OPTIONAL 1
 	#define RANGE 1
+	#define SINGLE_VALUE 0
+	#define PACKED_CURVE 1
 
 	static PARAMINFO gParamInfo[] =
 	{
@@ -112,6 +115,17 @@ struct _PARAMINFO
 			XWACOM_PARAM_BUTTON5,
 			VALUE_REQUIRED, RANGE, 1, 5 },
 
+		{ "DebugLevel",
+			"Level of debugging trace, default is 0",
+			XWACOM_PARAM_DEBUGLEVEL,
+			VALUE_REQUIRED, RANGE, 0, 10 },
+
+		{ "PressCurve",
+			"Bezier curve for pressure (default is 0 0 100 100)",
+			XWACOM_PARAM_PRESSCURVE,
+			VALUE_OPTIONAL, RANGE, 0, 100,
+			PACKED_CURVE },
+
 		{ NULL }
 	};
 
@@ -132,10 +146,10 @@ void Usage(FILE* f)
 	"\n"
 	"Commands:\n"
 	"  list [dev|param]           - display known devices, parameters\n"
-	"  set dev_name param value   - set param=value on device\n");
+	"  set dev_name param [values...]   - set device parameter by name\n");
 }
 
-static int ErrorHandler(Display* pDisp, XErrorEvent* pEvent)
+static int XError(Display* pDisp, XErrorEvent* pEvent)
 {
 	char chBuf[64];
 	XGetErrorText(pDisp,pEvent->error_code,chBuf,sizeof(chBuf));
@@ -149,9 +163,9 @@ static int ErrorHandler(Display* pDisp, XErrorEvent* pEvent)
 	return gnLastXError;
 }*/
 
-static void WacomConfigError(int err, const char* pszText)
+static void Error(int err, const char* pszText)
 {
-	fprintf(stderr,"WacomConfigError: %d %s\n",err,pszText);
+	fprintf(stderr,"Error (%d): %s\n",err,pszText);
 }
 
 typedef struct { WACOMDEVICETYPE type; const char* pszText; } TYPEXLAT;
@@ -217,20 +231,50 @@ static int List(WACOMCONFIG hConfig, char** argv)
 	return 1;
 }
 
+static int Pack(int nCount, int* pnValues, int* pnResult)
+{
+	if (nCount == 4)
+	{
+		*pnResult =
+			((pnValues[0] & 0xFF) << 24) |
+			((pnValues[1] & 0xFF) << 16) |
+			((pnValues[2] & 0xFF) << 8) |
+			(pnValues[3] & 0xFF);
+		return 0;
+	}
+	else if (nCount == 0)
+	{
+		*pnResult = 0x00006464; /* 0 0 100 100 */
+		return 0;
+	}
+
+	fprintf(stderr,
+	"Set: Incorrect number of values for bezier curve.\n"
+	"Bezier curve is specified by two control points x0,y0 and x1,y1\n"
+	"Ranges are 0 to 100 for each value corresponding to 0.00 to 1.00\n"
+	"A straight line would be: 0 0 100 100\n"
+	"A slightly depressed line might be: 15 0 100 85\n"
+	"A slightly amplified line might be: 0 15 85 100\n");
+
+	return 1;
+}
+
 static int Set(WACOMCONFIG hConfig, char** argv)
 {
-	int nValue;
 	PARAMINFO* p;
+	int nValues[4];
+	WACOMDEVICE hDev;
 	char* a, *pszEnd;
-	const char* pszDev = NULL;
+	const char* pszValues[4];
+	const char* pszDevName = NULL;
 	const char* pszParam = NULL;
-	const char* pszValue = NULL;
+	int i, nValue=0, nReturn, nCount = 0;
 
 	while ((a=*argv++) != NULL)
 	{
-		if (!pszDev) pszDev = a;
+		if (!pszDevName) pszDevName = a;
 		else if (!pszParam) pszParam = a;
-		else if (!pszValue) pszValue = a;
+		else if (nCount < 4) pszValues[nCount++] = a;
 		else
 		{
 			fprintf(stderr,"Set: Unknown argument '%s'\n",a);
@@ -239,7 +283,7 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 	}
 
 	/* No device or param? Error. */
-	if (!pszDev || !pszParam)
+	if (!pszDevName || !pszParam)
 		{ Usage(stderr); return 1; }
 
 	/* Find param. */
@@ -255,34 +299,73 @@ static int Set(WACOMCONFIG hConfig, char** argv)
 	}
 
 	/* If value is empty, do we support this? */
-	if (!pszValue && !p->bEmptyOK)
+	if (!nCount && !p->bEmptyOK)
 	{
 		fprintf(stderr,"Set: Value for '%s' must be specified.\n",
 			pszParam);
 		return 1;
 	}
 
-	/* Convert value to 32 bit integer; dec, hex, octal are all OK. */
-	nValue = strtol(pszValue,&pszEnd,0);
-	if ((pszEnd == pszValue) || (*pszEnd != '\0'))
+	/* process all the values we received */
+	for (i=0; i<nCount; ++i)
 	{
-		fprintf(stderr,"Set: Value '%s' is invalid.\n",pszValue);
-		return 1;
+		/* Convert value to 32 bit integer; hex OK, octal is not. */
+		if (strncasecmp(pszValues[i],"0x",2) == 0)
+			nValues[i] = strtol(pszValues[i],&pszEnd,16);
+		else
+			nValues[i] = strtol(pszValues[i],&pszEnd,10);
+
+		if ((pszEnd == pszValues[i]) || (*pszEnd != '\0'))
+		{
+			fprintf(stderr,"Set: Value '%s' is invalid.\n",
+				pszValues[i]);
+			return 1;
+		}
+
+		/* Is there a range and are we in it? */
+		if (p->bRange &&
+			((nValues[i] < p->nMin) || (nValues[i]> p->nMax)))
+		{
+			fprintf(stderr,"Set: Value for '%s' out of range "
+				"(%d - %d)\n", pszParam, p->nMin, p->nMax);
+			return 1;
+		}
 	}
 
-	/* Is there a range and are we in it? */
-	if (p->bRange && ((nValue < p->nMin) || (nValue > p->nMax)))
+	/* Is value count correct? */
+	if (p->nType == PACKED_CURVE)
 	{
-		fprintf(stderr,"Set: Value for '%s' out of range (%d - %d)\n",
-			pszParam, p->nMin, p->nMax);
-		return 1;
+		if (Pack(nCount,nValues,&nValue))
+			return 1;
+	}
+	else if (p->nType == SINGLE_VALUE)
+	{
+		nValue = nCount ? nValues[0] : 0;
 	}
 
 	/* Looks good, send it. */
 	if (gnVerbose)
 		printf("Set: sending %d %d (0x%X)\n",p->nParamID,nValue,nValue);
-	
-	return 0;
+
+	/* Open device */
+	hDev = WacomConfigOpenDevice(hConfig,pszDevName);
+	if (!hDev)
+	{
+		fprintf(stderr,"Set: Failed to open device '%s'\n",
+			pszDevName);
+		return 1;
+	}
+
+	/* Send request */
+	nReturn = WacomConfigSetRawParam(hDev,p->nParamID,nValue);
+
+	if (nReturn)
+		fprintf(stderr,"Set: Failed to set %s value for '%s'\n",
+			pszDevName, pszParam);
+
+	/* Close device and return */
+	(void)WacomConfigCloseDevice(hDev);
+	return nReturn ? 1 : 0;
 }
 
 int DoCommand(COMMAND cmd, char** argv)
@@ -299,10 +382,10 @@ int DoCommand(COMMAND cmd, char** argv)
 		return 1;
 	}
 
-	XSetErrorHandler(ErrorHandler);
+	XSetErrorHandler(XError);
 	XSynchronize(pDisp,1 /*sync on*/);
 
-	hConf = WacomConfigInit(pDisp,WacomConfigError);
+	hConf = WacomConfigInit(pDisp,Error);
 	if (!hConf)
 	{
 		fprintf(stderr,"Failed to init WacomConfig\n");

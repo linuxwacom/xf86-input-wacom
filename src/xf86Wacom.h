@@ -299,7 +299,7 @@ struct _WacomModel
 #define CURSOR_ID               2
 #define ERASER_ID               4
 #define ABSOLUTE_FLAG           8
-
+#define FIRST_TOUCH_FLAG	16
 #define KEEP_SHAPE_FLAG         32
 #define BAUD_19200_FLAG         64
 #define BETA_FLAG               128
@@ -311,6 +311,12 @@ struct _WacomModel
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 
 typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+
+/* FILTERFUNC return values:
+ *   -1 - data should be discarded
+ *    0 - data is valid */
+
+#define FILTER_PRESSURE_RES 2048        /* maximum points in pressure curve */
 
 struct _WacomDeviceRec
 {
@@ -351,7 +357,6 @@ struct _WacomDeviceRec
 	int throttleValue;      /* current throttle value */
 
 	/* JEJ - filters */
-	FILTERFUNC pfnPressFilter;      /* if set, pressure will be filtered */
 	int* pPressCurve;               /* pressure curve */
 	int nPressCtrl[4];              /* control points for curve */
 };

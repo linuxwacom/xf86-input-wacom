@@ -35,42 +35,54 @@ static int filterOnLine(double x0, double y0, double x1, double y1,
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
 
 /*****************************************************************************
- * xf86WcmPressureCurve -- apply user-defined curve to pressure values
+ * xf86WcmSetPressureCurve -- apply user-defined curve to pressure values
  ****************************************************************************/
 
-int xf86WcmPressureCurveFilter(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
+void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
+	int x1, int y1)
 {
 	int i;
 
-	/* if curve is not filled, do it now. */
+	/* sanity check values */
+	if ((x0 < 0) || (x0 > 100) || (y0 < 0) || (y0 > 100) ||
+		(x1 < 0) || (x1 > 100) || (y1 < 0) || (y1 > 100)) return;
+
+	xf86Msg(X_INFO, "xf86WcmSetPressureCurve: setting to %d,%d %d,%d\n",
+		x0, y0, x1, y1);
+
+	/* if curve is not allocated, do it now. */
 	if (!pDev->pPressCurve)
 	{
-
 		pDev->pPressCurve = (int*) xalloc(sizeof(int) *
-				(pDev->common->wcmMaxZ + 1));
-
-		/* linear by default */
-		for (i=0; i<=pDev->common->wcmMaxZ; ++i)
-			pDev->pPressCurve[i] = i;
-
-		filterCurveToLine(pDev->pPressCurve,
-			pDev->common->wcmMaxZ,
-			0.0, 0.0,                       /* bottom left  */
-			pDev->nPressCtrl[0] / 100.0,	/* control 1 */
-			pDev->nPressCtrl[1] / 100.0,
-			pDev->nPressCtrl[2] / 100.0,    /* control 2 */
-			pDev->nPressCtrl[3] / 100.0,
-			1.0, 1.0);                      /* top right */
+			(FILTER_PRESSURE_RES + 1));
+		if (!pDev->pPressCurve)
+		{
+			xf86Msg(X_ERROR, "xf86WcmSetPressureCurve: failed to "
+				"allocate memory for curve\n");
+			return;
+		}
 	}
 
-	i = pState->pressure;
-	if (i > pDev->common->wcmMaxZ)
-		i = pDev->common->wcmMaxZ;
-	else if (i < 0)
-		i = 0;
+	/* linear by default */
+	for (i=0; i<=FILTER_PRESSURE_RES; ++i)
+		pDev->pPressCurve[i] = i;
 
-	pState->pressure = pDev->pPressCurve[i];
-	return Success;
+	/* draw bezier line from bottom-left to top-right using ctrl points */
+	filterCurveToLine(pDev->pPressCurve,
+		FILTER_PRESSURE_RES,
+		0.0, 0.0,               /* bottom left  */
+		x0/100.0, y0/100.0,     /* control point 1 */
+		x1/100.0, y1/100.0,     /* control point 2 */
+		1.0, 1.0);              /* top right */
+
+	for (i=0; i<=FILTER_PRESSURE_RES; i+=128)
+		DBG(6, ErrorF("PRESSCURVE: %d=%d (%d)\n",i,pDev->pPressCurve[i],
+			pDev->pPressCurve[i] - i));
+
+	pDev->nPressCtrl[0] = x0;
+	pDev->nPressCtrl[1] = y0;
+	pDev->nPressCtrl[2] = x1;
+	pDev->nPressCtrl[3] = y1;
 }
 
 static void filterNearestPoint(double x0, double y0, double x1, double y1,
