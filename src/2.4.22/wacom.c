@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.6 2004/10/15 17:26:59 pingc Exp $
+ * $Id: wacom.c,v 1.7 2004/10/31 22:59:58 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -318,9 +318,6 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	/* check if we can handle the data */
-	if (data[0] == 99) /* some sort of clock for Volito? */
-		return;
 	if (data[0] != 2 && data[0] != 5 )
 	{
 		printk(KERN_INFO "wacom_graphire_irq: received unknown report #%d\n", data[0]);
@@ -862,10 +859,9 @@ static void wacom_reset(struct wacom* wacom)
 		read = usb_get_report(wacom->usbdev, wacom->ifnum, 3, 2, rdata, 2);
 	} while (rdata[1] != 2 && limit++ < 5);
 
-	/* make sure normal rotation is reported */
-	rdata[0] = 11;
-	rdata[1] = 0;
-	usb_set_report(wacom->usbdev, wacom->ifnum, 3, 11, rdata, 2);
+	/* ask the tablet to report tool id */
+ 	usb_set_report(wacom->intf, 3, 5, 0, 0);
+	usb_set_report(wacom->intf, 3, 6, 0, 0);
 }
 
 static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struct usb_device_id *id)
@@ -904,7 +900,7 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.absmax[ABS_TILT_Y] = 127;
 	wacom->dev.absmax[ABS_WHEEL] = 1023;
 
-	wacom->dev.absmin[ABS_RX] = 4097;
+	wacom->dev.absmax[ABS_RX] = 4097;
 	wacom->dev.absmax[ABS_RY] = 4097;
 	wacom->dev.absmin[ABS_RZ] = -900;
 	wacom->dev.absmax[ABS_RZ] = 899;

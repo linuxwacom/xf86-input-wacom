@@ -1,13 +1,14 @@
 /*
  *  USB Wacom Graphire and Wacom Intuos tablet support
  *
- *  Copyright (c) 2000-2002 Vojtech Pavlik	<vojtech@ucw.cz>
+ *  Copyright (c) 2000-2004 Vojtech Pavlik	<vojtech@ucw.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen	<abach@stofanet.dk>
  *  Copyright (c) 2000 Clifford Wolf		<clifford@clifford.at>
  *  Copyright (c) 2000 Sam Mosel		<sam.mosel@computer.org>
  *  Copyright (c) 2000 James E. Blair		<corvus@gnu.org>
  *  Copyright (c) 2000 Daniel Egger		<egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied		<flepied@mandrakesoft.com>
+ *  Copyright (c) 2004 Panagiotis Issaris	<panagiotis.issaris@mech.kuleuven.ac.be>
  *  Copyright (c) 2002-2004 Ping Cheng		<pingc@wacom.com>
  *
  *  ChangeLog:
@@ -65,14 +66,14 @@
  * (at your option) any later version.
  */
 
-#include <asm/unaligned.h>
-#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/usb.h>
+#include <asm/unaligned.h>
+#include <asm/byteorder.h>
 
 /*
  * Version Information
@@ -106,7 +107,6 @@ struct wacom {
 	struct usb_device *usbdev;
 	struct urb *irq;
 	struct wacom_features *features;
-	struct usb_interface *intf;
 	int tool[2];
 	int open;
 	__u32 serial[2];
@@ -119,29 +119,9 @@ static int usb_set_report(struct usb_interface *intf, unsigned char type,
 {
 	return usb_control_msg(interface_to_usbdev(intf),
 		usb_sndctrlpipe(interface_to_usbdev(intf), 0),
-                USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
-                (type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
+		USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
+		(type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
 		buf, size, HZ);
-}
-
-static void wacom_request_reset(struct wacom* wacom)
-{
-        unsigned char rdata[2];
-
-        /* ask the tablet to report tablet data. 
-	   repeat once (not sure why the first call fails).
-	 */
-	rdata[0] = 2;
-	rdata[1] = 2;
-	usb_set_report(wacom->intf, 3, 2, rdata, 2);
-	rdata[0] = 2;
-	rdata[1] = 2;
-	usb_set_report(wacom->intf, 3, 2, rdata, 2);
-
-        /* make sure normal rotation is reported */
-        rdata[0] = 11;
-        rdata[1] = 0;
-        usb_set_report(wacom->intf, 3, 11, rdata, 2);
 }
 
 static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
@@ -169,8 +149,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2 && data[0] != 5) {
 		dbg("wacom_pl_irq: received unknown report #%d", data[0]);
-		wacom_request_reset(wacom);
-		goto exit;
+		return;
 	}
 
 	prox = data[1] & 0x40;
@@ -184,50 +163,50 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 			pressure = (pressure << 1) | ((data[4] >> 6) & 1);
 		pressure += (wacom->features->pressure_max + 1) / 2;
 
-                /*
-                 * if going from out of proximity into proximity select between the eraser
-                 * and the pen based on the state of the stylus2 button, choose eraser if
-                 * pressed else choose pen. if not a proximity change from out to in, send
-                 * an out of proximity for previous tool then a in for new tool.
-                 */
-                if (!wacom->tool[0]) {
-                        /* Going into proximity select tool */
-                        wacom->tool[1] = (data[4] & 0x20)? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
-                }
-                else {
-                        /* was entered with stylus2 pressed */
-                        if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[4] & 0x20) ) {
-                                /* report out proximity for previous tool */
-                                input_report_key(dev, wacom->tool[1], 0);
-                                input_sync(dev);
-                                wacom->tool[1] = BTN_TOOL_PEN;
-                                goto exit;
-                        }
-                }
-                if (wacom->tool[1] != BTN_TOOL_RUBBER) {
-                        /* Unknown tool selected default to pen tool */
-                        wacom->tool[1] = BTN_TOOL_PEN;
-                }
-                input_report_key(dev, wacom->tool[1], prox); /* report in proximity for tool */
+		/*
+		 * if going from out of proximity into proximity select between the eraser
+		 * and the pen based on the state of the stylus2 button, choose eraser if
+		 * pressed else choose pen. if not a proximity change from out to in, send
+		 * an out of proximity for previous tool then a in for new tool.
+		 */
+		if (!wacom->tool[0]) {
+			/* Going into proximity select tool */
+			wacom->tool[1] = (data[4] & 0x20)? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
+		}
+		else {
+			/* was entered with stylus2 pressed */
+			if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[4] & 0x20) ) {
+				/* report out proximity for previous tool */
+				input_report_key(dev, wacom->tool[1], 0);
+				input_sync(dev);
+				wacom->tool[1] = BTN_TOOL_PEN;
+				goto exit;
+			}
+		}
+		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
+			/* Unknown tool selected default to pen tool */
+			wacom->tool[1] = BTN_TOOL_PEN;
+		}
+		input_report_key(dev, wacom->tool[1], prox); /* report in proximity for tool */
 		input_report_abs(dev, ABS_X, data[3] | ((__u32)data[2] << 7) | ((__u32)(data[1] & 0x03) << 14));
 		input_report_abs(dev, ABS_Y, data[6] | ((__u32)data[5] << 7) | ((__u32)(data[4] & 0x03) << 14));
 		input_report_abs(dev, ABS_PRESSURE, pressure);
 
 		input_report_key(dev, BTN_TOUCH, data[4] & 0x08);
 		input_report_key(dev, BTN_STYLUS, data[4] & 0x10);
-                /* Only allow the stylus2 button to be reported for the pen tool. */
+		/* Only allow the stylus2 button to be reported for the pen tool. */
 		input_report_key(dev, BTN_STYLUS2, (wacom->tool[1] == BTN_TOOL_PEN) && (data[4] & 0x20));
 	}
-        else {
-                /* report proximity-out of a (valid) tool */
-                if (wacom->tool[1] != BTN_TOOL_RUBBER) {
-                        /* Unknown tool selected default to pen tool */
-                        wacom->tool[1] = BTN_TOOL_PEN;
-                }
-                input_report_key(dev, wacom->tool[1], prox);
-        }
-	
-        wacom->tool[0] = prox; /* Save proximity state */
+	else {
+		/* report proximity-out of a (valid) tool */
+		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
+			/* Unknown tool selected default to pen tool */
+			wacom->tool[1] = BTN_TOOL_PEN;
+		}
+		input_report_key(dev, wacom->tool[1], prox);
+	}
+
+	wacom->tool[0] = prox; /* Save proximity state */
 	input_sync(dev);
 
 exit:
@@ -239,56 +218,55 @@ exit:
 
 static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 {
-        struct wacom *wacom = urb->context;
-        unsigned char *data = wacom->data;
-        struct input_dev *dev = &wacom->dev;
-        int retval;
+	struct wacom *wacom = urb->context;
+	unsigned char *data = wacom->data;
+	struct input_dev *dev = &wacom->dev;
+	int retval;
 
-        switch (urb->status) {
-        case 0:
-                /* success */
-                break;
-        case -ECONNRESET:
-        case -ENOENT:
-        case -ESHUTDOWN:
-                /* this urb is terminated, clean up */
-                dbg("%s - urb shutting down with status: %d", __FUNCTION__, urb->status);
-                return;
-        default:
-                dbg("%s - nonzero urb status received: %d", __FUNCTION__, urb->status);
-                goto exit;
-        }
-
-        if (data[0] != 2 && data[0] != 5) {
-                printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
-		wacom_request_reset(wacom);
+	switch (urb->status) {
+	case 0:
+		/* success */
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+		/* this urb is terminated, clean up */
+		dbg("%s - urb shutting down with status: %d", __FUNCTION__, urb->status);
+		return;
+	default:
+		dbg("%s - nonzero urb status received: %d", __FUNCTION__, urb->status);
 		goto exit;
-       }
+	}
 
-        input_regs(dev, regs);
-        if (data[1] & 0x04)
-        {
-                input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
-                input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
-        }
-        else
-        {
-                input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
-                input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
-        }
-        input_report_abs(dev, ABS_X, le16_to_cpu(get_unaligned((u16 *) &data[1])));
-        input_report_abs(dev, ABS_Y, le16_to_cpu(get_unaligned((u16 *) &data[3])));
-        input_report_abs(dev, ABS_PRESSURE, (data[6]|data[7] << 8));
-        input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
-        input_report_key(dev, BTN_STYLUS2, data[1] & 0x10);
+	if (data[0] != 2 && data[0] != 5) {
+		printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
+		return;
+	}
 
-        input_sync(dev);
+	input_regs(dev, regs);
+	if (data[1] & 0x04)
+	{
+		input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
+		input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
+	}
+	else
+	{
+		input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
+		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
+	}
+	input_report_abs(dev, ABS_X, le16_to_cpu(get_unaligned((u16 *) &data[2])));
+	input_report_abs(dev, ABS_Y, le16_to_cpu(get_unaligned((u16 *) &data[4])));
+	input_report_abs(dev, ABS_PRESSURE, (data[6]|data[7] << 8));
+	input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
+	input_report_key(dev, BTN_STYLUS2, data[1] & 0x10);
+
+	input_sync(dev);
 
 exit:
-        retval = usb_submit_urb (urb, GFP_ATOMIC);
-        if (retval)
-                err ("%s - usb_submit_urb failed with result %d",
-                     __FUNCTION__, retval);
+	retval = usb_submit_urb (urb, GFP_ATOMIC);
+	if (retval)
+		err ("%s - usb_submit_urb failed with result %d",
+		     __FUNCTION__, retval);
 }
 
 static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
@@ -313,16 +291,15 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-        if (data[0] != 2 && data[0] != 5) {
-                printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
-		wacom_request_reset(wacom);
-		goto exit;
-        }
+	if (data[0] != 2 && data[0] != 5) {
+		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
+		return;
+	}
 
 	input_regs(dev, regs);
 	input_report_key(dev, BTN_TOOL_PEN, 1);
-	input_report_abs(dev, ABS_X, le16_to_cpu(*(u16 *) &data[1]));
-	input_report_abs(dev, ABS_Y, le16_to_cpu(*(u16 *) &data[3]));
+	input_report_abs(dev, ABS_X, le16_to_cpu(get_unaligned((u16 *) &data[1])));
+	input_report_abs(dev, ABS_Y, le16_to_cpu(get_unaligned((u16 *) &data[3])));
 	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
 	input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -80) && !(data[5] & 0x20));
 	input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
@@ -364,8 +341,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2 && data[0] != 5) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
-		wacom_request_reset(wacom);
-		goto exit;
+		return;
 	}
 
 	x = le16_to_cpu(*(u16 *) &data[2]);
@@ -446,8 +422,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2 && data[0] != 5 && data[0] != 6) {
 		dbg("wacom_intuos_irq: received unknown report #%d", data[0]);
-		wacom_request_reset(wacom);
-		goto exit;
+		return;
 	}
 
 	input_regs(dev, regs);
@@ -476,11 +451,11 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 			case 0x096: wacom->tool[idx] = BTN_TOOL_LENS;		break;	/* Lens cursor */
 			case 0x82a:
 			case 0x85a:
-		        case 0x91a:
-                        case 0xd1a:
+			case 0x91a:
+			case 0xd1a:
 			case 0x0fa: wacom->tool[idx] = BTN_TOOL_RUBBER;		break;	/* Eraser */
-                        case 0xd12:
-                        case 0x912:
+			case 0xd12:
+			case 0x912:
 			case 0x112: wacom->tool[idx] = BTN_TOOL_AIRBRUSH;	break;	/* Airbrush */
 			default:    wacom->tool[idx] = BTN_TOOL_PEN;		break;	/* Unknown tool */
 		}
@@ -493,7 +468,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 
 	if ((data[1] & 0xfe) == 0x80) {						/* Exit report */
 		input_report_key(dev, wacom->tool[idx], 0);
-                input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
+		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		input_sync(dev);
 		goto exit;
 	}
@@ -538,8 +513,8 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 					input_report_key(dev, BTN_LEFT,   data[8] & 0x04);
 					input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 					input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
-					input_report_rel(dev, REL_WHEEL, (__u32)((data[8] & 0x02) >> 1)
-					    	 - (__u32)(data[8] & 0x01));
+					input_report_rel(dev, REL_WHEEL, 
+					    (-(__u32)(data[8] & 0x01) + (__u32)((data[8] & 0x02) >> 1)));
 				}
 				else {						/* Lens cursor packets */
 					input_report_key(dev, BTN_LEFT,   data[8] & 0x01);
@@ -551,9 +526,9 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 			}
 		}
 	}
-	
-        input_report_key(dev, wacom->tool[idx], 1);
-        input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
+
+	input_report_key(dev, wacom->tool[idx], 1);
+	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 	input_sync(dev);
 
 exit:
@@ -565,22 +540,22 @@ exit:
 
 static void wacom_intuos3_irq(struct urb *urb, struct pt_regs *regs)
 {
-        struct wacom *wacom = urb->context;
-        unsigned char *data = wacom->data;
-        struct input_dev *dev = &wacom->dev;
-        unsigned int t;
-        int idx, retval;
+	struct wacom *wacom = urb->context;
+	unsigned char *data = wacom->data;
+	struct input_dev *dev = &wacom->dev;
+	unsigned int t;
+	int idx, retval;
 
-        switch (urb->status) {
-        case 0:
-                /* success */
-                break;
-        case -ECONNRESET:
-        case -ENOENT:
-        case -ESHUTDOWN:
-                /* this urb is terminated, clean up */
-                dbg("%s - urb shutting down with status: %d", __FUNCTION__, urb->status);
-                return;
+	switch (urb->status) {
+	case 0:
+		/* success */
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+		/* this urb is terminated, clean up */
+		dbg("%s - urb shutting down with status: %d", __FUNCTION__, urb->status);
+		return;
 	default:
 		dbg("%s - nonzero urb status received: %d", __FUNCTION__, urb->status);
 		goto exit;
@@ -590,9 +565,8 @@ static void wacom_intuos3_irq(struct urb *urb, struct pt_regs *regs)
 	if (data[0] != 2 && data[0] != 5 && data[0] != 12)
 	{
 		printk(KERN_INFO "wacom_intuos3_irq: received unknown report #%d\n", data[0]);
-		wacom_request_reset(wacom);
-		goto exit;
-        }
+		return;
+	}
 	input_regs(dev, regs);
 
 	/* tool index is always 0 here since there is no dual input tool */
@@ -732,39 +706,39 @@ exit:
 	retval = usb_submit_urb (urb, GFP_ATOMIC);
 	if (retval)
 		err ("%s - usb_submit_urb failed with result %d",
-			__FUNCTION__, retval);
+		    __FUNCTION__, retval);
 }
 
 struct wacom_features wacom_features[] = {
 	{ "Wacom Penpartner",    7,   5040,  3780,  255, 32, 0, wacom_penpartner_irq },
-        { "Wacom Graphire",      8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
+	{ "Wacom Graphire",      8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
 	{ "Wacom Graphire2 4x5", 8,  10206,  7422,  511, 32, 1, wacom_graphire_irq },
- 	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 32, 1, wacom_graphire_irq },
-        { "Wacom Graphire3 4x5", 8,  10208,  7424,  511, 32, 1, wacom_graphire_irq },
-        { "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, 1, wacom_graphire_irq },
-  	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 15, 2, wacom_intuos_irq },
- 	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 15, 2, wacom_intuos_irq },
- 	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 15, 2, wacom_intuos_irq },
- 	{ "Wacom Intuos 12x12", 10,  30480, 31680, 1023, 15, 2, wacom_intuos_irq },
- 	{ "Wacom Intuos 12x18", 10,  45720, 31680, 1023, 15, 2, wacom_intuos_irq },
- 	{ "Wacom PL400",         8,   5408,  4056,  255, 32, 3, wacom_pl_irq },
- 	{ "Wacom PL500",         8,   6144,  4608,  255, 32, 3, wacom_pl_irq },
- 	{ "Wacom PL600",         8,   6126,  4604,  255, 32, 3, wacom_pl_irq },
- 	{ "Wacom PL600SX",       8,   6260,  5016,  255, 32, 3, wacom_pl_irq },
- 	{ "Wacom PL550",         8,   6144,  4608,  511, 32, 3, wacom_pl_irq },
- 	{ "Wacom PL800",         8,   7220,  5780,  511, 32, 3, wacom_pl_irq },
+	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 32, 1, wacom_graphire_irq },
+	{ "Wacom Graphire3 4x5", 8,  10208,  7424,  511, 32, 1, wacom_graphire_irq },
+	{ "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, 1, wacom_graphire_irq },
+	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Intuos 12x12", 10,  30480, 31680, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Intuos 12x18", 10,  45720, 31680, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom PL400",         8,   5408,  4056,  255, 32, 3, wacom_pl_irq },
+	{ "Wacom PL500",         8,   6144,  4608,  255, 32, 3, wacom_pl_irq },
+	{ "Wacom PL600",         8,   6126,  4604,  255, 32, 3, wacom_pl_irq },
+	{ "Wacom PL600SX",       8,   6260,  5016,  255, 32, 3, wacom_pl_irq },
+	{ "Wacom PL550",	 8,   6144,  4608,  511, 32, 3, wacom_pl_irq },
+	{ "Wacom PL800",	 8,   7220,  5780,  511, 32, 3, wacom_pl_irq },
 	{ "Wacom Intuos2 4x5",   10, 12700, 10600, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 15, 2, wacom_intuos_irq },
 	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 15, 2, wacom_intuos_irq },
-        { "Wacom Volito",        8,   5104,  3712,  511, 32, 1, wacom_graphire_irq },
-        { "Wacom Cintiq Partner",8,  20480, 15360,  511, 32, 3, wacom_ptu_irq },
-	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 15, 2, wacom_intuos_irq },
+	{ "Wacom Volito",        8,   5104,  3712,  511, 32, 1, wacom_graphire_irq },
+	{ "Wacom Cintiq Partner",8,  20480, 15360,  511, 32, 3, wacom_ptu_irq },
 	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 15, 4, wacom_intuos3_irq },
 	{ "Wacom Intuos3 6x8",   10, 40640, 30480, 1023, 15, 4, wacom_intuos3_irq },
 	{ "Wacom Intuos3 9x12",  10, 60960, 45720, 1023, 15, 4, wacom_intuos3_irq },
- 	{ }
+	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 15, 2, wacom_intuos_irq },
+	{ }
 };
 
 struct usb_device_id wacom_ids[] = {
@@ -772,8 +746,8 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x10) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x11) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x12) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x20) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x21) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x22) },
@@ -791,11 +765,11 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x44) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x45) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x60) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB0) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB1) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB2) },
-        { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB0) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB1) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB2) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ }
 };
 
@@ -809,16 +783,17 @@ static int wacom_open(struct input_dev *dev)
 		return 0;
 
 	wacom->irq->dev = wacom->usbdev;
-	if (usb_submit_urb(wacom->irq, GFP_KERNEL))
+	if (usb_submit_urb(wacom->irq, GFP_KERNEL)) {
+		wacom->open--;
 		return -EIO;
-
+	}
 	return 0;
 }
 
 static void wacom_close(struct input_dev *dev)
 {
 	struct wacom *wacom = dev->private;
-
+	
 	if (!--wacom->open)
 		usb_unlink_urb(wacom->irq);
 }
@@ -827,6 +802,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 {
 	struct usb_device *dev = interface_to_usbdev(intf);
 	struct usb_endpoint_descriptor *endpoint;
+	char rep_data[2] = {0x02, 0x02};
 	struct wacom *wacom;
 	char path[64];
 
@@ -892,7 +868,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	wacom->dev.absmax[ABS_TILT_Y] = 127;
 	wacom->dev.absmax[ABS_WHEEL] = 1023;
 
-	wacom->dev.absmin[ABS_RX] = 4097;
+	wacom->dev.absmax[ABS_RX] = 4097;
 	wacom->dev.absmax[ABS_RY] = 4097;
 	wacom->dev.absmin[ABS_RZ] = -900;
 	wacom->dev.absmax[ABS_RZ] = 899;
@@ -932,7 +908,14 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 	input_register_device(&wacom->dev);
 
-	wacom_request_reset(wacom);
+	/* ask the tablet to report tablet data */
+	usb_set_report(intf, 3, 2, rep_data, 2);
+	/* repeat once (not sure why the first call often fails) */
+	usb_set_report(intf, 3, 2, rep_data, 2);
+
+	/* ask the tablet to report tool id */
+ 	usb_set_report(wacom->intf, 3, 5, 0, 0);
+	usb_set_report(wacom->intf, 3, 6, 0, 0);
 
 	printk(KERN_INFO "input: %s on %s\n", wacom->features->name, path);
 

@@ -1,5 +1,5 @@
 README
-Oct. 06, 2004
+Nov. 02, 2004
 
 ==============================================================================
 
@@ -46,20 +46,33 @@ the website for more information on where specific drivers belong.
 
     [root@haku linuxwacom-dev] # ./configure
     [root@haku linuxwacom-dev] # make
-    [root@haku linuxwacom-dev] # make install (will install wacom_drv.o and wacomcpl)
+    [root@haku linuxwacom-dev] # make install 
+
+Note: "make install" will install wacom_drv.o, xidump, wacdump, and wacomcpl.
 
 There are many options, and configure will attempt to guess the correct
-values for most of them.  By default, only wacom_drv.o and wacdump
+values for most of them.  By default, only wacom_drv.o, xidump, and wacdump
 program are built.
 
 REQUIREMENTS:
 
-wacom.o, hid.o, and usbmouse are kernel modules and require the kernel
-sources to be present.  On a Redhat 8.0 system with the kernel-sources
+wacom, hid, evdev, mousedev, and usbmouse are kernel modules and require the 
+kernel sources to be present.  On a Redhat 8.0 system with the kernel-sources
 RPM installed, the source directory is located at /usr/src/linux-2.4.
 The wacdump configuration script will search for this directory
 automatically as well as /usr/src/linux.  You can override the directory
 using the --with-kernel=<directory> option.
+
+For kernel 2.6.x, a kernel source with which your tablet is going to run should 
+be precompiled before configuring linuxwacom package. For the steps to build a 
+kernel from source, please refer to your source's README or www.kernel.org. For 
+kernels newer than 2.6.4 (and you are not using Intuos3), wacom.c and hid-core.c 
+are up to date, that is, you probably don't need to build the kernel. But, if you 
+want to use the "hotplug" feature of the tablet, you need to build evdev from this 
+package. If mousedev and/or usbmouse are used by your running kernel, you need to 
+build these pieces since they will let mouse driver ignore Wacom tablet so Wacom 
+driver can take control of the tablet. Please DO NOT compile and load usbmouse 
+module if your system did not load it.
 
 wacom_drv.o requires the XFree86 sources as well as a functional XF86
 build environment.  Since this is a more complicated setup and few people
@@ -132,7 +145,8 @@ for kernels older than 2.4.22:
     [root@haku linuxwacom-dev] # cp src/2.4/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
     [root@haku linuxwacom-dev] # cp src/2.4/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
 
-for kernel 2.6
+for kernel 2.6.x
+
     [root@haku linuxwacom-dev] # cd kernel_src_dir
     [root@haku linuxwacom-dev] # make install
     [root@haku linuxwacom-dev] # make modules_install

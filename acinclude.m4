@@ -141,9 +141,21 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
 				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\"`
-				if test $MINOR -ge 4; then
+				if test $MINOR -ge 9; then
+					WCM_KERNEL_VER="2.6.9"
+				elif test $MINOR -eq 8; then
+					WCM_KERNEL_VER="2.6.8"
+				elif test $MINOR -eq 7; then
+					WCM_KERNEL_VER="2.6.7"
+				elif test $MINOR -eq 6; then
 					WCM_KERNEL_VER="2.6.6"
-				elif test $MINOR -ge 2; then
+				elif test $MINOR -eq 5; then
+					WCM_KERNEL_VER="2.6.5"
+				elif test $MINOR -eq 4; then
+					WCM_KERNEL_VER="2.6.4"
+				elif test $MINOR -eq 3; then
+					WCM_KERNEL_VER="2.6.3"
+				elif test $MINOR -eq 2; then
 					WCM_KERNEL_VER="2.6.2"
 				else
 					WCM_KERNEL_VER="2.6"

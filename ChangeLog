@@ -1,3 +1,7 @@
+2004-11-02    Ping Cheng <pingc@wacom.com>
+	* Added subdirs for each kernel 2.6.x
+	* Updated web scripts
+
 2004-10-15    Ping Cheng <pingc@wacom.com>
 	* Fixed Intuos3 pressure bug
 

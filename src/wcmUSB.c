@@ -380,6 +380,11 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 				return !Success;
 			}
 			common->wcmMaxX = nValues[2];
+			if (common->wcmMaxX <= 0)
+			{
+				ErrorF("WACOM: xmax value is wrong.\n");
+				return !Success;
+			}
 		}
 
 		/* max y */
@@ -391,6 +396,11 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 				return !Success;
 			}
 			common->wcmMaxY = nValues[2];
+			if (common->wcmMaxY <= 0)
+			{
+				ErrorF("WACOM: ymax value is wrong.\n");
+				return !Success;
+			}
 		}
 
 		/* max z cannot be configured */
@@ -400,6 +410,16 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 			return !Success;
 		}
 		common->wcmMaxZ = nValues[2];
+		if (common->wcmMaxZ <= 0)
+		{
+			ErrorF("WACOM: press max value is wrong.\n");
+			return !Success;
+		}
+	}
+	else
+	{
+		ErrorF("WACOM: unable to ioctl max values.\n");
+		return !Success;
 	}
 
 	return Success;
