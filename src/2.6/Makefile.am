@@ -33,3 +33,6 @@ evdev.o :
 		cd $(KERNEL_DIR); make; cd $(WCM_WACOM_DIR)/src/2.6; \
 		cp -f $(KERNEL_DIR)/drivers/usb/input/wacom.o .; \
 	fi
+
+clean:
+	rm -f *.o core *.core

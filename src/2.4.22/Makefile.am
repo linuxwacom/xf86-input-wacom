@@ -2,9 +2,6 @@ noinst_SCRIPTS = @WCM_MODULES@
 
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o
 
-EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
-		input.c usbmouse.c 
-
 KERNEL_DIR=@WCM_KERNELDIR@
 DEBUG_FLAGS = -D__JEJ_DEBUG
 MODS = @WCM_MODVER@
@@ -59,3 +56,6 @@ mousedev.o: mousedev.c Makefile
 input.o: input.c Makefile
 	$(CC) -I$(KERNEL_DIR)/include $(KCFLAGS) \
 		-DKBUILD_BASENAME=input -c -o input.o input.c
+
+clean:
+	rm -f *.o core *.core

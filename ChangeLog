@@ -1,3 +1,6 @@
+2004-02-05    Ping Cheng <pingc@wacom.com>
+	* Work around for 2.4.24 support (Marek Olszewski)
+
 2004-02-04    Ping Cheng <pingc@wacom.com>
 	* Released version 0.6.0
 

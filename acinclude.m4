@@ -131,7 +131,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
 		ISVER=`echo $moduts | grep -c "2.4"` 
 		if test "$ISVER" -gt 0; then
-			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d.`
+			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\"`
 			if test $MINOR -ge 22; then
 				WCM_KERNEL_VER="2.4.22"
 			else
