@@ -1,3 +1,9 @@
+2004-06-04    Ping Cheng <pingc@wacom.com>
+	* Updated configure.in for option verification
+	* Removed XFree86/xorg.conf 3.x code
+	* Fixed XF86Config multi-word identifier issue
+	* Fixed warnings in X.org 6.7.0
+
 2004-05-24    Ping Cheng <pingc@wacom.com>
         * Merged changes from 2.6.6 kernel Dan Bullok <dan.devel@bullok.com>
 	* Support protocol V dual input for both serial and USB

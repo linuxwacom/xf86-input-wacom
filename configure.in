@@ -1,6 +1,6 @@
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.6.3)
+AM_INIT_AUTOMAKE(linuxwacom, 0.6.4)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -321,12 +321,16 @@ if test "$enable_input" != "no"; then
 		echo "*** Unable to compile input.o without kernel build environment"
 		echo "*** input.o will not be built"
 		echo "***"
-	else
+	elif test "$WCM_KERNEL_VER" = "2.4" || test "$WCM_KERNEL_VER" = "2.4.22" ; then
 		WCM_OPTION_INPUT=yes
-		if test "$WCM_KERNEL_VER" != "2.4"; then
+		if test "$WCM_KERNEL_VER" = "2.4.22" ; then
 			cp $WCM_KERNELDIR/drivers/input/input.c src/2.4.22
 		fi
 		WCM_MODULES="$WCM_MODULES input.o"
+	else
+		echo "***"; echo "*** WARNING:";
+		echo "*** No need to build input.o for kernel 2.6"
+		echo "***"
 	fi
 fi
 

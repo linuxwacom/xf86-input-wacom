@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacomcfg.c
 **
-** Copyright (C) 2003 - John E. Joganic
+** Copyright (C) 2003-2004 - John E. Joganic
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -19,6 +19,7 @@
 **
 ** REVISION HISTORY
 **   2003-05-02 0.0.1 - JEJ - created
+**   2004-05-28 0.0.2 - PC - updated WacomConfigListDevices
 **
 ****************************************************************************/
 
@@ -169,6 +170,7 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 	/* populate data */
 	pInfo = (WACOMDEVICEINFO*)pReq;
 	nPos = nCount * sizeof(WACOMDEVICEINFO);
+	nCount = 0;
 	for (i=0; i<pCfg->nDevCnt; ++i)
 	{
 		/* ignore non-extension devices */
@@ -180,7 +182,7 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 		memcpy(pReq+nPos,pCfg->pDevs[i].name,nLen+1);
 		nPos += nLen + 1;
 
-		/* guess type for now - don't discard unknowns */
+		/* guess type for now - discard unknowns */
 		for (j=0; j<strlen(pInfo->pszName); j++)
 			devName[j] = tolower(pInfo->pszName[j]);
 		devName[j] = '\0';
@@ -193,7 +195,11 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 		else
 			pInfo->type = WACOMDEVICETYPE_UNKNOWN;
 
-		++pInfo;
+		if ( pInfo->type != WACOMDEVICETYPE_UNKNOWN )
+		{
+			++pInfo;
+			++nCount;
+		}
 	}
 
 	/* double check our work */
@@ -266,6 +272,8 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 	DEVICE* pInt = (DEVICE*)hDevice;
 	int nValues[2];
 	XDeviceResolutionControl c;
+	XDeviceResolutionControl* cp = &c;
+	XDeviceControl* dc = (XDeviceControl*)cp;
 
 	nValues[0] = nParam;
 	nValues[1] = nValue;
@@ -284,7 +292,7 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 		pInt->pCfg->pDisp,
 		pInt->pDev,
 		DEVICE_RESOLUTION,
-		(XDeviceControl*)&c);
+		dc);
 
 	/* Convert error codes */
 	if (nReturn == BadValue)

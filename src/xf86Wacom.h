@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -29,17 +29,6 @@
 #include <xf86Version.h>
 #include <Xwacom.h>
 
-/* This driver can be compiled for the 4.x API (technically versions
- * beginning at 3.9) or the older API which ended around version 3.3. */
-
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
-#define XFREE86_V4 1
-#define XFREE86_V3 0
-#else
-#define XFREE86_V3 1
-#define XFREE86_V4 0
-#endif
-
 /*****************************************************************************
  * Linux Input Support
  ****************************************************************************/
@@ -48,7 +37,7 @@
 #include <asm/types.h>
 #include <linux/input.h>
 
-/* 2.4.5 module support */
+/* 2.5 module support */
 #ifndef EV_MSC
 #define EV_MSC 0x04
 #endif
@@ -74,7 +63,6 @@
  * XFree86 V4.x Headers
  ****************************************************************************/
 
-#if XFREE86_V4
 #ifndef XFree86LOADER
 #include <unistd.h>
 #include <errno.h>
@@ -96,53 +84,6 @@
 #ifdef XFree86LOADER
 #include <xf86Module.h>
 #endif
-
-/*****************************************************************************
- * XFree86 V3.x Headers
- ****************************************************************************/
-
-#elif XFREE86_V3
-
-#include <Xos.h>
-#include <signal.h>
-#include <stdio.h>
-
-#define NEED_EVENTS
-#include <X.h>
-#include <Xproto.h>
-#include <misc.h>
-#include <inputstr.h>
-#include <scrnintstr.h>
-#include <XI.h>
-#include <XIproto.h>
-#include <keysym.h>
-
-#if defined(sun) && !defined(i386)
-#define POSIX_TTY
-#include <errno.h>
-#include <termio.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <extio.h>
-
-#else /* not sun or i386 */
-
-#include <compiler.h>
-#include <xf86.h>
-#include <xf86Procs.h>
-#include <xf86_OSlib.h>
-#include <xf86_Config.h>
-#include <xf86Xinput.h>
-#include <atKeynames.h>
-#include <xf86Version.h>
-#include <osdep.h>
-#include <exevents.h>
-#include <extnsionst.h>
-#include <extinit.h>
-#endif /* not sun or i386 */
-
-#endif /* XFREE86_V3 */
 
 /*****************************************************************************
  * QNX support
@@ -227,20 +168,10 @@ typedef struct _WacomDeviceClass WacomDeviceClass, *WacomDeviceClassPtr;
  *               global namespaces as clean as possible.
  *****************************************************************************/
 
-#if XFREE86_V4
 struct _WacomModule4
 {
 	InputDriverPtr wcmDrv;
 };
-#endif
-
-#if XFREE86_V3
-struct _WacomModule3
-{
-	int __unused;
-};
-#endif
-
 
 struct _WacomModule
 {
@@ -248,11 +179,7 @@ struct _WacomModule
 	KeySym* keymap;
 	const char* identification;
 
-	#if XFREE86_V4
 	WacomModule4 v4;
-	#elif XFREE86_V3
-	WacomModule3 v3;
-	#endif
 
 	int (*DevOpen)(DeviceIntPtr pWcm);
 	void (*DevReadInput)(LocalDevicePtr local);
@@ -539,8 +466,6 @@ struct _WacomCommonRec
  * XFree86 V4 Inlined Functions and Prototypes
  ****************************************************************************/
 
-#if XFREE86_V4
-
 #define xf86WcmFlushTablet(fd) xf86FlushInput(fd)
 #define xf86WcmWaitForTablet(fd) xf86WaitForInput((fd), 1000000)
 #define xf86WcmOpenTablet(local) xf86OpenSerial((local)->options)
@@ -555,24 +480,6 @@ struct _WacomCommonRec
 #define xf86Verbose 1
 #undef PRIVATE
 #define PRIVATE(x) XI_PRIVATE(x)
-
-/*****************************************************************************
- * XFree86 V3 Inlined Functions and Prototypes
- ****************************************************************************/
-
-#elif XFREE86_V3
-
-extern int atoi(const char*);
-int xf86WcmFlushTablet(int fd);
-int xf86WcmWaitForTablet(int fd);
-int xf86WcmOpenTablet(LocalDevicePtr local);
-int xf86WcmSetSerialSpeed(int fd, int rate);
-
-#define xf86WcmRead(a,b,c) read((a),(b),(c))
-#define xf86WcmWrite(a,b,c) write((a),(b),(c))
-#define xf86WcmClose(a) close(a)
-
-#endif
 
 /*****************************************************************************
  * General Inlined functions and Prototypes
@@ -607,4 +514,4 @@ Bool xf86WcmOpen(LocalDevicePtr local);
 	/* dispatches data to XInput event system */
 
 /****************************************************************************/
-#endif /* __XF86_XF86WACOM_H */
+#endif /* __XF86WACOM_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
  *									    
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -57,7 +57,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 {
-#if XFREE86_V4
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
@@ -184,7 +183,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
 		priv->currentScreen, screenToSet));
 	priv->currentScreen = screenToSet;
-#endif
 }
 
 /*****************************************************************************
@@ -441,12 +439,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	y += doffsetY;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
-		"button=%s\tbuttons=%d\n",
+		"button=%s\tbuttons=%d\t on channel=%d\n",
 		local->name,
 		is_absolute ? "abs" : "rel",
 		is_proximity,
 		x, y, z,
-		is_button ? "true" : "false", buttons));
+		is_button ? "true" : "false", buttons, channel));
 
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
@@ -601,7 +599,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 				int macro = z / 2;
 
 				DBG(6, ErrorF("macro=%d buttons=%d "
-					"wacom_map[%d]=%x\n",
+					"wacom_map[%d]=%lx\n",
 					macro, buttons, macro,
 					gWacomModule.keymap[macro]));
 
@@ -760,7 +758,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = (int)GetTimeInMillis();
 
-	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%p x=%d y=%d b=%d "
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%x x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,
@@ -772,7 +770,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample));
 
 	DBG(11, ErrorF("filter %d, %p\n",RAW_FILTERING(common),
-		common->wcmModel->FilterRaw));
+		(void *)common->wcmModel->FilterRaw));
 
 	/* Filter raw data, fix hardware defects, perform error correction */
 	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
@@ -786,10 +784,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	/* Discard unwanted data */
-	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
+	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds) && pChannel->nSamples == 4)
 	{
-		DBG(10, ErrorF("Suppressing data according to filter\n"));
-
 		/* If throttle is not in use, discard data. */
 		if (ABS(ds.throttle) < common->wcmSuppress)
 		{
@@ -820,10 +816,9 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
 	/* don't send the first sample due to the first USB package issue*/
-	if ( pChannel->nSamples != 1 )
+	if ( (pChannel->nSamples != 1) || (common->wcmDevCls != &gWacomUSBDevice) )
 	{
 		commonDispatchDevice(common,channel,pChannel);
-
 		resetSampleCounter(pChannel);
 	}
 }
@@ -866,7 +861,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
-	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",pDev,pLastDev));
+	DBG(11, ErrorF("commonDispatchEvents: %p %p\n",(void *)pDev,(void *)pLastDev));
 
 	/* if the logical device of the same physical tool has changed,
 	 * send proximity out to the previous one */
@@ -1052,7 +1047,6 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 
 	return Success;
 }
-
 
 /*****************************************************************************
 ** Transformations

@@ -78,10 +78,6 @@ void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 		x1/100.0, y1/100.0,     /* control point 2 */
 		1.0, 1.0);              /* top right */
 
-	for (i=0; i<=FILTER_PRESSURE_RES; i+=128)
-		DBG(6, ErrorF("PRESSCURVE: %d=%d (%d)\n",i,pDev->pPressCurve[i],
-			pDev->pPressCurve[i] - i));
-
 	pDev->nPressCtrl[0] = x0;
 	pDev->nPressCtrl[1] = y0;
 	pDev->nPressCtrl[2] = x1;
@@ -219,14 +215,14 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1)
 
 static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds)
 {
-	if (!state->npoints)
+	if (state->npoints < 3)
 	{
+		state->x[state->npoints] = ds->x;
+		state->y[state->npoints] = ds->y;
+		state->tiltx[state->npoints] = ds->tiltx;
+		state->tilty[state->npoints] = ds->tilty;
 		++state->npoints;
-		DBG(2,ErrorF("filterIntuosStylus: first sample NO_FILTER\n"));
-		state->x[0] = state->x[1] = state->x[2] = ds->x;
-		state->y[0] = state->y[1] = state->y[2] = ds->y;
-		state->tiltx[0] = state->tiltx[1] = state->tiltx[2] = ds->tiltx;
-		state->tilty[0] = state->tilty[1] = state->tilty[2] = ds->tilty;
+		DBG(11,ErrorF("filterIntuosStylus: first %d sample(s) NO_FILTER\n", state->npoints));
 		return;
 	}
 
@@ -345,12 +341,12 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
-	if (!pChannel->rawFilter.npoints)
+	if (pChannel->rawFilter.npoints<3)
 	{
+		x[pChannel->rawFilter.npoints] = ds->x;
+		y[pChannel->rawFilter.npoints] = ds->y;
 		++pChannel->rawFilter.npoints;
-		DBG(2,ErrorF("xf86WcmFilterCoord: first sample NO_FILTER\n"));
-		x[0] = x[1] = x[2] = ds->x;
-		y[0] = y[1] = y[2] = ds->y;
+		DBG(11,ErrorF("xf86WcmFilterCoord: first %d samples NO_FILTER\n", pChannel->rawFilter.npoints));
 		return 0;
 	}
 

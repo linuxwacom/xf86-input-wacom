@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -43,13 +43,6 @@
  */
 
 /*
- * TO XFREE86 THE MAINTAINERS: don't remove the 3.3 code as I continue
- * to maintain it. Discuss with me before changing things in this driver!
- *
- *  Fred
- */
-
-/*
  * REVISION HISTORY
  *
  * 2002-12-17 26-j0.3.3 - added Intuos2
@@ -83,13 +76,14 @@
  * 2003-11-10 26-j0.5.23 - support kernel 2.4.22 and user specified tcl/tk src dir
  * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
  * 2003-12-10 26-j0.5.25 - support kernel 2.6
- * 2003-12-10 26-j0.5.26 - added double click speed and radius
+ * 2003-01-10 26-j0.5.26 - added double click speed and radius
  * 2004-02-02 26-j0.6.0  - new release
- * 2004-02-02 26-j0.6.1  - new release
- * 2004-02-02 26-j0.6.2  - new release
+ * 2004-03-02 26-j0.6.1  - new release
+ * 2004-04-04 26-j0.6.2  - new release
+ * 2004-05-25 26-j0.6.3  - new release
 */
 
-static const char identification[] = "$Identification: 26-j0.6.2 $";
+static const char identification[] = "$Identification: 26-j0.6.4 $";
 
 /****************************************************************************/
 
@@ -175,17 +169,7 @@ WacomModule gWacomModule =
 	0,          /* debug level */
 	wacom_map,  /* key map */
 	identification, /* version */
-
-	/* XFree86 V4 specific variables */
-	#if XFREE86_V4
-	{
-		NULL,   /* input driver pointer */
-	},
-	#elif XFREE86_V3
-	{
-		0,      /* unused */
-	},
-	#endif
+	{ NULL, },   /* input driver pointer */
 
 	/* device procedures */
 	xf86WcmDevOpen,
@@ -529,7 +513,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 
 	DBG(2, ErrorF("BEGIN xf86WcmProc dev=%p priv=%p "
 			"type=%s flags=%d what=%d\n",
-			pWcm, priv,
+			(void *)pWcm, (void *)priv,
 			IsStylus(priv) ? "stylus" :
 			IsCursor(priv) ? "cursor" :
 			"eraser", priv->flags, what));
@@ -537,7 +521,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	switch (what)
 	{
 		case DEVICE_INIT: 
-			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=INIT\n", pWcm));
+			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=INIT\n", (void *)pWcm));
 
 			nbaxes = 6;  /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 
@@ -603,10 +587,6 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			{
 				/* allocate motion history buffer if needed */
 				xf86MotionHistoryAllocate(local);
-#if XFREE86_V3
-				AssignTypeAndName(pWcm, local->atom,
-						local->name);
-#endif
 			}
 
 			/* open the device to gather informations */
@@ -614,12 +594,12 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			{
 				/* Sometimes PL does not open the first time */
 				DBG(1, ErrorF("xf86WcmProc try to open "
-						"pWcm=%p again\n", pWcm));
+						"pWcm=%p again\n", (void *)pWcm));
 				if (!xf86WcmDevOpen(pWcm))
 				{
 					DBG(1, ErrorF("xf86WcmProc "
 						"pWcm=%p what=INIT FALSE\n",
-						pWcm));
+						(void *)pWcm));
 					return !Success;
 				}
 			}
@@ -627,33 +607,25 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 
 		case DEVICE_ON:
 			DBG(1, ErrorF("xf86WcmProc fd=%d pWcm=%p what=ON\n",
-				local->fd, pWcm));
+				local->fd, (void *)pWcm));
 
 			if ((local->fd < 0) && (!xf86WcmDevOpen(pWcm)))
 			{
 				pWcm->inited = FALSE;
 				return !Success;
 			}
-#if XFREE86_V4     
 			xf86AddEnabledDevice(local);
-#else
-			AddEnabledDevice(local->fd);
-#endif
 			pWcm->public.on = TRUE;
 			break;
 
 		case DEVICE_OFF:
 		case DEVICE_CLOSE:
-			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=%s\n", pWcm,
+			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=%s\n", (void *)pWcm,
 				(what == DEVICE_CLOSE) ?  "CLOSE" : "OFF"));
 
 			if (local->fd >= 0)
 			{
-#if XFREE86_V4     
 				xf86RemoveEnabledDevice(local);
-#else
-				RemoveEnabledDevice(local->fd);
-#endif
 				xf86WcmDevClose(local);
 			}
 			pWcm->public.on = FALSE;
@@ -665,7 +637,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	} /* end switch */
 
 	DBG(2, ErrorF("END xf86WcmProc Success what=%d dev=%p priv=%p\n",
-			what, pWcm, priv));
+			what, (void *)pWcm, (void *)priv));
 
 	return Success;
 }
@@ -892,8 +864,9 @@ static int xf86WcmOptionCommandToFile(LocalDevicePtr local)
 		if ( s && !IsCursor(priv) )
 		{
 			sscanf(s, "%d,%d,%d,%d", &p1, &p2, &p3, &p4);
-			fprintf(fp, "xsetwacom set %s PressCurve %d %d %d %d\n", 
-				local->name, p1, p2, p3, p4);
+			if ( p1 || p2 || p3 != 100 || p4 != 100 )
+				fprintf(fp, "xsetwacom set %s PressCurve %d %d %d %d\n", 
+					local->name, p1, p2, p3, p4);
 		}
 
         	s = xf86FindOptionValue(local->options, "Mode");
@@ -1040,7 +1013,7 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	LocalDevicePtr local = (LocalDevicePtr)dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(3, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", dev, mode));
+	DBG(3, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", (void *)dev, mode));
 
 	if (mode == Absolute)
 		priv->flags |= ABSOLUTE_FLAG;
@@ -1049,7 +1022,7 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	else
 	{
 		DBG(10, ErrorF("xf86WcmSwitchMode dev=%p invalid mode=%d\n",
-				dev, mode));
+				(void *)dev, mode));
 		return BadMatch;
 	}
 
@@ -1085,7 +1058,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		}
 		case 4: /* JEJ - test */
 		{
-			DBG(10,ErrorF("xf86WcmChangeControl: %p,%p\n",
+			DBG(10,ErrorF("xf86WcmChangeControl: %x,%x\n",
 				param,value));
 			return xf86WcmSetParam(local,param,value);
 		}
