@@ -1266,17 +1266,91 @@ static int serialStartTablet(WacomCommonPtr common, int fd)
 	return Success;
 }
 
+/*****************************************************************************
+ * filterIntuosCoord --
+ *   Correct some hardware defects we've been seeing in Intuos pads,
+ *   but also cuts down quite a bit on jitter.
+ ****************************************************************************/
+
+static int filterIntuosCoord(WacomFilterState* state, int coord, int tilt)
+{
+	int tilt_filtered;
+	int ts;
+	int x0_pred;
+	int x0_pred1;
+	int x0, x1, x2, x3;
+	int x;
+    
+	tilt_filtered = tilt + state->tilt[0] + state->tilt[1] + state->tilt[2];
+	state->tilt[2] = state->tilt[1];
+	state->tilt[1] = state->tilt[0];
+	state->tilt[0] = tilt;
+    
+	x0 = coord;
+	x1 = state->coord[0];
+	x2 = state->coord[1];
+	x3 = state->coord[2];
+	state->coord[0] = x0;
+	state->coord[1] = x1;
+	state->coord[2] = x2;
+    
+	ts = tilt_filtered >= 0 ? 1 : -1;
+    
+	if (state->state == 0 || state->state == 3)
+	{
+		x0_pred = 2 * x1 - x2;
+		x0_pred1 = 3 * x2 - 2 * x3;
+		if (ts * (x0 - x0_pred) > 12 && ts * (x0 - x0_pred1) > 12)
+		{
+			/* detected a jump at x0 */
+			state->state = 1;
+			x = x1;
+		}
+		else if (state->state == 0)
+		{
+			x = (7 * x0 + 14 * x1 + 15 * x2 - 4 * x3 + 16) >> 5;
+		}
+		else
+		{
+			/* state->state == 3 
+			 * a jump at x3 was detected */
+			x = (x0 + 2 * x1 + x2 + 2) >> 2;
+			state->state = 0;
+		}
+	}
+	else if (state->state == 1)
+	{
+		/* a jump at x1 was detected */
+		x = (3 * x0 + 7 * x2 - 2 * x3 + 4) >> 3;
+		state->state = 2;
+	}
+	else
+	{
+		/* state->state == 2 
+		 * a jump at x2 was detected */
+		x = x1;
+		state->state = 3;
+	}
+
+	return x;
+}
+
 static int serialFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds)
 {
 	/* Only error correction should happen here. If there's a problem that
 	 * cannot be fixed, return 1 such that the data is discarded. */
 
-	DBG(10, ErrorF("serialFilterIntuos %d\n",ds->buttons));
+	int x, y;
+	x = filterIntuosCoord(&pChannel->filter_x,ds->x,ds->tiltx);
+	y = filterIntuosCoord(&pChannel->filter_y,ds->y,ds->tilty);
 
+	if ((x != ds->x) || (y != ds->y))
+		DBG(10,ErrorF("serialFilterIntuos: %d,%d => %d,%d\n",
+			x,y,ds->x,ds->y));
 
-	if (ds->buttons & 16)
-		return 1; /* strike out data */
+	ds->x = x;
+	ds->y = y;
 
 	return 0; /* lookin' good */
 }
@@ -1286,6 +1360,9 @@ static int serialFilterGraphire(WacomCommonPtr common, WacomChannelPtr pChannel,
 {
 	/* Only error correction should happen here. If there's a problem that
 	 * cannot be fixed, return 1 such that the data is discarded. */
+
+	/* JEJ - Graphire filtering appears to be nothing
+	 *       more than suppression so it's been removed. */
 
 	return 0; /* everything's groovy */
 }

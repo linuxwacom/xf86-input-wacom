@@ -2,7 +2,7 @@
 #\
 exec wish -f "$0" ${1+"$@"}
 #
-# wacomcpl -- Wacom Control Panel Utility to Change Configuration Setting.
+# wacomcpl-exec -- Wacom Control Panel Utility to Change Configuration Setting.
 #
 # Author	: Ping Cheng
 # Creation date	: 04/05/2003

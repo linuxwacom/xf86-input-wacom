@@ -400,6 +400,13 @@ struct _WacomDeviceState
 	int sample;	/* wraps every 24 days */
 };
 
+struct _WacomFilterState
+{
+	int tilt[3];
+	int coord[3];
+	int state;
+};
+
 struct _WacomChannel
 {
 	/* data stored in this structure is raw data from the tablet, prior
@@ -418,7 +425,9 @@ struct _WacomChannel
 		WacomDeviceState states[MAX_SAMPLES];  /* states 0..MAX */
 	} valid;
 
+	int nSamples;
 	LocalDevicePtr pDev;    /* device associated with this channel */
+	WacomFilterState filter_x, filter_y;
 };
 
 /******************************************************************************

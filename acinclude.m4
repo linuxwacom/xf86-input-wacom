@@ -1,5 +1,15 @@
 dnl Macros for configuring the Linux Wacom package
 dnl
+AC_DEFUN(AC_WCM_SET_PATHS,[
+if test "x$prefix" = xNONE
+then WCM_PREFIX=$ac_default_prefix
+else WCM_PREFIX=$prefix
+fi
+if test "x$exec_prefix" = xNONE
+then WCM_EXECDIR=$WCM_PREFIX
+else WCM_EXECDIR=$exec_prefix
+fi
+])
 AC_DEFUN(AC_WCM_CHECK_ENVIRON,[
 dnl Variables for various checks
 WCM_ARCH=unknown
@@ -14,10 +24,8 @@ WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
 WCM_ENV_GTK=no
-WCM_ENV_TCLLIB=no
-WCM_TCLDIR_DEFAULT=/usr
-WCM_ENV_TKLIB=no
-WCM_TKDIR_DEFAULT=/usr
+WCM_ENV_TCL=no
+WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6
@@ -300,61 +308,53 @@ if test "$WCM_XLIBDIR" != "no"; then
 fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TCL,[
-dnl Check for TCL development environment
-WCM_TCLDIR=
 AC_ARG_WITH(tcl,
-[  --with-tcl=dir   uses a specified TCL directory],
-[WCM_TCLDIR=$withval])
-
-dnl handle default case
-if test "$WCM_TCLDIR" == "" || test "$WCM_TCLDIR" == "yes"; then
-	AC_MSG_CHECKING(for TCL library directory)
-	if test -d $WCM_TCLDIR_DEFAULT/local/lib/tcl; then
-		WCM_TCLDIR=$WCM_TCLDIR_DEFAULT/local/lib
-		AC_MSG_RESULT(found)
-		WCM_ENV_TCLLIB=yes
-	else
-		if test -d $WCM_TCLDIR_DEFAULT/lib/tcl; then
-			WCM_TCLDIR=$WCM_TCLDIR_DEFAULT/lib
-			AC_MSG_RESULT(found)
-			WCM_ENV_TCLLIB=yes
-		else
-			AC_MSG_RESULT(not found, tried $WCM_TCLDIR_DEFAULT and $WCM_TCLDIR_DEFAULT/local)
-			echo "***"; echo "*** WARNING:"
-			echo "*** unable to find $WCM_TCLDIR_DEFAULT/lib/tcl; are the tcl development"
-			echo "*** package installed?  tcl dependencies will not be built."
-			echo "***"
-		fi
+[  --with-tcl     Override tcl check], [ WCM_USETCL=$withval ])
+if test "x$WCM_USETCL" = xyes || test "x$WCM_USETCL" == "x"; then
+	dnl Check for TCL development environment
+	AC_CHECK_HEADER(tcl.h,[WCM_ENV_TCL=yes])
+	if test "$WCM_ENV_TCL" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** The tcl development environment does not appear to"
+		echo "*** be installed. The header file tcl.h does not appear"
+		echo "*** in the include path. Do you have the tcl rpm or"
+		echo "*** equivalent package properly installed?  Some build"
+		echo "*** features will be unavailable."
+		echo "***"
+	fi
+	AC_CHECK_LIB(tcl,Tcl_Main,[],[WCM_ENV_TCL=no])
+	if test "$WCM_ENV_TCL" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** The tcl library does not appear to be installed."
+		echo "*** Do you have the tcl rpm or equivalent package"
+		echo "*** properly installed?  Some build features will"
+		echo "*** be unavailable."
+		echo "***"
 	fi
 fi
 ])
 AC_DEFUN(AC_WCM_CHECK_TK,[
-dnl Check for TK development environment
-WCM_TKDIR=
 AC_ARG_WITH(tk,
-[  --with-tk=dir   uses a specified TK directory],
-[WCM_TKDIR=$withval])
-
-dnl handle default case
-if test "$WCM_TKDIR" == "" || test "$WCM_TKDIR" == "yes"; then
-	AC_MSG_CHECKING(for TK library directory)
-	if test -d $WCM_TKDIR_DEFAULT/local/lib/tk; then
-		WCM_TKDIR=$WCM_TKDIR_DEFAULT/local/lib
-		AC_MSG_RESULT(found)
-		WCM_ENV_TKLIB=yes
-	else
-		if test -d $WCM_TKDIR_DEFAULT/lib/tk; then
-			WCM_TKDIR=$WCM_TKDIR_DEFAULT/lib
-			AC_MSG_RESULT(found)
-			WCM_ENV_TKLIB=yes
-		else
-			AC_MSG_RESULT(not found, tried $WCM_TKDIR_DEFAULT and $WCM_TKDIR_DEFAULT/local)
-			echo "***"; echo "*** WARNING:"
-			echo "*** unable to find $WCM_TKDIR_DEFAULT/lib/tk or $WCM_TKDIR_DEFAULT/local/lib/tk; "
-			echo "*** are the tk development package installed?  "
-			echo " tk dependencies will not be built."
-			echo "***"
-		fi
+[  --with-tk     Override tk check], [ WCM_USETK=$withval ])
+if test "x$WCM_USETK" = xyes || test "x$WCM_USETK" == "x"; then
+	dnl Check for TK development environment
+	AC_CHECK_HEADER(tk.h,[WCM_ENV_TK=yes])
+	if test "$WCM_ENV_TK" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** The tk development environment does not appear to"
+		echo "*** be installed. The header file tk.h does not appear"
+		echo "*** in the include path. Do you have the tk rpm or"
+		echo "*** equivalent package properly installed?  Some build"
+		echo "*** features will be unavailable."
+		echo "***"
+	fi
+	AC_CHECK_LIB(tk,Tk_MainWindow,[],WCM_ENV_TK=no)
+	if test "$WCM_ENV_TK" != "yes"; then
+		echo "***"; echo "*** WARNING:"
+		echo "*** The tk library does not appear to be installed."
+		echo "*** Do you have the tk rpm or equivalent package properly"
+		echo "*** installed?  Some build features will be unavailable."
+		echo "***"
 	fi
 fi
 ])

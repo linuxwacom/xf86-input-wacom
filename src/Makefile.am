@@ -1,3 +1,5 @@
+SUBDIRS = . wacomxi
+
 bin_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
 noinst_SCRIPTS = @WCM_MODULES@ @WCM_XF86MODULES@
 lib_LTLIBRARIES = libwacomcfg.la
@@ -5,21 +7,17 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
-tcllib_LTLIBRARIES = libwacomxi.la
-tcllibdir = @WCM_TCLDIR@/TkXInput
-tcllib_HEADERS = pkgIndex.tcl
-
-cpldir = $(bindir)
-cpl_SCRIPTS = wacomcpl
-
 AM_CFLAGS = -Wall
 
+# These identify which programs, libraries, and headers could
+# potentially be built or installed depending on the results of
+# the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
-
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o \
 		tabletdev.o \
-		wacom_drv.o wacom_drv-v3.o wacomcpl
+		wacom_drv.o wacom_drv-v3.o wacomcpl wacomcpl-exec
 
+# Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
 		wacserial.c wacserial.h \
@@ -36,10 +34,6 @@ libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
-
-libwacomxi_la_SOURCES = wacomxi.c wacomxi.h
-libwacomxi_la_LDFLAGS = -no-undefined 
-libwacomxi_la_LIBADD = @WCM_WACOMXI_LIBS@
 
 EXTRA_DIST = wacom.c hid-core.c hid-input.c hiddev.c evdev.c mousedev.c \
 		input.c tabletdev.c usbmouse.c xf86Wacom.c \

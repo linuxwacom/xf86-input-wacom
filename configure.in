@@ -14,12 +14,16 @@ dnl Targets
 WCM_PROGS=""
 WCM_LIBS=""
 WCM_TCLLIBS=""
+WCM_TCLPKGS=""
 WCM_MODULES=""
 WCM_XF86PROGS=""
 WCM_XF86MODULES=""
 WCM_EXPPROGS=""
 WCM_EXPMODULES=""
 WCM_PATCH_HID=""
+
+dnl Setup paths based on configuration parameters
+AC_WCM_SET_PATHS
 
 dnl Check architecture, kernel type
 AC_WCM_CHECK_ENVIRON
@@ -136,6 +140,10 @@ if test "$enable_xsetwacom" != "no"; then
 fi
 
 dnl Check for libwacomxi build
+WCM_WACOMXI_BINDIR=$WCM_EXECDIR/bin
+WCM_WACOMXI_LIBDIR=$WCM_EXECDIR/lib
+AC_SUBST(WCM_WACOMXI_BINDIR)
+AC_SUBST(WCM_WACOMXI_LIBDIR)
 WCM_OPTION_LIBWACOMXI=no
 AC_ARG_ENABLE(libwacomxi,
 [  --enable-wacomxi  Enable building libwacomxi             default=yes],
@@ -145,24 +153,23 @@ if test "$enable_libwacomxi" != "no"; then
 		echo "***"; echo "*** WARNING:";
 		echo "*** libwacomxi requires XLib environment; libwacomxi will not be built."
 		echo "***"
+	elif test x$WCM_ENV_TCL != xyes; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** libwacomxi requires tcl environment; libwacomxi will not be built."
+		echo "***"
+	elif test x$WCM_ENV_TK != xyes; then
+		echo "***"; echo "*** WARNING:";
+		echo "*** libwacomxi requires tk environment; libwacomxi will not be built."
+		echo "***"
 	else
-		if test x$WCM_ENV_TCLLIB != xyes; then
-			echo "***"; echo "*** WARNING:";
-			echo "*** libwacomxi requires tcl environment; libwacomxi will not be built."
-			echo "***"
-		else
-			if test x$WCM_ENV_TKLIB != xyes; then
-				echo "***"; echo "*** WARNING:";
-				echo "*** libwacomxi requires tk environment; libwacomxi will not be built."
-				echo "***"
-			else
-				WCM_OPTION_LIBWACOMXI=yes
-				WCM_WACOMXI_LIBS="-L$WCM_TCLDIR -L$WCM_TKDIR -L$WCM_XLIBDIR/lib -lX11 -lXi -ltcl -ltk"
-				WCM_TCLLIBS="libwacomxi.la"
-			fi
-		fi
+		WCM_OPTION_LIBWACOMXI=yes
+		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR/lib -lX11 -lXi -ltcl -ltk"
+		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
+		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
 	fi
 fi
+
+AM_CONDITIONAL(WACOMXI_INSTALL, test "$WCM_OPTION_LIBWACOMXI" == "yes")
 
 dnl Check for hid build
 WCM_OPTION_HID=no
@@ -398,6 +405,7 @@ echo
 AC_SUBST(WCM_PROGS)
 AC_SUBST(WCM_LIBS)
 AC_SUBST(WCM_TCLLIBS)
+AC_SUBST(WCM_TCLPKGS)
 AC_SUBST(WCM_MODULES)
 AC_SUBST(WCM_XF86PROGS)
 AC_SUBST(WCM_XF86MODULES)
@@ -406,8 +414,6 @@ AC_SUBST(WCM_EXPMODULES)
 AC_SUBST(WCM_ARCH)
 AC_SUBST(WCM_MODVER)
 AC_SUBST(WCM_KERNELDIR)
-AC_SUBST(WCM_TCLDIR)
-AC_SUBST(WCM_TKDIR)
 AC_SUBST(WCM_XF86DIR)
 AC_SUBST(WCM_XF86V3DIR)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
@@ -417,7 +423,7 @@ AC_SUBST(WCM_LIBWACOMCFG_LIBS)
 AC_SUBST(WCM_WACOMXI_LIBS)
 AC_SUBST(WCM_XSETWACOM_LIBS)
 
-AC_OUTPUT(Makefile src/Makefile)
+AC_OUTPUT(Makefile src/Makefile src/wacomxi/Makefile src/wacomxi/wacomcpl)
 
 echo ""
 echo "----------------------------------------"
@@ -428,8 +434,8 @@ echo "  module versioning - $WCM_OPTION_MODVER"
 echo "      kernel source - $WCM_ENV_KERNEL"
 echo "            XFree86 - $WCM_ENV_XF86"
 echo "               XLib - $WCM_ENV_XLIB"
-echo "             TCLLib - $WCM_ENV_TCLLIB"
-echo "             TKLib  - $WCM_ENV_TKLIB"
+echo "                TCL - $WCM_ENV_TCL"
+echo "                 TK - $WCM_ENV_TK"
 if test -n "$WCM_ENV_XF86V3"; then
 	echo "          XFree86v3 - $WCM_ENV_XF86V3"
 fi

@@ -657,6 +657,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
+	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
 	commonDispatchDevice(common,pChannel);
 }
