@@ -1002,8 +1002,8 @@ static void serialInitGraphire(WacomCommonPtr common, int fd,
 	common->wcmMaxX = 5103;
 	common->wcmMaxY = 3711;
 	common->wcmMaxZ = 511;
-	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
-	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
+	common->wcmResolX = 1016; /* tablet X resolution in points/inch */
+	common->wcmResolY = 1016; /* tablet Y resolution in points/inch */
 }
 
 static void serialInitProtocol4(WacomCommonPtr common, int fd,

@@ -366,7 +366,12 @@ static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
-	common->wcmResolX = common->wcmResolY = 1016;
+	if ( strstr(id, "Cintiq") )
+		common->wcmResolX = common->wcmResolY = 508;
+	else if ( strstr(id, "PenPartner") )
+		common->wcmResolX = common->wcmResolY = 1000;
+	else
+		common->wcmResolX = common->wcmResolY = 1016;
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 }

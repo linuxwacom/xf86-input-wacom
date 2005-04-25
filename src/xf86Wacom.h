@@ -1,6 +1,5 @@
 /*
- * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom. <L>
+ * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -269,6 +268,8 @@ struct _WacomDeviceRec
 	WacomCommonPtr common;  /* common info pointer */
     
 	/* state fields */
+	int currentX;           /* current X position */
+	int currentY;           /* current Y position */
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */

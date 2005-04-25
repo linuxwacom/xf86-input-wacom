@@ -55,16 +55,24 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
  *   combined horizontal and vertical setups
  ****************************************************************************/
 
-static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
+static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int screenToSet = 0;
 	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
-	int i, x, y;
+	int i, x, y, v0 = *value0, v1 = *value1;
 	double sizeX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
 	double sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 
-	DBG(6, ErrorF("xf86WcmSetScreen\n"));
+	DBG(6, ErrorF("xf86WcmSetScreen v0=%d v1=%d\n", *value0, *value1));
+
+	if (priv->twinview == TV_NONE && (priv->flags & ABSOLUTE_FLAG))
+	{
+		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
+			v0 < priv->topX ? 0 : v0 - priv->topX;
+		v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY :
+			v1 < priv->topY ? 0 : v1 - priv->topY;
+	}
 
 	/* set factorX and factorY for single screen setup since
 	 * Top X Y and Bottom X Y can be changed while driver is running
@@ -77,16 +85,16 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 			{
 				if (priv->twinview == TV_LEFT_RIGHT)
 				{
-					if (*v0 > priv->bottomX - priv->tvoffsetX && *v0 <= priv->bottomX)
+					if (v0 > priv->bottomX - priv->tvoffsetX && v0 <= priv->bottomX)
 						priv->currentScreen = 1;
-					if (*v0 > priv->topX && *v0 <= priv->topX + priv->tvoffsetX)
+					if (v0 > priv->topX && v0 <= priv->topX + priv->tvoffsetX)
 						priv->currentScreen = 0;
 				}
 				if (priv->twinview == TV_ABOVE_BELOW)
 				{
-					if (*v1 > priv->bottomY - priv->tvoffsetY && *v1 <= priv->bottomY)
+					if (v1 > priv->bottomY - priv->tvoffsetY && v1 <= priv->bottomY)
 						priv->currentScreen = 1;
-					if (*v1 > priv->topY && *v1 <= priv->topY + priv->tvoffsetY)
+					if (v1 > priv->topY && v1 <= priv->topY + priv->tvoffsetY)
 						priv->currentScreen = 0;
 				}
 			}
@@ -129,7 +137,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		for (i = 0; i < priv->numScreen; i++)
 		{
-			if (*v0 * totalWidth <= (leftPadding + 
+			if (v0 * totalWidth <= (leftPadding + 
 				screenInfo.screens[i]->width) * sizeX)
 			{
 				screenToSet = i;
@@ -144,10 +152,10 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 		screenToSet = priv->screen_no;
 		for (i = 0; i < screenToSet; i++)
 			leftPadding += screenInfo.screens[i]->width;
-		*v0 = (sizeX * leftPadding + *v0
+		v0 = (sizeX * leftPadding + v0
 			* screenInfo.screens[screenToSet]->width) /
 			(double)totalWidth + 0.5;
-		*v1 = *v1 * screenInfo.screens[screenToSet]->height /
+		v1 = v1 * screenInfo.screens[screenToSet]->height /
 			(double)maxHeight + 0.5;
 	}
 
@@ -155,9 +163,9 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 	{
 		priv->factorX = totalWidth/sizeX;
 		priv->factorY = maxHeight/sizeY;
-		x = (*v0 - sizeX
+		x = (v0 - sizeX
 			* leftPadding / totalWidth) * priv->factorX + 0.5;
-		y = *v1 * priv->factorY + 0.5;
+		y = v1 * priv->factorY + 0.5;
 		
 		if (x >= screenInfo.screens[screenToSet]->width)
 			x = screenInfo.screens[screenToSet]->width - 1;
@@ -168,15 +176,15 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *v0, int *v1)
 #endif
 	{
 		if (priv->screen_no == -1)
-			*v0 = (*v0 * totalWidth - sizeX * leftPadding)
+			v0 = (v0 * totalWidth - sizeX * leftPadding)
 				/ screenInfo.screens[screenToSet]->width;
 		else
 			screenToSet = priv->screen_no;
 		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
 		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
 
-		x = *v0 * priv->factorX + 0.5;
-		y = *v1 * priv->factorY + 0.5;
+		x = v0 * priv->factorX + 0.5;
+		y = v1 * priv->factorY + 0.5;
 	}
 
 	xf86XInputSetScreen(local, screenToSet, x, y);
@@ -397,11 +405,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	WacomCommonPtr common = priv->common;
 	int rx, ry, rz, rtx, rty, rrot, rth, rw, no_jitter;
 	double param, relacc;
-	int is_core_pointer, is_absolute, doffsetX=0, doffsetY=0;
-	int aboveBelowSwitch = (priv->twinview == TV_ABOVE_BELOW)
-		? ((y < priv->topY) ? -1 : ((priv->bottomY < y) ? 1 : 0)) : 0;
-	int leftRightSwitch = (priv->twinview == TV_LEFT_RIGHT)
-		? ((x < priv->topX) ? -1 : ((priv->bottomX < x) ? 1 : 0)) : 0;
+	int is_core_pointer, is_absolute;
 
 	/* use tx and ty to report stripx and stripy */
 	if (type == PAD_ID)
@@ -421,31 +425,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
-
-	if ( is_proximity || x || y || z || buttons || tx || ty || wheel )
-	{
-		switch ( leftRightSwitch )
-		{
-			case -1:
-				doffsetX = 0;
-				break;
-			case 1:
-				doffsetX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
-				break;
-		}
-		switch ( aboveBelowSwitch )
-		{
-			case -1:
-				doffsetY = 0;
-				break;
-			case 1:
-				doffsetY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
-				break;
-		}
-	}
-
-	x += doffsetX;
-	y += doffsetY;
+	priv->currentX = x;
+	priv->currentY = y;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
 		"button=%s\tbuttons=%d\t on channel=%d\n",
@@ -458,18 +439,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
 	{
-		if (priv->twinview == TV_NONE)
-		{
-			rx = x > priv->bottomX ? priv->bottomX - priv->topX :
-				x < priv->topX ? 0 : x - priv->topX;
-			ry = y > priv->bottomY ? priv->bottomY - priv->topY :
-				y < priv->topY ? 0 : y - priv->topY;
-		}
-		else
-		{
-			rx = x;
-			ry = y;
-		}
+		rx = x;
+		ry = y;
 		rz = z;
 		rtx = tx;
 		rty = ty;
@@ -797,8 +768,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample));
 
 #ifdef LINUX_INPUT
- 	/* Discard the first USB packages due to events delay */
-	if ( (pChannel->nSamples < 1) && (common->wcmDevCls == &gWacomUSBDevice) )
+ 	/* Discard the first 2 USB packages due to events delay */
+	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
 	{
 		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
 		/* store channel device state for later use */
