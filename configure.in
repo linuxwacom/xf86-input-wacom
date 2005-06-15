@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.6.8)
+AM_INIT_AUTOMAKE(linuxwacom, 0.6.9)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -331,6 +331,9 @@ AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=no]]]
 if test "$enable_xserver64" != "no"; then
 	CFLAGS="$CFLAGS -D_XSERVER64"
 	WCM_XSERVER64=yes
+	if test "$WCM_ARCH" = "x86_64"; then
+		WCM_ARCH=x86-64
+	fi
 fi
 
 dnl Check for modver

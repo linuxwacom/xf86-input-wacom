@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2004 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -28,11 +29,11 @@
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbInit(LocalDevicePtr pDev);
 
-static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
+static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
-static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
+static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version);
-static int usbGetRanges(WacomCommonPtr common, int fd);
+static int usbGetRanges(LocalDevicePtr local);
 static int usbParse(WacomCommonPtr common, const unsigned char* data);
 static void usbParseEvent(WacomCommonPtr common,
 	const struct input_event* event);
@@ -270,8 +271,6 @@ static Bool usbInit(LocalDevicePtr local)
 	short sID[4];
 	char id[BUFFER_SIZE];
 	WacomModelPtr model = NULL;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
 
 	DBG(1, ErrorF("initializing USB tablet\n"));    
 
@@ -341,10 +340,10 @@ static Bool usbInit(LocalDevicePtr local)
 	if (!model)
 		model = &usbUnknown;
 
-	return xf86WcmInitTablet(common,model,local->fd,id,0.0);
+	return xf86WcmInitTablet(local,model,id,0.0);
 }
 
-static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
+static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
@@ -362,7 +361,7 @@ static void usbInitProtocol5(WacomCommonPtr common, int fd, const char* id,
 	common->wcmPktLength = sizeof(struct input_event);
 }
 
-static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
+static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
@@ -383,13 +382,14 @@ static void usbInitProtocol4(WacomCommonPtr common, int fd, const char* id,
 #define OFF(x)   ((x)%BITS_PER_LONG)
 #define LONG(x)  ((x)/BITS_PER_LONG)
 
-static int usbGetRanges(WacomCommonPtr common, int fd)
+static int usbGetRanges(LocalDevicePtr local)
 {
 	int nValues[5];
 	unsigned long ev[NBITS(EV_MAX)];
 	unsigned long abs[NBITS(ABS_MAX)];
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
-	if (ioctl(fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
+	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl event bits.\n");
 		return !Success;
@@ -398,7 +398,7 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 	/* absolute values */
 	if (ISBITSET(ev,EV_ABS))
 	{
-		if (ioctl(fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
+		if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 		{
 			ErrorF("WACOM: unable to ioctl abs bits.\n");
 			return !Success;
@@ -407,7 +407,7 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 		/* max x */
 		if (common->wcmMaxX == 0)
 		{
-			if (ioctl(fd, EVIOCGABS(ABS_X), nValues) < 0)
+			if (ioctl(local->fd, EVIOCGABS(ABS_X), nValues) < 0)
 			{
 				ErrorF("WACOM: unable to ioctl xmax value.\n");
 				return !Success;
@@ -423,7 +423,7 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 		/* max y */
 		if (common->wcmMaxY == 0)
 		{
-			if (ioctl(fd, EVIOCGABS(ABS_Y), nValues) < 0)
+			if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
 			{
 				ErrorF("WACOM: unable to ioctl ymax value.\n");
 				return !Success;
@@ -437,7 +437,7 @@ static int usbGetRanges(WacomCommonPtr common, int fd)
 		}
 
 		/* max z cannot be configured */
-		if (ioctl(fd, EVIOCGABS(ABS_PRESSURE), nValues) < 0)
+		if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), nValues) < 0)
 		{
 			ErrorF("WACOM: unable to ioctl press max value.\n");
 			return !Success;

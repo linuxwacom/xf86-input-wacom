@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -29,41 +30,30 @@
 static Bool serialDetect(LocalDevicePtr pDev);
 static Bool serialInit(LocalDevicePtr pDev);
 
-static int serialInitTablet(WacomCommonPtr common, int fd);
-static void serialInitIntuos(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialInitIntuos2(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialInitCintiq(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialInitPenPartner(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialInitGraphire(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialInitProtocol4(WacomCommonPtr common, int fd,
-	const char* id, float version);
-static void serialGetResolution(WacomCommonPtr common, int fd);
-static int serialGetRanges(WacomCommonPtr common, int fd);
-static int serialResetIntuos(WacomCommonPtr common, int fd);
-static int serialResetCintiq(WacomCommonPtr common, int fd);
-static int serialResetPenPartner(WacomCommonPtr common, int fd);
-static int serialResetProtocol4(WacomCommonPtr common, int fd);
-static int serialEnableTiltProtocol4(WacomCommonPtr common, int fd);
-static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd);
-static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd);
-static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd);
-static int serialStartTablet(WacomCommonPtr common, int fd);
-static int serialParseCintiq(WacomCommonPtr common,
-	const unsigned char* data);
-static int serialParseGraphire(WacomCommonPtr common,
-	const unsigned char* data);
-static int serialParseProtocol4(WacomCommonPtr common,
-	const unsigned char* data);
-static int serialParseProtocol5(WacomCommonPtr common,
-	const unsigned char* data);
-static void serialParseP4Common(WacomCommonPtr common,
-	const unsigned char* data, WacomDeviceState* last,
-	WacomDeviceState* ds);
+static int serialInitTablet(LocalDevicePtr local);
+static void serialInitIntuos(WacomCommonPtr common, const char* id, float version);
+static void serialInitIntuos2(WacomCommonPtr common, const char* id, float version);
+static void serialInitCintiq(WacomCommonPtr common, const char* id, float version);
+static void serialInitPenPartner(WacomCommonPtr common, const char* id, float version);
+static void serialInitGraphire(WacomCommonPtr common, const char* id, float version);
+static void serialInitProtocol4(WacomCommonPtr common, const char* id, float version);
+static void serialGetResolution(LocalDevicePtr local);
+static int serialGetRanges(LocalDevicePtr local);
+static int serialResetIntuos(LocalDevicePtr local);
+static int serialResetCintiq(LocalDevicePtr local);
+static int serialResetPenPartner(LocalDevicePtr local);
+static int serialResetProtocol4(LocalDevicePtr local);
+static int serialEnableTiltProtocol4(LocalDevicePtr local);
+static int serialEnableSuppressProtocol4(LocalDevicePtr local);
+static int serialSetLinkSpeedIntuos(LocalDevicePtr local);
+static int serialSetLinkSpeedProtocol5(LocalDevicePtr local);
+static int serialStartTablet(LocalDevicePtr local);
+static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data);
+static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data);
+static int serialParseProtocol4(WacomCommonPtr common, const unsigned char* data);
+static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data);
+static void serialParseP4Common(WacomCommonPtr common, const unsigned char* data, 
+	WacomDeviceState* last, WacomDeviceState* ds);
 
 /*****************************************************************************
  * Global Structures
@@ -420,7 +410,6 @@ static Bool serialDetect(LocalDevicePtr pDev)
 static Bool serialInit(LocalDevicePtr local)
 {
 	int err;
-	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
     
 	DBG(1, ErrorF("initializing serial tablet\n"));    
 
@@ -513,7 +502,7 @@ static Bool serialInit(LocalDevicePtr local)
 
 	xf86WcmFlushTablet(local->fd);
 
-	if (serialInitTablet(common,local->fd) == !Success)
+	if (serialInitTablet(local) == !Success)
 	{
 		SYSCALL(xf86WcmClose(local->fd));
 		local->fd = -1;
@@ -529,7 +518,7 @@ static Bool serialInit(LocalDevicePtr local)
  ****************************************************************************/
 
 
-static int serialInitTablet(WacomCommonPtr common, int fd)
+static int serialInitTablet(LocalDevicePtr local)
 {
 	int loop, idx;
 	char id[BUFFER_SIZE];
@@ -548,7 +537,7 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 	else
 	{
 		DBG(2, ErrorF("reading model\n"));
-		if (!xf86WcmSendRequest(fd, WC_MODEL, id, sizeof(id)))
+		if (!xf86WcmSendRequest(local->fd, WC_MODEL, id, sizeof(id)))
 			return !Success;
 
 		DBG(2, ErrorF("%s\n", id));
@@ -584,11 +573,10 @@ static int serialInitTablet(WacomCommonPtr common, int fd)
 
 	}
 
-	return xf86WcmInitTablet(common,model,fd,id,version);
+	return xf86WcmInitTablet(local,model,id,version);
 }
 
-static int serialParseGraphire(WacomCommonPtr common,
-	const unsigned char* data)
+static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 {
 	int n;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
@@ -626,8 +614,7 @@ static int serialParseGraphire(WacomCommonPtr common,
 	return common->wcmPktLength;
 }
 
-static int serialParseCintiq(WacomCommonPtr common,
-	const unsigned char* data)
+static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data)
 {
 	int n;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
@@ -667,8 +654,7 @@ static int serialParseCintiq(WacomCommonPtr common,
 	return common->wcmPktLength;
 }
 
-static int serialParseProtocol4(WacomCommonPtr common,
-	const unsigned char* data)
+static int serialParseProtocol4(WacomCommonPtr common, const unsigned char* data)
 {
 	int n;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
@@ -701,8 +687,7 @@ static int serialParseProtocol4(WacomCommonPtr common,
 	return common->wcmPktLength;
 }
 
-static int serialParseProtocol5(WacomCommonPtr common,
-	const unsigned char* data)
+static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data)
 {
 	int n;
 	int have_data=0;
@@ -877,8 +862,7 @@ static int serialParseProtocol5(WacomCommonPtr common,
  * Model-specific functions
  ****************************************************************************/
 
-static void serialInitIntuos(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitIntuos(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected an Intuos model\n"));
 
@@ -892,8 +876,7 @@ static void serialInitIntuos(WacomCommonPtr common, int fd,
 	common->wcmFlags |= TILT_ENABLED_FLAG;
 }
 
-static void serialInitIntuos2(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitIntuos2(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected an Intuos2 model\n"));
 
@@ -907,8 +890,7 @@ static void serialInitIntuos2(WacomCommonPtr common, int fd,
 	common->wcmFlags |= TILT_ENABLED_FLAG;
 }
 
-static void serialInitCintiq(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitCintiq(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected a Cintiq model\n"));
 
@@ -975,8 +957,7 @@ static void serialInitCintiq(WacomCommonPtr common, int fd,
 	common->wcmResolY = 508; /* tablet Y resolution in points/inch */
 }
 
-static void serialInitPenPartner(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitPenPartner(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected a PenPartner model\n"));
 
@@ -989,8 +970,7 @@ static void serialInitPenPartner(WacomCommonPtr common, int fd,
 	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
 }
 
-static void serialInitGraphire(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitGraphire(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected a Graphire model\n"));
 
@@ -1006,8 +986,7 @@ static void serialInitGraphire(WacomCommonPtr common, int fd,
 	common->wcmResolY = 1016; /* tablet Y resolution in points/inch */
 }
 
-static void serialInitProtocol4(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void serialInitProtocol4(WacomCommonPtr common, const char* id, float version)
 {
 	DBG(2, ErrorF("detected a Protocol4 model\n"));
 
@@ -1026,15 +1005,16 @@ static void serialInitProtocol4(WacomCommonPtr common, int fd,
 	}
 }
 
-static void serialGetResolution(WacomCommonPtr common, int fd)
+static void serialGetResolution(LocalDevicePtr local)
 {
 	int a, b;
 	char buffer[BUFFER_SIZE], header[BUFFER_SIZE];
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	if (!(common->wcmResolX && common->wcmResolY))
 	{
 		DBG(2, ErrorF("Requesting resolution from device\n"));
-		if (xf86WcmSendRequest(fd, WC_CONFIG, buffer,
+		if (xf86WcmSendRequest(local->fd, WC_CONFIG, buffer,
 			sizeof(buffer)))
 		{
 			DBG(2, ErrorF("%s\n", buffer));
@@ -1068,14 +1048,15 @@ static void serialGetResolution(WacomCommonPtr common, int fd)
 		common->wcmResolX, common->wcmResolY));
 }
 
-static int serialGetRanges(WacomCommonPtr common, int fd)
+static int serialGetRanges(LocalDevicePtr local)
 {
 	char buffer[BUFFER_SIZE];
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	if (!(common->wcmMaxX && common->wcmMaxY))
 	{
 		DBG(2, ErrorF("Requesting max coordinates\n"));
-		if (!xf86WcmSendRequest(fd, WC_COORD, buffer,
+		if (!xf86WcmSendRequest(local->fd, WC_COORD, buffer,
 			sizeof(buffer)))
 		{
 			ErrorF("WACOM: unable to read max coordinates. "
@@ -1100,69 +1081,70 @@ static int serialGetRanges(WacomCommonPtr common, int fd)
 	return Success;
 }
 
-static int serialResetIntuos(WacomCommonPtr common, int fd)
+static int serialResetIntuos(LocalDevicePtr local)
 {
 	int err;
-	SYSCALL(err = xf86WcmWrite(fd, intuos_setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, intuos_setup_string,
 		strlen(intuos_setup_string)));
 	return (err == -1) ? !Success : Success;
 }
 
-static int serialResetCintiq(WacomCommonPtr common, int fd)
+static int serialResetCintiq(LocalDevicePtr local)
 {
 	int err;
 
-	SYSCALL(err = xf86WcmWrite(fd, WC_RESET, strlen(WC_RESET)));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
   
 	if (xf86WcmWait(75)) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(fd, pl_setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, pl_setup_string,
 		strlen(pl_setup_string)));
 	if (err == -1) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
 		strlen(penpartner_setup_string)));
 
 	return (err == -1) ? !Success : Success;
 }
 
-static int serialResetPenPartner(WacomCommonPtr common, int fd)
+static int serialResetPenPartner(LocalDevicePtr local)
 {
 	int err;
-	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
 		strlen(penpartner_setup_string)));
 	return (err == -1) ? !Success : Success;
 }
 
-static int serialResetProtocol4(WacomCommonPtr common, int fd)
+static int serialResetProtocol4(LocalDevicePtr local)
 {
 	int err;
 
-	SYSCALL(err = xf86WcmWrite(fd, WC_RESET, strlen(WC_RESET)));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
   
 	if (xf86WcmWait(75)) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(fd, setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, setup_string,
 		strlen(setup_string)));
 	if (err == -1) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(fd, penpartner_setup_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
 		strlen(penpartner_setup_string)));
 	return (err == -1) ? !Success : Success;
 }
 
-static int serialEnableTiltProtocol4(WacomCommonPtr common, int fd)
+static int serialEnableTiltProtocol4(LocalDevicePtr local)
 {
 	return Success;
 }
 
-static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd)
+static int serialEnableSuppressProtocol4(LocalDevicePtr local)
 {
 	char buf[20];
 	int err;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
-	SYSCALL(err = xf86WcmWrite(fd, buf, strlen(buf)));
+	SYSCALL(err = xf86WcmWrite(local->fd, buf, strlen(buf)));
 
 	if (err == -1)
 	{
@@ -1173,8 +1155,10 @@ static int serialEnableSuppressProtocol4(WacomCommonPtr common, int fd)
 	return Success;
 }
 
-static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd)
+static int serialSetLinkSpeedIntuos(LocalDevicePtr local)
 {
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+
 	if ((common->wcmLinkSpeed == 38400) &&
 		(common->wcmVersion < 2.0F))
 	{
@@ -1183,13 +1167,14 @@ static int serialSetLinkSpeedIntuos(WacomCommonPtr common, int fd)
 		ErrorF("Switching to 19200\n");
 		common->wcmLinkSpeed = 19200;
 	}
-	return serialSetLinkSpeedProtocol5(common,fd);
+	return serialSetLinkSpeedProtocol5(local);
 }
 
-static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd)
+static int serialSetLinkSpeedProtocol5(LocalDevicePtr local)
 {
 	int err;
 	char* speed_init_string;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	DBG(1, ErrorF("Switching serial link to %d\n",
 		common->wcmLinkSpeed));
@@ -1199,7 +1184,7 @@ static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd)
 		WC_V_38400 : WC_V_19200;
 
 	/* Switch the tablet to the requested speed */
-	SYSCALL(err = xf86WcmWrite(fd, speed_init_string,
+	SYSCALL(err = xf86WcmWrite(local->fd, speed_init_string,
 		strlen(speed_init_string)));
 
 	if (err == -1)
@@ -1213,18 +1198,18 @@ static int serialSetLinkSpeedProtocol5(WacomCommonPtr common, int fd)
 		return !Success;
 
 	/* Set speed of serial link to requested speed */
-	if (xf86WcmSetSerialSpeed(fd, common->wcmLinkSpeed) < 0)
+	if (xf86WcmSetSerialSpeed(local->fd, common->wcmLinkSpeed) < 0)
 		return !Success;
 
 	return Success;
 }
 
-static int serialStartTablet(WacomCommonPtr common, int fd)
+static int serialStartTablet(LocalDevicePtr local)
 {
 	int err;
 
 	/* Tell the tablet to start sending coordinates */
-	SYSCALL(err = xf86WcmWrite(fd, WC_START, strlen(WC_START)));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_START, strlen(WC_START)));
 
 	if (err == -1)
 	{

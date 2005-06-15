@@ -86,9 +86,10 @@
  * 2004-11-22 42-j0.6.6  - new release
  * 2005-02-17 42-j0.6.7  - added 64-bit support
  * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
+ * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablet
 */
 
-static const char identification[] = "$Identification: 42-j0.6.8 $";
+static const char identification[] = "$Identification: 47-pc0.6.9 $";
 
 /****************************************************************************/
 
@@ -340,8 +341,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		tabletSize = priv->bottomX - priv->topX;
 
 	InitValuatorAxisStruct(pWcm, 0, 0, tabletSize, /* max val */
-		mils(common->wcmResolX), /* tablet resolution */
-		0, mils(common->wcmResolX)); /* max_res */
+		common->wcmResolX, /* tablet resolution */
+		0, common->wcmResolX); /* max_res */
 
 	if (priv->twinview == TV_ABOVE_BELOW)
 		tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
@@ -349,8 +350,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		tabletSize = priv->bottomY - priv->topY;
 
 	InitValuatorAxisStruct(pWcm, 1, 0, tabletSize, /* max val */
-		mils(common->wcmResolY), /* tablet resolution */
-		0, mils(common->wcmResolY)); /* max_res */
+		common->wcmResolY, /* tablet resolution */
+		0, common->wcmResolY); /* max_res */
 
 	/* pressure */
 	InitValuatorAxisStruct(pWcm, 2, 0,
@@ -652,6 +653,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		default:
 			ErrorF("wacom unsupported mode=%d\n", what);
 			return !Success;
+			break;
 	} /* end switch */
 
 	DBG(2, ErrorF("END xf86WcmProc Success what=%d dev=%p priv=%p\n",
@@ -1106,7 +1108,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		}
 		case 4: /* JEJ - test */
 		{
-			DBG(10,ErrorF("xf86WcmChangeControl: %x,%x\n",
+			DBG(10,ErrorF("xf86WcmChangeControl: 0x%x,0x%x\n",
 				param,value));
 			return xf86WcmSetParam(local,param,value);
 		}

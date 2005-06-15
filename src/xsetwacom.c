@@ -2,6 +2,7 @@
 ** xsetwacom.c
 **
 ** Copyright (C) 2003 - John E. Joganic
+** Copyright (C) 2004-2005 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -22,7 +23,7 @@
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.1"
+#define XSETWACOM_VERSION "0.0.3"
 
 #include "wacomcfg.h"
 #include "Xwacom.h" /* give use raw access to parameter values */
@@ -38,9 +39,9 @@
 #include <errno.h>
 #include <assert.h>
 
-	int gnVerbose = 0;
-	int gnLastXError = 0;
-	const char* gpszDisplayName = NULL;
+int gnVerbose = 0;
+int gnLastXError = 0;
+const char* gpszDisplayName = NULL;
 
 typedef struct _PARAMINFO PARAMINFO;
 
@@ -242,7 +243,7 @@ static void Error(int err, const char* pszText)
 
 typedef struct { WACOMDEVICETYPE type; const char* pszText; } TYPEXLAT;
 
-static int ListDev(WACOMCONFIG hConfig, char** argv)
+static int ListDev(WACOMCONFIG *hConfig, char** argv)
 {
 	const char* pszType;
 	WACOMDEVICEINFO* pInfo;
@@ -275,7 +276,7 @@ static int ListDev(WACOMCONFIG hConfig, char** argv)
 	return 0;
 }
 
-static int ListParam(WACOMCONFIG hConfig, char** argv)
+static int ListParam(WACOMCONFIG *hConfig, char** argv)
 {
 	PARAMINFO* p;
 
@@ -288,7 +289,7 @@ static int ListParam(WACOMCONFIG hConfig, char** argv)
 	return 0;
 }
 
-static int List(WACOMCONFIG hConfig, char** argv)
+static int List(WACOMCONFIG *hConfig, char** argv)
 {
 	if (*argv == NULL)
 		return ListDev(hConfig,argv);
@@ -331,11 +332,11 @@ static int Pack(int nCount, int* pnValues, int* pnResult)
 	return 1;
 }
 
-static int Set(WACOMCONFIG hConfig, char** argv)
+static int Set(WACOMCONFIG * hConfig, char** argv)
 {
 	PARAMINFO* p;
 	int nValues[4];
-	WACOMDEVICE hDev;
+	WACOMDEVICE * hDev;
 	char* a, *pszEnd;
 	const char* pszValues[4];
 	const char* pszDevName = NULL;
@@ -464,7 +465,7 @@ int DoCommand(COMMAND cmd, char** argv)
 {
 	int nReturn;
 	Display* pDisp;
-	WACOMCONFIG hConf;
+	WACOMCONFIG * hConf;
 
 	pDisp = XOpenDisplay(gpszDisplayName);
 	if (!pDisp)

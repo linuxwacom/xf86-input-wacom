@@ -2,6 +2,7 @@
 ** wacomcfg.c
 **
 ** Copyright (C) 2003-2004 - John E. Joganic
+** Copyright (C) 2004-2005 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -20,10 +21,14 @@
 ** REVISION HISTORY
 **   2003-05-02 0.0.1 - JEJ - created
 **   2004-05-28 0.0.2 - PC - updated WacomConfigListDevices
+**   2005-06-10 0.0.3 - PC - updated for x86_64
 **
 ****************************************************************************/
 
 #include "wacomcfg.h"
+#include "Xwacom.h" /* Hopefully it will be included in XFree86 someday, but
+                     * in the meantime, we are expecting it in the local
+                     * directory. */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,43 +43,15 @@
 #include <assert.h>
 
 /*****************************************************************************
-** XInput
-*****************************************************************************/
-
-#include <X11/Xlib.h>
-#include <X11/extensions/XInput.h>
-#include <X11/extensions/XIproto.h>
-
-#include "Xwacom.h" /* Hopefully it will be included in XFree86 someday, but
-                     * in the meantime, we are expecting it in the local
-                     * directory. */
-
-/*****************************************************************************
 ** Internal structures
 *****************************************************************************/
 
-typedef struct _CONFIG CONFIG;
-typedef struct _DEVICE DEVICE;
-
-struct _CONFIG
-{
-	Display* pDisp;
-	WACOMERRORFUNC pfnError;
-	XDeviceInfoPtr pDevs;
-	int nDevCnt;
-};
-
-struct _DEVICE
-{
-	CONFIG* pCfg;
-	XDevice* pDev;
-};
 
 /*****************************************************************************
 ** Library operations
 *****************************************************************************/
 
-static int CfgError(CONFIG* pCfg, int err, const char* pszText)
+static int CfgError(WACOMCONFIG* pCfg, int err, const char* pszText)
 {
 	/* report error */
 	if (pCfg->pfnError)
@@ -85,11 +62,12 @@ static int CfgError(CONFIG* pCfg, int err, const char* pszText)
 	return -1;
 }
 
-static int CfgGetDevs(CONFIG* pCfg)
+static int CfgGetDevs(WACOMCONFIG* pCfg)
 {
 	/* request device list */
-	pCfg->pDevs = (XDeviceInfoPtr) XListInputDevices(pCfg->pDisp,
+	pCfg->pDevs = XListInputDevices(pCfg->pDisp,
 			&pCfg->nDevCnt);
+
 	if (!pCfg->pDevs)
 		return CfgError(pCfg,EIO,"CfgGetDevs: failed to get devices");
 
@@ -100,9 +78,9 @@ static int CfgGetDevs(CONFIG* pCfg)
 ** Library initialization, termination
 *****************************************************************************/
 
-WACOMCONFIG WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler)
+WACOMCONFIG * WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler)
 {
-	CONFIG* pCfg;
+	WACOMCONFIG* pCfg;
 	int nMajor, nFEV, nFER;
 
 	/* check for XInput extension */
@@ -114,7 +92,7 @@ WACOMCONFIG WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler)
 	}
 
 	/* allocate configuration structure */
-	pCfg = (CONFIG*)malloc(sizeof(CONFIG));
+	pCfg = (WACOMCONFIG*)malloc(sizeof(WACOMCONFIG));
 	if (!pCfg)
 	{
 		if (pfnErrorHandler)
@@ -125,45 +103,45 @@ WACOMCONFIG WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler)
 	memset(pCfg,0,sizeof(*pCfg));
 	pCfg->pDisp = pDisplay;
 	pCfg->pfnError = pfnErrorHandler;
-	return (WACOMCONFIG)pCfg;
+	return pCfg;
 }
 
-void WacomConfigTerm(WACOMCONFIG hConfig)
+void WacomConfigTerm(WACOMCONFIG *hConfig)
 {
-	CONFIG* pCfg = (CONFIG*)hConfig;
-	if (!pCfg) return;
-	free(pCfg);
+	if (!hConfig) return;
+	free(hConfig);
 }
 
-int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
+int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	unsigned int* puCount)
 {
 	int i, j, nSize, nPos, nLen, nCount;
 	unsigned char* pReq;
 	WACOMDEVICEINFO* pInfo;
-	CONFIG* pCfg = (CONFIG*)hConfig;
+	XDeviceInfo* info;
 	char devName[64];
 
-	if (!pCfg || !ppInfo || !puCount)
+	if (!hConfig || !ppInfo || !puCount)
 		{ errno=EINVAL; return -1; }
 
 	/* load devices, if not already in memory */
-	if (!pCfg->pDevs && CfgGetDevs(pCfg))
+	if (!hConfig->pDevs && CfgGetDevs(hConfig))
 		return -1;
 
 	/* estimate size of memory needed to hold structures */
 	nSize = nCount = 0;
-	for (i=0; i<pCfg->nDevCnt; ++i)
+	for (i=0; i<hConfig->nDevCnt; ++i)
 	{
-		if (pCfg->pDevs[i].use != IsXExtensionDevice) continue;
+		info = hConfig->pDevs + i;
+		if (info->use != IsXExtensionDevice) continue;
 		nSize += sizeof(WACOMDEVICEINFO);
-		nSize += strlen(pCfg->pDevs[i].name) + 1;
+		nSize += strlen(info->name) + 1;
 		++nCount;
 	}
 
 	/* allocate memory and zero */
 	pReq = (unsigned char*)malloc(nSize);
-	if (!pReq) return CfgError(pCfg,errno,
+	if (!pReq) return CfgError(hConfig,errno,
 		"WacomConfigListDevices: failed to allocate memory");
 	memset(pReq,0,nSize);
 
@@ -171,17 +149,17 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 	pInfo = (WACOMDEVICEINFO*)pReq;
 	nPos = nCount * sizeof(WACOMDEVICEINFO);
 	nCount = 0;
-	for (i=0; i<pCfg->nDevCnt; ++i)
+	for (i=0; i<hConfig->nDevCnt; ++i)
 	{
+		info = hConfig->pDevs + i;
 		/* ignore non-extension devices */
-		if (pCfg->pDevs[i].use != IsXExtensionDevice) continue;
+		if (info->use != IsXExtensionDevice) continue;
 
 		/* copy name */
-		nLen = strlen(pCfg->pDevs[i].name);
+		nLen = strlen(info->name);
 		pInfo->pszName = (char*)(pReq + nPos);
-		memcpy(pReq+nPos,pCfg->pDevs[i].name,nLen+1);
+		memcpy(pReq+nPos,info->name,nLen+1);
 		nPos += nLen + 1;
-
 		/* guess type for now - discard unknowns */
 		for (j=0; j<strlen(pInfo->pszName); j++)
 			devName[j] = tolower(pInfo->pszName[j]);
@@ -210,66 +188,66 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
 	return 0;
 }
 
-WACOMDEVICE WacomConfigOpenDevice(WACOMCONFIG hConfig,
+WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	const char* pszDeviceName)
 {
 	int i;
-	DEVICE* pInt;
+	WACOMDEVICE* pInt;
 	XDevice* pDev;
-	XDeviceInfoPtr pDevInfo = NULL;
-	CONFIG* pCfg = (CONFIG*)hConfig;
+	XDeviceInfo *pDevInfo = NULL, *info;
 
 	/* sanity check input */
-	if (!pCfg || !pszDeviceName) { errno=EINVAL; return NULL; }
+	if (!hConfig || !pszDeviceName) { errno=EINVAL; return NULL; }
 
 	/* load devices, if not already in memory */
-	if (!pCfg->pDevs && CfgGetDevs(pCfg))
+	if (!hConfig->pDevs && CfgGetDevs(hConfig))
 		return NULL;
 
 	/* find device in question */
-	for (i=0; i<pCfg->nDevCnt; ++i)
-		if (strcmp(pCfg->pDevs[i].name, pszDeviceName) == 0)
-			pDevInfo = pCfg->pDevs + i;
+	for (i=0; i<hConfig->nDevCnt; ++i)
+	{
+		info = hConfig->pDevs + i;
+		if (strcmp(info->name, pszDeviceName) == 0)
+			pDevInfo = info;
+	}
 
 	/* no device, bail. */
 	if (!pDevInfo)
 	{
-		CfgError(pCfg,ENOENT,"WacomConfigOpenDevice: No such device");
+		CfgError(hConfig,ENOENT,"WacomConfigOpenDevice: No such device");
 		return NULL;
 	}
 
 	/* Open the device. */
-	pDev = XOpenDevice(pCfg->pDisp,pDevInfo->id);
+	pDev = XOpenDevice(hConfig->pDisp,pDevInfo->id);
 	if (!pDev)
 	{
-		CfgError(pCfg,EIO,"WacomConfigOpenDevice: "
+		CfgError(hConfig,EIO,"WacomConfigOpenDevice: "
 			"Failed to open device");
 		return NULL;
 	}
 
 	/* allocate device structure and return */
-	pInt = (DEVICE*)malloc(sizeof(DEVICE));
+	pInt = (WACOMDEVICE*)malloc(sizeof(WACOMDEVICE));
 	memset(pInt,0,sizeof(*pInt));
-	pInt->pCfg = pCfg;
+	pInt->pCfg = hConfig;
 	pInt->pDev = pDev;
 
-	return (WACOMDEVICE)pInt;
+	return pInt;
 }
 
-int WacomConfigCloseDevice(WACOMDEVICE hDevice)
+int WacomConfigCloseDevice(WACOMDEVICE *hDevice)
 {
-	DEVICE* pInt = (DEVICE*)hDevice;
-	if (!pInt) { errno=EINVAL; return -1; }
+	if (!hDevice) { errno=EINVAL; return -1; }
 
-	(void)XCloseDevice(pInt->pCfg->pDisp,pInt->pDev);
-	free(pInt);
+	(void)XCloseDevice(hDevice->pCfg->pDisp, hDevice->pDev);
+	free(hDevice);
 	return 0;
 }
 
-int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
+int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 {
 	int nReturn;
-	DEVICE* pInt = (DEVICE*)hDevice;
 	int nValues[2];
 	XDeviceResolutionControl c;
 	XDeviceResolutionControl* cp = &c;
@@ -277,7 +255,7 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 
 	nValues[0] = nParam;
 	nValues[1] = nValue;
-	if (!pInt || !nParam) { errno=EINVAL; return -1; }
+	if (!hDevice || !nParam) { errno=EINVAL; return -1; }
 
 	c.control = DEVICE_RESOLUTION;
 	c.length = sizeof(c);
@@ -286,20 +264,20 @@ int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue)
 	else c.first_valuator = 4;
 	c.num_valuators = 2;
 	c.resolutions = nValues;
-
 	/* Dispatch request */
 	nReturn = XChangeDeviceControl(
-		pInt->pCfg->pDisp,
-		pInt->pDev,
+		hDevice->pCfg->pDisp,
+		hDevice->pDev,
 		DEVICE_RESOLUTION,
 		dc);
 
 	/* Convert error codes */
 	if (nReturn == BadValue)
-		return CfgError(pInt->pCfg,EINVAL,
+		return CfgError(hDevice->pCfg,EINVAL,
 			"WacomConfigSetRawParam: Bad value");
-	else if (nReturn != Success)
-		return CfgError(pInt->pCfg,EIO,
+	/* On some systems, Success turned into !Success for unknown reason */
+	else if (nReturn != Success && nReturn != !Success)
+		return CfgError(hDevice->pCfg,EIO,
 			"WacomConfigSetRawParam: Unknown X error");
 	return 0;
 }

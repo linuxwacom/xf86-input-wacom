@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -400,19 +401,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int rot = ds->rotation;
 	int throttle = ds->throttle;
 	int wheel = ds->abswheel;
+	int tmp_coord;
 
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int rx, ry, rz, rtx, rty, rrot, rth, rw, no_jitter;
 	double param, relacc;
 	int is_core_pointer, is_absolute;
-
-	/* use tx and ty to report stripx and stripy */
-	if (type == PAD_ID)
-	{
-		tx = ds->stripx;
-		ty = ds->stripy;
-	}
 
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
@@ -422,6 +417,27 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		is_proximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
+
+	/* use tx and ty to report stripx and stripy */
+	if (type == PAD_ID)
+	{
+		tx = ds->stripx;
+		ty = ds->stripy;
+	}
+
+	/* rotation mixes x and y up a bit */
+	if (common->wcmRotate == ROTATE_CW)
+	{
+		tmp_coord = x;
+		x = y;
+		y = common->wcmMaxY - tmp_coord;
+	}
+	else if (common->wcmRotate == ROTATE_CCW)
+	{
+		tmp_coord = y;
+		y = x;
+		x = common->wcmMaxX - tmp_coord;
+	}
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
@@ -974,20 +990,31 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
  * xf86WcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
-	int fd, const char* id, float version)
+int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
+	const char* id, float version)
 {
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	int temp;
+
 	/* Initialize the tablet */
-	model->Initialize(common,fd,id,version);
+	model->Initialize(common,id,version);
 
 	/* Get tablet resolution */
 	if (model->GetResolution)
-		model->GetResolution(common,fd);
+		model->GetResolution(local);
 
 	/* Get tablet range */
-	if (model->GetRanges && (model->GetRanges(common,fd) != Success))
+	if (model->GetRanges && (model->GetRanges(local) != Success))
 		return !Success;
 	
+	/* Rotation rotates the Max Y and Y */
+	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
+	{
+		temp = common->wcmMaxX;
+		common->wcmMaxX = common->wcmMaxY;
+		common->wcmMaxY = temp;
+	}
+
 	/* Default threshold value if not set */
 	if (common->wcmThreshold <= 0)
 	{
@@ -998,7 +1025,7 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 	}
 
 	/* Reset tablet to known state */
-	if (model->Reset && (model->Reset(common,fd) != Success))
+	if (model->Reset && (model->Reset(local) != Success))
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
 		return !Success;
@@ -1007,14 +1034,14 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 	/* Enable tilt mode, if requested and available */
 	if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
 	{
-		if (model->EnableTilt(common,fd) != Success)
+		if (model->EnableTilt(local) != Success)
 			return !Success;
 	}
 
 	/* Enable hardware suppress, if requested and available */
 	if ((common->wcmSuppress != 0) && model->EnableSuppress)
 	{
-		if (model->EnableSuppress(common,fd) != Success)
+		if (model->EnableSuppress(local) != Success)
 			return !Success;
 	}
 
@@ -1023,7 +1050,7 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 	{
 		if (model->SetLinkSpeed)
 		{
-			if (model->SetLinkSpeed(common,fd) != Success)
+			if (model->SetLinkSpeed(local) != Success)
 				return !Success;
 		}
 		else
@@ -1045,7 +1072,7 @@ int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
   
 	/* start the tablet data */
-	if (model->Start && (model->Start(common,fd) != Success))
+	if (model->Start && (model->Start(local) != Success))
 		return !Success;
 
 	/*set the model */

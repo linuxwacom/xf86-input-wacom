@@ -2,6 +2,7 @@
 ** wacomcfg.h
 **
 ** Copyright (C) 2003 - John E. Joganic
+** Copyright (C) 2004-2005 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -23,13 +24,15 @@
 #define __LINUXWACOM_WACOMCFG_H
 
 #include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XIproto.h>
 
 /* JEJ - NOTE WE DO NOT INCLUDE Xwacom.h HERE.  THIS ELIMINATES A CONFLICT
  *       WHEN THIS FILE IS INSTALLED SINCE Xwacom.h WILL IN MANY CASES NOT
  *       GO WITH IT.  SOMEDAY IT MAY BE PART OF XFREE86. */
 
-typedef struct { int __unused; } _WACOMCONFIG, *WACOMCONFIG;
-typedef struct { int __unused; } _WACOMDEVICE, *WACOMDEVICE;
+typedef struct _WACOMCONFIG WACOMCONFIG;
+typedef struct _WACOMDEVICE WACOMDEVICE;
 typedef void (*WACOMERRORFUNC)(int err, const char* pszText);
 typedef struct _WACOMDEVICEINFO WACOMDEVICEINFO;
 
@@ -48,21 +51,36 @@ struct _WACOMDEVICEINFO
 	WACOMDEVICETYPE type;
 };
 
+struct _WACOMCONFIG
+{
+	Display* pDisp;
+	WACOMERRORFUNC pfnError;
+	XDeviceInfo * pDevs;
+	int nDevCnt;
+};
+
+struct _WACOMDEVICE
+{
+	WACOMCONFIG* pCfg;
+	XDevice* pDev;
+};
+
+
 /*****************************************************************************
 ** Functions
 *****************************************************************************/
 
-WACOMCONFIG WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler);
+WACOMCONFIG * WacomConfigInit(Display* pDisplay, WACOMERRORFUNC pfnErrorHandler);
 /* Initializes configuration library.
  *   pDisplay        - display to configure
  *   pfnErrorHandler - handler to which errors are reported; may be NULL
  * Returns WACOMCONFIG handle on success, NULL on error.
  *   errno contains error code. */
 
-void WacomConfigTerm(WACOMCONFIG hConfig);
+void WacomConfigTerm(WACOMCONFIG * hConfig);
 /* Terminates configuration library, releasing display. */
 
-int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
+int WacomConfigListDevices(WACOMCONFIG * hConfig, WACOMDEVICEINFO** ppInfo,
 	unsigned int* puCount);
 /* Returns a list of wacom devices.
  *   ppInfo         - pointer to WACOMDEVICEINFO* to receive device data
@@ -70,7 +88,7 @@ int WacomConfigListDevices(WACOMCONFIG hConfig, WACOMDEVICEINFO** ppInfo,
  * Returns 0 on success, -1 on failure.  errno contains error code.
  * Comments: You must free this structure using WacomConfigFree. */
 
-WACOMDEVICE WacomConfigOpenDevice(WACOMCONFIG hConfig,
+WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	const char* pszDeviceName);
 /* Open a device by name.
  *   pszDeviceName  - name of XInput device corresponding to wacom device
@@ -78,11 +96,11 @@ WACOMDEVICE WacomConfigOpenDevice(WACOMCONFIG hConfig,
  *   errno contains error code.
  * Comments: Close using WacomConfigCloseDevice */
 
-int WacomConfigCloseDevice(WACOMDEVICE hDevice);
+int WacomConfigCloseDevice(WACOMDEVICE * hDevice);
 /* Closes a device.
  * Returns 0 on success, -1 on error.  errno contains error code. */
 
-int WacomConfigSetRawParam(WACOMDEVICE hDevice, int nParam, int nValue);
+int WacomConfigSetRawParam(WACOMDEVICE * hDevice, int nParam, int nValue);
 /* Sets the raw device parameter to specified value.
  *   nParam         - valid paramters can be found Xwacom.h which is not
  *                      automatically included.

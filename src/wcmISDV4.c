@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -27,10 +28,9 @@
 
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr);
-static void isdv4InitISDV4(WacomCommonPtr common, int fd, const char* id,
-	float version);
-static int isdv4GetRanges(WacomCommonPtr common, int fd);
-static int isdv4StartTablet(WacomCommonPtr common, int fd);
+static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
+static int isdv4GetRanges(LocalDevicePtr);
+static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
 
 	WacomDeviceClass gWacomISDV4Device =
@@ -94,17 +94,15 @@ static Bool isdv4Init(LocalDevicePtr local)
 	if (xf86WcmWait(250))
 		return !Success;
 
-	return xf86WcmInitTablet(common,&isdv4General,local->fd,"ISDV4", common->wcmVersion);
+	return xf86WcmInitTablet(local,&isdv4General,"ISDV4", common->wcmVersion);
 }
 
 /*****************************************************************************
  * isdv4InitISDV4 -- Setup the device
  ****************************************************************************/
 
-static void isdv4InitISDV4(WacomCommonPtr common, int fd,
-	const char* id, float version)
+static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
-	int temp;
 	DBG(2, ErrorF("initializing as ISDV4 model\n"));
   
 	/* set parameters */
@@ -113,25 +111,18 @@ static void isdv4InitISDV4(WacomCommonPtr common, int fd,
 	common->wcmResolX = 2540; 	/* tablet X resolution in points/inch */
 	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
 	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
-
-	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
-	{
-		temp = common->wcmMaxX;
-		common->wcmMaxX = common->wcmMaxY;
-		common->wcmMaxY = temp;
-	}
-
 }
-static int isdv4GetRanges(WacomCommonPtr common, int fd)
+static int isdv4GetRanges(LocalDevicePtr local)
 {
 	char data[BUFFER_SIZE];
 	int maxtry = MAXTRY, nr;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	DBG(2, ErrorF("getting ISDV4 Ranges\n"));
 	/* Send query command to the tablet */
 	do
 	{
-		SYSCALL(nr = xf86WcmWrite(fd, WC_ISDV4_QUERY, strlen(WC_ISDV4_QUERY)));
+		SYSCALL(nr = xf86WcmWrite(local->fd, WC_ISDV4_QUERY, strlen(WC_ISDV4_QUERY)));
 		if ((nr == -1) && (errno != EAGAIN))
 		{
 			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
@@ -151,9 +142,9 @@ static int isdv4GetRanges(WacomCommonPtr common, int fd)
 	maxtry = MAXTRY;
 	do
 	{
-		if ((nr = xf86WcmWaitForTablet(fd)) > 0)
+		if ((nr = xf86WcmWaitForTablet(local->fd)) > 0)
 		{
-			SYSCALL(nr = xf86WcmRead(fd, data, 11));
+			SYSCALL(nr = xf86WcmRead(local->fd, data, 11));
 			if ((nr == -1) && (errno != EAGAIN))
 			{
 				ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
@@ -187,12 +178,12 @@ static int isdv4GetRanges(WacomCommonPtr common, int fd)
 	return Success;
 }
 
-static int isdv4StartTablet(WacomCommonPtr common, int fd)
+static int isdv4StartTablet(LocalDevicePtr local)
 {
 	int err;
 
 	/* Tell the tablet to start sending coordinates */
-	SYSCALL(err = xf86WcmWrite(fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING))));
+	SYSCALL(err = xf86WcmWrite(local->fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING))));
 
 	if (err == -1)
 	{
@@ -207,7 +198,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 {
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
-	int n, cur_type, tmp_coord;
+	int n, cur_type;
 
 	if ((n = xf86WcmSerialValidate(common,data)) > 0)
 	{
@@ -230,20 +221,6 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 		((int)data[1] << 9);
 	ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
 		((int)data[3] << 9);
-
-	/* rotation mixes x and y up a bit */
-	if (common->wcmRotate == ROTATE_CW)
-	{
-		tmp_coord = ds->x;
-		ds->x = ds->y;
-		ds->y = common->wcmMaxY - tmp_coord;
-	}
-	else if (common->wcmRotate == ROTATE_CCW)
-	{
-		tmp_coord = ds->y;
-		ds->y = ds->x;
-		ds->x = common->wcmMaxX - tmp_coord;
-	}
 
 	/* pressure */
 	ds->pressure = (((data[6] & 0x07) << 7) | data[5] );

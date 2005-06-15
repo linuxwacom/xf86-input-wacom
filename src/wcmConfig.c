@@ -138,6 +138,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 					/* disabled (=0) when user doesn't want to move the */
 					/* cursor from one screen to another screen */
 	common->wcmTPCButton = 0;       /* set Tablet PC button on/off, default is off */
+	common->wcmRotate = ROTATE_NONE; /* default tablet rotation to off */
 	return local;
 }
 
@@ -400,8 +401,6 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			dev->identifier);
 	}
 
-	common->wcmRotate=ROTATE_NONE;
-
 	s = xf86FindOptionValue(local->options, "Rotate");
 
 	if (s)
@@ -410,6 +409,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmRotate=ROTATE_CW;
 		else if (xf86NameCmp(s, "CCW") ==0)
 			common->wcmRotate=ROTATE_CCW;
+		xf86Msg(X_CONFIG, "WACOM: Rotation is set to %s\n", s);
 	}
 
 	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",

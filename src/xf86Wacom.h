@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2005 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -34,7 +35,11 @@
  ****************************************************************************/
 
 #ifdef LINUX_INPUT
+#ifdef _XSERVER64
+#include <asm-x86_64/types.h>
+#else
 #include <asm/types.h>
+#endif
 #include <linux/input.h>
 
 /* 2.5 module support */
@@ -206,14 +211,14 @@ struct _WacomModel
 {
 	const char* name;
 
-	void (*Initialize)(WacomCommonPtr common, int fd, const char* id, float version);
-	void (*GetResolution)(WacomCommonPtr common, int fd);
-	int (*GetRanges)(WacomCommonPtr common, int fd);
-	int (*Reset)(WacomCommonPtr common, int fd);
-	int (*EnableTilt)(WacomCommonPtr common, int fd);
-	int (*EnableSuppress)(WacomCommonPtr common, int fd);
-	int (*SetLinkSpeed)(WacomCommonPtr common, int fd);
-	int (*Start)(WacomCommonPtr common, int fd);
+	void (*Initialize)(WacomCommonPtr common, const char* id, float version);
+	void (*GetResolution)(LocalDevicePtr local);
+	int (*GetRanges)(LocalDevicePtr local);
+	int (*Reset)(LocalDevicePtr local);
+	int (*EnableTilt)(LocalDevicePtr local);
+	int (*EnableSuppress)(LocalDevicePtr local);
+	int (*SetLinkSpeed)(LocalDevicePtr local);
+	int (*Start)(LocalDevicePtr local);
 	int (*Parse)(WacomCommonPtr common, const unsigned char* data);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
 		WacomDeviceStatePtr ds);
@@ -456,7 +461,7 @@ struct _WacomCommonRec
 	char * wcmEraserID;	     /* eraser associated with the stylus */
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
-	int wcmTPCButton;		/* set Tablet PC button on/off */
+	int wcmTPCButton;	     /* set Tablet PC button on/off */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
@@ -506,20 +511,17 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 
-	int xf86WcmInitTablet(WacomCommonPtr common, WacomModelPtr model,
-		int fd, const char* id, float version);
-	/* common tablet initialization regime */
+/* common tablet initialization regime */
+int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model, const char* id, float version);
 
-	void xf86WcmReadPacket(LocalDevicePtr local);
-	/* standard packet handler */
+/* standard packet handler */
+void xf86WcmReadPacket(LocalDevicePtr local);
 
-	void xf86WcmEvent(WacomCommonPtr common,
-		unsigned int channel, const WacomDeviceState* ds);
-	/* handles suppression, filtering, and dispatch. */
+/* handles suppression, filtering, and dispatch. */
+void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
-	void xf86WcmSendEvents(LocalDevicePtr local,
-		const WacomDeviceState* ds, unsigned int channel);
-	/* dispatches data to XInput event system */
+/* dispatches data to XInput event system */
+void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

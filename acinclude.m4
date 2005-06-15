@@ -137,7 +137,9 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		ISVER=`echo $moduts | grep -c "2.4"` 
 		if test "$ISVER" -gt 0; then
 			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
-			if test $MINOR -ge 22; then
+			if test $MINOR -ge 30; then
+				WCM_KERNEL_VER="2.4.30"
+			elif test $MINOR -ge 22; then
 				WCM_KERNEL_VER="2.4.22"
 			else
 				WCM_KERNEL_VER="2.4"

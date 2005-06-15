@@ -1,3 +1,8 @@
+2005-06-14    Ping Cheng <pingc@wacom.com>
+	* Merged with xf86Wacom.c version 1.47 at www.xfree86.org
+	* Support tablet orentation rotation for all tablets
+	* Support x86-64 kernel
+
 2005-05-05    Ping Cheng <pingc@wacom.com>
 	* Added 3rd party developer support pages
 	* Released linuxwacom-0.6.8
