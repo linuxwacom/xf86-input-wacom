@@ -7,13 +7,14 @@ DEBUG_FLAGS = -D__JEJ_DEBUG
 MODS = @WCM_MODVER@
 ARCHITECTURE=@WCM_ARCH@
 USBDIR=$(KERNEL_DIR)/drivers/usb
+KSTACK=@WCM_KSTACK@
+
 KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
 		-DMODULE -DEXPORT_SYMTAB $(MODS) \
 		-Wstrict-prototypes -Wno-trigraphs -O2 \
 		-fno-strict-aliasing \
 		-fno-common -fomit-frame-pointer -pipe \
-		-mpreferred-stack-boundary=2 \
-		-march=$(ARCHITECTURE)
+		$(KSTACK) -march=$(ARCHITECTURE)
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
 LINUX_INPUT=@WCM_LINUX_INPUT@ -I$(KERNEL_DIR)/include
