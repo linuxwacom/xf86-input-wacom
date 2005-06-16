@@ -1,3 +1,6 @@
+2005-06-15    Ping Cheng <pingc@wacom.com>
+	* Added src/2.4.30x86-64 directory for x86-64 kernel 2.4.30
+
 2005-06-14    Ping Cheng <pingc@wacom.com>
 	* Merged with xf86Wacom.c version 1.47 at www.xfree86.org
 	* Support tablet orentation rotation for all tablets
