@@ -26,13 +26,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include <X11/extensions/XInput.h>
-/*
- * Included to obtain the number of events used by the xinput
- * extension.
- */
-#include <X11/extensions/XIproto.h>
-
 #include "wacomxi.h"
 
 /*
@@ -49,162 +42,6 @@
 
 #define CORE_KEYBOARD	1
 #define CORE_POINTER	2
-
-/*
- * These constants are used to represent fixed
- * event types. These types are computed by
- * mapping event types send by each server. The
- * mapping is done by a table maintained for
- * each server.
- */
-#define KEY_EVENT		1
-#define BUTTON_EVENT		2
-#define MOTION_EVENT		3
-#define FOCUS_EVENT		4
-#define PROXIMITY_EVENT		5
-#define CHANGE_DEVICE_EVENT	6
-#define DEVICE_MAPPING_EVENT	7
-#define DEVICE_STATE_EVENT	8
-
-/*
- * These constants must be kept in sync with the
- * xi_event_names array.
- */
-#define KEY_PRESS		0
-#define KEY_RELEASE		1
-#define BUTTON_PRESS		2
-#define BUTTON_PRESS_GRAB	3
-#define BUTTON_PRESS_OWNER_GRAB	4
-#define BUTTON_RELEASE		5
-#define MOTION			6
-#define MOTION_HINT		7
-#define BUTTON_MOTION		8
-#define B1_MOTION		9
-#define B2_MOTION		10
-#define B3_MOTION		11
-#define B4_MOTION		12
-#define B5_MOTION		13
-#define FOCUS_IN		14
-#define FOCUS_OUT		15
-#define PROXIMITY_IN		16
-#define PROXIMITY_OUT		17
-#define DEVICE_STATE		18
-#define DEVICE_MAPPING		19
-#define CHANGE_DEVICE		20
-
-#define	NUM_XI_EVENTS		21
-#define NUM_EVENTS		256	/* Core limit of the protocol */
-
-#define NUM_SIZE 50
-
-static Tk_Uid xi_event_names[NUM_XI_EVENTS] = {
-  "KeyPress",
-  "KeyRelease",
-  "ButtonPress",
-  "ButtonPressGrab",
-  "ButtonPressOwnerGrab",
-  "ButtonRelease",
-  "Motion",
-  "MotionHint",
-  "ButtonMotion",
-  "B1Motion",
-  "B2Motion",
-  "B3Motion",
-  "B4Motion",
-  "B5Motion",
-  "FocusIn",
-  "FocusOut",
-  "ProximityIn",
-  "ProximityOut",
-  "DeviceState",
-  "DeviceMapping",
-  "ChangeDevice",
-};
-
-typedef struct _EventHandlerStruct {
-  Tk_EventProc			*proc;
-  ClientData			client_data;
-  int				type;
-  XID				device_id;
-  int				num_classes;
-  int				classes[3];
-  Tk_Window			tkwin;
-  struct _EventHandlerStruct	*next;
-} EventHandlerStruct;
-
-typedef struct _EventScriptRecord {
-  struct _DeviceInfoStruct	*device;
-  Tk_Uid			event_spec;
-  Tk_Window			tkwin;
-  Tcl_Interp			*interp;
-  char				*script;
-  struct _EventScriptRecord	*next;
-} EventScriptRecord;
-
-typedef struct _AxeInfo {
-  int	min_value;
-  int	max_value;
-  int	resolution;
-  int	value;
-} AxeInfo;
-
-typedef struct _DeviceInfoStruct {
-  struct _DisplayInfoStruct *dpy_info;
-  XDevice	*xdev;
-  Tk_Uid	name;
-  XID		id;
-  char		core;		/* If the device is the core keyboard or pointer */
-  unsigned char	x_index;	/* index of valuator corresponding to core X */
-  unsigned char	y_index;	/* index of valuator corresponding to core Y */
-  int		num_axes;
-  int		num_keys;
-  int		num_buttons;
-  char		focusable;	/* True if the device can be explicitly focused */
-  char		proximity;	/* True if the device can emit proximity events */
-  char		feedback;	/* True if the device has some feedback control */
-  int		mode;		/* ABSOLUTE or RELATIVE */
-  int		history_size;
-  Time		last_motion_time;
-  
-  AxeInfo	*axe_info;
-  int		*valuator_cache; /* Used to store valuators if the device reports
-				  * more than six axes. The array is allocated
-				  * dynamically to match the number of axes. */
-  int		event_classes[NUM_XI_EVENTS];
-  int		no_event_class;
-} DeviceInfoStruct;
-
-typedef struct _DisplayInfoStruct {
-  char		has_xdevices;		/* Non zero if some devices are available
-					 * (other than core devices). */
-  Display	*display;		/* The display that is described. */
-  DeviceInfoStruct *devices;		/* The device list */
-  int		num_dev;
-  char		event_types[NUM_XI_EVENTS];
-  char		event_atypes[NUM_EVENTS]; /* Mapping from server local event types
-					   * to absolutes types independant from
-					   * servers. */
-  int		event_base;		/* The first event type reported by the
-					 * xinput extension on this server. */
-  Tcl_HashTable	per_wins;		/* Records for all handlers per windows on
-					 * this display. */
-  EventHandlerStruct *other_handlers;	/* The handlers associated with events not
-					 * reported relative to a window. */
-  EventHandlerStruct *frozen_handlers;	/* The handlers on hold because theirs
-					 * devices are currently core devices. */
-  struct _DisplayInfoStruct *next;
-} DisplayInfoStruct;
-
-typedef struct _WindowInfoStruct {
-  EventHandlerStruct	*handlers;
-  EventScriptRecord	*scripts;
-} WindowInfoStruct;
-
-typedef struct _InProgress {
-  ClientData		next_handler;	/* Next handler in search. */
-  struct _InProgress	*next;		/* Next higher nested search. */
-} InProgress;
-
 
 static DisplayInfoStruct *display_infos = NULL;
 static InProgress *pending_handlers = NULL;
@@ -238,7 +75,7 @@ GetDisplayInfo(Display	*dpy)
     XValuatorInfoPtr	v;
     int			dummy = 0;
 
-/*printf("Begin of GetDisplayInfo\n");*/
+    /*printf("Begin of GetDisplayInfo\n");*/
   
     /*
      * Lookup the display in the already known list.
@@ -248,7 +85,6 @@ GetDisplayInfo(Display	*dpy)
     {
 	if (dpy == info->display) 
 	{
-	    /*printf("End of GetDisplayInfo\n");*/
 	    return info;
 	}
 	else 
@@ -350,6 +186,7 @@ GetDisplayInfo(Display	*dpy)
 	    info->has_xdevices = 0;
 	}
     }
+    /*printf("End of GetDisplayInfo for device \n");*/
     return info;
 }
 
@@ -370,6 +207,7 @@ LookupDeviceById(Display	*dpy,
     DisplayInfoStruct	*info;
     int			i;
   
+    /*printf("LookupDeviceById \n");*/
     info = GetDisplayInfo(dpy);
     for (i = 0; i < info->num_dev; i++) 
     {
@@ -409,7 +247,7 @@ UpdateCoreMark(ClientData	client_data,
     Tcl_HashSearch		search;
     WindowInfoStruct		*pw;
   
-/*printf("UpdateCoreMark: type=%d, win=0x%X\n", e->type, (int)e->xany.window);*/
+    /*printf("UpdateCoreMark: type=%d, win=0x%X\n", e->type, (int)e->xany.window);*/
 
     device = LookupDeviceById(cdne->display, cdne->deviceid);
     info = device->dpy_info;
@@ -420,7 +258,7 @@ UpdateCoreMark(ClientData	client_data,
 	{
 	    old_device = &info->devices[i];
 	    old_device->core = 0;
-/*printf("old pointer is %s\n", old_device->name);*/
+	    /*printf("old pointer is %s\n", old_device->name);*/
 	    break;
 	}
 	else if ((info->devices[i].core == CORE_KEYBOARD) &&
@@ -438,7 +276,7 @@ UpdateCoreMark(ClientData	client_data,
     else if (cdne->request == NewPointer) 
     {
 	device->core = CORE_POINTER;
-/*printf("new pointer is %s\n", device->name);*/
+	/*printf("new pointer is %s\n", device->name);*/
     }
   
     /*
@@ -534,6 +372,7 @@ UpdateCoreMark(ClientData	client_data,
 	}
 	entry = Tcl_NextHashEntry(&search);
     }
+    return;
 }
 
 /*
@@ -558,7 +397,7 @@ GetDeviceInfo(Tk_Window	tkwin,	/* Used to get the display */
     int			i, dummy;
 
     info = GetDisplayInfo(dpy);
-/*printf("display_info=0x%X, display=0x%X\n", info, dpy);*/
+    /*printf("Begin GetDeviceInfo\n");*/
     for (i = 0; i < info->num_dev; i++) 
     {
 	if (info->devices[i].name == name) 
@@ -572,7 +411,7 @@ GetDeviceInfo(Tk_Window	tkwin,	/* Used to get the display */
 	 * Open the xdevice if not already done and not currently
 	 * a core device.
 	 */
-/*printf("device=%s(0x%X), id=%d\n", device->name, device, (int)device->id);*/
+	/*printf("device=%s, id=%d\n", device->name, (int)device->id);*/
 	if (!device->xdev && !device->core) 
 	{
 	    dummy = 0;
@@ -728,7 +567,7 @@ GetDeviceInfo(Tk_Window	tkwin,	/* Used to get the display */
 		 */
 		Tk_CreateXiEventHandler(tkwin, 
 			xi_event_names[CHANGE_DEVICE], 
-			device->name,
+			device->name, device, 
 			UpdateCoreMark, NULL);
 	    }
 	}
@@ -740,7 +579,7 @@ GetDeviceInfo(Tk_Window	tkwin,	/* Used to get the display */
 	    device = NULL;
 	}
     }
-/*printf("End of GetDeviceInfo\n");*/
+    /*printf("End of GetDeviceInfo\n");*/
 
   return device;
 }
@@ -797,9 +636,9 @@ DestroyPerWindow(ClientData	client_data,
     Tcl_HashEntry	*he;
     InProgress		*ip;
   
+    /*printf("Begin of DestroyPerWindow\n");*/
     if (e->type == DestroyNotify) 
     {
-/*printf("Begin of DestroyPerWindow\n");*/
 	info = GetDisplayInfo(e->xany.display);
 	he = Tcl_FindHashEntry(&info->per_wins, (char *) w);
 	if (he) 
@@ -890,8 +729,9 @@ DestroyPerWindow(ClientData	client_data,
 		h_prev = handlers;
 	    }
 	}
-/*printf("End of DestroyPerWindow\n");*/
     }
+    /*printf("End of DestroyPerWindow\n");*/
+    return;
 }
 
 /*
@@ -906,13 +746,14 @@ static WindowInfoStruct *
 GetWindowInfo(Tk_Window	w,
 	      int	create)
 {
-    DisplayInfoStruct	*info = GetDisplayInfo(Tk_Display(w));
+    DisplayInfoStruct	*info;
     Tcl_HashEntry	*he;
     WindowInfoStruct	*pw;
     int			new;
   
-/*printf("Begin of GetWindowInfo\n");*/
-  
+    /*printf("Begin of GetWindowInfo %d %s \n", create, (char *)w);*/
+
+    info = GetDisplayInfo(Tk_Display(w));  
     he = Tcl_FindHashEntry(&info->per_wins, (char *) w);
     if (he == NULL) 
     {
@@ -929,11 +770,10 @@ GetWindowInfo(Tk_Window	w,
 	{
 	    pw = NULL;
 	}
-/*printf("End of GetWindowInfo\n");*/
 	return pw;
     }
 
-/*printf("End of GetWindowInfo\n");*/
+    /* printf("End of GetWindowInfo \n");*/
     return (WindowInfoStruct *) Tcl_GetHashValue(he);
 }
 
@@ -952,13 +792,13 @@ static void
 SelectEvents(Tk_Window	w,
 	     int	no_event_class)
 {
+    /*printf("Begin SelectEvents\n");*/
     DisplayInfoStruct	*info = GetDisplayInfo(Tk_Display(w));
     WindowInfoStruct	*pw = GetWindowInfo(w, 0);
     EventHandlerStruct	*handlers;
     int			i, count = 0;
-    int			*classes;
+    XEventClass		*classes;
   
-/*printf("Begin SelectEvents\n");*/
     if (no_event_class >= 0) 
     {
 	count++;
@@ -980,7 +820,7 @@ SelectEvents(Tk_Window	w,
 
     if (count == 0) return;
 
-    classes = (int *) alloca(count * sizeof(int));
+    classes = (XEventClass *) alloca(count * sizeof(XEventClass));
     count = 0;
     if (no_event_class >= 0) 
     {
@@ -1009,7 +849,9 @@ SelectEvents(Tk_Window	w,
     }
 
     XSelectExtensionEvent(Tk_Display(w), Tk_WindowId(w),
-			(XEventClass *) classes, count);
+			classes, count);
+    /*printf("End SelectEvents\n");*/
+    return;
 }
 
 /*
@@ -1030,6 +872,7 @@ int
 Tk_CreateXiEventHandler(Tk_Window	w,
 			Tk_Uid		event_spec,
 			Tk_Uid		device_spec,
+			DeviceInfoStruct * device,
 			Tk_EventProc	*proc,
 			ClientData	client_data)
 {
@@ -1037,12 +880,10 @@ Tk_CreateXiEventHandler(Tk_Window	w,
     int			event_index, event_type, event_atype;
     WindowInfoStruct	*pw;
     EventHandlerStruct	*handlers, **handlers_head;
-    DeviceInfoStruct	*device;
     DisplayInfoStruct	*info;
   
-/*printf("Begin Tk_CreateXiEventHandler\n");*/
+    /*printf("Begin Tk_CreateXiEventHandler\n");*/
   
-    device = GetDeviceInfo(w, device_spec);
     info = device->dpy_info;
     event_index = GetEventIndex(event_spec);
 
@@ -1139,7 +980,7 @@ Tk_CreateXiEventHandler(Tk_Window	w,
 	SelectEvents(w, -1);
     }
 
-/*printf("End Tk_CreateXiEventHandler\n");*/
+    /*printf("End Tk_CreateXiEventHandler return 1\n");*/
     return 1;
 }
 
@@ -1158,20 +999,19 @@ void
 Tk_DeleteXiEventHandler(Tk_Window	w,
 			Tk_Uid		event_spec,
 			Tk_Uid		device_spec,
+			DeviceInfoStruct *device,
 			Tk_EventProc	*proc,
 			ClientData	client_data)
 {
     WindowInfoStruct	*pw;
     int			event_index, event_type, event_atype;
-    DeviceInfoStruct	*device;
     EventHandlerStruct	*handlers, *prev, *next;
     EventHandlerStruct	**handlers_head;
     InProgress		*ip;
     int			no_window;
     int			device_in_use = 0;
   
-/*printf("Begin Tk_DeleteXiEventHandler\n");*/
-    device = GetDeviceInfo(w, device_spec);
+    /*printf("Begin Tk_DeleteXiEventHandler\n");*/
     event_index = GetEventIndex(event_spec);
     event_type = device->dpy_info->event_types[event_index];
     event_atype = device->dpy_info->event_atypes[event_type];
@@ -1245,13 +1085,14 @@ Tk_DeleteXiEventHandler(Tk_Window	w,
      * Now we need to check if the widget window is created and
      * if it is, select the right events.
      */
-/*printf("device in use %s, %d, no_event=%d\n", device->name, device_in_use,
+    /*printf("device in use %s, %d, no_event=%d\n", device->name, device_in_use,
 	 device->no_event_class);*/
     if (Tk_WindowId(w)) 
     {
 	SelectEvents(w, device_in_use ? -1 : device->no_event_class);
     }
-/*printf("End Tk_DeleteXiEventHandler\n");*/
+    return;
+    /*printf("End Tk_DeleteXiEventHandler\n");*/
 }
 
 /*
@@ -1271,6 +1112,7 @@ WacomxiGenericEventHandler(ClientData	client_data,
 		      XEvent		*event)
 {
     DisplayInfoStruct	*info;
+    /*printf("Begin WacomxiGenericEventHandler \n");*/
   
     info = GetDisplayInfo(event->xany.display);
     if ((event->type >= info->event_base) &&
@@ -1281,6 +1123,7 @@ WacomxiGenericEventHandler(ClientData	client_data,
 
     /* Not able to dispatch return and let the standard system have a try.
      */
+    /*printf("End WacomxiGenericEventHandler 0 \n");*/
     return 0;
 }
 
@@ -1303,7 +1146,7 @@ Tk_DispatchXiEvent(XEvent	*e)
     DisplayInfoStruct	*info;
     int			hit = 0;
   
-/*printf("Begin Tk_DispatchXiEvent : %d\n", e->type);*/
+    /*printf("Begin Tk_DispatchXiEvent : %d\n", e->type);*/
 
     /*
      * Special case needed for ChangeDeviceEvent, DeviceMappingEvent
@@ -1347,7 +1190,7 @@ Tk_DispatchXiEvent(XEvent	*e)
     }
     pending_handlers = pending_handlers->next;
 
-/*printf("End Tk_DispatchXiEvent\n");*/
+    /*printf("End Tk_DispatchXiEvent\n");*/
     return hit;
 }
 
@@ -1370,8 +1213,7 @@ RemoveEventScript(Tcl_Interp	*interp,
     WindowInfoStruct	*pw = GetWindowInfo(tkwin, 0);
     EventScriptRecord	*escripts, *prev_escript;
 
-/*printf("Begin RemoveEventScript\n");
-printf("for %s\n", event_spec);*/
+    /*printf("Begin RemoveEventScript\n");*/
     /*
      * No window info. The window has probably been destroyed.
      */
@@ -1397,14 +1239,15 @@ printf("for %s\n", event_spec);*/
 	    {
 		prev_escript->next = escripts->next;
 	    }
-	    Tk_DeleteXiEventHandler(tkwin, event_spec, device->name,
+	    Tk_DeleteXiEventHandler(tkwin, event_spec, device->name, device,
 			InvokeEventScript, (ClientData) escripts);
 	    ckfree(escripts->script);
 	    ckfree((char *) escripts);
 	    break;
 	}
     }
-/*printf("End RemoveEventScript\n");*/
+    /*printf("End RemoveEventScript\n");*/
+    return;
 }
 
 /*
@@ -1435,7 +1278,7 @@ ExpandPercents(Tk_Window	tkwin,
     unsigned int	device_state = 0;
     int			axes_count = 0, *axis_data = NULL;
   
-/*printf("Begin ExpandPercents\n");*/
+    /*printf("Begin ExpandPercents\n");*/
     if ((event_atype == KEY_EVENT) || (event_atype == BUTTON_EVENT)) 
     {
 	k_b_flag = k_b_v_p_flag = 1;
@@ -1679,7 +1522,8 @@ ExpandPercents(Tk_Window	tkwin,
 	    Tcl_DStringSetLength(exp_script, length + space_needed);
 	    script += 2;
     }
-/*printf("End ExpandPercents\n");*/
+    return;
+    /*printf("End ExpandPercents\n");*/
 }
 
 /*
@@ -1797,7 +1641,8 @@ InvokeEventScript(ClientData	client_data,
 	Tcl_BackgroundError(interp);
     }
     Tcl_Release((ClientData) interp);
-/*printf("End InvokeEventScript\n");*/
+    /*printf("End InvokeEventScript\n");*/
+    return;
 }
 
 /*
@@ -1821,14 +1666,16 @@ AddEventScript(Tcl_Interp	*interp,
 	       char		*script)
 {
     WindowInfoStruct  *pw = GetWindowInfo(tkwin, 1);
+    DeviceInfoStruct * dinfo = GetDeviceInfo(tkwin, device->name);
     EventScriptRecord *escripts = NULL;
 
-/*printf("Begin of AddEventScript\n");*/
-  
+    /*printf("Begin of AddEventScript\n");*/
+
     /*
      * Try to see if a script is already registered with the
      * same combination of device, event and interp.
      */
+
     for (escripts = pw->scripts; escripts != NULL; escripts = escripts->next) 
     {
 	if ((escripts->device == device) &&
@@ -1853,7 +1700,7 @@ AddEventScript(Tcl_Interp	*interp,
 	escripts->tkwin = tkwin;
 	escripts->event_spec = event_spec;
 	escripts->interp = interp;
-	if (!Tk_CreateXiEventHandler(tkwin, event_spec, device->name,
+	if (!Tk_CreateXiEventHandler(tkwin, event_spec, device->name, dinfo,
 			InvokeEventScript, (ClientData) escripts)) 
 	{
 	    ckfree((char *) escripts);
@@ -1868,6 +1715,7 @@ AddEventScript(Tcl_Interp	*interp,
     escripts->script = ckalloc(strlen(script) + 1);
     strcpy(escripts->script, script);
 
+    /*printf("End of AddEventScript\n");*/
     return 1;
 }
 
@@ -1961,9 +1809,7 @@ WacomxiBindEventCmd(ClientData	clientData,
 		     "\" can't be reported by device \"", argv[2],
 		     "\"", (char *) NULL);
 	return TCL_ERROR;
-    }
-/*printf("Added event %s \n", argv[3] );*/
-  
+    }  
     return TCL_OK;
 }
 

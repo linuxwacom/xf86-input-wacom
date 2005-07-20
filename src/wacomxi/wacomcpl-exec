@@ -134,41 +134,45 @@ proc calibrationSequence {which xDev yDev} {
 	#
 	# A rough verification of the click
 	set clickCheck 0
+	set xDevMin $calibResults(xDev,0)
+	set xDevMax $calibResults(xDev,1)
+	set yDevMin $calibResults(yDev,0)
+	set yDevMax $calibResults(yDev,1)
 	if { $calibResults(xDev,1) < $calibResults(xDev,0) } {
 	    set clickCheck 1
+	    set xDevMin $calibResults(xDev,1)
+	    set xDevMax $calibResults(xDev,0)
 	}
 	if { $calibResults(yDev,1) < $calibResults(yDev,0) } {
 	    set clickCheck 1
+	    set yDevMin $calibResults(yDev,1)
+	    set yDevMax $calibResults(yDev,0)
 	}
 
 	if { $clickCheck == 1 } {
 	    messageWindow "Warning !!!" \
-		"\n\nYou need to click on the center\n\
-		of the pink crosshair. Please try again"
-	} else {
-	    set xDevMin [expr $calibResults(xDev,0) - \
-		    ($borderOffset * $widthDev / $widthX)]
-	    set xDevMax [expr $calibResults(xDev,1) + \
-		    ($borderOffset * $widthDev / $widthX)]
-	    set yDevMin [expr $calibResults(yDev,0) - \
-		    ($borderOffset * $heightDev / $heightX)]
-	    set yDevMax [expr $calibResults(yDev,1) + \
-		    ($borderOffset * $heightDev / $heightX)]
-	
-	    exec xsetwacom set $device topx $xDevMin
-	    exec xsetwacom set $device topy $yDevMin
-	    exec xsetwacom set $device bottomx $xDevMax
-	    exec xsetwacom set $device bottomy $yDevMax
-	    # send the same data to the associated eraser
-	    set eraser $getDeviceModel($device,eraser)
-	    if { [ string compare $eraser $device ] } {
-		exec xsetwacom set $eraser topx $xDevMin
-		exec xsetwacom set $eraser topy $yDevMin
-		exec xsetwacom set $eraser bottomx $xDevMax
-		exec xsetwacom set $eraser bottomy $yDevMax
-	    }
-	    updateXinitrc
+		"\n\nThere was something unusual in your calibration step.\n\
+		If you are pretty sure that you have clicked on the center\n\
+		of the pink crosshair, you are fine. Otherwise, try it again."
 	}
+	set xDevMin [expr $xDevMin - ($borderOffset * $widthDev / $widthX)]
+	set xDevMax [expr $xDevMax + ($borderOffset * $widthDev / $widthX)]
+	set yDevMin [expr $yDevMin - ($borderOffset * $heightDev / $heightX)]
+	set yDevMax [expr $yDevMax + ($borderOffset * $heightDev / $heightX)]
+	
+	exec xsetwacom set $device topx $xDevMin
+	exec xsetwacom set $device topy $yDevMin
+	exec xsetwacom set $device bottomx $xDevMax
+	exec xsetwacom set $device bottomy $yDevMax
+	# send the same data to the associated eraser
+	set eraser $getDeviceModel($device,eraser)
+	if { [ string compare $eraser $device ] } {
+	    exec xsetwacom set $eraser topx $xDevMin
+	    exec xsetwacom set $eraser topy $yDevMin
+	    exec xsetwacom set $eraser bottomx $xDevMax
+	    exec xsetwacom set $eraser bottomy $yDevMax
+	}
+	updateXinitrc
 
 	exec xsetwacom set $device gimp on
 	destroy .topleft .bottomright
@@ -333,19 +337,19 @@ proc updateDevice {} {
     global device deviceIndex getOption
     global numScreens getDeviceModel Option
 
-    if { $device != "" } {
+    set olddev $device
+    set device [ .workingDev.list get anchor ]
+    set deviceIndex [ .workingDev.list index anchor ]
+    if { $device != $olddev && $olddev != ""} {
 	#
 	# Clear old state related to preceding device
 	#
 	wacomxi::bindevent . $device <ButtonPress> ""
 	wacomxi::bindevent . $device <ButtonRelease> ""
-#	disableButtons
+	disableButtons
     }
-    
-    set device [ .workingDev.list get anchor ]
-    set deviceIndex [ .workingDev.list index anchor ]
 
-    if { $device != "" } {
+    if { $device != ""} {
 	#
 	# Update the entry indicator
 	#

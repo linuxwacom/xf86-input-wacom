@@ -1,8 +1,8 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
- *                                                                            
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
  * the  above copyright   notice appear  in   all  copies and  that both  that
@@ -87,7 +87,7 @@
  * 2005-02-17 42-j0.6.7  - added 64-bit support
  * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
  * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablet
-*/
+ */
 
 static const char identification[] = "$Identification: 47-pc0.6.9 $";
 

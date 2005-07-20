@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
- *                                                                            
+ * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
  * the  above copyright   notice appear  in   all  copies and  that both  that
@@ -10,8 +10,8 @@
  * advertising or publicity pertaining to distribution of the software without
  * specific,  written      prior  permission.     Frederic  Lepied   makes  no
  * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.                   
- *                                                                            
+ * is provided "as is" without express or implied warranty.
+ * 
  * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
  * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
  * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
@@ -35,11 +35,7 @@
  ****************************************************************************/
 
 #ifdef LINUX_INPUT
-#ifdef _XSERVER64
-#include <asm-x86_64/types.h>
-#else
 #include <asm/types.h>
-#endif
 #include <linux/input.h>
 
 /* 2.5 module support */

@@ -60,6 +60,7 @@
  *			    - added Intuos3
  *			    - added Cintiq 21UX
  *    v1.40-2.6.11.3-pc-0.2 - fixed an I3 bug
+ *    v1.40-2.6.11.3-pc-0.3 - fixed a Cintiq 21UX bug
  *
  */
 
@@ -82,7 +83,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.11.3-pc-0.2"
+#define DRIVER_VERSION "v1.40 - 2.6.11.3-pc-0.3"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -582,7 +583,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	if (wacom_intuos_inout(urb)) goto exit;
 
 	/* Cintiq doesn't send data when RDY bit isn't set */
-	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) return;
+	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) goto exit;
 
 	if(wacom->features->type >= INTUOS3)
 	{

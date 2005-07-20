@@ -275,10 +275,7 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 	if (nReturn == BadValue)
 		return CfgError(hDevice->pCfg,EINVAL,
 			"WacomConfigSetRawParam: Bad value");
-	/* On some systems, Success turned into !Success for unknown reason */
-	else if (nReturn != Success && nReturn != !Success)
-		return CfgError(hDevice->pCfg,EIO,
-			"WacomConfigSetRawParam: Unknown X error");
+	fprintf(stdout ,"WacomConfigSetRawParam: returned #%d\n", nReturn);
 	return 0;
 }
 

@@ -19,6 +19,7 @@ WCM_TCLPKGS=""
 WCM_MODULES=""
 WCM_XF86PROGS=""
 WCM_XF86MODULES=""
+WCM_XSERVER64=""
 WCM_EXPPROGS=""
 WCM_EXPMODULES=""
 WCM_PATCH_HID=""
@@ -309,11 +310,6 @@ if test "$enable_wacomdrv" != "no"; then
 		WCM_OPTION_WACOMDRV=yes
 		WCM_XF86MODULES="$WCM_XF86MODULES wacom_drv.o"
 		WCM_EXPMODULES="$WCM_EXPMODULES wacom_drv.o"
-		if test "$WCM_ENV_KERNEL" = "yes"; then 
-			WCM_LINUX_INPUT="$WCM_LINUX_INPUT -I$WCM_KERNELDIR/include"
-		else
-			WCM_LINUX_INPUT=$WCM_LINUX_INPUT
-		fi
 	fi
 fi
 
@@ -325,16 +321,17 @@ AC_HELP_STRING([--with-arch], [Use specified architecture]),
 ])
 
 dnl Check for X server bit
-WCM_XSERVER64=no
+WCM_OPTION_XSERVER64=no
 AC_ARG_ENABLE(xserver64,
 AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=no]]]),
 	, enable_xserver64=no)
 if test "$enable_xserver64" != "no"; then
-	CFLAGS="$CFLAGS -D_XSERVER64"
-	WCM_XSERVER64=yes
+	CFLAGS="$CFLAGS -D__amd64__"
+	WCM_XSERVER64="-D_XSERVER64"
+	WCM_OPTION_XSERVER64=yes
 	if test "$WCM_ARCH" = "x86_64"; then
 		WCM_ARCH=x86-64
-#		WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
+		WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
 	fi
 fi
 
@@ -444,20 +441,16 @@ if test "x$GCC" = "xyes"; then
 fi
 
 dnl Check for x86_64 kernel
-if test "$WCM_ARCH" = "x86-64"; then
-	echo "***"; echo "*** WARNING:";
-	echo "*** For x86-64 kernel, we only support kernel 2.4.30 and kernel 2.6.* "
-	echo "*** You need to copy the source files from src/2.4.30x86-64 or src/2.6.*"
-	echo "*** to your kernel source tree and build the drivers over there "
-	echo "*** "
+kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
+if test "$WCM_ARCH" = "x86-64" && test $kver != 0; then
 	WCM_OPTION_HID=no
 	WCM_OPTION_WACOM=no
 	WCM_OPTION_INPUT=no
-	WCM_OPTION_UBMOUSE=no
+	WCM_OPTION_USBMOUSE=no
 	WCM_OPTION_MOUSEDEV=no
 	WCM_OPTION_EVDEV=no
+	WCM_MODULES=""
 fi
-
 
 dnl Separate test output from file-generation output
 echo 
@@ -480,6 +473,7 @@ AC_SUBST(WCM_LINUXWACOMDIR)
 AC_SUBST(WCM_XORGSDK)
 AC_SUBST(WCM_XF86DIR)
 AC_SUBST(WCM_XLIBDIR)
+AC_SUBST(WCM_XSERVER64)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
 AC_SUBST(WCM_LINUX_INPUT)
 AC_SUBST(WCM_XIDUMP_LIBS)
@@ -525,7 +519,7 @@ echo "            XFree86 - $WCM_ENV_XF86 $WCM_XF86DIR"
 else
 echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK"
 fi
-echo "          XSERVER64 - $WCM_XSERVER64"
+echo "          XSERVER64 - $WCM_OPTION_XSERVER64"
 echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"
 echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
 echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
@@ -548,3 +542,15 @@ echo "            input.o - $WCM_OPTION_INPUT"
 echo "        tabletdev.o - $WCM_OPTION_TABLETDEV"
 echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_PATCH_WACOMDRV"
 echo "----------------------------------------"
+
+dnl Check for x86_64 kernel
+kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
+if test "$WCM_ARCH" = "x86-64" && test $kver != 0; then
+	echo ""
+	echo "***"; echo "*** Note:";
+	echo "*** For x86-64 kernel, we only support kernel 2.4.30 and kernel 2.6.* "
+	echo "*** To compile Wacom related kernel 2.4.30 modules for x86-64, you need to "
+	echo "*** copy the source files from src/2.4.30x86-64 to your kernel source tree "
+	echo "*** and build the drivers there "
+	echo "*** "
+fi

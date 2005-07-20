@@ -60,6 +60,7 @@
  *    v1.40-2.6.7-pc-0.3 - fixed a Graphire bug
  *    v1.40-2.6.7-pc-0.4 - added Cintiq 21UX
  *    v1.40-2.6.7-pc-0.5 - fixed an I3 bug
+ *    v1.40-2.6.7-pc-0.6 - fixed a Cintiq 21UX bug
  */
 
 /*
@@ -81,7 +82,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.7-pc-0.5"
+#define DRIVER_VERSION "v1.40 - 2.6.7-pc-0.6"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -162,7 +163,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2) {
 		dbg("wacom_pl_irq: received unknown report #%d", data[0]);
-		return;
+		goto exit;
 	}
 
 	prox = data[1] & 0x40;
@@ -253,7 +254,7 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2) {
 		printk(KERN_INFO "wacom_ptu_irq: received unknown report #%d\n", data[0]);
-		return;
+		goto exit;
 	}
 
 	input_regs(dev, regs);
@@ -306,7 +307,7 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2) {
 		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
-		return;
+		goto exit;
 	}
 
 	input_regs(dev, regs);
@@ -350,7 +351,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
-		return;
+		goto exit;
 	}
 
 	input_regs(dev, regs);
@@ -545,7 +546,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 
 	if (data[0] != 2 && data[0] != 5 && data[0] != 6 && data[0] != 12) {
 		dbg("wacom_intuos_irq: received unknown report #%d", data[0]);
-		return;
+		goto exit;
 	}
 
 	input_regs(dev, regs);
@@ -581,7 +582,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	if (wacom_intuos_inout(urb)) goto exit;
 
 	/* Cintiq doesn't send data when RDY bit isn't set */
-	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) return;
+	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) goto exit;
 
 	if(wacom->features->type >= INTUOS3)
 	{

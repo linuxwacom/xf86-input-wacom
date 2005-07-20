@@ -1,3 +1,8 @@
+2005-07-20    Ping Cheng <pingc@wacom.com>
+	* Support x86-64 X driver
+	* Fixed a Cintiq 21UX kernel bug
+	* Fixed a TabletPC eraser bug
+
 2005-06-15    Ping Cheng <pingc@wacom.com>
 	* Added src/2.4.30x86-64 directory for x86-64 kernel 2.4.30
 

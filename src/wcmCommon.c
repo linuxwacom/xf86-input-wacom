@@ -210,7 +210,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 	DBG(6, ErrorF("xf86WcmSendButtons buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) )
+	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) && !IsEraser(priv) )
 	{
 		if ( buttons & 1 )
 		{
