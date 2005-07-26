@@ -234,13 +234,8 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 
 		ds->device_type = cur_type;
-
-	/* out of prox */
-	else if (!ds->proximity)
-		memset(ds,0,sizeof(*ds));
-
 	/* check on previous proximity */
-	else
+	else if (cur_type == STYLUS_ID && ds->proximity)
 	{
 		/* we were fooled by tip and second
 		 * sideswitch when it came into prox */

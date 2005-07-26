@@ -1236,12 +1236,22 @@ static void serialParseP4Common(WacomCommonPtr common,
 	ds->x = (((data[0] & 0x3) << 14) + (data[1] << 7) + data[2]);
 	ds->y = (((data[3] & 0x3) << 14) + (data[4] << 7) + data[5]);
 
+	/* handle tilt values only for stylus */
+	if (HANDLE_TILT(common) && is_stylus)
+	{
+		ds->tiltx = (data[7] & TILT_BITS);
+		ds->tilty = (data[8] & TILT_BITS);
+		if (data[7] & TILT_SIGN_BIT)
+			ds->tiltx -= 64;
+		if (data[8] & TILT_SIGN_BIT)
+			ds->tilty -= 64;
+	}
+
 	/* first time into prox */
 	if (!last->proximity && ds->proximity) 
 		ds->device_type = cur_type;
-
 	/* check on previous proximity */
-	else if (is_stylus)
+	else if (is_stylus && ds->proximity)
 	{
 		/* we were fooled by tip and second
 		 * sideswitch when it came into prox */
@@ -1254,29 +1264,11 @@ static void serialParseP4Common(WacomCommonPtr common,
 			ds->device_type = cur_type;
 		}
 	}
-	else if (ds->device_type != cur_type) /* missed out-prox event*/
-	{
-		/* send a prox-out for old device */
-		WacomDeviceState out = { 0 };
-		xf86WcmEvent(common,0,&out);
-		ds->device_type = cur_type;
-	}
 
 	DBG(8, ErrorF("serialParseP4Common %s\n",
 		ds->device_type == CURSOR_ID ? "CURSOR" :
 		ds->device_type == ERASER_ID ? "ERASER " :
 		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
-
-	/* handle tilt values only for stylus */
-	if (HANDLE_TILT(common) && is_stylus)
-	{
-		ds->tiltx = (data[7] & TILT_BITS);
-		ds->tilty = (data[8] & TILT_BITS);
-		if (data[7] & TILT_SIGN_BIT)
-			ds->tiltx -= 64;
-		if (data[8] & TILT_SIGN_BIT)
-			ds->tilty -= 64;
-	}
 }
 
 /*****************************************************************************
