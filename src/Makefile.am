@@ -28,7 +28,9 @@ wacdump_LDADD = -lncurses
 
 xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
 xidump_LDFLAGS = @WCM_XIDUMP_LIBS@
+if WCM_ENV_NCURSES
 xidump_LDADD = -lncurses
+endif
 
 libwacomcfg_la_SOURCES = wacomcfg.c wacomcfg.h Xwacom.h
 libwacomcfg_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMCFG_VER@

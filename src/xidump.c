@@ -2,6 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
+** Copyright (C) 2005 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -24,6 +25,7 @@
 **   2003-03-21 0.0.4 - added conditional curses code
 **   2003-03-21 0.5.0 - released in development branch
 **   2003-04-07 0.5.1 - added pressure bar
+**   2003-07-27 0.5.2 - remove unused GTK stuff [jg]
 **
 ****************************************************************************/
 
@@ -35,7 +37,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.5.1"
+#define XIDUMP_VERSION "0.5.2"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -364,33 +366,6 @@ struct _UI
 	void (*Term)(void);
 	int (*Run)(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt);
 };
-
-/*****************************************************************************
-** GTK UI
-*****************************************************************************/
-
-#if WCM_ENABLE_GTK12 || WCM_ENABLE_GTK20
-#define USE_GTK 1
-#include <gtk/gtk.h>
-
-static int GTKInit(void)
-{
-	return 1;
-}
-
-static void GTKTerm(void)
-{
-}
-
-static int GTKRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
-{
-	return 1;
-}
-
-	UI gGTKUI = { "gtk", GTKInit, GTKTerm, GTKRun };
-#else
-#define USE_GTK 0
-#endif
 
 /*****************************************************************************
 ** Curses UI
@@ -794,11 +769,6 @@ static int RawRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 
 	UI* gpUIs[] =
 	{
-		/* GTK UI */
-		#if USE_GTK
-	/*	&gGTKUI, */ /* not ready yet */
-		#endif
-
 		/* Curses UI */
 		#if USE_NCURSES
 		&gCursesUI,

@@ -40,8 +40,7 @@ dnl Check for XFree86 source
 AC_WCM_CHECK_XFREE86SOURCE
 AC_WCM_CHECK_XORG_SDK
 
-dnl Check for GTK, TCL, TK, and XLib
-AC_WCM_CHECK_GTK
+dnl Check for TCL, TK, and XLib
 AC_WCM_CHECK_XLIB
 AC_WCM_CHECK_TCL
 AC_WCM_CHECK_TK
@@ -525,7 +524,6 @@ echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
 echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
 
 echo "            ncurses - $WCM_ENV_NCURSES"
-echo "                GTK - $WCM_ENV_GTK"
 echo ""
 echo "  BUILD OPTIONS:"
 echo "            wacom.o - $WCM_OPTION_WACOM"

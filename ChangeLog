@@ -1,3 +1,6 @@
+2005-07-28    Ping Cheng <pingc@wacom.com>
+	* Removed GTK from configure script and xidump code (Jens Georg)
+
 2005-07-26    Ping Cheng <pingc@wacom.com>
 	* Fixed a serial protocol 4 eraser/3rd button switch bug
 
