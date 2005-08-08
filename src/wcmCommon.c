@@ -408,6 +408,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int rx, ry, rz, rtx, rty, rrot, rth, rw, no_jitter;
 	double param, relacc;
 	int is_core_pointer, is_absolute;
+	priv->currentX = x;
+	priv->currentY = y;
 
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
@@ -441,8 +443,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
-	priv->currentX = x;
-	priv->currentY = y;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
 		"button=%s\tbuttons=%d\t on channel=%d\n",
@@ -468,10 +468,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	{
 		if (priv->oldProximity)
 		{
-			/* unify acceleration in both directions */
-			rx = (x - priv->oldX) * priv->factorY / priv->factorX;
+			if (x > priv->bottomX || x < priv->topX)
+				x = priv->oldX;
+			if (y > priv->bottomY || y < priv->topY)
+				y = priv->oldY;
 
-			rx = (x - priv->oldX);
+			rx = x - priv->oldX;
 			ry = y - priv->oldY;
 		}
 		else
@@ -481,7 +483,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		}
 
 		/* don't apply speed for fairly small increments */
-		no_jitter = priv->speed * 3;
+		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
 		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
 		if (ABS(rx) > no_jitter)
 		{
@@ -494,9 +496,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 				/* don't apply acceleration when too fast. */
 				if (param < 20.00)
 				{
-					rx *= param;
+					param = 20.00;
 				}
 			}
+			rx *= param;
 		}
 		if (ABS(ry) > no_jitter)
 		{
@@ -511,6 +514,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 					ry *= param;
 				}
 			}
+			ry *= param;
 		}
 		rz = z - priv->oldZ;
 		rtx = tx - priv->oldTiltX;
@@ -520,12 +524,19 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		rw = wheel - priv->oldWheel;
 	}
 
+	priv->currentX = rx;
+	priv->currentY = ry;
+
 	/* for multiple monitor support, we need to set the proper 
 	 * screen and modify the axes before posting events */
 	if( !(priv->flags & BUTTONS_ONLY_FLAG) )
 	{
 		xf86WcmSetScreen(local, &rx, &ry);
 	}
+
+	/* unify acceleration in both directions for relative mode to draw a circle */
+	if (!is_absolute)
+		rx *= priv->factorY / priv->factorX;
 
 	/* coordinates are ready we can send events */
 	if (is_proximity)
@@ -749,6 +760,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
+	WacomFilterState fs;
+	int i;
 
 	/* tool on the tablet when driver starts */
 	if (!miPointerCurrentScreen())
@@ -784,46 +797,72 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample));
 
 #ifdef LINUX_INPUT
- 	/* Discard the first 2 USB packages due to events delay */
+	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
 	{
 		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
-		/* store channel device state for later use */
-		memmove(pChannel->valid.states + 1,
-			pChannel->valid.states,
-			sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 		++pChannel->nSamples;
 		return; /* discard */
 	}
 #endif
-	/* Filter raw data, fix hardware defects, perform error correction */
-	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
+	fs = pChannel->rawFilter;
+	if (!fs.npoints && ds.proximity)
 	{
-		if (common->wcmModel->FilterRaw(common,pChannel,&ds))
+		DBG(11, ErrorF("initialize Channel data.\n"));
+		/* store channel device state for later use */
+		for (i=MAX_SAMPLES - 1; i>=0; i--)
 		{
-			DBG(10, ErrorF("Raw filtering discarded data.\n"));
-			resetSampleCounter(pChannel);
-			return; /* discard */
+			fs.x[i]= ds.x;
+			fs.y[i]= ds.y;
 		}
-	}
-
-	/* Discard unwanted data */
-	if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds) && pChannel->rawFilter.npoints == 4)
-	{
-		/* If throttle is not in use, discard data. */
-		if (ABS(ds.throttle) < common->wcmSuppress)
+		++fs.npoints;
+	} else  {
+		/* Filter raw data, fix hardware defects, perform error correction */
+		for (i=MAX_SAMPLES - 1; i>0; i--)
 		{
-			resetSampleCounter(pChannel);
-			return;
+			fs.x[i]= fs.x[i-1];
+			fs.y[i]= fs.y[i-1];
+		}
+		fs.x[0] = ds.x;
+		fs.y[0] = ds.y;
+		if (HANDLE_TILT(common) && (ds.device_type == ERASER_ID || ds.device_type == ERASER_ID))
+		{
+			for (i=MAX_SAMPLES - 1; i>0; i--)
+			{
+				fs.tiltx[i]= fs.tiltx[i-1];
+				fs.tilty[i]= fs.tilty[i-1];
+			}
+			fs.tiltx[0] = ds.tiltx;
+			fs.tilty[0] = ds.tilty;
+		}
+		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
+		{
+			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
+			{
+				DBG(10, ErrorF("Raw filtering discarded data.\n"));
+				resetSampleCounter(pChannel);
+				return; /* discard */
+			}
 		}
 
-		/* Otherwise, we need this event for time-rate-of-change
-		 * values like the throttle-to-relative-wheel filter.
-		 * To eliminate position change events, we reset all values
-		 * to last unsuppressed position. */
+		/* Discard unwanted data */
+		if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
+		{
+			/* If throttle is not in use, discard data. */
+			if (ABS(ds.throttle) < common->wcmSuppress)
+			{
+				resetSampleCounter(pChannel);
+				return;
+			}
 
-		ds = *pLast;
-		RESET_RELATIVE(ds);
+			/* Otherwise, we need this event for time-rate-of-change
+			 * values like the throttle-to-relative-wheel filter.
+			 * To eliminate position change events, we reset all values
+		 	* to last unsuppressed position. */
+
+			ds = *pLast;
+			RESET_RELATIVE(ds);
+		}
 	}
 
 	/* JEJ - Do not move this code without discussing it with me.
@@ -837,7 +876,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-	if (pChannel->rawFilter.npoints < 4) ++pChannel->nSamples;
+	if (pChannel->nSamples < 4) ++pChannel->nSamples;
 
 	commonDispatchDevice(common,channel,pChannel);
 	resetSampleCounter(pChannel);

@@ -382,17 +382,18 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		}
 	}
 
-	if (data[1] & 0x80) {
+	if (data[1] & 0x90) {
 		x = le16_to_cpu(*(__le16 *) &data[2]);
 		y = le16_to_cpu(*(__le16 *) &data[4]);
 		input_report_abs(dev, ABS_X, x);
 		input_report_abs(dev, ABS_Y, y);
-	}
-	if (wacom->tool[0] != BTN_TOOL_MOUSE) {
-		input_report_abs(dev, ABS_PRESSURE, le16_to_cpu(*(__le16 *) &data[6]));
-		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
-		input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
-		input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
+
+		if (wacom->tool[0] != BTN_TOOL_MOUSE) {
+			input_report_abs(dev, ABS_PRESSURE, le16_to_cpu(*(__le16 *) &data[6]));
+			input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
+			input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
+			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
+		}
 	}
 	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
 	input_sync(dev);

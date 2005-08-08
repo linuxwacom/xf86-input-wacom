@@ -1,3 +1,9 @@
+2005-08-08    Ping Cheng <pingc@wacom.com>
+	* Added --enable-dlloader configuration option
+	* Cleaned Graphire wacom.c code
+	* Cleaned relative Convert/revConvert X code
+	* Released linuxwacom-0.6.9 as beta
+
 2005-07-28    Ping Cheng <pingc@wacom.com>
 	* Removed GTK from configure script and xidump code (Jens Georg)
 
@@ -272,7 +278,6 @@
 	* Added gimp option for calibration
 
 2003-05-15    John E. Joganic <john@joganic.com>
-
 	* Added timestamp to sample structure
 	* Added acceleration format to raw xidump for viewing jitter
 
@@ -284,12 +289,10 @@
 	* Fixed compile warning for xf86Wacom.c
 
 2003-05-09    Ping Cheng <pingc@wacom.com>
-
 	* Added Cintiq Partner, Graphire3 4x5 and 6x8
 	* Added a few new xsetwacom commands
 
 2003-05-04    John E. Joganic <john@joganic.com>
-
 	* Overhauled device reading.
 	* Consolidated serial data path.
 	* Updated ISDV4 data path, untested.
@@ -298,23 +301,19 @@
 	* Commented out some incomplete features.
 
 2003-05-03    John E. Joganic <john@joganic.com>
-
 	* Fixed USB 4D mouse button mapping to be consistent with serial 4D.
 
 2003-05-02    John E. Joganic <john@joganic.com>
-
 	* Added xsetwacom, libwacomcfg, and Xwacom.h; work in progress
 	* xsetwacom, wacdump, libwacomcfg, and xidump now install by default.
 	* Added pressure curve, buttons, and bounding rect parameters.
 
 2003-05-01    John E. Joganic <john@joganic.com>
-
 	* Changed Graphire from absolute wheel to relative.
 	* Moved throttle position check out of Suppress.  Need it elsewhere.
 	* Fixed xidump library dependencies for non-gtk build
 
 2003-04-29    John E. Joganic <john@joganic.com>
-
 	* Expanded graphire parsing; all devices use same data path
 	* Disabled throttle/wheel correlation for now; needs work and
 	  option for enabling/disabling.
@@ -322,18 +321,15 @@
 	* Added pressure curve; implementation is a bit overkill, but it works
 
 2003-04-21    Ping Cheng <pingc@wacom.com>
-
 	* Updated serial UD and PL code for the refactored src
 
 2003-04-19    Jimmy Yen <jimmy@yen.tp>
-
 	* Fixed throttle code.
 	* Slightly refined Xinerama code. Use X's own global variable instead
 	  for Xinerama detection.
 	* Disallow pointers to enter dead areas, causing setting screen to fail.
 
 2003-04-18    Jimmy Yen <jimmy@yen.tp>
-
 	* Extra checking to set screen only when the device sends core events.
 	* Made KeepShape compatible with multiple screen setup.
 	* Reenabled throttle and fake button 4/5 code. Can be disabled by
@@ -341,23 +337,19 @@
 	* Unified cursor acceleration in both directions.
 
 2003-04-17    Jimmy Yen <jimmy@yen.tp>
-
 	* Software solution of dual channel input for USB devices.
 
 2003-04-16    Jimmy Yen <jimmy@yen.tp>
-
 	* Basic Xinerama setup support. Works with horizontal, non-overlapping
 	  screen combinations with different resoluions. Users need to specify
 	  'Option Xinerama "on"' for each absolute device.
 
 2003-04-14    Jimmy Yen <jimmy@yen.tp>
-
 	* Small KeepShape fix.
 	* Cleaned up xf86WcmSendEvents.
 	* Fallback case in device selection code.
 
 2003-04-08    John E. Joganic <john@joganic.com>
-
 	* Fixed USB tilt ranges.
 	* Exploded out serial tablet initialization.
 	* Reporting throttle on cursor valuator 4
@@ -365,108 +357,88 @@
 	* Default threshold to 1/32 maximum pressure
 
 2003-04-07    John E. Joganic <john@joganic.com>
-
 	* Fixed bug in tilt filter.
 	* MaxZ determined at tablet detection
 	* Changed pressure code; all values positive.
 	* Added channel code, device proximity bound to channel
 
 2003-04-07    Jimmy Yen <jimmy@yen.tp>
-
 	* Set resolutions for USB tablets.
 
 2003-04-06    John E. Joganic <john@joganic.com>
-
 	* Refactored xf86Wacom.c into separate files.
 
 2003-04-02    John E. Joganic <john@joganic.com>
-
 	* Added J. Yen's "misc fixes" patch to xf86Wacom.c
 	* Added J. Paisley's "reattach" patch to evdev.c
 
 2003-03-31    John E. Joganic <john@joganic.com>
-
 	* Added mousedev.c with fix to ignore wacom
 
 2003-03-22    John E. Joganic <john@joganic.com>
-
 	* Added ncurses detection.
 	* Cleaned up output of xidump.
 	* Added Dean Townsley's ISDV4 patch.
 
 2003-03-08    John E. Joganic <john@joganic.com>
-
 	* Added curses functionality to xidump.c, now default
 	* xidump now builds by default
 
 2003-03-07    John E. Joganic <john@joganic.com>
-
 	* Added tabletdev.c framework (based on mousedev.c)
 	* Added device list to xidump.c including class info
 	* Added raw event notification
 
 2003-03-06    John E. Joganic <john@joganic.com>
-
 	* Applied Ping Cheng's suppress patch
 	* Added evdev.c to project, contains Jonathan Paisley's oops patch
 	* Added input.c to project
 
 2003-02-23    John E. Joganic <john@joganic.com>
-
 	* Added xidump and gtk config options
 
 2003-02-22    John E. Joganic <john@joganic.com>
-
 	* Applied Ping Cheng's multi-monitor patch
 	* Added build option for Xfree86 v3.x; testing only
 	* Applied Jimmy Yen's origin patch
 
 2003-02-12    John E. Joganic <john@joganic.com>
-
 	* Applied Ping Cheng's eraser patch for PL in wacom.c
 	* Applied Ping Cheng's USB patch for xf86Wacom.c
 	* Applied Ping Cheng's device_on patch for xf86Wacom.c
 
 2003-01-31    John E. Joganic <john@joganic.com>
-
 	* Branched 0.4.0 production.  Updated version to 0.5.0-beta.
 	* Added Ping Cheng's PL code.
 	* Fixed serial number code in wacom.c, xf86Wacom.c, and wacserial.c such
 	  that they all correspond.
 
 2003-01-27    John E. Joganic <john@joganic.com>
-
 	* Changed macros from WAC_ to WCM_ due to bug in Mandrake 9 autoconf.
 	* Added timeout for reset and tablet detection in wacserial.c
 	* Added logging to wacdump.
 	* Added serial reset on bit errors.
 
 2003-01-26    John E. Joganic <john@joganic.com>
-
 	* Merged Dean Townsley's Acer C100 patch
 	* Changed internal device identification model to handle new tablets
 
 2003-01-25    John E. Joganic <john@joganic.com>
-
 	* Added configuration option to disable non-linux code
 	* Moved USB code from wacdump into wacusb.c
 
 2003-01-16    John E. Joganic <john@joganic.com>
-
 	* Added check for Mandrake .o.gz modules in configure
 
 2003-01-10    John E. Joganic <john@joganic.com>
-
 	* Changed bit macros for Graphire
 
 2003-01-09    John E. Joganic <john@joganic.com>
-
 	* Fixed Intuos and Intuos2 sizes
 	* Added Gilbert Ramirez's no-merge-constants patch
 	* Added patch for HID_QUIRK on 2.4.18
 
 2003-01-01    John E. Joganic <john@joganic.com>
-
 	* Added volito to hid-core.c.
 	* Fixed volito report #99.
 	* Updated volito ranges.
@@ -474,21 +446,17 @@
 	* Fixed 2D mouse buttons in xf86Wacom.c
 
 2002-12-31    John E. Joganic <john@joganic.com>
-
 	* Added Ping Cheng's new tool IDs.
 	* Fix for unknown report #1 using simple kernel thread
 	* Added automatic module loading for usb wacom and evdev
 
 2002-12-26    John E. Joganic <john@joganic.com>
-
 	* Fixed tablet initialization
 
 2002-12-21    John E. Joganic <john@joganic.com>
-
 	* Moved project to SourceForge as linuxwacom.
 
 2002-12-21    John E. Joganic <john@joganic.com>
-
 	* Added serial code to wacdump
 	* Added serial protocols IV 1.0 - 1.4.
 	* Added serial protocol V 1.0 - 1.1.
@@ -497,20 +465,17 @@
 	* Added Intuos2 to xf86Wacom.c
 
 2002-12-17    John E. Joganic <john@joganic.com>
-
 	* Merged code from 2.4.20 hid-core.c
 	* Added configuration code to handle kernels still at 2.4.19
 	* Split wacdump curses code into wacscrn.c to solve namespace collision
 	* Added volito to wacom.c
 
 2002-12-15    John E. Joganic <john@joganic.com>
-
 	* Last minute fix to debugging level on 4D mouse wheel
 	* Added framework for new driver
 	* Added code for 4D mouse wheel in xf86Wacom.c
 
 2002-12-13    John E. Joganic <john@joganic.com>
-
 	* Added pen model numbers for Intuos2 grip pen and Intuos pen
 	* Added wcm-beta.c and wcm-beta.h shell
 	* Added relative events to wacdump
@@ -518,11 +483,9 @@
 	* Fixed relative 2D mouse wheel reporting in wacom.c
 
 2002-11-27    John E. Joganic <john@joganic.com>
-
 	* Added exp subdirectory for experimental work
 	* Isolated xf86Wacom.c declarations to header file
 
 2002-11-24    John E. Joganic <john@joganic.com>
-
 	* Branched at 0.2.0
 	* Created configure-based build environment

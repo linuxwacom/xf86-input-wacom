@@ -215,17 +215,6 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1)
 
 static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds)
 {
-	if (state->npoints < 3)
-	{
-		state->x[state->npoints] = ds->x;
-		state->y[state->npoints] = ds->y;
-		state->tiltx[state->npoints] = ds->tiltx;
-		state->tilty[state->npoints] = ds->tilty;
-		++state->npoints;
-		DBG(11,ErrorF("filterIntuosStylus: first %d sample(s) NO_FILTER\n", state->npoints));
-		return;
-	}
-
 	/* filter x */
 	filterIntuosCoord(state->x, &ds->x);
 	/* filter y */
@@ -238,12 +227,15 @@ static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds
 
 static void filterIntuosCoord(int* state, int* current)
 {
-	int x;
+	int x, i;
 
-	x = *current + state[0] + state[1] + state[2];
-
-	state[2] = state[1];
-	state[1] = state[0];
+	x = *current;
+	for ( i=MAX_SAMPLES-2; i>0; i-- )
+	{
+		x += state[i];
+		state[i] = state[i-1];
+	}
+	x += state[0];
 	state[0] = *current;
 
 	*current = x / MAX_SAMPLES;
@@ -257,22 +249,19 @@ static void filterIntuosCoord(int* state, int* current)
 
 static void filterIntuosTilt(int* state, int* tilt)
 {
-	int tx;
+	int i;
 
-	tx = *tilt + state[0] + state[1] + state[2];
+	*tilt = 0;
+	for ( i=MAX_SAMPLES-1; i>=0; i-- )
+	{
+		*tilt += state[i];
+	}
+	*tilt /= MAX_SAMPLES;
 
-	state[2] = state[1];
-	state[1] = state[0];
-	state[0] = *tilt;
-
-	tx /= MAX_SAMPLES;
-
-	if (tx > 63)
-   		tx = 63;	
-	else if (tx < -64)
-		tx = -64;
-
-	*tilt = tx;
+	if (*tilt > 63)
+   		*tilt = 63;	
+	else if (*tilt < -64)
+		*tilt = -64;
 }
 
 /*****************************************************************************
@@ -287,29 +276,22 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	WacomDeviceState* pLast;
 	int *x, *y; 
-	int filter_x, filter_y;
+	int filter_x, filter_y, i;
 
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
-	if (pChannel->rawFilter.npoints<3)
-	{
-		x[pChannel->rawFilter.npoints] = ds->x;
-		y[pChannel->rawFilter.npoints] = ds->y;
-		++pChannel->rawFilter.npoints;
-		DBG(11,ErrorF("xf86WcmFilterCoord: first %d samples NO_FILTER\n", pChannel->rawFilter.npoints));
-		return 0;
-	}
 
 	pLast = &pChannel->valid.state;
-	filter_x = (ds->x + x[0] + x[1] + x[2])/4;
-	filter_y = (ds->y + y[0] + y[1] + y[2])/4;
+	filter_x = 0;
+	filter_y = 0;
 
-	x[2] = x[1];
-	y[2] = y[1];
-	x[1] = x[0];
-	y[1] = y[0];
-	x[0] = ds->x;
-	y[0] = ds->y;
+	for ( i=MAX_SAMPLES-1; i>=0; i-- )
+	{
+		filter_x += x[i];
+		filter_y += y[i];
+	}
+	filter_x /= MAX_SAMPLES;
+	filter_y /= MAX_SAMPLES;
 
 	if (abs(filter_x - pLast->x) > 4)
 		ds->x = filter_x;

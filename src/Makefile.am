@@ -103,3 +103,7 @@ $(XF86OBJS): xf86Wacom.c Makefile
 
 wacom_drv.o: $(XF86OBJS)
 	ld -r $(XF86OBJS) -o wacom_drv.o
+
+if WCM_DLLOADER
+	gcc -fPIC -shared -nostdlib -o wacom_drv.so wacom_drv.o -Bstatic -lgcc
+endif

@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.14 2005/03/28 23:10:03 pingc Exp $
+ * $Id: wacom.c,v 1.15 2005/08/08 20:53:29 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -84,6 +84,7 @@
  *    v1.30-j0.6.6 - new release
  *    v1.30-j0.6.7 - fixed a graphire bug
  *    v1.30-j0.6.8 - added Cintiq 21UX
+ *    v1.30-j0.6.9 - fixed a Cintiq 21UX bug and cleaned Graphire code
  */
 
 /*
@@ -114,7 +115,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.6.8"
+#define DRIVER_VERSION "v1.30-j0.6.9"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -354,18 +355,18 @@ static void wacom_graphire_irq(struct urb *urb)
 		}
 	}
 
-	if (data[1] & 0x80) {
+	if (data[1] & 0x90) {
 		x = data[2] | ((__u32)data[3] << 8);
 		y = data[4] | ((__u32)data[5] << 8);
 		input_report_abs(dev, ABS_X, x);
 		input_report_abs(dev, ABS_Y, y);
-	}
 
-	if (wacom->tool[0] != BTN_TOOL_MOUSE) {
-		input_report_abs(dev, ABS_PRESSURE, data[6] | ((__u32)data[7] << 8));
-		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
-		input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
-		input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
+		if (wacom->tool[0] != BTN_TOOL_MOUSE) {
+			input_report_abs(dev, ABS_PRESSURE, data[6] | ((__u32)data[7] << 8));
+			input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
+			input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
+			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
+		}
 	}
 	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
 	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);

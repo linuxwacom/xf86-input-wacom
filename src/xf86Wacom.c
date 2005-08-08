@@ -86,7 +86,7 @@
  * 2004-11-22 42-j0.6.6  - new release
  * 2005-02-17 42-j0.6.7  - added 64-bit support
  * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
- * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablet
+ * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablets
  */
 
 static const char identification[] = "$Identification: 47-pc0.6.9 $";
@@ -1133,98 +1133,100 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (first != 0 || num == 1)
 		return FALSE;
+	*x = 0;
+	*y = 0;
 
-	if (priv->twinview == TV_NONE && (priv->flags & ABSOLUTE_FLAG))
+	if (priv->flags & ABSOLUTE_FLAG)
 	{
-		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX : 
-			v0 < priv->topX ? 0 : v0 - priv->topX;
-		v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY : 
-			v1 < priv->topY ? 0 : v1 - priv->topY;
-	}
+		if (priv->twinview == TV_NONE)
+		{
+			v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX : 
+				v0 < priv->topX ? 0 : v0 - priv->topX;
+			v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY : 
+				v1 < priv->topY ? 0 : v1 - priv->topY;
+		}
 
 #ifdef PANORAMIX
-	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
-		priv->common->wcmGimp && priv->common->wcmMMonitor)
-	{
-		int i, totalWidth, leftPadding = 0;
-		for (i = 0; i < priv->currentScreen; i++)
-			leftPadding += screenInfo.screens[i]->width;
-		for (totalWidth = leftPadding; i < priv->numScreen; i++)
-			totalWidth += screenInfo.screens[i]->width;
-		v0 -= (priv->bottomX - priv->topX) * leftPadding
-			/ (double)totalWidth + 0.5;
-	}
+		if (!noPanoramiXExtension && priv->common->wcmGimp 
+			&& priv->common->wcmMMonitor)
+		{
+			int i, totalWidth, leftPadding = 0;
+			for (i = 0; i < priv->currentScreen; i++)
+				leftPadding += screenInfo.screens[i]->width;
+			for (totalWidth = leftPadding; i < priv->numScreen; i++)
+				totalWidth += screenInfo.screens[i]->width;
+			v0 -= (priv->bottomX - priv->topX) * leftPadding
+				/ (double)totalWidth + 0.5;
+		}
 #endif
-	if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
-	{
-		v0 -= priv->topX - priv->tvoffsetX;
-		v1 -= priv->topY - priv->tvoffsetY;
-                if (priv->twinview == TV_LEFT_RIGHT)
+		if (priv->twinview != TV_NONE)
 		{
-			if (v0 > priv->bottomX - priv->tvoffsetX && priv->screen_no == -1)
+			v0 -= priv->topX - priv->tvoffsetX;
+			v1 -= priv->topY - priv->tvoffsetY;
+               		if (priv->twinview == TV_LEFT_RIGHT)
 			{
-				if (priv->currentScreen == 0)
-					v0 = priv->bottomX - priv->tvoffsetX;
+				if (v0 > priv->bottomX - priv->tvoffsetX && priv->screen_no == -1)
+				{
+					if (priv->currentScreen == 0)
+						v0 = priv->bottomX - priv->tvoffsetX;
+					else
+					{
+						v0 -= priv->bottomX - priv->topX - 2*priv->tvoffsetX;
+						if (v0 > priv->bottomX - priv->tvoffsetX)
+							v0 = 2*(priv->bottomX - priv->tvoffsetX) - v0;
+					}
+				}
+				if (priv->currentScreen == 1)
+				{
+                       			*x = priv->tvResolution[0] + priv->tvResolution[2]
+						* v0 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+					*y = v1 * priv->tvResolution[3] /
+						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
+				}
 				else
 				{
-					v0 -= priv->bottomX - priv->topX - 2*priv->tvoffsetX;
-					if (v0 > priv->bottomX - priv->tvoffsetX)
-						v0 = 2*(priv->bottomX - priv->tvoffsetX) - v0;
+					*x = priv->tvResolution[0] * v0 
+						 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+					*y = v1 * priv->tvResolution[1] /
+						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 				}
 			}
-			if (priv->currentScreen == 1)
+            		if (priv->twinview == TV_ABOVE_BELOW)
 			{
-                       		*x = priv->tvResolution[0] + priv->tvResolution[2]
-					* v0 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-				*y = v1 * priv->tvResolution[3] /
-					(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
-			}
-			else
-			{
-				*x = priv->tvResolution[0] * v0 
-					 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-				*y = v1 * priv->tvResolution[1] /
-					(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
-			}
-		}
-                if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			if (v1 > priv->bottomY - priv->tvoffsetY && priv->screen_no == -1)
-			{
-				if (priv->currentScreen == 0)
-					v1 = priv->bottomY - priv->tvoffsetY;
+				if (v1 > priv->bottomY - priv->tvoffsetY && priv->screen_no == -1)
+				{
+					if (priv->currentScreen == 0)
+						v1 = priv->bottomY - priv->tvoffsetY;
+					else
+					{
+						v1 -= priv->bottomY - priv->topY - 2*priv->tvoffsetY;
+						if (v1 > priv->bottomY - priv->tvoffsetY)
+							v1 = 2*(priv->bottomY - priv->tvoffsetY) - v1;
+					}
+				}
+				if (priv->currentScreen == 1)
+				{
+ 					*x = v0 * priv->tvResolution[2] /
+						(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
+					*y = priv->tvResolution[1] + 
+						priv->tvResolution[3] * v1 / 
+						(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+				}
 				else
 				{
-					v1 -= priv->bottomY - priv->topY - 2*priv->tvoffsetY;
-					if (v1 > priv->bottomY - priv->tvoffsetY)
-						v1 = 2*(priv->bottomY - priv->tvoffsetY) - v1;
+					*x = v0 * priv->tvResolution[0] /
+						(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
+					*y = priv->tvResolution[1] * v1 /
+						(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 				}
 			}
-			if (priv->currentScreen == 1)
-			{
- 				*x = v0 * priv->tvResolution[2] /
-					(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
-				*y = priv->tvResolution[1] + 
-					priv->tvResolution[3] * v1 / 
-					(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-			}
-			else
-			{
-				*x = v0 * priv->tvResolution[0] /
-					(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
-				*y = priv->tvResolution[1] * v1 /
-					 (priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-			}
+			return TRUE;
 		}
 	}
-	else
-	{
-		*x = v0 * priv->factorX + 0.5;
-		*y = v1 * priv->factorY + 0.5;
-	}
+	*x += v0 * priv->factorX + 0.5;
+	*y += v1 * priv->factorY + 0.5;
 
-	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n",
-		v0, v1, *x, *y));
+	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
 	return TRUE;
 }
 
@@ -1238,13 +1240,20 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
 {
-	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
-
-#ifdef NEVER
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	valuators[0] = x / priv->factorX + 0.5;
-	valuators[1] = y / priv->factorY + 0.5;
 
+ 	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
+	priv->currentSX = x;
+	priv->currentSY = y;
+
+	if (!(priv->flags & ABSOLUTE_FLAG))
+	{
+		valuators[0] = x / priv->factorX + 0.5;
+		valuators[1] = y / priv->factorY + 0.5;
+	}
+
+#ifdef NEVER 
+/* This is for absolute scrren mapping */
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
 		priv->common->wcmGimp && priv->common->wcmMMonitor)

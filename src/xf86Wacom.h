@@ -271,6 +271,8 @@ struct _WacomDeviceRec
 	/* state fields */
 	int currentX;           /* current X position */
 	int currentY;           /* current Y position */
+	int currentSX;          /* current screen X position */
+	int currentSY;          /* current screen Y position */
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
