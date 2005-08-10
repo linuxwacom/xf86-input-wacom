@@ -17,7 +17,7 @@ DEPFLAGS = @WCM_DEPFLAGS@
 # potentially be built or installed depending on the results of
 # the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
-EXTRA_SCRIPTS = wacom_drv.o wacomcpl wacomcpl-exec
+EXTRA_SCRIPTS = wacom_drv.o wacom_drv.so wacomcpl wacomcpl-exec
 
 # Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
@@ -72,6 +72,10 @@ NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
 
 LINUX_INPUT=@WCM_LINUX_INPUT@
 
+if WCM_DLLOADER
+DLLOADER=-fPIC
+endif
+
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
 
@@ -85,7 +89,7 @@ wcmConfig.o: wcmConfig.c xf86Wacom.h
 wcmFilter.o: wcmFilter.c xf86Wacom.h
 
 $(XF86OBJS): xf86Wacom.c Makefile
-	gcc $(CFLAGS) $(DEPFLAGS) -pipe -ansi \
+	$(CC) $(CFLAGS) $(DEPFLAGS) $(DLLOADER) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		-I.  $(DRIVER_INCLUDES) -Dlinux \
 		-D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
@@ -101,9 +105,10 @@ $(XF86OBJS): xf86Wacom.c Makefile
 		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
 		-o $@ -c $(subst .o,.c,$@)
 
-wacom_drv.o: $(XF86OBJS)
-	ld -r $(XF86OBJS) -o wacom_drv.o
-
 if WCM_DLLOADER
-	gcc -fPIC -shared -nostdlib -o wacom_drv.so wacom_drv.o -Bstatic -lgcc
+wacom_drv.so: $(XF86OBJS)
+	$(CC) -shared -nostdlib -o wacom_drv.so $(XF86OBJS) -Bstatic -lgcc
+else
+wacom_drv.o: $(XF86OBJS)
+	$(LD) -r $(XF86OBJS) -o wacom_drv.o
 endif

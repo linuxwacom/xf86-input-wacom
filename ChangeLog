@@ -1,3 +1,6 @@
+2005-08-09    Ping Cheng <pingc@wacom.com>
+	* Fxied a dlloader option bug (Jeremy Huddleston) 
+
 2005-08-08    Ping Cheng <pingc@wacom.com>
 	* Added --enable-dlloader configuration option
 	* Cleaned Graphire wacom.c code
