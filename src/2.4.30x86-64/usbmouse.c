@@ -1,5 +1,5 @@
 /*
- * $Id: usbmouse.c,v 1.4 2005/06/16 17:04:09 pingc Exp $
+ * $Id: usbmouse.c,v 1.1 2005/08/18 18:45:39 pingc Exp $
  *
  *  Copyright (c) 1999-2000 Vojtech Pavlik
  *
@@ -27,16 +27,6 @@
  * e-mail - mail your message to <vojtech@suse.cz>, or by paper mail:
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
-
-#include <linux/autoconf.h>
-#if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
-#   define MODVERSIONS
-#endif
-
-#ifdef MODVERSIONS
-#include <linux/modversions.h>
-#endif
-
 
 #include <linux/kernel.h>
 #include <linux/slab.h>
@@ -124,15 +114,8 @@ static void *usb_mouse_probe(struct usb_device *dev, unsigned int ifnum,
 	endpoint = interface->endpoint + 0;
 	if (!(endpoint->bEndpointAddress & 0x80)) return NULL;
 	if ((endpoint->bmAttributes & 3) != 3) return NULL;
-
 	/* wacom tablets match... */
- 	if (dev->descriptor.idVendor == 0x056a)
-	{
-#ifdef __JEJ_DEBUG
-	printk(KERN_INFO __FILE__ ": usb_mouse_probe: ignoring wacom\n");
-#endif
-		return NULL; 
-	}
+ 	if (dev->descriptor.idVendor == 0x056a) return NULL;
 	
 	pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);
 	maxp = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
@@ -205,7 +188,7 @@ static struct usb_device_id usb_mouse_id_table [] = {
 MODULE_DEVICE_TABLE (usb, usb_mouse_id_table);
 
 static struct usb_driver usb_mouse_driver = {
-	name:		"usb_mouse",
+	name:		"usbmouse",
 	probe:		usb_mouse_probe,
 	disconnect:	usb_mouse_disconnect,
 	id_table:	usb_mouse_id_table,
@@ -213,9 +196,6 @@ static struct usb_driver usb_mouse_driver = {
 
 static int __init usb_mouse_init(void)
 {
-#ifdef __JEJ_DEBUG
-	printk(KERN_INFO __FILE__ ": usb_mouse_init (LINUXWACOM DEBUG)\n");
-#endif
 	usb_register(&usb_mouse_driver);
 	info(DRIVER_VERSION ":" DRIVER_DESC);
 	return 0;

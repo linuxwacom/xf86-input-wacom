@@ -678,6 +678,7 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	const WacomDeviceState* dsNew)
 {
 	/* NOTE: Suppression value of zero disables suppression. */
+	DBG(11, ErrorF("xf86WcmSuppress checking data (suppress=%d)\n", suppress));
 
 	if (dsOrig->buttons != dsNew->buttons) return 0;
 	if (dsOrig->proximity != dsNew->proximity) return 0;
@@ -699,6 +700,7 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if ((ABS(dsOrig->abswheel - dsNew->abswheel) > suppress) ||
 		(dsNew->relwheel != 0)) return 0;
 
+	DBG(11, ErrorF("xf86WcmSuppress discarded data\n"));
 	return 1;
 }
 
@@ -785,7 +787,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = (int)GetTimeInMillis();
 
-	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%x x=%d y=%d b=%d "
+	DBG(10, ErrorF("xf86WcmEvent: c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d t=%d df=%d px=%d st=%d\n",
 		channel,
 		ds.device_id,

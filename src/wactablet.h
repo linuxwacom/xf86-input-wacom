@@ -2,6 +2,7 @@
 ** wactablet.h
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
+** Copyright (C) 2003 - 2005 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -46,8 +47,9 @@
 #define WACOMDEVICE_CINTIQ      0x000B
 #define WACOMDEVICE_PTU         0x000C
 #define WACOMDEVICE_VOLITO      0x000D
-#define WACOMDEVICE_ACERC100    0x000E
-#define WACOMDEVICE_INTUOS3     0x000F
+#define WACOMDEVICE_VOLITO2     0x000E
+#define WACOMDEVICE_ACERC100    0x000F
+#define WACOMDEVICE_INTUOS3     0x0010
 
 typedef struct _WACOMMODEL WACOMMODEL;
 struct _WACOMMODEL

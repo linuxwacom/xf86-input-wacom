@@ -1,7 +1,8 @@
 /*****************************************************************************
 ** wacusb.c
 **
-** Copyright (C) 2002 - 2005 - John E. Joganic and Ping Cheng
+** Copyright (C) 2002 - 2004 - John E. Joganic
+** Copyright (C) 2003 - 2205 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -157,14 +158,14 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 	static USBSUBTYPE xGraphire2[] =
 	{
 		{ "ET_0405", "Wacom Graphire2 4x5", 1, 0x11 },
-		{ "ET_0507", "Wacom Graphire2 5x7", 1, 0x12 },
+		{ "ET_0507", "Wacom Graphire2 5x7", 2, 0x12 },
 		{ NULL }
 	};
 
 	static USBSUBTYPE xGraphire3[] =
 	{
 		{ "ET_0405", "Wacom Graphire3 4x5", 1, 0x13 },
-		{ "ET_0608", "Wacom Graphire3 6x8", 1, 0x14 },
+		{ "ET_0608", "Wacom Graphire3 6x8", 2, 0x14 },
 		{ NULL }
 	};
 
@@ -186,6 +187,8 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "MODEL_PL600SX", "Wacom PL600SX", 4, 0x33 },
 		{ "MODEL_PL550", "Wacom PL550", 5, 0x34 },
 		{ "MODEL_PL800", "Wacom PL800", 6, 0x35 },
+		{ "MODEL_PL700", "Wacom PL700", 7, 0x37 },
+		{ "MODEL_PL510", "Wacom PL510", 8, 0x38 },
 		{ NULL }
 	};
 
@@ -206,6 +209,14 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 	static USBSUBTYPE xVolito[] =
 	{
 		{ "MODEL-VOL", "Wacom Volito", 1, 0x60 },
+		{ NULL }
+	};
+
+	static USBSUBTYPE xVolito2[] =
+	{
+		{ "FT-0203-U", "Wacom PenStation",  1, 0x61 },
+		{ "CTF-420-U", "Wacom Volito2 4x5", 2, 0x62 },
+		{ "CTF-220-U", "Wacom Volito2 2x3", 3, 0x63 },
 		{ NULL }
 	};
 
@@ -235,6 +246,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
 		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner },
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },
+		{ "vol2", "Volito2", WACOMDEVICE_VOLITO2, xVolito2 },
 		{ NULL }
 	};
 

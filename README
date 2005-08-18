@@ -1,14 +1,13 @@
 README
-Dec. 01, 2004
+Aug. 17, 2005
 
 ==============================================================================
 
 BUILDING FROM CVS:
 
 You should run bootstrap from the main directory to correctly initialize
-the project.  From there, run configure as you would normally.  Installation
-is not automatic so there is no make install target.  Configure options are
-explained below.
+the project.  From there, run configure as you would normally do.  Configure 
+options are explained below.
 
     $ ./bootstrap && ./configure && make
 
@@ -16,8 +15,7 @@ explained below.
 
 BUILDING FROM TARBALL:
 
-As you would expect, run configure and make.  Installation is not automatic
-so there is no make install target.  Configure options are explained below.
+As you would expect, run configure and make.  Configure options are explained below.
 
     $ ./configure && make
 
@@ -38,30 +36,18 @@ breakdown (input.o is only for kernel 2.4).
       input.o: not built by default (--enable-input, --disable-input)
   wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
-BUILDING:
-
-Generally, you run the configure script followed by make.  This package
-will not attempt to install the kernel drivers.  Please see the documentation on
-the website for more information on where specific drivers belong.
-
-    [root@haku linuxwacom-dev] # ./configure
-    [root@haku linuxwacom-dev] # make
-    [root@haku linuxwacom-dev] # make install 
-
-Note: "make install" will install wacom_drv.o, xidump, wacdump, and wacomcpl.
-
 There are many options, and configure will attempt to guess the correct
-values for most of them.  By default, only wacom_drv.o, xidump, and wacdump
-program are built.
+values for most of them.  By default, only wacomcpl, xsetwacom, wacom_drv.o, 
+xidump, and wacdump program are built.
 
 REQUIREMENTS:
 
 wacom, hid, evdev, mousedev, and usbmouse are kernel modules and require the 
 kernel sources to be present.  On a Redhat 8.0 system with the kernel-sources
 RPM installed, the source directory is located at /usr/src/linux-2.4.
-The wacdump configuration script will search for this directory
-automatically as well as /usr/src/linux.  You can override the directory
-using the --with-kernel=<directory> option.
+The configuration script will search for this directory automatically as 
+well as /usr/src/linux.  You can override the directory using the 
+--with-kernel=<directory> option.
 
 For kernel 2.6.x, a kernel source with which your tablet is going to run should 
 be precompiled before configuring linuxwacom package. For the steps to build a 
@@ -74,18 +60,20 @@ build these pieces since they will let mouse driver ignore Wacom tablet so Wacom
 driver can take control of the tablet. Please DO NOT compile and load usbmouse 
 module if your system did not load it.
 
-wacom_drv.o requires the XFree86 sources as well as a functional XF86
-build environment.  Since this is a more complicated setup and few people
-are going to want to rebuild this driver from source, the wacom_drv.o file
-is supplied with the wacdump package in the prebuilt directory.  It is
-compiled with gcc 3.2 under Redhat 8.0.  If the prebuilt wacom_drv.o module
-will not work for you, see the section "Building wacom_drv.o From Scratch."
+wacom_drv.o requires XFree86 sources as well as a functional XF86 build  
+environment or xorg-sdk if your X server is from x.org.  Since this is a more 
+complicated setup and few people are going to want to rebuild this driver from  
+source, the wacom_drv.o files are supplied with the linuxwacom package in the 
+prebuilt directory.  If the prebuilt wacom_drv.o module doesn't work for you, 
+see the section "Building wacom_drv.o From Scratch."
 	
 BUILDING wacom_drv.o FROM SCRATCH
 
-You will need the XFree86 source code, and you will need to actually build
-it.  The file xf86Version.h is generated during the build process and is a
-required dependency for building wacom_drv.o.  The configure script will 
+If your system runs an X server from XFree86, you need the XFree86 
+source code, and you will need to actually build it.  The file 
+xf86Version.h is generated during the build process and is a required 
+dependency for building wacom_drv.o.  If your system runs an X server 
+from x.org, you need to install xorg-sdk. The configure script will 
 attempt to build wacom-drv.o by default,  but you need to provide the 
 --with-xf86=<xf86_directory> option.  If you don't want to build wacom-drv.o, 
 the option --disable-wacomdrv needs to be provided.
@@ -96,7 +84,18 @@ If the xf86Version.h file is located at:
 Then the correct configure option to build wacom_drv.o would be:
 	--with-xf86=/usr/local/src/XFree86-4.2.0
 
-INSTALL wacomcpl 
+INSTALL default
+
+Generally, you run the configure script followed by make install.  This package 
+will install wacom_drv.o, xidump, wacdump, xsetwacom, and wacomcpl. The kernel 
+drivers will not be installed.  Please see the documentation on the website for 
+more information on where specific drivers belong.
+
+    [jej@haku linuxwacom-dev] $ ./configure
+    [jej@haku linuxwacom-dev] $ su
+    [root@haku linuxwacom-dev] # make install 
+
+INSTALL wacomcpl (detail)
 
 wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed. 
 The configure script will attempt to build wacomxi libs by searching /usr/include 

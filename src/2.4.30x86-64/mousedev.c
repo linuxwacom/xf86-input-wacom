@@ -1,17 +1,11 @@
 /*
- * $Id: mousedev.c,v 1.3 2005/06/16 17:04:09 pingc Exp $
+ * $Id: mousedev.c,v 1.1 2005/08/18 18:45:39 pingc Exp $
  *
  *  Copyright (c) 1999-2000 Vojtech Pavlik
- *  Copyright (c) 2003 John Joganic         <john@joganic.com>
  *
  *  Input driver to ImExPS/2 device driver module.
  *
  *  Sponsored by SuSE
- *
- *  Revision History - AS BRANCH FROM LINUX WACOM PROJECT
- *  2003-03-31  2.4.20-j0.5.0  - Added to Linux Wacom project
- *                               Applied exception for wacom tablets
- * 
  */
 
 /*
@@ -33,8 +27,6 @@
  * e-mail - mail your message to <vojtech@suse.cz>, or by paper mail:
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
-
-#define MOUSEDEV_VERSION "2.4.20-j0.5.0"
 
 #include <linux/autoconf.h>
 #if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
@@ -425,18 +417,21 @@ static struct input_handle *mousedev_connect(struct input_handler *handler, stru
 	struct mousedev *mousedev;
 	int minor = 0;
 
-	/* Ignore all wacom tablets */
-	if (dev->idvendor == 0x56a)
-	{
-		printk(KERN_INFO "mousedev.c: Ignoring wacom tablet\n");
-		return NULL;
-	}
+        /* Ignore all wacom tablets */
+        if (dev->idvendor == 0x56a)
+        {
+                printk(KERN_INFO "mousedev.c: Ignoring wacom tablet\n");
+                return NULL;
+        }
 
 	if (!test_bit(EV_KEY, dev->evbit) ||
-	   (!test_bit(BTN_LEFT, dev->keybit) && !test_bit(BTN_TOUCH, dev->keybit)))
+	    (!test_bit(BTN_LEFT, dev->keybit) && 
+	     !test_bit(BTN_MIDDLE, dev->keybit) && 
+	     !test_bit(BTN_TOUCH, dev->keybit)))
 		return NULL;
 
 	if ((!test_bit(EV_REL, dev->evbit) || !test_bit(REL_X, dev->relbit)) &&
+	    (!test_bit(EV_REL, dev->evbit) || !test_bit(REL_WHEEL, dev->relbit)) &&
 	    (!test_bit(EV_ABS, dev->evbit) || !test_bit(ABS_X, dev->absbit)))
 		return NULL;
 
@@ -496,7 +491,6 @@ static struct input_handler mousedev_handler = {
 
 static int __init mousedev_init(void)
 {
-	printk(KERN_INFO "mousedev.c: version " MOUSEDEV_VERSION "\n");
 	input_register_handler(&mousedev_handler);
 
 	memset(&mousedev_mix, 0, sizeof(struct mousedev));
@@ -521,11 +515,7 @@ module_init(mousedev_init);
 module_exit(mousedev_exit);
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@suse.cz>");
-#ifndef __JEJ_DEBUG
-MODULE_DESCRIPTION("Input driver to PS/2 or ImPS/2 device driver (LINUXWACOM-DEBUG)");
-#else
-MODULE_DESCRIPTION("Input driver to PS/2 or ImPS/2 device driver (LINUXWACOM)");
-#endif
+MODULE_DESCRIPTION("Input driver to PS/2 or ImPS/2 device driver");
 MODULE_LICENSE("GPL");
 
 MODULE_PARM(xres, "i");

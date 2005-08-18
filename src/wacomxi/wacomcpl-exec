@@ -186,7 +186,19 @@ proc calibrationSequence {which xDev yDev} {
 }
 
 proc Calibration {} {
-    global numScreens device screenTags
+    global numScreens device screenTags getOption Option
+
+    set Option(1) "Mode"
+    getDeviceOptionProc $device 1
+    set mode $getOption($device,Mode)
+    if { [string compare -nocase -length 8 $mode "absolute"] } {
+	disableButtons
+	messageWindow "Warning " "\n\nDevice $device is in relative mode. \n\
+		You can calibrate $device only when it is in absolute mode. \n\
+		Please swith $device's mode and try again. "
+	closeTabWindow
+	return
+    }
 
     bindtags .workingDev.list .
     if { $numScreens > 1 } {
@@ -366,14 +378,14 @@ proc updateDevice {} {
 		![string compare -nocase -length 5 \
 		$model "isdv4"] } {
 	    if { ![ string compare $type "stylus" ] } {
-	    	if { ![string compare -nocase -length 8 \
-		    $mode "absolute"] } {
-		    createPanel 1 1 0 1
-		} else {
-		    createPanel 1 1 0 0
-		}
+		createPanel 1 1 0 1
 	    } else {
-		createPanel 1 1 0 0
+		if { [ string compare -nocase -length 6 \
+			$type "cursor" ] } {
+		    createPanel 1 1 0 0
+		} else {
+		    createPanel 0 0 0 0
+		}
 	    }
 	} else {
 	    if { [ string compare -nocase -length 6 \

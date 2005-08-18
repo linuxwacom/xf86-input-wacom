@@ -211,6 +211,21 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		xf86WcmFilterCoord,   /* input filtering */
 	};
 
+	static WacomModel usbVolito2 =
+	{
+		"USB Volito2",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterCoord,   /* input filtering */
+	};
+
 	static WacomModel usbCintiqV5 =
 	{
 		"USB Cintiq 21UX",
@@ -314,6 +329,8 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x33: /* PL600SX */
 			case 0x34: /* PL550 */
 			case 0x35: /* PL800 */
+			case 0x37: /* PL700 */
+			case 0x38: /* PL510 */
 				model = &usbCintiq; break;
 
 			case 0x41: /* Intuos2 4x5 */
@@ -326,6 +343,11 @@ static Bool usbInit(LocalDevicePtr local)
 
 			case 0x60: /* Volito */
 				model = &usbVolito; break;
+
+			case 0x61: /* PenStation */
+			case 0x62: /* Volito2 4x5 */
+			case 0x63: /* Volito2 2x3 */
+				model = &usbVolito2; break;
 
 			case 0xB0: /* Intuos3 4x5 */
 			case 0xB1: /* Intuos3 6x8 */
