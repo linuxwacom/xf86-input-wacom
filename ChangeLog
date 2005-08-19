@@ -1,3 +1,7 @@
+2005-08-18    Ping Cheng <pingc@wacom.com>
+	* Merged patches for Volito2 and PL700
+	* Updated wacomcpl and configure.in
+
 2005-08-09    Ping Cheng <pingc@wacom.com>
 	* Fxied a dlloader option bug (Jeremy Huddleston) 
 
