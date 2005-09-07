@@ -29,6 +29,7 @@
 **   2003-02-12 0.5.1 - added version option and fixed usage
 **   2003-06-19 0.5.2 - added patch for I2 6x8 id 0x47
 **   2005-02-17 0.6.6 - added I3 and support 64-bit system
+**   2005-09-01 0.7.0 - Added Cintiq 21UX
 **
 ****************************************************************************/
 
@@ -47,7 +48,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "0.5.2"
+#define WACDUMP_VER "0.7.0"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)

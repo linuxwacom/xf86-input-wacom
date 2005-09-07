@@ -134,7 +134,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
 		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
-		ISVER=`echo $moduts | grep -c "2.4"` 
+		ISVER=`echo $moduts | grep -c "\"2.4"` 
 		if test "$ISVER" -gt 0; then
 			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
 			if test $MINOR -ge 22; then

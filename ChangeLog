@@ -1,3 +1,9 @@
+2005-09-07    Ping Cheng <pingc@wacom.com>
+	* Updated wacdump for Cintiq 21UX
+	* Updated docs.html
+	* Updated acinclude.m4 to deal with version checking, 
+		such as 2.6.12.4 (Tim Jedlicka)
+
 2005-08-18    Ping Cheng <pingc@wacom.com>
 	* Merged patches for Volito2 and PL700
 	* Updated wacomcpl and configure.in

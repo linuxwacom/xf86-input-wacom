@@ -226,6 +226,12 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xCintiqV5[] =
+	{
+		{ "DTZ-21ux", "Wacom Cintiq 21UX", 1, 0x3F },
+		{ NULL }
+	};
+
 	static USBSUBTYPE xIntuos3[] =
 	{
 		{ "PTZ-430", "Wacom Intuos3 4x5",  1, 0xB0 },
@@ -243,6 +249,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
 		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
 		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3 },
+		{ "ctq", "Cintiq (V5)", WACOMDEVICE_CINTIQV5, xCintiqV5 },
 		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
 		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner },
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },
