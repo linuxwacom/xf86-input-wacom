@@ -1,3 +1,7 @@
+2005-09-09    Ping Cheng <pingc@wacom.com>
+	* Supports 16 button events for all tools
+	* Merged TabletPC button1 patch from Brent Baccala
+
 2005-09-07    Ping Cheng <pingc@wacom.com>
 	* Updated wacdump for Cintiq 21UX
 	* Updated docs.html

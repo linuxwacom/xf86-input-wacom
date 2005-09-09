@@ -543,19 +543,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=INIT\n", (void *)pWcm));
 
 			nbaxes = 6;  /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
-
-			switch(DEVICE_ID(priv->flags))
-			{
-				case ERASER_ID:
-					nbbuttons = 1;
-					break;
-				case STYLUS_ID:
-					nbbuttons = 4;
-					break;
-				default:
-					nbbuttons = 16;
-					break;
-			}
+			nbbuttons = 16;  /* All tools can report upto 16 buttons */ 
 
 			for(loop=1; loop<=nbbuttons; loop++) map[loop] = loop;
 

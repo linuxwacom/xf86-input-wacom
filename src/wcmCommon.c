@@ -261,7 +261,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 						if (priv->flags & TPCBUTTONONE_FLAG && !bsent)
 						{
 							priv->flags &= ~TPCBUTTONONE_FLAG;
-							sendAButton(local, 1, 0, rx, ry, rz, 
+							sendAButton(local, priv->button[0], 0, rx, ry, rz, 
 								rtx, rty, rrot, rth, rwheel);
 							bsent = 1;
 						}
@@ -292,7 +292,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			if (priv->flags & TPCBUTTONONE_FLAG)
 			{
 				priv->flags &= ~TPCBUTTONONE_FLAG;
-				sendAButton(local, 1, 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+				sendAButton(local, priv->button[0], 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
 			}
 		}
 	}
