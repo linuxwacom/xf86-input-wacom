@@ -142,7 +142,7 @@
 #define POINTER_BIT     0x20
 #define PROXIMITY_BIT   0x40
 #define BUTTON_FLAG     0x08
-#define BUTTONS_BITS    0x78
+#define BUTTONS_BITS    0x38
 #define TILT_SIGN_BIT   0x40
 #define TILT_BITS       0x3F
 

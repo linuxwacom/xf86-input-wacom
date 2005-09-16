@@ -1,3 +1,8 @@
+2005-09-16    Ping Cheng <pingc@wacom.com>
+	* Fixed a P4 eraser bug
+	* Fixed an initial relative pressure bug (Fred)
+	* Reports USB tool ID
+
 2005-09-09    Ping Cheng <pingc@wacom.com>
 	* Supports 16 button events for all tools
 	* Merged TabletPC button1 patch from Brent Baccala

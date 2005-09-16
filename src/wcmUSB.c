@@ -667,6 +667,8 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			{
 				ds->device_type = STYLUS_ID;
 				ds->proximity = (event->value != 0);
+				if (ds->proximity) 
+					ds->device_id = event->value;
 				DBG(6, ErrorF("USB stylus detected %x\n",
 					event->code));
 			}
@@ -674,8 +676,10 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			{
 				ds->device_type = ERASER_ID;
 				ds->proximity = (event->value != 0);
-				if (ds->proximity) 
+				if (ds->proximity) {
 					ds->proximity = ERASER_PROX;
+					ds->device_id = event->value;
+				}
 				DBG(6, ErrorF("USB eraser detected %x\n",
 					event->code));
 			}
@@ -686,6 +690,8 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 					event->code));
 				ds->device_type = CURSOR_ID;
 				ds->proximity = (event->value != 0);
+				if (ds->proximity) 
+					ds->device_id = event->value;
 			}
 			else if (event->code == BTN_TOOL_FINGER)
 			{

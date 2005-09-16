@@ -475,11 +475,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 			rx = x - priv->oldX;
 			ry = y - priv->oldY;
+			rz = z - priv->oldZ;
 		}
 		else
 		{
 			rx = 0;
 			ry = 0;
+			rz = z;
 		}
 
 		/* don't apply speed for fairly small increments */
@@ -516,7 +518,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			}
 			ry *= param;
 		}
-		rz = z - priv->oldZ;
 		rtx = tx - priv->oldTiltX;
 		rty = ty - priv->oldTiltY;
 		rrot = rot - priv->oldRot;

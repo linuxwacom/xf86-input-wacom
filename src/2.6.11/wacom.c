@@ -412,7 +412,7 @@ static int wacom_intuos_inout(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int idx;
+	int idx, type;
 
 	/* tool number */
 	idx = data[1] & 0x01;
@@ -425,7 +425,8 @@ static int wacom_intuos_inout(struct urb *urb)
 			(data[4] << 20) + (data[5] << 12) +
 			(data[6] << 4) + (data[7] >> 4);
 
-		switch ((data[2] << 4) | (data[3] >> 4)) {
+		type = (data[2] << 4) | (data[3] >> 4);
+		switch (type) {
 			case 0x812: /* Inking pen */
 			case 0x801: /* Intuos3 Inking pen */
 			case 0x012: 
@@ -473,7 +474,7 @@ static int wacom_intuos_inout(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN;
 		}
-		input_report_key(dev, wacom->tool[idx], 1);
+		input_report_key(dev, wacom->tool[idx], type);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		input_sync(dev);
 		return 1;

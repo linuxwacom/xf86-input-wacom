@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.15 2005/08/18 18:45:39 pingc Exp $
+ * $Id: wacom.c,v 1.16 2005/09/16 19:21:04 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -378,7 +378,7 @@ static int wacom_intuos_inout(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int idx;
+	int idx, type;
 
 	/* tool number */
 	idx = data[1] & 0x01;
@@ -396,7 +396,8 @@ static int wacom_intuos_inout(struct urb *urb)
 				(((__u32)data[2] << 4) | (data[3] >> 4)));
 		#endif
 
-		switch ((((__u32)data[2] << 4) | (data[3] >> 4)))
+		type = ((__u32)data[2] << 4) | (data[3] >> 4);
+		switch (type)
 		{
 			case 0x812: /* Intuos2 ink pen XP-110-00A */
 			case 0x801: /* Intuos3 Inking pen */
@@ -445,6 +446,7 @@ static int wacom_intuos_inout(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
+		input_report_key(dev, wacom->tool[idx], type);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		return 1;
 	}

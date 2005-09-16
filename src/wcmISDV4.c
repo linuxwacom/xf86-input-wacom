@@ -249,6 +249,12 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 		}
 	}
 
+	/* don't send button 3 event for eraser 
+	 * button 1 event will be sent by testing presure level
+	 */
+	if (ds->device_type == ERASER_ID && ds->buttons&4)
+		ds->buttons = 0;
+
 	DBG(8, ErrorF("isdv4Parse %s\n",
 		ds->device_type == ERASER_ID ? "ERASER " :
 		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));

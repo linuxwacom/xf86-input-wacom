@@ -596,7 +596,7 @@ static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 		((data[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 
 	/* get buttons */
-	ds->buttons = (data[3] & 0x38) >> 3;
+	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 
 	/* requires button info, so it goes down here. */
 	serialParseP4Common(common,data,last,ds);
@@ -645,7 +645,7 @@ static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data)
 	}
 
 	/* get buttons */
-	ds->buttons = (data[3] & 0x38) >> 3;
+	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 
 	/* requires button info, so it goes down here. */
 	serialParseP4Common(common,data,last,ds);
@@ -1248,7 +1248,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 	}
 
 	/* first time into prox */
-	if (!last->proximity && ds->proximity) 
+	if (!last->proximity && ds->proximity)
 		ds->device_type = cur_type;
 	/* check on previous proximity */
 	else if (is_stylus && ds->proximity)
@@ -1264,6 +1264,12 @@ static void serialParseP4Common(WacomCommonPtr common,
 			ds->device_type = cur_type;
 		}
 	}
+
+	/* don't send button 3 event for eraser 
+	 * button 1 event will be sent by testing presure level
+	 */
+	if (ds->device_type == ERASER_ID && ds->buttons&4)
+		ds->buttons = 0;
 
 	DBG(8, ErrorF("serialParseP4Common %s\n",
 		ds->device_type == CURSOR_ID ? "CURSOR" :
