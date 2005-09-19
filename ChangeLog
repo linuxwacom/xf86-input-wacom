@@ -1,3 +1,6 @@
+2005-09-19    Ping Cheng <pingc@wacom.com>
+	* Fixed a serial Graphire bug
+
 2005-09-16    Ping Cheng <pingc@wacom.com>
 	* Fixed a P4 eraser bug
 	* Fixed an initial relative pressure bug (Fred)

@@ -481,7 +481,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		{
 			rx = 0;
 			ry = 0;
-			rz = z;
+			rz = 0;
 		}
 
 		/* don't apply speed for fairly small increments */

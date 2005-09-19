@@ -592,12 +592,12 @@ static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 	/* get pressure */
 	ds->pressure = ((data[6]&ZAXIS_BITS) << 2 ) +
 		((data[3]&ZAXIS_BIT) >> 1) +
-		((data[3]&PROXIMITY_BIT) >> 6) +
+		((data[0]&ZAXIS_BIT) >> 6) +
 		((data[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 
 	/* get buttons */
 	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
-
+	
 	/* requires button info, so it goes down here. */
 	serialParseP4Common(common,data,last,ds);
 
@@ -607,7 +607,6 @@ static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 		ds->relwheel = (data[6] & 0x30) >> 4;
 		if (data[6] & 0x40)
 			ds->relwheel = -ds->relwheel;
-
 	}
 
 	xf86WcmEvent(common,0,ds);
@@ -637,10 +636,10 @@ static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data)
 	else
 	{
 		/* which tablets use this? */
-		/* PL550, PL800, and Graphire apparently */
+		/* PL550 and PL800 apparently */
 		ds->pressure = ((data[6]&ZAXIS_BITS) << 2 ) +
 			((data[3]&ZAXIS_BIT) >> 1) +
-			((data[3]&PROXIMITY_BIT) >> 6) +
+			((data[0]&ZAXIS_BIT) >> 6) +
 			((data[6]&ZAXIS_SIGN_BIT) ? 0 : 0x100);
 	}
 
@@ -1229,6 +1228,9 @@ static void serialParseP4Common(WacomCommonPtr common,
 		((ds->buttons & 4) ? ERASER_ID : STYLUS_ID) :
 		CURSOR_ID;
 
+	/* for Graphire eraser */
+	if(ds->buttons & 8) cur_type = ERASER_ID;
+
 	/* proximity bit */
 	ds->proximity = (data[0] & PROXIMITY_BIT);
 
@@ -1265,10 +1267,10 @@ static void serialParseP4Common(WacomCommonPtr common,
 		}
 	}
 
-	/* don't send button 3 event for eraser 
+	/* don't send button event for eraser 
 	 * button 1 event will be sent by testing presure level
 	 */
-	if (ds->device_type == ERASER_ID && ds->buttons&4)
+	if (ds->device_type == ERASER_ID)
 		ds->buttons = 0;
 
 	DBG(8, ErrorF("serialParseP4Common %s\n",
