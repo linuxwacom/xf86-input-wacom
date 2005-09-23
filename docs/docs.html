@@ -40,7 +40,7 @@
 	  <a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>   |
 	  <a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>   |
 	  <a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>  
-</td><td class="menu" align="right">Sep 06, 2005</td></tr>
+</td><td class="menu" align="right">Sep 23, 2005</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img width="1" height="4" src="docs_files/null.gif"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img width="1" height="2" src="docs_files/null.gif"></td></tr>
 </tbody></table>
@@ -201,29 +201,6 @@ why this document is written out in plain vanilla HTML.
 Linux Wacom Project</a></td><td>This site hosts the current version of this
 document as well as drivers, development tools, and mailing lists.</td></tr>
 
-<tr><td valign="top"><a href="http://people.mandrakesoft.com/%7Eflepied/projects/wacom/">Lepied's Wacom XInput
-driver for XFree86</a></td><td>This page contains the original driver and
-some additional help for serial tablet users.</td></tr>
-
-<tr><td valign="top"><a href="http://www.lepied.com/archive_wacom.html">Lepied's
-Wacom Mailing List Archive</a></td><td>This is an archive of Lepied's driver
-mailing list.  This list is mostly deprecated, with new lists being available
-at SourceForge.net.  Also, you are forewarned that posting directly to the
-mailing list web page does not mail to the list.  Many posts are missed this
-way.</td></tr>
-
-<tr><td valign="top"><a href="mailto:wacom-subscribe@lepied.com">Subscribe to
-Lepied's Wacom Mailing List</a></td><td>If you want to post to the old list,
-this link will subscribe you.  All new traffic, including announcements,
-discussion, and development related issues is now on the linuxwacom-announce,
-linuxwacom-discuss, and linuxwacom-devel mailing lists hosted at SourceForge.
-See the <a href="http://linuxwacom.sourceforge.net/">Linux Wacom Project</a>
-web page for details.</td></tr>
-
-<tr><td valign="top"><a href="http://prometheus.physics.ucsb.edu/%7Edean/TmC100/AcerTmC100.html">Dean Townsley's Linux on the Acer Travelmate C100</a></td><td>
-This page contains the steps to setup, install, and configure an Acer Travelmate 
-C100, one of the Tablet PCs with Wacom digitizer.</td></tr>
-
 <tr><td valign="top">
 <a href="http://www.runkel-it.de/wacom_tablet_howto.html">Stefan Runkel's
 Wacom Tablet HOWTO</a></td><td>This page is a bit old, but it covers
@@ -237,11 +214,6 @@ but you can look at their nifty new tablets.</td></tr>
 <tr><td valign="top"><a href="http://www.pxh.de/fs/graphire/">pxh: Graphire
 USB</a></td><td>This page is devoted to a Graphire-specific XFree86
 driver.</td></tr>
-
-<tr><td valign="top"><a href="http://homepages.feis.herts.ac.uk/%7Ebt7al/wcm/">A
-Webpage Dealing with Cintiq (Wacom PL-500 in particular) on Linux</a></td>
-<td>This website deals with getting the Cintiq running.  Code for the serial
-and USB Cintiq tablets is available in linuxwacom 0.5.4-beta and 0.6.0.</td></tr>
 
 <tr><td valign="top"><a href="http://sem.best.vwh.net/linux/wacom/">Wacom
 Intuos USB Micro-HOWTO</a></td><td>An older webpage which may not be relevent
@@ -421,7 +393,7 @@ tilt, pressure, and buttons.  It can also track two different tools
 simultaneously (Intuos and Intuos2).<br>
 <a name="download">
 </a></p><h2><a name="download">2.2 - Downloading the Code</a></h2>
-<a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.8.tar.bz2">linuxwacom-0.6.8.tar.bz2</a> is the stable package and contains
+<a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0.tar.bz2">linuxwacom-0.7.0.tar.bz2</a> is the stable package and contains
 files that you will need to get your serial or USB tablet working.  The
 current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.9.tar.bz2">linuxwacom-0.6.9.tar.bz2</a> is also available and may be
 used by people who are willing to risk an occasional kernel panic to help
@@ -433,9 +405,9 @@ get to see them.
 <p>Unpacking the tarball is usually a one-step process, but I show both
 steps in case the typical -jxf option doesn't work with tar.
 
-</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.6.8.tar.bz2
-[jej@ayukawa jej]$ tar -xf linuxwacom-0.6.8.tar
-[jej@ayukawa jej]$ cd linuxwacom-0.6.8</pre></blockquote>
+</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.7.0.tar.bz2
+[jej@ayukawa jej]$ tar -xf linuxwacom-0.7.0.tar
+[jej@ayukawa jej]$ cd linuxwacom-0.7.0</pre></blockquote>
 
 Once in the package directory, you need only to configure and build the code.
 This is described in more detail as you continue.  The executables and 
@@ -446,7 +418,7 @@ installation procedures depend on the kernel source you use.
 and release dates.  Otherwise, let's continue.
 
 
-</p><h3>Stable files included for linuxwacom-0.6.8:</h3>
+</p><h3>Stable files included for linuxwacom-0.7.0:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th align="left">Comment</th></tr>
 <tr><td valign="top">configure</td><td valign="top">- configure script for distribution independent builds</td></tr>
@@ -508,6 +480,8 @@ and release dates.  Otherwise, let's continue.
 <h3>Stable Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0.tar.bz2">linuxwacom-0.7.0.tar.bz2</a></td><td valign="top">-</td><td valign="top">2005-09-21</td><td valign="top">Updated wacomcpl and support 16 buttons for all tools.</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0-x86-64.tar.bz2">linuxwacom-0.7.0-x86-64.tar.bz2</a></td><td valign="top">-</td><td valign="top">2005-09-21</td><td valign="top">Updated wacomcpl and support 16 buttons for all tools.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.8.tar.bz2">linuxwacom-0.6.8.tar.bz2</a></td><td valign="top">-</td><td valign="top">2005-05-05</td><td valign="top">Support Cintiq 21UX and kernel 2.6.11.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.6.tar.bz2">linuxwacom-0.6.6.tar.bz2</a></td><td valign="top">-</td><td valign="top">2004-12-01</td><td valign="top">Build .ko locally and support kernel 2.6.10.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.4.tar.bz2">linuxwacom-0.6.4.tar.bz2</a></td><td valign="top">-</td><td valign="top">2004-08-06</td><td valign="top">Updated wacusb.c and fixed USB tablet protocol V dual input bug.</td></tr>
@@ -996,7 +970,7 @@ drivers provided by your standard distribution.  Rest assured, efforts
 are being made to get these changes merged back into the Linux kernel.
 <a name="newwacom">
 </a></p><h2><a name="newwacom">3.1 - Updated wacom.c</a></h2>
-<a name="newwacom">The wacom.c driver that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.8.tar.bz2">linuxwacom-0.6.8.tar.bz2</a> has a
+<a name="newwacom">The wacom.c driver that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0.tar.bz2">linuxwacom-0.7.0.tar.bz2</a> has a
 number of updates which cannot be found in many distributions yet.
 
 <p>This driver supports the new tablets: Cintiq 21UX, Intuos3, Graphire3, 
@@ -1018,9 +992,8 @@ tablet on the system. It can be done by adding the following rules in
 </div>
 
 <div class="diff">
-Steve Wallace has submitted a howto for compiling the related kernel pieces 
-on Debian Sid (Unstable) which is running XFree86 4.3 and kernel 2.6.6 as 
-of this writing. It can be viewed at page <a href="#debwacom">Building wacom driver On Fedora Core 3</a>.
+Paul Duffy has submitted a howto for compiling the related kernel pieces and x.org
+driver on Fedora Core 3. It can be viewed at page <a href="#debwacom">Building wacom driver On Fedora Core 3</a>.
 </div><a name="buildwacom">
 </a><h2><a name="buildwacom">3.2 - Building wacom.c (for kernel 2.4)</a></h2>
 
@@ -1204,18 +1177,18 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Sep 06 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Sep 06 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Sep 06 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Sep 06 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Sep 06 20:34:41 ayukawa kernel: wacom.c: <b>$1.40-linuxwacom-0.6.8.tar.bz2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Sep 06 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (<b>MODIFIED-DEBUG</b>)
+Sep 23 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Sep 23 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Sep 23 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Sep 23 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Sep 23 20:34:41 ayukawa kernel: wacom.c: <b>$1.40-linuxwacom-0.7.0.tar.bz2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Sep 23 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (<b>MODIFIED-DEBUG</b>)
 
 </pre></blockquote>
 
 <p>The important detail is the version number.  A version number like "1.30"
 is an original kernel version and not from the linuxwacom package.  The
-correct version should also have the -linuxwacom-0.6.8.tar.bz2 portion as
+correct version should also have the -linuxwacom-0.7.0.tar.bz2 portion as
 well.  Also, future versions of the driver will say "LINUXWACOM-DEBUG" or
 similar rather than "MODIFIED-DEBUG" as shown above.  This is to help
 differentiate between the stock kernel driver and those available from the
@@ -1350,13 +1323,13 @@ events, even if loaded afterwards.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Sep 06 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Sep 06 21:23:35 ayukawa kernel: wacom.c: <b>v1.40-linuxwacom-0.6.8.tar.bz2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Sep 06 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Sep 23 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Sep 23 21:23:35 ayukawa kernel: wacom.c: <b>v1.40-linuxwacom-0.7.0.tar.bz2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Sep 23 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.30.  This version number
-is 1.40-linuxwacom-0.6.8.tar.bz2 so the correct driver was loaded.</a></p>
+is 1.40-linuxwacom-0.7.0.tar.bz2 so the correct driver was loaded.</a></p>
 <a name="testtablet">
 </a><h2><a name="testtablet">3.7 - Testing Tablet Detection</a></h2>
 <p><a name="testtablet">In this section we will plug the tablet into the computer and determine
@@ -1377,20 +1350,20 @@ exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="plugin">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Sep 06 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Sep 06 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Sep 06 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product 56a/44/115
-Sep 06 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup <b>mousedev</b> for USB product 56a/44/115
+Sep 23 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Sep 23 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Sep 23 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product 56a/44/115
+Sep 23 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup <b>mousedev</b> for USB product 56a/44/115
 </a></pre>
 <pre class="diff"><a name="plugin">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Sep 06 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Sep 06 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Sep 06 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Sep 06 21:28:39 sasami kernel: usb.c: registered new driver hid
-Sep 06 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Sep 06 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Sep 06 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Sep 23 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Sep 23 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Sep 23 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Sep 23 21:28:39 sasami kernel: usb.c: registered new driver hid
+Sep 23 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Sep 23 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Sep 23 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -1469,7 +1442,7 @@ B: MSC=1
 <a name="buildhid">
 </a><h3><a name="buildhid">3.7.3 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.4)</a></h3>
 
-<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.8.tar.bz2">linuxwacom-0.6.8.tar.bz2</a>
+<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0.tar.bz2">linuxwacom-0.7.0.tar.bz2</a>
 file, you will find mousedev.c, usbmouse.c, hid-core.c, evdev.c, and input.c
 files which have special exceptions for wacom. These files are not built
 by default, so you will need to reconfigure the package and run make again. 
@@ -1526,7 +1499,7 @@ files to get .o.gz files.</span>
 <a name="buildhid6">
 </a><h3><a name="buildhid6">3.7.4 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.6)</a></h3>
 
-<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.6.8.tar.bz2">linuxwacom-0.6.8.tar.bz2</a>
+<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0.tar.bz2">linuxwacom-0.7.0.tar.bz2</a>
 file, you will find mousedev.c, usbmouse.c, hid-core.c, and evdev.c files
 which have special exceptions for wacom. These files are not built by default,
 so you will need to reconfigure the package and run make again.  </p><p>As for wacom.c, you need to configure the kernel modules (hid and
@@ -1655,8 +1628,8 @@ skip to </a><a href="#viewdata">Viewing the Raw Data</a>.
 the device identifier.  It can be discovered by doing the following:
 
 </a><blockquote><pre><a name="newtablet">[root@ayukawa root]# grep -i 56a /var/log/messages | tail -10
-Sep 06 21:03:09 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44/115</b>
-Sep 06 21:27:48 ayukawa kernel: usb.c: USB device 2 (vend/prod <b>0x56a/0x44</b>) is not claimed by any active driver.
+Sep 23 21:03:09 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44/115</b>
+Sep 23 21:27:48 ayukawa kernel: usb.c: USB device 2 (vend/prod <b>0x56a/0x44</b>) is not claimed by any active driver.
 </a></pre></blockquote>
 
 <p><a name="newtablet">In this case, the tablet identifier is 56a/44 (also written 0x56a/0x44).
@@ -1706,10 +1679,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# rmmod wacom
 [jej@sasami root]# modprobe wacom       (or insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Sep 06 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Sep 06 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Sep 06 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Sep 06 17:31:35 sasami kernel: wacom.c: v1.40-linuxwacom-0.6.8.tar.bz2 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Sep 23 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Sep 23 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Sep 23 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Sep 23 17:31:35 sasami kernel: wacom.c: v1.40-linuxwacom-0.7.0.tar.bz2 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -1856,8 +1829,9 @@ Intuos2 12x12.
 
 </p><p>The next section describes the dynamic attributes of the tablet,
 including the current position of the pointer, the type of tool in proximity
-to the surface, its pressure, and tilt.  Some tablets provide serial numbers
-for their styluses.  When a button is pressed, the button heading will change
+to the surface, its pressure, and tilt.  Some tablets (Protocol V tablets,  
+such as Intuos 1, 2, and 3 as well as Cintiq 21UX) provide serial numbers
+for their tools.  When a button is pressed, the button heading will change
 to something like "STYLUS=DOWN".
 
 </p><p> Some tablet tools report wheel movements as single increments forward and
@@ -1884,14 +1858,6 @@ considerably reduced.  This version of wacdump does not distinguish
 between tablets with mice, so the left, right, and middle buttons are
 present, even though the tablet itself has no mouse.  This will likely
 change in the future.
-
-</p><p><b>Out of Range Values</b>
-
-</p><p>If you get X and Y coordinates, pressures, or tilt values outside of the
-ranges specified, please let me know as soon as possible.  Bad range values
-can prevent the XFree86 driver from working correctly.  It is helpful if you
-can determine the true maximum values and send them along with your tablet
-type and model number.  A text-mode copy of the screen would be even better.
 <a name="x11">
 </a></p><h1><a name="x11">5.0 - Configuring XFree86</a></h1>
 <a name="x11">Two steps must be completed to get X to recognize your tablet.  First,
@@ -1901,41 +1867,35 @@ to the tablet since the one that ships with XFree86 is not very functional.
 Neither driver holds a candle to the windows driver though, so you'll
 have to take what you get for the time being.  Updates to the XFree86 driver
 are available in the stable and beta releases on the
-</a><a href="#download">Downloading the Code</a> page.  You may
-also check <a href="http://people.mandrakesoft.com/%7Eflepied/projects/wacom/">Lepied's Wacom Site</a> which
-has source code up to version 26 as of this writing.
+</a><a href="#download">Downloading the Code</a> page. 
 <a name="inputdev">
 </a><h2><a name="inputdev">5.1 - Adding the InputDevices</a></h2>
 
-<p><a name="inputdev">The X Window system identifies the stylus and eraser on your tablet as
-XInput devices.  Applications that want to know the absolute position of
-your stylus can request that information directly, and this generally
-bypasses whatever the mouse happens to be doing at the time.  This design
-is not without problems though.  For one, changing your setup or adding
-a new tool requires making changes to the XF86Config file and restarting
-X.  This should be fixed in the future.
+<p><a name="inputdev">The X Window system identifies the stylus (tip and side switches 
+of your pen), eraser (the other end of you pen if it is clocikable), 
+cursor, and pad on your tablet as XInput devices.  Applications that 
+want to know the absolute position of your tools (stylus, eraser, and 
+cursor) can request that information directly, and this generally 
+bypasses whatever the mouse happens to be doing at the time.  This 
+design is not without problems though.  For one, changing your setup 
+or adding a new tool normally requires making changes to the XF86Config
+or xorg.conf configuration file and restarting X.  This should be fixed in 
+the future.
 
-</a></p><p><a name="inputdev">For now however, add the InputDevice sections to your XF86Config file.  This
-assumes you are running XFree86 4.x.  <span class="diff">On some distributions,
-this file is called XF86Config-4</span>.  Notice that the serial and USB
-configurations are different, so only include the appropriate lines.  For 
+</a></p><p><a name="inputdev">For now however, add the InputDevice sections to your XF86Config/xorg.conf 
+file.  This assumes you are running XFree86 4.x.  <span class="diff">On some distributions,
+this file is called XF86Config-4.  Notice that the serial and USB
+configurations are different, so only include the appropriate lines.  
+The default serial and USB devices are given.For 
 Tablet PCs, options "Device" and "ForceDevice" should be included.  You
 should also change the device (e.g. ttyS0) to the correct one for your
-tablet; the default serial and USB devices are given.  All the new driver
-options are listed in the manual page below.
+tablet. Tablet PC and Cintiq/PL models don't support cursor type. </span>  
+All the new driver options are listed in the manual page below.
+
+
 
 
 </a></p><blockquote><pre><a name="inputdev">Section "InputDevice"
-  Driver        "wacom"
-  Identifier    "cursor"
-  <b>Option        "Device"        "/dev/ttyS0"          # SERIAL ONLY</b>
-  <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
-  Option        "Type"          "cursor"
-  <b>Option        "USB"           "on"                  # USB ONLY</b>
-  <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
-EndSection
-
-Section "InputDevice"
   Driver        "wacom"
   Identifier    "stylus"
   <b>Option        "Device"        "/dev/ttyS0"          # SERIAL ONLY</b>
@@ -1955,6 +1915,16 @@ Section "InputDevice"
   <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
 EndSection
 
+Section "InputDevice"
+  Driver        "wacom"
+  Identifier    "cursor"
+  <b>Option        "Device"        "/dev/ttyS0"          # SERIAL ONLY</b>
+  <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
+  Option        "Type"          "cursor"
+  <b>Option        "USB"           "on"                  # USB ONLY</b>
+  <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
+EndSection
+
 <b># This section is for Intuos3 or Cintiq 21UX only</b>
 Section "InputDevice"
   Driver        "wacom"
@@ -1966,7 +1936,7 @@ Section "InputDevice"
 EndSection
 </a></pre></blockquote>
 
-<p><a name="inputdev">The above four sections identify the cursor, stylus, eraser, and pad devices
+<p><a name="inputdev">The above four sections identify the stylus, eraser, cursor, and pad devices
 to XInput.  Notice that all four reference the same device /dev/ttyS0 or
 /dev/input/event0 depending on whether its a serial or USB tablet.
 
@@ -2273,7 +2243,7 @@ detection works properly.
 </a><a name="wacomdrv">
 </a></p><h2><a name="wacomdrv">5.4 - Updating wacom_drv.o</a></h2>
 <p><a name="wacomdrv">The </a><a href="#download">Downloading the Code</a> page currently
-offers source and binary for 26-linuxwacom-0.6.8.tar.bz2 in the stable package
+offers source and binary for 26-linuxwacom-0.7.0.tar.bz2 in the stable package
 and 26-0.6.9 in the beta version.  I recommend using the X driver 
  in the package you get the kernel drivers ( if you use a USB tablet) and the Wacom 
 Control Panel since they are in sync on supporting new functionality and new tablet 
@@ -2320,7 +2290,7 @@ are running right, the following lines appear in my log file.
 (II) LoadModule: "wacom"
 (II) Loading /usr/X11R6/lib/modules/input/wacom_drv.o
 (II) Module wacom: vendor="The XFree86 Project"
-(II) Wacom driver level: <b>26-linuxwacom-0.6.8.tar.bz2</b> $
+(II) Wacom driver level: <b>26-linuxwacom-0.7.0.tar.bz2</b> $
 (II) XINPUT: Adding extended input device "eraser" (type: Wacom Eraser)
 (II) XINPUT: Adding extended input device "stylus" (type: Wacom Stylus)
 (II) XINPUT: Adding extended input device "cursor" (type: Wacom Cursor)
@@ -2332,7 +2302,7 @@ suppress=0
 (==) Wacom Eraser top X=0 top Y=0 bottom X=30480 bottom Y=30480
 </a></pre></blockquote>
 
-<a name="restartx">Notice the driver version 26-linuxwacom-0.6.8.tar.bz2 above.  This is the new stable
+<a name="restartx">Notice the driver version 26-linuxwacom-0.7.0.tar.bz2 above.  This is the new stable
 wacom_drv.o driver.  The beta driver is currently 26-0.6.9.
 
 </a><p><a name="restartx">First things first, you should lift the mouse off the tablet and place it
@@ -2954,13 +2924,12 @@ So, you may need to rebuild gtk with ./configure --with-xinput=xfree on
 Slackware. As of March 23, 2004, newer Slackware shipping with gtk2 has 
 configured with xinput. </a></div>
 
-<p><a name="gimp">Bring up <i>gimp</i> and select "File|Dialogs|Input Devices" if using 1.x
-or "File|Preferences|Input Devices|Configure Extended Input Devices" if using 
-2.x.  You will see a drop-down list with all three devices present.  After 
-enabling them,  you can see their respective statuses by calling up 
-"File|Dialogs|Device Status".  It has been recommended that the devices be set 
-to "Screen" mode rather than "Window" due to a bug in Gimp which causes it to 
-crash unexpectedly.
+<p><a name="gimp">Bring up <i>gimp</i> and select "File -&gt; Dialogs -&gt; Input Devices" if 
+using 1.x or "File -&gt; Preferences -&gt; Input Devices -&gt; Configure Extended 
+Input Devices" if using 2.x.  You will see a drop-down list with all three 
+devices present.  After enabling them,  you can see their respective statuses 
+by calling up "File -&gt; Dialogs -&gt; Device Status".  It has been recommended 
+that the devices be set to "Screen" mode rather than "Window".
 
 </a></p><p><a name="gimp">I have successfully been able to use gimp with several different pens,
 including the tips and erasers.  Tilt does not appear to be used by gimp
@@ -4308,7 +4277,7 @@ to permit their use in free software. </a></p></td></tr></tbody></table></center
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2005 - LinuxWacom -Last updated August 18, 2005<br>
+	Copyright (C) 2002-2005 - LinuxWacom -Last updated September 23, 2005<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>
