@@ -562,7 +562,8 @@ static int serialInitTablet(LocalDevicePtr local)
 			model = &serialIntuos;
 		else if (id[2] == 'X' && id[3] == 'D')
 			model = &serialIntuos2;
-		else if (id[2] == 'P' && id[3] == 'L')
+		else if ( (id[2] == 'P' && id[3] == 'L') ||
+			(id[2] == 'D' && id[3] == 'T') )
 			model = &serialCintiq;
 		else if (id[2] == 'C' && id[3] == 'T')
 			model = &serialPenPartner;
@@ -896,6 +897,8 @@ static void serialInitCintiq(WacomCommonPtr common, const char* id, float versio
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
+	common->wcmResolX = 508; /* tablet X resolution in points/inch */
+	common->wcmResolY = 508; /* tablet Y resolution in points/inch */
 
 	if (id[5] == '2')
 	{
@@ -946,14 +949,18 @@ static void serialInitCintiq(WacomCommonPtr common, const char* id, float versio
 			common->wcmMaxZ = 255;
 		}
 	}
+	else if (id[5] == '7')
+	{
+		/* PL-710  */
+		common->wcmMaxZ = 511;
+		common->wcmResolX = 2540;
+		common->wcmResolY = 2540;
+	}
 	else if (id[5] == '8')
 	{
 		/* PL-800  */
 		common->wcmMaxZ = 511;
 	}
-
-	common->wcmResolX = 508; /* tablet X resolution in points/inch */
-	common->wcmResolY = 508; /* tablet Y resolution in points/inch */
 }
 
 static void serialInitPenPartner(WacomCommonPtr common, const char* id, float version)

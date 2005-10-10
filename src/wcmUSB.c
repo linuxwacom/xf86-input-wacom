@@ -121,6 +121,21 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		xf86WcmFilterCoord,   /* input filtering */
 	};
 
+	static WacomModel usbGraphire4 =
+	{
+		"USB Graphire4",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterCoord,   /* input filtering */
+	};
+
 	static WacomModel usbCintiq =
 	{
 		"USB Cintiq",
@@ -286,6 +301,7 @@ static Bool usbInit(LocalDevicePtr local)
 	short sID[4];
 	char id[BUFFER_SIZE];
 	WacomModelPtr model = NULL;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	DBG(1, ErrorF("initializing USB tablet\n"));    
 
@@ -313,6 +329,10 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x14: /* Graphire3 6x8 */
 				model = &usbGraphire3; break;
 
+			case 0x15: /* Graphire3 4x5 */
+			case 0x16: /* Graphire3 6x8 */
+				model = &usbGraphire4; break;
+
 			case 0x20: /* Intuos 4x5 */
 			case 0x21: /* Intuos 6x8 */
 			case 0x22: /* Intuos 9x12 */
@@ -323,6 +343,8 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x03: /* PTU600 */
 				model = &usbCintiqPartner; break;
 
+			case 0x39: /* PL710 */
+				common->wcmResolX = common->wcmResolY = 2540;
 			case 0x30: /* PL400 */
 			case 0x31: /* PL500 */
 			case 0x32: /* PL600 */
@@ -331,6 +353,7 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x35: /* PL800 */
 			case 0x37: /* PL700 */
 			case 0x38: /* PL510 */
+			case 0xC0: /* DTF720 */
 				model = &usbCintiq; break;
 
 			case 0x41: /* Intuos2 4x5 */
@@ -347,6 +370,7 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x61: /* PenStation */
 			case 0x62: /* Volito2 4x5 */
 			case 0x63: /* Volito2 2x3 */
+			case 0x64: /* Volito2 2x3 */
 				model = &usbVolito2; break;
 
 			case 0xB0: /* Intuos3 4x5 */
@@ -387,12 +411,17 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
-	if ( strstr(id, "Cintiq") )
-		common->wcmResolX = common->wcmResolY = 508;
-	else if ( strstr(id, "PenPartner") )
-		common->wcmResolX = common->wcmResolY = 1000;
-	else
-		common->wcmResolX = common->wcmResolY = 1016;
+	if ( !common->wcmResolX )
+	{
+		if ( strstr(id, "Cintiq") )
+			common->wcmResolX = common->wcmResolY = 508;
+		else if ( strstr(id, "PenPartner") )
+			common->wcmResolX = common->wcmResolY = 1000;
+		else if ( strstr(id, "Graphire") )
+			common->wcmResolX = common->wcmResolY = 2032;
+		else
+			common->wcmResolX = common->wcmResolY = 1016;
+	}
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 }
@@ -529,8 +558,8 @@ static void usbParseEvent(WacomCommonPtr common,
 	/* one channel only? */
 	if (common->wcmChannelCnt == 1)
 	{
-		/* Intuos3 Pad */
-		if (serial == 0xffffffff)
+		/* Intuos3 or Graphire4 Pad */
+		if (serial == 0xffffffff || serial == 0xf0)
 		{
 			channel = 1;
 			(&common->wcmChannel[channel].work)->device_type = PAD_ID;
@@ -695,7 +724,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			}
 			else if (event->code == BTN_TOOL_FINGER)
 			{
-				DBG(6, ErrorF("USB Intuos3 Pad detected %x\n",
+				DBG(6, ErrorF("USB Pad detected %x\n",
 					event->code));
 				ds->device_type = PAD_ID;
 				ds->proximity = (event->value != 0);

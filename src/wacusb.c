@@ -2,7 +2,7 @@
 ** wacusb.c
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2205 - Ping Cheng
+** Copyright (C) 2003 - 2005 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -169,11 +169,18 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xGraphire4[] =
+	{
+		{ "CTE_440", "Wacom Graphire4 4x5", 1, 0x15 },
+		{ "CTE_640", "Wacom Graphire4 6x8", 2, 0x16 },
+		{ NULL }
+	};
+
 	static USBSUBTYPE xIntuos[] =
 	{
-		{ "GD_0405-U", "Wacom Intuos 4x5", 1, 0x20 },
-		{ "GD_0608-U", "Wacom Intuos 6x8", 2, 0x21 },
-		{ "GD_0912-U", "Wacom Intuos 9x12", 3, 0x22 },
+		{ "GD_0405-U", "Wacom Intuos 4x5",   1, 0x20 },
+		{ "GD_0608-U", "Wacom Intuos 6x8",   2, 0x21 },
+		{ "GD_0912-U", "Wacom Intuos 9x12",  3, 0x22 },
 		{ "GD_1212-U", "Wacom Intuos 12x12", 4, 0x23 },
 		{ "GD_1218-U", "Wacom Intuos 12x18", 5, 0x24 },
 		{ NULL }
@@ -181,14 +188,16 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xCintiq[] =
 	{
-		{ "MODEL_PL400", "Wacom PL400", 1, 0x30 },
-		{ "MODEL_PL500", "Wacom PL500", 2, 0x31 },
-		{ "MODEL_PL600", "Wacom PL600", 3, 0x32 },
-		{ "MODEL_PL600SX", "Wacom PL600SX", 4, 0x33 },
-		{ "MODEL_PL550", "Wacom PL550", 5, 0x34 },
-		{ "MODEL_PL800", "Wacom PL800", 6, 0x35 },
-		{ "MODEL_PL700", "Wacom PL700", 7, 0x37 },
-		{ "MODEL_PL510", "Wacom PL510", 8, 0x38 },
+		{ "MODEL_PL400",   "Wacom PL400",    1, 0x30 },
+		{ "MODEL_PL500",   "Wacom PL500",    2, 0x31 },
+		{ "MODEL_PL600",   "Wacom PL600",    3, 0x32 },
+		{ "MODEL_PL600SX", "Wacom PL600SX",  4, 0x33 },
+		{ "MODEL_PL550",   "Wacom PL550",    5, 0x34 },
+		{ "MODEL_PL800",   "Wacom PL800",    6, 0x35 },
+		{ "MODEL_PL700",   "Wacom PL700",    7, 0x37 },
+		{ "MODEL_PL510",   "Wacom PL510",    8, 0x38 },
+		{ "MODEL_DTU710",  "Wacom PL710",   10, 0x39 },
+		{ "MODEL_DTF720",  "Wacom DTF720",  11, 0xC0 },
 		{ NULL }
 	};
 
@@ -234,9 +243,10 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xIntuos3[] =
 	{
-		{ "PTZ-430", "Wacom Intuos3 4x5",  1, 0xB0 },
-		{ "PTZ-630", "Wacom Intuos3 6x8",  2, 0xB1 },
-		{ "PTZ-930", "Wacom Intuos3 9x12", 3, 0xB2 },
+		{ "PTZ-430",  "Wacom Intuos3 4x5",  1, 0xB0 },
+		{ "PTZ-630",  "Wacom Intuos3 6x8",  2, 0xB1 },
+		{ "PTZ-930",  "Wacom Intuos3 9x12", 3, 0xB2 },
+		{ "PTZ-631W", "Wacom Intuos3 6x8",  4, 0xB5 },
 		{ NULL }
 	};
 
