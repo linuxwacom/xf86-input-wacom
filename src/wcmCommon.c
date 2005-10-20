@@ -411,6 +411,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	priv->currentX = x;
 	priv->currentY = y;
 
+	/* use tx and ty to report stripx and stripy */
+	if (type == PAD_ID)
+	{
+		tx = ds->stripx;
+		ty = ds->stripy;
+	}
+
 	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
 		(type == STYLUS_ID) ? "stylus" :
@@ -419,13 +426,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		is_proximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
-
-	/* use tx and ty to report stripx and stripy */
-	if (type == PAD_ID)
-	{
-		tx = ds->stripx;
-		ty = ds->stripy;
-	}
 
 	/* rotation mixes x and y up a bit */
 	if (common->wcmRotate == ROTATE_CW)
@@ -580,6 +580,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		{
 			int fakeButton = ds->relwheel > 0 ? 5 : 4;
 			int i;
+DBG(6, ErrorF("xf86WcmSendEvents relwheel=%d\n", ds->relwheel));
 			for (i=0; i<abs(ds->relwheel); i++)
 			{
 				xf86PostButtonEvent(local->dev,
@@ -801,7 +802,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 #ifdef LINUX_INPUT
 	/* Discard the first 2 USB packages due to events delay */
-	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) )
+	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && ds.device_type != PAD_ID )
 	{
 		DBG(11, ErrorF("discarded %dth USB data.\n", pChannel->nSamples));
 		++pChannel->nSamples;
@@ -828,7 +829,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 		fs.x[0] = ds.x;
 		fs.y[0] = ds.y;
-		if (HANDLE_TILT(common) && (ds.device_type == ERASER_ID || ds.device_type == ERASER_ID))
+		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
 		{
 			for (i=MAX_SAMPLES - 1; i>0; i--)
 			{

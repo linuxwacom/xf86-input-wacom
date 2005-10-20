@@ -383,9 +383,9 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->flags |= ABSOLUTE_FLAG;
 	}
 
-	/* pad always in relative mode since it doesn't move the cursor */
+	/* pad reports absolute value and never moves the cursor */
 	if (IsPad(priv)) 
-			priv->flags &= ~ABSOLUTE_FLAG;
+		priv->flags |= ABSOLUTE_FLAG;
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");

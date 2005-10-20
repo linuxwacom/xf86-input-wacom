@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.3 2005/10/10 19:25:32 pingc Exp $
+ * $Id: wacom.c,v 1.4 2005/10/20 22:56:01 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -99,6 +99,9 @@ MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
 #define USB_VENDOR_ID_WACOM	0x056a
+#define STYLUS_DEVICE_ID	0x02
+#define CURSOR_DEVICE_ID	0x06
+#define ERASER_DEVICE_ID	0x0A
 
 struct wacom_features {
 	char *name;
@@ -122,6 +125,7 @@ struct wacom {
 	struct urb irq;
 	struct wacom_features *features;
 	int tool[2];
+	int id[2];
 	int open;
 	__u32 serial[2];
 	
@@ -133,7 +137,7 @@ static void wacom_pl_irq(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int prox, pressure;
+	int prox, pressure, id;
 
 	if (urb->status) return;
 
@@ -146,6 +150,7 @@ static void wacom_pl_irq(struct urb *urb)
 	/* proximity and pressure */
 	prox = data[1] & 0x40;
 		
+	id = ERASER_DEVICE_ID;
 	if (prox) {
 	        pressure = (signed char) ((data[7] <<1 ) | ((data[4] >> 2) & 1));
 		if ( wacom->features->pressure_max > 350 ) {
@@ -180,8 +185,9 @@ static void wacom_pl_irq(struct urb *urb)
 		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
 			/* Unknown tool selected default to pen tool */
 			wacom->tool[1] = BTN_TOOL_PEN;
+			id = STYLUS_DEVICE_ID;
 		}
-		input_report_key(dev, wacom->tool[1], prox); /* report in proximity for tool */
+		input_report_key(dev, wacom->tool[1], id); /* report in proximity for tool */
 
 		input_report_abs(dev, ABS_X, data[3] | ((__u32)data[2] << 7) | ((__u32)(data[1] & 0x03) << 14));
 		input_report_abs(dev, ABS_Y, data[6] | ((__u32)data[5] << 7) | ((__u32)(data[4] & 0x03) << 14));
@@ -222,12 +228,12 @@ static void wacom_ptu_irq(struct urb *urb)
 	
 	if (data[1] & 0x04) 
 	{
-		input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
+		input_report_key(dev, BTN_TOOL_RUBBER, (data[1] & 0x20) ? ERASER_DEVICE_ID : 0);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
 	}
 	else
 	{
-		input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
+		input_report_key(dev, BTN_TOOL_PEN, (data[1] & 0x20) ? STYLUS_DEVICE_ID : 0);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
 	}
 	input_report_abs(dev, ABS_X, data[3] << 8 | data[2]);
@@ -255,7 +261,7 @@ static void wacom_penpartner_irq(struct urb *urb)
 		return;
 	}
 
-	input_report_key(dev, BTN_TOOL_PEN, 1);
+	input_report_key(dev, BTN_TOOL_PEN, STYLUS_DEVICE_ID);
 	input_report_abs(dev, ABS_X, data[2] << 8 | data[1]);
 	input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]);
 	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
@@ -270,7 +276,7 @@ static void wacom_graphire_irq(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int x, y;
+	int x, y, id, rw;
 
 	if (urb->status) return;
 
@@ -280,6 +286,7 @@ static void wacom_graphire_irq(struct urb *urb)
 		return;
 	}
 
+	id = STYLUS_DEVICE_ID;
 	if ( data[1] & 0x10 ) /* in prox */
 	{
 		switch ((data[1] >> 5) & 3) {
@@ -290,18 +297,21 @@ static void wacom_graphire_irq(struct urb *urb)
 
 			case 1: /* Rubber */
 				wacom->tool[0] = BTN_TOOL_RUBBER;
+				id = ERASER_DEVICE_ID;
 				break;
 
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
-				if ( strstr(wacom->features->name, "Graphire4") )
-					input_report_rel(dev, REL_WHEEL, (signed char) data[7] & 0x07);
-				else
+				if ( strstr(wacom->features->name, "Graphire4") ) {
+					rw = data[7] & 0x04 ? -(data[7] & 0x03) : data[7] & 0x03;
+					input_report_rel(dev, REL_WHEEL, rw);
+				} else
 					input_report_rel(dev, REL_WHEEL, (signed char) data[6]);
 				/* fall through */
 
 			case 3: /* Mouse without wheel */
 				wacom->tool[0] = BTN_TOOL_MOUSE;
+				id = CURSOR_DEVICE_ID;
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
 				if ( strstr(wacom->features->name, "Graphire4") )
@@ -325,18 +335,42 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 		}
 	}
-	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
+	input_report_key(dev, wacom->tool[0], (data[1] & 0x10) ? id : 0);
 	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
 
 	/* send pad data */
 	if ( strstr(wacom->features->name, "Graphire4") )
 	{
-		wacom->tool[1] = BTN_TOOL_FINGER;
-		input_report_key(dev, wacom->tool[1], 0xf0);
-		input_report_key(dev, BTN_0, (data[7] & 0x80));
-		input_report_key(dev, BTN_4, (data[7] & 0x40));
-		input_report_abs(dev, ABS_RX, (data[7] & 0x38) >> 3);
-		input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
+		/* fist tine sending pad data */
+		if (wacom->tool[1] != BTN_TOOL_FINGER)
+		{
+			wacom->id[1] = 0;
+			wacom->serial[1] = ( data[7] & 0x38 ) >> 2;
+		}
+		if ( data[7] & 0xf8 )
+		{
+			input_report_key(dev, BTN_0, (data[7] & 0x40));
+			input_report_key(dev, BTN_4, (data[7] & 0x80));
+			if ( (( data[7] & 0x38 ) >> 2) == (wacom->serial[1] & 0x0e) )
+				/* alter REL_WHEEL value so X apps can get it */
+				wacom->serial[1] += (wacom->serial[1] & 0x01) ? -1 : 1 ;
+			else 
+				 wacom->serial[1] = (data[7] & 0x38 ) >> 2;
+			/* don't alter the value when there is no wheel event */
+			if ( wacom->serial[1] == 1 ) wacom->serial[1] = 0;
+			rw = wacom->serial[1];
+			rw = ( rw & 0x08 ) ? -( rw & 0x07 ) : ( rw & 0x07 ); 
+			input_report_rel(dev, REL_WHEEL, rw);
+			wacom->tool[1] = BTN_TOOL_FINGER;
+			wacom->id[1] = data[7] & 0xf8;
+			input_report_key(dev, wacom->tool[1], 0xf0);
+			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
+		} else if ( wacom->id[1] ) {
+			wacom->id[1] = 0;
+			wacom->serial[1] = 0;
+			input_report_key(dev, wacom->tool[1], 0);
+			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
+		}
 	}
 }
 
@@ -345,7 +379,7 @@ static int wacom_intuos_inout(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int idx, type;
+	int idx;
 
 	/* tool number */
 	idx = data[1] & 0x01;
@@ -363,8 +397,8 @@ static int wacom_intuos_inout(struct urb *urb)
 				(((__u32)data[2] << 4) | (data[3] >> 4)));
 		#endif
 
-		type = ((__u32)data[2] << 4) | (data[3] >> 4);
-		switch (type)
+		wacom->id[idx] = ((__u32)data[2] << 4) | (data[3] >> 4);
+		switch (wacom->id[idx])
 		{
 			case 0x812: /* Intuos2 ink pen XP-110-00A */
 			case 0x801: /* Intuos3 Inking pen */
@@ -413,7 +447,7 @@ static int wacom_intuos_inout(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
-		input_report_key(dev, wacom->tool[idx], type);
+		input_report_key(dev, wacom->tool[idx], wacom->id[idx]);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		return 1;
 	}
@@ -594,7 +628,7 @@ static void wacom_intuos_irq(struct urb *urb)
 		}
 	}
 
-	input_report_key(dev, wacom->tool[idx], 1);
+	input_report_key(dev, wacom->tool[idx], wacom->id[idx]);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 }
 
@@ -602,7 +636,6 @@ static void wacom_intuos_irq(struct urb *urb)
 #define WACOM_GRAPHIRE_REL	(BIT(REL_WHEEL))
 #define WACOM_G4_TOOLS		(BIT(BTN_TOOL_FINGER))
 #define WACOM_G4_BUTTONS	(BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3) | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7))
-#define WACOM_G4_ABS		(BIT(ABS_RX) | BIT(ABS_RY))
 #define WACOM_INTUOS_TOOLS	(BIT(BTN_TOOL_BRUSH) | BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS))
 #define WACOM_INTUOS3_TOOLS	(WACOM_INTUOS_TOOLS | BIT(BTN_TOOL_FINGER))
 #define WACOM_INTUOS_BUTTONS	(BIT(BTN_SIDE) | BIT(BTN_EXTRA))
@@ -701,10 +734,10 @@ struct wacom_features wacom_features[] = {
 	/* 29 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
 	/* 30 */ { "Wacom Graphire4 4x5",  8,   10208, 7424,   511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, WACOM_G4_ABS, 
-			WACOM_GRAPHIRE_REL, WACOM_G4_BUTTONS, WACOM_INTUOS3_TOOLS },
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0,
+			WACOM_GRAPHIRE_REL, WACOM_G4_BUTTONS, WACOM_G4_TOOLS },
 	/* 31 */ { "Wacom Graphire4 6x8",  8,   16704, 12064,  511, 32,
-			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, WACOM_G4_ABS, 
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0,
 			WACOM_GRAPHIRE_REL, WACOM_G4_BUTTONS, WACOM_G4_TOOLS },
 	/* 32 */ { "Wacom Cintiq Partner", 8,   20480, 15360,  511, 32,
 			wacom_ptu_irq, 0, 0, 0, 0 },

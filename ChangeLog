@@ -1,4 +1,9 @@
-2005-11-10    Ping Cheng <pingc@wacom.com>
+2005-10-20   Ping Cheng <pingc@wacom.com>
+	* Updated configure options (added --with-x-src)
+	* Added Device ID info for USB and P4 tablets 
+	* Support 2.6.13
+
+2005-10-11    Ping Cheng <pingc@wacom.com>
 	* Added DTU710, DTF 720 and Graphire 4
 
 2005-09-21    Ping Cheng <pingc@wacom.com>

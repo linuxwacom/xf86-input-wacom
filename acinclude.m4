@@ -31,7 +31,7 @@ WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
 WCM_TCLTKDIR_DEFAULT=/usr
-XF86SUBDIR=xc/programs/Xserver/hw/xfree86/common
+XF86SUBDIR=programs/Xserver/hw/xfree86/common
 WCM_LINUXWACOMDIR=`pwd`
 WCM_ENV_NCURSES=no
 dnl Check architecture
@@ -146,7 +146,9 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
 				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
-				if test $MINOR -ge 11; then
+				if test $MINOR -ge 13; then
+					WCM_KERNEL_VER="2.6.13"
+				elif test $MINOR -lt 13; then
 					WCM_KERNEL_VER="2.6.11"
 				elif test $MINOR -eq 10; then
 					WCM_KERNEL_VER="2.6.10"
@@ -211,14 +213,14 @@ if test -n "$WCM_XORGSDK"; then
 		AC_MSG_RESULT(ok)
 	else
 		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Unable to find xf86Version.h under $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
+		AC_MSG_ERROR("Tried $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
 	fi
 	WCM_XORGSDK=`(cd $WCM_XORGSDK; pwd)`
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test x$WCM_ENV_XORGSDK = xyes])
 ])
 AC_DEFUN([AC_WCM_CHECK_XFREE86SOURCE],[
-dnl Check for XFree86 build environment
+dnl Check for X build environment
 if test -d x-includes; then
 	WCM_XF86DIR=x-includes
 fi
@@ -227,12 +229,41 @@ AS_HELP_STRING([--with-xf86=dir], [Specify XF86 build directory]),
 [ WCM_XF86DIR="$withval"; ])
 if test -n "$WCM_XF86DIR"; then
 	AC_MSG_CHECKING(for valid XFree86 build environment)
-	if test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
+	if test -f $WCM_XF86DIR/xc/$XF86SUBDIR/xf86Version.h; then
+		WCM_ENV_XF86=yes
+		WCM_XF86DIR="$WCM_XF86DIR/xc"
+		AC_MSG_RESULT(ok)
+	elif test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
 		WCM_ENV_XF86=yes
 		AC_MSG_RESULT(ok)
 	else
 		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Unable to find $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h")
+		AC_MSG_ERROR("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
+	fi
+	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
+fi
+AM_CONDITIONAL(WCM_ENV_XF86, [test x$WCM_ENV_XF86 = xyes])
+])
+AC_DEFUN([AC_WCM_CHECK_XSOURCE],[
+dnl Check for X build environment
+if test -d x-includes; then
+	WCM_XF86DIR=x-includes
+fi
+AC_ARG_WITH(x-src,
+AS_HELP_STRING([--with-x-src=dir], [Specify X driver build directory]),
+[ WCM_XF86DIR="$withval"; ])
+if test -n "$WCM_XF86DIR"; then
+	AC_MSG_CHECKING(for valid XFree86/X.org build environment)
+	if test -f $WCM_XF86DIR/xc/$XF86SUBDIR/xf86Version.h; then
+		WCM_ENV_XF86=yes
+		WCM_XF86DIR="$WCM_XF86DIR/xc"
+		AC_MSG_RESULT(ok)
+	elif test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
+		WCM_ENV_XF86=yes
+		AC_MSG_RESULT(ok)
+	else
+		AC_MSG_RESULT("xf86Version.h missing")
+		AC_MSG_ERROR("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
 fi

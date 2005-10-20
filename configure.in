@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.0)
+AM_INIT_AUTOMAKE(linuxwacom, 0.7.1)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -36,7 +36,8 @@ if test x$WCM_ISLINUX = xyes; then
 	AC_WCM_CHECK_MODVER
 fi
 
-dnl Check for XFree86 source
+dnl Check for X source
+AC_WCM_CHECK_XSOURCE
 AC_WCM_CHECK_XFREE86SOURCE
 AC_WCM_CHECK_XORG_SDK
 
@@ -520,6 +521,7 @@ AC_OUTPUT(Makefile
 	src/2.6.9/Makefile
 	src/2.6.10/Makefile
 	src/2.6.11/Makefile
+	src/2.6.13/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 

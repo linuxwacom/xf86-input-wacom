@@ -225,6 +225,9 @@ struct _WacomModel
  *****************************************************************************/
 
 #define DEVICE_ID(flags) ((flags) & 0x0f)
+#define STYLUS_DEVICE_ID	0x02
+#define CURSOR_DEVICE_ID	0x06
+#define ERASER_DEVICE_ID	0x0A
 
 #define STYLUS_ID               1
 #define CURSOR_ID               2

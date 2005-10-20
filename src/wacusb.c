@@ -256,6 +256,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "gr", "Graphire", WACOMDEVICE_GRAPHIRE, xGraphire },
 		{ "gr2", "Graphire2", WACOMDEVICE_GRAPHIRE2, xGraphire2 },
 		{ "gr3", "Graphire3", WACOMDEVICE_GRAPHIRE3, xGraphire3 },
+		{ "gr4", "Graphire4", WACOMDEVICE_GRAPHIRE4, xGraphire4 },
 		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
 		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
 		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3 },

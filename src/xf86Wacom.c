@@ -87,9 +87,10 @@
  * 2005-02-17 42-j0.6.7  - added 64-bit support
  * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
  * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablets
+ * 2004-10-17 47-pc0.7.1 - Added dDTU710, DTF720, G4
  */
 
-static const char identification[] = "$Identification: 47-pc0.6.9 $";
+static const char identification[] = "$Identification: 47-pc0.7.1 $";
 
 /****************************************************************************/
 
@@ -382,8 +383,10 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		/* Intuos3 Marker Pen rotation */
 		InitValuatorAxisStruct(pWcm, 5, -900, 899, 1, 1, 1);
 	else
+	{
 		/* absolute wheel */
 		InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
+	}
 	return TRUE;
 }
 

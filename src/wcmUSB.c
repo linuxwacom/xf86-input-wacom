@@ -329,8 +329,8 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x14: /* Graphire3 6x8 */
 				model = &usbGraphire3; break;
 
-			case 0x15: /* Graphire3 4x5 */
-			case 0x16: /* Graphire3 6x8 */
+			case 0x15: /* Graphire4 4x5 */
+			case 0x16: /* Graphire4 6x8 */
 				model = &usbGraphire4; break;
 
 			case 0x20: /* Intuos 4x5 */
@@ -376,6 +376,7 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0xB0: /* Intuos3 4x5 */
 			case 0xB1: /* Intuos3 6x8 */
 			case 0xB2: /* Intuos3 9x12 */
+			case 0xB5: /* Intuos3 6x11 */
 				model = &usbIntuos3; break;
 
 			case 0x3F: /* Cintiq 21UX */
