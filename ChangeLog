@@ -1,5 +1,6 @@
-2005-10-24   Ping Cheng <pingc@wacom.com>
-	Release 0.7.1 as beta
+2005-10-26   Ping Cheng <pingc@wacom.com>
+	Updated wacdump and xidump
+	Support 2.6.x without EV_SYN defined
 
 2005-10-20   Ping Cheng <pingc@wacom.com>
 	* Updated configure options (added --with-x-src)
@@ -11,3 +12,520 @@
 
 2005-09-21    Ping Cheng <pingc@wacom.com>
 	* linuxwacom-0.7.0 Released
+
+2005-09-19    Ping Cheng <pingc@wacom.com>
+	* Fixed a serial Graphire bug
+
+2005-09-16    Ping Cheng <pingc@wacom.com>
+	* Fixed a P4 eraser bug
+	* Fixed an initial relative pressure bug (Fred)
+	* Reports USB tool ID
+
+2005-09-09    Ping Cheng <pingc@wacom.com>
+	* Supports 16 button events for all tools
+	* Merged TabletPC button1 patch from Brent Baccala
+
+2005-09-07    Ping Cheng <pingc@wacom.com>
+	* Updated wacdump for Cintiq 21UX
+	* Updated docs.html
+	* Updated acinclude.m4 to deal with version checking, 
+		such as 2.6.12.4 (Tim Jedlicka)
+
+2005-08-18    Ping Cheng <pingc@wacom.com>
+	* Merged patches for Volito2 and PL700
+	* Updated wacomcpl and configure.in
+
+2005-08-09    Ping Cheng <pingc@wacom.com>
+	* Fxied a dlloader option bug (Jeremy Huddleston) 
+
+2005-08-08    Ping Cheng <pingc@wacom.com>
+	* Added --enable-dlloader configuration option
+	* Cleaned Graphire wacom.c code
+	* Cleaned relative Convert/revConvert X code
+	* Released linuxwacom-0.6.9 as beta
+
+2005-07-28    Ping Cheng <pingc@wacom.com>
+	* Removed GTK from configure script and xidump code (Jens Georg)
+
+2005-07-26    Ping Cheng <pingc@wacom.com>
+	* Fixed a serial protocol 4 eraser/3rd button switch bug
+
+2005-07-20    Ping Cheng <pingc@wacom.com>
+	* Support x86-64 X driver
+	* Fixed a Cintiq 21UX kernel bug
+	* Fixed a TabletPC eraser bug
+
+2005-06-15    Ping Cheng <pingc@wacom.com>
+	* Added src/2.4.30x86-64 directory for x86-64 kernel 2.4.30
+
+2005-06-14    Ping Cheng <pingc@wacom.com>
+	* Merged with xf86Wacom.c version 1.47 at www.xfree86.org
+	* Support tablet orentation rotation for all tablets
+	* Support x86-64 kernel
+
+2005-05-05    Ping Cheng <pingc@wacom.com>
+	* Added 3rd party developer support pages
+	* Released linuxwacom-0.6.8
+
+2005-04-25    Ping Cheng <pingc@wacom.com>
+	* Updated linuxwacom.sf.net website
+	* Cleaned tablet mapping and resolution code
+
+2005-03-28    Ping Cheng <pingc@wacom.com>
+	* Updated linuxwacom.sf.net website
+	* Released linuxwacom-0.6.7 as beta
+
+2005-03-18    Ping Cheng <pingc@wacom.com>
+	* Added support to kernel 2.6.11
+	* Cleaned wacom_graphire_irq routine
+
+2005-03-10    Ping Cheng <pingc@wacom.com>
+	* Merged Jens' 2.6.*/Makefile.in and a few other updates
+	* Added Cintiq 21UX support
+	* Added 2 new X config options: Gimp and MMonitor
+		"Gimp off" reports raw x and y in valuator;
+		"Gimp on" reports modified x and y when Top 
+			and Bottom values are set;
+		default is on to support Gimp;
+		"MMonitor on" moves cursor accross screens;
+		"MMonitor off" cursor stays in the current screen;
+		default is on.
+	* Fixed bug 1146135
+
+2005-02-28    Ping Cheng <pingc@wacom.com>
+	* Fixed Graphire/Volito button bug
+	* Added xserver64 option to configure
+	* Added EVIOCGRAB to wcmUSB.c as suggested by Vojtech Pavlik to
+	  grab the USB tablet event so nothing else can get the data
+	  (I don't see the effect though)
+	* Modified acinclude.m4 for tcl.h default checking (Jens Georg)
+
+2005-02-02    Ping Cheng <pingc@wacom.com>
+	* Added missing routine in src/2.6.8/wacom.c
+	* Fixed maxZ in wcmSerial.c for penpartner
+
+2004-12-01    Ping Cheng <pingc@wacom.com>
+	* Removed src/2.6.x/Makefile.am to build .ko locally (Jens Georg)
+	* Updated src/2.6.x/Makefile.in (Jens Georg)
+	* Added support for kernel 2.6.10
+	* Fixed a P4 bug in wcmSerial.c
+	* Added wacom.man to dev
+	* Released 0.6.6
+	* Updated web pages
+
+2004-11-05    Ping Cheng <pingc@wacom.com>
+	* Updated configure script  Kristian HÃ¸gsberg <krh@redhat.com>
+	* Removed XFree86v3 support
+	* Cleaned wacom.c files
+	* Released 0.6.5 as beta
+
+2004-11-02    Ping Cheng <pingc@wacom.com>
+	* Added subdirs for each kernel 2.6.x
+	* Updated web scripts
+
+2004-10-15    Ping Cheng <pingc@wacom.com>
+	* Fixed Intuos3 pressure bug
+
+2004-10-06    Ping Cheng <pingc@wacom.com>
+	* Added Intuos3 support
+	* Fixed z-rot valuator initialization error
+
+2004-08-06    Ping Cheng <pingc@wacom.com>
+	* Fixed USB tablet protocol V dual input for kernel 2.6
+	* Updated wacusb.c to fix wacdump ParseData error
+	* Fixed speed and acceleration bug
+	* Released version 0.6.4
+
+2004-06-04    Ping Cheng <pingc@wacom.com>
+	* Updated configure.in for option verification
+	* Removed XFree86/xorg.conf 3.x code
+	* Fixed XF86Config multi-word identifier issue
+	* Fixed warnings in X.org 6.7.0
+
+2004-05-24    Ping Cheng <pingc@wacom.com>
+        * Merged changes from 2.6.6 kernel Dan Bullok <dan.devel@bullok.com>
+	* Support protocol V dual input for both serial and USB
+	* Fixed wacomcpl-exec Feel window bug
+	* Released version 0.6.3
+
+2004-05-18    Ping Cheng <pingc@wacom.com>
+	* Fixed Relative Speed bug
+	* Added a workaround for TPCButton to deal with XFree86 button
+	  bug (occasionally unreleased left click when simultaneously
+	  pressed with another button)
+
+2004-05-14    Ping Cheng <pingc@wacom.com>
+	* Removed DoubleSpeed and DoubleRadius options (use system default instead)
+	* Fixed tool on tablet when driver starts issue
+	* Updated wacomcpl and webpages
+	* Added MODVER string to default option in configure.in
+
+2004-04-02    Ping Cheng <pingc@wacom.com>
+	* Fixed TwinView Absolute mode and DoubleSpeed check
+	* Fixed tool on tablet when driver starts issue
+	* Released version 0.6.2
+
+2004-03-11    Ping Cheng <pingc@wacom.com>
+	* Modified wacusb.c for Debian
+	* Fixed DoubleSpeed and DoubleRadius issues
+
+2004-03-05    Ping Cheng <pingc@wacom.com>
+	* Modified tcl and tk configuration options
+	* Updated webpage for kernel 2.6 support
+
+2004-03-02    Ping Cheng <pingc@wacom.com>
+	* Support 2.6.2/3 (Ned Konz)
+	* Released version 0.6.1
+
+2004-02-24    Ping Cheng <pingc@wacom.com>
+	* Support module versioning for kernel 2.4.22 and later (Adrian Secord)
+	* Added "Mode Toggle" to button functions to switch mode
+
+2004-02-05    Ping Cheng <pingc@wacom.com>
+	* Work around for 2.4.24 support (Marek Olszewski)
+
+2004-02-04    Ping Cheng <pingc@wacom.com>
+	* Released version 0.6.0
+
+2004-01-19    Ping Cheng <pingc@wacom.com>
+	* Sync wacom.c in kernel 2.6 with wacom.c in kernel 2.4 (Ned Konz)
+	* Work around for 2.4.23 support (Jens Georg)
+
+2004-01-13    Ping Cheng <pingc@wacom.com>
+	* Fixed relative wheel bug in wacom.c for 2.6
+	* Modified tcl and tk configuration options
+	* Rearranged wacomcpl windows for Tablet PC
+	* Updated README
+
+2003-12-15    Ping Cheng <pingc@wacom.com>
+	* Fixed a wacom.c bug for 2.6 (Martin Renold)
+	* Added evdev.c to src/2.6 to attach replugged device
+	* Updated README
+
+2003-12-10    Ping Cheng <pingc@wacom.com>
+	* Support kernel 2.6.0
+
+2003-11-26    Ping Cheng <pingc@wacom.com>
+        * Support Tablet PC Buttons. Default is off.
+          Usage:
+                xsetwacom set $device tpcbutton 1  (to turn it on)
+                xsetwacom set $device tpcbutton 0  (to turn it off)
+        * Turned configure option "--disable-wacom" as default
+	* Added wacom_drv.o into the install script so wacom_drv.o
+                will be installed along with the other executables  
+		and libs when "make install" is issued.
+                This enables the systems "identical" to the development 
+		system to install the Wacom X driver related items 
+		without rebuilding them on the targeted system.
+		Where "identical" means both systems have the same version
+                of XFree86, tcl, and tk. 
+          Usage:
+                After building and testing the package on the development
+                system, copy the whole package directory onto the
+                "identical" system, then
+                cd $package_home_dir
+                su
+                make install
+
+2003-11-18    Ping Cheng <pingc@wacom.com>
+	* Support general Tablet PC (ISDV4) 
+	* Added a new xsetwacom command for mult-monitor setup:
+		xsetwacom set $device mmmonitor $value
+		$value  0: let cursor move across monitors (default)
+			1: cursor will stay in the monitor it was
+
+2003-11-10    Ping Cheng <pingc@wacom.com>
+	* Support wacomcpl with user specified tcl/tk src dirs
+	* Moved kernel files to 2.4 and 2.4.22 for easy upgrading
+	* Refined filters
+
+2003-10-09    Ping Cheng <pingc@wacom.com>
+	* Support kernel-2.4.22
+
+2003-09-30    Ping Cheng <pingc@wacom.com>
+	* Fixed TwinView relative mapping error
+
+2003-09-24    Ping Cheng <pingc@wacom.com>
+	* Support TwinView with different Screen resolutions
+	* Added a new option, "TVResolution", to configure each resolution
+
+2003-09-22    Ping Cheng <pingc@wacom.com>
+	* Support TwinView Cintiq calibration
+	* Enable Screenno Option for TwinView setup
+	* Minor serial tablet and kernel 2.6 support fixes
+
+2003-08-13    Ping Cheng <pingc@wacom.com>
+	* Added relative movement acceleration
+	* Added Mapping, Tip Feel, and Movement Controls in wacomcpl
+
+2003-07-31    Ping Cheng <pingc@wacom.com>
+	* Added "Left Double Click" and "Ignore Button Event" 
+	  commands into xsetwacom
+	* Set Mode default values: cursor - relative
+				   stylus/eraser - absolute
+
+2003-07-24    Ping Cheng <pingc@wacom.com>
+	* Added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
+
+2003-07-19    Ping Cheng <pingc@wacom.com>
+	* Fixed Intuos tilt filter
+	* Send raw values of tilt, pressure, rotation and 4D mouse
+	  wheel to valuators when the device is in relative mode
+
+2003-07-16    Ping Cheng <pingc@wacom.com>
+	* Fixed Intuos filter to ignore the first sample
+	* Added noise reducing filter for all tablets
+	* Cleaned up old filters
+	* Improved USB relative movement
+
+2003-07-10    John E. Joganic <john@joganic.com>
+	* Fixed Intuos filter to ignore first couple samples.
+	* Added pedantic to compiler options
+	* Fixed minor warnings caused by pedantic setting.
+
+2003-07-08    Ping Cheng <pingc@wacom.com>
+	* Changed src/Makefile.am for kernel 2.5 (Kris Verbeeck)
+
+2003-06-25    Ping Cheng <pingc@wacom.com>
+	* Added TwinView support (Ron Woods)
+	* Fixed single screen mapping problem
+	* Added TabletPC calibration
+	* Support 2.5 kernel in X driver (Kris Verbeeck)
+
+2003-06-19    John E. Joganic <john@joganic.com>
+	* Reapplied patch for tablets reporting as 0x47.
+	* Suppress value of 0 disables suppression.
+
+2003-06-16    John E. Joganic <john@joganic.com>
+	* Added mkxincludes, automatic check for x-includes in configure
+
+2003-06-15    John E. Joganic <john@joganic.com>
+	* Released version 0.5.1-beta
+
+2003-06-14    John E. Joganic <john@joganic.com>
+	* Fixed wacomcpl/wacomxi to run on systems with tcl and tk installed
+	* Moved wacomxi into subdirectory
+	* Modified checks for tcl and tk to search include and library paths
+	* Applied conditional build and install to wacomxi
+	* Modified wacomcpl to install and run regardless of install prefix
+	* Added Intuos filter code back into data path
+	* Fixed Graphire filter code because suppression code does same thing
+	* Raw filtering is enabled by default
+	* Intuos filter code works for both serial and USB tablets
+
+2003-06-03    Ping Cheng <pingc@wacom.com>
+	* Added calibration tool and made it install as default
+	* Added gimp option for calibration
+
+2003-05-15    John E. Joganic <john@joganic.com>
+	* Added timestamp to sample structure
+	* Added acceleration format to raw xidump for viewing jitter
+
+2003-05-12    Ping Cheng <pingc@wacom.com>
+	* Removed FIRST_TOUCH_FLAG (J. Yen's patch for wcmCommon.c)
+	* Cleaned valuator report for relative mode
+	* Send 4th/5th buttons for all relative wheels
+	* Report in-prox after tool is set (J. Yen's patch for wacom.c)
+	* Fixed compile warning for xf86Wacom.c
+
+2003-05-09    Ping Cheng <pingc@wacom.com>
+	* Added Cintiq Partner, Graphire3 4x5 and 6x8
+	* Added a few new xsetwacom commands
+
+2003-05-04    John E. Joganic <john@joganic.com>
+	* Overhauled device reading.
+	* Consolidated serial data path.
+	* Updated ISDV4 data path, untested.
+	* Added data history buffer and working state.
+	* Added raw data filtering.
+	* Commented out some incomplete features.
+
+2003-05-03    John E. Joganic <john@joganic.com>
+	* Fixed USB 4D mouse button mapping to be consistent with serial 4D.
+
+2003-05-02    John E. Joganic <john@joganic.com>
+	* Added xsetwacom, libwacomcfg, and Xwacom.h; work in progress
+	* xsetwacom, wacdump, libwacomcfg, and xidump now install by default.
+	* Added pressure curve, buttons, and bounding rect parameters.
+
+2003-05-01    John E. Joganic <john@joganic.com>
+	* Changed Graphire from absolute wheel to relative.
+	* Moved throttle position check out of Suppress.  Need it elsewhere.
+	* Fixed xidump library dependencies for non-gtk build
+
+2003-04-29    John E. Joganic <john@joganic.com>
+	* Expanded graphire parsing; all devices use same data path
+	* Disabled throttle/wheel correlation for now; needs work and
+	  option for enabling/disabling.
+	* Split absolute and relative wheel at early data path stage
+	* Added pressure curve; implementation is a bit overkill, but it works
+
+2003-04-21    Ping Cheng <pingc@wacom.com>
+	* Updated serial UD and PL code for the refactored src
+
+2003-04-19    Jimmy Yen <jimmy@yen.tp>
+	* Fixed throttle code.
+	* Slightly refined Xinerama code. Use X's own global variable instead
+	  for Xinerama detection.
+	* Disallow pointers to enter dead areas, causing setting screen to fail.
+
+2003-04-18    Jimmy Yen <jimmy@yen.tp>
+	* Extra checking to set screen only when the device sends core events.
+	* Made KeepShape compatible with multiple screen setup.
+	* Reenabled throttle and fake button 4/5 code. Can be disabled by
+	  setting 'Option "MouseWheel" "off"'. This still needs work.
+	* Unified cursor acceleration in both directions.
+
+2003-04-17    Jimmy Yen <jimmy@yen.tp>
+	* Software solution of dual channel input for USB devices.
+
+2003-04-16    Jimmy Yen <jimmy@yen.tp>
+	* Basic Xinerama setup support. Works with horizontal, non-overlapping
+	  screen combinations with different resoluions. Users need to specify
+	  'Option Xinerama "on"' for each absolute device.
+
+2003-04-14    Jimmy Yen <jimmy@yen.tp>
+	* Small KeepShape fix.
+	* Cleaned up xf86WcmSendEvents.
+	* Fallback case in device selection code.
+
+2003-04-08    John E. Joganic <john@joganic.com>
+	* Fixed USB tilt ranges.
+	* Exploded out serial tablet initialization.
+	* Reporting throttle on cursor valuator 4
+	* Fixed serial 4D mouse rotation value
+	* Default threshold to 1/32 maximum pressure
+
+2003-04-07    John E. Joganic <john@joganic.com>
+	* Fixed bug in tilt filter.
+	* MaxZ determined at tablet detection
+	* Changed pressure code; all values positive.
+	* Added channel code, device proximity bound to channel
+
+2003-04-07    Jimmy Yen <jimmy@yen.tp>
+	* Set resolutions for USB tablets.
+
+2003-04-06    John E. Joganic <john@joganic.com>
+	* Refactored xf86Wacom.c into separate files.
+
+2003-04-02    John E. Joganic <john@joganic.com>
+	* Added J. Yen's "misc fixes" patch to xf86Wacom.c
+	* Added J. Paisley's "reattach" patch to evdev.c
+
+2003-03-31    John E. Joganic <john@joganic.com>
+	* Added mousedev.c with fix to ignore wacom
+
+2003-03-22    John E. Joganic <john@joganic.com>
+	* Added ncurses detection.
+	* Cleaned up output of xidump.
+	* Added Dean Townsley's ISDV4 patch.
+
+2003-03-08    John E. Joganic <john@joganic.com>
+	* Added curses functionality to xidump.c, now default
+	* xidump now builds by default
+
+2003-03-07    John E. Joganic <john@joganic.com>
+	* Added tabletdev.c framework (based on mousedev.c)
+	* Added device list to xidump.c including class info
+	* Added raw event notification
+
+2003-03-06    John E. Joganic <john@joganic.com>
+	* Applied Ping Cheng's suppress patch
+	* Added evdev.c to project, contains Jonathan Paisley's oops patch
+	* Added input.c to project
+
+2003-02-23    John E. Joganic <john@joganic.com>
+	* Added xidump and gtk config options
+
+2003-02-22    John E. Joganic <john@joganic.com>
+	* Applied Ping Cheng's multi-monitor patch
+	* Added build option for Xfree86 v3.x; testing only
+	* Applied Jimmy Yen's origin patch
+
+2003-02-12    John E. Joganic <john@joganic.com>
+	* Applied Ping Cheng's eraser patch for PL in wacom.c
+	* Applied Ping Cheng's USB patch for xf86Wacom.c
+	* Applied Ping Cheng's device_on patch for xf86Wacom.c
+
+2003-01-31    John E. Joganic <john@joganic.com>
+	* Branched 0.4.0 production.  Updated version to 0.5.0-beta.
+	* Added Ping Cheng's PL code.
+	* Fixed serial number code in wacom.c, xf86Wacom.c, and wacserial.c such
+	  that they all correspond.
+
+2003-01-27    John E. Joganic <john@joganic.com>
+	* Changed macros from WAC_ to WCM_ due to bug in Mandrake 9 autoconf.
+	* Added timeout for reset and tablet detection in wacserial.c
+	* Added logging to wacdump.
+	* Added serial reset on bit errors.
+
+2003-01-26    John E. Joganic <john@joganic.com>
+	* Merged Dean Townsley's Acer C100 patch
+	* Changed internal device identification model to handle new tablets
+
+2003-01-25    John E. Joganic <john@joganic.com>
+	* Added configuration option to disable non-linux code
+	* Moved USB code from wacdump into wacusb.c
+
+2003-01-16    John E. Joganic <john@joganic.com>
+	* Added check for Mandrake .o.gz modules in configure
+
+2003-01-10    John E. Joganic <john@joganic.com>
+	* Changed bit macros for Graphire
+
+2003-01-09    John E. Joganic <john@joganic.com>
+	* Fixed Intuos and Intuos2 sizes
+	* Added Gilbert Ramirez's no-merge-constants patch
+	* Added patch for HID_QUIRK on 2.4.18
+
+2003-01-01    John E. Joganic <john@joganic.com>
+	* Added volito to hid-core.c.
+	* Fixed volito report #99.
+	* Updated volito ranges.
+	* Fixed wacdump refresh
+	* Fixed 2D mouse buttons in xf86Wacom.c
+
+2002-12-31    John E. Joganic <john@joganic.com>
+	* Added Ping Cheng's new tool IDs.
+	* Fix for unknown report #1 using simple kernel thread
+	* Added automatic module loading for usb wacom and evdev
+
+2002-12-26    John E. Joganic <john@joganic.com>
+	* Fixed tablet initialization
+
+2002-12-21    John E. Joganic <john@joganic.com>
+	* Moved project to SourceForge as linuxwacom.
+
+2002-12-21    John E. Joganic <john@joganic.com>
+	* Added serial code to wacdump
+	* Added serial protocols IV 1.0 - 1.4.
+	* Added serial protocol V 1.0 - 1.1.
+	* Intuos mouse wheels are now positive when rolled backwards per PS/2
+	  Intellimouse convention
+	* Added Intuos2 to xf86Wacom.c
+
+2002-12-17    John E. Joganic <john@joganic.com>
+	* Merged code from 2.4.20 hid-core.c
+	* Added configuration code to handle kernels still at 2.4.19
+	* Split wacdump curses code into wacscrn.c to solve namespace collision
+	* Added volito to wacom.c
+
+2002-12-15    John E. Joganic <john@joganic.com>
+	* Last minute fix to debugging level on 4D mouse wheel
+	* Added framework for new driver
+	* Added code for 4D mouse wheel in xf86Wacom.c
+
+2002-12-13    John E. Joganic <john@joganic.com>
+	* Added pen model numbers for Intuos2 grip pen and Intuos pen
+	* Added wcm-beta.c and wcm-beta.h shell
+	* Added relative events to wacdump
+	* Added relative bit to Intuos and Intuos2 reporting in wacom.c
+	* Fixed relative 2D mouse wheel reporting in wacom.c
+
+2002-11-27    John E. Joganic <john@joganic.com>
+	* Added exp subdirectory for experimental work
+	* Isolated xf86Wacom.c declarations to header file
+
+2002-11-24    John E. Joganic <john@joganic.com>
+	* Branched at 0.2.0
+	* Created configure-based build environment
