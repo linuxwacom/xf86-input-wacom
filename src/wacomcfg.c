@@ -22,6 +22,7 @@
 **   2003-05-02 0.0.1 - JEJ - created
 **   2004-05-28 0.0.2 - PC - updated WacomConfigListDevices
 **   2005-06-10 0.0.3 - PC - updated for x86_64
+**   2005-10-24 0.0.4 - PC - Added Pad
 **
 ****************************************************************************/
 
@@ -170,6 +171,8 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 			pInfo->type = WACOMDEVICETYPE_STYLUS;
 		else if (strstr(devName,"eraser") != NULL)
 			pInfo->type = WACOMDEVICETYPE_ERASER;
+		else if (strstr(devName,"pad") != NULL)
+			pInfo->type = WACOMDEVICETYPE_PAD;
 		else
 			pInfo->type = WACOMDEVICETYPE_UNKNOWN;
 

@@ -20,10 +20,11 @@
 **
 ** REVISION HISTORY
 **   2003-05-02 0.0.1 - JEJ - created
-**
+**   2005-10-24 0.0.4 - PC - added Pad
+*
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.3"
+#define XSETWACOM_VERSION "0.0.4"
 
 #include "wacomcfg.h"
 #include "Xwacom.h" /* give use raw access to parameter values */
@@ -253,7 +254,8 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 	{
 		{ WACOMDEVICETYPE_CURSOR, "cursor" },
 		{ WACOMDEVICETYPE_STYLUS, "stylus" },
-		{ WACOMDEVICETYPE_ERASER, "eraser" }
+		{ WACOMDEVICETYPE_ERASER, "eraser" },
+		{ WACOMDEVICETYPE_STYLUS, "pad" }
 	};
 
 	if (*argv != NULL)

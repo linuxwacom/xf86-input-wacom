@@ -714,13 +714,21 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		case BTN_TOUCH: button = WACOMBUTTON_TOUCH; break;
 		case BTN_STYLUS: button = WACOMBUTTON_STYLUS; break;
 		case BTN_STYLUS2: button = WACOMBUTTON_STYLUS2; break;
+		case BTN_0: button = WACOMBUTTON_BT0; break;
+		case BTN_1: button = WACOMBUTTON_BT1; break;
+		case BTN_2: button = WACOMBUTTON_BT2; break;
+		case BTN_3: button = WACOMBUTTON_BT3; break;
+		case BTN_4: button = WACOMBUTTON_BT4; break;
+		case BTN_5: button = WACOMBUTTON_BT5; break;
+		case BTN_6: button = WACOMBUTTON_BT6; break;
+		case BTN_7: button = WACOMBUTTON_BT7; break;
 		case BTN_TOOL_PEN: tool = WACOMTOOLTYPE_PEN; break;
 		case BTN_TOOL_PENCIL: tool = WACOMTOOLTYPE_PENCIL; break;
 		case BTN_TOOL_BRUSH: tool = WACOMTOOLTYPE_BRUSH; break;
 		case BTN_TOOL_RUBBER: tool = WACOMTOOLTYPE_ERASER; break;
 		case BTN_TOOL_AIRBRUSH: tool = WACOMTOOLTYPE_AIRBRUSH; break;
 		case BTN_TOOL_MOUSE: tool = WACOMTOOLTYPE_MOUSE; break;
-		case BTN_TOOL_FINGER: break;
+		case BTN_TOOL_FINGER: tool = WACOMTOOLTYPE_PAD; break;
 		case BTN_TOOL_LENS: tool = WACOMTOOLTYPE_LENS; break;
 	}
 

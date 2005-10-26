@@ -30,6 +30,7 @@
 **   2003-06-19 0.5.2 - added patch for I2 6x8 id 0x47
 **   2005-02-17 0.6.6 - added I3 and support 64-bit system
 **   2005-09-01 0.7.0 - Added Cintiq 21UX
+**   2005-02-17 0.7.1 - added Graphire 4
 **
 ****************************************************************************/
 
@@ -48,7 +49,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "0.7.0"
+#define WACDUMP_VER "0.7.1"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -257,7 +258,7 @@ static void DisplaySerialValue(unsigned int uField)
 	static const char* xszTool[WACOMTOOLTYPE_MAX] =
 	{
 		"NONE", "PEN", "PENCIL", "BRUSH", "ERASER", "AIRBRUSH",
-		"MOUSE", "LENS"
+		"MOUSE", "LENS", "PAD"
 	};
 
 	int bBold = 0;
@@ -309,12 +310,12 @@ const char* GetSerialButton(unsigned int uButton)
 	static const char* xszButton[WACOMBUTTON_MAX] =
 	{
 		"LEFT", "MIDDLE", "RIGHT", "EXTRA", "SIDE",
-		"TOUCH", "STYLUS", "STYLUS2"
+		"TOUCH", "STYLUS", "STYLUS2", "BT0", "BT1",
+		"BT2", "BT3", "BT4", "BT5", "BT6", "BT7" 
 	};
 
 	return (uButton >= WACOMBUTTON_MAX) ?  "FIELD?" : xszButton[uButton];
 }
-
 
 static void DisplaySerialButton(unsigned int uButton)
 {

@@ -70,7 +70,8 @@ struct _WACOMMODEL
 #define WACOMTOOLTYPE_AIRBRUSH  0x05
 #define WACOMTOOLTYPE_MOUSE     0x06
 #define WACOMTOOLTYPE_LENS      0x07
-#define WACOMTOOLTYPE_MAX       0x08
+#define WACOMTOOLTYPE_PAD       0x08
+#define WACOMTOOLTYPE_MAX       0x09
 
 #define WACOMBUTTON_LEFT        0
 #define WACOMBUTTON_MIDDLE      1
@@ -80,7 +81,15 @@ struct _WACOMMODEL
 #define WACOMBUTTON_TOUCH       5
 #define WACOMBUTTON_STYLUS      6
 #define WACOMBUTTON_STYLUS2     7
-#define WACOMBUTTON_MAX         8
+#define WACOMBUTTON_BT0         8
+#define WACOMBUTTON_BT1         9
+#define WACOMBUTTON_BT2         10
+#define WACOMBUTTON_BT3         11
+#define WACOMBUTTON_BT4         12
+#define WACOMBUTTON_BT5         13
+#define WACOMBUTTON_BT6         14
+#define WACOMBUTTON_BT7         15
+#define WACOMBUTTON_MAX         16
 
 #define WACOMFIELD_TOOLTYPE     0
 #define WACOMFIELD_SERIAL       1
@@ -89,8 +98,8 @@ struct _WACOMMODEL
 #define WACOMFIELD_POSITION_X   4
 #define WACOMFIELD_POSITION_Y   5
 #define WACOMFIELD_ROTATION_Z   6
-#define WACOMFIELD_DISTANCE	    7
-#define WACOMFIELD_PRESSURE	    8
+#define WACOMFIELD_DISTANCE	7
+#define WACOMFIELD_PRESSURE	8
 #define WACOMFIELD_TILT_X       9
 #define WACOMFIELD_TILT_Y       10
 #define WACOMFIELD_ABSWHEEL     11
