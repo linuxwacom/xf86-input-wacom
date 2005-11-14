@@ -191,8 +191,7 @@ struct _WacomModule
 	int (*DevChangeControl)(LocalDevicePtr local, xDeviceCtl* control);
 	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
 	Bool (*DevConvert)(LocalDevicePtr local, int first, int num,
-		int v0, int v1, int v2, int v3, int v4, int v5,
-		int* x, int* y);
+		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 	Bool (*DevReverseConvert)(LocalDevicePtr local, int x, int y,
 		int* valuators);
 };
@@ -328,7 +327,7 @@ struct _WacomDeviceRec
 
 struct _WacomDeviceState
 {
-	int device_id;
+	int device_id;		/* tool id reported from the physical device */
 	int device_type;
 	unsigned int serial_num;
 	int x;
@@ -427,6 +426,7 @@ struct _WacomCommonRec
 	char* wcmDevice;             /* device file name */
 	int wcmSuppress;             /* transmit position on delta > supress */
 	unsigned char wcmFlags;      /* various flags (handle tilt) */
+	int tablet_id;		     /* USB tablet ID */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet max X value */

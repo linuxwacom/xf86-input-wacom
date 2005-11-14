@@ -1,9 +1,16 @@
+2005-11-14   Ping Cheng <pingc@wacom.com>
+	* Updated xidump
+	* Support 2.6.14
+	* Updated acinclude.m4 (Radomir Dopieralski)
+	* Check tool serial number configured in xorg.conf/XF86Config 
+	* Report tool id and serial number in 4th-6th valuators
+
 2005-11-02   Ping Cheng <pingc@wacom.com>
 	* linuxwacom-0.7.1 Released as beta
 
 2005-10-26   Ping Cheng <pingc@wacom.com>
-	Updated wacdump and xidump
-	Support 2.6.x without EV_SYN defined
+	* Updated wacdump and xidump
+	* Support 2.6.x without EV_SYN defined
 
 2005-10-20   Ping Cheng <pingc@wacom.com>
 	* Updated configure options (added --with-x-src)

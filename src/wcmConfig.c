@@ -354,7 +354,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Optional configuration */
 
-	xf86Msg(X_CONFIG, "%s serial device is %s\n", dev->identifier,
+	xf86Msg(X_CONFIG, "%s device is %s\n", dev->identifier,
 			common->wcmDevice);
 
 	gWacomModule.debugLevel = xf86SetIntOption(local->options,

@@ -146,9 +146,13 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
 				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
-				if test $MINOR -ge 13; then
+				if test $MINOR -ge 14; then
+					WCM_KERNEL_VER="2.6.14"
+				elif test $MINOR -eq 13; then
 					WCM_KERNEL_VER="2.6.13"
-				elif test $MINOR -lt 13; then
+				elif test $MINOR -eq 12; then
+					WCM_KERNEL_VER="2.6.11"
+				elif test $MINOR -eq 11; then
 					WCM_KERNEL_VER="2.6.11"
 				elif test $MINOR -eq 10; then
 					WCM_KERNEL_VER="2.6.10"
@@ -418,6 +422,9 @@ fi
 AC_DEFUN([AC_WCM_CHECK_NCURSES],[
 dnl Check for ncurses development environment
 AC_CHECK_HEADER(ncurses.h, [WCM_ENV_NCURSES=yes])
+if test x$WCM_ENV_NCURSES != xyes; then
+	AC_CHECK_HEADER(ncurses/ncurses.h, [WCM_ENV_NCURSES=yes])
+fi
 if test x$WCM_ENV_NCURSES != xyes; then
 	echo "***"; echo "*** WARNING:"
 	echo "*** The ncurses development library does not appear to be installed."

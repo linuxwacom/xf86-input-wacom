@@ -45,8 +45,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel);
 static void resetSampleCounter(const WacomChannelPtr pChannel);
 static void sendAButton(LocalDevicePtr local, int button, int mask,
-		int rx, int ry, int rz, int rtx, int rty, int rrot,
-		int rth, int rwheel);
+		int rx, int ry, int rz, int v3, int v4, int v5);
  
 /*****************************************************************************
  * xf86WcmSetScreen --
@@ -200,9 +199,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
  *   previous one.
  ****************************************************************************/
 
-static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
-		int rx, int ry, int rz, int rtx, int rty, int rrot,
-		int rth, int rwheel)
+static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry, 
+		int rz, int v3, int v4, int v5)
 {
 	int button, mask, bsent = 0;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
@@ -229,7 +227,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 						bsent = 1;
 						/* set to the configured button */
 						sendAButton(local, priv->button[button-1], 1, rx, ry, 
-							rz, rtx, rty, rrot, rth, rwheel);
+							rz, v3, v4, v5);
 					}
 				}
 				
@@ -242,7 +240,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 				{
 					priv->flags |= TPCBUTTONONE_FLAG;
 					sendAButton(local, priv->button[0], 1, rx, ry, 
-						rz, rtx, rty, rrot, rth, rwheel);
+						rz, v3, v4, v5);
 				}
 			}
 			else
@@ -262,12 +260,12 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 						{
 							priv->flags &= ~TPCBUTTONONE_FLAG;
 							sendAButton(local, priv->button[0], 0, rx, ry, rz, 
-								rtx, rty, rrot, rth, rwheel);
+								v3, v4, v5);
 							bsent = 1;
 						}
 						/* set to the configured buttons */
 						sendAButton(local, priv->button[button-1], mask & buttons, 
-							rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+							rx, ry, rz, v3, v4, v5);
 					}
 				}
 			}
@@ -284,7 +282,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 				{
 					/* set to the configured button */
 					sendAButton(local, priv->button[button-1], 0, rx, ry, 
-						rz, rtx, rty, rrot, rth, rwheel);
+						rz, v3, v4, v5);
 				}
 			}
 			/* This is also part of the workaround of the XFree86 bug mentioned above
@@ -292,7 +290,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			if (priv->flags & TPCBUTTONONE_FLAG)
 			{
 				priv->flags &= ~TPCBUTTONONE_FLAG;
-				sendAButton(local, priv->button[0], 0, rx, ry, rz, rtx, rty, rrot, rth, rwheel);
+				sendAButton(local, priv->button[0], 0, rx, ry, rz, v3, v4, v5);
 			}
 		}
 	}
@@ -305,7 +303,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
 			{
 				/* set to the configured button */
 				sendAButton(local, priv->button[button-1], mask & buttons, rx, ry, 
-					rz, rtx, rty, rrot, rth, rwheel);
+					rz, v3, v4, v5);
 			}
 		}
 	}
@@ -317,8 +315,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons,
  ****************************************************************************/
 
 static void sendAButton(LocalDevicePtr local, int button, int mask,
-		int rx, int ry, int rz, int rtx, int rty, int rrot,
-		int rth, int rwheel)
+		int rx, int ry, int rz, int v3, int v4, int v5)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
@@ -334,28 +331,17 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		if ( mask )
 		{
 			/* Left button down */
-			if (IsCursor(priv))
 				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-					1, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-			else
-				xf86PostButtonEvent(local->dev, is_absolute, nbutton,
-					1, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+					1,0,6,rx,ry,rz,v3,v4,v5);
+
 			/* Left button up */
-			if (IsCursor(priv))
-				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-					0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-			else
-				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-					0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+					0,0,6,rx,ry,rz,v3,v4,v5);
 		}
 
 		/* Left button down/up upon mask is 1/0 */
-		if (IsCursor(priv))
-			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-				mask != 0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-		else
-			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-				mask != 0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+		xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
+				mask != 0,0,6,rx,ry,rz,v3,v4,v5);
 	}
 	/* switch absolute or relative (Mode Toggle) */
 	if ( button == 19 && mask )
@@ -373,12 +359,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	}
 	if (button < 17)
 	{
-		if (IsCursor(priv))
-			xf86PostButtonEvent(local->dev, is_absolute, button,
-				mask != 0, 0, 6, rx, ry, rz, rrot, rth, rwheel);
-		else
-			xf86PostButtonEvent(local->dev, is_absolute, button,
-				mask != 0, 0, 6, rx, ry, rz, rtx, rty, rwheel);
+		xf86PostButtonEvent(local->dev, is_absolute, button,
+				mask != 0,0,6,rx,ry,rz,v3,v4,v5);
 	}
 }
 
@@ -390,6 +372,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel)
 {
 	int type = ds->device_type;
+	int id = ds->device_id;
+	int serial = (int)ds->serial_num;
 	int is_button = !!(ds->buttons);
 	int is_proximity = ds->proximity;
 	int x = ds->x;
@@ -402,12 +386,20 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int throttle = ds->throttle;
 	int wheel = ds->abswheel;
 	int tmp_coord;
-
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int rx, ry, rz, rtx, rty, rrot, rth, rw, no_jitter;
+
+	int rx, ry, rz, v3, v4, v5, no_jitter;
 	double param, relacc;
 	int is_core_pointer, is_absolute;
+
+	if (priv->serial && serial != priv->serial)
+	{
+		DBG(10, ErrorF("[%s] serial=%d configured only for serial=%d", 
+			local->name, serial, (int)priv-serial));
+		return;
+	}
+
 	priv->currentX = x;
 	priv->currentY = y;
 
@@ -444,25 +436,23 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	is_core_pointer = xf86IsCorePointer(local->dev);
 
-	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\t"
-		"button=%s\tbuttons=%d\t on channel=%d\n",
-		local->name,
-		is_absolute ? "abs" : "rel",
-		is_proximity,
-		x, y, z,
-		is_button ? "true" : "false", buttons, channel));
-
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
 	{
 		rx = x;
 		ry = y;
 		rz = z;
-		rtx = tx;
-		rty = ty;
-		rrot = rot;
-		rth = throttle;
-		rw = wheel;
+		if (IsCursor(priv)) 
+		{
+			v3 = rot;
+			v4 = throttle;
+		}
+		else
+		{
+			v3 = tx;
+			v4 = ty;
+		}
+		v5 = wheel;
 	}
 	else
 	{
@@ -518,11 +508,17 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			}
 			ry *= param;
 		}
-		rtx = tx - priv->oldTiltX;
-		rty = ty - priv->oldTiltY;
-		rrot = rot - priv->oldRot;
-		rth = throttle - priv->oldThrottle;
-		rw = wheel - priv->oldWheel;
+		if (IsCursor(priv)) 
+		{
+			v3 = rot - priv->oldRot;
+			v4 = throttle - priv->oldThrottle;
+		}
+		else
+		{
+			v3 = tx - priv->oldTiltX;
+			v4 = ty - priv->oldTiltY;
+		}
+		v5 = wheel - priv->oldWheel;
 	}
 
 	priv->currentX = rx;
@@ -539,40 +535,45 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	if (!is_absolute)
 		rx *= priv->factorY / priv->factorX;
 
+	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
+		"\tserial=%d\tbutton=%s\tbuttons=%d\t on channel=%d\n",
+		local->name,
+		is_absolute ? "abs" : "rel",
+		is_proximity,
+		rx, ry, rz, v3, v4, v5, id, serial,
+		is_button ? "true" : "false", buttons, channel));
+
+	/* report tool id in the upper 2 bytes of 4th valuator 
+	 * serial number in the upper 2 bytes of 5th and 6th 
+	 * valuators for the 4 bytes of serial number .
+	 * All tools except pad
+	 */
+	if (type != PAD_ID)
+	{
+		v3 = ((id<<16) & 0xffff0000) | (((short)v3)& 0xffff);
+		v4 = (serial & 0xffff0000) | (((short)v4)& 0xffff);
+		v5 = ((serial<<16) & 0xffff0000) | (((short)v5)& 0xffff);
+	}
+
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
 		if (!priv->oldProximity)
 		{
-			if (IsCursor(priv))
-				xf86PostProximityEvent(
-					local->dev, 1, 0, 6,
-					rx, ry, rz, rrot,
-					rth, rw);
-			else
-				xf86PostProximityEvent(
-					local->dev, 1, 0, 6,
-					rx, ry, rz, rtx, rty,
-					rw);
+				xf86PostProximityEvent(local->dev, 1, 0, 6,
+					rx, ry, rz, v3, v4, v5);
 		}
 
 		/* don't move the cursor if it only supports buttons */
 		if( !(priv->flags & BUTTONS_ONLY_FLAG) )
 		{
-			if (IsCursor(priv))
-				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, rz,
-					rrot, rth, rw);
-			else
-				xf86PostMotionEvent(local->dev,
-					is_absolute, 0, 6, rx, ry, rz,
-					rtx, rty, rw);
+				xf86PostMotionEvent(local->dev, is_absolute, 
+					0, 6, rx, ry, rz, v3, v4, v5);
 		}
 
 		if (priv->oldButtons != buttons)
 		{
-			xf86WcmSendButtons (local, buttons, rx, ry, rz,
-					rtx, rty, rrot, rth, rw);
+			xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
 		}
 
 		/* simulate button 4 and 5 for relative wheel */
@@ -580,17 +581,14 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		{
 			int fakeButton = ds->relwheel > 0 ? 5 : 4;
 			int i;
-DBG(6, ErrorF("xf86WcmSendEvents relwheel=%d\n", ds->relwheel));
 			for (i=0; i<abs(ds->relwheel); i++)
 			{
-				xf86PostButtonEvent(local->dev,
-					is_absolute,
+				xf86PostButtonEvent(local->dev, is_absolute,
 					fakeButton, 1, 0, 6, rx, ry, rz,
-					rrot, rth, rw);
-				xf86PostButtonEvent(local->dev,
-					is_absolute,
+					v3, v4, v5);
+				xf86PostButtonEvent(local->dev, is_absolute,
 					fakeButton, 0, 0, 6, rx, ry, rz,
-					rrot, rth, rw);
+					v3, v4, v5);
 			}
 		}
 	}
@@ -603,8 +601,7 @@ DBG(6, ErrorF("xf86WcmSendEvents relwheel=%d\n", ds->relwheel));
 		if (priv->oldButtons)
 		{
 			buttons = 0;
-			xf86WcmSendButtons (local, buttons, rx, ry, rz,
-				rtx, rty, rrot, rth, rw);
+			xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
 		}
 		if (!is_core_pointer)
 		{
@@ -620,40 +617,17 @@ DBG(6, ErrorF("xf86WcmSendEvents relwheel=%d\n", ds->relwheel));
 				 * therefore macro+7 */
 
 				/* key down */
-				if (IsCursor(priv))
-					xf86PostKeyEvent(local->dev,macro+7,1,
-						is_absolute,0,6,
-						0,0,buttons,rrot,rth,
-						rw);
-				else
-					xf86PostKeyEvent(local->dev,macro+7,1,
-						is_absolute,0,6,
-						0,0,buttons,rtx,rty,rw);
+				xf86PostKeyEvent(local->dev,macro+7,1,is_absolute,
+						0,6,0,0,buttons,v3,v4,v5);
 
 				/* key up */
-				if (IsCursor(priv))
-					xf86PostKeyEvent(local->dev,macro+7,0,
-						is_absolute,0,6,
-						0,0,buttons,rrot,rth,
-						rw);
-				else
-					xf86PostKeyEvent(local->dev,macro+7,0,
-						is_absolute,0,6,
-						0,0,buttons,rtx,rty,rw);
+				xf86PostKeyEvent(local->dev,macro+7,0,is_absolute,
+						0,6,0,0,buttons,v3,v4,v5);
 
 			}
 		}
 		if (priv->oldProximity)
-		{
-			if (IsCursor(priv))
-				xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, rz,
-						rrot, rth, rw);
-			else
-				xf86PostProximityEvent(local->dev,
-						0, 0, 6, rx, ry, rz,
-						rtx, rty, rw);
-		}
+			xf86PostProximityEvent(local->dev,0,0,6,rx,ry,rz,v3,v4,v5);
 	} /* not in proximity */
 
 	priv->oldProximity = is_proximity;

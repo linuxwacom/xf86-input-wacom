@@ -2,7 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
-** Copyright (C) 2005 - Ping Cheng 
+** Copyright (C) 2004 - 2005 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -25,7 +25,8 @@
 **   2003-03-21 0.0.4 - added conditional curses code
 **   2003-03-21 0.5.0 - released in development branch
 **   2003-04-07 0.5.1 - added pressure bar
-**   2003-07-27 0.5.2 - remove unused GTK stuff [jg]
+**   2005-07-27 0.5.2 - remove unused GTK stuff [jg]
+**   2005-11-11 0.7.1 - report tool ID and serial number
 **
 ****************************************************************************/
 
@@ -37,7 +38,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.5.2"
+#define XIDUMP_VERSION "0.7.1"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -400,7 +401,7 @@ static int CursesInit(void)
 static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 {
 	int i, j, k, bDown, nBtn;
-	int nRow=0, nPressRow, nProxRow, nFocusRow, nButtonRow,
+	int nRow=0, nTitleRow, nPressRow, nProxRow, nFocusRow, nButtonRow,
        		nKeyRow, nValRow;
 	int nMaxPress=100, nMinPress=0;
 	int bStylus = 0;
@@ -437,13 +438,12 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	nRow += 1;
 
 	/* display valuator related info */
+	nTitleRow = nRow;
 	if (pValInfo)
 	{
-		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   Axes: %d  Buffer: %ld",
+		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   ID: Undefined  Serial Number: Undefined",
 				pValInfo->mode == Absolute ? "Absolute" :
-				pValInfo->mode == Relative ? "Relative" : "Unknown",
-				pValInfo->num_axes,
-				pValInfo->motion_buffer);
+				pValInfo->mode == Relative ? "Relative" : "Unknown");
 		wacscrn_output(nRow,0,chBuf);
 		nRow += 2;
 		nValRow = nRow;
@@ -511,6 +511,10 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 
 		if (pAny->type == gnInputEvent[INPUTEVENT_PROXIMITY_IN])
 		{
+			if (!pValInfo)
+			{
+				wacscrn_output(23,0,"Unexpected valuator data received.");
+			}
 			wacscrn_standout();
 			wacscrn_output(nProxRow,12,"IN ");
 			wacscrn_normal();
@@ -533,10 +537,34 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 				wacscrn_output(23,0,"Unexpected valuator data received.");
 			}
 
-			for (k=0; k<pValInfo->num_axes && k<6; ++k)
+			/* title value */
 			{
-				snprintf(chBuf,sizeof(chBuf),"%+06d",pMove->axis_data[k]);
-				wacscrn_output(nValRow+1,12 + k * 10, chBuf);
+				int v = (pMove->axis_data[3]&0xffff0000) >> 16;
+				snprintf(chBuf,sizeof(chBuf),"%s",
+					pValInfo->mode == Absolute ? "Absolute" :
+					pValInfo->mode == Relative ? "Relative" : "Unknown");
+				wacscrn_output(nTitleRow,11,chBuf);
+				snprintf(chBuf, sizeof(chBuf), "%10d", v);
+				wacscrn_output(nTitleRow, 25, chBuf);
+				v = (pMove->axis_data[4]&0xffff0000) | ((pMove->axis_data[5]&0xffff0000)>>16);
+				if ( v )
+				{
+					snprintf(chBuf,sizeof(chBuf), "%10d", v);
+					wacscrn_output(nTitleRow,52,chBuf);
+				}
+			}
+
+			for (k=0; k<pValInfo->num_axes && k<3; ++k)
+			{
+				snprintf(chBuf, sizeof(chBuf), "%+06d", pMove->axis_data[k]);
+				wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
+
+			}
+
+			for (k=3; k<pValInfo->num_axes && k<6; ++k)
+			{
+				snprintf(chBuf, sizeof(chBuf), "%+06d", (short)(pMove->axis_data[k]&0xffff));
+				wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
 
 			}
 

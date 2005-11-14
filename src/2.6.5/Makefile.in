@@ -71,11 +71,11 @@ endif # CONFIG_INPUT_MOUSEDEV
 endif # WCM_OPTION_MOUSEDEV
 
 ifeq ($(WCM_OPTION_USBMOUSE),yes)
-ifeq ($(CONFIG_USB_USBMOUSE),m)
+ifeq ($(CONFIG_USB_MOUSE),m)
 obj-m += usbmouse.o
 else
 $(error You requested to build usbmouse with configure, but usbmouse is not a module in your kernel config)
-endif # CONFIG_USB_USBMOUSE
+endif # CONFIG_USB_MOUSE
 endif # WCM_OPTION_USBMOUSE
 
 else  # We were called from command line

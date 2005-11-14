@@ -139,7 +139,7 @@ static int usb_set_report(struct usb_interface *intf, unsigned char type,
 		usb_sndctrlpipe(interface_to_usbdev(intf), 0),
                 USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
                 (type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
-		buf, size, HZ);
+		buf, size, 1000);
 }
 
 static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
@@ -210,7 +210,8 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 			wacom->tool[1] = BTN_TOOL_PEN;
 			id = STYLUS_DEVICE_ID;
 		}
-		input_report_key(dev, wacom->tool[1], id); /* report in proximity for tool */
+		input_report_key(dev, wacom->tool[1], prox); /* report in proximity for tool */
+		input_report_abs(dev, ABS_MISC, id); /* report tool id */
 		input_report_abs(dev, ABS_X, data[3] | (data[2] << 7) | ((data[1] & 0x03) << 14));
 		input_report_abs(dev, ABS_Y, data[6] | (data[5] << 7) | ((data[4] & 0x03) << 14));
 		input_report_abs(dev, ABS_PRESSURE, pressure);
@@ -226,6 +227,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 			wacom->tool[1] = BTN_TOOL_PEN;
 		}
 		input_report_key(dev, wacom->tool[1], prox);
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 	}
 
 	wacom->tool[0] = prox; /* Save proximity state */
@@ -244,6 +246,7 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
 	int retval;
+	int id;
 
 	switch (urb->status) {
 	case 0:
@@ -267,12 +270,15 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 
 	input_regs(dev, regs);
 	if (data[1] & 0x04) {
-		input_report_key(dev, BTN_TOOL_RUBBER, (data[1] & 0x20) ? ERASER_DEVICE_ID : 0);
+		input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
+		id = ERASER_DEVICE_ID;
 	} else {
-		input_report_key(dev, BTN_TOOL_PEN, (data[1] & 0x20) ? STYLUS_DEVICE_ID : 0);
+		input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
+		id = STYLUS_DEVICE_ID;
 	}
+	input_report_abs(dev, ABS_MISC, id); /* report tool id */
 	input_report_abs(dev, ABS_X, le16_to_cpu(*(__le16 *) &data[2]));
 	input_report_abs(dev, ABS_Y, le16_to_cpu(*(__le16 *) &data[4]));
 	input_report_abs(dev, ABS_PRESSURE, le16_to_cpu(*(__le16 *) &data[6]));
@@ -316,7 +322,8 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 	}
 
 	input_regs(dev, regs);
-	input_report_key(dev, BTN_TOOL_PEN, STYLUS_DEVICE_ID);
+	input_report_key(dev, BTN_TOOL_PEN, 1);
+	input_report_abs(dev, ABS_MISC, STYLUS_DEVICE_ID); /* report tool id */
 	input_report_abs(dev, ABS_X, le16_to_cpu(*(__le16 *) &data[1]));
 	input_report_abs(dev, ABS_Y, le16_to_cpu(*(__le16 *) &data[3]));
 	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
@@ -410,7 +417,11 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		}
 	}
 
-	input_report_key(dev, wacom->tool[0], (data[1] & 0x10) ? id : 0);
+	if (data[1] & 0x10)
+		input_report_abs(dev, ABS_MISC, id); /* report tool id */
+	else
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
+	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
 	input_sync(dev);
 
 	/* send pad data */
@@ -522,7 +533,8 @@ static int wacom_intuos_inout(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN;
 		}
-		input_report_key(dev, wacom->tool[idx], wacom->id[idx]);
+		input_report_abs(dev, ABS_MISC, wacom->id[idx]); /* report tool id */
+		input_report_key(dev, wacom->tool[idx], 1);
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		input_sync(dev);
 		return 1;
@@ -531,6 +543,7 @@ static int wacom_intuos_inout(struct urb *urb)
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
 		input_report_key(dev, wacom->tool[idx], 0);
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		input_sync(dev);
 		return 1;
@@ -606,10 +619,9 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	/* pad packets. Works as a second tool and is always in prox */
 	if (data[0] == 12) {
 		/* initiate the pad as a device */
-		if (wacom->tool[1] != BTN_TOOL_FINGER) {
+		if (wacom->tool[1] != BTN_TOOL_FINGER)
 			wacom->tool[1] = BTN_TOOL_FINGER;
-			input_report_key(dev, wacom->tool[1], 1);
-		}
+
 		input_report_key(dev, BTN_0, (data[5] & 0x01));
 		input_report_key(dev, BTN_1, (data[5] & 0x02));
 		input_report_key(dev, BTN_2, (data[5] & 0x04));
@@ -620,6 +632,11 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		input_report_key(dev, BTN_7, (data[6] & 0x08));
 		input_report_abs(dev, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		input_report_abs(dev, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
+
+		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | data[2])
+			input_report_key(dev, wacom->tool[1], 1);
+		else
+			input_report_key(dev, wacom->tool[1], 0);
 		input_event(dev, EV_MSC, MSC_SERIAL, 0xffffffff);
 		input_sync(dev);
 		goto exit;
@@ -701,7 +718,8 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		}
 	}
 
-	input_report_key(dev, wacom->tool[idx], wacom->id[idx]);
+	input_report_abs(dev, ABS_MISC, wacom->id[idx]); /* report tool id */
+	input_report_key(dev, wacom->tool[idx], 1);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 	input_sync(dev);
 
@@ -848,7 +866,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	wacom->features = wacom_features + (id - wacom_ids);
 
 	wacom->dev.evbit[0] |= BIT(EV_KEY) | BIT(EV_ABS);
-	wacom->dev.absbit[0] |= BIT(ABS_X) | BIT(ABS_Y) | BIT(ABS_PRESSURE);
+	wacom->dev.absbit[0] |= BIT(ABS_X) | BIT(ABS_Y)  | BIT(ABS_MISC) | BIT(ABS_PRESSURE);
 	wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) | BIT(BTN_TOUCH) | BIT(BTN_STYLUS);
 
 	switch (wacom->features->type) {

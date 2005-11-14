@@ -545,8 +545,8 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_INIT: 
 			DBG(1, ErrorF("xf86WcmProc pWcm=%p what=INIT\n", (void *)pWcm));
 
-			nbaxes = 6;  /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
-			nbbuttons = 16;  /* All tools can report upto 16 buttons */ 
+			nbaxes = 8;  /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel, tool ID, and serial number */
+			nbbuttons = 16;  /* All tools can report up to 16 buttons */ 
 
 			for(loop=1; loop<=nbbuttons; loop++) map[loop] = loop;
 
@@ -1112,7 +1112,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 
 /*****************************************************************************
  * xf86WcmDevConvert --
- *   Convert valuators to X and Y. Only used by core events.
+ 
  ****************************************************************************/
 
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
@@ -1122,8 +1122,9 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
     
 	DBG(6, ErrorF("xf86WcmDevConvert v0=%d v1=%d \n", v0, v1));
 
-	if (first != 0 || num == 1)
-		return FALSE;
+	if (first != 0 || num == 1) 
+ 		return FALSE;
+
 	*x = 0;
 	*y = 0;
 
