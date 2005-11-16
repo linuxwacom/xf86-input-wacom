@@ -23,6 +23,7 @@
 **   2004-05-28 0.0.2 - PC - updated WacomConfigListDevices
 **   2005-06-10 0.0.3 - PC - updated for x86_64
 **   2005-10-24 0.0.4 - PC - Added Pad
+**   2005-11-17 0.0.5 - PC - update mode code
 **
 ****************************************************************************/
 
@@ -278,6 +279,11 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 	if (nReturn == BadValue)
 		return CfgError(hDevice->pCfg,EINVAL,
 			"WacomConfigSetRawParam: Bad value");
+	else if (nParam == XWACOM_PARAM_MODE)
+	{
+		/* tell Xinput the mode has been changed */
+		XSetDeviceMode(hDevice->pCfg->pDisp, hDevice->pDev, nValue);
+	}
 	return 0;
 }
 

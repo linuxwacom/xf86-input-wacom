@@ -131,6 +131,7 @@ struct wacom {
 	char phys[32];
 };
 
+#define USB_REQ_GET_REPORT	0x01
 #define USB_REQ_SET_REPORT	0x09
 static int usb_set_report(struct usb_interface *intf, unsigned char type,
 				unsigned char id, void *buf, int size)
@@ -138,6 +139,16 @@ static int usb_set_report(struct usb_interface *intf, unsigned char type,
         return usb_control_msg(interface_to_usbdev(intf),
 		usb_sndctrlpipe(interface_to_usbdev(intf), 0),
                 USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
+                (type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
+		buf, size, HZ);
+}
+
+static int usb_get_report(struct usb_interface *intf, unsigned char type,
+				unsigned char id, void *buf, int size)
+{
+	return usb_control_msg(interface_to_usbdev(intf),
+		usb_rcvctrlpipe(interface_to_usbdev(intf), 0),
+                USB_REQ_GET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
                 (type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
 		buf, size, HZ);
 }
@@ -865,7 +876,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 {
 	struct usb_device *dev = interface_to_usbdev(intf);
 	struct usb_endpoint_descriptor *endpoint;
-	char rep_data[2] = {0x02, 0x02};
+	char rep_data[2], limit = 0;
 	struct wacom *wacom;
 	char path[64];
 
@@ -976,10 +987,13 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 	input_register_device(&wacom->dev);
 
-	/* ask the tablet to report tablet data */
-	usb_set_report(intf, 3, 2, rep_data, 2);
-	/* repeat once (not sure why the first call often fails) */
-	usb_set_report(intf, 3, 2, rep_data, 2);
+	/* ask the tablet to report tablet data. repeats until it succeeds*/
+	do {
+		rep_data[0] = 2;
+		rep_data[1] = 2;
+		usb_set_report(intf, 3, 2, rep_data, 2);
+		usb_get_report(intf, 3, 2, rep_data, 2);
+	} while (rep_data[1] != 2 && limit++ < 5);
 
 	printk(KERN_INFO "input: %s on %s\n", wacom->features->name, path);
 

@@ -549,7 +549,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 				v = (pMove->axis_data[4]&0xffff0000) | ((pMove->axis_data[5]&0xffff0000)>>16);
 				if ( v )
 				{
-					snprintf(chBuf,sizeof(chBuf), "%10d", v);
+					snprintf(chBuf,sizeof(chBuf), "%12d", v);
 					wacscrn_output(nTitleRow,52,chBuf);
 				}
 			}

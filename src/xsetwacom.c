@@ -21,10 +21,11 @@
 ** REVISION HISTORY
 **   2003-05-02 0.0.1 - JEJ - created
 **   2005-10-24 0.0.4 - PC - added Pad
+**   2005-11-17 0.0.5 - PC - update mode code
 *
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.4"
+#define XSETWACOM_VERSION "0.0.5"
 
 #include "wacomcfg.h"
 #include "Xwacom.h" /* give use raw access to parameter values */

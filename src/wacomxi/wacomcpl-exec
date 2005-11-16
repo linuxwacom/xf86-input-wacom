@@ -172,9 +172,7 @@ proc calibrationSequence {which xDev yDev} {
 	    exec xsetwacom set $eraser bottomx $xDevMax
 	    exec xsetwacom set $eraser bottomy $yDevMax
 	}
-	updateXinitrc
 
-	exec xsetwacom set $device gimp on
 	destroy .topleft .bottomright
 	if { $numScreens > 1 } {
 	    .screen.list.label configure -text ""
@@ -243,6 +241,9 @@ proc startCalibration {} {
 		the pink crosshair using $device \n\
 		Please don't click on anything else \n\
 		by $device before you finish"
+
+    exec xsetwacom set $device gimp on
+    updateXinitrc
 }
 
 proc helpWindow { tString mString } {
