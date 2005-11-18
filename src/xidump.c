@@ -546,7 +546,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 				wacscrn_output(nTitleRow,11,chBuf);
 				snprintf(chBuf, sizeof(chBuf), "%10d", v);
 				wacscrn_output(nTitleRow, 25, chBuf);
-				v = (pMove->axis_data[4]&0xffff0000) | ((pMove->axis_data[5]&0xffff0000)>>16);
+				v = (pMove->axis_data[4]&0xffff0000) | 
+							((pMove->axis_data[5]&0xffff0000)>>16);
 				if ( v )
 				{
 					snprintf(chBuf,sizeof(chBuf), "%12d", v);
@@ -563,7 +564,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 
 			for (k=3; k<pValInfo->num_axes && k<6; ++k)
 			{
-				snprintf(chBuf, sizeof(chBuf), "%+06d", (short)(pMove->axis_data[k]&0xffff));
+				snprintf(chBuf, sizeof(chBuf), "%+06d", 
+						(short)(pMove->axis_data[k]&0xffff));
 				wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
 
 			}
@@ -676,13 +678,20 @@ static int RawRunDefault(Display* pDisp, XDeviceInfo* pDevInfo)
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
 			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
-			printf("Motion: x=%+6d y=%+6d p=%4d tx=%+4d ty=%+4d w=%+5d\n",
+			int v = (pMove->axis_data[4]&0xffff0000) | 
+					((pMove->axis_data[5]&0xffff0000)>>16);
+
+			printf("Motion: x=%+6d y=%+6d p=%4d tx=%+4d ty=%+4d "
+				"w=%+5d ID: %4d Serial: %11d \n",
 					pMove->axis_data[0],
 					pMove->axis_data[1],
 					pMove->axis_data[2],
-					pMove->axis_data[3],
-					pMove->axis_data[4],
-					pMove->axis_data[5]);
+					(short)(pMove->axis_data[3]&0xffff),
+					(short)(pMove->axis_data[4]&0xffff),
+					(short)(pMove->axis_data[5]&0xffff),
+					(pMove->axis_data[3]&0xffff0000)>>16,
+					v);
+
 		}
 		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
 				(pAny->type == gnInputEvent[INPUTEVENT_BTN_RELEASE]))
@@ -871,10 +880,10 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	/* create a window to receive events */
 	wnd = XCreateWindow(pDisp,
 			DefaultRootWindow(pDisp), /* parent */
-			0,0,100,100, /* placement */
+			0,0,10,10, /* placement */
 			0, /* border width */
 			0, /* depth */
-			InputOnly, /* class */
+			InputOutput, /* class */
 			CopyFromParent, /* visual */
 			0, /* valuemask */
 			NULL); /* attributes */

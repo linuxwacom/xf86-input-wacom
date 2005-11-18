@@ -395,8 +395,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	if (priv->serial && serial != priv->serial)
 	{
-		DBG(10, ErrorF("[%s] serial=%d configured only for serial=%d", 
-			local->name, serial, (int)priv-serial));
+		DBG(10, ErrorF("[%s] serial number is %d but your system configured %d", 
+			local->name, serial, (int)priv->serial));
 		return;
 	}
 

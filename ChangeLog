@@ -1,3 +1,6 @@
+2005-11-18   Ping Cheng <pingc@wacom.com>
+	*  Fixed a wacomcpl and an X driver bug
+
 2005-11-17   Ping Cheng <pingc@wacom.com>
 	* Updated wacomcpl
 	* Updated wacom.c and xsetwacom
