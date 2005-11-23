@@ -524,17 +524,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	priv->currentX = rx;
 	priv->currentY = ry;
 
-	/* for multiple monitor support, we need to set the proper 
-	 * screen and modify the axes before posting events */
-	if( !(priv->flags & BUTTONS_ONLY_FLAG) )
-	{
-		xf86WcmSetScreen(local, &rx, &ry);
-	}
-
-	/* unify acceleration in both directions for relative mode to draw a circle */
-	if (!is_absolute)
-		rx *= priv->factorY / priv->factorX;
-
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
 		"\tserial=%d\tbutton=%s\tbuttons=%d\t on channel=%d\n",
 		local->name,
@@ -558,6 +547,17 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	/* coordinates are ready we can send events */
 	if (is_proximity)
 	{
+		/* for multiple monitor support, we need to set the proper 
+		 * screen and modify the axes before posting events */
+		if( !(priv->flags & BUTTONS_ONLY_FLAG) )
+		{
+			xf86WcmSetScreen(local, &rx, &ry);
+		}
+
+		/* unify acceleration in both directions for relative mode to draw a circle */
+		if (!is_absolute)
+			rx *= priv->factorY / priv->factorX;
+
 		if (!priv->oldProximity)
 		{
 				xf86PostProximityEvent(local->dev, 1, 0, 6,

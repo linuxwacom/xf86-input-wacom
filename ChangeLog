@@ -1,3 +1,7 @@
+2005-11-22   Ping Cheng <pingc@wacom.com>
+	* linuxwacom-0.7.1-1 released
+	* Fixed a dual monitor display issue
+
 2005-11-18   Ping Cheng <pingc@wacom.com>
 	*  Fixed a wacomcpl and an X driver bug
 
