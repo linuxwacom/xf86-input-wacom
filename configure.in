@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.1)
+AM_INIT_AUTOMAKE(linuxwacom, 0.7.2)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -209,14 +209,16 @@ if test "$enable_usbmouse" != "no"; then
 		echo "*** Unable to compile usbmouse.o without kernel build environment"
 		echo "*** usbmouse.o will not be built"
 		echo "***"
-	else
+	elif test $kver != 0 ; then
 		WCM_OPTION_USBMOUSE=yes
-		if test $kver != 0; then
-			if test "$WCM_KERNEL_VER" = "2.4.22"; then
-				cp $WCM_KERNELDIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
-			fi
+		if test "$WCM_KERNEL_VER" = "2.4.22"; then
+			cp $WCM_KERNELDIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
 		fi
 		WCM_MODULES="$WCM_MODULES usbmouse.o"
+	else
+		echo "***"; echo "*** WARNING:";
+		echo "*** No need to build usbmouse.o for kernel 2.6"
+		echo "***"
 	fi
 fi
 
@@ -243,14 +245,19 @@ AC_ARG_ENABLE(mousedev,
 AC_HELP_STRING([--enable-mousedev], [Enable building mousedev.o [[default=no]]]),
 	, enable_mousedev=no)
 if test "$enable_mousedev" != "no"; then
+	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
 	if test "$WCM_ENV_KERNEL" != "yes"; then
 		echo "***"; echo "*** WARNING:";
 		echo "*** Unable to compile mousedev.o without kernel build environment"
 		echo "*** mousedev.o will not be built"
 		echo "***"
-	else
+	elif test $kver != 0 ; then
 		WCM_OPTION_MOUSEDEV=yes
 		WCM_MODULES="$WCM_MODULES mousedev.o"
+	else
+		echo "***"; echo "*** WARNING:";
+		echo "*** No need to build mousedev.o for kernel 2.6"
+		echo "***"
 	fi
 fi
 

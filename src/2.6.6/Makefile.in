@@ -62,22 +62,6 @@ $(error You requested to build evdev with configure, but evdev is not a module i
 endif # CONFIG_INPUT_EVDEV
 endif # WCM_OPTION_EVDEV
 
-ifeq ($(WCM_OPTION_MOUSEDEV),yes)
-ifeq ($(CONFIG_INPUT_MOUSEDEV),m)
-obj-m += mousedev.o
-else
-$(error You requested to build mousedev with configure, but mousedev is not a module in your kernel config)
-endif # CONFIG_INPUT_MOUSEDEV
-endif # WCM_OPTION_MOUSEDEV
-
-ifeq ($(WCM_OPTION_USBMOUSE),yes)
-ifeq ($(CONFIG_USB_MOUSE),m)
-obj-m += usbmouse.o
-else
-$(error You requested to build usbmouse with configure, but usbmouse is not a module in your kernel config)
-endif # CONFIG_USB_MOUSE
-endif # WCM_OPTION_USBMOUSE
-
 else  # We were called from command line
 PWD  := $(shell pwd)
 
@@ -89,8 +73,7 @@ WCM_OPTION_MOUSEDEV := @WCM_OPTION_MOUSEDEV@
 WCM_OPTION_USBMOUSE := @WCM_OPTION_USBMOUSE@
 WCM_OPTION_INPUT := @WCM_OPTION_INPUT@
 
-export WCM_OPTION_WACOM WCM_OPTION_HID WCM_OPTION_EVDEV WCM_OPTION_MOUSEDEV \
-	WCM_OPTION_USBMOUSE WCM_OPTION_INPUT
+export WCM_OPTION_WACOM WCM_OPTION_HID WCM_OPTION_EVDEV
 
 COPY_FROM_KERNEL_TREE := hiddev.c hid.h hid-ff.c hid-input.c fixp-arith.h
 COPY_FROM_KERNEL_TREE += hid-lgff.c hid-tmff.c pid.c pid.h

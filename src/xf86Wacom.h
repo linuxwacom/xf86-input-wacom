@@ -509,6 +509,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag);
 LocalDevicePtr xf86WcmAllocateStylus(void);
 LocalDevicePtr xf86WcmAllocateCursor(void);
 LocalDevicePtr xf86WcmAllocateEraser(void);
+LocalDevicePtr xf86WcmAllocatePad(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 

@@ -89,9 +89,10 @@
  * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablets
  * 2005-10-17 47-pc0.7.1 - Added DTU710, DTF720, G4
  * 2005-11-17 47-pc0.7.1-1 - Report tool serial number and ID to Xinput
+ * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it
  */
 
-static const char identification[] = "$Identification: 47-0.7.1-1 $";
+static const char identification[] = "$Identification: 47-0.7.1-2 $";
 
 /****************************************************************************/
 

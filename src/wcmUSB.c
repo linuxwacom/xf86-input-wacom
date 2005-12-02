@@ -275,19 +275,19 @@ static Bool usbDetect(LocalDevicePtr local)
 /*		ErrorF("%s Wacom Kernel Input driver version is %d.%d.%d\n",
 				XCONFIG_PROBED, version >> 16,
 				(version >> 8) & 0xff, version & 0xff);
-*/		return 1;
-	}
-
-	/* for kernel 2.6 or later */
+*/
+		/* Try to grab the event device so that data don't leak to /dev/input/mice */
 #ifdef EV_SYN
-	/* Try to grab the event device so that data don't leak to /dev/input/mice */
-	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
+		SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
 
-	if (err < 0) {
-		ErrorF("%s Wacom X driver can't grab event device, errno=%d\n",
-			local->name, errno);
-	}
+		if (err < 0) 
+			ErrorF("%s Wacom X driver can't grab event device, errno=%d\n",
+				local->name, errno);
+		else 
+			ErrorF("%s Wacom X driver grabbed event device\n", local->name);
 #endif
+		return 1;
+	}
 
 	return 0;
 }

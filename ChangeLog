@@ -1,3 +1,10 @@
+2005-12-02   Ping Cheng <pingc@wacom.com>
+	* Send EVIOCGRAB ioctl to kernel in wcmUSB.c (Christian Lupien)
+	* Removed mousedev.c and usbmouse.c in src/2.6.x 
+	  since wacom takes whole control of the tablet now
+	* Updated configure scripts and src/2.6.x/Makefile.in 
+	  to remove mousedev and usbmouse from building string
+
 2005-11-22   Ping Cheng <pingc@wacom.com>
 	* linuxwacom-0.7.1-1 released
 	* Fixed a dual monitor display issue
