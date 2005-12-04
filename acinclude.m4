@@ -329,7 +329,7 @@ if test "$WCM_TCLDIR" = "yes" || test "$WCM_TCLDIR" == ""; then
 		fi
 	done
 	if test "x$WCM_ENV_TCL" != "xyes"; then
-		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include/tcl.h])		
+		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include, tcl, and "tcl$version"; ])		
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tcl development environment does not appear to"
 		echo "*** be installed. The header file tcl.h does not appear"
@@ -379,13 +379,13 @@ if test "$WCM_TKDIR" = "yes" || test "$WCM_TKDIR" == ""; then
 	if test -f "$WCM_TCLTKDIR_DEFAULT/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
-		WCM_TKDIR="$WCM_TCLTKDIR_DEFAULT"
+		WCM_TKDIR="$WCM_TCLTKDIR_DEFAULT/include"
 	elif test -f "$WCM_TCLDIR/include/tk.h" || test -f "$WCM_TCLDIR/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
 		WCM_TKDIR="$WCM_TCLDIR"
 	else
-		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include/tk.h and $WCM_TCLDIR/include/tk.h])
+		AC_MSG_RESULT([not found; tried $WCM_TCLTKDIR_DEFAULT/include and $WCM_TCLDIR/include])
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk development environment does not appear to"
 		echo "*** be installed. The header file tk.h does not appear"

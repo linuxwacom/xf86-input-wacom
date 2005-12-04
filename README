@@ -1,5 +1,5 @@
 README
-Aug. 17, 2005
+Dec. 05, 2005
 
 ==============================================================================
 
@@ -25,15 +25,15 @@ CONFIGURE OPTIONS:
 
 This file contains hints for building the sources.  There are a number of
 build targets, some of which are not built automatically.  Here is the
-breakdown (input.o is only for kernel 2.4).
+breakdown:
 
       wacom.o: not built by default (--enable-wacom, --disable-wacom)
       wacdump: built by default (--enable-wacdump, --disable-wacdump)
         hid.o: not built by default (--enable-hid, --disable-hid)
       evdev.o: not built by default (--enable-evdev, --disable-evdev)
-   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev)
-   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse)
-      input.o: not built by default (--enable-input, --disable-input)
+   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev for kernel 2.4.x only)
+   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse for kernel 2.4.x only)
+      input.o: not built by default (--enable-input, --disable-input for kernel 2.4.x only)
   wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
 There are many options, and configure will attempt to guess the correct
@@ -55,10 +55,7 @@ kernel from source, please refer to your source's README or www.kernel.org. For
 kernels newer than 2.6.4 (and you are not using Intuos3), wacom.c and hid-core.c 
 are up to date, that is, you probably don't need to build the kernel. But, if you 
 want to use the "hotplug" feature of the tablet, you need to build evdev from this 
-package. If mousedev and/or usbmouse are used by your running kernel, you need to 
-build these pieces since they will let mouse driver ignore Wacom tablet so Wacom 
-driver can take control of the tablet. Please DO NOT compile and load usbmouse 
-module if your system did not load it.
+package.
 
 wacom_drv.o requires XFree86 sources as well as a functional XF86 build  
 environment or xorg-sdk if your X server is from x.org.  Since this is a more 
@@ -95,15 +92,26 @@ more information on where specific drivers belong.
     [jej@haku linuxwacom-dev] $ su
     [root@haku linuxwacom-dev] # make install 
 
-INSTALL wacomcpl (detail)
+INSTALL wacomcpl
 
 wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed. 
-The configure script will attempt to build wacomxi libs by searching /usr/include 
-and /usr/lib for tcl and tk hearders and libs. You can override the directories
-using the --with-tcl=<directory> and --with-tk=<directory> options.
+The configure script will attempt to build wacomxi libs by searching /usr/include,
+/usr/tcl/include, and /usr/tcl$version/include for tcl/tk headers and /usr/lib
+for tcl/tk libs. You can override the directories using the --with-tcl=<directory> 
+and --with-tk=<directory> options.
 
-If the tcl.h is located at /usr/local/tcl8.4/include and the libtcl8.4.so at 
-/usr/local/tcl8.4/lib, you need to:
+On Fedora Core 3, the steps to install tcl/tk development is as following:
+
+    [jej@haku linuxwacom-dev] $ su
+    [root@haku linuxwacom-dev] # yum install tcl
+    [root@haku linuxwacom-dev] # yum install tcl-devel
+    [root@haku linuxwacom-dev] # yum install tk
+    [root@haku linuxwacom-dev] # yum install tk-devel
+
+configure script will find the path for you, i.e., you don't need to specify option --with-tcl 
+and --with-tc in the configure command.
+
+However, if the tcl.h is located at specific directory other than /usr or /usr/tcl, say it is at /usr/local/tcl8.4/include and the libtcl8.4.so at /usr/local/tcl8.4/lib, you need to:
 
 First link /usr/local/tcl8.4/lib/libtcl8.4.so to /usr/lib/libtcl.so.0:
 	ln -s /usr/local/tcl8.4/lib/libtcl8.4.so /usr/lib/libtcl.so.0
@@ -147,9 +155,7 @@ for kernels older than 2.4.22:
 for kernel 2.6.x
     [root@haku linuxwacom-dev] # cp src/2.6.x/hid.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
     [root@haku linuxwacom-dev] # cp src/2.6.x/wacom.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
-    [root@haku linuxwacom-dev] # cp src/2.6.x/usbmouse.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
     [root@haku linuxwacom-dev] # cp src/2.6.x/evdev.ko /lib/modules/your_kernel_version/kernel/drivers/input 
-    [root@haku linuxwacom-dev] # cp src/2.6.x/mousedev.ko /lib/modules/your_kernel_version/kernel/drivers/input 
 
 ==============================================================================
 
