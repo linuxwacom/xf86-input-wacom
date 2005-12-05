@@ -90,9 +90,10 @@
  * 2005-10-17 47-pc0.7.1 - Added DTU710, DTF720, G4
  * 2005-11-17 47-pc0.7.1-1 - Report tool serial number and ID to Xinput
  * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it
+ * 2005-11-05 47-pc0.7.1-3 - Updated configure scripts
  */
 
-static const char identification[] = "$Identification: 47-0.7.1-2 $";
+static const char identification[] = "$Identification: 47-0.7.1-3 $";
 
 /****************************************************************************/
 
