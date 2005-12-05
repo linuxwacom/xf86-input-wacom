@@ -210,8 +210,9 @@ AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
 
 dnl handle default case
 if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
-	WCM_XORGSD=$WCM_XORGSDK_DEFAULT
+	WCM_XORGSDK=$WCM_XORGSDK_DEFAULT
 fi
+
 if test -n "$WCM_XORGSDK"; then
 	AC_MSG_CHECKING(for valid Xorg SDK)
 	if test -f $WCM_XORGSDK/include/xf86Version.h; then
