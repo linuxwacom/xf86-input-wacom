@@ -29,6 +29,7 @@ WCM_ENV_TCL=no
 WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
+WCM_XORGSDK_DEFAULT=/usr/X11R6/lib/Server
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
 WCM_TCLTKDIR_DEFAULT=/usr
 XF86SUBDIR=programs/Xserver/hw/xfree86/common
@@ -206,6 +207,11 @@ dnl Check for Xorg sdk environment
 AC_ARG_WITH(xorg-sdk,
 AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
 [ WCM_XORGSDK="$withval"; ])
+
+dnl handle default case
+if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
+	WCM_XORGSD=$WCM_XORGSDK_DEFAULT
+fi
 if test -n "$WCM_XORGSDK"; then
 	AC_MSG_CHECKING(for valid Xorg SDK)
 	if test -f $WCM_XORGSDK/include/xf86Version.h; then
