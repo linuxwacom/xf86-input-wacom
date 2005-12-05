@@ -38,7 +38,9 @@ fi
 
 dnl Check for X source
 AC_WCM_CHECK_XSOURCE
-AC_WCM_CHECK_XFREE86SOURCE
+if test x$WCM_ENV_XF86 != xyes; then
+	AC_WCM_CHECK_XFREE86SOURCE
+fi
 AC_WCM_CHECK_XORG_SDK
 
 dnl Check for TCL, TK, and XLib

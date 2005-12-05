@@ -90,7 +90,7 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 		WCM_ENV_KERNEL=yes
 	else
 		AC_MSG_RESULT(missing input.h)
-		AC_MSG_ERROR("Unable to find $WCM_KERNELDIR/include/linux/input.h")
+		AC_MSG_RESULT("Unable to find $WCM_KERNELDIR/include/linux/input.h")
 		WCM_ENV_KERNEL=no
 	fi
 ],
@@ -207,26 +207,27 @@ dnl Check for Xorg sdk environment
 AC_ARG_WITH(xorg-sdk,
 AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
 [ WCM_XORGSDK="$withval"; ])
-
-dnl handle default case
-if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
-	WCM_XORGSDK=$WCM_XORGSDK_DEFAULT
-fi
-
-if test -n "$WCM_XORGSDK"; then
-	AC_MSG_CHECKING(for valid Xorg SDK)
-	if test -f $WCM_XORGSDK/include/xf86Version.h; then
-		WCM_ENV_XORGSDK=yes
-		AC_MSG_RESULT(ok)
-	elif test -f $WCM_XORGSDK/xc/include/xf86Version.h; then
-		WCM_ENV_XORGSDK=yes
-		$WCM_XORGSDK=$WCM_XORGSDK/xc
-		AC_MSG_RESULT(ok)
-	else
-		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Tried $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
+if test x$WCM_ENV_XF86 != xyes; then
+	dnl handle default case
+	if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
+		WCM_XORGSDK=$WCM_XORGSDK_DEFAULT
 	fi
-	WCM_XORGSDK=`(cd $WCM_XORGSDK; pwd)`
+
+	if test -n "$WCM_XORGSDK"; then
+		AC_MSG_CHECKING(for valid Xorg SDK)
+		if test -f $WCM_XORGSDK/include/xf86Version.h; then
+			WCM_ENV_XORGSDK=yes
+			AC_MSG_RESULT(ok)
+		elif test -f $WCM_XORGSDK/xc/include/xf86Version.h; then
+			WCM_ENV_XORGSDK=yes
+			$WCM_XORGSDK=$WCM_XORGSDK/xc
+			AC_MSG_RESULT(ok)
+		else
+			AC_MSG_RESULT("xf86Version.h missing")
+			AC_MSG_RESULT("Tried $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
+		fi
+		WCM_XORGSDK=`(cd $WCM_XORGSDK; pwd)`
+	fi
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test x$WCM_ENV_XORGSDK = xyes])
 ])
@@ -249,7 +250,7 @@ if test -n "$WCM_XF86DIR"; then
 		AC_MSG_RESULT(ok)
 	else
 		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
+		AC_MSG_RESULT("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
 fi
@@ -274,7 +275,7 @@ if test -n "$WCM_XF86DIR"; then
 		AC_MSG_RESULT(ok)
 	else
 		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_ERROR("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
+		AC_MSG_RESULT("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
 	fi
 	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
 fi
