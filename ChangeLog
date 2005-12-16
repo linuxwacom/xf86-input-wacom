@@ -1,3 +1,10 @@
+2005-12-16   Ping Cheng <pingc@wacom.com>
+	* updated configure.in and acinclude.m4 to use system info
+	  to decide wacom_drv default module and etc. 
+	* Removed evdev.c in src/2.6.x
+	* Updated configure scripts and src/2.6.x/Makefile.in 
+	  to remove evdev from building string
+
 2005-12-05   Ping Cheng <pingc@wacom.com>
 	* Updated README and NEWS
 	* Modified configure.in

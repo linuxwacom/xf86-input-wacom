@@ -12,7 +12,6 @@ fi
 ])
 AC_DEFUN([AC_WCM_CHECK_ENVIRON],[
 dnl Variables for various checks
-WCM_ARCH=unknown
 WCM_KSTACK=-mpreferred-stack-boundary=2
 WCM_KERNEL=unknown
 WCM_KERNEL_VER=2.4
@@ -29,17 +28,23 @@ WCM_ENV_TCL=no
 WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
-WCM_XORGSDK_DEFAULT=/usr/X11R6/lib/Server
-WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
-WCM_TCLTKDIR_DEFAULT=/usr
-XF86SUBDIR=programs/Xserver/hw/xfree86/common
-WCM_LINUXWACOMDIR=`pwd`
-WCM_ENV_NCURSES=no
 dnl Check architecture
 AC_MSG_CHECKING(for processor type)
 WCM_ARCH=`uname -m`
 AC_MSG_RESULT($WCM_ARCH)
 dnl
+WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
+WCM_OPTION_XSERVER64=no
+IS64=`echo $WCM_ARCH | grep -c "64"`
+if test $IS64 != 0; then
+	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
+	WCM_OPTION_XSERVER64=yes
+fi
+WCM_XORGSDK_DEFAULT=$WCM_XLIBDIR_DEFAULT/Server
+WCM_TCLTKDIR_DEFAULT=/usr
+XF86SUBDIR=programs/Xserver/hw/xfree86/common
+WCM_LINUXWACOMDIR=`pwd`
+WCM_ENV_NCURSES=no
 dnl Check kernel type
 AC_MSG_CHECKING(for kernel type)
 WCM_KERNEL=`uname -s`
@@ -291,7 +296,8 @@ AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
 dnl handle default case
 AC_MSG_CHECKING(for X lib directory)
 if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
-	if test -d $WCM_XLIBDIR_DEFAULT/X11; then
+	if test -d $WCM_XLIBDIR_DEFAULT/X11 ||
+		test -d $WCM_XLIBDIR_DEFAULT; then
 		WCM_ENV_XLIB=yes
 		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
 		AC_MSG_RESULT(found)

@@ -54,23 +54,14 @@ $(error You requested to build wacom with configure, but wacom is configured as 
 endif # CONFIG_USB_WACOM
 endif # WCM_OPTION_WACOM
 
-ifeq ($(WCM_OPTION_EVDEV),yes)
-ifeq ($(CONFIG_INPUT_EVDEV),m)
-obj-m += evdev.o
-else
-$(error You requested to build evdev with configure, but evdev is not a module in your kernel config)
-endif # CONFIG_INPUT_EVDEV
-endif # WCM_OPTION_EVDEV
-
 else  # We were called from command line
 PWD  := $(shell pwd)
 
 KDIR := @WCM_KERNELDIR@
 WCM_OPTION_WACOM := @WCM_OPTION_WACOM@
 WCM_OPTION_HID := @WCM_OPTION_HID@
-WCM_OPTION_EVDEV := @WCM_OPTION_EVDEV@
 
-export WCM_OPTION_WACOM WCM_OPTION_HID WCM_OPTION_EVDEV 
+export WCM_OPTION_WACOM WCM_OPTION_HID
 
 COPY_FROM_KERNEL_TREE := hiddev.c hid.h hid-ff.c hid-input.c fixp-arith.h
 COPY_FROM_KERNEL_TREE += hid-lgff.c hid-tmff.c pid.c pid.h
