@@ -90,9 +90,10 @@
  * 2005-10-17 47-pc0.7.1 - Added DTU710, DTF720, G4
  * 2005-11-17 47-pc0.7.1-1 - Report tool serial number and ID to Xinput
  * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it
+ * 2005-12-21 47-pc0.7.2 - new release
  */
 
-static const char identification[] = "$Identification: 47-0.7.1-2 $";
+static const char identification[] = "$Identification: 47-0.7.2 $";
 
 /****************************************************************************/
 
@@ -1247,7 +1248,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	}
 
 #ifdef NEVER 
-/* This is for absolute scrren mapping */
+/* This is for absolute screen mapping */
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
 		priv->common->wcmGimp && priv->common->wcmMMonitor)
