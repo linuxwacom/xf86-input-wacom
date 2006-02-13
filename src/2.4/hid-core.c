@@ -1,5 +1,5 @@
 /*
- * $Id: hid-core.c,v 1.7 2005/10/10 19:25:32 pingc Exp $
+ * $Id: hid-core.c,v 1.8 2006/02/13 05:24:22 pingc Exp $
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
@@ -43,6 +43,7 @@
  *    v1.8.1-j5    - added Cintiq 21UX support
  *    v1.8.1-j6    - added Volito2, etc.
  *    v1.8.1-j7    - added DTF 720, DTU 710, Graphire4
+ *    v1.8.1-j8    - added DTF 521, I3 12x12, and I3 12x19
  */
 
 #include <linux/autoconf.h>
@@ -78,7 +79,7 @@
  * Version Information
  */
 
-#define DRIVER_VERSION "v1.8.1-j7"
+#define DRIVER_VERSION "v1.8.1-j8"
 #define DRIVER_AUTHOR "Andreas Gal, Vojtech Pavlik <vojtech@suse.cz>"
 #define DRIVER_DESC "USB HID support drivers"
 
@@ -1178,9 +1179,12 @@ struct hid_blacklist {
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3 + 1, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3 + 2, HID_QUIRK_IGNORE },
+	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3 + 3, HID_QUIRK_IGNORE },
+	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3 + 4, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_INTUOS3 + 5, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_CINTIQ, HID_QUIRK_IGNORE },
 	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_DTF, HID_QUIRK_IGNORE },
+	{ USB_VENDOR_ID_WACOM, USB_DEVICE_ID_WACOM_DTF + 3, HID_QUIRK_IGNORE },
 
 	{ USB_VENDOR_ID_ATEN, USB_DEVICE_ID_ATEN_UC100KM, HID_QUIRK_NOGET },
 	{ USB_VENDOR_ID_ATEN, USB_DEVICE_ID_ATEN_CS124U, HID_QUIRK_NOGET },

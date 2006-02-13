@@ -2,7 +2,7 @@
 ** wacusb.c
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2005 - Ping Cheng
+** Copyright (C) 2003 - 2006 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -196,8 +196,9 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "MODEL_PL800",   "Wacom PL800",    6, 0x35 },
 		{ "MODEL_PL700",   "Wacom PL700",    7, 0x37 },
 		{ "MODEL_PL510",   "Wacom PL510",    8, 0x38 },
-		{ "MODEL_DTU710",  "Wacom PL710",   10, 0x39 },
-		{ "MODEL_DTF720",  "Wacom DTF720",  11, 0xC0 },
+		{ "MODEL_DTU710",  "Wacom PL710",    9, 0x39 },
+		{ "MODEL_DTF720",  "Wacom DTF720",  10, 0xC0 },
+		{ "MODEL_DTF521",  "Wacom DTF521",  11, 0xC3 },
 		{ NULL }
 	};
 
@@ -243,10 +244,12 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xIntuos3[] =
 	{
-		{ "PTZ-430",  "Wacom Intuos3 4x5",  1, 0xB0 },
-		{ "PTZ-630",  "Wacom Intuos3 6x8",  2, 0xB1 },
-		{ "PTZ-930",  "Wacom Intuos3 9x12", 3, 0xB2 },
-		{ "PTZ-631W", "Wacom Intuos3 6x8",  4, 0xB5 },
+		{ "PTZ-430",   "Wacom Intuos3 4x5",   1, 0xB0 },
+		{ "PTZ-630",   "Wacom Intuos3 6x8",   2, 0xB1 },
+		{ "PTZ-930",   "Wacom Intuos3 9x12",  3, 0xB2 },
+		{ "PTZ-1230",  "Wacom Intuos3 12x12", 4, 0xB3 },
+		{ "PTZ-1231W", "Wacom Intuos3 12x19", 5, 0xB4 },
+		{ "PTZ-631W",  "Wacom Intuos3 6x11",  6, 0xB5 },
 		{ NULL }
 	};
 

@@ -352,9 +352,10 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x33: /* PL600SX */
 			case 0x34: /* PL550 */
 			case 0x35: /* PL800 */
-			case 0x37: /* PL700 */
+			case 0x37: /* PTU700 */
 			case 0x38: /* PL510 */
 			case 0xC0: /* DTF720 */
+			case 0xC3: /* DTF521 */
 				model = &usbCintiq; break;
 
 			case 0x41: /* Intuos2 4x5 */
@@ -377,6 +378,8 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0xB0: /* Intuos3 4x5 */
 			case 0xB1: /* Intuos3 6x8 */
 			case 0xB2: /* Intuos3 9x12 */
+			case 0xB3: /* Intuos3 12x12 */
+			case 0xB4: /* Intuos3 12x19 */
 			case 0xB5: /* Intuos3 6x11 */
 				model = &usbIntuos3; break;
 
