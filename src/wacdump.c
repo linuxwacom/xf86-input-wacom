@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacdump.c
 **
-** Copyright (C) 2002 - 2005 - John E. Joganic and Ping Cheng
+** Copyright (C) 2002 - 2006 - John E. Joganic and Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -31,6 +31,7 @@
 **   2005-02-17 0.6.6 - added I3 and support 64-bit system
 **   2005-09-01 0.7.0 - Added Cintiq 21UX
 **   2005-02-17 0.7.1 - added Graphire 4
+**   2006-02-27 0.7.3 - added DTF 521, I3 12x12 & 12x19
 **
 ****************************************************************************/
 
@@ -49,7 +50,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "0.7.1"
+#define WACDUMP_VER "0.7.3"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -286,7 +287,7 @@ static void DisplaySerialValue(unsigned int uField)
 	{
 		snprintf(xchBuf,sizeof(xchBuf),"0x%08X",gAbsState[uField].nValue);
 	}
-	else if (uField == WACOMFIELD_SERIAL)
+	else if (uField == WACOMFIELD_PROXIMITY)
 	{
 		snprintf(xchBuf,sizeof(xchBuf),"%-3s",
 				gAbsState[uField].nValue ? "in" : "out");
@@ -294,6 +295,23 @@ static void DisplaySerialValue(unsigned int uField)
 	}
 	else
 	{
+		/* deal with tool in prox before wacdump launched */
+		if (gAbsState[uField].nValue && !gAbsState[WACOMFIELD_PROXIMITY].nValue)
+		{
+			gAbsState[WACOMFIELD_PROXIMITY].nValue |= BIT(WACOMTOOLTYPE_PEN);
+			gAbsState[WACOMFIELD_TOOLTYPE].nValue = WACOMTOOLTYPE_PEN;
+			wacscrn_standout();
+			snprintf(xchBuf,sizeof(xchBuf),"%-3s","in");
+			wacscrn_output(gAbsState[WACOMFIELD_PROXIMITY].
+					nRow,gAbsState[WACOMFIELD_PROXIMITY].nCol*40+9,xchBuf);
+			wacscrn_normal();
+			wacscrn_standout();
+			snprintf(xchBuf,sizeof(xchBuf),"%-10s",xszTool[WACOMTOOLTYPE_PEN]);
+			wacscrn_output(gAbsState[WACOMFIELD_TOOLTYPE].
+					nRow,gAbsState[WACOMFIELD_TOOLTYPE].nCol*40+9,xchBuf);
+			wacscrn_normal();
+		}
+
 		snprintf(xchBuf,sizeof(xchBuf),"%+06d (%+06d .. %+06d)",
 			gAbsState[uField].nValue,
 			gAbsState[uField].nMin,

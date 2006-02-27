@@ -1,12 +1,17 @@
+2006-02-27   Ping Cheng <pingc@wacom.com>
+	* Updated website
+	* Support 2.6.15
+	* Fixed a Graphire 2 issue
+
 2006-02-11   Ping Cheng <pingc@wacom.com>
-       * Updated website
-       * Added DTF 521, I3 12x12, and I3 12x19
+	* Updated website
+	* Added DTF 521, I3 12x12, and I3 12x19
 
 2006-01-09   Ping Cheng <pingc@wacom.com>
-       * Restructured the website
-       * Added a page for Tablet PC 
-       * Added a mini-HOWTO page for Fedora Core 4
-       * Updated application developers' page
+	* Restructured the website
+	* Added a page for Tablet PC 
+	* Added a mini-HOWTO page for Fedora Core 4
+	* Updated application developers' page
 
 2005-12-21   Ping Cheng <pingc@wacom.com>
         * Updated website

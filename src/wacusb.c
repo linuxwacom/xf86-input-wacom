@@ -486,8 +486,6 @@ static int USBFindModel(USBTABLET* pUSB, unsigned int uVendor,
 	return 0;
 }
 
-
-
 static int USBIdentifyModel(USBTABLET* pUSB)
 {
 	int nCnt;
@@ -515,6 +513,22 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	}
 	assert(nCnt == sizeof(evbits));
 
+	/* key events */
+	if (ISBITSET(evbits,EV_KEY))
+	{
+		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits);
+		if (nCnt < 0)
+		{
+			WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
+				"Failed to CGBIT key: %s",strerror(errno));
+			return 1;
+		}
+		assert(nCnt == sizeof(keybits));
+
+		pUSB->state.uValid |= BIT(WACOMFIELD_PROXIMITY) | 
+					BIT(WACOMFIELD_TOOLTYPE);
+	}
+
 	/* absolute events */
 	if (ISBITSET(evbits,EV_ABS))
 	{
@@ -540,6 +554,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 			USBGetRange(pUSB,absbits,ABS_WHEEL,WACOMFIELD_ABSWHEEL) ||
 			USBGetRange(pUSB,absbits,ABS_THROTTLE,WACOMFIELD_THROTTLE))
 			return 1;
+
 	}
 
 	/* relative events */
@@ -563,6 +578,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	}
 
 	/* key events */
+	pUSB->nToolProx = 0;
 	if (ISBITSET(evbits,EV_KEY))
 	{
 		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits);
@@ -609,6 +625,8 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	{
 		case WACOMDEVICE_INTUOS:
 		case WACOMDEVICE_INTUOS2:
+		case WACOMDEVICE_INTUOS3:
+		case WACOMDEVICE_CINTIQV5:
 			pUSB->state.uValid |= BIT(WACOMFIELD_SERIAL);
 		default: ;
 	}
@@ -706,7 +724,7 @@ static int USBParseMSC(USBTABLET* pUSB, struct input_event* pEv)
 
 static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 {
-	int i, button=-1, tool=0;
+	int button=-1, tool=0;
 	switch (pEv->code)
 	{
 		case BTN_LEFT: button = WACOMBUTTON_LEFT; break;
@@ -752,38 +770,36 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		if (pEv->value)
 		{
 			/* no prior tool in proximity */
-			if (!pUSB->nToolProx)
+			if (!(pUSB->nToolProx & BIT(tool)))
 			{
 				pUSB->state.values[WACOMFIELD_PROXIMITY].nValue = 1;
-				pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
 			}
 
 			/* remember tool in prox */
 			pUSB->nToolProx |= BIT(tool);
+			pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
 		}
 
 		/* otherwise, going out of proximity */
 		else
 		{
 			/* forget tool in prox */
-			pUSB->nToolProx &= ~BIT(tool);
+			if (pUSB->nToolProx & BIT(tool))
+			{
+				pUSB->nToolProx &= ~BIT(tool);
+			}
+
+			/* single input */
+			if (!(pUSB->state.uValid & BIT(WACOMFIELD_SERIAL)))
+				pUSB->nToolProx = 0;
+
+			pUSB->state.values[WACOMFIELD_PROXIMITY].nValue = 0;
+			pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = 0;
 
 			/* nobody left? out of proximity */
 			if (!pUSB->nToolProx)
 				memset(pUSB->state.values, 0,
 						pUSB->state.uValueCnt * sizeof(WACOMVALUE));
-
-			/* otherwise, switch to next tool */
-			else
-			{
-				for (i=WACOMTOOLTYPE_PEN; i<WACOMTOOLTYPE_MAX; ++i)
-				{
-					if (pUSB->nToolProx & BIT(i))
-					{
-						pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = i;
-					}
-				}
-			}
 		} /* out of prox */
 	} /* end if tool */
 
