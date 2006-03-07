@@ -425,7 +425,7 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 void xf86WcmReadPacket(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
-	int len, pos, cnt, remaining;
+	int len, pos, cnt, remaining, loop;
 
 	if (!common->wcmModel) return;
 
@@ -437,12 +437,20 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		common->bufpos, remaining));
 
 	/* fill buffer with as much data as we can handle */
-	SYSCALL(len = xf86WcmRead(local->fd,
-		common->buffer + common->bufpos, remaining));
+	len = xf86WcmRead(local->fd,
+		common->buffer + common->bufpos, remaining);
 
 	if (len <= 0)
 	{
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
+		/* In case of error, we assume the device has been disconnected
+		   so we close it. We need to iterate over all wcmDevices to
+		   actually close the device. */
+		for (loop=0; loop<common->wcmNumDevices; loop++)
+		{
+			if (common->wcmDevices[loop]->fd >= 0)
+				xf86WcmDevProc(common->wcmDevices[loop]->dev,DEVICE_OFF);
+		}
 		return;
 	}
 
@@ -514,7 +522,7 @@ static void xf86WcmDevClose(LocalDevicePtr local)
 	if (num == 1)
 	{
 		DBG(1,ErrorF("Closing device; uninitializing.\n"));
-		SYSCALL(xf86WcmClose(local->fd));
+		xf86WcmClose(local->fd);
 		common->wcmInitialized = FALSE;
 	}
 
@@ -622,9 +630,10 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			DBG(1, ErrorF("xf86WcmProc fd=%d pWcm=%p what=ON\n",
 				local->fd, (void *)pWcm));
 
-			if ((local->fd < 0) && (!xf86WcmDevOpen(pWcm)))
+			/* if ((local->fd < 0) && (!xf86WcmDevOpen(pWcm))) */
+			if (!xf86WcmDevOpen(pWcm))
 			{
-				pWcm->inited = FALSE;
+				/* pWcm->inited = FALSE; */
 				return !Success;
 			}
 			xf86AddEnabledDevice(local);
@@ -1339,7 +1348,7 @@ static Bool xf86WcmInitDevice(LocalDevicePtr local)
 		if (local->fd >= 0)
 		{
 			DBG(1,ErrorF("Closing device\n"));
-			SYSCALL(xf86WcmClose(local->fd));
+			xf86WcmClose(local->fd);
 		}
 		local->fd = -1;
 		return FALSE;

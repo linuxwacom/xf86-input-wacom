@@ -1,3 +1,10 @@
+2006-03-06   Ping Cheng <pingc@wacom.com>
+	* Fixed a Volito bug (Kirill Frolov)
+	* Fixed a xsetwacom.c typo 
+	* Supporting tablet attach/detach while X driver running (Christian Lupien) 
+	* Remove SYSCALL from xf86 calls (Christian Lupien)
+	* Swapped USB tablet wheel directions (Christian Lupien)
+
 2006-02-27   Ping Cheng <pingc@wacom.com>
 	* Updated website
 	* Support 2.6.15

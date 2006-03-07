@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -696,7 +696,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 		else if (event->type == EV_REL)
 		{
 			if (event->code == REL_WHEEL)
-				ds->relwheel = event->value;
+				ds->relwheel = -event->value;
 			else
 				ErrorF("wacom: rel event recv'd (%d)!\n", event->code);
 		}

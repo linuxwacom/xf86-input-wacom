@@ -382,6 +382,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
+	if (data[0] == 99) return; /* for Volito tablets */
+
 	if (data[0] != 2) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
 		goto exit;
@@ -406,10 +408,10 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
 				if ( wacom->features->type == G4 ) {
-					rw = data[7] & 0x04 ? -(data[7] & 0x03) : (data[7] & 0x03);
-					input_report_rel(dev, REL_WHEEL, rw);
+					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : (data[7] & 0x03);
+					input_report_rel(dev, REL_WHEEL, -rw);
 				} else
-					input_report_rel(dev, REL_WHEEL, (signed char) data[6]);
+					input_report_rel(dev, REL_WHEEL, -(signed char) data[6]);
 				/* fall through */
 
                 	case 3: /* Mouse without wheel */
@@ -448,34 +450,18 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	/* send pad data */
 	if ( wacom->features->type == G4 )
 	{
-		/* fist time sending pad data */
-		if (wacom->tool[1] != BTN_TOOL_FINGER)
-		{
-			wacom->id[1] = 0;
-			wacom->serial[1] = ( data[7] & 0x38 ) >> 2;
-		}
-		if ( data[7] & 0xf8 )
-		{
+		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
+			wacom->id[1] = 1;
+			wacom->serial[1] = (data[7] & 0xf8);
 			input_report_key(dev, BTN_0, (data[7] & 0x40));
 			input_report_key(dev, BTN_4, (data[7] & 0x80));
-			if ( (( data[7] & 0x38 ) >> 2) == (wacom->serial[1] & 0x0e) )
-				/* alter REL_WHEEL value so X apps can get it */
-				wacom->serial[1] += (wacom->serial[1] & 0x01) ? -1 : 1 ;
-			else 
-				 wacom->serial[1] = (data[7] & 0x38 ) >> 2;
-			/* don't alter the value when there is no wheel event */
-			if ( wacom->serial[1] == 1 ) wacom->serial[1] = 0;
-			rw = wacom->serial[1];
-			rw = ( rw & 0x08 ) ? -( rw & 0x07 ) : ( rw & 0x07 ); 
+			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
 			input_report_rel(dev, REL_WHEEL, rw);
-			wacom->tool[1] = BTN_TOOL_FINGER;
-			wacom->id[1] = data[7] & 0xf8;
-			input_report_key(dev, wacom->tool[1], 0xf0);
+			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if ( wacom->id[1] ) {
 			wacom->id[1] = 0;
-			wacom->serial[1] = 0;
-			input_report_key(dev, wacom->tool[1], 0);
+			input_report_key(dev, BTN_TOOL_FINGER, 0);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 		input_sync(dev);
@@ -738,8 +724,8 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_LEFT,   data[8] & 0x04);
 			input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 			input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
-			input_report_rel(dev, REL_WHEEL, ((data[8] & 0x02) >> 1)
-					    	 - (data[8] & 0x01));
+			input_report_rel(dev, REL_WHEEL, (data[8] & 0x01)
+					    	 - ((data[8] & 0x02) >> 1));
 
 			/* I3 2D mouse side buttons */	
 			if (wacom->features->type == INTUOS3)

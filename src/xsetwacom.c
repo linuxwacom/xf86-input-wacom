@@ -2,7 +2,7 @@
 ** xsetwacom.c
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2005 - Ping Cheng
+** Copyright (C) 2004-2006 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -22,6 +22,7 @@
 **   2003-05-02 0.0.1 - JEJ - created
 **   2005-10-24 0.0.4 - PC - added Pad
 **   2005-11-17 0.0.5 - PC - update mode code
+**   2006-02-27 0.0.6 - PC - fixed a typo
 *
 ****************************************************************************/
 
@@ -256,7 +257,7 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 		{ WACOMDEVICETYPE_CURSOR, "cursor" },
 		{ WACOMDEVICETYPE_STYLUS, "stylus" },
 		{ WACOMDEVICETYPE_ERASER, "eraser" },
-		{ WACOMDEVICETYPE_STYLUS, "pad" }
+		{ WACOMDEVICETYPE_PAD, "pad" }
 	};
 
 	if (*argv != NULL)
