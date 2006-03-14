@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -981,8 +981,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
 		{
 			DBG(11, ErrorF("Distance over the tablet: %d \n", filtered.distance));
-			if ((filtered.distance > 28 && strstr(common->wcmModel->name, "Intuos3")) 
-			|| (filtered.distance > 112 && !strstr(common->wcmModel->name, "Intuos3")) )
+			if (filtered.distance &&
+			((filtered.distance > 39 && strstr(common->wcmModel->name, "Intuos")) 
+			|| (filtered.distance < 20 && !strstr(common->wcmModel->name, "Intuos"))) )
 			{
 				ds->proximity = 0;
 				filtered.proximity = 0;

@@ -1,3 +1,7 @@
+2006-03-14   Ping Cheng <pingc@wacom.com>
+	* Fixed a relative distance bug in wcmCommon.c
+	* Reday to release 0.7.3 as beta
+
 2006-03-06   Ping Cheng <pingc@wacom.com>
 	* Fixed a Volito bug (Kirill Frolov)
 	* Fixed a xsetwacom.c typo 
