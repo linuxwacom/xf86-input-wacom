@@ -61,6 +61,7 @@
  *   THIS IS FOR TESTING PURPOSES
  *
  *    v1.44-2.6.15.4-pc-0.1 - initial release based on 2.6.15.4
+ *    v1.44-2.6.15.4-pc-0.2 - Fixed serial id report issue
  *
  */
 
@@ -892,6 +893,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	input_set_abs_params(input_dev, ABS_X, 0, wacom->features->x_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, wacom->features->y_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, wacom->features->pressure_max, 0, 0);
+	input_dev->absbit[LONG(ABS_MISC)] |= BIT(ABS_MISC);
 
 	switch (wacom->features->type) {
 		case G4:

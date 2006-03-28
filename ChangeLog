@@ -1,3 +1,7 @@
+2006-03-27   Ping Cheng <pingc@wacom.com>
+	* Fixed serial id report issue in wacom.c (Rob Engle)
+	* Fixed Xinput events being reported twice (Rob Engle)
+
 2006-03-14   Ping Cheng <pingc@wacom.com>
 	* Fixed a relative distance bug in wcmCommon.c
 	* Reday to release 0.7.3 as beta

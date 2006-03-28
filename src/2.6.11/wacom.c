@@ -907,7 +907,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	wacom->features = wacom_features + (id - wacom_ids);
 
 	wacom->dev.evbit[0] |= BIT(EV_KEY) | BIT(EV_ABS);
-	wacom->dev.absbit[0] |= BIT(ABS_X) | BIT(ABS_Y) | BIT(ABS_MISC) | BIT(ABS_PRESSURE);
+	wacom->dev.absbit[0] |= BIT(ABS_X) | BIT(ABS_Y) | BIT(ABS_PRESSURE);
+	wacom->dev.absbit[LONG(ABS_MISC)] |= BIT(ABS_MISC);
 	wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) | BIT(BTN_TOUCH) | BIT(BTN_STYLUS);
 
 	switch (wacom->features->type) {

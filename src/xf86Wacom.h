@@ -38,17 +38,7 @@
 #include <asm/types.h>
 #include <linux/input.h>
 
-/* 2.5 module support */
-#ifndef EV_MSC
-#define EV_MSC 0x04
-#endif
-
-#ifndef MSC_SERIAL
-#define MSC_SERIAL 0x00
-#endif
-
-/* max number of input events to read in one read call */
-#define MAX_EVENTS 50
+#define MAX_USB_EVENTS 32
 
 /* keithp - a hack to avoid redefinitions of these in xf86str.h */
 #ifdef BUS_PCI
@@ -411,15 +401,19 @@ struct _WacomDeviceClass
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 #define RAW_FILTERING_FLAG      4
+#ifdef LINUX_INPUT
+/* set if the /dev/input driver should wait for SYN_REPORT events as the
+   end of record indicator */
+#define USE_SYN_REPORTS_FLAG	8
+#endif
 
-#define DEVICE_ISDV4 0x000C
+#define DEVICE_ISDV4 		0x000C
 
 #define ROTATE_NONE 0
 #define ROTATE_CW 1
 #define ROTATE_CCW 2
 
 #define MAX_CHANNELS 2
-#define MAX_USB_EVENTS 32
 
 struct _WacomCommonRec 
 {
@@ -468,6 +462,7 @@ struct _WacomCommonRec
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
 
 #ifdef LINUX_INPUT
+	int wcmLastToolSerial;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
 #endif
@@ -475,6 +470,9 @@ struct _WacomCommonRec
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
 #define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
+#ifdef LINUX_INPUT
+#define USE_SYN_REPORTS(comm) ((comm)->wcmFlags & USE_SYN_REPORTS_FLAG)
+#endif
 
 /*****************************************************************************
  * XFree86 V4 Inlined Functions and Prototypes

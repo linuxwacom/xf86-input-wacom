@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.21 2006/03/07 00:29:04 pingc Exp $
+ * $Id: wacom.c,v 1.22 2006/03/28 01:35:06 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -946,8 +946,9 @@ static void *wacom_probe(struct usb_device *dev, unsigned int ifnum, const struc
 	wacom->dev.evbit[0] |= BIT(EV_KEY) | BIT(EV_ABS) | BIT(EV_MSC) |
 			wacom->features->evbit;
 	wacom->dev.absbit[0] |= BIT(ABS_X) | BIT(ABS_Y) | BIT(ABS_PRESSURE) |
-			BIT(ABS_DISTANCE) | BIT(ABS_WHEEL) | BIT(ABS_MISC) |
+			BIT(ABS_DISTANCE) | BIT(ABS_WHEEL) |
 			wacom->features->absbit;
+	wacom->dev.absbit[LONG(ABS_MISC)] |= BIT(ABS_MISC);
 	wacom->dev.relbit[0] |= wacom->features->relbit;
 	wacom->dev.keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) |
 			BIT(BTN_MIDDLE) | wacom->features->btnbit;

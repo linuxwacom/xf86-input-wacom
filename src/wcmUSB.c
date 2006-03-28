@@ -26,6 +26,24 @@
 #include "wcmFilter.h"
 
 #ifdef LINUX_INPUT
+
+/* support for compiling module on kernels older than 2.6 */
+#ifndef EV_MSC
+#define EV_MSC 0x04
+#endif
+
+#ifndef MSC_SERIAL
+#define MSC_SERIAL 0x00
+#endif
+
+#ifndef EV_SYN
+#define EV_SYN 0x00
+#endif
+
+#ifndef SYN_REPORT
+#define SYN_REPORT 0
+#endif
+
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbInit(LocalDevicePtr pDev);
 
@@ -277,7 +295,7 @@ static Bool usbDetect(LocalDevicePtr local)
 				(version >> 8) & 0xff, version & 0xff);
 */
 		/* Try to grab the event device so that data don't leak to /dev/input/mice */
-#ifdef EV_SYN
+#ifdef EVIOCGRAB
 		SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
 
 		if (err < 0) 
@@ -451,6 +469,19 @@ static int usbGetRanges(LocalDevicePtr local)
 		return !Success;
 	}
 
+	/* determine if this version of the kernel uses SYN_REPORT or MSC_SERIAL
+	   to indicate end of record for a complete tablet event */
+	if (ISBITSET(ev,EV_SYN))
+	{
+		DBG(2, ErrorF("WACOM: Kernel supports SYN_REPORTs\n"));
+		common->wcmFlags |= USE_SYN_REPORTS_FLAG;
+	}
+	else
+	{
+		DBG(2, ErrorF("WACOM: Kernel doesn't support SYN_REPORTs\n"));
+		common->wcmFlags &= ~USE_SYN_REPORTS_FLAG;
+	}
+
 	/* absolute values */
 	if (ISBITSET(ev,EV_ABS))
 	{
@@ -523,7 +554,7 @@ static int usbParse(WacomCommonPtr common, const unsigned char* data)
 static void usbParseEvent(WacomCommonPtr common,
 	const struct input_event* event)
 {
-	int i, serial, channel;
+	int i, channel;
 
 	/* store events until we receive the MSC_SERIAL containing
 	 * the serial number; without it we cannot determine the
@@ -536,42 +567,54 @@ static void usbParseEvent(WacomCommonPtr common,
 		DBG(1, ErrorF("usbParse: Exceeded event queue (%d)\n",
 				common->wcmEventCnt));
 		common->wcmEventCnt = 0;
+		common->wcmLastToolSerial = 0;
 		return;
 	}
 
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	/* packet terminated by MSC_SERIAL on kernel 2.4 and SYN_REPORT on kernel 2.6 */
-	if ((event->type != EV_MSC) || (event->code != MSC_SERIAL))
+	/* Check for end of record indicator.  On 2.4 kernels MSC_SERIAL is used
+	   but on 2.6 and later kernels SYN_REPORT is used.  */
+	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
-		/* 2.6 none serial number tools fall here */
-#ifdef EV_SYN
-		if ((event->type == EV_SYN) && (event->code == SYN_REPORT) 
-			&& (common->wcmChannelCnt == 1))
+		/* save the serial number so we can look up the channel number later */
+		common->wcmLastToolSerial = event->value;
+
+		/* if SYN_REPORT is end of record indicator, we are done */
+		if (USE_SYN_REPORTS(common))
+			return;
+
+		/* fall through to deliver the X event */
+	}
+	else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+	{
+		/* if we got a SYN_REPORT but weren't expecting one, change over to
+		   using SYN_REPORT as the end of record indicator */
+		if (! USE_SYN_REPORTS(common))
 		{
-			usbParseChannel(common,0,0);
-			common->wcmEventCnt = 0;
+			DBG(2, ErrorF("WACOM: Got unexpected SYN_REPORT, changing mode\n"));
+
+			/* we can expect SYN_REPORT's from now on */
+			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 		}
-#else
-		if ((event->type == 0x00) && (event->code == 0x00) 
-			&& (common->wcmChannelCnt == 1))
-		{
-			usbParseChannel(common,0,0);
-			common->wcmEventCnt = 0;
-		}
-#endif
+
+		/* fall through to deliver the X event */
+	}
+	else
+	{
+		/* not an MSC_SERIAL or SYN_REPORT, bail out */
 		return;
 	}
-	/* serial number is key for channel */
-	serial = event->value;
+
+	/* figure out the channel to use based on serial number */
 	channel = -1;
 
 	/* one channel only? */
 	if (common->wcmChannelCnt == 1)
 	{
 		/* Intuos3 or Graphire4 Pad */
-		if (serial == 0xffffffff || serial == 0xf0)
+		if (common->wcmLastToolSerial == 0xffffffff || common->wcmLastToolSerial == 0xf0)
 		{
 			channel = 1;
 			(&common->wcmChannel[channel].work)->device_type = PAD_ID;
@@ -603,7 +646,7 @@ static void usbParseEvent(WacomCommonPtr common,
 		/* find existing channel */
 		for (i=0; i<common->wcmChannelCnt; ++i)
 		{
-			if (common->wcmChannel[i].work.serial_num == serial)
+			if (common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
 			{
 				channel = i;
 				break;
@@ -635,8 +678,8 @@ static void usbParseEvent(WacomCommonPtr common,
 		}
 	}
 
-	usbParseChannel(common,channel,serial);
-
+	usbParseChannel(common,channel,common->wcmLastToolSerial);
+	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
