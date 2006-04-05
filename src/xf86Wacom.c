@@ -1,7 +1,7 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -92,9 +92,10 @@
  * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it
  * 2005-12-21 47-pc0.7.2 - new release
  * 2006-03-21 47-pc0.7.3 - new release
+ * 2006-03-31 47-pc0.7.3-1 - new release
  */
 
-static const char identification[] = "$Identification: 47-0.7.3 $";
+static const char identification[] = "$Identification: 47-0.7.3-1 $";
 
 /****************************************************************************/
 

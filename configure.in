@@ -552,6 +552,7 @@ AC_OUTPUT(Makefile
 	src/2.6.13/Makefile
 	src/2.6.14/Makefile
 	src/2.6.15/Makefile
+	src/2.6.16/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 
