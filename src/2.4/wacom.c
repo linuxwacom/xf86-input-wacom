@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.23 2006/03/28 01:35:06 pingc Exp $
+ * $Id: wacom.c,v 1.24 2006/05/01 17:49:43 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -311,26 +311,44 @@ static void wacom_penpartner_irq(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int leftmb = (((signed char)data[6] > -80) && !(data[5] &0x20));
 
 	if (urb->status) return;
 
-	if (data[0] != 2 && data[0] != 5)
-	{
-		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
-		wacom_request_reset(wacom);
-		return;
-	}
-
-	input_report_key(dev, BTN_TOOL_PEN, 1);
-	input_report_abs(dev, ABS_MISC, STYLUS_DEVICE_ID); /* report tool id */
-	input_report_abs(dev, ABS_X, data[2] << 8 | data[1]);
-	input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]);
-	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
-	input_report_key(dev, BTN_TOUCH, leftmb);
-	input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
-
-	input_event(dev, EV_MSC, MSC_SERIAL, leftmb);
+	switch (data[0]) {
+		case 1:
+			if (data[5] & 0x80) {
+				wacom->tool[0] = (data[5] & 0x20) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
+				wacom->id[0] = (data[5] & 0x20) ? ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
+				input_report_key(dev, wacom->tool[0], 1);
+				input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
+				input_report_abs(dev, ABS_X, data[2] << 8 | data[1]));
+				input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]));
+				input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
+				input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -127));
+				input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
+			} else {
+				input_report_key(dev, wacom->tool[0], 0);
+				input_report_abs(dev, ABS_MISC, 0); /* report tool id */
+				input_report_abs(dev, ABS_PRESSURE, -1);
+				input_report_key(dev, BTN_TOUCH, 0);
+			}
+			input_event(dev, EV_MSC, MSC_SERIAL, data[5] & 0x80);
+			break;
+		case 2:
+			input_report_key(dev, BTN_TOOL_PEN, 1);
+			input_report_abs(dev, ABS_MISC, STYLUS_DEVICE_ID); /* report tool id */
+			input_report_abs(dev, ABS_X, data[2] << 8 | data[1]);
+			input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]);
+			input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
+			input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -80) && !(data[5] & 0x20));
+			input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
+			input_event(dev, EV_MSC, MSC_SERIAL, ((signed char)data[6] > -80) && !(data[5] & 0x20));
+			break;
+		default:
+			printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
+			wacom_request_reset(wacom);
+			return;
+        }
 }
 
 static void wacom_graphire_irq(struct urb *urb)
@@ -885,7 +903,7 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5), driver_info: 38 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F), driver_info: 39 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0), driver_info: 40 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC3), driver_info: 41 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4), driver_info: 41 },
 
 	/* some Intuos2 6x8's erroneously report as 0x47;
 	 * multiple confirmed examples exist. */

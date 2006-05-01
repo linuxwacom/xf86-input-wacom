@@ -34,15 +34,22 @@ WCM_ARCH=`uname -m`
 AC_MSG_RESULT($WCM_ARCH)
 dnl
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
+WCM_XLIBDIR_DEFAULT2=/usr/lib
 WCM_OPTION_XSERVER64=no
 IS64=`echo $WCM_ARCH | grep -c "64"`
 if test $IS64 != 0; then
 	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
+	WCM_XLIBDIR_DEFAULT2=/usr/lib64
 	WCM_OPTION_XSERVER64=yes
 fi
-WCM_XORGSDK_DEFAULT=$WCM_XLIBDIR_DEFAULT/Server
+if test -f "$WCM_XLIBDIR_DEFAULT/Server/xf86Version.h"; then
+	WCM_XORGSDK_DEFAULT=$WCM_XLIBDIR_DEFAULT/Server
+else
+	WCM_XORGSDK_DEFAULT=/usr
+fi
+
 WCM_TCLTKDIR_DEFAULT=/usr
-XF86SUBDIR=programs/Xserver/hw/xfree86/common
+XF86SUBDIR=programs/Xserver/hw/xfree86
 WCM_LINUXWACOMDIR=`pwd`
 WCM_ENV_NCURSES=no
 dnl Check kernel type
@@ -212,58 +219,38 @@ fi
 ])
 dnl
 AC_DEFUN([AC_WCM_CHECK_XORG_SDK],[
-dnl Check for Xorg sdk environment
+dnl Check for X11 sdk environment
+dnl handle default case
 AC_ARG_WITH(xorg-sdk,
 AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
 [ WCM_XORGSDK="$withval"; ])
 if test x$WCM_ENV_XF86 != xyes; then
-	dnl handle default case
+        dnl handle default case
 	if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
 		WCM_XORGSDK=$WCM_XORGSDK_DEFAULT
 	fi
-
 	if test -n "$WCM_XORGSDK"; then
 		AC_MSG_CHECKING(for valid Xorg SDK)
 		if test -f $WCM_XORGSDK/include/xf86Version.h; then
+			WCM_XORGSDK=$WCM_XORGSDK/include
 			WCM_ENV_XORGSDK=yes
+			AC_MSG_RESULT(ok)
+		elif test -f $WCM_XORGSDK/include/xorg/xf86Version.h; then
+			WCM_ENV_XORGSDK=yes
+			WCM_XORGSDK=$WCM_XORGSDK/include/xorg
 			AC_MSG_RESULT(ok)
 		elif test -f $WCM_XORGSDK/xc/include/xf86Version.h; then
 			WCM_ENV_XORGSDK=yes
-			$WCM_XORGSDK=$WCM_XORGSDK/xc
+			WCM_XORGSDK=$WCM_XORGSDK/xc/include
 			AC_MSG_RESULT(ok)
 		else
+			WCM_ENV_XORGSDK=no
 			AC_MSG_RESULT("xf86Version.h missing")
-			AC_MSG_RESULT("Tried $WCM_XORGSDK/include and WCM_XORGSDK/xc/include")
+			AC_MSG_RESULT([Tried $WCM_XORGSDK/include, $WCM_XORGSDK/include/xorg and $WCM_XORGSDK/xc/include])
 		fi
-		WCM_XORGSDK=`(cd $WCM_XORGSDK; pwd)`
 	fi
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test x$WCM_ENV_XORGSDK = xyes])
-])
-AC_DEFUN([AC_WCM_CHECK_XFREE86SOURCE],[
-dnl Check for X build environment
-if test -d x-includes; then
-	WCM_XF86DIR=x-includes
-fi
-AC_ARG_WITH(xf86,
-AS_HELP_STRING([--with-xf86=dir], [Specify XF86 build directory]),
-[ WCM_XF86DIR="$withval"; ])
-if test -n "$WCM_XF86DIR"; then
-	AC_MSG_CHECKING(for valid XFree86 build environment)
-	if test -f $WCM_XF86DIR/xc/$XF86SUBDIR/xf86Version.h; then
-		WCM_ENV_XF86=yes
-		WCM_XF86DIR="$WCM_XF86DIR/xc"
-		AC_MSG_RESULT(ok)
-	elif test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
-		WCM_ENV_XF86=yes
-		AC_MSG_RESULT(ok)
-	else
-		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_RESULT("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
-	fi
-	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
-fi
-AM_CONDITIONAL(WCM_ENV_XF86, [test x$WCM_ENV_XF86 = xyes])
 ])
 AC_DEFUN([AC_WCM_CHECK_XSOURCE],[
 dnl Check for X build environment
@@ -283,10 +270,10 @@ if test -n "$WCM_XF86DIR"; then
 		WCM_ENV_XF86=yes
 		AC_MSG_RESULT(ok)
 	else
-		AC_MSG_RESULT("xf86Version.h missing")
-		AC_MSG_RESULT("Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR")
+		WCM_ENV_XF86=no
+		AC_MSG_RESULT(xf86Version.h missing)
+		AC_MSG_RESULT(Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR)
 	fi
-	WCM_XF86DIR=`(cd $WCM_XF86DIR; pwd)`
 fi
 AM_CONDITIONAL(WCM_ENV_XF86, [test x$WCM_ENV_XF86 = xyes])
 ])
@@ -305,15 +292,19 @@ if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
 		WCM_ENV_XLIB=yes
 		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
 		AC_MSG_RESULT(found)
+	elif test -a $WCM_XLIBDIR_DEFAULT2/libX11.so; then
+		WCM_ENV_XLIB=yes
+		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT2
+		AC_MSG_RESULT(found)
 	else
-		AC_MSG_RESULT(not found, tried $WCM_XLIBDIR_DEFAULT/X11)
+		AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT/X11 and $WCM_XLIBDIR_DEFAULT2])
 		WCM_ENV_XLIB=no
 	fi
 elif test -d $WCM_XLIBDIR; then
 	WCM_ENV_XLIB=yes
 	AC_MSG_RESULT(found)
 else
-	AC_MSG_RESULT(not found, tried $WCM_XLIBDIR)
+	AC_MSG_RESULT([not found, tried $WCM_XLIBDIR])
 	WCM_ENV_XLIB=no
 fi
 ])
@@ -428,7 +419,7 @@ elif test "$WCM_TKDIR" != "no"; then
 			CFLAGS="$CFLAGS -I$WCM_TKDIR"
 		fi
 	else
-		AC_MSG_RESULT(not found; tried $WCM_TKDIR/include/tk.h and $WCM_TKDIR/tk.h)
+		AC_MSG_RESULT([not found; tried $WCM_TKDIR/include/tk.h and $WCM_TKDIR/tk.h])
 		echo "***"; echo "*** WARNING:"
 		echo "*** The tk library does not appear to be installed."
 		echo "*** Do you have the tk rpm or equivalent package properly"

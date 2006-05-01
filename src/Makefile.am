@@ -7,7 +7,7 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
-x86moduledir = @WCM_XLIBDIR@/modules/input
+x86moduledir = @WCM_MODDIR@
 x86module_DATA = @WCM_XF86MODULES@
 
 AM_CFLAGS = -Wall -pedantic
@@ -52,7 +52,7 @@ ARCHITECTURE	=@WCM_ARCH@
 XSERVER64	=@WCM_XSERVER64@
 
 if WCM_ENV_XORGSDK
-DRIVER_INCLUDES = -I$(XORGSDK_DIR)/include
+DRIVER_INCLUDES = -I$(XORGSDK_DIR) $(X_CFLAGS)
 endif
 
 if WCM_ENV_XF86
@@ -91,7 +91,7 @@ wcmFilter.o: wcmFilter.c xf86Wacom.h
 $(XF86OBJS): xf86Wacom.c Makefile
 	$(CC) $(CFLAGS) $(DEPFLAGS) $(DLLOADER) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
-		-I.  $(DRIVER_INCLUDES) -Dlinux \
+		-I$(srcdir) $(DRIVER_INCLUDES) -Dlinux \
 		-D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
 		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE \
 		-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
@@ -103,7 +103,7 @@ $(XF86OBJS): xf86Wacom.c Makefile
 		-DX_BYTE_ORDER=X_LITTLE_ENDIAN $(XSERVER64) \
 		-DNDEBUG -DFUNCPROTO=15 \
 		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
-		-o $@ -c $(subst .o,.c,$@)
+		-o $@ -c $(srcdir)/$(subst .o,.c,$@)
 
 if WCM_DLLOADER
 wacom_drv.so: $(XF86OBJS)

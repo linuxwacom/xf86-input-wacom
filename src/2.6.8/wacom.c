@@ -337,20 +337,42 @@ static void wacom_penpartner_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] != 2) {
-		printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
-		goto exit;
-	}
-
-	input_regs(dev, regs);
-	input_report_key(dev, BTN_TOOL_PEN, id);
-	input_report_abs(dev, ABS_MISC, STYLUS_DEVICE_ID); /* report tool id */
-	input_report_abs(dev, ABS_X, le16_to_cpu(get_unaligned((u16 *) &data[1])));
-	input_report_abs(dev, ABS_Y, le16_to_cpu(get_unaligned((u16 *) &data[3])));
-	input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
-	input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -80) && !(data[5] & 0x20));
-	input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
-	input_sync(dev);
+	switch (data[0]) {
+		case 1:
+			input_regs(dev, regs);
+			if (data[5] & 0x80) {
+				wacom->tool[0] = (data[5] & 0x20) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
+				wacom->id[0] = (data[5] & 0x20) ? ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
+				input_report_key(dev, wacom->tool[0], 1);
+				input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
+				input_report_abs(dev, ABS_X, le16_to_cpu(*(__le16 *) &data[1]));
+				input_report_abs(dev, ABS_Y, le16_to_cpu(*(__le16 *) &data[3]));
+				input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
+				input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -127));
+				input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
+			} else {
+				input_report_key(dev, wacom->tool[0], 0);
+				input_report_abs(dev, ABS_MISC, 0); /* report tool id */
+				input_report_abs(dev, ABS_PRESSURE, -1);
+				input_report_key(dev, BTN_TOUCH, 0);
+			}
+			input_sync(dev);
+			break;
+		case 2:
+			input_regs(dev, regs);
+			input_report_key(dev, BTN_TOOL_PEN, 1);
+			input_report_abs(dev, ABS_MISC, STYLUS_DEVICE_ID); /* report tool id */
+			input_report_abs(dev, ABS_X, le16_to_cpu(*(__le16 *) &data[1]));
+			input_report_abs(dev, ABS_Y, le16_to_cpu(*(__le16 *) &data[3]));
+			input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
+			input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -80) && !(data[5] & 0x20));
+			input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
+			input_sync(dev);
+			break;
+		default:
+			printk(KERN_INFO "wacom_penpartner_irq: received unknown report #%d\n", data[0]);
+			goto exit;
+        }
 
 exit:
 	retval = usb_submit_urb (urb, GFP_ATOMIC);
@@ -833,7 +855,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x38) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x39) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0) },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC3) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x41) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x42) },
@@ -946,6 +968,10 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 		case PL:
  			wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_STYLUS2) | BIT(BTN_TOOL_RUBBER);
+			break;
+
+		case PENPARTNER:
+			input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER);
 			break;
 	}
 

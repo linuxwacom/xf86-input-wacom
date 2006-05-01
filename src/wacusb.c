@@ -198,7 +198,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "MODEL_PL510",   "Wacom PL510",    8, 0x38 },
 		{ "MODEL_DTU710",  "Wacom PL710",    9, 0x39 },
 		{ "MODEL_DTF720",  "Wacom DTF720",  10, 0xC0 },
-		{ "MODEL_DTF521",  "Wacom DTF521",  11, 0xC3 },
+		{ "MODEL_DTF521",  "Wacom DTF521",  11, 0xC4 },
 		{ NULL }
 	};
 

@@ -1,3 +1,9 @@
+2006-05-01   Ping Cheng <pingc@wacom.com>
+	* Updated DTF-521 support
+	* Updated PenPartner code in wacom.c (Nick Lamb)
+	* Support X.Org 7 wacom driver paths
+	* Removed SYSCALL for unnecessary statements (Andrew Zabolotny)
+
 2006-04-06   Ping Cheng <pingc@wacom.com>
 	* Reday to release 0.7.3-1
 

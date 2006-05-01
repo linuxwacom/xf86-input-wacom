@@ -36,12 +36,13 @@ if test x$WCM_ISLINUX = xyes; then
 	AC_WCM_CHECK_MODVER
 fi
 
-dnl Check for X source
+dnl Check for X source or X SDK
 AC_WCM_CHECK_XSOURCE
-if test x$WCM_ENV_XF86 != xyes; then
-	AC_WCM_CHECK_XFREE86SOURCE
-fi
 AC_WCM_CHECK_XORG_SDK
+# Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
+# is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
+AC_PATH_XTRA
+
 
 dnl Check for TCL, TK, and XLib
 AC_WCM_CHECK_XLIB
@@ -309,9 +310,13 @@ if test "$enable_tabletdev" != "no"; then
 fi
 
 dnl Check for dlloader
+WCM_MODDIR=$WCM_XLIBDIR/modules/input
 WCM_OPTION_DLLOADER=no
 if test -f $WCM_XLIBDIR/modules/input/wacom_drv.so; then
 	WCM_OPTION_DLLOADER=yes
+elif test -f $WCM_XLIBDIR/xorg/modules/input/mouse_drv.so; then
+	WCM_OPTION_DLLOADER=yes
+	WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
 fi
 AC_ARG_ENABLE(dlloader,
 AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
@@ -514,9 +519,10 @@ AC_SUBST(WCM_MODVER)
 AC_SUBST(WCM_KERNELDIR)
 AC_SUBST(WCM_KERNEL_VER)
 AC_SUBST(WCM_LINUXWACOMDIR)
-AC_SUBST(WCM_XORGSDK)
 AC_SUBST(WCM_XF86DIR)
+AC_SUBST(WCM_XORGSDK)
 AC_SUBST(WCM_XLIBDIR)
+AC_SUBST(WCM_MODDIR)
 AC_SUBST(WCM_XSERVER64)
 #AC_SUBST(WCM_OPTION_DLLOADER)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
@@ -564,7 +570,7 @@ echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
 echo "  module versioning - $WCM_OPTION_MODVER $WCM_MODVER"
 echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
 if test "$WCM_ENV_XF86" == "yes"; then
-echo "            XFree86 - $WCM_ENV_XF86 $WCM_XF86DIR"
+echo "           X SOURCE - $WCM_ENV_XF86 $WCM_XF86DIR"
 else
 echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK"
 fi

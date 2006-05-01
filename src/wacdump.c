@@ -78,11 +78,11 @@ struct KEY_STATE
 	int nValue;
 };
 
-	struct ABS_STATE gAbsState[WACOMFIELD_MAX];
-	struct KEY_STATE gKeyState[WACOMBUTTON_MAX];
-	int gnSerialDataRow = 0;
-	int gbCursesRunning = 0;
-	FILE* gLogFile = NULL;
+struct ABS_STATE gAbsState[WACOMFIELD_MAX];
+struct KEY_STATE gKeyState[WACOMBUTTON_MAX];
+int gnSerialDataRow = 0;
+int gbCursesRunning = 0;
+FILE* gLogFile = NULL;
 
 void Usage(void)
 {
@@ -329,7 +329,10 @@ const char* GetSerialButton(unsigned int uButton)
 	{
 		"LEFT", "MIDDLE", "RIGHT", "EXTRA", "SIDE",
 		"TOUCH", "STYLUS", "STYLUS2", "BT0", "BT1",
-		"BT2", "BT3", "BT4", "BT5", "BT6", "BT7" 
+		"BT2", "BT3", "BT4", "BT5", "BT6", "BT7",
+		"BT8", "BT9", "BT10", "BT11", "BT12", "BT13",
+		"BT14", "BT15", "BT16", "BT17", "BT18", "BT19",
+		"BT20", "BT21", "BT22", "BT23"
 	};
 
 	return (uButton >= WACOMBUTTON_MAX) ?  "FIELD?" : xszButton[uButton];
@@ -627,4 +630,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-

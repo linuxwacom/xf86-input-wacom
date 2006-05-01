@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -69,7 +69,7 @@
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
-#include <keysym.h>
+#include <X11/keysym.h>
 #include <mipointer.h>
 
 #ifdef XFree86LOADER
@@ -496,8 +496,17 @@ struct _WacomCommonRec
 /*****************************************************************************
  * General Inlined functions and Prototypes
  ****************************************************************************/
-
+/* BIG HAIRY WARNING:
+ * Don't overuse SYSCALL(): use it ONLY when you call low-level functions such
+ * as ioctl(), read(), write() and such. Otherwise you can easily lock up X11,
+ * for example: you pull out the USB tablet, the handle becomes invalid,
+ * xf86WcmRead() returns -1 AND errno is left as EINTR from hell knows where.
+ * Then you'll loop forever, and even Ctrl+Alt+Backspace doesn't help.
+ * xf86WcmReadSerial, WriteSerial, CloseSerial & company already use SYSCALL()
+ * internally; there's no need to duplicate it outside the call.
+ */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
+
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 int xf86WcmWait(int t);

@@ -373,7 +373,7 @@ static Bool usbInit(LocalDevicePtr local)
 			case 0x37: /* PTU700 */
 			case 0x38: /* PL510 */
 			case 0xC0: /* DTF720 */
-			case 0xC3: /* DTF521 */
+			case 0xC4: /* DTF521 */
 				model = &usbCintiq; break;
 
 			case 0x41: /* Intuos2 4x5 */

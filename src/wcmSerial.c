@@ -265,7 +265,7 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 	/* send request string */
 	do
 	{
-		SYSCALL(len = xf86WcmWrite(fd, request, strlen(request)));
+		len = xf86WcmWrite(fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
 			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
@@ -292,7 +292,7 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 		{
 			if ((nr = xf86WcmWaitForTablet(fd)) > 0)
 			{
-				SYSCALL(nr = xf86WcmRead(fd, answer, 1));
+				nr = xf86WcmRead(fd, answer, 1);
 				if ((nr == -1) && (errno != EAGAIN))
 				{
 					ErrorF("Wacom xf86WcmRead error : %s\n",
@@ -322,7 +322,7 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 			{
 				if ((nr = xf86WcmWaitForTablet(fd)) > 0)
 				{
-					SYSCALL(nr = xf86WcmRead(fd, answer+1, 1));
+					nr = xf86WcmRead(fd, answer+1, 1);
 					if ((nr == -1) && (errno != EAGAIN))
 					{
 						ErrorF("Wacom xf86WcmRead error : %s\n",
@@ -361,7 +361,7 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 		{
 			if ((nr = xf86WcmWaitForTablet(fd)) > 0)
 			{
-				SYSCALL(nr = xf86WcmRead(fd, answer+len, 1));
+				nr = xf86WcmRead(fd, answer+len, 1);
 				if ((nr == -1) && (errno != EAGAIN))
 				{
 					ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
@@ -418,8 +418,8 @@ static Bool serialInit(LocalDevicePtr local)
 		return !Success;
     
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
-		strlen(WC_RESET_BAUD)));
+	err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
+		strlen(WC_RESET_BAUD));
 
 	if (err == -1)
 	{
@@ -432,7 +432,7 @@ static Bool serialInit(LocalDevicePtr local)
 		return !Success;
 
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
+	err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -448,8 +448,8 @@ static Bool serialInit(LocalDevicePtr local)
 		return !Success;
     
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
-		strlen(WC_RESET_BAUD)));
+	err = xf86WcmWrite(local->fd, WC_RESET_BAUD,
+		strlen(WC_RESET_BAUD));
 
 	if (err == -1)
 	{
@@ -462,7 +462,7 @@ static Bool serialInit(LocalDevicePtr local)
 		return !Success;
 
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
+	err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -478,7 +478,7 @@ static Bool serialInit(LocalDevicePtr local)
 		return !Success;
     
 	/* Send reset to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD)));
+	err = xf86WcmWrite(local->fd, WC_RESET_BAUD, strlen(WC_RESET_BAUD));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -489,7 +489,7 @@ static Bool serialInit(LocalDevicePtr local)
 	if (xf86WcmWait(250))
 		return !Success;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_STOP, strlen(WC_STOP)));
+	err = xf86WcmWrite(local->fd, WC_STOP, strlen(WC_STOP));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -504,7 +504,7 @@ static Bool serialInit(LocalDevicePtr local)
 
 	if (serialInitTablet(local) == !Success)
 	{
-		SYSCALL(xf86WcmClose(local->fd));
+		xf86WcmClose(local->fd);
 		local->fd = -1;
 		return !Success;
 	}
@@ -1090,8 +1090,8 @@ static int serialGetRanges(LocalDevicePtr local)
 static int serialResetIntuos(LocalDevicePtr local)
 {
 	int err;
-	SYSCALL(err = xf86WcmWrite(local->fd, intuos_setup_string,
-		strlen(intuos_setup_string)));
+	err = xf86WcmWrite(local->fd, intuos_setup_string,
+		strlen(intuos_setup_string));
 	return (err == -1) ? !Success : Success;
 }
 
@@ -1099,16 +1099,16 @@ static int serialResetCintiq(LocalDevicePtr local)
 {
 	int err;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
+	err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET));
   
 	if (xf86WcmWait(75)) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, pl_setup_string,
-		strlen(pl_setup_string)));
+	err = xf86WcmWrite(local->fd, pl_setup_string,
+		strlen(pl_setup_string));
 	if (err == -1) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
+	err = xf86WcmWrite(local->fd, penpartner_setup_string,
+		strlen(penpartner_setup_string));
 
 	return (err == -1) ? !Success : Success;
 }
@@ -1116,8 +1116,8 @@ static int serialResetCintiq(LocalDevicePtr local)
 static int serialResetPenPartner(LocalDevicePtr local)
 {
 	int err;
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
+	err = xf86WcmWrite(local->fd, penpartner_setup_string,
+		strlen(penpartner_setup_string));
 	return (err == -1) ? !Success : Success;
 }
 
@@ -1125,16 +1125,16 @@ static int serialResetProtocol4(LocalDevicePtr local)
 {
 	int err;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET)));
+	err = xf86WcmWrite(local->fd, WC_RESET, strlen(WC_RESET));
   
 	if (xf86WcmWait(75)) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, setup_string,
-		strlen(setup_string)));
+	err = xf86WcmWrite(local->fd, setup_string,
+		strlen(setup_string));
 	if (err == -1) return !Success;
 
-	SYSCALL(err = xf86WcmWrite(local->fd, penpartner_setup_string,
-		strlen(penpartner_setup_string)));
+	err = xf86WcmWrite(local->fd, penpartner_setup_string,
+		strlen(penpartner_setup_string));
 	return (err == -1) ? !Success : Success;
 }
 
@@ -1150,7 +1150,7 @@ static int serialEnableSuppressProtocol4(LocalDevicePtr local)
 	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
-	SYSCALL(err = xf86WcmWrite(local->fd, buf, strlen(buf)));
+	err = xf86WcmWrite(local->fd, buf, strlen(buf));
 
 	if (err == -1)
 	{
@@ -1190,8 +1190,8 @@ static int serialSetLinkSpeedProtocol5(LocalDevicePtr local)
 		WC_V_38400 : WC_V_19200;
 
 	/* Switch the tablet to the requested speed */
-	SYSCALL(err = xf86WcmWrite(local->fd, speed_init_string,
-		strlen(speed_init_string)));
+	err = xf86WcmWrite(local->fd, speed_init_string,
+		strlen(speed_init_string));
 
 	if (err == -1)
 	{
@@ -1215,7 +1215,7 @@ static int serialStartTablet(LocalDevicePtr local)
 	int err;
 
 	/* Tell the tablet to start sending coordinates */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_START, strlen(WC_START)));
+	err = xf86WcmWrite(local->fd, WC_START, strlen(WC_START));
 
 	if (err == -1)
 	{

@@ -83,7 +83,7 @@ static Bool isdv4Init(LocalDevicePtr local)
 		return !Success;
    
 	/* Send stop command to the tablet */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP)));
+	err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
 	{
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
@@ -122,7 +122,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	/* Send query command to the tablet */
 	do
 	{
-		SYSCALL(nr = xf86WcmWrite(local->fd, WC_ISDV4_QUERY, strlen(WC_ISDV4_QUERY)));
+		nr = xf86WcmWrite(local->fd, WC_ISDV4_QUERY, strlen(WC_ISDV4_QUERY));
 		if ((nr == -1) && (errno != EAGAIN))
 		{
 			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
@@ -144,7 +144,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	{
 		if ((nr = xf86WcmWaitForTablet(local->fd)) > 0)
 		{
-			SYSCALL(nr = xf86WcmRead(local->fd, data, 11));
+			nr = xf86WcmRead(local->fd, data, 11);
 			if ((nr == -1) && (errno != EAGAIN))
 			{
 				ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
@@ -183,7 +183,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	int err;
 
 	/* Tell the tablet to start sending coordinates */
-	SYSCALL(err = xf86WcmWrite(local->fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING))));
+	err = xf86WcmWrite(local->fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING)));
 
 	if (err == -1)
 	{

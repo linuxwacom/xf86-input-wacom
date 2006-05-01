@@ -2,7 +2,7 @@
 ** wactablet.h
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2005 - Ping Cheng
+** Copyright (C) 2003 - 2006 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -89,7 +89,23 @@ struct _WACOMMODEL
 #define WACOMBUTTON_BT5         13
 #define WACOMBUTTON_BT6         14
 #define WACOMBUTTON_BT7         15
-#define WACOMBUTTON_MAX         16
+#define WACOMBUTTON_BT8         16
+#define WACOMBUTTON_BT9         17
+#define WACOMBUTTON_BT10        18
+#define WACOMBUTTON_BT11        19
+#define WACOMBUTTON_BT12        20
+#define WACOMBUTTON_BT13        21
+#define WACOMBUTTON_BT14        22
+#define WACOMBUTTON_BT15        23
+#define WACOMBUTTON_BT16        24
+#define WACOMBUTTON_BT17        25
+#define WACOMBUTTON_BT18        26
+#define WACOMBUTTON_BT19        27
+#define WACOMBUTTON_BT20        28
+#define WACOMBUTTON_BT21        29
+#define WACOMBUTTON_BT22        30
+#define WACOMBUTTON_BT23        31
+#define WACOMBUTTON_MAX         32
 
 #define WACOMFIELD_TOOLTYPE     0
 #define WACOMFIELD_SERIAL       1
