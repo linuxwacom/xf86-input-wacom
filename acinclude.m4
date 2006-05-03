@@ -177,18 +177,6 @@ if test x$WCM_ENV_KERNEL = xyes; then
 					WCM_KERNEL_VER="2.6.9"
 				elif test $MINOR -eq 8; then
 					WCM_KERNEL_VER="2.6.8"
-				elif test $MINOR -eq 7; then
-					WCM_KERNEL_VER="2.6.7"
-				elif test $MINOR -eq 6; then
-					WCM_KERNEL_VER="2.6.6"
-				elif test $MINOR -eq 5; then
-					WCM_KERNEL_VER="2.6.5"
-				elif test $MINOR -eq 4; then
-					WCM_KERNEL_VER="2.6.4"
-				elif test $MINOR -eq 3; then
-					WCM_KERNEL_VER="2.6.3"
-				elif test $MINOR -eq 2; then
-					WCM_KERNEL_VER="2.6.2"
 				else
 					WCM_KERNEL_VER="2.6"
 				fi

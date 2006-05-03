@@ -1,8 +1,13 @@
+May 03, 2006 - Ping Cheng
+
+2.6 kernels older than 2.6.8 are removed from the project to avoid updating 
+the less used kernels. Support for X.Org 7 is added.
+
 December 05, 2005 - Ping Cheng
 
 We managed to merge x86 and x86-64 back into one package now (release 0.7.1). 
 The package contents have been changed too (no need to build mousedev and 
-usbmouse and change //dev/input/mice in X configure file xorg.conf or XF86Config 
+usbmouse and change /dev/input/mice in X configure file xorg.conf or XF86Config 
 for 2.6.x anymore). Refer to ChangeLog and website for details. 
 
 August 18, 2005 - Ping Cheng
