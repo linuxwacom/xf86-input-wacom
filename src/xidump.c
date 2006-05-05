@@ -2,7 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
-** Copyright (C) 2004 - 2005 - Ping Cheng 
+** Copyright (C) 2004 - 2006 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@
 **   2003-04-07 0.5.1 - added pressure bar
 **   2005-07-27 0.5.2 - remove unused GTK stuff [jg]
 **   2005-11-11 0.7.1 - report tool ID and serial number
+**   2006-05-05 0.7.4 - Removed older 2.6 kernels
 **
 ****************************************************************************/
 
@@ -38,7 +39,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.7.1"
+#define XIDUMP_VERSION "0.7.4"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

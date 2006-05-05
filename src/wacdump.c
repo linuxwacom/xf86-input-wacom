@@ -32,6 +32,7 @@
 **   2005-09-01 0.7.0 - Added Cintiq 21UX
 **   2005-02-17 0.7.1 - added Graphire 4
 **   2006-02-27 0.7.3 - added DTF 521, I3 12x12 & 12x19
+**   2006-05-05 0.7.4 - Removed older 2.6 kernels
 **
 ****************************************************************************/
 
@@ -50,7 +51,7 @@
 #include "config.h"
 #endif
 
-#define WACDUMP_VER "0.7.3"
+#define WACDUMP_VER "0.7.4"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
