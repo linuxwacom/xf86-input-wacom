@@ -29,18 +29,39 @@ WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 dnl Check architecture
-AC_MSG_CHECKING(for processor type)
-WCM_ARCH=`uname -m`
+AC_MSG_CHECKING(for arch type)
+AC_ARG_WITH(arch,
+AC_HELP_STRING([--with-arch], [Use specified architecture]),
+[ WCM_ARCH=$withval 
+],
+[
+	dnl Try the compiler for the build arch first.
+	dnl We may be cross compiling or building for
+	dnl a 32bit system with a 64 bit kernel etc.
+	WCM_ARCH=`$CC -dumpmachine 2> /dev/null`
+	test $? = 0 || WCM_ARCH=`uname -m`
+])
 AC_MSG_RESULT($WCM_ARCH)
-dnl
+
+dnl Check for X server bit
+AC_ARG_ENABLE(xserver64,
+AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=usually]]]),
+[ WCM_OPTION_XSERVER64=$enableval 
+],
+[
+	WCM_OPTION_XSERVER64=no
+	test `echo $WCM_ARCH | grep -c "64"` == 0 || WCM_OPTION_XSERVER64=yes
+])
+
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
 WCM_XLIBDIR_DEFAULT2=/usr/lib
-WCM_OPTION_XSERVER64=no
-IS64=`echo $WCM_ARCH | grep -c "64"`
-if test $IS64 != 0; then
+if test "$WCM_OPTION_XSERVER64" = "yes"; then
+	CFLAGS="$CFLAGS -D__amd64__"
+	WCM_XSERVER64="-D_XSERVER64"
+	test `echo $WCM_ARCH | grep -c "x86_64"` == 0 ||
+		WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
 	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
-	WCM_XLIBDIR_DEFAULT2=/usr/lib64
-	WCM_OPTION_XSERVER64=yes
+	test -L /usr/lib64 || WCM_XLIBDIR_DEFAULT2=/usr/lib64
 fi
 if test -f "$WCM_XLIBDIR_DEFAULT/Server/xf86Version.h"; then
 	WCM_XORGSDK_DEFAULT=$WCM_XLIBDIR_DEFAULT/Server
@@ -275,14 +296,14 @@ AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
 dnl handle default case
 AC_MSG_CHECKING(for X lib directory)
 if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
-	if test -d $WCM_XLIBDIR_DEFAULT/X11 ||
+	if test -f $WCM_XLIBDIR_DEFAULT2/libX11.so; then
+		WCM_ENV_XLIB=yes
+		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT2
+		AC_MSG_RESULT(found)
+	elif test -d $WCM_XLIBDIR_DEFAULT/X11 ||
 		test -d $WCM_XLIBDIR_DEFAULT; then
 		WCM_ENV_XLIB=yes
 		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
-		AC_MSG_RESULT(found)
-	elif test -a $WCM_XLIBDIR_DEFAULT2/libX11.so; then
-		WCM_ENV_XLIB=yes
-		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT2
 		AC_MSG_RESULT(found)
 	else
 		AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT/X11 and $WCM_XLIBDIR_DEFAULT2])

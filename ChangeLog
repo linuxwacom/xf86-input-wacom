@@ -1,3 +1,11 @@
+2006-05-25   Ping Cheng <pingc@wacom.com>
+	* Fixed a typo in some wacom.c files
+	* Update configure.in and acinclude.m4 (Ron at Debian) for
+	   xorg 7 installation path
+	   detecting target arch
+	   configure xlib path 
+	* Release as 0.7.4-2
+
 2006-05-05   Ping Cheng <pingc@wacom.com>
 	* Updated website
 	* Ready to release 0.7.4
@@ -12,7 +20,7 @@
 	* Removed SYSCALL for unnecessary statements (Andrew Zabolotny)
 
 2006-04-06   Ping Cheng <pingc@wacom.com>
-	* Reday to release 0.7.3-1
+	* Ready to release 0.7.3-1
 
 2006-03-31   Ping Cheng <pingc@wacom.com>
 	* Support 2.6.16
@@ -24,7 +32,7 @@
 
 2006-03-14   Ping Cheng <pingc@wacom.com>
 	* Fixed a relative distance bug in wcmCommon.c
-	* Reday to release 0.7.3 as beta
+	* Ready to release 0.7.3 as beta
 
 2006-03-06   Ping Cheng <pingc@wacom.com>
 	* Fixed a Volito bug (Kirill Frolov)

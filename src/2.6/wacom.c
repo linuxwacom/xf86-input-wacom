@@ -968,7 +968,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 			break;
 
 		case PENPARTNER:
-			input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER);
+			wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER);
 			break;
 	}
 
