@@ -1,3 +1,9 @@
+2006-06-15   Ping Cheng <pingc@wacom.com>
+	* Updated web pages with new success stories and a
+	  link to Wacom Ubuntu Wiki
+	* Fixed a Volito1 wacom.c issue as reported by 
+	  Samuel Colin (Samuel.Colin@laposte.net)
+
 2006-05-25   Ping Cheng <pingc@wacom.com>
 	* Fixed a typo in some wacom.c files
 	* Update configure.in and acinclude.m4 (Ron at Debian) for

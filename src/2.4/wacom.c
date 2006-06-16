@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.24 2006/05/01 17:49:43 pingc Exp $
+ * $Id: wacom.c,v 1.25 2006/06/16 21:25:34 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
@@ -305,7 +305,6 @@ static void wacom_ptu_irq(struct urb *urb)
 	input_event(dev, EV_MSC, MSC_SERIAL, 0);
 }
 
-
 static void wacom_penpartner_irq(struct urb *urb)
 {
 	struct wacom *wacom = urb->context;
@@ -321,8 +320,8 @@ static void wacom_penpartner_irq(struct urb *urb)
 				wacom->id[0] = (data[5] & 0x20) ? ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
 				input_report_key(dev, wacom->tool[0], 1);
 				input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
-				input_report_abs(dev, ABS_X, data[2] << 8 | data[1]));
-				input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]));
+				input_report_abs(dev, ABS_X, data[2] << 8 | data[1]);
+				input_report_abs(dev, ABS_Y, data[4] << 8 | data[3]);
 				input_report_abs(dev, ABS_PRESSURE, (signed char)data[6] + 127);
 				input_report_key(dev, BTN_TOUCH, ((signed char)data[6] > -127));
 				input_report_key(dev, BTN_STYLUS, (data[5] & 0x40));
@@ -360,7 +359,8 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	if (data[0] == 99) return; /* for Volito tablets */
+	/* for Volito2 tablets */
+	if (data[0] == 99 && !(strstr(wacom->features->name, "Volito1"))) return;
 
 	if (data[0] != 2)
 	{
@@ -808,7 +808,7 @@ struct wacom_features wacom_features[] = {
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
 	/* Volito */
-	/* 23 */ { "Wacom Volito",         8,   5104,  3712,   511, 32,
+	/* 23 */ { "Wacom Volito1",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 	/* Volito2 - PenPartner - PenStation */
 	/* 24 */ { "Wacom PenStation2",    8,   3250,  2320,   255, 32,

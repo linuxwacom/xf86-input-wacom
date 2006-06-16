@@ -102,6 +102,7 @@ MODULE_LICENSE(DRIVER_LICENSE);
 
 enum {
 	PENPARTNER = 0,
+	VOLITO1,
 	GRAPHIRE,
 	G4,
 	PL,
@@ -398,7 +399,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	if (data[0] == 99) return; /* for Volito tablets */
+	/* for Volito tablets */
+	if (data[0] == 99 && wacom->features->type == VOLITO1) return; 
 
 	if (data[0] != 2) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
@@ -768,7 +770,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 32, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Graphire4 4x5", 8,  10208,  7424,  511, 32, G4,	 wacom_graphire_irq },
 	{ "Wacom Graphire4 6x8", 8,  16704, 12064,  511, 32, G4,	 wacom_graphire_irq },
-	{ "Wacom Volito",        8,   5104,  3712,  511, 32, GRAPHIRE,   wacom_graphire_irq },
+	{ "Wacom Volito",        8,   5104,  3712,  511, 32, VOLITO1,   wacom_graphire_irq },
 	{ "Wacom PenStation2",   8,   3250,  2320,  255, 32, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 32, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 32, GRAPHIRE,   wacom_graphire_irq },
@@ -927,6 +929,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 			/* fall through */
 
 		case GRAPHIRE:
+		case VOLITO1:
 			input_dev->evbit[0] |= BIT(EV_REL);
 			input_dev->relbit[0] |= BIT(REL_WHEEL);
 			input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE);
