@@ -1,5 +1,5 @@
 /*
- * $Id: wacom.c,v 1.25 2006/06/16 21:25:34 pingc Exp $
+ * $Id: wacom.c,v 1.26 2006/06/17 00:01:58 pingc Exp $
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik  <vojtech@suse.cz>
  *  Copyright (c) 2000 Andreas Bach Aaen    <abach@stofanet.dk>
