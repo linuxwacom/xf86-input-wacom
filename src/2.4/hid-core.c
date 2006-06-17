@@ -1,6 +1,4 @@
 /*
- * $Id: hid-core.c,v 1.9 2006/05/01 17:49:43 pingc Exp $
- *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *
