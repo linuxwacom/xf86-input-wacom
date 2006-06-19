@@ -405,8 +405,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		goto exit;
 	}
 
-	/* for Volito tablets */
-	if (data[0] == 99 && wacom->features->type == VOLITO1) return; 
+	/* 2 Volito1 and 2 users say this is wrong
+	if (data[0] == 99) return; */
 
 	if (data[0] != 2) {
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
@@ -807,7 +807,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 15, INTUOS,     wacom_intuos_irq },
 	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 15, INTUOS,     wacom_intuos_irq },
 	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 15, INTUOS,     wacom_intuos_irq },
-	{ "Wacom Volito",        8,   5104,  3712,  511, 32, VOLITO1,    wacom_graphire_irq },
+	{ "Wacom Volito",        8,   5104,  3712,  511, 32, GRAPHIRE,    wacom_graphire_irq },
 	{ "Wacom PenStation2",   8,   3250,  2320,  255, 32, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 32, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 32, GRAPHIRE,   wacom_graphire_irq },
@@ -941,7 +941,6 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 			/* fall through */
 
 		case GRAPHIRE:
-		case VOLITO1:
 			wacom->dev.evbit[0] |= BIT(EV_REL);
 			wacom->dev.relbit[0] |= BIT(REL_WHEEL);
 			wacom->dev.absbit[0] |= BIT(ABS_DISTANCE);

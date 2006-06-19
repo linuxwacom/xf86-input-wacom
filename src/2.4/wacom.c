@@ -357,8 +357,8 @@ static void wacom_graphire_irq(struct urb *urb)
 
 	if (urb->status) return;
 
-	/* for Volito2 tablets */
-	if (data[0] == 99 && !(strstr(wacom->features->name, "Volito1"))) return;
+	/* 2 Volito1 and 2 users say this is wrong
+	if (data[0] == 99) return; */
 
 	if (data[0] != 2)
 	{
@@ -805,7 +805,7 @@ struct wacom_features wacom_features[] = {
 	/* 22 */ { "Wacom Intuos2 12x18", 10,  45720, 31680,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS_BUTTONS, WACOM_INTUOS_TOOLS },
-	/* Volito */
+	/* Volito1 */
 	/* 23 */ { "Wacom Volito1",         8,   5104,  3712,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 	/* Volito2 - PenPartner - PenStation */
