@@ -900,8 +900,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		{
 			fs.x[i]= ds.x;
 			fs.y[i]= ds.y;
-+                       fs.tiltx[i] = ds.tiltx;
-+                       fs.tilty[i] = ds.tilty;
+			fs.tiltx[i] = ds.tiltx;
+			fs.tilty[i] = ds.tilty;
 		}
 		++fs.npoints;
 	} else  {

@@ -96,7 +96,6 @@ proc updateXinitrc {device option value} {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1
 	exec sed -e "/xsetwacom set $device $option /d" /tmp/xinitrc1 > /tmp/wacom
-puts "xsetwacom set $device $option $value"
 	exec echo "xsetwacom set $device $option $value" > ~/.xinitrc
 	exec cat /tmp/wacom >> ~/.xinitrc
 	file delete -force /tmp/wacom /tmp/xinitrc1
