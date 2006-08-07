@@ -28,6 +28,7 @@
 **   2005-07-27 0.5.2 - remove unused GTK stuff [jg]
 **   2005-11-11 0.7.1 - report tool ID and serial number
 **   2006-05-05 0.7.4 - Removed older 2.6 kernels
+**   2006-07-19 0.7.5 - Support buttons and keys combined
 **
 ****************************************************************************/
 
@@ -39,7 +40,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.7.4"
+#define XIDUMP_VERSION "0.7.5"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -615,6 +616,19 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			wacscrn_output(nButtonRow,12 + (nBtn-1) * 10,chBuf);
 			if (bDown) wacscrn_normal();
 		}
+		else if ((pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]) ||
+				(pAny->type == gnInputEvent[INPUTEVENT_KEY_RELEASE]))
+		{
+			XDeviceKeyEvent* pKey = (XDeviceKeyEvent*)pAny;
+			bDown = (pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]);
+			nBtn = pKey->keycode - 7; /* first key is always 8 */
+			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
+			snprintf(chBuf,sizeof(chBuf),"%d-%s",pKey->keycode - 7,
+					bDown ? "DOWN" : "UP  ");
+			if (bDown) wacscrn_standout();
+			wacscrn_output(nKeyRow,12 + (nBtn-1) * 10,chBuf);
+			if (bDown) wacscrn_normal();
+		}
 		else
 		{
 			snprintf(chBuf,sizeof(chBuf),"%ld - %-60s",
@@ -702,6 +716,14 @@ static int RawRunDefault(Display* pDisp, XDeviceInfo* pDevInfo)
 					pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS] ?
 						"DOWN" : "UP");
 		}
+		else if ((pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]) ||
+				(pAny->type == gnInputEvent[INPUTEVENT_KEY_RELEASE]))
+		{
+			XDeviceKeyEvent* pKey = (XDeviceKeyEvent*)pAny;
+			printf("Key: %d %s\n", pKey->keycode - 7,
+			       (pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]) ?
+			       "DOWN" : "UP");
+		}
 		else
 		{
 			printf("Event: %s\n",GetEventName(pAny->type));
@@ -746,7 +768,7 @@ static int RawRunAccel(Display* pDisp, XDeviceInfo* pDevInfo)
 				dy = y[head] - y[prev];
 
 				if ((abs(dx) < gnSuppress) &&
-					(abs(dy) >= gnSuppress)) continue;
+					(abs(dy) < gnSuppress)) continue;
 
 				dd[head] = d[head] - d[prev];
 				vx[head] = dd[head] ? (dx/dd[head]) : 0;

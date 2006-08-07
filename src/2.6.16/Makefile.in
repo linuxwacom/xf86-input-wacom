@@ -48,6 +48,7 @@ endif # WCM_OPTION_HID not
 
 ifeq ($(WCM_OPTION_WACOM),yes)
 ifneq ($(CONFIG_USB_WACOM),y)
+wacom-objs := wacom_wac.o wacom_sys.o
 obj-m += wacom.o
 else
 $(error You requested to build wacom with configure, but wacom is configured as built-in in your kernel config)

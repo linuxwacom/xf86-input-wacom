@@ -1,0 +1,185 @@
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH WACOM __drivermansuffix__ __vendorversion__
+.SH NAME
+wacom \- Wacom input driver
+.SH SYNOPSIS
+.nf
+.B "Section \*qInputDevice\*q"
+.BI "  Identifier \*q" idevname \*q
+.B  "  Driver \*qwacom\*q"
+.BI "  Option \*qDevice\*q   \*q" devpath \*q
+\ \ ...
+.B EndSection
+.fi
+.SH DESCRIPTION
+.B wacom 
+is an __xservername__ input driver for Wacom devices.
+.PP
+The
+.B wacom
+driver functions as a pointer input device, and may be used as the
+X server's core pointer.
+.SH SUPPORTED HARDWARE
+This driver supports the Wacom IV and Wacom V protocols. Serial tablets only 
+need this driver.  USB tablet support is available on some Linux platforms. 
+USB tablets needs wacom kernel driver being loaded before this driver starts.  
+Please check linuxwacom.sf.net for latest updates of Wacom X and kernel drivers.
+.SH CONFIGURATION DETAILS
+Please refer to __xconfigfile__(__filemansuffix__) for general configuration
+details and for options that can be used with all input drivers.  This
+section only covers configuration details specific to this driver.
+.PP
+Multiple instances of the Wacom devices can cohabit. It can be useful
+to define multiple devices with different active zones. Each device
+supports the following entries:
+.RS 8
+.TP 4
+.B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"\fP
+sets the type of tool the device represents. This option is mandatory.  "pad" is 
+for Intuos 3, Cintiq 21UX, or Graphire 4 Tablet Menu Strip(s) only. It is required 
+for Intuos 3, Cintiq 21UX, or Graphire 4 if your application supports Tablet Menu 
+Strip features.  "pad" is reported as a second tool in the driver.  Since it will 
+not move the system's cursor,  IT SHOULD NOT have any of those core options, such 
+as "SendCoreEvents" or "AlwaysCore.
+.TP 4
+.B Option \fI"Device"\fP \fI"path"\fP
+sets the path to the special file which represents serial line where
+the tablet is plugged.  You have to specify it for each subsection with
+the same value if you want to have multiple devices with the same tablet.
+This option is mandatory.
+.TP 4
+.B Option \fI"USB"\fP \fI"on"\fP
+tells the driver to dialog with the tablet the USB way.  This option is
+mandatory for USB tablets.
+.TP 4
+.B Option \fI"ForceDevice"\fP \fI"ISDV4"\fP
+tells the driver to dialog with the tablet the Tablet PC way.  Tablet PC is a 
+serial tablet using a special Wacom IV protocol, called ISDV4 protocol.  This 
+option is mandatory for Tablet PC.
+.TP 4
+.B Option \fI"Suppress"\fP \fI"Inumber"\fP
+sets the position increment under which not to transmit coordinates.
+This entry must be specified only in the first Wacom subsection if you have
+multiple devices for one tablet. If you don't specify this entry, the default value,
+which is 2, will be used. To disable suppression, the entry should be specified as 0.
+When suppress is defined,  an event will be sent only when at least one of the 
+following conditions is met:
+
+        the change between the current X coordinate and the previous one is
+greater than suppress;
+
+        the change between the current Y coordinate and the previous one is
+greater than suppress;
+
+        the change between the current pressure and the previous one is
+greater than suppress;
+
+        the change between the  current degree of rotation and the previous
+one of the transducer is greater than suppress;
+
+        the change between the current wheel value and the previous one is
+equal to or greater than suppress;
+
+        button value has changed;
+
+        proximity has changed.
+.TP 4
+.B Option \fI"Mode"\fP \fI"Relative"|"Absolute"\fP
+sets the mode of the device.
+.TP 4
+.B Option \fI"TopX"\fP \fI"number"\fP
+X coordinate of the top corner of the active zone.
+.TP 4
+.B Option \fI"TopY"\fP \fI"number"\fP
+Y coordinate of the top corner of the active zone.
+.TP 4
+.B Option \fI"BottomX"\fP \fI"Inumber"\fP
+X coordinate of the bottom corner of the active zone.
+.TP 4
+.B Option \fI"BottomY"\fP \fI"number"\fP
+Y coordinate of the bottom corner of the active zone.
+.TP 4
+.B Option \fI"ButtonsOnly"\fP \fI"on"\fP
+disables the device's motion events.
+.TP 4
+.B Option \fI"ButtonM"\fP \fI"N"\fP
+reports a button N click when button M is pressed,  where M is one of the 
+wacom supported button numbers,  it can be 1 to 16 and N can be an integer 
+between 1 and 19. The default value for button M is M.  When N is less than 17,  
+button M is assigned to the function of button N.  When N is 17,  button M is 
+a left-double-click.  When N is 18, button M is ignored, i.e., no button event 
+will be reported when clicking on button M. When N is 19, button M is assigned 
+to Mode Toggle, switching between relative and absolute mode, which is especially 
+useful to switch windows in a multi-monitor environment.
+.TP 4
+.B Option \fI"TPCButton"\fP \fI"on"\fP
+enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus button
+event only when its tip is pressed.  Default to "on" for Tablet PC; "off" for 
+all the other models.
+.TP 4
+.B Option \fI"Speed"\fP \fI"Rspeed"\fP
+sets the cursor's relative movement speed to Rspeed.  The default value is 1.0.  
+A Rspeed greater than 1.0 will speed up the cursor's relative movement.  A Rspeed 
+less than 1.0 but greater than 0 will slow down the cursor's relative movement. 
+A Rspeed too close to 0 is not recommanded.
+.TP 4
+.B Option \fI"Twinview"\fP \fI"horizontal"|"vertical"|"none"\fP
+sets the orientation of TwinView to map the tablet to one screen and to be able 
+to move the screen cursor from one screen to the other when tool reaches the 
+edge of the tablet.  The cursor can be constrained in a specific screen if 
+"ScreenNo" option is added.  If you  want to map the tablet to the whole desktop,   
+you should NOT add this option.  The default is "none".
+.TP 4
+.B Option \fI"TVResolution"\fP \fI"res1,res2"\fP
+specifies different resolutions for the two screens in TwinView setup.  For example, 
+if the resolution of screen 1 (res1) is 1024x768 and screen 2 (res2) is 1280x1024, 
+the option will be set to:
+            Option "TVResolution" "1024x768,1280x1024"
+This option is used only when TwinView option is not none.  It is unnecessary to add 
+this option if your screens are displaying in the same resolutions.
+.TP 4
+.B Option \fI"ScreenNo"\fP \fI"n"\fP
+In a multi-monitor environment, specifies the screen number in which the cursor can move.
+.TP 4
+.B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"NONE"\fP
+rotates the tablet orientation clockwise (CCW) or anti-clockwise (CW). The default is "NONE".
+.TP 4
+.B Option \fI"PressCurve"\fP \fI"x1,y1,x2,y2"\fP
+sets pressure curve by control points x1, y1, x2, and y2.  Their values are in range 
+from 0..100. The input for 
+	linear curve (default) is "0,0,100,100"; 
+	slightly depressed curve (firmer) might be "5,0,100,95"; 
+	slightly raised curve (softer) might be "0,5,95,100".
+.TP 4
+.B Option \fI"KeepShape"\fP \fI"on"\fP
+When this option is enabled, the active zone  begins according to TopX
+and TopY.  The bottom corner is adjusted to keep the ratio width/height
+of the active zone the same as the screen while maximizing the area
+described by TopX, TopY, BottomX, BottomY.
+.TP 4
+.B Option \fI"DebugLevel"\fP \fInumber \fP
+sets the level of debugging info reported.  There are 12 levels, specified by 
+the integers between 1 and 12.  Once it is defined, all the debug messages 
+with a level less than or equal to the number will be logged into 
+/etc/X11/XFree86.0.log.
+.TP 4
+.B Option \fI"Serial"\fP \fI"number"\fP
+sets the serial number associated with the physical device. This allows
+to have multiple devices of the same type (i.e. multiple pens). This
+option is only available on wacom V devices (Intuos series and Cintiq 21U). 
+To see which serial number belongs to a device, you have to set the 
+DebugLevel to 6 and watch the output of the X log.
+.TP 4
+.B Option \fI"Threshold"\fP \fI"number"\fP
+sets the pressure threshold used to generate a button 1 events of stylus.
+The default is MaxPressure*3/50.
+.RE
+.SH "SEE ALSO"
+__xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), xorgconfig(__appmansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__).
+.SH AUTHORS
+Frederic Lepied <lepied@xfree86.org>
+Ping Cheng <pingc@wacom.com>
+John E. Joganic <jej@j-arkadia.com>
+

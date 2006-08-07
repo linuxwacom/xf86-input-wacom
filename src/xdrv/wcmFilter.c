@@ -227,16 +227,11 @@ static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds
 
 static void filterIntuosCoord(int* state, int* current)
 {
-	int x, i;
+	int x=0, i;
 
 	x = *current;
-	for ( i=MAX_SAMPLES-2; i>0; i-- )
-	{
+	for ( i=0; i<MAX_SAMPLES; i++ )
 		x += state[i];
-		state[i] = state[i-1];
-	}
-	x += state[0];
-	state[0] = *current;
 
 	*current = x / MAX_SAMPLES;
 }

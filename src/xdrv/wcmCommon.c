@@ -24,17 +24,24 @@
 
 #include "xf86Wacom.h"
 
-	WacomDeviceClass* wcmDeviceClasses[] =
-	{
-		/* Current USB implementation requires LINUX_INPUT */
-		#ifdef LINUX_INPUT
-		&gWacomUSBDevice,
-		#endif
+#if XF86_VERSION_MAJOR < 4
+/*
+ * There is a bug in XFree86 for combined left click and
+ * other button. It'll lost left up when releases.
+ * This should be removed if XFree86 fixes the problem.
+ */
+#  define XF86_BUTTON1_BUG
+#endif
 
-		&gWacomISDV4Device,
-		&gWacomSerialDevice,
-		NULL
-	};
+WacomDeviceClass* wcmDeviceClasses[] =
+{
+#ifdef LINUX_INPUT
+	&gWacomUSBDevice,
+#endif
+	&gWacomISDV4Device,
+	&gWacomSerialDevice,
+	NULL
+};
 
 /*****************************************************************************
  * Static functions
@@ -219,38 +226,37 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 				bsent = 0;
 
 				/* send all pressed buttons down */
-				for (button=2; button<=16; button++)
+				for (button=2; button<=MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ( buttons & mask ) 
 					{
 						bsent = 1;
 						/* set to the configured button */
-						sendAButton(local, priv->button[button-1], 1, rx, ry, 
+						sendAButton(local, button-1, 1, rx, ry, 
 							rz, v3, v4, v5);
 					}
 				}
 				
-				/* only send button one when nothing else was sent 
-				 * There is a bug in XFree86 for combined left click and 
-				 * other button. It'll lost left up when releases.
-				 * This should be removed if XFree86 fixes the problem.
-				 */
+#ifdef XF86_BUTTON1_BUG
+				/* only send button one when nothing else was sent */
 				if ( !bsent && (buttons & 1) )
 				{
 					priv->flags |= TPCBUTTONONE_FLAG;
-					sendAButton(local, priv->button[0], 1, rx, ry, 
+					sendAButton(local, 0, 1, rx, ry, 
 						rz, v3, v4, v5);
 				}
+#endif
 			}
 			else
 			{
 				bsent = 0;
-				for (button=2; button<=16; button++)
+				for (button=2; button<=MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ((mask & priv->oldButtons) != (mask & buttons))
 					{
+#ifdef XF86_BUTTON1_BUG
 						/* Send button one up before any button down is sent.
 						 * There is a bug in XFree86 for combined left click and 
 						 * other button. It'll lost left up when releases.
@@ -259,12 +265,13 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 						if (priv->flags & TPCBUTTONONE_FLAG && !bsent)
 						{
 							priv->flags &= ~TPCBUTTONONE_FLAG;
-							sendAButton(local, priv->button[0], 0, rx, ry, rz, 
+							sendAButton(local, 0, 0, rx, ry, rz, 
 								v3, v4, v5);
 							bsent = 1;
 						}
+#endif
 						/* set to the configured buttons */
-						sendAButton(local, priv->button[button-1], mask & buttons, 
+						sendAButton(local, button-1, mask & buttons, 
 							rx, ry, rz, v3, v4, v5);
 					}
 				}
@@ -275,38 +282,83 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			priv->flags &= ~TPCBUTTONS_FLAG;
 
 			/* send all pressed buttons up */
-			for (button=2; button<=16; button++)
+			for (button=2; button<=MAX_BUTTONS; button++)
 			{
 				mask = 1 << (button-1);
 				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
 				{
 					/* set to the configured button */
-					sendAButton(local, priv->button[button-1], 0, rx, ry, 
+					sendAButton(local, button-1, 0, rx, ry, 
 						rz, v3, v4, v5);
 				}
 			}
+#ifdef XF86_BUTTON1_BUG
 			/* This is also part of the workaround of the XFree86 bug mentioned above
 			 */
 			if (priv->flags & TPCBUTTONONE_FLAG)
 			{
 				priv->flags &= ~TPCBUTTONONE_FLAG;
-				sendAButton(local, priv->button[0], 0, rx, ry, rz, v3, v4, v5);
+				sendAButton(local, 0, 0, rx, ry, rz, v3, v4, v5);
 			}
+#endif
 		}
 	}
 	else  /* normal buttons */
 	{
-		for (button=1; button<=16; button++)
+		for (button=1; button<=MAX_BUTTONS; button++)
 		{
 			mask = 1 << (button-1);
 			if ((mask & priv->oldButtons) != (mask & buttons))
 			{
 				/* set to the configured button */
-				sendAButton(local, priv->button[button-1], mask & buttons, rx, ry, 
+				sendAButton(local, button-1, mask & buttons, rx, ry, 
 					rz, v3, v4, v5);
 			}
 		}
 	}
+}
+
+/*****************************************************************************
+ * emitKeysym --
+ *   Emit a keydown/keyup event
+ ****************************************************************************/
+
+static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
+{
+	extern int DeviceKeyPress;
+	extern int DeviceKeyRelease;
+	int i;
+	deviceKeyButtonPointer xE;
+	LocalDevicePtr local = (LocalDevicePtr)keydev->public.devicePrivate;
+
+	/* Now that we have the keycode look for key index */
+	KeySymsRec *ksr = &keydev->key->curKeySyms;
+
+	for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
+		if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == keysym)
+			break;
+
+	if (i > ksr->maxKeyCode)
+	{
+		xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
+			 keysym, keydev->name);
+		return;
+	}
+
+	/* We would use xf86PostKeyEvent/xf86PostKeyboardEvent
+	 * if they wouldn't be so buggy ...
+	 */
+
+	memset (&xE, 0, sizeof (xE));
+
+	xE.type = (local->flags & XI86_CORE_KEYBOARD) ?
+		(state ? KeyPress : KeyRelease) : (state ? DeviceKeyPress : DeviceKeyRelease);
+	xE.detail = i;
+
+	/*xf86Info.lastEventTime = */xE.time = GetTimeInMillis ();
+	xE.deviceid = keydev->id;
+
+	xf86eqEnqueue ((xEvent *)(void *)&xE);
 }
 
 /*****************************************************************************
@@ -319,34 +371,81 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG, nbutton;
-
-	DBG(4, ErrorF("xf86WcmSendButtons TPCButton(%s) button=%d state=%d, for %s\n", 
-		common->wcmTPCButton ? "on" : "off", button, mask, local->name));
-
-	/* translate into Left Double Click */
-	if (button == 17)
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+	int is_core = local->flags & XI86_ALWAYS_CORE;
+	int i, naxes = priv->naxes;
+	DeviceIntPtr keydev;
+	static struct
 	{
-		nbutton = 1;
-		if ( mask )
-		{
-			/* Left button down */
-				xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-					1,0,6,rx,ry,rz,v3,v4,v5);
+		unsigned ac_mask;
+		unsigned keysym;
+	} mods [] =
+	{
+		{ AC_SHIFT, XK_Shift_L },
+		{ AC_CONTROL, XK_Control_L },
+		{ AC_META, XK_Meta_L },
+		{ AC_ALT, XK_Alt_L },
+		{ AC_SUPER, XK_Super_L },
+		{ AC_HYPER, XK_Hyper_L },
+	};
 
-			/* Left button up */
-			xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-					0,0,6,rx,ry,rz,v3,v4,v5);
-		}
+	if (IsPad (priv))
+		button -= MAX_MOUSE_BUTTONS;
 
-		/* Left button down/up upon mask is 1/0 */
-		xf86PostButtonEvent(local->dev, is_absolute, nbutton, 
-				mask != 0,0,6,rx,ry,rz,v3,v4,v5);
+	if (button < 0 || button >= priv->nbuttons)
+	{
+		/* should never happen */
+		ErrorF ("sendAButton: Invalid button index %d\n", button);
+		return; 
 	}
-	/* switch absolute or relative (Mode Toggle) */
-	if ( button == 19 && mask )
+
+	DBG(4, ErrorF("sendAButton TPCButton(%s) button=%d state=%d code=%08x, for %s\n",
+		common->wcmTPCButton ? "on" : "off", button, mask, priv->button[button], local->name));
+
+	button = priv->button[button];
+	if (!button)
+		return;
+
+	if (priv->flags & BUTTONS_ONLY_FLAG)
+		naxes = 0;
+
+	/* Find out the keyboard device */
+	if (button & AC_CORE)
 	{
-		if (is_absolute)
+		keydev = inputInfo.keyboard;
+		naxes = 0;
+	}
+	else
+		keydev = local->dev;
+
+	/* Switch the device to core mode, if required
+	 */
+	if (!is_core && (button & AC_CORE))
+		xf86XInputSetSendCoreEvents (local, TRUE);
+
+	/* Emulate modifier key presses, if required
+	 */
+	if (mask != 0)
+		for (i = 0; i < sizeof (mods) / sizeof (mods [0]); i++)
+			if (button & mods [i].ac_mask)
+				emitKeysym (keydev, mods [i].keysym, 1);
+
+	switch (button & AC_TYPE)
+	{
+	case AC_BUTTON:
+		xf86PostButtonEvent(local->dev, is_absolute, button & AC_CODE,
+				    mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
+		break;
+
+	case AC_KEY:
+		emitKeysym (keydev, button & AC_CODE, mask != 0);
+		break;
+
+	case AC_MODETOGGLE:
+		if (!mask)
+			break;
+
+		if (priv->flags & ABSOLUTE_FLAG)
 		{
 			priv->flags &= ~ABSOLUTE_FLAG;
 			xf86ReplaceStrOption(local->options, "Mode", "Relative");
@@ -356,12 +455,37 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 			priv->flags |= ABSOLUTE_FLAG;
 			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
 		}
+		break;
+
+	case AC_DBLCLICK:
+		if (mask)
+		{
+			/* Left button down */
+			xf86PostButtonEvent(local->dev, is_absolute,
+					button & AC_CODE, 1,0,naxes,rx,ry,rz,v3,v4,v5);
+
+			/* Left button up */
+			xf86PostButtonEvent(local->dev, is_absolute,
+					button & AC_CODE, 0,0,naxes,rx,ry,rz,v3,v4,v5);
+		}
+
+		/* Left button down/up upon mask is 1/0 */
+		xf86PostButtonEvent(local->dev, is_absolute, button & AC_CODE, 
+					mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
+		break;
 	}
-	if (button < 17)
-	{
-		xf86PostButtonEvent(local->dev, is_absolute, button,
-				mask != 0,0,6,rx,ry,rz,v3,v4,v5);
-	}
+
+	/* Release modifier keys in reverse order
+	 */
+	if (mask == 0)
+		for (i = sizeof (mods) / sizeof (mods [0]) - 1; i >= 0; i--)
+			if (button & mods [i].ac_mask)
+				emitKeysym (keydev, mods [i].keysym, 0);
+
+	/* Switch the device out of the core mode, if required
+	 */
+	if (!is_core && (button & AC_CORE))
+		xf86XInputSetSendCoreEvents (local, FALSE);
 }
 
 /*****************************************************************************
@@ -388,10 +512,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int tmp_coord;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
+	int naxes = priv->naxes;
 
 	int rx, ry, rz, v3, v4, v5, no_jitter;
 	double param, relacc;
-	int is_core_pointer, is_absolute;
+	int is_absolute;
+	int has_moved;
 
 	if (priv->serial && serial != priv->serial)
 	{
@@ -400,8 +526,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		return;
 	}
 
-	priv->currentX = x;
-	priv->currentY = y;
+	if (priv->flags & BUTTONS_ONLY_FLAG)
+		naxes = 0;
 
 	/* use tx and ty to report stripx and stripy */
 	if (type == PAD_ID)
@@ -434,7 +560,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	}
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
-	is_core_pointer = xf86IsCorePointer(local->dev);
 
 	/* sets rx and ry according to the mode */
 	if (is_absolute)
@@ -521,6 +646,16 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		v5 = wheel - priv->oldWheel;
 	}
 
+	/* Pad subdevice axes are fingerstrip x/y */
+	if (naxes == 2)
+	{
+		rx = tx;
+		ry = ty;
+		has_moved = ((priv->currentX != rx) || (priv->currentY != ry));
+	}
+	else
+		has_moved = 1;
+
 	priv->currentX = rx;
 	priv->currentY = ry;
 
@@ -545,7 +680,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	}
 
 	/* coordinates are ready we can send events */
-	if (is_proximity)
+	if (is_proximity || IsPad (priv))
 	{
 		/* for multiple monitor support, we need to set the proper 
 		 * screen and modify the axes before posting events */
@@ -558,18 +693,15 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		if (!is_absolute)
 			rx *= priv->factorY / priv->factorX;
 
-		if (!priv->oldProximity)
-		{
-				xf86PostProximityEvent(local->dev, 1, 0, 6,
-					rx, ry, rz, v3, v4, v5);
-		}
+		/* don't emit proximity events if device does not support proximity */
+		if (local->dev->proximity &&
+		    !priv->oldProximity && !(priv->flags & BUTTONS_ONLY_FLAG))
+			xf86PostProximityEvent(local->dev, 1, 0, naxes,
+					       rx, ry, rz, v3, v4, v5);
 
-		/* don't move the cursor if it only supports buttons */
-		if( !(priv->flags & BUTTONS_ONLY_FLAG) )
-		{
-				xf86PostMotionEvent(local->dev, is_absolute, 
-					0, 6, rx, ry, rz, v3, v4, v5);
-		}
+		if (naxes && has_moved)
+			xf86PostMotionEvent(local->dev, is_absolute,
+					    0, naxes, rx, ry, rz, v3, v4, v5);
 
 		if (priv->oldButtons != buttons)
 		{
@@ -584,10 +716,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			for (i=0; i<abs(ds->relwheel); i++)
 			{
 				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 1, 0, 6, rx, ry, rz,
+					fakeButton, 1, 0, naxes, rx, ry, rz,
 					v3, v4, v5);
 				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 0, 0, 6, rx, ry, rz,
+					fakeButton, 0, 0, naxes, rx, ry, rz,
 					v3, v4, v5);
 			}
 		}
@@ -596,38 +728,14 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	/* not in proximity */
 	else
 	{
+		buttons = 0;
+
 		/* reports button up when the device has been
 		 * down and becomes out of proximity */
 		if (priv->oldButtons)
-		{
-			buttons = 0;
-			xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
-		}
-		if (!is_core_pointer)
-		{
-			/* macro button management */
-			if (common->wcmProtocolLevel == 4 && buttons)
-			{
-				int macro = z / 2;
-
-				DBG(6, ErrorF("macro=%d buttons=%d \n",
-					macro, buttons));
-
-				/* First available Keycode begins at 8
-				 * therefore macro+7 */
-
-				/* key down */
-				xf86PostKeyEvent(local->dev,macro+7,1,is_absolute,
-						0,6,0,0,buttons,v3,v4,v5);
-
-				/* key up */
-				xf86PostKeyEvent(local->dev,macro+7,0,is_absolute,
-						0,6,0,0,buttons,v3,v4,v5);
-
-			}
-		}
-		if (priv->oldProximity)
-			xf86PostProximityEvent(local->dev,0,0,6,rx,ry,rz,v3,v4,v5);
+			xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
+		if (priv->oldProximity && local->dev->proximity)
+			xf86PostProximityEvent(local->dev,0,0,naxes,rx,ry,rz,v3,v4,v5);
 	} /* not in proximity */
 
 	priv->oldProximity = is_proximity;
@@ -792,6 +900,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		{
 			fs.x[i]= ds.x;
 			fs.y[i]= ds.y;
++                       fs.tiltx[i] = ds.tiltx;
++                       fs.tilty[i] = ds.tilty;
 		}
 		++fs.npoints;
 	} else  {
@@ -854,7 +964,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-	if (pChannel->nSamples < 4) ++pChannel->nSamples;
+	if (pChannel->nSamples < MAX_SAMPLES) ++pChannel->nSamples;
 
 	commonDispatchDevice(common,channel,pChannel);
 	resetSampleCounter(pChannel);
@@ -973,17 +1083,24 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		/* force out-prox when height is greater than 13 
-		 * (use 112 for history reason for now) for GD & XD;
-		 * 28 for PTZ. This only applies to USB protocol V tablets
-		 * which aimed at improving relative movement support. 
-		 */
-		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
+		/* force out-prox when heighth is beyond threshold. */
+		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv) && common->wcmMaxDist)
 		{
-			DBG(11, ErrorF("Distance over the tablet: %d \n", filtered.distance));
-			if (filtered.distance &&
-			((filtered.distance > 39 && strstr(common->wcmModel->name, "Intuos")) 
-			|| (filtered.distance < 20 && !strstr(common->wcmModel->name, "Intuos"))) )
+			int threshold = common->wcmCursorProxoutDist;
+			int hysteresis = (threshold * common->wcmCursorProxoutHyst)/common->wcmMaxDist ;
+
+			/* Apply hysteresis to avoid jitter */
+			if (priv->oldProximity)
+				threshold += hysteresis;
+			else
+				threshold -= hysteresis;
+
+			DBG(10, ErrorF("Distance over the tablet: %d, threshold: %d\n",
+				       filtered.distance, threshold));
+			if ((filtered.distance > threshold && 
+				strstr(common->wcmModel->name, "Intuos")) || 
+				(filtered.distance < threshold && 
+				!strstr(common->wcmModel->name, "Intuos")))
 			{
 				ds->proximity = 0;
 				filtered.proximity = 0;

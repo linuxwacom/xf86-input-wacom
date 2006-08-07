@@ -114,6 +114,23 @@ struct _USBTABLET
 };
 
 /*****************************************************************************
+** Autodetect pad key codes
+*****************************************************************************/
+
+static unsigned short padkey_codes [] =
+{
+	BTN_0, BTN_1, BTN_2, BTN_3, BTN_4,
+	BTN_5, BTN_6, BTN_7, BTN_8, BTN_9,
+	BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z,
+	BTN_BASE, BTN_BASE2, BTN_BASE3,
+	BTN_BASE4, BTN_BASE5, BTN_BASE6,
+	BTN_TL, BTN_TR, BTN_TL2, BTN_TR2, BTN_SELECT
+};
+
+int gPadKeys [WACOMBUTTON_MAX];
+int gNumPadKeys;
+
+/*****************************************************************************
 ** Static Prototypes
 *****************************************************************************/
 
@@ -513,22 +530,6 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	}
 	assert(nCnt == sizeof(evbits));
 
-	/* key events */
-	if (ISBITSET(evbits,EV_KEY))
-	{
-		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits);
-		if (nCnt < 0)
-		{
-			WacomLog(pUSB->hEngine,WACOMLOGLEVEL_ERROR,
-				"Failed to CGBIT key: %s",strerror(errno));
-			return 1;
-		}
-		assert(nCnt == sizeof(keybits));
-
-		pUSB->state.uValid |= BIT(WACOMFIELD_PROXIMITY) | 
-					BIT(WACOMFIELD_TOOLTYPE);
-	}
-
 	/* absolute events */
 	if (ISBITSET(evbits,EV_ABS))
 	{
@@ -578,7 +579,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	}
 
 	/* key events */
-	pUSB->nToolProx = 0;
+	gNumPadKeys = 0;
 	if (ISBITSET(evbits,EV_KEY))
 	{
 		nCnt = ioctl(pUSB->fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits);
@@ -609,6 +610,11 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 				ISBITSET(keybits,BTN_TOOL_LENS))
 			pUSB->state.uValid |= BIT(WACOMFIELD_PROXIMITY) |
 					BIT(WACOMFIELD_TOOLTYPE);
+
+		/* Detect button codes */
+		for (nCnt = 0; nCnt < WACOMBUTTON_MAX; nCnt++)
+			if (ISBITSET (keybits, padkey_codes [nCnt]))
+				gPadKeys [gNumPadKeys++] = padkey_codes [nCnt];
 	}
 
 	/* set identification */
@@ -724,7 +730,7 @@ static int USBParseMSC(USBTABLET* pUSB, struct input_event* pEv)
 
 static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 {
-	int button=-1, tool=0;
+	int i, button=-1, tool=0;
 	switch (pEv->code)
 	{
 		case BTN_LEFT: button = WACOMBUTTON_LEFT; break;
@@ -735,14 +741,6 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		case BTN_TOUCH: button = WACOMBUTTON_TOUCH; break;
 		case BTN_STYLUS: button = WACOMBUTTON_STYLUS; break;
 		case BTN_STYLUS2: button = WACOMBUTTON_STYLUS2; break;
-		case BTN_0: button = WACOMBUTTON_BT0; break;
-		case BTN_1: button = WACOMBUTTON_BT1; break;
-		case BTN_2: button = WACOMBUTTON_BT2; break;
-		case BTN_3: button = WACOMBUTTON_BT3; break;
-		case BTN_4: button = WACOMBUTTON_BT4; break;
-		case BTN_5: button = WACOMBUTTON_BT5; break;
-		case BTN_6: button = WACOMBUTTON_BT6; break;
-		case BTN_7: button = WACOMBUTTON_BT7; break;
 		case BTN_TOOL_PEN: tool = WACOMTOOLTYPE_PEN; break;
 		case BTN_TOOL_PENCIL: tool = WACOMTOOLTYPE_PENCIL; break;
 		case BTN_TOOL_BRUSH: tool = WACOMTOOLTYPE_BRUSH; break;
@@ -751,6 +749,13 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		case BTN_TOOL_MOUSE: tool = WACOMTOOLTYPE_MOUSE; break;
 		case BTN_TOOL_FINGER: tool = WACOMTOOLTYPE_PAD; break;
 		case BTN_TOOL_LENS: tool = WACOMTOOLTYPE_LENS; break;
+		default:
+			for (i = 0; i < gNumPadKeys; i++)
+				if (pEv->code == gPadKeys [i])
+				{
+					button = WACOMBUTTON_BT0 + i;
+					break;
+				}
 	}
 
 	/* if button was specified */
@@ -800,6 +805,17 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 			if (!pUSB->nToolProx)
 				memset(pUSB->state.values, 0,
 						pUSB->state.uValueCnt * sizeof(WACOMVALUE));
+			/* otherwise, switch to next tool */
+			else
+			{
+				for (i=WACOMTOOLTYPE_PEN; i<WACOMTOOLTYPE_MAX; ++i)
+				{
+					if (pUSB->nToolProx & BIT(i))
+					{
+						pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = i;
+					}
+				}
+			}
 		} /* out of prox */
 	} /* end if tool */
 

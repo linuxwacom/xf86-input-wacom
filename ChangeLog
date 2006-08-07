@@ -1,5 +1,35 @@
+2006-08-07   Ping Cheng <pingc@wacom.com>
+	* Created 3 new directories, xdrv, include, and util under src to store 
+	  X driver, common headers, and utility programs separately
+
+2006-08-03   Ping Cheng <pingc@wacom.com>
+	* Increased MAX_SUPPRESS from 6 to 20 (Patch ID 1529268 from Wolfgang Oertl)
+	* Updated wacomcpl 
+
+2006-07-28   Ping Cheng <pingc@wacom.com>
+	* Updated xsetwacom to avoid writing data to files from X driver (more work to be done)
+	* Updated wacomcpl accordingly
+
+2006-07-19   Ping Cheng <pingc@wacom.com>
+	* Modified the definition of wacom_features in wacom_wac.h
+	* Modified newwacom.inc.php to get rid of a kernel warning (Magnus Vigerlöf)
+	* Added mouse and key combined event support in X driver (Andrew Zabolotny)
+
+2006-07-14   Ping Cheng <pingc@wacom.com>
+	* Split wacom.c into wacom_sys.c and wacom_wac.c, where
+	  wacom_sys.c deals with system specific code and wacom-wac.c 
+	  deals with wacom specific code. This work only applies to 
+	  kernel 2.6.16 for this release. wacom.c split for other 
+	  kernels will be considered in future releases.
+	* Add Wacom vendor id into hid_blacklist in hid-core.c, that is,
+	  all Wacom devices, existing and future, will be ignored 
+	  by (usb)hid driver.
+
+2006-06-22   Ping Cheng <pingc@wacom.com>
+	* Added more default Xlib and Xorg SDK searching pathes for x86_64 system 
+
 2006-06-16   Ping Cheng <pingc@wacom.com>
-	Ready to release 0.7.4-3
+	* Ready to release 0.7.4-3
 
 2006-06-15   Ping Cheng <pingc@wacom.com>
 	* Updated web pages with new success stories and a

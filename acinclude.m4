@@ -49,8 +49,13 @@ AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=usual
 [ WCM_OPTION_XSERVER64=$enableval 
 ],
 [
-	WCM_OPTION_XSERVER64=no
-	test `echo $WCM_ARCH | grep -c "64"` == 0 || WCM_OPTION_XSERVER64=yes
+	if test "$WCM_OPTION_XSERVER64" = ""; then
+		if test `uname -a | grep -c "64"` = 0; then
+			WCM_OPTION_XSERVER64=no
+		else
+			WCM_OPTION_XSERVER64=yes
+		fi
+	fi
 ])
 
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
@@ -58,12 +63,16 @@ WCM_XLIBDIR_DEFAULT2=/usr/lib
 if test "$WCM_OPTION_XSERVER64" = "yes"; then
 	CFLAGS="$CFLAGS -D__amd64__"
 	WCM_XSERVER64="-D_XSERVER64"
-	test `echo $WCM_ARCH | grep -c "x86_64"` == 0 ||
+	if test `uname -m | grep -c "x86_64"` != 0; then
 		WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
+	fi
 	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
-	test -L /usr/lib64 || WCM_XLIBDIR_DEFAULT2=/usr/lib64
+	if test -d /usr/lib64; then
+		WCM_XLIBDIR_DEFAULT2=/usr/lib64
+	fi
 fi
-if test -f "$WCM_XLIBDIR_DEFAULT/Server/xf86Version.h"; then
+if test -f "$WCM_XLIBDIR_DEFAULT/Server/include/xf86Version.h" || 
+test -f "$WCM_XLIBDIR_DEFAULT/Server/xf86Version.h"; then
 	WCM_XORGSDK_DEFAULT=$WCM_XLIBDIR_DEFAULT/Server
 else
 	WCM_XORGSDK_DEFAULT=/usr
@@ -180,7 +189,11 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			ISVER=`echo $moduts | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
 				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
-				if test $MINOR -ge 16; then
+				if test $MINOR -ge 18; then
+					WCM_KERNEL_VER="2.6.18"
+				elif test $MINOR -eq 17; then
+					WCM_KERNEL_VER="2.6.16"
+				elif test $MINOR -eq 16; then
 					WCM_KERNEL_VER="2.6.16"
 				elif test $MINOR -eq 15; then
 					WCM_KERNEL_VER="2.6.15"

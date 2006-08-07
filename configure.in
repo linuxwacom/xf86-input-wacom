@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.4)
+AM_INIT_AUTOMAKE(linuxwacom, 0.7.5)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -515,6 +515,8 @@ AC_SUBST(WCM_OPTION_INPUT)
 AC_OUTPUT(Makefile
 	mkxincludes
 	src/Makefile
+	src/util/Makefile
+	src/xdrv/Makefile
 	src/2.4/Makefile
 	src/2.4.22/Makefile
 	src/2.6/Makefile
@@ -526,6 +528,7 @@ AC_OUTPUT(Makefile
 	src/2.6.14/Makefile
 	src/2.6.15/Makefile
 	src/2.6.16/Makefile
+	src/2.6.18/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 

@@ -28,7 +28,7 @@
 /****************************************************************************/
 
 #include <xf86Version.h>
-#include <Xwacom.h>
+#include "../include/Xwacom.h"
 
 /*****************************************************************************
  * Linux Input Support
@@ -38,8 +38,6 @@
 #include <asm/types.h>
 #include <linux/input.h>
 
-#define MAX_USB_EVENTS 32
-
 /* keithp - a hack to avoid redefinitions of these in xf86str.h */
 #ifdef BUS_PCI
 #undef BUS_PCI
@@ -48,7 +46,12 @@
 #undef BUS_ISA
 #endif
 
+#define MAX_USB_EVENTS 32
+
 #endif /* LINUX_INPUT */
+
+/* max number of input events to read in one read call */
+#define MAX_EVENTS 50
 
 /*****************************************************************************
  * XFree86 V4.x Headers
@@ -115,7 +118,7 @@
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
 #define MAX_ACCEL 7             /* number of acceleration levels */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
-#define MAX_SUPPRESS 6          /* max value of suppress */
+#define MAX_SUPPRESS 20         /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
 #define XI_STYLUS "STYLUS"      /* X device name for the stylus */
 #define XI_CURSOR "CURSOR"      /* X device name for the cursor */
@@ -168,7 +171,6 @@ struct _WacomModule4
 struct _WacomModule
 {
 	int debugLevel;
-	KeySym* keymap;
 	const char* identification;
 
 	WacomModule4 v4;
@@ -207,6 +209,7 @@ struct _WacomModel
 	int (*Parse)(WacomCommonPtr common, const unsigned char* data);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
 		WacomDeviceStatePtr ds);
+	int (*DetectConfig)(LocalDevicePtr local);
 };
 
 /******************************************************************************
@@ -218,16 +221,17 @@ struct _WacomModel
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
 
-#define STYLUS_ID               1
-#define CURSOR_ID               2
-#define ERASER_ID               4
-#define PAD_ID                  8
-#define ABSOLUTE_FLAG           16
-#define KEEP_SHAPE_FLAG         32
-#define BAUD_19200_FLAG         64
-#define BUTTONS_ONLY_FLAG       128
-#define TPCBUTTONS_FLAG		256
-#define TPCBUTTONONE_FLAG	512
+#define STYLUS_ID		0x00000001
+#define CURSOR_ID		0x00000002
+#define ERASER_ID		0x00000004
+#define PAD_ID			0x00000008
+#define ABSOLUTE_FLAG		0x00000010
+#define KEEP_SHAPE_FLAG		0x00000020
+#define BAUD_19200_FLAG		0x00000040
+#define BUTTONS_ONLY_FLAG	0x00000080
+#define TPCBUTTONS_FLAG		0x00000100
+#define TPCBUTTONONE_FLAG	0x00000200
+#define X11DEVREG_FLAG		0x80000000
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
@@ -240,7 +244,11 @@ typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
  *   -1 - data should be discarded
  *    0 - data is valid */
 
-#define FILTER_PRESSURE_RES 2048        /* maximum points in pressure curve */
+#define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
+#define MAX_BUTTONS		32	/* maximum number of tablet buttons */
+#define MAX_MOUSE_BUTTONS	8	/* maximum number of buttons-on-pointer
+                                         * (which are treated as mouse buttons,
+                                         * not as keys like pad buttons) */
 
 typedef enum { TV_NONE = 0, TV_ABOVE_BELOW = 1, TV_LEFT_RIGHT = 2 } tvMode;
 
@@ -256,10 +264,12 @@ struct _WacomDeviceRec
 	double factorY;         /* Y factor */
 	unsigned int serial;    /* device serial number */
 	int screen_no;          /* associated screen */
- 	int button[16];         /* buttons */
-   
+ 	int button[MAX_BUTTONS];/* buttons assignments */
+ 	int nbuttons;           /* number of buttons for this subdevice */
+	int naxes;              /* number of axes */
+  
 	WacomCommonPtr common;  /* common info pointer */
-    
+
 	/* state fields */
 	int currentX;           /* current X position */
 	int currentY;           /* current Y position */
@@ -341,10 +351,10 @@ struct _WacomDeviceState
 struct _WacomFilterState
 {
         int npoints;
-        int x[3];
-        int y[3];
-        int tiltx[3];
-        int tilty[3];
+        int x[MAX_SAMPLES];
+        int y[MAX_SAMPLES];
+        int tiltx[MAX_SAMPLES];
+        int tilty[MAX_SAMPLES];
         int statex;
         int statey;
 };
@@ -421,11 +431,14 @@ struct _WacomCommonRec
 	int wcmSuppress;             /* transmit position on delta > supress */
 	unsigned char wcmFlags;      /* various flags (handle tilt) */
 	int tablet_id;		     /* USB tablet ID */
+	int fd;                      /* file descriptor to tablet */
+	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet max X value */
 	int wcmMaxY;                 /* tablet max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
+	int wcmMaxDist;              /* tablet max distance value */
 	int wcmResolX;               /* tablet X resolution in points/inch */
 	int wcmResolY;               /* tablet Y resolution in points/inch */
 	                             /* tablet Z resolution is equivalent
@@ -438,6 +451,13 @@ struct _WacomCommonRec
 	int wcmUserResolZ;           /* user-defined Z resolution,
 	                              * value equal to 100% pressure */
 
+	int wcmMaxStripX;            /* Maximum fingerstrip X */
+	int wcmMaxStripY;            /* Maximum fingerstrip Y */
+
+	int nbuttons;                /* total number of buttons */
+	int npadkeys;                /* number of pad keys in the above array */
+	int padkey_code[MAX_BUTTONS];/* hardware codes for buttons */
+
 	LocalDevicePtr* wcmDevices;  /* array of devices sharing same port */
 	int wcmNumDevices;           /* number of devices */
 	int wcmPktLength;            /* length of a packet */
@@ -448,7 +468,6 @@ struct _WacomCommonRec
 	int wcmThreshold;            /* Threshold for button pressure */
 	int wcmChannelCnt;           /* number of channels available */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
-	int wcmInitialized;          /* device is initialized */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
@@ -457,6 +476,9 @@ struct _WacomCommonRec
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
+	int wcmReadErrorCount;       /* Read error count */
+	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
+	int wcmCursorProxoutHyst;    /* Proxy-out distance hysteresis in max/256 units */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

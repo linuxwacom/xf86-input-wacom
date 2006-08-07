@@ -86,26 +86,32 @@ proc pad {name geometry} {
     pack $name.m
 }
 
-proc updateXinitrc {} {
-    global device
-
-    exec xsetwacom set $device FileOption
+proc updateXinitrc {device option value} {
 
     if { ![ file exists ~/.xinitrc ] } {
-	file copy -force /etc/X11/wcm.$device /tmp/wacom
-	exec echo "# run the primary system script" >> /tmp/wacom
-	exec echo ". /etc/X11/xinit/xinitrc" >> /tmp/wacom
+	exec echo "xsetwacom set $device $option $value" > ~/.xinitrc
+	exec echo "# run the primary system script" >> ~/.xinitrc
+	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc
     } else {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1
-	file copy -force /etc/X11/wcm.$device /tmp/xinitrc
-	exec sed -e "/xsetwacom set $device /d" /tmp/xinitrc1 > /tmp/wacom
-	exec cat /tmp/wacom >> /tmp/xinitrc
-	file copy -force /tmp/xinitrc /tmp/wacom
-	file delete -force /tmp/xinitrc /tmp/xinitrc1
+	exec sed -e "/xsetwacom set $device $option /d" /tmp/xinitrc1 > /tmp/wacom
+puts "xsetwacom set $device $option $value"
+	exec echo "xsetwacom set $device $option $value" > ~/.xinitrc
+	exec cat /tmp/wacom >> ~/.xinitrc
+	file delete -force /tmp/wacom /tmp/xinitrc1
     }
-    exec sed -e "/default /d" /tmp/wacom > ~/.xinitrc
-    file delete -force /tmp/wacom
+    if { $option == "PressCurve" } {
+	set index 0
+	set v1 [ lindex $value $index ]
+    	for { set i 2 } { $i < 5 } { incr i 1 } {
+	    set index [ expr $index+1 ]
+	    set v$i [ lindex $value $index ]
+	}
+	exec xsetwacom set $device $option $v1 $v2 $v3 $v4
+    } else {
+	exec xsetwacom set $device $option $value
+    }
 }
 
 proc calibrationSequence {which xDev yDev} {
@@ -160,17 +166,17 @@ proc calibrationSequence {which xDev yDev} {
 	set yDevMin [expr $yDevMin - ($borderOffset * $heightDev / $heightX)]
 	set yDevMax [expr $yDevMax + ($borderOffset * $heightDev / $heightX)]
 	
-	exec xsetwacom set $device topx $xDevMin
-	exec xsetwacom set $device topy $yDevMin
-	exec xsetwacom set $device bottomx $xDevMax
-	exec xsetwacom set $device bottomy $yDevMax
+	updateXinitrc $device topx $xDevMin
+	updateXinitrc $device topy $yDevMin
+	updateXinitrc $device bottomx $xDevMax
+	updateXinitrc $device bottomy $yDevMax
 	# send the same data to the associated eraser
 	set eraser $getDeviceModel($device,eraser)
 	if { [ string compare $eraser $device ] } {
-	    exec xsetwacom set $eraser topx $xDevMin
-	    exec xsetwacom set $eraser topy $yDevMin
-	    exec xsetwacom set $eraser bottomx $xDevMax
-	    exec xsetwacom set $eraser bottomy $yDevMax
+	    updateXinitrc $eraser topx $xDevMin
+	    updateXinitrc $eraser topy $yDevMin
+	    updateXinitrc $eraser bottomx $xDevMax
+	    updateXinitrc $eraser bottomy $yDevMax
 	}
 
 	destroy .topleft .bottomright
@@ -189,7 +195,7 @@ proc Calibration {} {
     set Option(1) "Mode"
     getDeviceOptionProc $device 1
     set mode $getOption($device,Mode)
-    if { [string compare -nocase -length 8 $mode "absolute"] } {
+    if { $mode != 1 } {
 	disableButtons
 	messageWindow "Warning " "\n\nDevice $device is in relative mode. \n\
 		You can calibrate $device only when it is in absolute mode. \n\
@@ -243,7 +249,6 @@ proc startCalibration {} {
 		by $device before you finish"
 
     exec xsetwacom set $device gimp on
-    updateXinitrc
 }
 
 proc helpWindow { tString mString } {
@@ -318,33 +323,59 @@ proc disableButtons {} {
 }
 
 proc getDeviceOptionProc { dev i } {
-    global getOption getOptionDefault Option
+    global getOption getOptionDefault Option db
 
-    exec xsetwacom set $dev FileOption
     for { set j 1 } { $j < [ expr $i+1 ] } { incr j 1 } {
-	exec awk /$Option($j)/ /etc/X11/wcm.$dev > /tmp/wacom
-	exec awk /$dev/ /tmp/wacom > /tmp/wacom1
-	exec awk /default/ /tmp/wacom > /tmp/wacom2
-	if { [ file exists /tmp/wacom1 ] } {
-	    set channelId [open /tmp/wacom1]
-	    set info [read -nonewline $channelId]
-	    close $channelId
-	    set getOption($dev,$Option($j)) [ lrange $info 4 end ]
+	set value [ exec xsetwacom get $dev $Option($j) ] 
+	set value1 [ exec xsetwacom getdefault $dev $Option($j) ] 
+	if { ![ string compare -nocase -length 10 $Option($j) "PressCurve" ] } {
+	    set getOption($dev,PressCurve) 4
+	    set getOptionDefault($dev,PressCurve) 4
 
-	}
-	if { [ file exists /tmp/wacom2 ] } {
-	    set channelId [open /tmp/wacom2]
-	    set info [read -nonewline $channelId]
-	    close $channelId
-	    set getOptionDefault($dev,$Option($j)) [ lindex $info 2 ]
-	}
-	if { $getOption($dev,$Option($j)) == "" } {
-	    set getOption($dev,$Option($j)) $getOptionDefault($dev,$Option($j))
+	    set p0 [ expr ( $value >> 24) & 0xFF ]
+	    set p1 [ expr ( $value >> 16) & 0xFF ]
+	    if { $p1 > 5 && $p1 < 35 } {
+		set getOption($dev,PressCurve) 3
+	    }
+	    if { $p1 >= 35 && $p1 < 65 } {
+		set getOption($dev,PressCurve) 2
+	    }
+	    if { $p1 >= 65 && $p1 < 95 } {
+		set getOption($dev,PressCurve) 1
+	    }
+	    if { $p0 > 5 && $p0 < 35 } {
+		set getOption($dev,PressCurve) 5
+	    }
+	    if { $p0 >= 35 && $p0 < 65 } {
+		set getOption($dev,PressCurve) 6
+	    }
+	    if { $p0 >= 65 && $p0 < 95 } {
+		set getOption($dev,PressCurve) 7
+	    }
+	} else {
+	    if { ![string compare -nocase -length 6 $Option($j) "button"] } {
+		if { $value > 19 || $value == 0 } {
+		    set output [ exec xsetwacom -x get $dev $Option($j) ]
+		    set outputd [ lindex $output 2 ]
+		    if { ![string compare -nocase -length 8 DBLCLICK $outputd ] } {
+			set getOption($dev,$Option($j)) 17
+		    }
+		    if { ![string compare -nocase -length 10 MODETOGGLE $outputd ] } {
+			set getOption($dev,$Option($j)) 19
+		    }
+		    if { $value == 0 } {
+			set getOption($dev,$Option($j)) 18
+		    }
+		} else {
+		    set getOption($dev,$Option($j)) $value
+		}
+	    } else {
+		set getOption($dev,$Option($j)) $value
+	    }
+	    set getOptionDefault($dev,$Option($j)) $value1
 	}
     }
-    file delete -force /tmp/wacom /tmp/wacom1 /tmp/wacom2
 }
-
 
 proc updateDevice {} {
     global device deviceIndex getOption
@@ -520,7 +551,7 @@ proc displayScreenList {} {
 }
 
 proc updateButton {} {
-    global device getDeviceModel sm
+    global device getDeviceModel sm getOption dm
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
@@ -536,23 +567,32 @@ proc updateButton {} {
     for { set i 1 } { $i < $k } { incr i 1 } {
 	switch [ .subW.f.$i cget -text ] {
 	    "Left"
-		{ set j 1 }
+		{ set j 1 
+		  set v "Button 1" }
 	    "Middle"
-		{ set j 2 }
+		{ set j 2 
+		 set v "Button 2" }
 	    "Right"
-		{ set j 3 }
+		{ set j 3 
+		 set v "Button 3" }
 	    "Fourth"
-		{ set j 4 }
+		{ set j 4 
+		 set v "Button 4" }
 	    "Fifth"
-		{ set j 5 }
+		{ set j 5 
+		 set v "Button 5" }
 	    "Left Double"
-		{ set j 17 }
+		{ set j 17 
+		 set v "DBLCLICK 1" }
 	    "Mode Toggle"
-		{ set j 19 }
+		{ set j 19 
+		 set v "ModeToggle 1" }
 	    "Ignore"
-		{ set j 18 }
+		{ set j 18 
+		 set v "Button 0" }
 	}
-	exec xsetwacom set $device button$i $j 
+	set getOption($device,button$i) $j
+	updateXinitrc $device button$i $v 
     }
 
     if { [string compare -nocase -length 6 $model \
@@ -561,33 +601,61 @@ proc updateButton {} {
 	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
 	    set mode [ .subW.f.mode cget -text ]
-	    exec xsetwacom set $device mode $mode
+	    updateXinitrc $device mode $mode
+	    if { $mode == $dm(1) } {
+		set getOption($device,Mode) 0
+	    } else {
+		set getOption($device,Mode) 1
+	    }
 	}
     }
 
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
 	    set smode [ .subW.f.smode cget -text ]
-	    if { [string compare -nocase $smode $sm(2)] } {
-		exec xsetwacom set $device TPCButton on
+	    if { $smode == $sm(1) } {
+		updateXinitrc $device TPCButton off
+		set getOption($device,TPCButton) 0
 	    } else {
-		exec xsetwacom set $device TPCButton off
+		updateXinitrc $device TPCButton on
+		set getOption($device,TPCButton) 1
 	    }
     }
-    updateXinitrc
     closeSubWindow
 }
 
-proc initialButton {} {
-    global device getDeviceModel sm smode
-    global dmode dm getOption Option
+proc defaultButton {} {
+    global db db1 db2 db3 db4 db5 dm sm dmv smv
+    global device getOptionDefault getDeviceModel
 
-    defaultButton
+    for { set i 1 } { $i < 6 } { incr i 1 } {
+	set db$i $db($i)
+    }
+
+    set model $getDeviceModel($device,model)
+    set type $getDeviceModel($device,type)
+
+    if { [string compare -nocase -length 6 $model \
+		"cintiq"] || ![string compare -nocase \
+		-length 7 $model "CintiqP" ] } {
+	if { [string compare -nocase -length 5 \
+		$model "isdv4"] } {
+	    set dmv $dm([ expr $getOptionDefault($device,Mode)+1 ])
+	}
+    }
+
+    if { ![ string compare -nocase -length 6 $type "stylus" ] } {
+	set smv $sm([ expr $getOptionDefault($device,TPCButton)+1 ])
+    }
+}
+
+proc initialButton {} {
+    global device getDeviceModel Option
+
     set type $getDeviceModel($device,type)
 
     set Option(1) "Mode"
     set Option(2) "TPCButton"
     set Option(3) "Button1"
-    set model $getDeviceModel($device,model)
     set t 3
     if { [ string compare -nocase -length 6 $type "eraser" ] } {
 	set Option(4) "Button2"
@@ -601,34 +669,39 @@ proc initialButton {} {
     }    
     getDeviceOptionProc $device $t
 
+    displayMode
+
+    for { set i 1 } { $i < $t-1 } { incr i 1 } {
+	addMenu $i
+    }
+}
+
+proc displayMode {} {
+    global device getDeviceModel sm smv
+    global dmv dm getOption
+
+    set model $getDeviceModel($device,model)
+    set type $getDeviceModel($device,type)
+
     if { [string compare -nocase -length 6 $model \
 		"cintiq"] || ![string compare -nocase \
 		-length 7 $model "CintiqP" ] } {
 	if { [string compare -nocase -length 5 \
 		$model "isdv4"] } {
-	    set dmode $getOption($device,Mode)
+	    set dmv $dm([ expr $getOption($device,Mode)+1 ])
+	    tk_optionMenu .subW.f.mode dmv $dm(1) $dm(2)
 	    label .subW.f.modeL -text "Positioning Mode: "
-	    tk_optionMenu .subW.f.mode dmode $dm(1) $dm(2)
 	    grid .subW.f.mode -row 0 -column 5 -columnspan 15
 	    grid .subW.f.modeL -row 0 -column 2
 	}
     }
 
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
-	set smode $getOption($device,TPCButton)
-	if { [string compare -nocase -length 3 $smode "off"] } {
-	    set smode $sm(1)
-	} else {
-	    set smode $sm(2)
-	}
+	set smv $sm([ expr $getOption($device,TPCButton)+1 ])
+	tk_optionMenu .subW.f.smode smv $sm(1) $sm(2)
 	label .subW.f.smodeL -text "Side Switch Mode: "
-	tk_optionMenu .subW.f.smode smode $sm(1) $sm(2)
 	grid .subW.f.smode -row 3 -column 5 -columnspan 15
 	grid .subW.f.smodeL -row 3 -column 2
-    }
-
-    for { set i 1 } { $i < $t-1 } { incr i 1 } {
-	addMenu $i
     }
 }
 
@@ -682,28 +755,6 @@ proc closeTabWindow {} {
     bindtags .workingDev.list $workingTags
 }
 
-proc defaultButton {} {
-    global db db1 db2 db3 db4 db5 dm sm
-    global getDeviceModel dmode device smode
-
-    for { set i 1 } { $i < 6 } { incr i 1 } {
-	set db$i $db($i)
-    }
-    set type $getDeviceModel($device,type)
-    if { [ string compare -nocase -length 6 $type "cursor" ] } {
-	set dmode $dm(2)
-    } else {
-	set dmode $dm(1)
-    }
-
-    set model $getDeviceModel($device,model)
-    if { [string compare -nocase -length 5 $model "isdv4"] } {
-	set smode $sm(2)
-    } else {
-	set smode $sm(1)
-    }
-}
-
 proc addMenu {t} {
     global db db1 db2 db3 db4 db5
     global getOption device getDeviceModel
@@ -754,7 +805,7 @@ proc initialT {} {
     set mode $getOption($device,Mode)
     frame .subW.f.group -bd 10 -bg beige -width 150 -height 150
 
-    if { [ string compare $mode "Relative" ] } {
+    if { $mode == 1 } {
 	label .subW.f.groupL -text "Mapping: "
 	for { set i 1 } { $i < 5 } { incr i 1 } {
 	    addMapScale $i
@@ -804,18 +855,19 @@ proc updateT {} {
     global getOption getOptionDefault Option device
 
     set mode $getOption($device,Mode)
-    if { ![ string compare $mode "Absolute" ] } {
+    if { $mode == 1 } {
 	for { set i 1 } { $i < 5 } { incr i 1 } {
 	    set value [ .subW.f.group.scale$i get ]
-	    exec xsetwacom set $device $Option($i) $value
+	    updateXinitrc $device $Option($i) $value
+	    set getOption($device,$Option($i)) $value
 	}
     } else {
 	set value [ .subW.f.group.scale1 get ]
-	exec xsetwacom set $device SpeedLevel $value
+	updateXinitrc $device SpeedLevel $value
 	set value [ .subW.f.group.scale2 get ]
-	exec xsetwacom set $device Accel $value
+	updateXinitrc $device Accel $value
+	set getOption($device,Accel) $value
     }
-    updateXinitrc
     closeSubWindow
 }
 
@@ -823,7 +875,7 @@ proc defaultT {} {
     global getOption getOptionDefault Option device
 
     set mode $getOption($device,Mode)
-    if { ![ string compare $mode "Absolute" ] } {
+    if { $mode == 1 } {
 	for { set i 1 } { $i < 5 } { incr i 1 } {
 	    .subW.f.group.scale$i set $getOptionDefault($device,$Option($i))
 	}
@@ -847,32 +899,8 @@ proc initialTip {} {
 		-from 1 -to 7
     grid .subW.f.group.scale1 -row 0 -column 8
     set curve $getOption($device,PressCurve)
-    #default curve value
-    set value 4
 
-    if { $curve != "" } {
-	set p0 [ lindex $curve 0 ]
-	set p1 [ lindex $curve 1 ]
-	if { $p1 > 5 && $p1 < 35 } {
-	    set value 3
-	}
-	if { $p1 >= 35 && $p1 < 65 } {
-	    set value 2
-	}
-	if { $p1 >= 65 && $p1 < 95 } {
-	    set value 1
-	}
-	if { $p0 > 5 && $p0 < 35 } {
-	    set value 5
-	}
-	if { $p0 >= 35 && $p0 < 65 } {
-	    set value 6
-	}
-	if { $p0 >= 65 && $p0 < 95 } {
-	    set value 7
-	}
-    }
-    .subW.f.group.scale1 set $value
+    .subW.f.group.scale1 set $curve
     label .subW.f.group.l2 -text "Soft"
     grid .subW.f.group.l2 -row 1 -column 7
     label .subW.f.group.l3 -text "Firm"
@@ -897,22 +925,24 @@ proc updateTip {} {
 
     switch [ .subW.f.group.scale1 get ] {
 	1 
-	    { exec xsetwacom set $device PressCurve 0 75 25 100 }
+	    { set curve "0 75 25 100" }
 	2  
-	    { exec xsetwacom set $device PressCurve 0 50 50 100 }
+	    { set curve "0 50 50 100" }
 	3  
-	    { exec xsetwacom set $device PressCurve 0 25 75 100 }
+	    { set curve "0 25 75 100" }
 	4  
-	    { exec xsetwacom set $device PressCurve 0 0 100 100 }
+	    { set curve "0 0 100 100" }
 	5  
-	    { exec xsetwacom set $device PressCurve 25 0 100 75 }
+	    { set curve "25 0 100 75" }
 	6  
-	    { exec xsetwacom set $device PressCurve 50 0 100 50 }
+	    { set curve "50 0 100 50" }
 	7  
-	    { exec xsetwacom set $device PressCurve 75 0 100 25 }
+	    { set curve "75 0 100 25" }
     }
-    exec xsetwacom set $device ClickForce [ .subW.f.group.scale2 get ]
-    updateXinitrc
+    updateXinitrc $device PressCurve $curve
+    set getOption($device,PressCurve) $curve
+    updateXinitrc $device ClickForce [ .subW.f.group.scale2 get ]
+    set getOption($device,ClickForce) [ .subW.f.group.scale2 get ]
     closeSubWindow
 }
 
@@ -984,7 +1014,7 @@ proc createControls { } {
 		is embeded into its identifier string"
 	return
     }
-    exec xsetwacom set $dev FileModel
+    exec xsetwacom getdefault $dev GetModel
     set channelId [open /etc/wacom.dat]
     set info [read -nonewline $channelId]
     close $channelId
@@ -1004,8 +1034,8 @@ proc createControls { } {
     set dm(1) "Relative"
     set dm(2) "Absolute"
 
-    set sm(1) "Side Switch + Tip"
-    set sm(2) "Side Switch Only"
+    set sm(1) "Side Switch Only"
+    set sm(2) "Side Switch + Tip"
 
     set wName(1) "Feel"
     set wName(2) "Tool Buttons"

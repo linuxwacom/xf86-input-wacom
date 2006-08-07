@@ -115,6 +115,19 @@ int WacomConfigSetRawParam(WACOMDEVICE * hDevice, int nParam, int nValue);
  *   library, but for some parameters, particularly experimental ones, you
  *   will probably have to set them directly. */
 
+int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu);
+/* Gets the raw device parameter.
+ *   nParam         - valid paramters can be found Xwacom.h which is not
+ *                      automatically included.
+ *   nValue         - the device parameter is returned in the integer
+ *                    pointed by this parameter.
+ *   valu	    - calling valuator value: 1: Get 3: GetDefault
+ * Returns 0 on success, -1 on error.  errno contains error code.
+ *   EINVAL  - invalid parameter or value
+ *   EIO     - unknown X failure, use XSetErrorHandler to capture complete
+ *             error code and message
+ */
+
 void WacomConfigFree(void* pvData);
 /* Frees memory allocated by library. */
 

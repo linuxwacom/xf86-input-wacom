@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2006 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -24,6 +24,22 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
+#define WCMACTION_X11_DRIVER
+#include "../include/wcmAction.h"
+
+/* Max distance (0-63) at which a proximity-out event is generated for
+ * cursor device (e.g. mouse). Default is half of the range.
+ */
+#define PROXOUT_DISTANCE	32
+/* Hysteresis value for the above distance in 1/64 relative units, e.g.
+ * if PROXOUT_DISTANCE == 32 and PROXOUT_HYSTERESIS == 8, this would mean
+ * that proximity out is generated when distance is more than (for Intuos 
+ * series and Cintiq 21UX) or less than (for Graphire series)
+ * 32+(32*8/64) = 36 units (this is to produce a prompt relative movement), 
+ * and proximity in is generated when distance is less than 32-(32*8/64) = 28 
+ * units (this is to avoid prox in/out jittering).
+ */
+#define PROXOUT_HYSTERESIS	8
 
 /*****************************************************************************
  * xf86WcmAllocate --
@@ -94,8 +110,19 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->screen_no = -1;        /* associated screen */
 	priv->speed = DEFAULT_SPEED; /* rel. mode speed */
 	priv->accel = 0;	     /* rel. mode acceleration */
-	for (i=0; i<16; i++)
-		priv->button[i] = i+1; /* button i value */
+	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
+	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
+	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
+	priv->nPressCtrl [3] = 100;  /* pressure curve y1 */
+	/* Pad by default emits keypresses, other devices emits buttons */
+	for (i=0; i<MAX_MOUSE_BUTTONS; i++)
+		priv->button[i] = IsPad (priv) ?
+			(AC_BUTTON | (MAX_MOUSE_BUTTONS + i + 1)) : (AC_BUTTON | (i + 1));
+	for (i=MAX_MOUSE_BUTTONS; i<MAX_BUTTONS; i++)
+		priv->button[i] = IsPad (priv) ?
+			(AC_KEY | (XK_F1 + i-MAX_MOUSE_BUTTONS)) : (AC_BUTTON | (i + 1));
+	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
+	priv->naxes = 6;                   /* Default number of axes */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
@@ -121,12 +148,14 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
 	common->wcmMaxZ = 0;               /* max Z value */
+	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
+	common->wcmMaxStripX = 4095;       /* Max fingerstrip X */
+	common->wcmMaxStripY = 4095;       /* Max fingerstrip Y */
 	common->wcmChannelCnt = 1;         /* number of channels */
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
-	common->wcmInitialized = FALSE; /* device is not initialized */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
@@ -137,8 +166,12 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitor desktop. */
 					/* disabled (=0) when user doesn't want to move the */
 					/* cursor from one screen to another screen */
-	common->wcmTPCButton = 0;       /* set Tablet PC button on/off, default is off */
+	common->wcmTPCButton = 0;	/* set Tablet PC button on/off, default is off */
 	common->wcmRotate = ROTATE_NONE; /* default tablet rotation to off */
+	common->wcmCursorProxoutDist = PROXOUT_DISTANCE;
+				/* Max mouse distance for proxy-out max/256 units */
+	common->wcmCursorProxoutHyst = PROXOUT_HYSTERESIS;
+				/* Proxy-out distance hysteresis in max/256 units */
 	return local;
 }
 
@@ -270,13 +303,13 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 
 /* xf86WcmInit - called when the module subsection is found in XF86Config */
 
-static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
+static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	LocalDevicePtr local = NULL;
 	LocalDevicePtr fakeLocal = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	char* 		s, b[10];
+	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
 
@@ -307,7 +340,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	else
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-				"Must be one of stylus, cursor or eraser\n",
+				"Must be one of stylus, cursor, eraser, or pad\n",
 				dev->identifier);
 		goto SetupProc_fail;
 	}
@@ -438,11 +471,14 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
 	{
+		static int already_tried_it = 0;
 		/* best effort attempt at loading the wacom and evdev
-		 * kernel modules */
-		(void)xf86LoadKernelModule("wacom");
-		(void)xf86LoadKernelModule("evdev");
-    
+		 * kernel modules. try it just once */
+		if (!already_tried_it) {
+			already_tried_it = 1;
+			(void)xf86LoadKernelModule("wacom");
+			(void)xf86LoadKernelModule("evdev");
+    		}
 		common->wcmDevCls = &gWacomUSBDevice;
 		xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);
 	}
@@ -473,6 +509,20 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			xf86WcmSetPressureCurve(priv,a,b,c,d);
 			xf86Msg(X_CONFIG, "WACOM: PressCurve %d,%d,%d,%d\n",
 				a,b,c,d);
+		}
+	}
+
+	s = xf86FindOptionValue(local->options, "CursorProx");
+	if (s && !IsCursor(priv))
+	{
+		int a,b;
+		if ((sscanf(s,"%d,%d",&a,&b) != 2) ||
+			(a < 0) || (a > 63) || (b < 0) || (b > 63))
+			xf86Msg(X_CONFIG, "WACOM: CursorProx not valid\n");
+		else
+		{
+			common->wcmCursorProxoutDist = a;
+			common->wcmCursorProxoutHyst = b;
 		}
 	}
 
@@ -608,15 +658,18 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 
-	for (i=0; i<16; i++)
+	for (i=0; i<MAX_BUTTONS; i++)
 	{
 		sprintf(b, "Button%d", i+1);
-		oldButton = priv->button[i];
-		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
-		if (oldButton != priv->button[i])
+		s = xf86SetStrOption(local->options, b, NULL);
+		if (s)
 		{
-			xf86Msg(X_CONFIG, "%s: button%d assigned to %d\n", 
-				dev->identifier, i+1, priv->button[i]);
+			oldButton = priv->button[i];
+			priv->button[i] = xf86WcmDecodeAction(dev->identifier, b, s);
+
+			if (oldButton != priv->button[i])
+				xf86Msg(X_CONFIG, "%s: button%d assigned to %d\n",
+					dev->identifier, i+1, priv->button[i]);
 		}
 	}
 
@@ -643,7 +696,7 @@ static InputInfoPtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 				break;
 		}
 
-		if (xf86Verbose)
+		if (xf86Verbose && !(xf86SetBoolOption(local->options, "USB", 0)))
 			xf86Msg(X_CONFIG, "%s: serial speed %u\n",
 				dev->identifier, val);
 	} /* baud rate */

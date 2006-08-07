@@ -2,7 +2,7 @@
 ** wacomcfg.c
 **
 ** Copyright (C) 2003-2004 - John E. Joganic
-** Copyright (C) 2004-2005 - Ping Cheng
+** Copyright (C) 2004-2006 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -24,11 +24,12 @@
 **   2005-06-10 0.0.3 - PC - updated for x86_64
 **   2005-10-24 0.0.4 - PC - Added Pad
 **   2005-11-17 0.0.5 - PC - update mode code
+**   2006-07-17 0.0.6 - PC - Exchange info directly with wacom_drv.o
 **
 ****************************************************************************/
 
 #include "wacomcfg.h"
-#include "Xwacom.h" /* Hopefully it will be included in XFree86 someday, but
+#include "../include/Xwacom.h" /* Hopefully it will be included in XFree86 someday, but
                      * in the meantime, we are expecting it in the local
                      * directory. */
 
@@ -254,8 +255,7 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 	int nReturn;
 	int nValues[2];
 	XDeviceResolutionControl c;
-	XDeviceResolutionControl* cp = &c;
-	XDeviceControl* dc = (XDeviceControl*)cp;
+	XDeviceControl *dc = (XDeviceControl *)(void *)&c;
 
 	nValues[0] = nParam;
 	nValues[1] = nValue;
@@ -263,27 +263,67 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 
 	c.control = DEVICE_RESOLUTION;
 	c.length = sizeof(c);
-	if ( nParam == XWACOM_PARAM_FILEOPTION ) c.first_valuator = 0;
-	else if ( nParam == XWACOM_PARAM_FILEMODEL ) c.first_valuator = 1;
-	else c.first_valuator = 4;
+	c.first_valuator = 0;
 	c.num_valuators = 2;
 	c.resolutions = nValues;
 	/* Dispatch request */
-	nReturn = XChangeDeviceControl(
-		hDevice->pCfg->pDisp,
-		hDevice->pDev,
-		DEVICE_RESOLUTION,
-		dc);
+	nReturn = XChangeDeviceControl (hDevice->pCfg->pDisp, hDevice->pDev,
+					DEVICE_RESOLUTION, dc);
 
-	/* Convert error codes */
-	if (nReturn == BadValue)
+	/* Convert error codes:
+	 * hell knows what XChangeDeviceControl should return */
+	if (nReturn == BadValue || nReturn == BadRequest)
 		return CfgError(hDevice->pCfg,EINVAL,
-			"WacomConfigSetRawParam: Bad value");
-	else if (nParam == XWACOM_PARAM_MODE)
+				"WacomConfigSetRawParam: failed");
+
+	if (nParam == XWACOM_PARAM_MODE)
 	{
 		/* tell Xinput the mode has been changed */
 		XSetDeviceMode(hDevice->pCfg->pDisp, hDevice->pDev, nValue);
 	}
+	return 0;
+}
+
+int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu)
+{
+	int nReturn;
+	XDeviceResolutionControl c;
+	XDeviceResolutionState *ds;
+	int nValues[1];
+
+	if (!hDevice || !nParam) { errno=EINVAL; return -1; }
+
+	nValues[0] = nParam;
+
+	c.control = DEVICE_RESOLUTION;
+	c.length = sizeof(c);
+	c.first_valuator = 0;
+	c.num_valuators = valu;
+	c.resolutions = nValues;
+	/* Dispatch request */
+	nReturn = XChangeDeviceControl(hDevice->pCfg->pDisp, hDevice->pDev,
+		DEVICE_RESOLUTION, (XDeviceControl *)(void *)&c);
+
+	if (nReturn == BadValue || nReturn == BadRequest)
+	{
+error:		return CfgError(hDevice->pCfg, EINVAL,
+			"WacomConfigGetRawParam: failed");
+	}
+
+	ds = (XDeviceResolutionState *)XGetDeviceControl (hDevice->pCfg->pDisp,
+		hDevice->pDev, DEVICE_RESOLUTION);
+
+	/* Restore resolution */
+	nValues [0] = 0;
+	XChangeDeviceControl(hDevice->pCfg->pDisp, hDevice->pDev,
+		DEVICE_RESOLUTION, (XDeviceControl *)(void *)&c);
+
+	if (!ds)
+		goto error;
+
+	*nValue = ds->resolutions [ds->num_valuators-1];
+	XFreeDeviceControl ((XDeviceControl *)ds);
+
 	return 0;
 }
 
