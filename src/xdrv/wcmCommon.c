@@ -390,7 +390,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	};
 
 	if (IsPad (priv))
-		button -= MAX_MOUSE_BUTTONS;
+		button -= MAX_MOUSE_BUTTONS/2;
 
 	if (button < 0 || button >= priv->nbuttons)
 	{
@@ -406,14 +406,10 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (!button)
 		return;
 
-	if (priv->flags & BUTTONS_ONLY_FLAG)
-		naxes = 0;
-
 	/* Find out the keyboard device */
 	if (button & AC_CORE)
 	{
 		keydev = inputInfo.keyboard;
-		naxes = 0;
 	}
 	else
 		keydev = local->dev;
@@ -517,7 +513,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	int rx, ry, rz, v3, v4, v5, no_jitter;
 	double param, relacc;
 	int is_absolute;
-	int has_moved;
 
 	if (priv->serial && serial != priv->serial)
 	{
@@ -525,9 +520,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			local->name, serial, (int)priv->serial));
 		return;
 	}
-
-	if (priv->flags & BUTTONS_ONLY_FLAG)
-		naxes = 0;
 
 	/* use tx and ty to report stripx and stripy */
 	if (type == PAD_ID)
@@ -646,16 +638,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		v5 = wheel - priv->oldWheel;
 	}
 
-	/* Pad subdevice axes are fingerstrip x/y */
-	if (naxes == 2)
-	{
-		rx = tx;
-		ry = ty;
-		has_moved = ((priv->currentX != rx) || (priv->currentY != ry));
-	}
-	else
-		has_moved = 1;
-
 	priv->currentX = rx;
 	priv->currentY = ry;
 
@@ -678,13 +660,38 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		v4 = (serial & 0xffff0000) | (((short)v4)& 0xffff);
 		v5 = ((serial<<16) & 0xffff0000) | (((short)v5)& 0xffff);
 	}
+	else
+	{
+		if (v3 || v4 || buttons)
+		{
+			xf86PostProximityEvent(local->dev, 1, 0, naxes,
+					       rx, ry, rz, v3, v4, v5);
+			xf86PostMotionEvent(local->dev, is_absolute,
+					    0, naxes, rx, ry, rz, v3, v4, v5);
+
+			if (priv->oldButtons != buttons)
+			{
+				xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
+			}
+		}
+		else
+		{
+			if (priv->oldButtons != buttons)
+				xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
+			xf86PostProximityEvent(local->dev, 0, 0, naxes,
+					       rx, ry, rz, v3, v4, v5);
+		}
+		priv->oldButtons = buttons;
+		priv->oldStripX = ds->stripx;
+		priv->oldStripY = ds->stripy;
+	}
 
 	/* coordinates are ready we can send events */
-	if (is_proximity || IsPad (priv))
+	if (is_proximity)
 	{
 		/* for multiple monitor support, we need to set the proper 
 		 * screen and modify the axes before posting events */
-		if( !(priv->flags & BUTTONS_ONLY_FLAG) )
+		if(!(priv->flags & BUTTONS_ONLY_FLAG) )
 		{
 			xf86WcmSetScreen(local, &rx, &ry);
 		}
@@ -694,13 +701,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			rx *= priv->factorY / priv->factorX;
 
 		/* don't emit proximity events if device does not support proximity */
-		if (local->dev->proximity &&
-		    !priv->oldProximity && !(priv->flags & BUTTONS_ONLY_FLAG))
+		if ((local->dev->proximity &&
+		    !priv->oldProximity && !(priv->flags & BUTTONS_ONLY_FLAG)))
 			xf86PostProximityEvent(local->dev, 1, 0, naxes,
 					       rx, ry, rz, v3, v4, v5);
 
-		if (naxes && has_moved)
-			xf86PostMotionEvent(local->dev, is_absolute,
+
+		xf86PostMotionEvent(local->dev, is_absolute,
 					    0, naxes, rx, ry, rz, v3, v4, v5);
 
 		if (priv->oldButtons != buttons)

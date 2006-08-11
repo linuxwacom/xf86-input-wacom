@@ -158,7 +158,7 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 	nbkeys = nbbuttons;         /* Same number of keys since any button may be */
 	                            /* configured as an either mouse button or key */
 
-	DBG(12,ErrorF("xf86WcmRegisterX11Devices (%s) %d buttons, %d keys, %d axes\n",
+	DBG(10,ErrorF("xf86WcmRegisterX11Devices (%s) %d buttons, %d keys, %d axes\n",
 			IsStylus(priv) ? "stylus" :
 			IsCursor(priv) ? "cursor" :
 			IsPad(priv) ? "pad" : "eraser",
@@ -173,20 +173,14 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 		return FALSE;
 	}
 
-	if (!IsPad (priv))
+	if (InitProximityClassDeviceStruct(pWcm) == FALSE)
 	{
-		if (InitProximityClassDeviceStruct(pWcm) == FALSE)
-		{
 			ErrorF("unable to init proximity class device\n");
 			return FALSE;
-		}
 	}
 
-	/* We need at least two axes for our communication via
-         * XChangeDeviceControl (doh).
-	 */
-	if (!nbaxes)
-		nbaxes = priv->naxes = 2;
+	if (nbaxes || nbaxes > 6)
+		nbaxes = priv->naxes = 6;
 
 	if (InitValuatorClassDeviceStruct(pWcm, nbaxes,
 					  xf86GetMotionEvents,

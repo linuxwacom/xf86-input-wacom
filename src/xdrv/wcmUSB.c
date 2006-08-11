@@ -458,6 +458,8 @@ static Bool usbInit(LocalDevicePtr local)
 		if (ISBITSET (keys, padkey_codes [i]))
 			common->padkey_code [common->npadkeys++] = padkey_codes [i];
 
+/*	For backward support (9-16 button for menu strips), we assign 16 to MAX_MOUSE_BUTTONS. 
+	Something more specific like below will be considered later.
 	if (ISBITSET (keys, BTN_TASK))
 		common->nbuttons = 10;
 	else if (ISBITSET (keys, BTN_BACK))
@@ -469,7 +471,7 @@ static Bool usbInit(LocalDevicePtr local)
 	else if (ISBITSET (keys, BTN_SIDE))
 		common->nbuttons = 6;
 	else
-		common->nbuttons = 5;
+*/		common->nbuttons = MAX_MOUSE_BUTTONS;
 
 	return xf86WcmInitTablet(local,model,id,0.0);
 }
@@ -607,26 +609,10 @@ static int usbGetRanges(LocalDevicePtr local)
 
 static int usbDetectConfig(LocalDevicePtr local)
 {
-	unsigned long abs[NBITS(ABS_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	if (IsPad (priv))
-	{
-		priv->nbuttons = common->npadkeys;
-		priv->naxes = 0;
-		if (ioctl(local->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) >= 0)
-		{
-			if (ISBITSET (abs, ABS_RX))
-				priv->naxes++;
-			if (ISBITSET (abs, ABS_RY))
-				priv->naxes++;
-			if (!priv->naxes)
-				priv->flags |= BUTTONS_ONLY_FLAG;
-		}
-	}
-	else
-		priv->nbuttons = common->nbuttons;
+	priv->nbuttons = common->nbuttons;
 
 	return TRUE;
 }
@@ -891,7 +877,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				for (i = 0; i < common->npadkeys; i++)
 					if (event->code == common->padkey_code [i])
 					{
-						MOD_BUTTONS ((MAX_MOUSE_BUTTONS+i), event->value);
+						MOD_BUTTONS ((MAX_MOUSE_BUTTONS/2+i), event->value);
 						break;
 					}
 			}

@@ -309,27 +309,43 @@ if test "$enable_tabletdev" != "no"; then
 	fi
 fi
 
-dnl Check for dlloader
+dnl Check for xmoduledir
 AC_ARG_WITH(xmoduledir,
 AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
-[ WCM_MODDIR=$withval 
-],
-[
-	WCM_MODDIR=
-	if test -d $WCM_XLIBDIR/xorg/modules/input; then
-		WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
-	elif test -d $WCM_XLIBDIR/modules/input; then
-		WCM_MODDIR=$WCM_XLIBDIR/modules/input
+[ 
+
+	WCM_MODDIR="$withval" 
+	AC_MSG_CHECKING(for specifying Wacom X driver module path)
+	if test $WCM_MODDIR == ""; then
+		if test -d $WCM_XLIBDIR/xorg/modules/input; then
+			WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
+		elif test -d $WCM_XLIBDIR/modules/input; then
+			WCM_MODDIR=$WCM_XLIBDIR/modules/input
+		fi
+	else
+		WCM_OPTION_DLLOADER=yes
+		
 	fi
 ])
 
-WCM_OPTION_DLLOADER=no
+dnl Check for dlloader
 AC_ARG_ENABLE(dlloader,
 AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
-[ WCM_OPTION_DLLOADER=$enableval 
-],
-[ test -z "$WCM_MODDIR" || WCM_OPTION_DLLOADER=yes 
-])
+	, enable_dlloader=$WCM_OPTION_DLLOADER) 
+#usual case
+if test $enable_dlloader == "" && test $WCM_OPTION_DLLOADER != "yes"; then
+	if test -f $WCM_MODDIR/wacom_drv.so; then
+		WCM_OPTION_DLLOADER=yes 
+	else
+		WCM_OPTION_DLLOADER=no 
+	fi
+fi
+#defined case
+if test "$enable_dlloader" = "yes"; then
+	WCM_OPTION_DLLOADER=yes
+elif test "$enable_dlloader" = "no"; then
+	  WCM_OPTION_DLLOADER=no
+fi
 
 AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
 

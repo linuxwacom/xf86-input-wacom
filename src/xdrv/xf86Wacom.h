@@ -246,9 +246,12 @@ typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 
 #define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
 #define MAX_BUTTONS		32	/* maximum number of tablet buttons */
-#define MAX_MOUSE_BUTTONS	8	/* maximum number of buttons-on-pointer
+#define MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer
                                          * (which are treated as mouse buttons,
-                                         * not as keys like pad buttons) */
+                                         * not as keys like tablet menu buttons). 
+					 * For backword compability support, 
+					 * tablet buttons besides the strips are
+					 * treated as buttons */
 
 typedef enum { TV_NONE = 0, TV_ABOVE_BELOW = 1, TV_LEFT_RIGHT = 2 } tvMode;
 

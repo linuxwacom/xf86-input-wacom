@@ -413,6 +413,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	XValuatorInfoPtr pValInfo = NULL;
 	XAnyClassPtr pClass;
 
+fprintf(stderr,"in CursesRun\n");
 	/* Identify program and version */
 	wacscrn_standout();
 	for (i=0; i<80; ++i) wacscrn_output(nRow,i," ");
@@ -420,6 +421,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	wacscrn_normal();
 	nRow += 2;
 
+fprintf(stderr,"in CursesRun get class info\n");
 	/* get class info */
 	pClass = pDevInfo->inputclassinfo;
 	for (j=0; j<pDevInfo->num_classes; ++j)
@@ -439,6 +441,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	wacscrn_output(nRow,0,chBuf);
 	nRow += 1;
 
+fprintf(stderr,"in CursesRun display valuator related info\n");
 	/* display valuator related info */
 	nTitleRow = nRow;
 	if (pValInfo)
@@ -450,12 +453,14 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 		nRow += 2;
 		nValRow = nRow;
 		nRow += 6;
+fprintf(stderr,"in CursesRun wacscrn_output \n");
 
 		wacscrn_output(nValRow+1 ,0,"     data:");
 		wacscrn_output(nValRow+2 ,0,"      min:");
 		wacscrn_output(nValRow+3 ,0,"      max:");
 		wacscrn_output(nValRow+4 ,0,"      res:");
 
+fprintf(stderr,"in CursesRun number of valuators = %d \n", pValInfo->num_axes);
 		/* retain pressure range for pressure bar */
 		nMaxPress = pValInfo->axes[2].max_value;
 		nMinPress = pValInfo->axes[2].min_value;
@@ -484,6 +489,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			snprintf(chBuf,sizeof(chBuf),"%+06d",
 				pValInfo->axes[k].resolution);
 			wacscrn_output(nValRow+4,12 + k * 10, chBuf);
+fprintf(stderr,"in CursesRun for display axes \n");
 		}
 	}
 	else nValRow = 0;
@@ -493,7 +499,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	nFocusRow = nRow++;
 	nButtonRow = nRow++;
 	nKeyRow = nRow++;
-
 	wacscrn_output(nProxRow,  0,"Proximity:");
 	wacscrn_output(nFocusRow, 0,"    Focus:");
 	wacscrn_output(nButtonRow,0,"  Buttons:");
@@ -503,6 +508,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 
 	/* handle events */
 
+fprintf(stderr,"in CursesRun while\n");
 	while (1)
 	{
 		wacscrn_refresh();
@@ -1008,11 +1014,13 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 			GrabModeAsync, /* same */
 			CurrentTime);
 
+fprintf(stderr,"initializing UI\n");
 	/* fire up the UI */
 	if ((nRtn=pUI->Init()) != 0)
 		fprintf(stderr,"failed to initialize UI\n");
 	else
 	{
+fprintf(stderr,"starting UI\n");
 		if ((nRtn=pUI->Run(pDisp,pDevInfo,fmt)) != 0)
 			fprintf(stderr,"failed to run UI\n");
 		pUI->Term();
