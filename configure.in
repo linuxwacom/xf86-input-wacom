@@ -310,28 +310,33 @@ if test "$enable_tabletdev" != "no"; then
 fi
 
 dnl Check for xmoduledir
+WCM_MODDIR=
+AC_MSG_CHECKING(for specifying Wacom X driver module path)
 AC_ARG_WITH(xmoduledir,
 AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
-[ 
-
+[
 	WCM_MODDIR="$withval" 
-	AC_MSG_CHECKING(for specifying Wacom X driver module path)
-	if test $WCM_MODDIR == ""; then
-		if test -d $WCM_XLIBDIR/xorg/modules/input; then
-			WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
-		elif test -d $WCM_XLIBDIR/modules/input; then
-			WCM_MODDIR=$WCM_XLIBDIR/modules/input
-		fi
-	else
-		WCM_OPTION_DLLOADER=yes
-		
-	fi
 ])
+if test -d $WCM_MODDIR; then
+	if test -d $WCM_XLIBDIR/xorg/modules/input; then
+		WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
+	elif test -d $WCM_XLIBDIR/modules/input; then
+		WCM_MODDIR=$WCM_XLIBDIR/modules/input
+	fi
+else
+	WCM_OPTION_DLLOADER=yes
+fi
 
 dnl Check for dlloader
 AC_ARG_ENABLE(dlloader,
 AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
 	, enable_dlloader=$WCM_OPTION_DLLOADER) 
+#defined case
+if test "$enable_dlloader" = "yes"; then
+	WCM_OPTION_DLLOADER=yes
+else
+	  WCM_OPTION_DLLOADER=no
+fi
 #usual case
 if test $enable_dlloader == "" && test $WCM_OPTION_DLLOADER != "yes"; then
 	if test -f $WCM_MODDIR/wacom_drv.so; then
@@ -339,12 +344,6 @@ if test $enable_dlloader == "" && test $WCM_OPTION_DLLOADER != "yes"; then
 	else
 		WCM_OPTION_DLLOADER=no 
 	fi
-fi
-#defined case
-if test "$enable_dlloader" = "yes"; then
-	WCM_OPTION_DLLOADER=yes
-elif test "$enable_dlloader" = "no"; then
-	  WCM_OPTION_DLLOADER=no
 fi
 
 AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
@@ -582,11 +581,11 @@ echo "         mousedev.o - $WCM_OPTION_MOUSEDEV"
 echo "            input.o - $WCM_OPTION_INPUT"
 echo "        tabletdev.o - $WCM_OPTION_TABLETDEV"
 if test "$WCM_OPTION_DLLOADER" == "yes" ; then
-echo "       wacom_drv.so - $WCM_OPTION_WACOMDRV $WCM_PATCH_WACOMDRV"
+echo "       wacom_drv.so - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 echo "        wacom_drv.o - no"
 else
 echo "       wacom_drv.so - no"
-echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_PATCH_WACOMDRV"
+echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 fi
 echo "----------------------------------------"
 

@@ -217,7 +217,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			else
 				echo "***"
 				echo "*** WARNING:"
-				echo "*** $moduts is not supported by this pachage"
+				echo "*** $moduts is not supported by this package"
 				echo "*** Kernel modules will not be built"
 				echo "***"
 				WCM_OPTION_MODVER=no

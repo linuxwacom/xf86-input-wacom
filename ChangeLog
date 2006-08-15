@@ -1,3 +1,6 @@
+2006-08-10   Ping Cheng <pingc@wacom.com>
+	* Backward tablet menu strip support
+ 
 2006-08-07   Ping Cheng <pingc@wacom.com>
 	* Created 3 new directories, xdrv, include, and util under src to store 
 	  X driver, common headers, and utility programs separately

@@ -310,7 +310,6 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 				wacom->tool[idx] = BTN_TOOL_PEN;
 		}
 		/* only large I3 support Lens Cursor */
-printk(KERN_INFO "wacom_intuos_irq: tool %d in\n", wacom->tool[idx]);
 		if(!((wacom->tool[idx] == BTN_TOOL_LENS) &&
 				(wacom->features->type == INTUOS3))) {
 			wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]); /* report tool id */
@@ -323,7 +322,6 @@ printk(KERN_INFO "wacom_intuos_irq: tool %d in\n", wacom->tool[idx]);
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
-printk(KERN_INFO "wacom_intuos_irq: tool %d leaving\n", wacom->tool[idx]);
  		wacom_report_key(wcombo, wacom->tool[idx], 0);
 		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
 		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
@@ -403,7 +401,6 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 
 	/* process in/out prox events */
 	result = wacom_intuos_inout(wacom, wcombo);
-printk(KERN_INFO "wacom_intuos_irq: inout return %d \n", result);
 	if (result)
                 return result-1;
 
