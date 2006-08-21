@@ -51,13 +51,13 @@
 #endif
 
 static Bool usbDetect(LocalDevicePtr);
-static Bool usbInit(LocalDevicePtr pDev);
+Bool usbWcmInit(LocalDevicePtr pDev);
 
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version);
-static int usbGetRanges(LocalDevicePtr local);
+int usbWcmGetRanges(LocalDevicePtr local);
 static int usbParse(WacomCommonPtr common, const unsigned char* data);
 static int usbDetectConfig(LocalDevicePtr local);
 static void usbParseEvent(WacomCommonPtr common,
@@ -67,7 +67,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 	WacomDeviceClass gWacomUSBDevice =
 	{
 		usbDetect,
-		usbInit,
+		usbWcmInit,
 		xf86WcmReadPacket,
 	};
 
@@ -76,7 +76,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"Unknown USB",
 		usbInitProtocol5,     /* assume the best */
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -92,7 +92,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB PenPartner",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -108,7 +108,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Graphire",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -124,7 +124,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Graphire2",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -140,7 +140,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Graphire3",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -156,7 +156,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Graphire4",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -172,7 +172,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Cintiq",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -188,7 +188,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB CintiqPartner",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -204,7 +204,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Intuos",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -220,7 +220,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Intuos2",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -236,7 +236,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Intuos3",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -252,7 +252,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Volito",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -268,7 +268,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Volito2",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -284,7 +284,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		"USB Cintiq21UX",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
-		usbGetRanges,
+		usbWcmGetRanges,
 		NULL,                 /* reset not supported */
 		NULL,                 /* tilt automatically enabled */
 		NULL,                 /* suppress implemented in software */
@@ -326,7 +326,7 @@ static Bool usbDetect(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * usbInit --
+ * wcmusbInit --
  ****************************************************************************/
 #define BIT(x)		(1<<((x) & (BITS_PER_LONG - 1)))
 #define BITS_PER_LONG	(sizeof(long) * 8)
@@ -363,6 +363,7 @@ static struct
 	{ 0x14, 2032, 2032, &usbGraphire3  }, /* Graphire3 6x8 */
 	{ 0x15, 2032, 2032, &usbGraphire4  }, /* Graphire4 4x5 */
 	{ 0x16, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 */ 
+	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
 	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
 	{ 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
@@ -408,7 +409,7 @@ static struct
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }  /* Cintiq 21UX */ 
 };
 
-static Bool usbInit(LocalDevicePtr local)
+Bool usbWcmInit(LocalDevicePtr local)
 {
 	int i;
 	short sID[4];
@@ -451,15 +452,13 @@ static Bool usbInit(LocalDevicePtr local)
 		return FALSE;
 	}
 
-	/* Find out supported button codes -
-	 * except mouse button codes which are always fixed */
+	/* Find out supported button codes - except mouse button codes
+	 * BTN_LEFT and BTN_RIGHT, which are always fixed. */
 	common->npadkeys = 0;
 	for (i = 0; i < sizeof (padkey_codes) / sizeof (padkey_codes [0]); i++)
 		if (ISBITSET (keys, padkey_codes [i]))
 			common->padkey_code [common->npadkeys++] = padkey_codes [i];
 
-/*	For backward support (9-16 button for menu strips), we assign 16 to MAX_MOUSE_BUTTONS. 
-	Something more specific like below will be considered later.
 	if (ISBITSET (keys, BTN_TASK))
 		common->nbuttons = 10;
 	else if (ISBITSET (keys, BTN_BACK))
@@ -471,7 +470,7 @@ static Bool usbInit(LocalDevicePtr local)
 	else if (ISBITSET (keys, BTN_SIDE))
 		common->nbuttons = 6;
 	else
-*/		common->nbuttons = MAX_MOUSE_BUTTONS;
+		common->nbuttons = 5;
 
 	return xf86WcmInitTablet(local,model,id,0.0);
 }
@@ -501,7 +500,7 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmPktLength = sizeof(struct input_event);
 }
 
-static int usbGetRanges(LocalDevicePtr local)
+int usbWcmGetRanges(LocalDevicePtr local)
 {
 	int nValues[5];
 	unsigned long ev[NBITS(EV_MAX)];
@@ -541,35 +540,29 @@ static int usbGetRanges(LocalDevicePtr local)
 	}
 
 	/* max x */
-	if (common->wcmMaxX == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_X), nValues) < 0)
 	{
-		if (ioctl(local->fd, EVIOCGABS(ABS_X), nValues) < 0)
-		{
-			ErrorF("WACOM: unable to ioctl xmax value.\n");
-			return !Success;
-		}
-		common->wcmMaxX = nValues[2];
-		if (common->wcmMaxX <= 0)
-		{
-			ErrorF("WACOM: xmax value is wrong.\n");
-			return !Success;
-		}
+		ErrorF("WACOM: unable to ioctl xmax value.\n");
+		return !Success;
+	}
+	common->wcmMaxX = nValues[2];
+	if (common->wcmMaxX <= 0)
+	{
+		ErrorF("WACOM: xmax value is wrong.\n");
+		return !Success;
 	}
 
 	/* max y */
-	if (common->wcmMaxY == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
 	{
-		if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
-		{
-			ErrorF("WACOM: unable to ioctl ymax value.\n");
-			return !Success;
-		}
-		common->wcmMaxY = nValues[2];
-		if (common->wcmMaxY <= 0)
-		{
-			ErrorF("WACOM: ymax value is wrong.\n");
-			return !Success;
-		}
+		ErrorF("WACOM: unable to ioctl ymax value.\n");
+		return !Success;
+	}
+	common->wcmMaxY = nValues[2];
+	if (common->wcmMaxY <= 0)
+	{
+		ErrorF("WACOM: ymax value is wrong.\n");
+		return !Success;
 	}
 
 	/* max z cannot be configured */
@@ -609,10 +602,26 @@ static int usbGetRanges(LocalDevicePtr local)
 
 static int usbDetectConfig(LocalDevicePtr local)
 {
+	unsigned long abs[NBITS(ABS_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	priv->nbuttons = common->nbuttons;
+	if (IsPad (priv))
+	{
+		priv->nbuttons = common->npadkeys;
+		priv->naxes = 0;
+		if (ioctl(local->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) >= 0)
+		{
+			if (ISBITSET (abs, ABS_RX))
+				priv->naxes++;
+			if (ISBITSET (abs, ABS_RY))
+				priv->naxes++;
+			if (!priv->naxes)
+				priv->flags |= BUTTONS_ONLY_FLAG;
+		}
+	}
+	else
+		priv->nbuttons = common->nbuttons;
 
 	return TRUE;
 }

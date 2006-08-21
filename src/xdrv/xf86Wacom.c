@@ -117,6 +117,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 static int xf86WcmModelToFile(LocalDevicePtr local);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
+extern Bool usbWcmInit(LocalDevicePtr pDev);
+extern int usbWcmGetRanges(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
@@ -141,10 +143,12 @@ WacomModule gWacomModule =
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
 
-static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
+static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
-	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int totalWidth = 0, maxHeight = 0, tabletSize = 0;
+	double screenRatio, tabletRatio;
 	CARD8 butmap[MAX_BUTTONS];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
@@ -167,13 +171,13 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 	for(loop=1; loop<=nbbuttons; loop++)
 		butmap[loop] = loop;
 
-	if (InitButtonClassDeviceStruct(pWcm, nbbuttons, butmap) == FALSE)
+	if (InitButtonClassDeviceStruct(local->dev, nbbuttons, butmap) == FALSE)
 	{
 		ErrorF("unable to allocate Button class device\n");
 		return FALSE;
 	}
 
-	if (InitProximityClassDeviceStruct(pWcm) == FALSE)
+	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
 	{
 			ErrorF("unable to init proximity class device\n");
 			return FALSE;
@@ -182,7 +186,7 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 	if (nbaxes || nbaxes > 6)
 		nbaxes = priv->naxes = 6;
 
-	if (InitValuatorClassDeviceStruct(pWcm, nbaxes,
+	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
 					  xf86GetMotionEvents,
 					  local->history_size,
 					  (priv->flags & ABSOLUTE_FLAG) ?
@@ -222,7 +226,7 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 		wacom_keysyms.minKeyCode = 8;
 		wacom_keysyms.maxKeyCode = 8 + nbkeys - 1;
 		wacom_keysyms.mapWidth = 1;
-		if (InitKeyClassDeviceStruct(pWcm, &wacom_keysyms, NULL) == FALSE)
+		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
 		{
 			ErrorF("unable to init key class device\n");
 			return FALSE;
@@ -231,57 +235,6 @@ static int xf86WcmRegisterX11Devices (DeviceIntPtr pWcm)
 
 	/* allocate motion history buffer if needed */
 	xf86MotionHistoryAllocate(local);
-
-	return TRUE;
-}
-
-/*****************************************************************************
- * xf86WcmDevOpen --
- *    Open the physical device and init information structs.
- ****************************************************************************/
-
-static int xf86WcmDevOpen(DeviceIntPtr pWcm)
-{
-	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
-	WacomCommonPtr common = priv->common;
-	int totalWidth = 0, maxHeight = 0, tabletSize = 0;
-	double screenRatio, tabletRatio;
- 
-	/* Drop read error counter */
-	common->wcmReadErrorCount = 0;
-
-	/* open file, if not already open */
-	if (common->fd_refs == 0)
-	{
-		if ((xf86WcmOpen (local) != Success) || (local->fd < 0))
-		{
-			DBG(1,ErrorF("Failed to open device (fd=%d)\n", local->fd));
-			if (local->fd >= 0)
-			{
-				DBG(1,ErrorF("Closing device\n"));
-				xf86WcmClose(local->fd);
-			}
-			local->fd = -1;
-			return FALSE;
-		}
-		common->fd = local->fd;
-		common->fd_refs = 1;
-	}
-
-	/* Grab the common descriptor, if it's available */
-	if (local->fd < 0)
-	{
-		local->fd = common->fd;
-		common->fd_refs++;
-	}
-
-	/* The rest of initialization is done only once */
-	if (local->flags & X11DEVREG_FLAG)
-		return TRUE;
-
-	if (!xf86WcmRegisterX11Devices (pWcm))
-		return FALSE;
 
 	local->flags |= X11DEVREG_FLAG;
 
@@ -292,6 +245,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		priv->tvoffsetY = 60;
 	}
 
+	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
 	if (priv->bottomY == 0) priv->bottomY = common->wcmMaxY;
 
@@ -401,13 +356,24 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			priv->factorX, priv->factorY));
 	}
 
+	if (IsPad(priv))
+	{
+		/* strip-x and strip-y */
+		if (priv->naxes)
+		{
+			InitValuatorAxisStruct(local->dev, 0, 0, 4097, 1, 1, 1);
+			InitValuatorAxisStruct(local->dev, 1, 0, 4097, 1, 1, 1);
+		}
+		return TRUE;
+	}
+
 	/* x and y axes */
 	if (priv->twinview == TV_LEFT_RIGHT)
 		tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 	else
 		tabletSize = priv->bottomX - priv->topX;
 
-	InitValuatorAxisStruct(pWcm, 0, 0, tabletSize, /* max val */
+	InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize, /* max val */
 		common->wcmResolX, /* tablet resolution */
 		0, common->wcmResolX); /* max_res */
 
@@ -416,42 +382,88 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	else
 		tabletSize = priv->bottomY - priv->topY;
 
-	InitValuatorAxisStruct(pWcm, 1, 0, tabletSize, /* max val */
+	InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
 		common->wcmResolY, /* tablet resolution */
 		0, common->wcmResolY); /* max_res */
 
 	/* pressure */
-	InitValuatorAxisStruct(pWcm, 2, 0,
+	InitValuatorAxisStruct(local->dev, 2, 0,
 		common->wcmMaxZ, /* max val */
 		1, 1, 1);
 
 	if (IsCursor(priv))
 	{
 		/* z-rot and throttle */
-		InitValuatorAxisStruct(pWcm, 3, -900, 899, 1, 1, 1);
-		InitValuatorAxisStruct(pWcm, 4, -1023, 1023, 1, 1, 1);
-	}
-	else if (IsPad(priv))
-	{
-		/* strip-x and strip-y */
-		InitValuatorAxisStruct(pWcm, 3, 0, 4097, 1, 1, 1);
-		InitValuatorAxisStruct(pWcm, 4, 0, 4097, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 3, -900, 899, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 4, -1023, 1023, 1, 1, 1);
 	}
 	else
 	{
 		/* tilt-x and tilt-y */
-		InitValuatorAxisStruct(pWcm, 3, -64, 63, 1, 1, 1);
-		InitValuatorAxisStruct(pWcm, 4, -64, 63, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 3, -64, 63, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 4, -64, 63, 1, 1, 1);
 	}
 
 	if (strstr(common->wcmModel->name, "Intuos3") && IsStylus(priv))
 		/* Intuos3 Marker Pen rotation */
-		InitValuatorAxisStruct(pWcm, 5, -900, 899, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5, -900, 899, 1, 1, 1);
 	else
 	{
 		/* absolute wheel */
-		InitValuatorAxisStruct(pWcm, 5, 0, 1023, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5, 0, 1023, 1, 1, 1);
 	}
+
+	return TRUE;
+}
+
+/*****************************************************************************
+ * xf86WcmDevOpen --
+ *    Open the physical device and init information structs.
+ ****************************************************************************/
+
+static int xf86WcmDevOpen(DeviceIntPtr pWcm)
+{
+	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
+	WacomCommonPtr common = priv->common;
+ 
+	DBG(10,ErrorF("xf86WcmDevOpen\n"));
+
+	/* Drop read error counter */
+	common->wcmReadErrorCount = 0;
+
+	/* open file, if not already open */
+	if (common->fd_refs == 0)
+	{
+		if ((xf86WcmOpen (local) != Success) || (local->fd < 0))
+		{
+			DBG(1,ErrorF("Failed to open device (fd=%d)\n", local->fd));
+			if (local->fd >= 0)
+			{
+				DBG(1,ErrorF("Closing device\n"));
+				xf86WcmClose(local->fd);
+			}
+			local->fd = -1;
+			return FALSE;
+		}
+		common->fd = local->fd;
+		common->fd_refs = 1;
+	}
+
+	/* Grab the common descriptor, if it's available */
+	if (local->fd < 0)
+	{
+		local->fd = common->fd;
+		common->fd_refs++;
+	}
+
+	/* The rest of initialization is done only once */
+	if (local->flags & X11DEVREG_FLAG)
+		return TRUE;
+
+	if (!xf86WcmRegisterX11Devices (local))
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -462,18 +474,35 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 static void xf86WcmDevReadInput(LocalDevicePtr local)
 {
-	int loop=0;
+	int loop=0, i;
 	#define MAX_READ_LOOPS 10
 
-	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
-	/* If there were 5 successive read errors, it means the device
-	 * was disconnected. The only way to make the tablet alive again
-	 * is to reconnect the tablet, then switch to another VT and back
-	 * so that X11 reopens the device.
+	/* If there were read errors for USB tablet, it means the device was 
+	 * disconnected or changed. The only way to make the tablet alive again 
+	 * is to reconnect or reregister it. 
 	 */
-	if (common->wcmReadErrorCount > 5)
-		return;
+	if (common->wcmReadErrorCount > 0)
+	{
+		if (common->wcmDevCls == &gWacomUSBDevice)
+		{
+			usbWcmInit(local);
+			usbWcmGetRanges(local);
+			xf86WcmRegisterX11Devices(local);
+			/* reinitialize all the other defined tools on the same port */
+			for (i=0; i<common->wcmNumDevices; i++)
+			{
+				if (((WacomDevicePtr)(common->wcmDevices[i]->private))->common == common  
+						&& common->wcmDevices[i] != local)
+					xf86WcmRegisterX11Devices(common->wcmDevices[i]);
+			}
+			common->wcmReadErrorCount = 0;
+			return;
+		}
+		common->wcmReadErrorCount = 0;
+	}
 
 	/* move data until we exhaust the device */
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
@@ -490,18 +519,30 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 		DBG(1,ErrorF("xf86WcmDevReadInput: Can't keep up!!!\n"));
 	else if (loop > 0)
 		DBG(10,ErrorF("xf86WcmDevReadInput: Read (%d)\n",loop));
-}
+}					
 
 void xf86WcmReadPacket(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	int len, pos, cnt, remaining;
+	short sID[4];
 
 	if (!common->wcmModel) return;
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
-	DBG(12, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
+	if (common->wcmDevCls == &gWacomUSBDevice && !common->wcmReadErrorCount)
+	{
+		ioctl(local->fd, EVIOCGID, sID);
+
+		if (common->tablet_id != sID[2])
+		{
+			common->wcmReadErrorCount++;
+			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", common->tablet_id, sID[2]));
+		}
+	}
+
+	DBG(10, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
 		"pos=%d remaining=%d\n",
 		common->wcmDevice, local->fd,
 		common->bufpos, remaining));
@@ -512,14 +553,18 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	if (len <= 0)
 	{
-		common->wcmReadErrorCount++;
+		if (common->wcmDevCls == &gWacomUSBDevice)
+		{
+			common->wcmReadErrorCount++;
+			xf86WcmWait(500);
+		}
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
 	}
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(12, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
+	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
 		common->bufpos));
 
 	pos = 0;
@@ -554,7 +599,6 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			common->bufpos = 0;
 		}
 	}
-	common->wcmReadErrorCount = 0;
 }
 
 /*****************************************************************************

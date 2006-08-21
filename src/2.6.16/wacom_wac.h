@@ -20,6 +20,7 @@ enum {
 	PTU,
 	PL,
 	INTUOS,
+	INTUOS3S,
 	INTUOS3,
 	INTUOS3L,
 	CINTIQ,

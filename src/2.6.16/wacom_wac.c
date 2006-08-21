@@ -310,8 +310,9 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 				wacom->tool[idx] = BTN_TOOL_PEN;
 		}
 		/* only large I3 support Lens Cursor */
-		if(!((wacom->tool[idx] == BTN_TOOL_LENS) &&
-				(wacom->features->type == INTUOS3))) {
+		if(!((wacom->tool[idx] == BTN_TOOL_LENS) 
+				 && ((wacom->features->type == INTUOS3) 
+				 || (wacom->features->type == INTUOS3S))) {
 			wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]); /* report tool id */
 			wacom_report_key(wcombo, wacom->tool[idx], 1);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
@@ -322,10 +323,14 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
- 		wacom_report_key(wcombo, wacom->tool[idx], 0);
-		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
-		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		return 2;
+ 		if(!((wacom->tool[idx] == BTN_TOOL_LENS) 
+				 && ((wacom->features->type == INTUOS3) 
+				 || (wacom->features->type == INTUOS3S))) {
+			wacom_report_key(wcombo, wacom->tool[idx], 0);
+			wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
+			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
+			return 2;
+		}
 	}
 	return 0;
 }
@@ -441,7 +446,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 					((t - 1) / 2) : -t / 2);
 			}
 
-		} else if (!(data[1] & 0x10) && wacom->features->type < INTUOS3) {
+		} else if (!(data[1] & 0x10) && wacom->features->type < INTUOS3S) {
 			/* 4D mouse packet */
 			wacom_report_key(wcombo, BTN_LEFT,   data[8] & 0x01);
 			wacom_report_key(wcombo, BTN_MIDDLE, data[8] & 0x02);
@@ -461,12 +466,12 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 						 - ((data[8] & 0x02) >> 1));
 
 			/* I3 2D mouse side buttons */
-			if (wacom->features->type == INTUOS3) {
+			if (wacom->features->type >= INTUOS3S && wacom->features->type <= INTUOS3L) {
 				wacom_report_key(wcombo, BTN_SIDE,   data[8] & 0x40);
 				wacom_report_key(wcombo, BTN_EXTRA,  data[8] & 0x20);
 			}
 
-		} else if (wacom->features->type < INTUOS3) {
+		} else if (wacom->features->type < INTUOS3S || wacom->features->type == INTUOS3L) {
 			/* Lens cursor packets */
 			wacom_report_key(wcombo, BTN_LEFT,   data[8] & 0x01);
 			wacom_report_key(wcombo, BTN_MIDDLE, data[8] & 0x02);
@@ -499,6 +504,7 @@ int wacom_wac_irq(struct wacom_wac *wacom_wac, void *wcombo)
 			return (wacom_ptu_irq(wacom_wac, wcombo));
 			break;
 		case INTUOS:
+		case INTUOS3S:
 		case INTUOS3:
 		case INTUOS3L:
 		case CINTIQ:
@@ -524,6 +530,8 @@ void wacom_init_input_dev(struct input_dev *input_dev, struct wacom_wac *wacom_w
 		case CINTIQ:
 			input_dev_i3(input_dev, wacom_wac);
 			/* fall through */
+		case INTUOS3S:
+			input_dev_i3s(input_dev, wacom_wac);
 		case INTUOS:
 			input_dev_i(input_dev, wacom_wac);
 			break;
@@ -574,7 +582,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 63, INTUOS },
 	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 63, INTUOS },
 	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 63, INTUOS },
-	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 63, INTUOS3 },
+	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 63, INTUOS3S },
 	{ "Wacom Intuos3 6x8",   10, 40640, 30480, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 9x12",  10, 60960, 45720, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 12x12", 10, 60960, 60960, 1023, 63, INTUOS3L },

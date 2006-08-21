@@ -325,11 +325,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 
 static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 {
-	extern int DeviceKeyPress;
-	extern int DeviceKeyRelease;
 	int i;
-	deviceKeyButtonPointer xE;
-	LocalDevicePtr local = (LocalDevicePtr)keydev->public.devicePrivate;
 
 	/* Now that we have the keycode look for key index */
 	KeySymsRec *ksr = &keydev->key->curKeySyms;
@@ -344,21 +340,7 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 			 keysym, keydev->name);
 		return;
 	}
-
-	/* We would use xf86PostKeyEvent/xf86PostKeyboardEvent
-	 * if they wouldn't be so buggy ...
-	 */
-
-	memset (&xE, 0, sizeof (xE));
-
-	xE.type = (local->flags & XI86_CORE_KEYBOARD) ?
-		(state ? KeyPress : KeyRelease) : (state ? DeviceKeyPress : DeviceKeyRelease);
-	xE.detail = i;
-
-	/*xf86Info.lastEventTime = */xE.time = GetTimeInMillis ();
-	xE.deviceid = keydev->id;
-
-	xf86eqEnqueue ((xEvent *)(void *)&xE);
+	xf86PostKeyboardEvent (keydev, i, state);
 }
 
 /*****************************************************************************
@@ -373,8 +355,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 	int is_core = local->flags & XI86_ALWAYS_CORE;
-	int i, naxes = priv->naxes;
-	DeviceIntPtr keydev;
+	int i, button_idx, naxes = priv->naxes;
 	static struct
 	{
 		unsigned ac_mask;
@@ -389,30 +370,23 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		{ AC_HYPER, XK_Hyper_L },
 	};
 
-	if (IsPad (priv))
-		button -= MAX_MOUSE_BUTTONS/2;
+	if (IsPad(priv))
+		button -= 9;
 
 	if (button < 0 || button >= priv->nbuttons)
 	{
 		/* should never happen */
-		ErrorF ("sendAButton: Invalid button index %d\n", button);
+		ErrorF ("sendAButton: Invalid button index %d (number of defined buttons = %d)\n", button, priv->nbuttons);
 		return; 
 	}
 
 	DBG(4, ErrorF("sendAButton TPCButton(%s) button=%d state=%d code=%08x, for %s\n",
 		common->wcmTPCButton ? "on" : "off", button, mask, priv->button[button], local->name));
 
+	button_idx = button;
 	button = priv->button[button];
 	if (!button)
 		return;
-
-	/* Find out the keyboard device */
-	if (button & AC_CORE)
-	{
-		keydev = inputInfo.keyboard;
-	}
-	else
-		keydev = local->dev;
 
 	/* Switch the device to core mode, if required
 	 */
@@ -424,17 +398,26 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (mask != 0)
 		for (i = 0; i < sizeof (mods) / sizeof (mods [0]); i++)
 			if (button & mods [i].ac_mask)
-				emitKeysym (keydev, mods [i].keysym, 1);
+				emitKeysym (inputInfo.keyboard, mods [i].keysym, 1);
 
 	switch (button & AC_TYPE)
 	{
 	case AC_BUTTON:
-		xf86PostButtonEvent(local->dev, is_absolute, button & AC_CODE,
+/*		xf86PostButtonEvent(local->dev, is_absolute, button & AC_CODE,
+*/		/* Dynamically modify the button map as required --
+		 * to be moved in the place where button mappings are changed
+		 */
+		local->dev->button->map [button_idx] = button & AC_CODE;
+
+		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
 				    mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		break;
 
 	case AC_KEY:
-		emitKeysym (keydev, button & AC_CODE, mask != 0);
+		if (button & AC_CORE)
+			emitKeysym (inputInfo.keyboard, button & AC_CODE, mask != 0);
+		else
+			ErrorF ("WARNING: Devices without SendCoreEvents cannot emit key events!\n");
 		break;
 
 	case AC_MODETOGGLE:
@@ -454,19 +437,24 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_DBLCLICK:
+		/* Dynamically modify the button map as required --
+		 * to be moved in the place where button mappings are changed
+		 */
+		local->dev->button->map [button_idx] = button & AC_CODE;
+
 		if (mask)
 		{
 			/* Left button down */
 			xf86PostButtonEvent(local->dev, is_absolute,
-					button & AC_CODE, 1,0,naxes,rx,ry,rz,v3,v4,v5);
+					button_idx, 1,0,naxes,rx,ry,rz,v3,v4,v5);
 
 			/* Left button up */
 			xf86PostButtonEvent(local->dev, is_absolute,
-					button & AC_CODE, 0,0,naxes,rx,ry,rz,v3,v4,v5);
+					button_idx, 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		}
 
 		/* Left button down/up upon mask is 1/0 */
-		xf86PostButtonEvent(local->dev, is_absolute, button & AC_CODE, 
+		xf86PostButtonEvent(local->dev, is_absolute, button_idx, 
 					mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		break;
 	}
@@ -476,7 +464,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (mask == 0)
 		for (i = sizeof (mods) / sizeof (mods [0]) - 1; i >= 0; i--)
 			if (button & mods [i].ac_mask)
-				emitKeysym (keydev, mods [i].keysym, 0);
+				emitKeysym (inputInfo.keyboard, mods [i].keysym, 0);
 
 	/* Switch the device out of the core mode, if required
 	 */

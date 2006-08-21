@@ -55,6 +55,7 @@
  *    v2.4.30-pc0.7.0   - Added Volito2 support
  *    v2.4.30-pc0.7.1   - Added DTF720, DTU 710, G4
  *    v2.4.30-pc0.7.3   - Added DTF 521, I3 12x12, and I3 12x19
+ *    v2.4.30-pc0.7.5   - Support tablet buttons/keys  
  */
 
 /*
@@ -85,7 +86,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v2.4.30-pc0.7.3"
+#define DRIVER_VERSION "v2.4.30-pc0.7.5"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -666,15 +667,17 @@ static void wacom_intuos_irq(struct urb *urb)
 #define WACOM_GRAPHIRE_BITS	(BIT(EV_REL))
 #define WACOM_GRAPHIRE_REL	(BIT(REL_WHEEL))
 #define WACOM_G4_TOOLS		(BIT(BTN_TOOL_FINGER))
-#define WACOM_G4_BUTTONS	(BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3) | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7))
+#define WACOM_G4_BUTTONS	(BIT(BTN_0) | BIT(BTN_4))
 #define WACOM_INTUOS_TOOLS	(BIT(BTN_TOOL_BRUSH) | BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS))
 #define WACOM_INTUOS3_TOOLS	(WACOM_INTUOS_TOOLS | BIT(BTN_TOOL_FINGER))
 #define WACOM_INTUOS_BUTTONS	(BIT(BTN_SIDE) | BIT(BTN_EXTRA))
-#define WACOM_INTUOS3_BUTTONS	(WACOM_INTUOS_BUTTONS | BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3) | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7))
+#define WACOM_INTUOS3S_BUTTONS	(WACOM_INTUOS_BUTTONS | BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3))
+#define WACOM_INTUOS3_BUTTONS	(WACOM_INTUOS3S_BUTTONS | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7))
 #define WACOM_INTUOS_BITS	(BIT(EV_REL))
 #define WACOM_INTUOS_REL	(BIT(REL_WHEEL))
 #define WACOM_INTUOS_ABS	(BIT(ABS_TILT_X) | BIT(ABS_TILT_Y) | BIT(ABS_RZ) | BIT(ABS_THROTTLE))
-#define WACOM_INTUOS3_ABS	(WACOM_INTUOS_ABS | BIT(ABS_RX) | BIT(ABS_RY))
+#define WACOM_INTUOS3S_ABS	(WACOM_INTUOS_ABS | BIT(ABS_RX)
+#define WACOM_INTUOS3_ABS	(WACOM_INTUOS3S_ABS | BIT(ABS_RY))
 
 struct wacom_features wacom_features[] = {
 
@@ -774,8 +777,8 @@ struct wacom_features wacom_features[] = {
 			wacom_ptu_irq, 0, 0, 0, 0 },
 	/* Intuos3 */
 	/* 33 */ { "Wacom Intuos3 4x5",   10,  25400, 20320,  1023, 15,
-			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
-			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
+			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3S_ABS,
+			WACOM_INTUOS_REL, WACOM_INTUOS3S_BUTTONS, WACOM_INTUOS3_TOOLS },
 	/* 34 */ { "Wacom Intuos3 6x8",   10,  40640, 30480,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },

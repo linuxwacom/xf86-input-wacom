@@ -173,10 +173,17 @@ AC_DEFUN([AC_WCM_CHECK_MODVER],[
 dnl Guess modversioning
 if test x$WCM_ENV_KERNEL = xyes; then
 	AC_MSG_CHECKING(for kernel module versioning)
+	UTS_PATH=""
 	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
+		UTS_PATH="$WCM_KERNELDIR/include/linux/version.h"
+	else
+		if test -f "$WCM_KERNELDIR/include/linux/uts_release.h"; then
+			UTS_PATH="$WCM_KERNELDIR/include/linux/uts_release.h"
+
+	if test -f "$UTS_PATH"; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
-		moduts=`grep UTS_RELEASE $WCM_KERNELDIR/include/linux/version.h`
+		moduts=`grep UTS_RELEASE $UTS_PATH`
 		ISVER=`echo $moduts | grep -c "\"2.4"` 
 		if test "$ISVER" -gt 0; then
 			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
@@ -228,7 +235,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 	else
 		echo "***"
 		echo "*** WARNING:"
-		echo "*** version.h is not in $WCM_KERNELDIR/include/linux"
+		echo "*** Can not identify your kernel source version"
 		echo "*** Kernel modules will not be built"
 		echo "***"
 		WCM_KERNELDIR=""

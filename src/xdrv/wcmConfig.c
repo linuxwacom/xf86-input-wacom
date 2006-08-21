@@ -115,12 +115,20 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
 	priv->nPressCtrl [3] = 100;  /* pressure curve y1 */
 	/* Pad by default emits keypresses, other devices emits buttons */
-	for (i=0; i<MAX_MOUSE_BUTTONS/2; i++)
+	for (i=0; i<MAX_BUTTONS; i++)
 		priv->button[i] = IsPad (priv) ?
 			(AC_BUTTON | (MAX_MOUSE_BUTTONS/2 + i + 1)) : (AC_BUTTON | (i + 1));
 	for (i=MAX_MOUSE_BUTTONS/2; i<MAX_BUTTONS; i++)
 		priv->button[i] = IsPad (priv) ?
-			(AC_KEY | (XK_F1 + i-MAX_MOUSE_BUTTONS/2)) : (AC_BUTTON | (i + 1));
+			(AC_KEY | (XK_F1 + i)) : (AC_BUTTON | (i + 1));
+
+	/* Now for backward compatibility make some keys emit button events
+	 * with button indices 9-16...
+	 */
+	if (IsPad (priv) /* && check for backward-compatibility models? */)
+		for (i = 0; i < 8; i++)
+			priv->button[i] = (AC_BUTTON | (i + 9));
+
 	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
 	priv->naxes = 6;                   /* Default number of axes */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */

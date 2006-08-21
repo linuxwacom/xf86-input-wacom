@@ -413,7 +413,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	XValuatorInfoPtr pValInfo = NULL;
 	XAnyClassPtr pClass;
 
-fprintf(stderr,"in CursesRun\n");
 	/* Identify program and version */
 	wacscrn_standout();
 	for (i=0; i<80; ++i) wacscrn_output(nRow,i," ");
@@ -421,7 +420,6 @@ fprintf(stderr,"in CursesRun\n");
 	wacscrn_normal();
 	nRow += 2;
 
-fprintf(stderr,"in CursesRun get class info\n");
 	/* get class info */
 	pClass = pDevInfo->inputclassinfo;
 	for (j=0; j<pDevInfo->num_classes; ++j)
@@ -441,7 +439,6 @@ fprintf(stderr,"in CursesRun get class info\n");
 	wacscrn_output(nRow,0,chBuf);
 	nRow += 1;
 
-fprintf(stderr,"in CursesRun display valuator related info\n");
 	/* display valuator related info */
 	nTitleRow = nRow;
 	if (pValInfo)
@@ -453,14 +450,12 @@ fprintf(stderr,"in CursesRun display valuator related info\n");
 		nRow += 2;
 		nValRow = nRow;
 		nRow += 6;
-fprintf(stderr,"in CursesRun wacscrn_output \n");
 
 		wacscrn_output(nValRow+1 ,0,"     data:");
 		wacscrn_output(nValRow+2 ,0,"      min:");
 		wacscrn_output(nValRow+3 ,0,"      max:");
 		wacscrn_output(nValRow+4 ,0,"      res:");
 
-fprintf(stderr,"in CursesRun number of valuators = %d \n", pValInfo->num_axes);
 		/* retain pressure range for pressure bar */
 		nMaxPress = pValInfo->axes[2].max_value;
 		nMinPress = pValInfo->axes[2].min_value;
@@ -489,16 +484,24 @@ fprintf(stderr,"in CursesRun number of valuators = %d \n", pValInfo->num_axes);
 			snprintf(chBuf,sizeof(chBuf),"%+06d",
 				pValInfo->axes[k].resolution);
 			wacscrn_output(nValRow+4,12 + k * 10, chBuf);
-fprintf(stderr,"in CursesRun for display axes \n");
 		}
 	}
-	else nValRow = 0;
+	else
+	{
+		/*  This is a workaround for device type "pad" after incorporated Anrew's patch.
+		 * The peoper place to fix it should be in wacom_drv.o.
+		 */
+		fprintf(stderr,"Valuators are not ready for input device '%s' yet. ",pDevInfo->name);
+		fprintf(stderr,"Please launch the program again. \n");
+		return 1;		
+	}
 
 	nPressRow = nRow++;
 	nProxRow = nRow++;
 	nFocusRow = nRow++;
 	nButtonRow = nRow++;
 	nKeyRow = nRow++;
+
 	wacscrn_output(nProxRow,  0,"Proximity:");
 	wacscrn_output(nFocusRow, 0,"    Focus:");
 	wacscrn_output(nButtonRow,0,"  Buttons:");
@@ -508,7 +511,6 @@ fprintf(stderr,"in CursesRun for display axes \n");
 
 	/* handle events */
 
-fprintf(stderr,"in CursesRun while\n");
 	while (1)
 	{
 		wacscrn_refresh();
@@ -544,9 +546,9 @@ fprintf(stderr,"in CursesRun while\n");
 			{
 				wacscrn_output(23,0,"Unexpected valuator data received.");
 			}
-
-			/* title value */
+			else
 			{
+				/* title value */
 				int v = (pMove->axis_data[3]&0xffff0000) >> 16;
 				snprintf(chBuf,sizeof(chBuf),"%s",
 					pValInfo->mode == Absolute ? "Absolute" :
@@ -561,52 +563,52 @@ fprintf(stderr,"in CursesRun while\n");
 					snprintf(chBuf,sizeof(chBuf), "%12d", v);
 					wacscrn_output(nTitleRow,52,chBuf);
 				}
-			}
 
-			for (k=0; k<pValInfo->num_axes && k<3; ++k)
-			{
-				snprintf(chBuf, sizeof(chBuf), "%+06d", pMove->axis_data[k]);
-				wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
-
-			}
-
-			for (k=3; k<pValInfo->num_axes && k<6; ++k)
-			{
-				snprintf(chBuf, sizeof(chBuf), "%+06d", 
-						(short)(pMove->axis_data[k]&0xffff));
-				wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
-
-			}
-
-			/* pressure bar */
-			{
-				char* c;
-				int s, nPos;
-				wacscrn_standout();
-				nPos = pMove->axis_data[2];
-
-				if (nPos < nMinPress)
+				for (k=0; k<pValInfo->num_axes && k<3; ++k)
 				{
-					c = "<";
-					nPos = 78; /* want full bar */
-				}
-				else if (nPos > nMaxPress)
-				{
-					c = ">";
-					nPos = 78; /* want full bar */
-				}
-				else
-				{
-					c = "*";
-					nPos = (nPos - nMinPress) * 78;
-					nPos /= (nMaxPress - nMinPress);
+					snprintf(chBuf, sizeof(chBuf), "%+06d", pMove->axis_data[k]);
+					wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
+
 				}
 
-				for (s=0; s<nPos; ++s)
-					wacscrn_output(nPressRow,s,c);
-				wacscrn_normal();
-				for (; s<78; ++s)
-					wacscrn_output(nPressRow,s," ");
+				for (k=3; k<pValInfo->num_axes && k<6; ++k)
+				{
+					snprintf(chBuf, sizeof(chBuf), "%+06d", 
+							(short)(pMove->axis_data[k]&0xffff));
+					wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
+
+				}
+
+				/* pressure bar */
+				{
+					char* c;
+					int s, nPos;
+					wacscrn_standout();
+					nPos = pMove->axis_data[2];
+
+					if (nPos < nMinPress)
+					{
+						c = "<";
+						nPos = 78; /* want full bar */
+					}
+					else if (nPos > nMaxPress)
+					{
+						c = ">";
+						nPos = 78; /* want full bar */
+					}
+					else
+					{
+						c = "*";
+						nPos = (nPos - nMinPress) * 78;
+						nPos /= (nMaxPress - nMinPress);
+					}
+
+					for (s=0; s<nPos; ++s)
+						wacscrn_output(nPressRow,s,c);
+					wacscrn_normal();
+					for (; s<78; ++s)
+						wacscrn_output(nPressRow,s," ");
+				}
 			}
 		}
 		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
@@ -1014,13 +1016,11 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 			GrabModeAsync, /* same */
 			CurrentTime);
 
-fprintf(stderr,"initializing UI\n");
 	/* fire up the UI */
 	if ((nRtn=pUI->Init()) != 0)
 		fprintf(stderr,"failed to initialize UI\n");
 	else
 	{
-fprintf(stderr,"starting UI\n");
 		if ((nRtn=pUI->Run(pDisp,pDevInfo,fmt)) != 0)
 			fprintf(stderr,"failed to run UI\n");
 		pUI->Term();

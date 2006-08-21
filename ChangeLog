@@ -1,3 +1,11 @@
+2006-08-22   Ping Cheng <pingc@wacom.com>
+	* Updated acinclude.m4 scripts for kernel 2.6.18
+	* Updated wacom.c for accurately report tablet buttons
+
+2006-08-18   Ping Cheng <pingc@wacom.com>
+	* Updated configure scripts and xidump.c 
+	* Support USB hot plug/unplug with different tablets
+
 2006-08-10   Ping Cheng <pingc@wacom.com>
 	* Backward tablet menu strip support
  
