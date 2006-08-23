@@ -179,7 +179,8 @@ if test x$WCM_ENV_KERNEL = xyes; then
 	else
 		if test -f "$WCM_KERNELDIR/include/linux/uts_release.h"; then
 			UTS_PATH="$WCM_KERNELDIR/include/linux/uts_release.h"
-
+		fi
+	fi
 	if test -f "$UTS_PATH"; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)

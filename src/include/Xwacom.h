@@ -38,6 +38,8 @@
 #define XWACOM_PARAM_MMT        	14
 #define XWACOM_PARAM_TPCBUTTON  	15
 #define XWACOM_PARAM_CURSORPROX  	16
+#define XWACOM_PARAM_TID		17
+#define XWACOM_PARAM_ROTATE             18
 #define XWACOM_PARAM_BUTTON1    	101
 #define XWACOM_PARAM_BUTTON2    	102
 #define XWACOM_PARAM_BUTTON3    	103
@@ -71,6 +73,11 @@
 #define XWACOM_PARAM_BUTTON31    	131
 #define XWACOM_PARAM_BUTTON32    	132
 #define XWACOM_PARAM_GETMODEL		133
+
+#define XWACOM_VALUE_ROTATE_NONE 0
+#define XWACOM_VALUE_ROTATE_CW 1
+#define XWACOM_VALUE_ROTATE_CCW 2
+#define XWACOM_VALUE_ROTATE_HALF 3
 
 /* The following flags are used for XWACOM_PARAM_BUTTON# values to mark
  * the type of event that should be emitted when that button is pressed;

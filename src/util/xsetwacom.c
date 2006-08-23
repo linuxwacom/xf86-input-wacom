@@ -334,6 +334,17 @@ static PARAMINFO gParamInfo[] =
 		"in max_distance/256 units",
 		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, 0, 0, 0, 
 		TWO_VALUES, 0x00100080 },
+		
+	{ "Rotate",
+		"Sets the rotation of the tablet. "
+		"Values = NONE, CW, CCW, HALF (default is NONE).",
+		XWACOM_PARAM_ROTATE, VALUE_OPTIONAL,
+		RANGE, XWACOM_VALUE_ROTATE_NONE, XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
+		XWACOM_VALUE_ROTATE_NONE },
+ 
+	{ "GetTabletID", 
+		"Returns the tablet ID of the associated device.",
+		XWACOM_PARAM_TID, VALUE_REQUIRED },
 
 	{ "GetModel",
 		"Writes tablet models to /etc/wacom.dat",
@@ -444,10 +455,10 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tSHIFT, CONTROL, ALT, META, HYPER, SUPER\n"
 		"  CODE: Button number or key code (see /usr/include/X11/keysymdef.h)\n");
 	printf ("Examples:\n"
-		"  xset set stylus Button1 \"button 5\"\n"
-		"  xset set stylus Button3 \"dblclick 1\"\n"
-		"  xset set pad Button2 \"core key control F2\"\n"
-		"  xset set pad Button10 \"core key ctrl alt backspace\"\n");
+		"  xsetwacom set stylus Button1 \"button 5\"\n"
+		"  xsetwacom set stylus Button3 \"dblclick 1\"\n"
+		"  xsetwacom set pad Button2 \"core key control F2\"\n"
+		"  xsetwacom set pad Button10 \"core key ctrl alt backspace\"\n");
 
 	return 0;
 }
@@ -573,6 +584,23 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 								  pszValues[i]);
 				if (!nValues[i])
 					return 1;
+			}
+			else if (p->nParamID == XWACOM_PARAM_ROTATE)
+			{
+				if (!strcasecmp(pszValues[i],"none"))
+					nValues[i] = XWACOM_VALUE_ROTATE_NONE;
+				else if (!strcasecmp(pszValues[i],"cw"))
+					nValues[i] = XWACOM_VALUE_ROTATE_CW;
+				else if (!strcasecmp(pszValues[i],"ccw"))
+					nValues[i] = XWACOM_VALUE_ROTATE_CCW;
+				else if (!strcasecmp(pszValues[i],"half"))
+					nValues[i] = XWACOM_VALUE_ROTATE_HALF;
+				else
+				{
+					fprintf(stderr,"Set: Value '%s' is "
+						"invalid.\n",pszValues[i]);
+					return 1;
+				}
 			}
 			else
 			{

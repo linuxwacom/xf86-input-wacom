@@ -356,22 +356,11 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			priv->factorX, priv->factorY));
 	}
 
-	if (IsPad(priv))
-	{
-		/* strip-x and strip-y */
-		if (priv->naxes)
-		{
-			InitValuatorAxisStruct(local->dev, 0, 0, 4097, 1, 1, 1);
-			InitValuatorAxisStruct(local->dev, 1, 0, 4097, 1, 1, 1);
-		}
-		return TRUE;
-	}
-
 	/* x and y axes */
 	if (priv->twinview == TV_LEFT_RIGHT)
 		tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 	else
-		tabletSize = priv->bottomX - priv->topX;
+		tabletSize = priv->bottomX;
 
 	InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize, /* max val */
 		common->wcmResolX, /* tablet resolution */
@@ -380,7 +369,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	if (priv->twinview == TV_ABOVE_BELOW)
 		tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 	else
-		tabletSize = priv->bottomY - priv->topY;
+		tabletSize = priv->bottomY;
 
 	InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
 		common->wcmResolY, /* tablet resolution */
@@ -396,6 +385,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		/* z-rot and throttle */
 		InitValuatorAxisStruct(local->dev, 3, -900, 899, 1, 1, 1);
 		InitValuatorAxisStruct(local->dev, 4, -1023, 1023, 1, 1, 1);
+	}
+	else if (IsPad(priv))
+	{
+		/* strip-x and strip-y */
+		if (priv->naxes)
+		{
+			InitValuatorAxisStruct(local->dev, 3, 0, common->wcmMaxStripX, 1, 1, 1);
+			InitValuatorAxisStruct(local->dev, 4, 0, common->wcmMaxStripY, 1, 1, 1);
+		}
 	}
 	else
 	{
@@ -698,26 +696,72 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int bn;
+	int bn, tabletSize;
+	WacomDevicePtr tmppriv;
 	char st[32];
+	int oldRotation, dev;
+	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
+	/* we don't reset cordinates to the values that the driver is using. This eliminates some 
+	 * confusion when driver is running on default values.
+	 */
 	switch (param) 
 	{
 	    case XWACOM_PARAM_TOPX:
-		xf86ReplaceIntOption(local->options, "TopX", value);
-		priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+		if ( priv->topX != value)
+		{
+			xf86ReplaceIntOption(local->options, "TopX", value);
+			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+			if (priv->twinview == TV_LEFT_RIGHT)
+				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+			else
+				tabletSize = priv->bottomX;
+			InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize,
+				common->wcmResolX, /* tablet resolution */
+				0, common->wcmResolX); /* max_res */
+		}
 		break;
 	    case XWACOM_PARAM_TOPY:
-		xf86ReplaceIntOption(local->options, "TopY", value);
-		priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+		if ( priv->topY != value)
+		{
+			xf86ReplaceIntOption(local->options, "TopY", value);
+			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+			if (priv->twinview == TV_ABOVE_BELOW)
+				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+			else
+				tabletSize = priv->bottomY;
+			InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
+				common->wcmResolY, /* tablet resolution */
+				0, common->wcmResolY); /* max_res */
+		}
 		break;
 	    case XWACOM_PARAM_BOTTOMX:
-		xf86ReplaceIntOption(local->options, "BottomX", value);
-		priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+		if ( priv->bottomX != value)
+		{
+			xf86ReplaceIntOption(local->options, "BottomX", value);
+			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+			if (priv->twinview == TV_LEFT_RIGHT)
+				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+			else
+				tabletSize = priv->bottomX;
+			InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize,
+				common->wcmResolX, /* tablet resolution */
+				0, common->wcmResolX); /* max_res */
+		}
 		break;
 	    case XWACOM_PARAM_BOTTOMY:
-		xf86ReplaceIntOption(local->options, "BottomY", value);
-		priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+		if ( priv->bottomY != value)
+		{
+			xf86ReplaceIntOption(local->options, "BottomY", value);
+			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+			if (priv->twinview == TV_ABOVE_BELOW)
+				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+			else
+				tabletSize = priv->bottomY;
+			InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
+				common->wcmResolY, /* tablet resolution */
+				0, common->wcmResolY); /* max_res */
+		}
 		break;
 	    case XWACOM_PARAM_BUTTON1:
 	    case XWACOM_PARAM_BUTTON2:
@@ -754,14 +798,20 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		bn = param - XWACOM_PARAM_BUTTON1 + 1;
 		if (bn > priv->nbuttons)
 			return BadValue;
-		snprintf (st, sizeof (st), "Button%d", bn);
-		xf86ReplaceIntOption (local->options, st, value);
-		priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn);
+		if (value != priv->button[bn - 1])
+		{
+			snprintf (st, sizeof (st), "Button%d", bn);
+			xf86ReplaceIntOption (local->options, st, value);
+			priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn);
+		}
 		break;
 	    case XWACOM_PARAM_DEBUGLEVEL:
 		if ((value < 1) || (value > 100)) return BadValue;
-		xf86ReplaceIntOption(local->options, "DebugLevel", value);
-		gWacomModule.debugLevel = value;
+		if (gWacomModule.debugLevel != value)
+		{
+			xf86ReplaceIntOption(local->options, "DebugLevel", value);
+			gWacomModule.debugLevel = value;
+		}
 		break;
 	    case XWACOM_PARAM_RAWFILTER:
 		if ((value < 0) || (value > 1)) return BadValue;
@@ -881,8 +931,124 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			common->wcmCursorProxoutHyst = h;
 		}
 		break;
-	    default:
-    		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
+	   case XWACOM_PARAM_ROTATE:
+		if ((value < 0) || (value > 3)) return BadValue;
+		switch(value) {
+		  case ROTATE_NONE:
+			xf86ReplaceStrOption(local->options, "Rotate", "NONE");
+			break;
+		  case ROTATE_CW:
+			xf86ReplaceStrOption(local->options, "Rotate", "CW");
+			break;
+		  case ROTATE_CCW:
+			xf86ReplaceStrOption(local->options, "Rotate", "CCW");
+			break;
+		  case ROTATE_HALF:
+			xf86ReplaceStrOption(local->options, "Rotate", "HALF");
+			break;
+		  default:
+			return BadValue;
+		}
+		oldRotation = common->wcmRotate;
+		oldMaxX = common->wcmMaxX;
+		oldMaxY = common->wcmMaxY;
+		common->wcmRotate = value;
+		if (((oldRotation == ROTATE_NONE || oldRotation == ROTATE_HALF) && 
+			(value == ROTATE_CW || value == ROTATE_CCW)) ||
+		     ((oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
+			&& (value == ROTATE_NONE || value == ROTATE_HALF)))
+		{
+		    common->wcmMaxX = oldMaxY;
+		    common->wcmMaxY = oldMaxX;
+		}
+
+		/* rotate all devices at once! else they get misaligned */
+		for (dev=0; dev < common->wcmNumDevices; dev++)
+		{
+		    tmppriv = (WacomDevicePtr)common->wcmDevices[dev]->private;
+		    /* recover the unrotated xy-rectangles */
+		    switch (oldRotation) {
+		      case ROTATE_CW:
+			tmpTopX = oldMaxY - tmppriv->bottomY;
+			tmpBottomX = oldMaxY - tmppriv->topY;
+			tmpTopY = tmppriv->topX;
+			tmpBottomY = tmppriv->bottomX;
+			break;
+		      case ROTATE_CCW:
+			tmpTopX = tmppriv->topY;
+			tmpBottomX = tmppriv->bottomY;
+			tmpTopY = oldMaxX - tmppriv->bottomX;
+			tmpBottomY = oldMaxX - tmppriv->topX;
+			break;
+		      case ROTATE_HALF:
+			tmpTopX = oldMaxX - tmppriv->bottomX;
+			tmpBottomX = oldMaxX - tmppriv->topX;
+			tmpTopY = oldMaxY - tmppriv->bottomY;
+			tmpBottomY = oldMaxY - tmppriv->topY;
+			break;
+		      default: /* ROTATE_NONE */
+			tmpTopX = tmppriv->topX;
+			tmpBottomX = tmppriv->bottomX;
+			tmpTopY = tmppriv->topY;
+			tmpBottomY = tmppriv->bottomY;
+			break;
+		    } 
+		    /* and rotate them back */
+		    switch (value) {
+		      case ROTATE_CW:
+			tmppriv->topX = tmpTopY;
+			tmppriv->bottomX = tmpBottomY;
+			tmppriv->topY = common->wcmMaxY - tmpBottomX;
+			tmppriv->bottomY = common->wcmMaxY - tmpTopX;
+			break;
+		      case ROTATE_CCW:
+			tmppriv->topX = common->wcmMaxX - tmpBottomY;
+			tmppriv->bottomX = common->wcmMaxX - tmpTopY;
+			tmppriv->topY = tmpTopX;
+			tmppriv->bottomY = tmpBottomX;
+			break;
+		      case ROTATE_HALF:
+			tmppriv->topX = common->wcmMaxX - tmpBottomX;
+			tmppriv->bottomX = common->wcmMaxX - tmpTopX;
+			tmppriv->topY= common->wcmMaxY - tmpBottomY;
+			tmppriv->bottomY = common->wcmMaxY - tmpTopY;
+			break;
+		      default: /* ROTATE_NONE */
+			tmppriv->topX = tmpTopX;
+			tmppriv->bottomX = tmpBottomX;
+			tmppriv->topY = tmpTopY;
+			tmppriv->bottomY = tmpBottomY;
+			break;
+		    } 
+
+		    InitValuatorAxisStruct(common->wcmDevices[dev]->dev,
+			0, tmppriv->topX, tmppriv->bottomX, common->wcmResolX, /* tablet resolution */
+			0, common->wcmResolX); /* max_res */
+
+		    InitValuatorAxisStruct(common->wcmDevices[dev]->dev,
+			1, tmppriv->topY, tmppriv->bottomY, common->wcmResolY, /* tablet resolution */
+			0, common->wcmResolY); /* max_res */
+
+		    if (tmppriv->topX)
+		    {
+			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopX", tmppriv->topX);
+		    }
+		    if (tmppriv->topY)
+		    {
+			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopY", tmppriv->topY);
+		    }
+		    if (tmppriv->bottomX != common->wcmMaxX)
+		    {
+			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomX", tmppriv->bottomX);
+		    }
+		    if (tmppriv->bottomY != common->wcmMaxY)
+		    {
+			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomY", tmppriv->bottomY);
+		    }
+		}
+		break;	    
+	      default:
+		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
 	}
 	return Success;
@@ -980,6 +1146,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 			return common->wcmCursorProxoutDist |
 			       (common->wcmCursorProxoutHyst << 16);
 		return -1;
+	case XWACOM_PARAM_TID:
+		return common->tablet_id;
 	}
 	DBG(10, ErrorF("xf86WcmGetParam invalid param %d\n",param));
 	return -1;

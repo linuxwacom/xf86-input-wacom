@@ -371,7 +371,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	};
 
 	if (IsPad(priv))
-		button -= 9;
+		button -= 8;
 
 	if (button < 0 || button >= priv->nbuttons)
 	{
@@ -537,6 +537,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		tmp_coord = y;
 		y = x;
 		x = common->wcmMaxX - tmp_coord;
+	}
+	else if (common->wcmRotate == ROTATE_HALF)
+	{
+		x = common->wcmMaxX - x;
+		y = common->wcmMaxY - y;
 	}
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
