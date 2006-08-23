@@ -338,7 +338,7 @@ else
 	  WCM_OPTION_DLLOADER=no
 fi
 #usual case
-if test $enable_dlloader == "" && test $WCM_OPTION_DLLOADER != "yes"; then
+if test x$enable_dlloader == x"" && test $WCM_OPTION_DLLOADER != "yes"; then
 	if test -f $WCM_MODDIR/wacom_drv.so; then
 		WCM_OPTION_DLLOADER=yes 
 	else
