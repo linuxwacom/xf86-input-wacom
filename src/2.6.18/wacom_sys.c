@@ -111,7 +111,7 @@ __u16 wacom_be16_to_cpu(unsigned char *data)
 __u16 wacom_le16_to_cpu(unsigned char *data)
 {
 	__u16 value;
-	value = be16_to_cpu(*(__be16 *) data);
+	value = le16_to_cpu(*(__le16 *) data);
 	return value;
 }
 

@@ -1,3 +1,10 @@
+2006-08-24   Ping Cheng <pingc@wacom.com>
+	* Added GetTabletID to "xsetwacom get" command for apps in X space 
+	  to acquire USB tablet's ID
+	* Added Rotate to "xsetwacom set" command to change tablet orentation 
+	  (Patch 1170661 from Denis Auroux)
+	* Incorporated Andrew Zabolotny's patches
+
 2006-08-22   Ping Cheng <pingc@wacom.com>
 	* Updated acinclude.m4 scripts for kernel 2.6.18
 	* Updated wacom.c for accurately report tablet buttons
