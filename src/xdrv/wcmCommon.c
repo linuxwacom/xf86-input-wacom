@@ -1091,9 +1091,15 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 			/* Apply hysteresis to avoid jitter */
 			if (priv->oldProximity)
-				threshold += hysteresis;
+				if (strstr(common->wcmModel->name, "Intuos"))
+					threshold += hysteresis;
+				else
+					threshold -= 2*hysteresis;
 			else
-				threshold -= hysteresis;
+				if (strstr(common->wcmModel->name, "Intuos"))
+					threshold -= hysteresis;
+				else
+					threshold -= hysteresis;
 
 			DBG(10, ErrorF("Distance over the tablet: %d, threshold: %d\n",
 				       filtered.distance, threshold));

@@ -536,7 +536,8 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		if (common->tablet_id != sID[2])
 		{
 			common->wcmReadErrorCount++;
-			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", common->tablet_id, sID[2]));
+			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", 
+				common->tablet_id, sID[2]));
 		}
 	}
 
@@ -554,7 +555,9 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		if (common->wcmDevCls == &gWacomUSBDevice)
 		{
 			common->wcmReadErrorCount++;
+			xf86WcmDevClose(local);
 			xf86WcmWait(500);
+			xf86WcmDevOpen(local->dev);
 		}
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
@@ -562,8 +565,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
-		common->bufpos));
+	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n", common->bufpos));
 
 	pos = 0;
 
