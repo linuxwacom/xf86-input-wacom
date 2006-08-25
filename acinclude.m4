@@ -176,15 +176,17 @@ if test x$WCM_ENV_KERNEL = xyes; then
 	UTS_PATH=""
 	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
 		UTS_PATH="$WCM_KERNELDIR/include/linux/version.h"
-	else
+		moduts=`grep UTS_RELEASE $UTS_PATH`
+	fi
+	if test x$moduts = x; then
 		if test -f "$WCM_KERNELDIR/include/linux/uts_release.h"; then
 			UTS_PATH="$WCM_KERNELDIR/include/linux/uts_release.h"
+			moduts=`grep UTS_RELEASE $UTS_PATH`
 		fi
 	fi
 	if test -f "$UTS_PATH"; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
-		moduts=`grep UTS_RELEASE $UTS_PATH`
 		ISVER=`echo $moduts | grep -c "\"2.4"` 
 		if test "$ISVER" -gt 0; then
 			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
