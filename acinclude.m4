@@ -174,31 +174,30 @@ dnl Guess modversioning
 if test x$WCM_ENV_KERNEL = xyes; then
 	AC_MSG_CHECKING(for kernel module versioning)
 	UTS_PATH=""
+	MODUTS=""
 	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
 		UTS_PATH="$WCM_KERNELDIR/include/linux/version.h"
-		moduts=`grep UTS_RELEASE $UTS_PATH`
+		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
-	if test x$moduts = x; then
-		if test -f "$WCM_KERNELDIR/include/linux/uts_release.h"; then
-			UTS_PATH="$WCM_KERNELDIR/include/linux/uts_release.h"
-			moduts=`grep UTS_RELEASE $UTS_PATH`
-		fi
+	if test -f "$WCM_KERNELDIR/include/linux/utsrelease.h" && "x$MODUTS" = x; then
+		UTS_PATH="$WCM_KERNELDIR/include/linux/utsrelease.h"
+		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
-	if test -f "$UTS_PATH"; then
+	if test "x$MODUTS" != x; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)
-		ISVER=`echo $moduts | grep -c "\"2.4"` 
+		ISVER=`echo $MODUTS | grep -c "\"2.4"` 
 		if test "$ISVER" -gt 0; then
-			MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
+			MINOR=`echo $MODUTS | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
 			if test $MINOR -ge 22; then
 				WCM_KERNEL_VER="2.4.22"
 			else
 				WCM_KERNEL_VER="2.4"
 			fi
 		else
-			ISVER=`echo $moduts | grep -c "2.6"` 
+			ISVER=`echo $MODUTS | grep -c "2.6"` 
 			if test "$ISVER" -gt 0; then
-				MINOR=`echo $moduts | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
+				MINOR=`echo $MODUTS | cut -f 1 -d- | cut -f3 -d. | cut -f1 -d\" | sed 's/\([[0-9]]*\).*/\1/'`
 				if test $MINOR -ge 18; then
 					WCM_KERNEL_VER="2.6.18"
 				elif test $MINOR -eq 17; then
@@ -227,7 +226,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 			else
 				echo "***"
 				echo "*** WARNING:"
-				echo "*** $moduts is not supported by this package"
+				echo "*** $MODUTS is not supported by this package"
 				echo "*** Kernel modules will not be built"
 				echo "***"
 				WCM_OPTION_MODVER=no
