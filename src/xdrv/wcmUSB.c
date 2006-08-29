@@ -405,6 +405,7 @@ static struct
 	{ 0xB3, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x12 */
 	{ 0xB4, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x19 */
 	{ 0xB5, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x11 */
+	{ 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
 
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }  /* Cintiq 21UX */ 
 };

@@ -821,6 +821,7 @@ struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos3 12x12", 10, 60960, 60960, 1023, 15, INTUOS3L,   wacom_intuos_irq },
 	{ "Wacom Intuos3 12x19", 10, 97536, 60960, 1023, 15, INTUOS3L,   wacom_intuos_irq },
 	{ "Wacom Intuos3 6x11",  10, 54204, 31750, 1023, 15, INTUOS3,    wacom_intuos_irq },
+	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 15, INTUOS3S,   wacom_intuos_irq },
 	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 15, CINTIQ,     wacom_intuos_irq },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 15, INTUOS,     wacom_intuos_irq },
  	{ }
@@ -868,6 +869,7 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB3) },
         { USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB4) },
         { USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB7) },
         { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F) },
         { USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ }

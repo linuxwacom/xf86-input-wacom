@@ -179,7 +179,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		UTS_PATH="$WCM_KERNELDIR/include/linux/version.h"
 		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
-	if test -f "$WCM_KERNELDIR/include/linux/utsrelease.h" && "x$MODUTS" = x; then
+	if test -f "$WCM_KERNELDIR/include/linux/utsrelease.h" && test "x$MODUTS" = x; then
 		UTS_PATH="$WCM_KERNELDIR/include/linux/utsrelease.h"
 		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
@@ -440,7 +440,7 @@ elif test "$WCM_TKDIR" != "no"; then
 	if test -f "$WCM_TKDIR/include/tk.h"; then
 		AC_MSG_RESULT(found)
 		WCM_ENV_TK=yes
-		if test "$WCM_TCLDIR" != "$WCM_TKDIR" && "$WCM_TKDIR" != "/usr"; then
+		if test "$WCM_TCLDIR" != "$WCM_TKDIR" && test "$WCM_TKDIR" != "/usr"; then
 			CFLAGS="$CFLAGS -I$WCM_TKDIR/include"
 		fi
 	elif test -f "$WCM_TKDIR/tk.h"; then

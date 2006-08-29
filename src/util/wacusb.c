@@ -267,6 +267,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "PTZ-1230",  "Wacom Intuos3 12x12", 4, 0xB3 },
 		{ "PTZ-1231W", "Wacom Intuos3 12x19", 5, 0xB4 },
 		{ "PTZ-631W",  "Wacom Intuos3 6x11",  6, 0xB5 },
+		{ "PTZ-431W",  "Wacom Intuos3 4x6",   7, 0xB7 },
 		{ NULL }
 	};
 

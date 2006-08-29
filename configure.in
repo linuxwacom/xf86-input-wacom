@@ -477,16 +477,19 @@ if test "x$GCC" = "xyes"; then
     fi
 fi
 
-dnl Check for x86_64 kernel
+dnl Check for x86_64 kernel and ARCH for kernel 2.4
 kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-if test "$WCM_ARCH" = "x86-64" && test $kver != 0; then
-	WCM_OPTION_HID=no
-	WCM_OPTION_WACOM=no
-	WCM_OPTION_INPUT=no
-	WCM_OPTION_USBMOUSE=no
-	WCM_OPTION_MOUSEDEV=no
-	WCM_OPTION_EVDEV=no
-	WCM_MODULES=""
+if test $kver != 0; then
+	WCM_ARCH=`echo $WCM_ARCH | cut -f 1 -d-`
+	if test "$WCM_ARCH" = "x86-64"; then
+		WCM_OPTION_HID=no
+		WCM_OPTION_WACOM=no
+		WCM_OPTION_INPUT=no
+		WCM_OPTION_USBMOUSE=no
+		WCM_OPTION_MOUSEDEV=no
+		WCM_OPTION_EVDEV=no
+		WCM_MODULES=""
+	fi
 fi
 
 dnl Separate test output from file-generation output

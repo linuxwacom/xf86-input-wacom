@@ -794,13 +794,16 @@ struct wacom_features wacom_features[] = {
 	/* 38 */ { "Wacom Intuos3 6x11",  10,  54204, 31750,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
+	/* 39 */ { "Wacom Intuos3 4x6",   10,  31496, 19685,  1023, 15,
+			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3S_ABS,
+			WACOM_INTUOS_REL, WACOM_INTUOS3S_BUTTONS, WACOM_INTUOS3_TOOLS },
 	/* Protocol 5 Cintiq */
-	/* 39 */ { "Wacom Cintiq 21UX",   10,  87200, 65600,  1023, 15,
+	/* 40 */ { "Wacom Cintiq 21UX",   10,  87200, 65600,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 40 */ { "Wacom DTF720",         8,   6858,  5506,   511, 32,
+	/* 41 */ { "Wacom DTF720",         8,   6858,  5506,   511, 32,
 			wacom_pl_irq, 0,  0, 0, 0 },
-	/* 41 */ { "Wacom DTF521",         8,   6282,  4762,   511, 32,
+	/* 42 */ { "Wacom DTF521",         8,   6282,  4762,   511, 32,
 			wacom_pl_irq, 0,  0, 0, 0 },
 
 	{ NULL , 0 }
@@ -846,9 +849,10 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB3), driver_info: 36 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB4), driver_info: 37 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5), driver_info: 38 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F), driver_info: 39 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0), driver_info: 40 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4), driver_info: 41 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB7), driver_info: 39 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F), driver_info: 40 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0), driver_info: 41 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4), driver_info: 42 },
 
 	/* some Intuos2 6x8's erroneously report as 0x47;
 	 * multiple confirmed examples exist. */
