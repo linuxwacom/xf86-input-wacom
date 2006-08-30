@@ -974,6 +974,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel)
 {
 	int id, idx;
+	int threshold;
 	WacomDevicePtr priv;
 	LocalDevicePtr pDev = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
@@ -1084,31 +1085,39 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		#endif /* throttle */
 
 		/* force out-prox when heighth is beyond threshold. */
-		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv) && common->wcmMaxDist)
+		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
 		{
-			int threshold = common->wcmCursorProxoutDist;
-			int hysteresis = (threshold * common->wcmCursorProxoutHyst)/common->wcmMaxDist ;
-
-			/* Apply hysteresis to avoid jitter */
-			if (priv->oldProximity)
-				if (strstr(common->wcmModel->name, "Intuos"))
-					threshold += hysteresis;
-				else
-					threshold -= 2*hysteresis;
+			if (strstr(common->wcmModel->name, "Intuos"))
+			{
+				if (common->wcmCursorProxoutDist > filtered.distance)
+					common->wcmCursorProxoutDist = filtered.distance;
+			}
 			else
-				if (strstr(common->wcmModel->name, "Intuos"))
-					threshold -= hysteresis;
-				else
-					threshold -= hysteresis;
+			{
+				if (common->wcmCursorProxoutDist == PROXOUT_DISTANCE)
+					common->wcmCursorProxoutDist = filtered.distance;
+				if (common->wcmCursorProxoutDist < filtered.distance)
+					common->wcmCursorProxoutDist = filtered.distance;
+			}
+					
+			threshold = common->wcmCursorProxoutDist;
 
-			DBG(10, ErrorF("Distance over the tablet: %d, threshold: %d\n",
-				       filtered.distance, threshold));
+			/* Force prox out when distance is outside of ProxoutHyst */
+			if (priv->oldProximity)
+			{
+				if (strstr(common->wcmModel->name, "Intuos"))
+					threshold += common->wcmCursorProxoutHyst;
+				else
+					threshold -= common->wcmCursorProxoutHyst;
+			}
+
+			DBG(10, ErrorF("Distance over the tablet: %d, ProxoutDist: %d hard prox: %d\n",
+				       filtered.distance, common->wcmCursorProxoutDist, ds->proximity));
 			if ((filtered.distance > threshold && 
 				strstr(common->wcmModel->name, "Intuos")) || 
 				(filtered.distance < threshold && 
 				!strstr(common->wcmModel->name, "Intuos")))
 			{
-				ds->proximity = 0;
 				filtered.proximity = 0;
 			}
 		}

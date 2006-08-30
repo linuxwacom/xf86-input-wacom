@@ -128,6 +128,18 @@
 #define MAXTRY 3                /* max number of try to receive magic number */
 #define MAX_COORD_RES 1270.0    /* Resolution of the returned MaxX and MaxY */
 
+/* Max distance to the tablet at which a proximity-out event is generated for
+ * cursor device (e.g. mouse). 
+ */
+#define PROXOUT_DISTANCE	256
+/* Hysteresis value would mean that proximity out is generated 
+ * when distance is more than (for Intuos series and Cintiq 21UX)
+ * or less than (for Graphire series) MinDistance + HYSTERESIS 
+ * ( or MaxDistance - HYSTERESIS) units (this is to produce a prompt 
+ * relative movement)
+ */
+#define PROXOUT_HYSTERESIS	8
+
 #define HEADER_BIT      0x80
 #define ZAXIS_SIGN_BIT  0x40
 #define ZAXIS_BIT       0x04

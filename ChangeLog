@@ -1,6 +1,7 @@
-2006-08-29   Ping Cheng <pingc@wacom.com>
+2006-08-30   Ping Cheng <pingc@wacom.com>
 	* Added Intuos3 4x6 support
 	* Updated acinclude.m4 and configure.in
+	* Fixed a pad display issue in xidump.c and wacom_drv.o (Mats Johannesson)
 
 2006-08-24   Ping Cheng <pingc@wacom.com>
 	* Added GetTabletID to "xsetwacom get" command for apps in X space 

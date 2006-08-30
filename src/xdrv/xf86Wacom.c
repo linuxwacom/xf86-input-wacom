@@ -536,8 +536,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		if (common->tablet_id != sID[2])
 		{
 			common->wcmReadErrorCount++;
-			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", 
-				common->tablet_id, sID[2]));
+			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", common->tablet_id, sID[2]));
 		}
 	}
 
@@ -555,9 +554,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		if (common->wcmDevCls == &gWacomUSBDevice)
 		{
 			common->wcmReadErrorCount++;
-			xf86WcmDevClose(local);
 			xf86WcmWait(500);
-			xf86WcmDevOpen(local->dev);
 		}
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
@@ -565,7 +562,8 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n", common->bufpos));
+	DBG(10, ErrorF("xf86WcmReadPacket buffer has %d bytes\n",
+		common->bufpos));
 
 	pos = 0;
 
@@ -656,16 +654,18 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 
 	switch (what)
 	{
+		/* All devices must be opened here to initialize and
+		 * register even a 'pad' which doesn't "SendCoreEvents"
+		 */
 		case DEVICE_INIT: 
-			/* Try to open the device later (on DEVICE_OFF/ON) */
+			if (!xf86WcmDevOpen(pWcm))
+			{
+				DBG(1, ErrorF("xf86WcmProc INIT FAILED\n"));
+				return !Success;
+			}
 			break; 
 
 		case DEVICE_ON:
-			if (!xf86WcmDevOpen(pWcm))
-			{
-				DBG(1, ErrorF("xf86WcmProc ON FAILED\n"));
-				return !Success;
-			}
 			xf86AddEnabledDevice(local);
 			pWcm->public.on = TRUE;
 			break;

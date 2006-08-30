@@ -27,21 +27,6 @@
 #define WCMACTION_X11_DRIVER
 #include "../include/wcmAction.h"
 
-/* Max distance (0-63) at which a proximity-out event is generated for
- * cursor device (e.g. mouse). Default is half of the range.
- */
-#define PROXOUT_DISTANCE	40
-/* Hysteresis value for the above distance in 1/64 relative units, e.g.
- * if PROXOUT_DISTANCE == 32 and PROXOUT_HYSTERESIS == 8, this would mean
- * that proximity out is generated when distance is more than (for Intuos 
- * series and Cintiq 21UX) or less than (for Graphire series) 
- * 32+(32*8/64) = 36 ( or 32-(32*8/64) = 28) units (this is to produce a prompt 
- * relative movement), and proximity in is generated when distance is less
- * than or more than 32-(32*8/64) = 28 ( or 32+(32*8/64) = 36) units 
- * (this is to avoid prox in/out jittering).
- */
-#define PROXOUT_HYSTERESIS	8
-
 /*****************************************************************************
  * xf86WcmAllocate --
  ****************************************************************************/

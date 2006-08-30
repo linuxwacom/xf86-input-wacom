@@ -1,4 +1,4 @@
-/*
+tilt/*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
@@ -473,6 +473,8 @@ Bool usbWcmInit(LocalDevicePtr local)
 	else
 		common->nbuttons = 5;
 
+	common->wcmFlags |= TILT_ENABLED_FLAG;
+
 	return xf86WcmInitTablet(local,model,id,0.0);
 }
 
@@ -893,6 +895,10 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			}
 		}
 	} /* next event */
+
+	/* reset the max proxout distance for next in */
+	if (ds->device_type == CURSOR_ID && !ds->proximity)
+		common->wcmCursorProxoutDist = PROXOUT_DISTANCE;
 
 	/* Disable proximity on pads with just one channel and a pseudo second
 	 * channel (Intuos3 or Graphire4) when no pad buttons are pressed.
