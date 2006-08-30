@@ -1,4 +1,4 @@
-tilt/*
+/*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
