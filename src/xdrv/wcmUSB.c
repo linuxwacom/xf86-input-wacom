@@ -605,13 +605,19 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 static int usbDetectConfig(LocalDevicePtr local)
 {
-	unsigned long abs[NBITS(ABS_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
 	if (IsPad (priv))
 	{
 		priv->nbuttons = common->npadkeys;
+
+/* This code will be used when we are ready to report valuators in tablet and tool 
+ * specific form, whcih will need to clean InitValuatorAxisStruct() in xf86Wacom.c
+ * and all the calls to X related to valuators, such as xf86PostButtonEvent and 
+ * xf86PostButtonEvent, etc. Code under util will need to be updaed as well.
+ * This will need some time. We put it in the to-do list for now.  Ping 
+		unsigned long abs[NBITS(ABS_MAX)];
 		priv->naxes = 0;
 		if (ioctl(local->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) >= 0)
 		{
@@ -622,7 +628,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 			if (!priv->naxes)
 				priv->flags |= BUTTONS_ONLY_FLAG;
 		}
-	}
+*/	}
 	else
 		priv->nbuttons = common->nbuttons;
 
