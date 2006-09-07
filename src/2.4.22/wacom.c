@@ -696,8 +696,8 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, BTN_MIDDLE, data[8] & 0x08);
 			input_report_key(dev, BTN_RIGHT,  data[8] & 0x10);
 			/* mouse wheel is positive when rolled backwards */
-			input_report_rel(dev, REL_WHEEL, (__u32)(data[8] & 0x01))
-					 - (__u32)((data[8] & 0x02) >> 1);
+			input_report_rel(dev, REL_WHEEL, (__u32)(data[8] & 0x01)
+					 - (__u32)((data[8] & 0x02) >> 1));
 
 			/* I3 2D mouse side buttons */	
 			if (strstr(wacom->features->name, "Intuos3"))

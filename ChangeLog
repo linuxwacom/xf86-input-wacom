@@ -1,3 +1,9 @@
+2006-09-08   Ping Cheng <pingc@wacom.com>
+	* Fixed Graphire 4 pad/wheel bug
+	* Unified support of USB hot plug/unplug with different tablets
+	  for both XFree86 and Xorg
+	* Ready to release 0.7.5-1 
+
 2006-08-30   Ping Cheng <pingc@wacom.com>
 	* Added Intuos3 4x6 support
 	* Updated acinclude.m4 and configure.in

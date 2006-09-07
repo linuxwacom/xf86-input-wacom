@@ -310,6 +310,7 @@ struct _WacomDeviceRec
 	int tvoffsetX;		/* X edge offset for TwinView setup */
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
+	int wcmDevOpenCount;    /* Device open count */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
@@ -492,7 +493,6 @@ struct _WacomCommonRec
 	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
-	int wcmReadErrorCount;       /* Read error count */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutHyst;    /* Proxy-out distance hysteresis in max/256 units */
 

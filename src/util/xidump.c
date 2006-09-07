@@ -617,7 +617,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			XDeviceButtonEvent* pBtn = (XDeviceButtonEvent*)pAny;
 			bDown = (pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]);
 			nBtn = pBtn->button;
-			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
+			while (nBtn > 5) nBtn -= 5;
+			if (nBtn < 1) nBtn=6;
 			snprintf(chBuf,sizeof(chBuf),"%d-%s",pBtn->button,
 					bDown ? "DOWN" : "UP  ");
 			if (bDown) wacscrn_standout();
@@ -630,7 +631,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			XDeviceKeyEvent* pKey = (XDeviceKeyEvent*)pAny;
 			bDown = (pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]);
 			nBtn = pKey->keycode - 7; /* first key is always 8 */
-			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
+			while (nBtn > 5) nBtn -= 5;
+			if (nBtn < 1) nBtn=6;
 			snprintf(chBuf,sizeof(chBuf),"%d-%s",pKey->keycode - 7,
 					bDown ? "DOWN" : "UP  ");
 			if (bDown) wacscrn_standout();

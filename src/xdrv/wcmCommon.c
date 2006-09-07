@@ -410,7 +410,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		local->dev->button->map [button_idx] = button & AC_CODE;
 
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
-				    mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
+			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
+
 		break;
 
 	case AC_KEY:
@@ -446,16 +447,18 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		{
 			/* Left button down */
 			xf86PostButtonEvent(local->dev, is_absolute,
-					button_idx, 1,0,naxes,rx,ry,rz,v3,v4,v5);
+				button_idx, 1,0,naxes, 
+				rx,ry,rz,v3,v4,v5);
 
 			/* Left button up */
 			xf86PostButtonEvent(local->dev, is_absolute,
-					button_idx, 0,0,naxes,rx,ry,rz,v3,v4,v5);
+				button_idx,0,0,naxes,
+				rx,ry,rz, v3,v4,v5);
 		}
 
 		/* Left button down/up upon mask is 1/0 */
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx, 
-					mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
+			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		break;
 	}
 
@@ -652,39 +655,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		v3 = ((id<<16) & 0xffff0000) | (((short)v3)& 0xffff);
 		v4 = (serial & 0xffff0000) | (((short)v4)& 0xffff);
 		v5 = ((serial<<16) & 0xffff0000) | (((short)v5)& 0xffff);
-	}
-	else
-	{
-		if (v3 || v4 || buttons)
-		{
-			xf86PostProximityEvent(local->dev, 1, 0, naxes,
-					       rx, ry, rz, v3, v4, v5);
-			xf86PostMotionEvent(local->dev, is_absolute,
-					    0, naxes, rx, ry, rz, v3, v4, v5);
 
-			if (priv->oldButtons != buttons)
-			{
-				xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
-			}
-		}
-		else
+		/* coordinates are ready we can send events */
+		if (is_proximity)
 		{
-			if (priv->oldButtons != buttons)
-				xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
-			xf86PostProximityEvent(local->dev, 0, 0, naxes,
-					       rx, ry, rz, v3, v4, v5);
-		}
-		priv->oldButtons = buttons;
-		priv->oldStripX = ds->stripx;
-		priv->oldStripY = ds->stripy;
-	}
-
-	/* coordinates are ready we can send events */
-	if (is_proximity)
-	{
-		/* for multiple monitor support, we need to set the proper 
-		 * screen and modify the axes before posting events */
-		if(!(priv->flags & BUTTONS_ONLY_FLAG) )
+			/* for multiple monitor support, we need to set the proper 
+			 * screen and modify the axes before posting events */
+		if(!(priv->flags & BUTTONS_ONLY_FLAG))
 		{
 			xf86WcmSetScreen(local, &rx, &ry);
 		}
@@ -694,27 +671,74 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			rx *= priv->factorY / priv->factorX;
 
 		/* don't emit proximity events if device does not support proximity */
-		if ((local->dev->proximity &&
-		    !priv->oldProximity && !(priv->flags & BUTTONS_ONLY_FLAG)))
+		if ((local->dev->proximity && !priv->oldProximity))
 			xf86PostProximityEvent(local->dev, 1, 0, naxes,
-					       rx, ry, rz, v3, v4, v5);
+					rx, ry, rz, v3, v4, v5);
 
 
-		xf86PostMotionEvent(local->dev, is_absolute,
-					    0, naxes, rx, ry, rz, v3, v4, v5);
+		if(!(priv->flags & BUTTONS_ONLY_FLAG))
+			xf86PostMotionEvent(local->dev, is_absolute,
+					0, naxes, rx, ry, rz, v3, v4, v5);
 
-		if (priv->oldButtons != buttons)
-		{
-			xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
+			if (priv->oldButtons != buttons)
+			{
+				xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
+			}
+
+			/* simulate button 4 and 5 for relative wheel */
+			if ( ds->relwheel )
+			{
+				int fakeButton = ds->relwheel > 0 ? 5 : 4;
+ 				int i;
+				for (i=0; i<abs(ds->relwheel); i++)
+				{
+					xf86PostButtonEvent(local->dev, is_absolute,
+						fakeButton, 1, 0, naxes, rx, ry, rz,
+						v3, v4, v5);
+					xf86PostButtonEvent(local->dev, is_absolute,
+						fakeButton, 0, 0, naxes, rx, ry, rz,
+						v3, v4, v5);
+				}
+			}
 		}
 
-		/* simulate button 4 and 5 for relative wheel */
+		/* not in proximity */
+		else
+		{
+			buttons = 0;
+
+			/* reports button up when the device has been
+			 * down and becomes out of proximity */
+			if (priv->oldButtons)
+				xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
+			if (priv->oldProximity && local->dev->proximity)
+				xf86PostProximityEvent(local->dev,0,0,naxes,rx,ry,rz,v3,v4,v5);
+		} /* not in proximity */
+	}
+	else
+	{
+		if ((v3 || v4 || buttons || ds->relwheel) && !priv->oldProximity)
+		{
+			xf86PostProximityEvent(local->dev, 1, 0, naxes,
+				rx, ry, rz, v3, v4, v5);
+			is_proximity = 1;
+		}
+		if ( v3 || v4 )
+			xf86PostMotionEvent(local->dev, is_absolute,
+				0, naxes, rx, ry, rz, v3, v4, v5);
+		if (priv->oldButtons != buttons)
+			xf86WcmSendButtons(local, buttons, 
+				rx, ry, rz, v3, v4, v5);
+
 		if ( ds->relwheel )
 		{
 			int fakeButton = ds->relwheel > 0 ? 5 : 4;
-			int i;
+ 			int i;
 			for (i=0; i<abs(ds->relwheel); i++)
 			{
+				/* Dynamically modify the button map
+				 */
+				local->dev->button->map [fakeButton] = fakeButton;
 				xf86PostButtonEvent(local->dev, is_absolute,
 					fakeButton, 1, 0, naxes, rx, ry, rz,
 					v3, v4, v5);
@@ -723,21 +747,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 					v3, v4, v5);
 			}
 		}
+		if ( !v3 && !v4 && !buttons)
+		{
+ 			xf86PostProximityEvent(local->dev, 0, 0, naxes, 
+				rx, ry, rz, v3, v4, v5);
+			is_proximity = 0;
+		}
 	}
-
-	/* not in proximity */
-	else
-	{
-		buttons = 0;
-
-		/* reports button up when the device has been
-		 * down and becomes out of proximity */
-		if (priv->oldButtons)
-			xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
-		if (priv->oldProximity && local->dev->proximity)
-			xf86PostProximityEvent(local->dev,0,0,naxes,rx,ry,rz,v3,v4,v5);
-	} /* not in proximity */
-
 	priv->oldProximity = is_proximity;
 	priv->oldButtons = buttons;
 	priv->oldWheel = wheel;
@@ -970,6 +986,45 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	resetSampleCounter(pChannel);
 }
 
+static int idtotype(int id)
+{
+	int type = CURSOR_ID;
+
+	/* tools with id, such as Intuos series and Cintiq 21UX */
+	switch (id)
+	{
+		case 0x812: /* Inking pen */
+		case 0x801: /* Intuos3 Inking pen */
+		case 0x012: 
+		case 0x822: /* Pen */
+		case 0x842:
+		case 0x852:
+		case 0x823: /* Intuos3 Grip Pen */
+		case 0x813: /* Intuos3 Classic Pen */
+		case 0x885: /* Intuos3 Marker Pen */
+		case 0x022: 
+		case 0x832: /* Stroke pen */
+		case 0x032: 
+		case 0xd12: /* Airbrush */
+		case 0x912:
+		case 0x112: 
+		case 0x913: /* Intuos3 Airbrush */
+			type = STYLUS_ID;
+			break;
+		case 0x82a: /* Eraser */
+		case 0x85a:
+		case 0x91a:
+		case 0xd1a:
+		case 0x0fa: 
+		case 0x82b: /* Intuos3 Grip Pen Eraser */
+		case 0x81b: /* Intuos3 Classic Pen Eraser */
+		case 0x91b: /* Intuos3 Airbrush Eraser */
+			type = ERASER_ID;
+			break;
+	}
+	return type;
+}
+
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel)
 {
@@ -983,8 +1038,23 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (!ds->device_type)
 	{
-		/* defaults to cursor if tool is on the tablet when X starts */
-		ds->device_type = CURSOR_ID;
+		/* Tool may be on the tablet when X starts. 
+		 * Figure out device type by device id
+		 */
+		switch (ds->device_id)
+		{
+			case STYLUS_DEVICE_ID:
+				ds->device_type = STYLUS_ID;
+				break;
+			case ERASER_DEVICE_ID:
+				ds->device_type = ERASER_ID;
+				break;
+			case CURSOR_DEVICE_ID:
+				ds->device_type = CURSOR_ID;
+				break;
+			default:
+				ds->device_type = idtotype(ds->device_id);
+		}
 		ds->proximity = 1;
 		if (ds->serial_num)
 			for (idx=0; idx<common->wcmNumDevices; idx++)

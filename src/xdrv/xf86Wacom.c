@@ -427,8 +427,9 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
  
 	DBG(10,ErrorF("xf86WcmDevOpen\n"));
 
-	/* Drop read error counter */
-	common->wcmReadErrorCount = 0;
+	/* Device has been open */
+	if (priv->wcmDevOpenCount)
+		return TRUE;
 
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
@@ -472,35 +473,11 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 
 static void xf86WcmDevReadInput(LocalDevicePtr local)
 {
-	int loop=0, i;
+	int loop=0;
 	#define MAX_READ_LOOPS 10
 
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-
-	/* If there were read errors for USB tablet, it means the device was 
-	 * disconnected or changed. The only way to make the tablet alive again 
-	 * is to reconnect or reregister it. 
-	 */
-	if (common->wcmReadErrorCount > 0)
-	{
-		if (common->wcmDevCls == &gWacomUSBDevice)
-		{
-			usbWcmInit(local);
-			usbWcmGetRanges(local);
-			xf86WcmRegisterX11Devices(local);
-			/* reinitialize all the other defined tools on the same port */
-			for (i=0; i<common->wcmNumDevices; i++)
-			{
-				if (((WacomDevicePtr)(common->wcmDevices[i]->private))->common == common  
-						&& common->wcmDevices[i] != local)
-					xf86WcmRegisterX11Devices(common->wcmDevices[i]);
-			}
-			common->wcmReadErrorCount = 0;
-			return;
-		}
-		common->wcmReadErrorCount = 0;
-	}
 
 	/* move data until we exhaust the device */
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
@@ -523,22 +500,10 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 {
 	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	int len, pos, cnt, remaining;
-	short sID[4];
 
 	if (!common->wcmModel) return;
 
 	remaining = sizeof(common->buffer) - common->bufpos;
-
-	if (common->wcmDevCls == &gWacomUSBDevice && !common->wcmReadErrorCount)
-	{
-		ioctl(local->fd, EVIOCGID, sID);
-
-		if (common->tablet_id != sID[2])
-		{
-			common->wcmReadErrorCount++;
-			DBG(10, ErrorF("Wacom device ID changed from %d to %d\n", common->tablet_id, sID[2]));
-		}
-	}
 
 	DBG(10, ErrorF("xf86WcmDevReadPacket: device=%s fd=%d "
 		"pos=%d remaining=%d\n",
@@ -551,11 +516,14 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	if (len <= 0)
 	{
-		if (common->wcmDevCls == &gWacomUSBDevice)
-		{
-			common->wcmReadErrorCount++;
-			xf86WcmWait(500);
-		}
+                /* In case of error, we assume the device has been
+		 * disconnected. So we close it and iterate over all
+		 * wcmDevices to actually close associated devices. */
+                for (cnt=0; cnt<common->wcmNumDevices; cnt++)
+                {
+                        if (common->wcmDevices[cnt]->fd >= 0)
+                                xf86WcmDevProc(common->wcmDevices[cnt]->dev, DEVICE_OFF);
+                }
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
 	}
@@ -658,14 +626,22 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		 * register even a 'pad' which doesn't "SendCoreEvents"
 		 */
 		case DEVICE_INIT: 
+			priv->wcmDevOpenCount = 0;
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc INIT FAILED\n"));
 				return !Success;
 			}
+			priv->wcmDevOpenCount++;
 			break; 
 
 		case DEVICE_ON:
+			if (!xf86WcmDevOpen(pWcm))
+			{
+				DBG(1, ErrorF("xf86WcmProc ON FAILED\n"));
+				return !Success;
+			}
+			priv->wcmDevOpenCount++;
 			xf86AddEnabledDevice(local);
 			pWcm->public.on = TRUE;
 			break;
@@ -678,6 +654,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 				xf86WcmDevClose(local);
 			}
 			pWcm->public.on = FALSE;
+			priv->wcmDevOpenCount = 0;
 			break;
 
 		default:

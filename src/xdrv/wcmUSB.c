@@ -906,12 +906,6 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 	if (ds->device_type == CURSOR_ID && !ds->proximity)
 		common->wcmCursorProxoutDist = PROXOUT_DISTANCE;
 
-	/* Disable proximity on pads with just one channel and a pseudo second
-	 * channel (Intuos3 or Graphire4) when no pad buttons are pressed.
-	 */
-	if (common->wcmChannelCnt == 1 && channel == 1 && !ds->buttons)
-		ds->proximity = 0;
-
 	/* DTF720 doesn't support eraser */
 	if (common->tablet_id == 0xC0 && ds->device_type == ERASER_ID) 
 	{
