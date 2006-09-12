@@ -52,16 +52,16 @@ endif
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
 
-xf86Wacom.o: xf86Wacom.c xf86Wacom.h Makefile
-wcmSerial.o: wcmSerial.c wcmSerial.h xf86Wacom.h
-wcmISDV4.o: wcmISDV4.c wcmSerial.h xf86Wacom.h
-wcmUSB.o: wcmUSB.c xf86Wacom.h
-wcmCommon.o: wcmCommon.c xf86Wacom.h
-wcmCompat.o: wcmCompat.c xf86Wacom.h
-wcmConfig.o: wcmConfig.c xf86Wacom.h ../include/wcmAction.h
-wcmFilter.o: wcmFilter.c xf86Wacom.h
+xf86Wacom.o: xf86Wacom.c wcmFilter.h
+wcmSerial.o: wcmSerial.c wcmSerial.h wcmFilter.h
+wcmISDV4.o: wcmISDV4.c wcmSerial.h wcmFilter.h
+wcmUSB.o: wcmUSB.c wcmFilter.h
+wcmCommon.o: wcmCommon.c
+wcmCompat.o: wcmCompat.c
+wcmConfig.o: wcmConfig.c wcmFilter.h ../include/wcmAction.h
+wcmFilter.o: wcmFilter.c wcmFilter.h
 
-$(XF86OBJS): xf86Wacom.c Makefile
+$(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
 	$(CC) $(CFLAGS) $(DEPFLAGS) $(DLLOADER) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		-I$(srcdir) $(DRIVER_INCLUDES) -Dlinux \

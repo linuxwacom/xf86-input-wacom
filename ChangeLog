@@ -1,3 +1,8 @@
+2006-09-12   Ping Cheng <pingc@wacom.com>
+	* Updated Makefile.am for xdrv (Magnus Vigerlöf)
+	* Fixed a typo in 2.4.x/wacom.c (Magnus Vigerlöf)
+	* Cleaned initialization code for tablet unplug/plug 
+
 2006-09-08   Ping Cheng <pingc@wacom.com>
 	* Fixed Graphire 4 pad/wheel bug
 	* Unified support of USB hot plug/unplug with different tablets

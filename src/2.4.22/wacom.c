@@ -734,7 +734,7 @@ static void wacom_intuos_irq(struct urb *urb)
 #define WACOM_INTUOS_BITS	(BIT(EV_REL))
 #define WACOM_INTUOS_REL	(BIT(REL_WHEEL))
 #define WACOM_INTUOS_ABS	(BIT(ABS_TILT_X) | BIT(ABS_TILT_Y) | BIT(ABS_RZ) | BIT(ABS_THROTTLE))
-#define WACOM_INTUOS3S_ABS	(WACOM_INTUOS_ABS | BIT(ABS_RX)
+#define WACOM_INTUOS3S_ABS	(WACOM_INTUOS_ABS | BIT(ABS_RX))
 #define WACOM_INTUOS3_ABS	(WACOM_INTUOS3S_ABS | BIT(ABS_RY))
 
 struct wacom_features wacom_features[] = {

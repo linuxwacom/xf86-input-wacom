@@ -150,7 +150,7 @@ void input_dev_g4(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->evbit[0] |= BIT(EV_MSC);
 	input_dev->mscbit[0] |= BIT(MSC_SERIAL);
 	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_FINGER);
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3) | BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7);
+	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_0) | BIT(BTN_4);
 }
 
 void input_dev_g(struct input_dev *input_dev, struct wacom_wac *wacom_wac)

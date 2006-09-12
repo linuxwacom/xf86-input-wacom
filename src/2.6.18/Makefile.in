@@ -26,6 +26,7 @@ all:
 ifeq ($(WCM_OPTION_WACOM),yes)
 	cp ../2.6.16/wacom_wac.c .
 	cp ../2.6.16/wacom_wac.h .
+	cp ../2.6.16/wacom_sys.c
 endif 
 	@echo '    Building linuxwacom drivers for 2.6 kernel.'
 	@echo '***Note: Drivers not enabled as modules in your kernel config but requested through configure are NOT built'

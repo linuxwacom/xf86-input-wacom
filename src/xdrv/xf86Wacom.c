@@ -236,8 +236,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	/* allocate motion history buffer if needed */
 	xf86MotionHistoryAllocate(local);
 
-	local->flags |= X11DEVREG_FLAG;
-
 	/* initialize bounding rect */
 	if (priv->twinview != TV_NONE && priv->screen_no == -1) 
 	{
@@ -455,10 +453,6 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		local->fd = common->fd;
 		common->fd_refs++;
 	}
-
-	/* The rest of initialization is done only once */
-	if (local->flags & X11DEVREG_FLAG)
-		return TRUE;
 
 	if (!xf86WcmRegisterX11Devices (local))
 		return FALSE;
