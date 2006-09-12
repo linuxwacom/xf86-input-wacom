@@ -245,7 +245,8 @@ int WacomConfigCloseDevice(WACOMDEVICE *hDevice)
 {
 	if (!hDevice) { errno=EINVAL; return -1; }
 
-	(void)XCloseDevice(hDevice->pCfg->pDisp, hDevice->pDev);
+	if (hDevice->pDev)
+		XFree(hDevice->pDev);
 	free(hDevice);
 	return 0;
 }

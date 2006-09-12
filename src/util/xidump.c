@@ -486,15 +486,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			wacscrn_output(nValRow+4,12 + k * 10, chBuf);
 		}
 	}
-	else
-	{
-		/*  This is a workaround for device type "pad" after incorporated Anrew's patch.
-		 * The peoper place to fix it should be in wacom_drv.o.
-		 */
-		fprintf(stderr,"Valuators are not ready for input device '%s' yet. ",pDevInfo->name);
-		fprintf(stderr,"Please launch the program again. \n");
-		return 1;		
-	}
 
 	nPressRow = nRow++;
 	nProxRow = nRow++;
@@ -506,8 +497,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	wacscrn_output(nFocusRow, 0,"    Focus:");
 	wacscrn_output(nButtonRow,0,"  Buttons:");
 	wacscrn_output(nKeyRow   ,0,"     Keys:");
-
-
 
 	/* handle events */
 
@@ -617,8 +606,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			XDeviceButtonEvent* pBtn = (XDeviceButtonEvent*)pAny;
 			bDown = (pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]);
 			nBtn = pBtn->button;
-			while (nBtn > 5) nBtn -= 5;
-			if (nBtn < 1) nBtn=6;
+			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
 			snprintf(chBuf,sizeof(chBuf),"%d-%s",pBtn->button,
 					bDown ? "DOWN" : "UP  ");
 			if (bDown) wacscrn_standout();
@@ -631,8 +619,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			XDeviceKeyEvent* pKey = (XDeviceKeyEvent*)pAny;
 			bDown = (pAny->type == gnInputEvent[INPUTEVENT_KEY_PRESS]);
 			nBtn = pKey->keycode - 7; /* first key is always 8 */
-			while (nBtn > 5) nBtn -= 5;
-			if (nBtn < 1) nBtn=6;
+			if ((nBtn < 1) || (nBtn > 5)) nBtn=6;
 			snprintf(chBuf,sizeof(chBuf),"%d-%s",pKey->keycode - 7,
 					bDown ? "DOWN" : "UP  ");
 			if (bDown) wacscrn_standout();
@@ -1029,7 +1016,8 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	}
 
 	XUngrabDevice(pDisp,pDev,CurrentTime);
-	XCloseDevice(pDisp,pDev);
+	XFree(pDev);
+	XCloseDisplay(pDisp);
 	XDestroyWindow(pDisp,wnd);
 
 	return nRtn;
