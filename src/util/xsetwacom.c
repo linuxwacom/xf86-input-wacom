@@ -665,7 +665,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 			pszDevName, pszParam);
 
 	/* Close device and return */
-	(void)WacomConfigCloseDevice(hDev);
+ 	(void)WacomConfigCloseDevice(hDev);
 	return nReturn ? 1 : 0;
 }
 
