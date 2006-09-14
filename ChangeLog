@@ -1,3 +1,7 @@
+2006-09-14   Ping Cheng <pingc@wacom.com>
+	* Fixed a filter bug (Wolfgang Oertl, etc).
+        * Ready to release 0.7.5-3
+
 2006-09-13   Ping Cheng <pingc@wacom.com>
         * Fixed a typo in 2.6.18/Makefile.in (Mats Johannesson)
         * Ready to release 0.7.5-2
