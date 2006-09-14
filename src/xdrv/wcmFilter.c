@@ -229,7 +229,6 @@ static void filterIntuosCoord(int* state, int* current)
 {
 	int x=0, i;
 
-	x = *current;
 	for ( i=0; i<MAX_SAMPLES; i++ )
 		x += state[i];
 
@@ -247,7 +246,7 @@ static void filterIntuosTilt(int* state, int* tilt)
 	int i;
 
 	*tilt = 0;
-	for ( i=MAX_SAMPLES-1; i>=0; i-- )
+	for ( i=0; i<MAX_SAMPLES; i++ )
 	{
 		*tilt += state[i];
 	}
@@ -280,7 +279,7 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	filter_x = 0;
 	filter_y = 0;
 
-	for ( i=MAX_SAMPLES-1; i>=0; i-- )
+	for ( i=0; i<MAX_SAMPLES; i++ )
 	{
 		filter_x += x[i];
 		filter_y += y[i];

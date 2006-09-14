@@ -692,6 +692,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
  				int i;
 				for (i=0; i<abs(ds->relwheel); i++)
 				{
+					/* Dynamically modify the button map
+					 */
+					local->dev->button->map [fakeButton] = fakeButton;
 					xf86PostButtonEvent(local->dev, is_absolute,
 						fakeButton, 1, 0, naxes, rx, ry, rz,
 						v3, v4, v5);
@@ -777,6 +780,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	const WacomDeviceState* dsNew)
 {
+	int drot;
+
 	/* NOTE: Suppression value of zero disables suppression. */
 	DBG(11, ErrorF("xf86WcmSuppress checking data (suppress=%d)\n", suppress));
 
@@ -790,10 +795,10 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (ABS(dsOrig->stripy - dsNew->stripy) > suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) return 0;
-
-	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress ||
-		(1800 - ABS(dsNew->rotation - dsOrig->rotation)) > suppress)
-		return 0;
+	drot = ABS(dsOrig->rotation - dsNew->rotation)-900 ? 
+		1800 - ABS(dsOrig->rotation - dsNew->rotation) : 
+		ABS(dsNew->rotation - dsOrig->rotation);
+	if (drot > suppress) return 0;
 
 	/* look for change in absolute wheel
 	 * position or any relative wheel movement */
@@ -862,7 +867,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
-	WacomFilterState fs;
+	WacomFilterState* fs;
 	int i;
 
 	/* tool on the tablet when driver starts */
@@ -907,37 +912,37 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		return; /* discard */
 	}
 #endif
-	fs = pChannel->rawFilter;
-	if (!fs.npoints && ds.proximity)
+	fs = &pChannel->rawFilter;
+	if (!fs->npoints && ds.proximity)
 	{
 		DBG(11, ErrorF("initialize Channel data.\n"));
 		/* store channel device state for later use */
 		for (i=MAX_SAMPLES - 1; i>=0; i--)
 		{
-			fs.x[i]= ds.x;
-			fs.y[i]= ds.y;
-			fs.tiltx[i] = ds.tiltx;
-			fs.tilty[i] = ds.tilty;
+			fs->x[i]= ds.x;
+			fs->y[i]= ds.y;
+			fs->tiltx[i] = ds.tiltx;
+			fs->tilty[i] = ds.tilty;
 		}
-		++fs.npoints;
+		++fs->npoints;
 	} else  {
 		/* Filter raw data, fix hardware defects, perform error correction */
 		for (i=MAX_SAMPLES - 1; i>0; i--)
 		{
-			fs.x[i]= fs.x[i-1];
-			fs.y[i]= fs.y[i-1];
+			fs->x[i]= fs->x[i-1];
+			fs->y[i]= fs->y[i-1];
 		}
-		fs.x[0] = ds.x;
-		fs.y[0] = ds.y;
+		fs->x[0] = ds.x;
+		fs->y[0] = ds.y;
 		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
 		{
 			for (i=MAX_SAMPLES - 1; i>0; i--)
 			{
-				fs.tiltx[i]= fs.tiltx[i-1];
-				fs.tilty[i]= fs.tilty[i-1];
+				fs->tiltx[i]= fs->tiltx[i-1];
+				fs->tilty[i]= fs->tilty[i-1];
 			}
-			fs.tiltx[0] = ds.tiltx;
-			fs.tilty[0] = ds.tilty;
+			fs->tiltx[0] = ds.tiltx;
+			fs->tilty[0] = ds.tilty;
 		}
 		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw)
 		{

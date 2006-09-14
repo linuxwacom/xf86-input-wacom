@@ -436,17 +436,18 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmRotate=ROTATE_CW;
 		else if (xf86NameCmp(s, "CCW") ==0)
 			common->wcmRotate=ROTATE_CCW;
+		else if (xf86NameCmp(s, "HALF") ==0)
+			common->wcmRotate=ROTATE_HALF;
 		xf86Msg(X_CONFIG, "WACOM: Rotation is set to %s\n", s);
 	}
 
 	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
 			common->wcmSuppress);
-	if ((common->wcmSuppress != 0) && /* 0 disables suppression */
-		(common->wcmSuppress > MAX_SUPPRESS ||
-			common->wcmSuppress < DEFAULT_SUPPRESS))
-	{
-		common->wcmSuppress = DEFAULT_SUPPRESS;
-	}
+	if (common->wcmSuppress != 0) /* 0 disables suppression */
+		if (common->wcmSuppress > MAX_SUPPRESS)
+			common->wcmSuppress = MAX_SUPPRESS;
+		if (common->wcmSuppress < DEFAULT_SUPPRESS)
+			common->wcmSuppress = DEFAULT_SUPPRESS;
 	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", common->wcmSuppress);      
     
 	if (xf86SetBoolOption(local->options, "Tilt",
