@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM __drivermansuffix__ __vendorversion__
+.TH WACOM 4 "linuxwacom 0.7.5" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ wacom \- Wacom input driver
 .fi
 .SH DESCRIPTION
 .B wacom 
-is an __xservername__ input driver for Wacom devices.
+is an X input driver for Wacom devices.
 .PP
 The
 .B wacom
@@ -27,7 +27,7 @@ need this driver.  USB tablet support is available on some Linux platforms.
 USB tablets needs wacom kernel driver being loaded before this driver starts.  
 Please check linuxwacom.sf.net for latest updates of Wacom X and kernel drivers.
 .SH CONFIGURATION DETAILS
-Please refer to __xconfigfile__(__filemansuffix__) for general configuration
+Please refer to xorg.conf(5x) for general configuration
 details and for options that can be used with all input drivers.  This
 section only covers configuration details specific to this driver.
 .PP
@@ -38,11 +38,12 @@ supports the following entries:
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"\fP
 sets the type of tool the device represents. This option is mandatory.  "pad" is 
-for Intuos 3, Cintiq 21UX, or Graphire 4 Tablet Menu Strip(s) only. It is required 
-for Intuos 3, Cintiq 21UX, or Graphire 4 if your application supports Tablet Menu 
-Strip features.  "pad" is reported as a second tool in the driver.  Since it will 
-not move the system's cursor,  IT SHOULD NOT have any of those core options, such 
-as "SendCoreEvents" or "AlwaysCore.
+for Intuos 3, Cintiq 21UX, or Graphire 4 ExpressKeys only. It is required 
+for Intuos 3, Cintiq 21UX, or Graphire 4 if your application supports  
+ExpressKeys 
+features.  "pad" is reported as a second tool in the driver.  Since it will 
+not move the system's cursor,  IT SHOULD NOT have any of those core options, 
+such as "SendCoreEvents" or "AlwaysCore".
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -177,7 +178,7 @@ sets the pressure threshold used to generate a button 1 events of stylus.
 The default is MaxPressure*3/50.
 .RE
 .SH "SEE ALSO"
-__xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), xorgconfig(__appmansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__).
+Xorg(1x), xorg.conf(5x), xorgconfig(1x), Xserver(1x), X(7).
 .SH AUTHORS
 Frederic Lepied <lepied@xfree86.org>
 Ping Cheng <pingc@wacom.com>

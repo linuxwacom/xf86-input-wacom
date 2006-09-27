@@ -63,6 +63,7 @@
  *      v1.46 (pc) - Split wacom.c into wacom_sys.c and wacom_wac.c, 
  *		   - where wacom_sys.c deals with system specific code, 
  * 		   - and wacom_wac.c deals with Wacom specific code
+ *		   - Support Intuos3 4x6
  */
 
 /*

@@ -1179,10 +1179,10 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 	{
 		stylus = puchData[0] & 0x20 ? 1 : 0;
 		if (pSerial->nVerMinor == 2)
-			press = (puchData[6] & 0x3F) << 1 | ((puchData[3] & 0x4) >> 2) |
-					(puchData[6] & 0x40) ? 0 : 0x80;
+			press = ((puchData[6] & 0x3F) << 1) | ((puchData[3] & 0x4) >> 2) |
+					((puchData[6] & 0x40) ? 0 : 0x80);
 		else
-			press = (puchData[6] & 0x3F) + (puchData[6] & 0x40) ? 0 : 64;
+			press = (puchData[6] & 0x3F) + ((puchData[6] & 0x40) ? 0 : 64);
 
 		if (stylus)
 		{

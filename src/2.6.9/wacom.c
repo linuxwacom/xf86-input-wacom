@@ -675,7 +675,8 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		input_report_abs(dev, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		input_report_abs(dev, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
-		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | data[2])
+		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | 
+			data[2] | (data[3] & 0x1f) | data[4])
 			input_report_key(dev, wacom->tool[1], 1);
 		else
 			input_report_key(dev, wacom->tool[1], 0);

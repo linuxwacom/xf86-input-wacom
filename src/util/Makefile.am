@@ -11,7 +11,6 @@ DEPFLAGS = @WCM_DEPFLAGS@
 # potentially be built or installed depending on the results of
 # the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
-EXTRA_SCRIPTS = wacom_drv.o wacom_drv.so wacomcpl wacomcpl-exec
 
 # Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \

@@ -14,7 +14,7 @@ AC_DEFUN([AC_WCM_CHECK_ENVIRON],[
 dnl Variables for various checks
 WCM_KSTACK=-mpreferred-stack-boundary=2
 WCM_KERNEL=unknown
-WCM_KERNEL_VER=2.4
+WCM_KERNEL_VER=
 WCM_ISLINUX=no
 WCM_ENV_KERNEL=no
 WCM_OPTION_MODVER=no
@@ -125,15 +125,23 @@ dnl Check for kernel build environment
 AC_ARG_WITH(kernel,
 AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 [
-	WCM_KERNELDIR="$withval"
-	AC_MSG_CHECKING(for valid kernel source tree)
-	if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
-		AC_MSG_RESULT(ok)
-		WCM_ENV_KERNEL=yes
-	else
-		AC_MSG_RESULT(missing input.h)
-		AC_MSG_RESULT("Unable to find $WCM_KERNELDIR/include/linux/input.h")
+	AC_MSG_CHECKING(if kernel source is enabled)
+	if test "x$with_kernel" = "xno"; then
+		AC_MSG_RESULT(no)
+		WCM_KERNELDIR=
 		WCM_ENV_KERNEL=no
+	else
+		AC_MSG_RESULT(yes)
+		WCM_KERNELDIR="$withval"
+		AC_MSG_CHECKING(for valid kernel source tree)
+		if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
+			AC_MSG_RESULT(ok)
+			WCM_ENV_KERNEL=yes
+		else
+			AC_MSG_RESULT(missing input.h)
+			AC_MSG_RESULT("Unable to find $WCM_KERNELDIR/include/linux/input.h")
+			WCM_ENV_KERNEL=no
+		fi
 	fi
 ],
 [
@@ -168,6 +176,25 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 		echo "***"
 	fi
 ])])
+dnl
+AC_DEFUN([AC_WCM_CHECK_MODSUPP],[
+dnl Check for kernel module support
+if test x$WCM_ENV_KERNEL = xyes; then
+	AC_MSG_CHECKING(for kernel module support)
+	modcfg=""
+	if test -f "$WCM_KERNELDIR/include/linux/autoconf.h"; then
+		modcfg="`grep CONFIG_MODULES $WCM_KERNELDIR/include/linux/autoconf.h | cut -d' ' -f 3-`"
+	fi
+	if test "x$modcfg" = "x1"; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		WCM_KERNELDIR=""
+		WCM_ENV_KERNEL=no
+		WCM_OPTION_MODVER=no
+	fi
+fi
+])
 dnl
 AC_DEFUN([AC_WCM_CHECK_MODVER],[
 dnl Guess modversioning

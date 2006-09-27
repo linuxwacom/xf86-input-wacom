@@ -24,14 +24,17 @@
 
 #include "xf86Wacom.h"
 
-#if XF86_VERSION_MAJOR < 4
 /*
+ #if XF86_VERSION_MAJOR < 4
+ *
  * There is a bug in XFree86 for combined left click and
  * other button. It'll lost left up when releases.
  * This should be removed if XFree86 fixes the problem.
- */
+ * This bug happens on Xorg as well.
 #  define XF86_BUTTON1_BUG
 #endif
+*/
+#define XF86_BUTTON1_BUG
 
 WacomDeviceClass* wcmDeviceClasses[] =
 {
@@ -661,23 +664,23 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		{
 			/* for multiple monitor support, we need to set the proper 
 			 * screen and modify the axes before posting events */
-		if(!(priv->flags & BUTTONS_ONLY_FLAG))
-		{
-			xf86WcmSetScreen(local, &rx, &ry);
-		}
+			if(!(priv->flags & BUTTONS_ONLY_FLAG))
+			{
+				xf86WcmSetScreen(local, &rx, &ry);
+			}
 
-		/* unify acceleration in both directions for relative mode to draw a circle */
-		if (!is_absolute)
-			rx *= priv->factorY / priv->factorX;
+			/* unify acceleration in both directions for relative mode to draw a circle */
+			if (!is_absolute)
+				rx *= priv->factorY / priv->factorX;
 
-		/* don't emit proximity events if device does not support proximity */
-		if ((local->dev->proximity && !priv->oldProximity))
-			xf86PostProximityEvent(local->dev, 1, 0, naxes,
+			/* don't emit proximity events if device does not support proximity */
+			if ((local->dev->proximity && !priv->oldProximity))
+				xf86PostProximityEvent(local->dev, 1, 0, naxes,
 					rx, ry, rz, v3, v4, v5);
 
 
-		if(!(priv->flags & BUTTONS_ONLY_FLAG))
-			xf86PostMotionEvent(local->dev, is_absolute,
+			if(!(priv->flags & BUTTONS_ONLY_FLAG))
+				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, rx, ry, rz, v3, v4, v5);
 
 			if (priv->oldButtons != buttons)
@@ -780,8 +783,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	const WacomDeviceState* dsNew)
 {
-	int drot;
-
 	/* NOTE: Suppression value of zero disables suppression. */
 	DBG(11, ErrorF("xf86WcmSuppress checking data (suppress=%d)\n", suppress));
 
@@ -795,10 +796,8 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if (ABS(dsOrig->stripy - dsNew->stripy) > suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) return 0;
-	drot = ABS(dsOrig->rotation - dsNew->rotation)-900 ? 
-		1800 - ABS(dsOrig->rotation - dsNew->rotation) : 
-		ABS(dsNew->rotation - dsOrig->rotation);
-	if (drot > suppress) return 0;
+	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress &&
+		(1800 - ABS(dsOrig->rotation - dsNew->rotation)) >  suppress) return 0;
 
 	/* look for change in absolute wheel
 	 * position or any relative wheel movement */

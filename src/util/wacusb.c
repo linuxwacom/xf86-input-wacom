@@ -724,8 +724,10 @@ static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 
 static int USBParseMSC(USBTABLET* pUSB, struct input_event* pEv)
 {
-	if (pEv->code == MSC_SERIAL)
+	if (pEv->code == MSC_SERIAL && pEv->value)
 		pUSB->state.values[WACOMFIELD_SERIAL].nValue = pEv->value;
+	if (!pUSB->state.values[WACOMFIELD_PROXIMITY].nValue)
+		pUSB->state.values[WACOMFIELD_SERIAL].nValue = 0;
 	return 0;
 }
 

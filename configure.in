@@ -33,6 +33,7 @@ AC_WCM_CHECK_ENVIRON
 dnl If linux kernel is detected, check for module versioning and kernel source
 if test x$WCM_ISLINUX = xyes; then
 	AC_WCM_CHECK_KERNELSOURCE
+	AC_WCM_CHECK_MODSUPP
 	AC_WCM_CHECK_MODVER
 fi
 

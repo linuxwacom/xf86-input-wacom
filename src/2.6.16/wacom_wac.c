@@ -396,7 +396,8 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 		wacom_report_abs(wcombo, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		wacom_report_abs(wcombo, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
-		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | data[2])
+		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | 
+			data[2] | (data[3] & 0x1f) | data[4])
 			wacom_report_key(wcombo, wacom->tool[1], 1);
 		else
 			wacom_report_key(wcombo, wacom->tool[1], 0);

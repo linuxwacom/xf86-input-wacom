@@ -1,3 +1,14 @@
+2006-09-27   Ping Cheng <pingc@wacom.com>
+	* Updated wacserial.c (Adam Marmbrant)
+	* Updated package configuration scripts 
+	  (Patch 1538734, Magnus Vigerlöf and Kai Sattler)
+
+2006-09-22   Ping Cheng <pingc@wacom.com>
+	* Updated wacom man page, wacom.4x
+	* Updated wacdump
+	* Fixed an I3 and Cintiq 21UX pad out-prox bit (Martin Wawro)
+	* Applied TabletPC button XFree86 workaround to Xorg 
+
 2006-09-14   Ping Cheng <pingc@wacom.com>
 	* Fixed a filter bug (Wolfgang Oertl, etc).
         * Ready to release 0.7.5-3
