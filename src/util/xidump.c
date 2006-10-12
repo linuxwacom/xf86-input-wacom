@@ -199,7 +199,7 @@ int ListDevices(Display* pDisp, const char* pszDeviceName)
 								pVal->motion_buffer);
 						for (k=0; k<pVal->num_axes; ++k)
 						{
-							printf("    axis[%d]: res=%d, max=%d, max=%d\n",
+							printf("    axis[%d]: res=%d, min=%d, max=%d\n",
 								k, /* index */
 								pVal->axes[k].resolution,
 								pVal->axes[k].min_value,

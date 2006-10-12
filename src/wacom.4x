@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4 "linuxwacom 0.7.5" "X Version 11"
+.TH WACOM 4 "linuxwacom 0.7.6" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -105,15 +105,15 @@ Y coordinate of the bottom corner of the active zone.
 .B Option \fI"ButtonsOnly"\fP \fI"on"\fP
 disables the device's motion events.
 .TP 4
-.B Option \fI"ButtonM"\fP \fI"N"\fP
-reports a button N click when button M is pressed,  where M is one of the 
-wacom supported button numbers,  it can be 1 to 16 and N can be an integer 
-between 1 and 19. The default value for button M is M.  When N is less than 17,  
-button M is assigned to the function of button N.  When N is 17,  button M is 
-a left-double-click.  When N is 18, button M is ignored, i.e., no button event 
-will be reported when clicking on button M. When N is 19, button M is assigned 
-to Mode Toggle, switching between relative and absolute mode, which is especially 
-useful to switch windows in a multi-monitor environment.
+.B Option \fI"ButtonM"\fP \fI"AC"\fP
+reports an action AC when button M is pressed,  where M 
+is one of the device supported  button numbers,  it can be 1 
+to 32. The default action reported to Xinput is mouse button M click.  
+To assign it to a left-double-click, use "dblclick 1".  
+To ignore the button click, i.e., to not report any button click event 
+to Xinput,  use "0" or "button 0".  Use "modetoggle" to assign  
+it to switching between relative and absolute mode,  which is  
+useful to switch windows in a multi-monitor  environment.
 .TP 4
 .B Option \fI"TPCButton"\fP \fI"on"\fP
 enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus button

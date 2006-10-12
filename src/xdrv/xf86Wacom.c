@@ -97,7 +97,7 @@
  * 2006-07-17 47-pc0.7.5 - Support button/key combined events
  */
 
-static const char identification[] = "$Identification: 47-0.7.5 $";
+static const char identification[] = "$Identification: 47-0.7.6 $";
 
 /****************************************************************************/
 

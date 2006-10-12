@@ -1,3 +1,18 @@
+2006-10-09   Ping Cheng <pingc@wacom.com>
+	* Updated install scripts to install wacom man
+	  page, wacom.4x.gz, under /usr/share/man/man4
+	* Updated release version to 0.7.6
+	* Ready to label the source
+
+2006-10-06   Ping Cheng <pingc@wacom.com>
+	* Updated xf86Wacom.h to support Xorg 7.1
+	* Fixed a bug in src/2.6.16/wacom_sys.c
+	* Updates xidump and xsetwacom
+
+2006-10-03   Ping Cheng <pingc@wacom.com>
+        * Updated configure.in and acinclude.m4 for x86_64
+        * Updated src/2.6.16/wacom_sys.c to sync with kernel.org
+
 2006-09-27   Ping Cheng <pingc@wacom.com>
 	* Updated wacserial.c (Adam Marmbrant)
 	* Updated package configuration scripts 

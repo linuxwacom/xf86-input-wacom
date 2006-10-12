@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.5)
+AM_INIT_AUTOMAKE(linuxwacom, 0.7.6)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -183,21 +183,29 @@ AC_ARG_ENABLE(hid,
 AC_HELP_STRING([--enable-hid], [Enable building hid.o [[default=no]]]),
 	, enable_hid=no)
 if test "$enable_hid" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-	if test "$WCM_ENV_KERNEL" != "yes"; then
+	kver=`echo $WCM_KERNEL_VER | grep "2.6"`
+	kver=`echo $kver | cut -f 3 -d.`
+	if test $kver -ge 18; then
 		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile hid.o without kernel build environment"
-		echo "*** hid.o will not be built"
+		echo "*** No need to build (usb)hid.ko for kernel 2.6.18 or later"
 		echo "***"
 	else
-		WCM_OPTION_HID=yes
-		if test $kver != 0; then
-			if test "$WCM_KERNEL_VER" = "2.4.22"; then
+		kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
+		if test "$WCM_ENV_KERNEL" != "yes"; then
+			echo "***"; echo "*** WARNING:";
+			echo "*** Unable to compile hid.o without kernel build environment"
+			echo "*** hid.o will not be built"
+			echo "***"
+		else
+			WCM_OPTION_HID=yes
+			if test $kver != 0; then
+				if test "$WCM_KERNEL_VER" = "2.4.22"; then
 				cp $WCM_KERNELDIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
 				cp $WCM_KERNELDIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
+				fi
 			fi
+			WCM_MODULES="$WCM_MODULES hid.o"
 		fi
-		WCM_MODULES="$WCM_MODULES hid.o"
 	fi
 fi
 
@@ -481,8 +489,7 @@ fi
 dnl Check for x86_64 kernel and ARCH for kernel 2.4
 kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
 if test $kver != 0; then
-	WCM_ARCH=`echo $WCM_ARCH | cut -f 1 -d-`
-	if test "$WCM_ARCH" = "x86-64"; then
+	if test "$WCM_ARCH" = "x86_64"; then
 		WCM_OPTION_HID=no
 		WCM_OPTION_WACOM=no
 		WCM_OPTION_INPUT=no
@@ -492,6 +499,9 @@ if test $kver != 0; then
 		WCM_MODULES=""
 	fi
 fi
+
+dnl Create man page file for the current driver
+gzip -f src/wacom.4x
 
 dnl Separate test output from file-generation output
 echo 
@@ -595,7 +605,7 @@ echo "----------------------------------------"
 
 dnl Check for x86_64 kernel
 kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-if test "$WCM_ARCH" = "x86-64" && test $kver != 0; then
+if test "$WCM_ARCH" = "x86_64" && test $kver != 0; then
 	echo ""
 	echo "***"; echo "*** Note:";
 	echo "*** For x86-64 kernel, we only support kernel 2.4.30 and kernel 2.6.* "

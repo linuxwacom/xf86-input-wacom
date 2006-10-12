@@ -94,187 +94,187 @@ struct _PARAMINFO
 static PARAMINFO gParamInfo[] =
 {
 	{ "TopX",
-		"Bounding rect left coordinate in tablet units",
+		"Bounding rect left coordinate in tablet units. ",
 		XWACOM_PARAM_TOPX, VALUE_REQUIRED },
 
 	{ "TopY",
-		"Bounding rect top coordinate in tablet units",
+		"Bounding rect top coordinate in tablet units . ",
 		XWACOM_PARAM_TOPY, VALUE_REQUIRED },
 
 	{ "BottomX",
-		"Bounding rect right coordinate in tablet units",
+		"Bounding rect right coordinate in tablet units. ",
 		XWACOM_PARAM_BOTTOMX, VALUE_REQUIRED },
 
 	{ "BottomY",
-		"Bounding rect bottom coordinate in tablet units",
+		"Bounding rect bottom coordinate in tablet units. ",
 		XWACOM_PARAM_BOTTOMY, VALUE_REQUIRED },
 
 	{ "Button1",
-		"X11 event to which button 1 should be mapped",
+		"X11 event to which button 1 should be mapped. ",
 		XWACOM_PARAM_BUTTON1, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 1 },
 
 	{ "Button2",
-		"X11 event to which button 2 should be mapped",
+		"X11 event to which button 2 should be mapped. ",
 		XWACOM_PARAM_BUTTON2, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 2 },
 
 	{ "Button3",
-		"X11 event to which button 3 should be mapped",
+		"X11 event to which button 3 should be mapped. ",
 		XWACOM_PARAM_BUTTON3, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 3 },
 
 	{ "Button4",
-		"X11 event to which button 4 should be mapped",
+		"X11 event to which button 4 should be mapped. ",
 		XWACOM_PARAM_BUTTON4, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 4 },
 
 	{ "Button5",
-		"X11 event to which button 5 should be mapped",
+		"X11 event to which button 5 should be mapped. ",
 		XWACOM_PARAM_BUTTON5, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 5 },
 
 	{ "Button6",
-		"X11 event to which button 6 should be mapped",
+		"X11 event to which button 6 should be mapped. ",
 		XWACOM_PARAM_BUTTON6, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 6 },
 
 	{ "Button7",
-		"X11 event to which button 7 should be mapped",
+		"X11 event to which button 7 should be mapped. ",
 		XWACOM_PARAM_BUTTON7, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 7 },
 
 	{ "Button8",
-		"X11 event to which button 8 should be mapped",
+		"X11 event to which button 8 should be mapped. ",
 		XWACOM_PARAM_BUTTON8, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 8 },
 
 	{ "Button9",
-		"X11 event to which button 9 should be mapped",
+		"X11 event to which button 9 should be mapped. ",
 		XWACOM_PARAM_BUTTON9, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 9 },
 
 	{ "Button10",
-		"X11 event to which button 10 should be mapped",
+		"X11 event to which button 10 should be mapped. ",
 		XWACOM_PARAM_BUTTON10, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 10 },
 
 	{"Button11",
-		"X11 event to which button 11 should be mapped",
+		"X11 event to which button 11 should be mapped. ",
 		XWACOM_PARAM_BUTTON11, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 11 },
 
 	{"Button12",
-		"X11 event to which button 12 should be mapped",
+		"X11 event to which button 12 should be mapped. ",
 		XWACOM_PARAM_BUTTON12, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 12 },
 
 	{"Button13",
-		"X11 event to which button 13 should be mapped",
+		"X11 event to which button 13 should be mapped. ",
 		XWACOM_PARAM_BUTTON13, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 13 },
 
 	{"Button14", 
-		"X11 event to which button 14 should be mapped",
+		"X11 event to which button 14 should be mapped. ",
 		XWACOM_PARAM_BUTTON14, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 14 },
 
 	{"Button15", 
-		"X11 event to which button 15 should be mapped",
+		"X11 event to which button 15 should be mapped. ",
 		XWACOM_PARAM_BUTTON15, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 15 },
 
 	{"Button16",
-		"X11 event to which button 16 should be mapped",
+		"X11 event to which button 16 should be mapped. ",
 		XWACOM_PARAM_BUTTON16, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 16 },
 
 	{"Button17", 
-		"X11 event to which button 17 should be mapped",
+		"X11 event to which button 17 should be mapped. ",
 		XWACOM_PARAM_BUTTON17, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 17 },
 
 	{"Button18", 
-		"X11 event to which button 18 should be mapped",
+		"X11 event to which button 18 should be mapped. ",
 		XWACOM_PARAM_BUTTON18, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 18 },
 
 	{"Button19", 
-		"X11 event to which button 19 should be mapped",
+		"X11 event to which button 19 should be mapped. ",
 		XWACOM_PARAM_BUTTON19, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 19 },
 
 	{"Button20", 
-		"X11 event to which button 20 should be mapped",
+		"X11 event to which button 20 should be mapped. ",
 		XWACOM_PARAM_BUTTON20, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 20 },
 
 	{"Button21", 
-		"X11 event to which button 21 should be mapped",
+		"X11 event to which button 21 should be mapped. ",
 		XWACOM_PARAM_BUTTON21, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 21 },
 
 	{"Button22", 
-		"X11 event to which button 22 should be mapped",
+		"X11 event to which button 22 should be mapped. ",
 		XWACOM_PARAM_BUTTON22, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 22 },
 
 	{"Button23", 
-		"X11 event to which button 23 should be mapped",
+		"X11 event to which button 23 should be mapped. ",
 		XWACOM_PARAM_BUTTON23, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 23 },
 	{"Button24", 
-		"X11 event to which button 24 should be mapped",
+		"X11 event to which button 24 should be mapped. ",
 		XWACOM_PARAM_BUTTON24, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 24 },
 
 	{"Button25", 
-		"X11 event to which button 25 should be mapped",
+		"X11 event to which button 25 should be mapped. ",
 		XWACOM_PARAM_BUTTON25, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 25 },
 
 	{"Button26", 
-		"X11 event to which button 26 should be mapped",
+		"X11 event to which button 26 should be mapped. ",
 		XWACOM_PARAM_BUTTON26, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 26 },
 
 	{"Button27", 
-		"X11 event to which button 27 should be mapped",
+		"X11 event to which button 27 should be mapped. ",
 		XWACOM_PARAM_BUTTON27, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 27 },
 
 	{"Button28", 
-		"X11 event to which button 28 should be mapped",
+		"X11 event to which button 28 should be mapped. ",
 		XWACOM_PARAM_BUTTON28, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 28 },
 
 	{"Button29", 
-		"X11 event to which button 29 should be mapped",
+		"X11 event to which button 29 should be mapped. ",
 		XWACOM_PARAM_BUTTON29, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 29 },
 
 	{"Button30", 
-		"X11 event to which button 30 should be mapped",
+		"X11 event to which button 30 should be mapped. ",
 		XWACOM_PARAM_BUTTON30, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 30 },
 
 	{"Button31", 
-		"X11 event to which button 31 should be mapped",
+		"X11 event to which button 31 should be mapped. ",
 		XWACOM_PARAM_BUTTON31, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 31 },
 
 	{"Button32", 
-		"X11 event to which button 32 should be mapped",
+		"X11 event to which button 32 should be mapped. ",
 		XWACOM_PARAM_BUTTON32, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 32 },
 
 	{ "DebugLevel",
-		"Level of debugging trace, default is 1",
+		"Level of debugging trace, default is 1. ",
 		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
 		1, 100, SINGLE_VALUE, 1 },
 
 	{ "PressCurve",
-		"Bezier curve for pressure (default is 0 0 100 100)",
+		"Bezier curve for pressure (default is 0 0 100 100). ",
 		XWACOM_PARAM_PRESSCURVE, VALUE_OPTIONAL, RANGE, 0, 100,
 		PACKED_CURVE },
 
@@ -285,55 +285,56 @@ static PARAMINFO gParamInfo[] =
 		0, 1, BOOLEAN_VALUE, 1 },	
 
 	{ "Mode",
-		"Switches cursor movement mode (default is absolute)",
+		"Switches cursor movement mode (default is absolute). ",
 		XWACOM_PARAM_MODE, VALUE_OPTIONAL, RANGE, 
 		0, 1, BOOLEAN_VALUE, 1 },	
 
 	{ "SpeedLevel",
-		"Sets relative cursor movement speed (default is 6)",
+		"Sets relative cursor movement speed (default is 6). ",
 		XWACOM_PARAM_SPEEDLEVEL, VALUE_OPTIONAL, RANGE, 
 		1, 11, SINGLE_VALUE, 6 },	
 
 	{ "ClickForce",
-		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100"
+		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
 		"(default is 6)",
 		XWACOM_PARAM_CLICKFORCE, VALUE_OPTIONAL, RANGE, 
 		1, 21, SINGLE_VALUE, 6 },	
 
 	{ "Accel",
-		"Sets relative cursor movement acceleration"
+		"Sets relative cursor movement acceleration "
 		"(default is 1)",
 		XWACOM_PARAM_ACCEL, VALUE_OPTIONAL, RANGE, 
 		1, 7, SINGLE_VALUE, 1 },
 	
 	{ "xyDefault",
-		"Resets the bounding coordinates to default in tablet units",
+		"Resets the bounding coordinates to default in tablet units. ",
 		XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
 
 	{ "gimp",
 		"Turns on/off Gimp support in Xinerama-enabled "
-		"multi-monitor desktop, default is on",
+		"multi-monitor desktop, default is on.",
 		XWACOM_PARAM_GIMP, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 	{ "mmonitor",
-		"Turns on/off across monitor movement in"
-		"multi-monitor desktop, default is on",
+		"Turns on/off across monitor movement in "
+		"multi-monitor desktop, default is on ",
 		XWACOM_PARAM_MMT, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 	{ "TPCButton",
-		"Turns on/off Tablet PC buttons."
+		"Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
 		XWACOM_PARAM_TPCBUTTON, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 	{ "CursorProx", 
-		"Set max cursor distance and hysteresis for proximity-out "
-		"in max_distance/256 units",
+		"Sets cursor distance and hysteresis for proximity-out "
+		"in distance from the tablet. distance = value&0xffff. "
+		"hysteresis = (value>>16) & 0xffff (default is 256 8)",
 		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, 0, 0, 0, 
-		TWO_VALUES, 0x00100080 },
+		TWO_VALUES, 0x00080080 },
 		
 	{ "Rotate",
 		"Sets the rotation of the tablet. "
@@ -343,11 +344,11 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_VALUE_ROTATE_NONE },
  
 	{ "GetTabletID", 
-		"Returns the tablet ID of the associated device.",
+		"Returns the tablet ID of the associated device. ",
 		XWACOM_PARAM_TID, VALUE_REQUIRED },
 
 	{ "GetModel",
-		"Writes tablet models to /etc/wacom.dat",
+		"Writes tablet models to /etc/wacom.dat. ",
 		XWACOM_PARAM_GETMODEL, VALUE_OPTIONAL },
 
 	{ NULL }
@@ -457,7 +458,7 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 	printf ("Examples:\n"
 		"  xsetwacom set stylus Button1 \"button 5\"\n"
 		"  xsetwacom set stylus Button3 \"dblclick 1\"\n"
-		"  xsetwacom set pad Button2 \"core key control F2\"\n"
+		"  xsetwacom set pad Button2 \"core key ctrl alt  F2\"\n"
 		"  xsetwacom set pad Button10 \"core key ctrl alt backspace\"\n");
 
 	return 0;

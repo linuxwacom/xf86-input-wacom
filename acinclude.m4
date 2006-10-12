@@ -50,7 +50,7 @@ AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=usual
 ],
 [
 	if test "$WCM_OPTION_XSERVER64" = ""; then
-		if test `uname -a | grep -c "64"` = 0; then
+		if test `uname -m | grep -c "64"` = 0; then
 			WCM_OPTION_XSERVER64=no
 		else
 			WCM_OPTION_XSERVER64=yes

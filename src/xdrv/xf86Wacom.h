@@ -67,7 +67,6 @@
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
 #include <xf86_ansic.h>
-#include <xisb.h>
 #endif
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
