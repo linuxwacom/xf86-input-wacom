@@ -1,6 +1,4 @@
 /*
- * $Id: evdev.c,v 1.1 2005/08/18 18:50:30 pingc Exp $
- *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
  *  Event char devices, giving access to raw input device events.

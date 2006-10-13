@@ -1,6 +1,4 @@
 /*
- * $Id: usbmouse.c,v 1.1 2003/11/10 20:00:02 pingc Exp $
- *
  *  Copyright (c) 1999-2000 Vojtech Pavlik
  *
  *  USB HIDBP Mouse support

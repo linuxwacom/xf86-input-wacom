@@ -1,6 +1,4 @@
 /*
- * $Id: hid-input.c,v 1.1 2003/11/10 20:00:02 pingc Exp $
- *
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *
  *  USB HID to Linux Input mapping module

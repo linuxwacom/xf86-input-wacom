@@ -1,6 +1,4 @@
 /*
- * $Id: input.c,v 1.1 2003/11/10 20:00:02 pingc Exp $
- *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *  Copyright (c) 2003 John Joganic         <john@joganic.com>
  *

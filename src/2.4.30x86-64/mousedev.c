@@ -1,6 +1,4 @@
 /*
- * $Id: mousedev.c,v 1.1 2005/08/18 18:45:39 pingc Exp $
- *
  *  Copyright (c) 1999-2000 Vojtech Pavlik
  *
  *  Input driver to ImExPS/2 device driver module.
