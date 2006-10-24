@@ -2,6 +2,7 @@
 ** wacserial.c
 **
 ** Copyright (C) 2002, 2003 - John E. Joganic
+** Copyright (C) 2002 - 2006 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -127,8 +128,8 @@ static int SerialSetDevice(SERIALTABLET* pSerial, SERIALVENDOR* pVendor,
 		SERIALDEVICE* pDevice, SERIALSUBTYPE* pSubType);
 
 static int SerialIdentDefault(SERIALTABLET* pSerial);
-static int SerialIdentAcerC100(SERIALTABLET* pSerial);
-static int SerialInitAcerC100(SERIALTABLET* pSerial);
+static int SerialIdentTabletPC(SERIALTABLET* pSerial);
+static int SerialInitTabletPC(SERIALTABLET* pSerial);
 static int SerialIdentWacom(SERIALTABLET* pSerial);
 static int SerialInitWacom(SERIALTABLET* pSerial);
 
@@ -144,7 +145,7 @@ static int SerialParseWacomIV_1_3(SERIALTABLET* pSerial,
 static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
-static int SerialParseAcerC100(SERIALTABLET* pSerial,
+static int SerialParseTabletPC(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState);
 
@@ -203,7 +204,7 @@ static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...);
 		WACOMVALID(PRESSURE)|WACOMVALID(TILT_X)|WACOMVALID(TILT_Y)| \
 		WACOMVALID(ABSWHEEL)|WACOMVALID(RELWHEEL)|WACOMVALID(THROTTLE))
 
-#define ACERC100_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(SERIAL)| \
+#define TABLETPC_CAPS (WACOMVALID(TOOLTYPE)|WACOMVALID(SERIAL)| \
 		WACOMVALID(PROXIMITY)|WACOMVALID(BUTTONS)|WACOMVALID(POSITION_X)| \
 		WACOMVALID(POSITION_Y)|WACOMVALID(PRESSURE))
 
@@ -214,15 +215,15 @@ static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...);
 
 #define WACOM_SUBTYPE(id,d,s) \
 	{ id, d, s, id, SerialInitWacom }
-#define ACER_SUBTYPE(id,d,s) \
-	{ id, d, s, id, SerialInitAcerC100 }
+#define TPC_SUBTYPE(id,d,s) \
+	{ id, d, s, id, SerialInitTabletPC }
 
 #define WACOM_DEVICE_P4(n,d,i,s,c) \
 	{ n, d, i, s, PROTOCOL_4, 7, c, 9600, SerialIdentWacom }
 #define WACOM_DEVICE_P5(n,d,i,s,c) \
 	{ n, d, i, s, PROTOCOL_5, 9, c, 9600, SerialIdentWacom }
-#define ACER_DEVICE(n,d,i,s,c) \
-	{ n, d, i, s, 0, 9, c, 19200, SerialIdentAcerC100 }
+#define TPC_DEVICE(n,d,i,s,c) \
+	{ n, d, i, s, 0, 9, c, 19200, SerialIdentTabletPC }
 
 /*****************************************************************************
 ** Globals
@@ -312,29 +313,29 @@ static void SerialTrace(SERIALTABLET* pSerial, const char* pszFmt, ...);
 	};
 
 	/* This one is reverse engineered at this point */
-	static SERIALSUBTYPE xAcerC100[] =
+	static SERIALSUBTYPE xTabletPC[] =
 	{
-		ACER_SUBTYPE("C100", "Acer C100 Tablet PC Screen", 1),
+		TPC_SUBTYPE("tpc", "Tablet PC Screen", 1),
 		{ NULL }
 	};
 
-	static SERIALDEVICE xAcerDevices[] =
+	static SERIALDEVICE xtpcDevices[] =
 	{
-		ACER_DEVICE("c100", "C100", WACOMDEVICE_ACERC100,
-				xAcerC100, ACERC100_CAPS),
+		TPC_DEVICE("tpc", "TabletPC", WACOMDEVICE_TPC,
+				xTabletPC, TABLETPC_CAPS),
 		{ NULL }
 	};
 
 	static SERIALVENDOR xWacomVendor =
 	{ "wacom", "Wacom", WACOMVENDOR_WACOM, xWacomDevices };
 
-	static SERIALVENDOR xAcerVendor =
-	{ "acer", "Acer", WACOMVENDOR_ACER, xAcerDevices };
+	static SERIALVENDOR xtpcVendor =
+	{ "Wacom", "Wacom", WACOMVENDOR_TPC, xtpcDevices };
 
 	static SERIALVENDOR* xVendors[] =
 	{
 		&xWacomVendor,
-		&xAcerVendor,
+		&xtpcVendor,
 		NULL
 	};
 
@@ -834,10 +835,10 @@ static int SerialInitWacom(SERIALTABLET* pSerial)
 }
 
 
-static int SerialIdentAcerC100(SERIALTABLET* pSerial)
+static int SerialIdentTabletPC(SERIALTABLET* pSerial)
 {
 	/* sanity check */
-	if ((pSerial->pVendor != &xAcerVendor) ||
+	if ((pSerial->pVendor != &xtpcVendor) ||
 		(pSerial->pDevice == NULL)) { return EPERM; return 1; }
 
 	/* use first one */
@@ -856,9 +857,9 @@ static int SerialIdentAcerC100(SERIALTABLET* pSerial)
 	return 0;
 }
 
-static int SerialInitAcerC100(SERIALTABLET* pSerial)
+static int SerialInitTabletPC(SERIALTABLET* pSerial)
 {
-	pSerial->pfnParse = SerialParseAcerC100;
+	pSerial->pfnParse = SerialParseTabletPC;
 	pSerial->state.values[WACOMFIELD_POSITION_X].nMax = 21136;
 	pSerial->state.values[WACOMFIELD_POSITION_Y].nMax = 15900;
 	pSerial->state.values[WACOMFIELD_PRESSURE].nMax = 255;
@@ -1213,16 +1214,14 @@ static int SerialParseWacomIV_1_2(SERIALTABLET* pSerial,
 	return pState ? WacomCopyState(pState,&pSerial->state) : 0;
 }
 
-static int SerialParseAcerC100(SERIALTABLET* pSerial,
+static int SerialParseTabletPC(SERIALTABLET* pSerial,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
 	int x=0, y=0, prox=0, tool=WACOMTOOLTYPE_NONE,
 			button=0, press=0, eraser;
 
-	/* Acer C100 Tablet PC (reverse-engineered)
-	 * Supports: 256 pressure, eraser, 1 side-switch
-	 * Limitation: no tilt (is all zeros, planned?)*/
+	/* Tablet PC Supports: 256 pressure, eraser, 1/2 side-switch */
 
 	if (uLength != 9) { errno=EINVAL; return 1; }
 
@@ -1238,11 +1237,13 @@ static int SerialParseAcerC100(SERIALTABLET* pSerial,
 		
 		button = (puchData[0] & 0x01) ? BIT(WACOMBUTTON_TOUCH) : 0;
 
-		/* pen has 1 side-switch, eraser has none */
+		/* pen has side-switch(es), eraser has none */
 		if (tool == WACOMTOOLTYPE_PEN)
 		{
 			button |= (puchData[0] & 0x02) ?
 					BIT(WACOMBUTTON_STYLUS) : 0;
+			button |= (puchData[0] & 0x04) ?
+					BIT(WACOMBUTTON_STYLUS2) : 0;
 		}
 
 		x = (((int)puchData[6] & 0x60) >> 5) |

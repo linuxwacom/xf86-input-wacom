@@ -549,7 +549,6 @@ AC_OUTPUT(Makefile
 	src/xdrv/Makefile
 	src/2.4/Makefile
 	src/2.4.22/Makefile
-	src/2.6/Makefile
 	src/2.6.8/Makefile
 	src/2.6.9/Makefile
 	src/2.6.10/Makefile

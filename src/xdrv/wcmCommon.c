@@ -601,13 +601,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			if (priv->speed > DEFAULT_SPEED )
 			{
 				param += priv->accel > 0 ? abs(rx)/relacc : 0;
-				/* don't apply acceleration when too fast. */
-				if (param < 20.00)
-				{
-					param = 20.00;
-				}
 			}
-			rx *= param;
+			/* don't apply acceleration when too fast. */
+			rx *= param > 20.00 ? 20.00 : param;
 		}
 		if (ABS(ry) > no_jitter)
 		{
@@ -616,13 +612,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			if (priv->speed > DEFAULT_SPEED )
 			{
 				param += priv->accel > 0 ? abs(ry)/relacc : 0;
-				/* don't apply acceleration when too fast. */
-				if (param < 20.00)
-				{
-					ry *= param;
-				}
+
 			}
-			ry *= param;
+			/* don't apply acceleration when too fast. */
+			ry *= param > 20.00 ? 20.00 : param;
 		}
 		if (IsCursor(priv)) 
 		{
