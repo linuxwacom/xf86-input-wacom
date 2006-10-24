@@ -216,13 +216,15 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_STYLUS, data[1] & 0x02);
 			wacom_report_key(wcombo, BTN_STYLUS2, data[1] & 0x04);
 		}
-	}
-
-	if (data[1] & 0x10)
 		wacom_report_abs(wcombo, ABS_MISC, id); /* report tool id */
+	}
 	else
 		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
-	wacom_report_key(wcombo, wacom->tool[0], data[1] & 0x10);
+
+	if (data[1] & 0x10)  /* only report prox-in when in area */
+		wacom_report_key(wcombo, wacom->tool[0], 1);
+	if (!(data[1] & 0x90))  /* report prox-out when physically out */
+		wacom_report_key(wcombo, wacom->tool[0], 0);
 	wacom_input_sync(wcombo);
 
 	/* send pad data */

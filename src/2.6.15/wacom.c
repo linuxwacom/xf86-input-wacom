@@ -455,13 +455,15 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
 			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 		}
-	}
-
-	if (data[1] & 0x10)
 		input_report_abs(dev, ABS_MISC, id); /* report tool id */
+	}
 	else
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
-	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
+
+	if (data[1] & 0x10) /* report in-prox only when in area */ 
+		input_report_key(dev, wacom->tool[0], 1);
+	if (!(data[1] & 0x90)) /* report out-prox when physically out */ 
+		input_report_key(dev, wacom->tool[0], 0);
 	input_sync(dev);
 
 	/* send pad data */
@@ -941,13 +943,13 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 		case INTUOS3L:
 		case CINTIQ:
 			input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7);
-			input_set_abs_params(input_dev, ABS_RY, 0, 4097, 0, 0);
+			input_set_abs_params(input_dev, ABS_RY, 0, 4096, 0, 0);
 			/* fall through */
 
 		case INTUOS3S:
 			input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_FINGER);
 			input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3);
-			input_set_abs_params(input_dev, ABS_RX, 0, 4097, 0, 0);
+			input_set_abs_params(input_dev, ABS_RX, 0, 4096, 0, 0);
 			/* fall through */
 
 		case INTUOS:

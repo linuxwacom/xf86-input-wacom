@@ -463,12 +463,15 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
 			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 		}
-	}
-	if (data[1] & 0x10)
 		input_report_abs(dev, ABS_MISC, id); /* report tool id */
+	}
 	else
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
-	input_report_key(dev, wacom->tool[0], data[1] & 0x10);
+
+	if (data[1] & 0x10) /* report in-prox only when in area */ 
+		input_report_key(dev, wacom->tool[0], 1);
+	if (!(data[1] & 0x90)) /* report out-prox when physically out */ 
+		input_report_key(dev, wacom->tool[0], 0);
 	input_sync(dev);
 
 	/* send pad data */
@@ -991,8 +994,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	wacom->dev.absmax[ABS_TILT_Y] = 127;
 	wacom->dev.absmax[ABS_WHEEL] = 1023;
 
-	wacom->dev.absmax[ABS_RX] = 4097;
-	wacom->dev.absmax[ABS_RY] = 4097;
+	wacom->dev.absmax[ABS_RX] = 4096;
+	wacom->dev.absmax[ABS_RY] = 4096;
 	wacom->dev.absmin[ABS_RZ] = -900;
 	wacom->dev.absmax[ABS_RZ] = 899;
 	wacom->dev.absmin[ABS_THROTTLE] = -1023;

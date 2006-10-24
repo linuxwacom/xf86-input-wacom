@@ -489,6 +489,7 @@ fi
 dnl Check for x86_64 kernel and ARCH for kernel 2.4
 kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
 if test $kver != 0; then
+	WCM_ARCH=`echo $WCM_ARCH | cut -f 1 -d-`
 	if test "$WCM_ARCH" = "x86_64"; then
 		WCM_OPTION_HID=no
 		WCM_OPTION_WACOM=no

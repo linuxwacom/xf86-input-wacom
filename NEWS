@@ -1,3 +1,7 @@
+Oct 16, 2006 - Ping Cheng
+
+Added a list of new xsetwacom options (refer to ChangeLog and website). Kernel driver is split into 4 separate files for ease of updating and maintaining. No need to built (usb)hid driver with 2.6.18 and newer kernels. "make install" will install wacom man page by default. Improved USB tablet hot plug/unplug functions. On-the-fly tablet rotation is supported. 
+
 May 03, 2006 - Ping Cheng
 
 2.6 kernels older than 2.6.8 are removed from the project to avoid updating 

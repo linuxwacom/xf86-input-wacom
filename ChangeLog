@@ -1,3 +1,12 @@
+2006-10-24   Ping Cheng <pingc@wacom.com>
+	* Fixed a relative mode acceleration problem
+	* Updated webpages, acinclude.m4, and configure.in
+	* Updated wacdump for TabletPC
+	* Supports Graphire outbound tracking
+
+2006-10-16   Ping Cheng <pingc@wacom.com>
+	* Updated README and NEWS
+ 
 2006-10-13   Ping Cheng <pingc@wacom.com>
 	* Removed 2.4 kernel unchanged $Id lines
 	* label 0.7.6-1

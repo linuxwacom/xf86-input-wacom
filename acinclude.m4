@@ -248,7 +248,15 @@ if test x$WCM_ENV_KERNEL = xyes; then
 				elif test $MINOR -eq 8; then
 					WCM_KERNEL_VER="2.6.8"
 				else
-					WCM_KERNEL_VER="2.6"
+					echo "***"
+					echo "*** WARNING:"
+					echo "*** $MODUTS is not supported by this package any more."
+					echo "*** Please upgrade your kernel to a version newer than 2.6.7."
+					echo "***  Or use linuxwacom-0.7.4 if you are not setting up for a newly released tablet model."
+					echo "***"
+					WCM_OPTION_MODVER=no
+					AC_MSG_RESULT(no)
+					WCM_ENV_KERNEL=no
 				fi
 			else
 				echo "***"
