@@ -1,3 +1,7 @@
+2006-10-31   Ping Cheng <pingc@wacom.com>
+	* Updated acinclude.m4 and wacom.c
+	* label 0.7.6-2
+
 2006-10-24   Ping Cheng <pingc@wacom.com>
 	* Fixed a relative mode acceleration problem
 	* Updated webpages, acinclude.m4, and configure.in

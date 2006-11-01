@@ -416,7 +416,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40))
                  return 0;
 
-	if (wacom->features->type >= INTUOS3) {
+	if (wacom->features->type >= INTUOS3S) {
 		wacom_report_abs(wcombo, ABS_X, (data[2] << 9) | (data[3] << 1) | ((data[9] >> 1) & 1));
 		wacom_report_abs(wcombo, ABS_Y, (data[4] << 9) | (data[5] << 1) | (data[9] & 1));
 		wacom_report_abs(wcombo, ABS_DISTANCE, ((data[9] >> 2) & 0x3f));
@@ -434,7 +434,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 
 		if (data[1] & 0x02) {
 			/* Rotation packet */
-			if (wacom->features->type >= INTUOS3) {
+			if (wacom->features->type >= INTUOS3S) {
 				/* I3 marker pen rotation reported as wheel
 				 * due to valuator limitation
 				 */
@@ -558,16 +558,16 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 63, GRAPHIRE },
 	{ "Wacom Graphire4 4x5", 8,  10208,  7424,  511, 63, WACOM_G4 },
 	{ "Wacom Graphire4 6x8", 8,  16704, 12064,  511, 63, WACOM_G4 },
-	{ "Wacom Volito",        8,   5104,  3712,  511,  0, GRAPHIRE },
-	{ "Wacom PenStation2",   8,   3250,  2320,  255,  0, GRAPHIRE },
-	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511,  0, GRAPHIRE },
-	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511,  0, GRAPHIRE },
-	{ "Wacom PenPartner2",   8,   3250,  2320,  255,  0, GRAPHIRE },
-	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 63, INTUOS },
-	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 63, INTUOS },
-	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 63, INTUOS },
-	{ "Wacom Intuos 12x12", 10,  30480, 31680, 1023, 63, INTUOS },
-	{ "Wacom Intuos 12x18", 10,  45720, 31680, 1023, 63, INTUOS },
+	{ "Wacom Volito",        8,   5104,  3712,  511, 63, GRAPHIRE },
+	{ "Wacom PenStation2",   8,   3250,  2320,  255, 63, GRAPHIRE },
+	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 63, GRAPHIRE },
+	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 63, GRAPHIRE },
+	{ "Wacom PenPartner2",   8,   3250,  2320,  255, 63, GRAPHIRE },
+	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 31, INTUOS },
+	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 31, INTUOS },
+	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 31, INTUOS },
+	{ "Wacom Intuos 12x12", 10,  30480, 31680, 1023, 31, INTUOS },
+	{ "Wacom Intuos 12x18", 10,  45720, 31680, 1023, 31, INTUOS },
 	{ "Wacom PL400",         8,   5408,  4056,  255,  0, PL },
 	{ "Wacom PL500",         8,   6144,  4608,  255,  0, PL },
 	{ "Wacom PL600",         8,   6126,  4604,  255,  0, PL },
@@ -580,20 +580,20 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom DTF521",        8,   6282,  4762,  511,  0, PL },
 	{ "Wacom DTF720",        8,   6858,  5506,  511,  0, PL },
 	{ "Wacom Cintiq Partner",8,  20480, 15360,  511,  0, PTU },
-	{ "Wacom Intuos2 4x5",   10, 12700, 10600, 1023, 63, INTUOS },
-	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 63, INTUOS },
-	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 63, INTUOS },
-	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 63, INTUOS },
-	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 63, INTUOS },
+	{ "Wacom Intuos2 4x5",   10, 12700, 10600, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 32, INTUOS },
 	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 63, INTUOS3S },
 	{ "Wacom Intuos3 6x8",   10, 40640, 30480, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 9x12",  10, 60960, 45720, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 12x12", 10, 60960, 60960, 1023, 63, INTUOS3L },
 	{ "Wacom Intuos3 12x19", 10, 97536, 60960, 1023, 63, INTUOS3L },
 	{ "Wacom Intuos3 6x11",  10, 54204, 31750, 1023, 63, INTUOS3 },
-	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 15, INTUOS3S },
+	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 63, INTUOS3S },
 	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 63, CINTIQ },
-	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 63, INTUOS },
+	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
 	{ }
 };
 
