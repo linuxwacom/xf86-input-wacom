@@ -66,6 +66,7 @@
 #include <xf86.h>
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
+#include <xisb.h>
 #include <xf86_ansic.h>
 #endif
 #include <xf86_OSproc.h>
@@ -488,7 +489,6 @@ struct _WacomCommonRec
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	char * wcmEraserID;	     /* eraser associated with the stylus */
-	int wcmGimp;                 /* support Gimp on Xinerama Enabled multi-monitor desktop */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */

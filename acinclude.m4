@@ -147,7 +147,7 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 [
 	dnl guess directory
 	AC_MSG_CHECKING(for kernel sources)
-	WCM_KERNELDIR="/lib/modules/`uname -r`/source /usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 /usr/src/linux-2.6"
+	WCM_KERNELDIR="/lib/modules/`uname -r`/source /lib/modules/`uname -r`/build /usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 /usr/src/linux-2.6"
 
 	for i in $WCM_KERNELDIR; do
 		if test -f "$i/include/linux/input.h"; then

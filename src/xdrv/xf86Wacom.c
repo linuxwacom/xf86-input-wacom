@@ -95,9 +95,10 @@
  * 2006-03-31 47-pc0.7.3-1 - new release
  * 2006-05-03 47-pc0.7.4 - new release
  * 2006-07-17 47-pc0.7.5 - Support button/key combined events
+ * 2006-11-13 47-pc0.7.7 - Updated Xinerama setup support
  */
 
-static const char identification[] = "$Identification: 47-0.7.6 $";
+static const char identification[] = "$Identification: 47-0.7.7 $";
 
 /****************************************************************************/
 
@@ -854,18 +855,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxX);
 		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
 		break;
-	    case XWACOM_PARAM_GIMP:
-		if ((value != 0) && (value != 1)) return BadValue;
-		common->wcmGimp = value;
-		if (value)
-		{
-			xf86ReplaceStrOption(local->options, "Gimp", "on");
-		}
-		else
-		{
-			xf86ReplaceStrOption(local->options, "Gimp", "off");
-		}
-		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) return BadValue;
 		common->wcmMMonitor = value;
@@ -1108,8 +1097,6 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 			(int) (((common->wcmThreshold + 0.5) * 100) / common->wcmMaxZ);
 	case XWACOM_PARAM_XYDEFAULT:
 		return -1;
-	case XWACOM_PARAM_GIMP:
-		return common->wcmGimp;
 	case XWACOM_PARAM_MMT:
 		return common->wcmMMonitor;
 	case XWACOM_PARAM_TPCBUTTON:
@@ -1164,8 +1151,6 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return 0;
 	case XWACOM_PARAM_CLICKFORCE:
 		return 6;
-	case XWACOM_PARAM_GIMP:
-		return 1;
 	case XWACOM_PARAM_MMT:
 		return 1;
 	case XWACOM_PARAM_TPCBUTTON:
@@ -1376,14 +1361,21 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		}
 
 #ifdef PANORAMIX
-		if (!noPanoramiXExtension && priv->common->wcmGimp 
-			&& priv->common->wcmMMonitor)
+		if (priv->common->wcmMMonitor)
 		{
 			int i, totalWidth, leftPadding = 0;
-			for (i = 0; i < priv->currentScreen; i++)
-				leftPadding += screenInfo.screens[i]->width;
-			for (totalWidth = leftPadding; i < priv->numScreen; i++)
-				totalWidth += screenInfo.screens[i]->width;
+			if (priv->screen_no == -1)
+			{
+				for (i = 0; i < priv->currentScreen; i++)
+					leftPadding += screenInfo.screens[i]->width;
+				for (totalWidth = leftPadding; i < priv->numScreen; i++)
+					totalWidth += screenInfo.screens[i]->width;
+			}
+			else
+			{
+				leftPadding = 0;
+				totalWidth = screenInfo.screens[priv->currentScreen]->width;
+			}
 			v0 -= (priv->bottomX - priv->topX) * leftPadding
 				/ (double)totalWidth + 0.5;
 		}
@@ -1484,8 +1476,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 #ifdef NEVER 
 /* This is for absolute screen mapping */
 #ifdef PANORAMIX
-	if (!noPanoramiXExtension && (priv->flags & ABSOLUTE_FLAG) && 
-		priv->common->wcmGimp && priv->common->wcmMMonitor)
+	if ((priv->flags & ABSOLUTE_FLAG) && priv->common->wcmMMonitor)
 	{
 		int i, totalWidth, leftPadding = 0;
 		for (i = 0; i < priv->currentScreen; i++)

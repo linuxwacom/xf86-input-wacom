@@ -1,7 +1,8 @@
 /*****************************************************************************
  *
  * Copyright 2003 by John Joganic <john@joganic.com>
- *                                                                           
+ * Copyright 2003 - 2006 by Ping Cheng <pingc@wacom.com> 
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -34,12 +35,11 @@
 #define XWACOM_PARAM_CLICKFORCE 	10
 #define XWACOM_PARAM_ACCEL      	11
 #define XWACOM_PARAM_XYDEFAULT  	12
-#define XWACOM_PARAM_GIMP       	13
-#define XWACOM_PARAM_MMT        	14
-#define XWACOM_PARAM_TPCBUTTON  	15
-#define XWACOM_PARAM_CURSORPROX  	16
-#define XWACOM_PARAM_TID		17
-#define XWACOM_PARAM_ROTATE             18
+#define XWACOM_PARAM_MMT        	13
+#define XWACOM_PARAM_TPCBUTTON  	14
+#define XWACOM_PARAM_CURSORPROX  	15
+#define XWACOM_PARAM_TID		16
+#define XWACOM_PARAM_ROTATE             17
 #define XWACOM_PARAM_BUTTON1    	101
 #define XWACOM_PARAM_BUTTON2    	102
 #define XWACOM_PARAM_BUTTON3    	103

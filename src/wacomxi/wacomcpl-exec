@@ -237,7 +237,6 @@ proc startCalibration {} {
     # Start calib sequence
     catch {unset calibResults}
     exec xsetwacom set $device xydefault
-    exec xsetwacom set $device gimp off
     .topleft.m configure -background "#df94df"
     wacomxi::bindevent .topleft.m $device <ButtonRelease> \
 		{calibrationSequence 0 %0 %1}
@@ -246,8 +245,6 @@ proc startCalibration {} {
 		the pink crosshair using $device \n\
 		Please don't click on anything else \n\
 		by $device before you finish"
-
-    exec xsetwacom set $device gimp on
 }
 
 proc helpWindow { tString mString } {

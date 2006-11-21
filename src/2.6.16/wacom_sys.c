@@ -42,7 +42,7 @@ static struct input_dev * get_input_dev(struct wacom_combo *wcombo)
 	return wcombo->wacom->dev;
 }
 
-void wacom_sys_irq(struct urb *urb, struct pt_regs *regs)
+static void wacom_sys_irq(struct urb *urb, struct pt_regs *regs)
 {
 	struct wacom *wacom = urb->context;
 	struct wacom_combo wcombo;

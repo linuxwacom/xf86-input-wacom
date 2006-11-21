@@ -154,9 +154,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmEraserID = 0;	/* eraser id associated with the stylus */
-	common->wcmGimp = 1;	/* enabled (=1) to support Gimp when Xinerama is */
-				/* enabled for multi-monitor desktop. */
-				/* To calibrate Cintiq and ISDV4, it should be disabled (=0) */
 	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitor desktop. */
 					/* disabled (=0) when user doesn't want to move the */
 					/* cursor from one screen to another screen */
@@ -634,14 +631,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmTPCButton = xf86SetBoolOption(local->options, "TPCButton", 0);
 		if ( common->wcmTPCButton )
 			xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
-	}
-
-	/* Turn on/off Gimp support in a multimonitor setup */
-	if ( !common->wcmGimp )
-	{
-		common->wcmGimp = xf86SetBoolOption(local->options, "Gimp", 1);
-		if ( !common->wcmGimp )
-			xf86Msg(X_CONFIG, "%s: Gimp multimonitor mapping isn't supported \n", common->wcmDevice);
 	}
 
 	/* Cursor stays in one monitor in a multimonitor setup */

@@ -135,16 +135,14 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		return;
 	}
 
-	/* YHJ - these don't need to be calculated every time */
-	for (i = 0; i < priv->numScreen; i++)
-	{
-		totalWidth += screenInfo.screens[i]->width;
-		if (maxHeight < screenInfo.screens[i]->height)
-			maxHeight = screenInfo.screens[i]->height;
-	}
-	/* YHJ - looks nasty. sorry. */	
 	if (priv->screen_no == -1)
 	{
+		for (i = 0; i < priv->numScreen; i++)
+		{
+			totalWidth += screenInfo.screens[i]->width;
+			if (maxHeight < screenInfo.screens[i]->height)
+				maxHeight = screenInfo.screens[i]->height;
+		}
 		for (i = 0; i < priv->numScreen; i++)
 		{
 			if (v0 * totalWidth <= (leftPadding + 
@@ -157,46 +155,22 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		}
 	}
 #ifdef PANORAMIX
-	else if (!noPanoramiXExtension && priv->common->wcmGimp)
+	else 
 	{
 		screenToSet = priv->screen_no;
-		for (i = 0; i < screenToSet; i++)
-			leftPadding += screenInfo.screens[i]->width;
-		v0 = (sizeX * leftPadding + v0
-			* screenInfo.screens[screenToSet]->width) /
-			(double)totalWidth + 0.5;
-		v1 = v1 * screenInfo.screens[screenToSet]->height /
-			(double)maxHeight + 0.5;
+		totalWidth = screenInfo.screens[screenToSet]->width;
+		maxHeight = screenInfo.screens[screenToSet]->height;
 	}
-
-	if (!noPanoramiXExtension && priv->common->wcmGimp)
-	{
-		priv->factorX = totalWidth/sizeX;
-		priv->factorY = maxHeight/sizeY;
-		x = (v0 - sizeX
-			* leftPadding / totalWidth) * priv->factorX + 0.5;
-		y = v1 * priv->factorY + 0.5;
+	priv->factorX = totalWidth/sizeX;
+	priv->factorY = maxHeight/sizeY;
+	x = (v0 - sizeX * leftPadding / totalWidth) * priv->factorX + 0.5;
+	y = v1 * priv->factorY + 0.5;
 		
-		if (x >= screenInfo.screens[screenToSet]->width)
-			x = screenInfo.screens[screenToSet]->width - 1;
-		if (y >= screenInfo.screens[screenToSet]->height)
-			y = screenInfo.screens[screenToSet]->height - 1;
-	}
-	else
+	if (x >= screenInfo.screens[screenToSet]->width)
+		x = screenInfo.screens[screenToSet]->width - 1;
+	if (y >= screenInfo.screens[screenToSet]->height)
+		y = screenInfo.screens[screenToSet]->height - 1;
 #endif
-	{
-		if (priv->screen_no == -1)
-			v0 = (v0 * totalWidth - sizeX * leftPadding)
-				/ screenInfo.screens[screenToSet]->width;
-		else
-			screenToSet = priv->screen_no;
-		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
-		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
-
-		x = v0 * priv->factorX + 0.5;
-		y = v1 * priv->factorY + 0.5;
-	}
-
 	xf86XInputSetScreen(local, screenToSet, x, y);
 	DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
 		priv->currentScreen, screenToSet));
@@ -641,16 +615,19 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		rx, ry, rz, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons, channel));
 
-	/* report tool id in the upper 2 bytes of 4th valuator 
-	 * serial number in the upper 2 bytes of 5th and 6th 
-	 * valuators for the 4 bytes of serial number .
-	 * All tools except pad
-	 */
 	if (type != PAD_ID)
 	{
+		/* report tool id in the upper 2 bytes of 4th valuator 
+		 * serial number in the upper 2 bytes of 5th and 6th 
+		 * valuators for the 4 bytes of serial number .
+		 * All tools except pad
+		 * This feature is postpond due to bug 1592814. 
+		 * Other approaches will be considered to support 
+		 * this featre in a future release
 		v3 = ((id<<16) & 0xffff0000) | (((short)v3)& 0xffff);
 		v4 = (serial & 0xffff0000) | (((short)v4)& 0xffff);
 		v5 = ((serial<<16) & 0xffff0000) | (((short)v5)& 0xffff);
+		*/
 
 		/* coordinates are ready we can send events */
 		if (is_proximity)

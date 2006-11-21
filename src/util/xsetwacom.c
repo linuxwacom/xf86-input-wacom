@@ -310,12 +310,6 @@ static PARAMINFO gParamInfo[] =
 		"Resets the bounding coordinates to default in tablet units. ",
 		XWACOM_PARAM_XYDEFAULT, VALUE_OPTIONAL },
 
-	{ "gimp",
-		"Turns on/off Gimp support in Xinerama-enabled "
-		"multi-monitor desktop, default is on.",
-		XWACOM_PARAM_GIMP, VALUE_OPTIONAL, 
-		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
-
 	{ "mmonitor",
 		"Turns on/off across monitor movement in "
 		"multi-monitor desktop, default is on ",
