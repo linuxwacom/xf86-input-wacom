@@ -157,12 +157,15 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitor desktop. */
 					/* disabled (=0) when user doesn't want to move the */
 					/* cursor from one screen to another screen */
-	common->wcmTPCButton = 0;	/* set Tablet PC button on/off, default is off */
+	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
+	common->wcmTPCButton = 
+		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmRotate = ROTATE_NONE; /* default tablet rotation to off */
-	common->wcmCursorProxoutDist = PROXOUT_DISTANCE;
+	common->wcmMaxCursorDist = 0;	/* Max distance received so far */
+	common->wcmCursorProxoutDist = 0;
 				/* Max mouse distance for proxy-out max/256 units */
-	common->wcmCursorProxoutHyst = PROXOUT_HYSTERESIS;
-				/* Proxy-out distance hysteresis in max/256 units */
+	common->wcmCursorProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE; 
+				/* default to Graphire */
 	return local;
 }
 
@@ -504,18 +507,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		}
 	}
 
-	s = xf86FindOptionValue(local->options, "CursorProx");
-	if (s && !IsCursor(priv))
+	if (IsCursor(priv))
 	{
-		int a,b;
-		if ((sscanf(s,"%d,%d",&a,&b) != 2) ||
-			(a < 0) || (a > 63) || (b < 0) || (b > 63))
-			xf86Msg(X_CONFIG, "WACOM: CursorProx not valid\n");
-		else
-		{
-			common->wcmCursorProxoutDist = a;
-			common->wcmCursorProxoutHyst = b;
-		}
+		common->wcmCursorProxoutDist = xf86SetIntOption(local->options, "CursorProx", 0);
+		if (common->wcmCursorProxoutDist < 0 || common->wcmCursorProxoutDist > 255)
+			xf86Msg(X_CONFIG, "WACOM: CursorProx invalid %d \n", common->wcmCursorProxoutDist);
 	}
 
 	/* Config Monitors' resoluiton in TwinView setup.

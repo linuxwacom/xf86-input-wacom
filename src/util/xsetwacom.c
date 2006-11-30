@@ -30,7 +30,7 @@
 #define XSETWACOM_VERSION "0.0.7"
 
 #include "wacomcfg.h"
-#include "../include/Xwacom.h" /* give use raw access to parameter values */
+#include "../include/Xwacom.h" /* give us raw access to parameter values */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -324,19 +324,21 @@ static PARAMINFO gParamInfo[] =
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 	{ "CursorProx", 
-		"Sets cursor distance and hysteresis for proximity-out "
-		"in distance from the tablet. distance = value&0xffff. "
-		"hysteresis = (value>>16) & 0xffff (default is 256 8)",
-		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, 0, 0, 0, 
-		TWO_VALUES, 0x00080080 },
+		"Sets cursor distance for proximity-out "
+		"in distance from the tablet.  "
+		"default is 10 for Intuos series, "
+		"42 for Graphire series).",
+		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, RANGE, 
+		0, 255, SINGLE_VALUE, 47 },
 		
 	{ "Rotate",
 		"Sets the rotation of the tablet. "
 		"Values = NONE, CW, CCW, HALF (default is NONE).",
 		XWACOM_PARAM_ROTATE, VALUE_OPTIONAL,
-		RANGE, XWACOM_VALUE_ROTATE_NONE, XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
+		RANGE, XWACOM_VALUE_ROTATE_NONE,
+		XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
 		XWACOM_VALUE_ROTATE_NONE },
- 
+
 	{ "GetTabletID", 
 		"Returns the tablet ID of the associated device. ",
 		XWACOM_PARAM_TID, VALUE_REQUIRED },

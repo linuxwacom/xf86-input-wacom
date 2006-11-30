@@ -562,6 +562,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			rx = 0;
 			ry = 0;
 			rz = 0;
+			/* initial current max distance */
+			common->wcmMaxCursorDist = ds->distance;
 		}
 
 		/* don't apply speed for fairly small increments */
@@ -1003,7 +1005,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel)
 {
 	int id, idx;
-	int threshold;
 	WacomDevicePtr priv;
 	LocalDevicePtr pDev = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
@@ -1128,44 +1129,41 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		/* force out-prox when heighth is beyond threshold. */
+		/* force out-prox when distance is outside wcmCursorProxoutDist. */
 		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
 		{
 			if (strstr(common->wcmModel->name, "Intuos"))
 			{
-				if (common->wcmCursorProxoutDist > filtered.distance)
-					common->wcmCursorProxoutDist = filtered.distance;
+				if (common->wcmMaxCursorDist > filtered.distance)
+					common->wcmMaxCursorDist = filtered.distance;
 			}
 			else
 			{
-				if (common->wcmCursorProxoutDist == PROXOUT_DISTANCE)
-					common->wcmCursorProxoutDist = filtered.distance;
-				if (common->wcmCursorProxoutDist < filtered.distance)
-					common->wcmCursorProxoutDist = filtered.distance;
+				if (common->wcmMaxCursorDist < filtered.distance)
+					common->wcmMaxCursorDist = filtered.distance;
 			}
-					
-			threshold = common->wcmCursorProxoutDist;
 
-			/* Force prox out when distance is outside of ProxoutHyst */
+			DBG(10, ErrorF("Distance over the tablet: %d, ProxoutDist: %d current min/max %d hard prox: %d\n",
+				filtered.distance, common->wcmCursorProxoutDist, common->wcmMaxCursorDist, ds->proximity));
+
 			if (priv->oldProximity)
 			{
-				if (strstr(common->wcmModel->name, "Intuos"))
-					threshold += common->wcmCursorProxoutHyst;
-				else
-					threshold -= common->wcmCursorProxoutHyst;
+				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist)
+					filtered.proximity = 0;
 			}
-
-			DBG(10, ErrorF("Distance over the tablet: %d, ProxoutDist: %d hard prox: %d\n",
-				       filtered.distance, common->wcmCursorProxoutDist, ds->proximity));
-			if ((filtered.distance > threshold && 
-				strstr(common->wcmModel->name, "Intuos")) || 
-				(filtered.distance < threshold && 
-				!strstr(common->wcmModel->name, "Intuos")))
-			{
-				filtered.proximity = 0;
-			}
+			/* once it is out. Don't let it in until a hard in */
+			/* or it gets inside wcmCursorProxoutDist */
+			else
+				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist && ds->proximity)
+					return;
+				else if (!ds->proximity)
+				{
+					if (strstr(common->wcmModel->name, "Intuos"))
+						common->wcmMaxCursorDist = 256;
+					else
+						common->wcmMaxCursorDist = 0;
+				}
 		}
-
 		xf86WcmSendEvents(pDev, &filtered, channel);
 	}
 

@@ -492,6 +492,11 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 		common->wcmChannelCnt = 2;
 	}
 	common->wcmPktLength = sizeof(struct input_event);
+	common->wcmCursorProxoutDistDefault 
+			= PROXOUT_INTUOS_DISTANCE; 
+	/* reinitialize max here since 0 is for Graphire series */
+	common->wcmMaxCursorDist = 256;
+
 }
 
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
@@ -501,6 +506,8 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmChannelCnt = 1;
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
+	common->wcmCursorProxoutDistDefault 
+			= PROXOUT_GRAPHIRE_DISTANCE; 
 }
 
 int usbWcmGetRanges(LocalDevicePtr local)
@@ -608,6 +615,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
+	DBG(10, ErrorF("usbDetectConfig \n"));
 	if (IsPad (priv))
 	{
 		priv->nbuttons = common->npadkeys;
@@ -632,6 +640,9 @@ static int usbDetectConfig(LocalDevicePtr local)
 	else
 		priv->nbuttons = common->nbuttons;
 
+	if (!common->wcmCursorProxoutDist)
+		common->wcmCursorProxoutDist
+			= common->wcmCursorProxoutDistDefault;
 	return TRUE;
 }
 
@@ -901,10 +912,6 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			}
 		}
 	} /* next event */
-
-	/* reset the max proxout distance for next in */
-	if (ds->device_type == CURSOR_ID && !ds->proximity)
-		common->wcmCursorProxoutDist = PROXOUT_DISTANCE;
 
 	/* DTF720 doesn't support eraser */
 	if (common->tablet_id == 0xC0 && ds->device_type == ERASER_ID) 

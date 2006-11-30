@@ -111,6 +111,7 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	common->wcmResolX = 2540; 	/* tablet X resolution in points/inch */
 	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
 	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
+	common->wcmTPCButtonDefault = 1;
 }
 static int isdv4GetRanges(LocalDevicePtr local)
 {

@@ -128,17 +128,11 @@
 #define MAXTRY 3                /* max number of try to receive magic number */
 #define MAX_COORD_RES 1270.0    /* Resolution of the returned MaxX and MaxY */
 
-/* Max distance to the tablet at which a proximity-out event is generated for
+/* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 
  */
-#define PROXOUT_DISTANCE	256
-/* Hysteresis value would mean that proximity out is generated 
- * when distance is more than (for Intuos series and Cintiq 21UX)
- * or less than (for Graphire series) MinDistance + HYSTERESIS 
- * ( or MaxDistance - HYSTERESIS) units (this is to produce a prompt 
- * relative movement)
- */
-#define PROXOUT_HYSTERESIS	8
+#define PROXOUT_INTUOS_DISTANCE		10
+#define PROXOUT_GRAPHIRE_DISTANCE	42
 
 #define HEADER_BIT      0x80
 #define ZAXIS_SIGN_BIT  0x40
@@ -491,8 +485,10 @@ struct _WacomCommonRec
 	char * wcmEraserID;	     /* eraser associated with the stylus */
 	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
+	int wcmTPCButtonDefault;     /* Tablet PC button default */
+	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
-	int wcmCursorProxoutHyst;    /* Proxy-out distance hysteresis in max/256 units */
+	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

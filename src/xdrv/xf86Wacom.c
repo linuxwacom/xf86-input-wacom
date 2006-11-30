@@ -882,15 +882,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 		{
-			char chBuf[64];
-			int d = value & 0xFFFF;
-			int h = (value >> 16) & 0xFFFF;
-			if ((d > 63) || (h > 63))
+			if ((value > 255) || (value < 0))
 				return BadValue;
-			snprintf(chBuf,sizeof(chBuf),"%d,%d",d,h);
-			xf86ReplaceStrOption(local->options, "CursorProx",chBuf);
-			common->wcmCursorProxoutDist = d;
-			common->wcmCursorProxoutHyst = h;
+			xf86ReplaceIntOption(local->options, "CursorProx",value);
+			common->wcmCursorProxoutDist = value;
 		}
 		break;
 	   case XWACOM_PARAM_ROTATE:
@@ -1103,8 +1098,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return common->wcmTPCButton;
 	case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
-			return common->wcmCursorProxoutDist |
-			       (common->wcmCursorProxoutHyst << 16);
+			return common->wcmCursorProxoutDist;
 		return -1;
 	case XWACOM_PARAM_TID:
 		return common->tablet_id;
@@ -1121,7 +1115,6 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	char *s;
 	DBG(10, ErrorF("xf86WcmGetDefaultParam param = %d\n",param));
 
 	switch (param)
@@ -1154,14 +1147,14 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_MMT:
 		return 1;
 	case XWACOM_PARAM_TPCBUTTON:
-		s = xf86FindOptionValue(local->options, "ForceDevice");
-		if ( s )
-			return 1;
-		else
-			return 0;
+		return common->wcmTPCButtonDefault;
 	case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;
+		return -1;
+	case XWACOM_PARAM_CURSORPROX:
+		if (IsCursor (priv))
+			return common->wcmCursorProxoutDistDefault;
 		return -1;
 	case XWACOM_PARAM_GETMODEL:
 		xf86WcmModelToFile(local);
