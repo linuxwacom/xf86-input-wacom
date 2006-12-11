@@ -225,11 +225,11 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 		wacom_report_key(wcombo, wacom->tool[0], 1);
 	if (!(data[1] & 0x90))  /* report prox-out when physically out */
 		wacom_report_key(wcombo, wacom->tool[0], 0);
-	wacom_input_sync(wcombo);
 
 	/* send pad data */
 	if (wacom->features->type == WACOM_G4) {
-		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
+		if (data[7] & 0xf8) {
+			wacom_input_sync(wcombo); /* sync last event */
 			wacom->id[1] = 1;
 			wacom->serial[1] = (data[7] & 0xf8);
 			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
@@ -239,7 +239,10 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0xf0);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if (wacom->id[1]) {
+			wacom_input_sync(wcombo); /* sync last event */
 			wacom->id[1] = 0;
+			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
+			wacom_report_key(wcombo, BTN_4, (data[7] & 0x80));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
 		}

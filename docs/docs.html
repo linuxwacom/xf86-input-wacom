@@ -40,7 +40,7 @@
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Nov 01, 2006</td></tr>
+</td><td class="menu" align="right">Dec 11, 2006</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -80,7 +80,20 @@ The </a><a href="#chg">ChangeLog</a> has a more complete list.
 <br><br>
 
 <table border="0" width="100%">
-<tbody><tr><td valign="top"><b>October 31, 2006</b> - Updated acinclude.m4 and wacom.c. label 0.7.6-2. </td></tr>
+<tbody><tr><td valign="top"><b>December 1, 2006</b> - Updated xsetwacom. </td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td valign="top"><b>November 30, 2006</b> - Fixed cursor relative
+out-prox issue. Changed CursorProx option from 2 inputs into 1. Updated
+xsetwacom and wacom_drv. Split wacom.c under 2.6.11 into 4 files. label
+0.7.7 for testing. </td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td valign="top"><b>November 21, 2006</b> - Updated web scripts
+(Magnus Vigerlöf). Removed serial number and device ID in 4th - 5th
+high bytes due to bug 1592814. label 0.7.6-3. </td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td valign="top"><b>November 13, 2006</b> - Updated acinclude.m4 and configure.in (Mats Johannesson). Updated X driver for Xinerama setup. Removed option gimp. </td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td valign="top"><b>October 31, 2006</b> - Updated acinclude.m4 and wacom.c. label 0.7.6-2. </td></tr>
 <tr><td>&nbsp;</td></tr>
 <tr><td valign="top"><b>October 24, 2006</b> - Fixed a relative mode
 acceleration problem. Updated webpages, acinclude.m4, and configure.in.
@@ -106,57 +119,6 @@ Updated release version to 0.7.6. Ready to label the source. </td></tr>
 page, wacom.4x. Updated wacdump. Fixed an I3 and Cintiq 21UX pad
 out-prox bit (Martin Wawro). Applied TabletPC button XFree86 workaround
 to Xorg. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>September 14, 2006</b> - Fixed a filter bug (Wolfgang Oertl, etc). Ready to release 0.7.5-4. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>September 13, 2006</b> - Fixed a typo in 2.6.18/Makefile.in (Mats Johannesson). Ready to release 0.7.5-2. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>September 12, 2006</b> - Updated Makefile.am
-for xdrv (Magnus Vigerlöf) Fixed a typo in 2.4.x/wacom.c (Magnus
-Vigerlöf) Cleaned initialization code for tablet unplug/plug </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>September 8, 2006</b> - Fixed Graphire 4
-pad/wheel bug. Unified support of USB hot plug/unplug with different
-tablets for both XFree86 and Xorg. Ready to release 0.7.5-1. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 30, 2006</b> - Added Intuos3 4x6
-support. Updated acinclude.m4 and configure.in. Fixed a pad display
-issue in xidump.c and wacom_drv.o (Mats Johannesson). </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 24, 2006</b> - Added GetTabletID to
-"xsetwacom get" command for apps in X space to acquire USB tablet's ID.
-Added Rotate to "xsetwacom set" command to change tablet orentation
-(Patch 1170661 from Denis Auroux). Incorporated Andrew Zabolotny's
-patches. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 22, 2006</b> - Updated acinclude.m4 scripts for kernel 2.6.18. Updated wacom.c for accurately report tablet buttons. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 18, 2006</b> - Updated configure scripts and xidump.c. Support USB hot plug/unplug with different tablets. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 10, 2006</b> - Backward tablet menu strip support. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 7, 2006</b> - Created 3 new directories,
-xdrv, include, and util under src to store X driver, common headers,
-and utility programs separately. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>August 3, 2006</b> - Increased MAX_SUPPRESS from 6 to 20 (Patch ID 1529268 from Wolfgang Oertl). Updated wacomcpl. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>July 28, 2006</b> - Updated xsetwacom to avoid writing data to files from X driver (more work to be done). Updated wacomcpl accordingly. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>July 19, 2006</b> - Modified the definition of
-wacom_features in wacom_wac.h. Modified newwacom.inc.php to get rid of
-a kernel warning (Magnus Vigerlöf). Added mouse and key combined event
-support in X driver (Andrew Zabolotny). </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>July 14, 2006</b> - Split wacom.c into
-wacom_sys.c and wacom_wac.c, where wacom_sys.c deals with system
-specific code and wacom-wac.c deals with wacom specific code. This work
-only applies to kernel 2.6.16 for this release. wacom.c split for other
-kernels will be considered in future releases. Add Wacom vendor id into
-hid_blacklist in hid-core.c, that is, all Wacom devices, existing and
-future, will be ignored by (usb)hid driver. </td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td valign="top"><b>June 22, 2006</b> - Added more default Xlib and Xorg SDK searching pathes for x86_64 system. </td></tr>
 <tr><td>&nbsp;</td></tr>
 </tbody></table>
 <a name="faq">
@@ -215,12 +177,17 @@ work to varying degrees, so if you are running into trouble, send me email.
 Also, if you are having trouble with the stable build, try the beta.  Many
 of the tools have been recently added and have not yet been moved to the
 production release.</a></p>
+
+<p><a name="BUSTED">Note, tilt is only supported with protocol V
+tablets, which include Intuos series and Cintiq 21UX to date (Nov. 9,
+2006). Any other tablets don't have tilt no matter you have the tilt
+option in your xorg.conf or not.</a></p>
 <a name="dl">
 </a><h1><a name="dl">3.0 - Downloads</a></h1>
 <h3><a name="dl">Stable Packages by Version and Date:</a></h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.6-2.tar.bz2">linuxwacom-0.7.6-2.tar.bz2</a></td><td valign="top">-</td><td valign="top">2006-10-13</td><td valign="top">Updated configuration script and support kernel 2.6.17/18, Intuos3 4x6 and on-the-fly tablet rotation.</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.6-4.tar.bz2">linuxwacom-0.7.6-4.tar.bz2</a></td><td valign="top">-</td><td valign="top">2006-12-01</td><td valign="top">Updated xsetwacom and support kernel 2.6.17/18, Intuos3 4x6 and on-the-fly tablet rotation.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.4-3.tar.bz2">linuxwacom-0.7.4-3.tar.bz2</a></td><td valign="top">-</td><td valign="top">2006-06-19</td><td valign="top">Supports kernels 2.6.15/16, 2 new Intuos3 (12x12 and 12x19), and DTF 521.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.2.tar.bz2">linuxwacom-0.7.2.tar.bz2</a></td><td valign="top">-</td><td valign="top">2005-12-21</td><td valign="top">Updated configuration script and support kernel 2.6.13/14, Graphire4, PL710, DTF720, Intuos3 6x11 and Volito2 .</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.0-1.tar.bz2">linuxwacom-0.7.0-1.tar.bz2</a></td><td valign="top">-</td><td valign="top">2005-09-23</td><td valign="top">Updated wacomcpl and support 16 buttons for all tools.</td></tr>
@@ -259,21 +226,21 @@ production release.</a></p>
 </a><h1><a name="minihowto">5.0 - Mini-HOWTO</a></h1>
 <center><h2><a name="minihowto">Mini HOWTO for Updating Wacom Driver on FC4 and FC5</a></h2></center>
 
-<a name="minihowto">$pkg="linuxwacom-$prod_pckg"
-<br>
+<a name="minihowto"><br>
 
 </a><p><a name="minihowto">First, download the most recent linuxwacom driver package from  
 </a><a href="http://linuxwacom.sourceforge.net/index.php/howto/download">Downloading the Code</a> page to your home directory 
 and unpack it: 
 
 </p><blockquote><pre>
-[jej@ayukawa jej]$ bunzip2 $pkg.tar.bz2
-[jej@ayukawa jej]$ tar xvf $pkg.tar
+[jej@ayukawa jej]$ bunzip2 linuxwacom-0.7.6-4.tar.bz2
+[jej@ayukawa jej]$ tar xvf linuxwacom-0.7.6-4.tar
 
 </pre></blockquote>
 
-<p>The following HOWTO describes the compiling and install details for $pkg
-on FC4 and FC5.  For descriptions on other platforms, please refer to <a href="http://linuxwacom.sourceforge.net/index.php/howto/success">Success Stories</a> page.
+<p>The following HOWTO describes the compiling and install details for
+linuxwacom-0.7.6-4on FC4 and FC5. For descriptions on other platforms,
+please refer to <a href="http://linuxwacom.sourceforge.net/index.php/howto/success">Success Stories</a> page.
 
 </p><p><b>Kernel Drivers for USB Tablets</b>
 
@@ -282,10 +249,8 @@ Note, this section is for USB tablets only. Serial tablet and Tablet PC
 users can skip this section since your tablets don't need kernel driver
 to run. </div>
 
-<p>Before updating your system with linuxwacom driver,  you need to make sure your FC4 or FC5 is up to date.  To do so, issue <i>up2date</i> for FC4 and <i>yum update</i>
-for FC5. The following testings are based on January 6, 2006's FC4,
-kernel 2.6.14-1.1653_FC4 and Oct. 25, 2006's FC5, kernel
-2.6.18-1.2200.fc5.
+<p>Before updating your system with linuxwacom driver,  you need to make sure your FC4 or FC5 is up to date.  To do so, issue <i>up2date</i> for FC4 and <i>yum update</i> for FC5.  The following testings are based on FC4 (kernel 2.6.14-1.1653_FC4) and FC5 (kernel 2.6.17-1.2174_FC5).
+
 </p><div class="diff">
 <p>Note, after updating your kernel, those of you with nVidia and other
 such graphics cards who like their 3D acceleration or dual monitor
@@ -322,8 +287,8 @@ Password:
 [root@ayukawa jej]# cd /usr/src
 [root@ayukawa src]# ln -s redhat/BUILD/kernel-2.6.14/linux-2.6.14 linux
 [root@ayukawa src]# cd linux
-[root@ayukawa linux]# cp ~/$pkg/src/2.6.14/wacom.c /usr/src/linux/drivers/usb/input/
-[root@ayukawa linux]# cp ~/$pkg/src/2.6.14/hid-core.c /usr/src/linux/drivers/usb/input/
+[root@ayukawa linux]# cp ~/linuxwacom-0.7.6-4/src/2.6.14/wacom.c /usr/src/linux/drivers/usb/input/
+[root@ayukawa linux]# cp ~/linuxwacom-0.7.6-4/src/2.6.14/hid-core.c /usr/src/linux/drivers/usb/input/
 [root@ayukawa linux]# make all
 [root@ayukawa linux]# make modules_install
 [root@ayukawa linux]# make install
@@ -352,15 +317,11 @@ Password:
 [root@ayukawa jej]# yum install tcl-devel
 [root@ayukawa jej]# yum install tk-devel
 [root@ayukawa jej]# yum install xorg-x11-sdk
-For FC4:
-[root@ayukawa jej]# cp $pkg/prebuilt/wacom_drv.o /usr/X11R6/lib/modules/input
-For FC5
-[root@ayukawa jej]# cp $pkg/prebuilt/wacom_drv.o /usr/lib/xorg/modules/input
 [root@ayukawa jej]# exit
-[jej@ayukawa jej]$ cd $pkg
-[jej@ayukawa $pkg]$ ./configure
-[jej@ayukawa $pkg]$ make
-[jej@ayukawa $pkg]$ su
+[jej@ayukawa jej]$ cd linuxwacom-0.7.6-4 
+[jej@ayukawa linuxwacom-0.7.6-4]$ ./configure
+[jej@ayukawa linuxwacom-0.7.6-4]$ make
+[jej@ayukawa linuxwacom-0.7.6-4]$ su
 Password:
 [root@ayukawa ]# make install
 
@@ -399,7 +360,7 @@ the production release  recognize and work with all known Wacom tablets.
 </a></p><blockquote><ul>
 <a name="help">	</a><li><a name="help">Kernel: 2.4.18 and up, preferably 2.4.20 or up
 	</a></li><li><a name="help">XFree86: 4.0 and up, preferably 4.2 or up
-	</a></li><li><a name="help">linuxwacom: </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.6-2.tar.bz2">linuxwacom-0.7.6-2</a></li></ul></blockquote>
+	</a></li><li><a name="help">linuxwacom: </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.6-4.tar.bz2">linuxwacom-0.7.6-4</a></li></ul></blockquote>
 
 <p>You will need to be running at least kernel 2.4.18, preferably 2.4.20.
 You should be aware that Redhat and other vendors will back-port features
@@ -467,7 +428,8 @@ Generally, you will get a faster response (from me even), if you post to
 the linuxwacom-discuss mailing list.
 <a name="tpd">
 </a><h1><a name="tpd">7.0 - Third Party Developers</a></h1>
-<a name="tpd">For application developers, we have an </a><a href="http://linuxwacom.sourceforge.net/index.php/appdev">overview</a> of adding new capabilities to your applications by using a Wacom tablet and <a href="http://linuxwacom.sourceforge.net/index.php/quantumtest">sample code</a> for getting the button and valuator values.<a name="appdev">
+<a name="tpd">For application developers, we have an </a><a href="http://linuxwacom.sourceforge.net/index.php/appdev">overview</a> of adding new capabilities to your applications by using a Wacom tablet and <a href="http://linuxwacom.sourceforge.net/index.php/quantumtest">sample code</a> for getting the button and valuator values.
+<a name="appdev">
 </a><h2><a name="appdev">7.1 - Overview</a></h2>
 
 <center><h2><a name="appdev">Overview for Third Party Developers</a></h2></center>
@@ -508,7 +470,7 @@ line rendering, such as modulation line width with pressure. The
 descriptions below explain special treatment of valuator events.
 </a></p><p><a name="appdev"><b>Controlling the Driver</b>
 
-</a></p><p><a name="appdev">To change the driver’s default values,
+</a></p><p><a name="appdev">To change the driver�&#8364;&#8482;s default values,
 there are options which can be defined through the configuration file,
 XF86Config, XF86Config-4, or xorg.conf under directory /etc/X11. Please
 refer to </a><a href="http://linuxwacom.sourceforge.net/index.php/howto/inputdev">Adding the InputDevices</a> for examples and a list of available options.
@@ -558,7 +520,7 @@ modulate the width of a stroke, opacity, color, etc. Be sure to scale
 the pressure value to use the full range of pressure. Don't assume a
 maximum pressure level, check the tablet's capabilities to find the
 maximum pressure value (Check the maximum for the third valuator).
-Don’t think of pressure as only useful for drawing. For example: Use
+Don�&#8364;&#8482;t think of pressure as only useful for drawing. For example: Use
 pressure to control scrolling speed in a scroll bar. Or maybe
 Click-drag with low pressure does a move; click-drag with high pressure
 does a copy-move. Pressure is reported in the third valuator.
@@ -593,9 +555,9 @@ to allow for future changes.
 
 </p><p>The Intuos and Intuos2 series tablets have a device that is
 similar to a puck. In addition to normal puck parameters, this puck
-supports axial rotation and a wheel. For example, using the 4D Mouse’s
-rotation you can rotate the paper, or an object, and zoom with the
-wheel.
+supports axial rotation and a wheel. For example, using the 4D
+Mouse�&#8364;&#8482;s rotation you can rotate the paper, or an object, and zoom
+with the wheel.
 </p><p>4D Mouse axial rotation is reported in the forth valuator. Values in this field range from -900 to 900 in 0.2 degree increments.
 
 </p><p><b>4D Mouse Wheel</b>
@@ -1442,7 +1404,36 @@ int toggle_pen_mode(Display *display, char *name)
 <a name="chg">
 </a><h1><a name="chg">8.0 - ChangeLog</a></h1>
 <ul>
-<li><a name="chg">2006-10-31   Ping Cheng &lt;pingc@wacom.com&gt;<br>
+<li><a name="chg">2006-12-01   Ping Cheng &lt;pingc@wacom.com&gt;<br>
+</a><blockquote>
+<a name="chg">        * updated xsetwacom<br>
+</a></blockquote>
+
+</li><li><a name="chg">2006-11-30   Ping Cheng &lt;pingc@wacom.com&gt;<br>
+</a><blockquote>
+<a name="chg">        * Fixed cursor relative out-prox issue<br>
+        * Changed CursorProx option from 2 inputs into 1<br>
+        * updated xsetwacom and wacom_drv<br>
+        * Split wacom.c under 2.6.11 into 4 files<br>
+        * label 0.7.7 for testing<br>
+</a></blockquote>
+
+</li><li><a name="chg">2006-11-21   Ping Cheng &lt;pingc@wacom.com&gt;<br>
+</a><blockquote>
+<a name="chg">	* Updated web scripts (Magnus Vigerlöf)<br>
+        * Removed serial number and device ID in 4th - 5th<br>
+          high bytes due to bug 1592814<br>
+        * label 0.7.6-3<br>
+</a></blockquote>
+
+</li><li><a name="chg">2006-11-13   Ping Cheng &lt;pingc@wacom.com&gt;<br>
+</a><blockquote>
+<a name="chg">	* Updated acinclude.m4 and configure.in (Mats Johannesson)<br>
+        * Updated X driver for Xinerama setup<br>
+        * Removed option gimp<br>
+</a></blockquote>
+
+</li><li><a name="chg">2006-10-31   Ping Cheng &lt;pingc@wacom.com&gt;<br>
 </a><blockquote>
 <a name="chg">        * Updated acinclude.m4 and wacom.c<br>
         * label 0.7.6-2<br>
@@ -1450,7 +1441,7 @@ int toggle_pen_mode(Display *display, char *name)
 
 </li><li><a name="chg">2006-10-24   Ping Cheng &lt;pingc@wacom.com&gt;<br>
 </a><blockquote>
-<a name="chg">       * Fixed a relative mode acceleration problem<br>
+<a name="chg">	* Fixed a relative mode acceleration problem<br>
         * Updated webpages, acinclude.m4, and configure.in<br>
         * Updated wacdump for TabletPC<br>
         * Supports Graphire outbound tracking<br>
@@ -1458,7 +1449,7 @@ int toggle_pen_mode(Display *display, char *name)
 
 </li><li><a name="chg">2006-10-16   Ping Cheng &lt;pingc@wacom.com&gt;<br>
 </a><blockquote>
-<a name="chg">       * Updated README and NEWS<br>
+<a name="chg">	* Updated README and NEWS<br>
 </a></blockquote>
 
 </li><li><a name="chg">2006-10-13   Ping Cheng &lt;pingc@wacom.com&gt;<br>
@@ -2907,7 +2898,7 @@ Public License, to permit their use in free software.
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2006 - LinuxWacom -Last updated October 31, 2006<br>
+	Copyright (C) 2002-2006 - LinuxWacom -Last updated December 1, 2006<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>

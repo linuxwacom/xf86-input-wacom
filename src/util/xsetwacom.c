@@ -758,7 +758,13 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
                 break;
 	case gfXCONF:
-		printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
+		if (p->nParamID > XWACOM_PARAM_NOXOPTION)
+		{
+			printf ("%s is only an xsetwacom command \n", p->pszParam);
+			printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+		}
+		else
+			printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
 		break;
 	default:
 		printf ("%d\n", value);

@@ -40,53 +40,12 @@
  * Brion Vibber <brion@pobox.com>,
  * Aaron Optimizer Digulla <digulla@hepe.com>,
  * Jonathan Layes <jonathan@layes.com>.
- *
+ * John Joganic <jej@j-arkadia.com>
  */
 
 /*
  * REVISION HISTORY
  *
- * 2002-12-17 26-j0.3.3 - added Intuos2
- * 2002-12-31 26-j0.3.5 - added module loading for usb wacom and evdev
- * 2003-01-01 26-j0.3.6 - fix for 2D Intuos2 mouse buttons
- * 2003-01-25 26-j0.3.7 - cleaned up usb conditions for FreeBSD
- * 2003-01-31 26-j0.5.0 - new release
- * 2003-01-31 26-j0.5.1 - added Ping Cheng's PL code
- * 2003-01-31 26-j0.5.2 - fixed serial number code for Intuos and Intuos2
- * 2003-02-12 26-j0.5.3 - added Ping Cheng's USB patch
- * 2003-02-12 26-j0.5.4 - added Ping Cheng's "device_on" patch
- * 2003-02-22 26-j0.5.5 - added Ping Cheng's "multi" patch
- * 2003-02-22 26-j0.5.6 - applied J. Yen's origin patch
- * 2003-03-06 26-j0.5.7 - added Ping Cheng's "suppress" patch
- * 2003-03-22 26-j0.5.8 - added Dean Townsley's ISDV4 patch
- * 2003-04-02 26-j0.5.9 - added J. Yen's "misc fixes" patch
- * 2003-04-06 26-j0.5.10 - refactoring
- * 2003-04-29 26-j0.5.11 - all devices using same data path
- * 2003-05-01 26-j0.5.12 - changed graphire wheel to report relative
- * 2003-05-02 26-j0.5.13 - added parameter configuration code
- * 2003-05-15 26-j0.5.14 - added relative wheel button 4 and 5
- * 2003-05-15 26-j0.5.15 - intuos filter code on by default, fixed APM init
- * 2003-06-19 26-j0.5.16 - added Intuos2 6x8 id 0x47, suppress of 0 disables
- * 2003-06-25 26-j0.5.17 - support TwinView and kernel 2.5 for USB tablet 
- * 2003-07-10 26-j0.5.18 - fix to Intuos filter, ignores first samples
- * 2003-07-16 26-j0.5.19 - added noise reducing filter, improved USB relative mode
- * 2003-07-24 26-j0.5.20 - added new xsetwacom commands (Mode, SpeedLevel, and ClickForce)
- * 2003-08-13 26-j0.5.21 - added speed acceleration xsetwacom commands (Accel)
- * 2003-09-30 26-j0.5.22 - added TwinView with different resolution support and
-			 - enabled ScreenNo option for TwinView
- * 2003-11-10 26-j0.5.23 - support kernel 2.4.22 and user specified tcl/tk src dir
- * 2003-11-18 26-j0.5.24 - support general Tablet PC (ISDV4) and xsetwacom mmonitor
- * 2003-12-10 26-j0.5.25 - support kernel 2.6
- * 2003-01-10 26-j0.5.26 - added double click speed and radius
- * 2004-02-02 26-j0.6.0  - new release
- * 2004-03-02 26-j0.6.1  - new release
- * 2004-04-04 26-j0.6.2  - new release
- * 2004-05-25 26-j0.6.3  - new release
- * 2004-10-05 26-j0.6.5  - new release
- * 2004-11-22 42-j0.6.6  - new release
- * 2005-02-17 42-j0.6.7  - added 64-bit support
- * 2005-03-10 42-j0.6.8  - added Cintiq 21UX support
- * 2005-05-16 47-pc0.6.9 - added tablet orentation rotation for all tablets
  * 2005-10-17 47-pc0.7.1 - Added DTU710, DTF720, G4
  * 2005-11-17 47-pc0.7.1-1 - Report tool serial number and ID to Xinput
  * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it

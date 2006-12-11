@@ -48,6 +48,7 @@ endif # WCM_OPTION_HID not
 
 ifeq ($(WCM_OPTION_WACOM),yes)
 ifneq ($(CONFIG_USB_WACOM),y)
+wacom-objs := wacom_wac.o wacom_sys.o
 obj-m += wacom.o
 else
 $(error You requested to build wacom with configure, but wacom is configured as built-in in your kernel config)
@@ -76,6 +77,13 @@ ifeq ($(WCM_OPTION_HID),yes)
 	done
 endif
 
+# Copy Wacom specific code which is common to all kernel releases
+ifeq ($(WCM_OPTION_WACOM),yes)
+	cp -f ../2.6.16/wacom_wac.c .
+	cp -f ../2.6.16/wacom_wac.h .
+	cp -f ../2.6.13/wacom.h .
+	cp -f ../2.6.13/wacom_sys.c .
+endif 
 	@echo '    Building linuxwacom drivers for 2.6 kernel.'
 	@echo '***Note: Drivers not enabled as modules in your kernel config but requested through configure are NOT built'
 	$(MAKE) -C $(KDIR) M=$(PWD)

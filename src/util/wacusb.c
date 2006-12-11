@@ -61,6 +61,9 @@
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define ISBITSET(x,y) ((x)[LONG(y)] & BIT(y))
 
+#define MAX_CHANNELS 2
+#define MAX_USB_EVENTS 32
+
 /*****************************************************************************
 ** Structures
 *****************************************************************************/
@@ -83,6 +86,7 @@ struct _USBDEVICE
 	const char* pszDesc;
 	unsigned int uDevice;
 	USBSUBTYPE* pSubTypes;
+	unsigned int uChannelCnt;
 };
 
 struct _USBVENDOR
@@ -109,8 +113,12 @@ struct _USBTABLET
 	USBSUBTYPE* pSubType;
 	int nBus;
 	int nVersion;
-	WACOMSTATE state;
-	int nToolProx;
+	WACOMSTATE state[MAX_CHANNELS];
+	int nToolProx[MAX_CHANNELS];
+	int nChannel;
+	int nLastToolSerial;
+	int nEventCnt;
+	struct input_event events[MAX_USB_EVENTS];
 };
 
 /*****************************************************************************
@@ -273,19 +281,19 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBDEVICE xWacomDevices[] =
 	{
-		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner },
-		{ "gr", "Graphire", WACOMDEVICE_GRAPHIRE, xGraphire },
-		{ "gr2", "Graphire2", WACOMDEVICE_GRAPHIRE2, xGraphire2 },
-		{ "gr3", "Graphire3", WACOMDEVICE_GRAPHIRE3, xGraphire3 },
-		{ "gr4", "Graphire4", WACOMDEVICE_GRAPHIRE4, xGraphire4 },
-		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos },
-		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2 },
-		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3 },
-		{ "ctq", "Cintiq (V5)", WACOMDEVICE_CINTIQV5, xCintiqV5 },
-		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq },
-		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner },
-		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito },
-		{ "vol2", "Volito2", WACOMDEVICE_VOLITO2, xVolito2 },
+		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner, 1 },
+		{ "gr", "Graphire", WACOMDEVICE_GRAPHIRE, xGraphire, 1 },
+		{ "gr2", "Graphire2", WACOMDEVICE_GRAPHIRE2, xGraphire2, 1 },
+		{ "gr3", "Graphire3", WACOMDEVICE_GRAPHIRE3, xGraphire3, 1 },
+		{ "gr4", "Graphire4", WACOMDEVICE_GRAPHIRE4, xGraphire4, 2 },
+		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos, 2 },
+		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2, 2 },
+		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3, 2 },
+		{ "ctq", "Cintiq (V5)", WACOMDEVICE_CINTIQV5, xCintiqV5, 2 },
+		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq, 1 },
+		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner, 1 },
+		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito, 1 },
+		{ "vol2", "Volito2", WACOMDEVICE_VOLITO2, xVolito2, 1 },
 		{ NULL }
 	};
 
@@ -446,9 +454,9 @@ static int USBGetRange(USBTABLET* pUSB, unsigned long* pBits, int nAbsField,
 	if (ioctl(pUSB->fd, EVIOCGABS(nAbsField), nAbs) != 0)
 		return 1;
 
-	pUSB->state.values[uField].nMin = nAbs[1];
-	pUSB->state.values[uField].nMax = nAbs[2];
-	pUSB->state.uValid |= BIT(uField);
+	pUSB->state[0].values[uField].nMin = nAbs[1];
+	pUSB->state[0].values[uField].nMax = nAbs[2];
+	pUSB->state[0].uValid |= BIT(uField);
 	return 0;
 }
 
@@ -467,7 +475,7 @@ static int USBFindModel(USBTABLET* pUSB, unsigned int uVendor,
 
 	static USBDEVICE xUnkDev[] =
 	{
-		{ "unk", "Unknown", WACOMDEVICE_UNKNOWN, xUnkSub },
+		{ "unk", "Unknown", WACOMDEVICE_UNKNOWN, xUnkSub, MAX_CHANNELS },
 		{ NULL }
 	};
 
@@ -506,7 +514,7 @@ static int USBFindModel(USBTABLET* pUSB, unsigned int uVendor,
 
 static int USBIdentifyModel(USBTABLET* pUSB)
 {
-	int nCnt;
+	int nCnt, chcnt;
 	short sID[4];
 	unsigned int uVendor, uProduct;
 	unsigned long evbits[NBITS(EV_MAX)];
@@ -519,7 +527,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 		return 1;
 
 	/* initialize state structure */
-	pUSB->state.uValueCnt = WACOMFIELD_MAX;
+	pUSB->state[0].uValueCnt = WACOMFIELD_MAX;
 
 	/* Get event types supported */
 	nCnt = ioctl(pUSB->fd,EVIOCGBIT(0 /*EV*/,sizeof(evbits)),evbits);
@@ -573,9 +581,9 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 
 		if (ISBITSET(relbits,REL_WHEEL))
 		{
-			pUSB->state.uValid |= BIT(WACOMFIELD_RELWHEEL);
-			pUSB->state.values[WACOMFIELD_RELWHEEL].nMin = -1;
-			pUSB->state.values[WACOMFIELD_RELWHEEL].nMax = 1;
+			pUSB->state[0].uValid |= BIT(WACOMFIELD_RELWHEEL);
+			pUSB->state[0].values[WACOMFIELD_RELWHEEL].nMin = -1;
+			pUSB->state[0].values[WACOMFIELD_RELWHEEL].nMax = 1;
 		}
 	}
 
@@ -598,7 +606,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 				ISBITSET(keybits,BTN_MIDDLE) ||
 				ISBITSET(keybits,BTN_SIDE) ||
 				ISBITSET(keybits,BTN_EXTRA))
-			pUSB->state.uValid |= BIT(WACOMFIELD_BUTTONS);
+			pUSB->state[0].uValid |= BIT(WACOMFIELD_BUTTONS);
 
 		/* tool events */
 		if (ISBITSET(keybits,BTN_TOOL_PEN) ||
@@ -609,7 +617,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 				ISBITSET(keybits,BTN_TOOL_FINGER) ||
 				ISBITSET(keybits,BTN_TOOL_MOUSE) ||
 				ISBITSET(keybits,BTN_TOOL_LENS))
-			pUSB->state.uValid |= BIT(WACOMFIELD_PROXIMITY) |
+			pUSB->state[0].uValid |= BIT(WACOMFIELD_PROXIMITY) |
 					BIT(WACOMFIELD_TOOLTYPE);
 
 		/* Detect button codes */
@@ -630,13 +638,18 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	/* add additional capabilities by device type */
 	switch (pUSB->pDevice->uDevice)
 	{
+		case WACOMDEVICE_GRAPHIRE4:
 		case WACOMDEVICE_INTUOS:
 		case WACOMDEVICE_INTUOS2:
 		case WACOMDEVICE_INTUOS3:
 		case WACOMDEVICE_CINTIQV5:
-			pUSB->state.uValid |= BIT(WACOMFIELD_SERIAL);
+			pUSB->state[0].uValid |= BIT(WACOMFIELD_SERIAL);
 		default: ;
 	}
+
+	/* Initialize all channels with the same values */
+	for(chcnt=1; chcnt<MAX_CHANNELS; chcnt++)
+		pUSB->state[chcnt] = pUSB->state[0];
 
 	return 0;
 }
@@ -687,13 +700,13 @@ static int USBGetROMVer(WACOMTABLET_PRIV* pTablet, int* pnMajor,
 static int USBGetCaps(WACOMTABLET_PRIV* pTablet)
 {
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
-	return pUSB->state.uValid;
+	return pUSB->state[0].uValid;
 }
 
 static int USBGetState(WACOMTABLET_PRIV* pTablet, WACOMSTATE* pState)
 {
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
-	return WacomCopyState(pState,&pUSB->state);
+	return WacomCopyState(pState,&pUSB->state[pUSB->nChannel]);
 }
 
 static int USBGetFD(WACOMTABLET_PRIV* pTablet)
@@ -725,9 +738,9 @@ static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 static int USBParseMSC(USBTABLET* pUSB, struct input_event* pEv)
 {
 	if (pEv->code == MSC_SERIAL && pEv->value)
-		pUSB->state.values[WACOMFIELD_SERIAL].nValue = pEv->value;
-	if (!pUSB->state.values[WACOMFIELD_PROXIMITY].nValue)
-		pUSB->state.values[WACOMFIELD_SERIAL].nValue = 0;
+		pUSB->state[pUSB->nChannel].values[WACOMFIELD_SERIAL].nValue = pEv->value;
+	if (!pUSB->state[pUSB->nChannel].values[WACOMFIELD_PROXIMITY].nValue)
+		pUSB->state[pUSB->nChannel].values[WACOMFIELD_SERIAL].nValue = 0;
 	return 0;
 }
 
@@ -766,9 +779,9 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 	{
 		/* button state change */
 		if (pEv->value)
-			pUSB->state.values[WACOMFIELD_BUTTONS].nValue |= BIT(button);
+			pUSB->state[pUSB->nChannel].values[WACOMFIELD_BUTTONS].nValue |= BIT(button);
 		else
-			pUSB->state.values[WACOMFIELD_BUTTONS].nValue &= ~BIT(button);
+			pUSB->state[pUSB->nChannel].values[WACOMFIELD_BUTTONS].nValue &= ~BIT(button);
 	}
 
 	/* if a tool was specified */
@@ -778,44 +791,44 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		if (pEv->value)
 		{
 			/* no prior tool in proximity */
-			if (!(pUSB->nToolProx & BIT(tool)))
+			if (!(pUSB->nToolProx[pUSB->nChannel] & BIT(tool)))
 			{
-				pUSB->state.values[WACOMFIELD_PROXIMITY].nValue = 1;
+				pUSB->state[pUSB->nChannel].values[WACOMFIELD_PROXIMITY].nValue = 1;
 			}
 
 			/* remember tool in prox */
-			pUSB->nToolProx |= BIT(tool);
-			pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = tool;
+			pUSB->nToolProx[pUSB->nChannel] |= BIT(tool);
+			pUSB->state[pUSB->nChannel].values[WACOMFIELD_TOOLTYPE].nValue = tool;
 		}
 
 		/* otherwise, going out of proximity */
 		else
 		{
 			/* forget tool in prox */
-			if (pUSB->nToolProx & BIT(tool))
+			if (pUSB->nToolProx[pUSB->nChannel] & BIT(tool))
 			{
-				pUSB->nToolProx &= ~BIT(tool);
+				pUSB->nToolProx[pUSB->nChannel] &= ~BIT(tool);
 			}
 
 			/* single input */
-			if (!(pUSB->state.uValid & BIT(WACOMFIELD_SERIAL)))
-				pUSB->nToolProx = 0;
+			if (!(pUSB->state[pUSB->nChannel].uValid & BIT(WACOMFIELD_SERIAL)))
+				pUSB->nToolProx[pUSB->nChannel] = 0;
 
-			pUSB->state.values[WACOMFIELD_PROXIMITY].nValue = 0;
-			pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = 0;
+			pUSB->state[pUSB->nChannel].values[WACOMFIELD_PROXIMITY].nValue = 0;
+			pUSB->state[pUSB->nChannel].values[WACOMFIELD_TOOLTYPE].nValue = 0;
 
 			/* nobody left? out of proximity */
-			if (!pUSB->nToolProx)
-				memset(pUSB->state.values, 0,
-						pUSB->state.uValueCnt * sizeof(WACOMVALUE));
+			if (!pUSB->nToolProx[pUSB->nChannel])
+				memset(pUSB->state[pUSB->nChannel].values, 0,
+						pUSB->state[pUSB->nChannel].uValueCnt * sizeof(WACOMVALUE));
 			/* otherwise, switch to next tool */
 			else
 			{
 				for (i=WACOMTOOLTYPE_PEN; i<WACOMTOOLTYPE_MAX; ++i)
 				{
-					if (pUSB->nToolProx & BIT(i))
+					if (pUSB->nToolProx[pUSB->nChannel] & BIT(i))
 					{
-						pUSB->state.values[WACOMFIELD_TOOLTYPE].nValue = i;
+						pUSB->state[pUSB->nChannel].values[WACOMFIELD_TOOLTYPE].nValue = i;
 					}
 				}
 			}
@@ -842,7 +855,7 @@ static int USBParseABS(USBTABLET* pUSB, struct input_event* pEv)
 	}
 
 	if (field)
-		pUSB->state.values[field].nValue = pEv->value;
+		pUSB->state[pUSB->nChannel].values[field].nValue = pEv->value;
 
 	return 0;
 }
@@ -856,7 +869,7 @@ static int USBParseREL(USBTABLET* pUSB, struct input_event* pEv)
 	}
 
 	if (field)
-		pUSB->state.values[field].nValue = pEv->value;
+		pUSB->state[pUSB->nChannel].values[field].nValue = pEv->value;
 
 	return 0;
 }
@@ -865,15 +878,93 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 		const unsigned char* puchData, unsigned int uLength,
 		WACOMSTATE* pState)
 {
+	int evcnt, chcnt;
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
 	struct input_event* pEv = (struct input_event*)puchData;
 	if (uLength != sizeof(struct input_event)) return 1;
 
-	pUSB->state.values[WACOMFIELD_RELWHEEL].nValue = 0;
-
-	/* dispatch event */
-	switch (pEv->type)
+	/* store event until we receive a MSC_SERIAL/SYN_REPORT
+	 * so we can figure out with channel to use */
+	if (pUSB->nEventCnt >= MAX_USB_EVENTS)
 	{
+		/* no more buffer space */
+		pUSB->nEventCnt = 0;
+		pUSB->nLastToolSerial = 0;
+		errno = ENOBUFS;
+		return -1;
+	}
+	pUSB->events[pUSB->nEventCnt++] = *pEv;
+
+	if ((pEv->type == EV_MSC) && (pEv->code == MSC_SERIAL))
+	{
+		/* store the serial for the tool for later use */
+		pUSB->nLastToolSerial = pEv->value;
+#ifdef EV_SYN
+		/* Kernel 2.4 uses MSC_SERIAL as an end-of-report, 2.6
+		 * don't so we're not done yet */
+		return 0;
+	}
+	else if ((pEv->type == EV_SYN) && (pEv->code == SYN_REPORT))
+	{
+		/* Kernel 2.6 used SYN_REPORT as an end-of-record,
+		 * fall through */
+#endif
+	}
+	else
+	{
+		/* Not a MSC_SERIAL or SYN_REPORT, we're not done yet */
+		return 0;
+	}
+
+	/* Select channel here based on the serial number, tablets
+	 * with only one channel will always use channel 0, so no
+	 * check.
+	 */
+	if (pUSB->pDevice->uChannelCnt > 1)
+	{
+		pUSB->nChannel = -1;
+		/* Find existing channel */
+		for (chcnt=0; chcnt<pUSB->pDevice->uChannelCnt; chcnt++)
+		{
+			if (pUSB->state[chcnt].values[WACOMFIELD_SERIAL].nValue == pUSB->nLastToolSerial)
+			{
+				pUSB->nChannel = chcnt;
+				break;
+			}
+		}
+
+		/* Find en empty channel */
+		if(pUSB->nChannel == -1)
+		{
+			for (chcnt=0; chcnt<pUSB->pDevice->uChannelCnt; chcnt++)
+			{
+				if(!pUSB->nToolProx[chcnt])
+				{
+					pUSB->nChannel = chcnt;
+					break;
+				}
+			}
+		}
+
+		/* no more channels?? */
+		if(pUSB->nChannel == -1)
+		{
+			pUSB->nChannel = 0;
+			pUSB->nEventCnt = 0;
+			pUSB->nLastToolSerial = 0;
+			errno = ENOBUFS;
+			return -1;
+		}
+	}
+
+	/* Channel found/allocated, lets process events */
+	pUSB->state[pUSB->nChannel].values[WACOMFIELD_RELWHEEL].nValue = 0;
+
+	for (evcnt=0; evcnt<pUSB->nEventCnt; evcnt++)
+	{
+		/* dispatch event */
+		switch (pEv->type)
+		{
 #ifdef EV_SYN
 		case EV_SYN: /* kernel 2.6 */
 #endif
@@ -883,9 +974,12 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 		case EV_ABS: if (USBParseABS(pUSB,pEv)) return pEv->type; break;
 		case EV_REL: if (USBParseREL(pUSB,pEv)) return pEv->type; break;
 		default: errno = EINVAL; return pEv->type;
+		}
 	}
 
-	return pState ? WacomCopyState(pState,&pUSB->state) : 0;
+	pUSB->nEventCnt = 0;
+	pUSB->nLastToolSerial = 0;
+	return pState ? WacomCopyState(pState,pUSB->state + pUSB->nChannel) : 0;
 }
 
 /*****************************************************************************

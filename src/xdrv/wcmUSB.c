@@ -392,12 +392,12 @@ static struct
 	{ 0x45, 2540, 2540, &usbIntuos2    }, /* Intuos2 12x18 */
 	{ 0x47, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8  */
 
-	{ 0x60,  37,  50, &usbVolito     }, /* Volito */ 
+	{ 0x60, 1016, 1016, &usbVolito     }, /* Volito */ 
 
-	{ 0x61,  37,  50, &usbVolito2    }, /* PenStation */
-	{ 0x62,  37,  50, &usbVolito2    }, /* Volito2 4x5 */
-	{ 0x63,  20,  30, &usbVolito2    }, /* Volito2 2x3 */
-	{ 0x64,  20,  30, &usbVolito2    }, /* Volito2 2x3 */
+	{ 0x61, 1016, 1016, &usbVolito2    }, /* PenStation */
+	{ 0x62, 1016, 1016, &usbVolito2    }, /* Volito2 4x5 */
+	{ 0x63, 1016, 1016, &usbVolito2    }, /* Volito2 2x3 */
+	{ 0x64, 1016, 1016, &usbVolito2    }, /* PenPartner2 */
 
 	{ 0xB0, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x5 */
 	{ 0xB1, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x8 */
@@ -786,7 +786,7 @@ static void usbParseEvent(WacomCommonPtr common,
 
 static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 {
-	int i, shift;
+	int i, shift, nkeys;
 	WacomDeviceState* ds;
 	struct input_event* event;
 
@@ -903,10 +903,10 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				MOD_BUTTONS (4, event->value);
 			else
 			{
-				for (i = 0; i < common->npadkeys; i++)
-					if (event->code == common->padkey_code [i])
+				for (nkeys = 0; nkeys < common->npadkeys; nkeys++)
+					if (event->code == common->padkey_code [nkeys])
 					{
-						MOD_BUTTONS ((MAX_MOUSE_BUTTONS/2+i), event->value);
+						MOD_BUTTONS ((MAX_MOUSE_BUTTONS/2+nkeys), event->value);
 						break;
 					}
 			}
