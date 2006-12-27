@@ -962,6 +962,7 @@ static int USBParseData(WACOMTABLET_PRIV* pTablet,
 
 	for (evcnt=0; evcnt<pUSB->nEventCnt; evcnt++)
 	{
+		pEv = pUSB->events + evcnt;
 		/* dispatch event */
 		switch (pEv->type)
 		{

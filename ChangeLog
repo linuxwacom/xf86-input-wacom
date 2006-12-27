@@ -1,3 +1,13 @@
+2006-12-27   Ping Cheng <pingc@wacom.com>
+	* label 0.7.7-1 for testing
+
+2006-12-22   Ping Cheng <pingc@wacom.com>
+	* Update install and uninstall scripts for prebuilt
+	  X driver and its utility programs
+	* Feature request #1519017 and patch #1614296
+	* Patch #1606288
+	* Updated web scripts
+
 2006-12-11   Ping Cheng <pingc@wacom.com>
 	* Split wacom.c under 2.6.13 into 4 files
 	* Fixed an ExpressKeys report bug in wcmUSB.c

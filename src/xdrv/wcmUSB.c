@@ -728,6 +728,7 @@ static void usbParseEvent(WacomCommonPtr common,
 			{
 				memset(&common->wcmChannel[0],0,
 						sizeof(WacomChannel));
+				common->wcmChannel[0].work.proximity = 1;
 			}
 		}
 	}

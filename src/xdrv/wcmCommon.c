@@ -1004,9 +1004,9 @@ static int idtotype(int id)
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel)
 {
-	int id, idx;
-	WacomDevicePtr priv;
 	LocalDevicePtr pDev = NULL;
+	WacomToolPtr tool = NULL;
+	WacomToolPtr tooldef = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
 
 	DBG(10, ErrorF("commonDispatchEvents\n"));
@@ -1032,32 +1032,51 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 		ds->proximity = 1;
 		if (ds->serial_num)
-			for (idx=0; idx<common->wcmNumDevices; idx++)
-			{
-				priv = common->wcmDevices[idx]->private;
-				if (ds->serial_num == priv->serial)
+			for (tool = common->wcmTool; tool; tool = tool->next)
+				if (ds->serial_num == tool->serial)
 				{
-					ds->device_type = DEVICE_ID(priv->flags);
+					ds->device_type = tool->typeid;
 					break;
 				}
-			}
 	}
 
 	/* Find the device the current events are meant for */
-	for (idx=0; idx<common->wcmNumDevices; idx++)
-	{
-		priv = common->wcmDevices[idx]->private;
-		id = DEVICE_ID(priv->flags);
-
-		if (id == ds->device_type &&
-			((!priv->serial) || (ds->serial_num == priv->serial)))
+	/* 1: Find the tool (the one with correct serial or in second
+	 * hand, the one with serial set to 0 if no match with the
+	 * specified serial exists) that is used for this event */
+	for (tool = common->wcmTool; tool; tool = tool->next)
+		if (tool->typeid == ds->device_type)
 		{
+			if (tool->serial == ds->serial_num)
+				break;
+			else if (!tool->serial)
+				tooldef = tool;
+		}
+	/* Use default tool (serial == 0) if no specific was found */
+	if (!tool)
+		tool = tooldef;
+	/* 2: Find the associated area, and its InputDevice */
+	if (tool)
+	{
+		/* If no current area in-prox, find a matching area */
+		if(!tool->current)
+		{
+			WacomToolAreaPtr area = tool->arealist;
+			for(; area; area = area->next)
+				if (area->topX <= ds->x && ds->x <= area->bottomX
+				    && area->topY <= ds->y && ds->y <= area->bottomY)
+					break;
+			tool->current = area;
+		}
+		/* If there was one already in use or we found one */
+		if(tool->current)
+		{
+			pDev = tool->current->device;
 			DBG(11, ErrorF("tool id=%d for %s\n",
-					id, common->wcmDevices[idx]->name));
-			pDev = common->wcmDevices[idx];
-			break;
+				       ds->device_type, pDev->name));
 		}
 	}
+	/* X: InputDevice selection done! */
 
 	DBG(11, ErrorF("commonDispatchEvents: %p \n",(void *)pDev));
 
@@ -1165,6 +1184,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				}
 		}
 		xf86WcmSendEvents(pDev, &filtered, channel);
+		/* If out-prox, reset the current area pointer */
+		if (!ds->proximity)
+			tool->current = NULL;
 	}
 
 	/* otherwise, if no device matched... */

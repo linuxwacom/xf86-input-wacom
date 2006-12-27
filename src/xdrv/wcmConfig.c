@@ -37,6 +37,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	WacomDevicePtr priv;
 	WacomCommonPtr common;
 	int i;
+	WacomToolPtr     tool;
+	WacomToolAreaPtr area;
 
 	priv = (WacomDevicePtr) xalloc(sizeof(WacomDeviceRec));
 	if (!priv)
@@ -49,9 +51,28 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		return NULL;
 	}
 
+	tool = (WacomToolPtr) xalloc(sizeof(WacomTool));
+	if(!tool)
+	{
+		xfree(priv);
+		xfree(common);
+		return NULL;
+	}
+
+	area = (WacomToolAreaPtr) xalloc(sizeof(WacomToolArea));
+	if(!area)
+	{
+		xfree(tool);
+		xfree(priv);
+		xfree(common);
+		return NULL;
+	}
+
 	local = xf86AllocateInput(gWacomModule.v4.wcmDrv, 0);
 	if (!local)
 	{
+		xfree(area);
+		xfree(tool);
 		xfree(priv);
 		xfree(common);
 		return NULL;
@@ -166,6 +187,24 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 				/* Max mouse distance for proxy-out max/256 units */
 	common->wcmCursorProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE; 
 				/* default to Graphire */
+
+	/* tool */
+	priv->tool = tool;
+	common->wcmTool = tool;
+	tool->next = NULL;          /* next tool in list */
+	tool->typeid = DEVICE_ID(flag); /* tool type (stylus/eraser/cursor/pad) */
+	tool->serial = 0;           /* serial id */
+	tool->current = NULL;       /* current area in-prox */
+	tool->arealist = area;      /* list of defined areas */
+	/* tool area */
+	priv->toolarea = area;
+	area->next = NULL;    /* next area in list */
+	area->topX = 0;       /* X top */
+	area->topY = 0;       /* Y top */
+	area->bottomX = 0;    /* X bottom */
+	area->bottomY = 0;    /* Y bottom */
+	area->device = local; /* associated WacomDevice */
+
 	return local;
 }
 
@@ -306,6 +345,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
+
+	WacomToolPtr tool = NULL;
+	WacomToolAreaPtr area = NULL;
 
 	gWacomModule.v4.wcmDrv = drv;
 
@@ -573,6 +615,46 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: serial number = %u\n", dev->identifier,
 			priv->serial);
 
+	tool = priv->tool;
+	area = priv->toolarea;
+	area->topX = priv->topX;
+	area->topY = priv->topY;
+	area->bottomX = priv->bottomX;
+	area->bottomY = priv->bottomY;
+	tool->serial = priv->serial;
+
+	/* The first device don't need to add any tools/areas as it
+	 * will be the first anyway, so if different -> add tool
+	 * and/or area to the existing lists */
+	if(tool != common->wcmTool)
+	{
+		WacomToolPtr toollist = NULL;
+		for(toollist = common->wcmTool; toollist; toollist = toollist->next)
+			if(tool->typeid == toollist->typeid && tool->serial == toollist->serial) 
+				break;
+
+		if(toollist) /* There was already a tool with the same type/serial */
+		{
+			WacomToolAreaPtr arealist;
+
+			xfree(tool);
+			priv->tool = tool = toollist;
+			/*TODO: verify area against other areas of the same tool */
+			/* Add the area to the end of the list */
+			arealist = toollist->arealist;
+			while(arealist->next)
+				arealist = arealist->next;
+			arealist->next = area;
+		}
+		else /* No match on existing tool/serial, add tool to the end of the list */
+		{
+			toollist = common->wcmTool;
+			while(toollist->next)
+				toollist = toollist->next;
+			toollist->next = tool;
+		}
+	}
+
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
 	if (common->wcmThreshold > 0)
@@ -735,6 +817,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	return (local);
 
 SetupProc_fail:
+	if(area)
+		xfree(area);
+	if(tool)
+		xfree(tool);
 	if (common)
 		xfree(common);
 	if (priv)

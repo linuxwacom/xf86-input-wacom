@@ -163,6 +163,8 @@ typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
 typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
 typedef struct _WacomFilterState WacomFilterState, *WacomFilterStatePtr;
 typedef struct _WacomDeviceClass WacomDeviceClass, *WacomDeviceClassPtr;
+typedef struct _WacomTool WacomTool, *WacomToolPtr;
+typedef struct _WacomToolArea WacomToolArea, *WacomToolAreaPtr;
 
 /******************************************************************************
  * WacomModule - all globals are packed in a single structure to keep the
@@ -313,6 +315,9 @@ struct _WacomDeviceRec
 	/* JEJ - filters */
 	int* pPressCurve;               /* pressure curve */
 	int nPressCtrl[4];              /* control points for curve */
+
+	WacomToolPtr tool;         /* The common tool-structure for this device */
+	WacomToolAreaPtr toolarea; /* The area defined for this device */
 };
 
 /******************************************************************************
@@ -498,6 +503,8 @@ struct _WacomCommonRec
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
 #endif
+
+	WacomToolPtr wcmTool; /* List of unique tools */
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
@@ -505,6 +512,35 @@ struct _WacomCommonRec
 #ifdef LINUX_INPUT
 #define USE_SYN_REPORTS(comm) ((comm)->wcmFlags & USE_SYN_REPORTS_FLAG)
 #endif
+
+/******************************************************************************
+ * WacomTool
+ *****************************************************************************/
+struct _WacomTool
+{
+	WacomToolPtr next; /* Next tool in list */
+
+	int typeid; /* Tool type */
+	int serial; /* Serial id, 0 == no serial id */
+
+	WacomToolAreaPtr current;  /* Current area in-prox */
+	WacomToolAreaPtr arealist; /* List of defined areas */
+};
+
+/******************************************************************************
+ * WacomToolArea
+ *****************************************************************************/
+struct _WacomToolArea
+{
+	WacomToolAreaPtr next;
+
+	int topX;    /* Top X/Y */
+	int topY;
+	int bottomX; /* Bottom X/Y */
+	int bottomY;
+
+	LocalDevicePtr device; /* The InputDevice connected to this area */
+};
 
 /*****************************************************************************
  * XFree86 V4 Inlined Functions and Prototypes

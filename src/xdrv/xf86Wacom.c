@@ -112,6 +112,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	CARD8 butmap[MAX_BUTTONS];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
+	WacomToolAreaPtr area = priv->toolarea;
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -207,34 +208,36 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
 	if (priv->bottomY == 0) priv->bottomY = common->wcmMaxY;
+	area->bottomX = priv->bottomX;
+	area->bottomY = priv->bottomY;
 
 	/* Verify Box validity */
 	if (priv->topX > common->wcmMaxX)
 	{
 		ErrorF("Wacom invalid TopX (%d) reseting to 0\n",
 				priv->topX);
-		priv->topX = 0;
+		area->topX = priv->topX = 0;
 	}
 
 	if (priv->topY > common->wcmMaxY)
 	{
 		ErrorF("Wacom invalid TopY (%d) reseting to 0\n",
 				priv->topY);
-		priv->topY = 0;
+		area->topY = priv->topY = 0;
 	}
 
 	if (priv->bottomX < priv->topX)
 	{
 		ErrorF("Wacom invalid BottomX (%d) reseting to %d\n",
 				priv->bottomX, common->wcmMaxX);
-		priv->bottomX = common->wcmMaxX;
+		area->bottomX = priv->bottomX = common->wcmMaxX;
 	}
 
 	if (priv->bottomY < priv->topY)
 	{
 		ErrorF("Wacom invalid BottomY (%d) reseting to %d\n",
 				priv->bottomY, common->wcmMaxY);
-		priv->bottomY = common->wcmMaxY;
+		area->bottomY = priv->bottomY = common->wcmMaxY;
 	}
 
 	if (priv->screen_no != -1 &&
@@ -286,15 +289,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 
 		if (screenRatio > tabletRatio)
 		{
-			priv->bottomX = common->wcmMaxX;
-			priv->bottomY = (common->wcmMaxY - priv->topY) *
+			area->bottomX = priv->bottomX = common->wcmMaxX;
+			area->bottomY = priv->bottomY = (common->wcmMaxY - priv->topY) *
 				tabletRatio / screenRatio + priv->topY;
 		}
 		else
 		{
-			priv->bottomX = (common->wcmMaxX - priv->topX) *
+			area->bottomX = priv->bottomX = (common->wcmMaxX - priv->topX) *
 				screenRatio / tabletRatio + priv->topX;
-			priv->bottomY = common->wcmMaxY;
+			area->bottomY = priv->bottomY = common->wcmMaxY;
 		}
 	} /* end keep shape */
 
@@ -634,6 +637,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	char st[32];
 	int oldRotation, dev;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
+	WacomToolAreaPtr area = priv->toolarea;
+	WacomToolAreaPtr tmparea;
 
 	/* we don't reset cordinates to the values that the driver is using. This eliminates some 
 	 * confusion when driver is running on default values.
@@ -644,7 +649,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ( priv->topX != value)
 		{
 			xf86ReplaceIntOption(local->options, "TopX", value);
-			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+			area->topX = priv->topX = xf86SetIntOption(local->options, "TopX", 0);
 			if (priv->twinview == TV_LEFT_RIGHT)
 				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 			else
@@ -658,7 +663,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ( priv->topY != value)
 		{
 			xf86ReplaceIntOption(local->options, "TopY", value);
-			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+			area->topY = priv->topY = xf86SetIntOption(local->options, "TopY", 0);
 			if (priv->twinview == TV_ABOVE_BELOW)
 				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			else
@@ -672,7 +677,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ( priv->bottomX != value)
 		{
 			xf86ReplaceIntOption(local->options, "BottomX", value);
-			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+			area->bottomX = priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 			if (priv->twinview == TV_LEFT_RIGHT)
 				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 			else
@@ -686,7 +691,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if ( priv->bottomY != value)
 		{
 			xf86ReplaceIntOption(local->options, "BottomY", value);
-			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+			area->bottomY = priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 			if (priv->twinview == TV_ABOVE_BELOW)
 				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			else
@@ -882,6 +887,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		for (dev=0; dev < common->wcmNumDevices; dev++)
 		{
 		    tmppriv = (WacomDevicePtr)common->wcmDevices[dev]->private;
+		    tmparea = tmppriv->toolarea;
 		    /* recover the unrotated xy-rectangles */
 		    switch (oldRotation) {
 		      case ROTATE_CW:
@@ -912,28 +918,28 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		    /* and rotate them back */
 		    switch (value) {
 		      case ROTATE_CW:
-			tmppriv->topX = tmpTopY;
-			tmppriv->bottomX = tmpBottomY;
-			tmppriv->topY = common->wcmMaxY - tmpBottomX;
-			tmppriv->bottomY = common->wcmMaxY - tmpTopX;
+			tmparea->topX = tmppriv->topX = tmpTopY;
+			tmparea->bottomX = tmppriv->bottomX = tmpBottomY;
+			tmparea->topY = tmppriv->topY = common->wcmMaxY - tmpBottomX;
+			tmparea->bottomY = tmppriv->bottomY = common->wcmMaxY - tmpTopX;
 			break;
 		      case ROTATE_CCW:
-			tmppriv->topX = common->wcmMaxX - tmpBottomY;
-			tmppriv->bottomX = common->wcmMaxX - tmpTopY;
-			tmppriv->topY = tmpTopX;
-			tmppriv->bottomY = tmpBottomX;
+			tmparea->topX = tmppriv->topX = common->wcmMaxX - tmpBottomY;
+			tmparea->bottomX = tmppriv->bottomX = common->wcmMaxX - tmpTopY;
+			tmparea->topY = tmppriv->topY = tmpTopX;
+			tmparea->bottomY = tmppriv->bottomY = tmpBottomX;
 			break;
 		      case ROTATE_HALF:
-			tmppriv->topX = common->wcmMaxX - tmpBottomX;
-			tmppriv->bottomX = common->wcmMaxX - tmpTopX;
-			tmppriv->topY= common->wcmMaxY - tmpBottomY;
-			tmppriv->bottomY = common->wcmMaxY - tmpTopY;
+			tmparea->topX = tmppriv->topX = common->wcmMaxX - tmpBottomX;
+			tmparea->bottomX = tmppriv->bottomX = common->wcmMaxX - tmpTopX;
+			tmparea->topY = tmppriv->topY= common->wcmMaxY - tmpBottomY;
+			tmparea->bottomY = tmppriv->bottomY = common->wcmMaxY - tmpTopY;
 			break;
 		      default: /* ROTATE_NONE */
-			tmppriv->topX = tmpTopX;
-			tmppriv->bottomX = tmpBottomX;
-			tmppriv->topY = tmpTopY;
-			tmppriv->bottomY = tmpBottomY;
+			tmparea->topX = tmppriv->topX = tmpTopX;
+			tmparea->bottomX = tmppriv->bottomX = tmpBottomX;
+			tmparea->topY = tmppriv->topY = tmpTopY;
+			tmparea->bottomY = tmppriv->bottomY = tmpBottomY;
 			break;
 		    } 
 
