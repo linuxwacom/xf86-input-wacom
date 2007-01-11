@@ -2,7 +2,7 @@
 ** xsetwacom.c
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2006 - Ping Cheng
+** Copyright (C) 2004-2007 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -24,10 +24,11 @@
 **   2005-11-17 0.0.5 - PC - update mode code
 **   2006-02-27 0.0.6 - PC - fixed a typo
 **   2006-07-19 0.0.7 - PC - supports button and keys combined
-*
+**   2007-01-10 0.0.8 - PC - don't display uninitialized tools
+**
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.7"
+#define XSETWACOM_VERSION "0.0.8"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */

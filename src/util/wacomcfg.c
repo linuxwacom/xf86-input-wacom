@@ -2,7 +2,7 @@
 ** wacomcfg.c
 **
 ** Copyright (C) 2003-2004 - John E. Joganic
-** Copyright (C) 2004-2006 - Ping Cheng
+** Copyright (C) 2004-2007 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -25,6 +25,7 @@
 **   2005-10-24 0.0.4 - PC - Added Pad
 **   2005-11-17 0.0.5 - PC - update mode code
 **   2006-07-17 0.0.6 - PC - Exchange info directly with wacom_drv.o
+**   2007-01-10 0.0.7 - PC - don't display uninitialized tools
 **
 ****************************************************************************/
 
@@ -137,6 +138,7 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	{
 		info = hConfig->pDevs + i;
 		if (info->use != IsXExtensionDevice) continue;
+		if (!info->num_classes) continue;
 		nSize += sizeof(WACOMDEVICEINFO);
 		nSize += strlen(info->name) + 1;
 		++nCount;
@@ -157,7 +159,8 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 		info = hConfig->pDevs + i;
 		/* ignore non-extension devices */
 		if (info->use != IsXExtensionDevice) continue;
-
+		/* ignore uninitialized tools  */
+		if (!info->num_classes) continue;
 		/* copy name */
 		nLen = strlen(info->name);
 		pInfo->pszName = (char*)(pReq + nPos);
@@ -212,7 +215,7 @@ WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	for (i=0; i<hConfig->nDevCnt; ++i)
 	{
 		info = hConfig->pDevs + i;
-		if (strcmp(info->name, pszDeviceName) == 0)
+		if (!strcmp(info->name, pszDeviceName) && info->num_classes)
 			pDevInfo = info;
 	}
 

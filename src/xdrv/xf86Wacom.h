@@ -297,6 +297,7 @@ struct _WacomDeviceRec
 	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
+	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
 	double speed;           /* relative mode speed */
 	int accel;              /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
@@ -396,7 +397,6 @@ struct _WacomChannel
 	} valid;
 
 	int nSamples;
-	LocalDevicePtr pDev;    /* device associated with this channel */
 	WacomFilterState rawFilter;
 };
 
@@ -481,7 +481,6 @@ struct _WacomCommonRec
 	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
-	int wcmChannelCnt;           /* number of channels available */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
 
@@ -599,6 +598,10 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDevice
 
 /* dispatches data to XInput event system */
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel);
+
+/* generic area check for wcmConfig.c, xf86Wacom.c, and wcmCommon.c */
+Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y);
+Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

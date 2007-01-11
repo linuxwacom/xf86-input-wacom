@@ -221,13 +221,16 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 		return -ENOMEM;
 	memset(wacom, 0, sizeof(struct wacom));
 
-	if (!(wacom_wac = kmalloc(sizeof(struct wacom_wac), GFP_KERNEL)))
+	if (!(wacom_wac = kmalloc(sizeof(struct wacom_wac), GFP_KERNEL))) {
+		kfree(wacom);
 		return -ENOMEM;
+	}
 	memset(wacom_wac, 0, sizeof(struct wacom_wac));
 
 	wacom_wac->data = usb_buffer_alloc(dev, 10, GFP_KERNEL, &wacom->data_dma);
 	if (!wacom_wac->data) {
 		kfree(wacom);
+		kfree(wacom_wac);
 		return -ENOMEM;
 	}
 
@@ -235,6 +238,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (!wacom->irq) {
 		usb_buffer_free(dev, 10, wacom_wac->data, wacom->data_dma);
 		kfree(wacom);
+		kfree(wacom_wac);
 		return -ENOMEM;
 	}
 

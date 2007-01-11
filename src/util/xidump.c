@@ -2,7 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
-** Copyright (C) 2004 - 2006 - Ping Cheng 
+** Copyright (C) 2004 - 2007 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -29,6 +29,7 @@
 **   2005-11-11 0.7.1 - report tool ID and serial number
 **   2006-05-05 0.7.4 - Removed older 2.6 kernels
 **   2006-07-19 0.7.5 - Support buttons and keys combined
+**   2007-01-10 0.7.7 - Don't list uninitialized tools
 **
 ****************************************************************************/
 
@@ -40,7 +41,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.7.5"
+#define XIDUMP_VERSION "0.7.7"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -151,7 +152,8 @@ int ListDevices(Display* pDisp, const char* pszDeviceName)
 		if (pszDeviceName && strcasecmp(pDev->name, pszDeviceName))
 			continue;
 
-		printf("%-30s %s\n",
+		if (pDev->num_classes)
+			printf("%-30s %s\n",
 				pDev->name,
 				(pDev->use == 0) ? "disabled" :
 				(pDev->use == IsXKeyboard) ? "keyboard" :
@@ -240,7 +242,8 @@ XDeviceInfoPtr GetDevice(Display* pDisp, const char* pszDeviceName)
 	/* find device by name */
 	for (i=0; i<gnDevListCnt; ++i)
 	{
-		if (strcasecmp(gpDevList[i].name,pszDeviceName) == 0)
+		if (!strcasecmp(gpDevList[i].name,pszDeviceName) &&
+			gpDevList[i].num_classes)
 			return gpDevList + i;
 	}
 
@@ -921,6 +924,7 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	}
 
 	/* open device */
+fprintf(stderr, "claess =%d use =%d type = %d \n", (int)pDevInfo->num_classes, (int)(pDevInfo->use), (int)pDevInfo->type);
 	pDev = XOpenDevice(pDisp,pDevInfo->id);
 	if (!pDev)
 	{

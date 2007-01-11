@@ -483,14 +483,6 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 {
 	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
 	common->wcmProtocolLevel = 5;
-	if ( strstr(id, "Intuos3") || strstr(id, "21UX") )
-	{
-		common->wcmChannelCnt = 1;
-	}
-	else
-	{
-		common->wcmChannelCnt = 2;
-	}
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
 			= PROXOUT_INTUOS_DISTANCE; 
@@ -503,7 +495,6 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version)
 {
 	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
-	common->wcmChannelCnt = 1;
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
@@ -711,73 +702,46 @@ static void usbParseEvent(WacomCommonPtr common,
 	/* figure out the channel to use based on serial number */
 	channel = -1;
 
-	/* one channel only? */
-	if (common->wcmChannelCnt == 1)
+	/* find existing channel */
+	for (i=0; i<MAX_CHANNELS; ++i)
 	{
-		/* Intuos3 or Graphire4 Pad */
-		if (common->wcmLastToolSerial == 0xffffffff || common->wcmLastToolSerial == 0xf0)
+		if (common->wcmChannel[i].work.proximity &&
+		   common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
 		{
-			channel = 1;
-			(&common->wcmChannel[channel].work)->device_type = PAD_ID;
-			(&common->wcmChannel[channel].work)->proximity = 1;
-		}
-		else   /* must be it. */
-		{
-			channel = 0;
-			if (common->wcmChannel[0].work.proximity == 0)
-			{
-				memset(&common->wcmChannel[0],0,
-						sizeof(WacomChannel));
-				common->wcmChannel[0].work.proximity = 1;
-			}
+			channel = i;
+			break;
 		}
 	}
 
-	/* otherwise, find the channel */
-	else
+	/* find an empty channel */
+	if (channel < 0)
 	{
-		/* clear out channels */
-		for (i=0; i<common->wcmChannelCnt; ++i)
+		for (i=0; i<MAX_CHANNELS; ++i)
 		{
-			if (common->wcmChannel[i].work.proximity == 0)
+			if (!common->wcmChannel[i].work.proximity)
 			{
 				memset(&common->wcmChannel[i],0,
 						sizeof(WacomChannel));
-			}
-		}
-		/* find existing channel */
-		for (i=0; i<common->wcmChannelCnt; ++i)
-		{
-			if (common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
-			{
+				/* in case the in-prox event was missing */
+				common->wcmChannel[i].work.proximity = 1;
+				/* Intuos3 or Graphire4 Pad */
+				if (common->wcmLastToolSerial == 0xffffffff ||
+					common->wcmLastToolSerial == 0xf0)
+					common->wcmChannel[i].work.device_type = PAD_ID;
 				channel = i;
 				break;
 			}
 		}
+	}
 
-		/* find an empty channel */
-		if (channel < 0)
-		{
-			for (i=0; i<common->wcmChannelCnt; ++i)
-			{
-				if (common->wcmChannel[i].work.proximity == 0)
-				{
-					channel = i;
-					/* the in-prox event was missing */
-					common->wcmChannel[i].work.proximity = 1;
-					break;
-				}
-			}
-		}
+	/* fresh out of channels */
+	if (channel < 0)
+	{
+		/* this should never happen in normal use */
+		DBG(1, ErrorF("usbParse: Exceeded channel count; "
+			"ignoring.\n"));
+		return;
 
-		/* fresh out of channels */
-		if (channel < 0)
-		{
-			/* this should never happen in normal use */
-			DBG(1, ErrorF("usbParse: Exceeded channel count; "
-				"ignoring.\n"));
-			return;
-		}
 	}
 
 	usbParseChannel(common,channel,common->wcmLastToolSerial);

@@ -98,111 +98,13 @@ WacomModule gWacomModule =
 	xf86WcmDevReverseConvert,
 };
 
-/*****************************************************************************
- * xf86WcmRegisterX11Devices --
- *    Register the X11 input devices with X11 core.
- ****************************************************************************/
-
-static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
+static int xf86WcmInitArea(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-	int totalWidth = 0, maxHeight = 0, tabletSize = 0;
-	double screenRatio, tabletRatio;
-	CARD8 butmap[MAX_BUTTONS];
-	int nbaxes, nbbuttons, nbkeys;
-	int loop;
 	WacomToolAreaPtr area = priv->toolarea;
-
-	/* Detect tablet configuration, if possible */
-	if (priv->common->wcmModel->DetectConfig)
-		priv->common->wcmModel->DetectConfig (local);
-
-	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
-	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
-	nbkeys = nbbuttons;         /* Same number of keys since any button may be */
-	                            /* configured as an either mouse button or key */
-
-	DBG(10,ErrorF("xf86WcmRegisterX11Devices (%s) %d buttons, %d keys, %d axes\n",
-			IsStylus(priv) ? "stylus" :
-			IsCursor(priv) ? "cursor" :
-			IsPad(priv) ? "pad" : "eraser",
-			nbbuttons, nbkeys, nbaxes));
-
-	for(loop=1; loop<=nbbuttons; loop++)
-		butmap[loop] = loop;
-
-	if (InitButtonClassDeviceStruct(local->dev, nbbuttons, butmap) == FALSE)
-	{
-		ErrorF("unable to allocate Button class device\n");
-		return FALSE;
-	}
-
-	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
-	{
-			ErrorF("unable to init proximity class device\n");
-			return FALSE;
-	}
-
-	if (nbaxes || nbaxes > 6)
-		nbaxes = priv->naxes = 6;
-
-	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
-					  xf86GetMotionEvents,
-					  local->history_size,
-					  (priv->flags & ABSOLUTE_FLAG) ?
-					  Absolute : Relative) == FALSE)
-	{
-		ErrorF("unable to allocate Valuator class device\n");
-		return FALSE;
-	}
-
-	if (nbkeys)
-	{
-		KeySymsRec wacom_keysyms;
-		KeySym keymap[MAX_BUTTONS];
-
-		for (loop = 0; loop < nbkeys; loop++)
-			if ((priv->button [loop] & AC_TYPE) == AC_KEY)
-				keymap [loop] = priv->button [loop] & AC_CODE;
-			else
-				keymap [loop] = NoSymbol;
-
-		/* There seems to be a long-standing misunderstanding about
-		 * how a keymap should be defined. All tablet drivers from
-		 * stock X11 source tree are doing it wrong: they leave first
-		 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
-		 * key code. But if you look at SetKeySymsMap() from
-		 * programs/Xserver/dix/devices.c you will see that
-		 * Xserver does not require first 8 keysyms; it supposes
-		 * that the map begins at minKeyCode.
-		 *
-		 * It could be that this assumption is a leftover from
-		 * earlier XFree86 versions, but that's out of our scope.
-		 * This also means that no keys on extended input devices
-		 * with their own keycodes (e.g. tablets) were EVER used.
-		 */
-		wacom_keysyms.map = keymap;
-		/* minKeyCode = 8 because this is the min legal key code */
-		wacom_keysyms.minKeyCode = 8;
-		wacom_keysyms.maxKeyCode = 8 + nbkeys - 1;
-		wacom_keysyms.mapWidth = 1;
-		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
-		{
-			ErrorF("unable to init key class device\n");
-			return FALSE;
-		}
-	}
-
-	/* allocate motion history buffer if needed */
-	xf86MotionHistoryAllocate(local);
-
-	/* initialize bounding rect */
-	if (priv->twinview != TV_NONE && priv->screen_no == -1) 
-	{
-		priv->tvoffsetX = 60;
-		priv->tvoffsetY = 60;
-	}
+	WacomCommonPtr common = priv->common;
+	int totalWidth = 0, maxHeight = 0;
+	double screenRatio, tabletRatio;
 
 	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
@@ -277,6 +179,16 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		}
 	}
 
+	if (priv->numScreen == 1)
+	{
+		priv->factorX = totalWidth
+			/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+		priv->factorY = maxHeight
+			/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+		DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
+			priv->factorX, priv->factorY));
+	}
+
 	/* Maintain aspect ratio */
 	if (priv->flags & KEEP_SHAPE_FLAG)
 	{
@@ -301,20 +213,150 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		}
 	} /* end keep shape */
 
-	if (xf86Verbose)
+	if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+	{
+		int i, j;
+		/* remove this area from the list */
+		WacomToolAreaPtr arealist = priv->tool->arealist;
+		while (arealist && arealist->next != area)
+		{
+			arealist = arealist->next;
+		}
+		arealist->next = area->next;
+		xfree(area);
+
+		/* Remove this device from the common struct */
+		i = 0;
+		while (i<common->wcmNumDevices && common->wcmDevices[i] != local)
+			i++;
+		for (j=i; j<common->wcmNumDevices-1; j++)
+		{
+			common->wcmDevices[j] = common->wcmDevices[j+1];
+		}
+		common->wcmDevices[common->wcmNumDevices-1] = NULL;
+		common->wcmNumDevices--;
+		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
+			local->conf_idev->identifier);
+		return FALSE;
+	}
+	else if (xf86Verbose)
+	{
 		ErrorF("%s Wacom device \"%s\" top X=%d top Y=%d "
 				"bottom X=%d bottom Y=%d\n",
 				XCONFIG_PROBED, local->name, priv->topX,
 				priv->topY, priv->bottomX, priv->bottomY);
+		return TRUE;
+	}
 
-	if (priv->numScreen == 1)
+}
+
+/*****************************************************************************
+ * xf86WcmRegisterX11Devices --
+ *    Register the X11 input devices with X11 core.
+ ****************************************************************************/
+
+static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int tabletSize = 0;
+	CARD8 butmap[MAX_BUTTONS];
+	int nbaxes, nbbuttons, nbkeys;
+	int loop;
+
+	/* Detect tablet configuration, if possible */
+	if (priv->common->wcmModel->DetectConfig)
+		priv->common->wcmModel->DetectConfig (local);
+
+	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
+	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
+	nbkeys = nbbuttons;         /* Same number of keys since any button may be */
+	                            /* configured as an either mouse button or key */
+
+	DBG(10,ErrorF("xf86WcmRegisterX11Devices (%s) %d buttons, %d keys, %d axes\n",
+			IsStylus(priv) ? "stylus" :
+			IsCursor(priv) ? "cursor" :
+			IsPad(priv) ? "pad" : "eraser",
+			nbbuttons, nbkeys, nbaxes));
+
+	if (xf86WcmInitArea(local) == FALSE)
 	{
-		priv->factorX = totalWidth
-			/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-		priv->factorY = maxHeight
-			/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-		DBG(2, ErrorF("X factor = %.3g, Y factor = %.3g\n",
-			priv->factorX, priv->factorY));
+		return FALSE;
+	}
+
+	for(loop=1; loop<=nbbuttons; loop++)
+		butmap[loop] = loop;
+
+	if (InitButtonClassDeviceStruct(local->dev, nbbuttons, butmap) == FALSE)
+	{
+		ErrorF("unable to allocate Button class device\n");
+		return FALSE;
+	}
+
+	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
+	{
+			ErrorF("unable to init proximity class device\n");
+			return FALSE;
+	}
+
+	if (nbaxes || nbaxes > 6)
+		nbaxes = priv->naxes = 6;
+
+	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
+					  xf86GetMotionEvents,
+					  local->history_size,
+					  (priv->flags & ABSOLUTE_FLAG) ?
+					  Absolute : Relative) == FALSE)
+	{
+		ErrorF("unable to allocate Valuator class device\n");
+		return FALSE;
+	}
+
+	if (nbkeys)
+	{
+		KeySymsRec wacom_keysyms;
+		KeySym keymap[MAX_BUTTONS];
+
+		for (loop = 0; loop < nbkeys; loop++)
+			if ((priv->button [loop] & AC_TYPE) == AC_KEY)
+				keymap [loop] = priv->button [loop] & AC_CODE;
+			else
+				keymap [loop] = NoSymbol;
+
+		/* There seems to be a long-standing misunderstanding about
+		 * how a keymap should be defined. All tablet drivers from
+		 * stock X11 source tree are doing it wrong: they leave first
+		 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
+		 * key code. But if you look at SetKeySymsMap() from
+		 * programs/Xserver/dix/devices.c you will see that
+		 * Xserver does not require first 8 keysyms; it supposes
+		 * that the map begins at minKeyCode.
+		 *
+		 * It could be that this assumption is a leftover from
+		 * earlier XFree86 versions, but that's out of our scope.
+		 * This also means that no keys on extended input devices
+		 * with their own keycodes (e.g. tablets) were EVER used.
+		 */
+		wacom_keysyms.map = keymap;
+		/* minKeyCode = 8 because this is the min legal key code */
+		wacom_keysyms.minKeyCode = 8;
+		wacom_keysyms.maxKeyCode = 8 + nbkeys - 1;
+		wacom_keysyms.mapWidth = 1;
+		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+		{
+			ErrorF("unable to init key class device\n");
+			return FALSE;
+		}
+	}
+
+	/* allocate motion history buffer if needed */
+	xf86MotionHistoryAllocate(local);
+
+	/* initialize bounding rect */
+	if (priv->twinview != TV_NONE && priv->screen_no == -1) 
+	{
+		priv->tvoffsetX = 60;
+		priv->tvoffsetY = 60;
 	}
 
 	/* x and y axes */
@@ -587,6 +629,8 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc INIT FAILED\n"));
+				DisableDevice(pWcm);
+				priv->common = NULL;
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
@@ -596,6 +640,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc ON FAILED\n"));
+				DisableDevice(pWcm);
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
@@ -648,8 +693,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TOPX:
 		if ( priv->topX != value)
 		{
+			/* check if value overlaps with existing ones */
+			area->topX = value;
+			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			{
+				area->topX = priv->topX;
+				return BadValue;
+			}
+
+			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopX", value);
-			area->topX = priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
 			if (priv->twinview == TV_LEFT_RIGHT)
 				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 			else
@@ -662,8 +716,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TOPY:
 		if ( priv->topY != value)
 		{
+			/* check if value overlaps with existing ones */
+			area->topY = value;
+			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			{
+				area->topY = priv->topY;
+				return BadValue;
+			}
+
+			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopY", value);
-			area->topY = priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
 			if (priv->twinview == TV_ABOVE_BELOW)
 				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			else
@@ -676,8 +739,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_BOTTOMX:
 		if ( priv->bottomX != value)
 		{
+			/* check if value overlaps with existing ones */
+			area->bottomX = value;
+			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			{
+				area->bottomX = priv->bottomX;
+				return BadValue;
+			}
+
+			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomX", value);
-			area->bottomX = priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 			if (priv->twinview == TV_LEFT_RIGHT)
 				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 			else
@@ -690,8 +762,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_BOTTOMY:
 		if ( priv->bottomY != value)
 		{
+			/* check if value overlaps with existing ones */
+			area->bottomY = value;
+			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			{
+				area->bottomY = priv->bottomY;
+				return BadValue;
+			}
+
+			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomY", value);
-			area->bottomY = priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 			if (priv->twinview == TV_ABOVE_BELOW)
 				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 			else
@@ -1136,8 +1217,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 static int xf86WcmModelToFile(LocalDevicePtr local)
 {
 	FILE		*fp = 0;
-	LocalDevicePtr	localDevices = xf86FirstLocalDevice();
+	LocalDevicePtr  localDevices = xf86FirstLocalDevice();
 	WacomDevicePtr	priv = NULL, lprv;
+	
 	char		m1[32], m2[32], *m3;			
 	int 		i = 0, x = 0, y = 0;
 
@@ -1233,7 +1315,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	xDeviceResolutionCtl* res = (xDeviceResolutionCtl *)control;
 	int i, rc = Success, *r = (int*)(res+1);
-	
+
 	if (control->control != DEVICE_RESOLUTION || (res->num_valuators < 1
 			&& res->num_valuators > 3) || res->first_valuator != 0)
 		return BadMatch;
@@ -1299,6 +1381,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int no_jitter; 
+	double relacc, param, temp;
     
 	DBG(6, ErrorF("xf86WcmDevConvert v0=%d v1=%d \n", v0, v1));
 
@@ -1401,9 +1485,60 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			}
 			return TRUE;
 		}
+		temp = (double)v0 * priv->factorX + 0.5;
+		*x += temp;
 	}
-	*x += v0 * priv->factorX + 0.5;
-	*y += v1 * priv->factorY + 0.5;
+	else
+	{
+		*x = priv->currentSX;
+		*y = priv->currentSY;
+		if(!priv->oldProximity)
+		{
+			/* don't move the cursor */
+			v0 = 0;
+			v1 = 0;
+		}
+		else
+		{
+			v0 -= priv->oldX;
+			v1 -= priv->oldY;
+		}
+		/* don't apply speed for fairly small increments */
+		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
+		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
+		if (ABS(v0) > no_jitter)
+		{
+			param = priv->speed;
+
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
+			{
+				param += priv->accel > 0 ? abs(v0)/relacc : 0;
+			}
+			/* don't apply acceleration when too fast. */
+			v0 *= param > 20.00 ? 20.00 : param;
+		}
+		if (ABS(v1) > no_jitter)
+		{
+			param = priv->speed;
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
+			{
+				param += priv->accel > 0 ? abs(v1)/relacc : 0;
+
+			}
+			/* don't apply acceleration when too fast. */
+			v1 *= param > 20.00 ? 20.00 : param;
+		}
+
+		/* unify acceleration in both directions 
+		 * for relative mode to draw a circle 
+		 */
+		temp = (double)v0 * priv->factorY + 0.5;
+		*x += temp;
+	}
+	temp = (double)v1 * priv->factorY + 0.5;
+	*y += temp;
 
 	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
 	return TRUE;
@@ -1420,6 +1555,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int i = 0;
 
  	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
 	priv->currentSX = x;
@@ -1427,8 +1563,16 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
-		valuators[0] = x / priv->factorX + 0.5;
-		valuators[1] = y / priv->factorY + 0.5;
+		if (!priv->devReverseCount)
+		{
+			/* reset valuators to report raw values */
+			for (i=0; i<priv->naxes; i++)
+				valuators[i] = 0;
+
+			priv->devReverseCount = 1;
+		}
+		else
+			priv->devReverseCount = 0;
 	}
 
 #ifdef NEVER 

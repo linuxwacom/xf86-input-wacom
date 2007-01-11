@@ -98,11 +98,13 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	
 	memset(priv,0,sizeof(*priv));
 	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
-	priv->oldX = -1;             /* previous X position */
-	priv->oldY = -1;             /* previous Y position */
-	priv->oldZ = -1;             /* previous pressure */
-	priv->oldTiltX = -1;         /* previous tilt in x direction */
-	priv->oldTiltY = -1;         /* previous tilt in y direction */
+	priv->oldX = 0;             /* previous X position */
+	priv->oldY = 0;             /* previous Y position */
+	priv->oldZ = 0;             /* previous pressure */
+	priv->oldTiltX = 0;         /* previous tilt in x direction */
+	priv->oldTiltY = 0;         /* previous tilt in y direction */
+	priv->oldStripX = 0;	    /* previous left strip value */
+	priv->oldStripY = 0;	    /* previous right strip value */
 	priv->oldButtons = 0;        /* previous buttons state */
 	priv->oldWheel = 0;          /* previous wheel */
 	priv->topX = 0;              /* X top */
@@ -113,6 +115,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->factorY = 0.0;         /* Y factor */
 	priv->common = common;       /* common info pointer */
 	priv->oldProximity = 0;      /* previous proximity */
+	priv->devReverseCount = 0;   /* flag for relative Reverse call */
 	priv->serial = 0;            /* serial number */
 	priv->screen_no = -1;        /* associated screen */
 	priv->speed = DEFAULT_SPEED; /* rel. mode speed */
@@ -168,7 +171,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
 	common->wcmMaxStripX = 4095;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4095;       /* Max fingerstrip Y */
-	common->wcmChannelCnt = 1;         /* number of channels */
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
@@ -254,6 +256,38 @@ LocalDevicePtr xf86WcmAllocatePad(void)
 		local->type_name = "Wacom Pad";
 
 	return local;
+}
+
+/* xf86WcmPointInArea - check whether the point is within the area */
+
+Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y)
+{
+	if (area->topX <= x && x <= area->bottomX &&
+	    area->topY <= y && y <= area->bottomY)
+		return 1;
+	return 0;
+}
+
+/* xf86WcmAreasOverlap - check if two areas are overlapping */
+
+static Bool xf86WcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
+{
+	if (xf86WcmPointInArea(area1, area2->topX, area2->topY) ||
+	    xf86WcmPointInArea(area1, area2->topX, area2->bottomY) ||
+	    xf86WcmPointInArea(area1, area2->bottomX, area2->topY) ||
+	    xf86WcmPointInArea(area1, area2->bottomX, area2->bottomY))
+		return 1;
+	return 0;
+}
+
+/* xf86WcmAreaListOverlaps - check if the area overlaps any area in the list */
+
+Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
+{
+	for (; list; list = list->next)
+		if (area != list && xf86WcmAreasOverlap(list, area))
+			return 1;
+	return 0;
 }
 
 /* 
@@ -639,9 +673,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 			xfree(tool);
 			priv->tool = tool = toollist;
-			/*TODO: verify area against other areas of the same tool */
-			/* Add the area to the end of the list */
 			arealist = toollist->arealist;
+
+			/* Add the area to the end of the list */
 			while(arealist->next)
 				arealist = arealist->next;
 			arealist->next = area;

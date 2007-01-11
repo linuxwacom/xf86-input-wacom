@@ -52,7 +52,7 @@ WacomDeviceClass* wcmDeviceClasses[] =
  
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
-	const WacomChannelPtr pChannel);
+	const WacomChannelPtr pChannel, int suppress);
 static void resetSampleCounter(const WacomChannelPtr pChannel);
 static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5);
@@ -131,6 +131,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		screenToSet = miPointerCurrentScreen()->myNum;
 		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
 		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
+		DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
+				priv->currentScreen, screenToSet));
 		priv->currentScreen = screenToSet;
 		return;
 	}
@@ -478,8 +480,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
 
-	int rx, ry, rz, v3, v4, v5, no_jitter;
-	double param, relacc;
+	int v3, v4, v5;
 	int is_absolute;
 
 	if (priv->serial && serial != priv->serial)
@@ -526,95 +527,32 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 
-	/* sets rx and ry according to the mode */
-	if (is_absolute)
+	if(!priv->oldProximity && !is_absolute)
 	{
-		rx = x;
-		ry = y;
-		rz = z;
-		if (IsCursor(priv)) 
-		{
-			v3 = rot;
-			v4 = throttle;
-		}
-		else
-		{
-			v3 = tx;
-			v4 = ty;
-		}
-		v5 = wheel;
+		/* initial current max distance */
+		priv->common->wcmMaxCursorDist = ds->distance;
+	}	
+	priv->currentX = x;
+	priv->currentY = y;
+
+	if (IsCursor(priv)) 
+	{
+		v3 = rot;
+		v4 = throttle;
 	}
 	else
 	{
-		if (priv->oldProximity)
-		{
-			if (x > priv->bottomX || x < priv->topX)
-				x = priv->oldX;
-			if (y > priv->bottomY || y < priv->topY)
-				y = priv->oldY;
-
-			rx = x - priv->oldX;
-			ry = y - priv->oldY;
-			rz = z - priv->oldZ;
-		}
-		else
-		{
-			rx = 0;
-			ry = 0;
-			rz = 0;
-			/* initial current max distance */
-			common->wcmMaxCursorDist = ds->distance;
-		}
-
-		/* don't apply speed for fairly small increments */
-		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
-		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
-		if (ABS(rx) > no_jitter)
-		{
-			param = priv->speed;
-
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(rx)/relacc : 0;
-			}
-			/* don't apply acceleration when too fast. */
-			rx *= param > 20.00 ? 20.00 : param;
-		}
-		if (ABS(ry) > no_jitter)
-		{
-			param = priv->speed;
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(ry)/relacc : 0;
-
-			}
-			/* don't apply acceleration when too fast. */
-			ry *= param > 20.00 ? 20.00 : param;
-		}
-		if (IsCursor(priv)) 
-		{
-			v3 = rot - priv->oldRot;
-			v4 = throttle - priv->oldThrottle;
-		}
-		else
-		{
-			v3 = tx - priv->oldTiltX;
-			v4 = ty - priv->oldTiltY;
-		}
-		v5 = wheel - priv->oldWheel;
+		v3 = tx;
+		v4 = ty;
 	}
-
-	priv->currentX = rx;
-	priv->currentY = ry;
+	v5 = wheel;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
 		"\tserial=%d\tbutton=%s\tbuttons=%d\t on channel=%d\n",
 		local->name,
 		is_absolute ? "abs" : "rel",
 		is_proximity,
-		rx, ry, rz, v3, v4, v5, id, serial,
+		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons, channel));
 
 	if (type != PAD_ID)
@@ -638,26 +576,22 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			 * screen and modify the axes before posting events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86WcmSetScreen(local, &rx, &ry);
+				xf86WcmSetScreen(local, &x, &y);
 			}
-
-			/* unify acceleration in both directions for relative mode to draw a circle */
-			if (!is_absolute)
-				rx *= priv->factorY / priv->factorX;
 
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
 				xf86PostProximityEvent(local->dev, 1, 0, naxes,
-					rx, ry, rz, v3, v4, v5);
+					x, y, z, v3, v4, v5);
 
 
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 				xf86PostMotionEvent(local->dev, is_absolute,
-					0, naxes, rx, ry, rz, v3, v4, v5);
+					0, naxes, x, y, z, v3, v4, v5);
 
 			if (priv->oldButtons != buttons)
 			{
-				xf86WcmSendButtons(local,buttons,rx,ry,rz,v3,v4,v5);
+				xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 			}
 
 			/* simulate button 4 and 5 for relative wheel */
@@ -671,10 +605,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 					 */
 					local->dev->button->map [fakeButton] = fakeButton;
 					xf86PostButtonEvent(local->dev, is_absolute,
-						fakeButton, 1, 0, naxes, rx, ry, rz,
+						fakeButton, 1, 0, naxes, x, y, z,
 						v3, v4, v5);
 					xf86PostButtonEvent(local->dev, is_absolute,
-						fakeButton, 0, 0, naxes, rx, ry, rz,
+						fakeButton, 0, 0, naxes, x, y, z,
 						v3, v4, v5);
 				}
 			}
@@ -688,9 +622,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
-				xf86WcmSendButtons(local,0,rx,ry,rz,v3,v4,v5);
+				xf86WcmSendButtons(local,0,x,y,z,v3,v4,v5);
 			if (priv->oldProximity && local->dev->proximity)
-				xf86PostProximityEvent(local->dev,0,0,naxes,rx,ry,rz,v3,v4,v5);
+				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
 		} /* not in proximity */
 	}
 	else
@@ -698,15 +632,15 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		if ((v3 || v4 || buttons || ds->relwheel) && !priv->oldProximity)
 		{
 			xf86PostProximityEvent(local->dev, 1, 0, naxes,
-				rx, ry, rz, v3, v4, v5);
+				x, y, z, v3, v4, v5);
 			is_proximity = 1;
 		}
 		if ( v3 || v4 )
 			xf86PostMotionEvent(local->dev, is_absolute,
-				0, naxes, rx, ry, rz, v3, v4, v5);
+				0, naxes, x, y, z, v3, v4, v5);
 		if (priv->oldButtons != buttons)
 			xf86WcmSendButtons(local, buttons, 
-				rx, ry, rz, v3, v4, v5);
+				x, y, z, v3, v4, v5);
 
 		if ( ds->relwheel )
 		{
@@ -718,32 +652,49 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 				 */
 				local->dev->button->map [fakeButton] = fakeButton;
 				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 1, 0, naxes, rx, ry, rz,
+					fakeButton, 1, 0, naxes, x, y, z,
 					v3, v4, v5);
 				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 0, 0, naxes, rx, ry, rz,
+					fakeButton, 0, 0, naxes, x, y, z,
 					v3, v4, v5);
 			}
 		}
 		if ( !v3 && !v4 && !buttons)
 		{
  			xf86PostProximityEvent(local->dev, 0, 0, naxes, 
-				rx, ry, rz, v3, v4, v5);
+				x, y, z, v3, v4, v5);
 			is_proximity = 0;
 		}
 	}
 	priv->oldProximity = is_proximity;
-	priv->oldButtons = buttons;
-	priv->oldWheel = wheel;
-	priv->oldX = x;
-	priv->oldY = y;
-	priv->oldZ = z;
-	priv->oldTiltX = tx;
-	priv->oldTiltY = ty;
-	priv->oldStripX = ds->stripx;
-	priv->oldStripY = ds->stripy;
-	priv->oldRot = rot;
-	priv->oldThrottle = throttle;
+	if (is_proximity)
+	{
+		priv->oldButtons = buttons;
+		priv->oldWheel = wheel;
+		priv->oldX = x;
+		priv->oldY = y;
+		priv->oldZ = z;
+		priv->oldTiltX = tx;
+		priv->oldTiltY = ty;
+		priv->oldStripX = ds->stripx;
+		priv->oldStripY = ds->stripy;
+		priv->oldRot = rot;
+		priv->oldThrottle = throttle;
+	}
+	else
+	{
+		priv->oldButtons = 0;
+		priv->oldWheel = 0;
+		priv->oldX = 0;
+		priv->oldY = 0;
+		priv->oldZ = 0;
+		priv->oldTiltX = 0;
+		priv->oldTiltY = 0;
+		priv->oldStripX = 0;
+		priv->oldStripY = 0;
+		priv->oldRot = 0;
+		priv->oldThrottle = 0;
+	}
 }
 
 /*****************************************************************************
@@ -760,8 +711,6 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 
 	if (dsOrig->buttons != dsNew->buttons) return 0;
 	if (dsOrig->proximity != dsNew->proximity) return 0;
-	if (ABS(dsOrig->x - dsNew->x) > suppress) return 0;
-	if (ABS(dsOrig->y - dsNew->y) > suppress) return 0;
 	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) return 0;
 	if (ABS(dsOrig->tilty - dsNew->tilty) > suppress) return 0;
 	if (ABS(dsOrig->stripx - dsNew->stripx) > suppress) return 0;
@@ -776,6 +725,11 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 	if ((ABS(dsOrig->abswheel - dsNew->abswheel) > suppress) ||
 		(dsNew->relwheel != 0)) return 0;
 
+	/* need to check if cursor moves or not */
+	if ((ABS(dsOrig->x - dsNew->x) > suppress) || 
+		(ABS(dsOrig->y - dsNew->y) > suppress)) return 2;
+
+	/* discard this event */
 	DBG(11, ErrorF("xf86WcmSuppress discarded data\n"));
 	return 1;
 }
@@ -839,7 +793,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
 	WacomFilterState* fs;
-	int i;
+	int i, suppress = 0;
 
 	/* tool on the tablet when driver starts */
 	if (!miPointerCurrentScreen())
@@ -926,22 +880,11 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 
 		/* Discard unwanted data */
-		if (xf86WcmSuppress(common->wcmSuppress, pLast, &ds))
+		suppress = xf86WcmSuppress(common->wcmSuppress, pLast, &ds);
+		if (suppress == 1)
 		{
-			/* If throttle is not in use, discard data. */
-			if (ABS(ds.throttle) < common->wcmSuppress)
-			{
-				resetSampleCounter(pChannel);
-				return;
-			}
-
-			/* Otherwise, we need this event for time-rate-of-change
-			 * values like the throttle-to-relative-wheel filter.
-			 * To eliminate position change events, we reset all values
-		 	* to last unsuppressed position. */
-
-			ds = *pLast;
-			RESET_RELATIVE(ds);
+			resetSampleCounter(pChannel);
+			return;
 		}
 	}
 
@@ -958,7 +901,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < MAX_SAMPLES) ++pChannel->nSamples;
 
-	commonDispatchDevice(common,channel,pChannel);
+	commonDispatchDevice(common,channel,pChannel, suppress);
 	resetSampleCounter(pChannel);
 }
 
@@ -1002,7 +945,7 @@ static int idtotype(int id)
 }
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
-	const WacomChannelPtr pChannel)
+	const WacomChannelPtr pChannel, int suppress)
 {
 	LocalDevicePtr pDev = NULL;
 	WacomToolPtr tool = NULL;
@@ -1058,16 +1001,49 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	/* 2: Find the associated area, and its InputDevice */
 	if (tool)
 	{
+		/* if the current area is not in-prox anymore, we
+		 * might want to use another area. So move the
+		 * current-pointer away for a moment while we have a
+		 * look if there's a better area defined */
+		WacomToolAreaPtr outprox = NULL;
+		if (tool->current && !xf86WcmPointInArea(tool->current, ds->x, ds->y))
+		{
+			outprox = tool->current;
+			tool->current = NULL;
+		}
+
 		/* If no current area in-prox, find a matching area */
 		if(!tool->current)
 		{
 			WacomToolAreaPtr area = tool->arealist;
 			for(; area; area = area->next)
-				if (area->topX <= ds->x && ds->x <= area->bottomX
-				    && area->topY <= ds->y && ds->y <= area->bottomY)
+				if (xf86WcmPointInArea(area, ds->x, ds->y))
 					break;
 			tool->current = area;
 		}
+
+		/* If a better area was found, send a soft prox-out
+		 * for the current in-prox area, else use the old one. */
+		if (outprox)
+		{
+			if (tool->current)
+			{
+				/* Send soft prox-out for the old area */
+				WacomDevicePtr priv = outprox->device->private;
+				DBG(2, ErrorF("Soft prox-out for %s\n",
+					outprox->device->name));
+				xf86PostProximityEvent(outprox->device->dev,0,0,0);
+				/* Set state of the old device to prox-out */
+				priv->oldProximity = 0;
+				priv->oldButtons = 0;
+				/* start over with button-press events */
+				pChannel->work.buttons = 0;
+				pChannel->valid.state.buttons = 0;
+			}
+			else
+				tool->current = outprox;
+		}
+
 		/* If there was one already in use or we found one */
 		if(tool->current)
 		{
@@ -1148,6 +1124,32 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
+		if (!(priv->flags & ABSOLUTE_FLAG) && (suppress == 2))
+		{
+			/* To improve the accuracy of relative x/y,
+			 * don't send event when there is no movement.
+			 */
+			double deltx = filtered.x - priv->oldX;
+			double delty = filtered.y - priv->oldY;
+			deltx *= priv->factorY*priv->speed;
+			delty *= priv->factorY*priv->speed;
+
+			if (ABS(deltx)<1 && ABS(delty)<1) 
+			{
+				DBG(10, ErrorF("Ignore non-movement relative data \n"));
+				return;
+			}
+			else
+			{
+				int temp = deltx;
+				deltx = (double)temp/(priv->factorY*priv->speed);
+				temp = delty;
+				delty = (double)temp/(priv->factorY*priv->speed);
+				filtered.x = deltx + priv->oldX;
+				filtered.y = delty + priv->oldY;
+			}
+		}
+
 		/* force out-prox when distance is outside wcmCursorProxoutDist. */
 		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
 		{
@@ -1185,7 +1187,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 		xf86WcmSendEvents(pDev, &filtered, channel);
 		/* If out-prox, reset the current area pointer */
-		if (!ds->proximity)
+		if (!filtered.proximity)
 			tool->current = NULL;
 	}
 
@@ -1195,9 +1197,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		DBG(11, ErrorF("no device matches with id=%d, serial=%d\n",
 				ds->device_type, ds->serial_num));
 	}
-
-	/* save the last device */
-	pChannel->pDev = pDev;
 }
 
 /*****************************************************************************

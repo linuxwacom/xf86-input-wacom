@@ -1,3 +1,17 @@
+2007-01-11   Ping Cheng <pingc@wacom.com>
+	* Incorporated patches 1630928, 1630926, and 1614296
+	* Updated xidump to ignore uninitialized tools
+	* Fixed kfree bug in wacom_sys.c for 2.6.13
+
+2007-01-08   Ping Cheng <pingc@wacom.com>
+	* Report raw tablet data in valuators for relative mode
+	* Improve relative movement accuracy in general
+
+2007-01-03   Ping Cheng <pingc@wacom.com>
+	* Improve relative small movement accuracy
+	* Reset pressure for relative in-prox event
+	  to fix bug 1562718
+
 2006-12-27   Ping Cheng <pingc@wacom.com>
 	* label 0.7.7-1 for testing
 

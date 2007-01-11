@@ -849,12 +849,6 @@ static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data
 	{
 	       	xf86WcmEvent(common,channel,ds);
 	}
-
-	/* otherwise, initialize channel and wait for next packet */
-	else
-	{
-		common->wcmChannel[channel].pDev = NULL;
-	}
 	return common->wcmPktLength;
 }
 
