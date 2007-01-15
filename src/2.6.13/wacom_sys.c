@@ -213,7 +213,6 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	struct usb_endpoint_descriptor *endpoint;
 	struct wacom *wacom;
 	struct wacom_wac *wacom_wac;
-	struct input_dev input_dev;
 	char rep_data[2], limit = 0;
         char path[64];
 
@@ -243,30 +242,29 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	}
 
 	wacom->usbdev = dev;
-	wacom->dev = input_dev;
 	usb_make_path(dev, path, 64);
 	sprintf(wacom->phys, "%s/input0", path);
 
 	wacom_wac->features = get_wacom_feature(id);
 	BUG_ON(wacom_wac->features->pktlen > 10);
 
-	input_dev.name = wacom_wac->features->name;
+	wacom->dev.name = wacom_wac->features->name;
 	wacom->wacom_wac = wacom_wac;
-        input_dev.phys = wacom->phys;
-        usb_to_input_id(dev, &input_dev.id);
-	input_dev.dev = &intf->dev;
-	input_dev.private = wacom;
-	input_dev.open = wacom_open;
-	input_dev.close = wacom_close;
+        wacom->dev.phys = wacom->phys;
+        usb_to_input_id(dev, &wacom->dev.id);
+	wacom->dev.dev = &intf->dev;
+	wacom->dev.private = wacom;
+	wacom->dev.open = wacom_open;
+	wacom->dev.close = wacom_close;
 
-	input_dev.evbit[0] |= BIT(EV_KEY) | BIT(EV_ABS);
-	input_dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) | BIT(BTN_TOUCH) | BIT(BTN_STYLUS);
-	input_set_abs_params(&input_dev, ABS_X, 0, wacom_wac->features->x_max, 4, 0);
-	input_set_abs_params(&input_dev, ABS_Y, 0, wacom_wac->features->y_max, 4, 0);
-	input_set_abs_params(&input_dev, ABS_PRESSURE, 0, wacom_wac->features->pressure_max, 0, 0);
-	input_dev.absbit[LONG(ABS_MISC)] |= BIT(ABS_MISC);
+	wacom->dev.evbit[0] |= BIT(EV_KEY) | BIT(EV_ABS);
+	wacom->dev.keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_PEN) | BIT(BTN_TOUCH) | BIT(BTN_STYLUS);
+	input_set_abs_params(&wacom->dev, ABS_X, 0, wacom_wac->features->x_max, 4, 0);
+	input_set_abs_params(&wacom->dev, ABS_Y, 0, wacom_wac->features->y_max, 4, 0);
+	input_set_abs_params(&wacom->dev, ABS_PRESSURE, 0, wacom_wac->features->pressure_max, 0, 0);
+	wacom->dev.absbit[LONG(ABS_MISC)] |= BIT(ABS_MISC);
 
-	wacom_init_input_dev(&input_dev, wacom_wac);
+	wacom_init_input_dev(&wacom->dev, wacom_wac);
 
 	endpoint = &intf->cur_altsetting->endpoint[0].desc;
 

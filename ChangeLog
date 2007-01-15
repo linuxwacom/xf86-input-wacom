@@ -1,3 +1,8 @@
+2007-01-15   Ping Cheng <pingc@wacom.com>
+	* Split wacom.c for 2.6.14
+	* Fixed wacom_sys.c in 2.6.11 and 2.6.13
+	* Fixed bugs related to multiarea support
+
 2007-01-11   Ping Cheng <pingc@wacom.com>
 	* Incorporated patches 1630928, 1630926, and 1614296
 	* Updated xidump to ignore uninitialized tools

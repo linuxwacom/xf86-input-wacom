@@ -213,7 +213,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		}
 	} /* end keep shape */
 
-	if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+	if ((area != priv->tool->arealist) && xf86WcmAreaListOverlap(area, priv->tool->arealist))
 	{
 		int i, j;
 		/* remove this area from the list */
@@ -247,7 +247,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 				priv->topY, priv->bottomX, priv->bottomY);
 		return TRUE;
 	}
-
+	return TRUE;
 }
 
 /*****************************************************************************
@@ -629,7 +629,6 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc INIT FAILED\n"));
-				DisableDevice(pWcm);
 				priv->common = NULL;
 				return !Success;
 			}
@@ -640,7 +639,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc ON FAILED\n"));
-				DisableDevice(pWcm);
+				priv->common = NULL;
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
