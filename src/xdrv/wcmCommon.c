@@ -995,6 +995,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else if (!tool->serial)
 				tooldef = tool;
 		}
+
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldef;
@@ -1207,6 +1208,8 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
 	const char* id, float version)
 {
 	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomToolPtr toollist = common->wcmTool;
+	WacomToolAreaPtr arealist;
 	int temp;
 
 	/* Initialize the tablet */
@@ -1226,6 +1229,18 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
 		temp = common->wcmMaxX;
 		common->wcmMaxX = common->wcmMaxY;
 		common->wcmMaxY = temp;
+	}
+
+	for (; toollist; toollist=toollist->next)
+	{
+		arealist = toollist->arealist;
+		for (; arealist; arealist=arealist->next)
+		{
+			if (!arealist->bottomX) 
+				arealist->bottomX = common->wcmMaxX;
+			if (!arealist->bottomY)
+				arealist->bottomY = common->wcmMaxY;
+		}
 	}
 
 	/* Default threshold value if not set */

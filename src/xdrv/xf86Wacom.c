@@ -101,19 +101,12 @@ WacomModule gWacomModule =
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomToolAreaPtr area = priv->toolarea;
+	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
 	int totalWidth = 0, maxHeight = 0;
 	double screenRatio, tabletRatio;
 
-	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-	if (priv->bottomX == 0) priv->bottomX = common->wcmMaxX;
-	if (priv->bottomY == 0) priv->bottomY = common->wcmMaxY;
-	area->bottomX = priv->bottomX;
-	area->bottomY = priv->bottomY;
-
-	/* Verify Box validity */
+	/* Verify Box */
 	if (priv->topX > common->wcmMaxX)
 	{
 		ErrorF("Wacom invalid TopX (%d) reseting to 0\n",
@@ -211,19 +204,28 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 				screenRatio / tabletRatio + priv->topX;
 			area->bottomY = priv->bottomY = common->wcmMaxY;
 		}
-	} /* end keep shape */
+	}
+	/* end keep shape */ 
 
-	if ((area != priv->tool->arealist) && xf86WcmAreaListOverlap(area, priv->tool->arealist))
+	inlist = priv->tool->arealist;
+
+	/* The first one in the list is always valid */
+	if (area != inlist && xf86WcmAreaListOverlap(area, inlist))
 	{
 		int i, j;
+		inlist = priv->tool->arealist;
+
 		/* remove this area from the list */
-		WacomToolAreaPtr arealist = priv->tool->arealist;
-		while (arealist && arealist->next != area)
+		for (; inlist; inlist=inlist->next)
 		{
-			arealist = arealist->next;
+ 			if (inlist == area)
+			{
+				inlist->next = area->next;
+				xfree(area);
+				area = NULL;
+				break;
+			}
 		}
-		arealist->next = area->next;
-		xfree(area);
 
 		/* Remove this device from the common struct */
 		i = 0;
@@ -694,7 +696,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topX = value;
-			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topX = priv->topX;
 				return BadValue;
@@ -717,7 +719,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topY = value;
-			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topY = priv->topY;
 				return BadValue;
@@ -740,7 +742,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomX = value;
-			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomX = priv->bottomX;
 				return BadValue;
@@ -763,7 +765,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomY = value;
-			if (xf86WcmAreaListOverlap(area, common->wcmTool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomY = priv->bottomY;
 				return BadValue;
