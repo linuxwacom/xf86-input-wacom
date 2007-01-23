@@ -49,6 +49,8 @@ if WCM_DLLOADER
 DLLOADER=-fPIC
 endif
 
+CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
+
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
 

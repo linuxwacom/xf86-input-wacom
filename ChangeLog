@@ -1,3 +1,6 @@
+2007-01-22   Ping Cheng <pingc@wacom.com>
+	Incorporated Magnus' patches
+
 2007-01-19   Ping Cheng <pingc@wacom.com>
 	* Split wacom.c for 2.6.15
 	* Fixed bugs related to multiarea support

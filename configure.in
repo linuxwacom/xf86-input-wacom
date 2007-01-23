@@ -44,6 +44,16 @@ AC_WCM_CHECK_XORG_SDK
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA
 
+dnl Check for -fstack-protector/-fno-stack-protector option in compiler
+AC_MSG_CHECKING(for stack-protector flags support in $CC)
+if $CC -dumpspecs | grep stack-protector >/dev/null 2>&1; then
+	AC_MSG_RESULT(yes)
+	WCM_CFLAGS_STACK_PROTECTOR="-fno-stack-protector"
+else
+	AC_MSG_RESULT(no)
+	WCM_CFLAGS_STACK_PROTECTOR=""
+fi
+AC_SUBST(WCM_CFLAGS_STACK_PROTECTOR)
 
 dnl Check for TCL, TK, and XLib
 AC_WCM_CHECK_XLIB
