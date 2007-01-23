@@ -272,7 +272,6 @@ Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y)
 
 static Bool xf86WcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
 {
-ErrorF("tx=%d ty=%d bx=%d by=%d tx=%d ty=%d bx=%d by=%d \n", area1->topX, area1->topY, area1->bottomX, area1->bottomY, area2->topX, area2->topY, area2->bottomX, area2->bottomY);
 	if (xf86WcmPointInArea(area1, area2->topX, area2->topY) ||
 	    xf86WcmPointInArea(area1, area2->topX, area2->bottomY) ||
 	    xf86WcmPointInArea(area1, area2->bottomX, area2->topY) ||
@@ -661,7 +660,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
 	tool->serial = priv->serial;
-ErrorF(" Config tx=%d ty=%d bx=%d by=%d \n", area->topX, area->topY, area->bottomX, area->bottomY);
 
 	/* The first device don't need to add any tools/areas as it
 	 * will be the first anyway, so if different -> add tool
@@ -685,7 +683,6 @@ ErrorF(" Config tx=%d ty=%d bx=%d by=%d \n", area->topX, area->topY, area->botto
 			while(arealist->next)
 				arealist = arealist->next;
 			arealist->next = area;
-			area->next = NULL;
 		}
 		else /* No match on existing tool/serial, add tool to the end of the list */
 		{
@@ -693,7 +690,6 @@ ErrorF(" Config tx=%d ty=%d bx=%d by=%d \n", area->topX, area->topY, area->botto
 			while(toollist->next)
 				toollist = toollist->next;
 			toollist->next = tool;
-			tool->next = NULL;
 		}
 	}
 

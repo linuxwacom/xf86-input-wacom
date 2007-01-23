@@ -106,6 +106,8 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	int totalWidth = 0, maxHeight = 0;
 	double screenRatio, tabletRatio;
 
+	DBG(10,ErrorF("xf86WcmInitArea\n"));
+
 	/* Verify Box */
 	if (priv->topX > common->wcmMaxX)
 	{
@@ -121,14 +123,14 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		area->topY = priv->topY = 0;
 	}
 
-	if (priv->bottomX < priv->topX)
+	if (priv->bottomX < priv->topX || !priv->bottomX)
 	{
 		ErrorF("Wacom invalid BottomX (%d) reseting to %d\n",
 				priv->bottomX, common->wcmMaxX);
 		area->bottomX = priv->bottomX = common->wcmMaxX;
 	}
 
-	if (priv->bottomY < priv->topY)
+	if (priv->bottomY < priv->topY || !priv->bottomY)
 	{
 		ErrorF("Wacom invalid BottomY (%d) reseting to %d\n",
 				priv->bottomY, common->wcmMaxY);
@@ -218,12 +220,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		/* remove this area from the list */
 		for (; inlist; inlist=inlist->next)
 		{
- 			if (inlist == area)
+			if (inlist->next == area)
 			{
 				inlist->next = area->next;
 				xfree(area);
 				area = NULL;
-				break;
+ 				break;
 			}
 		}
 
@@ -241,13 +243,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 			local->conf_idev->identifier);
 		return FALSE;
 	}
-	else if (xf86Verbose)
+	if (xf86Verbose)
 	{
 		ErrorF("%s Wacom device \"%s\" top X=%d top Y=%d "
 				"bottom X=%d bottom Y=%d\n",
 				XCONFIG_PROBED, local->name, priv->topX,
 				priv->topY, priv->bottomX, priv->bottomY);
-		return TRUE;
 	}
 	return TRUE;
 }
@@ -631,7 +632,6 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc INIT FAILED\n"));
-				priv->common = NULL;
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
@@ -641,7 +641,6 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, ErrorF("xf86WcmProc ON FAILED\n"));
-				priv->common = NULL;
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
@@ -696,9 +695,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topX = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			/* The first one in the list is always valid */			
+			if (area != priv->tool->arealist && 
+				xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topX = priv->topX;
+				DBG(10, ErrorF("xf86WcmSetParam TopX overlap with another area \n"));
 				return BadValue;
 			}
 
@@ -719,9 +721,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topY = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			/* The first one in the list is always valid */			
+			if (area != priv->tool->arealist && 
+				xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topY = priv->topY;
+				DBG(10, ErrorF("xf86WcmSetParam TopY overlap with another area \n"));
 				return BadValue;
 			}
 
@@ -742,9 +747,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomX = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			/* The first one in the list is always valid */			
+			if (area != priv->tool->arealist && 
+				xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomX = priv->bottomX;
+				DBG(10, ErrorF("xf86WcmSetParam BottomX overlap with another area \n"));
 				return BadValue;
 			}
 
@@ -765,9 +773,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomY = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			/* The first one in the list is always valid */			
+			if (area != priv->tool->arealist && 
+				xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomY = priv->bottomY;
+				DBG(10, ErrorF("xf86WcmSetParam BottomY overlap with another area \n"));
 				return BadValue;
 			}
 

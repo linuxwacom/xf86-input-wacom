@@ -1025,7 +1025,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		/* If a better area was found, send a soft prox-out
 		 * for the current in-prox area, else use the old one. */
-		if (outprox)
+		if (outprox && outprox != tool->current)
 		{
 			if (tool->current)
 			{
