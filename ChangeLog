@@ -1,10 +1,13 @@
+2007-01-25   Ping Cheng <pingc@wacom.com>
+	* Added support for Thinkpad X60t
+	* label 0.7.7-2 for testing
+
 2007-01-22   Ping Cheng <pingc@wacom.com>
-	Incorporated Magnus' patches
+	* Incorporated Magnus' patches
 
 2007-01-19   Ping Cheng <pingc@wacom.com>
 	* Split wacom.c for 2.6.15
 	* Fixed bugs related to multiarea support
-	* label 0.7.7-2 for testing
 
 2007-01-15   Ping Cheng <pingc@wacom.com>
 	* Split wacom.c for 2.6.14
