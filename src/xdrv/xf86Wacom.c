@@ -1,7 +1,7 @@
 /* $XConsortium: xf86Wacom.c /main/20 1996/10/27 11:05:20 kaleb $ */
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
- * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -111,29 +111,25 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	/* Verify Box */
 	if (priv->topX > common->wcmMaxX)
 	{
-		ErrorF("Wacom invalid TopX (%d) reseting to 0\n",
-				priv->topX);
 		area->topX = priv->topX = 0;
 	}
 
 	if (priv->topY > common->wcmMaxY)
 	{
-		ErrorF("Wacom invalid TopY (%d) reseting to 0\n",
-				priv->topY);
 		area->topY = priv->topY = 0;
 	}
 
+	/* set unconfigured bottom to max */
+	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 	if (priv->bottomX < priv->topX || !priv->bottomX)
 	{
-		ErrorF("Wacom invalid BottomX (%d) reseting to %d\n",
-				priv->bottomX, common->wcmMaxX);
 		area->bottomX = priv->bottomX = common->wcmMaxX;
 	}
 
+	/* set unconfigured bottom to max */
+	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomY < priv->topY || !priv->bottomY)
 	{
-		ErrorF("Wacom invalid BottomY (%d) reseting to %d\n",
-				priv->bottomY, common->wcmMaxY);
 		area->bottomY = priv->bottomY = common->wcmMaxY;
 	}
 
@@ -224,7 +220,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 			{
 				inlist->next = area->next;
 				xfree(area);
-				area = NULL;
+				priv->toolarea = NULL;
  				break;
 			}
 		}
@@ -695,9 +691,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topX = value;
-			/* The first one in the list is always valid */			
-			if (area != priv->tool->arealist && 
-				xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topX = priv->topX;
 				DBG(10, ErrorF("xf86WcmSetParam TopX overlap with another area \n"));
@@ -721,9 +715,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->topY = value;
-			/* The first one in the list is always valid */			
-			if (area != priv->tool->arealist && 
-				xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->topY = priv->topY;
 				DBG(10, ErrorF("xf86WcmSetParam TopY overlap with another area \n"));
@@ -747,9 +739,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomX = value;
-			/* The first one in the list is always valid */			
-			if (area != priv->tool->arealist && 
-				xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomX = priv->bottomX;
 				DBG(10, ErrorF("xf86WcmSetParam BottomX overlap with another area \n"));
@@ -773,9 +763,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			/* check if value overlaps with existing ones */
 			area->bottomY = value;
-			/* The first one in the list is always valid */			
-			if (area != priv->tool->arealist && 
-				xf86WcmAreaListOverlap(area, priv->tool->arealist))
+			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				area->bottomY = priv->bottomY;
 				DBG(10, ErrorF("xf86WcmSetParam BottomY overlap with another area \n"));

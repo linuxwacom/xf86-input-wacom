@@ -78,8 +78,10 @@ static Bool isdv4Init(LocalDevicePtr local)
 
 	DBG(1, ErrorF("initializing ISDV4 tablet\n"));    
 
-	/* Set the speed of the serial link to 19200 */
-	if (xf86WcmSetSerialSpeed(local->fd, 19200) < 0)
+	/* Set the speed of the serial link to 19200 first */
+	if (common->wcmLinkSpeed == 9600)
+		common->wcmLinkSpeed = 19200;
+	if (xf86WcmSetSerialSpeed(local->fd, common->wcmLinkSpeed) < 0)
 		return !Success;
    
 	/* Send stop command to the tablet */
@@ -165,8 +167,16 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		ErrorF("Wacom Query ISDV4 error magic error \n");
-		return !Success;
+		if (common->wcmLinkSpeed != 38400)
+		{
+			common->wcmLinkSpeed = 38400;
+			return isdv4Init(local);
+		}
+		else
+		{
+			ErrorF("Wacom Query ISDV4 error magic error \n");
+			return !Success;
+		}
 	}
 	
 	common->wcmMaxZ = ( data[5] | ((data[6] & 0x07) << 7) );
