@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  * Copyright 2003 by John Joganic <john@joganic.com>
- * Copyright 2003 - 2006 by Ping Cheng <pingc@wacom.com> 
+ * Copyright 2003 - 2007 by Ping Cheng <pingc@wacom.com> 
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -72,8 +72,16 @@
 #define XWACOM_PARAM_XYDEFAULT  	204
 #define XWACOM_PARAM_MMT        	205
 #define XWACOM_PARAM_RAWFILTER  	206
-#define XWACOM_PARAM_TID		207
-#define XWACOM_PARAM_GETMODEL		208
+#define XWACOM_PARAM_GETONLYPARAM	220
+#define XWACOM_PARAM_TID		221
+#define XWACOM_PARAM_TOOLID		222
+#define XWACOM_PARAM_TOOLSERIAL		223
+#define XWACOM_PARAM_GETMODEL		224
+#define XWACOM_PARAM_NUMSCREEN		250
+#define XWACOM_PARAM_SCREENTOPX		231
+#define XWACOM_PARAM_SCREENTOPY		232
+#define XWACOM_PARAM_SCREENBOTTOMX	233
+#define XWACOM_PARAM_SCREENBOTTOMY	234
 
 #define XWACOM_VALUE_ROTATE_NONE 0
 #define XWACOM_VALUE_ROTATE_CW 1
@@ -98,5 +106,6 @@
 #define AC_HYPER            0x08000000  /* Emulate HYPER+event */
 #define AC_ANYMOD           0x0fc00000  /* Any modifier key bit */
 #define AC_CORE             0x20000000	/* Always emit a core event */
+#define AC_KEY_END          0x40000000	/* End of a keystroke */
 
 #endif /* __XF86_XWACOM_H */
