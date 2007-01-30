@@ -1148,6 +1148,15 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return -1;
 	case XWACOM_PARAM_TID:
 		return common->tablet_id;
+	case XWACOM_PARAM_TOOLID:
+		return priv->old_device_id;
+	case XWACOM_PARAM_TOOLSERIAL:
+		return priv->old_serial;
+	case XWACOM_PARAM_NUMSCREEN:
+		if (priv->twinview == TV_NONE)
+			return screenInfo.numScreens;
+		else
+			return 2;
 	}
 	DBG(10, ErrorF("xf86WcmGetParam invalid param %d\n",param));
 	return -1;

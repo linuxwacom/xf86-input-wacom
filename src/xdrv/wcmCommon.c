@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -667,6 +667,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		}
 	}
 	priv->oldProximity = is_proximity;
+	priv->old_device_id = id;
+	priv->old_serial = serial;
 	if (is_proximity)
 	{
 		priv->oldButtons = buttons;

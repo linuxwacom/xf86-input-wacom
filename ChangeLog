@@ -1,3 +1,8 @@
+2007-01-29   Ping Cheng <pingc@wacom.com>
+	* Added 3 new xsetwacom options
+	* Updated wacom_wac.c and wacom.c for Intuos outbound tracking
+	* label 0.7.7-3 
+
 2007-01-25   Ping Cheng <pingc@wacom.com>
 	* Added support for Thinkpad X60t
 	* label 0.7.7-2 for testing

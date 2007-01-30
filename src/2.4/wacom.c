@@ -86,7 +86,8 @@
  *    v1.30-j0.7.0 - added Volito 2 and PenStation/PenPartner 2
  *    v1.30-j0.7.1 - added DTU 710, DTF 720, Graphire4
  *    v1.30-j0.7.3 - added DTF 521, I3 12x12, and I3 12x19
- *    v1.30-j0.7.5 - Support tablet buttons/keys  
+ *    v1.30-j0.7.5 - Support tablet buttons/keys 
+ *    v1.30-j0.7.7 - Support Intuos outbound tracking
  */
 
 /*
@@ -117,7 +118,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.7.5"
+#define DRIVER_VERSION "v1.30-j0.7.7"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -133,6 +134,7 @@ MODULE_LICENSE("GPL");
 #define STYLUS_DEVICE_ID	0x02
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
+#define PAD_DEVICE_ID		0x0F
 
 static int kwacomd_pid = 0;			/* PID of kwacomd */
 static DECLARE_COMPLETION(kwacomd_exited);
@@ -440,10 +442,12 @@ static void wacom_graphire_irq(struct urb *urb)
 			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
 			input_report_rel(dev, REL_WHEEL, rw);
 			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
+			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if ( wacom->id[1] ) {
 			wacom->id[1] = 0;
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
+			input_report_abs(dev, ABS_MISC, 0);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 	}
@@ -522,14 +526,6 @@ static int wacom_intuos_inout(struct urb *urb)
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN; break;
 		}
-		if(!((wacom->tool[idx] == BTN_TOOL_LENS) && 
-				(strstr(wacom->features->name, "Intuos3 12x12") 
-					|| strstr(wacom->features->name, "Intuos3 12x19"))))
-		{
-			input_report_abs(dev, ABS_MISC, wacom->id[idx]); /* report tool id */
-			input_report_key(dev, wacom->tool[idx], 1);
-			input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-		}
 		return 1;
 	}
 
@@ -541,12 +537,7 @@ static int wacom_intuos_inout(struct urb *urb)
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 		return 1;
 	}
-
-	if((wacom->tool[idx] == BTN_TOOL_LENS) && (strstr(wacom->features->name, "Intuos3 12x12") 
-			|| strstr(wacom->features->name, "Intuos3 12x19")))
-		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 static void wacom_intuos_general(struct urb *urb)
@@ -626,6 +617,7 @@ static void wacom_intuos_irq(struct urb *urb)
 			input_report_key(dev, wacom->tool[1], 1);
 		else
 			input_report_key(dev, wacom->tool[1], 0);
+		input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
 		input_event(dev, EV_MSC, MSC_SERIAL, 0xffffffff);
 		return;
 	}
@@ -721,7 +713,13 @@ static void wacom_intuos_irq(struct urb *urb)
 	}
 
 	input_report_abs(dev, ABS_MISC, wacom->id[idx]); /* report tool id */
-	input_report_key(dev, wacom->tool[idx], 1);
+	/* Only large I3 supports Lens Cursor 
+	 * Report in-prox only when RDY is set 
+	 */
+	if((!((wacom->tool[idx] == BTN_TOOL_LENS) && (strstr(wacom->features->name, "Intuos3 12x12") 
+			|| strstr(wacom->features->name, "Intuos3 12x19"))))
+			&& (data[1] & 0x40))
+		input_report_key(dev, wacom->tool[idx], 1);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 }
 

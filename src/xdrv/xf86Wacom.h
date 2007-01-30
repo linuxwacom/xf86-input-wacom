@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -228,6 +228,7 @@ struct _WacomModel
 #define STYLUS_DEVICE_ID	0x02
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
+#define PAD_DEVICE_ID		0x0F
 
 #define STYLUS_ID		0x00000001
 #define CURSOR_ID		0x00000002
@@ -297,6 +298,8 @@ struct _WacomDeviceRec
 	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
+	int old_device_id;	/* last in prox device id */
+	int old_serial;		/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
 	double speed;           /* relative mode speed */
 	int accel;              /* relative mode acceleration */
@@ -483,6 +486,7 @@ struct _WacomCommonRec
 	int wcmThreshold;            /* Threshold for button pressure */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 	unsigned int wcmLinkSpeed;   /* serial link speed */
+	unsigned int wcmISDV4Speed;  /* serial ISDV4 link speed */
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */

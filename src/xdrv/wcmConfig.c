@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2006 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -115,6 +115,11 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->factorY = 0.0;         /* Y factor */
 	priv->common = common;       /* common info pointer */
 	priv->oldProximity = 0;      /* previous proximity */
+	priv->old_serial = 0;	     /* last active tool's serial */
+	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
+		(IsEraser(priv) ? ERASER_DEVICE_ID : 
+		(IsCursor(priv) ? CURSOR_DEVICE_ID : PAD_DEVICE_ID));
+
 	priv->devReverseCount = 0;   /* flag for relative Reverse call */
 	priv->serial = 0;            /* serial number */
 	priv->screen_no = -1;        /* associated screen */
@@ -174,6 +179,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
+	common->wcmISDV4Speed = 19200;  /* serial ISDV4 link speed */
+
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmEraserID = 0;	/* eraser id associated with the stylus */

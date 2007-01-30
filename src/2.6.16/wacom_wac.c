@@ -237,6 +237,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
 			wacom_report_rel(wcombo, REL_WHEEL, rw);
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0xf0);
+			wacom_report_abs(wcombo, ABS_MISC, PAD_DEVICE_ID);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if (wacom->id[1]) {
 			wacom_input_sync(wcombo); /* sync last event */
@@ -244,6 +245,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x80));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0);
+			wacom_report_abs(wcombo, ABS_MISC, 0); 
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 	}
@@ -313,15 +315,6 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 				break;
 			default: /* Unknown tool */
 				wacom->tool[idx] = BTN_TOOL_PEN;
-		}
-		/* only large I3 support Lens Cursor */
-		if(!((wacom->tool[idx] == BTN_TOOL_LENS) 
-				 && ((wacom->features->type == INTUOS3) 
-				 || (wacom->features->type == INTUOS3S)))) {
-			wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]); /* report tool id */
-			wacom_report_key(wcombo, wacom->tool[idx], 1);
-			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-			return 2;
 		}
 		return 1;
 	}
@@ -406,6 +399,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, wacom->tool[1], 1);
 		else
 			wacom_report_key(wcombo, wacom->tool[1], 0);
+		wacom_report_abs(wcombo, ABS_MISC, PAD_DEVICE_ID); 
 		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xffffffff);
                 return 1;
 	}
@@ -487,8 +481,16 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 		}
 	}
 
-	wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]); /* report tool id */
-	wacom_report_key(wcombo, wacom->tool[idx], 1);
+	wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]);
+
+	/* Only large I3 supports Lens Cursor 
+	 * Report in-prox only when RDY is set 
+	 */
+	if((!((wacom->tool[idx] == BTN_TOOL_LENS) 
+		&& ((wacom->features->type == INTUOS3) 
+			|| (wacom->features->type == INTUOS3S)))) && 
+	    		(data[1] & 0x40))
+		wacom_report_key(wcombo, wacom->tool[idx], 1);
 	wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 	return 1;
 }

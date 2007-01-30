@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2006 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -722,8 +722,6 @@ static void usbParseEvent(WacomCommonPtr common,
 			{
 				memset(&common->wcmChannel[i],0,
 						sizeof(WacomChannel));
-				/* in case the in-prox event was missing */
-				common->wcmChannel[i].work.proximity = 1;
 				/* Intuos3 or Graphire4 Pad */
 				if (common->wcmLastToolSerial == 0xffffffff ||
 					common->wcmLastToolSerial == 0xf0)

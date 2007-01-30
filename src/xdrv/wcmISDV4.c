@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -78,10 +78,8 @@ static Bool isdv4Init(LocalDevicePtr local)
 
 	DBG(1, ErrorF("initializing ISDV4 tablet\n"));    
 
-	/* Set the speed of the serial link to 19200 first */
-	if (common->wcmLinkSpeed == 9600)
-		common->wcmLinkSpeed = 19200;
-	if (xf86WcmSetSerialSpeed(local->fd, common->wcmLinkSpeed) < 0)
+	/* Try 19200 first */
+	if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 		return !Success;
    
 	/* Send stop command to the tablet */
@@ -114,6 +112,7 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
 	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
 	common->wcmTPCButtonDefault = 1;
+	common->tablet_id = 0x90;
 }
 static int isdv4GetRanges(LocalDevicePtr local)
 {
@@ -167,9 +166,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		if (common->wcmLinkSpeed != 38400)
+		/* Try 38400 now */
+		if (common->wcmISDV4Speed != 38400)
 		{
-			common->wcmLinkSpeed = 38400;
+			common->wcmISDV4Speed = 38400;
 			return isdv4Init(local);
 		}
 		else

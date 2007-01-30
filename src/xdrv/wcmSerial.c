@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2005 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -523,6 +523,7 @@ static int serialInitTablet(LocalDevicePtr local)
 	int loop, idx;
 	char id[BUFFER_SIZE];
 	float version;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
 	WacomModelPtr model = NULL;
 
@@ -559,19 +560,36 @@ static int serialInitTablet(LocalDevicePtr local)
 
 		/* Detect tablet model based on identifier */
 		if (id[2] == 'G' && id[3] == 'D')
+		{
 			model = &serialIntuos;
+			common->tablet_id = 0x20;
+		}
 		else if (id[2] == 'X' && id[3] == 'D')
+		{
 			model = &serialIntuos2;
+			common->tablet_id = 0x40;
+		}
 		else if ( (id[2] == 'P' && id[3] == 'L') ||
 			(id[2] == 'D' && id[3] == 'T') )
+		{
 			model = &serialCintiq;
+			common->tablet_id = 0x30;
+		}
 		else if (id[2] == 'C' && id[3] == 'T')
+		{
 			model = &serialPenPartner;
+			common->tablet_id = 0x00;
+		}
 		else if (id[2] == 'E' && id[3] == 'T')
+		{
 			model = &serialGraphire;
+			common->tablet_id = 0x10;
+		}
 		else
+		{
 			model = &serialProtocol4;
-
+			common->tablet_id = 0x03;
+		}
 	}
 
 	return xf86WcmInitTablet(local,model,id,version);

@@ -340,9 +340,21 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
 		XWACOM_VALUE_ROTATE_NONE },
 
-	{ "GetTabletID", 
+	{ "ToolID", 
+		"Returns the ID of the associated device. ",
+		XWACOM_PARAM_TOOLID, VALUE_REQUIRED },
+
+	{ "ToolSerial", 
+		"Returns the serial number of the associated device. ",
+		XWACOM_PARAM_TOOLSERIAL, VALUE_REQUIRED },
+
+	{ "TabletID", 
 		"Returns the tablet ID of the associated device. ",
 		XWACOM_PARAM_TID, VALUE_REQUIRED },
+
+	{ "NumScreen", 
+		"Returns number of screens configured for the desktop. ",
+		XWACOM_PARAM_NUMSCREEN, VALUE_REQUIRED },
 
 	{ "GetModel",
 		"Writes tablet models to /etc/wacom.dat. ",
@@ -540,6 +552,13 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 	if (!p->pszParam)
 	{
 		fprintf(stderr,"Set: Unknown parameter '%s'\n",pszParam);
+		return 1;
+	}
+
+	if (p->nParamID > XWACOM_PARAM_GETONLYPARAM)
+	{
+		fprintf(stderr,"Set: '%s' doesn't support set option.\n",
+			pszParam);
 		return 1;
 	}
 
