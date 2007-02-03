@@ -170,7 +170,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 	wacom_input_regs(wcombo);
 
 	id = STYLUS_DEVICE_ID;
-	if (data[1] & 0x10) { /* in prox */
+	if (data[1] & 0x80) { /* in prox */
 
 		switch ((data[1] >> 5) & 3) {
 
@@ -203,9 +203,6 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 					wacom_report_abs(wcombo, ABS_DISTANCE, data[7] & 0x3f);
 				break;
 		}
-	}
-
-	if (data[1] & 0x90) {
 		x = wacom_le16_to_cpu(&data[2]);
 		y = wacom_le16_to_cpu(&data[4]);
 		wacom_report_abs(wcombo, ABS_X, x);
@@ -217,14 +214,23 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_STYLUS2, data[1] & 0x04);
 		}
 		wacom_report_abs(wcombo, ABS_MISC, id); /* report tool id */
-	}
-	else
-		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
-
-	if (data[1] & 0x10)  /* only report prox-in when in area */
 		wacom_report_key(wcombo, wacom->tool[0], 1);
-	if (!(data[1] & 0x90))  /* report prox-out when physically out */
+	} else if (!(data[1] & 0x90)) {
+		wacom_report_abs(wcombo, ABS_X, 0);
+		wacom_report_abs(wcombo, ABS_Y, 0);
+		if (wacom->tool[0] == BTN_TOOL_MOUSE) {
+			wacom_report_key(wcombo, BTN_LEFT, 0);
+			wacom_report_key(wcombo, BTN_RIGHT, 0);
+			wacom_report_abs(wcombo, ABS_DISTANCE, 0);
+		} else {
+			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
+			wacom_report_key(wcombo, BTN_TOUCH, 0);
+			wacom_report_key(wcombo, BTN_STYLUS, 0);
+			wacom_report_key(wcombo, BTN_STYLUS2, 0);
+		}
+		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
 		wacom_report_key(wcombo, wacom->tool[0], 0);
+	}
 
 	/* send pad data */
 	if (wacom->features->type == WACOM_G4) {
@@ -321,14 +327,30 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
- 		if(!((wacom->tool[idx] == BTN_TOOL_LENS) 
-				 && ((wacom->features->type == INTUOS3) 
-				 || (wacom->features->type == INTUOS3S)))) {
-			wacom_report_key(wcombo, wacom->tool[idx], 0);
-			wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
-			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-			return 2;
+		wacom_report_abs(wcombo, ABS_X, 0);
+		wacom_report_abs(wcombo, ABS_Y, 0);
+		wacom_report_abs(wcombo, ABS_DISTANCE, 0);
+		if (wacom->tool[idx] >= BTN_TOOL_MOUSE) {
+			wacom_report_key(wcombo, BTN_LEFT, 0);
+			wacom_report_key(wcombo, BTN_MIDDLE, 0);
+			wacom_report_key(wcombo, BTN_RIGHT, 0);
+			wacom_report_key(wcombo, BTN_SIDE, 0);
+			wacom_report_key(wcombo, BTN_EXTRA, 0);
+			wacom_report_abs(wcombo, ABS_THROTTLE, 0);
+			wacom_report_abs(wcombo, ABS_RZ, 0);
+ 		} else {
+			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
+			wacom_report_abs(wcombo, ABS_TILT_X, 0);
+			wacom_report_abs(wcombo, ABS_TILT_Y, 0);
+			wacom_report_key(wcombo, BTN_STYLUS, 0);
+			wacom_report_key(wcombo, BTN_STYLUS2, 0);
+			wacom_report_key(wcombo, BTN_TOUCH, 0);
+			wacom_report_abs(wcombo, ABS_WHEEL, 0);
 		}
+		wacom_report_key(wcombo, wacom->tool[idx], 0);
+		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
+		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
+		return 2;
 	}
 	return 0;
 }
@@ -409,6 +431,12 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 	if (result)
                 return result-1;
 
+	/* Only large I3 and I1 & I2 support Lense Cursor */
+ 	if((wacom->tool[idx] == BTN_TOOL_LENS) 
+			&& ((wacom->features->type == INTUOS3) 
+		 	|| (wacom->features->type == INTUOS3S)))
+		return 0;
+
 	/* Cintiq doesn't send data when RDY bit isn't set */
 	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40))
                  return 0;
@@ -480,17 +508,8 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_EXTRA,  data[8] & 0x08);
 		}
 	}
-
 	wacom_report_abs(wcombo, ABS_MISC, wacom->id[idx]);
-
-	/* Only large I3 supports Lens Cursor 
-	 * Report in-prox only when RDY is set 
-	 */
-	if((!((wacom->tool[idx] == BTN_TOOL_LENS) 
-		&& ((wacom->features->type == INTUOS3) 
-			|| (wacom->features->type == INTUOS3S)))) && 
-	    		(data[1] & 0x40))
-		wacom_report_key(wcombo, wacom->tool[idx], 1);
+	wacom_report_key(wcombo, wacom->tool[idx], 1);
 	wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 	return 1;
 }

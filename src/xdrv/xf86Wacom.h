@@ -298,6 +298,7 @@ struct _WacomDeviceRec
 	int oldThrottle;        /* previous throttle value */
 	int oldButtons;         /* previous buttons state */
 	int oldProximity;       /* previous proximity */
+	int hardProx;       	/* previous hardware proximity */
 	int old_device_id;	/* last in prox device id */
 	int old_serial;		/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/

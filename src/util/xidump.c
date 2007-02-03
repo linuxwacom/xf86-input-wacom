@@ -924,7 +924,6 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	}
 
 	/* open device */
-fprintf(stderr, "claess =%d use =%d type = %d \n", (int)pDevInfo->num_classes, (int)(pDevInfo->use), (int)pDevInfo->type);
 	pDev = XOpenDevice(pDisp,pDevInfo->id);
 	if (!pDev)
 	{

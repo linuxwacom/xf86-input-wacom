@@ -419,7 +419,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	input_regs(dev, regs);
 
 	id = STYLUS_DEVICE_ID;
-	if ( data[1] & 0x10 ) /* in prox */
+	if ( data[1] & 0x80 ) /* in prox */
 	{
 		switch ((data[1] >> 5) & 3) {
 
@@ -452,9 +452,6 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 					input_report_abs(dev, ABS_DISTANCE, data[7]);
 				break;
 		}
-	}
-
-	if (data[1] & 0x90) {
 		x = le16_to_cpu(*(__le16 *) &data[2]);
 		y = le16_to_cpu(*(__le16 *) &data[4]);
 		input_report_abs(dev, ABS_X, x);
@@ -467,14 +464,23 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 		}
 		input_report_abs(dev, ABS_MISC, id); /* report tool id */
-	}
-	else
-		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
-
-	if (data[1] & 0x10) /* report in-prox only when in area */ 
 		input_report_key(dev, wacom->tool[0], 1);
-	if (!(data[1] & 0x90)) /* report out-prox when physically out */ 
+	} else if (!(data[1] & 0x90)) {
+		input_report_abs(dev, ABS_X, 0);
+		input_report_abs(dev, ABS_Y, 0);
+		if (wacom->tool[0] == BTN_TOOL_MOUSE) {
+			input_report_key(dev, BTN_LEFT, 0);
+			input_report_key(dev, BTN_RIGHT, 0);
+			input_report_abs(dev, ABS_DISTANCE, 0);
+		} else {
+			input_report_abs(dev, ABS_PRESSURE, 0);
+			input_report_key(dev, BTN_TOUCH, 0);
+			input_report_key(dev, BTN_STYLUS, 0);
+			input_report_key(dev, BTN_STYLUS2, 0);
+		}
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 		input_report_key(dev, wacom->tool[0], 0);
+	}
 	input_sync(dev);
 
 	/* send pad data */
@@ -578,14 +584,30 @@ static int wacom_intuos_inout(struct urb *urb)
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
-		if(!((wacom->tool[idx] == BTN_TOOL_LENS) &&
-				((wacom->features->type == INTUOS3) 
-				 || (wacom->features->type == INTUOS3S)))) {
-			input_report_key(dev, wacom->tool[idx], 0);
-			input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
-			input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
-			input_sync(dev);
+		wacom_report_abs(wcombo, ABS_X, 0);
+		wacom_report_abs(wcombo, ABS_Y, 0);
+		wacom_report_abs(wcombo, ABS_DISTANCE, 0);
+		if (wacom->tool[idx] >= BTN_TOOL_MOUSE) {
+			wacom_report_key(wcombo, BTN_LEFT, 0);
+			wacom_report_key(wcombo, BTN_MIDDLE, 0);
+			wacom_report_key(wcombo, BTN_RIGHT, 0);
+			wacom_report_key(wcombo, BTN_SIDE, 0);
+			wacom_report_key(wcombo, BTN_EXTRA, 0);
+			wacom_report_abs(wcombo, ABS_THROTTLE, 0);
+			wacom_report_abs(wcombo, ABS_RZ, 0);
+ 		} else {
+			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
+			wacom_report_abs(wcombo, ABS_TILT_X, 0);
+			wacom_report_abs(wcombo, ABS_TILT_Y, 0);
+			wacom_report_key(wcombo, BTN_STYLUS, 0);
+			wacom_report_key(wcombo, BTN_STYLUS2, 0);
+			wacom_report_key(wcombo, BTN_TOUCH, 0);
+			wacom_report_abs(wcombo, ABS_WHEEL, 0);
 		}
+		input_report_key(dev, wacom->tool[idx], 0);
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
+		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
+		input_sync(dev);
 		return 1;
 	}
 	return 0;
@@ -689,6 +711,12 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	/* process in/out prox events */
 	if (wacom_intuos_inout(urb)) goto exit;
 
+	/* Only large I3 and I1 & I2 support Lense Cursor */
+ 	if((wacom->tool[idx] == BTN_TOOL_LENS) 
+			&& ((wacom->features->type == INTUOS3) 
+		 	|| (wacom->features->type == INTUOS3S)))
+		return 0;
+
 	/* Cintiq doesn't send data when RDY bit isn't set */
 	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) goto exit;
 
@@ -771,14 +799,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	}
 
 	input_report_abs(dev, ABS_MISC, wacom->id[idx]); /* report tool id */
-	/* Only large I3 supports Lens Cursor 
-	 * Report in-prox only when RDY is set 
-	 */
-	if((!((wacom->tool[idx] == BTN_TOOL_LENS) 
-		&& ((wacom->features->type == INTUOS3) 
-			|| (wacom->features->type == INTUOS3S)))) && 
-	    		(data[1] & 0x40))
-		input_report_key(dev, wacom->tool[idx], 1);
+	input_report_key(dev, wacom->tool[idx], 1);
 	input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
 	input_sync(dev);
 

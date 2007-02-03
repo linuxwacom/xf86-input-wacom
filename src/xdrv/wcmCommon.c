@@ -359,9 +359,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		return; 
 	}
 
-	DBG(4, ErrorF("sendAButton TPCButton(%s) button=%d state=%d code=%08x, for %s\n",
-		common->wcmTPCButton ? "on" : "off", button, mask, priv->button[button], local->name));
-
 	button_idx = button;
 	button = priv->button[button];
 	if (!button)
@@ -371,6 +368,11 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	 */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
+
+	DBG(4, ErrorF("sendAButton TPCButton(%s) button=%d state=%d" 
+		"code=%08x, for %s coreEvent=%s \n", common->wcmTPCButton ? 
+		"on" : "off", button_idx, mask, button, 
+		local->name, (button & AC_CORE) ? "yes" : "no"));
 
 	/* Emulate modifier key presses, if required
 	 */
@@ -482,6 +484,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	int v3, v4, v5;
 	int is_absolute;
+	int no_jitter; 
+	double relacc, param;
 
 	if (priv->serial && serial != priv->serial)
 	{
@@ -497,12 +501,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		ty = ds->stripy;
 	}
 
-	DBG(7, ErrorF("[%s] prox=%s x=%d y=%d z=%d "
+	DBG(7, ErrorF("[%s] o_prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
 		(type == STYLUS_ID) ? "stylus" :
 			(type == CURSOR_ID) ? "cursor" : 
 			(type == ERASER_ID) ? "eraser" : "pad",
-		is_proximity ? "true" : "false",
+		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
 
@@ -527,14 +531,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 
 	is_absolute = (priv->flags & ABSOLUTE_FLAG);
 
-	if(!priv->oldProximity && !is_absolute)
-	{
-		/* initial current max distance */
-		priv->common->wcmMaxCursorDist = ds->distance;
-	}	
-	priv->currentX = x;
-	priv->currentY = y;
-
 	if (IsCursor(priv)) 
 	{
 		v3 = rot;
@@ -555,6 +551,57 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons, channel));
 
+	if (x > priv->bottomX)
+		x = priv->bottomX;
+	if (x < priv->topX)
+		x = priv->topX;
+	if (y > priv->bottomY)
+		y = priv->bottomY;
+	if (y < priv->topY)
+		y = priv->topY;
+	priv->currentX = x;
+	priv->currentY = y;
+	if (!is_absolute)
+	{
+		if(!priv->oldProximity)
+		{
+			/* don't move the cursor */
+			x = 0;
+			y = 0;
+		}
+		else
+		{
+			x -= priv->oldX;
+			y -= priv->oldY;
+		}
+		/* don't apply speed for fairly small increments */
+		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
+		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
+		if (ABS(x) > no_jitter)
+		{
+			param = priv->speed;
+
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
+			{
+				param += priv->accel > 0 ? abs(x)/relacc : 0;
+			}
+			/* don't apply acceleration when too fast. */
+			x *= param > 20.00 ? 20.00 : param;
+		}
+		if (ABS(y) > no_jitter)
+		{
+			param = priv->speed;
+			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
+			if (priv->speed > DEFAULT_SPEED )
+			{
+				param += priv->accel > 0 ? abs(y)/relacc : 0;
+
+			}
+			/* don't apply acceleration when too fast. */
+			y *= param > 20.00 ? 20.00 : param;
+		}		
+	}
 	if (type != PAD_ID)
 	{
 		/* report tool id in the upper 2 bytes of 4th valuator 
@@ -578,6 +625,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			{
 				xf86WcmSetScreen(local, &x, &y);
 			}
+
+			/* unify acceleration in both directions 
+			 * for relative mode to draw a circle 
+			 */
+			if (!is_absolute)
+				x *= priv->factorY / priv->factorX;
 
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
@@ -636,8 +689,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			is_proximity = 1;
 		}
 		if ( v3 || v4 )
-			xf86PostMotionEvent(local->dev, is_absolute,
-				0, naxes, x, y, z, v3, v4, v5);
+		{
+			xf86WcmSetScreen(local, &x, &y);
+			xf86PostMotionEvent(local->dev, 0,
+				0, naxes, 0, 0, z, v3, v4, v5);
+		}
 		if (priv->oldButtons != buttons)
 			xf86WcmSendButtons(local, buttons, 
 				x, y, z, v3, v4, v5);
@@ -673,8 +729,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	{
 		priv->oldButtons = buttons;
 		priv->oldWheel = wheel;
-		priv->oldX = x;
-		priv->oldY = y;
+		priv->oldX = priv->currentX;
+		priv->oldY = priv->currentY;
 		priv->oldZ = z;
 		priv->oldTiltX = tx;
 		priv->oldTiltY = ty;
@@ -1032,16 +1088,11 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			if (tool->current)
 			{
 				/* Send soft prox-out for the old area */
-				WacomDevicePtr priv = outprox->device->private;
+				LocalDevicePtr oDev = outprox->device;
+				WacomDeviceState out = { 0 };
 				DBG(2, ErrorF("Soft prox-out for %s\n",
 					outprox->device->name));
-				xf86PostProximityEvent(outprox->device->dev,0,0,0);
-				/* Set state of the old device to prox-out */
-				priv->oldProximity = 0;
-				priv->oldButtons = 0;
-				/* start over with button-press events */
-				pChannel->work.buttons = 0;
-				pChannel->valid.state.buttons = 0;
+				xf86WcmSendEvents(oDev, &out, channel);
 			}
 			else
 				tool->current = outprox;
@@ -1067,7 +1118,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		WacomDevicePtr priv = pDev->private;
 
 		/* Device transformations come first */
-
 		/* button 1 Threshold test */
 		int button = 1;
 		if ( IsStylus(priv) || IsEraser(priv))
@@ -1079,6 +1129,17 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			/* transform pressure */
 			transPressureCurve(priv,&filtered);
 		}
+
+		if (!(priv->flags & ABSOLUTE_FLAG) && !priv->hardProx)
+		{
+			/* initial current max distance */
+			if (strstr(common->wcmModel->name, "Intuos"))
+				common->wcmMaxCursorDist = 256;
+			else
+				common->wcmMaxCursorDist = 0;
+		}
+		/* Store current hard prox for next use */
+		priv->hardProx = ds->proximity;		
 
 		/* User-requested filtering comes next */
 
@@ -1154,7 +1215,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 
 		/* force out-prox when distance is outside wcmCursorProxoutDist. */
-		if (!(priv->flags & ABSOLUTE_FLAG) && IsCursor(priv))
+		if (!(priv->flags & ABSOLUTE_FLAG))
 		{
 			if (strstr(common->wcmModel->name, "Intuos"))
 			{
@@ -1166,7 +1227,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				if (common->wcmMaxCursorDist < filtered.distance)
 					common->wcmMaxCursorDist = filtered.distance;
 			}
-
 			DBG(10, ErrorF("Distance over the tablet: %d, ProxoutDist: %d current min/max %d hard prox: %d\n",
 				filtered.distance, common->wcmCursorProxoutDist, common->wcmMaxCursorDist, ds->proximity));
 
@@ -1178,15 +1238,12 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			/* once it is out. Don't let it in until a hard in */
 			/* or it gets inside wcmCursorProxoutDist */
 			else
+			{
 				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist && ds->proximity)
 					return;
-				else if (!ds->proximity)
-				{
-					if (strstr(common->wcmModel->name, "Intuos"))
-						common->wcmMaxCursorDist = 256;
-					else
-						common->wcmMaxCursorDist = 0;
-				}
+				if (!ds->proximity)
+					return;	
+			}
 		}
 		xf86WcmSendEvents(pDev, &filtered, channel);
 		/* If out-prox, reset the current area pointer */

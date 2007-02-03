@@ -1,3 +1,8 @@
+2007-02-02   Ping Cheng <pingc@wacom.com>
+	* Updated kernel driver to report full out-prox data
+	* Updated pad in X driver
+	* Fine tuned outbound tracking
+
 2007-01-29   Ping Cheng <pingc@wacom.com>
 	* Added 3 new xsetwacom options
 	* Updated wacom_wac.c and wacom.c for Intuos outbound tracking

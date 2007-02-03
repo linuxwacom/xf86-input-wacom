@@ -55,9 +55,10 @@
  * 2006-05-03 47-pc0.7.4 - new release
  * 2006-07-17 47-pc0.7.5 - Support button/key combined events
  * 2006-11-13 47-pc0.7.7 - Updated Xinerama setup support
+ * 2007-01-31 47-pc0.7.7-3 - multiarea support
  */
 
-static const char identification[] = "$Identification: 47-0.7.7 $";
+static const char identification[] = "$Identification: 47-0.7.7-3 $";
 
 /****************************************************************************/
 
@@ -863,6 +864,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    }
 	    case XWACOM_PARAM_MODE:
+		/* don't change pad's mode */
+		if (IsPad(priv)) return Success;
 		if ((value < 0) || (value > 1)) return BadValue;
 		if (value) 
 		{
@@ -1390,8 +1393,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int no_jitter; 
-	double relacc, param, temp;
+	double temp;
     
 	DBG(6, ErrorF("xf86WcmDevConvert v0=%d v1=%d \n", v0, v1));
 
@@ -1494,59 +1496,11 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			}
 			return TRUE;
 		}
-		temp = (double)v0 * priv->factorX + 0.5;
-		*x += temp;
 	}
-	else
-	{
-		*x = priv->currentSX;
-		*y = priv->currentSY;
-		if(!priv->oldProximity)
-		{
-			/* don't move the cursor */
-			v0 = 0;
-			v1 = 0;
-		}
-		else
-		{
-			v0 -= priv->oldX;
-			v1 -= priv->oldY;
-		}
-		/* don't apply speed for fairly small increments */
-		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
-		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
-		if (ABS(v0) > no_jitter)
-		{
-			param = priv->speed;
 
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(v0)/relacc : 0;
-			}
-			/* don't apply acceleration when too fast. */
-			v0 *= param > 20.00 ? 20.00 : param;
-		}
-		if (ABS(v1) > no_jitter)
-		{
-			param = priv->speed;
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(v1)/relacc : 0;
-
-			}
-			/* don't apply acceleration when too fast. */
-			v1 *= param > 20.00 ? 20.00 : param;
-		}
-
-		/* unify acceleration in both directions 
-		 * for relative mode to draw a circle 
-		 */
-		temp = (double)v0 * priv->factorY + 0.5;
-		*x += temp;
-	}
-	temp = (double)v1 * priv->factorY + 0.5;
+	temp = ((double)v0 * priv->factorX + 0.5);
+	*x += temp;
+	temp = ((double)v1 * priv->factorY + 0.5);
 	*y += temp;
 
 	DBG(6, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
@@ -1572,10 +1526,12 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
+		valuators[0] = (((double)x / priv->factorX) + 0.5);
+		valuators[1] = (((double)y / priv->factorY) + 0.5);
 		if (!priv->devReverseCount)
 		{
 			/* reset valuators to report raw values */
-			for (i=0; i<priv->naxes; i++)
+			for (i=2; i<priv->naxes; i++)
 				valuators[i] = 0;
 
 			priv->devReverseCount = 1;

@@ -115,6 +115,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->factorY = 0.0;         /* Y factor */
 	priv->common = common;       /* common info pointer */
 	priv->oldProximity = 0;      /* previous proximity */
+	priv->hardProx = 1;	     /* previous hardware proximity */
 	priv->old_serial = 0;	     /* last active tool's serial */
 	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
 		(IsEraser(priv) ? ERASER_DEVICE_ID : 
@@ -497,9 +498,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->flags |= ABSOLUTE_FLAG;
 	}
 
-	/* pad reports absolute value and never moves the cursor */
+	/* pad reports relative value and never moves the cursor */
 	if (IsPad(priv)) 
-		priv->flags |= ABSOLUTE_FLAG;
+		priv->flags &= ~ABSOLUTE_FLAG;
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");
