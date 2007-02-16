@@ -655,7 +655,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	if((wacom->tool[idx] == BTN_TOOL_LENS) && strstr(wacom->features->name, "Intuos3"))
 		if (!(strstr(wacom->features->name, "Intuos3 12x12") 
 			|| strstr(wacom->features->name, "Intuos3 12x19")))
-			return 0;
+			return;
 
 	/* Cintiq doesn't send data when RDY bit isn't set */
 	if (strstr(wacom->features->name, "Cintiq") && !(data[1] & 0x40)) return;

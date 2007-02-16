@@ -23,6 +23,8 @@
 #ifndef __XF86_XWACOM_H
 #define __XF86_XWACOM_H
 
+#include <X11/keysym.h>
+
 #define XWACOM_PARAM_TOPX       	1
 #define XWACOM_PARAM_TOPY       	2
 #define XWACOM_PARAM_BOTTOMX    	3
@@ -92,20 +94,14 @@
  * the type of event that should be emitted when that button is pressed;
  * combined together they form an Action Code (AC).
  */
-#define AC_CODE             0x100fffff	/* Mask to isolate button number or key code */
-#define AC_BUTTON           0x00000000	/* Emit a button event */
-#define AC_KEY              0x00100000	/* Emit a key event */
-#define AC_MODETOGGLE       0x00200000	/* Toggle absolute/relative mode */
-#define AC_DBLCLICK         0x00300000	/* Emit a button1 double-click event */
-#define AC_TYPE             0x00300000	/* The mask to isolate event type bits */
-#define AC_SHIFT            0x00400000  /* Emulate SHIFT+event */
-#define AC_CONTROL          0x00800000  /* Emulate CONTROL+event */
-#define AC_META             0x01000000  /* Emulate META+event */
-#define AC_ALT              0x02000000  /* Emulate ALT+event */
-#define AC_SUPER            0x04000000  /* Emulate SUPER+event */
-#define AC_HYPER            0x08000000  /* Emulate HYPER+event */
-#define AC_ANYMOD           0x0fc00000  /* Any modifier key bit */
-#define AC_CORE             0x20000000	/* Always emit a core event */
-#define AC_KEY_END          0x40000000	/* End of a keystroke */
+#define AC_CODE             0x0000ffff	/* Mask to isolate button number or key code */
+#define AC_BUTTON           0x00000000	/* Emit button events */
+#define AC_KEY              0x00010000	/* Emit key events */
+#define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
+#define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
+#define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
+#define AC_NUM_KEYS         0x0ff00000  /* Emulate SHIFT+event */
+#define AC_CORE             0x10000000	/* Always emit a core event */
+#define AC_EVENT            0xf00f0000	/* Mask to isolate event flag */
 
 #endif /* __XF86_XWACOM_H */

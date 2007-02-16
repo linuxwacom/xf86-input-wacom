@@ -56,9 +56,10 @@
  * 2006-07-17 47-pc0.7.5 - Support button/key combined events
  * 2006-11-13 47-pc0.7.7 - Updated Xinerama setup support
  * 2007-01-31 47-pc0.7.7-3 - multiarea support
+ * 2007-02-09 47-pc0.7.7-5 - Support keystrokes
  */
 
-static const char identification[] = "$Identification: 47-0.7.7-3 $";
+static const char identification[] = "$Identification: 47-0.7.7-5 $";
 
 /****************************************************************************/
 
@@ -674,7 +675,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int bn, tabletSize;
+	int tabletSize;
 	WacomDevicePtr tmppriv;
 	char st[32];
 	int oldRotation, dev;
@@ -783,48 +784,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				0, common->wcmResolY); /* max_res */
 		}
 		break;
-	    case XWACOM_PARAM_BUTTON1:
-	    case XWACOM_PARAM_BUTTON2:
-	    case XWACOM_PARAM_BUTTON3:
-	    case XWACOM_PARAM_BUTTON4:
-	    case XWACOM_PARAM_BUTTON5:
-	    case XWACOM_PARAM_BUTTON6:
-	    case XWACOM_PARAM_BUTTON7:
-	    case XWACOM_PARAM_BUTTON8:
-	    case XWACOM_PARAM_BUTTON9:
-	    case XWACOM_PARAM_BUTTON10:
-	    case XWACOM_PARAM_BUTTON11:
-	    case XWACOM_PARAM_BUTTON12:
-	    case XWACOM_PARAM_BUTTON13:
-	    case XWACOM_PARAM_BUTTON14:
-	    case XWACOM_PARAM_BUTTON15:
-	    case XWACOM_PARAM_BUTTON16:
-	    case XWACOM_PARAM_BUTTON17:
-	    case XWACOM_PARAM_BUTTON18:
-	    case XWACOM_PARAM_BUTTON19:
-	    case XWACOM_PARAM_BUTTON20:
-	    case XWACOM_PARAM_BUTTON21:
-	    case XWACOM_PARAM_BUTTON22:
-	    case XWACOM_PARAM_BUTTON23:
-	    case XWACOM_PARAM_BUTTON24:
-	    case XWACOM_PARAM_BUTTON25:
-	    case XWACOM_PARAM_BUTTON26:
-	    case XWACOM_PARAM_BUTTON27:
-	    case XWACOM_PARAM_BUTTON28:
-	    case XWACOM_PARAM_BUTTON29:
-	    case XWACOM_PARAM_BUTTON30:
-	    case XWACOM_PARAM_BUTTON31:
-	    case XWACOM_PARAM_BUTTON32:
-		bn = param - XWACOM_PARAM_BUTTON1 + 1;
-		if (bn > priv->nbuttons)
-			return BadValue;
-		if (value != priv->button[bn - 1])
-		{
-			snprintf (st, sizeof (st), "Button%d", bn);
-			xf86ReplaceIntOption (local->options, st, value);
-			priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn);
-		}
-		break;
 	    case XWACOM_PARAM_DEBUGLEVEL:
 		if ((value < 1) || (value > 100)) return BadValue;
 		if (gWacomModule.debugLevel != value)
@@ -864,9 +823,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    }
 	    case XWACOM_PARAM_MODE:
-		/* don't change pad's mode */
-		if (IsPad(priv)) return Success;
+	    {
+		/* Pad's mode stays as is */
+		int is_absolute = priv->flags & ABSOLUTE_FLAG;
+		if (IsPad(priv))
+		{
+			DBG(10, ErrorF("xf86WcmSetParam Pad (%p) is always in %s mode\n", (void *)local->dev, is_absolute ? "absolute" : "relative"));
+			return Success;
+		}
+
 		if ((value < 0) || (value > 1)) return BadValue;
+		if (value == is_absolute)
+			break;
+
 		if (value) 
 		{
 			priv->flags |= ABSOLUTE_FLAG;
@@ -878,6 +847,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			xf86ReplaceStrOption(local->options, "Mode", "Relative");
 		}
 		break;
+	    }
 	    case XWACOM_PARAM_SPEEDLEVEL:
 		if ((value < 1) || (value > 11)) return BadValue;
 		if (value > 6) priv->speed = 2.00*((double)value - 6.00);
@@ -1061,6 +1031,29 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 }
 
 /*****************************************************************************
+ * xf86WcmSetButtonParam
+ ****************************************************************************/
+
+static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int bn;
+	char st[32];
+
+	bn = param - XWACOM_PARAM_BUTTON1 + 1;
+	if (bn > priv->nbuttons)
+		return BadValue;
+
+	if (value != priv->button[bn - 1])
+	{
+		snprintf (st, sizeof (st), "Button%d", bn);
+		xf86ReplaceIntOption (local->options, st, value);
+		priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn);
+	}
+	return Success;
+}
+
+/*****************************************************************************
  * xf86WcmGetParam
  ****************************************************************************/
 
@@ -1068,7 +1061,6 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int bn;
 	DBG(10, ErrorF("xf86WcmGetParam param = %d\n",param));
 
 	switch (param)
@@ -1081,42 +1073,6 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->bottomX;
 	case XWACOM_PARAM_BOTTOMY:
 		return priv->bottomY;
-	case XWACOM_PARAM_BUTTON1:
-	case XWACOM_PARAM_BUTTON2:
-	case XWACOM_PARAM_BUTTON3:
-	case XWACOM_PARAM_BUTTON4:
-	case XWACOM_PARAM_BUTTON5:
-	case XWACOM_PARAM_BUTTON6:
-	case XWACOM_PARAM_BUTTON7:
-	case XWACOM_PARAM_BUTTON8:
-	case XWACOM_PARAM_BUTTON9:
-	case XWACOM_PARAM_BUTTON10:
-	case XWACOM_PARAM_BUTTON11:
-	case XWACOM_PARAM_BUTTON12:
-	case XWACOM_PARAM_BUTTON13:
-	case XWACOM_PARAM_BUTTON14:
-	case XWACOM_PARAM_BUTTON15:
-	case XWACOM_PARAM_BUTTON16:
-	case XWACOM_PARAM_BUTTON17:
-	case XWACOM_PARAM_BUTTON18:
-	case XWACOM_PARAM_BUTTON19:
-	case XWACOM_PARAM_BUTTON20:
-	case XWACOM_PARAM_BUTTON21:
-	case XWACOM_PARAM_BUTTON22:
-	case XWACOM_PARAM_BUTTON23:
-	case XWACOM_PARAM_BUTTON24:
-	case XWACOM_PARAM_BUTTON25:
-	case XWACOM_PARAM_BUTTON26:
-	case XWACOM_PARAM_BUTTON27:
-	case XWACOM_PARAM_BUTTON28:
-	case XWACOM_PARAM_BUTTON29:
-	case XWACOM_PARAM_BUTTON30:
-	case XWACOM_PARAM_BUTTON31:
-	case XWACOM_PARAM_BUTTON32:
-		bn = param - XWACOM_PARAM_BUTTON1;
-		if (bn >= priv->nbuttons)
-			return -1;
-		return priv->button [bn];
 	case XWACOM_PARAM_DEBUGLEVEL:
 		return gWacomModule.debugLevel;
 	case XWACOM_PARAM_RAWFILTER:
@@ -1301,8 +1257,15 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 {
 	LocalDevicePtr local = (LocalDevicePtr)dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	DBG(3, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", (void *)dev, mode));
+
+	if (IsPad(priv)) 
+	{
+		DBG(10, ErrorF("xf86WcmSwitchMode Pad (%p) is always in %s mode\n", (void *)dev, is_absolute ? "absolute" : "relative"));
+		return Success;
+	}
 
 	if (mode == Absolute)
 		priv->flags |= ABSOLUTE_FLAG;
@@ -1326,7 +1289,8 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	xDeviceResolutionCtl* res = (xDeviceResolutionCtl *)control;
-	int i, rc = Success, *r = (int*)(res+1);
+	int i, rc = Success, *r = (int*)(res+1), param, tk = 0;
+	static int button_keys = 0, number_keys = 0;
 
 	if (control->control != DEVICE_RESOLUTION || (res->num_valuators < 1
 			&& res->num_valuators > 3) || res->first_valuator != 0)
@@ -1348,15 +1312,69 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 			 * again with r [0] == 0, which restores default resolution.
 			 */
 			a = local->dev->valuator->axes + priv->naxes - 1;
-			a->resolution = a->min_resolution = a->max_resolution =
-				r [0] ? xf86WcmGetParam (local, r [0]) : 1;
+			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_BUTTON32)
+			{
+				param = r [0] - XWACOM_PARAM_BUTTON1;
+				if (!number_keys)
+				{
+					a->resolution = a->min_resolution 
+					 = a->max_resolution 
+					 = priv->button [param];
+					number_keys = (a->resolution & AC_NUM_KEYS) >> 20;
+					if (number_keys)
+						button_keys++;
+				}
+				else
+				{
+					if (button_keys < number_keys)
+					{
+						tk = priv->keys[param][button_keys++];
+						a->resolution 
+					      = a->min_resolution 
+					      = a->max_resolution
+					      = (tk | ((button_keys -number_keys) ? 
+						(priv->keys[param][button_keys++] << 16) : 0));
+					}
+				}
+			}
+			else if (!r[0])
+			{
+				button_keys = number_keys = 0;
+				a->resolution = a->min_resolution = a->max_resolution = 1;
+			}
+			else
+				a->resolution = a->min_resolution = a->max_resolution =
+					xf86WcmGetParam (local, r [0]);
 			break;
 		}
 		case 2:
 		{
 			DBG (10, ErrorF("xf86WcmChangeControl: dev %s set 0x%x to 0x%x\n",
 				local->dev->name, r [0], r [1]));
-			rc = xf86WcmSetParam (local, r [0], r[1]);
+			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_BUTTON32)
+			{
+				param = r [0] - XWACOM_PARAM_BUTTON1;
+				if (!number_keys)
+				{
+					priv->button[param] = r[1];
+					number_keys = (r[1] & AC_NUM_KEYS) >> 20;
+					if (number_keys)
+						priv->keys[param][button_keys++] = r[1] & 0xffff;
+					rc = xf86WcmSetButtonParam (local, r [0], r[1]);
+				}
+				else
+				{
+					if (button_keys < number_keys)
+					{
+						priv->keys[param][button_keys++] = r[1] & 0xffff;
+						priv->keys[param][button_keys++] = (r[1] & 0xffff0000) >> 16;
+					}
+				}
+				if (button_keys >= number_keys)
+					button_keys = number_keys = 0;
+			}
+			else
+				rc = xf86WcmSetParam (local, r [0], r[1]);
 			break;
 		}
 		case 3:

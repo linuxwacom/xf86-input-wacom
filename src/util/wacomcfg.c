@@ -254,9 +254,9 @@ int WacomConfigCloseDevice(WACOMDEVICE *hDevice)
 	return 0;
 }
 
-int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
+int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue, unsigned * keys)
 {
-	int nReturn;
+	int nReturn, i;
 	int nValues[2];
 	XDeviceResolutionControl c;
 	XDeviceControl *dc = (XDeviceControl *)(void *)&c;
@@ -280,6 +280,20 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 		return CfgError(hDevice->pCfg,EINVAL,
 				"WacomConfigSetRawParam: failed");
 
+	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_BUTTON32)
+	{
+		for (i=1; i<((nValue & AC_NUM_KEYS)>>20); i += 2)
+		{
+			nValues[1] = keys[i] | (keys[i+1]<<16);
+			nReturn = XChangeDeviceControl (hDevice->pCfg->pDisp, hDevice->pDev,
+					DEVICE_RESOLUTION, dc);
+
+			if (nReturn == BadValue || nReturn == BadRequest)
+				return CfgError(hDevice->pCfg,EINVAL,
+					"WacomConfigSetRawParam: keystroke failed");
+		}
+	}
+
 	if (nParam == XWACOM_PARAM_MODE)
 	{
 		/* tell Xinput the mode has been changed */
@@ -288,9 +302,9 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue)
 	return 0;
 }
 
-int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu)
+int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu, unsigned * keys)
 {
-	int nReturn;
+	int nReturn, i;
 	XDeviceResolutionControl c;
 	XDeviceResolutionState *ds;
 	int nValues[1];
@@ -317,15 +331,43 @@ error:		return CfgError(hDevice->pCfg, EINVAL,
 	ds = (XDeviceResolutionState *)XGetDeviceControl (hDevice->pCfg->pDisp,
 		hDevice->pDev, DEVICE_RESOLUTION);
 
+	if (!ds)
+		goto error;
+
+	*nValue = ds->resolutions [ds->num_valuators-1];
+
+	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_BUTTON32)
+	{
+		int num = (*nValue & AC_NUM_KEYS)>>20;
+		if (num) keys[0] = ((*nValue) & AC_CODE);
+
+		for (i=1; i<num; i += 2)
+		{
+			nReturn = XChangeDeviceControl(hDevice->pCfg->pDisp, 
+				hDevice->pDev, DEVICE_RESOLUTION, 
+				(XDeviceControl *)(void *)&c);
+
+			if (nReturn == BadValue || nReturn == BadRequest)
+			{
+errork:				return CfgError(hDevice->pCfg, EINVAL,
+					"WacomConfigGetRawParam: keystroke failed");
+			}
+
+			ds = (XDeviceResolutionState *)XGetDeviceControl (hDevice->pCfg->pDisp,
+			hDevice->pDev, DEVICE_RESOLUTION);
+			if (!ds)
+				goto errork;
+
+			keys[i] = ds->resolutions [ds->num_valuators-1] & 0xffff;
+			keys[i+1] = ((ds->resolutions [ds->num_valuators-1] & 0xffff0000)>>16);
+		}
+	}
+
 	/* Restore resolution */
 	nValues [0] = 0;
 	XChangeDeviceControl(hDevice->pCfg->pDisp, hDevice->pDev,
 		DEVICE_RESOLUTION, (XDeviceControl *)(void *)&c);
 
-	if (!ds)
-		goto error;
-
-	*nValue = ds->resolutions [ds->num_valuators-1];
 	XFreeDeviceControl ((XDeviceControl *)ds);
 
 	return 0;

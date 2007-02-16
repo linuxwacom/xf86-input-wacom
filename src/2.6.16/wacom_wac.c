@@ -608,7 +608,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
 	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 31, INTUOS },
 	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 31, INTUOS },
-	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 32, INTUOS },
+	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 31, INTUOS },
 	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 63, INTUOS3S },
 	{ "Wacom Intuos3 6x8",   10, 40640, 30480, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 9x12",  10, 60960, 45720, 1023, 63, INTUOS3 },

@@ -29,5 +29,5 @@ libwacomcfg_la_SOURCES = wacomcfg.c wacomcfg.h ../include/Xwacom.h
 libwacomcfg_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMCFG_VER@
 libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 
-xsetwacom_SOURCES = xsetwacom.c wacomcfg.h ../include/Xwacom.h
+xsetwacom_SOURCES = xsetwacom.c wacomcfg.h wcmAction.c wcmAction.h ../include/Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la

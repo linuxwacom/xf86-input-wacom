@@ -23,6 +23,7 @@
  */
 
 #include "xf86Wacom.h"
+#include "../include/Xwacom.h"
 
 /*
  #if XF86_VERSION_MAJOR < 4
@@ -301,21 +302,77 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
  * emitKeysym --
  *   Emit a keydown/keyup event
  ****************************************************************************/
+static int ODDKEYSYM [][2] = 
+{
+	{ XK_asciitilde, XK_grave },
+	{ XK_exclam, XK_1 },
+	{ XK_at, XK_2 },
+	{ XK_numbersign, XK_3 },
+	{ XK_dollar, XK_4 },
+	{ XK_percent, XK_5 },
+	{ XK_asciicircum, XK_6 },
+	{ XK_ampersand, XK_7 },
+	{ XK_asterisk, XK_8 },
+	{ XK_parenleft, XK_9 },
+	{ XK_parenright, XK_0 },
+	{ XK_underscore, XK_minus },
+	{ XK_plus, XK_equal },
+	{ XK_braceleft, XK_bracketleft },
+	{ XK_braceright, XK_bracketright },
+	{ XK_colon, XK_semicolon },
+	{ XK_quotedbl, XK_quoteright },
+	{ XK_less, XK_comma },
+	{ XK_greater, XK_period },
+	{ XK_question, XK_slash },
+	{ XK_bar, XK_backslash },
+	{ 0, 0}
+};
 
 static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 {
-	int i;
+	int i, j, alt_keysym = 0;
 
 	/* Now that we have the keycode look for key index */
 	KeySymsRec *ksr = &keydev->key->curKeySyms;
 
+	DBG(10, ErrorF("emitKeysym keySym=%x state=%d\n", keysym, state));
 	for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
 		if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == keysym)
 			break;
 
 	if (i > ksr->maxKeyCode)
 	{
-		xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
+		if (isupper(keysym))
+			alt_keysym = tolower(keysym);
+		else
+		{
+			j = 0;
+			while (ODDKEYSYM [j][0])
+			{
+				if (ODDKEYSYM [j][0] == keysym)
+				{
+					alt_keysym = ODDKEYSYM [j][1];
+					break;
+				}
+				j++;
+			}
+		}
+		if ( alt_keysym )
+		{
+			for (j = ksr->minKeyCode; j <= ksr->maxKeyCode; j++)
+				if (ksr->map [(j - ksr->minKeyCode) * ksr->mapWidth] == XK_Shift_L)
+				break;
+			if (state)
+				xf86PostKeyboardEvent (keydev, j, 1);
+			for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
+				if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == alt_keysym)
+				break;
+			xf86PostKeyboardEvent (keydev, i, state);
+			if (state)
+				xf86PostKeyboardEvent (keydev, j, 0);
+		}
+		else
+			xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
 			 keysym, keydev->name);
 		return;
 	}
@@ -326,6 +383,29 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
  * sendAButton --
  *   Send one button event, called by xf86WcmSendButtons
  ****************************************************************************/
+static int wcm_modifier [ ] = 
+{
+	XK_Shift_L,
+	XK_Control_L,
+	XK_Meta_L,
+	XK_Alt_L,
+	XK_Super_L,
+	XK_Hyper_L,
+	0
+};
+
+static int WcmIsModifier(int keysym)
+{
+	int j = 0, match = 0;
+	while (wcm_modifier[j])
+		if (wcm_modifier[j++] == keysym)
+		{
+			match = 1;
+			break;
+		}
+	DBG(10, ErrorF("WcmIsModifier keySym=%x match=%d\n", keysym, match));
+	return match;
+}
 
 static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5)
@@ -335,19 +415,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 	int is_core = local->flags & XI86_ALWAYS_CORE;
 	int i, button_idx, naxes = priv->naxes;
-	static struct
-	{
-		unsigned ac_mask;
-		unsigned keysym;
-	} mods [] =
-	{
-		{ AC_SHIFT, XK_Shift_L },
-		{ AC_CONTROL, XK_Control_L },
-		{ AC_META, XK_Meta_L },
-		{ AC_ALT, XK_Alt_L },
-		{ AC_SUPER, XK_Super_L },
-		{ AC_HYPER, XK_Hyper_L },
-	};
 
 	if (IsPad(priv))
 		button -= 8;
@@ -374,13 +441,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		"on" : "off", button_idx, mask, button, 
 		local->name, (button & AC_CORE) ? "yes" : "no"));
 
-	/* Emulate modifier key presses, if required
-	 */
-	if (mask != 0)
-		for (i = 0; i < sizeof (mods) / sizeof (mods [0]); i++)
-			if (button & mods [i].ac_mask)
-				emitKeysym (inputInfo.keyboard, mods [i].keysym, 1);
-
 	switch (button & AC_TYPE)
 	{
 	case AC_BUTTON:
@@ -397,7 +457,19 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 	case AC_KEY:
 		if (button & AC_CORE)
-			emitKeysym (inputInfo.keyboard, button & AC_CODE, mask != 0);
+		{
+			for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
+			{
+				if (mask)
+				{
+					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 1);
+					if (!WcmIsModifier(priv->keys[button_idx][i]))
+						emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
+				}
+				else if (WcmIsModifier(priv->keys[button_idx][i]))
+					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
+			}
+		}
 		else
 			ErrorF ("WARNING: Devices without SendCoreEvents cannot emit key events!\n");
 		break;
@@ -442,13 +514,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		break;
 	}
-
-	/* Release modifier keys in reverse order
-	 */
-	if (mask == 0)
-		for (i = sizeof (mods) / sizeof (mods [0]) - 1; i >= 0; i--)
-			if (button & mods [i].ac_mask)
-				emitKeysym (inputInfo.keyboard, mods [i].keysym, 0);
 
 	/* Switch the device out of the core mode, if required
 	 */
@@ -604,18 +669,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	}
 	if (type != PAD_ID)
 	{
-		/* report tool id in the upper 2 bytes of 4th valuator 
-		 * serial number in the upper 2 bytes of 5th and 6th 
-		 * valuators for the 4 bytes of serial number .
-		 * All tools except pad
-		 * This feature is postpond due to bug 1592814. 
-		 * Other approaches will be considered to support 
-		 * this featre in a future release
-		v3 = ((id<<16) & 0xffff0000) | (((short)v3)& 0xffff);
-		v4 = (serial & 0xffff0000) | (((short)v4)& 0xffff);
-		v5 = ((serial<<16) & 0xffff0000) | (((short)v5)& 0xffff);
-		*/
-
 		/* coordinates are ready we can send events */
 		if (is_proximity)
 		{
@@ -684,14 +737,16 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	{
 		if ((v3 || v4 || buttons || ds->relwheel) && !priv->oldProximity)
 		{
-			xf86PostProximityEvent(local->dev, 1, 0, naxes,
+			/* don't emit proximity events if device does not support proximity */
+			if ((local->dev->proximity && !priv->oldProximity))
+				xf86PostProximityEvent(local->dev, 1, 0, naxes,
 				x, y, z, v3, v4, v5);
 			is_proximity = 1;
 		}
 		if ( v3 || v4 )
 		{
 			xf86WcmSetScreen(local, &x, &y);
-			xf86PostMotionEvent(local->dev, 0,
+	 		xf86PostMotionEvent(local->dev, is_absolute,
 				0, naxes, 0, 0, z, v3, v4, v5);
 		}
 		if (priv->oldButtons != buttons)
@@ -1063,13 +1118,21 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		/* if the current area is not in-prox anymore, we
 		 * might want to use another area. So move the
 		 * current-pointer away for a moment while we have a
-		 * look if there's a better area defined */
+		 * look if there's a better area defined.
+		 * Skip this if only one area is defined 
+		 */
 		WacomToolAreaPtr outprox = NULL;
-		if (tool->current && !xf86WcmPointInArea(tool->current, ds->x, ds->y))
+		if (tool->current && tool->arealist->next && !xf86WcmPointInArea(tool->current, ds->x, ds->y))
 		{
 			outprox = tool->current;
 			tool->current = NULL;
 		}
+
+		/* If only one area is defined for the tool, always
+		 * use this area even if we're not inside it
+		 */
+		if (!tool->current && !tool->arealist->next)
+			tool->current = tool->arealist;
 
 		/* If no current area in-prox, find a matching area */
 		if(!tool->current)

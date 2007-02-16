@@ -1,7 +1,15 @@
+2007-02-16   Ping Cheng <pingc@wacom.com>
+	* Updated install script to deal with broken uname -p 
+	* Support pad as core and non-core device
+	* Support keystrokes
+	* Support 2.6.19 (Magnus Vigerlöf)
+	* label 0.7.7-5
+
 2007-02-02   Ping Cheng <pingc@wacom.com>
 	* Updated kernel driver to report full out-prox data
 	* Updated pad in X driver
 	* Fine tuned outbound tracking
+	* label 0.7.7-4 
 
 2007-01-29   Ping Cheng <pingc@wacom.com>
 	* Added 3 new xsetwacom options
@@ -62,174 +70,3 @@
 	* updated xsetwacom and wacom_drv
 	* Split wacom.c under 2.6.11 into 4 files
 	* label 0.7.7 for testing
-
-2006-11-21   Ping Cheng <pingc@wacom.com>
-	* Updated web scripts (Magnus Vigerlöf)
-	* Removed serial number and device ID in 4th - 5th 
-	  high bytes due to bug 1592814
-	* label 0.7.6-3
-
-2006-11-13   Ping Cheng <pingc@wacom.com>
-	* Updated acinclude.m4 and configure.in (Mats Johannesson)
-	* Updated X driver for Xinerama setup
-	* Removed option gimp
-
-2006-10-31   Ping Cheng <pingc@wacom.com>
-	* Updated acinclude.m4 and wacom.c
-	* label 0.7.6-2
-
-2006-10-24   Ping Cheng <pingc@wacom.com>
-	* Fixed a relative mode acceleration problem
-	* Updated webpages, acinclude.m4, and configure.in
-	* Updated wacdump for TabletPC
-	* Supports Graphire outbound tracking
-
-2006-10-16   Ping Cheng <pingc@wacom.com>
-	* Updated README and NEWS
- 
-2006-10-13   Ping Cheng <pingc@wacom.com>
-	* Removed 2.4 kernel unchanged $Id lines
-	* label 0.7.6-1
-
-2006-10-09   Ping Cheng <pingc@wacom.com>
-	* Updated install scripts to install wacom man
-	  page, wacom.4x.gz, under /usr/share/man/man4
-	* Updated release version to 0.7.6
-	* Ready to label the source
-
-2006-10-06   Ping Cheng <pingc@wacom.com>
-	* Updated xf86Wacom.h to support Xorg 7.1
-	* Fixed a bug in src/2.6.16/wacom_sys.c
-	* Updates xidump and xsetwacom
-
-2006-10-03   Ping Cheng <pingc@wacom.com>
-        * Updated configure.in and acinclude.m4 for x86_64
-        * Updated src/2.6.16/wacom_sys.c to sync with kernel.org
-
-2006-09-27   Ping Cheng <pingc@wacom.com>
-	* Updated wacserial.c (Adam Marmbrant)
-	* Updated package configuration scripts 
-	  (Patch 1538734, Magnus Vigerlöf and Kai Sattler)
-
-2006-09-22   Ping Cheng <pingc@wacom.com>
-	* Updated wacom man page, wacom.4x
-	* Updated wacdump
-	* Fixed an I3 and Cintiq 21UX pad out-prox bit (Martin Wawro)
-	* Applied TabletPC button XFree86 workaround to Xorg 
-
-2006-09-14   Ping Cheng <pingc@wacom.com>
-	* Fixed a filter bug (Wolfgang Oertl, etc).
-        * Ready to release 0.7.5-3
-
-2006-09-13   Ping Cheng <pingc@wacom.com>
-        * Fixed a typo in 2.6.18/Makefile.in (Mats Johannesson)
-        * Ready to release 0.7.5-2
-
-2006-09-12   Ping Cheng <pingc@wacom.com>
-	* Updated Makefile.am for xdrv (Magnus Vigerlöf)
-	* Fixed a typo in 2.4.x/wacom.c (Magnus Vigerlöf)
-	* Cleaned initialization code for tablet unplug/plug 
-
-2006-09-08   Ping Cheng <pingc@wacom.com>
-	* Fixed Graphire 4 pad/wheel bug
-	* Unified support of USB hot plug/unplug with different tablets
-	  for both XFree86 and Xorg
-	* Ready to release 0.7.5-1 
-
-2006-08-30   Ping Cheng <pingc@wacom.com>
-	* Added Intuos3 4x6 support
-	* Updated acinclude.m4 and configure.in
-	* Fixed a pad display issue in xidump.c and wacom_drv.o (Mats Johannesson)
-
-2006-08-24   Ping Cheng <pingc@wacom.com>
-	* Added GetTabletID to "xsetwacom get" command for apps in X space 
-	  to acquire USB tablet's ID
-	* Added Rotate to "xsetwacom set" command to change tablet orentation 
-	  (Patch 1170661 from Denis Auroux)
-	* Incorporated Andrew Zabolotny's patches
-
-2006-08-22   Ping Cheng <pingc@wacom.com>
-	* Updated acinclude.m4 scripts for kernel 2.6.18
-	* Updated wacom.c for accurately report tablet buttons
-
-2006-08-18   Ping Cheng <pingc@wacom.com>
-	* Updated configure scripts and xidump.c 
-	* Support USB hot plug/unplug with different tablets
-
-2006-08-10   Ping Cheng <pingc@wacom.com>
-	* Backward tablet menu strip support
- 
-2006-08-07   Ping Cheng <pingc@wacom.com>
-	* Created 3 new directories, xdrv, include, and util under src to store 
-	  X driver, common headers, and utility programs separately
-
-2006-08-03   Ping Cheng <pingc@wacom.com>
-	* Increased MAX_SUPPRESS from 6 to 20 (Patch ID 1529268 from Wolfgang Oertl)
-	* Updated wacomcpl 
-
-2006-07-28   Ping Cheng <pingc@wacom.com>
-	* Updated xsetwacom to avoid writing data to files from X driver (more work to be done)
-	* Updated wacomcpl accordingly
-
-2006-07-19   Ping Cheng <pingc@wacom.com>
-	* Modified the definition of wacom_features in wacom_wac.h
-	* Modified newwacom.inc.php to get rid of a kernel warning (Magnus Vigerlöf)
-	* Added mouse and key combined event support in X driver (Andrew Zabolotny)
-
-2006-07-14   Ping Cheng <pingc@wacom.com>
-	* Split wacom.c into wacom_sys.c and wacom_wac.c, where
-	  wacom_sys.c deals with system specific code and wacom-wac.c 
-	  deals with wacom specific code. This work only applies to 
-	  kernel 2.6.16 for this release. wacom.c split for other 
-	  kernels will be considered in future releases.
-	* Add Wacom vendor id into hid_blacklist in hid-core.c, that is,
-	  all Wacom devices, existing and future, will be ignored 
-	  by (usb)hid driver.
-
-2006-06-22   Ping Cheng <pingc@wacom.com>
-	* Added more default Xlib and Xorg SDK searching pathes for x86_64 system 
-
-2006-06-16   Ping Cheng <pingc@wacom.com>
-	* Ready to release 0.7.4-3
-
-2006-06-15   Ping Cheng <pingc@wacom.com>
-	* Updated web pages with new success stories and a
-	  link to Wacom Ubuntu Wiki
-	* Fixed a Volito1 wacom.c issue as reported by 
-	  Samuel Colin (Samuel.Colin@laposte.net)
-
-2006-05-25   Ping Cheng <pingc@wacom.com>
-	* Fixed a typo in some wacom.c files
-	* Update configure.in and acinclude.m4 (Ron at Debian) for
-	   xorg 7 installation path
-	   detecting target arch
-	   configure xlib path 
-	* Release as 0.7.4-2
-
-2006-05-05   Ping Cheng <pingc@wacom.com>
-	* Updated website
-	* Ready to release 0.7.4
-
-2006-05-03   Ping Cheng <pingc@wacom.com>
-	* Removed kernels 2.6.2/3/4/5/6/7
-
-2006-05-01   Ping Cheng <pingc@wacom.com>
-	* Updated DTF-521 support
-	* Updated PenPartner code in wacom.c (Nick Lamb)
-	* Support X.Org 7 wacom driver paths
-	* Removed SYSCALL for unnecessary statements (Andrew Zabolotny)
-
-2006-04-06   Ping Cheng <pingc@wacom.com>
-	* Ready to release 0.7.3-1
-
-2006-03-31   Ping Cheng <pingc@wacom.com>
-	* Support 2.6.16
-	* Updated Mouse1 page to include kernel 2.6
-
-2006-03-27   Ping Cheng <pingc@wacom.com>
-	* Fixed serial id report issue in wacom.c (Rob Engle)
-	* Fixed Xinput events being reported twice (Rob Engle)
-
-2006-03-14   Ping Cheng <pingc@wacom.com>
-	* Fixed a relative distance bug in wcmCommon.c
-	* Ready to release 0.7.3 as beta

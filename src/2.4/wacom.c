@@ -655,7 +655,7 @@ static void wacom_intuos_irq(struct urb *urb)
 	if((wacom->tool[idx] == BTN_TOOL_LENS) && strstr(wacom->features->name, "Intuos3"))
 		if (!(strstr(wacom->features->name, "Intuos3 12x12") 
 			|| strstr(wacom->features->name, "Intuos3 12x19")))
-			return 0;
+			return;
 
 	/* Cintiq doesn't send data when RDY bit isn't set */
 	if (strstr(wacom->features->name, "Cintiq") && !(data[1] & 0x40)) return;
@@ -728,8 +728,8 @@ static void wacom_intuos_irq(struct urb *urb)
 			/* I3 2D mouse side buttons */	
 			if (strstr(wacom->features->name, "Intuos3"))
 			{
-				input_report_key(dev, BTN_SIDE,   data[8] & 0x40);
-				input_report_key(dev, BTN_EXTRA,  data[8] & 0x20);
+				input_report_key(dev, BTN_SIDE,  data[8] & 0x40);
+				input_report_key(dev, BTN_EXTRA, data[8] & 0x20);
 			}
 		}
 

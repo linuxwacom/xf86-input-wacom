@@ -25,13 +25,15 @@
 **   2006-02-27 0.0.6 - PC - fixed a typo
 **   2006-07-19 0.0.7 - PC - supports button and keys combined
 **   2007-01-10 0.0.8 - PC - don't display uninitialized tools
+**   2007-02-07 0.0.9 - PC - support keystrokes
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.8"
+#define XSETWACOM_VERSION "0.0.9"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
+#include "wcmAction.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,11 +41,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <memory.h>
 #include <errno.h>
 #include <assert.h>
-#include "../include/wcmAction.h"
 
 int gnVerbose = 0;
 int gnLastXError = 0;
@@ -352,6 +354,10 @@ static PARAMINFO gParamInfo[] =
 		"Returns the tablet ID of the associated device. ",
 		XWACOM_PARAM_TID, VALUE_REQUIRED },
 
+	{ "GetTabletID", 
+		"Returns the tablet ID of the associated device. ",
+		XWACOM_PARAM_TID, VALUE_REQUIRED },
+
 	{ "NumScreen", 
 		"Returns number of screens configured for the desktop. ",
 		XWACOM_PARAM_NUMSCREEN, VALUE_REQUIRED },
@@ -381,7 +387,8 @@ void Usage(FILE* f)
 
 	fprintf(f,
 	"\nCommands:\n"
-	" list [dev|param]           - display known devices, parameters\n"
+	" list [dev|param|mod]       - display known devices, parameters \n"
+	" list mod                   - display supported modifier and specific keys for keystokes\n"
 	" set dev_name param [values...] - set device parameter by name\n"
 	" get dev_name param [param...] - get device parameter(s) by name\n"
 	" getdefault dev_name param [param...] - get device parameter(s) default value by name\n");
@@ -461,13 +468,15 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tBUTTON: Emit a button event\n"
 		"\tDBLCLICK: Emit a double-click button event\n"
 		"\tMODETOGGLE: Toggle absolute/relative tablet mode\n"
-		"  MODIFIERS: Key modifiers: any combination of:\n"
-		"\tSHIFT, CONTROL, ALT, META, HYPER, SUPER\n"
-		"  CODE: Button number or key code (see /usr/include/X11/keysymdef.h)\n");
+		"  Modifier: use \"xsetwacom list mod\"\n"
+		"\tto see a list of modifiers and specific keys\n"
+		"  CODE: Button number if emit a button event \n"
+		"\tor specific keys and any other keys not listed as mod \n");
 	printf ("Examples:\n"
 		"  xsetwacom set stylus Button1 \"button 5\"\n"
 		"  xsetwacom set stylus Button3 \"dblclick 1\"\n"
-		"  xsetwacom set pad Button2 \"core key ctrl alt  F2\"\n"
+		"  xsetwacom set pad Button2 \"core key ctrl alt F2\"\n"
+		"  xsetwacom set pad Button3 \"core key quotedbl a test string quotedbl\"\n"
 		"  xsetwacom set pad Button10 \"core key ctrl alt backspace\"\n");
 
 	return 0;
@@ -483,6 +492,9 @@ static int List(WACOMCONFIG *hConfig, char** argv)
 
 	if (!strcmp(*argv,"param"))
 		return ListParam(hConfig,argv+1);
+
+	if (!strcmp(*argv,"mod"))
+		return xf86WcmListMod(argv+1);
 
 	fprintf(stderr,"List: Unknown argument '%s'\n",*argv);
 	return 1;
@@ -526,6 +538,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 	const char* pszDevName = NULL;
 	const char* pszParam = NULL;
 	int i, nValue=0, nReturn, nCount = 0;
+	unsigned keys[256];
 
 	while ((a=*argv++) != NULL)
 	{
@@ -596,10 +609,11 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 					nValues[i] = 0;
 			else if (p->nType == ACTION_VALUE)
 			{
-				nValues[i] = xf86WcmDecodeAction (pszDevName,
-								  pszParam,
-								  pszValues[i]);
-				if (!nValues[i])
+				nValues[i] = xf86WcmDecode (pszDevName,
+							    pszParam,
+							    pszValues[i],
+							    keys);
+ 				if (!nValues[i])
 					return 1;
 			}
 			else if (p->nParamID == XWACOM_PARAM_ROTATE)
@@ -675,7 +689,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 	}
 
 	/* Send request */
-	nReturn = WacomConfigSetRawParam(hDev,p->nParamID,nValue);
+	nReturn = WacomConfigSetRawParam(hDev,p->nParamID,nValue,keys);
 
 	if (nReturn)
 		fprintf(stderr,"Set: Failed to set %s value for '%s'\n",
@@ -689,10 +703,11 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 			  int disperr, int valu)
 {
-	int value, sl;
-        char strval [200];
+	int value, sl, i;
+        char strval [200] = "";
+	unsigned keys[256];
 
-	if (WacomConfigGetRawParam (hDev, p->nParamID, &value, valu))
+	if (WacomConfigGetRawParam (hDev, p->nParamID, &value, valu, keys))
 	{
 		fprintf (stderr, "Get: Failed to get %s value for '%s'\n",
 			 devname, p->pszParam);
@@ -745,28 +760,41 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "DBLCLICK ");
 			break;
 		}
-		if (value & AC_HYPER)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "HYPER ");
-		if (value & AC_SUPER)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "SUPER ");
-		if (value & AC_CONTROL)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "CONTROL ");
-		if (value & AC_ALT)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "ALT ");
-		if (value & AC_META)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "META ");
-		if (value & AC_SHIFT)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "SHIFT ");
-
 		if ((value & AC_TYPE) != AC_KEY)
+		{
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "%d",
 					value & AC_CODE);
-		else if (gGetFormat == gfXCONF)
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "0x%x",
-					value & AC_CODE);
+		}
+		else if (!(value & AC_CODE))
+		{
+			printf ("xsetwacom %s %s \"%s\" missing keystrokes \n", devname, p->pszParam, strval);
+			return;
+		}
 		else
-			sl += snprintf (strval + sl, sizeof (strval) - sl, "%s",
-					XKeysymToString (value & AC_CODE));
+		{
+			char keyString[32];
+			if (gGetFormat == gfXCONF)
+			{
+				printf ("Button keystroke is only an xsetwacom command \n");
+				return;
+			}
+			if (!xf86WcmGetString(keys[0], keyString))
+			{
+				printf ("Button keystroke key error \n");
+				return;
+			}
+			i=0;
+			while (i<((value & AC_NUM_KEYS)>>20))
+			{
+				if (!xf86WcmGetString(keys[i++], keyString))
+					return;
+
+				if (strlen(keyString) == 1)
+					sl += snprintf (strval + sl, sizeof (strval) - sl, "%s", keyString);
+				else
+					sl += snprintf (strval + sl, sizeof (strval) - sl, " %s ", keyString);
+			}
+		}
 		if (strval [sl - 1] == ' ')
 			strval [sl - 1] = 0;
 		break;
@@ -780,14 +808,18 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	case gfXCONF:
 		if (p->nParamID > XWACOM_PARAM_NOXOPTION)
 		{
-			printf ("%s is only an xsetwacom command \n", p->pszParam);
-			printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+			printf ("This %s option is only an xsetwacom command \n", p->pszParam);
+			if (p->nParamID < XWACOM_PARAM_GETONLYPARAM)
+				printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
 		}
 		else
 			printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
 		break;
 	default:
-		printf ("%d\n", value);
+		if ((value & AC_TYPE) != AC_KEY)
+			printf ("%d\n", value);
+		else
+			printf ("%s\n", strval);
 		break;
 	}
 }

@@ -2,7 +2,7 @@
 ** wacomcfg.h
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2005 - Ping Cheng
+** Copyright (C) 2004-2007 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -101,11 +101,12 @@ int WacomConfigCloseDevice(WACOMDEVICE * hDevice);
 /* Closes a device.
  * Returns 0 on success, -1 on error.  errno contains error code. */
 
-int WacomConfigSetRawParam(WACOMDEVICE * hDevice, int nParam, int nValue);
+int WacomConfigSetRawParam(WACOMDEVICE * hDevice, int nParam, int nValue, unsigned * keys);
 /* Sets the raw device parameter to specified value.
  *   nParam         - valid paramters can be found Xwacom.h which is not
  *                      automatically included.
  *   nValue         - 32 bit integer value
+ *   keys	    - an array of keys and modifiers
  * Returns 0 on success, -1 on error.  errno contains error code.
  *   EINVAL  - invalid parameter or value
  *   EIO     - unknown X failure, use XSetErrorHandler to capture complete
@@ -115,13 +116,14 @@ int WacomConfigSetRawParam(WACOMDEVICE * hDevice, int nParam, int nValue);
  *   library, but for some parameters, particularly experimental ones, you
  *   will probably have to set them directly. */
 
-int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu);
+int WacomConfigGetRawParam(WACOMDEVICE *hDevice, int nParam, int *nValue, int valu, unsigned * keys);
 /* Gets the raw device parameter.
  *   nParam         - valid paramters can be found Xwacom.h which is not
  *                      automatically included.
  *   nValue         - the device parameter is returned in the integer
  *                    pointed by this parameter.
  *   valu	    - calling valuator value: 1: Get 3: GetDefault
+ *   keys	    - an array of keys and modifiers
  * Returns 0 on success, -1 on error.  errno contains error code.
  *   EINVAL  - invalid parameter or value
  *   EIO     - unknown X failure, use XSetErrorHandler to capture complete

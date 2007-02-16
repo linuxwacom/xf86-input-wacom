@@ -24,8 +24,6 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
-#define WCMACTION_X11_DRIVER
-#include "../include/wcmAction.h"
 
 /*****************************************************************************
  * xf86WcmAllocate --
@@ -36,7 +34,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	LocalDevicePtr local;
 	WacomDevicePtr priv;
 	WacomCommonPtr common;
-	int i;
+	int i, j;
 	WacomToolPtr     tool;
 	WacomToolAreaPtr area;
 
@@ -144,6 +142,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	if (IsPad (priv) /* && check for backward-compatibility models? */)
 		for (i = 0; i < 8; i++)
 			priv->button[i] = (AC_BUTTON | (i + 9));
+
+	for (i=0; i<MAX_BUTTONS; i++)
+		for (j=0; j<256; j++)
+			priv->keys[i][j] = 0;
 
 	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
 	priv->naxes = 6;                   /* Default number of axes */
@@ -498,9 +500,16 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->flags |= ABSOLUTE_FLAG;
 	}
 
-	/* pad reports relative value and never moves the cursor */
-	if (IsPad(priv)) 
-		priv->flags &= ~ABSOLUTE_FLAG;
+	/* Pad is always in relative mode when it's a core device.
+	 * Always in absolute mode when it is not a core device.
+	 */
+	if (IsPad(priv))
+	{
+		if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
+			priv->flags &= ~ABSOLUTE_FLAG;
+		else
+			priv->flags |= ABSOLUTE_FLAG;
+	}
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");
@@ -602,7 +611,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			xf86Msg(X_CONFIG, "WACOM: CursorProx invalid %d \n", common->wcmCursorProxoutDist);
 	}
 
-	/* Config Monitors' resoluiton in TwinView setup.
+	/* Configure Monitors' resoluiton in TwinView setup.
 	 * The value is in the form of "1024x768,1280x1024" 
 	 * for a desktop of monitor 1 at 1024x768 and 
 	 * monitor 2 at 1280x1024
@@ -669,9 +678,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	area->bottomY = priv->bottomY;
 	tool->serial = priv->serial;
 
-	/* The first device don't need to add any tools/areas as it
-	 * will be the first anyway, so if different -> add tool
-	 * and/or area to the existing lists */
+	/* The first device doesn't need to add any tools/areas as it
+	 * will be the first anyway. So if different, add tool
+	 * and/or area to the existing lists 
+	 */
 	if(tool != common->wcmTool)
 	{
 		WacomToolPtr toollist = NULL;
@@ -679,7 +689,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			if(tool->typeid == toollist->typeid && tool->serial == toollist->serial) 
 				break;
 
-		if(toollist) /* There was already a tool with the same type/serial */
+		if(toollist) /* Already have a tool with the same type/serial */
 		{
 			WacomToolAreaPtr arealist;
 
@@ -773,7 +783,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		if (s)
 		{
 			oldButton = priv->button[i];
-			priv->button[i] = xf86WcmDecodeAction(dev->identifier, b, s);
+			priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
 
 			if (oldButton != priv->button[i])
 				xf86Msg(X_CONFIG, "%s: button%d assigned to %d\n",

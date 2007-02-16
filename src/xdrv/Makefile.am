@@ -15,7 +15,7 @@ EXTRA_DIST = xf86Wacom.c xf86Wacom.h \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
 		wcmCommon.c wcmCompat.c wcmConfig.c \
 		wcmFilter.c wcmFilter.h wcmSerial.h \
-		../include/wcmAction.h
+		../include/Xwacom.h
 
 KERNEL_DIR	=@WCM_KERNELDIR@
 XF86_DIR	=@WCM_XF86DIR@
@@ -54,13 +54,13 @@ CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
 
-xf86Wacom.o: xf86Wacom.c wcmFilter.h
+xf86Wacom.o: xf86Wacom.c wcmFilter.h ../include/Xwacom.h
 wcmSerial.o: wcmSerial.c wcmSerial.h wcmFilter.h
 wcmISDV4.o: wcmISDV4.c wcmSerial.h wcmFilter.h
 wcmUSB.o: wcmUSB.c wcmFilter.h
 wcmCommon.o: wcmCommon.c
 wcmCompat.o: wcmCompat.c
-wcmConfig.o: wcmConfig.c wcmFilter.h ../include/wcmAction.h
+wcmConfig.o: wcmConfig.c wcmFilter.h 
 wcmFilter.o: wcmFilter.c wcmFilter.h
 
 $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile

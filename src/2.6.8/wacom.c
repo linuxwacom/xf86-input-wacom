@@ -714,7 +714,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
  	if((wacom->tool[idx] == BTN_TOOL_LENS) 
 			&& ((wacom->features->type == INTUOS3) 
 		 	|| (wacom->features->type == INTUOS3S)))
-		return 0;
+		goto exit;
 
 	/* Cintiq doesn't send data when RDY bit isn't set */
 	if ((wacom->features->type == CINTIQ) && !(data[1] & 0x40)) goto exit;

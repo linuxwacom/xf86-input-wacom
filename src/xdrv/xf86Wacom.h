@@ -276,6 +276,7 @@ struct _WacomDeviceRec
 	unsigned int serial;    /* device serial number */
 	int screen_no;          /* associated screen */
  	int button[MAX_BUTTONS];/* buttons assignments */
+	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
  	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
   
