@@ -1429,29 +1429,29 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 				v0 < priv->topX ? 0 : v0 - priv->topX;
 			v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY : 
 				v1 < priv->topY ? 0 : v1 - priv->topY;
-		}
 
 #ifdef PANORAMIX
-		if (priv->common->wcmMMonitor)
-		{
-			int i, totalWidth, leftPadding = 0;
-			if (priv->screen_no == -1)
+			if (priv->common->wcmMMonitor)
 			{
-				for (i = 0; i < priv->currentScreen; i++)
-					leftPadding += screenInfo.screens[i]->width;
-				for (totalWidth = leftPadding; i < priv->numScreen; i++)
-					totalWidth += screenInfo.screens[i]->width;
+				int i, totalWidth, leftPadding = 0;
+				if (priv->screen_no == -1)
+				{
+					for (i = 0; i < priv->currentScreen; i++)
+						leftPadding += screenInfo.screens[i]->width;
+					for (totalWidth = leftPadding; i < priv->numScreen; i++)
+						totalWidth += screenInfo.screens[i]->width;
+				}
+				else
+				{
+					leftPadding = 0;
+					totalWidth = screenInfo.screens[priv->currentScreen]->width;
+				}
+				v0 -= (priv->bottomX - priv->topX) * leftPadding
+					/ (double)totalWidth + 0.5;
 			}
-			else
-			{
-				leftPadding = 0;
-				totalWidth = screenInfo.screens[priv->currentScreen]->width;
-			}
-			v0 -= (priv->bottomX - priv->topX) * leftPadding
-				/ (double)totalWidth + 0.5;
-		}
 #endif
-		if (priv->twinview != TV_NONE)
+		}
+		else
 		{
 			v0 -= priv->topX - priv->tvoffsetX;
 			v1 -= priv->topY - priv->tvoffsetY;
