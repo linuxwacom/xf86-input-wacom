@@ -148,6 +148,14 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 			priv->keys[i][j] = 0;
 
 	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
+	priv->relup = 4;		   /* Default relative wheel up event */
+	priv->reldn = 5;		   /* Default relative wheel down event */
+	priv->wheelup = 4;		   /* Default absolute wheel up event */
+	priv->wheeldn = 5;		   /* Default absolute wheel down event */
+	priv->striplup = 0;		   /* Default left strip up event. Let user app take care of */
+	priv->stripldn = 0;		   /* Default left strip down event. Let user app take care of */
+	priv->striprup = 0;		   /* Default right strip up event. Let user app take care of */
+	priv->striprdn = 0;		   /* Default right strip down event. Let user app take care of */
 	priv->naxes = 6;                   /* Default number of axes */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
@@ -177,8 +185,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* X resolution in points/inch */
 	common->wcmResolY = 0;             /* Y resolution in points/inch */
-	common->wcmMaxStripX = 4095;       /* Max fingerstrip X */
-	common->wcmMaxStripY = 4095;       /* Max fingerstrip Y */
+	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
+	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
@@ -864,6 +872,53 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical or horizontal). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
+	}
+
+	/* initial screen info */
+	priv->screenTopX[0] = 0;
+	priv->screenTopY[0] = 0;
+	if (priv->twinview != TV_NONE)
+	{
+		priv->screenBottomX[0] = priv->tvResolution[0];
+		priv->screenBottomY[0] = priv->tvResolution[1];
+	}
+	else
+	{
+		priv->screenBottomX[0] = screenInfo.screens[0]->width;
+		priv->screenBottomY[0] = screenInfo.screens[0]->height;
+	}
+	if (priv->twinview != TV_NONE)
+	{
+		if (priv->twinview == TV_ABOVE_BELOW)
+		{
+			priv->screenTopX[1] = 0;
+			priv->screenTopY[1] = priv->tvResolution[1];
+			priv->screenBottomX[1] = priv->tvResolution[2];
+			priv->screenBottomY[1] = priv->tvResolution[3];
+		}
+		if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			priv->screenTopX[1] = priv->tvResolution[0];
+			priv->screenTopY[1] = 0;
+			priv->screenBottomX[1] = priv->tvResolution[2];
+			priv->screenBottomY[1] = priv->tvResolution[3];
+		}
+	}
+	else if (screenInfo.numScreens)
+	{	
+		for (i=1; i<screenInfo.numScreens; i++)
+		{
+			int x = 0, y = 0, j;
+			for (j=0; j<i; j++)
+				x += screenInfo.screens[j]->width;
+			for (j=0; j<i; j++)
+				y += screenInfo.screens[j]->height;
+
+			priv->screenTopX[i] = x;
+			priv->screenTopY[i] = y;
+			priv->screenBottomX[i] = screenInfo.screens[i]->width;
+			priv->screenBottomY[i] = screenInfo.screens[i]->height;
+		}
 	}
 
 	/* mark the device configured */

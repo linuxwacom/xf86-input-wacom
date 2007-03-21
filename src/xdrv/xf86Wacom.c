@@ -76,7 +76,6 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
-static int xf86WcmModelToFile(LocalDevicePtr local);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
 extern Bool usbWcmInit(LocalDevicePtr pDev);
@@ -250,6 +249,51 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	}
 	return TRUE;
 }
+/*****************************************************************************
+ * xf86WcmInitialCordinates
+ ****************************************************************************/
+
+static void xf86WcmInitialCordinates(LocalDevicePtr local, int axes)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int tabletSize = 0, topx = 0, topy = 0;
+
+	/* x ax */
+	if ( !axes )
+	{
+		if (priv->twinview == TV_LEFT_RIGHT)
+			tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+		else
+		{
+			if (priv->flags & ABSOLUTE_FLAG)
+				tabletSize = priv->bottomX;
+			else
+				tabletSize = priv->bottomX - priv->topX;
+		}
+		if (priv->flags & ABSOLUTE_FLAG)
+			topx = priv->topX;
+
+		InitValuatorAxisStruct(local->dev, 0, topx, tabletSize, 
+			common->wcmResolX, 0, common->wcmResolX); 
+	}
+	else /* y ax */
+	{
+		if (priv->twinview == TV_ABOVE_BELOW)
+			tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+		else
+		{
+			if (priv->flags & ABSOLUTE_FLAG)
+				tabletSize = priv->bottomY;
+			else
+				tabletSize = priv->bottomY - priv->topY;
+		}
+		if (priv->flags & ABSOLUTE_FLAG)
+			topy = priv->topY;
+		InitValuatorAxisStruct(local->dev, 1, topy, tabletSize, 
+			common->wcmResolY, 0, common->wcmResolY); 
+	}
+}
 
 /*****************************************************************************
  * xf86WcmRegisterX11Devices --
@@ -260,7 +304,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int tabletSize = 0;
 	CARD8 butmap[MAX_BUTTONS];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
@@ -294,6 +337,19 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		return FALSE;
 	}
 
+	if (InitFocusClassDeviceStruct(local->dev) == FALSE)
+	{
+		ErrorF("unable to init Focus class device\n");
+		return FALSE;
+	}
+
+	if (InitPtrFeedbackClassDeviceStruct(local->dev,
+		xf86WcmDevControlProc) == FALSE)
+	{
+		ErrorF("unable to init ptr feedback\n");
+		return FALSE;
+	}
+
 	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
 	{
 			ErrorF("unable to init proximity class device\n");
@@ -306,12 +362,14 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
 					  xf86GetMotionEvents,
 					  local->history_size,
-					  (priv->flags & ABSOLUTE_FLAG) ?
-					  Absolute : Relative) == FALSE)
+					  ((priv->flags & ABSOLUTE_FLAG) ?
+					  Absolute : Relative) | 
+					  OutOfProximity ) == FALSE)
 	{
 		ErrorF("unable to allocate Valuator class device\n");
 		return FALSE;
 	}
+
 
 	if (nbkeys)
 	{
@@ -360,29 +418,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		priv->tvoffsetY = 60;
 	}
 
-	/* x and y axes */
-	if (priv->twinview == TV_LEFT_RIGHT)
-		tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-	else
-		tabletSize = priv->bottomX;
+	/* x */
+	xf86WcmInitialCordinates(local, 0);
 
-	InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize, /* max val */
-		common->wcmResolX, /* tablet resolution */
-		0, common->wcmResolX); /* max_res */
-
-	if (priv->twinview == TV_ABOVE_BELOW)
-		tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-	else
-		tabletSize = priv->bottomY;
-
-	InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
-		common->wcmResolY, /* tablet resolution */
-		0, common->wcmResolY); /* max_res */
+	/* y */
+	xf86WcmInitialCordinates(local, 1);
 
 	/* pressure */
-	InitValuatorAxisStruct(local->dev, 2, 0,
-		common->wcmMaxZ, /* max val */
-		1, 1, 1);
+	InitValuatorAxisStruct(local->dev, 2, 0, 
+		common->wcmMaxZ, 1, 1, 1);
 
 	if (IsCursor(priv))
 	{
@@ -675,7 +719,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int tabletSize;
 	WacomDevicePtr tmppriv;
 	char st[32];
 	int oldRotation, dev;
@@ -683,8 +726,9 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	WacomToolAreaPtr area = priv->toolarea;
 	WacomToolAreaPtr tmparea;
 
-	/* we don't reset cordinates to the values that the driver is using. This eliminates some 
-	 * confusion when driver is running on default values.
+	/* we don't reset cordinates to the values that the driver is using.  
+	 * This eliminates some confusion when driver is running on
+	 * default values.
 	 */
 	switch (param) 
 	{
@@ -703,13 +747,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopX", value);
 			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
-			if (priv->twinview == TV_LEFT_RIGHT)
-				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-			else
-				tabletSize = priv->bottomX;
-			InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize,
-				common->wcmResolX, /* tablet resolution */
-				0, common->wcmResolX); /* max_res */
+			xf86WcmInitialCordinates(local, 0);
 		}
 		break;
 	    case XWACOM_PARAM_TOPY:
@@ -727,13 +765,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopY", value);
 			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
-			if (priv->twinview == TV_ABOVE_BELOW)
-				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-			else
-				tabletSize = priv->bottomY;
-			InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
-				common->wcmResolY, /* tablet resolution */
-				0, common->wcmResolY); /* max_res */
+			xf86WcmInitialCordinates(local, 1);
 		}
 		break;
 	    case XWACOM_PARAM_BOTTOMX:
@@ -751,13 +783,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomX", value);
 			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-			if (priv->twinview == TV_LEFT_RIGHT)
-				tabletSize = 2*(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-			else
-				tabletSize = priv->bottomX;
-			InitValuatorAxisStruct(local->dev, 0, priv->topX, tabletSize,
-				common->wcmResolX, /* tablet resolution */
-				0, common->wcmResolX); /* max_res */
+			xf86WcmInitialCordinates(local, 0);
 		}
 		break;
 	    case XWACOM_PARAM_BOTTOMY:
@@ -775,13 +801,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomY", value);
 			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-			if (priv->twinview == TV_ABOVE_BELOW)
-				tabletSize = 2*(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-			else
-				tabletSize = priv->bottomY;
-			InitValuatorAxisStruct(local->dev, 1, priv->topY, tabletSize, /* max val */
-				common->wcmResolY, /* tablet resolution */
-				0, common->wcmResolY); /* max_res */
+			xf86WcmInitialCordinates(local, 1);
 		}
 		break;
 	    case XWACOM_PARAM_DEBUGLEVEL:
@@ -840,11 +860,15 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			priv->flags |= ABSOLUTE_FLAG;
 			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+			xf86WcmInitialCordinates(local, 0);
+			xf86WcmInitialCordinates(local, 1);
 		}
-		else 
+		else
 		{
 			priv->flags &= ~ABSOLUTE_FLAG;
 			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			xf86WcmInitialCordinates(local, 0);
+			xf86WcmInitialCordinates(local, 1);
 		}
 		break;
 	    }
@@ -997,30 +1021,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			break;
 		    } 
 
-		    InitValuatorAxisStruct(common->wcmDevices[dev]->dev,
-			0, tmppriv->topX, tmppriv->bottomX, common->wcmResolX, /* tablet resolution */
-			0, common->wcmResolX); /* max_res */
+		    xf86WcmInitialCordinates(common->wcmDevices[dev], 0);
+		    xf86WcmInitialCordinates(common->wcmDevices[dev], 1);
 
-		    InitValuatorAxisStruct(common->wcmDevices[dev]->dev,
-			1, tmppriv->topY, tmppriv->bottomY, common->wcmResolY, /* tablet resolution */
-			0, common->wcmResolY); /* max_res */
-
-		    if (tmppriv->topX)
-		    {
-			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopX", tmppriv->topX);
-		    }
-		    if (tmppriv->topY)
-		    {
-			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopY", tmppriv->topY);
-		    }
-		    if (tmppriv->bottomX != common->wcmMaxX)
-		    {
-			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomX", tmppriv->bottomX);
-		    }
-		    if (tmppriv->bottomY != common->wcmMaxY)
-		    {
-			xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomY", tmppriv->bottomY);
-		    }
+		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopX", tmppriv->topX);
+		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopY", tmppriv->topY);
+		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomX", tmppriv->bottomX);
+		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomY", tmppriv->bottomY);
 		}
 		break;	    
 	      default:
@@ -1037,20 +1044,167 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int bn;
+	static int button_keys = 0, number_keys = 0;
+	int *setVal = 0, bn = param - XWACOM_PARAM_BUTTON1;
+	unsigned  *keyP = 0;
 	char st[32];
 
-	bn = param - XWACOM_PARAM_BUTTON1 + 1;
-	if (bn > priv->nbuttons)
-		return BadValue;
-
-	if (value != priv->button[bn - 1])
+	if (param >= XWACOM_PARAM_BUTTON1 && param <= XWACOM_PARAM_BUTTON32)
 	{
-		snprintf (st, sizeof (st), "Button%d", bn);
-		xf86ReplaceIntOption (local->options, st, value);
-		priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn);
+		if (bn > priv->nbuttons)
+			return BadValue;
+		else
+		{
+			if ((!(value & AC_TYPE)) && (value != priv->button[bn - 1]))
+			{
+				snprintf (st, sizeof (st), "Button%d", bn);
+				xf86ReplaceIntOption (local->options, st, value);
+				priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn); 
+			}
+			setVal = &(priv->button [bn]);
+			keyP = priv->keys[bn];
+		}
+	}
+
+	switch (param)
+	{
+	   case XWACOM_PARAM_RELWUP:
+		setVal = &(priv->relup);
+		keyP = priv->rupk;
+		break;
+	   case XWACOM_PARAM_RELWDN:
+		setVal = &(priv->reldn);
+		keyP = priv->rdnk;
+		break;
+	   case XWACOM_PARAM_ABSWUP:
+		setVal = &(priv->wheelup);
+		keyP = priv->wupk;
+		break;
+	   case XWACOM_PARAM_ABSWDN:
+		setVal = &(priv->wheeldn);
+		keyP = priv->wdnk;
+		break;
+	   case XWACOM_PARAM_STRIPLUP:
+		setVal = &(priv->striplup);
+		keyP = priv->slupk;
+		break;
+	   case XWACOM_PARAM_STRIPLDN:
+		setVal = &(priv->stripldn);
+		keyP = priv->sldnk;
+		break;
+	   case XWACOM_PARAM_STRIPRUP:
+		setVal = &(priv->striprup);
+		keyP = priv->srupk;
+		break;
+	   case XWACOM_PARAM_STRIPRDN:
+		setVal = &(priv->striprdn);
+		keyP = priv->srdnk;
+		break;
+	}
+	if (keyP)
+	{
+		if (!number_keys)
+		{
+			*setVal = value;
+			number_keys = (value & AC_NUM_KEYS) >> 20;
+			DBG(10, ErrorF("xf86WcmSetButtonParam value = %x number of keys = %d\n",*setVal, number_keys));
+			if (number_keys)
+				keyP[button_keys++] = value & 0xffff;
+		}
+		else
+		{
+			if (button_keys < number_keys)
+			{
+				keyP[button_keys++] = value & 0xffff;
+				keyP[button_keys++] = (value & 0xffff0000) >> 16;
+			}
+		}
+		if (button_keys >= number_keys)
+			button_keys = number_keys = 0;
 	}
 	return Success;
+}
+
+/*****************************************************************************
+ * xf86WcmGetButtonParam
+ ****************************************************************************/
+
+static int xf86WcmGetButtonParam(LocalDevicePtr local, int param)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	static int button_keys = 0, number_keys = 0;
+	int retVal = 0, bn = param - XWACOM_PARAM_BUTTON1;
+	unsigned *keyP = 0;
+
+	if (param >= XWACOM_PARAM_BUTTON1 && param <= XWACOM_PARAM_BUTTON32)
+	{
+		if (bn > priv->nbuttons)
+			return BadValue;
+		else
+		{
+			retVal = priv->button [bn];
+			keyP = priv->keys[bn];
+		}
+	}
+
+	switch (param)
+	{
+	   case XWACOM_PARAM_RELWUP:
+		retVal = priv->relup;
+		keyP = priv->rupk;
+		break;
+	   case XWACOM_PARAM_RELWDN:
+		retVal = priv->reldn;
+		keyP = priv->rdnk;
+		break;
+	   case XWACOM_PARAM_ABSWUP:
+		retVal = priv->wheelup;
+		keyP = priv->wupk;
+		break;
+	   case XWACOM_PARAM_ABSWDN:
+		retVal = priv->wheeldn;
+		keyP = priv->wdnk;
+		break;
+	   case XWACOM_PARAM_STRIPLUP:
+		retVal = priv->striplup;
+		keyP = priv->slupk;
+		break;
+	   case XWACOM_PARAM_STRIPLDN:
+		retVal = priv->stripldn;
+		keyP = priv->sldnk;
+		break;
+	   case XWACOM_PARAM_STRIPRUP:
+		retVal = priv->striprup;
+		keyP = priv->srupk;
+		break;
+	   case XWACOM_PARAM_STRIPRDN:
+		retVal = priv->striprdn;
+		keyP = priv->srdnk;
+		break;
+	}
+	DBG(10, ErrorF("xf86WcmGetButtonParam value = %x\n", retVal));
+	if (keyP)
+	{
+		if (!number_keys)
+		{
+			number_keys = (retVal & AC_NUM_KEYS) >> 20;
+			if (number_keys)
+				button_keys++;
+		}
+		else
+		{
+			if (button_keys < number_keys)
+			{
+				retVal = keyP[button_keys++];
+				retVal |=  ((button_keys - number_keys) ? (keyP[button_keys++] << 16) : 0);
+			}
+		}
+		if (button_keys >= number_keys)
+			button_keys = number_keys = 0;
+	}
+	else
+		retVal = BadValue;
+	return retVal;
 }
 
 /*****************************************************************************
@@ -1065,6 +1219,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 
 	switch (param)
 	{
+	case 0:
+		return 1;
 	case XWACOM_PARAM_TOPX:
 		return priv->topX;
 	case XWACOM_PARAM_TOPY:
@@ -1073,6 +1229,58 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->bottomX;
 	case XWACOM_PARAM_BOTTOMY:
 		return priv->bottomY;
+	case XWACOM_PARAM_STOPX0:
+	case XWACOM_PARAM_STOPX1:
+	case XWACOM_PARAM_STOPX2:
+	{
+		int sn = (param - XWACOM_PARAM_STOPX0) / 4; 
+		int numS = screenInfo.numScreens;
+		if (priv->twinview != TV_NONE)
+			numS = 2;
+		if (sn >= numS)
+			return -1;
+		else
+			return priv->screenTopX[sn];
+	}
+	case XWACOM_PARAM_STOPY0:
+	case XWACOM_PARAM_STOPY1:
+	case XWACOM_PARAM_STOPY2:
+	{
+		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
+		int numS = screenInfo.numScreens;
+		if (priv->twinview != TV_NONE)
+			numS = 2;
+		if (sn >= numS)
+			return -1;
+		else
+			return priv->screenTopY[sn];
+	}
+	case XWACOM_PARAM_SBOTTOMX0:
+	case XWACOM_PARAM_SBOTTOMX1:
+	case XWACOM_PARAM_SBOTTOMX2:
+	{
+		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
+		int numS = screenInfo.numScreens;
+		if (priv->twinview != TV_NONE)
+			numS = 2;
+		if (sn >= numS)
+			return -1;
+		else
+			return priv->screenBottomX[sn];
+	}
+	case XWACOM_PARAM_SBOTTOMY0:
+	case XWACOM_PARAM_SBOTTOMY1:
+	case XWACOM_PARAM_SBOTTOMY2:
+	{
+		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
+		int numS = screenInfo.numScreens;
+		if (priv->twinview != TV_NONE)
+			numS = 2;
+		if (sn >= numS)
+			return -1;
+		else
+			return priv->screenBottomY[sn];
+	}
 	case XWACOM_PARAM_DEBUGLEVEL:
 		return gWacomModule.debugLevel;
 	case XWACOM_PARAM_RAWFILTER:
@@ -1122,6 +1330,86 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 }
 
 /*****************************************************************************
+ * xf86WcmGetDefaultScreenInfo
+ ****************************************************************************/
+
+static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int numS = screenInfo.numScreens, i = 0;
+
+	if (priv->twinview != TV_NONE)
+		numS = 2;
+
+	switch (param)
+	{
+	case XWACOM_PARAM_STOPX0:
+	case XWACOM_PARAM_STOPX1:
+	case XWACOM_PARAM_STOPX2:
+	   {
+		int sn = (param - XWACOM_PARAM_STOPX0) / 4;
+		if (sn >= numS)
+			return -1;
+		else if (priv->twinview == TV_ABOVE_BELOW)
+			return 0;
+		else if (priv->twinview == TV_LEFT_RIGHT)
+			return (sn ? priv->tvResolution[0] : 0);
+		else
+		{
+			int x = 0;
+			for (i = 0; i<sn; i++)
+				x += screenInfo.screens[i]->width;
+			return x;
+		}
+	   }
+	case XWACOM_PARAM_STOPY0:
+	case XWACOM_PARAM_STOPY1:
+	case XWACOM_PARAM_STOPY2:
+	   {
+		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
+		if (sn >= numS)
+			return -1;
+		else if (priv->twinview == TV_ABOVE_BELOW)
+			return (sn ? priv->tvResolution[1] : 0);
+		else if (priv->twinview == TV_LEFT_RIGHT)
+			return 0;
+		else
+		{
+			int y = 0;
+			for (i = 0; i<sn; i++)
+				y += screenInfo.screens[i]->height;
+			return y;
+		}
+	   }
+	case XWACOM_PARAM_SBOTTOMX0:
+	case XWACOM_PARAM_SBOTTOMX1:
+	case XWACOM_PARAM_SBOTTOMX2:
+	   {
+		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
+		if (sn >= numS)
+			return -1;
+		else if (priv->twinview != TV_NONE)
+			return (sn ? priv->tvResolution[2] : priv->tvResolution[0]);
+		else
+			return screenInfo.screens[i]->width;
+	   }
+	case XWACOM_PARAM_SBOTTOMY0:
+	case XWACOM_PARAM_SBOTTOMY1:
+	case XWACOM_PARAM_SBOTTOMY2:
+	   {
+		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
+		if (sn >= numS)
+			return -1;
+		else if (priv->twinview != TV_NONE)
+			return (sn ? priv->tvResolution[3] : priv->tvResolution[1]);
+		else
+			return screenInfo.screens[i]->height;
+	   }
+	}
+	return -1;
+}
+
+/*****************************************************************************
  * xf86WcmGetDefaultParam
  ****************************************************************************/
 
@@ -1130,6 +1418,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	DBG(10, ErrorF("xf86WcmGetDefaultParam param = %d\n",param));
+
+	if ( param >= XWACOM_PARAM_STOPX0 && param <= XWACOM_PARAM_SBOTTOMY2)
+		return xf86WcmGetDefaultScreenInfo(local, param);
 
 	switch (param)
 	{
@@ -1152,6 +1443,16 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 			return 0;
                 else
 			return 1;
+	case XWACOM_PARAM_RELWUP:
+	case XWACOM_PARAM_ABSWUP:
+	case XWACOM_PARAM_STRIPLUP:
+	case XWACOM_PARAM_STRIPRUP:
+		return 4;
+	case XWACOM_PARAM_RELWDN:
+	case XWACOM_PARAM_ABSWDN:
+	case XWACOM_PARAM_STRIPLDN:
+	case XWACOM_PARAM_STRIPRDN:
+		return 5;
 	case XWACOM_PARAM_SPEEDLEVEL:
 		return 6;
 	case XWACOM_PARAM_ACCEL:
@@ -1170,83 +1471,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDistDefault;
 		return -1;
-	case XWACOM_PARAM_GETMODEL:
-		xf86WcmModelToFile(local);
-		return 0;
 	}
 	DBG(10, ErrorF("xf86WcmGetDefaultParam invalid param %d\n",param));
 	return -1;
-}
-
-/*****************************************************************************
- * xf86WcmModelToFile
- ****************************************************************************/
-
-static int xf86WcmModelToFile(LocalDevicePtr local)
-{
-	FILE		*fp = 0;
-	LocalDevicePtr  localDevices = xf86FirstLocalDevice();
-	WacomDevicePtr	priv = NULL, lprv;
-	
-	char		m1[32], m2[32], *m3;			
-	int 		i = 0, x = 0, y = 0;
-
-    	DBG(10, ErrorF("xf86WcmModelToFile \n"));
-	fp = fopen("/etc/wacom.dat", "w+");
-	if ( fp )
-	{
-		while(localDevices) 
-		{
-			m3 = xf86FindOptionValue(localDevices->options, "Type");
-			if (m3 && (strstr(m3, "eraser") || strstr(m3, "stylus") 
-					|| strstr(m3, "cursor")))
-				lprv = (WacomDevicePtr)localDevices->private;
-			else
-				lprv = NULL;
-			if ( lprv && lprv->common && lprv->common->wcmModel ) 
-			{
-				sscanf((char*)(lprv->common->wcmModel)->name, "%s %s", m1, m2);
-				if ( lprv->common->wcmEraserID )
-					fprintf(fp, "%s %s %s %s\n", localDevices->name, m2, m3, lprv->common->wcmEraserID);
-				else
-					fprintf(fp, "%s %s %s %s\n", localDevices->name, m2, m3, localDevices->name);
-				if (lprv->twinview != TV_NONE)
-				{
-					priv = lprv;
-				}
-				if( !priv ) priv = lprv;
-			}
-			localDevices = localDevices->next;
-		}
-		/* write TwinView ScreenInfo */
-		if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			fprintf(fp, "Screen0 %d %d %d %d\n", priv->tvResolution[0], 
-				priv->tvResolution[1], 0, 0);
-			fprintf(fp, "Screen1 %d %d %d %d\n", priv->tvResolution[2], 
-				priv->tvResolution[3], 0, priv->tvResolution[1]);
-		}
-		else if (priv->twinview == TV_LEFT_RIGHT)
-		{
-			fprintf(fp, "Screen0 %d %d %d %d\n", priv->tvResolution[0], 
-				priv->tvResolution[1], 0, 0);
-			fprintf(fp, "Screen1 %d %d %d %d\n", priv->tvResolution[2], 
-				priv->tvResolution[3], priv->tvResolution[0], 0);
-		}
-		/* write other screen setup info */
-		else
-		{
-			for (i = 0; i<screenInfo.numScreens; i++)
-			{
-				fprintf(fp, "Screen%d %d %d %d %d\n", 
-				i, screenInfo.screens[i]->width,
-				screenInfo.screens[i]->height, x, y);
-				x += screenInfo.screens[i]->width;
-			}
-		}
-		fclose(fp);
-	} 
-	return(Success);
 }
 
 /*****************************************************************************
@@ -1267,11 +1494,21 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 		return Success;
 	}
 
-	if (mode == Absolute)
+	if ((mode == Absolute) && !(priv->flags & ABSOLUTE_FLAG))
+	{
 		priv->flags |= ABSOLUTE_FLAG;
-	else if (mode == Relative)
+		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+		xf86WcmInitialCordinates(local, 0);
+		xf86WcmInitialCordinates(local, 1);
+	}
+	else if ((mode == Relative) && (priv->flags & ABSOLUTE_FLAG))
+	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
-	else
+		xf86ReplaceStrOption(local->options, "Mode", "Relative");
+		xf86WcmInitialCordinates(local, 0);
+		xf86WcmInitialCordinates(local, 1);
+	}
+	else if ( (mode != Absolute) && (mode != Relative))
 	{
 		DBG(10, ErrorF("xf86WcmSwitchMode dev=%p invalid mode=%d\n",
 				(void *)dev, mode));
@@ -1289,8 +1526,7 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	xDeviceResolutionCtl* res = (xDeviceResolutionCtl *)control;
-	int i, rc = Success, *r = (int*)(res+1), param, tk = 0;
-	static int button_keys = 0, number_keys = 0;
+	int i, rc = Success, *r = (int*)(res+1);
 
 	if (control->control != DEVICE_RESOLUTION || (res->num_valuators < 1
 			&& res->num_valuators > 3) || res->first_valuator != 0)
@@ -1312,36 +1548,9 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 			 * again with r [0] == 0, which restores default resolution.
 			 */
 			a = local->dev->valuator->axes + priv->naxes - 1;
-			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_BUTTON32)
-			{
-				param = r [0] - XWACOM_PARAM_BUTTON1;
-				if (!number_keys)
-				{
-					a->resolution = a->min_resolution 
-					 = a->max_resolution 
-					 = priv->button [param];
-					number_keys = (a->resolution & AC_NUM_KEYS) >> 20;
-					if (number_keys)
-						button_keys++;
-				}
-				else
-				{
-					if (button_keys < number_keys)
-					{
-						tk = priv->keys[param][button_keys++];
-						a->resolution 
-					      = a->min_resolution 
-					      = a->max_resolution
-					      = (tk | ((button_keys -number_keys) ? 
-						(priv->keys[param][button_keys++] << 16) : 0));
-					}
-				}
-			}
-			else if (!r[0])
-			{
-				button_keys = number_keys = 0;
-				a->resolution = a->min_resolution = a->max_resolution = 1;
-			}
+			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_STRIPRDN)
+				a->resolution = a->min_resolution = a->max_resolution = 
+					xf86WcmGetButtonParam (local, r [0]);
 			else
 				a->resolution = a->min_resolution = a->max_resolution =
 					xf86WcmGetParam (local, r [0]);
@@ -1351,28 +1560,8 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 		{
 			DBG (10, ErrorF("xf86WcmChangeControl: dev %s set 0x%x to 0x%x\n",
 				local->dev->name, r [0], r [1]));
-			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_BUTTON32)
-			{
-				param = r [0] - XWACOM_PARAM_BUTTON1;
-				if (!number_keys)
-				{
-					priv->button[param] = r[1];
-					number_keys = (r[1] & AC_NUM_KEYS) >> 20;
-					if (number_keys)
-						priv->keys[param][button_keys++] = r[1] & 0xffff;
-					rc = xf86WcmSetButtonParam (local, r [0], r[1]);
-				}
-				else
-				{
-					if (button_keys < number_keys)
-					{
-						priv->keys[param][button_keys++] = r[1] & 0xffff;
-						priv->keys[param][button_keys++] = (r[1] & 0xffff0000) >> 16;
-					}
-				}
-				if (button_keys >= number_keys)
-					button_keys = number_keys = 0;
-			}
+			if (r [0] >= XWACOM_PARAM_BUTTON1 && r[0] <= XWACOM_PARAM_STRIPRDN)
+				rc = xf86WcmSetButtonParam (local, r [0], r[1]);
 			else
 				rc = xf86WcmSetParam (local, r [0], r[1]);
 			break;
@@ -1404,8 +1593,8 @@ static int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control)
 
 /*****************************************************************************
  * xf86WcmDevConvert --
- 
- ****************************************************************************/
+ *  Convert X & Y valuators so core events can be generated with 
+ *  coordinates that are scaled and suitable for screen resolution. ****************************************************************************/
 
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
@@ -1430,7 +1619,6 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY : 
 				v1 < priv->topY ? 0 : v1 - priv->topY;
 
-#ifdef PANORAMIX
 			if (priv->common->wcmMMonitor)
 			{
 				int i, totalWidth, leftPadding = 0;
@@ -1449,13 +1637,12 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 				v0 -= (priv->bottomX - priv->topX) * leftPadding
 					/ (double)totalWidth + 0.5;
 			}
-#endif
 		}
 		else
 		{
 			v0 -= priv->topX - priv->tvoffsetX;
 			v1 -= priv->topY - priv->tvoffsetY;
-               		if (priv->twinview == TV_LEFT_RIGHT)
+			if (priv->twinview == TV_LEFT_RIGHT)
 			{
 				if (v0 > priv->bottomX - priv->tvoffsetX && priv->screen_no == -1)
 				{
@@ -1470,7 +1657,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 				}
 				if (priv->currentScreen == 1)
 				{
-                       			*x = priv->tvResolution[0] + priv->tvResolution[2]
+					*x = priv->tvResolution[0] + priv->tvResolution[2]
 						* v0 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
 					*y = v1 * priv->tvResolution[3] /
 						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
@@ -1483,7 +1670,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 				}
 			}
-            		if (priv->twinview == TV_ABOVE_BELOW)
+			if (priv->twinview == TV_ABOVE_BELOW)
 			{
 				if (v1 > priv->bottomY - priv->tvoffsetY && priv->screen_no == -1)
 				{
@@ -1498,7 +1685,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 				}
 				if (priv->currentScreen == 1)
 				{
- 					*x = v0 * priv->tvResolution[2] /
+					*x = v0 * priv->tvResolution[2] /
 						(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
 					*y = priv->tvResolution[1] + 
 						priv->tvResolution[3] * v1 / 
@@ -1515,7 +1702,6 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			return TRUE;
 		}
 	}
-
 	temp = ((double)v0 * priv->factorX + 0.5);
 	*x += temp;
 	temp = ((double)v1 * priv->factorY + 0.5);
@@ -1527,10 +1713,9 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 /*****************************************************************************
  * xf86WcmDevReverseConvert --
- *  Convert X and Y to valuators. Only used by core events.
- *  Handdle relatve screen to tablet convert
- *  We don't support screen mapping yet (Ping April 22, 2005)
- ****************************************************************************/
+ *  Convert X and Y to valuators in relative mode where the position of 
+ *  the core pointer must be translated into device cootdinates before 
+ *  the extension and core events are generated in Xserver. ****************************************************************************/
 
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
@@ -1538,16 +1723,17 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int i = 0;
 
- 	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
+	DBG(6, ErrorF("xf86WcmDevReverseConvert x=%d y=%d \n", x, y));
 	priv->currentSX = x;
 	priv->currentSY = y;
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
-		valuators[0] = (((double)x / priv->factorX) + 0.5);
-		valuators[1] = (((double)y / priv->factorY) + 0.5);
 		if (!priv->devReverseCount)
 		{
+			valuators[0] = (((double)x / priv->factorX) + 0.5);
+			valuators[1] = (((double)y / priv->factorY) + 0.5);
+
 			/* reset valuators to report raw values */
 			for (i=2; i<priv->naxes; i++)
 				valuators[i] = 0;
@@ -1557,68 +1743,6 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		else
 			priv->devReverseCount = 0;
 	}
-
-#ifdef NEVER 
-/* This is for absolute screen mapping */
-#ifdef PANORAMIX
-	if ((priv->flags & ABSOLUTE_FLAG) && priv->common->wcmMMonitor)
-	{
-		int i, totalWidth, leftPadding = 0;
-		for (i = 0; i < priv->currentScreen; i++)
-			leftPadding += screenInfo.screens[i]->width;
-		for (totalWidth = leftPadding; i < priv->numScreen; i++)
-			totalWidth += screenInfo.screens[i]->width;
-		valuators[0] += (priv->bottomX - priv->topX)
-			* leftPadding / (double)totalWidth + 0.5;
-	}
-#endif
-	if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
-	{
-                if (priv->twinview == TV_LEFT_RIGHT)
-		{
-			if (x > priv->tvResolution[0])
-				x -= priv->tvResolution[0];
-			if (priv->currentScreen == 1)
-			{
-				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX)
-				 	/ priv->tvResolution[2] + 0.5;
-				valuators[1] = y * (priv->bottomY - priv->topY - 2*priv->tvoffsetY) /
-					priv->tvResolution[3] + 0.5;
-			}
-			else
-			{
-				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX)
-					 / priv->tvResolution[0] + 0.5;
-				valuators[1] = y * (priv->bottomY - priv->topY - 2*priv->tvoffsetY) /
-					priv->tvResolution[1] + 0.5;
-			}
-		}
-                if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			if (y > priv->tvResolution[1])
-				y -= priv->tvResolution[1];
-			if (priv->currentScreen == 1)
-			{
-				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX) /
-					priv->tvResolution[2] + 0.5;
-				valuators[1] = y *(priv->bottomY - priv->topY - 2*priv->tvoffsetY)
-					/ priv->tvResolution[3] + 0.5;
-			}
-			else
-			{
-				valuators[0] = x * (priv->bottomX - priv->topX - 2*priv->tvoffsetX) /
-					priv->tvResolution[0] + 0.5;
-				valuators[1] = y *(priv->bottomY - priv->topY - 2*priv->tvoffsetY)
-					/ priv->tvResolution[1] + 0.5;
-			}
-		}
-	}
-	if (priv->flags & ABSOLUTE_FLAG)
-	{
-		valuators[0] += priv->topX + priv->tvoffsetX;
-		valuators[1] += priv->topY + priv->tvoffsetY;
-	}
-#endif
 	DBG(6, ErrorF("Wacom converted x=%d y=%d to v0=%d v1=%d v2=%d v3=%d v4=%d v5=%d\n", x, y,
 		valuators[0], valuators[1], valuators[2], valuators[3], valuators[4], valuators[5]));
 

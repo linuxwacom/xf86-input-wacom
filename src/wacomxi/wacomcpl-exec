@@ -27,7 +27,6 @@ exec wish -f "$0" ${1+"$@"}
 
 package require LIBWACOMXI
 
-set numScreens 1
 set currentScreen 0
 set desktopWidth [ winfo screenwidth . ]
 set desktopHeight [ winfo screenheight . ]
@@ -49,12 +48,12 @@ set deviceIndex 0
 set showHelp 0
 
 proc updateCurrentScreenInfo {} {
-    global numScreens currentScreen
+    global device numScreens currentScreen
     global screenWidth screenHeight screenX_org screenY_org 
     global getScreenInfo
 
-    if { $numScreens != 1 } {
-        set screenInfo $getScreenInfo(Screen$currentScreen)
+    if { $numScreens($device) != 1 } {
+        set screenInfo $getScreenInfo($device,Screen$currentScreen)
 	set screenWidth [ lindex $screenInfo 0 ]
 	set screenHeight [ lindex $screenInfo 1 ]
 	set screenX_org [ lindex $screenInfo 2 ]
@@ -179,7 +178,7 @@ proc calibrationSequence {which xDev yDev} {
 	}
 
 	destroy .topleft .bottomright
-	if { $numScreens > 1 } {
+	if { $numScreens($device) > 1 } {
 	    .screen.list.label configure -text ""
  	    bindtags .screen.list.list $screenTags
 	} else {
@@ -204,19 +203,16 @@ proc Calibration {} {
     }
 
     bindtags .workingDev.list .
-    if { $numScreens > 1 } {
+    if { $numScreens($device) > 1 } {
+	displayScreenList $device
 	set screenTags [ bindtags .screen.list.list]
-    }
-
-    if { $numScreens > 1 } {
 	.screen.list.title configure -text "Select $device associated Screen:"
 	wm state .screen normal
-	disableButtons
     } else {
 	updateCurrentScreenInfo
 	startCalibration
-	disableButtons
     }
+    disableButtons
 }
 
 proc startCalibration {} {
@@ -224,7 +220,7 @@ proc startCalibration {} {
     global screenX_org screenY_org size numScreens
     global screenWidth screenHeight
     
-    if { $numScreens > 1 } {
+    if { $numScreens($device) > 1 } {
 	bindtags .screen.list.list .
     }
 
@@ -279,14 +275,14 @@ proc messageWindow { tString mString } {
 
 proc updateScreenList {} {
     global currentScreen numScreens screenWidth screenHeight
-    global screenX_org screenY_org origin_x origin_y
+    global device screenX_org screenY_org origin_x origin_y
 
-    if { $numScreens > 1 } {
+    if { $numScreens($device) > 1 } {
 	set cScreen [ .screen.list.list get anchor ]
-	for { set i 0 } { $i < $numScreens } { incr i 1 } {
+	for { set i 0 } { $i < $numScreens($device) } { incr i 1 } {
 	    if { $cScreen == "Screen$i" } {
 		set currentScreen $i
-		set i $numScreens
+		set i $numScreens($device)
 	    }
 	}
     }
@@ -330,27 +326,27 @@ proc getDeviceOptionProc { dev i } {
 
 	    set p0 [ expr ( $value >> 24) & 0xFF ]
 	    set p1 [ expr ( $value >> 16) & 0xFF ]
-	    if { $p1 > 5 && $p1 < 35 } {
+	    if { ($p1 > 5) && ($p1 < 35) } {
 		set getOption($dev,PressCurve) 3
 	    }
-	    if { $p1 >= 35 && $p1 < 65 } {
+	    if { ($p1 >= 35) && ($p1 < 65) } {
 		set getOption($dev,PressCurve) 2
 	    }
-	    if { $p1 >= 65 && $p1 < 95 } {
+	    if { ($p1 >= 65) && ($p1 < 95) } {
 		set getOption($dev,PressCurve) 1
 	    }
-	    if { $p0 > 5 && $p0 < 35 } {
+	    if { ($p0 > 5) && ($p0 < 35) } {
 		set getOption($dev,PressCurve) 5
 	    }
-	    if { $p0 >= 35 && $p0 < 65 } {
+	    if { ($p0 >= 35) && ($p0 < 65) } {
 		set getOption($dev,PressCurve) 6
 	    }
-	    if { $p0 >= 65 && $p0 < 95 } {
+	    if { ($p0 >= 65) && ($p0 < 95) } {
 		set getOption($dev,PressCurve) 7
 	    }
 	} else {
 	    if { ![string compare -nocase -length 6 $Option($j) "button"] } {
-		if { $value > 19 || $value == 0 } {
+		if { ($value > 19) || ($value == 0) } {
 		    set output [ exec xsetwacom -x get $dev $Option($j) ]
 		    set outputd [ lindex $output 2 ]
 		    if { ![string compare -nocase -length 8 DBLCLICK $outputd ] } {
@@ -359,7 +355,7 @@ proc getDeviceOptionProc { dev i } {
 		    if { ![string compare -nocase -length 10 MODETOGGLE $outputd ] } {
 			set getOption($dev,$Option($j)) 19
 		    }
-		    if { $value == 0 } {
+		    if { ($value == 0) } {
 			set getOption($dev,$Option($j)) 18
 		    }
 		} else {
@@ -400,11 +396,10 @@ proc updateDevice {} {
 	getDeviceOptionProc $device 1
 	set mode $getOption($device,Mode)
 	destroy .panel
-	if { ![string compare -nocase -length 6 $model \
-		"cintiq"] && [string compare -nocase \
-		-length 7 $model "CintiqP" ] || 
-		![string compare -nocase -length 5 \
-		$model "isdv4"] } {
+	if { ($model >= 48 && $model < 64) \
+		|| ($model >= 192 && $model < 196)  \
+		|| ($model == 63) \
+		|| ($model == 144) } { 
 	    if { ![ string compare $type "stylus" ] } {
 		createPanel 1 1 0 1
 	    } else {
@@ -431,38 +426,26 @@ proc updateDevice {} {
     }
 }
 
-proc createDeviceList {infoString} {
+proc createDeviceList {} {
     global getDeviceModel
 
+    set infoString [exec xsetwacom list]
     set index 0
     set devices ""
-    set s1 [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set s2 [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set s3 [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set s4 [ lindex $infoString $index ]
-    while { $s1 != "" } {
-	if { [string compare -length 6 $s1 "Screen" ] } {
-	    set getDeviceModel($s1,model) $s2
-	    set getDeviceModel($s1,type) $s3
-	    set getDeviceModel($s1,eraser) $s4
-	    if { [string first $devices $s1] == -1 } {
-		set devices "$devices $s1"
-	    }
-	    set index [expr $index+1]
-	    set s1 [ lindex $infoString $index ]
-	    set index [ expr $index+1 ]
-	    set s2 [ lindex $infoString $index ]
-	    set index [ expr $index+1 ]
-	    set s3 [ lindex $infoString $index ]
-	    set index [ expr $index+1 ]
-	    set s4 [ lindex $infoString $index ]
-	} else {
-	    set s1 ""
+    set dev [ lindex $infoString $index ]
+    while { $dev != "" } {
+	set index [ expr $index+1 ]
+	set type [ lindex $infoString $index ]
+	set index [ expr $index+1 ]
+
+	if { [string compare $type "pad"] } {
+	    set getDeviceModel($dev,type) $type
+	    set getDeviceModel($dev,model) [ exec xsetwacom get $dev TabletID ]
+	    set devices "$devices $dev"
 	}
+        set dev [ lindex $infoString $index ]
     }
+
     frame .workingDev
     label .workingDev.title -text "Select the Device:"
     label .workingDev.label -background gray
@@ -477,49 +460,48 @@ proc createDeviceList {infoString} {
     set flag 0
     foreach dev $devices {
 	.workingDev.list insert end $dev
+	createScreenList $dev
+	set type $getDeviceModel($dev,type)
+	if { ![string compare $type "eraser"] } {
+	    set model $getDeviceModel($dev,model)
+	    foreach dev1 $devices {
+		set type1 $getDeviceModel($dev1,type)
+		set model1 $getDeviceModel($dev1,model)
+		if { ( $model == $model1 ) 
+			&& ![string compare $type1 "stylus"] } {
+		    set getDeviceModel($dev1,eraser) $dev
+		}
+	    }
+	}
     }
     bind .workingDev.list <ButtonRelease-1> updateDevice
 }
 
-proc createScreenList {infoString} {
+proc createScreenList { dev } {
     global numScreens currentScreen
     global desktopHeight desktopWidth getScreenInfo
 
-    set index 0
-    set numS 0
-    set s0 [ lindex $infoString $index ]
-    while { $s0 != "" } {
-	if { ![string compare -length 6 $s0 "Screen" ] } {
-    	    for { set i 1 } { $i < 5 } { incr i 1 } {
-		set index [ expr $index+1 ]
-		set s$i [ lindex $infoString $index ]
-	    }
-	    set getScreenInfo($s0) "$s1 $s2 $s3 $s4"
-	    set index [ expr $index+1 ]
-	    set s0 [ lindex $infoString $index ]
-	    set numS [expr $numS+1]
-	} else {
-	    set index [ expr $index+4 ]
-	    set s0 [ lindex $infoString $index ]
-	}
+    set numScreens($dev) [ exec xsetwacom get $dev NumScreen ]
+    for { set i 0 } {$i < $numScreens($dev)} { incr i 1 } {
+	set s1 [ exec xsetwacom get $dev SBottomX$i ]
+	set s2 [ exec xsetwacom get $dev SBottomY$i ]
+	set s3 [ exec xsetwacom get $dev STopX$i ]
+	set s4 [ exec xsetwacom get $dev STopY$i ]
+	set getScreenInfo($dev,Screen$i) "$s1 $s2 $s3 $s4"
     }
-    set numScreens $numS
 }
 
 proc screenCancel {} {
     global screenTags
 
     closeTabWindow
-    destroy .topleft .bottomright
-    .screen.list.label configure -text ""
-    bindtags .screen.list.list $screenTags
-    wm state .screen withdraw
+    destroy .topleft .bottomright .screen
 }
 
-proc displayScreenList {} {
+proc displayScreenList { dev } {
     global numScreens currentScreen 
 
-    if {  $numScreens <= 1  } {
+    if {  $numScreens($dev) <= 1  } {
 	return
     }
     toplevel .screen
@@ -538,7 +520,7 @@ proc displayScreenList {} {
     grid .screen.list.label -row 3 -column 0 -columnspan 3 -sticky we
     grid .screen.list.list -row 4 -column 0
     grid .screen.list.sb -row 4 -column 1 -sticky nse
-    for { set i 0 } { $i < $numScreens } { incr i } {
+    for { set i 0 } { $i < $numScreens($dev) } { incr i } {
 	.screen.list.list insert end "Screen$i"
     }
     bind .screen.list.list <ButtonRelease-1> updateScreenList
@@ -591,18 +573,16 @@ proc updateButton {} {
 	updateXinitrc $device button$i $v 
     }
 
-    if { [string compare -nocase -length 6 $model \
-		"cintiq"] || ![string compare -nocase \
-		-length 7 $model "CintiqP" ] } { 
-	if { [string compare -nocase -length 5 \
-		$model "isdv4"] } {
-	    set mode [ .subW.f.mode cget -text ]
-	    updateXinitrc $device mode $mode
-	    if { $mode == $dm(1) } {
-		set getOption($device,Mode) 0
-	    } else {
-		set getOption($device,Mode) 1
-	    }
+    if { !(($model >= 48 && $model < 64)  \
+	|| ($model >= 192 && $model < 196) \
+		|| ($model == 63)  \
+		|| ($model == 144)) } { 
+	set mode [ .subW.f.mode cget -text ]
+	updateXinitrc $device mode $mode
+	if { $mode == $dm(1) } {
+	    set getOption($device,Mode) 0
+	} else {
+	    set getOption($device,Mode) 1
 	}
     }
 
@@ -630,13 +610,11 @@ proc defaultButton {} {
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
-    if { [string compare -nocase -length 6 $model \
-		"cintiq"] || ![string compare -nocase \
-		-length 7 $model "CintiqP" ] } {
-	if { [string compare -nocase -length 5 \
-		$model "isdv4"] } {
-	    set dmv $dm([ expr $getOptionDefault($device,Mode)+1 ])
-	}
+    if { !(($model >= 48 && $model < 64) \
+	|| ($model >= 192 && $model < 196) \
+		|| ($model == 63) \
+		|| ($model == 144)) } { 
+	set dmv $dm([ expr $getOptionDefault($device,Mode)+1 ])
     }
 
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
@@ -679,17 +657,15 @@ proc displayMode {} {
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
-    if { [string compare -nocase -length 6 $model \
-		"cintiq"] || ![string compare -nocase \
-		-length 7 $model "CintiqP" ] } {
-	if { [string compare -nocase -length 5 \
-		$model "isdv4"] } {
-	    set dmv $dm([ expr $getOption($device,Mode)+1 ])
-	    tk_optionMenu .subW.f.mode dmv $dm(1) $dm(2)
-	    label .subW.f.modeL -text "Positioning Mode: "
-	    grid .subW.f.mode -row 0 -column 5 -columnspan 15
-	    grid .subW.f.modeL -row 0 -column 2
-	}
+    if { !(($model >= 48 && $model < 64)  \
+	|| ($model >= 192 && $model < 196)  \
+		|| ($model == 63) \
+		|| ($model == 144)) } { 
+ 	set dmv $dm([ expr $getOption($device,Mode)+1 ])
+	tk_optionMenu .subW.f.mode dmv $dm(1) $dm(2)
+	label .subW.f.modeL -text "Positioning Mode: "
+	grid .subW.f.mode -row 0 -column 5 -columnspan 15
+	grid .subW.f.modeL -row 0 -column 2
     }
 
     if { ![ string compare -nocase -length 6 $type "stylus" ] } {
@@ -760,7 +736,7 @@ proc addMenu {t} {
     set db$t $db($opt) 
 
     set model $getDeviceModel($device,model)
-    if { [string compare -nocase -length 5 $model "isdv4"] } {
+    if {  $model != 144 } { 
 	tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(19) $db(18)
     } else {
 	tk_optionMenu .subW.f.$t db$t $db(1) $db(2) $db(3) $db(4) $db(5) $db(17) $db(18)
@@ -986,38 +962,7 @@ proc createControls { } {
     global desktopHeight desktopWidth 
     global workingTags db dm sm wName
 
-    set infoString [exec xsetwacom list]
-    set index 0
-    set dev [ lindex $infoString $index ]
-    set index [ expr $index+1 ]
-    set type [ lindex $infoString $index ]
-    while { $type != "" } {
-	if { ![string compare -nocase -length 6 $type "stylus"] \
-		|| ![string compare -nocase -length 6 $type "cursor"] \
-		|| ![string compare -nocase -length 6 $type "eraser"] } {
-	    set type ""
-	} else {
-	    set index [ expr $index+1 ]
-	    set dev [ lindex $infoString $index ]
-	    set index [ expr $index+1 ]
-	    set type [ lindex $infoString $index ]
-	}
-    }
-    if { $dev == "" } {
-	messageWindow "Warning " "\n\nWe didn't find any Wacom device. \n\
-		Please make sure the device's \n\
-		type (stylus, eraser, or cursor) \n\
-		is embeded into its identifier string"
-	return
-    }
-    exec xsetwacom getdefault $dev GetModel
-    set channelId [open /etc/wacom.dat]
-    set info [read -nonewline $channelId]
-    close $channelId
-
-    createDeviceList $info
-    createScreenList $info
-    displayScreenList
+    createDeviceList 
 
     set db(1) "Left"
     set db(2) "Middle"

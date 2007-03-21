@@ -26,10 +26,11 @@
 **   2006-07-19 0.0.7 - PC - supports button and keys combined
 **   2007-01-10 0.0.8 - PC - don't display uninitialized tools
 **   2007-02-07 0.0.9 - PC - support keystrokes
+**   2007-02-22 0.1.0 - PC - support wheels and strips
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.0.9"
+#define XSETWACOM_VERSION "0.1.0"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
@@ -111,6 +112,54 @@ static PARAMINFO gParamInfo[] =
 	{ "BottomY",
 		"Bounding rect bottom coordinate in tablet units. ",
 		XWACOM_PARAM_BOTTOMY, VALUE_REQUIRED },
+
+	{ "STopX0",
+		"Screen 0 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX0, VALUE_REQUIRED },
+
+	{ "STopY0",
+		"Screen 0 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY0, VALUE_REQUIRED },
+
+	{ "SBottomX0",
+		"Screen 0 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX0, VALUE_REQUIRED },
+
+	{ "SBottomY0",
+		"Screen 0 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY0, VALUE_REQUIRED },
+
+	{ "STopX1",
+		"Screen 1 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX1, VALUE_REQUIRED },
+
+	{ "STopY1",
+		"Screen 1 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY1, VALUE_REQUIRED },
+
+	{ "SBottomX1",
+		"Screen 1 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX1, VALUE_REQUIRED },
+
+	{ "SBottomY1",
+		"Screen 1 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY1, VALUE_REQUIRED },
+
+	{ "STopX2",
+		"Screen 2 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX2, VALUE_REQUIRED },
+
+	{ "STopY2",
+		"Screen 2 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY2, VALUE_REQUIRED },
+
+	{ "SBottomX2",
+		"Screen 2 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX2, VALUE_REQUIRED },
+
+	{ "SBottomY2",
+		"Screen 2 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY2, VALUE_REQUIRED },
 
 	{ "Button1",
 		"X11 event to which button 1 should be mapped. ",
@@ -271,6 +320,46 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_BUTTON32, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 32 },
 
+	{"RelWUp", 
+		"X11 event to which relative wheel up should be mapped. ",
+		XWACOM_PARAM_RELWUP, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 4 },
+
+	{"RelWDn", 
+		"X11 event to which relative wheel down should be mapped. ",
+		XWACOM_PARAM_RELWDN, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 5 },
+
+/*	{"AbsWUp", 
+		"X11 event to which absolute wheel up should be mapped. ",
+		XWACOM_PARAM_ABSWUP, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 4 },
+
+	{"AbsWDn", 
+		"X11 event to which absolute wheel down should be mapped. ",
+		XWACOM_PARAM_ABSWDN, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 5 },
+*/
+	{"StripLUp", 
+		"X11 event to which left strip up should be mapped. ",
+		XWACOM_PARAM_STRIPLUP, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 4 },
+
+	{"StripLDn", 
+		"X11 event to which left strip down should be mapped. ",
+		XWACOM_PARAM_STRIPLDN, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 5 },
+
+	{"StripRUp", 
+		"X11 event to which right strip up should be mapped. ",
+		XWACOM_PARAM_STRIPRUP, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 4 },
+
+	{"StripRDn", 
+		"X11 event to which right strip down should be mapped. ",
+		XWACOM_PARAM_STRIPRDN, VALUE_OPTIONAL, 0, 0, 0, 
+		ACTION_VALUE, 5 },
+
 	{ "DebugLevel",
 		"Level of debugging trace, default is 1. ",
 		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
@@ -361,10 +450,6 @@ static PARAMINFO gParamInfo[] =
 	{ "NumScreen", 
 		"Returns number of screens configured for the desktop. ",
 		XWACOM_PARAM_NUMSCREEN, VALUE_REQUIRED },
-
-	{ "GetModel",
-		"Writes tablet models to /etc/wacom.dat. ",
-		XWACOM_PARAM_GETMODEL, VALUE_OPTIONAL },
 
 	{ NULL }
 };
@@ -477,7 +562,8 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"  xsetwacom set stylus Button3 \"dblclick 1\"\n"
 		"  xsetwacom set pad Button2 \"core key ctrl alt F2\"\n"
 		"  xsetwacom set pad Button3 \"core key quotedbl a test string quotedbl\"\n"
-		"  xsetwacom set pad Button10 \"core key ctrl alt backspace\"\n");
+		"  xsetwacom set pad striplup \"core key up\"\n"
+		"  xsetwacom set pad stripldn \"core key down\"\n");
 
 	return 0;
 }
@@ -706,7 +792,6 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	int value, sl, i;
         char strval [200] = "";
 	unsigned keys[256];
-
 	if (WacomConfigGetRawParam (hDev, p->nParamID, &value, valu, keys))
 	{
 		fprintf (stderr, "Get: Failed to get %s value for '%s'\n",

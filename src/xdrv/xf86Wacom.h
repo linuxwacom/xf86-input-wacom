@@ -275,9 +275,29 @@ struct _WacomDeviceRec
 	double factorY;         /* Y factor */
 	unsigned int serial;    /* device serial number */
 	int screen_no;          /* associated screen */
+	int screenTopX[32];	/* left cordinate of the associated screen */
+	int screenTopY[32];	/* top cordinate of the associated screen */
+	int screenBottomX[32];	/* right cordinate of the associated screen */
+	int screenBottomY[32];	/* bottom cordinate of the associated screen */
  	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
- 	int nbuttons;           /* number of buttons for this subdevice */
+	int relup;
+	unsigned rupk[256]; /* keystrokes assigned to relative wheel up event (default is button 4) */
+	int reldn;
+	unsigned rdnk[256]; /* keystrokes assigned to relative wheel down event (default is button 5) */
+	int wheelup;
+	unsigned wupk[256]; /* keystrokes assigned to absolute wheel or throttle up event (default is button 4) */
+	int wheeldn;
+	unsigned wdnk[256]; /* keystrokes assigned to absolute wheel or throttle down event (default is button 5) */
+	int striplup;
+	unsigned slupk[256]; /* keystrokes assigned to left strip up event (default is button 4) */
+	int stripldn;
+	unsigned sldnk[256]; /* keystrokes assigned to left strip up event (default is button 5) */
+	int striprup;
+	unsigned srupk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
+	int striprdn;
+ 	unsigned srdnk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
+	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
   
 	WacomCommonPtr common;  /* common info pointer */
@@ -603,7 +623,7 @@ void xf86WcmReadPacket(LocalDevicePtr local);
 void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
-void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel);
+void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 
 /* generic area check for wcmConfig.c, xf86Wacom.c, and wcmCommon.c */
 Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y);

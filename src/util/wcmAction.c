@@ -52,7 +52,11 @@ static ACTIONCODE modifier_code [] =
 	{ "META",       XK_Meta_L },
 	{ "ALT",        XK_Alt_L },
 	{ "SUPER",      XK_Super_L },
-	{ "HYPER",      XK_Hyper_L },
+	{ "HYPER",      XK_Hyper_L }
+};
+
+static ACTIONCODE specific_code [] =
+{
 	{ "F1",		XK_F1 },
 	{ "F2",		XK_F2 },
 	{ "F3",		XK_F3 },
@@ -87,15 +91,13 @@ static ACTIONCODE modifier_code [] =
 	{ "Right",	XK_Right },
 	{ "BackSpace",	XK_BackSpace },
 	{ "Enter",	XK_Return },
-	{ "NumLock",	XK_Num_Lock }
-};
-
-static ACTIONCODE specific_code [] =
-{
+	{ "NumLock",	XK_Num_Lock },
 	{ "space",	XK_space },
 	{ "quotedbl",   XK_quotedbl },
 	{ "backslash",  XK_backslash },
-	{ "exclam",	XK_exclam }
+	{ "exclam",	XK_exclam },
+	{ "break",	XK_Break },
+	{ "print",	XK_Print }
 };
 
 static ACTIONCODE key_code [] =
@@ -281,7 +283,7 @@ int xf86WcmListMod(char** argv)
 	fprintf(stderr,"\t%s\n", modifier_code[i].keyword);
 
     modsize = sizeof (specific_code) / sizeof (specific_code [0]);
-    fprintf(stderr,"\n\nListMod: %d specific keys are supported. "
+    fprintf(stderr,"\n\nListMod: %d special keys are supported. "
 	"For example: to send \", you need to use quotedbl:\n\n", modsize);
     for (i=0; i<modsize; i++)
 	fprintf(stderr,"\t%s\n", specific_code[i].keyword);

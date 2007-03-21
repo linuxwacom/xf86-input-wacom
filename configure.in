@@ -375,8 +375,8 @@ AC_HELP_STRING([--enable-wacomdrv], [Enable building wacom_drv.{o,so} [[default=
 if test "$enable_wacomdrv" != "no"; then
 	if test "$WCM_ENV_XF86" != "yes" && test "$WCM_ENV_XORGSDK" != "yes"; then
 		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacom_drv.{o,so} without XF86 build environment"
-		echo "*** or Xorg SDK."
+		echo "*** Unable to compile wacom_drv.{o,so} "
+		echo "*** without Xorg SDK or XFree86 build environment"
 		echo "*** wacom_drv.o will not be built"
 		echo "***"
 	else

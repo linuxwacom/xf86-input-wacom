@@ -280,7 +280,7 @@ int WacomConfigSetRawParam(WACOMDEVICE *hDevice, int nParam, int nValue, unsigne
 		return CfgError(hDevice->pCfg,EINVAL,
 				"WacomConfigSetRawParam: failed");
 
-	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_BUTTON32)
+	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_STRIPRDN)
 	{
 		for (i=1; i<((nValue & AC_NUM_KEYS)>>20); i += 2)
 		{
@@ -336,7 +336,7 @@ error:		return CfgError(hDevice->pCfg, EINVAL,
 
 	*nValue = ds->resolutions [ds->num_valuators-1];
 
-	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_BUTTON32)
+	if (nParam >= XWACOM_PARAM_BUTTON1 && nParam <= XWACOM_PARAM_STRIPRDN)
 	{
 		int num = (*nValue & AC_NUM_KEYS)>>20;
 		if (num) keys[0] = ((*nValue) & AC_CODE);

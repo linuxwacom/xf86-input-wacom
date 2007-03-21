@@ -77,6 +77,23 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 
 	DBG(6, ErrorF("xf86WcmSetScreen v0=%d v1=%d\n", *value0, *value1));
 
+	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
+
+	if (!(priv->flags & ABSOLUTE_FLAG))
+	{
+		/* screenToSet lags by one event, but not that important */
+		priv->currentScreen = miPointerCurrentScreen()->myNum;
+		for (i = 0; i < priv->numScreen; i++)
+			totalWidth += screenInfo.screens[i]->width;
+
+		maxHeight = screenInfo.screens[priv->currentScreen]->height;
+		priv->factorX = totalWidth / sizeX;
+		priv->factorY = maxHeight / sizeY;
+		DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
+				priv->currentScreen, screenToSet));
+		return;
+	}
+
 	if (priv->twinview == TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
 		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
@@ -125,19 +142,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		return;
 	}
 
-	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
-	if (!(priv->flags & ABSOLUTE_FLAG))
-	{
-		/* screenToSet lags by one event, but not that important */
-		screenToSet = miPointerCurrentScreen()->myNum;
-		priv->factorX = screenInfo.screens[screenToSet]->width / sizeX;
-		priv->factorY = screenInfo.screens[screenToSet]->height / sizeY;
-		DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
-				priv->currentScreen, screenToSet));
-		priv->currentScreen = screenToSet;
-		return;
-	}
-
 	if (priv->screen_no == -1)
 	{
 		for (i = 0; i < priv->numScreen; i++)
@@ -157,7 +161,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 			leftPadding += screenInfo.screens[i]->width;
 		}
 	}
-#ifdef PANORAMIX
 	else 
 	{
 		screenToSet = priv->screen_no;
@@ -173,7 +176,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		x = screenInfo.screens[screenToSet]->width - 1;
 	if (y >= screenInfo.screens[screenToSet]->height)
 		y = screenInfo.screens[screenToSet]->height - 1;
-#endif
+
 	xf86XInputSetScreen(local, screenToSet, x, y);
 	DBG(10, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
 		priv->currentScreen, screenToSet));
@@ -431,8 +434,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (!button)
 		return;
 
-	/* Switch the device to core mode, if required
-	 */
+	/* Switch the device to core mode, if required */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
 
@@ -460,12 +462,14 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		{
 			for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
 			{
+				/* button down to send modifier and key down then key up */
 				if (mask)
 				{
 					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 1);
 					if (!WcmIsModifier(priv->keys[button_idx][i]))
 						emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
 				}
+				/* button up to send modifier up */
 				else if (WcmIsModifier(priv->keys[button_idx][i]))
 					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
 			}
@@ -506,7 +510,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 			/* Left button up */
 			xf86PostButtonEvent(local->dev, is_absolute,
 				button_idx,0,0,naxes,
-				rx,ry,rz, v3,v4,v5);
+				rx,ry,rz,v3,v4,v5);
 		}
 
 		/* Left button down/up upon mask is 1/0 */
@@ -522,11 +526,188 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 }
 
 /*****************************************************************************
+ * sendWheelStripEvents --
+ *   Send events defined for relative/absolute wheels or strips
+ ****************************************************************************/
+
+static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* ds, int x, int y, int z, int v3, int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
+	unsigned  *keyP = 0;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+	int is_core = local->flags & XI86_ALWAYS_CORE;
+
+	DBG(10, ErrorF("sendWheelStripEvents for %s \n", local->name));
+
+	/* simulate events for relative wheel */
+	if ( ds->relwheel )
+	{
+		value = ds->relwheel;
+		if ( ds->relwheel > 0 )
+		{
+			fakeButton = priv->relup;
+			keyP = priv->rupk;
+		}
+		else
+		{
+			fakeButton = priv->reldn;
+			keyP = priv->rdnk;
+		}
+	}
+
+	/* simulate events for absolute wheel when needed */
+/*	if ( ds->abswheel != priv->oldWheel )
+	{
+		value = priv->oldWheel - ds->abswheel;
+		if ( value > 0 )
+		{
+			fakeButton = priv->wheelup;
+			keyP = priv->wupk;
+		}
+		else
+		{
+			fakeButton = priv->wheeldn;
+			keyP = priv->wdnk;
+		}
+	}
+*/
+	/* simulate events for left strip */
+	if ( ds->stripx != priv->oldStripX )
+	{
+		int temp = 0, n;
+		for (i=1; i<14; i++)
+		{
+			n = 1 << (i-1);
+			if ( ds->stripx & n )
+				temp = i;
+			if ( priv->oldStripX & n )
+				value = i;
+			if ( temp & value) break;
+		}
+
+		value -= temp;
+		if ( value > 0 )
+		{
+			fakeButton = priv->striplup;
+			keyP = priv->slupk;
+		}
+		else
+		{
+			fakeButton = priv->stripldn;
+			keyP = priv->sldnk;
+		}
+	}
+
+	/* simulate events for right strip */
+	if ( ds->stripy != priv->oldStripY )
+	{
+		int temp = 0, n;
+		for (i=1; i<14; i++)
+		{
+			n = 1 << (i-1);
+			if ( ds->stripy & n )
+				temp = i;
+			if ( priv->oldStripY & n )
+				value = i;
+			if ( temp & value) break;
+		}
+
+		value -= temp;
+		if ( value > 0 )
+		{
+			fakeButton = priv->striprup;
+			keyP = priv->srupk;
+		}
+		else
+		{
+			fakeButton = priv->striprdn;
+			keyP = priv->srdnk;
+		}
+	}
+
+	DBG(10, ErrorF("sendWheelStripEvents send fakeButton %x with value = %d \n", fakeButton, value));
+
+	if (!fakeButton) return;
+
+	/* Switch the device to core mode, if required */
+	if (!is_core && (fakeButton & AC_CORE))
+		xf86XInputSetSendCoreEvents (local, TRUE);
+
+	switch (fakeButton & AC_TYPE)
+	{
+	    case AC_BUTTON:
+		/* pad may only have 2 buttons */
+		local->dev->button->map [0] = fakeButton & AC_CODE;
+
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
+			1,0,naxes,x,y,z,v3,v4,v5);
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
+			0,0,naxes,x,y,z,v3,v4,v5);
+
+	    break;
+
+	    case AC_KEY:
+		if (fakeButton & AC_CORE)
+		{
+			/* modifier and key down then key up events */
+			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
+			{
+				emitKeysym (inputInfo.keyboard, keyP[i], 1);
+				if (!WcmIsModifier(keyP[i]))
+					emitKeysym (inputInfo.keyboard, keyP[i], 0);
+			}
+			/* modifier up events */
+			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
+				if (WcmIsModifier(keyP[i]))
+					emitKeysym (inputInfo.keyboard, keyP[i], 0);
+		}
+		else
+			ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+	    break;
+
+	    default:
+		ErrorF ("WARNING: [%s] unsupported event %x \n", local->name, fakeButton);
+	}
+
+	/* Switch the device out of the core mode, if required
+	 */
+	if (!is_core && (fakeButton & AC_CORE))
+		xf86XInputSetSendCoreEvents (local, FALSE);
+}
+
+/*****************************************************************************
+ * sendCommonEvents --
+ *   Send events common between pad and stylus/cursor/eraser.
+ ****************************************************************************/
+
+static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, int x, int y, int z, int v3, int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int buttons = ds->buttons;
+	int naxes = priv->naxes;
+
+	/* don't emit proximity events if device does not support proximity */
+	if ((local->dev->proximity && !priv->oldProximity))
+		xf86PostProximityEvent(local->dev, 1, 0, naxes,
+			x, y, z, v3, v4, v5);
+
+	if (priv->oldButtons != buttons)
+		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
+
+	/* simulate wheel/strip events when defined */
+	if ( ds->relwheel || 
+		( (ds->stripx - priv->oldStripX) && ds->stripx && priv->oldStripX) || 
+			((ds->stripy - priv->oldStripY) && ds->stripy && priv->oldStripY) )
+		sendWheelStripEvents(local, ds, x, y, z, v3, v4, v5);
+}
+
+/*****************************************************************************
  * xf86WcmSendEvents --
  *   Send events according to the device state.
  ****************************************************************************/
 
-void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigned int channel)
+void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
 	int type = ds->device_type;
 	int id = ds->device_id;
@@ -546,9 +727,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	int v3, v4, v5;
-	int is_absolute;
 	int no_jitter; 
 	double relacc, param;
 
@@ -594,8 +775,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 		y = common->wcmMaxY - y;
 	}
 
-	is_absolute = (priv->flags & ABSOLUTE_FLAG);
-
 	if (IsCursor(priv)) 
 	{
 		v3 = rot;
@@ -609,12 +788,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	v5 = wheel;
 
 	DBG(6, ErrorF("[%s] %s prox=%d\tx=%d\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
-		"\tserial=%d\tbutton=%s\tbuttons=%d\t on channel=%d\n",
+		"\tserial=%d\tbutton=%s\tbuttons=%d\n",
 		local->name,
 		is_absolute ? "abs" : "rel",
 		is_proximity,
 		x, y, z, v3, v4, v5, id, serial,
-		is_button ? "true" : "false", buttons, channel));
+		is_button ? "true" : "false", buttons));
 
 	if (x > priv->bottomX)
 		x = priv->bottomX;
@@ -685,39 +864,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 			if (!is_absolute)
 				x *= priv->factorY / priv->factorX;
 
-			/* don't emit proximity events if device does not support proximity */
-			if ((local->dev->proximity && !priv->oldProximity))
-				xf86PostProximityEvent(local->dev, 1, 0, naxes,
-					x, y, z, v3, v4, v5);
-
+			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
-
-			if (priv->oldButtons != buttons)
-			{
-				xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
-			}
-
-			/* simulate button 4 and 5 for relative wheel */
-			if ( ds->relwheel )
-			{
-				int fakeButton = ds->relwheel > 0 ? 5 : 4;
- 				int i;
-				for (i=0; i<abs(ds->relwheel); i++)
-				{
-					/* Dynamically modify the button map
-					 */
-					local->dev->button->map [fakeButton] = fakeButton;
-					xf86PostButtonEvent(local->dev, is_absolute,
-						fakeButton, 1, 0, naxes, x, y, z,
-						v3, v4, v5);
-					xf86PostButtonEvent(local->dev, is_absolute,
-						fakeButton, 0, 0, naxes, x, y, z,
-						v3, v4, v5);
-				}
-			}
 		}
 
 		/* not in proximity */
@@ -735,44 +886,27 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds, unsigne
 	}
 	else
 	{
-		if ((v3 || v4 || buttons || ds->relwheel) && !priv->oldProximity)
+		if (v3 || v4 || buttons || ds->relwheel)
 		{
-			/* don't emit proximity events if device does not support proximity */
-			if ((local->dev->proximity && !priv->oldProximity))
-				xf86PostProximityEvent(local->dev, 1, 0, naxes,
-				x, y, z, v3, v4, v5);
+			x = 0;
+			y = 0;
+			if ( v3 || v4 )
+				xf86WcmSetScreen(local, &x, &y);
+			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 			is_proximity = 1;
-		}
-		if ( v3 || v4 )
-		{
-			xf86WcmSetScreen(local, &x, &y);
-	 		xf86PostMotionEvent(local->dev, is_absolute,
-				0, naxes, 0, 0, z, v3, v4, v5);
-		}
-		if (priv->oldButtons != buttons)
-			xf86WcmSendButtons(local, buttons, 
-				x, y, z, v3, v4, v5);
-
-		if ( ds->relwheel )
-		{
-			int fakeButton = ds->relwheel > 0 ? 5 : 4;
- 			int i;
-			for (i=0; i<abs(ds->relwheel); i++)
+			if ( v3 || v4 )
 			{
-				/* Dynamically modify the button map
-				 */
-				local->dev->button->map [fakeButton] = fakeButton;
-				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 1, 0, naxes, x, y, z,
-					v3, v4, v5);
-				xf86PostButtonEvent(local->dev, is_absolute,
-					fakeButton, 0, 0, naxes, x, y, z,
-					v3, v4, v5);
+	 			xf86PostMotionEvent(local->dev, is_absolute,
+					0, naxes, x, y, z, v3, v4, v5);
 			}
 		}
-		if ( !v3 && !v4 && !buttons)
+		else
 		{
- 			xf86PostProximityEvent(local->dev, 0, 0, naxes, 
+			if (priv->oldButtons)
+				xf86WcmSendButtons(local, buttons, 
+					x, y, z, v3, v4, v5);
+			if (priv->oldProximity && local->dev->proximity)
+ 				xf86PostProximityEvent(local->dev, is_absolute, 0, naxes, 
 				x, y, z, v3, v4, v5);
 			is_proximity = 0;
 		}
@@ -824,10 +958,10 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 
 	if (dsOrig->buttons != dsNew->buttons) return 0;
 	if (dsOrig->proximity != dsNew->proximity) return 0;
+	if (dsOrig->stripx != dsNew->stripx) return 0;
+	if (dsOrig->stripy != dsNew->stripy) return 0;
 	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) return 0;
 	if (ABS(dsOrig->tilty - dsNew->tilty) > suppress) return 0;
-	if (ABS(dsOrig->stripx - dsNew->stripx) > suppress) return 0;
-	if (ABS(dsOrig->stripy - dsNew->stripy) > suppress) return 0;
 	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) return 0;
 	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) return 0;
 	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress &&
@@ -1155,7 +1289,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				WacomDeviceState out = { 0 };
 				DBG(2, ErrorF("Soft prox-out for %s\n",
 					outprox->device->name));
-				xf86WcmSendEvents(oDev, &out, channel);
+				xf86WcmSendEvents(oDev, &out);
 			}
 			else
 				tool->current = outprox;
@@ -1308,7 +1442,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					return;	
 			}
 		}
-		xf86WcmSendEvents(pDev, &filtered, channel);
+		xf86WcmSendEvents(pDev, &filtered);
 		/* If out-prox, reset the current area pointer */
 		if (!filtered.proximity)
 			tool->current = NULL;

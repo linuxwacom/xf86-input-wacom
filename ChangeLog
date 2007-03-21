@@ -1,3 +1,18 @@
+2007-03-21   Ping Cheng <pingc@wacom.com>
+	* Updated wacomcpl with new xsetwacom command
+	* Removed xsetwacom GetModel option
+	  - no more writing to file from Wacom X driver
+	* label 0.7.7-7
+
+2007-03-19   Ping Cheng <pingc@wacom.com>
+	* Fixed bug 1675567
+	* Updated cordinates initialization
+
+2007-03-09   Ping Cheng <pingc@wacom.com>
+	* Report screen cordinates through xsetwacom
+	* Support I3 strips and relatvie wheel with 
+	  button and keystroke events through xsetwacom
+
 2007-02-20   Ping Cheng <pingc@wacom.com>
 	* Fixed an install typo
 	* Fixed a dual Cintiq TwinView setup in wacom_drv.o 
