@@ -893,12 +893,20 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	case gfXCONF:
 		if (p->nParamID > XWACOM_PARAM_NOXOPTION)
 		{
-			printf ("This %s option is only an xsetwacom command \n", p->pszParam);
 			if (p->nParamID < XWACOM_PARAM_GETONLYPARAM)
 				printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+			else
+				printf ("This %s option is only an xsetwacom get command \n", p->pszParam);
 		}
 		else
-			printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
+		{
+			if ((p->nParamID >= XWACOM_PARAM_BUTTON1) &&
+				(p->nParamID >= XWACOM_PARAM_STRIPRDN) &&
+				((value & AC_TYPE) != AC_BUTTON))
+				printf ("This %s option is only an xsetwacom command \n", p->pszParam);
+			else
+				printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
+		}
 		break;
 	default:
 		if ((value & AC_TYPE) != AC_KEY)

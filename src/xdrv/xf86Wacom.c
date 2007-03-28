@@ -57,9 +57,10 @@
  * 2006-11-13 47-pc0.7.7 - Updated Xinerama setup support
  * 2007-01-31 47-pc0.7.7-3 - multiarea support
  * 2007-02-09 47-pc0.7.7-5 - Support keystrokes
+ * 2007-03-28 47-pc0.7.7-7 - multiarea support
  */
 
-static const char identification[] = "$Identification: 47-0.7.7-5 $";
+static const char identification[] = "$Identification: 47-0.7.7-7 $";
 
 /****************************************************************************/
 
