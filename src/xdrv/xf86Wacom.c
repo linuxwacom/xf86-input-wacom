@@ -58,9 +58,10 @@
  * 2007-01-31 47-pc0.7.7-3 - multiarea support
  * 2007-02-09 47-pc0.7.7-5 - Support keystrokes
  * 2007-03-28 47-pc0.7.7-7 - multiarea support
+ * 2007-03-29 47-pc0.7.7-8 - clean up code
  */
 
-static const char identification[] = "$Identification: 47-0.7.7-7 $";
+static const char identification[] = "$Identification: 47-0.7.7-8 $";
 
 /****************************************************************************/
 
@@ -84,9 +85,9 @@ extern int usbWcmGetRanges(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
-	0,          /* debug level */
+	0,              /* debug level */
 	identification, /* version */
-	{ NULL, },   /* input driver pointer */
+	NULL,           /* input driver pointer */
 
 	/* device procedures */
 	xf86WcmDevOpen,
@@ -212,7 +213,6 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	/* The first one in the list is always valid */
 	if (area != inlist && xf86WcmAreaListOverlap(area, inlist))
 	{
-		int i, j;
 		inlist = priv->tool->arealist;
 
 		/* remove this area from the list */
@@ -223,20 +223,21 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 				inlist->next = area->next;
 				xfree(area);
 				priv->toolarea = NULL;
- 				break;
+ 			break;
 			}
 		}
 
 		/* Remove this device from the common struct */
-		i = 0;
-		while (i<common->wcmNumDevices && common->wcmDevices[i] != local)
-			i++;
-		for (j=i; j<common->wcmNumDevices-1; j++)
+		if (common->wcmDevices == priv)
+			common->wcmDevices = priv->next;
+		else
 		{
-			common->wcmDevices[j] = common->wcmDevices[j+1];
+			WacomDevicePtr tmp = common->wcmDevices;
+			while(tmp->next && tmp->next != priv)
+				tmp = tmp->next;
+			if(tmp)
+				tmp->next = priv->next;
 		}
-		common->wcmDevices[common->wcmNumDevices-1] = NULL;
-		common->wcmNumDevices--;
 		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
 			local->conf_idev->identifier);
 		return FALSE;
@@ -561,14 +562,15 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	if (len <= 0)
 	{
-                /* In case of error, we assume the device has been
+		/* In case of error, we assume the device has been
 		 * disconnected. So we close it and iterate over all
 		 * wcmDevices to actually close associated devices. */
-                for (cnt=0; cnt<common->wcmNumDevices; cnt++)
-                {
-                        if (common->wcmDevices[cnt]->fd >= 0)
-                                xf86WcmDevProc(common->wcmDevices[cnt]->dev, DEVICE_OFF);
-                }
+		WacomDevicePtr wDev = common->wcmDevices;
+		for(; wDev; wDev = wDev->next)
+		{
+			if (wDev->local->fd >= 0)
+				xf86WcmDevProc(wDev->local->dev, DEVICE_OFF);
+		}
 		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
 	}
@@ -670,7 +672,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		/* All devices must be opened here to initialize and
 		 * register even a 'pad' which doesn't "SendCoreEvents"
 		 */
-		case DEVICE_INIT: 
+		case DEVICE_INIT:
 			priv->wcmDevOpenCount = 0;
 			if (!xf86WcmDevOpen(pWcm))
 			{
@@ -712,6 +714,28 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	return Success;
 }
 
+
+/*****************************************************************************
+ * xf86WcmSetPadCoreMode
+ ****************************************************************************/
+int xf86WcmSetPadCoreMode(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
+
+	/* Pad is always in relative mode when it's a core device.
+	 * Always in absolute mode when it is not a core device.
+	 */
+	DBG(10, ErrorF("xf86WcmSetParam Pad (%p) is always in %s mode " 		"when it %s core device\n", (void *)local->dev, 
+		!is_core ? "absolute" : "relative", 
+		is_core ? "is" : "isn't"));
+	if (is_core)
+		priv->flags &= ~ABSOLUTE_FLAG;
+	else
+		priv->flags |= ABSOLUTE_FLAG;
+	return Success;
+}
+
 /*****************************************************************************
  * xf86WcmSetParam
  ****************************************************************************/
@@ -722,7 +746,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	WacomCommonPtr common = priv->common;
 	WacomDevicePtr tmppriv;
 	char st[32];
-	int oldRotation, dev;
+	int oldRotation;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 	WacomToolAreaPtr area = priv->toolarea;
 	WacomToolAreaPtr tmparea;
@@ -731,7 +755,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	 * This eliminates some confusion when driver is running on
 	 * default values.
 	 */
-	switch (param) 
+	switch (param)
 	{
 	    case XWACOM_PARAM_TOPX:
 		if ( priv->topX != value)
@@ -845,17 +869,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    }
 	    case XWACOM_PARAM_MODE:
 	    {
-		/* Pad's mode stays as is */
 		int is_absolute = priv->flags & ABSOLUTE_FLAG;
-		if (IsPad(priv))
-		{
-			DBG(10, ErrorF("xf86WcmSetParam Pad (%p) is always in %s mode\n", (void *)local->dev, is_absolute ? "absolute" : "relative"));
-			return Success;
-		}
-
 		if ((value < 0) || (value > 1)) return BadValue;
 		if (value == is_absolute)
 			break;
+
+		if (IsPad(priv))
+			return xf86WcmSetPadCoreMode(local);
 
 		if (value) 
 		{
@@ -931,6 +951,20 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			common->wcmCursorProxoutDist = value;
 		}
 		break;
+	    case XWACOM_PARAM_COREEVENT:
+		if ((value != 0) && (value != 1)) return BadValue;
+		/* Change the local flags. But not the configure file */
+		if (value)
+		{
+			local->flags |= XI86_ALWAYS_CORE;
+/*			xf86XInputSetSendCoreEvents (local, TRUE);
+*/		}
+		else
+		{
+			local->flags &= ~XI86_ALWAYS_CORE;
+/*			xf86XInputSetSendCoreEvents (local, FALSE);
+*/		}
+		break;
 	   case XWACOM_PARAM_ROTATE:
 		if ((value < 0) || (value > 3)) return BadValue;
 		switch(value) {
@@ -963,9 +997,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 
 		/* rotate all devices at once! else they get misaligned */
-		for (dev=0; dev < common->wcmNumDevices; dev++)
+		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
 		{
-		    tmppriv = (WacomDevicePtr)common->wcmDevices[dev]->private;
 		    tmparea = tmppriv->toolarea;
 		    /* recover the unrotated xy-rectangles */
 		    switch (oldRotation) {
@@ -1020,17 +1053,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			tmparea->topY = tmppriv->topY = tmpTopY;
 			tmparea->bottomY = tmppriv->bottomY = tmpBottomY;
 			break;
-		    } 
+		    }
 
-		    xf86WcmInitialCordinates(common->wcmDevices[dev], 0);
-		    xf86WcmInitialCordinates(common->wcmDevices[dev], 1);
+		    xf86WcmInitialCordinates(tmppriv->local, 0);
+		    xf86WcmInitialCordinates(tmppriv->local, 1);
 
-		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopX", tmppriv->topX);
-		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "TopY", tmppriv->topY);
-		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomX", tmppriv->bottomX);
-		    xf86ReplaceIntOption(common->wcmDevices[dev]->options, "BottomY", tmppriv->bottomY);
+		    xf86ReplaceIntOption(tmppriv->local->options, "TopX", tmppriv->topX);
+		    xf86ReplaceIntOption(tmppriv->local->options, "TopY", tmppriv->topY);
+		    xf86ReplaceIntOption(tmppriv->local->options, "BottomX", tmppriv->bottomX);
+		    xf86ReplaceIntOption(tmppriv->local->options, "BottomY", tmppriv->bottomY);
 		}
-		break;	    
+		break;
 	      default:
 		DBG(10, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
@@ -1056,11 +1089,11 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 			return BadValue;
 		else
 		{
-			if ((!(value & AC_TYPE)) && (value != priv->button[bn - 1]))
+			if ((!(value & AC_TYPE)) && (value != priv->button[bn]))
 			{
 				snprintf (st, sizeof (st), "Button%d", bn);
 				xf86ReplaceIntOption (local->options, st, value);
-				priv->button[bn - 1] = xf86SetIntOption (local->options, st, bn); 
+				priv->button[bn] = xf86SetIntOption (local->options, st, bn); 
 			}
 			setVal = &(priv->button [bn]);
 			keyP = priv->keys[bn];
@@ -1294,7 +1327,9 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 			       (priv->nPressCtrl [3]);
 		return -1;
 	case XWACOM_PARAM_MODE:
-		return (priv->flags & ABSOLUTE_FLAG) ? 1 : 0;
+		return ((priv->flags & ABSOLUTE_FLAG) ? 1 : 0);
+	case XWACOM_PARAM_COREEVENT:
+		return ((local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER)) ? 1 : 0);
 	case XWACOM_PARAM_SPEEDLEVEL:
 		return (priv->speed > 1) ?
 			(int) (priv->speed / 2) + 6 :
@@ -1440,7 +1475,7 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_BUTTON5:
 		return (param - XWACOM_PARAM_BUTTON1 + 1);
 	case XWACOM_PARAM_MODE:
-                if (IsCursor(priv) || IsPad(priv))
+                if (IsCursor(priv) || (IsPad(priv) && (priv->flags & COREEVENT_FLAG)))
 			return 0;
                 else
 			return 1;
@@ -1472,6 +1507,8 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDistDefault;
 		return -1;
+	case XWACOM_PARAM_COREEVENT:
+		return ((priv->flags & COREEVENT_FLAG) ? 1 : 0);
 	}
 	DBG(10, ErrorF("xf86WcmGetDefaultParam invalid param %d\n",param));
 	return -1;
@@ -1489,20 +1526,20 @@ static int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 
 	DBG(3, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", (void *)dev, mode));
 
-	if (IsPad(priv)) 
-	{
-		DBG(10, ErrorF("xf86WcmSwitchMode Pad (%p) is always in %s mode\n", (void *)dev, is_absolute ? "absolute" : "relative"));
-		return Success;
-	}
+	/* Pad is always in relative mode when it's a core device.
+	 * Always in absolute mode when it is not a core device.
+	 */
+	if (IsPad(priv))
+		return xf86WcmSetPadCoreMode(local);
 
-	if ((mode == Absolute) && !(priv->flags & ABSOLUTE_FLAG))
+	if ((mode == Absolute) && !is_absolute)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
 		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
 		xf86WcmInitialCordinates(local, 0);
 		xf86WcmInitialCordinates(local, 1);
 	}
-	else if ((mode == Relative) && (priv->flags & ABSOLUTE_FLAG))
+	else if ((mode == Relative) && is_absolute)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
 		xf86ReplaceStrOption(local->options, "Mode", "Relative");

@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4 "linuxwacom 0.7.6" "X Version 11"
+.TH WACOM 4 "linuxwacom 0.7.8" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -37,13 +37,11 @@ supports the following entries:
 .RS 8
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"\fP
-sets the type of tool the device represents. This option is mandatory.  "pad" is 
-for Intuos 3, Cintiq 21UX, or Graphire 4 ExpressKeys only. It is required 
-for Intuos 3, Cintiq 21UX, or Graphire 4 if your application supports  
-ExpressKeys 
-features.  "pad" is reported as a second tool in the driver.  Since it will 
-not move the system's cursor,  IT SHOULD NOT have any of those core options, 
-such as "SendCoreEvents" or "AlwaysCore".
+sets the type of tool the device represents. This option is mandatory.  The core options, such as "SendCoreEvents" or "AlwaysCore", are  
+unnecessary in Gimp if you don't need to move system cursor outside 
+of Gimp drawing area.  "pad" is for Intuos 3,  Cintiq 21UX, or 
+Graphire 4 ExpressKeys only.  It is required  for Intuos3,  Cintiq 21UX, and Graphire 4 if your application supports ExpressKeys  
+features.  "pad" is reported as a second tool in the driver. 
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -80,45 +78,49 @@ greater than suppress;
         the change between the  current degree of rotation and the previous
 one of the transducer is greater than suppress;
 
-        the change between the current wheel value and the previous one is
-equal to or greater than suppress;
+        the change between the current absolute wheel value and the previous 
+one is equal to or greater than suppress;
+
+        the change between the current tilt value and the previous one is equal 
+to or greater than suppress (if tilt is supported);
+
+        relative wheel value has changed;
 
         button value has changed;
 
         proximity has changed.
 .TP 4
 .B Option \fI"Mode"\fP \fI"Relative"|"Absolute"\fP
-sets the mode of the device.
+sets the mode of the device.  The default value for stylus and 
+eraser is Absolute; cursor is Relative; pad mode is decided 
+according to its core option due to its nature of not moving 
+system cursor: Relative if it is a core device; Absolute, otherwise.
 .TP 4
 .B Option \fI"TopX"\fP \fI"number"\fP
-X coordinate of the top corner of the active zone.
+X coordinate of the top corner of the active zone.  Default to 0. 
 .TP 4
 .B Option \fI"TopY"\fP \fI"number"\fP
-Y coordinate of the top corner of the active zone.
+Y coordinate of the top corner of the active zone.  Default to 0.
 .TP 4
 .B Option \fI"BottomX"\fP \fI"Inumber"\fP
-X coordinate of the bottom corner of the active zone.
+X coordinate of the bottom corner of the active zone.  Default to width of the tablet.
 .TP 4
 .B Option \fI"BottomY"\fP \fI"number"\fP
-Y coordinate of the bottom corner of the active zone.
+Y coordinate of the bottom corner of the active zone.  Default to height of the tablet.
 .TP 4
 .B Option \fI"ButtonsOnly"\fP \fI"on"\fP
-disables the device's motion events.
+disables the device's motion events.  Default to off.
 .TP 4
 .B Option \fI"ButtonM"\fP \fI"AC"\fP
 reports an action AC when button M is pressed,  where M 
 is one of the device supported  button numbers,  it can be 1 
-to 32. The default action reported to Xinput is mouse button M click.  
-To assign it to a left-double-click, use "dblclick 1".  
+to 32. The default action reported to Xinput is mouse button M click.    
 To ignore the button click, i.e., to not report any button click event 
-to Xinput,  use "0" or "button 0".  Use "modetoggle" to assign  
-it to switching between relative and absolute mode,  which is  
-useful to switch windows in a multi-monitor  environment.
+to Xinput,  use "0" or "button 0".  
 .TP 4
 .B Option \fI"TPCButton"\fP \fI"on"\fP
 enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus button
-event only when its tip is pressed.  Default to "on" for Tablet PC; "off" for 
-all the other models.
+event only when its tip is pressed.  Default to "on" for Tablet PC; "off" for all other models.
 .TP 4
 .B Option \fI"Speed"\fP \fI"Rspeed"\fP
 sets the cursor's relative movement speed to Rspeed.  The default value is 1.0.  

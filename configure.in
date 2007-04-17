@@ -511,11 +511,6 @@ if test $kver != 0; then
 	fi
 fi
 
-dnl Create man page file for the current driver
-if test -f src/wacom.4x; then
-	gzip -f src/wacom.4x
-fi
-
 dnl Separate test output from file-generation output
 echo 
 

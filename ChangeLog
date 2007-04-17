@@ -1,3 +1,14 @@
+2007-04-17  Ping Cheng <pingc@wacom.com>
+	* Prepared for toggling CoreEvent option
+	* Fixed bug 1698123
+
+2007-03-30  Ping Cheng <pingc@wacom.com>
+	* Updated acinclude.m4 to default to system running kernel
+
+2007-03-29  Ping Cheng <pingc@wacom.com>
+	* Incorporated patch 1680163 from Magnus Vigerlöf
+	* Updated wacom man page, wacom.4x
+
 2007-03-21   Ping Cheng <pingc@wacom.com>
 	* Updated wacomcpl with new xsetwacom command
 	* Removed xsetwacom GetModel option

@@ -416,7 +416,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-	int is_core = local->flags & XI86_ALWAYS_CORE;
+	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 	int i, button_idx, naxes = priv->naxes;
 
 	if (IsPad(priv))
@@ -536,7 +536,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-	int is_core = local->flags & XI86_ALWAYS_CORE;
+	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 
 	DBG(10, ErrorF("sendWheelStripEvents for %s \n", local->name));
 

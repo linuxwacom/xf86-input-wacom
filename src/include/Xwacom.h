@@ -35,6 +35,7 @@
 #define XWACOM_PARAM_TPCBUTTON  	8
 #define XWACOM_PARAM_CURSORPROX  	9
 #define XWACOM_PARAM_ROTATE             10
+#define XWACOM_PARAM_COREEVENT		11
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101
 #define XWACOM_PARAM_BUTTON2    	102

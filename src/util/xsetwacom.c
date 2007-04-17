@@ -27,10 +27,11 @@
 **   2007-01-10 0.0.8 - PC - don't display uninitialized tools
 **   2007-02-07 0.0.9 - PC - support keystrokes
 **   2007-02-22 0.1.0 - PC - support wheels and strips
+**   2007-04-12 0.1.1 - PC - Support CoreEvent on/off
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.0"
+#define XSETWACOM_VERSION "0.1.1"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
@@ -430,6 +431,12 @@ static PARAMINFO gParamInfo[] =
 		RANGE, XWACOM_VALUE_ROTATE_NONE,
 		XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
 		XWACOM_VALUE_ROTATE_NONE },
+
+	{ "CoreEvent",
+		"Turns on/off device to send core event. "
+		"default is decided by X driver and xorg.conf ",
+		XWACOM_PARAM_COREEVENT, VALUE_OPTIONAL, 
+		RANGE, 0, 1, BOOLEAN_VALUE },
 
 	{ "ToolID", 
 		"Returns the ID of the associated device. ",
@@ -901,7 +908,7 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		else
 		{
 			if ((p->nParamID >= XWACOM_PARAM_BUTTON1) &&
-				(p->nParamID >= XWACOM_PARAM_STRIPRDN) &&
+				(p->nParamID <= XWACOM_PARAM_STRIPRDN) &&
 				((value & AC_TYPE) != AC_BUTTON))
 				printf ("This %s option is only an xsetwacom command \n", p->pszParam);
 			else

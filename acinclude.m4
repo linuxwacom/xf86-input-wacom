@@ -210,6 +210,14 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		UTS_PATH="$WCM_KERNELDIR/include/linux/utsrelease.h"
 		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
+	if test "x$MODUTS" = x; then
+		echo "***"
+		echo "*** WARNING:"
+		echo "*** Can not identify your kernel source version"
+		echo "*** Use your current running kernel version instead"
+		echo "***"
+		MODUTS=`uname -r`	
+	fi
 	if test "x$MODUTS" != x; then
 		WCM_OPTION_MODVER=yes
 		AC_MSG_RESULT(yes)

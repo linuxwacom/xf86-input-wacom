@@ -38,18 +38,18 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	WacomToolPtr     tool;
 	WacomToolAreaPtr area;
 
-	priv = (WacomDevicePtr) xalloc(sizeof(WacomDeviceRec));
+	priv = (WacomDevicePtr) xcalloc(1, sizeof(WacomDeviceRec));
 	if (!priv)
 		return NULL;
 
-	common = (WacomCommonPtr) xalloc(sizeof(WacomCommonRec));
+	common = (WacomCommonPtr) xcalloc(1, sizeof(WacomCommonRec));
 	if (!common)
 	{
 		xfree(priv);
 		return NULL;
 	}
 
-	tool = (WacomToolPtr) xalloc(sizeof(WacomTool));
+	tool = (WacomToolPtr) xcalloc(1, sizeof(WacomTool));
 	if(!tool)
 	{
 		xfree(priv);
@@ -57,7 +57,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		return NULL;
 	}
 
-	area = (WacomToolAreaPtr) xalloc(sizeof(WacomToolArea));
+	area = (WacomToolAreaPtr) xcalloc(1, sizeof(WacomToolArea));
 	if(!area)
 	{
 		xfree(tool);
@@ -66,7 +66,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		return NULL;
 	}
 
-	local = xf86AllocateInput(gWacomModule.v4.wcmDrv, 0);
+	local = xf86AllocateInput(gWacomModule.wcmDrv, 0);
 	if (!local)
 	{
 		xfree(area);
@@ -93,8 +93,9 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	local->history_size  = 0;
 	local->old_x = -1;
 	local->old_y = -1;
-	
-	memset(priv,0,sizeof(*priv));
+
+	priv->next = NULL;
+	priv->local = local;
 	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
 	priv->oldX = 0;             /* previous X position */
 	priv->oldY = 0;             /* previous Y position */
@@ -171,14 +172,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleStart = 0;
 	priv->throttleLimit = -1;
 	
-	memset(common,0,sizeof(*common));
-	memset(common->wcmChannel, 0, sizeof(common->wcmChannel));
 	common->wcmDevice = "";                  /* device file name */
 	common->wcmSuppress = DEFAULT_SUPPRESS;  /* transmit position if increment is superior */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
-	common->wcmDevices = (LocalDevicePtr*) xalloc(sizeof(LocalDevicePtr));
-	common->wcmDevices[0] = local;
-	common->wcmNumDevices = 1;         /* number of devices */
+	common->wcmDevices = priv;
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
 	common->wcmMaxZ = 0;               /* max Z value */
@@ -377,14 +374,10 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 				privMatch->common->wcmEraserID=pLocal->name;
 			}
 		}
-		xfree(common->wcmDevices);
 		xfree(common);
 		common = priv->common = privMatch->common;
-		common->wcmNumDevices++;
-		common->wcmDevices = (LocalDevicePtr *)xrealloc(
-				common->wcmDevices,
-				sizeof(LocalDevicePtr) * common->wcmNumDevices);
-		common->wcmDevices[common->wcmNumDevices - 1] = pLocal;
+		priv->next = common->wcmDevices;
+		common->wcmDevices = priv;
 		return 1;
 	}
 	return 0;
@@ -405,7 +398,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
-	gWacomModule.v4.wcmDrv = drv;
+	gWacomModule.wcmDrv = drv;
 
 	fakeLocal = (LocalDevicePtr) xcalloc(1, sizeof(LocalDeviceRec));
 	if (!fakeLocal)
@@ -512,12 +505,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * Always in absolute mode when it is not a core device.
 	 */
 	if (IsPad(priv))
-	{
-		if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
-			priv->flags &= ~ABSOLUTE_FLAG;
-		else
-			priv->flags |= ABSOLUTE_FLAG;
-	}
+		xf86WcmSetPadCoreMode(local);
+
+	/* Store original local Core flag so it can be changed later */
+	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
+		priv->flags |= COREEVENT_FLAG;
 
 	xf86Msg(X_CONFIG, "%s is in %s mode\n", local->name,
 		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");

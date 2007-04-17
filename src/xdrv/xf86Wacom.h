@@ -154,8 +154,6 @@
  *****************************************************************************/
 
 typedef struct _WacomModule WacomModule;
-typedef struct _WacomModule4 WacomModule4;
-typedef struct _WacomModule3 WacomModule3;
 typedef struct _WacomModel WacomModel, *WacomModelPtr;
 typedef struct _WacomDeviceRec WacomDeviceRec, *WacomDevicePtr;
 typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
@@ -171,17 +169,12 @@ typedef struct _WacomToolArea WacomToolArea, *WacomToolAreaPtr;
  *               global namespaces as clean as possible.
  *****************************************************************************/
 
-struct _WacomModule4
-{
-	InputDriverPtr wcmDrv;
-};
-
 struct _WacomModule
 {
 	int debugLevel;
 	const char* identification;
 
-	WacomModule4 v4;
+	InputDriverPtr wcmDrv;
 
 	int (*DevOpen)(DeviceIntPtr pWcm);
 	void (*DevReadInput)(LocalDevicePtr local);
@@ -240,6 +233,7 @@ struct _WacomModel
 #define BUTTONS_ONLY_FLAG	0x00000080
 #define TPCBUTTONS_FLAG		0x00000100
 #define TPCBUTTONONE_FLAG	0x00000200
+#define COREEVENT_FLAG		0x00000400
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
@@ -266,6 +260,9 @@ typedef enum { TV_NONE = 0, TV_ABOVE_BELOW = 1, TV_LEFT_RIGHT = 2 } tvMode;
 struct _WacomDeviceRec
 {
 	/* configuration fields */
+	struct _WacomDeviceRec *next;
+	LocalDevicePtr local;
+
 	unsigned int flags;     /* various flags (type, abs, touch...) */
 	int topX;               /* X top */
 	int topY;               /* Y top */
@@ -279,7 +276,7 @@ struct _WacomDeviceRec
 	int screenTopY[32];	/* top cordinate of the associated screen */
 	int screenBottomX[32];	/* right cordinate of the associated screen */
 	int screenBottomY[32];	/* bottom cordinate of the associated screen */
- 	int button[MAX_BUTTONS];/* buttons assignments */
+	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
 	unsigned rupk[256]; /* keystrokes assigned to relative wheel up event (default is button 4) */
@@ -297,10 +294,10 @@ struct _WacomDeviceRec
 	unsigned srupk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
 	int striprdn;
  	unsigned srdnk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
-	int nbuttons;           /* number of buttons for this subdevice */
-	int naxes;              /* number of axes */
-  
-	WacomCommonPtr common;  /* common info pointer */
+	int nbuttons;         /* number of buttons for this subdevice */
+	int naxes;            /* number of axes */
+
+	WacomCommonPtr common;/* common info pointer */
 
 	/* state fields */
 	int currentX;           /* current X position */
@@ -498,8 +495,7 @@ struct _WacomCommonRec
 	int npadkeys;                /* number of pad keys in the above array */
 	int padkey_code[MAX_BUTTONS];/* hardware codes for buttons */
 
-	LocalDevicePtr* wcmDevices;  /* array of devices sharing same port */
-	int wcmNumDevices;           /* number of devices */
+	WacomDevicePtr wcmDevices;   /* list of devices sharing same port */
 	int wcmPktLength;            /* length of a packet */
 	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
 	float wcmVersion;            /* ROM version */
@@ -628,6 +624,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 /* generic area check for wcmConfig.c, xf86Wacom.c, and wcmCommon.c */
 Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
+
+/* Change pad's mode according to it core event status */
+int xf86WcmSetPadCoreMode(LocalDevicePtr local);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
