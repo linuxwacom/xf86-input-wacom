@@ -906,7 +906,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				xf86WcmSendButtons(local, buttons, 
 					x, y, z, v3, v4, v5);
 			if (priv->oldProximity && local->dev->proximity)
- 				xf86PostProximityEvent(local->dev, is_absolute, 0, naxes, 
+ 				xf86PostProximityEvent(local->dev, 0, 0, naxes, 
 				x, y, z, v3, v4, v5);
 			is_proximity = 0;
 		}

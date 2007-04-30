@@ -7,7 +7,7 @@
  *  Copyright (c) 2000 Daniel Egger         <egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied      <flepied@mandrakesoft.com>
  *  Copyright (c) 2002 Christer Nilsson     <christer.nilsson@kretskompaniet.se>
- *  Copyright (c) 2002-2006 Ping Cheng      <pingc@wacom.com>
+ *  Copyright (c) 2002-2007 Ping Cheng      <pingc@wacom.com>
  *  Copyright (c) 2002 John Joganic         <john@joganic.com>
  *
  *  USB Wacom Graphire and Intuos tablet support
@@ -88,6 +88,7 @@
  *    v1.30-j0.7.3 - added DTF 521, I3 12x12, and I3 12x19
  *    v1.30-j0.7.5 - Support tablet buttons/keys  
  *    v1.30-j0.7.7 - Support Intuos outbound tracking
+ *    v1.30-j0.7.8 - Added Bamboo
  */
 
 /*
@@ -118,7 +119,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.7.7"
+#define DRIVER_VERSION "v1.30-j0.7.8"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -432,15 +433,14 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_report_key(dev, BTN_STYLUS, 0);
 			input_report_key(dev, BTN_STYLUS2, 0);
 		}
-		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */		input_report_key(dev, wacom->tool[0], 0);
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */	
+		input_report_key(dev, wacom->tool[0], 0);
 	}
 	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
 
 	/* send pad data */
-	if ( strstr(wacom->features->name, "Graphire4") )
-	{
-		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) )
-		{
+	if ( strstr(wacom->features->name, "Graphire4") ) {
+		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
 			wacom->id[1] = 1;
 			wacom->serial[1] = (data[7] & 0xf8);
 			input_report_key(dev, BTN_0, (data[7] & 0x40));
@@ -454,6 +454,30 @@ static void wacom_graphire_irq(struct urb *urb)
 			wacom->id[1] = 0;
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
 			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
+		}
+	}
+	if ( strstr(wacom->features->name, "Bamboo") ) {
+		if ((data[7] & 0xf8) || (data[8] & 0x80)) {
+			wacom->id[1] = 1;
+			wacom->serial[1] = (data[7] & 0xf8);
+			input_report_key(dev, BTN_0, (data[7] & 0x08));
+			input_report_key(dev, BTN_1, (data[7] & 0x20));
+			input_report_key(dev, BTN_4, (data[7] & 0x10));
+			input_report_key(dev, BTN_5, (data[7] & 0x40));
+			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
+			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
+		} else if (wacom->id[1]) {
+			wacom->id[1] = 0;
+			input_report_key(dev, BTN_0, (data[7] & 0x40));
+			input_report_key(dev, BTN_1, (data[7] & 0x20));
+			input_report_key(dev, BTN_4, (data[7] & 0x80));
+			input_report_key(dev, BTN_5, (data[7] & 0x40));
+			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_key(dev, BTN_TOOL_FINGER, 0);
+			input_report_abs(dev, ABS_MISC, 0); 
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 	}
@@ -752,6 +776,8 @@ static void wacom_intuos_irq(struct urb *urb)
 #define WACOM_GRAPHIRE_REL	(BIT(REL_WHEEL))
 #define WACOM_G4_TOOLS		(BIT(BTN_TOOL_FINGER))
 #define WACOM_G4_BUTTONS	(BIT(BTN_0) | BIT(BTN_4))
+#define WACOM_MO_BUTTONS	(WACOM_G4_BUTTONS | BIT(BTN_1) | BIT(BTN_5))
+#define WACOM_MO_ABS		(BIT(ABS_RX))
 #define WACOM_INTUOS_TOOLS	(BIT(BTN_TOOL_BRUSH) | BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS))
 #define WACOM_INTUOS3_TOOLS	(WACOM_INTUOS_TOOLS | BIT(BTN_TOOL_FINGER))
 #define WACOM_INTUOS_BUTTONS	(BIT(BTN_SIDE) | BIT(BTN_EXTRA))
@@ -847,47 +873,50 @@ struct wacom_features wacom_features[] = {
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 	/* 27 */ { "Wacom PenPartner2",    8,   3250,  2320,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
-	/* 28 */ { "Wacom Graphire3 4x5",  8,   10208, 7424,   511, 32,
+	/* 28 */ { "Wacom Bamboo",         8,   14760, 9225,   511, 32,
+			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, WACOM_MO_ABS,
+			WACOM_GRAPHIRE_REL, WACOM_MO_BUTTONS, WACOM_G4_TOOLS },
+	/* 29 */ { "Wacom Graphire3 4x5",  8,   10208, 7424,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
-	/* 29 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
+	/* 30 */ { "Wacom Graphire3 6x8",  8,   16704, 12064,  511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, WACOM_GRAPHIRE_REL, 0 },
-	/* 30 */ { "Wacom Graphire4 4x5",  8,   10208, 7424,   511, 32,
+	/* 31 */ { "Wacom Graphire4 4x5",  8,   10208, 7424,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 
 			WACOM_GRAPHIRE_REL, WACOM_G4_BUTTONS, WACOM_G4_TOOLS },
-	/* 31 */ { "Wacom Graphire4 6x8",  8,   16704, 12064,  511, 32,
+	/* 32 */ { "Wacom Graphire4 6x8",  8,   16704, 12064,  511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 
 			WACOM_GRAPHIRE_REL, WACOM_G4_BUTTONS, WACOM_G4_TOOLS },
-	/* 32 */ { "Wacom Cintiq Partner", 8,   20480, 15360,  511, 32,
+	/* 33 */ { "Wacom Cintiq Partner", 8,   20480, 15360,  511, 32,
 			wacom_ptu_irq, 0, 0, 0, 0 },
 	/* Intuos3 */
-	/* 33 */ { "Wacom Intuos3 4x5",   10,  25400, 20320,  1023, 15,
+	/* 34 */ { "Wacom Intuos3 4x5",   10,  25400, 20320,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3S_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3S_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 34 */ { "Wacom Intuos3 6x8",   10,  40640, 30480,  1023, 15,
+	/* 35 */ { "Wacom Intuos3 6x8",   10,  40640, 30480,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 35 */ { "Wacom Intuos3 9x12",  10,  60960, 45720,  1023, 15,
+	/* 36 */ { "Wacom Intuos3 9x12",  10,  60960, 45720,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 36 */ { "Wacom Intuos3 12x12", 10,  60960, 60960,  1023, 15,
+	/* 37 */ { "Wacom Intuos3 12x12", 10,  60960, 60960,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 37 */ { "Wacom Intuos3 12x19", 10,  97536, 60960,  1023, 15,
+	/* 38 */ { "Wacom Intuos3 12x19", 10,  97536, 60960,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 38 */ { "Wacom Intuos3 6x11",  10,  54204, 31750,  1023, 15,
+	/* 39 */ { "Wacom Intuos3 6x11",  10,  54204, 31750,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 39 */ { "Wacom Intuos3 4x6",  10,  31496, 19685,  1023, 15,
+	/* 40 */ { "Wacom Intuos3 4x6",  10,  31496, 19685,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
 	/* Protocol 5 Cintiq */
-	/* 40 */ { "Wacom Cintiq 21UX",   10,  87200, 65600,  1023, 15,
+	/* 41 */ { "Wacom Cintiq 21UX",   10,  87200, 65600,  1023, 15,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			WACOM_INTUOS_REL, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 41 */ { "Wacom DTF720",         8,   6858,  5506,   511, 32,
+	/* 42 */ { "Wacom DTF720",         8,   6858,  5506,   511, 32,
 			wacom_pl_irq, 0,  0, 0, 0 },
-	/* 42 */ { "Wacom DTF521",         8,   6282,  4762,   511, 32,
+	/* 43 */ { "Wacom DTF521",         8,   6282,  4762,   511, 32,
 			wacom_pl_irq, 0,  0, 0, 0 },
 	{ NULL , 0 }
 };
@@ -921,21 +950,22 @@ struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x62), driver_info: 25 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x63), driver_info: 26 },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x64), driver_info: 27 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13), driver_info: 28 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14), driver_info: 29 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x15), driver_info: 30 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x16), driver_info: 31 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03), driver_info: 32 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB0), driver_info: 33 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB1), driver_info: 34 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB2), driver_info: 35 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB3), driver_info: 36 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB4), driver_info: 37 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5), driver_info: 38 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB7), driver_info: 39 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F), driver_info: 40 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0), driver_info: 41 },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4), driver_info: 42 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x65), driver_info: 28 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13), driver_info: 29 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14), driver_info: 30 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x15), driver_info: 31 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x16), driver_info: 32 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03), driver_info: 33 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB0), driver_info: 34 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB1), driver_info: 35 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB2), driver_info: 36 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB3), driver_info: 37 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB4), driver_info: 38 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5), driver_info: 39 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB7), driver_info: 40 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F), driver_info: 41 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0), driver_info: 42 },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4), driver_info: 43 },
 
 	/* some Intuos2 6x8's erroneously report as 0x47;
 	 * multiple confirmed examples exist. */

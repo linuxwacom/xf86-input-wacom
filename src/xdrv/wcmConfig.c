@@ -149,10 +149,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 			priv->keys[i][j] = 0;
 
 	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
-	priv->relup = 4;		   /* Default relative wheel up event */
-	priv->reldn = 5;		   /* Default relative wheel down event */
-	priv->wheelup = 4;		   /* Default absolute wheel up event */
-	priv->wheeldn = 5;		   /* Default absolute wheel down event */
+	priv->relup = 5;		   /* Default relative wheel up event */
+	priv->reldn = 4;		   /* Default relative wheel down event */
+	priv->wheelup = 5;		   /* Default absolute wheel up event */
+	priv->wheeldn = 4;		   /* Default absolute wheel down event */
 	priv->striplup = 0;		   /* Default left strip up event. Let user app take care of */
 	priv->stripldn = 0;		   /* Default left strip down event. Let user app take care of */
 	priv->striprup = 0;		   /* Default right strip up event. Let user app take care of */

@@ -2,7 +2,7 @@
 ** wacusb.c
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2006 - Ping Cheng
+** Copyright (C) 2003 - 2007 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -252,6 +252,13 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "FT-0203-U", "Wacom PenStation",  1, 0x61 },
 		{ "CTF-420-U", "Wacom Volito2 4x5", 2, 0x62 },
 		{ "CTF-220-U", "Wacom Volito2 2x3", 3, 0x63 },
+		{ "CTF-421-U", "Wacom PenPartner2", 4, 0x64 },
+		{ NULL }
+	};
+
+	static USBSUBTYPE xBamboo[] =
+	{
+		{ "MTE_450", "Wacom Bamboo", 1, 0x65 },
 		{ NULL }
 	};
 
@@ -294,6 +301,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner, 1 },
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito, 1 },
 		{ "vol2", "Volito2", WACOMDEVICE_VOLITO2, xVolito2, 1 },
+		{ "mo", "Bamboo", WACOMDEVICE_MO, xBamboo, 2 },
 		{ NULL }
 	};
 
@@ -638,6 +646,7 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 	/* add additional capabilities by device type */
 	switch (pUSB->pDevice->uDevice)
 	{
+		case WACOMDEVICE_MO:
 		case WACOMDEVICE_GRAPHIRE4:
 		case WACOMDEVICE_INTUOS:
 		case WACOMDEVICE_INTUOS2:
@@ -722,10 +731,12 @@ static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 	unsigned int uCnt, uPacketLength;
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
 	uPacketLength = sizeof(struct input_event);
+fprintf(stderr,"USBReadRaw\n");
 
 	/* check size of buffer */
 	if (uSize < uPacketLength) { errno=EINVAL; return 0; }
 	
+fprintf(stderr,"USBReadRaw not 0\n");
 	for (uCnt=0; uCnt<uPacketLength; uCnt+=nXfer)
 	{
 		nXfer = read(pUSB->fd,puchData+uCnt,uPacketLength-uCnt);

@@ -167,6 +167,22 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
+	static WacomModel usbBamboo =
+	{
+		"USB Bamboo",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbWcmGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterCoord,   /* input filtering */
+		usbDetectConfig,      /* detect hardware buttons etc */
+	};
+
 	static WacomModel usbCintiq =
 	{
 		"USB Cintiq",
@@ -398,6 +414,8 @@ static struct
 	{ 0x62, 1016, 1016, &usbVolito2    }, /* Volito2 4x5 */
 	{ 0x63, 1016, 1016, &usbVolito2    }, /* Volito2 2x3 */
 	{ 0x64, 1016, 1016, &usbVolito2    }, /* PenPartner2 */
+
+	{ 0x65, 2540, 2540, &usbBamboo     }, /* Bamboo */
 
 	{ 0xB0, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x5 */
 	{ 0xB1, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x8 */
