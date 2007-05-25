@@ -867,8 +867,6 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 		{
 			nValue = nValues[0];
 			/* Is there a range and are we in it? */
-if (nValue < p->nMin)
-printf("value (%d) < min (%d) \n", nValue, p->nMin);
 			if (p->bRange &&
 				((nValue < p->nMin) || (nValue > p->nMax)))
 			{
