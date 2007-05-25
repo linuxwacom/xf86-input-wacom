@@ -1,3 +1,16 @@
+2007-05-25  Ping Cheng <pingc@wacom.com>
+	* Added 2 new xsetwacom potions
+		(TVResolution0/1 and Screen_No)
+	* Added support for Bamboo
+	* Split wcmXCommand.c from xf86Wacom.c
+
+2007-05-18  Ping Cheng <pingc@wacom.com>
+	* Added 2 new xsetwacom potions 
+		(Common DebugLevel and TwinView)
+	* Increased MAX_SUPPRESS from 20 to 100
+	* Added new xsetwacom option to change suppress
+	* Fixed suppress bug (Allan Wind)
+
 2007-04-30  Ping Cheng <pingc@wacom.com>
 	* Fixed a xsetwacom button and a relative wheel bug
 	* label 0.7.7-9

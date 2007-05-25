@@ -3,6 +3,7 @@
 # mkxincludes
 #
 # Copyright (C) 2003 - John Joganic
+# Copyright (C) 2003 - 2007 Ping Cheng
 #
 # Based on code by Jonathan Paisley
 #
@@ -17,7 +18,7 @@ DEPFLAGS=@WCM_DEPFLAGS@
 
 X_INCLUDES=x-includes
 
-FILES="wcmCommon.d wcmCompat.d wcmConfig.d wcmFilter.d wcmISDV4.d wcmSerial.d wcmUSB.d xf86Wacom.d"
+FILES="wcmCommon.d wcmCompat.d wcmConfig.d wcmFilter.d wcmISDV4.d wcmSerial.d wcmUSB.d xf86Wacom.d wcmXCommand.d"
 
 if test -z "$DEPFLAGS" || test -z "$XF86MODS"; then
 	echo "Either mkxincludes or wacomdrv was not enabled..."

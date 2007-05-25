@@ -48,11 +48,11 @@ static int serialEnableSuppressProtocol4(LocalDevicePtr local);
 static int serialSetLinkSpeedIntuos(LocalDevicePtr local);
 static int serialSetLinkSpeedProtocol5(LocalDevicePtr local);
 static int serialStartTablet(LocalDevicePtr local);
-static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data);
-static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data);
-static int serialParseProtocol4(WacomCommonPtr common, const unsigned char* data);
-static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data);
-static void serialParseP4Common(WacomCommonPtr common, const unsigned char* data, 
+static int serialParseCintiq(LocalDevicePtr local, const unsigned char* data);
+static int serialParseGraphire(LocalDevicePtr local, const unsigned char* data);
+static int serialParseProtocol4(LocalDevicePtr local, const unsigned char* data);
+static int serialParseProtocol5(LocalDevicePtr local, const unsigned char* data);
+static void serialParseP4Common(LocalDevicePtr local, const unsigned char* data, 
 	WacomDeviceState* last, WacomDeviceState* ds);
 
 /*****************************************************************************
@@ -299,8 +299,6 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 							strerror(errno));
 					return NULL;
 				}
-				DBG(10, ErrorF("%c err=%d [0]\n",
-					answer[0], nr));
 			}
 			maxtry--;  
 		} while ((answer[0] != request[0]) && maxtry);
@@ -329,8 +327,6 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 								strerror(errno));
 						return NULL;
 					}
-					DBG(10, ErrorF("%c err=%d [1]\n",
-							answer[1], nr));
 				}
 				maxtry--;  
 			} while ((nr <= 0) && maxtry);
@@ -367,15 +363,10 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 					ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
 					return NULL;
 				}
-				DBG(10, ErrorF("%c err=%d [%d]\n", answer[len], nr, len));
 			}
 			else
 			{
-				if (len == 2)
-				{
-					DBG(10, ErrorF("timeout remains %d tries\n", maxtry));
-					maxtry--;
-				}
+				if (len == 2) maxtry--;
 			}
 		} while ((nr <= 0) && len == 2 && maxtry);
 
@@ -410,8 +401,9 @@ static Bool serialDetect(LocalDevicePtr pDev)
 static Bool serialInit(LocalDevicePtr local)
 {
 	int err;
-    
-	DBG(1, ErrorF("initializing serial tablet\n"));    
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+	DBG(1, priv->debugLevel, ErrorF("initializing serial tablet\n"));    
 
 	/* Set the speed of the serial link to 38400 */
 	if (xf86WcmSetSerialSpeed(local->fd, 38400) < 0)
@@ -523,7 +515,8 @@ static int serialInitTablet(LocalDevicePtr local)
 	int loop, idx;
 	char id[BUFFER_SIZE];
 	float version;
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
 
 	WacomModelPtr model = NULL;
 
@@ -537,11 +530,11 @@ static int serialInitTablet(LocalDevicePtr local)
 	/* otherwise, query and initialize */
 	else
 	{
-		DBG(2, ErrorF("reading model\n"));
+		DBG(2, priv->debugLevel, ErrorF("reading model\n"));
 		if (!xf86WcmSendRequest(local->fd, WC_MODEL, id, sizeof(id)))
 			return !Success;
 
-		DBG(2, ErrorF("%s\n", id));
+		DBG(2, priv->debugLevel, ErrorF("%s\n", id));
   
 		if (xf86Verbose)
 			ErrorF("%s Wacom tablet model : %s\n",
@@ -595,9 +588,11 @@ static int serialInitTablet(LocalDevicePtr local)
 	return xf86WcmInitTablet(local,model,id,version);
 }
 
-static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
+static int serialParseGraphire(LocalDevicePtr local, const unsigned char* data)
 {
 	int n;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
 
@@ -618,7 +613,7 @@ static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 	
 	/* requires button info, so it goes down here. */
-	serialParseP4Common(common,data,last,ds);
+	serialParseP4Common(local, data, last, ds);
 
 	/* handle relative wheel for non-stylus device */
 	if (ds->device_type == CURSOR_ID)
@@ -628,13 +623,15 @@ static int serialParseGraphire(WacomCommonPtr common, const unsigned char* data)
 			ds->relwheel = -ds->relwheel;
 	}
 
-	xf86WcmEvent(common,0,ds);
+	xf86WcmEvent(local,0,ds);
 	return common->wcmPktLength;
 }
 
-static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data)
+static int serialParseCintiq(LocalDevicePtr local, const unsigned char* data)
 {
 	int n;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
 
@@ -666,18 +663,21 @@ static int serialParseCintiq(WacomCommonPtr common, const unsigned char* data)
 	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 
 	/* requires button info, so it goes down here. */
-	serialParseP4Common(common,data,last,ds);
+	serialParseP4Common(local, data, last, ds);
 
-	xf86WcmEvent(common,0,ds);
+	xf86WcmEvent(local,0,ds);
 	return common->wcmPktLength;
 }
 
-static int serialParseProtocol4(WacomCommonPtr common, const unsigned char* data)
+static int serialParseProtocol4(LocalDevicePtr local, const unsigned char* data)
 {
 	int n;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
 
+	DBG(10, common->debugLevel, ErrorF("serialParseProtocol4 \n"));
 	/* positive value is skip */
 	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
 
@@ -699,19 +699,22 @@ static int serialParseProtocol4(WacomCommonPtr common, const unsigned char* data
 	ds->buttons = (data[3] & BUTTONS_BITS) >> 3;
 
 	/* requires button info, so it goes down here. */
-	serialParseP4Common(common,data,last,ds);
+	serialParseP4Common(local, data, last, ds);
 
-	xf86WcmEvent(common,0,ds);
+	xf86WcmEvent(local,0,ds);
 	return common->wcmPktLength;
 }
 
-static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data)
+static int serialParseProtocol5(LocalDevicePtr local, const unsigned char* data)
 {
 	int n;
 	int have_data=0;
 	int channel;
 	WacomDeviceState* ds;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
+	DBG(10, common->debugLevel, ErrorF("serialParseProtocol5 \n"));
 	/* positive value is skip */
 	if ((n = xf86WcmSerialValidate(common,data)) > 0) return n;
 
@@ -722,7 +725,7 @@ static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	DBG(7, ErrorF("packet header = %x\n", data[0]));
+	DBG(7, common->debugLevel, ErrorF("packet header = %x\n", data[0]));
      
 	/* Device ID packet */
 	if ((data[0] & 0xfc) == 0xc0)
@@ -750,7 +753,8 @@ static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data
 		else
 			ds->device_type = ERASER_ID;
   
-		DBG(6, ErrorF("device_id=%x serial_num=%u type=%s\n",
+		DBG(6, common->debugLevel, ErrorF(
+			"device_id=%x serial_num=%u type=%s\n",
 			ds->device_id, ds->serial_num,
 			(ds->device_type == STYLUS_ID) ? "stylus" :
 			(ds->device_type == CURSOR_ID) ? "cursor" :
@@ -859,13 +863,13 @@ static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data
 	}
 	else
 	{
-		DBG(10, ErrorF("unknown wacom V packet %x\n",data[0]));
+		DBG(10, common->debugLevel, ErrorF("unknown wacom V packet %x\n",data[0]));
 	}
 
 	/* if new data is available, send it */
 	if (have_data)
 	{
-	       	xf86WcmEvent(common,channel,ds);
+	       	xf86WcmEvent(local,channel,ds);
 	}
 	return common->wcmPktLength;
 }
@@ -876,8 +880,6 @@ static int serialParseProtocol5(WacomCommonPtr common, const unsigned char* data
 
 static void serialInitIntuos(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected an Intuos model\n"));
-
 	common->wcmProtocolLevel = 5;
 	common->wcmVersion = version;
 
@@ -890,8 +892,6 @@ static void serialInitIntuos(WacomCommonPtr common, const char* id, float versio
 
 static void serialInitIntuos2(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected an Intuos2 model\n"));
-
 	common->wcmProtocolLevel = 5;
 	common->wcmVersion = version;
 
@@ -904,8 +904,6 @@ static void serialInitIntuos2(WacomCommonPtr common, const char* id, float versi
 
 static void serialInitCintiq(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected a Cintiq model\n"));
-
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
@@ -977,8 +975,6 @@ static void serialInitCintiq(WacomCommonPtr common, const char* id, float versio
 
 static void serialInitPenPartner(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected a PenPartner model\n"));
-
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
@@ -990,8 +986,6 @@ static void serialInitPenPartner(WacomCommonPtr common, const char* id, float ve
 
 static void serialInitGraphire(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected a Graphire model\n"));
-
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
@@ -1006,8 +1000,6 @@ static void serialInitGraphire(WacomCommonPtr common, const char* id, float vers
 
 static void serialInitProtocol4(WacomCommonPtr common, const char* id, float version)
 {
-	DBG(2, ErrorF("detected a Protocol4 model\n"));
-
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 7;
 	common->wcmVersion = version;
@@ -1027,15 +1019,17 @@ static void serialGetResolution(LocalDevicePtr local)
 {
 	int a, b;
 	char buffer[BUFFER_SIZE], header[BUFFER_SIZE];
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
 
 	if (!(common->wcmResolX && common->wcmResolY))
 	{
-		DBG(2, ErrorF("Requesting resolution from device\n"));
+		DBG(2, priv->debugLevel, ErrorF(
+			"Requesting resolution from device\n"));
 		if (xf86WcmSendRequest(local->fd, WC_CONFIG, buffer,
 			sizeof(buffer)))
 		{
-			DBG(2, ErrorF("%s\n", buffer));
+			DBG(2, priv->debugLevel, ErrorF("%s\n", buffer));
 			/* The header string is simply a place to put the
 			 * unwanted config header don't use buffer+xx because
 			 * the header size varies on different tablets */
@@ -1044,8 +1038,8 @@ static void serialGetResolution(LocalDevicePtr local)
 				 &a, &b, &common->wcmResolX,
 				 &common->wcmResolY) == 5)
 			{
-				DBG(6, ErrorF("WC_CONFIG Header = %s\n",
-					header));
+				DBG(6, priv->debugLevel, ErrorF(
+					"WC_CONFIG Header = %s\n", header));
 			}
 			else
 			{
@@ -1062,18 +1056,19 @@ static void serialGetResolution(LocalDevicePtr local)
 		}
 	}
 
-	DBG(2, ErrorF("serialGetResolution: ResolX=%d ResolY=%d\n",
+	DBG(2, priv->debugLevel, ErrorF("serialGetResolution: ResolX=%d ResolY=%d\n",
 		common->wcmResolX, common->wcmResolY));
 }
 
 static int serialGetRanges(LocalDevicePtr local)
 {
 	char buffer[BUFFER_SIZE];
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
 
 	if (!(common->wcmMaxX && common->wcmMaxY))
 	{
-		DBG(2, ErrorF("Requesting max coordinates\n"));
+		DBG(2, priv->debugLevel, ErrorF("Requesting max coordinates\n"));
 		if (!xf86WcmSendRequest(local->fd, WC_COORD, buffer,
 			sizeof(buffer)))
 		{
@@ -1081,7 +1076,7 @@ static int serialGetRanges(LocalDevicePtr local)
 				"Use the MaxX and MaxY options.\n");
 			return !Success;
 		}
-		DBG(2, ErrorF("%s\n", buffer));
+		DBG(2, priv->debugLevel, ErrorF("%s\n", buffer));
 		if (sscanf(buffer+2, "%d,%d", &common->wcmMaxX,
 			&common->wcmMaxY) != 2)
 		{
@@ -1091,7 +1086,7 @@ static int serialGetRanges(LocalDevicePtr local)
 		}
 	}
 
-	DBG(2, ErrorF("serialGetRanges: maxX=%d maxY=%d (%g,%g in)\n",
+	DBG(2, priv->debugLevel, ErrorF("serialGetRanges: maxX=%d maxY=%d (%g,%g in)\n",
 		common->wcmMaxX, common->wcmMaxY,
 		(double)common->wcmMaxX / common->wcmResolX,
 		(double)common->wcmMaxY / common->wcmResolY));
@@ -1159,9 +1154,9 @@ static int serialEnableSuppressProtocol4(LocalDevicePtr local)
 {
 	char buf[20];
 	int err;
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
+	sprintf(buf, "%s%d\r", WC_SUPPRESS, priv->wcmSuppress);
 	err = xf86WcmWrite(local->fd, buf, strlen(buf));
 
 	if (err == -1)
@@ -1192,9 +1187,10 @@ static int serialSetLinkSpeedProtocol5(LocalDevicePtr local)
 {
 	int err;
 	char* speed_init_string;
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
 
-	DBG(1, ErrorF("Switching serial link to %d\n",
+	DBG(1, priv->debugLevel, ErrorF("Switching serial link to %d\n",
 		common->wcmLinkSpeed));
 
 	/* set init string according to speed */
@@ -1238,10 +1234,12 @@ static int serialStartTablet(LocalDevicePtr local)
 	return Success;
 }
 
-static void serialParseP4Common(WacomCommonPtr common,
+static void serialParseP4Common(LocalDevicePtr local,
 	const unsigned char* data, WacomDeviceState* last,
 	WacomDeviceState* ds)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	int is_stylus = (data[0] & POINTER_BIT);
 	int cur_type = is_stylus ?
 		((ds->buttons & 4) ? ERASER_ID : STYLUS_ID) :
@@ -1281,7 +1279,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		{
 			/* send a prox-out for old device */
 			WacomDeviceState out = { 0 };
-			xf86WcmEvent(common,0,&out);
+			xf86WcmEvent(local, 0, &out);
 			ds->device_type = cur_type;
 		}
 	}
@@ -1296,7 +1294,7 @@ static void serialParseP4Common(WacomCommonPtr common,
 		ds->device_id = ERASER_DEVICE_ID;
 	}
 		
-	DBG(8, ErrorF("serialParseP4Common %s\n",
+	DBG(8, common->debugLevel, ErrorF("serialParseP4Common %s\n",
 		ds->device_type == CURSOR_ID ? "CURSOR" :
 		ds->device_type == ERASER_ID ? "ERASER " :
 		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
@@ -1318,8 +1316,8 @@ int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 				((i!=0) && (data[i] & HEADER_BIT)) )
 		{
 			bad = 1;
-			DBG(10, ErrorF("xf86WcmSerialValidate: bad magic at %d "
-				"v=%x l=%d\n", i, data[i], common->wcmPktLength));
+			ErrorF("xf86WcmSerialValidate: bad magic at %d "
+				"v=%x l=%d\n", i, data[i], common->wcmPktLength);
 			if (i!=0 && (data[i] & HEADER_BIT)) return i;
 		}
 	}

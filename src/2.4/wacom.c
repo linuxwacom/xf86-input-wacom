@@ -387,7 +387,8 @@ static void wacom_graphire_irq(struct urb *urb)
 
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
-				if ( strstr(wacom->features->name, "Graphire4") ) {
+				if ( strstr(wacom->features->name, "Graphire4") || 
+						strstr(wacom->features->name, "Bamboo") ) {
 					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : data[7] & 0x03;
 					input_report_rel(dev, REL_WHEEL, -rw);
 				} else
@@ -399,7 +400,8 @@ static void wacom_graphire_irq(struct urb *urb)
 				id = CURSOR_DEVICE_ID;
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
-				if ( strstr(wacom->features->name, "Graphire4") )
+				if ( strstr(wacom->features->name, "Graphire4") || 
+						strstr(wacom->features->name, "Bamboo") )
 					input_report_abs(dev, ABS_DISTANCE, data[6]);
 				else
 					input_report_abs(dev, ABS_DISTANCE, data[7]);
@@ -470,9 +472,9 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if (wacom->id[1]) {
 			wacom->id[1] = 0;
-			input_report_key(dev, BTN_0, (data[7] & 0x40));
+			input_report_key(dev, BTN_0, (data[7] & 0x08));
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
-			input_report_key(dev, BTN_4, (data[7] & 0x80));
+			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
 			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
@@ -873,7 +875,7 @@ struct wacom_features wacom_features[] = {
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
 	/* 27 */ { "Wacom PenPartner2",    8,   3250,  2320,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, 0, 0, 0 },
-	/* 28 */ { "Wacom Bamboo",         8,   14760, 9225,   511, 32,
+	/* 28 */ { "Wacom Bamboo",         9,   14760, 9225,   511, 32,
 			wacom_graphire_irq, WACOM_GRAPHIRE_BITS, WACOM_MO_ABS,
 			WACOM_GRAPHIRE_REL, WACOM_MO_BUTTONS, WACOM_G4_TOOLS },
 	/* 29 */ { "Wacom Graphire3 4x5",  8,   10208, 7424,   511, 32,

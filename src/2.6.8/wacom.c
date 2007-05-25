@@ -435,7 +435,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
-				if ( wacom->features->type == G4 ) {
+				if ( wacom->features->type == G4 ||
+						wacom->features->type == WACOM_MO ) {
 					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : (data[7] & 0x03);
 					input_report_rel(dev, REL_WHEEL, -rw);
 				} else
@@ -447,7 +448,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 				id = CURSOR_DEVICE_ID;
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
-				if ( wacom->features->type == G4 ) 
+				if ( wacom->features->type == G4 ||
+						wacom->features->type == WACOM_MO ) 
 					input_report_abs(dev, ABS_DISTANCE, data[6]);
 				else
 					input_report_abs(dev, ABS_DISTANCE, data[7]);
@@ -519,9 +521,9 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if (wacom->id[1]) {
 			wacom->id[1] = 0;
-			input_report_key(dev, BTN_0, (data[7] & 0x40));
+			input_report_key(dev, BTN_0, (data[7] & 0x08));
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
-			input_report_key(dev, BTN_4, (data[7] & 0x80));
+			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
 			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
@@ -851,7 +853,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom PenPartner2",   8,   3250,  2320,  255, 63, GRAPHIRE,   wacom_graphire_irq },
-	{ "Wacom Bamboo",        8,  14760,  9225,  511, 63, MO,	 wacom_graphire_irq },
+	{ "Wacom Bamboo",        9,  14760,  9225,  511, 63, MO,	 wacom_graphire_irq },
   	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 31, INTUOS,     wacom_intuos_irq },

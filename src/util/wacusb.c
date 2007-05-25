@@ -731,12 +731,10 @@ static int USBReadRaw(WACOMTABLET_PRIV* pTablet, unsigned char* puchData,
 	unsigned int uCnt, uPacketLength;
 	USBTABLET* pUSB = (USBTABLET*)pTablet;
 	uPacketLength = sizeof(struct input_event);
-fprintf(stderr,"USBReadRaw\n");
 
 	/* check size of buffer */
 	if (uSize < uPacketLength) { errno=EINVAL; return 0; }
 	
-fprintf(stderr,"USBReadRaw not 0\n");
 	for (uCnt=0; uCnt<uPacketLength; uCnt+=nXfer)
 	{
 		nXfer = read(pUSB->fd,puchData+uCnt,uPacketLength-uCnt);

@@ -58,11 +58,11 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version);
 int usbWcmGetRanges(LocalDevicePtr local);
-static int usbParse(WacomCommonPtr common, const unsigned char* data);
+static int usbParse(LocalDevicePtr local, const unsigned char* data);
 static int usbDetectConfig(LocalDevicePtr local);
-static void usbParseEvent(WacomCommonPtr common,
+static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event);
-static void usbParseChannel(WacomCommonPtr common, int channel, int serial);
+static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
@@ -320,14 +320,17 @@ static Bool usbDetect(LocalDevicePtr local)
 {
 	int version;
 	int err;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(1, ErrorF("usbDetect\n"));
+	DBG(1, priv->debugLevel, ErrorF("usbDetect\n"));
     
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 
 	if (err < 0)
+	{
+		ErrorF("usbDetect: can not ioctl version\n");
 		return 0;
-
+	}
 #ifdef EVIOCGRAB
 	/* Try to grab the event device so that data don't leak to /dev/input/mice */
 	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
@@ -438,7 +441,7 @@ Bool usbWcmInit(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(1, ErrorF("initializing USB tablet\n"));    
+	DBG(1, priv->debugLevel, ErrorF("initializing USB tablet\n"));    
 
 	/* fetch vendor, product, and model name */
 	ioctl(local->fd, EVIOCGID, sID);
@@ -499,7 +502,6 @@ Bool usbWcmInit(LocalDevicePtr local)
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version)
 {
-	DBG(2, ErrorF("detected a protocol 5 model (%s)\n",id));
 	common->wcmProtocolLevel = 5;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
@@ -512,7 +514,6 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version)
 {
-	DBG(2, ErrorF("detected a protocol 4 model (%s)\n",id));
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
@@ -536,12 +537,11 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	   to indicate end of record for a complete tablet event */
 	if (ISBITSET(ev,EV_SYN))
 	{
-		DBG(2, ErrorF("WACOM: Kernel supports SYN_REPORTs\n"));
 		common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 	}
 	else
 	{
-		DBG(2, ErrorF("WACOM: Kernel doesn't support SYN_REPORTs\n"));
+		ErrorF("WACOM: Kernel doesn't support SYN_REPORT\n");
 		common->wcmFlags &= ~USE_SYN_REPORTS_FLAG;
 	}
 
@@ -624,7 +624,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(10, ErrorF("usbDetectConfig \n"));
+	DBG(10, common->debugLevel, ErrorF("usbDetectConfig \n"));
 	if (IsPad (priv))
 	{
 		priv->nbuttons = common->npadkeys;
@@ -655,17 +655,23 @@ static int usbDetectConfig(LocalDevicePtr local)
 	return TRUE;
 }
 
-static int usbParse(WacomCommonPtr common, const unsigned char* data)
+static int usbParse(LocalDevicePtr local, const unsigned char* data)
 {
-	usbParseEvent(common,(const struct input_event*)data);
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+
+	usbParseEvent(local, (const struct input_event*)data);
 	return common->wcmPktLength;
 }
 
-static void usbParseEvent(WacomCommonPtr common,
+static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event)
 {
 	int i, channel;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
+	DBG(10, common->debugLevel, ErrorF("usbParseEvent \n"));
 	/* store events until we receive the MSC_SERIAL containing
 	 * the serial number; without it we cannot determine the
 	 * correct channel. */
@@ -674,8 +680,8 @@ static void usbParseEvent(WacomCommonPtr common,
 	if (common->wcmEventCnt >=
 		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
 	{
-		DBG(1, ErrorF("usbParse: Exceeded event queue (%d)\n",
-				common->wcmEventCnt));
+		ErrorF("usbParse: Exceeded event queue (%d)\n",
+				common->wcmEventCnt);
 		common->wcmEventCnt = 0;
 		common->wcmLastToolSerial = 0;
 		return;
@@ -703,7 +709,7 @@ static void usbParseEvent(WacomCommonPtr common,
 		   using SYN_REPORT as the end of record indicator */
 		if (! USE_SYN_REPORTS(common))
 		{
-			DBG(2, ErrorF("WACOM: Got unexpected SYN_REPORT, changing mode\n"));
+			ErrorF("WACOM: Got unexpected SYN_REPORT, changing mode\n");
 
 			/* we can expect SYN_REPORT's from now on */
 			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
@@ -756,22 +762,24 @@ static void usbParseEvent(WacomCommonPtr common,
 	if (channel < 0)
 	{
 		/* this should never happen in normal use */
-		DBG(1, ErrorF("usbParse: Exceeded channel count; "
-			"ignoring.\n"));
+		ErrorF("usbParse: Exceeded channel count; "
+			"ignoring.\n");
 		return;
 
 	}
 
-	usbParseChannel(common,channel,common->wcmLastToolSerial);
+	usbParseChannel(local,channel,common->wcmLastToolSerial);
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
-static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
+static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 {
 	int i, shift, nkeys;
 	WacomDeviceState* ds;
 	struct input_event* event;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
 	#define MOD_BUTTONS(bit, value) do { \
 		shift = 1<<bit; \
@@ -779,6 +787,7 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
 		} while (0)
 
+	DBG(6, common->debugLevel, ErrorF("usbParseChannel \n"));
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
@@ -788,9 +797,9 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 	for (i=0; i<common->wcmEventCnt; ++i)
 	{
 		event = common->wcmEvents + i;
-		DBG(11, ErrorF("usbParseChannel event[%d]->type=%d "
-			"code=%d value=%d\n", i, event->type,
-			event->code, event->value));
+		DBG(11, common->debugLevel, ErrorF("usbParseChannel "
+			"event[%d]->type=%d code=%d value=%d\n", 
+			i, event->type, event->code, event->value));
 
 		/* absolute events */
 		if (event->type == EV_ABS)
@@ -837,7 +846,8 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 			{
 				ds->device_type = STYLUS_ID;
 				ds->proximity = (event->value != 0);
-				DBG(6, ErrorF("USB stylus detected %x\n",
+				DBG(6, common->debugLevel, ErrorF(
+					"USB stylus detected %x\n",
 					event->code));
 			}
 			else if (event->code == BTN_TOOL_RUBBER)
@@ -846,20 +856,23 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 				ds->proximity = (event->value != 0);
 				if (ds->proximity)
 					ds->proximity = ERASER_PROX;
-				DBG(6, ErrorF("USB eraser detected %x\n",
+				DBG(6, common->debugLevel, ErrorF(
+					"USB eraser detected %x\n",
 					event->code));
 			}
 			else if ((event->code == BTN_TOOL_MOUSE) ||
 				(event->code == BTN_TOOL_LENS))
 			{
-				DBG(6, ErrorF("USB mouse detected %x\n",
+				DBG(6, common->debugLevel, ErrorF(
+					"USB mouse detected %x\n",
 					event->code));
 				ds->device_type = CURSOR_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOOL_FINGER)
 			{
-				DBG(6, ErrorF("USB Pad detected %x\n",
+				DBG(6, common->debugLevel, ErrorF(
+					"USB Pad detected %x\n",
 					event->code));
 				ds->device_type = PAD_ID;
 				ds->proximity = (event->value != 0);
@@ -899,12 +912,13 @@ static void usbParseChannel(WacomCommonPtr common, int channel, int serial)
 	/* DTF720 doesn't support eraser */
 	if (common->tablet_id == 0xC0 && ds->device_type == ERASER_ID) 
 	{
-		DBG(10, ErrorF("usbParseChannel DTF720 doesn't support eraser "));
+		DBG(10, common->debugLevel, ErrorF("usbParseChannel "
+			"DTF 720 doesn't support eraser "));
 		return;
 	}
 
 	/* dispatch event */
-	xf86WcmEvent(common, channel, ds);
+	xf86WcmEvent(local, channel, ds);
 }
 
 #endif /* LINUX_INPUT */

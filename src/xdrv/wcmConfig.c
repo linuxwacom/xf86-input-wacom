@@ -158,6 +158,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->striprup = 0;		   /* Default right strip up event. Let user app take care of */
 	priv->striprdn = 0;		   /* Default right strip down event. Let user app take care of */
 	priv->naxes = 6;                   /* Default number of axes */
+	priv->debugLevel = 0;              /* debug level */
+	priv->wcmSuppress = DEFAULT_SUPPRESS;    /* transmit position if increment is superior */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
@@ -173,7 +175,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleLimit = -1;
 	
 	common->wcmDevice = "";                  /* device file name */
-	common->wcmSuppress = DEFAULT_SUPPRESS;  /* transmit position if increment is superior */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->wcmMaxX = 0;               /* max X value */
@@ -188,6 +189,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmISDV4Speed = 19200;  /* serial ISDV4 link speed */
+	common->debugLevel = 0;         /* shared debug level can only 
+					 * be changed though xsetwacom */
 
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
@@ -336,7 +339,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
-	DBG(1, ErrorF("xf86WcmUninit\n"));
+	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
 
@@ -361,8 +364,9 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 		(pMatch->device_control == gWacomModule.DevProc) &&
 		!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
 	{
-		DBG(2, ErrorF("xf86WcmInit wacom port share between"
-				" %s and %s\n", pLocal->name, pMatch->name));
+		DBG(2, priv->debugLevel, ErrorF(
+			"xf86WcmInit wacom port share between"
+			" %s and %s\n", pLocal->name, pMatch->name));
 		type = xf86FindOptionValue(pMatch->options, "Type");
 		if ( type && (strstr(type, "eraser")) )
 			privMatch->common->wcmEraserID=pMatch->name;
@@ -475,11 +479,17 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86Msg(X_CONFIG, "%s device is %s\n", dev->identifier,
 			common->wcmDevice);
 
-	gWacomModule.debugLevel = xf86SetIntOption(local->options,
-		"DebugLevel", gWacomModule.debugLevel);
-	if (gWacomModule.debugLevel > 0)
-		xf86Msg(X_CONFIG, "WACOM: debug level set to %d\n",
-			gWacomModule.debugLevel);
+	priv->debugLevel = xf86SetIntOption(local->options,
+		"DebugLevel", priv->debugLevel);
+	if (priv->debugLevel > 0)
+		xf86Msg(X_CONFIG, "WACOM: %s debug level set to %d\n",
+			dev->identifier, priv->debugLevel);
+
+	common->debugLevel = xf86SetIntOption(local->options,
+		"CommonDBG", common->debugLevel);
+	if (common->debugLevel > 0)
+		xf86Msg(X_CONFIG, "WACOM: %s tablet common debug level set to %d\n",
+			common->wcmModel->name, common->debugLevel);
 
 	s = xf86FindOptionValue(local->options, "Mode");
 
@@ -538,14 +548,16 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "WACOM: Rotation is set to %s\n", s);
 	}
 
-	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
-			common->wcmSuppress);
-	if (common->wcmSuppress != 0) /* 0 disables suppression */
-		if (common->wcmSuppress > MAX_SUPPRESS)
-			common->wcmSuppress = MAX_SUPPRESS;
-		if (common->wcmSuppress < DEFAULT_SUPPRESS)
-			common->wcmSuppress = DEFAULT_SUPPRESS;
-	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", common->wcmSuppress);      
+	priv->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
+			priv->wcmSuppress);
+	if (priv->wcmSuppress != 0) /* 0 disables suppression */
+	{
+		if (priv->wcmSuppress > MAX_SUPPRESS)
+			priv->wcmSuppress = MAX_SUPPRESS;
+		if (priv->wcmSuppress < DEFAULT_SUPPRESS)
+			priv->wcmSuppress = DEFAULT_SUPPRESS;
+	}
+	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", priv->wcmSuppress);      
     
 	if (xf86SetBoolOption(local->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
@@ -832,85 +844,16 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	s = xf86FindOptionValue(local->options, "Twinview");
 	if (s) xf86Msg(X_CONFIG, "%s: Twinview = %s\n", dev->identifier, s);
 	if (s && xf86NameCmp(s, "none") == 0) 
-	{
 		priv->twinview = TV_NONE;
-	}
 	else if (s && xf86NameCmp(s, "horizontal") == 0) 
-	{
 		priv->twinview = TV_LEFT_RIGHT;
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
-			priv->tvResolution[1] = screenInfo.screens[0]->height;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
 	else if (s && xf86NameCmp(s, "vertical") == 0) 
-	{
 		priv->twinview = TV_ABOVE_BELOW;
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width;
-			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
 	else if (s) 
 	{
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical or horizontal). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
-	}
-
-	/* initial screen info */
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	if (priv->twinview != TV_NONE)
-	{
-		priv->screenBottomX[0] = priv->tvResolution[0];
-		priv->screenBottomY[0] = priv->tvResolution[1];
-	}
-	else
-	{
-		priv->screenBottomX[0] = screenInfo.screens[0]->width;
-		priv->screenBottomY[0] = screenInfo.screens[0]->height;
-	}
-	if (priv->twinview != TV_NONE)
-	{
-		if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			priv->screenTopX[1] = 0;
-			priv->screenTopY[1] = priv->tvResolution[1];
-			priv->screenBottomX[1] = priv->tvResolution[2];
-			priv->screenBottomY[1] = priv->tvResolution[3];
-		}
-		if (priv->twinview == TV_LEFT_RIGHT)
-		{
-			priv->screenTopX[1] = priv->tvResolution[0];
-			priv->screenTopY[1] = 0;
-			priv->screenBottomX[1] = priv->tvResolution[2];
-			priv->screenBottomY[1] = priv->tvResolution[3];
-		}
-	}
-	else if (screenInfo.numScreens)
-	{	
-		for (i=1; i<screenInfo.numScreens; i++)
-		{
-			int x = 0, y = 0, j;
-			for (j=0; j<i; j++)
-				x += screenInfo.screens[j]->width;
-			for (j=0; j<i; j++)
-				y += screenInfo.screens[j]->height;
-
-			priv->screenTopX[i] = x;
-			priv->screenTopY[i] = y;
-			priv->screenBottomX[i] = screenInfo.screens[i]->width;
-			priv->screenBottomY[i] = screenInfo.screens[i]->height;
-		}
 	}
 
 	/* mark the device configured */
@@ -957,7 +900,7 @@ InputDriverRec WACOM =
 
 static void xf86WcmUnplug(pointer p)
 {
-	DBG(1, ErrorF("xf86WcmUnplug\n"));
+	ErrorF("xf86WcmUnplug\n");
 }
 
 /* xf86WcmPlug - called when the module subsection is found in XF86Config */

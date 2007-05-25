@@ -100,9 +100,9 @@
 
 #define DEBUG 1
 #if DEBUG
-#define DBG(lvl, f) do { if ((lvl) <= gWacomModule.debugLevel) f; } while (0)
+#define DBG(lvl, dLevel, f) do { if ((lvl) <= dLevel) f; } while (0)
 #else
-#define DBG(lvl, f)
+#define DBG(lvl, dLevel, f)
 #endif
 
 /*****************************************************************************
@@ -118,7 +118,7 @@
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
 #define MAX_ACCEL 7             /* number of acceleration levels */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
-#define MAX_SUPPRESS 20         /* max value of suppress */
+#define MAX_SUPPRESS 100        /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
 #define XI_STYLUS "STYLUS"      /* X device name for the stylus */
 #define XI_CURSOR "CURSOR"      /* X device name for the cursor */
@@ -171,7 +171,6 @@ typedef struct _WacomToolArea WacomToolArea, *WacomToolAreaPtr;
 
 struct _WacomModule
 {
-	int debugLevel;
 	const char* identification;
 
 	InputDriverPtr wcmDrv;
@@ -207,7 +206,7 @@ struct _WacomModel
 	int (*EnableSuppress)(LocalDevicePtr local);
 	int (*SetLinkSpeed)(LocalDevicePtr local);
 	int (*Start)(LocalDevicePtr local);
-	int (*Parse)(WacomCommonPtr common, const unsigned char* data);
+	int (*Parse)(LocalDevicePtr local, const unsigned char* data);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
 		WacomDeviceStatePtr ds);
 	int (*DetectConfig)(LocalDevicePtr local);
@@ -255,13 +254,12 @@ typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
 
-typedef enum { TV_NONE = 0, TV_ABOVE_BELOW = 1, TV_LEFT_RIGHT = 2 } tvMode;
-
 struct _WacomDeviceRec
 {
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
 	LocalDevicePtr local;
+	int debugLevel;
 
 	unsigned int flags;     /* various flags (type, abs, touch...) */
 	int topX;               /* X top */
@@ -324,11 +322,12 @@ struct _WacomDeviceRec
 	int accel;              /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
-	tvMode twinview;	/* using twinview mode of gfx card */
+	int twinview;	        /* using twinview mode of gfx card */
 	int tvoffsetX;		/* X edge offset for TwinView setup */
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmDevOpenCount;    /* Device open count */
+	int wcmSuppress;        /* transmit position on delta > supress */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
@@ -364,6 +363,7 @@ struct _WacomDeviceRec
 
 struct _WacomDeviceState
 {
+	LocalDevicePtr local;
 	int device_id;		/* tool id reported from the physical device */
 	int device_type;
 	unsigned int serial_num;
@@ -455,18 +455,21 @@ struct _WacomDeviceClass
 
 #define DEVICE_ISDV4 		0x000C
 
-#define ROTATE_NONE XWACOM_VALUE_ROTATE_NONE
-#define ROTATE_CW XWACOM_VALUE_ROTATE_CW
-#define ROTATE_CCW XWACOM_VALUE_ROTATE_CCW
-#define ROTATE_HALF XWACOM_VALUE_ROTATE_HALF
+#define TV_NONE 	XWACOM_VALUE_TV_NONE
+#define TV_ABOVE_BELOW	XWACOM_VALUE_TV_ABOVE_BELOW
+#define TV_LEFT_RIGHT 	XWACOM_VALUE_TV_LEFT_RIGHT
+#define ROTATE_NONE 	XWACOM_VALUE_ROTATE_NONE
+#define ROTATE_CW 	XWACOM_VALUE_ROTATE_CW
+#define ROTATE_CCW 	XWACOM_VALUE_ROTATE_CCW
+#define ROTATE_HALF 	XWACOM_VALUE_ROTATE_HALF
 
 #define MAX_CHANNELS 2
 
 struct _WacomCommonRec 
 {
 	char* wcmDevice;             /* device file name */
-	int wcmSuppress;             /* transmit position on delta > supress */
 	unsigned char wcmFlags;      /* various flags (handle tilt) */
+	int debugLevel;
 	int tablet_id;		     /* USB tablet ID */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
@@ -616,7 +619,7 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model, const char* id,
 void xf86WcmReadPacket(LocalDevicePtr local);
 
 /* handles suppression, filtering, and dispatch. */
-void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
+void xf86WcmEvent(LocalDevicePtr local, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);

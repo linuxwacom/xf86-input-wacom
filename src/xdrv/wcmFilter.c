@@ -1,5 +1,6 @@
 /*
- * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
+ * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -50,9 +51,6 @@ void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	if ((x0 < 0) || (x0 > 100) || (y0 < 0) || (y0 > 100) ||
 		(x1 < 0) || (x1 > 100) || (y1 < 0) || (y1 > 100)) return;
 
-	DBG(10, ErrorF("xf86WcmSetPressureCurve: setting to "
-		"%d,%d %d,%d\n", x0, y0, x1, y1));
-
 	/* if curve is not allocated, do it now. */
 	if (!pDev->pPressCurve)
 	{
@@ -60,8 +58,8 @@ void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 			(FILTER_PRESSURE_RES + 1));
 		if (!pDev->pPressCurve)
 		{
-			DBG(1, ErrorF("xf86WcmSetPressureCurve: failed to "
-				"allocate memory for curve\n"));
+			ErrorF("xf86WcmSetPressureCurve: failed to "
+				"allocate memory for curve\n");
 			return;
 		}
 	}
@@ -272,6 +270,7 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	int *x, *y; 
 	int filter_x, filter_y, i;
 
+	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with " 			"MAX_SAMPLES = %d \n", MAX_SAMPLES));
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
 

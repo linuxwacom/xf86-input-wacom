@@ -185,7 +185,8 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 
 			case 2: /* Mouse with wheel */
 				wacom_report_key(wcombo, BTN_MIDDLE, data[1] & 0x04);
-				if (wacom->features->type == WACOM_G4) {
+				if (wacom->features->type == WACOM_G4 ||
+						wacom->features->type == WACOM_MO) {
 					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : (data[7] & 0x03);
 					wacom_report_rel(wcombo, REL_WHEEL, -rw);
 				} else
@@ -197,7 +198,8 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 				id = CURSOR_DEVICE_ID;
 				wacom_report_key(wcombo, BTN_LEFT, data[1] & 0x01);
 				wacom_report_key(wcombo, BTN_RIGHT, data[1] & 0x02);
-				if (wacom->features->type == WACOM_G4)
+				if (wacom->features->type == WACOM_G44 ||
+						wacom->features->type == WACOM_MO)
 					wacom_report_abs(wcombo, ABS_DISTANCE, data[6] & 0x3f);
 				else
 					wacom_report_abs(wcombo, ABS_DISTANCE, data[7] & 0x3f);
@@ -252,7 +254,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x80));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0);
-			wacom_report_abs(wcombo, ABS_MISC, 0); 
+			wacom_report_abs(wcombo, ABS_MISC, 0);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 		break;
@@ -272,9 +274,9 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 		} else if (wacom->id[1]) {
 			wacom_input_sync(wcombo); /* sync last event */
 			wacom->id[1] = 0;
-			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
+			wacom_report_key(wcombo, BTN_0, (data[7] & 0x08));
 			wacom_report_key(wcombo, BTN_1, (data[7] & 0x20));
-			wacom_report_key(wcombo, BTN_4, (data[7] & 0x80));
+			wacom_report_key(wcombo, BTN_4, (data[7] & 0x10));
 			wacom_report_key(wcombo, BTN_5, (data[7] & 0x40));
 			wacom_report_abs(wcombo, ABS_RX, (data[8] & 0x7f));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0);
@@ -618,7 +620,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 63, GRAPHIRE },
 	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 63, GRAPHIRE },
 	{ "Wacom PenPartner2",   8,   3250,  2320,  255, 63, GRAPHIRE },
-	{ "Wacom Bamboo",        8,  14760,  9225,  511, 63, WACOM_MO },
+	{ "Wacom Bamboo",        9,  14760,  9225,  511, 63, WACOM_MO },
 	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 31, INTUOS },
 	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 31, INTUOS },
 	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 31, INTUOS },

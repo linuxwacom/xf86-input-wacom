@@ -35,7 +35,11 @@
 #define XWACOM_PARAM_TPCBUTTON  	8
 #define XWACOM_PARAM_CURSORPROX  	9
 #define XWACOM_PARAM_ROTATE             10
-#define XWACOM_PARAM_COREEVENT		11
+#define XWACOM_PARAM_TWINVIEW		11
+#define XWACOM_PARAM_SUPPRESS		12
+#define XWACOM_PARAM_SCREEN_NO		13
+#define XWACOM_PARAM_COMMONDBG		14
+
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101
 #define XWACOM_PARAM_BUTTON2    	102
@@ -69,22 +73,29 @@
 #define XWACOM_PARAM_BUTTON30    	130
 #define XWACOM_PARAM_BUTTON31    	131
 #define XWACOM_PARAM_BUTTON32    	132
-#define XWACOM_PARAM_RELWUP    		133
-#define XWACOM_PARAM_RELWDN    		134
-#define XWACOM_PARAM_ABSWUP    		135
-#define XWACOM_PARAM_ABSWDN    		136
-#define XWACOM_PARAM_STRIPLUP    	137
-#define XWACOM_PARAM_STRIPLDN    	138
-#define XWACOM_PARAM_STRIPRUP    	139
-#define XWACOM_PARAM_STRIPRDN    	140
+
+#define XWACOM_PARAM_NOXOPTION		150
+#define XWACOM_PARAM_RELWUP    		151
+#define XWACOM_PARAM_RELWDN    		152
+#define XWACOM_PARAM_ABSWUP    		153
+#define XWACOM_PARAM_ABSWDN    		154
+#define XWACOM_PARAM_STRIPLUP    	155
+#define XWACOM_PARAM_STRIPLDN    	156
+#define XWACOM_PARAM_STRIPRUP    	157
+#define XWACOM_PARAM_STRIPRDN    	158
 /* End of together */
-#define XWACOM_PARAM_NOXOPTION		200
+
 #define XWACOM_PARAM_SPEEDLEVEL 	201
 #define XWACOM_PARAM_CLICKFORCE 	202
 #define XWACOM_PARAM_ACCEL      	203
 #define XWACOM_PARAM_XYDEFAULT  	204
 #define XWACOM_PARAM_MMT        	205
 #define XWACOM_PARAM_RAWFILTER  	206
+/* the following 2 stays together */
+#define XWACOM_PARAM_TVRESOLUTION0	207
+#define XWACOM_PARAM_TVRESOLUTION1	208
+#define XWACOM_PARAM_COREEVENT		209
+
 #define XWACOM_PARAM_GETONLYPARAM	320
 #define XWACOM_PARAM_TID		321
 #define XWACOM_PARAM_TOOLID		322
@@ -103,10 +114,14 @@
 #define XWACOM_PARAM_SBOTTOMX2		361
 #define XWACOM_PARAM_SBOTTOMY2		362
 
-#define XWACOM_VALUE_ROTATE_NONE 0
-#define XWACOM_VALUE_ROTATE_CW 1
-#define XWACOM_VALUE_ROTATE_CCW 2
-#define XWACOM_VALUE_ROTATE_HALF 3
+#define XWACOM_VALUE_TV_NONE 		0
+#define XWACOM_VALUE_TV_ABOVE_BELOW 	1
+#define XWACOM_VALUE_TV_LEFT_RIGHT	2
+
+#define XWACOM_VALUE_ROTATE_NONE 	0
+#define XWACOM_VALUE_ROTATE_CW 		1
+#define XWACOM_VALUE_ROTATE_CCW 	2
+#define XWACOM_VALUE_ROTATE_HALF 	3
 
 /* The following flags are used for XWACOM_PARAM_BUTTON# values to mark
  * the type of event that should be emitted when that button is pressed;
@@ -118,7 +133,7 @@
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
 #define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
-#define AC_NUM_KEYS         0x0ff00000  /* Emulate SHIFT+event */
+#define AC_NUM_KEYS         0x0ff00000  /* The mask to isolate number of keys to send */
 #define AC_CORE             0x10000000	/* Always emit a core event */
 #define AC_EVENT            0xf00f0000	/* Mask to isolate event flag */
 

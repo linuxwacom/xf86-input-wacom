@@ -11,7 +11,7 @@ DEPFLAGS = @WCM_DEPFLAGS@
 # the configuration.
 EXTRA_SCRIPTS = wacom_drv.o wacom_drv.so
 
-EXTRA_DIST = xf86Wacom.c xf86Wacom.h \
+EXTRA_DIST = xf86Wacom.c wcmXCommand.c xf86Wacom.h \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
 		wcmCommon.c wcmCompat.c wcmConfig.c \
 		wcmFilter.c wcmFilter.h wcmSerial.h \
@@ -52,9 +52,11 @@ endif
 CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
-		wcmCommon.o wcmCompat.o wcmConfig.o wcmFilter.o
+	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \
+	wcmFilter.o
 
 xf86Wacom.o: xf86Wacom.c wcmFilter.h ../include/Xwacom.h
+wcmXCommand.o: wcmXCommand.c wcmFilter.h ../include/Xwacom.h
 wcmSerial.o: wcmSerial.c wcmSerial.h wcmFilter.h
 wcmISDV4.o: wcmISDV4.c wcmSerial.h wcmFilter.h
 wcmUSB.o: wcmUSB.c wcmFilter.h

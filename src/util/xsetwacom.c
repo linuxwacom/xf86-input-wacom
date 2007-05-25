@@ -27,11 +27,12 @@
 **   2007-01-10 0.0.8 - PC - don't display uninitialized tools
 **   2007-02-07 0.0.9 - PC - support keystrokes
 **   2007-02-22 0.1.0 - PC - support wheels and strips
-**   2007-04-12 0.1.1 - PC - Support CoreEvent on/off
+**   2007-04-12 0.1.1 - PC - Support CoreEvent on/off (need more work)
+**   2007-05-18 0.1.2 - PC - Support DebugLevel options
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.1"
+#define XSETWACOM_VERSION "0.1.2"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
@@ -78,7 +79,7 @@ struct _PARAMINFO
 	int nParamID;
 	int bEmptyOK;
 	int bRange;
-	unsigned nMin, nMax;
+	int nMin, nMax;
 	int nType;
 	int nDefault;
 };
@@ -95,6 +96,23 @@ struct _PARAMINFO
 #define BOOLEAN_VALUE	2
 #define ACTION_VALUE	3
 #define TWO_VALUES	4
+
+static const char* tv_char[] = 
+{
+	"none",
+	"vertical",
+	"horizontal",
+	"NULL"
+};
+
+static const char* rt_char[] = 
+{
+	"none",
+	"cw",
+	"ccw",
+	"half",
+	"NULL"
+};
 
 static PARAMINFO gParamInfo[] =
 {
@@ -113,54 +131,6 @@ static PARAMINFO gParamInfo[] =
 	{ "BottomY",
 		"Bounding rect bottom coordinate in tablet units. ",
 		XWACOM_PARAM_BOTTOMY, VALUE_REQUIRED },
-
-	{ "STopX0",
-		"Screen 0 left coordinate in pixels. ",
-		XWACOM_PARAM_STOPX0, VALUE_REQUIRED },
-
-	{ "STopY0",
-		"Screen 0 top coordinate in pixels. ",
-		XWACOM_PARAM_STOPY0, VALUE_REQUIRED },
-
-	{ "SBottomX0",
-		"Screen 0 right coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMX0, VALUE_REQUIRED },
-
-	{ "SBottomY0",
-		"Screen 0 bottom coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMY0, VALUE_REQUIRED },
-
-	{ "STopX1",
-		"Screen 1 left coordinate in pixels. ",
-		XWACOM_PARAM_STOPX1, VALUE_REQUIRED },
-
-	{ "STopY1",
-		"Screen 1 top coordinate in pixels. ",
-		XWACOM_PARAM_STOPY1, VALUE_REQUIRED },
-
-	{ "SBottomX1",
-		"Screen 1 right coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMX1, VALUE_REQUIRED },
-
-	{ "SBottomY1",
-		"Screen 1 bottom coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMY1, VALUE_REQUIRED },
-
-	{ "STopX2",
-		"Screen 2 left coordinate in pixels. ",
-		XWACOM_PARAM_STOPX2, VALUE_REQUIRED },
-
-	{ "STopY2",
-		"Screen 2 top coordinate in pixels. ",
-		XWACOM_PARAM_STOPY2, VALUE_REQUIRED },
-
-	{ "SBottomX2",
-		"Screen 2 right coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMX2, VALUE_REQUIRED },
-
-	{ "SBottomY2",
-		"Screen 2 bottom coordinate in pixels. ",
-		XWACOM_PARAM_SBOTTOMY2, VALUE_REQUIRED },
 
 	{ "Button1",
 		"X11 event to which button 1 should be mapped. ",
@@ -321,6 +291,69 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_BUTTON32, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 32 },
 
+	{ "DebugLevel",
+		"Level of debugging trace for individual devices, "
+		"default is 0 (off). ",
+		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
+		0, 100, SINGLE_VALUE, 0 },
+
+	{ "CommonDBG",
+		"Level of debugging statements applied to all devices "
+		"associated with the same tablet. default is 0 (off). ",
+		XWACOM_PARAM_COMMONDBG, VALUE_OPTIONAL, RANGE, 
+		0, 100, SINGLE_VALUE, 0 },
+
+	{ "Suppress",
+		"Number of points trimmed, default is 2. ",
+		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
+		0, 80, SINGLE_VALUE, 2 },
+
+	{ "Screen_No",
+		"Sets/gets screen number the tablet is mapped to, "
+		"default is -1. ",
+		XWACOM_PARAM_SCREEN_NO, VALUE_OPTIONAL, RANGE, 
+		-1, 10, SINGLE_VALUE, -1 },
+
+	{ "PressCurve",
+		"Bezier curve for pressure (default is 0 0 100 100). ",
+		XWACOM_PARAM_PRESSCURVE, VALUE_OPTIONAL, RANGE,
+		0, 100, PACKED_CURVE, 0x00006464},
+
+	{ "TwinView",
+		"Sets the mapping to TwinView horizontal/vertical/none. "
+		"Values = none, vertical, horizontal (default is none).",
+		XWACOM_PARAM_TWINVIEW, VALUE_OPTIONAL, RANGE, 
+		XWACOM_VALUE_TV_NONE, XWACOM_VALUE_TV_LEFT_RIGHT, 
+		SINGLE_VALUE, XWACOM_VALUE_TV_NONE },
+
+	{ "Mode",
+		"Switches cursor movement mode (default is absolute). ",
+		XWACOM_PARAM_MODE, VALUE_OPTIONAL, RANGE, 
+		0, 1, BOOLEAN_VALUE, 1 },	
+
+	{ "TPCButton",
+		"Turns on/off Tablet PC buttons. "
+		"default is off for regular tablets, "
+		"on for Tablet PC. ",
+		XWACOM_PARAM_TPCBUTTON, VALUE_OPTIONAL, 
+		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
+	{ "CursorProx", 
+		"Sets cursor distance for proximity-out "
+		"in distance from the tablet.  "
+		"default is 10 for Intuos series, "
+		"42 for Graphire series).",
+		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, RANGE, 
+		0, 255, SINGLE_VALUE, 47 },
+		
+	{ "Rotate",
+		"Sets the rotation of the tablet. "
+		"Values = NONE, CW, CCW, HALF (default is NONE).",
+		XWACOM_PARAM_ROTATE, VALUE_OPTIONAL,
+		RANGE, XWACOM_VALUE_ROTATE_NONE,
+		XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
+		XWACOM_VALUE_ROTATE_NONE },
+
 	{"RelWUp", 
 		"X11 event to which relative wheel up should be mapped. ",
 		XWACOM_PARAM_RELWUP, VALUE_OPTIONAL, 0, 0, 0, 
@@ -361,25 +394,20 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_STRIPRDN, VALUE_OPTIONAL, 0, 0, 0, 
 		ACTION_VALUE, 5 },
 
-	{ "DebugLevel",
-		"Level of debugging trace, default is 1. ",
-		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
-		1, 100, SINGLE_VALUE, 1 },
+	{ "TVResolution0", 
+		"Sets MetaModes option for TwinView Screen 0. ",
+		XWACOM_PARAM_TVRESOLUTION0, VALUE_OPTIONAL, RANGE,
+		0, 6000, TWO_VALUES, 0 },
 
-	{ "PressCurve",
-		"Bezier curve for pressure (default is 0 0 100 100). ",
-		XWACOM_PARAM_PRESSCURVE, VALUE_OPTIONAL, RANGE, 0, 100,
-		PACKED_CURVE },
+	{ "TVResolution1", 
+		"Sets MetaModes option for TwinView Screen 1. ",
+		XWACOM_PARAM_TVRESOLUTION1, VALUE_OPTIONAL, RANGE,
+		0, 6000, TWO_VALUES, 0 },
 
 	{ "RawFilter",
 		"Enables and disables filtering of raw data, "
 		"default is true.",
 		XWACOM_PARAM_RAWFILTER, VALUE_OPTIONAL, RANGE, 
-		0, 1, BOOLEAN_VALUE, 1 },	
-
-	{ "Mode",
-		"Switches cursor movement mode (default is absolute). ",
-		XWACOM_PARAM_MODE, VALUE_OPTIONAL, RANGE, 
 		0, 1, BOOLEAN_VALUE, 1 },	
 
 	{ "SpeedLevel",
@@ -409,34 +437,59 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_MMT, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
-	{ "TPCButton",
-		"Turns on/off Tablet PC buttons. "
-		"default is off for regular tablets, "
-		"on for Tablet PC. ",
-		XWACOM_PARAM_TPCBUTTON, VALUE_OPTIONAL, 
-		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
-
-	{ "CursorProx", 
-		"Sets cursor distance for proximity-out "
-		"in distance from the tablet.  "
-		"default is 10 for Intuos series, "
-		"42 for Graphire series).",
-		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, RANGE, 
-		0, 255, SINGLE_VALUE, 47 },
-		
-	{ "Rotate",
-		"Sets the rotation of the tablet. "
-		"Values = NONE, CW, CCW, HALF (default is NONE).",
-		XWACOM_PARAM_ROTATE, VALUE_OPTIONAL,
-		RANGE, XWACOM_VALUE_ROTATE_NONE,
-		XWACOM_VALUE_ROTATE_HALF, SINGLE_VALUE,
-		XWACOM_VALUE_ROTATE_NONE },
-
 	{ "CoreEvent",
 		"Turns on/off device to send core event. "
 		"default is decided by X driver and xorg.conf ",
 		XWACOM_PARAM_COREEVENT, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE },
+
+	{ "STopX0",
+		"Screen 0 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX0, VALUE_REQUIRED },
+
+	{ "STopY0",
+		"Screen 0 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY0, VALUE_REQUIRED },
+
+	{ "SBottomX0",
+		"Screen 0 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX0, VALUE_REQUIRED },
+
+	{ "SBottomY0",
+		"Screen 0 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY0, VALUE_REQUIRED },
+
+	{ "STopX1",
+		"Screen 1 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX1, VALUE_REQUIRED },
+
+	{ "STopY1",
+		"Screen 1 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY1, VALUE_REQUIRED },
+
+	{ "SBottomX1",
+		"Screen 1 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX1, VALUE_REQUIRED },
+
+	{ "SBottomY1",
+		"Screen 1 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY1, VALUE_REQUIRED },
+
+	{ "STopX2",
+		"Screen 2 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX2, VALUE_REQUIRED },
+
+	{ "STopY2",
+		"Screen 2 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY2, VALUE_REQUIRED },
+
+	{ "SBottomX2",
+		"Screen 2 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX2, VALUE_REQUIRED },
+
+	{ "SBottomY2",
+		"Screen 2 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY2, VALUE_REQUIRED },
 
 	{ "ToolID", 
 		"Returns the ID of the associated device. ",
@@ -593,10 +646,25 @@ static int List(WACOMCONFIG *hConfig, char** argv)
 	return 1;
 }
 
-static int Pack(int nCount, int* pnValues, int* pnResult)
+static int Pack(int nCount, int* pnValues, int* pnResult, PARAMINFO* p)
 {
 	if (nCount == 4)
 	{
+		int i, check = 0;
+		for (i = 0; i<2; i++)
+			if ((pnValues[i] < p->nMin) || (pnValues[i]> p->nMax))
+				check = 1;
+		if (!check)
+			if (((pnValues[0] + pnValues[3]) != p->nMax) 
+				|| ((pnValues[1] + pnValues[2]) != p->nMax))
+				check = 1;
+		if (check)
+		{
+			fprintf(stderr,"Pack: Value for '%s' out of range "
+				"(%d - %d)\n", p->pszParam, p->nMin, p->nMax);
+			return 1;
+		}
+
 		*pnResult =
 			((pnValues[0] & 0xFF) << 24) |
 			((pnValues[1] & 0xFF) << 16) |
@@ -604,14 +672,10 @@ static int Pack(int nCount, int* pnValues, int* pnResult)
 			(pnValues[3] & 0xFF);
 		return 0;
 	}
-	else if (nCount == 0)
-	{
-		*pnResult = 0x00006464; /* 0 0 100 100 */
-		return 0;
-	}
 
 	fprintf(stderr,
 	"Set: Incorrect number of values for bezier curve.\n"
+	"Please check your values' format. \n"
 	"Bezier curve is specified by two control points x0,y0 and x1,y1\n"
 	"Ranges are 0 to 100 for each value corresponding to 0.00 to 1.00\n"
 	"A straight line would be: 0 0 100 100\n"
@@ -621,13 +685,121 @@ static int Pack(int nCount, int* pnValues, int* pnResult)
 	return 1;
 }
 
+static int ReCount(int * nValues, const char * pszValues)
+{
+	int nCount = 0;
+	const char* pszEnd = pszValues;
+	const char* tmpValues;
+
+	do
+	{
+		tmpValues = pszEnd;
+		if (strncasecmp(tmpValues,"0x",2) == 0)
+			nValues[nCount++] = strtol(tmpValues,(char **)&pszEnd,16);
+		else
+			nValues[nCount++] = strtol(tmpValues,(char **)&pszEnd,10);
+	} while (pszEnd != tmpValues && (*pszEnd != '\0') && pszEnd[0] == ' ' );
+
+	return nCount;
+}
+
+static int ParseValues(int nCount, const char* pszValues, int* nValues, 
+	int* nValue, unsigned * keys, PARAMINFO* p, const char * devName)
+{
+	if (p->nType == BOOLEAN_VALUE ||
+		 p->nType == SINGLE_VALUE ||
+		 p->nType == ACTION_VALUE)
+	{
+		if ((p->nType == BOOLEAN_VALUE) &&
+			(!strcasecmp(pszValues,"on") ||
+			!strcasecmp(pszValues,"true") ||
+			!strcasecmp(pszValues,"absolute")))
+				*nValue = 1;
+		else if ((p->nType == BOOLEAN_VALUE) &&
+			(!strcasecmp(pszValues,"off") ||
+			!strcasecmp(pszValues,"false") ||
+			!strcasecmp(pszValues,"relative")))
+				*nValue = 0;
+		else if (p->nType == ACTION_VALUE)
+		{
+			*nValue = xf86WcmDecode (devName,
+						p->pszParam,
+						pszValues,
+						keys);
+ 			if (!*nValue)
+				return 1;
+		}
+		else if (p->nType == SINGLE_VALUE)
+		{
+		    if (nCount)
+		   	 *nValue = nValues[0];
+		    else if (p->nParamID == XWACOM_PARAM_TWINVIEW ||
+			p->nParamID == XWACOM_PARAM_ROTATE)
+		    {
+			int check = 0, j;
+			const char ** option_char = rt_char;
+			if (p->nParamID == XWACOM_PARAM_TWINVIEW)
+				option_char = tv_char;
+			for (j = p->nMin; j <= p->nMax; j++)
+				if (!strcasecmp(pszValues, option_char[j]))
+				{
+					check = 1;
+					*nValue = j;
+				}
+			if (!check)
+			{
+				fprintf(stderr,"ParseValues: Value '%s' is "
+					"invalid.\n", pszValues);
+				return 1;
+			}
+		    }
+		}
+		/* Is there a range and are we in it? */
+		if (p->bRange &&
+			((*nValue < p->nMin) || (*nValue > p->nMax)))
+		{
+			fprintf(stderr,"ParseValues: Value for '%s' (%d) out of range "
+			"(%d - %d)\n", p->pszParam, *nValue, p->nMin, p->nMax);
+			return 1;
+		}
+	}
+	else if (p->nType == PACKED_CURVE)
+	{
+		if (nCount == 1)
+			nCount = ReCount(nValues, pszValues);
+
+		if (Pack(nCount,nValues,nValue,p))
+			return 1;
+	}
+	else if (p->nType == TWO_VALUES)
+	{
+		if (nCount == 1)
+			nCount = ReCount(nValues, pszValues);
+
+		if (nCount != 2)
+		{
+			fprintf (stderr, "ParseValues: only two values allowed for %s. \n"
+				"Please check your values' format. \n", p->pszParam);
+			return 1;
+		}
+		*nValue = nValues [0] | (nValues [1] << 16);
+	}
+	else
+	{
+		fprintf(stderr,"ParseValues: Value (%s) for '%s' is "
+			"invalid.\n", pszValues, p->pszParam);
+		return 1;
+	}
+	return 0;
+}
+
 static int Set(WACOMCONFIG * hConfig, char** argv)
 {
 	PARAMINFO* p;
-	int nValues[4];
 	WACOMDEVICE * hDev;
 	char* a, *pszEnd;
-	const char* pszValues[4];
+	const char* pszValues[32];
+	int nValues[4];
 	const char* pszDevName = NULL;
 	const char* pszParam = NULL;
 	int i, nValue=0, nReturn, nCount = 0;
@@ -678,94 +850,36 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 			pszParam);
 		return 1;
 	}
-
-	/* process all the values we received */
-	for (i=0; i<nCount; ++i)
+	if (!nCount)
+		nValue = p->nDefault;
+	else
 	{
-		/* Convert value to 32 bit integer; hex OK, octal is not. */
-		if (strncasecmp(pszValues[i],"0x",2) == 0)
-			nValues[i] = strtol(pszValues[i],&pszEnd,16);
-		else
-			nValues[i] = strtol(pszValues[i],&pszEnd,10);
-
-		if ((pszEnd == pszValues[i]) || (*pszEnd != '\0'))
+		for (i=0; i<nCount; i++)
 		{
-			if ((p->nType == BOOLEAN_VALUE) &&
-				(!strcasecmp(pszValues[i],"on") ||
-				!strcasecmp(pszValues[i],"true") ||
-				!strcasecmp(pszValues[i],"absolute")))
-					nValues[i] = 1;
-			else if ((p->nType == BOOLEAN_VALUE) &&
-				(!strcasecmp(pszValues[i],"off") ||
-				!strcasecmp(pszValues[i],"false") ||
-				!strcasecmp(pszValues[i],"relative")))
-					nValues[i] = 0;
-			else if (p->nType == ACTION_VALUE)
-			{
-				nValues[i] = xf86WcmDecode (pszDevName,
-							    pszParam,
-							    pszValues[i],
-							    keys);
- 				if (!nValues[i])
-					return 1;
-			}
-			else if (p->nParamID == XWACOM_PARAM_ROTATE)
-			{
-				if (!strcasecmp(pszValues[i],"none"))
-					nValues[i] = XWACOM_VALUE_ROTATE_NONE;
-				else if (!strcasecmp(pszValues[i],"cw"))
-					nValues[i] = XWACOM_VALUE_ROTATE_CW;
-				else if (!strcasecmp(pszValues[i],"ccw"))
-					nValues[i] = XWACOM_VALUE_ROTATE_CCW;
-				else if (!strcasecmp(pszValues[i],"half"))
-					nValues[i] = XWACOM_VALUE_ROTATE_HALF;
-				else
-				{
-					fprintf(stderr,"Set: Value '%s' is "
-						"invalid.\n",pszValues[i]);
-					return 1;
-				}
-			}
+			/* Convert value to 32 bit integer; hex OK, octal is not. */
+			if (strncasecmp(pszValues[i],"0x",2) == 0)
+				nValues[i] = strtol(pszValues[i],&pszEnd,16);
 			else
+				nValues[i] = strtol(pszValues[i],&pszEnd,10);
+		}
+		if (p->nType == SINGLE_VALUE && nCount == 1 &&
+			(*pszEnd == '\0'))
+		{
+			nValue = nValues[0];
+			/* Is there a range and are we in it? */
+if (nValue < p->nMin)
+printf("value (%d) < min (%d) \n", nValue, p->nMin);
+			if (p->bRange &&
+				((nValue < p->nMin) || (nValue > p->nMax)))
 			{
-				fprintf(stderr,"Set: Value '%s' is "
-					"invalid.\n",pszValues[i]);
+				fprintf(stderr,"Set: Value for '%s' (%d) out of range "
+				"(%d - %d)\n", p->pszParam, nValue, p->nMin, p->nMax);
 				return 1;
 			}
 		}
-
-		/* Is there a range and are we in it? */
-		if (p->bRange &&
-			((nValues[i] < p->nMin) || (nValues[i]> p->nMax)))
-		{
-			fprintf(stderr,"Set: Value for '%s' out of range "
-				"(%d - %d)\n", pszParam, p->nMin, p->nMax);
+		else if (ParseValues(nCount, pszValues[0],
+			nValues, &nValue, keys, p, pszDevName)) 
 			return 1;
-		}
-	}
-
-	/* Is value count correct? */
-	if (p->nType == PACKED_CURVE)
-	{
-		if (Pack(nCount,nValues,&nValue))
-			return 1;
-	}
-	else if (p->nType == TWO_VALUES)
-	{
-		if (nCount > 2)
-		{
-			fprintf (stderr, "Set: No more than two values allowed for %s\n", pszParam);
-			return 1;
-		}
-		nValue = nCount ? 0 : p->nDefault;
-		for (i = 0; i < nCount; i++)
-			nValue |= nValues [i] << (i * 16);
-	}
-	else if (p->nType == BOOLEAN_VALUE ||
-		 p->nType == SINGLE_VALUE ||
-		 p->nType == ACTION_VALUE)
-	{
-		nValue = nCount ? nValues[0] : p->nDefault;
 	}
 
 	/* Looks good, send it. */
@@ -773,7 +887,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 		printf("Set: sending %d %d (0x%X)\n",p->nParamID,nValue,nValue);
 
 	/* Open device */
-	hDev = WacomConfigOpenDevice(hConfig,pszDevName);
+	hDev = WacomConfigOpenDevice(hConfig, pszDevName);
 	if (!hDev)
 	{
 		fprintf(stderr,"Set: Failed to open device '%s'\n",
@@ -782,7 +896,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 	}
 
 	/* Send request */
-	nReturn = WacomConfigSetRawParam(hDev,p->nParamID,nValue,keys);
+	nReturn = WacomConfigSetRawParam(hDev, p->nParamID, nValue, keys);
 
 	if (nReturn)
 		fprintf(stderr,"Set: Failed to set %s value for '%s'\n",
@@ -801,7 +915,7 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	unsigned keys[256];
 	if (WacomConfigGetRawParam (hDev, p->nParamID, &value, valu, keys))
 	{
-		fprintf (stderr, "Get: Failed to get %s value for '%s'\n",
+		fprintf (stderr, "GetRawParam: Failed to get %s value for '%s'\n",
 			 devname, p->pszParam);
 		return;
 	}
@@ -809,7 +923,7 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	if (value == -1)
 	{
 		if (disperr)
-			fprintf (stderr, "Get: %s setting '%s' does not have a value\n",
+			fprintf (stderr, "DisplayValue: %s setting '%s' does not have a value\n",
 				 devname, p->pszParam);
                 return;
 	}
@@ -817,7 +931,18 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	switch (p->nType)
 	{
 	case SINGLE_VALUE:
-		snprintf (strval, sizeof (strval), "%d", value);
+		if (p->nParamID == XWACOM_PARAM_TWINVIEW ||
+			p->nParamID == XWACOM_PARAM_ROTATE)
+		{
+			const char ** option_char = rt_char;
+			if (p->nParamID == XWACOM_PARAM_TWINVIEW)
+				option_char = tv_char;
+		
+				snprintf (strval, sizeof (strval), 
+					"%s", option_char[value] );
+		}
+		else
+			snprintf (strval, sizeof (strval), "%d", value);
                 break;
 	case PACKED_CURVE:
 		snprintf (strval, sizeof (strval), gGetFormat == gfXCONF ?
@@ -895,22 +1020,25 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	switch (gGetFormat)
 	{
 	case gfSHELL:
-		printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+		if (p->nParamID < XWACOM_PARAM_GETONLYPARAM)
+			printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+		else
+			printf ("%s option is only an xsetwacom get command \n", p->pszParam);
                 break;
 	case gfXCONF:
 		if (p->nParamID > XWACOM_PARAM_NOXOPTION)
 		{
 			if (p->nParamID < XWACOM_PARAM_GETONLYPARAM)
-				printf ("xsetwacom set %s %s \"%s\"\n", devname, p->pszParam, strval);
+				printf ("%s is not an X configuration option \n", p->pszParam);
 			else
-				printf ("This %s option is only an xsetwacom get command \n", p->pszParam);
+				printf ("%s option is only an xsetwacom get command \n", p->pszParam);
 		}
 		else
 		{
 			if ((p->nParamID >= XWACOM_PARAM_BUTTON1) &&
 				(p->nParamID <= XWACOM_PARAM_STRIPRDN) &&
 				((value & AC_TYPE) != AC_BUTTON))
-				printf ("This %s option is only an xsetwacom command \n", p->pszParam);
+				printf ("%s option is only an xsetwacom command \n", p->pszParam);
 			else
 				printf ("\tOption\t\"%s\"\t\"%s\"\n", p->pszParam, strval);
 		}
@@ -972,7 +1100,11 @@ static int Get(WACOMCONFIG *hConfig, char **argv, int valu)
 			return 1;
 		}
 
-		DisplayValue (hDev, devname, p, 1, valu);
+		/* no X option */
+		if (p->nParamID > XWACOM_PARAM_NOXOPTION && gGetFormat == gfXCONF)
+			fprintf (stderr,"Get: parameter '%s' is only an xsetwacom command\n", *argv);
+		else
+			DisplayValue (hDev, devname, p, 1, valu);
 		argv++;
 	}
 

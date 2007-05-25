@@ -148,7 +148,7 @@ static ACTIONCODE number_code [] =
 
 };
 
-void xf86WcmDecodeKey(const char *dev, const char *but, char *ev, unsigned * entev, ACTIONCODE * code, int codesize, int * butev)
+void xf86WcmDecodeKey(char *ev, unsigned * entev, ACTIONCODE * code, int codesize, int * butev)
 {
     int i, num_keys = ((*butev) & AC_NUM_KEYS) >> 20;
     char keys[2] = " ";
@@ -171,7 +171,8 @@ void xf86WcmDecodeKey(const char *dev, const char *but, char *ev, unsigned * ent
 		| (num_keys ? entev[0] : 0);
 }
 
-char * xf86WcmDecodeWord(const char *dev, const char *but, char *ev, unsigned * entev, ACTIONCODE * code, int codesize, int * butev)
+
+char * xf86WcmDecodeWord(char *ev, unsigned * entev, ACTIONCODE * code, int codesize, int * butev)
 {
     int i, num_keys = ((*butev) & AC_NUM_KEYS) >> 20;
     for (;;)
@@ -221,7 +222,8 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 	return 0;
     }
 
-    ev_p = xf86WcmDecodeWord(dev, but, new_ev, entev, action_code, codesize, &butev);
+    /* Get action type first */
+    ev_p = xf86WcmDecodeWord(new_ev, entev, action_code, codesize, &butev);
     switch (butev & AC_TYPE)
     {
 	case AC_BUTTON:
@@ -236,7 +238,7 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 			dev, but, butev, ev);
 	case AC_MODETOGGLE:
 	case AC_DBLCLICK:
-	    return butev;
+	    break;
 	case AC_KEY:
 	    if (!strlen(ev_p))
 	    {
@@ -244,9 +246,9 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 		return 0;
 	    }
 	    codesize = sizeof (modifier_code) / sizeof (modifier_code [0]);
-	    ev_p = xf86WcmDecodeWord(dev, but, ev_p, entev, modifier_code, codesize, &butev);
+	    ev_p = xf86WcmDecodeWord(ev_p, entev, modifier_code, codesize, &butev);
 	    codesize = sizeof (specific_code) / sizeof (specific_code [0]);
-	    ev_p = xf86WcmDecodeWord(dev, but, ev_p, entev, specific_code, codesize, &butev);
+	    ev_p = xf86WcmDecodeWord(ev_p, entev, specific_code, codesize, &butev);
 
 	    while(strlen(ev_p))
 	    {
@@ -254,20 +256,21 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 		{
 		    ev_p++;
 		    codesize = sizeof (specific_code) / sizeof (specific_code [0]);
-		    ev_p = xf86WcmDecodeWord(dev, but, ev_p, entev, specific_code, codesize, &butev);
+		    ev_p = xf86WcmDecodeWord(ev_p, entev, specific_code, codesize, &butev);
 		}
 		codesize = sizeof (key_code) / sizeof (key_code [0]);
 		num_keys = (butev & AC_NUM_KEYS) >> 20;
-		xf86WcmDecodeKey(dev, but, ev_p, entev, key_code, codesize, &butev);
+		xf86WcmDecodeKey(ev_p, entev, key_code, codesize, &butev);
 		if (num_keys == ((butev & AC_NUM_KEYS) >> 20))
 		{
 		    codesize = sizeof (number_code) / sizeof (number_code [0]);
-		    xf86WcmDecodeKey(dev, but, ev_p, entev, number_code, codesize, &butev);
+		    xf86WcmDecodeKey(ev_p, entev, number_code, codesize, &butev);
 		    if (num_keys == ((butev & AC_NUM_KEYS) >> 20))
-			xf86WcmDecodeKey(dev, but, ev_p, entev, 0, 1, &butev);
+			xf86WcmDecodeKey(ev_p, entev, 0, 1, &butev);
 		}
 		ev_p++;
 	    }
+	    break;
     }
     return butev;
 }

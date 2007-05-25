@@ -31,7 +31,7 @@ static Bool isdv4Init(LocalDevicePtr);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
-static int isdv4Parse(WacomCommonPtr common, const unsigned char* data);
+static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -76,7 +76,7 @@ static Bool isdv4Init(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(1, ErrorF("initializing ISDV4 tablet\n"));    
+	DBG(1, priv->debugLevel, ErrorF("initializing ISDV4 tablet\n"));    
 
 	/* Try 19200 first */
 	if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
@@ -102,9 +102,7 @@ static Bool isdv4Init(LocalDevicePtr local)
  ****************************************************************************/
 
 static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
-{
-	DBG(2, ErrorF("initializing as ISDV4 model\n"));
-  
+{  
 	/* set parameters */
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 9;       /* length of a packet */
@@ -117,10 +115,11 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 static int isdv4GetRanges(LocalDevicePtr local)
 {
 	char data[BUFFER_SIZE];
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int maxtry = MAXTRY, nr;
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomCommonPtr common =	priv->common;
 
-	DBG(2, ErrorF("getting ISDV4 Ranges\n"));
+	DBG(2, priv->debugLevel, ErrorF("getting ISDV4 Ranges\n"));
 	/* Send query command to the tablet */
 	do
 	{
@@ -205,12 +204,15 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	return Success;
 }
 
-static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
+static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
 	int n, cur_type;
 
+	DBG(10, common->debugLevel, ErrorF("isdv4Parse \n"));
 	if ((n = xf86WcmSerialValidate(common,data)) > 0)
 	{
 		return n;
@@ -255,7 +257,7 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 		{
 			/* send a prox-out for old device */
 			WacomDeviceState out = { 0 };
-			xf86WcmEvent(common,0,&out);
+			xf86WcmEvent(local, 0, &out);
 			ds->device_type = cur_type;
 		}
 	}
@@ -271,11 +273,11 @@ static int isdv4Parse(WacomCommonPtr common, const unsigned char* data)
 		ds->device_id = ERASER_DEVICE_ID;
 	}
 
-	DBG(8, ErrorF("isdv4Parse %s\n",
+	DBG(8, common->debugLevel, ErrorF("isdv4Parse %s\n",
 		ds->device_type == ERASER_ID ? "ERASER " :
 		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 
-	xf86WcmEvent(common,0,ds);
+	xf86WcmEvent(local,0,ds);
 
 	return common->wcmPktLength;
 }
