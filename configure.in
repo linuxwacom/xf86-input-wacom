@@ -336,14 +336,14 @@ AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies
 [
 	WCM_MODDIR="$withval" 
 ])
-if test -d $WCM_MODDIR; then
+if test -n $WCM_MODDIR; then
+	WCM_OPTION_DLLOADER=yes
+else
 	if test -d $WCM_XLIBDIR/xorg/modules/input; then
 		WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
 	elif test -d $WCM_XLIBDIR/modules/input; then
 		WCM_MODDIR=$WCM_XLIBDIR/modules/input
 	fi
-else
-	WCM_OPTION_DLLOADER=yes
 fi
 
 dnl Check for dlloader

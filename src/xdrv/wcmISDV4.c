@@ -52,7 +52,6 @@ static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
 		NULL,                 /* link speed unsupported */
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
-		xf86WcmHysteresisFilter,   /* input filtering */
 	};
 
 /*****************************************************************************
@@ -257,7 +256,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		{
 			/* send a prox-out for old device */
 			WacomDeviceState out = { 0 };
-			xf86WcmEvent(local, 0, &out);
+			xf86WcmEvent(common, 0, &out);
 			ds->device_type = cur_type;
 		}
 	}
@@ -277,7 +276,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		ds->device_type == ERASER_ID ? "ERASER " :
 		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 
-	xf86WcmEvent(local,0,ds);
+	xf86WcmEvent(common,0,ds);
 
 	return common->wcmPktLength;
 }

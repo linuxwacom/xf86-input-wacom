@@ -29,10 +29,11 @@
 **   2007-02-22 0.1.0 - PC - support wheels and strips
 **   2007-04-12 0.1.1 - PC - Support CoreEvent on/off (need more work)
 **   2007-05-18 0.1.2 - PC - Support DebugLevel options
+**   2007-06-05 0.1.3 - PC - Support Suppress and TwinView options
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.2"
+#define XSETWACOM_VERSION "0.1.3"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
@@ -305,8 +306,8 @@ static PARAMINFO gParamInfo[] =
 
 	{ "Suppress",
 		"Number of points trimmed, default is 2. ",
-		XWACOM_PARAM_DEBUGLEVEL, VALUE_OPTIONAL, RANGE, 
-		0, 80, SINGLE_VALUE, 2 },
+		XWACOM_PARAM_SUPPRESS, VALUE_OPTIONAL, RANGE, 
+		0, 100, SINGLE_VALUE, 2 },
 
 	{ "Screen_No",
 		"Sets/gets screen number the tablet is mapped to, "

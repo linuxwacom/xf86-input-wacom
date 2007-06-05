@@ -169,10 +169,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_SUPPRESS:
 		if ((value < 0) || (value > 100)) return BadValue;
-		if (priv->wcmSuppress != value)
+		if (common->wcmSuppress != value)
 		{
 			xf86ReplaceIntOption(local->options, "Suppress", value);
-			priv->wcmSuppress = value;
+			common->wcmSuppress = value;
 		}
 		break;
 	    case XWACOM_PARAM_RAWFILTER:
@@ -665,7 +665,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	DBG(10, common->debugLevel, ErrorF("xf86WcmGetParam param = %d\n",param));
+	DBG(10, common->debugLevel, ErrorF("xf86WcmGetParam param = %d\n", param));
 
 	switch (param)
 	{
@@ -737,6 +737,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return common->debugLevel;
 	    case XWACOM_PARAM_ROTATE:
 		return common->wcmRotate;
+	    case XWACOM_PARAM_SUPPRESS:
+		return common->wcmSuppress;
 	    case XWACOM_PARAM_RAWFILTER:
 		return (common->wcmFlags & RAW_FILTERING_FLAG) ? 1 : 0;
 	    case XWACOM_PARAM_PRESSCURVE:
@@ -796,7 +798,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		else
 			return 2;
 	}
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmGetParam invalid param %d\n",param));
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmGetParam invalid param %d\n", param));
 	return -1;
 }
 

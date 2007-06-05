@@ -958,9 +958,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
  *  if not.
  ****************************************************************************/
 
-static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
+static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig, 
 	WacomDeviceState* dsNew)
 {
+	int suppress = common->wcmSuppress;
 	/* NOTE: Suppression value of zero disables suppression. */
 	int returnV = 0;
 
@@ -990,6 +991,8 @@ static int xf86WcmSuppress(int suppress, const WacomDeviceState* dsOrig,
 		dsNew->y = dsOrig->y;
 	}
 
+	DBG(10, common->debugLevel, ErrorF("xf86WcmSuppress at level = %d"
+		" return value = %d\n", suppress, returnV));
 	return returnV;
 }
 
@@ -1045,11 +1048,9 @@ static void resetSampleCounter(const WacomChannelPtr pChannel)
  *   Handles suppression, transformation, filtering, and event dispatch.
  ****************************************************************************/
 
-void xf86WcmEvent(LocalDevicePtr local, unsigned int channel,
+void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	const WacomDeviceState* pState)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
 	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
@@ -1059,7 +1060,7 @@ void xf86WcmEvent(LocalDevicePtr local, unsigned int channel,
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
 
-	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent channel = %d\n", channel));
+	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent at channel = %d\n", channel));
 
 	/* tool on the tablet when driver starts */
 	if (!miPointerCurrentScreen())
@@ -1149,7 +1150,7 @@ void xf86WcmEvent(LocalDevicePtr local, unsigned int channel,
 		}
 
 		/* Discard unwanted data */
-		suppress = xf86WcmSuppress(priv->wcmSuppress, pLast, &ds);
+		suppress = xf86WcmSuppress(common, pLast, &ds);
 		if (!suppress)
 		{
 			resetSampleCounter(pChannel);

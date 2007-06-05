@@ -61,9 +61,10 @@
  * 2007-03-29 47-pc0.7.7-8 - clean up code
  * 2007-05-01 47-pc0.7.7-9 - fixed 2 bugs
  * 2007-05-18 47-pc0.7.7-10 - support new xsetwacom commands
+ * 2007-06-05 47-pc0.7.7-11 - Test Ron's patches
  */
 
-static const char identification[] = "$Identification: 47-0.7.7-10 $";
+static const char identification[] = "$Identification: 47-0.7.7-11 $";
 
 /****************************************************************************/
 

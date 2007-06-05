@@ -159,7 +159,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->striprdn = 0;		   /* Default right strip down event. Let user app take care of */
 	priv->naxes = 6;                   /* Default number of axes */
 	priv->debugLevel = 0;              /* debug level */
-	priv->wcmSuppress = DEFAULT_SUPPRESS;    /* transmit position if increment is superior */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = 0;                 /* current screen in display */
 
@@ -204,9 +203,11 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmRotate = ROTATE_NONE; /* default tablet rotation to off */
 	common->wcmMaxCursorDist = 0;	/* Max distance received so far */
 	common->wcmCursorProxoutDist = 0;
-				/* Max mouse distance for proxy-out max/256 units */
+			/* Max mouse distance for proxy-out max/256 units */
 	common->wcmCursorProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE; 
-				/* default to Graphire */
+			/* default to Graphire */
+	common->wcmSuppress = DEFAULT_SUPPRESS;    
+			/* transmit position if increment is superior */
 
 	/* tool */
 	priv->tool = tool;
@@ -548,16 +549,16 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "WACOM: Rotation is set to %s\n", s);
 	}
 
-	priv->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
-			priv->wcmSuppress);
-	if (priv->wcmSuppress != 0) /* 0 disables suppression */
+	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
+			common->wcmSuppress);
+	if (common->wcmSuppress != 0) /* 0 disables suppression */
 	{
-		if (priv->wcmSuppress > MAX_SUPPRESS)
-			priv->wcmSuppress = MAX_SUPPRESS;
-		if (priv->wcmSuppress < DEFAULT_SUPPRESS)
-			priv->wcmSuppress = DEFAULT_SUPPRESS;
+		if (common->wcmSuppress > MAX_SUPPRESS)
+			common->wcmSuppress = MAX_SUPPRESS;
+		if (common->wcmSuppress < DEFAULT_SUPPRESS)
+			common->wcmSuppress = DEFAULT_SUPPRESS;
 	}
-	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", priv->wcmSuppress);      
+	xf86Msg(X_CONFIG, "WACOM: suppress value is %d\n", common->wcmSuppress);      
     
 	if (xf86SetBoolOption(local->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))

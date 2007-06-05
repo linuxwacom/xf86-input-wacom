@@ -327,7 +327,6 @@ struct _WacomDeviceRec
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmDevOpenCount;    /* Device open count */
-	int wcmSuppress;        /* transmit position on delta > supress */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
@@ -518,6 +517,7 @@ struct _WacomCommonRec
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */
+	int wcmSuppress;        	 /* transmit position on delta > supress */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
@@ -619,7 +619,7 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model, const char* id,
 void xf86WcmReadPacket(LocalDevicePtr local);
 
 /* handles suppression, filtering, and dispatch. */
-void xf86WcmEvent(LocalDevicePtr local, unsigned int channel, const WacomDeviceState* ds);
+void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);

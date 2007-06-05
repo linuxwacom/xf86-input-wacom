@@ -112,7 +112,6 @@ static void serialParseP4Common(LocalDevicePtr local, const unsigned char* data,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseCintiq,
-		xf86WcmHysteresisFilter,
 	};
 
 	static WacomModel serialPenPartner =
@@ -157,7 +156,6 @@ static void serialParseP4Common(LocalDevicePtr local, const unsigned char* data,
 		NULL,               /* link speed cannot be changed */
 		serialStartTablet,
 		serialParseProtocol4,
-		xf86WcmHysteresisFilter,
 	};
 
 /*****************************************************************************
@@ -623,7 +621,7 @@ static int serialParseGraphire(LocalDevicePtr local, const unsigned char* data)
 			ds->relwheel = -ds->relwheel;
 	}
 
-	xf86WcmEvent(local,0,ds);
+	xf86WcmEvent(common,0,ds);
 	return common->wcmPktLength;
 }
 
@@ -665,7 +663,7 @@ static int serialParseCintiq(LocalDevicePtr local, const unsigned char* data)
 	/* requires button info, so it goes down here. */
 	serialParseP4Common(local, data, last, ds);
 
-	xf86WcmEvent(local,0,ds);
+	xf86WcmEvent(common,0,ds);
 	return common->wcmPktLength;
 }
 
@@ -701,7 +699,7 @@ static int serialParseProtocol4(LocalDevicePtr local, const unsigned char* data)
 	/* requires button info, so it goes down here. */
 	serialParseP4Common(local, data, last, ds);
 
-	xf86WcmEvent(local,0,ds);
+	xf86WcmEvent(common,0,ds);
 	return common->wcmPktLength;
 }
 
@@ -869,7 +867,7 @@ static int serialParseProtocol5(LocalDevicePtr local, const unsigned char* data)
 	/* if new data is available, send it */
 	if (have_data)
 	{
-	       	xf86WcmEvent(local,channel,ds);
+	       	xf86WcmEvent(common,channel,ds);
 	}
 	return common->wcmPktLength;
 }
@@ -1154,9 +1152,9 @@ static int serialEnableSuppressProtocol4(LocalDevicePtr local)
 {
 	char buf[20];
 	int err;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
 
-	sprintf(buf, "%s%d\r", WC_SUPPRESS, priv->wcmSuppress);
+	sprintf(buf, "%s%d\r", WC_SUPPRESS, common->wcmSuppress);
 	err = xf86WcmWrite(local->fd, buf, strlen(buf));
 
 	if (err == -1)
@@ -1279,7 +1277,7 @@ static void serialParseP4Common(LocalDevicePtr local,
 		{
 			/* send a prox-out for old device */
 			WacomDeviceState out = { 0 };
-			xf86WcmEvent(local, 0, &out);
+			xf86WcmEvent(common, 0, &out);
 			ds->device_type = cur_type;
 		}
 	}

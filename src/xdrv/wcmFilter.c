@@ -1,25 +1,15 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com>
- *                                                                            
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is  hereby granted without fee, provided that
- * the  above copyright   notice appear  in   all  copies and  that both  that
- * copyright  notice   and   this  permission   notice  appear  in  supporting
- * documentation, and that   the  name of  Frederic   Lepied not  be  used  in
- * advertising or publicity pertaining to distribution of the software without
- * specific,  written      prior  permission.     Frederic  Lepied   makes  no
- * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.                   
- *                                                                            
- * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
- * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
- * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA  OR PROFITS, WHETHER  IN  AN ACTION OF  CONTRACT,  NEGLIGENCE OR OTHER
- * TORTIOUS  ACTION, ARISING    OUT OF OR   IN  CONNECTION  WITH THE USE    OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com> 
  *
+ * Permission to use, copy, modify, distribute, and sell this software and
+ * its documentation for any purpose is hereby granted without fee, 
+ * provided that the above copyright notice appear in all copies and that 
+ * both that copyright notice and this permission notice appear in 
+ * supporting documentation, and that the name of Frederic Lepied not be 
+ * used in advertising or publicity pertaining to distribution of the 
+ * software without specific, written prior permission. It is provided 
+ * "as is" without express or implied warranty.
  */
 
 #include "wcmFilter.h"
@@ -266,56 +256,26 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	/* Only noise correction should happen here. If there's a problem that
 	 * cannot be fixed, return 1 such that the data is discarded. */
 
-	WacomDeviceState* pLast;
-	int *x, *y; 
-	int filter_x, filter_y, i;
+	WacomDeviceState *pLast;
+	int *x, *y, i; 
 
 	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with " 			"MAX_SAMPLES = %d \n", MAX_SAMPLES));
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
 
 	pLast = &pChannel->valid.state;
-	filter_x = 0;
-	filter_y = 0;
+	ds->x = 0;
+	ds->y = 0;
 
 	for ( i=0; i<MAX_SAMPLES; i++ )
 	{
-		filter_x += x[i];
-		filter_y += y[i];
+		ds->x += x[i];
+		ds->y += y[i];
 	}
-	filter_x /= MAX_SAMPLES;
-	filter_y /= MAX_SAMPLES;
-
-	if (abs(filter_x - pLast->x) > 4)
-		ds->x = filter_x;
-	else
-		ds->x = pLast->x;
-
-	if (abs(filter_y - pLast->y) > 4)
-		ds->y = filter_y;
-	else
-		ds->y = pLast->y;
+	ds->x /= MAX_SAMPLES;
+	ds->y /= MAX_SAMPLES;
 
 	return 0; /* lookin' good */
-}
-
-/*****************************************************************************
- * xf86WcmHysteresisFilter -- provide noise correction to protocol IV transducers
- ****************************************************************************/
-
-int xf86WcmHysteresisFilter(WacomCommonPtr common, WacomChannelPtr pChannel,
-	WacomDeviceStatePtr ds)
-{
-	WacomDeviceState* pLast;
-	pLast = &pChannel->valid.state;
-
-	if (abs(ds->x - pLast->x) < 4)
-		ds->x = pLast->x;
-
-	if (abs(ds->y - pLast->y) < 4)
-		ds->y = pLast->y;
-
-	return 0;
 }
 
 /*****************************************************************************
@@ -335,5 +295,3 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	return 0; /* lookin' good */
 }
-
-

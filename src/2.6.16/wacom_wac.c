@@ -198,7 +198,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 				id = CURSOR_DEVICE_ID;
 				wacom_report_key(wcombo, BTN_LEFT, data[1] & 0x01);
 				wacom_report_key(wcombo, BTN_RIGHT, data[1] & 0x02);
-				if (wacom->features->type == WACOM_G44 ||
+				if (wacom->features->type == WACOM_G4 ||
 						wacom->features->type == WACOM_MO)
 					wacom_report_abs(wcombo, ABS_DISTANCE, data[6] & 0x3f);
 				else

@@ -195,7 +195,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmHysteresisFilter,   /* input filtering */
+		NULL,                 /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -211,7 +211,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmHysteresisFilter,   /* input filtering */
+		NULL,                 /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -918,7 +918,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	}
 
 	/* dispatch event */
-	xf86WcmEvent(local, channel, ds);
+	xf86WcmEvent(common, channel, ds);
 }
 
 #endif /* LINUX_INPUT */

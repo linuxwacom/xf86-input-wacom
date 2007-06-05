@@ -49,13 +49,8 @@ AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=usual
 [ WCM_OPTION_XSERVER64=$enableval 
 ],
 [
-	if test "$WCM_OPTION_XSERVER64" = ""; then
-		if test `uname -m | grep -c "64"` = 0; then
-			WCM_OPTION_XSERVER64=no
-		else
-			WCM_OPTION_XSERVER64=yes
-		fi
-	fi
+	WCM_OPTION_XSERVER64=no
+	test `echo $WCM_ARCH | grep -c "64"` == 0 || 	WCM_OPTION_XSERVER64=yes
 ])
 
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
@@ -63,9 +58,7 @@ WCM_XLIBDIR_DEFAULT2=/usr/lib
 if test "$WCM_OPTION_XSERVER64" = "yes"; then
 	CFLAGS="$CFLAGS -D__amd64__"
 	WCM_XSERVER64="-D_XSERVER64"
-	if test `uname -m | grep -c "x86_64"` != 0; then
-		WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
-	fi
+	test `$WCM_ARCH | grep -c "x86_64"` == 0 || WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
 	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
 	if test -d /usr/lib64; then
 		WCM_XLIBDIR_DEFAULT2=/usr/lib64

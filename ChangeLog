@@ -1,11 +1,20 @@
+2007-06-05  Ping Cheng <pingc@wacom.com>
+	* Updated xsetwacom suppress option
+	* Merged Ron's building and configuration patches
+	* Label 0.7.7-11
+
+2007-05-29  Ping Cheng <pingc@wacom.com>
+	* Fixed a typo in 2.6.16/wacom_wac.c
+	* Label 0.7.7-10
+
 2007-05-25  Ping Cheng <pingc@wacom.com>
-	* Added 2 new xsetwacom potions
+	* Added 2 new xsetwacom options
 		(TVResolution0/1 and Screen_No)
 	* Added support for Bamboo
 	* Split wcmXCommand.c from xf86Wacom.c
 
 2007-05-18  Ping Cheng <pingc@wacom.com>
-	* Added 2 new xsetwacom potions 
+	* Added 2 new xsetwacom options 
 		(Common DebugLevel and TwinView)
 	* Increased MAX_SUPPRESS from 20 to 100
 	* Added new xsetwacom option to change suppress
