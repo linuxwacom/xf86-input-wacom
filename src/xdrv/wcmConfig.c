@@ -208,6 +208,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 			/* default to Graphire */
 	common->wcmSuppress = DEFAULT_SUPPRESS;    
 			/* transmit position if increment is superior */
+	common->wcmRawSample = DEFAULT_SAMPLES;    
+			/* number of raw data to be used to for filtering */
 
 	/* tool */
 	priv->tool = tool;

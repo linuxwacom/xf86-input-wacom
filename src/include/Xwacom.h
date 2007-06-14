@@ -39,6 +39,7 @@
 #define XWACOM_PARAM_SUPPRESS		12
 #define XWACOM_PARAM_SCREEN_NO		13
 #define XWACOM_PARAM_COMMONDBG		14
+#define XWACOM_PARAM_RAWSAMPLE		15
 
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101
@@ -114,14 +115,16 @@
 #define XWACOM_PARAM_SBOTTOMX2		361
 #define XWACOM_PARAM_SBOTTOMY2		362
 
-#define XWACOM_VALUE_TV_NONE 		0
-#define XWACOM_VALUE_TV_ABOVE_BELOW 	1
-#define XWACOM_VALUE_TV_LEFT_RIGHT	2
+#define TV_NONE 		0
+#define TV_ABOVE_BELOW 		1
+#define TV_LEFT_RIGHT		2
 
-#define XWACOM_VALUE_ROTATE_NONE 	0
-#define XWACOM_VALUE_ROTATE_CW 		1
-#define XWACOM_VALUE_ROTATE_CCW 	2
-#define XWACOM_VALUE_ROTATE_HALF 	3
+#define ROTATE_NONE 		0
+#define ROTATE_CW 		1
+#define ROTATE_CCW 		2
+#define ROTATE_HALF 		3
+
+#define XWACOM_MAX_SAMPLES	20
 
 /* The following flags are used for XWACOM_PARAM_BUTTON# values to mark
  * the type of event that should be emitted when that button is pressed;

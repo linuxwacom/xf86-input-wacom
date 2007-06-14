@@ -24,9 +24,7 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
-static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds);
-static void filterIntuosCoord(int* state, int* current);
-static void filterIntuosTilt(int* state, int* tilt);
+static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds);
 
 /*****************************************************************************
  * xf86WcmSetPressureCurve -- apply user-defined curve to pressure values
@@ -201,49 +199,31 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1)
  *   but also cuts down quite a bit on jitter.
  ****************************************************************************/
 
-static void filterIntuosStylus(WacomFilterStatePtr state, WacomDeviceStatePtr ds)
+static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds)
 {
-	/* filter x */
-	filterIntuosCoord(state->x, &ds->x);
-	/* filter y */
-	filterIntuosCoord(state->y, &ds->y);
-	/* filter tiltx */
-	filterIntuosTilt(state->tiltx, &ds->tiltx);
-	/* filter tilty */
-	filterIntuosTilt(state->tilty, &ds->tilty);
-}
+	int x=0, y=0, tx=0, ty=0, i;
 
-static void filterIntuosCoord(int* state, int* current)
-{
-	int x=0, i;
-
-	for ( i=0; i<MAX_SAMPLES; i++ )
-		x += state[i];
-
-	*current = x / MAX_SAMPLES;
-}
-
-/*****************************************************************************
- * filterIntuosTilt --
- *   Correct some hardware defects we've been seeing in Intuos pads,
- *   but also cuts down quite a bit on jitter.
- ****************************************************************************/
-
-static void filterIntuosTilt(int* state, int* tilt)
-{
-	int i;
-
-	*tilt = 0;
-	for ( i=0; i<MAX_SAMPLES; i++ )
+	for ( i=0; i<common->wcmRawSample; i++ )
 	{
-		*tilt += state[i];
+		x += state->x[i];
+		y += state->y[i];
+		tx += state->tiltx[i];
+		ty += state->tilty[i];
 	}
-	*tilt /= MAX_SAMPLES;
+	ds->x = x / common->wcmRawSample;
+	ds->y = y / common->wcmRawSample;
 
-	if (*tilt > 63)
-   		*tilt = 63;	
-	else if (*tilt < -64)
-		*tilt = -64;
+	ds->tiltx = tx / common->wcmRawSample;
+	if (ds->tiltx > 63)
+   		ds->tiltx = 63;	
+	else if (ds->tiltx < -64)
+		ds->tiltx = -64;
+
+	ds->tilty = ty / common->wcmRawSample;
+	if (ds->tilty > 63)
+   		ds->tilty = 63;	
+	else if (ds->tilty < -64)
+		ds->tilty = -64;
 }
 
 /*****************************************************************************
@@ -259,7 +239,7 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceState *pLast;
 	int *x, *y, i; 
 
-	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with " 			"MAX_SAMPLES = %d \n", MAX_SAMPLES));
+	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with " 			"common->wcmRawSample = %d \n", common->wcmRawSample));
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
 
@@ -267,13 +247,13 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	ds->x = 0;
 	ds->y = 0;
 
-	for ( i=0; i<MAX_SAMPLES; i++ )
+	for ( i=0; i<common->wcmRawSample; i++ )
 	{
 		ds->x += x[i];
 		ds->y += y[i];
 	}
-	ds->x /= MAX_SAMPLES;
-	ds->y /= MAX_SAMPLES;
+	ds->x /= common->wcmRawSample;
+	ds->y /= common->wcmRawSample;
 
 	return 0; /* lookin' good */
 }
@@ -289,7 +269,7 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	 * cannot be fixed, return 1 such that the data is discarded. */
 
 	if (ds->device_type != CURSOR_ID)
-		filterIntuosStylus(&pChannel->rawFilter, ds);
+		filterIntuosStylus(common, &pChannel->rawFilter, ds);
 	else
 		xf86WcmFilterCoord(common, pChannel, ds);
 

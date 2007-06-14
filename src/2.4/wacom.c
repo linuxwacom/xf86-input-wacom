@@ -466,7 +466,7 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
-			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_abs(dev, ABS_WHEEL, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
 			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
@@ -476,7 +476,7 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
-			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_abs(dev, ABS_WHEEL, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
 			input_report_abs(dev, ABS_MISC, 0); 
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
@@ -779,7 +779,7 @@ static void wacom_intuos_irq(struct urb *urb)
 #define WACOM_G4_TOOLS		(BIT(BTN_TOOL_FINGER))
 #define WACOM_G4_BUTTONS	(BIT(BTN_0) | BIT(BTN_4))
 #define WACOM_MO_BUTTONS	(WACOM_G4_BUTTONS | BIT(BTN_1) | BIT(BTN_5))
-#define WACOM_MO_ABS		(BIT(ABS_RX))
+#define WACOM_MO_ABS		(BIT(ABS_WHEEL))
 #define WACOM_INTUOS_TOOLS	(BIT(BTN_TOOL_BRUSH) | BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS))
 #define WACOM_INTUOS3_TOOLS	(WACOM_INTUOS_TOOLS | BIT(BTN_TOOL_FINGER))
 #define WACOM_INTUOS_BUTTONS	(BIT(BTN_SIDE) | BIT(BTN_EXTRA))

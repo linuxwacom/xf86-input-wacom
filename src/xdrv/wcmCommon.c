@@ -544,7 +544,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 	DBG(10, priv->debugLevel, ErrorF("sendWheelStripEvents for %s \n", local->name));
 
-	/* simulate events for relative wheel */
+	/* emulate events for relative wheel */
 	if ( ds->relwheel )
 	{
 		value = ds->relwheel;
@@ -560,8 +560,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		}
 	}
 
-	/* simulate events for absolute wheel when needed */
-/*	if ( ds->abswheel != priv->oldWheel )
+	/* emulate events for absolute wheel when needed */
+	if ( ds->abswheel != priv->oldWheel )
 	{
 		value = priv->oldWheel - ds->abswheel;
 		if ( value > 0 )
@@ -575,8 +575,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 			keyP = priv->wdnk;
 		}
 	}
-*/
-	/* simulate events for left strip */
+
+	/* emulate events for left strip */
 	if ( ds->stripx != priv->oldStripX )
 	{
 		int temp = 0, n;
@@ -596,14 +596,14 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 			fakeButton = priv->striplup;
 			keyP = priv->slupk;
 		}
-		else
+		else if ( value < 0 )
 		{
 			fakeButton = priv->stripldn;
 			keyP = priv->sldnk;
 		}
 	}
 
-	/* simulate events for right strip */
+	/* emulate events for right strip */
 	if ( ds->stripy != priv->oldStripY )
 	{
 		int temp = 0, n;
@@ -623,7 +623,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 			fakeButton = priv->striprup;
 			keyP = priv->srupk;
 		}
-		else
+		else if ( value < 0 )
 		{
 			fakeButton = priv->striprdn;
 			keyP = priv->srdnk;
@@ -701,8 +701,8 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 	if (priv->oldButtons != buttons)
 		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
-	/* simulate wheel/strip events when defined */
-	if ( ds->relwheel || 
+	/* emulate wheel/strip events when defined */
+	if ( ds->relwheel || ds->abswheel || 
 		( (ds->stripx - priv->oldStripX) && ds->stripx && priv->oldStripX) || 
 			((ds->stripy - priv->oldStripY) && ds->stripy && priv->oldStripY) )
 		sendWheelStripEvents(local, ds, x, y, z, v3, v4, v5);
@@ -813,19 +813,26 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		y = priv->topY;
 	priv->currentX = x;
 	priv->currentY = y;
+
+	/* update the old records */
+	if(!priv->oldProximity)
+	{
+		priv->oldWheel = wheel;
+		priv->oldX = priv->currentX;
+		priv->oldY = priv->currentY;
+		priv->oldZ = z;
+		priv->oldTiltX = tx;
+		priv->oldTiltY = ty;
+		priv->oldStripX = ds->stripx;
+		priv->oldStripY = ds->stripy;
+		priv->oldRot = rot;
+		priv->oldThrottle = throttle;
+	}
 	if (!is_absolute)
 	{
-		if(!priv->oldProximity)
-		{
-			/* don't move the cursor */
-			x = 0;
-			y = 0;
-		}
-		else
-		{
-			x -= priv->oldX;
-			y -= priv->oldY;
-		}
+		x -= priv->oldX;
+		y -= priv->oldY;
+
 		/* don't apply speed for fairly small increments */
 		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
 		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
@@ -894,15 +901,15 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	else
 	{
-		if (v3 || v4 || buttons || ds->relwheel)
+		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
 			x = 0;
 			y = 0;
-			if ( v3 || v4 )
+			if ( v3 || v4 || v5 )
 				xf86WcmSetScreen(local, &x, &y);
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 			is_proximity = 1;
-			if ( v3 || v4 )
+			if ( v3 || v4 || v5 )
 			{
 	 			xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
@@ -1111,7 +1118,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	{
 		DBG(11, common->debugLevel, ErrorF("initialize Channel data.\n"));
 		/* store channel device state for later use */
-		for (i=MAX_SAMPLES - 1; i>=0; i--)
+		for (i=common->wcmRawSample - 1; i>=0; i--)
 		{
 			fs->x[i]= ds.x;
 			fs->y[i]= ds.y;
@@ -1121,7 +1128,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		++fs->npoints;
 	} else  {
 		/* Filter raw data, fix hardware defects, perform error correction */
-		for (i=MAX_SAMPLES - 1; i>0; i--)
+		for (i=common->wcmRawSample - 1; i>0; i--)
 		{
 			fs->x[i]= fs->x[i-1];
 			fs->y[i]= fs->y[i-1];
@@ -1130,7 +1137,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		fs->y[0] = ds.y;
 		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
 		{
-			for (i=MAX_SAMPLES - 1; i>0; i--)
+			for (i=common->wcmRawSample - 1; i>0; i--)
 			{
 				fs->tiltx[i]= fs->tiltx[i-1];
 				fs->tilty[i]= fs->tilty[i-1];
@@ -1167,9 +1174,9 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* save channel device state and device to which last event went */
 	memmove(pChannel->valid.states + 1,
 		pChannel->valid.states,
-		sizeof(WacomDeviceState) * (MAX_SAMPLES - 1));
+		sizeof(WacomDeviceState) * (common->wcmRawSample - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-	if (pChannel->nSamples < MAX_SAMPLES) ++pChannel->nSamples;
+	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
 	commonDispatchDevice(common,channel,pChannel, suppress);
 	resetSampleCounter(pChannel);

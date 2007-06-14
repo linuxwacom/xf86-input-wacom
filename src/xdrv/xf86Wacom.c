@@ -62,9 +62,10 @@
  * 2007-05-01 47-pc0.7.7-9 - fixed 2 bugs
  * 2007-05-18 47-pc0.7.7-10 - support new xsetwacom commands
  * 2007-06-05 47-pc0.7.7-11 - Test Ron's patches
+ * 2007-06-15 47-pc0.7.7-12 - enable changing number of raw data 
  */
 
-static const char identification[] = "$Identification: 47-0.7.7-11 $";
+static const char identification[] = "$Identification: 47-0.7.7-12 $";
 
 /****************************************************************************/
 
@@ -554,6 +555,8 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	if (strstr(common->wcmModel->name, "Intuos3") && IsStylus(priv))
 		/* Intuos3 Marker Pen rotation */
 		InitValuatorAxisStruct(local->dev, 5, -900, 899, 1, 1, 1);
+	else if (strstr(common->wcmModel->name, "Bamboo") && IsPad(priv))
+		InitValuatorAxisStruct(local->dev, 5, 0, 71, 1, 1, 1);
 	else
 	{
 		/* absolute wheel */

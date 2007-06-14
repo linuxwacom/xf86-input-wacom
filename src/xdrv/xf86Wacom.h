@@ -345,7 +345,8 @@ struct _WacomDeviceRec
  * WacomDeviceState
  *****************************************************************************/
 
-#define MAX_SAMPLES 4
+#define MAX_SAMPLES	20
+#define DEFAULT_SAMPLES 4
 
 #define PEN(ds)         ((((ds)->device_id) & 0x07ff) == 0x0022 || \
                          (((ds)->device_id) & 0x07ff) == 0x0042 || \
@@ -454,14 +455,6 @@ struct _WacomDeviceClass
 
 #define DEVICE_ISDV4 		0x000C
 
-#define TV_NONE 	XWACOM_VALUE_TV_NONE
-#define TV_ABOVE_BELOW	XWACOM_VALUE_TV_ABOVE_BELOW
-#define TV_LEFT_RIGHT 	XWACOM_VALUE_TV_LEFT_RIGHT
-#define ROTATE_NONE 	XWACOM_VALUE_ROTATE_NONE
-#define ROTATE_CW 	XWACOM_VALUE_ROTATE_CW
-#define ROTATE_CCW 	XWACOM_VALUE_ROTATE_CCW
-#define ROTATE_HALF 	XWACOM_VALUE_ROTATE_HALF
-
 #define MAX_CHANNELS 2
 
 struct _WacomCommonRec 
@@ -518,6 +511,7 @@ struct _WacomCommonRec
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */
 	int wcmSuppress;        	 /* transmit position on delta > supress */
+	int wcmRawSample;	     /* Number of raw data used to filter an event */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

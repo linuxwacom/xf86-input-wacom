@@ -267,7 +267,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_1, (data[7] & 0x20));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x10));
 			wacom_report_key(wcombo, BTN_5, (data[7] & 0x40));
-			wacom_report_abs(wcombo, ABS_RX, (data[8] & 0x7f));
+			wacom_report_abs(wcombo, ABS_WHEEL, (data[8] & 0x7f));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0xf0);
 			wacom_report_abs(wcombo, ABS_MISC, PAD_DEVICE_ID);
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);
@@ -278,7 +278,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_1, (data[7] & 0x20));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x10));
 			wacom_report_key(wcombo, BTN_5, (data[7] & 0x40));
-			wacom_report_abs(wcombo, ABS_RX, (data[8] & 0x7f));
+			wacom_report_abs(wcombo, ABS_WHEEL, (data[8] & 0x7f));
 			wacom_report_key(wcombo, BTN_TOOL_FINGER, 0);
 			wacom_report_abs(wcombo, ABS_MISC, 0); 
 			wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xf0);

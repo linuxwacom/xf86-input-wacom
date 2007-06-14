@@ -58,7 +58,7 @@ WCM_XLIBDIR_DEFAULT2=/usr/lib
 if test "$WCM_OPTION_XSERVER64" = "yes"; then
 	CFLAGS="$CFLAGS -D__amd64__"
 	WCM_XSERVER64="-D_XSERVER64"
-	test `$WCM_ARCH | grep -c "x86_64"` == 0 || WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
+	test `echo $WCM_ARCH | grep -c "x86_64"` == 0 || WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
 	WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
 	if test -d /usr/lib64; then
 		WCM_XLIBDIR_DEFAULT2=/usr/lib64

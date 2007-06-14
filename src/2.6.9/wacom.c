@@ -515,7 +515,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
-			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_abs(dev, ABS_WHEEL, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
 			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
@@ -525,7 +525,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
-			input_report_abs(dev, ABS_RX, (data[8] & 0x7f));
+			input_report_abs(dev, ABS_WHEEL, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
 			input_report_abs(dev, ABS_MISC, 0); 
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
@@ -998,8 +998,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	switch (wacom->features->type) {
 		case MO:
 			wacom->dev.keybit[LONG(BTN_LEFT)] |= BIT(BTN_1) | BIT(BTN_5);
-			wacom->dev.absbit[0] |= BIT(ABS_RX);
-			wacom->dev.absmax[ABS_RX] = 71;
+			wacom->dev.absbit[0] |= BIT(ABS_WHEEL);
+			wacom->dev.absmax[ABS_WHEEL] = 71;
 		case G4:
 			wacom->dev.evbit[0] |= BIT(EV_MSC);
 			wacom->dev.mscbit[0] |= BIT(MSC_SERIAL);

@@ -1,3 +1,8 @@
+2007-06-14  Ping Cheng <pingc@wacom.com>
+	* Added RawSample option to xsetwacom
+	* Reset old data after each out-prox event 
+	* Change Bamboo ring from strip to absolute wheel
+
 2007-06-05  Ping Cheng <pingc@wacom.com>
 	* Updated xsetwacom suppress option
 	* Merged Ron's building and configuration patches

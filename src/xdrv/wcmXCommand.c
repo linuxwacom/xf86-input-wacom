@@ -175,6 +175,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			common->wcmSuppress = value;
 		}
 		break;
+	    case XWACOM_PARAM_RAWSAMPLE:
+		if ((value < 1) || (value > XWACOM_MAX_SAMPLES)) return BadValue;
+		if (common->wcmRawSample != value)
+		{
+			common->wcmRawSample = value;
+		}
+		break;
 	    case XWACOM_PARAM_RAWFILTER:
 		if ((value < 0) || (value > 1)) return BadValue;
 		if (value) 
@@ -741,6 +748,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return common->wcmSuppress;
 	    case XWACOM_PARAM_RAWFILTER:
 		return (common->wcmFlags & RAW_FILTERING_FLAG) ? 1 : 0;
+	    case XWACOM_PARAM_RAWSAMPLE:
+		return common->wcmRawSample;
 	    case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv))
 			return (priv->nPressCtrl [0] << 24) |
@@ -940,6 +949,10 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		if (!IsCursor (priv) && !IsPad (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;
 		return -1;
+	case XWACOM_PARAM_SUPPRESS:
+		return DEFAULT_SUPPRESS;
+	case XWACOM_PARAM_RAWSAMPLE:
+		return DEFAULT_SAMPLES;
 	case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDistDefault;
