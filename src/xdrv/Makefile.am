@@ -25,7 +25,7 @@ ARCHITECTURE	=@WCM_ARCH@
 XSERVER64	=@WCM_XSERVER64@
 
 if WCM_ENV_XORGSDK
-DRIVER_INCLUDES = -I$(XORGSDK_DIR) $(X_CFLAGS)
+DRIVER_INCLUDES = -I$(XORGSDK_DIR) $(X_CFLAGS) -DWCM_XORG
 endif
 
 if WCM_ENV_XF86
@@ -38,7 +38,7 @@ DRIVER_INCLUDES = \
 	-I$(XF86_DIR)/exports/include/X11 \
 	-I$(XF86_DIR)/include/extensions \
 	-I$(XF86_DIR) \
-	-I$(XF86_DIR)/exports/include
+	-I$(XF86_DIR)/exports/include -DWCM_XFREE86
 endif
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
@@ -49,7 +49,7 @@ if WCM_DLLOADER
 DLLOADER=-fPIC
 endif
 
-CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
+CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR) -Wno-variadic-macros
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \

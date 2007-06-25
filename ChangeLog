@@ -1,7 +1,18 @@
+2007-06-25  Ping Cheng <pingc@wacom.com>
+	* Merged patch 1689476 (Gregor Richards)
+	* Merged patch 1674472 (Magnus Vigerlöf)
+	* Updated new xsetwacom commands
+	* Updated wacom man page
+	* Updated webpages to make /PRE scalable 
+	* Fixed an older UD pressure calculation error 
+				(Pierre-Alain Tercier) 
+	* Label 0.7.8
+
 2007-06-14  Ping Cheng <pingc@wacom.com>
 	* Added RawSample option to xsetwacom
 	* Reset old data after each out-prox event 
 	* Change Bamboo ring from strip to absolute wheel
+	* Label 0.7.7-12
 
 2007-06-05  Ping Cheng <pingc@wacom.com>
 	* Updated xsetwacom suppress option

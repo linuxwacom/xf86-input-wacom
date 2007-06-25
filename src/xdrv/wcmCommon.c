@@ -2,24 +2,19 @@
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is  hereby granted without fee, provided that
- * the  above copyright   notice appear  in   all  copies and  that both  that
- * copyright  notice   and   this  permission   notice  appear  in  supporting
- * documentation, and that   the  name of  Frederic   Lepied not  be  used  in
- * advertising or publicity pertaining to distribution of the software without
- * specific,  written      prior  permission.     Frederic  Lepied   makes  no
- * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
- * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
- * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA  OR PROFITS, WHETHER  IN  AN ACTION OF  CONTRACT,  NEGLIGENCE OR OTHER
- * TORTIOUS  ACTION, ARISING    OUT OF OR   IN  CONNECTION  WITH THE USE    OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
 #include "xf86Wacom.h"
@@ -83,7 +78,11 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
 		/* screenToSet lags by one event, but not that important */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 		priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+		priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
 		for (i = 0; i < priv->numScreen; i++)
 			totalWidth += screenInfo.screens[i]->width;
 
@@ -136,8 +135,13 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		else
 		{
 			/* tool on the tablet when driver starts */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 			if (miPointerCurrentScreen())
 				priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+			if (miPointerGetScreen(local->dev))
+				priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
 			priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
 			priv->factorY = screenInfo.screens[priv->currentScreen]->height / sizeY;
 		}
@@ -418,7 +422,9 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
+#endif
 	int i, button_idx, naxes = priv->naxes;
 
 	if (IsPad(priv))
@@ -436,10 +442,11 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (!button)
 		return;
 
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	/* Switch the device to core mode, if required */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
-
+#endif
 	DBG(4, priv->debugLevel, ErrorF(
 		"sendAButton TPCButton(%s) button=%d state=%d " 
 		"code=%08x, for %s coreEvent=%s \n", 
@@ -523,10 +530,12 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 	}
 
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	/* Switch the device out of the core mode, if required
 	 */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, FALSE);
+#endif
 }
 
 /*****************************************************************************
@@ -540,8 +549,9 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
-
+#endif
 	DBG(10, priv->debugLevel, ErrorF("sendWheelStripEvents for %s \n", local->name));
 
 	/* emulate events for relative wheel */
@@ -636,10 +646,11 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 	if (!fakeButton) return;
 
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	/* Switch the device to core mode, if required */
 	if (!is_core && (fakeButton & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
-
+#endif
 	switch (fakeButton & AC_TYPE)
 	{
 	    case AC_BUTTON:
@@ -676,10 +687,12 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		ErrorF ("WARNING: [%s] unsupported event %x \n", local->name, fakeButton);
 	}
 
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	/* Switch the device out of the core mode, if required
 	 */
 	if (!is_core && (fakeButton & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, FALSE);
+#endif
 }
 
 /*****************************************************************************
@@ -861,6 +874,14 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			y *= param > 20.00 ? 20.00 : param;
 		}		
 	}
+
+#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+	/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
+	 * for coordinate conversion at the moment */
+	x = (int)((double)x * priv->factorX + 0.5);
+	y = (int)((double)y * priv->factorY + 0.5);
+#endif
+
 	if (type != PAD_ID)
 	{
 		/* coordinates are ready we can send events */
@@ -1069,8 +1090,13 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent at channel = %d\n", channel));
 
-	/* tool on the tablet when driver starts */
+	/* Tool on the tablet when driver starts. This sometime causes
+	 * access errors to the device */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	if (!miPointerCurrentScreen())
+#else
+	if (!miPointerGetScreen(pDev->dev))
+#endif
 	{
 		DBG(1, common->debugLevel, ErrorF("xf86WcmEvent: "
 			"Wacom driver can not get Current Screen ID\n"));

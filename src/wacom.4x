@@ -37,11 +37,14 @@ supports the following entries:
 .RS 8
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"\fP
-sets the type of tool the device represents. This option is mandatory.  The core options, such as "SendCoreEvents" or "AlwaysCore", are  
+sets the type of tool the device represents. This option is mandatory.  
+The core options, such as "SendCoreEvents" or "AlwaysCore", are  
 unnecessary in Gimp if you don't need to move system cursor outside 
-of Gimp drawing area.  "pad" is for Intuos 3,  Cintiq 21UX, or 
-Graphire 4 ExpressKeys only.  It is required  for Intuos3,  Cintiq 21UX, and Graphire 4 if your application supports ExpressKeys  
-features.  "pad" is reported as a second tool in the driver. 
+of Gimp drawing area.  "pad" is for Intuos 3 or Cintiq 21UX tablet 
+ExpressKeys/menu strips, and Graphire 4 or Bamboo tablet buttons, wheel, 
+and/or ring.  It is required  for Intuos3,  Cintiq 21UX, Graphire 4, and 
+Bamboo if you want to use keystroke features.  "pad" is reported as a 
+second tool in the driver. 
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -54,9 +57,9 @@ tells the driver to dialog with the tablet the USB way.  This option is
 mandatory for USB tablets.
 .TP 4
 .B Option \fI"ForceDevice"\fP \fI"ISDV4"\fP
-tells the driver to dialog with the tablet the Tablet PC way.  Tablet PC is a 
-serial tablet using a special Wacom IV protocol, called ISDV4 protocol.  This 
-option is mandatory for Tablet PC.
+tells the driver to dialog with the tablet the Tablet PC way.  Right now 
+we only support serial Tablet PC. It is a special Wacom IV protocol, 
+called ISDV4 protocol.  This option is mandatory for Tablet PC.
 .TP 4
 .B Option \fI"Suppress"\fP \fI"Inumber"\fP
 sets the position increment under which not to transmit coordinates.

@@ -1,25 +1,20 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
- *                                                                            
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is  hereby granted without fee, provided that
- * the  above copyright   notice appear  in   all  copies and  that both  that
- * copyright  notice   and   this  permission   notice  appear  in  supporting
- * documentation, and that   the  name of  Frederic   Lepied not  be  used  in
- * advertising or publicity pertaining to distribution of the software without
- * specific,  written      prior  permission.     Frederic  Lepied   makes  no
- * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.                   
- *                                                                            
- * FREDERIC  LEPIED DISCLAIMS ALL   WARRANTIES WITH REGARD  TO  THIS SOFTWARE,
- * INCLUDING ALL IMPLIED   WARRANTIES OF MERCHANTABILITY  AND   FITNESS, IN NO
- * EVENT  SHALL FREDERIC  LEPIED BE   LIABLE   FOR ANY  SPECIAL, INDIRECT   OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA  OR PROFITS, WHETHER  IN  AN ACTION OF  CONTRACT,  NEGLIGENCE OR OTHER
- * TORTIOUS  ACTION, ARISING    OUT OF OR   IN  CONNECTION  WITH THE USE    OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
 #include "xf86Wacom.h"
@@ -104,7 +99,9 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {  
 	/* set parameters */
 	common->wcmProtocolLevel = 4;
-	common->wcmPktLength = 9;       /* length of a packet */
+	common->wcmPktLength = 5;       /* length of a packet 
+					 * device packets are 9 bytes long,
+					 * multitouch are only 5 */
 	common->wcmResolX = 2540; 	/* tablet X resolution in points/inch */
 	common->wcmResolY = 2540; 	/* tablet Y resolution in points/inch */
 	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
@@ -209,13 +206,29 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
-	int n, cur_type;
+	int n, cur_type, ismt = 0;
+	static int lastismt = 0;
 
 	DBG(10, common->debugLevel, ErrorF("isdv4Parse \n"));
-	if ((n = xf86WcmSerialValidate(common,data)) > 0)
+
+	/* determine the type of message */
+	if (data[0] & 0x10)
 	{
-		return n;
+		ismt = 1;
+		common->wcmPktLength = 5;
 	}
+	else
+	{
+		common->wcmPktLength = 9;
+		if (common->buffer + common->bufpos - data < common->wcmPktLength)
+		{
+			/* we can't handle this yet */
+			return 0;
+		}
+	}
+
+	if ((n = xf86WcmSerialValidate(common,data)) > 0)
+		return n;
 	else
 	{
 		/* Coordinate data bit check */
@@ -226,58 +239,82 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	ds = &common->wcmChannel[0].work;
 	RESET_RELATIVE(*ds);
 
-	ds->proximity = (data[0] & 0x20);
-
-	/* x and y in "normal" orientetion (wide length is X) */
-	ds->x = (((int)data[6] & 0x60) >> 5) | ((int)data[2] << 2) |
-		((int)data[1] << 9);
-	ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
-		((int)data[3] << 9);
-
-	/* pressure */
-	ds->pressure = (((data[6] & 0x07) << 7) | data[5] );
-
-	/* buttons */
-	ds->buttons = (data[0] & 0x07);
-
-	/* check which device we have */
-	cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
-
-	/* first time into prox */
-	if (!last->proximity && ds->proximity) 
-		ds->device_type = cur_type;
-	/* check on previous proximity */
-	else if (cur_type == STYLUS_ID && ds->proximity)
+	if (ismt)
 	{
-		/* we were fooled by tip and second
-		 * sideswitch when it came into prox */
-		if ((ds->device_type != cur_type) &&
-			(ds->device_type == ERASER_ID))
+		if (!lastismt && last->pressure)
 		{
-			/* send a prox-out for old device */
-			WacomDeviceState out = { 0 };
-			xf86WcmEvent(common, 0, &out);
-			ds->device_type = cur_type;
+			/* pen sends both pen and MultiTouch input, 
+			 * since pressing it creates pressure. 
+			 * We only want the pen input though.
+			 */
+			return common->wcmPktLength;
 		}
+		lastismt = ismt;
+
+		/* MultiTouch input is comparably simple */
+		ds->proximity = 0;
+		ds->x = (((((int)data[1]) << 7) | ((int)data[2])) - 18) * common->wcmMaxX / 926;
+		ds->y = (((((int)data[3]) << 7) | ((int)data[4])) - 51) * common->wcmMaxY / 934;
+		ds->pressure = (data[0] & 0x01) * common->wcmMaxZ;
+		ds->buttons = 1;
+		ds->device_id = STYLUS_DEVICE_ID;
+		ds->device_type = 0;
+		DBG(8, priv->debugLevel, ErrorF("isdv4Parse MultiTouch\n"));
 	}
-
-	ds->device_id = (ds->device_type == CURSOR_ID) ? CURSOR_DEVICE_ID : STYLUS_DEVICE_ID;
-
-	/* don't send button 3 event for eraser 
-	 * button 1 event will be sent by testing presure level
-	 */
-	if (ds->device_type == ERASER_ID && ds->buttons&4)
+	else
 	{
-		ds->buttons = 0;
-		ds->device_id = ERASER_DEVICE_ID;
+		ds->proximity = (data[0] & 0x20);
+
+		/* x and y in "normal" orientetion (wide length is X) */
+		ds->x = (((int)data[6] & 0x60) >> 5) | ((int)data[2] << 2) |
+			((int)data[1] << 9);
+		ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
+			((int)data[3] << 9);
+
+		/* pressure */
+		ds->pressure = (((data[6] & 0x07) << 7) | data[5] );
+
+		/* buttons */
+		ds->buttons = (data[0] & 0x07);
+
+		/* check which device we have */
+		cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
+
+		/* first time into prox */
+		if (!last->proximity && ds->proximity) 
+			ds->device_type = cur_type;
+		/* check on previous proximity */
+		else if (cur_type == STYLUS_ID && ds->proximity)
+		{
+			/* we were fooled by tip and second
+			 * sideswitch when it came into prox */
+			if ((ds->device_type != cur_type) &&
+				(ds->device_type == ERASER_ID))
+			{
+				/* send a prox-out for old device */
+				WacomDeviceState out = { 0 };
+				xf86WcmEvent(common, 0, &out);
+				ds->device_type = cur_type;
+			}
+		}
+
+		ds->device_id = (ds->device_type == CURSOR_ID) ? 
+			CURSOR_DEVICE_ID : STYLUS_DEVICE_ID;
+
+		/* don't send button 3 event for eraser 
+		 * button 1 event will be sent by testing presure level
+		 */
+		if (ds->device_type == ERASER_ID && ds->buttons&4)
+		{
+			ds->buttons = 0;
+			ds->device_id = ERASER_DEVICE_ID;
+		}
+
+		DBG(8, priv->debugLevel, ErrorF("isdv4Parse %s\n",
+			ds->device_type == ERASER_ID ? "ERASER " :
+			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 	}
-
-	DBG(8, common->debugLevel, ErrorF("isdv4Parse %s\n",
-		ds->device_type == ERASER_ID ? "ERASER " :
-		ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
-
 	xf86WcmEvent(common,0,ds);
-
 	return common->wcmPktLength;
 }
 
