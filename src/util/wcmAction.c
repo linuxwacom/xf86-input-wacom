@@ -231,11 +231,11 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 	    {
 		char *end;
 		int n = strtol (ev_p, &end, 0);
+	    	if (ev_p == end)
+			printf ("xf86WcmDecode %s: invalid %s value: button (%x) \"%s\".  Ignore it (assign to 0)\n",
+				dev, but, butev, ev);
 		butev |= n;
 	    }
-	    if (!(butev & AC_CODE))
-		printf ("xf86WcmDecode %s: invalid %s value: button (%x) \"%s\"\n",
-			dev, but, butev, ev);
 	case AC_MODETOGGLE:
 	case AC_DBLCLICK:
 	    break;

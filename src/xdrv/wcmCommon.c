@@ -439,7 +439,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 	button_idx = button;
 	button = priv->button[button];
-	if (!button)
+	if (!button)  /* ignore this button event */
 		return;
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0

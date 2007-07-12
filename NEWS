@@ -1,3 +1,7 @@
+July 9, 2007 - Ping Cheng
+
+Added keystroke and modifier support.  Added a list of new xsetwacom options. Provides prebuilt Wacom X driver and its utility programs for both x86_32 and x86_64 systems. Support Bamboo. 
+
 Oct 16, 2006 - Ping Cheng
 
 Added a list of new xsetwacom options (refer to ChangeLog and website). Kernel driver is split into 4 separate files for ease of updating and maintaining. No need to built (usb)hid driver with 2.6.18 and newer kernels. "make install" will install wacom man page by default. Improved USB tablet hot plug/unplug functions. On-the-fly tablet rotation is supported. 

@@ -730,8 +730,6 @@ static int ParseValues(int nCount, const char* pszValues, int* nValues,
 						p->pszParam,
 						pszValues,
 						keys);
- 			if (!*nValue)
-				return 1;
 		}
 		else if (p->nType == SINGLE_VALUE)
 		{
@@ -1046,7 +1044,9 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		}
 		break;
 	default:
-		if ((value & AC_TYPE) != AC_KEY)
+		if ( ((value & AC_TYPE) != AC_KEY) &&  
+			((value & AC_TYPE) != AC_MODETOGGLE) &&
+			((value & AC_TYPE) != AC_DBLCLICK) )
 			printf ("%d\n", value);
 		else
 			printf ("%s\n", strval);

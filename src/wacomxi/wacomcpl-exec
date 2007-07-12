@@ -88,14 +88,14 @@ proc pad {name geometry} {
 proc updateXinitrc {device option value} {
 
     if { ![ file exists ~/.xinitrc ] } {
-	exec echo "xsetwacom set $device $option $value" > ~/.xinitrc
+	exec echo "xsetwacom set $device $option \"$value\"" > ~/.xinitrc
 	exec echo "# run the primary system script" >> ~/.xinitrc
 	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc
     } else {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1
 	exec sed -e "/xsetwacom set $device $option /d" /tmp/xinitrc1 > /tmp/wacom
-	exec echo "xsetwacom set $device $option $value" > ~/.xinitrc
+	exec echo "xsetwacom set $device $option \"$value\"" > ~/.xinitrc
 	exec cat /tmp/wacom >> ~/.xinitrc
 	file delete -force /tmp/wacom /tmp/xinitrc1
     }
@@ -347,8 +347,8 @@ proc getDeviceOptionProc { dev i } {
 	} else {
 	    if { ![string compare -nocase -length 6 $Option($j) "button"] } {
 		if { ($value > 19) || ($value == 0) } {
-		    set output [ exec xsetwacom -x get $dev $Option($j) ]
-		    set outputd [ lindex $output 2 ]
+		    set output [ exec xsetwacom get $dev $Option($j) ]
+		    set outputd [ lindex $output 0 ]
 		    if { ![string compare -nocase -length 8 DBLCLICK $outputd ] } {
 			set getOption($dev,$Option($j)) 17
 		    }
@@ -570,7 +570,7 @@ proc updateButton {} {
 		 set v "Button 0" }
 	}
 	set getOption($device,button$i) $j
-	updateXinitrc $device button$i $v 
+	updateXinitrc $device button$i $v
     }
 
     if { !(($model >= 48 && $model < 64)  \

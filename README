@@ -1,15 +1,23 @@
 README
-Oct. 16, 2006
+July 09, 2007
+
+==============================================================================
+Most end users would probably only need to update the Wacom X driver and the /etc/X11/xorg.conf file to use the rich features that Wacom tablets offer. The steps could be as simple as:
+
+download the package then
+    $ bunzip2 linuxwacom.tar.bz2
+    $ tar xvf linuxwacom.tar
+    $ cd linuxwacom/prebuilt
+    $ su
+    # ./uninstall
+    # ./install
+    # cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak
+    # gedit /etc/X11/xorg.conf
+    # reboot
 
 ==============================================================================
 
-BUILDING FROM CVS:
-
-You should run bootstrap from the main directory to correctly initialize
-the project.  From there, run configure as you would normally do.  Configure 
-options are explained below.
-
-    $ ./bootstrap && ./configure && make
+However, if you have a USB tablet which is newer than your running kernel, i.e., the tablet is not supported by your running kernel, or you are a developer who is willing to build the driver from the source, there are extra work waiting for you.
 
 ==============================================================================
 
@@ -31,126 +39,16 @@ breakdown:
       wacdump: built by default (--enable-wacdump, --disable-wacdump)
         hid.o: not built by default (--enable-hid, --disable-hid)
       evdev.o: not built by default (--enable-evdev, --disable-evdev for kernel 2.4.x only)
-   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev for kernel 2.4.x only)
-   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse for kernel 2.4.x only)
-      input.o: not built by default (--enable-input, --disable-input for kernel 2.4.x only)
+   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev. It is used for kernel 2.4.x only)
+   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse. It is used  for kernel 2.4.x only)
+      input.o: not built by default (--enable-input, --disable-input. It is used  for kernel 2.4.x only)
   wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
 There are many options, and configure will attempt to guess the correct
 values for most of them.  By default, only wacomcpl, xsetwacom,  wacom_drv.o, 
 xidump, and wacdump program are built.
 
-REQUIREMENTS:
-
-wacom, hid, evdev, mousedev, and usbmouse are kernel modules and require the 
-kernel sources to be present.  On a Redhat 8.0 system with the kernel-sources
-RPM installed, the source directory is located at /usr/src/linux-2.4.
-The configuration script will search for this directory automatically as 
-well as /usr/src/linux.  You can override the directory using the 
---with-kernel=<directory> option.
-
-For kernel 2.6.x, a kernel source with which your tablet is going to run should 
-be precompiled before configuring linuxwacom package. For the steps to build a 
-kernel from source, please refer to your source's README or www.kernel.org. 
-
-wacom_drv.o requires XFree86 sources as well as a functional XF86 build  
-environment or xorg-sdk if your X server is from x.org.  A set of 
-wacom_drv.o files are supplied with the linuxwacom package in the 
-prebuilt directory.  If the prebuilt wacom_drv.o module doesn't work  
-for you, you'll need to build it on your system. See the section "Building 
-wacom_drv.o From Scratch." for details.
-	
-BUILDING wacom_drv.o FROM SCRATCH
-
-If your system runs an X server from XFree86, you need the XFree86 
-source code, and you will need to actually build it.  The file 
-xf86Version.h is generated during the build process and is a required 
-dependency for building wacom_drv.o.  If your system runs an X server 
-from x.org, you need to install xorg-sdk. The configure script will 
-attempt to build wacom_drv.o by default,  but you need to provide the 
---with-xf86=<xf86_directory> option.  If you don't want to build wacom_drv.o, 
-the option --disable-wacomdrv needs to be provided.
-
-If the xf86Version.h file is located at:
-	/usr/local/src/XFree86-4.2.0/xc/programs/Xserver/include/xf86Version.h
-
-Then the correct configure option to build wacom_drv.o would be:
-	--with-xf86=/usr/local/src/XFree86-4.2.0
-
-INSTALL default
-
-Generally, you run the configure script followed by make install.  This package 
-will install wacom_drv.o, xidump, wacdump, xsetwacom, wacom.4x, and wacomcpl. The kernel 
-drivers will not be installed.  Please see the documentation on the website for 
-more information on where specific drivers belong.
-
-    [jej@haku linuxwacom-dev] $ ./configure
-    [jej@haku linuxwacom-dev] $ su
-    [root@haku linuxwacom-dev] # make install 
-
-INSTALL wacomcpl
-
-wacomcpl is a tcl/tk based control panel. It requires tcl/tk being installed. 
-The configure script will attempt to build wacomxi libs by searching /usr/include,
-/usr/tcl/include, and /usr/tcl$version/include for tcl/tk headers and /usr/lib
-for tcl/tk libs. You can override the directories using the --with-tcl=<directory> 
-and --with-tk=<directory> options.
-
-On Fedora Core 3, the steps to install tcl/tk development is as following:
-
-    [jej@haku linuxwacom-dev] $ su
-    [root@haku linuxwacom-dev] # yum install tcl
-    [root@haku linuxwacom-dev] # yum install tcl-devel
-    [root@haku linuxwacom-dev] # yum install tk
-    [root@haku linuxwacom-dev] # yum install tk-devel
-
-configure script will find the path for you, i.e., you don't need to specify option --with-tcl 
-and --with-tc in the configure command.
-
-However, if the tcl.h is located at specific directory other than /usr or /usr/tcl, say it is at /usr/local/tcl8.4/include and the libtcl8.4.so at /usr/local/tcl8.4/lib, you need to:
-
-First link /usr/local/tcl8.4/lib/libtcl8.4.so to /usr/lib/libtcl.so.0:
-	ln -s /usr/local/tcl8.4/lib/libtcl8.4.so /usr/lib/libtcl.so.0
-
-Then use the configure option:
-	--with-tcl=/usr/local/tcl8.4
-
-If the tk.h is located at /usr/local/tk8.4/include and the libtk8.4.so at 
-/usr/local/tk8.4/lib, then the correct steps would be:
-	ln -s /usr/local/tk8.4/lib/libtk8.4.so /usr/lib/libtk.so.0
-
-Then use the configure option:
-	--with-tk=/usr/local/tk8.4
-
-If both tcl and tk under the same directory, say /usr/local/tcl8.4, then the steps are:
-	ln -s /usr/local/tcl8.4/lib/libtcl8.4.so /usr/lib/libtcl.so.0
-	ln -s /usr/local/tcl8.4/lib/libtk8.4.so /usr/lib/libtk.so.0
-
-And use the configure option:
-	--with-tcl=/usr/local/tcl8.4
-
-
-INSTALL kernel pieces
-
-for kernel 2.4.22 or newer: 
-    [root@haku linuxwacom-dev] # cp src/2.4.22/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/2.4.22/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
-    [root@haku linuxwacom-dev] # cp src/2.4.22/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/2.4.22/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
-    [root@haku linuxwacom-dev] # cp src/2.4.22/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
-    [root@haku linuxwacom-dev] # cp src/2.4.22/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
-
-for kernels older than 2.4.22: 
-    [root@haku linuxwacom-dev] # cp src/2.4/hid.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/2.4/usbmouse.o /lib/modules/your_kernel_version/kernel/drivers/usb
-    [root@haku linuxwacom-dev] # cp src/2.4/wacom.o /lib/modules/your_kernel_version/kernel/drivers/usb 
-    [root@haku linuxwacom-dev] # cp src/2.4/mousedev.o /lib/modules/your_kernel_version/kernel/drivers/input 
-    [root@haku linuxwacom-dev] # cp src/2.4/evdev.o /lib/modules/your_kernel_version/kernel/drivers/input
-    [root@haku linuxwacom-dev] # cp src/2.4/input.o /lib/modules/your_kernel_version/kernel/drivers/input 
-
-for kernel 2.6.x
-    [root@haku linuxwacom-dev] # cp src/2.6.x/(usb)hid.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
-    [root@haku linuxwacom-dev] # cp src/2.6.x/wacom.ko /lib/modules/your_kernel_version/kernel/drivers/usb/input 
+Please surf the HOWTO page at http://linuxwacom.sf.net/index.php/howto/main to find the proper options if the default building environment doesn't work for you.
 
 ==============================================================================
 
