@@ -54,7 +54,7 @@
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Jun 26, 2007</td></tr>
+</td><td class="menu" align="right">Jul 24, 2007</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -316,7 +316,7 @@ Serial tablet or Tablet PC users can go directly to the next section
 <a name="download">
 </a></p><h2><a name="download">2.2 - Downloading the Code</a></h2>
 
-<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8.tar.bz2">linuxwacom-0.7.8.tar.bz2</a> is the stable package and contains
+<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8-1.tar.bz2">linuxwacom-0.7.8-1.tar.bz2</a> is the stable package and contains
 files that you will need to get your serial or USB tablet working.  The
 current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.7-12.tar.bz2">linuxwacom-0.7.7-12.tar.bz2</a> is also available and may be
 used by people who are willing to help test new features.  I will never put a 
@@ -327,9 +327,9 @@ show stoppers, they will be fixed before you get to see them.
 </p><p>Unpacking the tarball is usually a one-step process, but I show both
 steps in case the typical -jxf option doesn't work with tar.
 
-</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.7.8.tar.bz2
-[jej@ayukawa jej]$ tar -xf linuxwacom-0.7.8.tar
-[jej@ayukawa jej]$ cd linuxwacom-0.7.8</pre></blockquote>
+</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.7.8-1.tar.bz2
+[jej@ayukawa jej]$ tar -xf linuxwacom-0.7.8-1.tar
+[jej@ayukawa jej]$ cd linuxwacom-0.7.8-1</pre></blockquote>
 
 Once in the package directory, you need only to configure and build the code.
 This is described in more detail as you continue.  The executables and 
@@ -340,7 +340,7 @@ installation procedures depend on the kernel source you use.
 and release dates.  Otherwise, let's continue.
 
 
-</p><h3>Stable files included for linuxwacom-0.7.8:</h3>
+</p><h3>Stable files included for linuxwacom-0.7.8-1:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th align="left">Comment</th></tr>
 <tr><td valign="top">configure</td><td valign="top">- configure script for distribution independent builds</td></tr>
@@ -407,7 +407,7 @@ and release dates.  Otherwise, let's continue.
 <h3>Stable Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8.tar.bz2">linuxwacom-0.7.8.tar.bz2</a></td><td valign="top">-</td><td valign="top">2007-06-25</td><td valign="top">Supports
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8-1.tar.bz2">linuxwacom-0.7.8-1.tar.bz2</a></td><td valign="top">-</td><td valign="top">2007-07-12</td><td valign="top">Supports
 new tablet, Bamboo. Provides prebuilt Wacom X driver and its utility
 programs for x86_32 and x86_64 systems. Adds many new xsetwacom options.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.6-4.tar.bz2">linuxwacom-0.7.6-4.tar.bz2</a></td><td valign="top">-</td><td valign="top">2006-12-01</td><td valign="top">Updated xsetwacom and support kernel 2.6.17/18, Intuos3 4x6 and on-the-fly tablet rotation.</td></tr>
@@ -446,350 +446,8 @@ through xsetwacom</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.5.1-beta.tar.gz">linuxwacom-0.5.1-beta.tar.gz</a></td><td valign="top">-</td><td valign="top">2003-06-15</td><td valign="top">Completely refactored data path, configurability.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.5.0-beta.tar.gz">linuxwacom-0.5.0-beta.tar.gz</a></td><td valign="top">-</td><td valign="top">2003-02-12</td><td valign="top">Updated PL code.  Numerous tweaks.</td></tr>
 </tbody></table>
-<a name="config">
-</a><h2><a name="config">2.3 - Configuring the Package</a></h2>
-
-<p><a name="config">This section describes how to configure the package.  You can run 
-the configure script now as the samples below demonstrate, or later 
-when you reach the section of the document that explains what 
-specifically needs to be configured and why.  This page is provided 
-largely as a reference.
-
-</a></p><p><a name="config">By default, xidump, wacdump, xsetwacom, wacom_drv.o, and wacomcpl 
-are built.  Additional options include replacement kernel drivers for 
-hid, mousedev, evdev, and usbmouse as well as building the XFree86 
-driver from scratch.  Lastly, remember that for every --enable option, 
-there is also an equivalent --disable option.
-
-</a></p><p><a name="config">The configuration options are listed on this page. You can also 
-see the online list by issuing <i>./configure -help</i> under 
-linuxwacom's base directory.
-
-</a></p><h3><a name="config">Building Kernel Modules - USB Only</a></h3>
-
-<p><a name="config">In order to build kernel modules, you will need the kernel source 
-installed on your system.  If you are running on Redhat or Mandrake, 
-you can get it by installing the kernel-source RPM.
-
-</a></p><p><a name="config">The kernel source directory is assumed to be in /usr/src/linux-2.4, 
-/usr/src/linux, /usr/src/linux-2.6, /usr/src/linux-`uname -r`, or 
-/lib/modules/`uname -r`/source.  If your kernel sources are elsewhere, 
-you will need to specify the directory with the --with-kernel option 
-described below.
-
-</a></p><p><a name="config">For kernel 2.6, you need to configure the kernel modules (wacom and 
-hid) under your kernel source directory before configuring linuxwacom. 
-
-</a></p><p class="diff"><a name="config">Note, for kernel 2.6.18 and later, no need to build hid 
-any more. Refer to </a><a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
-
-<h3>Module Versioning - USB Only</h3>
-
-<p>The script attempts to discover if the kernel is using module 
-versioning by detecting the presence of version numbers in the hid.o 
-module of the currently active kernel.  Recent package versions also 
-check for hid.o.gz which exist on Mandrake systems.  The configure 
-script may not be able to determine if kernel module versioning 
-should be enabled or not, in which case it will say "unknown, 
-assuming no."
-
-</p><p>If module versioning is disabled when it should be enabled, depmod 
-will complain about missing symbols but otherwise, things will probably 
-work fine. If it is enabled when it should be disabled, the code may 
-not compile, and it almost certainly will not load properly.  If the 
-configure script fails to determine the correct value, the default 
-action of disabling module versioning is the better choice, and you can 
-allows enable it manually and rebuild if depmod complains.
-
-</p><h3>The XFree86/Xorg XInput Driver - USB and Serial</h3>
-
-<p>Generally, you will not need to build wacom_drv.o since it ships in 
-binary form in the prebuilt directory.  There are prebuilt binaries for 
-XFree86 and Xorg corresponding to x86 and x86-64 systems, respectively.  
-If no one works for you, building from source may be your only option.  
-See the <a href="#builddrv">Building wacom_drv.o from Scratch</a> 
-page for more information.
-
-</p><h3>Library Dependencies - ncurses and XLib</h3>
-
-<p>Various utilities in the linuxwacom package require not only specific 
-libraries, but their development header files as well.  The ncurses 
-package is one such example.  Most distributions install the ncurses 
-libraries by default, but the header files are often located in a 
-separate package.  You will need both.  On Redhat 8.0, they can be 
-found in the ncurses-devel RPM.
-
-</p><p>Similarly, if you wish to test your tablet using xidump to view 
-XFree86 input events, you will need the XFree86 development headers. 
-On Redhat, they are contained in the XFree86-devel package.
-
-</p><p>If any packages are missing, the configuration will warn you and 
-disable building any programs that depend on them. 
-
-</p><h3>Processor Type</h3>
-
-<p>The processor type is determined by the script and used to build the 
-kernel modules.  If it guesses incorrectly, or you would prefer a  
-different setting, use the --with-arch option described below.
-
-</p><h3>Linux Specific Features</h3>
-
-<p>The Linux wacom driver uses the Linux input subsystem, as does the
-USB portions of the XFree86 driver. Consequently, if you are building
-on a non-Linux system, the USB code will not work for you. This is
-detected, and a comment to that effect is added to the configuration
-summary. I recognize that FreeBSD and similar systems have USB support;
-however, until someone can bridge the gap between the FreeBSD kernel
-and the XFree86/X.org driver, the problem is largely unsolved.
-Contributions are of course welcome. The Linux-specific features can be
-enabled/disabled using the --with-linux argument.
-</p><h3>Configuration Options</h3>
-
-The following options are provided as reference.  Normally, you will 
-only need a few of these options, but more obscure systems may need all 
-of them.  Each section of the document identifies which options are 
-necessary and when.<br><br>
-
-<table border="0" cellspacing="5">
-<tbody><tr><th align="left">Option</th><th align="left">Default</th>
-		<th align="left">Builds</th></tr>
-<tr><td>--enable-wacom</td><td><b>no</b></td>
-		<td>wacom.o kernel driver</td></tr>
-<tr><td>--enable-wacdump</td><td><b>yes</b></td>
-		<td>wacdump LinuxInput event monitor</td></tr>
-<tr><td>--enable-xidump</td><td><b>yes</b></td>
-		<td>xidump XInput event monitor</td></tr>
-<tr><td>--enable-libwacomcfg</td><td><b>yes</b></td>
-		<td>libwacomcfg Dynamic library for xsetwacom</td></tr>
-<tr><td>--enable-libwacomxi</td><td><b>yes</b></td>
-		<td>libwacomxi Dynamic library for wacomcpl</td></tr>
-<tr><td>--enable-xsetwacom</td><td><b>yes</b></td>
-		<td>xsetwacom XFree86 wacom driver configuration 
- 		comannd</td></tr>
-<tr><td>--enable-hid</td><td>no</td>
-		<td>hid.o replacement kernel driver (not normally 
-		necessary)</td></tr>
-<tr><td>--enable-usbmouse</td><td>no</td>
-		<td>usbmouse.o replacement kernel driver (not 
-		normally necessary)</td></tr>
-<tr><td>--enable-evdev</td><td>no</td>
-		<td>evdev.o replacement kernel driver (not 
-		normally necessary)</td></tr>
-<tr><td>--enable-mousedev</td><td>no</td>
-		<td>mousedev.o replacement kernel driver (not 
-		normally necessary)</td></tr>
-<tr><td>--enable-wacomdrv</td><td><b>yes</b></td>
-		<td>wacom_drv.o XFree86 driver (binary is 
-		available in prebuilt directory)</td></tr>
-<tr><td>--enable-modver=yes|no</td><td>best guess</td>
-		<td>enables kernel module versioning; usually 
-		guesses correctly, but can be enabled or
-		disabled if not</td></tr>
-<tr><td>--with-kernel=dir</td><td>best guess</td>
-		<td>Specifies the kernel source directory if 
-		configure cannot guess correctly.</td></tr>
-<tr><td>--with-x-src=dir</td><td>none</td>
-		<td>Specifies the X driver build source 
-		directory</td></tr>
-<tr><td>--with-xorg-sdk=dir</td><td>best guess</td>
-		<td>Specifies the Xorg SDK directory</td></tr>
-<tr><td>--with-tcl=dir</td><td>/usr</td>
-		<td>Specifies the tcl directory. The tcl's include 
-		and lib directories should be under this directory.  
-		If tcl.h is not in dir/include, it will be searched
-		under dir directly</td></tr>
-<tr><td>--with-tk=dir</td><td>/usr</td>
-		<td>Specifies the tk directory. If tk is under the 
-		same directory as tcl, this option can be 
-		eliminated. Otherwise, the tk's include and lib 
-		directories should be under this directory. If tk.h  
-		is not in dir/include, it will be searched under 
-		dir directly</td></tr>
-<tr><td>--with-arch=arch</td><td>best guess</td>
-		<td>Specifies the architecture if configure guesses 
-		incorrectly</td></tr>
-<tr><td>--enable-xserver64=yes|no</td><td>best guess</td>
-		<td>enables 64-bit X server. You probably need to 
-		define xlib directory by add option  
-		--with-xlib=xlib-dir so compiler can link with 
-		the right Xlib.</td></tr>
-<tr><td>--with-linux=yes|no</td><td>best guess</td>
-		<td>Specifies if compiled on a Linux system; USB 
-		code is Linux specific</td></tr>
-<tr><td>--with-xlib=yes|no</td><td>best guess</td>
-		<td>Specifies if building xlib-based programs; 
-		xidump uses XInput headers</td></tr>
-<tr><td>--enable-dlloader=yes|no</td><td>best guess</td>
-		<td>Enable dlloader build option and built 
-		wacom_drv.so instead of wacom_drv.o</td></tr>
-</tbody></table>
-
-<h3>Configuration Samples</h3>
-
-<p>Here is a sample output of the script on a Redhat 8.0 system:
-
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$ ./configure
-checking for a BSD-compatible install... /usr/bin/install -c
-checking whether build environment is sane... yes
-...
-checking for processor type... <b>i686</b>
-checking for kernel module versioning... <b>yes</b>
-checking for kernel sources... <b>/usr/src/linux</b>
-checking for XLib include directory... <b>found</b>
-checking for XLib header files... <b>found</b>
-...
-checking for ncurses.h... <b>yes</b>
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - yes
-      kernel source - yes /usr/src/linux
-            XFree86 - no
-               XLib - yes
-                TCL - yes /usr
-                 TK - yes /usr
-           ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
-</pre></blockquote>
-
-<p>If the configure script fails to find something that it is looking 
-for,  it may disable some options that you previously enabled on the 
-command-line. If this happens, check the output for a warning like the 
-following:
-
-</p><blockquote><pre>***
-*** WARNING:
-*** Unable to compile wacom_drv.o without XF86 build environment
-*** wacom_drv.o will not be built
-***
-</pre></blockquote>
-
-<p>In this particular case, the XFree86 driver was enabled, but the 
---with-xf86 option was not specified.  Without the build environment, 
-the module cannot be compiled and was consequently disabled.
-
-
-</p><p>The following sample command-line will build everything but wacdump 
-while disabling module versioning.  It also has a user-specified kernel 
-source directory:
-
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$ ./configure --enable-wacom \
-	--enable-hid --enable-usbmouse --enable-evdev \
-	--enable-moudedev --enable-input --disable-modver \
-	--with-xf86=/usr/src/redhat/BUILD/XFree86-4.2.0 \
-	--with-kernel=/home/jej/src/linux \
-	--disable-wacdump --with-tcl=/usr/local/ActiveTcl
-checking for a BSD-compatible install... /usr/bin/install -c
-checking whether build environment is sane... yes
-...
-checking for processor type... i686
-checking for kernel module versioning... <b>yes</b>
-checking for kernel sources... /usr/src/linux-2.4
-checking for valid XFree86 build environment... <b>ok</b>
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - <b>no</b>
-      kernel source - <b>yes /home/jej/src/linux</b>
-            XFree86 - <b>yes /usr/src/redhat/BUILD/XFree86-4.2.0</b>
-               XLib - yes /usr/X11R6/lib
-                TCL - <b>yes /usr/local/ActiveTcl</b>
-                 TK - <b>yes /usr/local/ActiveTcl</b>
-            ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - <b>yes</b>
-            wacdump - <b>no</b>
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - <b>yes</b>
-         usbmouse.o - <b>yes</b>
-            evdev.o - <b>yes</b>
-         mousedev.o - <b>yes</b>
-            input.o - <b>yes</b>
-        tabletdev.o - no
-        wacom_drv.o - <b>yes</b>
-----------------------------------------
-</pre></blockquote>
-
-<p>Notice that the configure script guessed module versioning was 
-enabled by default, but was disabled by the command-line option 
---disable-modver.  Similarly, the wacdump program which is enabled 
-by default was also disabled.  All the kernel modules and the 
-XFree86 wacom driver are enabled.
-
-
-</p><p>Here is another sample from Red Hat Enterprise Linux ES v.4:
-
-</p><blockquote><pre>[jej@ayukawa linuxwacom-x86-64]$ ./configure \
-		--enable-wacom --enable-hid \
-		--with-xf86=/home/jej/Desktop/X11R6.8 \
-		--with-tcl=/usr/local/ActiveTcl \
-		<b>--enable-xserver64 \
-		--with-xlib=/usr/X11R6/lib64 </b>
-checking for a BSD-compatible install... /usr/bin/install -c
-checking whether build environment is sane... yes
-...
-checking build system type... x86_64-redhat-linux-gnu
-checking host system type... x86_64-redhat-linux-gnu
-checking for ld used by g++... /usr/bin/ld -m elf_x86_64
-...
-
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - <b>x86-64</b>
-       linux kernel - yes 2.6.9
-  module versioning - yes -DCONFIG_MODVERSIONS -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h
-      kernel source - yes /usr/src/linux
-            XFree86 - yes /home/jej/Desktop/X11R6.8
-          XSERVER64 - <b>yes</b>
-               XLib - <b>yes /usr/X11R6/lib64</b>
-                TCL - yes /usr/local/ActiveTcl
-                 TK - yes /usr/local/ActiveTcl
-            ncurses - yes
-
-  BUILD OPTIONS:
-            wacom.o - yes
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - yes
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - yes
-----------------------------------------
-</pre></blockquote>
-
 <a name="root">
-</a><h2><a name="root">2.4 - The Root Account</a></h2>
+</a><h2><a name="root">2.3 - The Root Account</a></h2>
 <p><a name="root">If you are comfortable with the root account, paths, the /sbin directory,
 and programs like <i>modprobe</i>, you can skip this section.  This is largely
 to clarify some things for people who are new to Linux and get tripped up
@@ -921,13 +579,390 @@ use the <i>exit</i> command or type Ctrl-D on an empty line.
 <p><a name="root">If any of this is not explained clearly, drop me a line and let me know
 where you got stuck.  I'd be happy to clarify directly and update this page
 for future readers.
-</a><a name="kernel">
-</a></p><h1><a name="kernel">3.0 - The USB Kernel Driver</a></h1>
+</a><a name="install">
+</a></p><h2><a name="install">2.4 - Install from Prebuilt </a></h2>
+
+<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.7.8-1/prebuilt;  one for x86-32 
+systems, the other for x86-64 systems.  
+
+</a></p><p><a name="install">If you don't plan to change anything in the driver, following steps will install the prebuilt files for you:
+
+</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.7.8-1/prebuilt
+[jej@ayukawa prebuilt]$ su
+[jej@ayukawa prebuilt]# ./uninstall
+[jej@ayukawa prebuilt]# ./install
+</a></pre></blockquote>
+
+<p><a name="install">Serial tablet (most Tablet PCs are serial) users can skip the rest 
+sections and go to </a><a href="#wacdump">Using wacdump</a> page for details on viewing the tablet output now.  
+
+</p><p>If you use an older USB tablet and your running kernel was
+released 6 months later than your tablet was first seen in market, you
+most probably can skip next section of this chapter and the whole
+chapter 4 too. If you would like to make certain, continue to next
+section. <a name="config">
+</a></p><h2><a name="config">2.5 - Configuring the Package</a></h2>
+
+<p><a name="config">This section describes how to configure the package.  You can run 
+the configure script now as the samples below demonstrate, or later 
+when you reach the section of the document that explains what 
+specifically needs to be configured and why.  This page is provided 
+largely as a reference.
+
+</a></p><p><a name="config">By default, xidump, wacdump, xsetwacom, wacom_drv.o, and wacomcpl 
+are built.  Additional options include replacement of kernel drivers 
+for hid, mousedev, evdev, and usbmouse as well as building the 
+XFree86/Xorg driver from scratch.  Lastly, remember that for every 
+--enable option,  there is also an equivalent --disable option.
+
+</a></p><p><a name="config">The configuration options are listed on this page. You can also 
+see the online list by issuing <i>./configure -help</i> under 
+linuxwacom's base directory.
+
+</a></p><h3><a name="config">Building Kernel Modules - USB Only</a></h3>
+
+<p><a name="config">In order to build kernel modules, you will need the kernel source 
+installed on your system.  If you are running on Redhat or Mandrake, 
+you can get it by installing the kernel-source RPM.
+
+</a></p><p><a name="config">The kernel source directory is assumed to be in /usr/src/linux-2.4, 
+/usr/src/linux, /usr/src/linux-2.6, /usr/src/linux-`uname -r`, or 
+/lib/modules/`uname -r`/source.  If your kernel sources are elsewhere, 
+you will need to specify the directory with the --with-kernel option 
+described below.
+
+</a></p><p><a name="config">For older 2.6 kernels, you need to configure the kernel modules (wacom 
+and hid) under your kernel source directory before configuring linuxwacom. 
+
+</a></p><p class="diff"><a name="config">Note, for kernel 2.6.18 and later, no need to build hid 
+any more. Refer to </a><a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
+
+<h3>Module Versioning - USB Only</h3>
+
+<p>The script attempts to discover if the kernel is using module 
+versioning by detecting the presence of version numbers in the hid.o 
+module of the currently active kernel.  Recent package versions also 
+check for hid.o.gz which exist on Mandrake systems.  The configure 
+script may not be able to determine if kernel module versioning 
+should be enabled or not, in which case it will say "unknown, 
+assuming no."
+
+</p><p>If module versioning is disabled when it should be enabled, depmod 
+will complain about missing symbols but otherwise, things will probably 
+work fine. If it is enabled when it should be disabled, the code may 
+not compile, and it almost certainly will not load properly.  If the 
+configure script fails to determine the correct value, the default 
+action of disabling module versioning is the better choice, and you can 
+allows enable it manually and rebuild if depmod complains.
+
+</p><h3>The XFree86/Xorg XInput Driver - USB and Serial</h3>
+
+<p>Generally, you will not need to build wacom_drv.o since it ships in 
+binary form in the prebuilt directory.  There are prebuilt binaries for 
+XFree86 and Xorg corresponding to x86 and x86-64 systems, respectively.  
+If no one works for you, building from source may be your only option.  
+See the <a href="#builddrv">Building wacom_drv.o from Scratch</a> 
+page for more information.
+
+</p><h3>Library Dependencies - ncurses and XLib</h3>
+
+<p>Various utilities in the linuxwacom package require not only specific 
+libraries, but their development header files as well.  The ncurses 
+package is one such example.  Most distributions install the ncurses 
+libraries by default, but the header files are often located in a 
+separate package.  You will need both.  On Redhat 8.0, they can be 
+found in the ncurses-devel RPM.
+
+</p><p>Similarly, if you wish to test your tablet using xidump to view 
+XFree86/Xorg input events, you will need the XFree86/Xorg development 
+headers.  On Redhat/Fedore Core, they are contained in the XFree86-devel/xorg-sdk package.
+
+</p><p>If any packages are missing, the configuration will warn you and 
+disable building any programs that depend on them. 
+
+</p><h3>Processor Type</h3>
+
+<p>The processor type is determined by the script and used to build the 
+kernel modules.  If it guesses incorrectly, or you would prefer a  
+different setting, use the --with-arch option described below.
+
+</p><h3>Linux Specific Features</h3>
+
+<p>The Linux wacom driver uses the Linux input subsystem, as does the
+USB portions of the XFree86/Xorg driver. Consequently, if you are
+building on a non-Linux system, the USB code will not work for you.
+This is detected, and a comment to that effect is added to the
+configuration summary. I recognize that FreeBSD and similar systems
+have USB support; however, until someone can bridge the gap between the
+FreeBSD kernel and the XFree86/X.org driver, the problem is largely
+unsolved. Contributions are of course welcome. The Linux-specific
+features can be enabled/disabled using the --with-linux argument.
+</p><h3>Configuration Options</h3>
+
+The following options are provided as reference.  Normally, you will 
+only need a few of these options.  Some obscure systems or you want to 
+build a driver for another platform may need all of them.  Each section 
+of the document identifies which options are needed and when.<br><br>
+
+<table border="0" cellspacing="5">
+<tbody><tr><th align="left">Option</th><th align="left">Default</th>
+		<th align="left">Builds</th></tr>
+<tr><td>--enable-wacom</td><td><b>no</b></td>
+		<td>wacom.o kernel driver</td></tr>
+<tr><td>--enable-wacdump</td><td><b>yes</b></td>
+		<td>wacdump LinuxInput event monitor</td></tr>
+<tr><td>--enable-xidump</td><td><b>yes</b></td>
+		<td>xidump XInput event monitor</td></tr>
+<tr><td>--enable-libwacomcfg</td><td><b>yes</b></td>
+		<td>libwacomcfg Dynamic library for xsetwacom</td></tr>
+<tr><td>--enable-libwacomxi</td><td><b>yes</b></td>
+		<td>libwacomxi Dynamic library for wacomcpl</td></tr>
+<tr><td>--enable-xsetwacom</td><td><b>yes</b></td>
+		<td>xsetwacom XFree86 wacom driver configuration 
+ 		comannd</td></tr>
+<tr><td>--enable-hid</td><td>no</td>
+		<td>hid.o replacement kernel driver (not normally 
+		needed)</td></tr>
+<tr><td>--enable-usbmouse</td><td>no</td>
+		<td>usbmouse.o replacement kernel driver (not 
+		normally needed)</td></tr>
+<tr><td>--enable-evdev</td><td>no</td>
+		<td>evdev.o replacement kernel driver (not 
+		normally needed)</td></tr>
+<tr><td>--enable-mousedev</td><td>no</td>
+		<td>mousedev.o replacement kernel driver (not 
+		normally needed)</td></tr>
+<tr><td>--enable-wacomdrv</td><td><b>yes</b></td>
+		<td>wacom_drv.o XFree86 driver (binary is 
+		available in prebuilt directory)</td></tr>
+<tr><td>--enable-modver=yes|no</td><td>best guess</td>
+		<td>enables kernel module versioning; usually 
+		guesses correctly, but can be enabled or
+		disabled if not</td></tr>
+<tr><td>--with-kernel=dir</td><td>best guess</td>
+		<td>Specifies the kernel source directory if 
+		configure cannot guess correctly.</td></tr>
+<tr><td>--with-x-src=dir</td><td>best guess</td>
+		<td>Specifies the X driver build source 
+		directory</td></tr>
+<tr><td>--with-xorg-sdk=dir</td><td>best guess</td>
+		<td>Specifies the Xorg SDK directory</td></tr>
+<tr><td>--with-tcl=dir</td><td>/usr</td>
+		<td>Specifies the tcl directory. The tcl's include 
+		and lib directories should be under this directory.  
+		If tcl.h is not in dir/include, it will be searched
+		under dir directly</td></tr>
+<tr><td>--with-tk=dir</td><td>/usr</td>
+		<td>Specifies the tk directory. If tk is under the 
+		same directory as tcl, this option can be 
+		eliminated. Otherwise, the tk's include and lib 
+		directories should be under this directory. If tk.h  
+		is not in dir/include, it will be searched under 
+		dir directly</td></tr>
+<tr><td>--with-arch=arch</td><td>best guess</td>
+		<td>Specifies the architecture if configure guesses 
+		incorrectly</td></tr>
+<tr><td>--enable-xserver64=yes|no</td><td>best guess</td>
+		<td>enables 64-bit X server. You probably need to 
+		define xlib directory by adding option  
+		--with-xlib=xlib-dir so compiler can link with 
+		the right Xlib.</td></tr>
+<tr><td>--with-linux=yes|no</td><td>best guess</td>
+		<td>Specifies if compiled on a Linux system; USB 
+		code is Linux specific</td></tr>
+<tr><td>--with-xlib=yes|no</td><td>best guess</td>
+		<td>Specifies if building xlib-based programs; 
+		xidump uses XInput headers</td></tr>
+<tr><td>--enable-dlloader=yes|no</td><td>best guess</td>
+		<td>Enable dlloader build option and built 
+		wacom_drv.so instead of wacom_drv.o</td></tr>
+</tbody></table>
+
+<h3>Configuration Samples</h3>
+
+<p>Here is a sample output of the script on a Fedora Core 5 system:
+
+</p><blockquote><pre>[jej@ayukawa linuxwacom]$ ./configure
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+...
+checking for arch type... <b>i386-redhat-linux</b>
+checking for kernel type... <b>Linux</b>
+checking for linux-based kernel... <b>yes</b>
+checking for kernel sources... <b>/lib/modules/2.6.20-1.2320.fc5/source</b>
+checking for kernel module support... <b>yes</b>
+checking for kernel module versioning... <b>yes</b>
+checking for valid Xorg SDK... <b>ok</b>
+checking for X... <b>libraries , headers</b>
+...
+checking for X lib directory... <b>found</b>
+checking for tclsh... <b>/usr/bin/tclsh</b>
+checking for tcl version... <b>8.4</b>
+checking for tcl header files... <b>/usr/include/</b>
+checking for tk header files... <b>found</b>
+checking ncurses.h usability... <b>yes</b>
+checking ncurses.h presence... <b>yes</b>
+checking for ncurses.h... <b>yes</b>
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i386-redhat-linux
+       linux kernel - yes 2.6.19
+  module versioning - yes -DCONFIG_MODVERSIONS -DMODVERSIONS -include /lib/modules/2.6.20-1.2320.fc5/source/include/linux/modversions.h
+      kernel source - yes /lib/modules/2.6.20-1.2320.fc5/source
+           Xorg SDK - yes /usr/include/xorg
+          XSERVER64 - no 
+           dlloader - yes 
+               XLib - yes /usr/lib
+                TCL - yes /usr/include
+                 TK - yes /usr/include
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - no
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+       wacom_drv.so - yes /usr/lib/xorg/modules/input
+        wacom_drv.o - no
+----------------------------------------
+</pre></blockquote>
+
+<p>If the configure script fails to find something that it is looking 
+for,  it may disable some options that you previously enabled on the 
+command-line. If this happens, check the output for a warning like the 
+following:
+
+</p><blockquote><pre>checking for valid XFree86/X.org build environment... xf86Version.h missing
+Tried /usr/programs/Xserver/hw/xfree86 and /usr/xc/programs/Xserver/hw/xfree86
+...
+***
+*** WARNING:
+*** Unable to compile wacom_drv.{o,so}
+*** without Xorg SDK or XFree86 build environment
+*** wacom_drv.o will not be built
+***
+</pre></blockquote>
+
+<p>In this particular case, the X driver was enabled. The 
+--with-x-src option was not specified.  And the configure can not find 
+the header file, xf86Version.h, under any of the predefined paths.  
+Without the build environment, the module cannot be compiled and was consequently disabled. 
+
+
+</p><p>The following sample command-line will build everything but wacdump 
+while disabling module versioning.  It also has a user-specified kernel 
+source directory:
+
+</p><blockquote><pre>[jej@ayukawa linuxwacom]$ ./configure --enable-wacom \
+	--enable-hid --enable-usbmouse --enable-evdev \
+	--enable-moudedev --enable-input --disable-modver \
+	--with-x-src=/usr/src/redhat/BUILD/XFree86-4.2.0 \
+	--with-kernel=/home/jej/src/linux \
+	--disable-wacdump --with-tcl=/usr/local/ActiveTcl
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+...
+checking for processor type... i686
+checking for kernel module versioning... <b>yes</b>
+checking for kernel sources... /usr/src/linux-2.4
+checking for valid XFree86 build environment... <b>ok</b>
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i686
+       linux kernel - yes 2.4
+  module versioning - <b>no</b>
+      kernel source - <b>yes /home/jej/src/linux</b>
+            XFree86 - <b>yes /usr/src/redhat/BUILD/XFree86-4.2.0</b>
+               XLib - yes /usr/X11R6/lib
+                TCL - <b>yes /usr/local/ActiveTcl</b>
+                 TK - <b>yes /usr/local/ActiveTcl</b>
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - <b>yes</b>
+            wacdump - <b>no</b>
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - <b>yes</b>
+         usbmouse.o - <b>yes</b>
+            evdev.o - <b>yes</b>
+         mousedev.o - <b>yes</b>
+            input.o - <b>yes</b>
+        tabletdev.o - no
+        wacom_drv.o - <b>yes</b>
+----------------------------------------
+</pre></blockquote>
+
+<p>Notice that the configure script guessed module versioning was 
+enabled by default, but was disabled by the command-line option 
+--disable-modver.  Similarly, the wacdump program which is enabled 
+by default was also disabled.  All the kernel modules and the 
+XFree86 wacom driver are enabled.
+
+
+</p><p>Here is another sample from Red Hat Enterprise Linux ES v.4:
+
+</p><blockquote><pre>[jej@ayukawa linuxwacom-x86-64]$ ./configure \
+		--enable-wacom --enable-hid \
+		--with-xf86=/home/jej/Desktop/X11R6.8 \
+		--with-tcl=/usr/local/ActiveTcl \
+		<b>--enable-xserver64 \
+		--with-xlib=/usr/X11R6/lib64 </b>
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+...
+checking build system type... x86_64-redhat-linux-gnu
+checking host system type... x86_64-redhat-linux-gnu
+checking for ld used by g++... /usr/bin/ld -m elf_x86_64
+...
+
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - <b>x86-64</b>
+       linux kernel - yes 2.6.9
+  module versioning - yes -DCONFIG_MODVERSIONS -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h
+      kernel source - yes /usr/src/linux
+            XFree86 - yes /home/jej/Desktop/X11R6.8
+          XSERVER64 - <b>yes</b>
+               XLib - <b>yes /usr/X11R6/lib64</b>
+                TCL - yes /usr/local/ActiveTcl
+                 TK - yes /usr/local/ActiveTcl
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - yes
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - yes
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+        wacom_drv.o - yes
+----------------------------------------
+</pre></blockquote>
+
+<a name="kernel">
+</a><h1><a name="kernel">3.0 - The USB Kernel Driver</a></h1>
 <p><a name="kernel">Serial tablet users rejoice: you can skip this entire section.  Please
 go to the </a><a href="#wacdump">Using wacdump</a> page for details on viewing the tablet output.
 USB users stay put; we need to tweak your kernel.
-
-<br><br><br>
 
 </p><p>Kernel modules must be recompiled for each new kernel so I can't
 just provide binaries.  By the time you read this, my present kernel
@@ -937,8 +972,8 @@ will be entirely out of date with yours. </p>
 from the Linux Wacom Project, so I wholly recommend using them over the
 drivers provided by your standard distribution.  Rest assured, continuous 
 efforts are being made to get these changes merged back into the Linux 
-kernel. However, the changes can normally only merged into the next kernel 
-release, instead of the current one. </p>
+kernel. However, the changes can normally only merged into the next 
+kernel release, instead of the current one. </p>
 
 <p>For those who don't like upgrading kernels, here is a safe statement: 
 if you are not using a newly released tablet model and you are running a 
@@ -953,7 +988,7 @@ kernel related modules. </p>
 </a><h2><a name="testtablet">3.1 - Testing Tablet Detection</a></h2>
 
 <p><a name="testtablet">In this section we will determine which driver, if any, claims control 
-over the tablet.  There are at least three drivers that are interested: 
+over the tablet.  There are at least three drivers that are interested:  <br>
 1) (usb)hid.o which may think it is an HID device, <br>
 2) usbmouse.o which may think it is an HID mouse (for kernel 2.4), and <br>
 3) the wacom driver which should identify the tablet as its own.  <br>
@@ -1002,22 +1037,22 @@ The exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="testtablet">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Jun 26 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Jun 26 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Jun 26 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
-Jun 26 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
-Jun 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
-Jun 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
+Jul 24 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Jul 24 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Jul 24 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
+Jul 24 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
+Jul 24 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
+Jul 24 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
 </a></pre>
 <pre class="diff"><a name="testtablet">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Jun 26 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Jun 26 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Jun 26 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Jun 26 21:28:39 sasami kernel: usb.c: registered new driver hid
-Jun 26 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jun 26 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Jun 26 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Jul 24 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Jul 24 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Jul 24 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Jul 24 21:28:39 sasami kernel: usb.c: registered new driver hid
+Jul 24 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jul 24 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Jul 24 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -1034,37 +1069,106 @@ driver <i>did not get control</i>.  Either hid or usbmouse did.
 <pre></pre></pre></blockquote>
 <a name="newwacom">
 </a><h2><a name="newwacom">3.2 - Updated wacom.c</a></h2>
-<p><a name="newwacom">The wacom.c driver that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8.tar.bz2">linuxwacom-0.7.8.tar.bz2</a> supports Bamboo, which will be available in kernel version 2.6.23. 
+<p><a name="newwacom">The wacom.c driver that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8-1.tar.bz2">linuxwacom-0.7.8-1.tar.bz2</a> supports Bamboo, which will be available in kernel version 2.6.23. 
 
 </p><p>The driver also added a few new xsetwacom commands that help you change X driver settings from user space.
 
 </p><div class="diff">On newer kernel versions, 2.6.8 or later, you can
-link Wacom USB tablet to "/dev/input/wacom#", where # is a number when
-you have more than one Wacom tablet on the system. It can be done by
-adding the following rules in /etc/udev/rules.d/10-wacom.rules. Some
+link Wacom USB tablet to "/dev/input/wacom". It can be done by adding
+the following rules in /etc/udev/rules.d/10-wacom.rules. Some
 distributions use a different number for the file name. Please look for
 proper one with wacom under /etc/udev/rules.d.
-<blockquote><pre>KERNEL=="event*", SYSFS{idVendor}=="056a", NAME="input/%k", SYMLINK="input/wacom%e" 
+<blockquote><pre>KERNEL=="event*", SYSFS{idVendor}=="056a", NAME="input/%k", SYMLINK="input/wacom" 
 </pre></blockquote>
+</div>
 
+<div class="diff">
 <p>Some Fedora Core and RHEL releases use SYSFS{manufacturer}="WACOM" 
 instead of SYSFS{idVendor}=="056a" in the file, which is wrong. You need 
 to modify it. Some can not translate NAME="input/%k". You need to remove 
-it. And some translate SYMLINK="input/wacom%e" into input/wacom%e instead 
-of input/wacom#, where # is a number.  The following format is recommended. 
+it. 
+</p></div>
 
-</p><p>If you only have one Wacom tablet, SYMLINK="input/wacom" instead of 
-SYMLINK="input/wacom%e" to avoid port changes after hot-plugging the device.  
+<p>If you have more than one Wacom tablets plugged on the system, specify  the link with product id is recommanded (refer to <a href="#testtablet">Testing Tablet Detection</a> to see the ways to get your tablet's product id). Below is an example from Debian GNU/Linux distribution:
 
-</p><p>If you have more than one Wacom tablets plugged on the system, specify the link with 
-product id is recommanded (refer to <a href="#testtablet">Testing Tablet Detection</a> to see the ways to get your tablet's product id):
+</p><div class="diff">
+<blockquote><pre># udev rules for wacom tablets.
+# These rules were compiled for the Debian GNU/Linux distribution,
+# but others may, and indeed are encouraged to, use them also.
+#
+# Should you do so, PLEASE CO-ORDINATE ANY CHANGES OR ADDITIONS
+# of new devices with Ron <ron@debian.org> so that we can try
+# to present users with with a standard set of device nodes
+# which they can rely on across the board.
 
-</p><blockquote><pre>KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b5", NAME="input/%k", SYMLINK="input/intuos3" 
-KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0015", NAME="input/%k", SYMLINK="input/graphire4"
-</pre></blockquote>
- 
+# Convenience link for the common case of a single tablet.
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYMLINK="input/wacom"
 
+# You probably won't need this IMPORT rule, since an earlier file is
+# likely to have already done it, but the rule that follows it does
+# depend on that having happened to set ID_PATH.
+# IMPORT{program}="path_id %p"
+
+# Port specific link for users of multiple tablets of the same type.
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", ENV{ID_PATH}=="?*", SYMLINK+="input/by-path/$env{ID_PATH}-wacom"
+
+# Type-named links for multiple tablets.  If you want to use multiple
+# tablets of the _same_ type, you will probably need to use the links
+# from /dev/input/by-path to identify which is plugged into what usb
+# port.  For different types though, just pick your links from the
+# list below.
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0000", SYMLINK+="input/tablet-penpartner"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0010", SYMLINK+="input/tablet-graphire"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0011", SYMLINK+="input/tablet-graphire2-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0012", SYMLINK+="input/tablet-graphire2-5x7"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0013", SYMLINK+="input/tablet-graphire3"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0014", SYMLINK+="input/tablet-graphire3-6x8"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0015", SYMLINK+="input/tablet-graphire4-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0016", SYMLINK+="input/tablet-graphire4-6x8"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0060", SYMLINK+="input/tablet-volito"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0061", SYMLINK+="input/tablet-penstation2"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0062", SYMLINK+="input/tablet-volito2-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0063", SYMLINK+="input/tablet-volito2-2x3"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0064", SYMLINK+="input/tablet-penpartner2"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0065", SYMLINK+="input/tablet-bamboo"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0020", SYMLINK+="input/tablet-intuos-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0021", SYMLINK+="input/tablet-intuos-6x8"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0022", SYMLINK+="input/tablet-intuos-9x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0023", SYMLINK+="input/tablet-intuos-12x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0024", SYMLINK+="input/tablet-intuos-12x18"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0030", SYMLINK+="input/tablet-pl400"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0031", SYMLINK+="input/tablet-pl500"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0032", SYMLINK+="input/tablet-pl600"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0033", SYMLINK+="input/tablet-pl600sx"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0034", SYMLINK+="input/tablet-pl550"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0035", SYMLINK+="input/tablet-pl800"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0037", SYMLINK+="input/tablet-pl700"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0038", SYMLINK+="input/tablet-pl510"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0039", SYMLINK+="input/tablet-dtu710"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c0", SYMLINK+="input/tablet-dtf521"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c4", SYMLINK+="input/tablet-dtf720"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0003", SYMLINK+="input/tablet-cintiq_partner"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0041", SYMLINK+="input/tablet-intuos2-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0042", SYMLINK+="input/tablet-intuos2-6x8"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0043", SYMLINK+="input/tablet-intuos2-9x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0044", SYMLINK+="input/tablet-intuos2-12x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0045", SYMLINK+="input/tablet-intuos2-12x18"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b0", SYMLINK+="input/tablet-intuos3-4x5"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b1", SYMLINK+="input/tablet-intuos3-6x8"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b2", SYMLINK+="input/tablet-intuos3-9x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b3", SYMLINK+="input/tablet-intuos3-12x12"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b4", SYMLINK+="input/tablet-intuos3-12x19"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b5", SYMLINK+="input/tablet-intuos3-6x11"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="003f", SYMLINK+="input/tablet-cintiq21ux"
+KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0047", SYMLINK+="input/tablet-intuos2-6x8a"
+</ron@debian.org></pre></blockquote>
 </div>
+
+<div class="diff">Newer Mandriva Linux (Mandriva 2007 Spring and later)
+has an application called mousedrake which takes care of the setup and
+configuration of linuxwacom driver. If you use Mandriva Linux and you
+see InputDevice sections for Wacom device in your Xorg.conf, chances
+are your system is ready for you to draw. </div>
 
 <a name="buildwacom">
 </a><h2><a name="buildwacom">3.3 - Building wacom.c (for kernel 2.4)</a></h2>
@@ -1249,18 +1353,18 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Jun 26 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Jun 26 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Jun 26 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Jun 26 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Jun 26 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.7.8</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jun 26 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (<b>MODIFIED-DEBUG</b>)
+Jul 24 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Jul 24 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Jul 24 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Jul 24 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Jul 24 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.7.8-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jul 24 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (<b>MODIFIED-DEBUG</b>)
 
 </pre></blockquote>
 
 <p>The important detail is the version number.  A version number like "1.30"
 is an original kernel version and not from the linuxwacom package.  The
-correct version should also have the -0.7.8 portion as
+correct version should also have the -0.7.8-1 portion as
 well.  Also, future versions of the driver will say "LINUXWACOM-DEBUG" or
 similar rather than "MODIFIED-DEBUG" as shown above.  This is to help
 differentiate between the stock kernel driver and those available from the
@@ -1387,17 +1491,17 @@ if it cannot find the one you have specified.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Jun 26 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Jun 26 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.7.8</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jun 26 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Jul 24 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Jul 24 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.7.8-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jul 24 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.43.  This version number
-is 1.43-0.7.8 so the correct driver was loaded.</a></p>
+is 1.43-0.7.8-1 so the correct driver was loaded.</a></p>
 <a name="buildhid">
 </a><h2><a name="buildhid">3.8 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.4)</a></h2>
 
-<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8.tar.bz2">linuxwacom-0.7.8.tar.bz2</a>
+<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8-1.tar.bz2">linuxwacom-0.7.8-1.tar.bz2</a>
 file, you will find mousedev.c, usbmouse.c, hid-core.c, evdev.c, and
 input.c files which have special exceptions for wacom. These files are
 not built by default, so you will need to reconfigure the package and
@@ -1456,12 +1560,12 @@ files to get .o.gz files.</span>
 <a name="buildhid6">
 </a><h2><a name="buildhid6">3.9 - Building (usb)hid.ko (for kernel 2.6)</a></h2>
 
-<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8.tar.bz2">linuxwacom-0.7.8.tar.bz2</a>
+<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.8-1.tar.bz2">linuxwacom-0.7.8-1.tar.bz2</a>
 file, you will find hid-core.c, which have special exceptions for
 wacom. This file is not built by default, so you will need to
 reconfigure the package and run make again. </p><p class="diff">Note, for kernel 2.6.18 and later, no need to build hid any more. For other kernels, refer to <a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
 
-<p>As for wacom.c, you need to configure usbhid as a module under your kernel source tree before configuring linuxwacom. 
+<p>You need to configure usbhid as a module under your kernel source tree before configuring linuxwacom. 
 
 </p><p class="diff">On some distributions, Mandrake or Mandriva
 included, the (usb)hid.ko driver that located in the kernel modules
@@ -1476,9 +1580,9 @@ and copy (usb)hid.ko.gz instead.</p>
 </pre></blockquote>
 
 <p>Kernel 2.6.11 and 2.6.12 are in src/2.6.11. Kernels 2.6.16 and
-2.6.17 are handled in src/2.6.16. All the other kernels are processed
-in its own src/2.6.x. New 2.6 directories will be created when
-compatibility issue occurs.
+2.6.17 are handled in src/2.6.16. Kernels 2.6.18/19/20/21/22 are in
+src/2.6.18. All the other kernels are processed in its own src/2.6.x.
+New 2.6 directories will be created when compatibility issue occurs.
 </p><blockquote><div class="diff">For those who like to build everything from 
 the source tree, please skip the make and install steps below. Scroll down to the end of this 
 page to see the steps with light blue background.
@@ -1534,30 +1638,38 @@ directory to the source tree and rebuild the kernel. An example for kernel 2.6.9
 <a name="newtablet">
 </a><h2><a name="newtablet">3.10 - Unknown Tablet?</a></h2>
 <a name="newtablet">To determine whether your device is listed in the driver, we need to determine
-the device identifier.  It can be discovered by doing the following:
+the device identifier.  It can be discovered by issuing <i>more /proc/bus/usb/devices</i>:
 
-</a><blockquote><pre><a name="newtablet">[root@ayukawa root]# grep -i 56a /var/log/messages | tail -10
-Jun 26 21:03:09 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44/115</b>
-Jun 26 21:27:48 ayukawa kernel: usb.c: USB device 2 (vend/prod <b>0x56a/0x44</b>) is not claimed by any active driver.
+</a><blockquote><pre><a name="newtablet">[jej@ayukawa linuxwacom]# more /proc/bus/usb/devices
+T:  Bus=01 Lev=01 Prnt=01 Port=01 Cnt=02 Dev#=  3 Spd=12  MxCh= 0
+D:  Ver= 1.10 Cls=00(&gt;ifc ) Sub=00 Prot=00 MxPS= 8 #Cfgs=  1
+P:  <b>Vendor=056a ProdID=0044</b> Rev= 1.15
+S:  Manufacturer=Tablet
+S:  <b>Product=XD-1212-U</b>
+C:* #Ifs= 1 Cfg#= 1 Atr=80 MxPwr=140mA
+I:  If#= 0 Alt= 0 #EPs= 1 Cls=03(HID  ) Sub=01 Prot=02 Driver=wacom
+E:  Ad=81(I) Atr=03(Int.) MxPS=  10 Ivl=5ms
 </a></pre></blockquote>
 
-<p><a name="newtablet">In this case, the tablet identifier is 56a/44 (also written 0x56a/0x44).
-The model is determined by the second number; the Intuos2 12x12 is 0x44 for
-instance.
+<p><a name="newtablet">In this case, the tablet identifier is in Vendor=056a ProdID=<b>0044</b>.
+The model (<b>Product=XD-1212-U</b>) is determined by ProdID; the Intuos2 12x12 is 0x44 for instance.
 
-</a></p><p><a name="newtablet">In the wacom.c file, you will find a table called "wacom_ids." Look for
-your device identifier.  Only the identifiers listed are handled by the
-wacom driver, so if it is missing, it needs to be added.  Also look in
-hid-core.c.  It has a table called "hid_blacklist" which identifies devices
-to ignore.  The code is a little strange, but PENPARTNER is 0x00, GRAPHIRE is
-0x10, INTUOS is 0x20, PL is 0x30, and INTUOS2 is 0x40.  A table entry like
-INTUOS2 + 4 would therefore be 0x44.
+</a></p><p><a name="newtablet">In the wacom.c/wacom_wac.c file, you
+will find a table called "wacom_ids". Look for your device identifier.
+Only the identifiers listed are handled by the wacom driver, so if it
+is missing, it needs to be added. Also look for routine
+usb_hid_configure() in hid-core.c. At the beginning of the routine, we
+added the following lines to let HID driver ignore all Wacom devices:
+</a></p><blockquote><pre><a name="newtablet">	/* ignore all Wacom devices */
+	if (dev-&gt;descriptor.idVendor == USB_VENDOR_ID_WACOM)
+		return NULL;
+</a></pre></blockquote>
 
-</a></p><p><a name="newtablet">If you've gotten this far, and still cannot get it to work, send me email
-with your device identifier and as much of an explanation of where things did
-and did not work as described.  I'll see what I can do about at least finding
-out why it did not work.  Then we can go on to solutions.
-
+<p><a name="newtablet">If you've gotten this far, and still cannot get
+it to work, email me with your device identifier and as much of an
+explanation of where things did and did not work as described. I'll see
+what I can do about at least finding out why it did not work. Then we
+can go on to solutions.
 </a></p><p><a name="newtablet">The next section assumes you have things working up to this point.
 
 </a><a name="viewdata">
@@ -1588,10 +1700,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# /sbin/rmmod wacom
 [jej@sasami root]# /sbin/modprobe wacom       (or /sbin/insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Jun 26 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Jun 26 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Jun 26 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Jun 26 17:31:35 sasami kernel: wacom.c: v1.43-0.7.8 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jul 24 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Jul 24 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Jul 24 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Jul 24 17:31:35 sasami kernel: wacom.c: v1.43-0.7.8-1 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -1616,42 +1728,16 @@ look at for mouse movement.  Use Ctrl-C to exit xxd.
 </a></p><h1><a name="wacdump">4.0 - Using wacdump</a></h1>
 <p><a name="wacdump">The wacdump program parses and displays raw data from the Linux event
 subsystem or serial port.  It is very handy for verifying that your
-tablet works without having to hassle with XFree86.  Generally, you
+tablet works without having to hassle with X server.  Generally, you
 must be root to run it unless you've set the permissions on the
 appropriate device such that you can read them.
-
-</a></p><p><a name="wacdump"><b>Building wacdump</b>
-
-</a></p><p><a name="wacdump">Serial users who have been following along will not have built wacdump by
-this point while USB users should already have it.
-wacdump is enabled by default in the configure script, so let's do that now:
-
-</a></p><blockquote><pre><a name="wacdump">[jej@ayukawa linuxwacom]$ ./configure
-...
-----------------------------------------
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - <b>yes</b>
-              hid.o - no
-         usbmouse.o - no
-        wacom_drv.o - no
-----------------------------------------
-</a></pre></blockquote>
-
-<p><a name="wacdump">As shown above, the build options indicate that wacdump will be built.  If
-not, then scroll back through the configuration to see if there aren't any
-errors or warnings that would explain this.
-
-</a></p><p><a name="wacdump">Next, run <i>make</i>.  The output will be a file called wacdump in the
-linuxwacom package's src directory.  Running <i>make install</i>, will install
-it under /usr/local/bin.
 
 </a></p><p><a name="wacdump"><b>Running wacdump</b>
 
 </a></p><p><a name="wacdump">In the case of USB tablets, this program can run simultaneously with X,
 but it's best if X has not been configured for the tablet yet.  X will
 not share the serial port with wacdump, so serial users should comment out the
-wacom InputDevice sections from XF86Config (and/or XF86Config-4) before
+wacom InputDevice sections from XF86Config (or xorg.conf) before
 using.  Alternatively, you could move your serial tablet to COM2 and
 try /dev/ttyS1 instead.
 
@@ -1684,7 +1770,7 @@ This is now deprecated.  You should instead specify which device to use
 on the command line directly.  If you get an end-of-file error or the
 device does not exist, then the wacom may be attached to a different event.
 Serial users may experience a timeout error which indicates that either
-the tablet is not responding or XFree86 has it open.  Access denied errors
+the tablet is not responding or X server has it open.  Access denied errors
 probably indicate that
 </a><a href="#root">you are not root</a>.
 If you get different types of errors, let me know so we can get them
@@ -1732,12 +1818,12 @@ such as Intuos 1, 2, and 3 as well as Cintiq 21UX) provide serial numbers
 for their tools.  When a button is pressed, the button heading will change
 to something like "STYLUS=DOWN".
 
-</p><p> Some tablet tools report wheel movements as single increments forward and
-reverse, while others provide absolute positions.  The 4D mouse has a throttle
-instead of a wheel.  All three cases are reported independently.
+</p><p> Some tablet tools report wheel movements as single increments forward 
+and reverse, while others provide absolute positions.  The 4D mouse has a 
+throttle instead of a wheel.  All three cases are reported independently.
 
-</p><p>Different tablets will have different options.  Here is the lowly ArtPadII
-for comparison.
+</p><p>Different tablets will have different options.  Here is the lowly 
+ArtPadII for comparison.
 
 </p><blockquote><pre>wacdump v0.4.0
 MODEL=Wacom ArtPadII 4x5                ROM=1.3-6
@@ -1754,8 +1840,7 @@ TOOLTYPE=NONE                            IN_PROX=+00000 (+00000 .. +00000)
 <p>Notice that this tablet has no tilt, and the pressure range is
 considerably reduced.  This version of wacdump does not distinguish
 between tablets with mice, so the left, right, and middle buttons are
-present, even though the tablet itself has no mouse.  This will likely
-change in the future.
+present, even though the tablet itself has no mouse.  
 <a name="x11">
 </a></p><h1><a name="x11">5.0 - Configuring X11</a></h1>
 <a name="x11">Two steps must be completed to get X to recognize your tablet.  First,
@@ -1783,7 +1868,7 @@ or the simple GUI control panel <a href="#wacomcpl">wacomcpl</a> while Wacom dri
 xorg.conf file for Wacom devices is required. You should add these 
 devices to the <a href="#srvlayout">ServerLayout</a> section of your XF86Config/xorg.conf file too.
 
-</p><p>We assume you are running XFree86 4.x or Xorg.  <span class="diff">On
+</p><p>We assume you are running XFree86 4.x or Xorg.   <span class="diff">On
 some distributions, this file is called XF86Config-4. Notice that the
 serial and USB configurations are different, so only include the
 appropriate lines. The default serial and USB devices are given. For
@@ -2156,44 +2241,8 @@ recommended since X server doesn't properly support hotplugging yet. My
 recommendation is to tell Anaconda to ignore the tablet until the
 device
 detection works properly.
-</a><a name="wacomdrv">
-</a></p><h2><a name="wacomdrv">5.4 - Updating wacom_drv.(s)o</a></h2>
-<p><a name="wacomdrv">The </a><a href="#download">Downloading the Code</a> page currently
-offers source and binary for 47-0.7.8 in the stable package
-and 47-0.7.7-12 in the beta version.  I recommend using the X driver 
-and the Wacom Control Panel in the package that you get the kernel drivers 
-( if you use a USB tablet ) since they are in sync on supporting new functionality 
-and new tablet models.
-
-</p><p>Note:  the binary wacom_drv.(s)o file is located in the prebuilt directory
-of the stable and beta packages.  Instructions for rebuilding from source 
-are available in the Appendix under <a href="#builddrv">Building wacom_drv.o from Scratch</a> if you are a developer yourself or the binary is not 
-compatible with your system.
-
-</p><p>With that said, locate and replace wacom_drv.(s)o.  Using <i>locate</i>,  
-we find the driver in the X11R6 tree.  This directory is pretty standard, 
-so it is unlikely that your file will be located elsewhere.  Note the 
-assumption is that you are using XFree86 4.x or X11R6.x.  
-
-</p><blockquote><pre>[root@ayukawa root]# locate wacom_drv.o
-/usr/X11R6/lib/modules/input/<b>wacom_drv.o</b>
-[root@ayukawa root]# cd /usr/X11R6/lib/modules/input
-[root@ayukawa input]# cp <b>wacom_drv.o</b>   /home/jej/linuxwacom-47-0.7.8/src/xdrv/<b>wacom_drv_old.o</b>
-[root@ayukawa input]# cp /home/jej/linuxwacom-47-0.7.8/prebuilt/<b>wacom_drv.o<span class="diff">_x</span>   wacom_drv.o</b>
-where <span class="diff">_x</span> stands for _x86-64 if you are running an x86-64 system.
-</pre></blockquote>
-
-<p>If you are using X11R7.x, you need to locate wacom_drv.so:
-
-</p><blockquote><pre>[root@ayukawa root]# locate wacom_drv.so
-/usr/lib/xorg/modules/input/<b>wacom_drv.so</b>
-</pre></blockquote>
-
-
-<p>The old file is copied away, and replaced with the newer version.  If it does not load on your system, please let me know.
-
-<a name="restartx">
-</a></p><h2><a name="restartx">5.5 - Restart X</a></h2>
+</a><a name="restartx">
+</a></p><h2><a name="restartx">5.4 - Restart X</a></h2>
 <p><a name="restartx">Finally, restart X.  You may wish to do this from runlevel 3 for
 testing purposes.
 
@@ -2202,17 +2251,18 @@ testing purposes.
 [root@ayukawa root]# startx
 </a></pre></blockquote>
 
-<a name="restartx">If the X server dies, you can always back-out the changes to the XF86Config
-file and try again.  Worse case, copy the wacom_drv_old.o file back to
-its original place.  But first, look at the XFree86 log file for clues.
-You might want to do this even if everything works correctly.  When things
+<a name="restartx">If the X server dies, you can always back-out the
+changes to the XF86Config or xorg.conf file and try again. But first,
+look at the X log file (XFree86.0.log for XFree86 and Xorg.0.log for
+Xorg) for clues.
+You might want to do this even if everything works correctly. When
+things
 are running right, the following lines appear in my log file.
-
 </a><blockquote><pre><a name="restartx">[root@ayukawa root]# grep -i wacom /var/log/XFree86.0.log
 (II) LoadModule: "wacom"
 (II) Loading /usr/X11R6/lib/modules/input/wacom_drv.o
 (II) Module wacom: vendor="The XFree86 Project"
-(II) Wacom driver level: <b>47-0.7.8</b> $
+(II) Wacom driver level: <b>47-0.7.8-1</b> $
 (II) XINPUT: Adding extended input device "eraser" (type: Wacom Eraser)
 (II) XINPUT: Adding extended input device "stylus" (type: Wacom Stylus)
 (II) XINPUT: Adding extended input device "cursor" (type: Wacom Cursor)
@@ -2224,7 +2274,7 @@ suppress=0
 (==) Wacom Eraser top X=0 top Y=0 bottom X=30480 bottom Y=30480
 </a></pre></blockquote>
 
-<a name="restartx">Notice the driver version 47-0.7.8 above.  This is the new stable
+<a name="restartx">Notice the driver version 47-0.7.8-1 above.  This is the new stable
 wacom_drv.o driver.  The beta driver is currently 47-0.7.7-12.
 
 </a><p><a name="restartx">First things first, you should lift the mouse off the tablet and place it
@@ -2235,19 +2285,23 @@ corners of the tablet corresponding with the four corners of the screen.  If
 the cursor stops short of an edge, then the kernel driver limits are probably
 incorrect.  Please let me know so that I can update the driver.
 
-</a></p><p><a name="restartx">Next, remove the mouse and try using the eraser end of the stylus.
-Hovering over the surface of the tablet should move the cursor.  Touching the
-eraser tip to the surface should generate a click.  If you invert the
+</a></p><p><a name="restartx">Next, remove the mouse and try using the eraser end of the stylus. 
+Hovering over the surface of the tablet should move the cursor.  Touching 
+the eraser tip to the surface should generate a click.  If you invert the
 pen and use the stylus tip, you should get a similar result.  If the pen
-tip generates spurious touch events, you will need to increase the threshold
-value in the InputDevice section.  Wacdump is useful for determining the
-appropriate value.
+tip generates spurious touch events, you will need to increase the 
+threshold value in the InputDevice section.  Wacdump is useful for 
+determining the appropriate value.
 
-</a></p><p><a name="restartx">Lastly, if you would like more logging, the parameter "DebugLevel" can be
-set to values between 1 and 11, with 11 being way too much, and 1 being fairly
-useful.
-</a><a name="ptrstat">
-</a></p><h2><a name="ptrstat">5.6 - Check the Pointer Status</a></h2>
+</a></p><p><a name="restartx">Lastly, if you would like more logging, the parameter "DebugLevel" (for 
+individual tools) and "CommonDBG" (for all tools associated with the same 
+tablet) can be set to values between 1 and 12, with 12 being way too much, 
+and 1 being fairly useful.
+
+</a></p><p><a name="restartx">If X server failed to start and you are running the prebuilt wacom_drv.(s)o, you may have to go back to </a><a href="#config">Configuring the Package</a> page to build the driver on your system.
+
+<a name="ptrstat">
+</a></p><h2><a name="ptrstat">5.5 - Check the Pointer Status</a></h2>
 <p><a name="ptrstat">You can check the XInput pointer status by using <i>xsetpointer</i>
 as below.  The man page states that calling xsetpointer with the name of
 a particular device will set it as the primary pointing device.
@@ -2268,12 +2322,13 @@ itself.  This is useful for seeing what programs like gimp and gsumi are
 receiving from X.
 
 </a></p><p><a name="xidump">Presently, xidump will display proximity and motion events for
-the stylus, cursor, and eraser input devices.  xidump supports different
-display modes with "curses" and "raw" modes already implemented and a
-GTK-based graphical mode in the works.  The curses mode is probably the
-most useful in terms of verifying that the tablet is functioning correctly
-in the XFree environment; however, the raw mode has the additional benefit
-of being able to verify the order, timing, and history of events.
+the stylus, cursor, eraser, and pad input devices.  xidump supports 
+different display modes with "curses" and "raw" modes already 
+implemented and a GTK-based graphical mode in the works.  The curses 
+mode is probably the most useful in terms of verifying that the tablet 
+is functioning correctly in the XFree environment; however, the raw 
+mode has the additional benefit of being able to verify the order,  
+timing, and history of events.
 
 </a></p><p><a name="xidump">Since xidump uses the same XInput interface that gimp and gsumi use
 to get tablet data, the values displayed in xidump should be identical
@@ -2281,54 +2336,6 @@ to what they are receiving.  If you are having trouble with pressure in
 gimp, chances are that xidump will demonstrate the same problem.
 xidump does not require root access to use.
 
-</a></p><p><a name="xidump"><b>Building xidump</b>
-
-</a></p><p><a name="xidump">xidump builds by default so if you've configured and built the project
-in previous steps, you probably have it already.  If not, we can build it now.
-
-</a></p><p><a name="xidump">xidump requires the XLib and XInput header files to be present on
-the system.  On Redhat 8.0, these files are located in the XFree86-devel
-RPM package.  Other distributions may be organized differently, and
-people who build X from source probably get them by default.  When
-configuring, check that XLib is detected in the build environment,
-and if not, refer to the warnings and "checking for" messages for
-additional clues.
-
-</a></p><p><a name="xidump">The preferred display mode for xidump uses ncurses.  To compile it, you
-will need the ncurses header files.  On Redhat 8.0, these files are located
-in the ncurses-devel package.  Without ncurses, xidump defaults to raw mode
-automatically.
-
-</a></p><blockquote><pre><a name="xidump">[jej@ayukawa linuxwacom]$ ./configure
-checking for XLib include directory... <b>found</b>
-checking for XLib header files... <b>found</b>
-checking for ncurses.h... <b>yes</b>
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-                ...
-               <b>XLib - yes</b>
-            <b>ncurses - yes</b>
-                ...
-
-  BUILD OPTIONS:
-                ...
-             <b>xidump - yes</b>
-                ...
-----------------------------------------
-
-</a></pre></blockquote>
-
-<p><a name="xidump">The configuration above indicates that the XLib and ncurses header files
-were found and xidump will be built.  If ncurses.h is not found, xidump
-will still build, but it will also warn you that ncurses will not be
-available.  If you encounter warnings, it is most likely that your
-development environment is missing some packages.
-
-</a></p><p><a name="xidump">When you run <i>make</i>, the xidump program will be built along with any
-other programs that are specified in the build options.  The output file is
-called 'xidump' and is located in the linuxwacom package's src directory.
-It is installed by running <i>make install</i>.
 
 </a></p><p><a name="xidump"><b>Running xidump</b>
 
@@ -2599,83 +2606,55 @@ int main()
 
 </div></blockquote>
 
-<a name="xsetwacom">
-</a><h1><a name="xsetwacom">8.0 - Using xsetwacom</a></h1>
-<p><a name="xsetwacom">The xsetwacom is a command-line Wacom driver configuration tool.  It 
-changes the pressure sensitivity, click threshold, button functions, 
-cursor mode and speed, and much more without having to manually modify 
-XF86Config file. 
+<a name="wacomcpl">
+</a><h1><a name="wacomcpl">8.0 - Using wacomcpl</a></h1>
+<p><a name="wacomcpl">wacomcpl is a simple graphic Wacom driver configuration tool.  It 
+changes the pressure sensitivity, click threshold, button functions,  
+cursor mode, speed, mapping, etc. without having to manually modify   
+XF86Config/xorg.conf file.  For Cintiq and Tablet PC users,  it is 
+also a tool to calibrate the tablet.  wacomcpl should be launched 
+when you login as yourself since .xinitrc,  a file under your home 
+directory, will be updated locally each time you run wacomcpl.  
+The .xinitrc stores the preferences you selected through wacomcpl 
+for your next login.  The goal is to give each user a chance to use 
+his/her own preference on a shared system.
 
-</a></p><p><a name="xsetwacom">However, it is reported that there are systems on which you can not run 
-xsetwacom due to some XFree86 interface error.  We did not figure out the root 
-cause of this problem yet.  Please check </a><a href="#success">Success Stories</a> page to see if your system is in question.  
-If it is, you'll have to add the configuration options to your /etc/X11/XF86Config
-file.  Please refer <a href="#x11">Configuring XFree86</a> 
-for details. 
+</a></p><div class="diff">
+<p><a name="wacomcpl">If you want all users on one system to share some settings, you can 
+copy those lines started with xsetwacom in ~/.xinitrc to /etc/xinitrc. 
 
-</p><p><b>Building xsetwacom</b>
+</a></p><p><a name="wacomcpl">If your system doesn't execute .xinitrc at login, each time after 
+exiting from wacomcpl,  you will need to copy those xsetwacom lines 
+in .xinitrc to a startup script (.bashrc, .cshrc, .profile, etc.) that 
+your system launches. You can also modify wacomcpl-exec to automate 
+this step. 
 
-</p><p>xsetwacom uses libwacomcfg.so to communicate with Wacom X (XFree86 or Xorg) driver, 
-wacom_drv.o.  So, libwacomcfg.so should be built and installed. 
+</a></p><p><a name="wacomcpl">However,  it is reported that there are older systems on which can not run wacomcpl 
+due to some XFree86 interface error.  Please check </a><a href="#success">Success Stories</a> page to see if your system is in question.  
+The work around is to add the configuration options to your /etc/X11/XF86Config file.  Please refer to <a href="#x11">Configuring X11</a> page for details.
+</p></div>
 
-</p><p>libwacomcfg.so relies on Xlib.  In the configure script, it will default 
-the Xlib path to /usr/X11R6.  If your Xlib is not installed under /usr/X11R6,
-you'll need to specify the path (dir) by <i>--with-xlib=dir</i>.  Let's see 
-what we get from configure:
+<p><b>Running wacomcpl</b>
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$./configure
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - yes -DONFIG_MODVERSIONS -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h
-      kernel source - yes /usr/src/linux
-            XFree86 - no
-               XLib - yes /usr/X11R6
-                TCL - yes /usr
-                 TK - yes /usr
-            ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
-</pre></blockquote>
-
-<p>As shown above, the build options indicate that libwacomcfg and xsetwacom 
-will be built.  If not, then scroll back through the configuration to see 
-if there aren't any errors or warnings that would explain this.
-
-</p><p>Next, run <i>make</i>.  The output will be stored in the linuxwacom
-package's src/util and src/util/.libs directory. They will be installed by running
-<i>make install (you need to switch to superuser to run this command)</i>.
-
-</p><p>If wacom_drv.o was running while installing xsetwacom, xsetwacom can be 
+</p><p>If wacom_drv.o was running while installing wacomcpl, wacomcpl can be 
 launched immediately after <i>make install</i> and <i>exit (switch back 
 to your own account)</i>.
 
-</p><p>If wacom_drv.o is installed by the same <i>make install</i> as xsetwacom
+</p><p>If wacom_drv.o is installed by the same <i>make install</i> as wacomcpl
 is, restarting X server is required to use the newly built wacom_drv.o. We 
-strongly recommand to build and install wacom_drv.o and xsetwacom from 
-the same release package since the out of sync wacom_drv.o and xsetwacom may 
+strongly recommand to build and install the wacom_drv.o and wacomcpl from 
+the same release package since the out of sync wacom_drv.o and wacomcpl may 
 crash your X server.
+<a name="xsetwacom">
+</a></p><h1><a name="xsetwacom">8.0 - Using xsetwacom</a></h1>
+<p><a name="xsetwacom">The xsetwacom is a command-line Wacom driver configuration tool.  It 
+changes the pressure sensitivity, click threshold, button functions, 
+cursor mode and speed, and much more without having to manually modify 
+XF86Config or xorg.conf file. 
 
-</p><p><b>Running xsetwacom</b>
+</a></p><p><a name="xsetwacom">The basic usage and options can be viewed by issuing <i>xsetwacom</i>
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom
 Usage: xsetwacom [options] [command [arguments...]]
 Options:
   -h, --help                 - usage
@@ -2686,44 +2665,47 @@ Options:
   -x, --xconf                - generate X.conf lines for 'get'
 
 Commands:
-  list [dev|param|mod]       - display known devices, parameters
+  list [dev|param]       - display known devices, parameters
   list mod                   - display supported modifier and specific keys for keystokes
   set dev_name param [values...]   - set device parameter by name
-  get dev_name param [param...] - get device parameter(s) by name
+  get dev_name param [param...] - get current device parameter(s) value by name
   getdefault dev_name param [param...] - get device parameter(s) default value by name
-</pre></blockquote>
+</a></pre></blockquote>
 
-<p>The most used xsetwacom command is <i>xsetwacom set dev_name param [values...]</i>,
-where param is an option which will be set to values in wacom_drv.o after 
-excuting xsetwacom. To better understand the use of this command, let's see 
-some examples. Assume that you use <i>Stylus</i> as your Wacom tool's Identifier, 
-which is considered is considered as dev_name in xsetwacom command. 
+<p><a name="xsetwacom">xsetwacom supports 3 forms of get/getdefault commands: <i>xsetwacom get</i>
+returns the parameter's raw value; <i>xsetwacom -x get</i> returns the value in Xorg.conf
+form; and <i>xsetwacom -s get</i> returns the value in shell command form.
 
-</p><p>If you want to change <i>Stylus's</i> mode from absolute (default) to relative, then:
+</a></p><p><a name="xsetwacom">The most used xsetwacom command is <i>xsetwacom set dev_name param [values...]</i>,
+where param is an option which will be set to values in wacom_drv.o
+after excuting xsetwacom. To better understand the use of this command,
+let's see some examples. Assume that you use <i>Stylus</i> as your Wacom tool's Identifier, which is considered as dev_name in xsetwacom command. 
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus mode relative
-</pre></blockquote>
+</a></p><p><a name="xsetwacom">If you want to change <i>Stylus's</i> mode from absolute (default) to relative, then:
 
-<p>If you want to change button 2 to left-double-click, then:
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus mode relative
+</a></pre></blockquote>
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus button2 "dblclick 1"
-</pre></blockquote>
+<p><a name="xsetwacom">If you want to change button 2 to left-double-click, then:
 
-<p>If you want to change button 2 to button 5, then:
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus button2 "dblclick 1"
+</a></pre></blockquote>
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus Button2 "button 5"
+<p><a name="xsetwacom">If you want to change button 2 to button 5, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus Button2 "button 5"
 or 
 [jej@ayukawa linuxwacom]$xsetwacom set Stylus Button2 5
-</pre></blockquote>
+</a></pre></blockquote>
 
-<p>If you want to change button 3 to ModeToggle, then:
+<p><a name="xsetwacom">If you want to change button 3 to ModeToggle, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus button3 modetoggle
-</pre></blockquote>
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus button3 modetoggle
+</a></pre></blockquote>
 
-<p>If you want to know what the current (or default) pressure sensitivity setting is, then:
+<p><a name="xsetwacom">If you want to know what the current (or default) pressure sensitivity setting is, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom -s get Stylus PressCurve (output in xsetwacom format)
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom -s get Stylus PressCurve (output in xsetwacom format)
 xsetwacom set stylus PressCurve "0 15 85 100"
 or
 [jej@ayukawa linuxwacom]$xsetwacom -x get Stylus PressCurve (output in xorg.conf Option format)
@@ -2731,53 +2713,58 @@ or
 
 [jej@ayukawa linuxwacom]$xsetwacom -x getdefault Stylus PressCurve 
         Option  "PressCurve"    "0,0,100,100"
-</pre></blockquote>
+</a></pre></blockquote>
 
-<p>If you want to set the pressure sensitivity a bit softer, then:
+<p><a name="xsetwacom">If you want to set the pressure sensitivity a bit softer, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus PressCurve 0 15 85 100
-</pre></blockquote>
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus PressCurve 0 15 85 100
+</a></pre></blockquote>
 
-<p>If you want the buttons behave the Tablet PC way, i.e., sending button event only when
+<p><a name="xsetwacom">If you want the buttons behave the Tablet PC way, i.e., sending button event only when
 button1 (the tip) is pressed, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set Stylus TPCButton on
-</pre></blockquote>
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus TPCButton on
+</a></pre></blockquote>
 
-<p>If you want to change <i>pad's</i> button 1 to ctrl alt F2, then:
+<p><a name="xsetwacom">If you want to change <i>pad's</i> button 1 to ctrl alt F2, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set pad Button1 "core key ctrl alt F2"
-</pre></blockquote>
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set pad Button1 "core key ctrl alt F2"
+</a></pre></blockquote>
 
-<p>If you want to change <i>pad's</i> button 2 to ctrl alt backspace, then:
+<p><a name="xsetwacom">If you want to change <i>pad's</i> button 2 to ctrl alt backspace, then:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$xsetwacom set pad Button2 "core key ctrl alt backspace"
-</pre></blockquote>
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set pad Button2 "core key ctrl alt backspace"
+</a></pre></blockquote>
 
-<div class="diff"><b>Note:</b> keystrokes and modifiers are only supported for Xorg 6.8 or later.
-</div>
+<div class="diff"><a name="xsetwacom"><b>Note:</b> keystrokes and modifiers are only supported for Xorg 6.8 or later.
+</a></div>
 
-Below is a list of the parameters and their values used by <i>xsetwacom</i> command (a similar output can be get from <i>xsetwacom list param</i>):
 
-<blockquote><pre>   param         [values...]              results
+<p><a name="xsetwacom"><b>xsetwacom supported parameters</b>
+
+Below is a list of the parameters and their values used by <i>xsetwacom</i> command (a similar output can be viewed by <i>xsetwacom list param</i>):
+
+</a></p><blockquote><pre><a name="xsetwacom">   param         [values...]              results
 ------------------------------------------------------------------
    Mode          Relative|Absolute        sets the mode of the device
    TopX          integer                  sets the X coordinate of the top corner of the active zone
    TopY          integer                  sets the Y coordinate of the top corner of the active zone
    BottomX       integer                  sets the X coordinate of the bottom corner of the active zone
    BottomY       integer                  sets the Y coordinate of the bottom corner of the active zone
-   STopX<i>i</i>        integer                  returns screen <i>i</i> left coordinate in pixels.
-   STopY<i>i</i>        integer                  returns screen <i>i</i> top coordinate in pixels.
-   SBottomX<i>i</i>     integer                  returns screen <i>i</i> right coordinate in pixels.
-   SBottomY<i>i</i>     integer                  returns screen <i>i</i> bottom coordinate in pixels.
+   STopX<i>i</i>        integer                  returns screen <i>i</i> left coordinate in pixels
+   STopY<i>i</i>        integer                  returns screen <i>i</i> top coordinate in pixels
+   SBottomX<i>i</i>     integer                  returns screen <i>i</i> right coordinate in pixels
+   SBottomY<i>i</i>     integer                  returns screen <i>i</i> bottom coordinate in pixels
    Button<i>M</i>       integer|keystroke        sets button <i>M</i> to button integer click or keystroke
    Button<i>M</i>       0                        ignores button <i>M</i> click
-   RelWUp        integer|keystroke        sets relative wheel up to button integer click or keystroke.
-   RelWDn        integer|keystroke        sets relative wheel down to button integer click or keystroke.
-   StripLUp      integer|keystroke        sets left strip up to button integer click or keystroke.
-   StripLDn      integer|keystroke        sets left strip down to button integer click or keystroke.
-   StripRUp      integer|keystroke        sets right strip up to button integer click or keystroke.
-   StripRDn      integer|keystroke        sets right strip down to button integer click or keystroke.
+   RelWUp        integer|keystroke        sets relative wheel up to button click or keystroke
+   RelWDn        integer|keystroke        sets relative wheel down to button click or keystroke
+   AbsWUp        integer|keystroke        sets absolute wheel up to button click or keystroke
+   AbsWDn        integer|keystroke        sets absolute wheel down to button click
+   StripLUp      integer|keystroke        sets left strip up to button click or keystroke
+   StripLDn      integer|keystroke        sets left strip down to button click or keystroke
+   StripRUp      integer|keystroke        sets right strip up to button click or keystroke
+   StripRDn      integer|keystroke        sets right strip down to button click or keystroke
    PressCurve    i1 i2 i3 i4              sets the pressure bezier curve, where i1+i4=100; i2+i3=100
    DebugLevel    integer (0 - 12)         sets the level of debugging trace for one tool
    CommonDBG     integer (0 - 12)         sets the level of debugging trace for all tools 
@@ -2816,15 +2803,37 @@ Event description format:
   CODE: Button number if emit a button event
         or specific keys and any other keys not listed as mod
 
-</pre></blockquote>
+</a></pre></blockquote>
 
-<p>The xsetwacom commands can be added to the .xinitrc under your home 
-directory so next time when you login as yourself, the driver will be 
-set to the options you choose.
 
-</p><p>Below is an example of my .xinitrc:
+<p><a name="xsetwacom"><b>Associating parameters to physical devices</b>
 
-</p><blockquote><pre>[jej@ayukawa jej]$more .xinitrc
+</a></p><p><a name="xsetwacom">Following is a list of the parameters that are associated with the elements of devcies.
+
+</a></p><blockquote><pre><a name="xsetwacom">   param		tools
+--------------------------------------------------------------------------
+Button#			All Wacom styli/pucks buttons 
+			Tablet ExpressKeys
+RelWUp/RelWDn		Graphire4 tablet wheel 
+			Wacom puck Fingerwheel
+AbsWUp/AbsWDn		Intuos puck Thumbwheel
+			Intuos Airbrush Fingerwheel
+			Bamboo tabelt Touch Ring
+StripLUp/StripLUp	Intuos3 and Cintiq 21UX tablet left Touch Strip
+StripRUp/StripRUp	Intuos3 and Cintiq 21UX tablet Right Touch Strip
+--------------------------------------------------------------------------
+
+</a></pre></blockquote>
+
+
+<p><a name="xsetwacom"><b>Automatically excuting predefined xsetwacom commands at logging in</b>
+
+</a></p><p><a name="xsetwacom">The xsetwacom commands can be added to
+the .xinitrc under your home directory so next time when you login as
+yourself, the driver will be set to the options you choose.
+</a></p><p><a name="xsetwacom">Below is an example of my .xinitrc:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa jej]$ more .xinitrc
 xsetwacom set Stylus0 TopX 10
 xsetwacom set Stylus0 TopY 67
 xsetwacom set Stylus0 BottomX 7170
@@ -2832,227 +2841,428 @@ xsetwacom set Stylus0 BottomY 5778
 xsetwacom set Stylus0 TPCButton 1
 # run the primary system script
 . /etc/X11/xinit/xinitrc
-</pre></blockquote>
+</a></pre></blockquote>
 
 <div class="diff">
-<p>If your system doesn't execute .xinitrc at login, you can add those xsetwacom commands 
-into the startup script (.bashrc, .cshrc, .profile, etc.) that your system launches.  
-</p><p>It has been suggested that on debian, .Xsession should be used instead of .xinitrc.
-</p><p>To see what's under your home directory, use <i>ls -al ~</i>.
-</p></div>
-<a name="wacomcpl">
-</a><h1><a name="wacomcpl">9.0 - Using wacomcpl</a></h1>
-<p><a name="wacomcpl">The wacomcpl is a graphic Wacom driver configuration tool.  It changes
-the pressure sensitivity, click threshold, button functions,  cursor mode 
-and speed without having to manually modify XF86Config file.  For Cintiq 
-and Tablet PC users,  it is also a tool to calibrate the tablet.  wacomcpl
-should be launched when you login as yourself since .xinitrc,  a file under 
-your home directory, will be updated each time you run wacomcpl.  The .xinitrc
-stores the preferences you selected through wacomcpl for your next login.  
-The goal is to give each user a chance to use his/her own preference on a 
-shared system.
+<p><a name="xsetwacom">To see what's under your home directory, use <i>ls -al ~</i>.
 
-</a></p><div class="diff">
-<a name="wacomcpl">If your system doesn't execute .xinitrc at login, after exiting from wacomcpl,  
-you will need to copy those xsetwacom commands in .xinitrc into the startup script 
-(.bashrc, .cshrc, .profile, etc.) that your system launches.
+</a></p><p><a name="xsetwacom">If your system doesn't execute .xinitrc
+at login, you can add those xsetwacom commands into the startup script
+(.bashrc, .cshrc, .profile, etc.) that your system launches, for
+example, you should use .Xsession instead of .xinitrc on Debian.
+</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can not run on some older systems due to a XFree86 interface error.  Please check </a><a href="#success">Success Stories</a>
+page to see if your system is in question. A generic solution to this
+issue is directly adding your configuration options to the
+/etc/X11/XF86Config file. Please refer to <a href="#x11">Configuring X11</a> for details. 
+</p></div>
+
+<p><b>More examples</b>
+
+</p><p>If you are confused with the usages above, let's see some more confusing examples.  
+
+</p><p>	<b>1.</b> Usage of keystroke and modifiers
+
+</p><p>keystroke and modifiers can be used through buttons,
+ExpressKeys, wheels, Touch Strips, and Touch Ring. A list of supported
+modifiers and special keys can be viewed through <i>xsetwacom list mod</i>.  Special keys are symbols that go together to represent one XInput key event. 
+
+</p><p>In the following example, <b>Up</b> represents the <b>up arrow</b> key:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button4 "key core Up"   
+</pre></blockquote>
+
+<p>When you press button4 on your Wacom puck, Xinput will receive an <b>up arrow</b> event. 
+
+</p><p>If you want to send the <b>Up</b> keystroke, the universal escape character <b>\</b> has to be used:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button4 "key core \Up"   
+</pre></blockquote>
+
+<p>If you press button4 on your Wacom puck, Xinput will receive an <b>U</b> and a <b>p</b> events, i.e., <b>Up</b> would be displayed on your active console or application.
+
+</p><p>Sending <b>down arrow</b> event when button5 is pressed:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button5 "key core Down"  
+</pre></blockquote>
+
+<p>Sending <b>PageUp</b> event when tablet wheel scrolls up:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set pad RelWUp "key core pgup"   
+</pre></blockquote>
+
+<p>Sending <b>PageDown</b> event when tablet wheel scrolls down:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set pad RelWDn "key core pgdn"   
+</pre></blockquote>
+
+<p>The same functions work for parameters AbsWUp, AbsWDn, StripLUp,
+StripLDn, StripRUp, and StripRDn.
+
+</p><p>	<b>2.</b> Changing debug level while driver is running
+
+</p><p>xsetwacom supports 2 ways of enabling/disabling debugging
+information, for individual device and/or for all tools associated with
+the same tablet, through parameters DebugLevel and CommonDBG. For
+example,
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor DebugLevel 10
+</pre></blockquote>
+
+<p>Turns debugger on to level 10 for device "cursor" only.  Other devices
+will not report information to Xorg.0.log file.
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor CommonDBG 3
+</pre></blockquote>
+
+<p>Turns debugger on to level 3 for all devices associated with the same
+tablet as "cursor" does. But only common debug information will be
+reported.
+
+</p><p>	<b>3.</b> Configuring TwinView setup while system running
+
+</p><p>TwinView parameter sets the mapping of TwinView to
+horizontal/vertical/none. The current TwinView setup can be retrieved
+by the corresponding get command. For example:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom -x get cursor TwinView
+        Option  "TwinView"      "none"
+[jej@ayukawa jej]$ 
+</pre></blockquote>
+
+which means device <b>cursor</b> was not set to TwinView display.
+
+<p>Two other parameters, TVResolution0 and TVResolution1, made the
+change of MetaModes option in TwinView setup possible when system is
+running. TVResolution0 sets MetaModes option for TwinView Screen 0,
+while TVResolution1 sets MetaModes option for TwinView Screen 1.
+However, you need to make sure that the MetaModes you are going to set
+is the same as the TwinView setup in your xorg.conf for Nvidia Graphic
+card driver.
+</p><p>	<b>4.</b> Changing Suppress and RawSample to filter the raw data
+
+</p><p>Use of Suppress will reduce the number of raw data we process in
+the driver. So, unless you know what you are doing, changing Suppress
+is not recommended. Valid values for Suppress is 0 to 100, where 0
+means raw data is used as is. Suppress less than 101 means data will be
+used only when its change compared to the last processed event is
+larger than Suppress in points. Default is 2.
+</p><p>RawSample was originally introduced to smooth x/y coordinates
+to a certain degree. A four-points averaging was tested and convinced
+to be effective. In 0.7.8, we made RawSample changeable through
+xsetwacom. However, same as with Suppress, changing RawSample is not
+recommended. The maximum value can be as large as 20. But the default
+stays at 4.
+</p><p>Both Suppress and RawSample apply to the devices on the same
+tablet, that is, it is global to all devices associated with the same
+tablet.
+<a name="xsetwacom">
+</a></p><h1><a name="xsetwacom">9.0 - Using xsetwacom</a></h1>
+<p><a name="xsetwacom">The xsetwacom is a command-line Wacom driver configuration tool.  It 
+changes the pressure sensitivity, click threshold, button functions, 
+cursor mode and speed, and much more without having to manually modify 
+XF86Config or xorg.conf file. 
+
+</a></p><p><a name="xsetwacom">The basic usage and options can be viewed by issuing <i>xsetwacom</i>
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom
+Usage: xsetwacom [options] [command [arguments...]]
+Options:
+  -h, --help                 - usage
+  -v, --verbose              - verbose output
+  -V, --version              - version info
+  -d, --display disp_name    - override default display
+  -s, --shell                - generate shell commands for 'get'
+  -x, --xconf                - generate X.conf lines for 'get'
+
+Commands:
+  list [dev|param]       - display known devices, parameters
+  list mod                   - display supported modifier and specific keys for keystokes
+  set dev_name param [values...]   - set device parameter by name
+  get dev_name param [param...] - get current device parameter(s) value by name
+  getdefault dev_name param [param...] - get device parameter(s) default value by name
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">xsetwacom supports 3 forms of get/getdefault commands: <i>xsetwacom get</i>
+returns the parameter's raw value; <i>xsetwacom -x get</i> returns the value in Xorg.conf
+form; and <i>xsetwacom -s get</i> returns the value in shell command form.
+
+</a></p><p><a name="xsetwacom">The most used xsetwacom command is <i>xsetwacom set dev_name param [values...]</i>,
+where param is an option which will be set to values in wacom_drv.o
+after excuting xsetwacom. To better understand the use of this command,
+let's see some examples. Assume that you use <i>Stylus</i> as your Wacom tool's Identifier, which is considered as dev_name in xsetwacom command. 
+
+</a></p><p><a name="xsetwacom">If you want to change <i>Stylus's</i> mode from absolute (default) to relative, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus mode relative
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to change button 2 to left-double-click, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus button2 "dblclick 1"
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to change button 2 to button 5, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus Button2 "button 5"
+or 
+[jej@ayukawa linuxwacom]$xsetwacom set Stylus Button2 5
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to change button 3 to ModeToggle, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus button3 modetoggle
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to know what the current (or default) pressure sensitivity setting is, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom -s get Stylus PressCurve (output in xsetwacom format)
+xsetwacom set stylus PressCurve "0 15 85 100"
+or
+[jej@ayukawa linuxwacom]$xsetwacom -x get Stylus PressCurve (output in xorg.conf Option format)
+        Option  "PressCurve"    "0,15,85,100"
+
+[jej@ayukawa linuxwacom]$xsetwacom -x getdefault Stylus PressCurve 
+        Option  "PressCurve"    "0,0,100,100"
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to set the pressure sensitivity a bit softer, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus PressCurve 0 15 85 100
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want the buttons behave the Tablet PC way, i.e., sending button event only when
+button1 (the tip) is pressed, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set Stylus TPCButton on
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to change <i>pad's</i> button 1 to ctrl alt F2, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set pad Button1 "core key ctrl alt F2"
+</a></pre></blockquote>
+
+<p><a name="xsetwacom">If you want to change <i>pad's</i> button 2 to ctrl alt backspace, then:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom set pad Button2 "core key ctrl alt backspace"
+</a></pre></blockquote>
+
+<div class="diff"><a name="xsetwacom"><b>Note:</b> keystrokes and modifiers are only supported for Xorg 6.8 or later.
 </a></div>
 
-<p><a name="wacomcpl">However,  it is reported that there are systems on which can not run wacomcpl 
-due to some XFree86 interface error.  We did not figure out the root cause of 
-this problem yet. Please check </a><a href="#success">Success Stories</a> page to see if your system is in question.  
-If it is,  you'll have to add the configuration options to your /etc/X11/XF86Config 
-file.  Please refer <a href="#x11">Configuring XFree86</a> for details.
 
-</p><p><b>Building wacomcpl</b>
+<p><a name="xsetwacom"><b>xsetwacom supported parameters</b>
 
-</p><p>wacomcpl is written in tcl/tk.  It uses libwacomxi.so and xsetwacom to 
-communicate with Wacom XFree86 driver,  wacom_drv.o.  So,  to run wacomcpl, 
-tcl/tk should be installed,  libwacomxi.so and xsetwacom should be built and
-installed. 
+Below is a list of the parameters and their values used by <i>xsetwacom</i> command (a similar output can be viewed by <i>xsetwacom list param</i>):
 
-</p><p>libwacomxi.so and xsetwacom are enabled by default in the configure script.  
-By default,  the script will assume that tcl/tk is installed under /usr.  That
-is,  tcl.h and tk.h should be under /usr/include;  libtcl.so.0 and libtk.so.0 
-should be under /usr/lib.  Let's see what we get from configure:
+</a></p><blockquote><pre><a name="xsetwacom">   param         [values...]              results
+------------------------------------------------------------------
+   Mode          Relative|Absolute        sets the mode of the device
+   TopX          integer                  sets the X coordinate of the top corner of the active zone
+   TopY          integer                  sets the Y coordinate of the top corner of the active zone
+   BottomX       integer                  sets the X coordinate of the bottom corner of the active zone
+   BottomY       integer                  sets the Y coordinate of the bottom corner of the active zone
+   STopX<i>i</i>        integer                  returns screen <i>i</i> left coordinate in pixels
+   STopY<i>i</i>        integer                  returns screen <i>i</i> top coordinate in pixels
+   SBottomX<i>i</i>     integer                  returns screen <i>i</i> right coordinate in pixels
+   SBottomY<i>i</i>     integer                  returns screen <i>i</i> bottom coordinate in pixels
+   Button<i>M</i>       integer|keystroke        sets button <i>M</i> to button integer click or keystroke
+   Button<i>M</i>       0                        ignores button <i>M</i> click
+   RelWUp        integer|keystroke        sets relative wheel up to button click or keystroke
+   RelWDn        integer|keystroke        sets relative wheel down to button click or keystroke
+   AbsWUp        integer|keystroke        sets absolute wheel up to button click or keystroke
+   AbsWDn        integer|keystroke        sets absolute wheel down to button click
+   StripLUp      integer|keystroke        sets left strip up to button click or keystroke
+   StripLDn      integer|keystroke        sets left strip down to button click or keystroke
+   StripRUp      integer|keystroke        sets right strip up to button click or keystroke
+   StripRDn      integer|keystroke        sets right strip down to button click or keystroke
+   PressCurve    i1 i2 i3 i4              sets the pressure bezier curve, where i1+i4=100; i2+i3=100
+   DebugLevel    integer (0 - 12)         sets the level of debugging trace for one tool
+   CommonDBG     integer (0 - 12)         sets the level of debugging trace for all tools 
+				          associated with the same tablet.
+   Suppress      integer (0 - 100)        number of data trimmed for the tools associated 
+					  with the same tablet.
+   Screen_No     integer (-1 - 5)         sets screen number the tablet is mapped to.
+   TwinView      none|vertical|horizontal sets the mapping to TwinView.
+   TVResolution0 width x height           sets MetaModes option for TwinView Screen 0.
+   TVResolution1 width x height           sets MetaModes option for TwinView Screen 1.
+   SpeedLevel    integer (1 - 11)         sets relative cursor movement speed
+   ClickForce    integer (1 - 21)         sets tip/eraser pressure threshold
+   xyDefault                              resets the bounding coordinates to default in tablet units
+   mmonitor      on|off                   turns on/off across monitor movement on (non-TwinView) 
+				          multi-monitor desktop
+   TPCButton     on|off                   turns on/off the buttons as Tablet PC buttons
+   CursorProx    integer (distance)       sets cursor distance margin for proximity-out 
+				          in distance from the tablet surface
+   Rotate        none|cw|ccw|half         sets the rotation of the tablet. 
+   ToolID           	                  returns the ID of the associated device.
+   ToolSerial       	                  returns the serial number of the associated device.
+   GetTabletID/TabletID     	          returns the tablet ID of the associated device.
+   NumScreen             	          returns number of screens configured for the desktop.
+------------------------------------------------------------------
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$./configure
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - yes
-      kernel source - yes /usr/src/linux
-            XFree86 - no
-               XLib - yes /usr/X11R6
-                TCL - yes /usr
-                 TK - yes /usr
-            ncurses - yes
-                GTK - 2.0.6
+Event description format:
+[CORE] [EVENT TYPE] [MODIFIERS] [CODE]
+  CORE: Emit core events irrespective of the SendCoreEvents setting
+  EVENT TYPE: the type of event to emit:
+        KEY: Emit a key event
+        BUTTON: Emit a button event
+        DBLCLICK: Emit a double-click button event
+        MODETOGGLE: Toggle absolute/relative tablet mode
+  MODIFIERS: use "xsetwacom list mod"
+        to see a list of modifiers and specific keys
+  CODE: Button number if emit a button event
+        or specific keys and any other keys not listed as mod
 
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
+</a></pre></blockquote>
+
+
+<p><a name="xsetwacom"><b>Associating parameters to physical devices</b>
+
+</a></p><p><a name="xsetwacom">Following is a list of the parameters that are associated with the elements of devcies.
+
+</a></p><blockquote><pre><a name="xsetwacom">   param		tools
+--------------------------------------------------------------------------
+Button#			All Wacom styli/pucks buttons 
+			Tablet ExpressKeys
+RelWUp/RelWDn		Graphire4 tablet wheel 
+			Wacom puck Fingerwheel
+AbsWUp/AbsWDn		Intuos puck Thumbwheel
+			Intuos Airbrush Fingerwheel
+			Bamboo tabelt Touch Ring
+StripLUp/StripLUp	Intuos3 and Cintiq 21UX tablet left Touch Strip
+StripRUp/StripRUp	Intuos3 and Cintiq 21UX tablet Right Touch Strip
+--------------------------------------------------------------------------
+
+</a></pre></blockquote>
+
+
+<p><a name="xsetwacom"><b>Automatically excuting predefined xsetwacom commands at logging in</b>
+
+</a></p><p><a name="xsetwacom">The xsetwacom commands can be added to
+the .xinitrc under your home directory so next time when you login as
+yourself, the driver will be set to the options you choose.
+</a></p><p><a name="xsetwacom">Below is an example of my .xinitrc:
+
+</a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa jej]$ more .xinitrc
+xsetwacom set Stylus0 TopX 10
+xsetwacom set Stylus0 TopY 67
+xsetwacom set Stylus0 BottomX 7170
+xsetwacom set Stylus0 BottomY 5778
+xsetwacom set Stylus0 TPCButton 1
+# run the primary system script
+. /etc/X11/xinit/xinitrc
+</a></pre></blockquote>
+
+<div class="diff">
+<p><a name="xsetwacom">To see what's under your home directory, use <i>ls -al ~</i>.
+
+</a></p><p><a name="xsetwacom">If your system doesn't execute .xinitrc
+at login, you can add those xsetwacom commands into the startup script
+(.bashrc, .cshrc, .profile, etc.) that your system launches, for
+example, you should use .Xsession instead of .xinitrc on Debian.
+</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can not run on some older systems due to a XFree86 interface error.  Please check </a><a href="#success">Success Stories</a>
+page to see if your system is in question. A generic solution to this
+issue is directly adding your configuration options to the
+/etc/X11/XF86Config file. Please refer to <a href="#x11">Configuring X11</a> for details. 
+</p></div>
+
+<p><b>More examples</b>
+
+</p><p>If you are confused with the usages above, let's see some more confusing examples.  
+
+</p><p>	<b>1.</b> Usage of keystroke and modifiers
+
+</p><p>keystroke and modifiers can be used through buttons,
+ExpressKeys, wheels, Touch Strips, and Touch Ring. A list of supported
+modifiers and special keys can be viewed through <i>xsetwacom list mod</i>.  Special keys are symbols that go together to represent one XInput key event. 
+
+</p><p>In the following example, <b>Up</b> represents the <b>up arrow</b> key:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button4 "key core Up"   
 </pre></blockquote>
 
-<p>As shown above, the build options indicate that libwacomxi and xsetwacom 
-will be built.  If not, then scroll back through the configuration to see 
-if there aren't any errors or warnings that would explain this.
+<p>When you press button4 on your Wacom puck, Xinput will receive an <b>up arrow</b> event. 
 
-</p><p>For example, on another system, I have installed tcl/tk under /usr/local/ActiveTcl.  
-That is, tcl.h and tk.h are under /usr/local/ActiveTcl/include. If I run configure 
-without options, I get:
+</p><p>If you want to send the <b>Up</b> keystroke, the universal escape character <b>\</b> has to be used:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$./configure
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - yes
-      kernel source - yes /usr/src/linux
-            XFree86 - no
-               XLib - yes /usr/X11R6
-                TCL - no
-                 TK - no
-            ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - no
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button4 "key core \Up"   
 </pre></blockquote>
 
-<p>The build options show that libwacomxi will not be built. When I scroll 
-back through the configuration, I see:
+<p>If you press button4 on your Wacom puck, Xinput will receive an <b>U</b> and a <b>p</b> events, i.e., <b>Up</b> would be displayed on your active console or application.
 
-</p><blockquote><pre>...
-checking for tcl header files... not found; tried /usr/include/tcl.h
-***
-*** WARNING:
-*** The tcl development environment does not appear to
-*** be installed. The header file tcl.h does not appear
-*** in the include path. Do you have the tcl rpm or
-*** equivalent package properly installed?  Some build
-*** features will be unavailable.
-***
-checking for tk header files... not found; tried /usr/include/tk.h and /include/tk.h
-***
-*** WARNING:
-*** The tk development environment does not appear to
-*** be installed. The header file tk.h does not appear
-*** in the include path. Do you have the tk rpm or
-*** equivalent package properly installed?  Some build
-*** features will be unavailable.
-***
-checking ncurses.h usability... yes
-checking ncurses.h presence... yes
-checking for ncurses.h... yes
-***
-*** WARNING:
-*** libwacomxi requires tcl environment; libwacomxi will not be built.
-***
-...
+</p><p>Sending <b>down arrow</b> event when button5 is pressed:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button5 "key core Down"  
 </pre></blockquote>
 
-<p>Then I run configure with option --with-tcl=/usr/local/ActiveTcl:
+<p>Sending <b>PageUp</b> event when tablet wheel scrolls up:
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$./configure --with-tcl=/usr/local/ActiveTcl
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - yes 2.4
-  module versioning - yes
-      kernel source - yes /usr/src/linux
-            XFree86 - no
-               XLib - yes /usr/X11R6
-                TCL - yes /usr/local/ActiveTcl
-                 TK - yes /usr/local/ActiveTcl
-            ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - no
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set pad RelWUp "key core pgup"   
 </pre></blockquote>
 
-<p><b>Note:</b> You may need to issue the following commands before running wacomcpl: 
-  
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$export LD_LIBRARY_PATH=/usr/local/ActiveTcl/lib:$LD_LIBRARY_PATH
-[jej@ayukawa linuxwacom]$su
-[jej@ayukawa linuxwacom]#cd /usr/local/ActiveTcl/lib
-[jej@ayukawa lib]#ln -s libtcl.8.4.so libtcl.so.0
-[jej@ayukawa lib]#ln -s libtk.8.4.so libtk.so.0
+<p>Sending <b>PageDown</b> event when tablet wheel scrolls down:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set pad RelWDn "key core pgdn"   
 </pre></blockquote>
 
-<p>If your tcl and tk are installed on different paths, you'll need to 
-specify them separately. Suppose that your tcl is under /usr/local/tcl8.4
-and your tk is under /usr/local/tk8.4, the proper configuration and setup 
-commands will be:
+<p>The same functions work for parameters AbsWUp, AbsWDn, StripLUp,
+StripLDn, StripRUp, and StripRDn.
 
-</p><blockquote><pre>[jej@ayukawa linuxwacom]$./configure --with-tcl=/usr/local/tcl8.4 --with-tk=/usr/local/tk8.4
-[jej@ayukawa linuxwacom]$export LD_LIBRARY_PATH=/usr/local/tcl8.4/lib:/usr/local/tk8.4/lib:$LD_LIBRARY_PATH
-[jej@ayukawa linuxwacom]$su
-[jej@ayukawa linuxwacom]#cd /usr/local/tcl8.4/lib
-[jej@ayukawa lib]#ln -s libtcl.8.4.so libtcl.so.0
-[jej@ayukawa lib]#cd /usr/local/tk8.4/lib
-[jej@ayukawa lib]#ln -s libtk.8.4.so libtk.so.0
+</p><p>	<b>2.</b> Changing debug level while driver is running
+
+</p><p>xsetwacom supports 2 ways of enabling/disabling debugging
+information, for individual device and/or for all tools associated with
+the same tablet, through parameters DebugLevel and CommonDBG. For
+example,
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor DebugLevel 10
 </pre></blockquote>
 
-<p>Next, run <i>make</i>.  The output will be stored in the linuxwacom
-package's src, src/.libs, src/wacomxi, and src/wacomxi/.libs directories. 
-They will be installed by running <i>make install (you need to switch to 
-superuser to run this command)</i>.
+<p>Turns debugger on to level 10 for device "cursor" only.  Other devices
+will not report information to Xorg.0.log file.
 
-</p><p><b>Running wacomcpl</b>
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor CommonDBG 3
+</pre></blockquote>
 
-</p><p>If wacom_drv.o was running while installing wacomcpl, wacomcpl can be 
-launched immediately after <i>make install</i> and <i>exit (switch back 
-to your own account)</i>.
+<p>Turns debugger on to level 3 for all devices associated with the same
+tablet as "cursor" does. But only common debug information will be
+reported.
 
-</p><p>If wacom_drv.o is installed by the same <i>make install</i> as wacomcpl
-is, restarting X server is required to use the newly built wacom_drv.o. We 
-strongly recommand to build and install the wacom_drv.o and wacomcpl from 
-the same release package since the out of sync wacom_drv.o and wacomcpl may 
-crash your X server.
+</p><p>	<b>3.</b> Configuring TwinView setup while system running
+
+</p><p>TwinView parameter sets the mapping of TwinView to
+horizontal/vertical/none. The current TwinView setup can be retrieved
+by the corresponding get command. For example:
+
+</p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom -x get cursor TwinView
+        Option  "TwinView"      "none"
+[jej@ayukawa jej]$ 
+</pre></blockquote>
+
+which means device <b>cursor</b> was not set to TwinView display.
+
+<p>Two other parameters, TVResolution0 and TVResolution1, made the
+change of MetaModes option in TwinView setup possible when system is
+running. TVResolution0 sets MetaModes option for TwinView Screen 0,
+while TVResolution1 sets MetaModes option for TwinView Screen 1.
+However, you need to make sure that the MetaModes you are going to set
+is the same as the TwinView setup in your xorg.conf for Nvidia Graphic
+card driver.
+</p><p>	<b>4.</b> Changing Suppress and RawSample to filter the raw data
+
+</p><p>Use of Suppress will reduce the number of raw data we process in
+the driver. So, unless you know what you are doing, changing Suppress
+is not recommended. Valid values for Suppress is 0 to 100, where 0
+means raw data is used as is. Suppress less than 101 means data will be
+used only when its change compared to the last processed event is
+larger than Suppress in points. Default is 2.
+</p><p>RawSample was originally introduced to smooth x/y coordinates
+to a certain degree. A four-points averaging was tested and convinced
+to be effective. In 0.7.8, we made RawSample changeable through
+xsetwacom. However, same as with Suppress, changing RawSample is not
+recommended. The maximum value can be as large as 20. But the default
+stays at 4.
+</p><p>Both Suppress and RawSample apply to the devices on the same
+tablet, that is, it is global to all devices associated with the same
+tablet.
 <a name="gimp">
 </a></p><h1><a name="gimp">10.0 - Working With Gimp</a></h1>
 <div class="diff"><a name="gimp">It has been suggested that gimp should be recompiled from
@@ -3104,8 +3314,326 @@ are having trouble, it's worth a shot.
 <p><a name="appendix">This section is for everything that is either not critical or simply
 too complex to describe in the document above without becoming overly
 distracting.
+</a><a name="dump">
+</a></p><h2><a name="dump">12.1 - Building wacdump and xidump</a></h2>
+
+<p><a name="dump"><b>Building wacdump</b>
+
+</a></p><p><a name="dump">wacdump is enabled by default in the configure script, so let's do that now:
+
+</a></p><blockquote><pre><a name="dump">[jej@ayukawa linuxwacom]$ ./configure
+...
+----------------------------------------
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - <b>yes</b>
+              hid.o - no
+         usbmouse.o - no
+        wacom_drv.o - no
+----------------------------------------
+</a></pre></blockquote>
+
+<p><a name="dump">As shown above, the build options indicate that wacdump will be built.  
+If  not, then scroll back through the configuration to see if there aren't 
+any errors or warnings that would explain this.
+
+</a></p><p><a name="dump">Next, run <i>make</i>.  The output will be a file called wacdump in the
+linuxwacom package's src/util directory.  Running <i>make install</i>, will 
+install it under /usr/local/bin.
+
+</a></p><p><a name="dump"><b>Building xidump</b>
+
+</a></p><p><a name="dump">xidump builds by default so if you've configured and built the project
+in previous steps, you probably have it already.  If not, we can build it now.
+
+</a></p><p><a name="dump">xidump requires the XLib and XInput header files to be present on
+the system.  On Redhat 8.0, these files are located in the XFree86-devel
+RPM package.  Other distributions may be organized differently, and
+people who build X from source probably get them by default.  When
+configuring, check that XLib is detected in the build environment,
+and if not, refer to the warnings and "checking for" messages for
+additional clues.
+
+</a></p><p><a name="dump">The preferred display mode for xidump uses ncurses.  To compile it, you
+will need the ncurses header files.  On Redhat 8.0, these files are located
+in the ncurses-devel package.  Without ncurses, xidump defaults to raw mode
+automatically.
+
+</a></p><blockquote><pre><a name="dump">[jej@ayukawa linuxwacom]$ ./configure
+checking for XLib include directory... <b>found</b>
+checking for XLib header files... <b>found</b>
+checking for ncurses.h... <b>yes</b>
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+                ...
+               <b>XLib - yes</b>
+            <b>ncurses - yes</b>
+                ...
+
+  BUILD OPTIONS:
+                ...
+             <b>xidump - yes</b>
+                ...
+----------------------------------------
+
+</a></pre></blockquote>
+
+<p><a name="dump">The configuration above indicates that the XLib and ncurses header files
+were found and xidump will be built.  If ncurses.h is not found, xidump
+will still build, but it will also warn you that ncurses will not be
+available.  If you encounter warnings, it is most likely that your
+development environment is missing some packages.
+
+</a></p><p><a name="dump">When you run <i>make</i>, the xidump program will be built along with any
+other programs that are specified in the build options.  The output file is
+called 'xidump' and is located in the linuxwacom package's src/util directory.
+It is installed by running <i>make install</i>.
+</a><a name="xset">
+</a></p><h2><a name="xset">12.2 - Building xsetwacom</a></h2>
+
+<p><a name="xset"><b>Building xsetwacom</b>
+
+</a></p><p><a name="xset">xsetwacom uses libwacomcfg.so to communicate with Wacom X (XFree86 or 
+Xorg) driver, wacom_drv.o.  So, libwacomcfg.so should be built and 
+installed. 
+
+</a></p><p><a name="xset">libwacomcfg.so relies on Xlib. In the
+configure script, it will default the Xlib path to /usr/X11R6 or
+/usr/lib (/usr/X11R6/lib64 or /usr/lib64 if --enable-xserver64 option
+is set) by checking the existence of xf86Version.h. If your Xlib is not
+installed under /usr/X11R6 or /usr/lib, you'll need to specify the path
+(dir) by <i>--with-xlib=dir</i>.  Let's see 
+what we get from configure:
+
+</a></p><blockquote><pre><a name="xset">[jej@ayukawa linuxwacom]$./configure
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i686
+       linux kernel - yes 2.4
+  module versioning - yes -DONFIG_MODVERSIONS -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h
+      kernel source - yes /usr/src/linux
+            XFree86 - no 
+          XSERVER64 - no 
+           dlloader - no 
+               XLib - yes /usr/X11R6
+                TCL - yes /usr
+                 TK - yes /usr
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - no
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+        wacom_drv.o - no
+----------------------------------------
+</a></pre></blockquote>
+
+<p><a name="xset">As shown above, the build options indicate that libwacomcfg and xsetwacom 
+will be built.  If not, then scroll back through the configuration to see 
+if there aren't any errors or warnings that would explain this.
+
+</a></p><p><a name="xset">Next, run <i>make</i>.  The output will be stored in the linuxwacom
+package's src/util and src/util/.libs directory. They will be installed by running
+<i>make install (you need to switch to superuser to run this command)</i>.
+
+</a></p><p><a name="xset">If wacom_drv.o was running while installing xsetwacom, xsetwacom can be 
+launched immediately after <i>make install</i> and <i>exit (switch back 
+to your own account)</i>.
+
+</a></p><p><a name="xset">If wacom_drv.o is installed by the same <i>make install</i> as xsetwacom
+is, restarting X server is required to use the newly built wacom_drv.o. We 
+strongly recommand to build and install wacom_drv.o and xsetwacom from 
+the same release package since the out of sync wacom_drv.o and xsetwacom 
+may crash your X server.
+</a><a name="cpl">
+</a></p><h2><a name="cpl">12.3 - Building wacomcpl</a></h2>
+
+<p><a name="cpl">wacomcpl is written in tcl/tk.  It uses libwacomxi.so and xsetwacom to 
+communicate with Wacom XFree86/Xorg driver,  wacom_drv.(s)o.  So,  to run 
+wacomcpl,  tcl/tk should be installed,  libwacomxi.so and xsetwacom should 
+be built and installed. 
+
+</a></p><p><a name="cpl">libwacomxi.so and xsetwacom are enabled by
+default in the configure script. By default, the script will assume
+that tcl/tk is installed under /usr. That is, tcl.h and tk.h should be
+under /usr/include; libtcl.so.0 and libtk.so.0 should be under
+/usr/lib. Let's see what we get from configure:
+</a></p><blockquote><pre><a name="cpl">[jej@ayukawa linuxwacom]$./configure
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i686
+       linux kernel - yes 2.4
+  module versioning - yes
+      kernel source - yes /usr/src/linux
+            XFree86 - no
+               XLib - yes /usr/X11R6
+                TCL - yes /usr
+                 TK - yes /usr
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - no
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+        wacom_drv.o - no
+----------------------------------------
+</a></pre></blockquote>
+
+<p><a name="cpl">As shown above, the build options indicate that libwacomxi and xsetwacom 
+will be built.  If not, then scroll back through the configuration to see 
+if there aren't any errors or warnings that would explain this.
+
+</a></p><p><a name="cpl">For example, on another system, I have installed tcl/tk under /usr/local/ActiveTcl.  
+That is, tcl.h and tk.h are under /usr/local/ActiveTcl/include. If I run configure 
+without options, I get:
+
+</a></p><blockquote><pre><a name="cpl">[jej@ayukawa linuxwacom]$./configure
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i686
+       linux kernel - yes 2.4
+  module versioning - yes
+      kernel source - yes /usr/src/linux
+            XFree86 - no
+               XLib - yes /usr/X11R6
+                TCL - no
+                 TK - no
+            ncurses - yes
+                GTK - 2.0.6
+
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - no
+          xsetwacom - yes
+              hid.o - no
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+        wacom_drv.o - no
+----------------------------------------
+</a></pre></blockquote>
+
+<p><a name="cpl">The build options show that libwacomxi will not be built. When I scroll 
+back through the configuration, I see:
+
+</a></p><blockquote><pre><a name="cpl">...
+checking for tcl header files... not found; tried /usr/include/tcl.h
+***
+*** WARNING:
+*** The tcl development environment does not appear to
+*** be installed. The header file tcl.h does not appear
+*** in the include path. Do you have the tcl rpm or
+*** equivalent package properly installed?  Some build
+*** features will be unavailable.
+***
+checking for tk header files... not found; tried /usr/include/tk.h and /include/tk.h
+***
+*** WARNING:
+*** The tk development environment does not appear to
+*** be installed. The header file tk.h does not appear
+*** in the include path. Do you have the tk rpm or
+*** equivalent package properly installed?  Some build
+*** features will be unavailable.
+***
+checking ncurses.h usability... yes
+checking ncurses.h presence... yes
+checking for ncurses.h... yes
+***
+*** WARNING:
+*** libwacomxi requires tcl environment; libwacomxi will not be built.
+***
+...
+</a></pre></blockquote>
+
+<p><a name="cpl">Then I run configure with option --with-tcl=/usr/local/ActiveTcl:
+
+</a></p><blockquote><pre><a name="cpl">[jej@ayukawa linuxwacom]$./configure --with-tcl=/usr/local/ActiveTcl
+...
+----------------------------------------
+  BUILD ENVIRONMENT:
+       architecture - i686
+       linux kernel - yes 2.4
+  module versioning - yes
+      kernel source - yes /usr/src/linux
+            XFree86 - no
+               XLib - yes /usr/X11R6
+                TCL - yes /usr/local/ActiveTcl
+                 TK - yes /usr/local/ActiveTcl
+            ncurses - yes
+
+  BUILD OPTIONS:
+            wacom.o - no
+            wacdump - yes
+             xidump - yes
+        libwacomcfg - yes
+         libwacomxi - yes
+          xsetwacom - yes
+              hid.o - no
+         usbmouse.o - no
+            evdev.o - no
+         mousedev.o - no
+            input.o - no
+        tabletdev.o - no
+        wacom_drv.o - no
+----------------------------------------
+</a></pre></blockquote>
+
+<p><a name="cpl"><b>Note:</b> You may need to issue the following commands before running wacomcpl: 
+  
+</a></p><blockquote><pre><a name="cpl">[jej@ayukawa linuxwacom]$export LD_LIBRARY_PATH=/usr/local/ActiveTcl/lib:$LD_LIBRARY_PATH
+[jej@ayukawa linuxwacom]$su
+[jej@ayukawa linuxwacom]#cd /usr/local/ActiveTcl/lib
+[jej@ayukawa lib]#ln -s libtcl.8.4.so libtcl.so.0
+[jej@ayukawa lib]#ln -s libtk.8.4.so libtk.so.0
+</a></pre></blockquote>
+
+<p><a name="cpl">If your tcl and tk are installed on different paths, you'll need to 
+specify them separately. Suppose that your tcl is under /usr/local/tcl8.4
+and your tk is under /usr/local/tk8.4, the proper configuration and setup 
+commands will be:
+
+</a></p><blockquote><pre><a name="cpl">[jej@ayukawa linuxwacom]$./configure --with-tcl=/usr/local/tcl8.4 --with-tk=/usr/local/tk8.4
+[jej@ayukawa linuxwacom]$export LD_LIBRARY_PATH=/usr/local/tcl8.4/lib:/usr/local/tk8.4/lib:$LD_LIBRARY_PATH
+[jej@ayukawa linuxwacom]$su
+[jej@ayukawa linuxwacom]#cd /usr/local/tcl8.4/lib
+[jej@ayukawa lib]#ln -s libtcl.8.4.so libtcl.so.0
+[jej@ayukawa lib]#cd /usr/local/tk8.4/lib
+[jej@ayukawa lib]#ln -s libtk.8.4.so libtk.so.0
+</a></pre></blockquote>
+
+<p><a name="cpl">Next, run <i>make</i>.  The output will be stored in the linuxwacom
+package's src/wacomxi and src/wacomxi/.libs directories. They will be 
+installed by running <i>make install (you need to switch to superuser 
+to run this command)</i>.
 </a><a name="builddrv">
-</a></p><h2><a name="builddrv">12.1 - Building wacom_drv.o from Scratch</a></h2>
+</a></p><h2><a name="builddrv">12.4 - Building wacom_drv.o from Scratch</a></h2>
 <h3><a name="builddrv">Introduction</a></h3>
 
 <p><a name="builddrv">I should tell you out-right that this is a time consuming process.
@@ -3288,7 +3816,7 @@ can probably remove all the non-essential directories, but be careful; the
 dependency tree in X is huge.
 
 <a name="debwcmdrv">
-</a></p><h2><a name="debwcmdrv">12.2 - Installing wacom driver On Debian</a></h2>
+</a></p><h2><a name="debwcmdrv">12.5 - Installing wacom driver On Debian</a></h2>
 <a name="debwcmdrv">The following documentation for building wacom driver on Debian was 
 written by Olivier Lecarme.  You can also refer to Olivier's page  
 </a><a href="http://www.i3s.unice.fr/%7Eol/success.html">here</a> for updates.
@@ -3477,7 +4005,7 @@ Gimp-user discussion lists, especially Carol Spears, Karine Delvare, Ping Cheng,
 
 </pre>
 <a name="ppcwcmdrv">
-</a><h2><a name="ppcwcmdrv">12.3 - Building wacom driver On PowerMac</a></h2>
+</a><h2><a name="ppcwcmdrv">12.6 - Building wacom driver On PowerMac</a></h2>
 <a name="ppcwcmdrv">The following documentation for building wacom driver on PowerMac [silver]
 was written by Joseph E. Sacco.  If you have any problems or questions,
 go ahead and post them to the list, or send email to me directly.  I'll 
@@ -3781,7 +4309,7 @@ XFree86 command  'xsetmode' works fine.
 -Joseph 
 </vojtech@suse.cz></a></pre>
 <a name="debwacomnosrc">
-</a><h2><a name="debwacomnosrc">12.4 - Building wacom driver On Fedora Core 3</a></h2>
+</a><h2><a name="debwacomnosrc">12.7 - Building wacom driver On Fedora Core 3</a></h2>
 <a name="debwacomnosrc">The following documentation for building wacom kernel modules and x.org 
 driver on Fedora Core 3 was written by Paul Duffy. If you have any problems 
 or questions, go ahead and post them to the list, or send email to me directly.  
@@ -4070,7 +4598,7 @@ regards, Paul
 
 </arch></arch></a></pre>
 <a name="susewacom">
-</a><h2><a name="susewacom">12.5 - Building wacom driver On Suse 9.2</a></h2>
+</a><h2><a name="susewacom">12.8 - Building wacom driver On Suse 9.2</a></h2>
 
 <a name="susewacom">Nico Kadel-Garcia has provided a changed SPEC file for SuSE 9.2.
 You can download the spec </a><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1117278&amp;group_id=69596&amp;atid=525124">here</a>. 
@@ -4083,7 +4611,7 @@ generating symlinks into /usr/include/X11 at compilation
 time, and it's done. ". Nico said on Mar 21 2005.
 
 </pre><a name="laptop">
-</a><h2><a name="laptop">12.6 - Laptop Suspend/Resume Tips</a></h2>
+</a><h2><a name="laptop">12.9 - Laptop Suspend/Resume Tips</a></h2>
 <a name="laptop">Thomas Netter (tnetter at iniDOTunizhDOTc) kindly provided a solution 
 to the following problem: 
 
@@ -4118,7 +4646,7 @@ Therefore, old airline operations apply: Extinguish LEDs before take-off!
 -Thomas
 </a></pre></blockquote>
 <a name="lic">
-</a><h2><a name="lic">12.7 - GNU Free Document License</a></h2>
+</a><h2><a name="lic">12.10 - GNU Free Document License</a></h2>
 <a name="lic">Version 1.2, November 2002<br>
 <br>
 Copyright (C) 2000,2001,2002  Free Software Foundation, Inc.<br>
@@ -4486,7 +5014,7 @@ Public License, to permit their use in free software.
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2007 - LinuxWacom -Last updated June 26, 2007<br>
+	Copyright (C) 2002-2007 - LinuxWacom -Last updated July 12, 2007<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>

@@ -1,3 +1,8 @@
+2007-07-24  Ping Cheng <pingc@wacom.com>
+	* Fixed a xsetwacom bug
+	* Updated wacomcpl
+	* Label 0.7.8-2
+
 2007-07-12  Ping Cheng <pingc@wacom.com>
 	* Updated HowTo pages
 	* Fixed a control panel button bug
@@ -124,7 +129,7 @@
 	  to fix bug 1562718
 
 2006-12-27   Ping Cheng <pingc@wacom.com>
-	* label 0.7.7-1 for testing
+	* Label 0.7.7-1 for testing
 
 2006-12-22   Ping Cheng <pingc@wacom.com>
 	* Update install and uninstall scripts for prebuilt
@@ -139,11 +144,11 @@
 	* Removed duplicated sync event in wacom_wac.c (Magnus Vigerlöf)
 
 2006-12-01   Ping Cheng <pingc@wacom.com>
-	* updated xsetwacom 
+	* Updated xsetwacom 
 
 2006-11-30   Ping Cheng <pingc@wacom.com>
 	* Fixed cursor relative out-prox issue
 	* Changed CursorProx option from 2 inputs into 1
-	* updated xsetwacom and wacom_drv
+	* Updated xsetwacom and wacom_drv
 	* Split wacom.c under 2.6.11 into 4 files
 	* label 0.7.7 for testing

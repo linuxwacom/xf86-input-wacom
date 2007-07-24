@@ -30,10 +30,11 @@
 **   2007-04-12 0.1.1 - PC - Support CoreEvent on/off (need more work)
 **   2007-05-18 0.1.2 - PC - Support DebugLevel options
 **   2007-06-05 0.1.3 - PC - Support Suppress and TwinView options
+**   2007-07-24 0.1.4 - PC - Support Screen_No option
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.3"
+#define XSETWACOM_VERSION "0.1.4"
 
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
@@ -536,10 +537,10 @@ void Usage(FILE* f)
 
 	fprintf(f,
 	"\nCommands:\n"
-	" list [dev|param|mod]       - display known devices, parameters \n"
+	" list [dev|param]           - display known devices, parameters \n"
 	" list mod                   - display supported modifier and specific keys for keystokes\n"
 	" set dev_name param [values...] - set device parameter by name\n"
-	" get dev_name param [param...] - get device parameter(s) by name\n"
+	" get dev_name param [param...] - get current device parameter(s) value by name\n"
 	" getdefault dev_name param [param...] - get device parameter(s) default value by name\n");
 }
 
@@ -733,9 +734,7 @@ static int ParseValues(int nCount, const char* pszValues, int* nValues,
 		}
 		else if (p->nType == SINGLE_VALUE)
 		{
-		    if (nCount)
-		   	 *nValue = nValues[0];
-		    else if (p->nParamID == XWACOM_PARAM_TWINVIEW ||
+		    if (p->nParamID == XWACOM_PARAM_TWINVIEW ||
 			p->nParamID == XWACOM_PARAM_ROTATE)
 		    {
 			int check = 0, j;
@@ -748,13 +747,15 @@ static int ParseValues(int nCount, const char* pszValues, int* nValues,
 					check = 1;
 					*nValue = j;
 				}
-			if (!check)
+ 			if (!check)
 			{
 				fprintf(stderr,"ParseValues: Value '%s' is "
 					"invalid.\n", pszValues);
 				return 1;
 			}
 		    }
+		    else
+		   	 *nValue = nValues[0];
 		}
 		/* Is there a range and are we in it? */
 		if (p->bRange &&
@@ -865,7 +866,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 				nValues[i] = strtol(pszValues[i],&pszEnd,10);
 		}
 		if (p->nType == SINGLE_VALUE && nCount == 1 &&
-			(*pszEnd == '\0'))
+			(*pszEnd == '\0')) /* numbers */
 		{
 			nValue = nValues[0];
 			/* Is there a range and are we in it? */
@@ -923,7 +924,7 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	if (value == -1)
 	{
 		if (disperr)
-			fprintf (stderr, "DisplayValue: %s setting '%s' does not have a value\n",
+			fprintf (stderr, "DisplayValue: %s does not have a valid value for parameter '%s' \n",
 				 devname, p->pszParam);
                 return;
 	}
