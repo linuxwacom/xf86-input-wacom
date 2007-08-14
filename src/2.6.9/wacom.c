@@ -100,7 +100,7 @@ MODULE_LICENSE(DRIVER_LICENSE);
 #define STYLUS_DEVICE_ID	0x02
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
-#define ERASER_DEVICE_ID	0x0A
+#define PAD_DEVICE_ID		0x0F
 
 enum {
 	PENPARTNER = 0,
@@ -436,7 +436,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
 				if ( wacom->features->type == G4 ||
-						wacom->features->type == WACOM_MO ) {
+						wacom->features->type == MO ) {
 					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : (data[7] & 0x03);
 					input_report_rel(dev, REL_WHEEL, -rw);
 				} else
@@ -449,7 +449,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
 				if ( wacom->features->type == G4 ||
-						wacom->features->type == WACOM_MO ) 
+						wacom->features->type == MO ) 
 					input_report_abs(dev, ABS_DISTANCE, data[6]);
 				else
 					input_report_abs(dev, ABS_DISTANCE, data[7]);
@@ -613,25 +613,25 @@ static int wacom_intuos_inout(struct urb *urb)
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
-		wacom_report_abs(wcombo, ABS_X, 0);
-		wacom_report_abs(wcombo, ABS_Y, 0);
-		wacom_report_abs(wcombo, ABS_DISTANCE, 0);
+		input_report_abs(dev, ABS_X, 0);
+		input_report_abs(dev, ABS_Y, 0);
+		input_report_abs(dev, ABS_DISTANCE, 0);
 		if (wacom->tool[idx] >= BTN_TOOL_MOUSE) {
-			wacom_report_key(wcombo, BTN_LEFT, 0);
-			wacom_report_key(wcombo, BTN_MIDDLE, 0);
-			wacom_report_key(wcombo, BTN_RIGHT, 0);
-			wacom_report_key(wcombo, BTN_SIDE, 0);
-			wacom_report_key(wcombo, BTN_EXTRA, 0);
-			wacom_report_abs(wcombo, ABS_THROTTLE, 0);
-			wacom_report_abs(wcombo, ABS_RZ, 0);
+			input_report_key(dev, BTN_LEFT, 0);
+			input_report_key(dev, BTN_MIDDLE, 0);
+			input_report_key(dev, BTN_RIGHT, 0);
+			input_report_key(dev, BTN_SIDE, 0);
+			input_report_key(dev, BTN_EXTRA, 0);
+			input_report_abs(dev, ABS_THROTTLE, 0);
+			input_report_abs(dev, ABS_RZ, 0);
  		} else {
-			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
-			wacom_report_abs(wcombo, ABS_TILT_X, 0);
-			wacom_report_abs(wcombo, ABS_TILT_Y, 0);
-			wacom_report_key(wcombo, BTN_STYLUS, 0);
-			wacom_report_key(wcombo, BTN_STYLUS2, 0);
-			wacom_report_key(wcombo, BTN_TOUCH, 0);
-			wacom_report_abs(wcombo, ABS_WHEEL, 0);
+			input_report_abs(dev, ABS_PRESSURE, 0);
+			input_report_abs(dev, ABS_TILT_X, 0);
+			input_report_abs(dev, ABS_TILT_Y, 0);
+			input_report_key(dev, BTN_STYLUS, 0);
+			input_report_key(dev, BTN_STYLUS2, 0);
+			input_report_key(dev, BTN_TOUCH, 0);
+			input_report_abs(dev, ABS_WHEEL, 0);
 		}
 		input_report_key(dev, wacom->tool[idx], 0);
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */

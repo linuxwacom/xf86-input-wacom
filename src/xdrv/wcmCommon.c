@@ -507,9 +507,10 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 	case AC_DBLCLICK:
 		/* Dynamically modify the button map as required --
-		 * to be moved in the place where button mappings are changed
+		 * to be moved in the place where button mappings are changed.
+		 * Only left double is supported.
 		 */
-		local->dev->button->map [button_idx] = button & AC_CODE;
+		local->dev->button->map [button_idx] = 1;
 
 		if (mask)
 		{

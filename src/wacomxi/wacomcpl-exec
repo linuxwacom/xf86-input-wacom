@@ -89,6 +89,8 @@ proc updateXinitrc {device option value} {
 
     if { ![ file exists ~/.xinitrc ] } {
 	exec echo "xsetwacom set $device $option \"$value\"" > ~/.xinitrc
+	exec echo "# run the primary system script" >> ~/.xinitrc
+	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc
     } else {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1

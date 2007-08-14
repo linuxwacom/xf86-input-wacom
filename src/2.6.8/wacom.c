@@ -101,7 +101,7 @@ MODULE_LICENSE(DRIVER_LICENSE);
 #define STYLUS_DEVICE_ID	0x02
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
-#define ERASER_DEVICE_ID	0x0A
+#define PAD_DEVICE_ID		0x0F
 
 enum {
 	PENPARTNER = 0,
@@ -436,7 +436,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			case 2: /* Mouse with wheel */
 				input_report_key(dev, BTN_MIDDLE, data[1] & 0x04);
 				if ( wacom->features->type == G4 ||
-						wacom->features->type == WACOM_MO ) {
+						wacom->features->type == MO ) {
 					rw = data[7] & 0x04 ? (data[7] & 0x03)-4 : (data[7] & 0x03);
 					input_report_rel(dev, REL_WHEEL, -rw);
 				} else
@@ -449,7 +449,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
 				if ( wacom->features->type == G4 ||
-						wacom->features->type == WACOM_MO ) 
+						wacom->features->type == MO ) 
 					input_report_abs(dev, ABS_DISTANCE, data[6]);
 				else
 					input_report_abs(dev, ABS_DISTANCE, data[7]);

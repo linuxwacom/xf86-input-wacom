@@ -334,7 +334,7 @@ static PARAMINFO gParamInfo[] =
 		TV_NONE, TV_LEFT_RIGHT, SINGLE_VALUE, TV_NONE },
 
 	{ "Mode",
-		"Switches cursor movement mode (default is absolute). ",
+		"Switches cursor movement mode (default is absolute/on). ",
 		XWACOM_PARAM_MODE, VALUE_OPTIONAL, RANGE, 
 		0, 1, BOOLEAN_VALUE, 1 },	
 
@@ -411,7 +411,7 @@ static PARAMINFO gParamInfo[] =
 
 	{ "RawFilter",
 		"Enables and disables filtering of raw data, "
-		"default is true.",
+		"default is true/on.",
 		XWACOM_PARAM_RAWFILTER, VALUE_OPTIONAL, RANGE, 
 		0, 1, BOOLEAN_VALUE, 1 },	
 

@@ -142,7 +142,8 @@ you should NOT add this option.  The default is "none".
 specifies different resolutions for the two screens in TwinView setup.  For example, 
 if the resolution of screen 1 (res1) is 1024x768 and screen 2 (res2) is 1280x1024, 
 the option will be set to:
-            Option "TVResolution" "1024x768,1280x1024"
+            Option "TVResolution" "1024x768,1280x1024" 
+
 This option is used only when TwinView option is not none.  It is unnecessary to add 
 this option if your screens are displaying in the same resolutions.
 .TP 4
@@ -169,7 +170,7 @@ described by TopX, TopY, BottomX, BottomY.
 sets the level of debugging info reported.  There are 12 levels, specified by 
 the integers between 1 and 12.  Once it is defined, all the debug messages 
 with a level less than or equal to the number will be logged into 
-/etc/X11/XFree86.0.log.
+/etc/X11/Xorg.0.log.
 .TP 4
 .B Option \fI"CursorProx"\fP \fI"number"\fP
 sets the max distance from tablet to stop reporting movement for cursor in relative mode. Default for Intuos series is 10, for Graphire series (including Volitos) is 42.
@@ -178,8 +179,7 @@ sets the max distance from tablet to stop reporting movement for cursor in relat
 sets the serial number associated with the physical device. This allows
 to have multiple devices of the same type (i.e. multiple pens). This
 option is only available on wacom V devices (Intuos series and Cintiq 21U). 
-To see which serial number belongs to a device, you have to set the 
-DebugLevel to 6 and watch the output of the X log.
+To see which serial number belongs to a device, you need to run the utility program, xsetwacom, which comes with linuxwacom package.
 .TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
 sets the pressure threshold used to generate a button 1 events of stylus.
