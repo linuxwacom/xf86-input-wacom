@@ -49,7 +49,7 @@ if WCM_DLLOADER
 DLLOADER=-fPIC
 endif
 
-CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR) -Wno-variadic-macros
+CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \
@@ -79,6 +79,9 @@ $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
 		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
 		-DX_BYTE_ORDER=X_LITTLE_ENDIAN $(XSERVER64) \
 		-DNDEBUG -DFUNCPROTO=15 \
+if WCM_DLLOADER
+		 $(XSERVER_CFLAGS) \
+endif
 		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
 		-o $@ -c $(srcdir)/$(subst .o,.c,$@)
 

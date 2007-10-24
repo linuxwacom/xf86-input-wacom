@@ -272,6 +272,14 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		if (priv->flags & ABSOLUTE_FLAG)
 			topx = priv->topX;
 
+#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
+		 * for coordinate conversion at the moment */
+		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx;
+		topx = 0;
+		tabletSize = (int)((double)tabletSize * priv->factorX + 0.5);
+#endif
+
 		InitValuatorAxisStruct(local->dev, 0, topx, tabletSize, 
 			common->wcmResolX, 0, common->wcmResolX); 
 	}
@@ -288,6 +296,15 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		}
 		if (priv->flags & ABSOLUTE_FLAG)
 			topy = priv->topY;
+
+#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
+		 * for coordinate conversion at the moment */
+		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy;
+		topy = 0;
+		tabletSize = (int)((double)tabletSize * priv->factorY + 0.5);
+#endif
+
 		InitValuatorAxisStruct(local->dev, 1, topy, tabletSize, 
 			common->wcmResolY, 0, common->wcmResolY); 
 	}

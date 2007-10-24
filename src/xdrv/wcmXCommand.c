@@ -684,6 +684,11 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_STOPX0:
 	    case XWACOM_PARAM_STOPX1:
 	    case XWACOM_PARAM_STOPX2:
+	    case XWACOM_PARAM_STOPX3:
+	    case XWACOM_PARAM_STOPX4:
+	    case XWACOM_PARAM_STOPX5:
+	    case XWACOM_PARAM_STOPX6:
+	    case XWACOM_PARAM_STOPX7:
 	    {
 		int sn = (param - XWACOM_PARAM_STOPX0) / 4; 
 		int numS = screenInfo.numScreens;
@@ -696,7 +701,11 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    }
 	    case XWACOM_PARAM_STOPY0:
 	    case XWACOM_PARAM_STOPY1:
-	    case XWACOM_PARAM_STOPY2:
+	    case XWACOM_PARAM_STOPY3:
+	    case XWACOM_PARAM_STOPY4:
+	    case XWACOM_PARAM_STOPY5:
+	    case XWACOM_PARAM_STOPY6:
+	    case XWACOM_PARAM_STOPY7:
 	    {
 		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
 		int numS = screenInfo.numScreens;
@@ -710,6 +719,11 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_SBOTTOMX0:
 	    case XWACOM_PARAM_SBOTTOMX1:
 	    case XWACOM_PARAM_SBOTTOMX2:
+	    case XWACOM_PARAM_SBOTTOMX3:
+	    case XWACOM_PARAM_SBOTTOMX4:
+	    case XWACOM_PARAM_SBOTTOMX5:
+	    case XWACOM_PARAM_SBOTTOMX6:
+	    case XWACOM_PARAM_SBOTTOMX7:
 	    {
 		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
 		int numS = screenInfo.numScreens;
@@ -723,6 +737,11 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_SBOTTOMY0:
 	    case XWACOM_PARAM_SBOTTOMY1:
 	    case XWACOM_PARAM_SBOTTOMY2:
+	    case XWACOM_PARAM_SBOTTOMY3:
+	    case XWACOM_PARAM_SBOTTOMY4:
+	    case XWACOM_PARAM_SBOTTOMY5:
+	    case XWACOM_PARAM_SBOTTOMY6:
+	    case XWACOM_PARAM_SBOTTOMY7:
 	    {
 		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
 		int numS = screenInfo.numScreens;

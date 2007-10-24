@@ -879,8 +879,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 	/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 	 * for coordinate conversion at the moment */
-	x = (int)((double)x * priv->factorX + 0.5);
-	y = (int)((double)y * priv->factorY + 0.5);
+	x = (int)((double)(x - priv->topX) * priv->factorX + 0.5);
+	y = (int)((double)(y - priv->topY) * priv->factorY + 0.5);
 #endif
 
 	if (type != PAD_ID)
@@ -1090,21 +1090,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pLast = &pChannel->valid.state;
 
 	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent at channel = %d\n", channel));
-
-	/* Tool on the tablet when driver starts. This sometime causes
-	 * access errors to the device */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-	if (!miPointerCurrentScreen())
-#else
-	if (!miPointerGetScreen(pDev->dev))
-#endif
-	{
-		DBG(1, common->debugLevel, ErrorF("xf86WcmEvent: "
-			"Wacom driver can not get Current Screen ID\n"));
-		DBG(1, common->debugLevel, ErrorF(
-			"Please remove Wacom tool from the tablet.\n"));
-		return;
-	}
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
@@ -1362,6 +1347,21 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 	/* X: InputDevice selection done! */
+
+	/* Tool on the tablet when driver starts. This sometime causes
+	 * access errors to the device */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+	if (!miPointerCurrentScreen())
+#else
+	if (!miPointerGetScreen(pDev->dev))
+#endif
+	{
+		DBG(1, common->debugLevel, ErrorF("xf86WcmEvent: "
+			"Wacom driver can not get Current Screen ID\n"));
+		DBG(1, common->debugLevel, ErrorF(
+			"Please remove Wacom tool from the tablet.\n"));
+		return;
+	}
 
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */

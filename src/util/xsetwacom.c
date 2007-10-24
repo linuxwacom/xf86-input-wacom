@@ -496,6 +496,86 @@ static PARAMINFO gParamInfo[] =
 		"Screen 2 bottom coordinate in pixels. ",
 		XWACOM_PARAM_SBOTTOMY2, VALUE_REQUIRED },
 
+	{ "STopX3",
+		"Screen 3 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX3, VALUE_REQUIRED },
+
+	{ "STopY3",
+		"Screen 3 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY3, VALUE_REQUIRED },
+
+	{ "SBottomX3",
+		"Screen 3 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX3, VALUE_REQUIRED },
+
+	{ "SBottomY3",
+		"Screen 3 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY3, VALUE_REQUIRED },
+
+	{ "STopX4",
+		"Screen 4 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX4, VALUE_REQUIRED },
+
+	{ "STopY4",
+		"Screen 4 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY4, VALUE_REQUIRED },
+
+	{ "SBottomX4",
+		"Screen 4 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX4, VALUE_REQUIRED },
+
+	{ "SBottomY4",
+		"Screen 4 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY4, VALUE_REQUIRED },
+
+	{ "STopX5",
+		"Screen 5 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX5, VALUE_REQUIRED },
+
+	{ "STopY5",
+		"Screen 5 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY5, VALUE_REQUIRED },
+
+	{ "SBottomX5",
+		"Screen 5 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX5, VALUE_REQUIRED },
+
+	{ "SBottomY5",
+		"Screen 5 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY5, VALUE_REQUIRED },
+
+	{ "STopX6",
+		"Screen 6 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX6, VALUE_REQUIRED },
+
+	{ "STopY6",
+		"Screen 6 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY6, VALUE_REQUIRED },
+
+	{ "SBottomX6",
+		"Screen 6 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX6, VALUE_REQUIRED },
+
+	{ "SBottomY6",
+		"Screen 6 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY6, VALUE_REQUIRED },
+
+	{ "STopX7",
+		"Screen 7 left coordinate in pixels. ",
+		XWACOM_PARAM_STOPX7, VALUE_REQUIRED },
+
+	{ "STopY7",
+		"Screen 7 top coordinate in pixels. ",
+		XWACOM_PARAM_STOPY7, VALUE_REQUIRED },
+
+	{ "SBottomX7",
+		"Screen 7 right coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMX7, VALUE_REQUIRED },
+
+	{ "SBottomY7",
+		"Screen 7 bottom coordinate in pixels. ",
+		XWACOM_PARAM_SBOTTOMY7, VALUE_REQUIRED },
+
 	{ "ToolID", 
 		"Returns the ID of the associated device. ",
 		XWACOM_PARAM_TOOLID, VALUE_REQUIRED },
@@ -819,7 +899,6 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 			return 1;
 		}
 	}
-
 	/* No device or param? Error. */
 	if (!pszDevName || !pszParam)
 		{ Usage(stderr); return 1; }
@@ -878,8 +957,9 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 				return 1;
 			}
 		}
-		else if (ParseValues(nCount, pszValues[0],
-			nValues, &nValue, keys, p, pszDevName)) 
+		else if ((strlen (pszValues[0]) > 255) || 
+			ParseValues(nCount, pszValues[0],
+			nValues, &nValue, keys, p, pszDevName) ) 
 			return 1;
 	}
 

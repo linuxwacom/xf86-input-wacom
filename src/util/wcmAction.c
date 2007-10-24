@@ -95,7 +95,6 @@ static ACTIONCODE specific_code [] =
 	{ "space",	XK_space },
 	{ "quotedbl",   XK_quotedbl },
 	{ "backslash",  XK_backslash },
-	{ "exclam",	XK_exclam },
 	{ "break",	XK_Break },
 	{ "print",	XK_Print }
 };
@@ -130,7 +129,8 @@ static ACTIONCODE key_code [] =
 	{ "{",	XK_braceleft },
 	{ "}",	XK_braceright },
 	{ "|",	XK_bar },
-	{ "~",	XK_asciitilde}
+	{ "~",	XK_asciitilde },
+	{ "!",	XK_exclam }
 };
 
 static ACTIONCODE number_code [] =

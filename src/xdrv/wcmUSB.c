@@ -397,7 +397,7 @@ static struct
 	{ 0x38,  508,  508, &usbCintiq     }, /* PL510 */
 	{ 0x39,  508,  508, &usbCintiq     }, /* PL710 */ 
 	{ 0xC0,  508,  508, &usbCintiq     }, /* DTF720 */
-	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF520 */ 
+	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */ 
 
 	{ 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
 	{ 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */

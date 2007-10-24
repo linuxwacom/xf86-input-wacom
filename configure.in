@@ -1,7 +1,7 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.8)
+AM_INIT_AUTOMAKE(linuxwacom, 0.7.9)
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_AWK
@@ -364,6 +364,12 @@ if test x$enable_dlloader == x"" && test $WCM_OPTION_DLLOADER != "yes"; then
 	fi
 fi
 
+dnl Check for pixman
+if test $WCM_OPTION_DLLOADER == "yes"; then
+	PKG_PROG_PKG_CONFIG
+	PKG_CHECK_MODULES(XSERVER,[xorg-server])
+fi
+
 AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
 
 dnl Check for wacomdrv build
@@ -565,6 +571,7 @@ AC_OUTPUT(Makefile
 	src/2.6.16/Makefile
 	src/2.6.18/Makefile
 	src/2.6.19/Makefile
+	src/2.6.22/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 
