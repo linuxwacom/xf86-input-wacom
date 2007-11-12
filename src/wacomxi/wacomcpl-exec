@@ -32,6 +32,9 @@ set desktopWidth [ winfo screenwidth . ]
 set desktopHeight [ winfo screenheight . ]
 set screenWidth [ winfo screenwidth . ]
 set screenHeight [ winfo screenheight . ]
+set screenXBottom [ winfo screenwidth . ]
+set screenYBottom [ winfo screenheight . ]
+
 set screenX_org 0
 set screenY_org 0
 set swapThresh 100
@@ -49,13 +52,13 @@ set showHelp 0
 
 proc updateCurrentScreenInfo {} {
     global device numScreens currentScreen
-    global screenWidth screenHeight screenX_org screenY_org 
+    global screenXBottom screenYBottom screenX_org screenY_org 
     global getScreenInfo
 
     if { $numScreens($device) != 1 } {
         set screenInfo $getScreenInfo($device,Screen$currentScreen)
-	set screenWidth [ lindex $screenInfo 0 ]
-	set screenHeight [ lindex $screenInfo 1 ]
+	set screenXBottom [ lindex $screenInfo 0 ]
+	set screenYBottom [ lindex $screenInfo 1 ]
 	set screenX_org [ lindex $screenInfo 2 ]
 	set screenY_org [ lindex $screenInfo 3 ]
    }
@@ -116,7 +119,7 @@ proc calibrationSequence {which xDev yDev} {
     global device calibResults screenY_org screenX_org
     global workingTags screenTags size numScreens
     global swapThresh screenWidth screenHeight
-    global getDeviceModel
+    global getDeviceModel screenXBottom screenYBottom
 
     set calibResults(xDev,$which) $xDev
     set calibResults(yDev,$which) $yDev
@@ -132,8 +135,8 @@ proc calibrationSequence {which xDev yDev} {
 	set borderOffset [expr ($size / 2 )]
 	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
  	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
- 	set widthX [expr $screenWidth - (2 * $borderOffset)]
- 	set heightX [expr $screenHeight - (2 * $borderOffset)]
+ 	set widthX [expr $screenXBottom-$size*(abs($screenXBottom)/$screenXBottom)]
+ 	set heightX [expr $screenYBottom-$size*(abs($screenYBottom)/$screenYBottom)]
 
 	#
 	# A rough verification of the click
@@ -218,14 +221,14 @@ proc Calibration {} {
 proc startCalibration {} {
     global device calibResults
     global screenX_org screenY_org size numScreens
-    global screenWidth screenHeight
+    global screenWidth screenHeight screenXBottom screenYBottom
     
     if { $numScreens($device) > 1 } {
 	bindtags .screen.list.list .
     }
 
-    set y_coor [ expr $screenY_org+$screenHeight-$size ]
-    set x_coor [ expr $screenX_org+$screenWidth-$size ]
+    set y_coor [ expr $screenYBottom-$size*(abs($screenYBottom)/$screenYBottom) ]
+    set x_coor [ expr $screenXBottom-$size*(abs($screenXBottom)/$screenXBottom) ]
     pad .topleft +$screenX_org+$screenY_org
     pad .bottomright +$x_coor+$y_coor
     update
@@ -406,7 +409,6 @@ proc updateDevice {} {
 	#
 	wacomxi::bindevent . $device <ButtonPress> ""
 	wacomxi::bindevent . $device <ButtonRelease> ""
-	disableButtons
     }
 
     if { $device != ""} {
@@ -1116,22 +1118,24 @@ proc initialSet {} {
     if { $snd == -1 } {
 	set snd "Desktop" 
     } else {
-	set snd "Screen[ expr $snd+1 ]"
+	set snd "Screen$snd"
     }
 
     if { $numS == 1 } {
 	if { $tvd } {
 	    set sn0 "Desktop" 
-	    set sn1 "Screen1"
-	    set sn2 "Screen2"
+	    set sn1 "Screen0"
+	    set sn2 "Screen1"
 	    tk_optionMenu $currentW.f.snsmenu snd $sn0 $sn1 $sn2
 	}
     } else {
 	if { $numS > 1 } {
 	    set smenu [ tk_optionMenu $currentW.f.snsmenu snd "Desktop" ]
 	    pack $currentW.f.snsmenu -side left
-	    for { set i 1 } { $i <= $numS } { incr i } {
-		$smenu insert $i radiobutton -label "Screen$i"
+	    for { set i 0 } { $i < $numS } { incr i } {
+		$smenu insert $i radiobutton -label "Screen$i" \
+		-variable smenvar -command \
+		{ global smenvar; set snd $smenvar }
 	    }
 	}
     }

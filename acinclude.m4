@@ -361,25 +361,21 @@ AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
 
 dnl handle default case
 AC_MSG_CHECKING(for X lib directory)
-if test "$WCM_XLIBDIR" == "" || test "$WCM_XLIBDIR" == "yes"; then
-	if test -f $WCM_XLIBDIR_DEFAULT2/libX11.so; then
-		WCM_ENV_XLIB=yes
-		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT2
-		AC_MSG_RESULT(found)
-	elif test -d $WCM_XLIBDIR_DEFAULT/X11 ||
-		test -d $WCM_XLIBDIR_DEFAULT; then
-		WCM_ENV_XLIB=yes
-		WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
-		AC_MSG_RESULT(found)
-	else
-		AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT/X11 and $WCM_XLIBDIR_DEFAULT2])
-		WCM_ENV_XLIB=no
-	fi
-elif test -d $WCM_XLIBDIR; then
+
+if test -d $WCM_XLIBDIR && test -f $WCM_XLIBDIR/libX11.so; then
 	WCM_ENV_XLIB=yes
 	AC_MSG_RESULT(found)
+elif test -f $WCM_XLIBDIR_DEFAULT2/libX11.so; then
+	WCM_ENV_XLIB=yes
+	WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT2
+	AC_MSG_RESULT(found)
+elif test -d $WCM_XLIBDIR_DEFAULT/X11 ||
+		test -d $WCM_XLIBDIR_DEFAULT; then
+	WCM_ENV_XLIB=yes
+	WCM_XLIBDIR=$WCM_XLIBDIR_DEFAULT
+	AC_MSG_RESULT(found)
 else
-	AC_MSG_RESULT([not found, tried $WCM_XLIBDIR])
+	AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT/X11 and $WCM_XLIBDIR_DEFAULT2])
 	WCM_ENV_XLIB=no
 fi
 ])

@@ -65,6 +65,7 @@
  *    v1.40-2.6.10-pc-0.8 - Support tablet buttons/keys  
  *    v1.40-2.6.10-pc-0.9 - Support Intuos outbound tracking
  *    v1.40-2.6.10-pc-0.10 - Added Bamboo
+ *    v1.40-2.6.10-pc-0.11 - added Bamboo1, Bamboo Fun, and Hummingbird
  */
 
 /*
@@ -86,7 +87,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.10"
+#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.11"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -113,6 +114,7 @@ enum {
 	INTUOS3L,
 	CINTIQ,
 	MO,
+	BEE,
 	MAX_TYPE
 };
 
@@ -724,10 +726,12 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		input_report_key(dev, BTN_5, (data[6] & 0x02));
 		input_report_key(dev, BTN_6, (data[6] & 0x04));
 		input_report_key(dev, BTN_7, (data[6] & 0x08));
+		input_report_key(dev, BTN_8, (data[5] & 0x10));
+		input_report_key(dev, BTN_9, (data[6] & 0x10));
 		input_report_abs(dev, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		input_report_abs(dev, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
-		if((data[5] & 0x0f) | (data[6] & 0x0f) | (data[1] & 0x1f) | 
+		if((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) | 
 			data[2] | (data[3] & 0x1f) | data[4])
 			input_report_key(dev, wacom->tool[1], 1);
 		else
@@ -773,13 +777,11 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		{
 			if(wacom->features->type >= INTUOS3S)
 			{
-				/* I3 marker pen rotation reported as wheel 
-				 * due to valuator limitation 
-				 */
+				/* I3 marker pen rotation */
 				t = (data[6] << 3) | ((data[7] >> 5) & 7);
 				t = (data[7] & 0x20) ? ((t > 900) ? ((t-1) / 2 - 1350) :
 					((t-1) / 2 + 450)) : (450 - t / 2) ;
-				input_report_abs(dev, ABS_WHEEL, t);
+				input_report_abs(dev, ABS_Z, t);
 			}
 			else
 			{
@@ -847,6 +849,8 @@ static struct wacom_features wacom_features[] = {
  	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Graphire3 4x5", 8,  10208,  7424,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 63, GRAPHIRE,   wacom_graphire_irq },
+	{ "Wacom BambooFun 4x5", 9,  14760,  9225,  511, 63, MO,         wacom_graphire_irq },
+	{ "Wacom BambooFun 6x8", 9,  21648, 13530,  511, 63, MO,         wacom_graphire_irq },
   	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 31, INTUOS,     wacom_intuos_irq },
@@ -873,6 +877,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom PenPartner2",   8,   3250,  2320,  255, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Bamboo",        9,  14760,  9225,  511, 63, MO,	 wacom_graphire_irq },
+	{ "Wacom Bamboo1",       8,   5104,  3712,  511, 63, GRAPHIRE,   wacom_graphire_irq },
 	{ "Wacom Graphire4 4x5", 8,  10208,  7424,  511, 63, G4,	 wacom_graphire_irq },
 	{ "Wacom Graphire4 6x8", 8,  16704, 12064,  511, 63, G4,	 wacom_graphire_irq },
 	{ "Wacom Cintiq Partner",8,  20480, 15360,  511,  0, PL,         wacom_ptu_irq },
@@ -885,6 +890,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 63, INTUOS3S,   wacom_intuos_irq },
 	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 63, CINTIQ,     wacom_intuos_irq },
 	{ "Wacom DTF720",         8,  6858,  5506,  511,  0, PL,	 wacom_pl_irq },
+	{ "Wacom Cintiq 12WX",   10, 53020, 33440, 1023, 63, BEE,        wacom_intuos_irq },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ }
 };
@@ -896,6 +902,8 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x12) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x13) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x14) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x17) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x18) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x20) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x21) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x22) },
@@ -921,6 +929,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x63) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x64) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x65) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x69) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x15) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x16) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
@@ -934,6 +943,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC6) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ }
 };

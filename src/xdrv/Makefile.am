@@ -79,9 +79,7 @@ $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
 		-DSMART_SCHEDULE -DBUILDDEBUG -DXResExtension \
 		-DX_BYTE_ORDER=X_LITTLE_ENDIAN $(XSERVER64) \
 		-DNDEBUG -DFUNCPROTO=15 \
-if WCM_DLLOADER
 		 $(XSERVER_CFLAGS) \
-endif
 		-DNARROWPROTO -DIN_MODULE -DXFree86Module $(LINUX_INPUT) \
 		-o $@ -c $(srcdir)/$(subst .o,.c,$@)
 

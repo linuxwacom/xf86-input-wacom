@@ -178,6 +178,38 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
+	static WacomModel usbBamboo1 =
+	{
+		"USB Bamboo1",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbWcmGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterCoord,   /* input filtering */
+		usbDetectConfig,      /* detect hardware buttons etc */
+	};
+
+	static WacomModel usbBambooFun =
+	{
+		"USB BambooFun",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbWcmGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterCoord,   /* input filtering */
+		usbDetectConfig,      /* detect hardware buttons etc */
+	};
+
 	static WacomModel usbCintiq =
 	{
 		"USB Cintiq",
@@ -292,7 +324,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 
 	static WacomModel usbCintiqV5 =
 	{
-		"USB Cintiq21UX",
+		"USB CintiqV5",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
@@ -377,6 +409,8 @@ static struct
 	{ 0x14, 2032, 2032, &usbGraphire3  }, /* Graphire3 6x8 */
 	{ 0x15, 2032, 2032, &usbGraphire4  }, /* Graphire4 4x5 */
 	{ 0x16, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 */ 
+	{ 0x17, 2540, 2540, &usbBambooFun  }, /* BambooFun 4x5 */
+	{ 0x18, 2540, 2540, &usbBambooFun  }, /* BambooFun 6x8 */
 	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
 	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
@@ -414,6 +448,7 @@ static struct
 	{ 0x64, 1016, 1016, &usbVolito2    }, /* PenPartner2 */
 
 	{ 0x65, 2540, 2540, &usbBamboo     }, /* Bamboo */
+	{ 0x69, 1012, 1012, &usbBamboo1    }, /* Bamboo1 */ 
 
 	{ 0xB0, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x5 */
 	{ 0xB1, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x8 */
@@ -423,7 +458,8 @@ static struct
 	{ 0xB5, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x11 */
 	{ 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
 
-	{ 0x3F, 5080, 5080, &usbCintiqV5   }  /* Cintiq 21UX */ 
+	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
+	{ 0xC6, 5080, 5080, &usbCintiqV5   }  /* Cintiq 12WX */ 
 };
 
 Bool usbWcmInit(LocalDevicePtr local)
@@ -807,7 +843,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				ds->stripx = event->value; 
 			else if (event->code == ABS_RY)
 				ds->stripy = event->value;
-			else if (event->code == ABS_RZ)
+			else if (event->code == ABS_RZ) 
 				ds->rotation = event->value;
 			else if (event->code == ABS_TILT_X)
 				ds->tiltx = event->value - 64;
@@ -817,7 +853,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				ds->pressure = event->value;
 			else if (event->code == ABS_DISTANCE)
 				ds->distance = event->value;
-			else if (event->code == ABS_WHEEL)
+			else if (event->code == ABS_WHEEL || 
+				    event->code == ABS_Z)
 				ds->abswheel = event->value;
 			else if (event->code == ABS_THROTTLE)
 				ds->throttle = event->value;

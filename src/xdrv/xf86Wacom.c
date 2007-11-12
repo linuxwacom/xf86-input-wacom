@@ -56,9 +56,10 @@
  * 2007-06-05 47-pc0.7.7-11 - Test Ron's patches
  * 2007-06-15 47-pc0.7.7-12 - enable changing number of raw data 
  * 2007-06-25 47-pc0.7.8 - new release
+ * 2007-06-25 47-pc0.7.9-1 - Support multimonitors in both horizonal and vertical settings
  */
 
-static const char identification[] = "$Identification: 47-0.7.8 $";
+static const char identification[] = "$Identification: 47-0.7.9-1 $";
 
 /****************************************************************************/
 
@@ -356,20 +357,23 @@ void xf86WcmInitialTVScreens(LocalDevicePtr local)
 		priv->screenTopX[1] = 0;
 		priv->screenTopY[1] = priv->tvResolution[1];
 		priv->screenBottomX[1] = priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[3];
+		priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
 	}
 	if (priv->twinview == TV_LEFT_RIGHT)
 	{
 		priv->screenTopX[1] = priv->tvResolution[0];
 		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[2];
+		priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
 		priv->screenBottomY[1] = priv->tvResolution[3];
 	}
 
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialTVScreens for \"%s\" "
-		"resX0=%d resY0=%d resX1=%d resY1=%d\n",
-		local->name, priv->tvResolution[0], priv->tvResolution[1],
-		priv->tvResolution[2], priv->tvResolution[3]));
+		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
+		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
+		local->name, priv->screenTopX[0], priv->screenTopY[0],
+		priv->screenBottomX[0], priv->screenBottomY[0],
+		priv->screenTopX[1], priv->screenTopY[1],
+		priv->screenBottomX[1], priv->screenBottomY[1]));
 }
 
 /*****************************************************************************
@@ -379,31 +383,25 @@ void xf86WcmInitialTVScreens(LocalDevicePtr local)
 void xf86WcmInitialScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int i;
 
 	if (priv->twinview != TV_NONE)
 		return;
 
 	/* initial screen info */
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = screenInfo.screens[0]->width;
-	priv->screenBottomY[0] = screenInfo.screens[0]->height;
-	if (screenInfo.numScreens)
+	for (i=0; i<screenInfo.numScreens; i++)
 	{
-		int i;
-		for (i=1; i<screenInfo.numScreens; i++)
-		{
-			int x = 0, y = 0, j;
-			for (j=0; j<i; j++)
-				x += screenInfo.screens[j]->width;
-			for (j=0; j<i; j++)
-				y += screenInfo.screens[j]->height;
+		priv->screenTopX[i] = dixScreenOrigins[i].x;
+		priv->screenTopY[i] = dixScreenOrigins[i].y;
+		priv->screenBottomX[i] = dixScreenOrigins[i].x;
+		priv->screenBottomY[i] = dixScreenOrigins[i].y;
+		priv->screenBottomX[i] += screenInfo.screens[i]->width;
+		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 
-			priv->screenTopX[i] = x;
-			priv->screenTopY[i] = y;
-			priv->screenBottomX[i] = screenInfo.screens[i]->width;
-			priv->screenBottomY[i] = screenInfo.screens[i]->height;
-		}
+		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
+			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
+			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
+			i, priv->screenBottomX[i], i, priv->screenBottomY[i]));
 	}
 }
 

@@ -1001,14 +1001,6 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		return;
 	}
 
-	if (value == -1)
-	{
-		if (disperr)
-			fprintf (stderr, "DisplayValue: %s does not have a valid value for parameter '%s' \n",
-				 devname, p->pszParam);
-                return;
-	}
-
 	switch (p->nType)
 	{
 	case SINGLE_VALUE:
