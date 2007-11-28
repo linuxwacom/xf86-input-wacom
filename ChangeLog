@@ -1,3 +1,12 @@
+2007-11-28  Ping Cheng <pingc@wacom.com>
+	* Updated TwinView support to eliminate the unnecessary tvoffset (bug 1812593)
+	* Incorporated Bartosz Fabianowski's patch (bug 1831998)
+	* Patch 1818295 from Alexander V. Inyukhin
+	* Patch 1834712 from Magnus Vigerlöf 
+	* Fixed bug 1791005 (protocol 4 tablets don't support serial numbers)
+	* Patch 1839008 from Magnus Vigerlöf 
+	* Label 0.7.9-3
+
 2007-11-12  Ping Cheng <pingc@wacom.com>
 	* Support legacy kernels
 	* Label 0.7.9-2

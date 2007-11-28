@@ -756,35 +756,47 @@ static void usbParseEvent(LocalDevicePtr local,
 
 	/* figure out the channel to use based on serial number */
 	channel = -1;
-
-	/* find existing channel */
-	for (i=0; i<MAX_CHANNELS; ++i)
+	if (common->wcmProtocolLevel == 4)
 	{
-		if (common->wcmChannel[i].work.proximity &&
-		   common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
+		/* Protocol 4 don't support tool serial numbers */
+		if (common->wcmLastToolSerial == 0xf0)
+			channel = 1;
+		else
+			channel = 0;
+		if (!common->wcmChannel[channel].work.proximity)
 		{
-			channel = i;
-			break;
+			memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
+			/* in case the in-prox event was missing */
+			common->wcmChannel[channel].work.proximity = 1;
 		}
 	}
-
-	/* find an empty channel */
-	if (channel < 0)
+	else
 	{
+		/* find existing channel */
 		for (i=0; i<MAX_CHANNELS; ++i)
 		{
-			if (!common->wcmChannel[i].work.proximity)
+			if (common->wcmChannel[i].work.proximity &&
+			   common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
 			{
-				memset(&common->wcmChannel[i],0,
-						sizeof(WacomChannel));
-				/* in case the in-prox event was missing */
-				common->wcmChannel[i].work.proximity = 1;
-				/* Intuos3 or Graphire4 Pad */
-				if (common->wcmLastToolSerial == 0xffffffff ||
-					common->wcmLastToolSerial == 0xf0)
-					common->wcmChannel[i].work.device_type = PAD_ID;
 				channel = i;
 				break;
+			}
+		}
+
+		/* find an empty channel */
+		if (channel < 0)
+		{
+			for (i=0; i<MAX_CHANNELS; ++i)
+			{
+				if (!common->wcmChannel[i].work.proximity)
+				{
+					memset(&common->wcmChannel[i],0,
+							sizeof(WacomChannel));
+					/* in case the in-prox event was missing */
+					common->wcmChannel[i].work.proximity = 1;
+					channel = i;
+					break;
+				}
 			}
 		}
 	}
@@ -940,6 +952,10 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 		}
 	} /* next event */
+
+	/* it is an out-prox when id or/and serial number is zero */
+	if (!ds->device_id || !ds->serial_num)
+		ds->proximity = 0;
 
 	/* DTF720 doesn't support eraser */
 	if (common->tablet_id == 0xC0 && ds->device_type == ERASER_ID) 

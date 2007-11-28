@@ -300,9 +300,24 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				|| (priv->twinview != TV_NONE 
 				&& value > 1) )
 			return BadValue;
-		else
+		else if (priv->screen_no != value)
 		{
 			priv->screen_no = value;
+			if (priv->twinview != TV_NONE)
+			{
+				if (priv->screen_no == -1)
+				{
+				    if (priv->twinview == TV_LEFT_RIGHT)
+					priv->tvoffsetX = 60;
+				    else
+					priv->tvoffsetY = 60;
+				}
+				else
+				{
+					priv->tvoffsetX = 0;
+					priv->tvoffsetY = 0;
+				}
+			}
 			xf86ReplaceIntOption(local->options, "ScreenNo", value);
 		}
 		break;
@@ -314,8 +329,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			priv->twinview = value;
 			switch(value) {
 			    case TV_NONE:
-				/* reset resolutions */
-				priv->tvResolution[0] = 0;
 				xf86ReplaceStrOption(local->options, "TwinView", "None");
 				break;
 			    case TV_ABOVE_BELOW:
@@ -324,6 +337,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			    case TV_LEFT_RIGHT:
 				xf86ReplaceStrOption(local->options, "TwinView", "Horizontal");
 				break;
+			    default:
+				return BadValue;
 			}
 			xf86WcmInitialTVScreens(local);
 		}
@@ -362,7 +377,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				return BadValue;
 			priv->tvResolution[sNum++] = value & 0xffff;
 			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
-			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 					"to ResX=%d ResY=%d \n",
+			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
+					"to ResX=%d ResY=%d \n",
 				value & 0xffff, (value >> 16) & 0xffff));
 		}
 		break;
@@ -494,6 +510,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	static int button_keys = 0, number_keys = 0;
 	int *setVal = 0, bn = param - XWACOM_PARAM_BUTTON1;
 	unsigned  *keyP = 0;
@@ -501,7 +518,7 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 
 	if (param >= XWACOM_PARAM_BUTTON1 && param <= XWACOM_PARAM_BUTTON32)
 	{
-		if (bn > priv->nbuttons)
+		if (bn > priv->nbuttons && bn > common->npadkeys)
 			return BadValue;
 		else
 		{
@@ -584,13 +601,14 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 static int xf86WcmGetButtonParam(LocalDevicePtr local, int param)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	static int button_keys = 0, number_keys = 0;
 	int retVal = 0, bn = param - XWACOM_PARAM_BUTTON1;
 	unsigned *keyP = 0;
 
 	if (param >= XWACOM_PARAM_BUTTON1 && param <= XWACOM_PARAM_BUTTON32)
 	{
-		if (bn > priv->nbuttons)
+		if (bn > priv->nbuttons && bn > common->npadkeys)
 			return BadValue;
 		else
 		{
@@ -701,6 +719,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    }
 	    case XWACOM_PARAM_STOPY0:
 	    case XWACOM_PARAM_STOPY1:
+	    case XWACOM_PARAM_STOPY2:
 	    case XWACOM_PARAM_STOPY3:
 	    case XWACOM_PARAM_STOPY4:
 	    case XWACOM_PARAM_STOPY5:
@@ -842,6 +861,11 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_STOPX0:
 	case XWACOM_PARAM_STOPX1:
 	case XWACOM_PARAM_STOPX2:
+	case XWACOM_PARAM_STOPX3:
+	case XWACOM_PARAM_STOPX4:
+	case XWACOM_PARAM_STOPX5:
+	case XWACOM_PARAM_STOPX6:
+	case XWACOM_PARAM_STOPX7:
 	   {
 		int sn = (param - XWACOM_PARAM_STOPX0) / 4;
 		if (sn >= numS)
@@ -861,6 +885,11 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_STOPY0:
 	case XWACOM_PARAM_STOPY1:
 	case XWACOM_PARAM_STOPY2:
+	case XWACOM_PARAM_STOPY3:
+	case XWACOM_PARAM_STOPY4:
+	case XWACOM_PARAM_STOPY5:
+	case XWACOM_PARAM_STOPY6:
+	case XWACOM_PARAM_STOPY7:
 	   {
 		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
 		if (sn >= numS)
@@ -880,6 +909,11 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_SBOTTOMX0:
 	case XWACOM_PARAM_SBOTTOMX1:
 	case XWACOM_PARAM_SBOTTOMX2:
+	case XWACOM_PARAM_SBOTTOMX3:
+	case XWACOM_PARAM_SBOTTOMX4:
+	case XWACOM_PARAM_SBOTTOMX5:
+	case XWACOM_PARAM_SBOTTOMX6:
+	case XWACOM_PARAM_SBOTTOMX7:
 	   {
 		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
 		if (sn >= numS)
@@ -892,6 +926,11 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_SBOTTOMY0:
 	case XWACOM_PARAM_SBOTTOMY1:
 	case XWACOM_PARAM_SBOTTOMY2:
+	case XWACOM_PARAM_SBOTTOMY3:
+	case XWACOM_PARAM_SBOTTOMY4:
+	case XWACOM_PARAM_SBOTTOMY5:
+	case XWACOM_PARAM_SBOTTOMY6:
+	case XWACOM_PARAM_SBOTTOMY7:
 	   {
 		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
 		if (sn >= numS)

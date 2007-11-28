@@ -126,21 +126,22 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
 	priv->nPressCtrl [3] = 100;  /* pressure curve y1 */
-	/* Pad by default emits keypresses, other devices emits buttons */
+
+	/* Default button and expresskey values */
 	for (i=0; i<MAX_BUTTONS; i++)
 		priv->button[i] = IsPad (priv) ?
 			(AC_BUTTON | (MAX_MOUSE_BUTTONS/2 + i + 1)) : (AC_BUTTON | (i + 1));
-	for (i=MAX_MOUSE_BUTTONS/2; i<MAX_BUTTONS; i++)
+/*	for (i=MAX_MOUSE_BUTTONS/2; i<MAX_BUTTONS; i++)
 		priv->button[i] = IsPad (priv) ?
 			(AC_KEY | (XK_F1 + i)) : (AC_BUTTON | (i + 1));
-
+*/
 	/* Now for backward compatibility make some keys emit button events
 	 * with button indices 9-16...
 	 */
-	if (IsPad (priv) /* && check for backward-compatibility models? */)
+/*	if (IsPad (priv))
 		for (i = 0; i < 8; i++)
 			priv->button[i] = (AC_BUTTON | (i + 9));
-
+*/
 	for (i=0; i<MAX_BUTTONS; i++)
 		for (j=0; j<256; j++)
 			priv->keys[i][j] = 0;
@@ -148,12 +149,12 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
 	priv->relup = 5;		   /* Default relative wheel up event */
 	priv->reldn = 4;		   /* Default relative wheel down event */
-	priv->wheelup = 5;		   /* Default absolute wheel up event */
-	priv->wheeldn = 4;		   /* Default absolute wheel down event */
-	priv->striplup = 0;		   /* Default left strip up event. Let user app take care of */
-	priv->stripldn = 0;		   /* Default left strip down event. Let user app take care of */
-	priv->striprup = 0;		   /* Default right strip up event. Let user app take care of */
-	priv->striprdn = 0;		   /* Default right strip down event. Let user app take care of */
+	priv->wheelup = 0;		   /* Default absolute wheel up event */
+	priv->wheeldn = 0;		   /* Default absolute wheel down event */
+	priv->striplup = 4;		   /* Default left strip up event */
+	priv->stripldn = 5;		   /* Default left strip down event */
+	priv->striprup = 4;		   /* Default right strip up event */
+	priv->striprdn = 5;		   /* Default right strip down event */
 	priv->naxes = 6;                   /* Default number of axes */
 	priv->debugLevel = 0;              /* debug level */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
@@ -173,6 +174,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevice = "";                  /* device file name */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
+	common->npadkeys = 0;		   /* Default number of pad keys */
 	common->wcmMaxX = 0;               /* max X value */
 	common->wcmMaxY = 0;               /* max Y value */
 	common->wcmMaxZ = 0;               /* max Z value */
@@ -489,7 +491,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		"CommonDBG", common->debugLevel);
 	if (common->debugLevel > 0)
 		xf86Msg(X_CONFIG, "WACOM: %s tablet common debug level set to %d\n",
-			common->wcmModel->name, common->debugLevel);
+			dev->identifier, common->debugLevel);
 
 	s = xf86FindOptionValue(local->options, "Mode");
 

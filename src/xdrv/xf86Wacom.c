@@ -56,10 +56,11 @@
  * 2007-06-05 47-pc0.7.7-11 - Test Ron's patches
  * 2007-06-15 47-pc0.7.7-12 - enable changing number of raw data 
  * 2007-06-25 47-pc0.7.8 - new release
- * 2007-06-25 47-pc0.7.9-1 - Support multimonitors in both horizonal and vertical settings
+ * 2007-10-25 47-pc0.7.9-1 - Support multimonitors in both horizonal and vertical settings
+ * 2007-11-21 47-pc0.7.9-3 - Updated TwinView screen switch offset
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-1 $";
+static const char identification[] = "$Identification: 47-0.7.9-3 $";
 
 /****************************************************************************/
 
@@ -137,9 +138,9 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	{
 		if (priv->twinview == TV_NONE || priv->screen_no != 1)
 		{
-			ErrorF("%s: invalid screen number %d, resetting to 0\n",
+			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
 					local->name, priv->screen_no);
-			priv->screen_no = 0;
+			priv->screen_no = -1;
 		}
 	}
 
@@ -319,14 +320,16 @@ void xf86WcmInitialTVScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
+	priv->tvoffsetX = 0;
+	priv->tvoffsetY = 0;
 	if (priv->twinview == TV_NONE)
 		return;
 
-	priv->tvoffsetX = 60;
-	priv->tvoffsetY = 60;
-
 	if (priv->twinview == TV_LEFT_RIGHT)
 	{
+		if (priv->screen_no == -1)
+			priv->tvoffsetX = 60;
+
 		/* default resolution */
 		if(!priv->tvResolution[0])
 		{
@@ -338,6 +341,9 @@ void xf86WcmInitialTVScreens(LocalDevicePtr local)
 	}
 	else if (priv->twinview == TV_ABOVE_BELOW)
 	{
+		if (priv->screen_no == -1)
+			priv->tvoffsetY = 60;
+
 		if(!priv->tvResolution[0])
 		{
 			priv->tvResolution[0] = screenInfo.screens[0]->width;
@@ -389,15 +395,25 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		return;
 
 	/* initial screen info */
+	priv->screenTopX[0] = 0;
+	priv->screenTopY[0] = 0;
+	priv->screenBottomX[0] = 0;
+	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
+#if !(defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0)
 		priv->screenTopX[i] = dixScreenOrigins[i].x;
 		priv->screenTopY[i] = dixScreenOrigins[i].y;
 		priv->screenBottomX[i] = dixScreenOrigins[i].x;
 		priv->screenBottomY[i] = dixScreenOrigins[i].y;
+#endif
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+		priv->screenTopX[i] = priv->screenBottomX[i];
+		priv->screenTopY[i] = priv->screenBottomY[i];
+#endif
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
 			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
@@ -490,13 +506,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	if (nbkeys)
 	{
 		KeySymsRec wacom_keysyms;
-		KeySym keymap[MAX_BUTTONS];
+		KeySym keymap[256];
 
 		for (loop = 0; loop < nbkeys; loop++)
 			if ((priv->button [loop] & AC_TYPE) == AC_KEY)
 				keymap [loop] = priv->button [loop] & AC_CODE;
 			else
 				keymap [loop] = NoSymbol;
+		for(loop = nbkeys; loop<256; loop++)
+			keymap [loop] = NoSymbol;
 
 		/* There seems to be a long-standing misunderstanding about
 		 * how a keymap should be defined. All tablet drivers from
@@ -515,7 +533,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		wacom_keysyms.map = keymap;
 		/* minKeyCode = 8 because this is the min legal key code */
 		wacom_keysyms.minKeyCode = 8;
-		wacom_keysyms.maxKeyCode = 8 + nbkeys - 1;
+		wacom_keysyms.maxKeyCode = 255;
 		wacom_keysyms.mapWidth = 1;
 		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
 		{
@@ -567,8 +585,10 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		InitValuatorAxisStruct(local->dev, 4, -64, 63, 1, 1, 1);
 	}
 
-	if (strstr(common->wcmModel->name, "Intuos3") && IsStylus(priv))
-		/* Intuos3 Marker Pen rotation */
+	if ((strstr(common->wcmModel->name, "Intuos3") || 
+		strstr(common->wcmModel->name, "CintiqV5")) 
+			&& IsStylus(priv))
+		/* Art Marker Pen rotation */
 		InitValuatorAxisStruct(local->dev, 5, -900, 899, 1, 1, 1);
 	else if (strstr(common->wcmModel->name, "Bamboo") && IsPad(priv))
 		InitValuatorAxisStruct(local->dev, 5, 0, 71, 1, 1, 1);
