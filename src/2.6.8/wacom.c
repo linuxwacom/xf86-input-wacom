@@ -422,8 +422,10 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	input_regs(dev, regs);
 
 	id = STYLUS_DEVICE_ID;
-	if ( data[1] & 0x80 ) /* in prox */
-	{
+	if ((data[1] & 0x80) && ((data[1] & 0x07) || data[2] || data[3] || data[4]
+			|| data[5] || data[6] || (data[7] & 0x07))) {
+		/* in prox and not a pad data */
+
 		switch ((data[1] >> 5) & 3) {
 
 			case 0:	/* Pen */
@@ -493,7 +495,6 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	    case G4: 
 		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
 			wacom->id[1] = 1;
-			wacom->serial[1] = (data[7] & 0xf8);
 			input_report_key(dev, BTN_0, (data[7] & 0x40));
 			input_report_key(dev, BTN_4, (data[7] & 0x80));
 			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
@@ -510,9 +511,8 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 		input_sync(dev);
 		break;
 	    case MO:
-		if ((data[7] & 0xf8) || (data[8] & 0x80)) {
+		if ((data[7] & 0xf8) || (data[8] & 0xff)) {
 			wacom->id[1] = 1;
-			wacom->serial[1] = (data[7] & 0xf8);
 			input_report_key(dev, BTN_0, (data[7] & 0x08));
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));

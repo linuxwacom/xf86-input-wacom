@@ -170,7 +170,10 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 	wacom_input_regs(wcombo);
 
 	id = STYLUS_DEVICE_ID;
-	if (data[1] & 0x80) { /* in prox */
+
+	if ((data[1] & 0x80) && ((data[1] & 0x07) || data[2] || data[3] || data[4]
+			|| data[5] || data[6] || (data[7] & 0x07))) {
+		/* in prox and not a pad data */
 
 		switch ((data[1] >> 5) & 3) {
 
@@ -240,7 +243,6 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 		if (data[7] & 0xf8) {
 			wacom_input_sync(wcombo); /* sync last event */
 			wacom->id[1] = 1;
-			wacom->serial[1] = (data[7] & 0xf8);
 			wacom_report_key(wcombo, BTN_0, (data[7] & 0x40));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x80));
 			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
@@ -259,10 +261,9 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 		}
 		break;
 	    case WACOM_MO:
-		if ((data[7] & 0xf8) || (data[8] & 0x80)) {
+		if ((data[7] & 0xf8) || (data[8] & 0xff)) {
 			wacom_input_sync(wcombo); /* sync last event */
 			wacom->id[1] = 1;
-			wacom->serial[1] = (data[7] & 0xf8);
 			wacom_report_key(wcombo, BTN_0, (data[7] & 0x08));
 			wacom_report_key(wcombo, BTN_1, (data[7] & 0x20));
 			wacom_report_key(wcombo, BTN_4, (data[7] & 0x10));
