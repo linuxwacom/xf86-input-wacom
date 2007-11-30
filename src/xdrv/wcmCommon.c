@@ -77,6 +77,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
+		/* screenToSet lags by one event, but not that important */
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 		priv->currentScreen = miPointerCurrentScreen()->myNum;
 #else
@@ -94,7 +95,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		return;
 	}
 
-	if (priv->twinview == TV_NONE)
+	if (priv->twinview == TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
 		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
 			v0 < priv->topX ? 0 : v0 - priv->topX;
@@ -107,7 +108,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 	 */
 	if (screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
 	{
-		if (priv->twinview != TV_NONE)
+		if (priv->twinview != TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 		{
 			if (priv->screen_no == -1)
 			{
@@ -460,15 +461,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 */		/* Dynamically modify the button map as required --
 		 * to be moved in the place where button mappings are changed
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* +1 to be able to support Xorg xserver 1.4, which due to a
-		 * button translation bug will run the translation twice. By
-		 * adding 1 to the button# we're able to support at least a
-		 * simple button1 is button1 mapping. 
-		 */
-		button_idx++;
-#endif
 		local->dev->button->map [button_idx] = button & AC_CODE;
+
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 
@@ -516,12 +510,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		 * to be moved in the place where button mappings are changed.
 		 * Only left double is supported.
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button1 is button1.
-		 */
-		button_idx = 1;
-#endif
 		local->dev->button->map [button_idx] = 1;
 
 		if (mask)
@@ -544,7 +532,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-	/* Switch the device out of the core mode, if required */
+	/* Switch the device out of the core mode, if required
+	 */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, FALSE);
 #endif
@@ -666,21 +655,12 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	switch (fakeButton & AC_TYPE)
 	{
 	    case AC_BUTTON:
-		/* send both button on/off in the same event for pad */
-		i = 0;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button4 is button4. This makes it usable if
-		 * no exotic configuration is made.
-		 */
-		i = fakeButton & AC_CODE;
-#endif
-		local->dev->button->map [i] = fakeButton & AC_CODE;
-	
-		xf86PostButtonEvent(local->dev, is_absolute, i,
-			1,0,naxes,x,y,z,v3,v4,v5);
+		/* pad may only have 2 buttons */
+		local->dev->button->map [0] = fakeButton & AC_CODE;
 
-		xf86PostButtonEvent(local->dev, is_absolute, i,
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
+			1,0,naxes,x,y,z,v3,v4,v5);
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			0,0,naxes,x,y,z,v3,v4,v5);
 
 	    break;
@@ -1373,7 +1353,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	if (!miPointerCurrentScreen())
 #else
-	if (pDev && !miPointerGetScreen(pDev->dev))
+	if (!miPointerGetScreen(pDev->dev))
 #endif
 	{
 		DBG(1, common->debugLevel, ErrorF("xf86WcmEvent: "

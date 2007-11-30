@@ -90,7 +90,6 @@
  *    v1.30-j0.7.7 - Support Intuos outbound tracking
  *    v1.30-j0.7.8 - Added Bamboo
  *    v1.30-j0.7.9 - added Bamboo1, Bamboo Fun, and Hummingbird
- *    v1.30-j0.7.9-3 - Sync with wcmUSB.c
  */
 
 /*
@@ -121,7 +120,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.30-j0.7.9-3"
+#define DRIVER_VERSION "v1.30-j0.7.9"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@suse.cz>"
 #ifndef __JEJ_DEBUG
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver (LINUXWACOM)"
@@ -234,8 +233,7 @@ static void wacom_pl_irq(struct urb *urb)
 			if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[4] & 0x20) ) {
 				/* report out proximity for previous tool */
 				input_report_key(dev, wacom->tool[1], 0);
-				input_report_abs(dev, ABS_MISC, id); /* report tool id */
-				input_event(dev, EV_MSC, MSC_SERIAL, id);
+				input_event(dev, EV_MSC, MSC_SERIAL, 0);
 				wacom->tool[1] = BTN_TOOL_PEN;
 				return;
 			}
@@ -263,13 +261,13 @@ static void wacom_pl_irq(struct urb *urb)
 			wacom->tool[1] = BTN_TOOL_PEN;
 		}
 		input_report_key(dev, wacom->tool[1], prox);
-		input_report_abs(dev, ABS_MISC, id); 
+		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 	}
 
 	wacom->tool[0] = prox; /* Save proximity state */
 	/* end of proximity code */
 	
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, 0);
 }
 
 static void wacom_ptu_irq(struct urb *urb)
@@ -307,7 +305,7 @@ static void wacom_ptu_irq(struct urb *urb)
 	input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
 	input_report_key(dev, BTN_STYLUS2, data[1] & 0x10);
 
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, 0);
 }
 
 static void wacom_penpartner_irq(struct urb *urb)
@@ -439,11 +437,11 @@ static void wacom_graphire_irq(struct urb *urb)
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
  		input_report_key(dev, wacom->tool[0], 0);
 	}
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, data[1] & 0x01);
 
 	/* send pad data */
 	if ( strstr(wacom->features->name, "Graphire4") ) {
-		if (data[7] & 0xf8) {
+		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
 			wacom->id[1] = 1;
 			wacom->serial[1] = (data[7] & 0xf8);
 			input_report_key(dev, BTN_0, (data[7] & 0x40));
@@ -456,9 +454,6 @@ static void wacom_graphire_irq(struct urb *urb)
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if ( wacom->id[1] ) {
 			wacom->id[1] = 0;
-                        input_report_key(dev, BTN_0, (data[7] & 0x40));
-                        input_report_key(dev, BTN_4, (data[7] & 0x80));
-			input_report_rel(dev, REL_WHEEL, 0);
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
 			input_report_abs(dev, ABS_MISC, 0);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
@@ -931,7 +926,7 @@ struct wacom_features wacom_features[] = {
 	/* 44 */ { "Wacom Cintiq 21UX",   10,  87200, 65600,  1023, 63,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			0, WACOM_INTUOS3_BUTTONS, WACOM_INTUOS3_TOOLS },
-	/* 45 */ { "Wacom Cintiq 12WX",   10,  53020, 33440,  1023, 63,
+	/* 45 */ { "Wacom Cintiq 12UX",   10,  53020, 33440,  1023, 63,
 			wacom_intuos_irq, WACOM_INTUOS_BITS, WACOM_INTUOS3_ABS,
 			0, WACOM_BEE_BUTTONS, WACOM_INTUOS3_TOOLS },
 	/* 46 */ { "Wacom DTF720",         8,   6858,  5506,   511, 0,
