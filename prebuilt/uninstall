@@ -1,0 +1,16 @@
+echo "Removing Wacom X driver related utility programs...."
+rm -f /usr/local/bin/xsetwacom
+rm -f /usr/local/bin/wacdump
+rm -f /usr/local/bin/xidump
+rm -f /usr/bin/xsetwacom
+rm -f /usr/bin/wacdump
+rm -f /usr/bin/xidump
+rm -f /usr/local/lib/libwacomcfg.la /usr/local/lib/libwacomcfg.so.0.0.1 /usr/local/lib/libwacomcfg.so.0 /usr/local/lib/libwacomcf.so /usr/local/lib/libwacomcfg.a
+rm -f /usr/local/include/wacomcfg/wacomcfg.h
+rm -f /usr/local/bin/wacomcpl
+rm -f /usr/local/bin/wacomcpl-exec
+rm -f /usr/local/lib/TkXInput/pkgIndex.tcl
+rm -f /usr/local/lib/TkXInput/libwacomxi.la /usr/local/lib/TkXInput/libwacomxi.so.0.0.0 /usr/local/lib/TkXInput/libwacomxi.so.0 /usr/local/lib/TkXInput/libwacomxi.so /usr/local/lib/TkXInput/libwacomxi.a
+rm -f /etc/wacom.dat
+rm -f /etc/X11/wcm.*
+echo "Wacom X driver related utility programs have been removed"
