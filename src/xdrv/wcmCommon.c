@@ -518,7 +518,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		 * Only left double is supported.
 		 */
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/Match the button sent to the actual pos due to a bug in Xorg
+		/* Match the button sent to the actual pos due to a bug in Xorg
 		 * xserver 1.4. I.e. button1 is button1.
 		 */
 		button_idx = 1;
