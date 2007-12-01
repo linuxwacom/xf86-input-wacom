@@ -112,7 +112,6 @@
  ****************************************************************************/
 
 #define ABS(x) ((x) > 0 ? (x) : -(x))
-#define mils(res) (res * 100 / 2.54) /* resolution */
 
 /*****************************************************************************
  * General Defines
@@ -126,9 +125,7 @@
 #define XI_CURSOR "CURSOR"      /* X device name for the cursor */
 #define XI_ERASER "ERASER"      /* X device name for the eraser */
 #define XI_PAD    "PAD"         /* X device name for the I3 Pad */
-#define MAX_VALUE 100           /* number of positions */
 #define MAXTRY 3                /* max number of try to receive magic number */
-#define MAX_COORD_RES 1270.0    /* Resolution of the returned MaxX and MaxY */
 
 /* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 
@@ -149,7 +146,6 @@
 
 /* defines to discriminate second side button and the eraser */
 #define ERASER_PROX     4
-#define OTHER_PROX      1
 
 /******************************************************************************
  * Forward Declarations
@@ -240,12 +236,6 @@ struct _WacomModel
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 #define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
-
-typedef int (*FILTERFUNC)(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
-
-/* FILTERFUNC return values:
- *   -1 - data should be discarded
- *    0 - data is valid */
 
 #define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
 #define MAX_BUTTONS		32	/* maximum number of tablet buttons */
