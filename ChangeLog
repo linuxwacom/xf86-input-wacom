@@ -1,3 +1,8 @@
+2007-12-13  Ping Cheng <pingc@wacom.com>
+	* Updated wacomcpl
+	* Incorporated Xorg 7.3 workaround from Magnus Vigerlöf
+	* Label 0.7.9-4
+
 2007-11-28  Ping Cheng <pingc@wacom.com>
 	* Clean support of outbound tracking for Bamboo, etc
 	* Updated kernel 2.4.x code

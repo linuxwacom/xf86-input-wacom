@@ -900,8 +900,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 	/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 	 * for coordinate conversion at the moment */
-	x = (int)((double)(x - priv->topX) * priv->factorX + 0.5);
-	y = (int)((double)(y - priv->topY) * priv->factorY + 0.5);
+	/* The +-0.4 is to increase the sensitivity in relative mode.
+	 * Must be sensitive to which way the tool is moved or one way
+	 * will get a severe penalty for small movements. */
+	x = (int)((double)(x - priv->topX) * priv->factorX + (x>=0?0.4:-0.4));
+	y = (int)((double)(y - priv->topY) * priv->factorY + (y>=0?0.4:-0.4));
 #endif
 
 	if (type != PAD_ID)

@@ -522,14 +522,18 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 			return BadValue;
 		else
 		{
-			if ((!(value & AC_TYPE)) && (value != priv->button[bn]))
+			if (((value & AC_TYPE) == AC_BUTTON) && (value != priv->button[bn]) && !number_keys )
 			{
+				/* assign button */
 				snprintf (st, sizeof (st), "Button%d", bn);
 				xf86ReplaceIntOption (local->options, st, value);
 				priv->button[bn] = xf86SetIntOption (local->options, st, bn); 
+			} 
+			else
+			{
+				setVal = &(priv->button [bn]);
+				keyP = priv->keys[bn];
 			}
-			setVal = &(priv->button [bn]);
-			keyP = priv->keys[bn];
 		}
 	}
 
@@ -568,6 +572,7 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 		keyP = priv->srdnk;
 		break;
 	}
+	/* assign keys */
 	if (keyP)
 	{
 		if (!number_keys)
@@ -575,8 +580,8 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 			*setVal = value;
 			number_keys = (value & AC_NUM_KEYS) >> 20;
 			DBG(10, priv->debugLevel, ErrorF(
-			"xf86WcmSetButtonParam value = %x number"
-			" of keys = %d\n", *setVal, number_keys));
+				"xf86WcmSetButtonParam value = %x number"
+				" of keys = %d\n", *setVal, number_keys));
 			if (number_keys)
 				keyP[button_keys++] = value & 0xffff;
 		}
@@ -586,6 +591,9 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 			{
 				keyP[button_keys++] = value & 0xffff;
 				keyP[button_keys++] = (value & 0xffff0000) >> 16;
+				DBG(10, priv->debugLevel, ErrorF(
+					"xf86WcmSetButtonParam got %d values = %x \n",
+					 button_keys, value));
 			}
 		}
 		if (button_keys >= number_keys)

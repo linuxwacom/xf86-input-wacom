@@ -61,8 +61,24 @@
 #include <xf86.h>
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
-#include <xisb.h>
-#include <xf86_ansic.h>
+# include <xisb.h>
+/* X.org recently kicked out the libc-wrapper */
+# if defined WCM_XORG
+#  undef NEED_XF86_TYPES /* defined (or not) in xorg-server.h*/
+#  include <xorg-server.h>
+/* Xorg 6.x, 7.0, 7.1, and 7.2 uses version 6.xx or 7.xx,
+ * Xorg 7.3 have dropped down to 1.4... */
+#  if XORG_VERSION_CURRENT < ((1) * 10000000) + ((4) * 100000) + ((99) * 1000)
+#   include <xf86_ansic.h>
+#  elif XORG_VERSION_CURRENT >= ((6) * 10000000)
+#   include <xf86_ansic.h>
+#  else
+#   include <string.h>
+#   include <errno.h>
+#  endif
+# else
+#  include <xf86_ansic.h>
+# endif
 #endif
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
