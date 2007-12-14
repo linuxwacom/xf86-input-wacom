@@ -58,9 +58,10 @@
  * 2007-06-25 47-pc0.7.8 - new release
  * 2007-10-25 47-pc0.7.9-1 - Support multimonitors in both horizonal and vertical settings
  * 2007-11-21 47-pc0.7.9-3 - Updated TwinView screen switch offset
+ * 2007-12-07 47-pc0.7.9-4 - Support Cintiq 12WX and Bamboo
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-3 $";
+static const char identification[] = "$Identification: 47-0.7.9-4 $";
 
 /****************************************************************************/
 
@@ -170,21 +171,11 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		}
 	}
 
-	if (priv->numScreen == 1)
-	{
-		priv->factorX = totalWidth
-			/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-		priv->factorY = maxHeight
-			/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-		DBG(2, priv->debugLevel, ErrorF("X factor = %.3g, Y factor = %.3g\n",
-			priv->factorX, priv->factorY));
-	}
-
 	/* Maintain aspect ratio */
 	if (priv->flags & KEEP_SHAPE_FLAG)
 	{
 		screenRatio = totalWidth / (double)maxHeight;
-			tabletRatio = ((double)(common->wcmMaxX - priv->topX)) /
+		tabletRatio = ((double)(common->wcmMaxX - priv->topX)) /
 				(common->wcmMaxY - priv->topY);
 
 		DBG(2, priv->debugLevel, ErrorF("screenRatio = %.3g, "
@@ -204,6 +195,13 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		}
 	}
 	/* end keep shape */ 
+
+	priv->factorX = totalWidth
+		/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+	priv->factorY = maxHeight
+		/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+	DBG(2, priv->debugLevel, ErrorF("X factor = %.3g, Y factor = %.3g\n",
+		priv->factorX, priv->factorY));
 
 	inlist = priv->tool->arealist;
 
@@ -258,6 +256,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	int tabletSize = 0, topx = 0, topy = 0;
+	int resolution;
 
 	/* x ax */
 	if ( !axes )
@@ -274,16 +273,18 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		if (priv->flags & ABSOLUTE_FLAG)
 			topx = priv->topX;
 
+		resolution = common->wcmResolX;
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx;
 		topx = 0;
 		tabletSize = (int)((double)tabletSize * priv->factorX + 0.5);
+		resolution = (int)((double)resolution * priv->factorX + 0.5);
 #endif
 
 		InitValuatorAxisStruct(local->dev, 0, topx, tabletSize, 
-			common->wcmResolX, 0, common->wcmResolX); 
+			resolution, 0, resolution); 
 	}
 	else /* y ax */
 	{
@@ -299,16 +300,18 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		if (priv->flags & ABSOLUTE_FLAG)
 			topy = priv->topY;
 
+		resolution = common->wcmResolY;
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy;
 		topy = 0;
 		tabletSize = (int)((double)tabletSize * priv->factorY + 0.5);
+		resolution = (int)((double)resolution * priv->factorY + 0.5);
 #endif
 
 		InitValuatorAxisStruct(local->dev, 1, topy, tabletSize, 
-			common->wcmResolY, 0, common->wcmResolY); 
+			resolution, 0, resolution); 
 	}
 }
 
@@ -401,19 +404,25 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
-#if !(defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0)
+#ifdef _XSERV_GLOBAL_H_
 		priv->screenTopX[i] = dixScreenOrigins[i].x;
 		priv->screenTopY[i] = dixScreenOrigins[i].y;
 		priv->screenBottomX[i] = dixScreenOrigins[i].x;
 		priv->screenBottomY[i] = dixScreenOrigins[i].y;
+
+		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
+			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
+			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
+#else
+		if (i > 0)
+		{
+			priv->screenTopX[i] = priv->screenBottomX[i-1];
+			priv->screenTopY[i] = priv->screenBottomY[i-1];
+		}
 #endif
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-		priv->screenTopX[i] = priv->screenBottomX[i];
-		priv->screenTopY[i] = priv->screenBottomY[i];
-#endif
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
 			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],

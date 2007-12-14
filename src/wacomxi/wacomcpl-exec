@@ -308,10 +308,10 @@ proc updateScreenList {} {
 }
 
 proc disableButtons {} {
-    global bName numButton currentW currentb
+    global bName numButton numStrips currentW currentb
 
     if { $currentb } {
-	for { set i 1 } { $i <= $numButton } { incr i 1 } {
+	for { set i 1 } { $i <= [ expr ($numButton+$numStrips) ] } { incr i 1 } {
 	    .allothers.f.$i configure -state disabled
 	}
 	.allothers.f.ok configure -state disable
@@ -338,7 +338,7 @@ proc disableButtons {} {
 
 proc getDeviceOptionProc { dev i } {
     global getOption getOptionDefault Option oldKeys spName numButton 
-    global modeToggleB ignoreButton doubleClickB keystrokeB
+    global modeToggleB ignoreButton doubleClickB keystrokeB numStrips
 
     for { set j 1 } { $j < [ expr $i+1 ] } { incr j 1 } {
 	set value [ exec xsetwacom get $dev $Option($j) ] 
@@ -369,35 +369,30 @@ proc getDeviceOptionProc { dev i } {
 	    }
 	} else {
 	    set match 0
-	    # are they wheel/ring/strips?
-	    for { set k 1 } { $k <= 8 } { incr k 1 } {
+	    # are they button/wheel/ring/strip?
+	    for { set k 1 } { $k <= [ expr ($numButton+$numStrips) ] } { incr k 1 } {
 		if { ![string compare -nocase $Option($j) $spName($k)] } {
-		    set k 9
 		    set match 1
+		    break
 		}
 	    }
+	    set getOption($dev,$Option($j)) $value
 	    if { $match } {
 		if { ($value > $doubleClickB) || ($value == 0) } {
-		    set output [ exec xsetwacom get $dev $Option($j) ]
-		    set outputd [ lindex $output 0 ]
-		    if { ![string compare -nocase -length 8 DBLCLICK $outputd ] } {
+		    if { ![string compare -nocase -length 8 DBLCLICK $value ] } {
 			set getOption($dev,$Option($j)) $doubleClickB
 		    }
-		    if { ![string compare -nocase -length 4 "Core" $outputd ] } {
+		    if { ![string compare -nocase -length 4 CORE $value ] } {
 			set getOption($dev,$Option($j)) $keystrokeB
-			set oldKeys($Option($j)) $output
+			set oldKeys($Option($j)) $value
 		    }
-		    if { ![string compare -nocase -length 10 MODETOGGLE $outputd ] } {
-			set getOption($dev,$Option($j)) $modetoggleB
+		    if { ![string compare -nocase -length 10 MODETOGGLE $value ] } {
+			set getOption($dev,$Option($j)) $modeToggleB
 		    }
-		    if { ($value == 0) } {
+		    if { $value == 0 } {
 			set getOption($dev,$Option($j)) $ignoreButton
 		    }
-		} else {
-		    set getOption($dev,$Option($j)) $value
 		}
-	    } else {
-		set getOption($dev,$Option($j)) $value
 	    }
 	    set getOptionDefault($dev,$Option($j)) $value1
 	}
@@ -405,8 +400,8 @@ proc getDeviceOptionProc { dev i } {
 }
 
 proc updateDevice {} {
-    global device deviceIndex getOption hasPad isLCD
-    global numScreens getDeviceModel Option 
+    global device deviceIndex hasPad isLCD
+    global numScreens getDeviceModel 
 
     set olddev $device
     set device [ .workingDev.list get anchor ]
@@ -426,9 +421,6 @@ proc updateDevice {} {
 	.workingDev.label configure -text $device
 	set model $getDeviceModel($device,model)
 	set type $getDeviceModel($device,type)
-	set Option(1) "Mode"
-	getDeviceOptionProc $device 1
-	set mode $getOption($device,Mode)
 	destroy .panel
 	if { ![ string compare $type "pad" ] } {
 	    if { $hasPad($model) } {
@@ -563,13 +555,17 @@ proc displayScreenList { dev } {
 
 proc updateButton {} {
     global device getDeviceModel sm getOption spName isLCD
-    global dm currentW oldKeys numButton cKeys numStrips
+    global dm currentW oldKeys numButton cKeys numStrips startS
     global modeToggleB ignoreButton doubleClickB keystrokeB
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
 
     for { set i 1 } { $i <= [ expr ($numButton + $numStrips)] } { incr i 1 } {
+	set k $i
+	if { $i > $numButton } {
+	    set k [ expr ($startS-1+$i) ]
+	}
 	switch [ $currentW.f.$i cget -text ] {
 	    "Left"
 		{ set j 1 
@@ -594,23 +590,23 @@ proc updateButton {} {
 		 set v "ModeToggle 1" }
 	    "KeyStroke"
 		{ set j $keystrokeB 
-		 set v $cKeys($spName($i)) 
-		 set oldKeys($spName($i)) $cKeys($spName($i)) }
+		 set v $cKeys($spName($k)) 
+		 set oldKeys($spName($k)) $cKeys($spName($k)) }
 	    "Ignore"
 		{ set j $ignoreButton
 		 set v "Button 0" }
 	}
-	set getOption($device,$spName($i)) $j
-	updateXinitrc $device $spName($i) $v
+	set getOption($device,$spName($k)) $j
+	updateXinitrc $device $spName($k) $v
 
 	# reset key strokes 
 	if { $j != $keystrokeB } {
-	    set $oldKeys($spName($i)) ""
-	    set cKeys($spName($i)) ""
+	    set $oldKeys($spName($k)) ""
+	    set cKeys($spName($k)) ""
 	}
     }
 
-    if { !isLCD($model) && [string compare $type "pad"] } { 
+    if { !$isLCD($model) && [string compare $type "pad"] } { 
 	set mode [ $currentW.f.mode cget -text ]
 	updateXinitrc $device mode $mode
 	if { $mode == $dm(1) } {
@@ -635,18 +631,24 @@ proc updateButton {} {
 
 proc defaultButton {} {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
-    global db11 db12 db13 db14 isLCD
-    global dm sm dmv smv numButton
+    global db11 db12 db13 db14 isLCD spName
+    global dm sm dmv smv numButton startS numStrips
     global device getOptionDefault getDeviceModel
 
     for { set i 1 } { $i <= $numButton } { incr i 1 } {
-	set db$i $db($i)
+	set db$i $db($getOptionDefault($device,$spName($i)))
+    }
+
+    if { $startS } {
+	for { set i $startS } { $i <= [ expr ($startS+$numStrips-1) ] } { incr i 1 } {
+	    set db$i $db($getOptionDefault($device,$spName([ expr ($numButton+$i) ])))
+	}
     }
 
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
-    if { !$isLCD($model) } { 
+    if { !$isLCD($model) && [ string compare $type "pad" ] } { 
 	set dmv $dm([ expr $getOptionDefault($device,Mode)+1 ])
     }
 
@@ -681,11 +683,13 @@ proc getNumButton { type } {
 }
 
 proc setspName {} {
-    global numButton spName
+    global numButton spName numStrips startS device Option cKeys oldKeys
+    global numPadRelW numPadStrips numPadRings getDeviceModel
 
     for { set i 1 } { $i <= $numButton } { incr i 1 } {
 	set spName($i) Button$i
     }
+    getDeviceOptionProc $device $numButton
 
     set spName([expr ($numButton + 1) ]) "RelWUp"
     set spName([expr ($numButton + 2) ]) "RelWDn"
@@ -695,18 +699,42 @@ proc setspName {} {
     set spName([expr ($numButton + 6) ]) "StripLDn"
     set spName([expr ($numButton + 7) ]) "StripRUp"
     set spName([expr ($numButton + 8) ]) "StripRDn"
+
+    for { set i 1 } { $i <= 8 } { incr i 1 } {
+	set Option($i) $spName([expr ($numButton + $i)])
+    }
+    getDeviceOptionProc $device 8
+
+    set s1 5
+    set s2 8
+    set model $getDeviceModel($device,model)
+    if { $numPadRelW($model) } { # G4
+	set s1 1
+	set s2 2
+    } elseif { $numPadStrips($model) == 1 } { # I3 4x5
+	set s1 5
+	set s2 6
+    } elseif { $numPadRings($model) } { # Bamboo
+	set s1 3
+	set s2 4
+    }
+    set startS $s1
+    set numStrips [expr ($s2 - $s1) + 1]
+
+    # initial keys
+    for { set i 1 } { $i <= [ expr ($numButton + 8) ] } { incr i 1 } {
+	set oldKeys($spName($i)) ""
+	set cKeys($spName($i)) ""
+    }
 }
 
 proc initialButton {} {
-    global device Option numButton getDeviceModel spName numStrips
+    global device Option numButton getDeviceModel 
+    global spName numStrips
 
     set type $getDeviceModel($device,type)
 
-    # buttons 
-    getNumButton $type
     set t $numButton
-    setspName
-
     if { [ string compare $type "pad" ] } {
 	set t [expr ($t+1)]
 	set Option($t) "Mode"
@@ -714,7 +742,9 @@ proc initialButton {} {
 	set Option($t) "TPCButton"
     }
     getDeviceOptionProc $device $t
-    displayMode
+    if { [ string compare $type "pad" ] } {
+    	displayMode
+    }
 
     for { set i 1 } { $i <= $numButton } { incr i 1 } {
 	addMenu $i
@@ -757,11 +787,11 @@ proc displayMode {} {
     }
 }
 
-proc displaySubWindow { okF deF initial winID cbutton } {
-    global currentb currentW wName
+proc displaySubWindow { okF deF initial winID cbutton kcurrent} {
+    global currentb currentW wName currentk
 
     set currentb $cbutton
-
+    set currentk $kcurrent
     if { $cbutton } {
 	set currentW .keystrokes
    } else {
@@ -808,13 +838,12 @@ proc closeTabWindow {} {
     if { $bName(keystroke) } {
 	set bName(keystroke) 0
 	set currentW .allothers
-	for { set i 1 } { $i <= $numButton } { incr i 1 } {
+	for { set i 1 } { $i <= [ expr ($numButton+$numStrips) ] } { incr i 1 } {
 	    $currentW.f.$i configure -state normal
 	}
 	$currentW.f.default configure -state normal
 	$currentW.f.ok configure -state normal
 	$currentW.f.cancel configure -state normal
-	set cKeys($spName($currentb)) ""
 	set currentb 0
     } else {
 	if { $bName(pressure) } {
@@ -832,7 +861,7 @@ proc closeTabWindow {} {
 	if { $bName(advanced) } {
 	    .panel.advanced configure -state normal
 	}
-	for { set i 1 } { $i <= [expr ($numButton + $numStrips)] } { incr i 1 } {
+	for { set i 1 } { $i <= [ expr ($numButton+$numStrips) ] } { incr i 1 } {
 	    set cKeys($spName($i)) ""
 	}
 	bindtags .workingDev.list $workingTags
@@ -841,15 +870,11 @@ proc closeTabWindow {} {
 
 proc expressKeys { } {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
-    global db11 db12 db13 db14
+    global db11 db12 db13 db14 startS
     global currentW device numButton spName numStrips
     global Option getOption getDeviceModel cKeys oldKeys 
     global doubleClickB ignoreButton modeToggleB keystrokeB
     global numPadRings numPadStrips numPadAbsW numPadRelW
-
-    for { set i 1 } { $i <= 8 } { incr i 1 } {
-	set Option($i) $spName([expr ($numButton + $i)])
-    }
 
     set name(1) "Wheel Up"
     set name(2) "Wheel Down"
@@ -860,55 +885,38 @@ proc expressKeys { } {
     set name(7) "Right Strip Up"
     set name(8) "Right Strip Down"
 
-    getDeviceOptionProc $device 8
-
-    set s1 5
-    set s2 8
-    set model $getDeviceModel($device,model)
-    if { $numPadRelW($model) } { # G4
-	set s1 1
-	set s2 2
-    } elseif { $numPadStrips($model) == 1 } { # I3 4x5
-	set s1 5
-	set s2 6
-    } elseif { $numPadRings($model) } { # Bamboo
-	set s1 3
-	set s2 4
-    }
-    set numStrips [expr ($s2 - $s1) + 1]
-    for { set i $s1 } { $i <= $s2 } { incr i 1 } {
-	set cur [ expr ($numButton + $i - $s1 + 1) ]
+    set s2 [expr ($startS + $numStrips) - 1]
+    for { set i $startS } { $i <= $s2 } { incr i 1 } {
+	set cur [ expr ($numButton + $i - $startS + 1) ]
 	set opt $getOption($device,$Option($i))
 	if { $opt == "" } { set opt $ignoreButton }
 
-	set cur [ expr ($numButton + $i - $s1 + 1) ]
+	set curOption [ expr ($numButton + $i) ]
 	set db$cur $db($opt) 
-
 	#reset keys
 	if { $opt != $keystrokeB } {
 	    set cKeys($Option($i)) ""
 	    set oldKeys($Option($i)) ""
 	}
 	set bmenu [ tk_optionMenu $currentW.f.$cur db$cur \
-	    $db(1) $db(2) $db(3) $db(4) $db(5) ]
+	    $db(1) $db(2) $db(3) $db(4) $db(5) $db($ignoreButton) ]
 	$bmenu insert 6 radiobutton -label "$db($keystrokeB)" \
 	    -variable menvar -command "displaySubWindow \
-	    updateKeys 0 initialKeys 5 $cur"
-	$bmenu insert 7 radiobutton -label "$db($ignoreButton)" 
+	    updateKeys 0 initialKeys 5 $cur $curOption"
 
 	label $currentW.f.name$cur -text "$name($i): "
 	set t2 [expr ($numButton+1)/2+1]
 	set t1 0
-	if { [expr ($s2 - $s1) > 1] } {
-	    if { $i == [expr ($s1+1)] || \
-		    $i == [expr ($s1+3)] } { 
+	if { [expr ($s2 - $startS) > 1] } {
+	    if { $i == [expr ($startS+1)] || \
+		    $i == [expr ($startS+3)] } { 
 		set t2 [expr ($numButton+1)/2+2]
 	    }
 	    if { [expr ($i - $s1) > 1] } {
 		set t1 2
 	    }
 	} else {
-	    if { [expr ($i - $s1) > 0] } {
+	    if { [expr ($i - $startS) > 0] } {
 		set t1 2
 	    }
 	}
@@ -929,10 +937,9 @@ proc addMenu { curb } {
     set opt $getOption($device,$spName($curb))
     if { $opt == "" } { set opt $curb }
     if { ![string compare $type "pad"] } { 
+	# values 30 or larger are special functions
 	if { ($opt > 8 && $opt < 14) } {
 	    set opt [ expr ($opt-8) ] 
-	} else {
-	    set opt $ignoreButton
 	}
     }
     set db$curb $db($opt) 
@@ -942,24 +949,20 @@ proc addMenu { curb } {
 	set oldKeys($spName($curb)) ""
     }
 
-    
-    set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
-	$db(3) $db(4) $db(5) ]
-    set i 5
     if { [string compare $type "pad"] } {
-	set i [expr ($i+1)]
-	$bmenu insert $i radiobutton -label "$db($doubleClickB)"
-	if {  $model != 144 } { 
-	    set i [expr ($i+1)]
-	    $bmenu insert $i radiobutton -label "$db($modeToggleB)"
-	}
-    } 
+	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
+		$db(3) $db(4) $db(5) $db($doubleClickB) $db($modeToggleB) $db($ignoreButton) ]
+	set i 8
+    } else {
+	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
+		$db(3) $db(4) $db(5) $db($ignoreButton) ]
+	set i 6
+    }
+
     set i [expr ($i+1)]
     $bmenu insert $i radiobutton -label "$db($keystrokeB)" \
 	-variable menvar -command "displaySubWindow \
-	updateKeys 0 initialKeys 5 $curb"
-    set i [expr ($i+1)]
-    $bmenu insert $i radiobutton -label "$db($ignoreButton)"
+	updateKeys 0 initialKeys 5 $curb $curb"
 
     label $currentW.f.name$curb -text "Button $curb: "
     set t2 [expr ($curb-1)/2]
@@ -1251,18 +1254,17 @@ proc defaultSet {} {
 
 proc initialKeys {} {
     global device getDeviceModel getOption cKeys spName 
-    global Option oldKeys currentW bName currentb
+    global Option oldKeys currentW bName currentb currentk
 
     frame $currentW.f.panelt
     set bName(keystroke) 1
     text $currentW.f.panelt.input -width 40 -height 10 \
 	-yscrollcommand "$currentW.f.panelt.srl_y set" 
-
-    if { $cKeys($spName($currentb)) != "" } {
-	$currentW.f.panelt.input insert end $cKeys($spName($currentb))
+    if { $cKeys($spName($currentk)) != "" } {
+	$currentW.f.panelt.input insert end $cKeys($spName($currentk))
     } else {
-	if { $oldKeys($spName($currentb)) != "" } {
-	    $currentW.f.panelt.input insert end $oldKeys($spName($currentb))
+	if { $oldKeys($spName($currentk)) != "" } {
+	    $currentW.f.panelt.input insert end $oldKeys($spName($currentk))
 	}
     }
     scrollbar $currentW.f.panelt.srl_y -width 10 -command \
@@ -1375,7 +1377,7 @@ proc initialKeys {} {
 proc updateKeys {} {
     global device oldKeys currentb cKeys spName currentW
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
-    global db11 db12 db13 db14
+    global db11 db12 db13 db14 currentk
     global doubleClickB ignoreButton modeToggleB keystrokeB
 
     set keys [ $currentW.f.panelt.input get 1.0 end ]
@@ -1388,20 +1390,20 @@ proc updateKeys {} {
     }
 
     if { $keys != "" } {
-	if { $oldKeys($spName($currentb)) != $keys } {
+	if { $oldKeys($spName($currentk)) != $keys } {
 	    if { [string compare -nocase -length 8 $keys "core key"] } {
-		set cKeys($spName($currentb)) "core key $keys"
+		set cKeys($spName($currentk)) "core key $keys"
 	    } else {
-	        set cKeys($spName($currentb)) $keys
+	        set cKeys($spName($currentk)) $keys
 	    }
-	    set getOption($device,$spName($currentb)) $keystrokeB
-	    set db$currentb $db($keystroke)
+	    set getOption($device,$spName($currentk)) $keystrokeB
+	    set db$currentb $db($keystrokeB)
 	}
     } else {  # ignore the button
-	set getOption($device,$spName($currentb)) $ignoreButton
+	set getOption($device,$spName($currentk)) $ignoreButton
 	set db$currentb $db($ignoreButton)
     }
-    if { [ string length $cKeys($spName($currentb)) ] > 240 } {
+    if { [ string length $cKeys($spName($currentk)) ] > 240 } {
 	helpWindow "Help Window " \
 		"\n\nYou have entered more 240 keys. \n\
 		wacomcpl only accepts 240 keys. \n\
@@ -1412,7 +1414,8 @@ proc updateKeys {} {
 }
 
 proc createPanel { pressure button mapping calibrate } {
-    global bName device getOption getDeviceModel currentb wName
+    global bName device getOption getDeviceModel currentb 
+    global wName startS Option
 
     frame .panel
     set bName(pressure) $pressure
@@ -1420,9 +1423,14 @@ proc createPanel { pressure button mapping calibrate } {
     set bName(mapping) $mapping
     set bName(calibrate) $calibrate
     set currentb 0
+    set type $getDeviceModel($device,type)
+
+    # buttons and expresskeys
+    getNumButton $type
+    setspName
 
     set SN [ exec xsetwacom get $device ToolSerial ]
-    if { $SN && [string compare $getDeviceModel($device,type) "pad"] } {
+    if { $SN && [string compare type "pad"] } {
 	set hexSN [format %X $SN]
 	label .panel.sn -text "Serial Number: $hexSN"
 	grid .panel.sn -row 0 -column 0 -columnspan 2 -padx 3 -pady 3
@@ -1431,25 +1439,25 @@ proc createPanel { pressure button mapping calibrate } {
     if { $pressure } {
 	button .panel.pressure -text $wName(1) \
 	    -state normal -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1 0"
+	    updateTip defaultTip initialTip 1 0 0"
 	grid .panel.pressure -row 5 -column 0 -columnspan 2 -sticky news -padx 10
     }
     if { $button } {
 	if { ![string compare $getDeviceModel($device,type) "pad"] } {
 	    button .panel.button -text $wName(6) \
 		-state normal -command "displaySubWindow \
-		updateButton defaultButton initialButton 6 0"
+		updateButton defaultButton initialButton 6 0 $startS"
 	} else {
 	    button .panel.button -text $wName(2) \
 		-state normal -command "displaySubWindow \
-		updateButton defaultButton initialButton 2 0"
+		updateButton defaultButton initialButton 2 0 0"
 	}
 	grid .panel.button -row 6 -column 0 -columnspan 2 -sticky news -padx 10
     }
     if { $mapping } {
 	button .panel.mapping -text $wName(3) \
 	    -state normal -command "displaySubWindow \
-	    updateT defaultT initialT 3 0"
+	    updateT defaultT initialT 3 0 0"
 	grid .panel.mapping -row 6 -column 3 -columnspan 2 -sticky news -padx 10
     }
     if { $calibrate } {
@@ -1458,15 +1466,18 @@ proc createPanel { pressure button mapping calibrate } {
 	grid .panel.calibrate -row 5 -column 3 -columnspan 2 -sticky news -padx 10
     }
 
-    set mode [ exec xsetwacom get $device mode ]
-    set getOption($device,Mode) $mode
     set bName(advanced) 0
-    if { ($pressure || $mapping) && $mode } {  #not a pad and in absolute mode
-	set bName(advanced) 1
-	button .panel.advanced -text $wName(4) \
-	    -state normal -command "displaySubWindow \
-	    updateSet defaultSet initialSet 4 0"
-	grid .panel.advanced -row 9 -column 2 -columnspan 2 -sticky news -padx 10
+    if { [string compare $getDeviceModel($device,type) "pad"] } { #not a pad
+	set Option(1) "Mode"
+	getDeviceOptionProc $device 1
+	set mode $getOption($device,Mode)
+   	if { ($pressure || $mapping) && $mode } {  #and in absolute mode
+	    set bName(advanced) 1
+	    button .panel.advanced -text $wName(4) \
+		-state normal -command "displaySubWindow \
+		updateSet defaultSet initialSet 4 0 0"
+	    grid .panel.advanced -row 9 -column 2 -columnspan 2 -sticky news -padx 10
+	}
     }
 
     grid .panel -row 0 -column 1 -columnspan 8 -sticky news -padx 10 -pady 40
@@ -1518,10 +1529,13 @@ proc updateModelInfo { } {
     # I3
     set numPadButtons(176) 4
     set numPadStrips(176) 1
-    for { set i 177 } { $i <= 183 } { incr i 1 } {
+    for { set i 177 } { $i <= 182 } { incr i 1 } {
 	set numPadButtons($i) 8
 	set numPadStrips($i) 2
     }
+    set numPadButtons(183) 4
+    set numPadStrips(183) 1
+
     # Hummingbird
     set numPadButtons(198) 10
     set numPadStrips(198) 2
@@ -1551,6 +1565,11 @@ proc createControls { } {
     set db(3) "Right"
     set db(4) "Fourth"
     set db(5) "Fifth"
+    set db(6) "Ignore"
+    set db(7) "Ignore"
+    set db(8) "Ignore"
+    set db(9) "Ignore"
+    set db(10) "Ignore"
     set db($doubleClickB) "Left Double"
     set db($modeToggleB) "Mode Toggle"
     set db($ignoreButton) "Ignore"
@@ -1572,12 +1591,7 @@ proc createControls { } {
     # up to the max number of buttons
     set numButton 10
     set numStrips 4
-    setspName
-
-    for { set i 1 } { $i <= [ expr ($numButton + 8) ] } { incr i 1 } {
-	set oldKeys($spName($i)) ""
-	set cKeys($spName($i)) ""
-    }
+#    setspName
 
     checkbutton .showHelp -text "Turn Help on" -anchor w \
 	    -variable showHelp -state normal  
