@@ -104,7 +104,6 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
-	int totalWidth = 0, maxHeight = 0;
 	double screenRatio, tabletRatio;
 
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitArea\n"));
@@ -134,6 +133,9 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		area->bottomY = priv->bottomY = common->wcmMaxY;
 	}
 
+	if (priv->twinview != TV_NONE)
+		priv->numScreen = 2;
+
 	if (priv->screen_no != -1 &&
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{
@@ -145,38 +147,19 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		}
 	}
 
-	/* Calculate the ratio according to KeepShape, TopX and TopY */
 	if (priv->screen_no != -1)
-	{
 		priv->currentScreen = priv->screen_no;
-		if (priv->twinview == TV_NONE)
-		{
-			totalWidth = screenInfo.screens[priv->currentScreen]->width;
-			maxHeight = screenInfo.screens[priv->currentScreen]->height;
-		}
-		else
-		{
-			totalWidth = priv->tvResolution[2*priv->currentScreen];
-			maxHeight = priv->tvResolution[2*priv->currentScreen+1];
-		}
-	}
 	else
-	{
-		int i;
-		for (i = 0; i < priv->numScreen; i++)
-		{
-			totalWidth += screenInfo.screens[i]->width;
-			if (maxHeight < screenInfo.screens[i]->height)
-				maxHeight=screenInfo.screens[i]->height;
-		}
-	}
+		priv->currentScreen = 0;
+
+	xf86WcmMappingFactor(local, -1, -1, priv->currentScreen);
 
 	/* Maintain aspect ratio */
 	if (priv->flags & KEEP_SHAPE_FLAG)
 	{
-		screenRatio = totalWidth / (double)maxHeight;
-		tabletRatio = ((double)(common->wcmMaxX - priv->topX)) /
-				(common->wcmMaxY - priv->topY);
+		screenRatio = ((double)priv->maxWidth / (double)priv->maxHeight);
+		tabletRatio = ((double)(common->wcmMaxX - priv->topX) /
+				(double)(common->wcmMaxY - priv->topY));
 
 		DBG(2, priv->debugLevel, ErrorF("screenRatio = %.3g, "
 			"tabletRatio = %.3g\n", screenRatio, tabletRatio));
@@ -195,13 +178,6 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		}
 	}
 	/* end keep shape */ 
-
-	priv->factorX = totalWidth
-		/ (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-	priv->factorY = maxHeight
-		/ (double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
-	DBG(2, priv->debugLevel, ErrorF("X factor = %.3g, Y factor = %.3g\n",
-		priv->factorX, priv->factorY));
 
 	inlist = priv->tool->arealist;
 
@@ -328,6 +304,8 @@ void xf86WcmInitialTVScreens(LocalDevicePtr local)
 	if (priv->twinview == TV_NONE)
 		return;
 
+	priv->numScreen = 2;
+
 	if (priv->twinview == TV_LEFT_RIGHT)
 	{
 		if (priv->screen_no == -1)
@@ -398,13 +376,14 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		return;
 
 	/* initial screen info */
+	priv->numScreen = screenInfo.numScreens;
 	priv->screenTopX[0] = 0;
 	priv->screenTopY[0] = 0;
 	priv->screenBottomX[0] = 0;
 	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
-#ifdef _XSERV_GLOBAL_H_
+#ifdef XORG_VERSION_CURRENT
 		priv->screenTopX[i] = dixScreenOrigins[i].x;
 		priv->screenTopY[i] = dixScreenOrigins[i].y;
 		priv->screenBottomX[i] = dixScreenOrigins[i].x;
@@ -863,7 +842,8 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 /*****************************************************************************
  * xf86WcmDevConvert --
  *  Convert X & Y valuators so core events can be generated with 
- *  coordinates that are scaled and suitable for screen resolution. ****************************************************************************/
+ *  coordinates that are scaled and suitable for screen resolution.
+ ****************************************************************************/
 
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
@@ -871,7 +851,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	double temp;
     
-	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d \n", v0, v1));
+	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d on screen %d \n",
+		 v0, v1, priv->currentScreen));
 
 	if (first != 0 || num == 1) 
  		return FALSE;
@@ -890,21 +871,16 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 			if (priv->common->wcmMMonitor)
 			{
-				int i, totalWidth, leftPadding = 0;
+				int leftPadding = 0, topPadding = 0;
 				if (priv->screen_no == -1)
 				{
-					for (i = 0; i < priv->currentScreen; i++)
-						leftPadding += screenInfo.screens[i]->width;
-					for (totalWidth = leftPadding; i < priv->numScreen; i++)
-						totalWidth += screenInfo.screens[i]->width;
-				}
-				else
-				{
-					leftPadding = 0;
-					totalWidth = screenInfo.screens[priv->currentScreen]->width;
-				}
-				v0 -= (priv->bottomX - priv->topX) * leftPadding
-					/ (double)totalWidth + 0.5;
+					leftPadding = priv->screenTopX[priv->currentScreen];
+					topPadding = priv->screenTopY[priv->currentScreen];
+				}				
+				v0 -= (double)((priv->bottomX - priv->topX) * leftPadding)
+					/ (double)priv->maxWidth + 0.5;
+				v1 -= (double)((priv->bottomX - priv->topX) * topPadding)
+					/ (double)priv->maxHeight + 0.5;				
 			}
 		}
 		else
@@ -913,61 +889,41 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 			v1 -= priv->topY - priv->tvoffsetY;
 			if (priv->twinview == TV_LEFT_RIGHT)
 			{
-				if (v0 > priv->bottomX - priv->tvoffsetX && priv->screen_no == -1)
-				{
-					if (priv->currentScreen == 0)
-						v0 = priv->bottomX - priv->tvoffsetX;
-					else
-					{
-						v0 -= priv->bottomX - priv->topX - 2*priv->tvoffsetX;
-						if (v0 > priv->bottomX - priv->tvoffsetX)
-							v0 = 2*(priv->bottomX - priv->tvoffsetX) - v0;
-					}
-				}
 				if (priv->currentScreen == 1)
 				{
-					*x = priv->tvResolution[0] + priv->tvResolution[2]
-						* v0 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-					*y = v1 * priv->tvResolution[3] /
-						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
+					*x = priv->tvResolution[0] + (double)(priv->tvResolution[2]
+						* v0) / (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+					*y = (double)(v1 * priv->tvResolution[3]) /
+						(double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 				}
 				else
 				{
-					*x = priv->tvResolution[0] * v0 
-						 / (priv->bottomX - priv->topX - 2*priv->tvoffsetX);
-					*y = v1 * priv->tvResolution[1] /
-						(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
+					*x = (double)(priv->tvResolution[0] * v0) 
+						 / (double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX);
+					*y = (double)(v1 * priv->tvResolution[1]) /
+						(double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY) + 0.5;
 				}
 			}
 			if (priv->twinview == TV_ABOVE_BELOW)
 			{
-				if (v1 > priv->bottomY - priv->tvoffsetY && priv->screen_no == -1)
-				{
-					if (priv->currentScreen == 0)
-						v1 = priv->bottomY - priv->tvoffsetY;
-					else
-					{
-						v1 -= priv->bottomY - priv->topY - 2*priv->tvoffsetY;
-						if (v1 > priv->bottomY - priv->tvoffsetY)
-							v1 = 2*(priv->bottomY - priv->tvoffsetY) - v1;
-					}
-				}
+
 				if (priv->currentScreen == 1)
 				{
-					*x = v0 * priv->tvResolution[2] /
-						(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
+					*x = (double)(v0 * priv->tvResolution[2]) /
+						(double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
 					*y = priv->tvResolution[1] + 
-						priv->tvResolution[3] * v1 / 
-						(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+						(double)(priv->tvResolution[3] * v1) / 
+						(double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 				}
 				else
 				{
-					*x = v0 * priv->tvResolution[0] /
-						(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
-					*y = priv->tvResolution[1] * v1 /
-						(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
+					*x = (double)(v0 * priv->tvResolution[0]) /
+						(double)(priv->bottomX - priv->topX - 2*priv->tvoffsetX) + 0.5;
+					*y = (double)(priv->tvResolution[1] * v1) /
+						(double)(priv->bottomY - priv->topY - 2*priv->tvoffsetY);
 				}
 			}
+			DBG(6, priv->debugLevel, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
 			return TRUE;
 		}
 	}
@@ -984,7 +940,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
  * xf86WcmDevReverseConvert --
  *  Convert X and Y to valuators in relative mode where the position of 
  *  the core pointer must be translated into device cootdinates before 
- *  the extension and core events are generated in Xserver. ****************************************************************************/
+ *  the extension and core events are generated in Xserver.
+ ****************************************************************************/
 
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)

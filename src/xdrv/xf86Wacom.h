@@ -277,6 +277,8 @@ struct _WacomDeviceRec
 	int topY;               /* Y top */
 	int bottomX;            /* X bottom */
 	int bottomY;            /* Y bottom */
+	int sizeX;		/* active X size */
+	int sizeY;		/* active Y size */
 	double factorX;         /* X factor */
 	double factorY;         /* Y factor */
 	unsigned int serial;    /* device serial number */
@@ -285,6 +287,8 @@ struct _WacomDeviceRec
 	int screenTopY[32];	/* top cordinate of the associated screen */
 	int screenBottomX[32];	/* right cordinate of the associated screen */
 	int screenBottomY[32];	/* bottom cordinate of the associated screen */
+	int maxWidth;		/* max active screen width */
+	int maxHeight;		/* max active screen height */
 	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
@@ -635,6 +639,9 @@ Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* Change pad's mode according to it core event status */
 int xf86WcmSetPadCoreMode(LocalDevicePtr local);
+
+/* calculate the proper tablet to screen mapping factor */
+void xf86WcmMappingFactor(LocalDevicePtr local, int v0, int v1, int currentScreen);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

@@ -54,6 +54,59 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5);
  
 /*****************************************************************************
+ * xf86WcmMappingFactor --
+ *   calculate the proper tablet to screen mapping factor according to the 
+ *   screen/desktop size and the tablet size 
+ ****************************************************************************/
+
+void xf86WcmMappingFactor(LocalDevicePtr local, int v0, int v1, int currentScreen)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
+ 
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmMappingFactor v0=%d v1=%d "
+		" currentScreen=%d\n", v0, v1, currentScreen));
+
+	priv->sizeX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
+	priv->sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
+	priv->maxWidth = 0, priv->maxHeight = 0;
+	
+	if ( ((priv->twinview != TV_NONE && priv->screen_no == -1) || 
+		!priv->common->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG) )
+	{
+		priv->maxWidth = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen];
+		priv->maxHeight = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen];
+	}
+	else
+	{
+		/* count the whole desktop when no specific screen is defined or 
+		 * tool is in relative mode
+		 */
+		for (i = 0; i < priv->numScreen; i++)
+		{
+			if (priv->screenTopX[i] < minX)
+				minX = priv->screenTopX[i];
+			if (priv->screenTopY[i] < minY)
+				minY = priv->screenTopY[i];
+			if (priv->screenBottomX[i] > maxX)
+				maxX = priv->screenBottomX[i];
+			if (priv->screenBottomY[i] > maxY)
+				maxY = priv->screenBottomY[i];
+		}
+		priv->maxWidth = maxX - minX;
+		priv->maxHeight = maxY - minY;
+	}
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmMappingFactor"
+		" Active tablet area x=%d y=%d map to maxWidth =%d maxHeight =%d\n", 
+		priv->sizeX, priv->sizeY, priv->maxWidth, priv->maxHeight));
+
+	priv->factorX = (double)priv->maxWidth / (double)priv->sizeX;
+	priv->factorY = (double)priv->maxHeight / (double)priv->sizeY;
+	DBG(2, priv->debugLevel, ErrorF("X factor = %.3g, Y factor = %.3g\n",
+		priv->factorX, priv->factorY));
+}
+
+/*****************************************************************************
  * xf86WcmSetScreen --
  *   set to the proper screen according to the converted (x,y).
  *   this only supports for horizontal setup now.
@@ -64,37 +117,51 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int screenToSet = 0;
-	int totalWidth = 0, maxHeight = 0, leftPadding = 0;
+	int screenToSet = -1, letfPadding = 0, topPadding = 0;
 	int i, x, y, v0 = *value0, v1 = *value1;
-	double sizeX = priv->bottomX - priv->topX - 2*priv->tvoffsetX;
-	double sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 
 	DBG(6, priv->debugLevel, ErrorF("xf86WcmSetScreen "
 		"v0=%d v1=%d\n", *value0, *value1));
 
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 
-	if (!(priv->flags & ABSOLUTE_FLAG))
+	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
 	{
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-		priv->currentScreen = miPointerCurrentScreen()->myNum;
-#else
-		priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
-#endif
-		for (i = 0; i < priv->numScreen; i++)
-			totalWidth += screenInfo.screens[i]->width;
+		if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			if (v0 > priv->bottomX - priv->tvoffsetX && v0 <= priv->bottomX)
+				priv->currentScreen = 1;
+			if (v0 > priv->topX && v0 <= priv->topX + priv->tvoffsetX)
+				priv->currentScreen = 0;
+		}
+		if (priv->twinview == TV_ABOVE_BELOW)
+		{
+			if (v1 > priv->bottomY - priv->tvoffsetY && v1 <= priv->bottomY)
+				priv->currentScreen = 1;
+			if (v1 > priv->topY && v1 <= priv->topY + priv->tvoffsetY)
+				priv->currentScreen = 0;
+		}
+	}
 
-		maxHeight = screenInfo.screens[priv->currentScreen]->height;
-		priv->factorX = totalWidth / sizeX;
-		priv->factorY = maxHeight / sizeY;
-		DBG(10, priv->debugLevel, ErrorF(
-			"xf86WcmSetScreen current=%d ToSet=%d\n", 
-			priv->currentScreen, screenToSet));
+	xf86WcmMappingFactor(local, v0, v1, screenToSet);
+
+	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
+	{
+		if (priv->screen_no != -1 && priv->currentScreen != priv->screen_no)
+			priv->currentScreen = priv->screen_no;
 		return;
 	}
 
-	if (priv->twinview == TV_NONE)
+	/* tool on the tablet when driver starts */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+	if (miPointerCurrentScreen())
+		priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+	if (miPointerGetScreen(local->dev))
+		priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
+
+	if (priv->twinview == TV_NONE && (priv->flags & ABSOLUTE_FLAG))
 	{
 		v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
 			v0 < priv->topX ? 0 : v0 - priv->topX;
@@ -102,91 +169,44 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 			v1 < priv->topY ? 0 : v1 - priv->topY;
 	}
 
-	/* set factorX and factorY for single screen setup since
-	 * Top X Y and Bottom X Y can be changed while driver is running
-	 */
-	if (screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
-	{
-		if (priv->twinview != TV_NONE)
-		{
-			if (priv->screen_no == -1)
-			{
-				if (priv->twinview == TV_LEFT_RIGHT)
-				{
-					if (v0 > priv->bottomX - priv->tvoffsetX && v0 <= priv->bottomX)
-						priv->currentScreen = 1;
-					if (v0 > priv->topX && v0 <= priv->topX + priv->tvoffsetX)
-						priv->currentScreen = 0;
-				}
-				if (priv->twinview == TV_ABOVE_BELOW)
-				{
-					if (v1 > priv->bottomY - priv->tvoffsetY && v1 <= priv->bottomY)
-						priv->currentScreen = 1;
-					if (v1 > priv->topY && v1 <= priv->topY + priv->tvoffsetY)
-						priv->currentScreen = 0;
-				}
-			}
-			else
-				priv->currentScreen = priv->screen_no;
-			priv->factorX = priv->tvResolution[2*priv->currentScreen] / sizeX;
-			priv->factorY = priv->tvResolution[2*priv->currentScreen+1] / sizeY;
-		}
-		else
-		{
-			/* tool on the tablet when driver starts */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-			if (miPointerCurrentScreen())
-				priv->currentScreen = miPointerCurrentScreen()->myNum;
-#else
-			if (miPointerGetScreen(local->dev))
-				priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
-#endif
-			priv->factorX = screenInfo.screens[priv->currentScreen]->width / sizeX;
-			priv->factorY = screenInfo.screens[priv->currentScreen]->height / sizeY;
-		}
-		return;
-	}
-
 	if (priv->screen_no == -1)
 	{
 		for (i = 0; i < priv->numScreen; i++)
 		{
-			totalWidth += screenInfo.screens[i]->width;
-			if (maxHeight < screenInfo.screens[i]->height)
-				maxHeight = screenInfo.screens[i]->height;
-		}
-		for (i = 0; i < priv->numScreen; i++)
-		{
-			if (v0 * totalWidth <= (leftPadding + 
-				screenInfo.screens[i]->width) * sizeX)
+			if (v0 * priv->maxWidth >= priv->screenTopX[i] && 
+				v0 * priv->maxWidth <= priv->screenBottomX[i])
 			{
 				screenToSet = i;
 				break;
 			}
-			leftPadding += screenInfo.screens[i]->width;
 		}
 	}
 	else 
-	{
 		screenToSet = priv->screen_no;
-		totalWidth = screenInfo.screens[screenToSet]->width;
-		maxHeight = screenInfo.screens[screenToSet]->height;
+
+	if (screenToSet == -1)
+	{
+		screenToSet = priv->currentScreen;
+		letfPadding = priv->screenTopX[screenToSet];
+		topPadding = priv->screenTopY[screenToSet];
 	}
-	priv->factorX = totalWidth/sizeX;
-	priv->factorY = maxHeight/sizeY;
-	x = (v0 - sizeX * leftPadding / totalWidth) * priv->factorX + 0.5;
-	y = v1 * priv->factorY + 0.5;
+
+	x = (double)v0 * priv->factorX - letfPadding + 0.5;
+	y = (double)v1 * priv->factorY - topPadding + 0.5;
 		
 	if (x >= screenInfo.screens[screenToSet]->width)
 		x = screenInfo.screens[screenToSet]->width - 1;
 	if (y >= screenInfo.screens[screenToSet]->height)
 		y = screenInfo.screens[screenToSet]->height - 1;
 
-	xf86XInputSetScreen(local, screenToSet, x, y);
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmSetScreen"
-		" current=%d ToSet=%d\n", 
-		priv->currentScreen, screenToSet));
-	priv->currentScreen = screenToSet;
+	if (screenToSet != priv->currentScreen)
+	{
+		xf86XInputSetScreen(local, screenToSet, x, y);
+		DBG(10, priv->debugLevel, ErrorF("xf86WcmSetScreen"
+			" current=%d ToSet=%d\n", 
+			priv->currentScreen, screenToSet));
+		priv->currentScreen = screenToSet;
+	}
 }
 
 /*****************************************************************************
