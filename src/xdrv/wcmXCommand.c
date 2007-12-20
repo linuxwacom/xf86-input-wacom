@@ -29,7 +29,6 @@
 #include "wcmFilter.h"
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void xf86WcmInitialTVScreens(LocalDevicePtr local);
 extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 /*****************************************************************************
@@ -300,6 +299,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			priv->screen_no = value;
 			if (priv->twinview != TV_NONE)
 			{
+				xf86WcmInitialScreens(local);
 				if (priv->screen_no == -1)
 				{
 				    if (priv->twinview == TV_LEFT_RIGHT)
@@ -313,8 +313,11 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 					priv->tvoffsetY = 0;
 				}
 			}
+			xf86WcmInitialCoordinates(local, 0);
+			xf86WcmInitialCoordinates(local, 1);
 			if (priv->screen_no != -1)
 				priv->currentScreen = priv->screen_no;
+			xf86WcmInitialScreens(local);
 			xf86ReplaceIntOption(local->options, "ScreenNo", value);
 		}
 		break;
@@ -324,17 +327,17 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			if ((value > 2) || (value < 0) || screenInfo.numScreens != 1)
 				return BadValue;
 			priv->twinview = value;
+			xf86WcmInitialScreens(local);
+			xf86WcmInitialCoordinates(local, 0);
+			xf86WcmInitialCoordinates(local, 1);
 			switch(value) {
 			    case TV_NONE:
-				xf86WcmInitialScreens(local);
 				xf86ReplaceStrOption(local->options, "TwinView", "None");
 				break;
 			    case TV_ABOVE_BELOW:
-				xf86WcmInitialTVScreens(local);
 				xf86ReplaceStrOption(local->options, "TwinView", "Vertical");
 				break;
 			    case TV_LEFT_RIGHT:
-				xf86WcmInitialTVScreens(local);
 				xf86ReplaceStrOption(local->options, "TwinView", "Horizontal");
 				break;
 			    default:
@@ -355,6 +358,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			{
 				rX = priv->tvResolution[0];
 				rY = priv->tvResolution[1];
+				sNum++;
 			}
 			else
 			{
@@ -376,6 +380,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				return BadValue;
 			priv->tvResolution[sNum++] = value & 0xffff;
 			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
+			xf86WcmInitialScreens(local);
 			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
 					"to ResX=%d ResY=%d \n",
 				value & 0xffff, (value >> 16) & 0xffff));

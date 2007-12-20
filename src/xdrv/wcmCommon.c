@@ -72,7 +72,9 @@ void xf86WcmMappingFactor(LocalDevicePtr local, int v0, int v1, int currentScree
 	priv->maxWidth = 0, priv->maxHeight = 0;
 	
 	if ( ((priv->twinview != TV_NONE && priv->screen_no == -1) || 
-		!priv->common->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG) )
+		!priv->common->wcmMMonitor || 
+		(screenInfo.numScreens > 1 && priv->screen_no != -1)) && 
+		(priv->flags & ABSOLUTE_FLAG) )
 	{
 		priv->maxWidth = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen];
 		priv->maxHeight = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen];

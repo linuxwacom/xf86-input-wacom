@@ -77,6 +77,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
+static void xf86WcmInitialTVScreens(LocalDevicePtr local);
 extern Bool usbWcmInit(LocalDevicePtr pDev);
 extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
@@ -295,7 +296,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
  * xf86WcmInitialTVScreens
  ****************************************************************************/
 
-void xf86WcmInitialTVScreens(LocalDevicePtr local)
+static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
@@ -373,7 +374,10 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	int i;
 
 	if (priv->twinview != TV_NONE)
+	{
+		xf86WcmInitialTVScreens(local);
 		return;
+	}
 
 	/* initial screen info */
 	priv->numScreen = screenInfo.numScreens;
@@ -536,10 +540,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 #endif
 
 	/* initialize screen bounding rect */
-	if (priv->twinview != TV_NONE)
-		xf86WcmInitialTVScreens(local);
-	else
-		xf86WcmInitialScreens(local);
+	xf86WcmInitialScreens(local);
 
 	/* x */
 	xf86WcmInitialCoordinates(local, 0);
