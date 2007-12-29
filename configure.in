@@ -440,33 +440,6 @@ if test "$WCM_OPTION_HID" = "yes"; then
 		fi
 		AC_DEFINE(WCM_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
 	fi
-
-	AC_MSG_CHECKING(for HID_QUIRK)
-	HID_H="$WCM_KERNEL_DIR/drivers/usb/hid.h"
-	if test -f "$HID_H"; then
-		PATCH_QUIRK=`grep 'HID_QUIRK' "$HID_H" | wc -l`
-		if test "$PATCH_QUIRK" -gt 0; then
-			AC_MSG_RESULT(yes)
-			AC_DEFINE(WCM_PATCH_NOQUIRK,0,[Missing quirks])
-		else
-			AC_MSG_RESULT(no)
-			AC_DEFINE(WCM_PATCH_NOQUIRK,1,[Missing quirks])
-			WCM_PATCH_HID="(quirk_patch) $WCM_PATCH_HID"
-		fi
-	else
-		HID_H="$WCM_KERNEL_DIR/drivers/usb/input/hid.h"
-		if test -f "$HID_H"; then
-			AC_MSG_RESULT([missing, assuming quirks are OK])
-		else
-			echo "***"
-			echo "*** Warning: unable to find hid.h in kernel tree"
-			echo "*** It was not possible to detect whether patches needed to be"
-			echo "*** applied.  If the hid-core.c in this project does not build"
-			echo "*** correctly, you should resolve this problem first."
-			echo "***"
-		fi
-		AC_DEFINE(WCM_PATCH_NOQUIRK,0,[Missing quirks])
-	fi
 fi
 
 dnl Check for depflags

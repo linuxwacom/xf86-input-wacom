@@ -85,6 +85,14 @@
 static char *hid_types[] = {"Device", "Pointer", "Mouse", "Device", "Joystick",
 				"Gamepad", "Keyboard", "Keypad", "Multi-Axis Controller"};
 
+/* Need these two later, needs to be defined for older kernels */
+#ifndef HID_QUIRK_IGNORE
+#define HID_QUIRK_IGNORE	0x04
+#endif
+#ifndef HID_QUIRK_NOGET
+#define HID_QUIRK_NOGET		0x08
+#endif
+
 /*
  * Register a new report for a device.
  */
@@ -1116,14 +1124,6 @@ void hid_init_reports(struct hid_device *hid)
 #define USB_DEVICE_ID_ATEN_CS124U	0x2202
 #define USB_DEVICE_ID_ATEN_2PORTKVM	0x2204
 #define USB_DEVICE_ID_ATEN_4PORTKVM	0x2205
-
-/* JEJ - added for 2.4.18 compatibility */
-#if WCM_PATCH_NOQUIRK
-#define HID_QUIRK_INVERT	0x01
-#define HID_QUIRK_NOTOUCH	0x02
-#define HID_QUIRK_IGNORE	0x04
-#define HID_QUIRK_NOGET		0x08
-#endif
 
 struct hid_blacklist {
 	__u16 idVendor;
