@@ -39,14 +39,6 @@ endif  # End kbuild check
 clean:
 	rm -rf *.o *.ko *.mod.* .[a-z]* core *.i
 
-# also remove copied stuff
-distclean: clean
-	@for i in $(COPY_FROM_KERNEL_TREE); do \
-		if test -f "$$i"; then \
-			rm -f $$i ; \
-		fi; \
-	done
-
 EMPTY_AUTOMAKE_TARGETS = distdir install install-data install-exec uninstall install-info
 EMPTY_AUTOMAKE_TARGETS += installdirs check dvi pdf ps info html tags ctags mostlyclean distclean maintainer-clean
 .PHONY: $(EMPTY_AUTOMAKE_TARGETS)
