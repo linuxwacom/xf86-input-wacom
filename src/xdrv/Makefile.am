@@ -42,12 +42,11 @@ DRIVER_INCLUDES = \
 endif
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
+NO_STACK_PROTECTOR=@WCM_NO_STACK_PROTECTOR@
 
 if WCM_DLLOADER
 DLLOADER=-fPIC
 endif
-
-CFLAGS += $(WCM_CFLAGS_STACK_PROTECTOR)
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \
@@ -66,6 +65,7 @@ wcmFilter.o: wcmFilter.c wcmFilter.h
 $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
 	$(CC) $(CFLAGS) $(DEPFLAGS) $(DLLOADER) -pipe -ansi \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
+		$(NO_STACK_PROTECTOR) \
 		-I$(srcdir) $(DRIVER_INCLUDES) -Dlinux \
 		-D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE \
 		-D_XOPEN_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE \

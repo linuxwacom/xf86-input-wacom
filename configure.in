@@ -49,17 +49,6 @@ AC_WCM_CHECK_XORG_SDK
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA
 
-dnl Check for -fstack-protector/-fno-stack-protector option in compiler
-AC_MSG_CHECKING(for stack-protector flags support in $CC)
-if $CC -dumpspecs | grep stack-protector >/dev/null 2>&1; then
-	AC_MSG_RESULT(yes)
-	WCM_CFLAGS_STACK_PROTECTOR="-fno-stack-protector"
-else
-	AC_MSG_RESULT(no)
-	WCM_CFLAGS_STACK_PROTECTOR=""
-fi
-AC_SUBST(WCM_CFLAGS_STACK_PROTECTOR)
-
 dnl Check for TCL, TK, and XLib
 AC_WCM_CHECK_XLIB
 AC_WCM_CHECK_TCL
@@ -456,23 +445,22 @@ if test "x$enable_mkxincludes" == "xyes"; then
 	WCM_DEPFLAGS="-MMD"
 fi
 
-dnl Check for -fno-merge-constants if using gcc
-if test "x$GCC" = "xyes"; then
-    AC_MSG_CHECKING(if gcc accepts -fno-merge-constants)
-    OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -fno-merge-constants"
-    AC_TRY_COMPILE(, "int main(void) { return 0; }",
-        has_no_merge_constants=yes,
-        has_no_merge_constants=no)
-    CFLAGS=$OLD_CFLAGS
+dnl =======================================================
+dnl Check for compiler flags if using gcc
+if test "$GCC" = yes; then
+	OLD_CFLAGS="$CFLAGS"
+	AC_MSG_CHECKING(if gcc accepts -fno-merge-constants)
+	CFLAGS="$OLD_CFLAGS -fno-merge-constants"
+	AC_TRY_COMPILE(, "int main(void) { return 0; }",
+		[WCM_NO_MERGE_CONSTANTS="-fno-merge-constants"; AC_MSG_RESULT(yes)],
+		[WCM_NO_MERGE_CONSTANTS=; AC_MSG_RESULT(no)])
 
-    if test "$has_no_merge_constants" = "yes" ; then
-        AC_MSG_RESULT(yes)
-        WCM_NO_MERGE_CONSTANTS="-fno-merge-constants"
-    else
-        AC_MSG_RESULT(no)
-        WCM_NO_MERGE_CONSTANTS=""
-    fi
+	AC_MSG_CHECKING(if gcc accepts -fno-stack-protector)
+	CFLAGS="$OLD_CFLAGS -fno-stack-protector"
+	AC_TRY_COMPILE(, "int main(void) { return 0; }",
+		[WCM_NO_STACK_PROTECTOR="-fno-stack-protector"; AC_MSG_RESULT(yes)],
+		[WCM_NO_STACK_PROTECTOR=; AC_MSG_RESULT(no)])
+	CFLAGS=$OLD_CFLAGS
 fi
 
 dnl Check for x86_64 kernel and ARCH for kernel 2.4
@@ -515,6 +503,7 @@ AC_SUBST(WCM_MODDIR)
 AC_SUBST(WCM_XSERVER64)
 #AC_SUBST(WCM_OPTION_DLLOADER)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
+AC_SUBST(WCM_NO_STACK_PROTECTOR)
 AC_SUBST(WCM_LINUX_INPUT)
 AC_SUBST(WCM_XIDUMP_LIBS)
 AC_SUBST(WCM_LIBWACOMCFG_LIBS)
