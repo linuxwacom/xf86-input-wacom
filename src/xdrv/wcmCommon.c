@@ -34,7 +34,7 @@
 
 WacomDeviceClass* wcmDeviceClasses[] =
 {
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	&gWacomUSBDevice,
 #endif
 	&gWacomISDV4Device,
@@ -1165,7 +1165,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample,
 		pChannel->nSamples));
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && ds.device_type != PAD_ID )
 	{

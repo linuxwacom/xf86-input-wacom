@@ -578,7 +578,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmFlags |= RAW_FILTERING_FLAG;
 	}
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
 	{
