@@ -1,6 +1,5 @@
 AC_PREREQ(2.58)
 AC_INIT(src/2.4/wacom.c)
-AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(linuxwacom, 0.7.9)
 AM_MAINTAINER_MODE
 

@@ -27,7 +27,7 @@
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
 
-#include "../../config.h"
+#include "../include/kernel-config.h"
 
 /*
  *   WARNING: THIS IS NOT PART OF THE OFFICIAL KERNEL TREE
