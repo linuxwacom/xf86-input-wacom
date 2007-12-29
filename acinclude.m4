@@ -1,15 +1,5 @@
 dnl Macros for configuring the Linux Wacom package
 dnl
-AC_DEFUN([AC_WCM_SET_PATHS],[
-if test "x$prefix" = xNONE
-then WCM_PREFIX=$ac_default_prefix
-else WCM_PREFIX=$prefix
-fi
-if test "x$exec_prefix" = xNONE
-then WCM_EXECDIR=$WCM_PREFIX
-else WCM_EXECDIR=$exec_prefix
-fi
-])
 AC_DEFUN([AC_WCM_CHECK_ENVIRON],[
 dnl Variables for various checks
 WCM_KSTACK=-mpreferred-stack-boundary=2
@@ -19,7 +9,7 @@ WCM_ISLINUX=no
 WCM_ENV_KERNEL=no
 WCM_OPTION_MODVER=no
 WCM_KERNEL_WACOM_DEFAULT=no
-WCM_ENV_XF86=no
+WCM_ENV_XFREE86=no
 WCM_ENV_XORGSDK=no
 WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
@@ -73,7 +63,6 @@ fi
 
 WCM_TCLTKDIR_DEFAULT=/usr
 XF86SUBDIR=programs/Xserver/hw/xfree86
-WCM_LINUXWACOMDIR=`pwd`
 WCM_ENV_NCURSES=no
 dnl Check kernel type
 AC_MSG_CHECKING(for kernel type)
@@ -298,30 +287,30 @@ dnl Check for X11 sdk environment
 dnl handle default case
 AC_ARG_WITH(xorg-sdk,
 AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
-[ WCM_XORGSDK="$withval"; ])
-if test x$WCM_ENV_XF86 != xyes; then
+[ WCM_XORGSDK_DIR="$withval"; ])
+if test x$WCM_ENV_XFREE86 != xyes; then
         dnl handle default case
-	if test "$WCM_XORGSDK" = "yes" || test "$WCM_XORGSDK" == ""; then
-		WCM_XORGSDK=$WCM_XORGSDK_DEFAULT
+	if test "$WCM_XORGSDK_DIR" = "yes" || test "$WCM_XORGSDK_DIR" == ""; then
+		WCM_XORGSDK_DIR=$WCM_XORGSDK_DEFAULT
 	fi
-	if test -n "$WCM_XORGSDK"; then
+	if test -n "$WCM_XORGSDK_DIR"; then
 		AC_MSG_CHECKING(for valid Xorg SDK)
-		if test -f $WCM_XORGSDK/include/xf86Version.h; then
-			WCM_XORGSDK=$WCM_XORGSDK/include
+		if test -f $WCM_XORGSDK_DIR/include/xf86Version.h; then
+			WCM_XORGSDK_DIR=$WCM_XORGSDK_DIR/include
 			WCM_ENV_XORGSDK=yes
 			AC_MSG_RESULT(ok)
-		elif test -f $WCM_XORGSDK/include/xorg/xf86Version.h; then
+		elif test -f $WCM_XORGSDK_DIR/include/xorg/xf86Version.h; then
 			WCM_ENV_XORGSDK=yes
-			WCM_XORGSDK=$WCM_XORGSDK/include/xorg
+			WCM_XORGSDK_DIR=$WCM_XORGSDK_DIR/include/xorg
 			AC_MSG_RESULT(ok)
-		elif test -f $WCM_XORGSDK/xc/include/xf86Version.h; then
+		elif test -f $WCM_XORGSDK_DIR/xc/include/xf86Version.h; then
 			WCM_ENV_XORGSDK=yes
-			WCM_XORGSDK=$WCM_XORGSDK/xc/include
+			WCM_XORGSDK_DIR=$WCM_XORGSDK_DIR/xc/include
 			AC_MSG_RESULT(ok)
 		else
 			WCM_ENV_XORGSDK=no
 			AC_MSG_RESULT("xf86Version.h missing")
-			AC_MSG_RESULT([Tried $WCM_XORGSDK/include, $WCM_XORGSDK/include/xorg and $WCM_XORGSDK/xc/include])
+			AC_MSG_RESULT([Tried $WCM_XORGSDK_DIR/include, $WCM_XORGSDK_DIR/include/xorg and $WCM_XORGSDK_DIR/xc/include])
 		fi
 	fi
 fi
@@ -330,27 +319,27 @@ AM_CONDITIONAL(WCM_ENV_XORGSDK, [test x$WCM_ENV_XORGSDK = xyes])
 AC_DEFUN([AC_WCM_CHECK_XSOURCE],[
 dnl Check for X build environment
 if test -d x-includes; then
-	WCM_XF86DIR=x-includes
+	WCM_XFREE86_DIR=x-includes
 fi
 AC_ARG_WITH(x-src,
 AS_HELP_STRING([--with-x-src=dir], [Specify X driver build directory]),
-[ WCM_XF86DIR="$withval"; ])
-if test -n "$WCM_XF86DIR"; then
+[ WCM_XFREE86_DIR="$withval"; ])
+if test -n "$WCM_XFREE86_DIR"; then
 	AC_MSG_CHECKING(for valid XFree86/X.org build environment)
-	if test -f $WCM_XF86DIR/xc/$XF86SUBDIR/xf86Version.h; then
-		WCM_ENV_XF86=yes
-		WCM_XF86DIR="$WCM_XF86DIR/xc"
+	if test -f $WCM_XFREE86_DIR/xc/$XF86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
+		WCM_XFREE86_DIR="$WCM_XFREE86_DIR/xc"
 		AC_MSG_RESULT(ok)
-	elif test -f $WCM_XF86DIR/$XF86SUBDIR/xf86Version.h; then
-		WCM_ENV_XF86=yes
+	elif test -f $WCM_XFREE86_DIR/$XF86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
 		AC_MSG_RESULT(ok)
 	else
-		WCM_ENV_XF86=no
+		WCM_ENV_XFREE86=no
 		AC_MSG_RESULT(xf86Version.h missing)
-		AC_MSG_RESULT(Tried $WCM_XF86DIR/$XF86SUBDIR and $WCM_XF86DIR/xc/$XF86SUBDIR)
+		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XF86SUBDIR and $WCM_XFREE86_DIR/xc/$XF86SUBDIR)
 	fi
 fi
-AM_CONDITIONAL(WCM_ENV_XF86, [test x$WCM_ENV_XF86 = xyes])
+AM_CONDITIONAL(WCM_ENV_XFREE86, [test x$WCM_ENV_XFREE86 = xyes])
 ])
 AC_DEFUN([AC_WCM_CHECK_XLIB],[
 dnl Check for XLib development environment
