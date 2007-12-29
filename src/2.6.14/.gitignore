@@ -1,0 +1,11 @@
+# Lines starting with '#' are considered comments.
+# Ignore files that are copied from other directories
+/hiddev.c
+/hid.h
+/hid-*
+!/hid-core.c
+/fixp-arith.h
+/pid.?
+/wacom_wac.?
+/wacom.h
+/wacom_sys.c

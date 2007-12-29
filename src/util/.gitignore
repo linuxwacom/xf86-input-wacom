@@ -2,3 +2,4 @@
 # Ignore genereated binaries
 /xidump
 /xsetwacom
+/wacdump
