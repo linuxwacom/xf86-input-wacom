@@ -9,9 +9,6 @@ WCM_ISLINUX=no
 WCM_ENV_KERNEL=no
 WCM_OPTION_MODVER=no
 WCM_KERNEL_WACOM_DEFAULT=no
-WCM_ENV_XFREE86=no
-WCM_ENV_XORGSDK=no
-WCM_LINUX_INPUT=
 WCM_PATCH_WACDUMP=
 WCM_PATCH_WACOMDRV=
 WCM_ENV_TCL=no
@@ -19,29 +16,6 @@ WCM_ENV_TK=no
 WCM_XIDUMP_DEFAULT=yes
 WCM_ENV_XLIB=no
 dnl Check architecture
-AC_MSG_CHECKING(for arch type)
-AC_ARG_WITH(arch,
-AC_HELP_STRING([--with-arch], [Use specified architecture]),
-[ WCM_ARCH=$withval 
-],
-[
-	dnl Try the compiler for the build arch first.
-	dnl We may be cross compiling or building for
-	dnl a 32bit system with a 64 bit kernel etc.
-	WCM_ARCH=`$CC -dumpmachine 2> /dev/null`
-	test $? = 0 || WCM_ARCH=`uname -m`
-])
-AC_MSG_RESULT($WCM_ARCH)
-
-dnl Check for X server bit
-AC_ARG_ENABLE(xserver64,
-AC_HELP_STRING([--enable-xserver64], [Use specified X server bit [[default=usually]]]),
-[ WCM_OPTION_XSERVER64=$enableval 
-],
-[
-	WCM_OPTION_XSERVER64=no
-	test `echo $WCM_ARCH | grep -c "64"` == 0 || 	WCM_OPTION_XSERVER64=yes
-])
 
 WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
 WCM_XLIBDIR_DEFAULT2=/usr/lib
@@ -92,7 +66,6 @@ dnl
 dnl Handle linux specific features
 if test x$WCM_ISLINUX = xyes; then
 	WCM_KERNEL_WACOM_DEFAULT=yes
-	WCM_LINUX_INPUT="-DLINUX_INPUT"
 	AC_DEFINE(WCM_ENABLE_LINUXINPUT,1,[Enable the Linux Input subsystem])
 else
 	WCM_PATCH_WACDUMP="(no USB) $WCM_PATCH_WACDUMP"
