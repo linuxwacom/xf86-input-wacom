@@ -210,8 +210,8 @@ if test "$enable_hid" != "no"; then
 			WCM_OPTION_HID=yes
 			if test $kver != 0; then
 				if test "$WCM_KERNEL_VER" = "2.4.22"; then
-				cp $WCM_KERNELDIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
-				cp $WCM_KERNELDIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
+				cp $WCM_KERNEL_DIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
+				cp $WCM_KERNEL_DIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
 				fi
 			fi
 			WCM_MODULES="$WCM_MODULES hid.o"
@@ -234,7 +234,7 @@ if test "$enable_usbmouse" != "no"; then
 	elif test $kver != 0 ; then
 		WCM_OPTION_USBMOUSE=yes
 		if test "$WCM_KERNEL_VER" = "2.4.22"; then
-			cp $WCM_KERNELDIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
+			cp $WCM_KERNEL_DIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
 		fi
 		WCM_MODULES="$WCM_MODULES usbmouse.o"
 	else
@@ -302,7 +302,7 @@ if test "$enable_input" != "no"; then
 		echo "***"
 	elif test $kver != 0 ; then
 		WCM_OPTION_INPUT=yes
-		cp $WCM_KERNELDIR/drivers/input/input.c src/$WCM_KERNEL_VER
+		cp $WCM_KERNEL_DIR/drivers/input/input.c src/$WCM_KERNEL_VER
 		WCM_MODULES="$WCM_MODULES input.o"
 	else
 		echo "***"; echo "*** WARNING:";
@@ -405,11 +405,11 @@ if test "$enable_modver" = "no"; then
 	WCM_MODVER=""
 elif test "$enable_modver" = "yes"; then
 	WCM_OPTION_MODVER=yes
-	WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
+	WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNEL_DIR/include/linux/modversions.h"
 else
 	dnl not explicitly set, go with default
 	if test "$WCM_OPTION_MODVER" = "yes"; then
-		WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
+		WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNEL_DIR/include/linux/modversions.h"
 	else
 		WCM_MODVER=""
 	fi
@@ -418,7 +418,7 @@ fi
 dnl Check for changed field names in hid-core.c
 if test "$WCM_OPTION_HID" = "yes"; then
 	AC_MSG_CHECKING(for updated field names in hid-core.c)
-	HIDCORE="$WCM_KERNELDIR/drivers/usb/hid-core.c"
+	HIDCORE="$WCM_KERNEL_DIR/drivers/usb/hid-core.c"
 	if test -f "$HIDCORE"; then
 		PATCH_DRVALUE=`grep 'dr\\.wValue' "$HIDCORE" | wc -l`
 		if test "$PATCH_DRVALUE" -gt 0; then
@@ -430,7 +430,7 @@ if test "$WCM_OPTION_HID" = "yes"; then
 			AC_DEFINE(WCM_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
 		fi
 	else
-		HIDCORE="$WCM_KERNELDIR/drivers/usb/input/hid-core.c"
+		HIDCORE="$WCM_KERNEL_DIR/drivers/usb/input/hid-core.c"
 		if test -f "$HIDCORE"; then
 			AC_MSG_RESULT([yes, using $WCM_KERNEL_VER])
 		else
@@ -446,7 +446,7 @@ if test "$WCM_OPTION_HID" = "yes"; then
 	fi
 
 	AC_MSG_CHECKING(for HID_QUIRK)
-	HID_H="$WCM_KERNELDIR/drivers/usb/hid.h"
+	HID_H="$WCM_KERNEL_DIR/drivers/usb/hid.h"
 	if test -f "$HID_H"; then
 		PATCH_QUIRK=`grep 'HID_QUIRK' "$HID_H" | wc -l`
 		if test "$PATCH_QUIRK" -gt 0; then
@@ -458,7 +458,7 @@ if test "$WCM_OPTION_HID" = "yes"; then
 			WCM_PATCH_HID="(quirk_patch) $WCM_PATCH_HID"
 		fi
 	else
-		HID_H="$WCM_KERNELDIR/drivers/usb/input/hid.h"
+		HID_H="$WCM_KERNEL_DIR/drivers/usb/input/hid.h"
 		if test -f "$HID_H"; then
 			AC_MSG_RESULT([missing, assuming quirks are OK])
 		else
@@ -531,7 +531,7 @@ AC_SUBST(WCM_EXPMODULES)
 AC_SUBST(WCM_ARCH)
 AC_SUBST(WCM_KSTACK)
 AC_SUBST(WCM_MODVER)
-AC_SUBST(WCM_KERNELDIR)
+AC_SUBST(WCM_KERNEL_DIR)
 AC_SUBST(WCM_KERNEL_VER)
 AC_SUBST(WCM_LINUXWACOMDIR)
 AC_SUBST(WCM_XF86DIR)
@@ -581,7 +581,7 @@ echo "  BUILD ENVIRONMENT:"
 echo "       architecture - $WCM_ARCH"
 echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
 echo "  module versioning - $WCM_OPTION_MODVER $WCM_MODVER"
-echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
+echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNEL_DIR"
 if test "$WCM_ENV_XF86" == "yes"; then
 echo "           X SOURCE - $WCM_ENV_XF86 $WCM_XF86DIR"
 else

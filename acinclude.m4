@@ -121,18 +121,18 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 	AC_MSG_CHECKING(if kernel source is enabled)
 	if test "x$with_kernel" = "xno"; then
 		AC_MSG_RESULT(no)
-		WCM_KERNELDIR=
+		WCM_KERNEL_DIR=
 		WCM_ENV_KERNEL=no
 	else
 		AC_MSG_RESULT(yes)
-		WCM_KERNELDIR="$withval"
+		WCM_KERNEL_DIR="$withval"
 		AC_MSG_CHECKING(for valid kernel source tree)
-		if test -f "$WCM_KERNELDIR/include/linux/input.h"; then
+		if test -f "$WCM_KERNEL_DIR/include/linux/input.h"; then
 			AC_MSG_RESULT(ok)
 			WCM_ENV_KERNEL=yes
 		else
 			AC_MSG_RESULT(missing input.h)
-			AC_MSG_RESULT("Unable to find $WCM_KERNELDIR/include/linux/input.h")
+			AC_MSG_RESULT("Unable to find $WCM_KERNEL_DIR/include/linux/input.h")
 			WCM_ENV_KERNEL=no
 		fi
 	fi
@@ -140,22 +140,22 @@ AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
 [
 	dnl guess directory
 	AC_MSG_CHECKING(for kernel sources)
-	WCM_KERNELDIR="/lib/modules/`uname -r`/source /lib/modules/`uname -r`/build /usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 /usr/src/linux-2.6"
+	WCM_KERNEL_DIR="/lib/modules/`uname -r`/source /lib/modules/`uname -r`/build /usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 /usr/src/linux-2.6"
 
-	for i in $WCM_KERNELDIR; do
+	for i in $WCM_KERNEL_DIR; do
 		if test -f "$i/include/linux/input.h"; then
 			WCM_ENV_KERNEL=yes
-			WCM_KERNELDIR=$i
+			WCM_KERNEL_DIR=$i
 			break
 		fi
 	done
 
 	if test "x$WCM_ENV_KERNEL" = "xyes"; then
 		WCM_ENV_KERNEL=yes
-		AC_MSG_RESULT($WCM_KERNELDIR)
+		AC_MSG_RESULT($WCM_KERNEL_DIR)
 	else
 		AC_MSG_RESULT(not found)
-		WCM_KERNELDIR=""
+		WCM_KERNEL_DIR=""
 		WCM_ENV_KERNEL=no
 		echo "***"
 		echo "*** WARNING:"
@@ -175,14 +175,14 @@ dnl Check for kernel module support
 if test x$WCM_ENV_KERNEL = xyes; then
 	AC_MSG_CHECKING(for kernel module support)
 	modcfg=""
-	if test -f "$WCM_KERNELDIR/include/linux/autoconf.h"; then
-		modcfg="`grep CONFIG_MODULES $WCM_KERNELDIR/include/linux/autoconf.h | cut -d' ' -f 3-`"
+	if test -f "$WCM_KERNEL_DIR/include/linux/autoconf.h"; then
+		modcfg="`grep CONFIG_MODULES $WCM_KERNEL_DIR/include/linux/autoconf.h | cut -d' ' -f 3-`"
 	fi
 	if test "x$modcfg" = "x1"; then
 		AC_MSG_RESULT(yes)
 	else
 		AC_MSG_RESULT(no)
-		WCM_KERNELDIR=""
+		WCM_KERNEL_DIR=""
 		WCM_ENV_KERNEL=no
 		WCM_OPTION_MODVER=no
 	fi
@@ -195,12 +195,12 @@ if test x$WCM_ENV_KERNEL = xyes; then
 	AC_MSG_CHECKING(for kernel module versioning)
 	UTS_PATH=""
 	MODUTS=""
-	if test -f "$WCM_KERNELDIR/include/linux/version.h"; then
-		UTS_PATH="$WCM_KERNELDIR/include/linux/version.h"
+	if test -f "$WCM_KERNEL_DIR/include/linux/version.h"; then
+		UTS_PATH="$WCM_KERNEL_DIR/include/linux/version.h"
 		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
-	if test -f "$WCM_KERNELDIR/include/linux/utsrelease.h" && test "x$MODUTS" = x; then
-		UTS_PATH="$WCM_KERNELDIR/include/linux/utsrelease.h"
+	if test -f "$WCM_KERNEL_DIR/include/linux/utsrelease.h" && test "x$MODUTS" = x; then
+		UTS_PATH="$WCM_KERNEL_DIR/include/linux/utsrelease.h"
 		MODUTS=`grep UTS_RELEASE $UTS_PATH`
 	fi
 	if test "x$MODUTS" = x; then
@@ -284,7 +284,7 @@ if test x$WCM_ENV_KERNEL = xyes; then
 		echo "*** Can not identify your kernel source version"
 		echo "*** Kernel modules will not be built"
 		echo "***"
-		WCM_KERNELDIR=""
+		WCM_KERNEL_DIR=""
 		WCM_ENV_KERNEL=no
 		WCM_OPTION_MODVER=no
 		AC_MSG_RESULT(no)
