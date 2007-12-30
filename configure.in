@@ -577,6 +577,56 @@ else
 	AM_CONDITIONAL(WCM_ENV_NCURSES, true)
 fi
 
+dnl =======================================================
+dnl Check for libwacomcfg build
+AC_MSG_CHECKING([if libwacomcfg should/can be built])
+WCM_OPTION_LIBWACOMCFG=no
+AC_ARG_ENABLE(libwacomcfg,
+	AC_HELP_STRING([--enable-libwacomcfg], [Enable building libwacomcfg [[default=yes]]]),
+	, enable_libwacomcfg=yes)
+if test "$enable_libwacomcfg" != no; then
+	if test "$WCM_ENV_XLIB" = yes; then
+		AC_MSG_RESULT(yes)
+		WCM_OPTION_LIBWACOMCFG=yes
+		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
+		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
+	else
+		AC_MSG_WARN([XLib environment missing, libwacomcfg not built])
+	fi
+else
+	AC_MSG_RESULT(no)
+fi
+
+dnl =======================================================
+dnl Check for libwacomxi build
+AC_MSG_CHECKING([if libwacomxi should/can be built])
+WCM_TCLLIBS=
+WCM_TCLPKGS=
+WCM_OPTION_LIBWACOMXI=no
+AC_ARG_ENABLE(libwacomxi,
+	AC_HELP_STRING([--enable-libwacomxi], [Enable building libwacomxi [[default=yes]]]),
+	, enable_libwacomxi=yes)
+if test "$enable_libwacomxi" != no; then
+	if test "$WCM_ENV_XLIB" != yes; then
+		AC_MSG_WARN([XLib environment missing, libwacomxi not built])
+	elif test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_WARN([tcl environment missing, libwacomxi not built])
+	elif test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([tk environment missing, libwacomxi not built])
+	else
+		AC_MSG_RESULT(yes)
+		WCM_OPTION_LIBWACOMXI=yes
+		WCM_WACOMXI_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
+		WCM_TCLLIBS="libwacomxi.la"
+		WCM_TCLPKGS="pkgIndex.tcl"
+	fi
+	AM_CONDITIONAL(WACOMXI_INSTALL, true)
+else
+	AC_MSG_RESULT(no)
+	AM_CONDITIONAL(WACOMXI_INSTALL, false)
+fi
+
+
 WCM_XIDUMP_DEFAULT=yes
 
 dnl Check for wacdump build
@@ -620,23 +670,6 @@ if test "$enable_xidump" != "no"; then
 	fi
 fi
 
-dnl Check for libwacomcfg build
-WCM_OPTION_LIBWACOMCFG=no
-AC_ARG_ENABLE(libwacomcfg,
-AC_HELP_STRING([--enable-libwacomcfg], [Enable building libwacomcfg [[default=yes]]]),
-	, enable_libwacomcfg=yes)
-if test "$enable_libwacomcfg" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomcfg requires XLib environment; libwacomcfg will not be built."
-		echo "***"
-	else
-		WCM_OPTION_LIBWACOMCFG=yes
-		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
-		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
-	fi
-fi
-
 dnl Check for xsetwacom build
 WCM_OPTION_XSETWACOM=no
 AC_ARG_ENABLE(xsetwacom,
@@ -653,34 +686,6 @@ if test "$enable_xsetwacom" != "no"; then
 		WCM_PROGS="$WCM_PROGS xsetwacom"
 	fi
 fi
-
-dnl Check for libwacomxi build
-WCM_OPTION_LIBWACOMXI=no
-AC_ARG_ENABLE(libwacomxi,
-AC_HELP_STRING([--enable-libwacomxi], [Enable building libwacomxi [[default=yes]]]),
-	, enable_libwacomxi=yes)
-if test "$enable_libwacomxi" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires XLib environment; libwacomxi will not be built."
-		echo "***"
-	elif test x$WCM_ENV_TCL != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires tcl environment; libwacomxi will not be built."
-		echo "***"
-	elif test x$WCM_ENV_TK != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires tk environment; libwacomxi will not be built."
-		echo "***"
-	else
-		WCM_OPTION_LIBWACOMXI=yes
-		WCM_WACOMXI_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
-		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
-		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
-	fi
-fi
-
-AM_CONDITIONAL(WACOMXI_INSTALL, test "$WCM_OPTION_LIBWACOMXI" == "yes")
 
 dnl Check for xmoduledir
 WCM_MODDIR=
