@@ -1,0 +1,6 @@
+# Lines starting with '#' are considered comments.
+# Ignore files that are copied from other directories
+/hid-input.c
+/hiddev.c
+/input.c
+/usbmouse.c
