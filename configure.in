@@ -446,19 +446,138 @@ if test "$WCM_ENV_XFREE86" != yes; then
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test "$WCM_ENV_XORGSDK" = yes])
 
-dnl Check architecture, kernel type
-AC_WCM_CHECK_ENVIRON
-
 # Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA
 
-dnl Check for TCL, TK, and XLib
-AC_WCM_CHECK_TCL
-AC_WCM_CHECK_TK
+dnl =======================================================
+dnl Check for TCL development environment
+WCM_ENV_TCL=no
+WCM_TCL_DIR=
+WCM_TCL_CFLAGS=
+dnl get tcl version
+AC_PATH_PROG([TCLSH],[tclsh],[no])
+if test "x$TCLSH" != "xno"; then
+	AC_MSG_CHECKING([for tcl version])
+	version=$(echo ["puts [set tcl_version]"] | $TCLSH)
+	AC_MSG_RESULT([$version])
+fi
 
-dnl Check for ncurses
-AC_WCM_CHECK_NCURSES
+AC_ARG_WITH(tcl,
+	AS_HELP_STRING([--with-tcl=dir], [uses the specified tcl directory]),
+	[ WCM_TCL_DIR=$withval ])
+if test "$WCM_TCL_DIR" = yes -o -z "$WCM_TCL_DIR"; then
+	AC_MSG_CHECKING([for tcl header files])
+	for i in /usr/include /usr/include/tcl "/usr/include/tcl$version"; do
+		if test -f "$i/tcl.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TCL=yes
+			WCM_TCL_DIR="$i"
+			WCM_TCL_CFLAGS="-I$WCM_TCL_DIR"
+			CFLAGS="$CFLAGS $WCM_TCL_CFLAGS"
+			break
+		fi
+	done
+	if test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_WARN([not found; tried /usr/include, tcl, and tcl$version; ])
+	fi
+elif test "$WCM_TCL_DIR" != no; then
+	AC_MSG_CHECKING([for tcl header files])
+	for i in include .; do
+		if test -f "$WCM_TCL_DIR/$i/tcl.h"; then
+			AC_MSG_RESULT([found, ])
+			WCM_ENV_TCL=yes
+			if test "$WCM_TCL_DIR" != "/usr"; then
+				WCM_TCL_CFLAGS="-I$WCM_TCL_DIR/$i"
+				CFLAGS="$CFLAGS $WCM_TCL_CFLAGS"
+			fi
+		fi
+	done
+	if test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_RESULT([not found; tried $WCM_TCL_DIR/include/tcl.h and $WCM_TCL_DIR/tcl.h])
+		WCM_TCL_DIR=
+	fi
+fi
+if test "$WCM_ENV_TCL" != yes; then
+	echo "***"
+	echo "*** The tcl development environment can not be found."
+	echo "*** The header file tcl.h does not appear at the normal"
+	echo "*** (or provided) include path. Some build features"
+	echo "*** will be unavailable."
+	echo "***"
+fi
+
+dnl =======================================================
+dnl Check for TK development environment
+WCM_ENV_TK=no
+WCM_TK_DIR=
+WCM_TK_CFLAGS=
+AC_ARG_WITH(tk,
+	AS_HELP_STRING([--with-tk=dir], [uses a specified tk directory  ]),
+	[ WCM_TK_DIR=$withval ])
+if test "$WCM_TK_DIR" = yes -o -z "$WCM_TK_DIR"; then
+	AC_MSG_CHECKING([for tk header files])
+	for i in $WCM_TCL_DIR /usr/include ; do
+		if test -f "$i/tk.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TK=yes
+			WCM_TK_DIR="$i"
+			if test "$WCM_TCL_DIR" != "$WCM_TK_DIR" -a "$WCM_TK_DIR" != "/usr"; then
+				WCM_TK_CFLAGS="-I$WCM_TK_DIR"
+				CFLAGS="$CFLAGS $WCM_TK_CFLAGS"
+			fi
+			break
+		fi
+	done
+	if test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([not found; tried $WCM_TCL_DIR/tk.h and /usr/include/tk.h])
+	fi
+elif test "$WCM_TK_DIR" != no; then
+	AC_MSG_CHECKING([for tk header files])
+
+	for i in "$WCM_TK_DIR/include" "$WCM_TK_DIR"; do
+		if test -f "$i/tk.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TK=yes
+			WCM_TK_DIR="$i"
+			if test "$WCM_TCL_DIR" != "$WCM_TK_DIR" -a "$WCM_TK_DIR" != "/usr"; then
+				WCM_TK_CFLAGS="-I$WCM_TK_DIR"
+				CFLAGS="$CFLAGS $WCM_TK_CFLAGS"
+			fi
+			break
+		fi
+	done
+	if test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([not found; tried $WCM_TK_DIR/tk.h and $WCM_TK_DIR/include/tk.h])
+		WCM_TK_DIR=
+	fi
+fi
+if test "$WCM_ENV_TK" != yes; then
+	echo "***"
+	echo "*** The tk development environment can not be found."
+	echo "*** The header file tk.h does not appear at the normal"
+	echo "*** (or provided) include path. Some build features"
+	echo "*** will be unavailable."
+	echo "***"
+fi
+
+dnl =======================================================
+dnl Check for ncurses development environment
+WCM_ENV_NCURSES=no
+AC_CHECK_HEADER(ncurses.h, [WCM_ENV_NCURSES=yes])
+if test "$WCM_ENV_NCURSES" != yes; then
+	AC_CHECK_HEADER(ncurses/ncurses.h, [WCM_ENV_NCURSES=yes])
+fi
+if test "$WCM_ENV_NCURSES" != yes; then
+	AC_MSG_WARN([ncurses not available, ncurses UI disabled])
+	AC_DEFINE(WCM_ENABLE_NCURSES,0,[ncurses header files available])
+	AM_CONDITIONAL(WCM_ENV_NCURSES, false)
+else
+	AC_DEFINE(WCM_ENABLE_NCURSES,1,[ncurses header files available])
+	AM_CONDITIONAL(WCM_ENV_NCURSES, true)
+fi
+
+WCM_XIDUMP_DEFAULT=yes
 
 dnl Check for wacdump build
 WCM_OPTION_WACDUMP=no
@@ -723,8 +842,8 @@ echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK_DIR"
 echo "          XSERVER64 - $WCM_OPTION_XSERVER64"
 echo "           dlloader - $WCM_OPTION_DLLOADER"
 echo "               XLib - $WCM_ENV_XLIB $WCM_XLIB_DIR"
-echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
-echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
+echo "                TCL - $WCM_ENV_TCL $WCM_TCL_DIR"
+echo "                 TK - $WCM_ENV_TK $WCM_TK_DIR"
 echo "            ncurses - $WCM_ENV_NCURSES"
 echo ""
 echo "  BUILD OPTIONS:"
