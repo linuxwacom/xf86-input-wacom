@@ -1,0 +1,9 @@
+/* kernel-config.h.in */
+
+#ifndef _KERNEL_CONFIG_H_
+#define _KERNEL_CONFIG_H_
+
+/* Do not need the dr.wValue patch */
+#undef WCM_PATCH_DRVALUE
+
+#endif /* _KERNEL_CONFIG_H_ */

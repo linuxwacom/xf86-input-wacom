@@ -1,0 +1,9 @@
+/* util-config.h.in */
+
+#ifndef _UTIL_CONFIG_H_
+#define _UTIL_CONFIG_H_
+
+/* ncurses header files available */
+#undef WCM_ENABLE_NCURSES
+
+#endif /* _UTIL_CONFIG_H_ */

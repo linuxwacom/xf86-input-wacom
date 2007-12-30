@@ -16,7 +16,7 @@ Makefile.in
 /aclocal.m4
 /autom4te.cache
 /config.*
-/stamp-h1
+stamp-h*
 /configure
 /depcomp
 /install-sh

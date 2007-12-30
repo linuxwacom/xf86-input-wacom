@@ -1,0 +1,3 @@
+# Lines starting with '#' are considered comments.
+# Ignore the generated config.h file(s)
+/*-config.h
