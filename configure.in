@@ -626,66 +626,67 @@ else
 	AM_CONDITIONAL(WACOMXI_INSTALL, false)
 fi
 
-
-WCM_XIDUMP_DEFAULT=yes
-
+dnl =======================================================
 dnl Check for wacdump build
+AC_MSG_CHECKING([if wacdump should/can be built])
 WCM_OPTION_WACDUMP=no
 AC_ARG_ENABLE(wacdump,
-AC_HELP_STRING([--enable-wacdump], [Enable building wacdump [[default=yes]]]),
+	AC_HELP_STRING([--enable-wacdump], [Enable building wacdump [[default=yes]]]),
 	, enable_wacdump=yes)
 if test "$enable_wacdump" != "no"; then
-	if test x$WCM_ENV_NCURSES != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacdump without ncurses environment"
-		echo "*** wacdump will not be built"
-		echo "***"
-	else
+	if test "$WCM_ENV_NCURSES" = yes; then
+		AC_MSG_RESULT(yes)
 		WCM_OPTION_WACDUMP=yes
 		WCM_PROGS="$WCM_PROGS wacdump"
+	else
+		AC_MSG_WARN([ncurses environment missing, wacdump not built])
 	fi
 fi
 
+dnl =======================================================
 dnl Check for xidump build
+AC_MSG_CHECKING([if xidump should/can be built])
 WCM_PATCH_XIDUMP=
 WCM_OPTION_XIDUMP=no
 AC_ARG_ENABLE(xidump,
-AC_HELP_STRING([--enable-xidump], [Enable building xidump [[default=yes]]]),
-	, enable_xidump=$WCM_XIDUMP_DEFAULT)
+	AC_HELP_STRING([--enable-xidump], [Enable building xidump [[default=yes]]]),
+	, enable_xidump=yes)
 if test "$enable_xidump" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** xidump requires XLib environment; xidump will not be built."
-		echo "***"
+	if test "$WCM_ENV_XLIB" != yes; then
+		AC_MSG_WARN([XLib environment missing, xidump not built])
 	else
-		if test x$WCM_ENV_NCURSES != xyes; then
-			echo "***"; echo "*** WARNING:";
-			echo "*** xidump will build without ncurses support."
-			echo "***"
-			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
+		if test "$WCM_ENV_NCURSES" != yes; then
+			AC_MSG_RESULT([yes, no ncurses])
+			WCM_PATCH_XIDUMP="(no ncurses)"
+		else
+			AC_MSG_RESULT(yes)
 		fi
 		WCM_OPTION_XIDUMP=yes
 		WCM_XIDUMP_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi -lm"
 		WCM_PROGS="$WCM_PROGS xidump"
 	fi
+else
+	AC_MSG_RESULT(no)
 fi
 
+dnl =======================================================
 dnl Check for xsetwacom build
+AC_MSG_CHECKING([if xsetwacom should be built])
 WCM_OPTION_XSETWACOM=no
 AC_ARG_ENABLE(xsetwacom,
-AC_HELP_STRING([--enable-xsetwacom], [Enable building xsetwacom [[default=yes]]]),
+	AC_HELP_STRING([--enable-xsetwacom], [Enable building xsetwacom [[default=yes]]]),
 	, enable_xsetwacom=yes)
 if test "$enable_xsetwacom" != "no"; then
-	if test x$WCM_OPTION_LIBWACOMCFG != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** xsetwacom requires libwacomcfg; xsetwacom will not be built."
-		echo "***"
+	if test "$WCM_OPTION_LIBWACOMCFG" != yes; then
+		AC_MSG_WARN([requires libwacomcfg, xsetwacom not built])
 	else
+		AC_MSG_RESULT(yes)
 		WCM_OPTION_XSETWACOM=yes
 		WCM_XSETWACOM_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
 		WCM_PROGS="$WCM_PROGS xsetwacom"
 	fi
 fi
+
 
 dnl Check for xmoduledir
 WCM_MODDIR=
