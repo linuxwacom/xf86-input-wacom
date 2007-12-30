@@ -36,13 +36,11 @@
 
 #define XSETWACOM_VERSION "0.1.4"
 
+#include "../include/util-config.h"
+
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* give us raw access to parameter values */
 #include "wcmAction.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

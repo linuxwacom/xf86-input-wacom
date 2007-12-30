@@ -6,4 +6,7 @@
 /* ncurses header files available */
 #undef WCM_ENABLE_NCURSES
 
+/* Enable the Linux Input subsystem */
+#undef WCM_ENABLE_LINUXINPUT
+
 #endif /* _UTIL_CONFIG_H_ */

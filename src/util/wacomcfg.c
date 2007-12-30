@@ -29,14 +29,11 @@
 **
 ****************************************************************************/
 
+#include "../include/util-config.h"
 #include "wacomcfg.h"
 #include "../include/Xwacom.h" /* Hopefully it will be included in XFree86 someday, but
                      * in the meantime, we are expecting it in the local
                      * directory. */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdio.h> /* debugging only, we've got no business output text */
 #include <ctype.h>
