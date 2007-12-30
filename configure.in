@@ -299,18 +299,161 @@ else
 	fi
 fi
 
+dnl =======================================================
+dnl Check for Xlib
+WCM_CLEVEL=-ansi
+WCM_ENV_XLIB=no
+WCM_XLIB_DIR=
+WCM_XSERVER64=
+AC_ARG_WITH(xlib,
+	AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
+	[WCM_XLIB_DIR=$withval])
+if test -z "$WCM_XLIB_DIR" -o "$WCM_XLIB_DIR" = "yes"; then
+	PKG_CHECK_MODULES(Xlib,[x11],
+	[
+		dnl Found it with pkg-config, use that information
+		WCM_XLIB_DIR="`$PKG_CONFIG --variable=libdir x11`"
+		WCM_ENV_XLIB=yes
+	],
+	[
+		AC_MSG_CHECKING(for X lib directory)
+		WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
+		WCM_XLIBDIR_DEFAULT2=/usr/lib
+		if test "$WCM_OPTION_XSERVER64" = "yes"; then
+			WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
+			test -d /usr/lib64 && WCM_XLIBDIR_DEFAULT2=/usr/lib64
+		fi
+
+		if test -f $WCM_XLIBDIR_DEFAULT/libX11.so; then
+			WCM_ENV_XLIB=yes
+			WCM_XLIB_DIR=$WCM_XLIBDIR_DEFAULT
+			AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		elif test -d $WCM_XLIBDIR_DEFAULT2; then
+			WCM_ENV_XLIB=yes
+			WCM_XLIB_DIR=$WCM_XLIBDIR_DEFAULT2
+			AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		else
+			WCM_ENV_XLIB=no
+			AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT and $WCM_XLIBDIR_DEFAULT2])
+		fi
+	])
+elif test "$WCM_XLIB_DIR" != "no"; then
+	AC_MSG_CHECKING(for X lib directory)
+	if test -f $WCM_XLIB_DIR/libX11.so; then
+		AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		WCM_ENV_XLIB=yes
+	else
+		AC_MSG_ERROR([Provided Xlib-path is invalid])
+	fi
+else
+	WCM_ENV_XLIB=no
+fi
+if test "$WCM_ENV_XLIB" = yes; then
+	if test "$WCM_OPTION_XSERVER64" = "yes"; then
+		CFLAGS="$CFLAGS -D__amd64__"
+		WCM_XSERVER64="-D_XSERVER64"
+	fi
+fi
+
+dnl =======================================================
+dnl Check for XFree86 source or X.org SDK
+test -d "x-include" && WCM_XFREE86_DIR="x-include"
+AC_ARG_WITH(x-src,
+	AS_HELP_STRING([--with-x-src=dir], [Specify X driver build directory]),
+	WCM_XFREE86_DIR="$withval")
+if test -n "$WCM_XFREE86_DIR"; then
+	XFREE86SUBDIR=programs/Xserver/hw/xfree86
+	AC_MSG_CHECKING(for valid XFree86/X.org build environment)
+	if test -f $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
+		WCM_XFREE86_DIR="$WCM_XFREE86_DIR/xc"
+		AC_MSG_RESULT([ok, $WCM_XFREE86_DIR])
+	elif test -f $WCM_XFREE86_DIR/$XFREE86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
+		AC_MSG_RESULT([ok, $WCM_XFREE86_DIR])
+	else
+		WCM_ENV_XFREE86=no
+		WCM_XFREE86_DIR=
+		AC_MSG_RESULT(xf86Version.h missing)
+		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XFREE86SUBDIR and $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR)
+	fi
+fi
+if test "$WCM_ENV_XFREE86" = yes; then
+	AM_CONDITIONAL(WCM_ENV_XFREE86, true)
+	AC_DEFINE(WCM_XFREE86,1,[Compiling for XFree86])
+else
+	AM_CONDITIONAL(WCM_ENV_XFREE86, false)
+fi
+dnl Check for X.org SDK
+if test "$WCM_ENV_XFREE86" != yes; then
+	AC_ARG_WITH(xorg-sdk,
+		AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
+		WCM_XORGSDK_DIR="$withval")
+
+	if test "$WCM_XORGSDK_DIR" = "yes" -o -z "$WCM_XORGSDK_DIR"; then
+		PKG_CHECK_MODULES(XSERVER,[xorg-server],
+		[
+			dnl Found it with pkg-config, use that information
+			WCM_ENV_XORGSDK=yes
+			WCM_XORGSDK_DIR="`$PKG_CONFIG --variable=sdkdir xorg-server`"
+			WCM_XORGSDK_VER="`$PKG_CONFIG --modversion xorg-server`"
+		],
+		[
+			AC_MSG_CHECKING(for valid Xorg SDK)
+			WCM_XORGSDK_DEFAULT="$WCM_XLIB_DIR/Server"
+			test -d "$WCM_XORGSDK_DEFAULT" || WCM_XORGSDK_DEFAULT="/usr"
+			for a in include include/xorg xc/include; do
+				if test -f $WCM_XORGSDK_DEFAULT/$a/xf86Version.h; then
+					WCM_ENV_XORGSDK=yes
+					WCM_XORGSDK_DIR=$WCM_XORGSDK_DEFAULT/$a
+					AC_MSG_RESULT([found, $WCM_XORGSDK_DIR])
+					break
+				fi
+			done
+			if test -z "$WCM_XORGSDK_DIR"; then
+				AC_MSG_RESULT("xf86Version.h missing")
+				AC_MSG_RESULT([Tried $WCM_XORGSDK_DEFAULT/include, $WCM_XORGSDK_DEFAULT/include/xorg, and $WCM_XORGSDK_DEFAULT/xc/include])
+			fi
+		])
+	elif test "$WCM_XORGSDK_DIR" != "no"; then
+		AC_MSG_CHECKING(for valid Xorg SDK)
+		if test -f $WCM_XORGSDK_DIR/xf86Version.h; then
+			AC_MSG_RESULT(ok)
+			WCM_ENV_XORGSDK=yes
+		else
+			AC_MSG_ERROR("provided path for Xorg SDK invalid")
+		fi
+	fi
+	if test -n "$WCM_XORGSDK_DIR"; then
+		AC_DEFINE(WCM_XORG,1,[Compiling for X.org])
+		AC_MSG_CHECKING([for xserver libc-wrapper header-files])
+		if test -f "$WCM_XORGSDK_DIR/xf86_libc.h"; then
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+			AC_DEFINE(WCM_NO_LIBCWRAPPER,1,[The xserver have no wraps around libc-functions])
+		fi
+		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
+		case "$WCM_XORGSDK_VER" in
+			1.0*|1.1*|1.2*|1.3*)
+				;;
+			1.*|2*)
+				WCM_CLEVEL=-std=c99;;
+			*)
+				;;
+		esac
+	fi
+fi
+AM_CONDITIONAL(WCM_ENV_XORGSDK, [test "$WCM_ENV_XORGSDK" = yes])
+
 dnl Check architecture, kernel type
 AC_WCM_CHECK_ENVIRON
 
-dnl Check for X source or X SDK
-AC_WCM_CHECK_XSOURCE
-AC_WCM_CHECK_XORG_SDK
 # Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA
 
 dnl Check for TCL, TK, and XLib
-AC_WCM_CHECK_XLIB
 AC_WCM_CHECK_TCL
 AC_WCM_CHECK_TK
 
@@ -353,7 +496,7 @@ if test "$enable_xidump" != "no"; then
 			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
 		fi
 		WCM_OPTION_XIDUMP=yes
-		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR -lX11 -lXi -lm"
+		WCM_XIDUMP_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi -lm"
 		WCM_PROGS="$WCM_PROGS xidump"
 	fi
 fi
@@ -370,7 +513,7 @@ if test "$enable_libwacomcfg" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_LIBWACOMCFG=yes
-		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
+		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
 		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
 	fi
 fi
@@ -387,7 +530,7 @@ if test "$enable_xsetwacom" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_XSETWACOM=yes
-		WCM_XSETWACOM_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
+		WCM_XSETWACOM_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
 		WCM_PROGS="$WCM_PROGS xsetwacom"
 	fi
 fi
@@ -412,7 +555,7 @@ if test "$enable_libwacomxi" != "no"; then
 		echo "***"
 	else
 		WCM_OPTION_LIBWACOMXI=yes
-		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
+		WCM_WACOMXI_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
 		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
 		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
 	fi
@@ -430,10 +573,10 @@ AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies
 ])
 if test -n "$WCM_MODDIR"; then
 	WCM_OPTION_DLLOADER=yes
-elif test -d $WCM_XLIBDIR/xorg/modules/input; then
-	WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
-elif test -d $WCM_XLIBDIR/modules/input; then
-	WCM_MODDIR=$WCM_XLIBDIR/modules/input
+elif test -d $WCM_XLIB_DIR/xorg/modules/input; then
+	WCM_MODDIR=$WCM_XLIB_DIR/xorg/modules/input
+elif test -d $WCM_XLIB_DIR/modules/input; then
+	WCM_MODDIR=$WCM_XLIB_DIR/modules/input
 fi
 AC_MSG_RESULT($WCM_MODDIR)
 
@@ -533,6 +676,7 @@ AC_SUBST(WCM_MODDIR)
 AC_SUBST(WCM_XSERVER64)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
 AC_SUBST(WCM_NO_STACK_PROTECTOR)
+AC_SUBST(WCM_CLEVEL)
 AC_SUBST(WCM_XIDUMP_LIBS)
 AC_SUBST(WCM_LIBWACOMCFG_LIBS)
 AC_SUBST(WCM_WACOMXI_LIBS)
@@ -578,7 +722,7 @@ echo "     XFree86 source - $WCM_ENV_XFREE86 $WCM_XFREE86_DIR"
 echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK_DIR"
 echo "          XSERVER64 - $WCM_OPTION_XSERVER64"
 echo "           dlloader - $WCM_OPTION_DLLOADER"
-echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"
+echo "               XLib - $WCM_ENV_XLIB $WCM_XLIB_DIR"
 echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
 echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
 echo "            ncurses - $WCM_ENV_NCURSES"

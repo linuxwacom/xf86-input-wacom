@@ -15,7 +15,7 @@ EXTRA_DIST = xf86Wacom.c wcmXCommand.c xf86Wacom.h \
 		../include/Xwacom.h
 
 if WCM_ENV_XORGSDK
-DRIVER_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS) -DWCM_XORG
+DRIVER_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
 endif
 
 if WCM_ENV_XFREE86
@@ -28,11 +28,12 @@ DRIVER_INCLUDES = \
 	-I$(WCM_XFREE86_DIR)/exports/include/X11 \
 	-I$(WCM_XFREE86_DIR)/include/extensions \
 	-I$(WCM_XFREE86_DIR) \
-	-I$(WCM_XFREE86_DIR)/exports/include -DWCM_XFREE86
+	-I$(WCM_XFREE86_DIR)/exports/include
 endif
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
 NO_STACK_PROTECTOR=@WCM_NO_STACK_PROTECTOR@
+WCM_CLEVEL=@WCM_CLEVEL@
 
 if WCM_DLLOADER
 DLLOADER=-fPIC
@@ -53,7 +54,7 @@ wcmConfig.o: wcmConfig.c wcmFilter.h
 wcmFilter.o: wcmFilter.c wcmFilter.h
 
 $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
-	$(CC) $(CFLAGS) $(WCM_DEPFLAGS) $(DLLOADER) -pipe -ansi \
+	$(CC) $(CFLAGS) $(WCM_DEPFLAGS) $(DLLOADER) -pipe $(WCM_CLEVEL) \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		$(NO_STACK_PROTECTOR) \
 		-I$(srcdir) $(DRIVER_INCLUDES) -Dlinux \
