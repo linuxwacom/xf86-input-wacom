@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -632,7 +632,7 @@ Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 int xf86WcmSetPadCoreMode(LocalDevicePtr local);
 
 /* calculate the proper tablet to screen mapping factor */
-void xf86WcmMappingFactor(LocalDevicePtr local, int v0, int v1, int currentScreen);
+void xf86WcmMappingFactor(LocalDevicePtr local);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

@@ -1,3 +1,8 @@
+2008-01-01  Ping Cheng <pingc@wacom.com>
+	* Updated build and configure scripts (Magnus Vigerlöf)
+	* Support Xorg 7.3 with multimonitors
+	* Unified screen, tablet, and cordinate initialization
+
 2007-12-19  Ping Cheng <pingc@wacom.com>
 	* Support multimonitor setup on 4 directions
 

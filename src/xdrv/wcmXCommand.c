@@ -89,6 +89,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopX", value);
 			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 		}
 		break;
@@ -107,6 +108,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopY", value);
 			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 1);
 		}
 		break;
@@ -125,6 +127,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomX", value);
 			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 		}
 		break;
@@ -143,6 +146,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomY", value);
 			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 1);
 		}
 		break;
@@ -211,23 +215,22 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    {
 		int is_absolute = priv->flags & ABSOLUTE_FLAG;
 		if ((value < 0) || (value > 1)) return BadValue;
-		if (value == is_absolute)
-			break;
+		if (value != is_absolute)
+		{		
+			if (IsPad(priv))
+				return xf86WcmSetPadCoreMode(local);
 
-		if (IsPad(priv))
-			return xf86WcmSetPadCoreMode(local);
-
-		if (value) 
-		{
-			priv->flags |= ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
-			xf86WcmInitialCoordinates(local, 0);
-			xf86WcmInitialCoordinates(local, 1);
-		}
-		else
-		{
-			priv->flags &= ~ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			if (value) 
+			{
+				priv->flags |= ABSOLUTE_FLAG;
+				xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+			}
+			else
+			{
+				priv->flags &= ~ABSOLUTE_FLAG;
+				xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			}
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 			xf86WcmInitialCoordinates(local, 1);
 		}
@@ -259,27 +262,29 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
 		break;
 	    case XWACOM_PARAM_MMT:
-		if ((value != 0) && (value != 1)) return BadValue;
-		common->wcmMMonitor = value;
-		if (value)
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmMMonitor != value)
 		{
-			xf86ReplaceStrOption(local->options, "MMonitor", "on");
-		}
-		else
-		{
-			xf86ReplaceStrOption(local->options, "MMonitor", "off");
+			common->wcmMMonitor = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "MMonitor", "on");
+			else
+				xf86ReplaceStrOption(local->options, "MMonitor", "off");
+			
+			xf86WcmMappingFactor(local);
 		}
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
-		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmTPCButton = value;
-		if (value)
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmMMonitor != value)
 		{
-			xf86ReplaceStrOption(local->options, "TPCButton", "on");
-		}
-		else
-		{
-			xf86ReplaceStrOption(local->options, "TPCButton", "off");
+			common->wcmTPCButton = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "TPCButton", "on");
+			else
+				xf86ReplaceStrOption(local->options, "TPCButton", "off");
 		}
 		break;
 	    case XWACOM_PARAM_CURSORPROX:
@@ -287,8 +292,11 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			if ((value > 255) || (value < 0))
 				return BadValue;
-			xf86ReplaceIntOption(local->options, "CursorProx",value);
-			common->wcmCursorProxoutDist = value;
+			else if (common->wcmCursorProxoutDist != value)
+			{
+				xf86ReplaceIntOption(local->options, "CursorProx",value);
+				common->wcmCursorProxoutDist = value;
+			}
 		}
 		break;
 	    case XWACOM_PARAM_SCREEN_NO:
@@ -313,11 +321,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 					priv->tvoffsetY = 0;
 				}
 			}
-			xf86WcmInitialCoordinates(local, 0);
-			xf86WcmInitialCoordinates(local, 1);
 			if (priv->screen_no != -1)
 				priv->currentScreen = priv->screen_no;
 			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
+			xf86WcmInitialCoordinates(local, 0);
+			xf86WcmInitialCoordinates(local, 1);
 			xf86ReplaceIntOption(local->options, "ScreenNo", value);
 		}
 		break;
@@ -328,6 +337,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				return BadValue;
 			priv->twinview = value;
 			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 			xf86WcmInitialCoordinates(local, 1);
 			switch(value) {
@@ -381,6 +391,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			priv->tvResolution[sNum++] = value & 0xffff;
 			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
 			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
 			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
 					"to ResX=%d ResY=%d \n",
 				value & 0xffff, (value >> 16) & 0xffff));
@@ -491,6 +502,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			break;
 		    }
 
+		    xf86WcmMappingFactor(tmppriv->local);
 		    xf86WcmInitialCoordinates(tmppriv->local, 0);
 		    xf86WcmInitialCoordinates(tmppriv->local, 1);
 
@@ -1012,6 +1024,7 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
 		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}
@@ -1019,6 +1032,7 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
+		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}
