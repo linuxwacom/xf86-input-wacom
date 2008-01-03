@@ -2,7 +2,7 @@ noinst_SCRIPTS = @WCM_MODULES@
 
 EXTRA_SCRIPTS = wacom.o hid.o usbmouse.o evdev.o input.o mousedev.o
 
-KERNEL_DIR=@WCM_KERNELDIR@
+KERNEL_DIR=@WCM_KERNEL_DIR@
 DEBUG_FLAGS = -D__JEJ_DEBUG
 MODS = @WCM_MODVER@
 ARCHITECTURE=@WCM_ARCH@
@@ -17,7 +17,6 @@ KCFLAGS = -Wall $(DEBUG_FLAGS) -D__KERNEL__ \
 		$(KSTACK) -march=$(ARCHITECTURE)
 
 NO_MERGE_CONSTANTS=@WCM_NO_MERGE_CONSTANTS@
-LINUX_INPUT=@WCM_LINUX_INPUT@ -I$(KERNEL_DIR)/include
 
 wacom.o: wacom.c Makefile
 	$(CC) -I$(KERNEL_DIR)/include $(KCFLAGS) \

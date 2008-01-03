@@ -1,520 +1,813 @@
 AC_PREREQ(2.58)
-AC_INIT(src/2.4/wacom.c)
-AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(linuxwacom, 0.7.9)
+AC_INIT(linuxwacom, 0.7.9)
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
+
+AM_CONFIG_HEADER(src/include/xdrv-config.h)
+AM_CONFIG_HEADER(src/include/kernel-config.h)
+AM_CONFIG_HEADER(src/include/util-config.h)
+
 AC_PROG_CC
 AC_PROG_AWK
 AC_PROG_LIBTOOL
+PKG_PROG_PKG_CONFIG
 
 dnl Library versions
 WCM_LIBWACOMCFG_VER="0:1:0"
 AC_SUBST(WCM_LIBWACOMCFG_VER)
 
 dnl Targets
-WCM_PROGS=""
-WCM_LIBS=""
+WCM_PROGS=
+WCM_LIBS=
+WCM_MODULES=
+WCM_XF86MODULES=
+
 WCM_TCLLIBS=""
 WCM_TCLPKGS=""
-WCM_MODULES=""
-WCM_XF86PROGS=""
-WCM_XF86MODULES=""
 WCM_XSERVER64=""
-WCM_EXPPROGS=""
-WCM_EXPMODULES=""
-WCM_PATCH_HID=""
+
+dnl Configuration
+WCM_MODVER=
+WCM_ENV_XFREE86=no
+WCM_ENV_XORGSDK=no
 
 dnl Setup paths based on configuration parameters
-AC_WCM_SET_PATHS
+WCM_PREFIX=$prefix
+test "$WCM_PREFIX" = NONE && WCM_PREFIX=$ac_default_prefix
 
-dnl Check architecture, kernel type
-AC_WCM_CHECK_ENVIRON
+dnl =======================================================
+dnl Check architecture we compile for
+AC_MSG_CHECKING(for arch type)
+AC_ARG_WITH(arch,
+	AC_HELP_STRING([--with-arch], [Use specified architecture]),
+[ WCM_ARCHITECTURE=$withval ],
+[
+	dnl Try the compiler for the build arch first.
+	dnl We may be cross compiling or building for
+	dnl a 32bit system with a 64 bit kernel etc.
+	WCM_ARCHITECTURE=`$CC -dumpmachine 2>/dev/null`
+	test $? = 0 || WCM_ARCHITECTURE=`uname -m`
+])
+AC_MSG_RESULT($WCM_ARCHITECTURE)
+WCM_ARCH="`echo $WCM_ARCHITECTURE | cut -d- -f 1`"
 
-dnl If linux kernel is detected, check for module versioning and kernel source
-if test x$WCM_ISLINUX = xyes; then
-	AC_WCM_CHECK_KERNELSOURCE
-	AC_WCM_CHECK_MODSUPP
-	AC_WCM_CHECK_MODVER
+dnl =======================================================
+dnl Check if we should be compiling for linux
+AC_MSG_CHECKING(for kernel type)
+WCM_KERNEL=`uname -s`
+AC_MSG_RESULT($WCM_KERNEL)
+
+AC_MSG_CHECKING(for linux-based kernel)
+WCM_ISLINUX=no
+if echo $WCM_KERNEL | grep -i linux >/dev/null; then
+	WCM_ISLINUX=yes
+fi
+AC_MSG_RESULT($WCM_ISLINUX)
+
+dnl Check for 64bit XServer
+WCM_OPTION_XSERVER64=no
+AC_ARG_ENABLE(xserver64,
+	AC_HELP_STRING([--enable-xserver64], [Use 64bit XServer [[default=usually]]]),
+	[ WCM_OPTION_XSERVER64=$enableval ],
+	[ echo $WCM_ARCHITECTURE | grep "64" >/dev/null && WCM_OPTION_XSERVER64=yes ])
+
+dnl Check for linux kernel override
+AC_ARG_WITH(linux,
+	AS_HELP_STRING([--with-linux], [Override linux kernel check]),
+	[ WCM_ISLINUX=$withval ])
+
+dnl Enable linux specific features if linux kernel is detected.
+dnl  kernel source, module versioning, etc
+WCM_OPTION_WACOM=no
+WCM_OPTION_HID=no
+WCM_OPTION_USBMOUSE=no
+WCM_OPTION_EVDEV=no
+WCM_OPTION_MOUSEDEV=no
+WCM_OPTION_INPUT=no
+WCM_OPTION_MODVER=no
+WCM_PATCH_HID=
+WCM_ENV_KERNEL=no
+WCM_KERNEL_DIR=
+WCM_KERNEL_VER=
+WCM_KSTACK=
+if test "$WCM_ISLINUX" != yes; then
+	WCM_PATCH_WACDUMP="(no USB)"
+	WCM_PATCH_WACOMDRV="(no USB)"
+else
+	WCM_PATCH_WACDUMP=
+	WCM_PATCH_WACOMDRV=
+
+	dnl Check for kernel build environment
+	AC_ARG_WITH(kernel,
+		AS_HELP_STRING([--with-kernel=dir], [Specify kernel source directory]),
+		[WCM_KERNEL_DIR="$withval"])
+
+	AC_MSG_CHECKING(for kernel source/headers)
+	if test "$WCM_KERNEL_DIR" = "yes" -o -z "$WCM_KERNEL_DIR"; then
+		WCM_KERNEL_DIR=
+		dnl Kernel source not specified, guess where it is
+		for i in /lib/modules/`uname -r`/source /lib/modules/`uname -r`/build \
+			/usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 \
+			/usr/src/linux-2.6; do
+			if test -f "$i/include/linux/input.h"; then
+				WCM_KERNEL_DIR=$i
+				WCM_ENV_KERNEL=yes
+				AC_MSG_RESULT($WCM_KERNEL_DIR)
+				break
+			fi
+		done
+		if test -z "$WCM_KERNEL_DIR"; then
+			AC_MSG_RESULT(not found)
+			echo "***"
+			echo "*** WARNING:"
+			echo "*** Unable to guess kernel source directory"
+			echo "***   Looked at /lib/modules/`uname -r`/source, /lib/modules/`uname -r`/build,"
+			echo "***     /usr/src/linux, /usr/src/linux-`uname -r`, /usr/src/linux-2.4, and"
+			echo "***     /usr/src/linux-2.6"
+			echo "*** Kernel modules will not be built"
+			echo "***"
+		fi
+	elif test "$WCM_KERNEL_DIR" != "no"; then
+		if test -f "$WCM_KERNEL_DIR/include/linux/input.h"; then
+			WCM_ENV_KERNEL=yes
+			AC_MSG_RESULT([yes, $WCM_KERNEL_DIR])
+		else
+			AC_MSG_ERROR([Provided kernel path is invalid])
+		fi
+	else
+		WCM_KERNEL_DIR=
+		AC_MSG_RESULT(no)
+	fi
+
+	dnl Check which version of the driver we should compile
+	if test -n "$WCM_KERNEL_DIR"; then
+		AC_MSG_CHECKING(kernel version)
+		MODUTS=
+		for a in "$WCM_KERNEL_DIR/include/linux/version.h" \
+			"$WCM_KERNEL_DIR/include/linux/utsrelease.h"; do
+			MODUTS=`grep UTS_RELEASE $a | sed -e 's/^[[^"]]*"\([[^"]]*\).*$/\1/g'`
+			test -n "$MODUTS" && break
+		done
+		if test -z "$MODUTS"; then
+			AC_MSG_WARN(unable to identify kernel version)
+		else
+			AC_MSG_RESULT([$MODUTS])
+			MINOR=`echo $MODUTS | sed 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`
+			if echo $MODUTS | grep "^2.4" >/dev/null; then
+				WCM_KERNEL_VER="2.4"
+				test $MINOR -ge 20 && WCM_PATCH_HID="(value_patch)"
+				test $MINOR -ge 22 && WCM_KERNEL_VER="2.4.22"
+				if echo $WCM_ARCHITECTURE | grep "x86_64" >/dev/null; then
+					AC_MSG_WARN([module compilation not supported on x86-64 for Linux 2.4-kernels ])
+					WCM_KERNEL_VER=
+				fi
+			elif echo $MODUTS | grep "^2.6" >/dev/null; then
+				if test $MINOR -ge 8; then
+					case $MINOR in
+						8) WCM_KERNEL_VER="2.6.8";;
+						9) WCM_KERNEL_VER="2.6.9";;
+						10) WCM_KERNEL_VER="2.6.10";;
+						11|12) WCM_KERNEL_VER="2.6.11";;
+						13) WCM_KERNEL_VER="2.6.13";;
+						14) WCM_KERNEL_VER="2.6.14";;
+						15) WCM_KERNEL_VER="2.6.15";;
+						16|17) WCM_KERNEL_VER="2.6.16";;
+						18) WCM_KERNEL_VER="2.6.18";;
+						19|20|21) WCM_KERNEL_VER="2.6.19";;
+						*) WCM_KERNEL_VER="2.6.22";;
+					esac
+				else
+					AC_MSG_WARN([support for kernels older than 2.6.8 has been dropped after 0.7.4])
+				fi
+			else
+				AC_MSG_WARN(kernel version $MODUTS not supported)
+			fi
+		fi
+	fi
+
+	dnl Check if we have support for modules in the kernel, needed if
+	dnl we are compiling any kernel modules.
+	if test -n "$WCM_KERNEL_DIR"; then
+		AC_MSG_CHECKING(for kernel module support)
+		if grep CONFIG_MODULES $WCM_KERNEL_DIR/include/linux/autoconf.h >/dev/null 2>&1; then
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+			WCM_KERNEL_VER=
+		fi
+	fi
+
+	if test -n "$WCM_KERNEL_VER"; then
+		dnl Check for kernel module build
+		AC_ARG_ENABLE(wacom,
+			AC_HELP_STRING([--enable-wacom], [Enable building wacom.o [[default=no]]]),
+			WCM_OPTION_WACOM=$enable_wacom)
+		AC_ARG_ENABLE(hid,
+			AC_HELP_STRING([--enable-hid], [Enable building hid.o [[default=no]]]),
+			WCM_OPTION_HID=$enable_hid)
+
+		if test "$WCM_OPTION_WACOM" = yes; then
+			WCM_MODULES="$WCM_MODULES wacom.o"
+		fi
+		if echo $WCM_KERNEL_VER | grep "^2.4" >/dev/null; then
+			AC_ARG_ENABLE(usbmouse,
+				AC_HELP_STRING([--enable-usbmouse], [Enable building usbmouse.o [[default=no]]]),
+				WCM_OPTION_USBMOUSE=$enable_usbmouse)
+			AC_ARG_ENABLE(evdev,
+				AC_HELP_STRING([--enable-evdev], [Enable building evdev.o [[default=no]]]),
+				WCM_OPTION_EVDEV=$enable_evdev)
+			AC_ARG_ENABLE(mousedev,
+				AC_HELP_STRING([--enable-mousedev], [Enable building mousedev.o [[default=no]]]),
+				WCM_OPTION_MOUSEDEV=$enable_mousedev)
+			AC_ARG_ENABLE(input,
+				AC_HELP_STRING([--enable-input], [Enable building input.o [[default=no]]]),
+				WCM_OPTION_INPUT=$enable_input)
+			AC_ARG_ENABLE(modver,
+				AC_HELP_STRING([--enable-modver], [Enable kernel module versioning [[default=usually]]]),
+				WCM_OPTION_MODVER=$enable_modver, WCM_OPTION_MODVER=yes)
+
+			WCM_KSTACK="-mpreferred-stack-boundary=2"
+			if echo $WCM_ARCHITECTURE | grep "x86_64" >/dev/null; then
+				WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
+			fi
+
+			if test "$WCM_OPTION_EVDEV" = yes; then
+				WCM_MODULES="$WCM_MODULES evdev.o"
+			fi
+			if test "$WCM_OPTION_USBMOUSE" = yes; then
+				if test "$WCM_KERNEL_VER" = "2.4.22"; then
+					if test -f $WCM_KERNEL_DIR/drivers/usb/usbmouse.c; then
+						cp $WCM_KERNEL_DIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
+						WCM_MODULES="$WCM_MODULES usbmouse.o"
+					else
+						AC_MSG_WARN(usbmouse.c not found in kernel source)
+						WCM_OPTION_USBMOUSE=no
+					fi
+				else
+					WCM_MODULES="$WCM_MODULES usbmouse.o"
+				fi
+			fi
+			if test "$WCM_OPTION_MOUSEDEV" = yes; then
+				WCM_MODULES="$WCM_MODULES mousedev.o"
+			fi
+			if test "$WCM_OPTION_INPUT" = yes; then
+				if test "$WCM_KERNEL_VER" = "2.4.22"; then
+					if test -f $WCM_KERNEL_DIR/drivers/input/input.c; then
+						cp $WCM_KERNEL_DIR/drivers/input/input.c src/$WCM_KERNEL_VER
+						WCM_MODULES="$WCM_MODULES input.o"
+					else
+						AC_MSG_WARN(input.c not found in kernel source)
+						WCM_OPTION_INPUT=no
+					fi
+				else
+					WCM_MODULES="$WCM_MODULES input.o"
+				fi
+			fi
+			if test "$WCM_OPTION_HID" = yes; then
+				if test "$WCM_KERNEL_VER" = "2.4.22"; then
+					if test -f $WCM_KERNEL_DIR/drivers/usb/hid-input.c; then
+						cp $WCM_KERNEL_DIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
+						cp $WCM_KERNEL_DIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
+						WCM_MODULES="$WCM_MODULES hid.o"
+					else
+						AC_MSG_WARN(hid-input.c/hiddev.c not found in kernel source)
+						WCM_OPTION_HID=no
+					fi
+				else
+					WCM_MODULES="$WCM_MODULES hid.o"
+				fi
+
+				if echo "$WCM_PATCH_HID" | grep value_patch >/dev/null; then
+					AC_DEFINE(WCM_PATCH_DRVALUE,1,[Need the dr.wValue patch])
+				else
+					AC_DEFINE(WCM_PATCH_DRVALUE,0,[Need the dr.wValue patch])
+				fi
+			fi
+			if test $WCM_OPTION_MODVER = yes; then
+				WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNEL_DIR/include/linux/modversions.h"
+			fi
+		elif echo $WCM_KERNEL_VER | grep "^2.6" >/dev/null 2>&1; then
+			MINOR=`echo $WCM_KERNEL_VER | cut -f 3 -d.`
+			if test $MINOR -ge 18; then
+				WCM_OPTION_HID=no
+			else
+				WCM_MODULES="$WCM_MODULES hid.o"
+			fi
+		fi
+	fi
+	if test "$WCM_ENV_KERNEL" = yes; then
+		AC_DEFINE(WCM_ENABLE_LINUXINPUT,,[Enable the Linux Input subsystem])
+	fi
 fi
 
-dnl Check for X source or X SDK
-AC_WCM_CHECK_XSOURCE
-AC_WCM_CHECK_XORG_SDK
+dnl =======================================================
+dnl Check for Xlib
+WCM_CLEVEL=-ansi
+WCM_ENV_XLIB=no
+WCM_XLIB_DIR=
+WCM_XSERVER64=
+AC_ARG_WITH(xlib,
+	AS_HELP_STRING([--with-xlib=dir], [uses a specified X11R6 directory]),
+	[WCM_XLIB_DIR=$withval])
+if test -z "$WCM_XLIB_DIR" -o "$WCM_XLIB_DIR" = "yes"; then
+	PKG_CHECK_MODULES(Xlib,[x11],
+	[
+		dnl Found it with pkg-config, use that information
+		WCM_XLIB_DIR="`$PKG_CONFIG --variable=libdir x11`"
+		WCM_ENV_XLIB=yes
+	],
+	[
+		AC_MSG_CHECKING(for X lib directory)
+		WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib
+		WCM_XLIBDIR_DEFAULT2=/usr/lib
+		if test "$WCM_OPTION_XSERVER64" = "yes"; then
+			WCM_XLIBDIR_DEFAULT=/usr/X11R6/lib64
+			test -d /usr/lib64 && WCM_XLIBDIR_DEFAULT2=/usr/lib64
+		fi
+
+		if test -f $WCM_XLIBDIR_DEFAULT/libX11.so; then
+			WCM_ENV_XLIB=yes
+			WCM_XLIB_DIR=$WCM_XLIBDIR_DEFAULT
+			AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		elif test -d $WCM_XLIBDIR_DEFAULT2; then
+			WCM_ENV_XLIB=yes
+			WCM_XLIB_DIR=$WCM_XLIBDIR_DEFAULT2
+			AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		else
+			WCM_ENV_XLIB=no
+			AC_MSG_RESULT([not found, tried $WCM_XLIBDIR_DEFAULT and $WCM_XLIBDIR_DEFAULT2])
+		fi
+	])
+elif test "$WCM_XLIB_DIR" != "no"; then
+	AC_MSG_CHECKING(for X lib directory)
+	if test -f $WCM_XLIB_DIR/libX11.so; then
+		AC_MSG_RESULT([found, $WCM_XLIB_DIR])
+		WCM_ENV_XLIB=yes
+	else
+		AC_MSG_ERROR([Provided Xlib-path is invalid])
+	fi
+else
+	WCM_ENV_XLIB=no
+fi
+if test "$WCM_ENV_XLIB" = yes; then
+	if test "$WCM_OPTION_XSERVER64" = "yes"; then
+		CFLAGS="$CFLAGS -D__amd64__"
+		WCM_XSERVER64="-D_XSERVER64"
+	fi
+fi
+
+dnl =======================================================
+dnl Check for XFree86 source or X.org SDK
+test -d "x-include" && WCM_XFREE86_DIR="x-include"
+AC_ARG_WITH(x-src,
+	AS_HELP_STRING([--with-x-src=dir], [Specify X driver build directory]),
+	WCM_XFREE86_DIR="$withval")
+if test -n "$WCM_XFREE86_DIR"; then
+	XFREE86SUBDIR=programs/Xserver/hw/xfree86
+	AC_MSG_CHECKING(for valid XFree86/X.org build environment)
+	if test -f $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
+		WCM_XFREE86_DIR="$WCM_XFREE86_DIR/xc"
+		AC_MSG_RESULT([ok, $WCM_XFREE86_DIR])
+	elif test -f $WCM_XFREE86_DIR/$XFREE86SUBDIR/xf86Version.h; then
+		WCM_ENV_XFREE86=yes
+		AC_MSG_RESULT([ok, $WCM_XFREE86_DIR])
+	else
+		WCM_ENV_XFREE86=no
+		WCM_XFREE86_DIR=
+		AC_MSG_RESULT(xf86Version.h missing)
+		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XFREE86SUBDIR and $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR)
+	fi
+fi
+if test "$WCM_ENV_XFREE86" = yes; then
+	AM_CONDITIONAL(WCM_ENV_XFREE86, true)
+	AC_DEFINE(WCM_XFREE86,1,[Compiling for XFree86])
+else
+	AM_CONDITIONAL(WCM_ENV_XFREE86, false)
+fi
+dnl Check for X.org SDK
+if test "$WCM_ENV_XFREE86" != yes; then
+	AC_ARG_WITH(xorg-sdk,
+		AS_HELP_STRING([--with-xorg-sdk=dir], [Specify Xorg SDK directory]),
+		WCM_XORGSDK_DIR="$withval")
+
+	if test "$WCM_XORGSDK_DIR" = "yes" -o -z "$WCM_XORGSDK_DIR"; then
+		PKG_CHECK_MODULES(XSERVER,[xorg-server],
+		[
+			dnl Found it with pkg-config, use that information
+			WCM_ENV_XORGSDK=yes
+			WCM_XORGSDK_DIR="`$PKG_CONFIG --variable=sdkdir xorg-server`"
+			WCM_XORGSDK_VER="`$PKG_CONFIG --modversion xorg-server`"
+		],
+		[
+			AC_MSG_CHECKING(for valid Xorg SDK)
+			WCM_XORGSDK_DEFAULT="$WCM_XLIB_DIR/Server"
+			test -d "$WCM_XORGSDK_DEFAULT" || WCM_XORGSDK_DEFAULT="/usr"
+			for a in include include/xorg xc/include; do
+				if test -f $WCM_XORGSDK_DEFAULT/$a/xf86Version.h; then
+					WCM_ENV_XORGSDK=yes
+					WCM_XORGSDK_DIR=$WCM_XORGSDK_DEFAULT/$a
+					AC_MSG_RESULT([found, $WCM_XORGSDK_DIR])
+					break
+				fi
+			done
+			if test -z "$WCM_XORGSDK_DIR"; then
+				AC_MSG_RESULT("xf86Version.h missing")
+				AC_MSG_RESULT([Tried $WCM_XORGSDK_DEFAULT/include, $WCM_XORGSDK_DEFAULT/include/xorg, and $WCM_XORGSDK_DEFAULT/xc/include])
+			fi
+		])
+	elif test "$WCM_XORGSDK_DIR" != "no"; then
+		AC_MSG_CHECKING(for valid Xorg SDK)
+		if test -f $WCM_XORGSDK_DIR/xf86Version.h; then
+			AC_MSG_RESULT(ok)
+			WCM_ENV_XORGSDK=yes
+		else
+			AC_MSG_ERROR("provided path for Xorg SDK invalid")
+		fi
+	fi
+	if test -n "$WCM_XORGSDK_DIR"; then
+		AC_DEFINE(WCM_XORG,1,[Compiling for X.org])
+		AC_MSG_CHECKING([for xserver libc-wrapper header-files])
+		if test -f "$WCM_XORGSDK_DIR/xf86_libc.h"; then
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+			AC_DEFINE(WCM_NO_LIBCWRAPPER,1,[The xserver have no wraps around libc-functions])
+		fi
+		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
+		case "$WCM_XORGSDK_VER" in
+			1.0*|1.1*|1.2*|1.3*)
+				;;
+			1.*|2*)
+				WCM_CLEVEL=-std=c99;;
+			*)
+				;;
+		esac
+	fi
+fi
+AM_CONDITIONAL(WCM_ENV_XORGSDK, [test "$WCM_ENV_XORGSDK" = yes])
+
 # Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA
 
-dnl Check for -fstack-protector/-fno-stack-protector option in compiler
-AC_MSG_CHECKING(for stack-protector flags support in $CC)
-if $CC -dumpspecs | grep stack-protector >/dev/null 2>&1; then
-	AC_MSG_RESULT(yes)
-	WCM_CFLAGS_STACK_PROTECTOR="-fno-stack-protector"
+dnl =======================================================
+dnl Check for TCL development environment
+WCM_ENV_TCL=no
+WCM_TCL_DIR=
+WCM_TCL_CFLAGS=
+dnl get tcl version
+AC_PATH_PROG([TCLSH],[tclsh],[no])
+if test "x$TCLSH" != "xno"; then
+	AC_MSG_CHECKING([for tcl version])
+	version=$(echo ["puts [set tcl_version]"] | $TCLSH)
+	AC_MSG_RESULT([$version])
+fi
+
+AC_ARG_WITH(tcl,
+	AS_HELP_STRING([--with-tcl=dir], [uses the specified tcl directory]),
+	[ WCM_TCL_DIR=$withval ])
+if test "$WCM_TCL_DIR" = yes -o -z "$WCM_TCL_DIR"; then
+	AC_MSG_CHECKING([for tcl header files])
+	for i in /usr/include /usr/include/tcl "/usr/include/tcl$version"; do
+		if test -f "$i/tcl.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TCL=yes
+			WCM_TCL_DIR="$i"
+			WCM_TCL_CFLAGS="-I$WCM_TCL_DIR"
+			CFLAGS="$CFLAGS $WCM_TCL_CFLAGS"
+			break
+		fi
+	done
+	if test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_WARN([not found; tried /usr/include, tcl, and tcl$version; ])
+	fi
+elif test "$WCM_TCL_DIR" != no; then
+	AC_MSG_CHECKING([for tcl header files])
+	for i in include .; do
+		if test -f "$WCM_TCL_DIR/$i/tcl.h"; then
+			AC_MSG_RESULT([found, ])
+			WCM_ENV_TCL=yes
+			if test "$WCM_TCL_DIR" != "/usr"; then
+				WCM_TCL_CFLAGS="-I$WCM_TCL_DIR/$i"
+				CFLAGS="$CFLAGS $WCM_TCL_CFLAGS"
+			fi
+		fi
+	done
+	if test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_RESULT([not found; tried $WCM_TCL_DIR/include/tcl.h and $WCM_TCL_DIR/tcl.h])
+		WCM_TCL_DIR=
+	fi
+fi
+if test "$WCM_ENV_TCL" != yes; then
+	echo "***"
+	echo "*** The tcl development environment can not be found."
+	echo "*** The header file tcl.h does not appear at the normal"
+	echo "*** (or provided) include path. Some build features"
+	echo "*** will be unavailable."
+	echo "***"
+fi
+
+dnl =======================================================
+dnl Check for TK development environment
+WCM_ENV_TK=no
+WCM_TK_DIR=
+WCM_TK_CFLAGS=
+AC_ARG_WITH(tk,
+	AS_HELP_STRING([--with-tk=dir], [uses a specified tk directory  ]),
+	[ WCM_TK_DIR=$withval ])
+if test "$WCM_TK_DIR" = yes -o -z "$WCM_TK_DIR"; then
+	AC_MSG_CHECKING([for tk header files])
+	for i in $WCM_TCL_DIR /usr/include ; do
+		if test -f "$i/tk.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TK=yes
+			WCM_TK_DIR="$i"
+			if test "$WCM_TCL_DIR" != "$WCM_TK_DIR" -a "$WCM_TK_DIR" != "/usr"; then
+				WCM_TK_CFLAGS="-I$WCM_TK_DIR"
+				CFLAGS="$CFLAGS $WCM_TK_CFLAGS"
+			fi
+			break
+		fi
+	done
+	if test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([not found; tried $WCM_TCL_DIR/tk.h and /usr/include/tk.h])
+	fi
+elif test "$WCM_TK_DIR" != no; then
+	AC_MSG_CHECKING([for tk header files])
+
+	for i in "$WCM_TK_DIR/include" "$WCM_TK_DIR"; do
+		if test -f "$i/tk.h"; then
+			AC_MSG_RESULT([found, $i])
+			WCM_ENV_TK=yes
+			WCM_TK_DIR="$i"
+			if test "$WCM_TCL_DIR" != "$WCM_TK_DIR" -a "$WCM_TK_DIR" != "/usr"; then
+				WCM_TK_CFLAGS="-I$WCM_TK_DIR"
+				CFLAGS="$CFLAGS $WCM_TK_CFLAGS"
+			fi
+			break
+		fi
+	done
+	if test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([not found; tried $WCM_TK_DIR/tk.h and $WCM_TK_DIR/include/tk.h])
+		WCM_TK_DIR=
+	fi
+fi
+if test "$WCM_ENV_TK" != yes; then
+	echo "***"
+	echo "*** The tk development environment can not be found."
+	echo "*** The header file tk.h does not appear at the normal"
+	echo "*** (or provided) include path. Some build features"
+	echo "*** will be unavailable."
+	echo "***"
+fi
+
+dnl =======================================================
+dnl Check for ncurses development environment
+WCM_ENV_NCURSES=no
+AC_CHECK_HEADER(ncurses.h, [WCM_ENV_NCURSES=yes])
+if test "$WCM_ENV_NCURSES" != yes; then
+	AC_CHECK_HEADER(ncurses/ncurses.h, [WCM_ENV_NCURSES=yes])
+fi
+if test "$WCM_ENV_NCURSES" != yes; then
+	AC_MSG_WARN([ncurses not available, ncurses UI disabled])
+	AC_DEFINE(WCM_ENABLE_NCURSES,0,[ncurses header files available])
+	AM_CONDITIONAL(WCM_ENV_NCURSES, false)
+else
+	AC_DEFINE(WCM_ENABLE_NCURSES,1,[ncurses header files available])
+	AM_CONDITIONAL(WCM_ENV_NCURSES, true)
+fi
+
+dnl =======================================================
+dnl Check for libwacomcfg build
+AC_MSG_CHECKING([if libwacomcfg should/can be built])
+WCM_OPTION_LIBWACOMCFG=no
+AC_ARG_ENABLE(libwacomcfg,
+	AC_HELP_STRING([--enable-libwacomcfg], [Enable building libwacomcfg [[default=yes]]]),
+	, enable_libwacomcfg=yes)
+if test "$enable_libwacomcfg" != no; then
+	if test "$WCM_ENV_XLIB" = yes; then
+		AC_MSG_RESULT(yes)
+		WCM_OPTION_LIBWACOMCFG=yes
+		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
+		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
+	else
+		AC_MSG_WARN([XLib environment missing, libwacomcfg not built])
+	fi
 else
 	AC_MSG_RESULT(no)
-	WCM_CFLAGS_STACK_PROTECTOR=""
 fi
-AC_SUBST(WCM_CFLAGS_STACK_PROTECTOR)
 
-dnl Check for TCL, TK, and XLib
-AC_WCM_CHECK_XLIB
-AC_WCM_CHECK_TCL
-AC_WCM_CHECK_TK
-
-dnl Check for ncurses
-AC_WCM_CHECK_NCURSES
-
-dnl Check for wacom build
-WCM_OPTION_WACOM=no
-AC_ARG_ENABLE(wacom,
-AC_HELP_STRING([--enable-wacom], [Enable building wacom.o [[default=no]]]),
-	, enable_wacom=no)
-if test "$enable_wacom" != "no"; then
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacom.o without kernel build environment"
-		echo "*** wacom.o will not be built"
-		echo "***"
+dnl =======================================================
+dnl Check for libwacomxi build
+AC_MSG_CHECKING([if libwacomxi should/can be built])
+WCM_TCLLIBS=
+WCM_TCLPKGS=
+WCM_OPTION_LIBWACOMXI=no
+AC_ARG_ENABLE(libwacomxi,
+	AC_HELP_STRING([--enable-libwacomxi], [Enable building libwacomxi [[default=yes]]]),
+	, enable_libwacomxi=yes)
+if test "$enable_libwacomxi" != no; then
+	if test "$WCM_ENV_XLIB" != yes; then
+		AC_MSG_WARN([XLib environment missing, libwacomxi not built])
+	elif test "$WCM_ENV_TCL" != yes; then
+		AC_MSG_WARN([tcl environment missing, libwacomxi not built])
+	elif test "$WCM_ENV_TK" != yes; then
+		AC_MSG_WARN([tk environment missing, libwacomxi not built])
 	else
-		WCM_OPTION_WACOM=yes
-		WCM_MODULES="$WCM_MODULES wacom.o"
+		AC_MSG_RESULT(yes)
+		WCM_OPTION_LIBWACOMXI=yes
+		WCM_WACOMXI_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
+		WCM_TCLLIBS="libwacomxi.la"
+		WCM_TCLPKGS="pkgIndex.tcl"
 	fi
+	AM_CONDITIONAL(WACOMXI_INSTALL, true)
+else
+	AC_MSG_RESULT(no)
+	AM_CONDITIONAL(WACOMXI_INSTALL, false)
 fi
 
+dnl =======================================================
 dnl Check for wacdump build
+AC_MSG_CHECKING([if wacdump should/can be built])
 WCM_OPTION_WACDUMP=no
 AC_ARG_ENABLE(wacdump,
-AC_HELP_STRING([--enable-wacdump], [Enable building wacdump [[default=yes]]]),
+	AC_HELP_STRING([--enable-wacdump], [Enable building wacdump [[default=yes]]]),
 	, enable_wacdump=yes)
 if test "$enable_wacdump" != "no"; then
-	if test x$WCM_ENV_NCURSES != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacdump without ncurses environment"
-		echo "*** wacdump will not be built"
-		echo "***"
-	else
+	if test "$WCM_ENV_NCURSES" = yes; then
+		AC_MSG_RESULT(yes)
 		WCM_OPTION_WACDUMP=yes
 		WCM_PROGS="$WCM_PROGS wacdump"
+	else
+		AC_MSG_WARN([ncurses environment missing, wacdump not built])
 	fi
 fi
 
+dnl =======================================================
 dnl Check for xidump build
+AC_MSG_CHECKING([if xidump should/can be built])
 WCM_PATCH_XIDUMP=
 WCM_OPTION_XIDUMP=no
 AC_ARG_ENABLE(xidump,
-AC_HELP_STRING([--enable-xidump], [Enable building xidump [[default=yes]]]),
-	, enable_xidump=$WCM_XIDUMP_DEFAULT)
+	AC_HELP_STRING([--enable-xidump], [Enable building xidump [[default=yes]]]),
+	, enable_xidump=yes)
 if test "$enable_xidump" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** xidump requires XLib environment; xidump will not be built."
-		echo "***"
+	if test "$WCM_ENV_XLIB" != yes; then
+		AC_MSG_WARN([XLib environment missing, xidump not built])
 	else
-		if test x$WCM_ENV_NCURSES != xyes; then
-			echo "***"; echo "*** WARNING:";
-			echo "*** xidump will build without ncurses support."
-			echo "***"
-			WCM_PATCH_XIDUMP="(no ncurses) $WCM_PATCH_XIDUMP"
+		if test "$WCM_ENV_NCURSES" != yes; then
+			AC_MSG_RESULT([yes, no ncurses])
+			WCM_PATCH_XIDUMP="(no ncurses)"
+		else
+			AC_MSG_RESULT(yes)
 		fi
 		WCM_OPTION_XIDUMP=yes
-		WCM_XIDUMP_LIBS="-L$WCM_XLIBDIR -lX11 -lXi -lm"
+		WCM_XIDUMP_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi -lm"
 		WCM_PROGS="$WCM_PROGS xidump"
 	fi
+else
+	AC_MSG_RESULT(no)
 fi
 
-dnl Check for libwacomcfg build
-WCM_OPTION_LIBWACOMCFG=no
-AC_ARG_ENABLE(libwacomcfg,
-AC_HELP_STRING([--enable-libwacomcfg], [Enable building libwacomcfg [[default=yes]]]),
-	, enable_libwacomcfg=yes)
-if test "$enable_libwacomcfg" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomcfg requires XLib environment; libwacomcfg will not be built."
-		echo "***"
-	else
-		WCM_OPTION_LIBWACOMCFG=yes
-		WCM_LIBWACOMCFG_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
-		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
-	fi
-fi
-
+dnl =======================================================
 dnl Check for xsetwacom build
+AC_MSG_CHECKING([if xsetwacom should be built])
 WCM_OPTION_XSETWACOM=no
 AC_ARG_ENABLE(xsetwacom,
-AC_HELP_STRING([--enable-xsetwacom], [Enable building xsetwacom [[default=yes]]]),
+	AC_HELP_STRING([--enable-xsetwacom], [Enable building xsetwacom [[default=yes]]]),
 	, enable_xsetwacom=yes)
 if test "$enable_xsetwacom" != "no"; then
-	if test x$WCM_OPTION_LIBWACOMCFG != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** xsetwacom requires libwacomcfg; xsetwacom will not be built."
-		echo "***"
+	if test "$WCM_OPTION_LIBWACOMCFG" != yes; then
+		AC_MSG_WARN([requires libwacomcfg, xsetwacom not built])
 	else
+		AC_MSG_RESULT(yes)
 		WCM_OPTION_XSETWACOM=yes
-		WCM_XSETWACOM_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
+		WCM_XSETWACOM_LIBS="-L$WCM_XLIB_DIR -lX11 -lXi"
 		WCM_PROGS="$WCM_PROGS xsetwacom"
 	fi
 fi
 
-dnl Check for libwacomxi build
-WCM_WACOMXI_BINDIR=$WCM_EXECDIR/bin
-WCM_WACOMXI_LIBDIR=$WCM_EXECDIR/lib
-AC_SUBST(WCM_WACOMXI_BINDIR)
-AC_SUBST(WCM_WACOMXI_LIBDIR)
-WCM_OPTION_LIBWACOMXI=no
-AC_ARG_ENABLE(libwacomxi,
-AC_HELP_STRING([--enable-libwacomxi], [Enable building libwacomxi [[default=yes]]]),
-	, enable_libwacomxi=yes)
-if test "$enable_libwacomxi" != "no"; then
-	if test x$WCM_ENV_XLIB != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires XLib environment; libwacomxi will not be built."
-		echo "***"
-	elif test x$WCM_ENV_TCL != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires tcl environment; libwacomxi will not be built."
-		echo "***"
-	elif test x$WCM_ENV_TK != xyes; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** libwacomxi requires tk environment; libwacomxi will not be built."
-		echo "***"
-	else
-		WCM_OPTION_LIBWACOMXI=yes
-		WCM_WACOMXI_LIBS="-L$WCM_XLIBDIR -lX11 -lXi"
-		WCM_TCLLIBS="$WCM_TCLLIBS libwacomxi.la"
-		WCM_TCLPKGS="$WCM_TCLPCKS pkgIndex.tcl"
-	fi
-fi
-
-AM_CONDITIONAL(WACOMXI_INSTALL, test "$WCM_OPTION_LIBWACOMXI" == "yes")
-
-dnl Check for hid build
-WCM_OPTION_HID=no
-AC_ARG_ENABLE(hid,
-AC_HELP_STRING([--enable-hid], [Enable building hid.o [[default=no]]]),
-	, enable_hid=no)
-if test "$enable_hid" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep "2.6"`
-	kver=`echo $kver | cut -f 3 -d.`
-	if test $kver -ge 18; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** No need to build (usb)hid.ko for kernel 2.6.18 or later"
-		echo "***"
-	else
-		kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-		if test "$WCM_ENV_KERNEL" != "yes"; then
-			echo "***"; echo "*** WARNING:";
-			echo "*** Unable to compile hid.o without kernel build environment"
-			echo "*** hid.o will not be built"
-			echo "***"
-		else
-			WCM_OPTION_HID=yes
-			if test $kver != 0; then
-				if test "$WCM_KERNEL_VER" = "2.4.22"; then
-				cp $WCM_KERNELDIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
-				cp $WCM_KERNELDIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
-				fi
-			fi
-			WCM_MODULES="$WCM_MODULES hid.o"
-		fi
-	fi
-fi
-
-dnl Check for usbmouse build
-WCM_OPTION_USBMOUSE=no
-AC_ARG_ENABLE(usbmouse,
-AC_HELP_STRING([--enable-usbmouse], [Enable building usbmouse.o [[default=no]]]),
-	, enable_usbmouse=no)
-if test "$enable_usbmouse" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile usbmouse.o without kernel build environment"
-		echo "*** usbmouse.o will not be built"
-		echo "***"
-	elif test $kver != 0 ; then
-		WCM_OPTION_USBMOUSE=yes
-		if test "$WCM_KERNEL_VER" = "2.4.22"; then
-			cp $WCM_KERNELDIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
-		fi
-		WCM_MODULES="$WCM_MODULES usbmouse.o"
-	else
-		echo "***"; echo "*** WARNING:";
-		echo "*** No need to build usbmouse.o for kernel 2.6"
-		echo "***"
-	fi
-fi
-
-dnl Check for evdev build
-WCM_OPTION_EVDEV=no
-AC_ARG_ENABLE(evdev,
-AC_HELP_STRING([--enable-evdev], [Enable building evdev.o [[default=no]]]),
-	, enable_evdev=no)
-if test "$enable_evdev" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile evdev.o without kernel build environment"
-		echo "*** evdev.o will not be built"
-		echo "***"
-	elif test $kver != 0 ; then
-		WCM_OPTION_EVDEV=yes
-		WCM_MODULES="$WCM_MODULES evdev.o"
-	else
-		echo "***"; echo "*** WARNING:";
-		echo "*** No need to build evdev.o for kernel 2.6"
-		echo "***"
-	fi
-fi
-
-dnl Check for mousedev build
-WCM_OPTION_MOUSEDEV=no
-AC_ARG_ENABLE(mousedev,
-AC_HELP_STRING([--enable-mousedev], [Enable building mousedev.o [[default=no]]]),
-	, enable_mousedev=no)
-if test "$enable_mousedev" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile mousedev.o without kernel build environment"
-		echo "*** mousedev.o will not be built"
-		echo "***"
-	elif test $kver != 0 ; then
-		WCM_OPTION_MOUSEDEV=yes
-		WCM_MODULES="$WCM_MODULES mousedev.o"
-	else
-		echo "***"; echo "*** WARNING:";
-		echo "*** No need to build mousedev.o for kernel 2.6"
-		echo "***"
-	fi
-fi
-
-dnl Check for input build
-WCM_OPTION_INPUT=no
-AC_ARG_ENABLE(input,
-AC_HELP_STRING([--enable-input], [Enable building input.o [[default=no]]]),
-	, enable_input=no)
-if test "$enable_input" != "no"; then
-	kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile input.o without kernel build environment"
-		echo "*** input.o will not be built"
-		echo "***"
-	elif test $kver != 0 ; then
-		WCM_OPTION_INPUT=yes
-		cp $WCM_KERNELDIR/drivers/input/input.c src/$WCM_KERNEL_VER
-		WCM_MODULES="$WCM_MODULES input.o"
-	else
-		echo "***"; echo "*** WARNING:";
-		echo "*** No need to build input.o for kernel 2.6"
-		echo "***"
-	fi
-fi
-
-dnl Check for tabletdev build
-WCM_OPTION_TABLETDEV=no
-AC_ARG_ENABLE(tabletdev,
-AC_HELP_STRING([--enable-tabletdev], [Enable building tabletdev.o [[default=no]]]),
-	, enable_tabletdev=no)
-if test "$enable_tabletdev" != "no"; then
-	if test "$WCM_ENV_KERNEL" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile tabletdev.o without kernel build environment"
-		echo "*** tabletdev.o will not be built"
-		echo "***"
-	else
-		WCM_OPTION_TABLETDEV=yes
-		WCM_MODULES="$WCM_MODULES tabletdev.o"
-	fi
-fi
-
+dnl =======================================================
 dnl Check for xmoduledir
-WCM_MODDIR=
 AC_MSG_CHECKING(for Wacom X driver module path)
+WCM_OPTION_DLLOADER=yes
+WCM_MODDIR=
 AC_ARG_WITH(xmoduledir,
-AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
-[
-	WCM_MODDIR="$withval" 
-])
-if test -n "$WCM_MODDIR"; then
-	WCM_OPTION_DLLOADER=yes
-elif test -d $WCM_XLIBDIR/xorg/modules/input; then
-	WCM_MODDIR=$WCM_XLIBDIR/xorg/modules/input
-elif test -d $WCM_XLIBDIR/modules/input; then
-	WCM_MODDIR=$WCM_XLIBDIR/modules/input
+	AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
+	WCM_MODDIR="$withval")
+if test -d $WCM_XLIB_DIR/xorg/modules/input; then
+	WCM_MODDIR=$WCM_XLIB_DIR/xorg/modules/input
+elif test -d $WCM_XLIB_DIR/modules/input; then
+	WCM_MODDIR=$WCM_XLIB_DIR/modules/input
+elif -z "$WCM_MODDIR"; then
+	WCM_OPTION_DLLOADER=no
 fi
 AC_MSG_RESULT($WCM_MODDIR)
 
+dnl =======================================================
 dnl Check for dlloader
+AC_MSG_CHECKING(for dynamic driver loading support)
 AC_ARG_ENABLE(dlloader,
-AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
-	, enable_dlloader=$WCM_OPTION_DLLOADER) 
-#defined case
-if test "$enable_dlloader" = "yes"; then
-	WCM_OPTION_DLLOADER=yes
-else
-	WCM_OPTION_DLLOADER=no
-fi
-#usual case
-if test x$enable_dlloader == x"" && test $WCM_OPTION_DLLOADER != "yes"; then
-	if test -f $WCM_MODDIR/wacom_drv.so; then
-		WCM_OPTION_DLLOADER=yes 
+	AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
+	WCM_OPTION_DLLOADER=$enableval)
+if test "$WCM_OPTION_DLLOADER" = yes; then
+	if test -f $WCM_MODDIR/evdev_drv.so -o -f $WCM_MODDIR/kbd_drv.so -o -f $WCM_MODDIR/mouse_drv.so; then
+		WCM_OPTION_DLLOADER=yes
 	else
-		WCM_OPTION_DLLOADER=no 
+		WCM_OPTION_DLLOADER=no
 	fi
 fi
-
-dnl Check for pixman
-if test $WCM_OPTION_DLLOADER == "yes"; then
-	PKG_PROG_PKG_CONFIG
-	PKG_CHECK_MODULES(XSERVER,[xorg-server])
-fi
-
+AC_MSG_RESULT($WCM_OPTION_DLLOADER)
 AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
 
+dnl =======================================================
 dnl Check for wacomdrv build
-WCM_OPTION_WACOMDRV=no
+AC_MSG_CHECKING([if wacom_drv.{o,so} should be compiled])
+WCM_OPTION_WACOMDRV=yes
 AC_ARG_ENABLE(wacomdrv,
-AC_HELP_STRING([--enable-wacomdrv], [Enable building wacom_drv.{o,so} [[default=yes]]]),
-	, enable_wacomdrv=yes)
-if test "$enable_wacomdrv" != "no"; then
-	if test "$WCM_ENV_XF86" != "yes" && test "$WCM_ENV_XORGSDK" != "yes"; then
-		echo "***"; echo "*** WARNING:";
-		echo "*** Unable to compile wacom_drv.{o,so} "
-		echo "*** without Xorg SDK or XFree86 build environment"
-		echo "*** wacom_drv.o will not be built"
-		echo "***"
+	AC_HELP_STRING([--enable-wacomdrv], [Enable building wacom_drv.{o,so} [[default=yes]]]),
+	WCM_OPTION_WACOMDRV=$enableval)
+if test "$WCM_OPTION_WACOMDRV" != "no"; then
+	if test "$WCM_ENV_XFREE86" != "yes" -a "$WCM_ENV_XORGSDK" != "yes"; then
+		AC_MSG_WARN([requires Xorg SDK or XFree86 build environment, wacom_drv not built])
+		WCM_OPTION_WACOMDRV=no
 	else
+		AC_MSG_RESULT(yes)
 		WCM_OPTION_WACOMDRV=yes
 		if test "$WCM_OPTION_DLLOADER" == "yes" ; then
-			WCM_XF86MODULES="$WCM_XF86MODULES wacom_drv.so"
-			WCM_EXPMODULES="$WCM_EXPMODULES wacom_drv.so"
+			WCM_XF86MODULES="wacom_drv.so"
 		else
-			WCM_XF86MODULES="$WCM_XF86MODULES wacom_drv.o"
-			WCM_EXPMODULES="$WCM_EXPMODULES wacom_drv.o"
+			WCM_XF86MODULES="wacom_drv.o"
 		fi
 	fi
-fi
-
-dnl Check for modver
-AC_ARG_ENABLE(modver,
-AC_HELP_STRING([--enable-modver], [Enable kernel module versioning [[default=usually]]]),
-	, enable_modver=$WCM_MODVER)
-if test "$enable_modver" = "no"; then
-	WCM_OPTION_MODVER=no
-	WCM_MODVER=""
-elif test "$enable_modver" = "yes"; then
-	WCM_OPTION_MODVER=yes
-	WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
 else
-	dnl not explicitly set, go with default
-	if test "$WCM_OPTION_MODVER" = "yes"; then
-		WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNELDIR/include/linux/modversions.h"
-	else
-		WCM_MODVER=""
-	fi
+	AC_MSG_RESULT(no)
 fi
 
-dnl Check for changed field names in hid-core.c
-if test "$WCM_OPTION_HID" = "yes"; then
-	AC_MSG_CHECKING(for updated field names in hid-core.c)
-	HIDCORE="$WCM_KERNELDIR/drivers/usb/hid-core.c"
-	if test -f "$HIDCORE"; then
-		PATCH_DRVALUE=`grep 'dr\\.wValue' "$HIDCORE" | wc -l`
-		if test "$PATCH_DRVALUE" -gt 0; then
-			AC_MSG_RESULT([yes, using 2.4.20 or later])
-			AC_DEFINE(WCM_PATCH_DRVALUE,1,[Need the dr.wValue patch])
-			WCM_PATCH_HID="(value_patch) $WCM_PATCH_HID"
-		else
-			AC_MSG_RESULT([no, using 2.4.19])
-			AC_DEFINE(WCM_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
-		fi
-	else
-		HIDCORE="$WCM_KERNELDIR/drivers/usb/input/hid-core.c"
-		if test -f "$HIDCORE"; then
-			AC_MSG_RESULT([yes, using $WCM_KERNEL_VER])
-		else
-			AC_MSG_RESULT([missing, using 2.4.19])
-			echo "***"
-			echo "*** Warning: unable to find hid-core.c in kernel tree"
-			echo "*** It was not possible to detect whether patches needed to be"
-			echo "*** applied.  If the hid-core.c in this project does not build"
-			echo "*** correctly, you should resolve this problem first."
-			echo "***"
-		fi
-		AC_DEFINE(WCM_PATCH_DRVALUE,0,[Do not need the dr.wValue patch])
-	fi
-
-	AC_MSG_CHECKING(for HID_QUIRK)
-	HID_H="$WCM_KERNELDIR/drivers/usb/hid.h"
-	if test -f "$HID_H"; then
-		PATCH_QUIRK=`grep 'HID_QUIRK' "$HID_H" | wc -l`
-		if test "$PATCH_QUIRK" -gt 0; then
-			AC_MSG_RESULT(yes)
-			AC_DEFINE(WCM_PATCH_NOQUIRK,0,[Missing quirks])
-		else
-			AC_MSG_RESULT(no)
-			AC_DEFINE(WCM_PATCH_NOQUIRK,1,[Missing quirks])
-			WCM_PATCH_HID="(quirk_patch) $WCM_PATCH_HID"
-		fi
-	else
-		HID_H="$WCM_KERNELDIR/drivers/usb/input/hid.h"
-		if test -f "$HID_H"; then
-			AC_MSG_RESULT([missing, assuming quirks are OK])
-		else
-			echo "***"
-			echo "*** Warning: unable to find hid.h in kernel tree"
-			echo "*** It was not possible to detect whether patches needed to be"
-			echo "*** applied.  If the hid-core.c in this project does not build"
-			echo "*** correctly, you should resolve this problem first."
-			echo "***"
-		fi
-		AC_DEFINE(WCM_PATCH_NOQUIRK,0,[Missing quirks])
-	fi
-fi
-
+dnl =======================================================
 dnl Check for depflags
 WCM_DEPFLAGS=
 AC_ARG_ENABLE(mkxincludes,
-AC_HELP_STRING([--enable-mkxincludes], [Enable mkxincludes, XF86 dependency builder [[default=no]]]),
-	, enable_mkxincludes=no)
-if test "x$enable_mkxincludes" == "xyes"; then
-	WCM_DEPFLAGS="-MMD"
+	AC_HELP_STRING([--enable-mkxincludes], [Enable mkxincludes, XFree86 dependency builder [[default=no]]]),
+	[ test "$enable_mkxincludes" = yes && WCM_DEPFLAGS="-MMD" ])
+
+dnl =======================================================
+dnl Check for compiler flags if using gcc
+if test "$GCC" = yes; then
+	OLD_CFLAGS="$CFLAGS"
+	AC_MSG_CHECKING(if gcc accepts -fno-merge-constants)
+	CFLAGS="$OLD_CFLAGS -fno-merge-constants"
+	AC_TRY_COMPILE(, "int main(void) { return 0; }",
+		[WCM_NO_MERGE_CONSTANTS="-fno-merge-constants"; AC_MSG_RESULT(yes)],
+		[WCM_NO_MERGE_CONSTANTS=; AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if gcc accepts -fno-stack-protector)
+	CFLAGS="$OLD_CFLAGS -fno-stack-protector"
+	AC_TRY_COMPILE(, "int main(void) { return 0; }",
+		[WCM_NO_STACK_PROTECTOR="-fno-stack-protector"; AC_MSG_RESULT(yes)],
+		[WCM_NO_STACK_PROTECTOR=; AC_MSG_RESULT(no)])
+	CFLAGS=$OLD_CFLAGS
 fi
 
-dnl Check for -fno-merge-constants if using gcc
-if test "x$GCC" = "xyes"; then
-    AC_MSG_CHECKING(if gcc accepts -fno-merge-constants)
-    OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -fno-merge-constants"
-    AC_TRY_COMPILE(, "int main(void) { return 0; }",
-        has_no_merge_constants=yes,
-        has_no_merge_constants=no)
-    CFLAGS=$OLD_CFLAGS
-
-    if test "$has_no_merge_constants" = "yes" ; then
-        AC_MSG_RESULT(yes)
-        WCM_NO_MERGE_CONSTANTS="-fno-merge-constants"
-    else
-        AC_MSG_RESULT(no)
-        WCM_NO_MERGE_CONSTANTS=""
-    fi
-fi
-
-dnl Check for x86_64 kernel and ARCH for kernel 2.4
-kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-if test $kver != 0; then
-	WCM_ARCH=`echo $WCM_ARCH | cut -f 1 -d-`
-	if test "$WCM_ARCH" = "x86_64"; then
-		WCM_OPTION_HID=no
-		WCM_OPTION_WACOM=no
-		WCM_OPTION_INPUT=no
-		WCM_OPTION_USBMOUSE=no
-		WCM_OPTION_MOUSEDEV=no
-		WCM_OPTION_EVDEV=no
-		WCM_MODULES=""
-	fi
-fi
+dnl =======================================================
+dnl Set default defines in src/include/xdrv-config.h (moved from cmd-line)
+AC_DEFINE(AVOID_GLYPHBLT,,[cmdline substitute])
+AC_DEFINE(_BSD_SOURCE,,[cmdline substitute])
+AC_DEFINE(BUILDDEBUG,,[cmdline substitute])
+AC_DEFINE(DPMSExtension,,[cmdline substitute])
+AC_DEFINE(FUNCPROTO,15,[cmdline substitute])
+AC_DEFINE(GCCUSESGAS,,[cmdline substitute])
+AC_DEFINE(_GNU_SOURCE,,[cmdline substitute])
+AC_DEFINE(IN_MODULE,,[cmdline substitute])
+AC_DEFINE(LBX,,[cmdline substitute])
+AC_DEFINE(linux,,[cmdline substitute])
+AC_DEFINE(NARROWPROTO,,[cmdline substitute])
+AC_DEFINE(NDEBUG,,[cmdline substitute])
+AC_DEFINE(PIXPRIV,,[cmdline substitute])
+AC_DEFINE(_POSIX_C_SOURCE,,[cmdline substitute])
+AC_DEFINE(_POSIX_SOURCE,,[cmdline substitute])
+AC_DEFINE(RENDER,,[cmdline substitute])
+AC_DEFINE(SHAPE,,[cmdline substitute])
+AC_DEFINE(SINGLEDEPTH,,[cmdline substitute])
+AC_DEFINE(SMART_SCHEDULE,,[cmdline substitute])
+AC_DEFINE(_SVID_SOURCE,,[cmdline substitute])
+AC_DEFINE(TOGCUP,,[cmdline substitute])
+AC_DEFINE(XAPPGROUP,,[cmdline substitute])
+AC_DEFINE(X_BYTE_ORDER,X_LITTLE_ENDIAN,[cmdline substitute])
+AC_DEFINE(XCSECURITY,,[cmdline substitute])
+AC_DEFINE(XF86BIGFONT,,[cmdline substitute])
+AC_DEFINE(XF86VIDMODE,,[cmdline substitute])
+AC_DEFINE(XFree86LOADER,,[cmdline substitute])
+AC_DEFINE(XFree86Module,,[cmdline substitute])
+AC_DEFINE(XFree86Server,,[cmdline substitute])
+AC_DEFINE(XFreeXDGA,,[cmdline substitute])
+AC_DEFINE(XINPUT,,[cmdline substitute])
+AC_DEFINE(XKB,,[cmdline substitute])
+AC_DEFINE(_XOPEN_SOURCE,,[cmdline substitute])
+AC_DEFINE(XResExtension,,[cmdline substitute])
+AC_DEFINE(XvExtension,,[cmdline substitute])
+AC_DEFINE(XvMCExtension,,[cmdline substitute])
 
 dnl Separate test output from file-generation output
 echo 
@@ -524,27 +817,23 @@ AC_SUBST(WCM_LIBS)
 AC_SUBST(WCM_TCLLIBS)
 AC_SUBST(WCM_TCLPKGS)
 AC_SUBST(WCM_MODULES)
-AC_SUBST(WCM_XF86PROGS)
 AC_SUBST(WCM_XF86MODULES)
-AC_SUBST(WCM_EXPPROGS)
-AC_SUBST(WCM_EXPMODULES)
 AC_SUBST(WCM_ARCH)
 AC_SUBST(WCM_KSTACK)
 AC_SUBST(WCM_MODVER)
-AC_SUBST(WCM_KERNELDIR)
+AC_SUBST(WCM_KERNEL_DIR)
 AC_SUBST(WCM_KERNEL_VER)
-AC_SUBST(WCM_LINUXWACOMDIR)
-AC_SUBST(WCM_XF86DIR)
-AC_SUBST(WCM_XORGSDK)
-AC_SUBST(WCM_XLIBDIR)
+AC_SUBST(WCM_XFREE86_DIR)
+AC_SUBST(WCM_XORGSDK_DIR)
 AC_SUBST(WCM_MODDIR)
 AC_SUBST(WCM_XSERVER64)
-#AC_SUBST(WCM_OPTION_DLLOADER)
 AC_SUBST(WCM_NO_MERGE_CONSTANTS)
-AC_SUBST(WCM_LINUX_INPUT)
+AC_SUBST(WCM_NO_STACK_PROTECTOR)
+AC_SUBST(WCM_CLEVEL)
 AC_SUBST(WCM_XIDUMP_LIBS)
 AC_SUBST(WCM_LIBWACOMCFG_LIBS)
 AC_SUBST(WCM_WACOMXI_LIBS)
+AC_SUBST(WCM_PREFIX)
 AC_SUBST(WCM_XSETWACOM_LIBS)
 AC_SUBST(WCM_DEPFLAGS)
 AC_SUBST(WCM_OPTION_WACOM)
@@ -553,7 +842,7 @@ AC_SUBST(WCM_OPTION_EVDEV)
 AC_SUBST(WCM_OPTION_MOUSEDEV)
 AC_SUBST(WCM_OPTION_USBMOUSE)
 AC_SUBST(WCM_OPTION_INPUT)
- 
+
 AC_OUTPUT(Makefile
 	mkxincludes
 	src/Makefile
@@ -578,21 +867,17 @@ AC_OUTPUT(Makefile
 echo ""
 echo "----------------------------------------"
 echo "  BUILD ENVIRONMENT:"
-echo "       architecture - $WCM_ARCH"
+echo "       architecture - $WCM_ARCHITECTURE"
 echo "       linux kernel - $WCM_ISLINUX $WCM_KERNEL_VER"
 echo "  module versioning - $WCM_OPTION_MODVER $WCM_MODVER"
-echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNELDIR"
-if test "$WCM_ENV_XF86" == "yes"; then
-echo "           X SOURCE - $WCM_ENV_XF86 $WCM_XF86DIR"
-else
-echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK"
-fi
+echo "      kernel source - $WCM_ENV_KERNEL $WCM_KERNEL_DIR"
+echo "     XFree86 source - $WCM_ENV_XFREE86 $WCM_XFREE86_DIR"
+echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK_DIR"
 echo "          XSERVER64 - $WCM_OPTION_XSERVER64"
 echo "           dlloader - $WCM_OPTION_DLLOADER"
-echo "               XLib - $WCM_ENV_XLIB $WCM_XLIBDIR"
-echo "                TCL - $WCM_ENV_TCL $WCM_TCLDIR"
-echo "                 TK - $WCM_ENV_TK $WCM_TKDIR"
-
+echo "               XLib - $WCM_ENV_XLIB $WCM_XLIB_DIR"
+echo "                TCL - $WCM_ENV_TCL $WCM_TCL_DIR"
+echo "                 TK - $WCM_ENV_TK $WCM_TK_DIR"
 echo "            ncurses - $WCM_ENV_NCURSES"
 echo ""
 echo "  BUILD OPTIONS:"
@@ -607,7 +892,6 @@ echo "         usbmouse.o - $WCM_OPTION_USBMOUSE"
 echo "            evdev.o - $WCM_OPTION_EVDEV"
 echo "         mousedev.o - $WCM_OPTION_MOUSEDEV"
 echo "            input.o - $WCM_OPTION_INPUT"
-echo "        tabletdev.o - $WCM_OPTION_TABLETDEV"
 if test "$WCM_OPTION_DLLOADER" == "yes" ; then
 echo "       wacom_drv.so - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 echo "        wacom_drv.o - no"
@@ -618,10 +902,10 @@ fi
 echo "----------------------------------------"
 
 dnl Check for x86_64 kernel
-kver=`echo $WCM_KERNEL_VER | grep -c "2.4"`
-if test "$WCM_ARCH" = "x86_64" && test $kver != 0; then
+if echo $WCM_KERNEL_VER | grep "2.4" >/dev/null && echo "$WCM_ARCHITECTURE" | grep "x86_64" >/dev/null; then
 	echo ""
-	echo "***"; echo "*** Note:";
+	echo "***"
+	echo "*** Note:"
 	echo "*** For x86-64 kernel, we only support kernel 2.4.30 and kernel 2.6.* "
 	echo "*** To compile Wacom related kernel 2.4.30 modules for x86-64, you need to "
 	echo "*** copy the source files from src/2.4.30x86-64 to your kernel source tree "

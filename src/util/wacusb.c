@@ -20,6 +20,8 @@
 **
 ****************************************************************************/
 
+#include "../include/util-config.h"
+
 #include "wacusb.h"
 
 #include <stdio.h>
@@ -30,10 +32,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <assert.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 /*****************************************************************************
 ** Begin USB Linux Input Subsystem

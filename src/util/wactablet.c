@@ -20,6 +20,8 @@
 **
 ****************************************************************************/
 
+#include "../include/util-config.h"
+
 #include "wactablet.h"
 #include "wacserial.h"
 #include "wacusb.h"
@@ -32,10 +34,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdarg.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef WCM_ENABLE_LINUXINPUT
 #include <linux/input.h>

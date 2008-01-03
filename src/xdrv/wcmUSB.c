@@ -20,7 +20,7 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 
 #include <sys/utsname.h>
 
@@ -969,4 +969,4 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	xf86WcmEvent(common, channel, ds);
 }
 
-#endif /* LINUX_INPUT */
+#endif /* WCM_ENABLE_LINUXINPUT */

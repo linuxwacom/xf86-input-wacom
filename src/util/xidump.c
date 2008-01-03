@@ -43,9 +43,7 @@
 
 #define XIDUMP_VERSION "0.7.7"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "../include/util-config.h"
 
 /*****************************************************************************
 ** XInput

@@ -29,7 +29,7 @@
 #include "wcmFilter.h"
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void xf86WcmInitialTVScreens(LocalDevicePtr local);
+extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 /*****************************************************************************
  * xf86WcmSetPadCoreMode
@@ -89,6 +89,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopX", value);
 			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 		}
 		break;
@@ -107,6 +108,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "TopY", value);
 			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 1);
 		}
 		break;
@@ -125,6 +127,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomX", value);
 			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 		}
 		break;
@@ -143,6 +146,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			/* Area definition is ok */
 			xf86ReplaceIntOption(local->options, "BottomY", value);
 			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 1);
 		}
 		break;
@@ -211,23 +215,22 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    {
 		int is_absolute = priv->flags & ABSOLUTE_FLAG;
 		if ((value < 0) || (value > 1)) return BadValue;
-		if (value == is_absolute)
-			break;
+		if (value != is_absolute)
+		{		
+			if (IsPad(priv))
+				return xf86WcmSetPadCoreMode(local);
 
-		if (IsPad(priv))
-			return xf86WcmSetPadCoreMode(local);
-
-		if (value) 
-		{
-			priv->flags |= ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
-			xf86WcmInitialCoordinates(local, 0);
-			xf86WcmInitialCoordinates(local, 1);
-		}
-		else
-		{
-			priv->flags &= ~ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			if (value) 
+			{
+				priv->flags |= ABSOLUTE_FLAG;
+				xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+			}
+			else
+			{
+				priv->flags &= ~ABSOLUTE_FLAG;
+				xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			}
+			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 0);
 			xf86WcmInitialCoordinates(local, 1);
 		}
@@ -259,27 +262,29 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
 		break;
 	    case XWACOM_PARAM_MMT:
-		if ((value != 0) && (value != 1)) return BadValue;
-		common->wcmMMonitor = value;
-		if (value)
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmMMonitor != value)
 		{
-			xf86ReplaceStrOption(local->options, "MMonitor", "on");
-		}
-		else
-		{
-			xf86ReplaceStrOption(local->options, "MMonitor", "off");
+			common->wcmMMonitor = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "MMonitor", "on");
+			else
+				xf86ReplaceStrOption(local->options, "MMonitor", "off");
+			
+			xf86WcmMappingFactor(local);
 		}
 		break;
 	    case XWACOM_PARAM_TPCBUTTON:
-		if ((value != 0) && (value != 1)) return BadValue;
-		priv->common->wcmTPCButton = value;
-		if (value)
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmMMonitor != value)
 		{
-			xf86ReplaceStrOption(local->options, "TPCButton", "on");
-		}
-		else
-		{
-			xf86ReplaceStrOption(local->options, "TPCButton", "off");
+			common->wcmTPCButton = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "TPCButton", "on");
+			else
+				xf86ReplaceStrOption(local->options, "TPCButton", "off");
 		}
 		break;
 	    case XWACOM_PARAM_CURSORPROX:
@@ -287,24 +292,22 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			if ((value > 255) || (value < 0))
 				return BadValue;
-			xf86ReplaceIntOption(local->options, "CursorProx",value);
-			common->wcmCursorProxoutDist = value;
+			else if (common->wcmCursorProxoutDist != value)
+			{
+				xf86ReplaceIntOption(local->options, "CursorProx",value);
+				common->wcmCursorProxoutDist = value;
+			}
 		}
 		break;
 	    case XWACOM_PARAM_SCREEN_NO:
-		if ( (priv->twinview == TV_NONE && 
-				screenInfo.numScreens == 1) 
-				|| value < -1 || 
-				(priv->twinview == TV_NONE && 
-				value >= screenInfo.numScreens) 
-				|| (priv->twinview != TV_NONE 
-				&& value > 1) )
+		if (value < -1 || value >= priv->numScreen) 
 			return BadValue;
 		else if (priv->screen_no != value)
 		{
 			priv->screen_no = value;
 			if (priv->twinview != TV_NONE)
 			{
+				xf86WcmInitialScreens(local);
 				if (priv->screen_no == -1)
 				{
 				    if (priv->twinview == TV_LEFT_RIGHT)
@@ -318,6 +321,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 					priv->tvoffsetY = 0;
 				}
 			}
+			if (priv->screen_no != -1)
+				priv->currentScreen = priv->screen_no;
+			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
+			xf86WcmInitialCoordinates(local, 0);
+			xf86WcmInitialCoordinates(local, 1);
 			xf86ReplaceIntOption(local->options, "ScreenNo", value);
 		}
 		break;
@@ -327,6 +336,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			if ((value > 2) || (value < 0) || screenInfo.numScreens != 1)
 				return BadValue;
 			priv->twinview = value;
+			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
+			xf86WcmInitialCoordinates(local, 0);
+			xf86WcmInitialCoordinates(local, 1);
 			switch(value) {
 			    case TV_NONE:
 				xf86ReplaceStrOption(local->options, "TwinView", "None");
@@ -340,7 +353,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			    default:
 				return BadValue;
 			}
-			xf86WcmInitialTVScreens(local);
 		}
 		break;
 	    case XWACOM_PARAM_TVRESOLUTION0:
@@ -356,6 +368,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			{
 				rX = priv->tvResolution[0];
 				rY = priv->tvResolution[1];
+				sNum++;
 			}
 			else
 			{
@@ -377,6 +390,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				return BadValue;
 			priv->tvResolution[sNum++] = value & 0xffff;
 			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
+			xf86WcmInitialScreens(local);
+			xf86WcmMappingFactor(local);
 			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
 					"to ResX=%d ResY=%d \n",
 				value & 0xffff, (value >> 16) & 0xffff));
@@ -487,6 +502,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			break;
 		    }
 
+		    xf86WcmMappingFactor(tmppriv->local);
 		    xf86WcmInitialCoordinates(tmppriv->local, 0);
 		    xf86WcmInitialCoordinates(tmppriv->local, 1);
 
@@ -717,10 +733,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_STOPX7:
 	    {
 		int sn = (param - XWACOM_PARAM_STOPX0) / 4; 
-		int numS = screenInfo.numScreens;
-		if (priv->twinview != TV_NONE)
-			numS = 2;
-		if (sn >= numS)
+		if (sn >= priv->numScreen)
 			return -1;
 		else
 			return priv->screenTopX[sn];
@@ -735,10 +748,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_STOPY7:
 	    {
 		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
-		int numS = screenInfo.numScreens;
-		if (priv->twinview != TV_NONE)
-			numS = 2;
-		if (sn >= numS)
+		if (sn >= priv->numScreen)
 			return -1;
 		else
 			return priv->screenTopY[sn];
@@ -753,10 +763,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_SBOTTOMX7:
 	    {
 		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
-		int numS = screenInfo.numScreens;
-		if (priv->twinview != TV_NONE)
-			numS = 2;
-		if (sn >= numS)
+		if (sn >= priv->numScreen)
 			return -1;
 		else
 			return priv->screenBottomX[sn];
@@ -771,10 +778,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_SBOTTOMY7:
 	    {
 		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
-		int numS = screenInfo.numScreens;
-		if (priv->twinview != TV_NONE)
-			numS = 2;
-		if (sn >= numS)
+		if (sn >= priv->numScreen)
 			return -1;
 		else
 			return priv->screenBottomY[sn];
@@ -843,10 +847,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_SCREEN_NO:
 		return priv->screen_no;
 	    case XWACOM_PARAM_NUMSCREEN:
-		if (priv->twinview == TV_NONE)
-			return screenInfo.numScreens;
-		else
-			return 2;
+		return priv->numScreen;
 	}
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmGetParam invalid param %d\n", param));
 	return -1;
@@ -859,10 +860,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int numS = screenInfo.numScreens, i = 0;
-
-	if (priv->twinview != TV_NONE)
-		numS = 2;
+	int numS = priv->numScreen;
 
 	switch (param)
 	{
@@ -878,17 +876,8 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 		int sn = (param - XWACOM_PARAM_STOPX0) / 4;
 		if (sn >= numS)
 			return -1;
-		else if (priv->twinview == TV_ABOVE_BELOW)
-			return 0;
-		else if (priv->twinview == TV_LEFT_RIGHT)
-			return (sn ? priv->tvResolution[0] : 0);
 		else
-		{
-			int x = 0;
-			for (i = 0; i<sn; i++)
-				x += screenInfo.screens[i]->width;
-			return x;
-		}
+			return priv->screenTopX[sn];
 	   }
 	case XWACOM_PARAM_STOPY0:
 	case XWACOM_PARAM_STOPY1:
@@ -902,17 +891,8 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 		int sn = (param - XWACOM_PARAM_STOPY0) / 4; 
 		if (sn >= numS)
 			return -1;
-		else if (priv->twinview == TV_ABOVE_BELOW)
-			return (sn ? priv->tvResolution[1] : 0);
-		else if (priv->twinview == TV_LEFT_RIGHT)
-			return 0;
 		else
-		{
-			int y = 0;
-			for (i = 0; i<sn; i++)
-				y += screenInfo.screens[i]->height;
-			return y;
-		}
+			return priv->screenTopY[sn];
 	   }
 	case XWACOM_PARAM_SBOTTOMX0:
 	case XWACOM_PARAM_SBOTTOMX1:
@@ -926,10 +906,8 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 		int sn = (param - XWACOM_PARAM_SBOTTOMX0) / 4; 
 		if (sn >= numS)
 			return -1;
-		else if (priv->twinview != TV_NONE)
-			return (sn ? priv->tvResolution[2] : priv->tvResolution[0]);
 		else
-			return screenInfo.screens[i]->width;
+			return priv->screenBottomX[sn];
 	   }
 	case XWACOM_PARAM_SBOTTOMY0:
 	case XWACOM_PARAM_SBOTTOMY1:
@@ -943,12 +921,11 @@ static int xf86WcmGetDefaultScreenInfo(LocalDevicePtr local, int param)
 		int sn = (param - XWACOM_PARAM_SBOTTOMY0) / 4; 
 		if (sn >= numS)
 			return -1;
-		else if (priv->twinview != TV_NONE)
-			return (sn ? priv->tvResolution[3] : priv->tvResolution[1]);
 		else
-			return screenInfo.screens[i]->height;
+			return priv->screenBottomY[sn];
 	   }
 	}
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmGetDefaultScreenInfo invalid param %d\n", param));
 	return -1;
 }
 
@@ -1047,6 +1024,7 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
 		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}
@@ -1054,6 +1032,7 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
+		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}

@@ -36,6 +36,8 @@
 **
 ****************************************************************************/
 
+#include "../include/util-config.h"
+
 #include "wactablet.h"
 #include "wacscrn.h"
 
@@ -46,10 +48,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #define WACDUMP_VER "0.7.4"
 

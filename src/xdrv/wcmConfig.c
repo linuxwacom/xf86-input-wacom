@@ -107,6 +107,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->topY = 0;              /* Y top */
 	priv->bottomX = 0;           /* X bottom */
 	priv->bottomY = 0;           /* Y bottom */
+	priv->sizeX = 0;	     /* active X size */
+	priv->sizeY = 0;	     /* active Y size */
 	priv->factorX = 0.0;         /* X factor */
 	priv->factorY = 0.0;         /* Y factor */
 	priv->common = common;       /* common info pointer */
@@ -146,21 +148,23 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		for (j=0; j<256; j++)
 			priv->keys[i][j] = 0;
 
-	priv->nbuttons = MAX_BUTTONS;      /* Default number of buttons */
-	priv->relup = 5;		   /* Default relative wheel up event */
-	priv->reldn = 4;		   /* Default relative wheel down event */
+	priv->nbuttons = MAX_BUTTONS;		/* Default number of buttons */
+	priv->relup = 5;			/* Default relative wheel up event */
+	priv->reldn = 4;			/* Default relative wheel down event */
 	
 	priv->wheelup = IsPad (priv) ? 5 : 0;	/* Default absolute wheel up event */
 	priv->wheeldn = IsPad (priv) ? 4 : 0;	/* Default absolute wheel down event */
-	priv->striplup = 4;		   /* Default left strip up event */
-	priv->stripldn = 5;		   /* Default left strip down event */
-	priv->striprup = 4;		   /* Default right strip up event */
-	priv->striprdn = 5;		   /* Default right strip down event */
-	priv->naxes = 6;                   /* Default number of axes */
-	priv->debugLevel = 0;              /* debug level */
+	priv->striplup = 4;			/* Default left strip up event */
+	priv->stripldn = 5;			/* Default left strip down event */
+	priv->striprup = 4;			/* Default right strip up event */
+	priv->striprdn = 5;			/* Default right strip down event */
+	priv->naxes = 6;			/* Default number of axes */
+	priv->debugLevel = 0;			/* debug level */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
-	priv->currentScreen = 0;                 /* current screen in display */
+	priv->currentScreen = -1;                /* current screen in display */
 
+	priv->maxWidth = 0;			/* max active screen width */
+	priv->maxHeight = 0;			/* max active screen height */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
 	priv->tvoffsetX = 0;			/* none X edge offset for TwinView setup */
 	priv->tvoffsetY = 0;			/* none Y edge offset for TwinView setup */
@@ -574,7 +578,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmFlags |= RAW_FILTERING_FLAG;
 	}
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
 	{

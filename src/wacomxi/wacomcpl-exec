@@ -938,7 +938,7 @@ proc addMenu { curb } {
     if { $opt == "" } { set opt $curb }
     if { ![string compare $type "pad"] } { 
 	# values 30 or larger are special functions
-	if { ($opt > 8 && $opt < 14) } {
+	if { ($opt > 8 && $opt < 30) } {
 	    set opt [ expr ($opt-8) ] 
 	}
     }

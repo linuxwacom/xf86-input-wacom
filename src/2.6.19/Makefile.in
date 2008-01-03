@@ -16,7 +16,7 @@ endif # WCM_OPTION_WACOM
 else  # We were called from command line
 PWD  := $(shell pwd)
 
-KDIR := @WCM_KERNELDIR@
+WCM_KERNEL_DIR := @WCM_KERNEL_DIR@
 WCM_OPTION_WACOM := @WCM_OPTION_WACOM@
 
 export WCM_OPTION_WACOM 
@@ -28,7 +28,7 @@ ifeq ($(WCM_OPTION_WACOM),yes)
 endif 
 	@echo '    Building linuxwacom drivers for 2.6 kernel.'
 	@echo '***Note: Drivers not enabled as modules in your kernel config but requested through configure are NOT built'
-	$(MAKE) -C $(KDIR) M=$(PWD)
+	$(MAKE) -C $(WCM_KERNEL_DIR) M=$(PWD)
 
 endif  # End kbuild check
 
@@ -36,14 +36,6 @@ endif  # End kbuild check
 
 clean:
 	rm -rf *.o *.ko *.mod.* .[a-z]* core *.i
-
-# also remove copied stuff
-distclean: clean
-	@for i in $(COPY_FROM_KERNEL_TREE); do \
-		if test -f "$$i"; then \
-			rm -f $$i ; \
-		fi; \
-	done
 
 EMPTY_AUTOMAKE_TARGETS = distdir install install-data install-exec uninstall install-info
 EMPTY_AUTOMAKE_TARGETS += installdirs check dvi pdf ps info html tags ctags mostlyclean distclean maintainer-clean

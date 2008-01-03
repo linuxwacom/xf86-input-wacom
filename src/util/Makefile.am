@@ -1,11 +1,10 @@
-bin_PROGRAMS = @WCM_PROGS@ @WCM_XF86PROGS@
+bin_PROGRAMS = @WCM_PROGS@
 lib_LTLIBRARIES = libwacomcfg.la
 
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
 AM_CFLAGS = -Wall -pedantic
-DEPFLAGS = @WCM_DEPFLAGS@
 
 # These identify which programs, libraries, and headers could
 # potentially be built or installed depending on the results of
@@ -17,7 +16,9 @@ wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
 		wactablet.c wactablet.h \
 		wacserial.c wacserial.h \
 		wacusb.c wacusb.h 
+if WCM_ENV_NCURSES
 wacdump_LDADD = -lncurses
+endif
 
 xidump_SOURCES = xidump.c wacscrn.c wacscrn.h
 xidump_LDFLAGS = @WCM_XIDUMP_LIBS@

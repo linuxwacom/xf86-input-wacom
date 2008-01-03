@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 
 /****************************************************************************/
 
+#include "../include/xdrv-config.h"
 #include <xf86Version.h>
 #include "../include/Xwacom.h"
 
@@ -29,7 +30,7 @@
  * Linux Input Support
  ****************************************************************************/
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 #include <asm/types.h>
 #include <linux/input.h>
 
@@ -43,7 +44,7 @@
 
 #define MAX_USB_EVENTS 32
 
-#endif /* LINUX_INPUT */
+#endif /* WCM_ENABLE_LINUXINPUT */
 
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50
@@ -63,19 +64,9 @@
 #if !defined(DGUX)
 # include <xisb.h>
 /* X.org recently kicked out the libc-wrapper */
-# if defined WCM_XORG
-#  undef NEED_XF86_TYPES /* defined (or not) in xorg-server.h*/
-#  include <xorg-server.h>
-/* Xorg 6.x, 7.0, 7.1, and 7.2 uses version 6.xx or 7.xx,
- * Xorg 7.3 have dropped down to 1.4... */
-#  if XORG_VERSION_CURRENT < ((1) * 10000000) + ((4) * 100000) + ((99) * 1000)
-#   include <xf86_ansic.h>
-#  elif XORG_VERSION_CURRENT >= ((6) * 10000000)
-#   include <xf86_ansic.h>
-#  else
-#   include <string.h>
-#   include <errno.h>
-#  endif
+# ifdef WCM_NO_LIBCWRAPPER
+#  include <string.h>
+#  include <errno.h>
 # else
 #  include <xf86_ansic.h>
 # endif
@@ -277,6 +268,8 @@ struct _WacomDeviceRec
 	int topY;               /* Y top */
 	int bottomX;            /* X bottom */
 	int bottomY;            /* Y bottom */
+	int sizeX;		/* active X size */
+	int sizeY;		/* active Y size */
 	double factorX;         /* X factor */
 	double factorY;         /* Y factor */
 	unsigned int serial;    /* device serial number */
@@ -285,6 +278,8 @@ struct _WacomDeviceRec
 	int screenTopY[32];	/* top cordinate of the associated screen */
 	int screenBottomX[32];	/* right cordinate of the associated screen */
 	int screenBottomY[32];	/* bottom cordinate of the associated screen */
+	int maxWidth;		/* max active screen width */
+	int maxHeight;		/* max active screen height */
 	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
@@ -444,7 +439,7 @@ struct _WacomDeviceClass
 	void (*Read)(LocalDevicePtr local);   /* reads device */
 };
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	extern WacomDeviceClass gWacomUSBDevice;
 #endif
 
@@ -458,7 +453,7 @@ struct _WacomDeviceClass
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 #define RAW_FILTERING_FLAG      4
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 /* set if the /dev/input driver should wait for SYN_REPORT events as the
    end of record indicator */
 #define USE_SYN_REPORTS_FLAG	8
@@ -527,7 +522,7 @@ struct _WacomCommonRec
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
 
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 	int wcmLastToolSerial;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
@@ -538,7 +533,7 @@ struct _WacomCommonRec
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
 #define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
-#ifdef LINUX_INPUT
+#ifdef WCM_ENABLE_LINUXINPUT
 #define USE_SYN_REPORTS(comm) ((comm)->wcmFlags & USE_SYN_REPORTS_FLAG)
 #endif
 
@@ -635,6 +630,9 @@ Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* Change pad's mode according to it core event status */
 int xf86WcmSetPadCoreMode(LocalDevicePtr local);
+
+/* calculate the proper tablet to screen mapping factor */
+void xf86WcmMappingFactor(LocalDevicePtr local);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
