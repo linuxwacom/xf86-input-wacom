@@ -1052,7 +1052,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldStripY = 0;
 		priv->oldRot = 0;
 		priv->oldThrottle = 0;
-		priv->currentScreen = -1;
 	}
 }
 
