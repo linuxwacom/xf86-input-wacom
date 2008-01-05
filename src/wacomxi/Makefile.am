@@ -14,4 +14,4 @@ EXTRA_DIST = wacomcpl-exec
 # Source dependencies
 libwacomxi_la_SOURCES = wacomxi.c wacomxi.h
 libwacomxi_la_LDFLAGS = -no-undefined
-libwacomxi_la_LIBADD = $(libdir)
+libwacomxi_la_LIBADD = @WCM_WACOMXI_LIBS@
