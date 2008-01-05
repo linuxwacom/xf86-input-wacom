@@ -229,10 +229,6 @@ else
 				WCM_OPTION_MODVER=$enable_modver, WCM_OPTION_MODVER=yes)
 
 			WCM_KSTACK="-mpreferred-stack-boundary=2"
-			if echo $WCM_ARCHITECTURE | grep "x86_64" >/dev/null; then
-				WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
-			fi
-
 			if test "$WCM_OPTION_EVDEV" = yes; then
 				WCM_MODULES="$WCM_MODULES evdev.o"
 			fi
