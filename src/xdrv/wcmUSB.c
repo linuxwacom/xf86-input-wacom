@@ -350,7 +350,7 @@ static Bool usbDetect(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(1, priv->debugLevel, ErrorF("usbDetect\n"));
-    
+
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 
 	if (err < 0)
@@ -535,7 +535,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	common->wcmProtocolLevel = 5;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_INTUOS_DISTANCE; 
+			= PROXOUT_INTUOS_DISTANCE;
 	/* reinitialize max here since 0 is for Graphire series */
 	common->wcmMaxCursorDist = 256;
 
@@ -547,7 +547,7 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_GRAPHIRE_DISTANCE; 
+			= PROXOUT_GRAPHIRE_DISTANCE;
 }
 
 int usbWcmGetRanges(LocalDevicePtr local)
@@ -840,7 +840,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	{
 		event = common->wcmEvents + i;
 		DBG(11, common->debugLevel, ErrorF("usbParseChannel "
-			"event[%d]->type=%d code=%d value=%d\n", 
+			"event[%d]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value));
 
 		/* absolute events */

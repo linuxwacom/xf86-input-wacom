@@ -83,7 +83,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
 		return !Success;
 	}
-    
+
 	/* Wait 250 mSecs */
 	if (xf86WcmWait(250))
 		return !Success;
