@@ -463,11 +463,13 @@ proc createDeviceList {} {
     while { $dev != "" } {
 	set index [ expr $index+1 ]
 	set type [ lindex $infoString $index ]
-	set index [ expr $index+1 ]
 
-	set getDeviceModel($dev,type) $type
-	set getDeviceModel($dev,model) [ exec xsetwacom get $dev TabletID ]
-	set devices "$devices $dev"
+	if { [catch { exec xsetwacom get $dev TabletID } model] == 0} {
+	    set getDeviceModel($dev,type) $type
+	    set getDeviceModel($dev,model) $model
+	    set devices "$devices $dev"
+	    set index [ expr $index+1 ]
+	}
         set dev [ lindex $infoString $index ]
     }
 
