@@ -60,9 +60,10 @@
  * 2007-11-21 47-pc0.7.9-3 - Updated TwinView screen switch offset
  * 2007-12-07 47-pc0.7.9-4 - Support Cintiq 12WX and Bamboo
  * 2007-12-20 47-pc0.7.9-5 - multimonitor support update
+ * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-5 $";
+static const char identification[] = "$Identification: 47-0.7.9-6 $";
 
 /****************************************************************************/
 
@@ -248,13 +249,13 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				tabletSize = priv->bottomX - priv->topX;
 		}
 		if (priv->flags & ABSOLUTE_FLAG)
-			topx = priv->topX;
+			topx = priv->topX - priv->tvoffsetX;
 
 		resolution = common->wcmResolX;
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
-		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx - priv->tvoffsetX;
+		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx;
 		topx = 0;
 		tabletSize = (int)((double)tabletSize * priv->factorX + 0.5);
 		resolution = (int)((double)resolution * priv->factorX + 0.5);
@@ -275,13 +276,13 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				tabletSize = priv->bottomY - priv->topY;
 		}
 		if (priv->flags & ABSOLUTE_FLAG)
-			topy = priv->topY;
+			topy = priv->topY - priv->tvoffsetY;
 
 		resolution = common->wcmResolY;
 #if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
-		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy - priv->tvoffsetY;
+		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy;
 		topy = 0;
 		tabletSize = (int)((double)tabletSize * priv->factorY + 0.5);
 		resolution = (int)((double)resolution * priv->factorY + 0.5);
@@ -869,12 +870,8 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (priv->flags & ABSOLUTE_FLAG)
 	{
-		v0 = v0 > priv->bottomX - priv->tvoffsetX ? priv->sizeX : 
-			v0 < priv->topX + priv->tvoffsetX ? 
-				0 : v0 - priv->topX - priv->tvoffsetX;
-		v1 = v1 > priv->bottomY - priv->tvoffsetY ? priv->sizeY : 
-			v1 < priv->topY + priv->tvoffsetY ?
-				0 : v1 - priv->topY - priv->tvoffsetY;
+		v0 = v0 - priv->topX - priv->tvoffsetX;
+		v1 = v1 - priv->topY - priv->tvoffsetY;
 
 		int leftPadding = 0;
 		int topPadding = 0;				

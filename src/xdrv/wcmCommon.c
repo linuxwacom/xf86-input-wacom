@@ -70,6 +70,23 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	priv->sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 	priv->maxWidth = 0, priv->maxHeight = 0;
 	
+	if (priv->screen_no != -1)
+		priv->currentScreen = priv->screen_no;
+	else if (priv->currentScreen == -1)
+	{
+		/* Get the current screen that the cursor is in */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+		if (miPointerCurrentScreen())
+			priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+		if (miPointerGetScreen(local->dev))
+			priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
+	
+	}
+	if (priv->currentScreen == -1) /* tool on the tablet */
+		priv->currentScreen = 0;
+
 	if ( ((priv->twinview != TV_NONE) || /* TwinView & whole desktop */
 		/* stay in one screen at a time (multimonitor) */
 		!priv->common->wcmMMonitor || 
@@ -87,7 +104,11 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 		/* count the whole desktop when no specific screen is defined or 
 		 * tool is in relative mode
 		 */
-		for (i = 0; i < priv->numScreen; i++)
+		minX = priv->screenTopX[0];
+		minY = priv->screenTopY[0];
+		maxX = priv->screenBottomX[0];
+		maxY = priv->screenBottomY[0];
+		for (i = 1; i < priv->numScreen; i++)
 		{
 			if (priv->screenTopX[i] < minX)
 				minX = priv->screenTopX[i];
@@ -131,22 +152,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 
-	if (priv->screen_no != -1)
-		priv->currentScreen = priv->screen_no;
-	else if (priv->currentScreen == -1)
-	{
-		/* Get the current screen that the cursor is in */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-		if (miPointerCurrentScreen())
-			priv->currentScreen = miPointerCurrentScreen()->myNum;
-#else
-		if (miPointerGetScreen(local->dev))
-			priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
-#endif
-	
-	} else if (priv->currentScreen == -1) /* tool on the tablet */
-		priv->currentScreen = 0;
-
 	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
 	{
 		if (priv->twinview == TV_LEFT_RIGHT)
@@ -169,10 +174,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
 		return;
 
-	v0 = v0 > priv->bottomX ? priv->bottomX - priv->topX :
-		v0 < priv->topX ? 0 : v0 - priv->topX;
-	v1 = v1 > priv->bottomY ? priv->bottomY - priv->topY :
-		v1 < priv->topY ? 0 : v1 - priv->topY;
+	v0 = v0 - priv->topX;
+	v1 = v1 - priv->topY;
 
 	if (priv->screen_no == -1)
 	{
@@ -879,7 +882,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons));
 
-	if (x > priv->bottomX)
+/*	if (x > priv->bottomX)
 		x = priv->bottomX;
 	if (x < priv->topX)
 		x = priv->topX;
@@ -887,7 +890,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		y = priv->bottomY;
 	if (y < priv->topY)
 		y = priv->topY;
-	priv->currentX = x;
+*/	priv->currentX = x;
 	priv->currentY = y;
 
 	/* update the old records */
