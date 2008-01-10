@@ -1,4 +1,7 @@
-2008-01-01  Ping Cheng <pingc@wacom.com>
+2008-01-10  Ping Cheng <pingc@wacom.com>
+	* Label 0.7.9-6
+
+2008-01-02  Ping Cheng <pingc@wacom.com>
 	* Updated build and configure scripts (Magnus Vigerlöf)
 	* Support Xorg 7.3 with multimonitors
 	* Unified screen, tablet, and cordinate initialization
