@@ -102,6 +102,10 @@ WacomModule gWacomModule =
 	xf86WcmDevReverseConvert,
 };
 
+static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
+{
+}
+
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -542,6 +546,11 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init key class device\n");
 			return FALSE;
 		}
+	}
+
+	if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
+		ErrorF("unable to init led feedback device struct\n");
+		return FALSE;
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
