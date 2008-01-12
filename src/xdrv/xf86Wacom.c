@@ -79,11 +79,11 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
-static void xf86WcmInitialTVScreens(LocalDevicePtr local);
 extern Bool usbWcmInit(LocalDevicePtr pDev);
 extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
@@ -294,133 +294,6 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 
 		InitValuatorAxisStruct(local->dev, 1, topy, tabletSize, 
 			resolution, 0, resolution); 
-	}
-}
-
-/*****************************************************************************
- * xf86WcmInitialTVScreens
- ****************************************************************************/
-
-static void xf86WcmInitialTVScreens(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-
-	if (priv->twinview == TV_NONE)
-		return;
-
-	priv->numScreen = 2;
-
-	if (priv->twinview == TV_LEFT_RIGHT)
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-			priv->tvoffsetX = 60;
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
-			priv->tvResolution[1] = screenInfo.screens[0]->height;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-	else if (priv->twinview == TV_ABOVE_BELOW)
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-			priv->tvoffsetY = 60;
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width;
-			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-
-	/* initial screen info */
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = priv->tvResolution[0];
-	priv->screenBottomY[0] = priv->tvResolution[1];
-	if (priv->twinview == TV_ABOVE_BELOW)
-	{
-		priv->screenTopX[1] = 0;
-		priv->screenTopY[1] = priv->tvResolution[1];
-		priv->screenBottomX[1] = priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
-	}
-	if (priv->twinview == TV_LEFT_RIGHT)
-	{
-		priv->screenTopX[1] = priv->tvResolution[0];
-		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[3];
-	}
-
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialTVScreens for \"%s\" "
-		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
-		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
-		local->name, priv->screenTopX[0], priv->screenTopY[0],
-		priv->screenBottomX[0], priv->screenBottomY[0],
-		priv->screenTopX[1], priv->screenTopY[1],
-		priv->screenBottomX[1], priv->screenBottomY[1]));
-}
-
-/*****************************************************************************
- * xf86WcmInitialScreens
- ****************************************************************************/
-
-void xf86WcmInitialScreens(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i;
-
-	priv->tvoffsetX = 0;
-	priv->tvoffsetY = 0;
-	if (priv->twinview != TV_NONE)
-	{
-		xf86WcmInitialTVScreens(local);
-		return;
-	}
-
-	/* initial screen info */
-	priv->numScreen = screenInfo.numScreens;
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = 0;
-	priv->screenBottomY[0] = 0;
-	for (i=0; i<screenInfo.numScreens; i++)
-	{
-#ifdef WCM_XORG
-		priv->screenTopX[i] = dixScreenOrigins[i].x;
-		priv->screenTopY[i] = dixScreenOrigins[i].y;
-		priv->screenBottomX[i] = dixScreenOrigins[i].x;
-		priv->screenBottomY[i] = dixScreenOrigins[i].y;
-
-		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
-			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
-#else
-		if (i > 0)
-		{
-			/* only support left to right in this case */
-			priv->screenTopX[i] = priv->screenBottomX[i-1];
-			priv->screenTopY[i] = 0;
-			priv->screenBottomX[i] = priv->screenTopX[i];
-			priv->screenBottomY[i] = 0;
-		}
-#endif
-		priv->screenBottomX[i] += screenInfo.screens[i]->width;
-		priv->screenBottomY[i] += screenInfo.screens[i]->height;
-
-		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
-			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
-			i, priv->screenBottomX[i], i, priv->screenBottomY[i]));
 	}
 }
 
