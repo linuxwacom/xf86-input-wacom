@@ -879,11 +879,12 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (priv->flags & ABSOLUTE_FLAG)
 	{
+		int leftPadding = 0;
+		int topPadding = 0;				
+
 		v0 = v0 - priv->topX - priv->tvoffsetX;
 		v1 = v1 - priv->topY - priv->tvoffsetY;
 
-		int leftPadding = 0;
-		int topPadding = 0;				
 		if (priv->twinview == TV_NONE)
 		{
 			if (priv->screen_no == -1)
