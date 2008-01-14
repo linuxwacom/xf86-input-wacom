@@ -433,7 +433,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	CARD8 butmap[MAX_BUTTONS];
+	CARD8 butmap[MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
 
