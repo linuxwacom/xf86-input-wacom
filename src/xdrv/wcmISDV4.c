@@ -22,7 +22,7 @@
 #include "wcmFilter.h"
 
 static Bool isdv4Detect(LocalDevicePtr);
-static Bool isdv4Init(LocalDevicePtr);
+static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
@@ -64,18 +64,18 @@ static Bool isdv4Detect(LocalDevicePtr local)
  * isdv4Init --
  ****************************************************************************/
 
-static Bool isdv4Init(LocalDevicePtr local)
+static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 {
 	int err;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(1, priv->debugLevel, ErrorF("initializing ISDV4 tablet\n"));    
+	DBG(1, priv->debugLevel, ErrorF("initializing ISDV4 tablet\n"));
 
 	/* Try 19200 first */
 	if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 		return !Success;
-   
+
 	/* Send stop command to the tablet */
 	err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
@@ -83,12 +83,20 @@ static Bool isdv4Init(LocalDevicePtr local)
 		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
 		return !Success;
 	}
-
+    
 	/* Wait 250 mSecs */
 	if (xf86WcmWait(250))
 		return !Success;
 
-	return xf86WcmInitTablet(local,&isdv4General,"ISDV4", common->wcmVersion);
+	if(id)
+		strcpy(id, "ISDV4");
+	if(version)
+		*version = common->wcmVersion;
+
+	/*set the model */
+	common->wcmModel = &isdv4General;
+
+	return Success;
 }
 
 /*****************************************************************************
@@ -165,7 +173,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		if (common->wcmISDV4Speed != 38400)
 		{
 			common->wcmISDV4Speed = 38400;
-			return isdv4Init(local);
+			return isdv4Init(local, NULL, NULL);
 		}
 		else
 		{

@@ -1112,10 +1112,12 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceClass** ppDevCls;
+	char id[BUFFER_SIZE];
+	float version;
 
 	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
 
-	local->fd = xf86WcmOpenTablet(local);
+	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0)
 	{
 		ErrorF("Error opening %s : %s\n", common->wcmDevice,
@@ -1134,7 +1136,14 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	}
 
 	/* Initialize the tablet */
-	return common->wcmDevCls->Init(local);
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		xf86WcmInitTablet(local, id, version) != Success)
+	{
+		xf86CloseSerial(local->fd);
+		local->fd = -1;
+		return !Success;
+	}
+	return Success;
 }
 
 /* reset raw data counters for filters */
@@ -1602,13 +1611,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
  * xf86WcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
-	const char* id, float version)
+int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 {
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
 	int temp;
+	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
 	model->Initialize(common,id,version);
@@ -1699,9 +1708,6 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
 	/* start the tablet data */
 	if (model->Start && (model->Start(local) != Success))
 		return !Success;
-
-	/*set the model */
-	common->wcmModel = model;
 
 	return Success;
 }

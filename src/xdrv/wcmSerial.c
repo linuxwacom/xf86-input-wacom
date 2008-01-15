@@ -23,9 +23,9 @@
 
 /* Serial Support */
 static Bool serialDetect(LocalDevicePtr pDev);
-static Bool serialInit(LocalDevicePtr pDev);
+static Bool serialInit(LocalDevicePtr pDev, char* id, float *version);
 
-static int serialInitTablet(LocalDevicePtr local);
+static int serialInitTablet(LocalDevicePtr local, char* id, float *version);
 static void serialInitIntuos(WacomCommonPtr common, const char* id, float version);
 static void serialInitIntuos2(WacomCommonPtr common, const char* id, float version);
 static void serialInitCintiq(WacomCommonPtr common, const char* id, float version);
@@ -391,7 +391,7 @@ static Bool serialDetect(LocalDevicePtr pDev)
 	return 1;
 }
 
-static Bool serialInit(LocalDevicePtr local)
+static Bool serialInit(LocalDevicePtr local, char* id, float *version)
 {
 	int err;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -487,14 +487,7 @@ static Bool serialInit(LocalDevicePtr local)
 
 	xf86WcmFlushTablet(local->fd);
 
-	if (serialInitTablet(local) == !Success)
-	{
-		xf86WcmClose(local->fd);
-		local->fd = -1;
-		return !Success;
-	}
-
-	return Success;
+	return serialInitTablet(local, id, version);
 }
 
 /*****************************************************************************
@@ -502,37 +495,22 @@ static Bool serialInit(LocalDevicePtr local)
  *   Initialize the tablet
  ****************************************************************************/
 
-
-static int serialInitTablet(LocalDevicePtr local)
+static int serialInitTablet(LocalDevicePtr local, char* id, float *version)
 {
 	int loop, idx;
-	char id[BUFFER_SIZE];
-	float version;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common =	priv->common;
+	WacomCommonPtr common = priv->common;
 
-	WacomModelPtr model = NULL;
-
-	/* if model is forced, initialize */
-	if (model != NULL)
-	{
-		id[0] = '\0';
-		version = 0.0F;
-	}
-
-	/* otherwise, query and initialize */
-	else
-	{
 		DBG(2, priv->debugLevel, ErrorF("reading model\n"));
 		if (!xf86WcmSendRequest(local->fd, WC_MODEL, id, sizeof(id)))
 			return !Success;
 
 		DBG(2, priv->debugLevel, ErrorF("%s\n", id));
-  
+
 		if (xf86Verbose)
 			ErrorF("%s Wacom tablet model : %s\n",
 					XCONFIG_PROBED, id+2);
-    
+
 		/* Answer is in the form ~#Tablet-Model VRom_Version 
 		 * look for the first V from the end of the string
 		 * this seems to be the better way to find the version
@@ -542,43 +520,42 @@ static int serialInitTablet(LocalDevicePtr local)
 		*(id+idx) = '\0';
 
 		/* Extract version numbers */
-		sscanf(id+loop+1, "%f", &version);
+		sscanf(id+loop+1, "%f", version);
 
 		/* Detect tablet model based on identifier */
 		if (id[2] == 'G' && id[3] == 'D')
 		{
-			model = &serialIntuos;
+			common->wcmModel = &serialIntuos;
 			common->tablet_id = 0x20;
 		}
 		else if (id[2] == 'X' && id[3] == 'D')
 		{
-			model = &serialIntuos2;
+			common->wcmModel = &serialIntuos2;
 			common->tablet_id = 0x40;
 		}
 		else if ( (id[2] == 'P' && id[3] == 'L') ||
 			(id[2] == 'D' && id[3] == 'T') )
 		{
-			model = &serialCintiq;
+			common->wcmModel = &serialCintiq;
 			common->tablet_id = 0x30;
 		}
 		else if (id[2] == 'C' && id[3] == 'T')
 		{
-			model = &serialPenPartner;
+			common->wcmModel = &serialPenPartner;
 			common->tablet_id = 0x00;
 		}
 		else if (id[2] == 'E' && id[3] == 'T')
 		{
-			model = &serialGraphire;
+			common->wcmModel = &serialGraphire;
 			common->tablet_id = 0x10;
 		}
 		else
 		{
-			model = &serialProtocol4;
+			common->wcmModel = &serialProtocol4;
 			common->tablet_id = 0x03;
 		}
-	}
 
-	return xf86WcmInitTablet(local,model,id,version);
+	return Success;
 }
 
 static int serialParseGraphire(LocalDevicePtr local, const unsigned char* data)

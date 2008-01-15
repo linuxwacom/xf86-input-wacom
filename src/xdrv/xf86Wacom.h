@@ -435,7 +435,7 @@ struct _WacomChannel
 struct _WacomDeviceClass
 {
 	Bool (*Detect)(LocalDevicePtr local); /* detect device */
-	Bool (*Init)(LocalDevicePtr local);   /* initialize device */
+	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
 	void (*Read)(LocalDevicePtr local);   /* reads device */
 };
 
@@ -572,7 +572,6 @@ struct _WacomToolArea
 
 #define xf86WcmFlushTablet(fd) xf86FlushInput(fd)
 #define xf86WcmWaitForTablet(fd) xf86WaitForInput((fd), 1000000)
-#define xf86WcmOpenTablet(local) xf86OpenSerial((local)->options)
 #define xf86WcmSetSerialSpeed(fd,rate) xf86SetSerialSpeed((fd),(rate))
 
 #define xf86WcmRead(a,b,c) xf86ReadSerial((a),(b),(c))
@@ -613,7 +612,7 @@ LocalDevicePtr xf86WcmAllocatePad(void);
 Bool xf86WcmOpen(LocalDevicePtr local);
 
 /* common tablet initialization regime */
-int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model, const char* id, float version);
+int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);
 
 /* standard packet handler */
 void xf86WcmReadPacket(LocalDevicePtr local);
