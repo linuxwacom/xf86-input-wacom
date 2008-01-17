@@ -21,7 +21,7 @@
 #include "../include/Xwacom.h"
 
 /*
- #if XF86_VERSION_MAJOR < 4
+#if XF86_VERSION_MAJOR < 4
  *
  * There is a bug in XFree86 for combined left click and
  * other button. It'll lost left up when releases.
@@ -70,9 +70,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	priv->sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 	priv->maxWidth = 0, priv->maxHeight = 0;
 	
-	if (priv->screen_no != -1)
-		priv->currentScreen = priv->screen_no;
-	else if (priv->currentScreen == -1)
+	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->common->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
@@ -82,7 +80,22 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 		if (miPointerGetScreen(local->dev))
 			priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
 #endif
-	
+	}
+	else
+	{
+		if (priv->screen_no != -1)
+			priv->currentScreen = priv->screen_no;
+		else if (priv->currentScreen == -1)
+		{
+			/* Get the current screen that the cursor is in */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+			if (miPointerCurrentScreen())
+				priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+			if (miPointerGetScreen(local->dev))
+				priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
+		}
 	}
 	if (priv->currentScreen == -1) /* tool on the tablet */
 		priv->currentScreen = 0;
@@ -1055,6 +1068,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldStripY = 0;
 		priv->oldRot = 0;
 		priv->oldThrottle = 0;
+		priv->devReverseCount = 0;
 	}
 }
 

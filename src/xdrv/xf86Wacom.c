@@ -31,8 +31,11 @@
  * Frederic Lepied <lepied@xfree86.org>,
  * Brion Vibber <brion@pobox.com>,
  * Aaron Optimizer Digulla <digulla@hepe.com>,
- * Jonathan Layes <jonathan@layes.com>.
- * John Joganic <jej@j-arkadia.com>
+ * Jonathan Layes <jonathan@layes.com>,
+ * John Joganic <jej@j-arkadia.com>.
+ * 
+ * Support for hot plug-n-play by 
+ * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>.
  */
 
 /*
@@ -61,9 +64,10 @@
  * 2007-12-07 47-pc0.7.9-4 - Support Cintiq 12WX and Bamboo
  * 2007-12-20 47-pc0.7.9-5 - multimonitor support update
  * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
+ * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-6 $";
+static const char identification[] = "$Identification: 47-0.7.9-7 $";
 
 /****************************************************************************/
 
@@ -779,7 +783,17 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	temp = ((double)v1 * priv->factorY + 0.5);
 	*y += temp;
 
-	DBG(6, priv->debugLevel, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
+	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
+	if ((priv->screen_no != -1 || !priv->common->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG))
+	{
+		if (*x < 1) *x = 0;
+		if (*y < 1) *y = 0;
+		if (*x >= priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+			*x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen]-1;
+		if (*y >= priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+			*y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen]-1;
+		DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert restrict (x,y) to x=%d y=%d\n", *x, *y));
+	}
 	return TRUE;
 }
 
