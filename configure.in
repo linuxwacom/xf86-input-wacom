@@ -94,6 +94,7 @@ if test "$WCM_ISLINUX" != yes; then
 	WCM_PATCH_WACDUMP="(no USB)"
 	WCM_PATCH_WACOMDRV="(no USB)"
 else
+	AC_DEFINE(WCM_ENABLE_LINUXINPUT,,[Enable the Linux Input subsystem])
 	WCM_PATCH_WACDUMP=
 	WCM_PATCH_WACOMDRV=
 
@@ -294,9 +295,6 @@ else
 				WCM_MODULES="$WCM_MODULES hid.o"
 			fi
 		fi
-	fi
-	if test "$WCM_ENV_KERNEL" = yes; then
-		AC_DEFINE(WCM_ENABLE_LINUXINPUT,,[Enable the Linux Input subsystem])
 	fi
 fi
 
