@@ -206,6 +206,7 @@ struct _WacomDeviceRec
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmDevOpenCount;    /* Device open count */
+	int wcmInitKeyClassCount;    /* Device InitKeyClassDeviceStruct count */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */

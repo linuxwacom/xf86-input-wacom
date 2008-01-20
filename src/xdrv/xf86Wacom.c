@@ -386,48 +386,51 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 
-	if (nbkeys)
-	{
-		KeySymsRec wacom_keysyms;
-		KeySym keymap[256];
-
-		for (loop = 0; loop < nbkeys; loop++)
-			if ((priv->button [loop] & AC_TYPE) == AC_KEY)
-				keymap [loop] = priv->button [loop] & AC_CODE;
-			else
-				keymap [loop] = NoSymbol;
-		for(loop = nbkeys; loop<256; loop++)
-			keymap [loop] = NoSymbol;
-
-		/* There seems to be a long-standing misunderstanding about
-		 * how a keymap should be defined. All tablet drivers from
-		 * stock X11 source tree are doing it wrong: they leave first
-		 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
-		 * key code. But if you look at SetKeySymsMap() from
-		 * programs/Xserver/dix/devices.c you will see that
-		 * Xserver does not require first 8 keysyms; it supposes
-		 * that the map begins at minKeyCode.
-		 *
-		 * It could be that this assumption is a leftover from
-		 * earlier XFree86 versions, but that's out of our scope.
-		 * This also means that no keys on extended input devices
-		 * with their own keycodes (e.g. tablets) were EVER used.
-		 */
-		wacom_keysyms.map = keymap;
-		/* minKeyCode = 8 because this is the min legal key code */
-		wacom_keysyms.minKeyCode = 8;
-		wacom_keysyms.maxKeyCode = 255;
-		wacom_keysyms.mapWidth = 1;
-		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+	/* only initial KeyClass and LedFeedbackClass once */
+	if (!priv->wcmInitKeyClassCount)
+		if (nbkeys)
 		{
-			ErrorF("unable to init key class device\n");
+			KeySymsRec wacom_keysyms;
+			KeySym keymap[256];
+
+			for (loop = 0; loop < nbkeys; loop++)
+				if ((priv->button [loop] & AC_TYPE) == AC_KEY)
+					keymap [loop] = priv->button [loop] & AC_CODE;
+				else
+					keymap [loop] = NoSymbol;
+			for(loop = nbkeys; loop<256; loop++)
+				keymap [loop] = NoSymbol;
+
+			/* There seems to be a long-standing misunderstanding about
+			 * how a keymap should be defined. All tablet drivers from
+			 * stock X11 source tree are doing it wrong: they leave first
+			 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
+			 * key code. But if you look at SetKeySymsMap() from
+			 * programs/Xserver/dix/devices.c you will see that
+			 * Xserver does not require first 8 keysyms; it supposes
+			 * that the map begins at minKeyCode.
+			 *
+			 * It could be that this assumption is a leftover from
+			 * earlier XFree86 versions, but that's out of our scope.
+			 * This also means that no keys on extended input devices
+			 * with their own keycodes (e.g. tablets) were EVER used.
+			 */
+			wacom_keysyms.map = keymap;
+			/* minKeyCode = 8 because this is the min legal key code */
+			wacom_keysyms.minKeyCode = 8;
+			wacom_keysyms.maxKeyCode = 255;
+			wacom_keysyms.mapWidth = 1;
+			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+			{
+				ErrorF("unable to init key class device\n");
+				return FALSE;
+			}
+		}
+
+		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
+			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
-	}
-
-	if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
-		ErrorF("unable to init led feedback device struct\n");
-		return FALSE;
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
@@ -693,11 +696,13 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		 */
 		case DEVICE_INIT:
 			priv->wcmDevOpenCount = 0;
+			priv->wcmInitKeyClassCount = 0;
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, priv->debugLevel, ErrorF("xf86WcmProc INIT FAILED\n"));
 				return !Success;
 			}
+			priv->wcmInitKeyClassCount++;
 			priv->wcmDevOpenCount++;
 			break; 
 
