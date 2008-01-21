@@ -42,6 +42,9 @@ WacomDeviceClass* wcmDeviceClasses[] =
 	NULL
 };
 
+extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
+
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
@@ -554,18 +557,12 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_MODETOGGLE:
-		if (!mask)
-			break;
-
-		if (priv->flags & ABSOLUTE_FLAG)
+		if (mask)
 		{
-			priv->flags &= ~ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Relative");
-		}
-		else
-		{
-			priv->flags |= ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+			int mode = Absolute;
+			if (is_absolute)
+				mode = Relative;
+			xf86WcmDevSwitchModeCall(local, mode);
 		}
 		break;
 
@@ -895,15 +892,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons));
 
-/*	if (x > priv->bottomX)
-		x = priv->bottomX;
-	if (x < priv->topX)
-		x = priv->topX;
-	if (y > priv->bottomY)
-		y = priv->bottomY;
-	if (y < priv->topY)
-		y = priv->topY;
-*/	priv->currentX = x;
+	priv->currentX = x;
 	priv->currentY = y;
 
 	/* update the old records */
@@ -1769,7 +1758,10 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 	{
 		/* it does not need the offset if always map to a specific screen */
 		if (priv->screen_no == -1)
+		{
 			priv->tvoffsetX = 60;
+			priv->tvoffsetY = 0;
+		}
 
 		/* default resolution */
 		if(!priv->tvResolution[0])
@@ -1784,7 +1776,10 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 	{
 		/* it does not need the offset if always map to a specific screen */
 		if (priv->screen_no == -1)
+		{
+			priv->tvoffsetX = 0;
 			priv->tvoffsetY = 60;
+		}
 
 		/* default resolution */
 		if(!priv->tvResolution[0])
