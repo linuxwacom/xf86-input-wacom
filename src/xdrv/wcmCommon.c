@@ -566,6 +566,16 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		}
 		break;
 
+	case AC_DISPLAYTOGGLE:
+		if (mask)
+                {
+			int screen = priv->screen_no;
+			if (++screen >= priv->numScreen && priv->numScreen > 1)
+				screen = -1;
+			xf86WcmChangeScreen(local, screen);
+		}
+		break;
+
 	case AC_DBLCLICK:
 		/* Dynamically modify the button map as required --
 		 * to be moved in the place where button mappings are changed.
