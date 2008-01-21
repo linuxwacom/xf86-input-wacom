@@ -792,13 +792,26 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
 	if ((priv->screen_no != -1 || !priv->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG))
 	{
-		if (*x < 1) *x = 0;
-		if (*y < 1) *y = 0;
-		if (*x >= priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-			*x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen]-1;
-		if (*y >= priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-			*y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen]-1;
-		DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert restrict (x,y) to x=%d y=%d\n", *x, *y));
+		DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert restricted (%d,%d)", *x, *y));
+		if (priv->twinview == TV_NONE)
+		{
+			if (*x < 1) *x = 0;
+			if (*y < 1) *y = 0;
+			if (*x >= priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+				*x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen]-1;
+			if (*y >= priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+				*y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen]-1;
+		}
+		else
+		{
+			if (*x < priv->screenTopX[priv->currentScreen]+1) *x = priv->screenTopX[priv->currentScreen];
+			if (*y < priv->screenTopY[priv->currentScreen]+1) *y = priv->screenTopY[priv->currentScreen];
+			if (*x >= priv->screenBottomX[priv->currentScreen])
+				*x = priv->screenBottomX[priv->currentScreen]-1;
+			if (*y >= priv->screenBottomY[priv->currentScreen])
+				*y = priv->screenBottomY[priv->currentScreen]-1;
+		}
+		DBG(6, priv->debugLevel, ErrorF(" to x=%d y=%d\n", *x, *y));
 	}
 	return TRUE;
 }

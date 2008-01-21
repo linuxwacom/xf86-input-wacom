@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -498,53 +498,55 @@ static Bool serialInit(LocalDevicePtr local, char* id, float *version)
 static int serialInitTablet(LocalDevicePtr local, char* id, float *version)
 {
 	int loop, idx;
+	char getID[BUFFER_SIZE];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(2, priv->debugLevel, ErrorF("reading model\n"));
-	if (!xf86WcmSendRequest(local->fd, WC_MODEL, id, sizeof(id)))
+
+	if (!xf86WcmSendRequest(local->fd, WC_MODEL, getID, sizeof(getID)))
 		return !Success;
 
-	DBG(2, priv->debugLevel, ErrorF("%s\n", id));
+	DBG(2, priv->debugLevel, ErrorF("%s\n", getID));
 
 	if (xf86Verbose)
 		ErrorF("%s Wacom tablet model : %s\n",
-				XCONFIG_PROBED, id+2);
+				XCONFIG_PROBED, getID+2);
 
 	/* Answer is in the form ~#Tablet-Model VRom_Version 
 	 * look for the first V from the end of the string
 	 * this seems to be the better way to find the version
 	 * of the ROM */
-	for(loop=strlen(id); loop>=0 && *(id+loop) != 'V'; loop--);
-	for(idx=loop; idx<strlen(id) && *(id+idx) != '-'; idx++);
-	*(id+idx) = '\0';
+	for(loop=strlen(getID); loop>=0 && *(getID+loop) != 'V'; loop--);
+	for(idx=loop; idx<strlen(getID) && *(getID+idx) != '-'; idx++);
+	*(getID+idx) = '\0';
 
 	/* Extract version numbers */
-	sscanf(id+loop+1, "%f", version);
+	sscanf(getID+loop+1, "%f", version);
 
 	/* Detect tablet model based on identifier */
-	if (id[2] == 'G' && id[3] == 'D')
+	if (getID[2] == 'G' && getID[3] == 'D')
 	{
 		common->wcmModel = &serialIntuos;
 		common->tablet_id = 0x20;
 	}
-	else if (id[2] == 'X' && id[3] == 'D')
+	else if (getID[2] == 'X' && getID[3] == 'D')
 	{
 		common->wcmModel = &serialIntuos2;
 		common->tablet_id = 0x40;
 	}
-	else if ( (id[2] == 'P' && id[3] == 'L') ||
-		(id[2] == 'D' && id[3] == 'T') )
+	else if ( (getID[2] == 'P' && getID[3] == 'L') ||
+		(getID[2] == 'D' && getID[3] == 'T') )
 	{
 		common->wcmModel = &serialCintiq;
 		common->tablet_id = 0x30;
 	}
-	else if (id[2] == 'C' && id[3] == 'T')
+	else if (getID[2] == 'C' && getID[3] == 'T')
 	{
 		common->wcmModel = &serialPenPartner;
 		common->tablet_id = 0x00;
 	}
-	else if (id[2] == 'E' && id[3] == 'T')
+	else if (getID[2] == 'E' && getID[3] == 'T')
 	{
 		common->wcmModel = &serialGraphire;
 		common->tablet_id = 0x10;
@@ -554,6 +556,7 @@ static int serialInitTablet(LocalDevicePtr local, char* id, float *version)
 		common->wcmModel = &serialProtocol4;
 		common->tablet_id = 0x03;
 	}
+	sprintf(id, "%s", getID);
 
 	return Success;
 }

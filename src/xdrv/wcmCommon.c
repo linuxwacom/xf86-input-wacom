@@ -568,7 +568,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 	case AC_DISPLAYTOGGLE:
 		if (mask)
-                {
+		{
 			int screen = priv->screen_no;
 			if (++screen >= priv->numScreen && priv->numScreen > 1)
 				screen = -1;
