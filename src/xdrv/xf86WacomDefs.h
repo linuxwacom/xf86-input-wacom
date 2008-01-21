@@ -205,6 +205,7 @@ struct _WacomDeviceRec
 	int tvoffsetX;		/* X edge offset for TwinView setup */
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
+	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmDevOpenCount;    /* Device open count */
 	int wcmInitKeyClassCount;    /* Device InitKeyClassDeviceStruct count */
 
@@ -384,7 +385,6 @@ struct _WacomCommonRec
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	char * wcmEraserID;	     /* eraser associated with the stylus */
-	int wcmMMonitor;             /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */

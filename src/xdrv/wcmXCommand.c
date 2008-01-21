@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2007-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -264,9 +264,9 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) 
 			return BadValue;
-		else if (common->wcmMMonitor != value)
+		else if (priv->wcmMMonitor != value)
 		{
-			common->wcmMMonitor = value;
+			priv->wcmMMonitor = value;
 			if (value)
 				xf86ReplaceStrOption(local->options, "MMonitor", "on");
 			else
@@ -278,7 +278,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TPCBUTTON:
 		if ((value != 0) && (value != 1)) 
 			return BadValue;
-		else if (common->wcmMMonitor != value)
+		else if (priv->wcmMMonitor != value)
 		{
 			common->wcmTPCButton = value;
 			if (value)
@@ -818,7 +818,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_XYDEFAULT:
 		return -1;
 	    case XWACOM_PARAM_MMT:
-		return common->wcmMMonitor;
+		return priv->wcmMMonitor;
 	    case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButton;
 	    case XWACOM_PARAM_CURSORPROX:

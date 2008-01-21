@@ -70,7 +70,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	priv->sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 	priv->maxWidth = 0, priv->maxHeight = 0;
 	
-	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->common->wcmMMonitor)
+	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
@@ -102,7 +102,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 
 	if ( ((priv->twinview != TV_NONE) || /* TwinView & whole desktop */
 		/* stay in one screen at a time (multimonitor) */
-		!priv->common->wcmMMonitor || 
+		!priv->wcmMMonitor || 
 		/* always stay in the configured screen */
 		(screenInfo.numScreens > 1 && priv->screen_no != -1))  
 		 && (priv->flags & ABSOLUTE_FLAG) )
@@ -184,7 +184,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 	}
 
 	xf86WcmMappingFactor(local);
-	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
+	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
 		return;
 
 	v0 = v0 - priv->topX;

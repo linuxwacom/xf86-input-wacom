@@ -388,6 +388,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
+	{
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
@@ -789,7 +790,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	*y += temp;
 
 	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
-	if ((priv->screen_no != -1 || !priv->common->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG))
+	if ((priv->screen_no != -1 || !priv->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG))
 	{
 		if (*x < 1) *x = 0;
 		if (*y < 1) *y = 0;
