@@ -1,3 +1,9 @@
+2008-01-22  Ping Cheng <pingc@wacom.com>
+	* Updarted xsetwacom for Cintiq 12WX, Bamboo1, and BambooFun
+	* Regrouped the routines for coming Xorg 7.3 hot-plug support (Magnus Vigerlöf)
+	* refer to http://git.debian.org/?p=collab-maint/linux-wacom.git;a=summary for detailed changes
+	* Label 0.7.9-7
+
 2008-01-10  Ping Cheng <pingc@wacom.com>
 	* Label 0.7.9-6
 
