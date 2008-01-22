@@ -619,11 +619,10 @@ if test "$enable_libwacomxi" != no; then
 		WCM_TCLLIBS="libwacomxi.la"
 		WCM_TCLPKGS="pkgIndex.tcl"
 	fi
-	AM_CONDITIONAL(WACOMXI_INSTALL, true)
 else
 	AC_MSG_RESULT(no)
-	AM_CONDITIONAL(WACOMXI_INSTALL, false)
 fi
+AM_CONDITIONAL(WACOMXI_INSTALL, [test "$WCM_OPTION_LIBWACOMXI" = yes] )
 
 dnl =======================================================
 dnl Check for wacdump build
