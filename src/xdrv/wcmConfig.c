@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -170,6 +170,9 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->tvoffsetY = 0;			/* none Y edge offset for TwinView setup */
 	for (i=0; i<4; i++)
 		priv->tvResolution[i] = 0;	/* unconfigured twinview resolution */
+	priv->wcmMMonitor = 1;		/* enabled (=1) to support multi-monitor desktop. */
+						/* disabled (=0) when user doesn't want to move the */
+						/* cursor from one screen to another screen */
 
 	/* JEJ - throttle sampling code */
 	priv->throttleValue = 0;
@@ -198,9 +201,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmEraserID = 0;	/* eraser id associated with the stylus */
-	common->wcmMMonitor = 1;	/* enabled (=1) to support multi-monitor desktop. */
-					/* disabled (=0) when user doesn't want to move the */
-					/* cursor from one screen to another screen */
 	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
@@ -787,10 +787,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	/* Cursor stays in one monitor in a multimonitor setup */
-	if ( !common->wcmMMonitor )
+	if ( !priv->wcmMMonitor )
 	{
-		common->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
-		if ( !common->wcmMMonitor )
+		priv->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
+		if ( !priv->wcmMMonitor )
 			xf86Msg(X_CONFIG, "%s: Cursor will stay in one monitor \n", common->wcmDevice);
 	}
 

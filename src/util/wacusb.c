@@ -2,7 +2,7 @@
 ** wacusb.c
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2007 - Ping Cheng
+** Copyright (C) 2003 - 2008 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -251,12 +251,15 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "CTF-420-U", "Wacom Volito2 4x5", 2, 0x62 },
 		{ "CTF-220-U", "Wacom Volito2 2x3", 3, 0x63 },
 		{ "CTF-421-U", "Wacom PenPartner2", 4, 0x64 },
+		{ "CTF_430-U", "Wacom Bamboo1",     5, 0x69 },
 		{ NULL }
 	};
 
 	static USBSUBTYPE xBamboo[] =
 	{
 		{ "MTE_450", "Wacom Bamboo", 1, 0x65 },
+		{ "CTE_450", "Wacom BambooFun 4x5", 2, 0x17 },
+		{ "CTE_650", "Wacom BambooFun 6x8", 3, 0x18 },
 		{ NULL }
 	};
 
@@ -269,6 +272,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 	static USBSUBTYPE xCintiqV5[] =
 	{
 		{ "DTZ-21ux", "Wacom Cintiq 21UX", 1, 0x3F },
+		{ "DTZ-12wx", "Wacom Cintiq 12WX", 2, 0x6C },
 		{ NULL }
 	};
 

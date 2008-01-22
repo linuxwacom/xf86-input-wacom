@@ -46,7 +46,7 @@
 #endif
 
 static Bool usbDetect(LocalDevicePtr);
-Bool usbWcmInit(LocalDevicePtr pDev);
+Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
 
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
@@ -350,7 +350,7 @@ static Bool usbDetect(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(1, priv->debugLevel, ErrorF("usbDetect\n"));
-    
+
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 
 	if (err < 0)
@@ -462,17 +462,16 @@ static struct
 	{ 0xC6, 5080, 5080, &usbCintiqV5   }  /* Cintiq 12WX */ 
 };
 
-Bool usbWcmInit(LocalDevicePtr local)
+Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
 	short sID[4];
-	char id[BUFFER_SIZE];
-	WacomModelPtr model = NULL;
 	unsigned long keys[NBITS(KEY_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(1, priv->debugLevel, ErrorF("initializing USB tablet\n"));    
+	DBG(1, priv->debugLevel, ErrorF("initializing USB tablet\n"));
+	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
 	ioctl(local->fd, EVIOCGID, sID);
@@ -486,15 +485,15 @@ Bool usbWcmInit(LocalDevicePtr local)
 		for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
 			if (common->tablet_id == WacomModelDesc [i].model_id)
 			{
-				model = WacomModelDesc [i].model;
+				common->wcmModel = WacomModelDesc [i].model;
 				common->wcmResolX = WacomModelDesc [i].xRes;
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 	}
 
-	if (!model)
+	if (!common->wcmModel)
 	{
-		model = &usbUnknown;
+		common->wcmModel = &usbUnknown;
 		common->wcmResolX = common->wcmResolY = 1016;
 	}
 
@@ -527,7 +526,7 @@ Bool usbWcmInit(LocalDevicePtr local)
 
 	common->wcmFlags |= TILT_ENABLED_FLAG;
 
-	return xf86WcmInitTablet(local,model,id,0.0);
+	return Success;
 }
 
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
@@ -536,7 +535,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	common->wcmProtocolLevel = 5;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_INTUOS_DISTANCE; 
+			= PROXOUT_INTUOS_DISTANCE;
 	/* reinitialize max here since 0 is for Graphire series */
 	common->wcmMaxCursorDist = 256;
 
@@ -548,7 +547,7 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_GRAPHIRE_DISTANCE; 
+			= PROXOUT_GRAPHIRE_DISTANCE;
 }
 
 int usbWcmGetRanges(LocalDevicePtr local)
@@ -841,7 +840,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	{
 		event = common->wcmEvents + i;
 		DBG(11, common->debugLevel, ErrorF("usbParseChannel "
-			"event[%d]->type=%d code=%d value=%d\n", 
+			"event[%d]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value));
 
 		/* absolute events */

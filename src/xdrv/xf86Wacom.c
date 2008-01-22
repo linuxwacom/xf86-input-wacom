@@ -31,8 +31,11 @@
  * Frederic Lepied <lepied@xfree86.org>,
  * Brion Vibber <brion@pobox.com>,
  * Aaron Optimizer Digulla <digulla@hepe.com>,
- * Jonathan Layes <jonathan@layes.com>.
- * John Joganic <jej@j-arkadia.com>
+ * Jonathan Layes <jonathan@layes.com>,
+ * John Joganic <jej@j-arkadia.com>.
+ * 
+ * Support for hot plug-n-play by 
+ * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>.
  */
 
 /*
@@ -61,9 +64,10 @@
  * 2007-12-07 47-pc0.7.9-4 - Support Cintiq 12WX and Bamboo
  * 2007-12-20 47-pc0.7.9-5 - multimonitor support update
  * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
+ * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-6 $";
+static const char identification[] = "$Identification: 47-0.7.9-7 $";
 
 /****************************************************************************/
 
@@ -79,11 +83,11 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
-static void xf86WcmInitialTVScreens(LocalDevicePtr local);
 extern Bool usbWcmInit(LocalDevicePtr pDev);
 extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
@@ -101,6 +105,10 @@ WacomModule gWacomModule =
 	xf86WcmDevConvert,
 	xf86WcmDevReverseConvert,
 };
+
+static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
+{
+}
 
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
@@ -294,133 +302,6 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 }
 
 /*****************************************************************************
- * xf86WcmInitialTVScreens
- ****************************************************************************/
-
-static void xf86WcmInitialTVScreens(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-
-	if (priv->twinview == TV_NONE)
-		return;
-
-	priv->numScreen = 2;
-
-	if (priv->twinview == TV_LEFT_RIGHT)
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-			priv->tvoffsetX = 60;
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
-			priv->tvResolution[1] = screenInfo.screens[0]->height;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-	else if (priv->twinview == TV_ABOVE_BELOW)
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-			priv->tvoffsetY = 60;
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width;
-			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-
-	/* initial screen info */
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = priv->tvResolution[0];
-	priv->screenBottomY[0] = priv->tvResolution[1];
-	if (priv->twinview == TV_ABOVE_BELOW)
-	{
-		priv->screenTopX[1] = 0;
-		priv->screenTopY[1] = priv->tvResolution[1];
-		priv->screenBottomX[1] = priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
-	}
-	if (priv->twinview == TV_LEFT_RIGHT)
-	{
-		priv->screenTopX[1] = priv->tvResolution[0];
-		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[3];
-	}
-
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialTVScreens for \"%s\" "
-		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
-		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
-		local->name, priv->screenTopX[0], priv->screenTopY[0],
-		priv->screenBottomX[0], priv->screenBottomY[0],
-		priv->screenTopX[1], priv->screenTopY[1],
-		priv->screenBottomX[1], priv->screenBottomY[1]));
-}
-
-/*****************************************************************************
- * xf86WcmInitialScreens
- ****************************************************************************/
-
-void xf86WcmInitialScreens(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i;
-
-	priv->tvoffsetX = 0;
-	priv->tvoffsetY = 0;
-	if (priv->twinview != TV_NONE)
-	{
-		xf86WcmInitialTVScreens(local);
-		return;
-	}
-
-	/* initial screen info */
-	priv->numScreen = screenInfo.numScreens;
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = 0;
-	priv->screenBottomY[0] = 0;
-	for (i=0; i<screenInfo.numScreens; i++)
-	{
-#ifdef WCM_XORG
-		priv->screenTopX[i] = dixScreenOrigins[i].x;
-		priv->screenTopY[i] = dixScreenOrigins[i].y;
-		priv->screenBottomX[i] = dixScreenOrigins[i].x;
-		priv->screenBottomY[i] = dixScreenOrigins[i].y;
-
-		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
-			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
-#else
-		if (i > 0)
-		{
-			/* only support left to right in this case */
-			priv->screenTopX[i] = priv->screenBottomX[i-1];
-			priv->screenTopY[i] = 0;
-			priv->screenBottomX[i] = priv->screenTopX[i];
-			priv->screenBottomY[i] = 0;
-		}
-#endif
-		priv->screenBottomX[i] += screenInfo.screens[i]->width;
-		priv->screenBottomY[i] += screenInfo.screens[i]->height;
-
-		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
-			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
-			i, priv->screenBottomX[i], i, priv->screenBottomY[i]));
-	}
-}
-
-/*****************************************************************************
  * xf86WcmRegisterX11Devices --
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
@@ -429,7 +310,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	CARD8 butmap[MAX_BUTTONS];
+	CARD8 butmap[MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
 
@@ -505,41 +386,50 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 
-	if (nbkeys)
+	/* only initial KeyClass and LedFeedbackClass once */
+	if (!priv->wcmInitKeyClassCount)
 	{
-		KeySymsRec wacom_keysyms;
-		KeySym keymap[256];
-
-		for (loop = 0; loop < nbkeys; loop++)
-			if ((priv->button [loop] & AC_TYPE) == AC_KEY)
-				keymap [loop] = priv->button [loop] & AC_CODE;
-			else
-				keymap [loop] = NoSymbol;
-		for(loop = nbkeys; loop<256; loop++)
-			keymap [loop] = NoSymbol;
-
-		/* There seems to be a long-standing misunderstanding about
-		 * how a keymap should be defined. All tablet drivers from
-		 * stock X11 source tree are doing it wrong: they leave first
-		 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
-		 * key code. But if you look at SetKeySymsMap() from
-		 * programs/Xserver/dix/devices.c you will see that
-		 * Xserver does not require first 8 keysyms; it supposes
-		 * that the map begins at minKeyCode.
-		 *
-		 * It could be that this assumption is a leftover from
-		 * earlier XFree86 versions, but that's out of our scope.
-		 * This also means that no keys on extended input devices
-		 * with their own keycodes (e.g. tablets) were EVER used.
-		 */
-		wacom_keysyms.map = keymap;
-		/* minKeyCode = 8 because this is the min legal key code */
-		wacom_keysyms.minKeyCode = 8;
-		wacom_keysyms.maxKeyCode = 255;
-		wacom_keysyms.mapWidth = 1;
-		if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+		if (nbkeys)
 		{
-			ErrorF("unable to init key class device\n");
+			KeySymsRec wacom_keysyms;
+			KeySym keymap[256];
+
+			for (loop = 0; loop < nbkeys; loop++)
+				if ((priv->button [loop] & AC_TYPE) == AC_KEY)
+					keymap [loop] = priv->button [loop] & AC_CODE;
+				else
+					keymap [loop] = NoSymbol;
+			for(loop = nbkeys; loop<256; loop++)
+				keymap [loop] = NoSymbol;
+
+			/* There seems to be a long-standing misunderstanding about
+			 * how a keymap should be defined. All tablet drivers from
+			 * stock X11 source tree are doing it wrong: they leave first
+			 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
+			 * key code. But if you look at SetKeySymsMap() from
+			 * programs/Xserver/dix/devices.c you will see that
+			 * Xserver does not require first 8 keysyms; it supposes
+			 * that the map begins at minKeyCode.
+			 *
+			 * It could be that this assumption is a leftover from
+			 * earlier XFree86 versions, but that's out of our scope.
+			 * This also means that no keys on extended input devices
+			 * with their own keycodes (e.g. tablets) were EVER used.
+			 */
+			wacom_keysyms.map = keymap;
+			/* minKeyCode = 8 because this is the min legal key code */
+			wacom_keysyms.minKeyCode = 8;
+			wacom_keysyms.maxKeyCode = 255;
+			wacom_keysyms.mapWidth = 1;
+			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+			{
+				ErrorF("unable to init key class device\n");
+				return FALSE;
+			}
+		}
+
+		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
+			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
 	}
@@ -807,11 +697,13 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		 */
 		case DEVICE_INIT:
 			priv->wcmDevOpenCount = 0;
+			priv->wcmInitKeyClassCount = 0;
 			if (!xf86WcmDevOpen(pWcm))
 			{
 				DBG(1, priv->debugLevel, ErrorF("xf86WcmProc INIT FAILED\n"));
 				return !Success;
 			}
+			priv->wcmInitKeyClassCount++;
 			priv->wcmDevOpenCount++;
 			break; 
 
@@ -870,11 +762,12 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (priv->flags & ABSOLUTE_FLAG)
 	{
+		int leftPadding = 0;
+		int topPadding = 0;				
+
 		v0 = v0 - priv->topX - priv->tvoffsetX;
 		v1 = v1 - priv->topY - priv->tvoffsetY;
 
-		int leftPadding = 0;
-		int topPadding = 0;				
 		if (priv->twinview == TV_NONE)
 		{
 			if (priv->screen_no == -1)
@@ -896,7 +789,30 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	temp = ((double)v1 * priv->factorY + 0.5);
 	*y += temp;
 
-	DBG(6, priv->debugLevel, ErrorF("Wacom converted v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
+	DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y));
+	if ((priv->screen_no != -1 || !priv->wcmMMonitor) && (priv->flags & ABSOLUTE_FLAG))
+	{
+		DBG(6, priv->debugLevel, ErrorF("xf86WcmDevConvert restricted (%d,%d)", *x, *y));
+		if (priv->twinview == TV_NONE)
+		{
+			if (*x < 1) *x = 0;
+			if (*y < 1) *y = 0;
+			if (*x >= priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+				*x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen]-1;
+			if (*y >= priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+				*y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen]-1;
+		}
+		else
+		{
+			if (*x < priv->screenTopX[priv->currentScreen]+1) *x = priv->screenTopX[priv->currentScreen];
+			if (*y < priv->screenTopY[priv->currentScreen]+1) *y = priv->screenTopY[priv->currentScreen];
+			if (*x >= priv->screenBottomX[priv->currentScreen])
+				*x = priv->screenBottomX[priv->currentScreen]-1;
+			if (*y >= priv->screenBottomY[priv->currentScreen])
+				*y = priv->screenBottomY[priv->currentScreen]-1;
+		}
+		DBG(6, priv->debugLevel, ErrorF(" to x=%d y=%d\n", *x, *y));
+	}
 	return TRUE;
 }
 

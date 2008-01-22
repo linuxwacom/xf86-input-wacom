@@ -449,7 +449,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 		wacom_report_abs(wcombo, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		wacom_report_abs(wcombo, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
-		if((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) | 
+		if ((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) | 
 			data[2] | (data[3] & 0x1f) | data[4])
 			wacom_report_key(wcombo, wacom->tool[1], 1);
 		else
@@ -465,7 +465,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
                 return result-1;
 
 	/* Only large I3 and I1 & I2 support Lense Cursor */
- 	if((wacom->tool[idx] == BTN_TOOL_LENS) 
+ 	if ((wacom->tool[idx] == BTN_TOOL_LENS) 
 			&& ((wacom->features->type == INTUOS3) 
 		 	|| (wacom->features->type == INTUOS3S)))
 		return 0;

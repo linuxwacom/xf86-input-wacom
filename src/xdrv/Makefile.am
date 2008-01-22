@@ -43,17 +43,7 @@ XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \
 	wcmFilter.o
 
-xf86Wacom.o: xf86Wacom.c wcmFilter.h ../include/Xwacom.h
-wcmXCommand.o: wcmXCommand.c wcmFilter.h ../include/Xwacom.h
-wcmSerial.o: wcmSerial.c wcmSerial.h wcmFilter.h
-wcmISDV4.o: wcmISDV4.c wcmSerial.h wcmFilter.h
-wcmUSB.o: wcmUSB.c wcmFilter.h
-wcmCommon.o: wcmCommon.c
-wcmCompat.o: wcmCompat.c
-wcmConfig.o: wcmConfig.c wcmFilter.h 
-wcmFilter.o: wcmFilter.c wcmFilter.h
-
-$(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
+$(XF86OBJS):
 	$(CC) $(CFLAGS) $(WCM_DEPFLAGS) $(DLLOADER) -pipe $(WCM_CLEVEL) \
 		-pedantic -Wall -Wpointer-arith $(NO_MERGE_CONSTANTS) \
 		$(NO_STACK_PROTECTOR) -I$(srcdir) $(DRIVER_INCLUDES) \
@@ -61,9 +51,18 @@ $(XF86OBJS): xf86Wacom.h ../include/Xwacom.h Makefile
 		-o $@ -c $(srcdir)/$(subst .o,.c,$@)
 
 if WCM_DLLOADER
-wacom_drv.so: $(XF86OBJS)
+wacom_drv.so: .depend $(XF86OBJS)
 	$(CC) -shared -nostdlib -o wacom_drv.so $(XF86OBJS) -Bstatic -lgcc
 else
-wacom_drv.o: $(XF86OBJS)
+wacom_drv.o: .depend $(XF86OBJS)
 	$(LD) -r $(XF86OBJS) -o wacom_drv.o
 endif
+
+depend: .depend
+
+.depend: Makefile
+	@rm -f .depend
+	$(CC) -MM $(CFLAGS) $(DEPFLAGS) $(DRIVER_INCLUDES) $(XF86OBJS:%.o=%.c) > .depend
+
+-include .depend
+

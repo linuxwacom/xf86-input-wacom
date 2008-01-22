@@ -21,7 +21,7 @@
 #include "../include/Xwacom.h"
 
 /*
- #if XF86_VERSION_MAJOR < 4
+#if XF86_VERSION_MAJOR < 4
  *
  * There is a bug in XFree86 for combined left click and
  * other button. It'll lost left up when releases.
@@ -41,6 +41,9 @@ WacomDeviceClass* wcmDeviceClasses[] =
 	&gWacomSerialDevice,
 	NULL
 };
+
+extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 
 /*****************************************************************************
  * Static functions
@@ -70,9 +73,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	priv->sizeY = priv->bottomY - priv->topY - 2*priv->tvoffsetY;
 	priv->maxWidth = 0, priv->maxHeight = 0;
 	
-	if (priv->screen_no != -1)
-		priv->currentScreen = priv->screen_no;
-	else if (priv->currentScreen == -1)
+	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
@@ -82,14 +83,29 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 		if (miPointerGetScreen(local->dev))
 			priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
 #endif
-	
+	}
+	else
+	{
+		if (priv->screen_no != -1)
+			priv->currentScreen = priv->screen_no;
+		else if (priv->currentScreen == -1)
+		{
+			/* Get the current screen that the cursor is in */
+#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+			if (miPointerCurrentScreen())
+				priv->currentScreen = miPointerCurrentScreen()->myNum;
+#else
+			if (miPointerGetScreen(local->dev))
+				priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
+#endif
+		}
 	}
 	if (priv->currentScreen == -1) /* tool on the tablet */
 		priv->currentScreen = 0;
 
 	if ( ((priv->twinview != TV_NONE) || /* TwinView & whole desktop */
 		/* stay in one screen at a time (multimonitor) */
-		!priv->common->wcmMMonitor || 
+		!priv->wcmMMonitor || 
 		/* always stay in the configured screen */
 		(screenInfo.numScreens > 1 && priv->screen_no != -1))  
 		 && (priv->flags & ABSOLUTE_FLAG) )
@@ -171,7 +187,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 	}
 
 	xf86WcmMappingFactor(local);
-	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->common->wcmMMonitor)
+	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
 		return;
 
 	v0 = v0 - priv->topX;
@@ -541,18 +557,22 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_MODETOGGLE:
-		if (!mask)
-			break;
-
-		if (priv->flags & ABSOLUTE_FLAG)
+		if (mask)
 		{
-			priv->flags &= ~ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Relative");
+			int mode = Absolute;
+			if (is_absolute)
+				mode = Relative;
+			xf86WcmDevSwitchModeCall(local, mode);
 		}
-		else
+		break;
+
+	case AC_DISPLAYTOGGLE:
+		if (mask)
 		{
-			priv->flags |= ABSOLUTE_FLAG;
-			xf86ReplaceStrOption(local->options, "Mode", "Absolute");
+			int screen = priv->screen_no;
+			if (++screen >= priv->numScreen && priv->numScreen > 1)
+				screen = -1;
+			xf86WcmChangeScreen(local, screen);
 		}
 		break;
 
@@ -882,15 +902,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons));
 
-/*	if (x > priv->bottomX)
-		x = priv->bottomX;
-	if (x < priv->topX)
-		x = priv->topX;
-	if (y > priv->bottomY)
-		y = priv->bottomY;
-	if (y < priv->topY)
-		y = priv->topY;
-*/	priv->currentX = x;
+	priv->currentX = x;
 	priv->currentY = y;
 
 	/* update the old records */
@@ -1055,6 +1067,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldStripY = 0;
 		priv->oldRot = 0;
 		priv->oldThrottle = 0;
+		priv->devReverseCount = 0;
 	}
 }
 
@@ -1112,10 +1125,12 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceClass** ppDevCls;
+	char id[BUFFER_SIZE];
+	float version;
 
 	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
 
-	local->fd = xf86WcmOpenTablet(local);
+	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0)
 	{
 		ErrorF("Error opening %s : %s\n", common->wcmDevice,
@@ -1134,7 +1149,14 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	}
 
 	/* Initialize the tablet */
-	return common->wcmDevCls->Init(local);
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		xf86WcmInitTablet(local, id, version) != Success)
+	{
+		xf86CloseSerial(local->fd);
+		local->fd = -1;
+		return !Success;
+	}
+	return Success;
 }
 
 /* reset raw data counters for filters */
@@ -1602,13 +1624,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
  * xf86WcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
-	const char* id, float version)
+int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 {
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
 	int temp;
+	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
 	model->Initialize(common,id,version);
@@ -1700,9 +1722,6 @@ int xf86WcmInitTablet(LocalDevicePtr local, WacomModelPtr model,
 	if (model->Start && (model->Start(local) != Success))
 		return !Success;
 
-	/*set the model */
-	common->wcmModel = model;
-
 	return Success;
 }
 
@@ -1729,5 +1748,138 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 		/* scale back to wcmMaxZ */
 		pState->pressure = (p * pDev->common->wcmMaxZ) /
 			FILTER_PRESSURE_RES;
+	}
+}
+
+/*****************************************************************************
+ * xf86WcmInitialTVScreens
+ ****************************************************************************/
+
+static void xf86WcmInitialTVScreens(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+	if (priv->twinview == TV_NONE)
+		return;
+
+	priv->numScreen = 2;
+
+	if (priv->twinview == TV_LEFT_RIGHT)
+	{
+		/* it does not need the offset if always map to a specific screen */
+		if (priv->screen_no == -1)
+		{
+			priv->tvoffsetX = 60;
+			priv->tvoffsetY = 0;
+		}
+
+		/* default resolution */
+		if(!priv->tvResolution[0])
+		{
+			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
+			priv->tvResolution[1] = screenInfo.screens[0]->height;
+			priv->tvResolution[2] = priv->tvResolution[0];
+			priv->tvResolution[3] = priv->tvResolution[1];
+		}
+	}
+	else if (priv->twinview == TV_ABOVE_BELOW)
+	{
+		/* it does not need the offset if always map to a specific screen */
+		if (priv->screen_no == -1)
+		{
+			priv->tvoffsetX = 0;
+			priv->tvoffsetY = 60;
+		}
+
+		/* default resolution */
+		if(!priv->tvResolution[0])
+		{
+			priv->tvResolution[0] = screenInfo.screens[0]->width;
+			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
+			priv->tvResolution[2] = priv->tvResolution[0];
+			priv->tvResolution[3] = priv->tvResolution[1];
+		}
+	}
+
+	/* initial screen info */
+	priv->screenTopX[0] = 0;
+	priv->screenTopY[0] = 0;
+	priv->screenBottomX[0] = priv->tvResolution[0];
+	priv->screenBottomY[0] = priv->tvResolution[1];
+	if (priv->twinview == TV_ABOVE_BELOW)
+	{
+		priv->screenTopX[1] = 0;
+		priv->screenTopY[1] = priv->tvResolution[1];
+		priv->screenBottomX[1] = priv->tvResolution[2];
+		priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
+	}
+	if (priv->twinview == TV_LEFT_RIGHT)
+	{
+		priv->screenTopX[1] = priv->tvResolution[0];
+		priv->screenTopY[1] = 0;
+		priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
+		priv->screenBottomY[1] = priv->tvResolution[3];
+	}
+
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialTVScreens for \"%s\" "
+		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
+		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
+		local->name, priv->screenTopX[0], priv->screenTopY[0],
+		priv->screenBottomX[0], priv->screenBottomY[0],
+		priv->screenTopX[1], priv->screenTopY[1],
+		priv->screenBottomX[1], priv->screenBottomY[1]));
+}
+
+/*****************************************************************************
+ * xf86WcmInitialScreens
+ ****************************************************************************/
+
+void xf86WcmInitialScreens(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int i;
+
+	priv->tvoffsetX = 0;
+	priv->tvoffsetY = 0;
+	if (priv->twinview != TV_NONE)
+	{
+		xf86WcmInitialTVScreens(local);
+		return;
+	}
+
+	/* initial screen info */
+	priv->numScreen = screenInfo.numScreens;
+	priv->screenTopX[0] = 0;
+	priv->screenTopY[0] = 0;
+	priv->screenBottomX[0] = 0;
+	priv->screenBottomY[0] = 0;
+	for (i=0; i<screenInfo.numScreens; i++)
+	{
+#ifdef WCM_XORG
+		priv->screenTopX[i] = dixScreenOrigins[i].x;
+		priv->screenTopY[i] = dixScreenOrigins[i].y;
+		priv->screenBottomX[i] = dixScreenOrigins[i].x;
+		priv->screenBottomY[i] = dixScreenOrigins[i].y;
+
+		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
+			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
+			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
+#else
+		if (i > 0)
+		{
+			/* only support left to right in this case */
+			priv->screenTopX[i] = priv->screenBottomX[i-1];
+			priv->screenTopY[i] = 0;
+			priv->screenBottomX[i] = priv->screenTopX[i];
+			priv->screenBottomY[i] = 0;
+		}
+#endif
+		priv->screenBottomX[i] += screenInfo.screens[i]->width;
+		priv->screenBottomY[i] += screenInfo.screens[i]->height;
+
+		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
+			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
+			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
+			i, priv->screenBottomX[i], i, priv->screenBottomY[i]));
 	}
 }

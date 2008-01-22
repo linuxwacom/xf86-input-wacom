@@ -1,6 +1,6 @@
 /*
  * Copyright 2003 by John Joganic <john@joganic.com>
- * Copyright 2003 - 2007 by Ping Cheng <pingc@wacom.com> 
+ * Copyright 2003 - 2008 by Ping Cheng <pingc@wacom.com> 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,6 +152,7 @@
 #define AC_KEY              0x00010000	/* Emit key events */
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
 #define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
+#define AC_DISPLAYTOGGLE    0x00040000 /* Toggle among screens */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
 #define AC_NUM_KEYS         0x0ff00000  /* The mask to isolate number of keys to send */
 #define AC_CORE             0x10000000	/* Always emit a core event */

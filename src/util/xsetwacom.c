@@ -2,7 +2,7 @@
 ** xsetwacom.c
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2007 - Ping Cheng
+** Copyright (C) 2004-2008 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -31,10 +31,11 @@
 **   2007-05-18 0.1.2 - PC - Support DebugLevel options
 **   2007-06-05 0.1.3 - PC - Support Suppress and TwinView options
 **   2007-07-24 0.1.4 - PC - Support Screen_No option
+**   2008-01-17 0.1.5 - PC - Add DISPLAYTOGGLE command
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.4"
+#define XSETWACOM_VERSION "0.1.5"
 
 #include "../include/util-config.h"
 
@@ -695,7 +696,8 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tKEY: Emit a key event\n"
 		"\tBUTTON: Emit a button event\n"
 		"\tDBLCLICK: Emit a double-click button event\n"
-		"\tMODETOGGLE: Toggle absolute/relative tablet mode\n"
+		"\tMODETOGGLE: Toggle absolute/relative tablet mode\n");
+	printf ("\tDISPLAYTOGGLE: Toggle cursor movement among screens\n"
 		"  Modifier: use \"xsetwacom list mod\"\n"
 		"\tto see a list of modifiers and specific keys\n"
 		"  CODE: Button number if emit a button event \n"
@@ -989,7 +991,7 @@ static int Set(WACOMCONFIG * hConfig, char** argv)
 static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 			  int disperr, int valu)
 {
-	int value, sl, i;
+	int value = 0, sl = 0, i = 0;
         char strval [200] = "";
 	unsigned keys[256];
 	if (WacomConfigGetRawParam (hDev, p->nParamID, &value, valu, keys))
@@ -1035,17 +1037,20 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "CORE ");
 		switch (value & AC_TYPE)
 		{
-		case AC_BUTTON:
+		    case AC_BUTTON:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "BUTTON ");
 			break;
-		case AC_KEY:
+		    case AC_KEY:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "KEY ");
 			break;
-		case AC_MODETOGGLE:
+		    case AC_MODETOGGLE:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "MODETOGGLE ");
 			break;
-		case AC_DBLCLICK:
+		    case AC_DBLCLICK:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "DBLCLICK ");
+			break;
+		    case AC_DISPLAYTOGGLE:
+			sl += snprintf (strval + sl, sizeof (strval) - sl, "DISPLAYTOGGLE ");
 			break;
 		}
 		if ((value & AC_TYPE) != AC_KEY)
@@ -1117,7 +1122,8 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 	default:
 		if ( ((value & AC_TYPE) != AC_KEY) &&  
 			((value & AC_TYPE) != AC_MODETOGGLE) &&
-			((value & AC_TYPE) != AC_DBLCLICK) )
+			((value & AC_TYPE) != AC_DBLCLICK) &&
+			((value & AC_TYPE) != AC_DISPLAYTOGGLE) )
 			printf ("%d\n", value);
 		else
 			printf ("%s\n", strval);
