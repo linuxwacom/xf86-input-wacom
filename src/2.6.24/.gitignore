@@ -1,0 +1,4 @@
+# Lines starting with '#' are considered comments.
+# Ignore files that are copied from other directories
+/wacom_wac.[ch]
+/wacom.h
