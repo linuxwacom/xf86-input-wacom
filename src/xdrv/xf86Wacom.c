@@ -260,7 +260,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			topx = priv->topX - priv->tvoffsetX;
 
 		resolution = common->wcmResolX;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx;
@@ -287,7 +287,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			topy = priv->topY - priv->tvoffsetY;
 
 		resolution = common->wcmResolY;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy;

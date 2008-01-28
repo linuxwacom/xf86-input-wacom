@@ -53,4 +53,7 @@
 /* The xserver have no wraps around libc-functions */
 #undef WCM_NO_LIBCWRAPPER
 
+/* Some X.org versions require that the events are scaled to screen size */
+#undef WCM_XORG_TABLET_SCALING
+
 #endif /* _XDRV_CONFIG_H_ */

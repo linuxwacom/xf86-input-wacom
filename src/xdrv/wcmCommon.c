@@ -971,7 +971,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (!is_absolute)
 				x *= priv->factorY / priv->factorX;
 
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 			 * for coordinate conversion at the moment */
 			/* The +-0.4 is to increase the sensitivity in relative mode.
