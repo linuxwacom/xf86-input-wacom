@@ -914,7 +914,7 @@ proc expressKeys { } {
 		    $i == [expr ($startS+3)] } { 
 		set t2 [expr ($numButton+1)/2+2]
 	    }
-	    if { [expr ($i - $s1) > 1] } {
+	    if { [expr ($i - $startS) > 1] } {
 		set t1 2
 	    }
 	} else {
