@@ -22,7 +22,8 @@ static int usb_get_report(struct usb_interface *intf, unsigned char type,
 {
 	return usb_control_msg(interface_to_usbdev(intf),
 		usb_rcvctrlpipe(interface_to_usbdev(intf), 0),
-		USB_REQ_GET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
+		USB_REQ_GET_REPORT,
+		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
 		(type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
 		buf, size, 100);
 }
@@ -32,8 +33,9 @@ static int usb_set_report(struct usb_interface *intf, unsigned char type,
 {
 	return usb_control_msg(interface_to_usbdev(intf),
 		usb_sndctrlpipe(interface_to_usbdev(intf), 0),
-                USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
-                (type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
+		USB_REQ_SET_REPORT,
+		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
+		(type << 8) + id, intf->altsetting[0].desc.bInterfaceNumber,
 		buf, size, 1000);
 }
 
@@ -285,11 +287,10 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 	/* Ask the tablet to report tablet data. Repeat until it succeeds */
 	do {
-		rep_data[0] = 2;
-		rep_data[1] = 2;
-		usb_set_report(intf, 3, 2, rep_data, 2);
-		usb_get_report(intf, 3, 2, rep_data, 2);
-	} while (rep_data[1] != 2 && limit++ < 5);
+		rep_data[0] = rep_data[1] = 2;
+		if(usb_set_report(intf, 3, 2, rep_data, 2) >= 0)
+			error = usb_get_report(intf, 3, 2, rep_data, 2);
+	} while ((error <= 0 || rep_data[1] != 2) && limit++ < 5);
 
 	usb_set_intfdata(intf, wacom);
 	return 0;
