@@ -134,7 +134,11 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	for (i=0; i<hConfig->nDevCnt; ++i)
 	{
 		info = hConfig->pDevs + i;
+#ifndef WCM_ISXEXTENSIONPOINTER
+		if (info->use != IsXExtensionDevice) continue;
+#else
 		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer) continue;
+#endif
 		if (!info->num_classes) continue;
 		nSize += sizeof(WACOMDEVICEINFO);
 		nSize += strlen(info->name) + 1;
@@ -155,7 +159,11 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	{
 		info = hConfig->pDevs + i;
 		/* ignore non-extension devices */
+#ifndef WCM_ISXEXTENSIONPOINTER
+		if (info->use != IsXExtensionDevice) continue;
+#else
 		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer) continue;
+#endif
 		/* ignore uninitialized tools  */
 		if (!info->num_classes) continue;
 		/* copy name */

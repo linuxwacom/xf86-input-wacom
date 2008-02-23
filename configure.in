@@ -462,6 +462,23 @@ int main(int argc, char** argv) {return 0;}
 			AC_DEFINE(WCM_XORG_TABLET_SCALING,1,
 				[Some X.org versions require that the events are scaled to screen size])
 		fi
+		AC_MSG_CHECKING([if Xorg SDK defines IsXExtensionPointer])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE(, [
+#include <X11/extensions/XI.h>
+#ifndef IsXExtensionPointer
+# error "X.org SDK does not define IsXExtensionPointer"
+#endif
+int main(int argc, char** argv) {return 0;}
+], [WCM_ISXEXTENSIONPOINTER=yes], [WCM_ISXEXTENSIONPOINTER=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_ISXEXTENSIONPOINTER)
+		if test "$WCM_ISXEXTENSIONPOINTER" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS IsXExtensionPointer"
+			AC_DEFINE(WCM_ISXEXTENSIONPOINTER,1,
+				[IsXExtensionPointer is only defined in later X.org releases])
+		fi
 
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
 		case "$WCM_XORGSDK_VER" in
