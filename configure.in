@@ -449,8 +449,8 @@ if test "$WCM_ENV_XFREE86" != yes; then
 #include <xorgVersion.h>
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 4, 0, 0, 0)
 # error "X.org < 1.4 doesn't need rescaling code"
-#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 5, 0, 0, 0)
-# error "X.org >= 1.5 doesn't need rescaling code"
+#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 4, 99, 2, 0)
+# error "X.org >= 1.4.99.2 doesn't need rescaling code"
 #endif
 int main(int argc, char** argv) {return 0;}
 ], [WCM_TABLET_SCALING=yes], [WCM_TABLET_SCALING=no])
