@@ -1,3 +1,9 @@
+2008-02-23  Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
+	* The rescaling patch is now in X.org master database
+	* Updated configure.in
+	* Added 2.6.24 support
+	* Updated kernel 2.4 make file
+
 2008-01-22  Ping Cheng <pingc@wacom.com>
 	* Updarted xsetwacom for Cintiq 12WX, Bamboo1, and BambooFun
 	* Regrouped the routines for coming Xorg 7.3 hot-plug support (Magnus Vigerlöf)
