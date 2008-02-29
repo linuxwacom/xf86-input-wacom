@@ -439,7 +439,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 		wacom_report_abs(wcombo, ABS_RX, ((data[1] & 0x1f) << 8) | data[2]);
 		wacom_report_abs(wcombo, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
-		if((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) |
+		if ((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) |
 			data[2] | (data[3] & 0x1f) | data[4])
 			wacom_report_key(wcombo, wacom->tool[1], 1);
 		else
@@ -455,7 +455,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
                 return result-1;
 
 	/* Only large I3 and I1 & I2 support Lense Cursor */
- 	if((wacom->tool[idx] == BTN_TOOL_LENS) 
+ 	if ((wacom->tool[idx] == BTN_TOOL_LENS) 
 			&& ((wacom->features->type == INTUOS3) 
 		 	|| (wacom->features->type == INTUOS3S)))
 		return 0;
@@ -649,6 +649,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos3 6x11",  10, 54204, 31750, 1023, 63, INTUOS3 },
 	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 63, INTUOS3S },
 	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 63, CINTIQ },
+	{ "Wacom Cintiq 20WSX",  10, 86680, 54180, 1023, 63, WACOM_BEE },
 	{ "Wacom Cintiq 12WX",   10, 53020, 33440, 1023, 63, WACOM_BEE },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
 	{ }
@@ -702,6 +703,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB5) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xB7) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC5) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC6) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ }

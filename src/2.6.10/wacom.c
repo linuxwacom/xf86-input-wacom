@@ -9,7 +9,7 @@
  *  Copyright (c) 2000 Daniel Egger		<egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied		<flepied@mandrakesoft.com>
  *  Copyright (c) 2004 Panagiotis Issaris	<panagiotis.issaris@mech.kuleuven.ac.be>
- *  Copyright (c) 2002-2007 Ping Cheng		<pingc@wacom.com>
+ *  Copyright (c) 2002-2008 Ping Cheng		<pingc@wacom.com>
  *
  *  ChangeLog:
  *      v0.1 (vp)  - Initial release
@@ -66,6 +66,7 @@
  *    v1.40-2.6.10-pc-0.9 - Support Intuos outbound tracking
  *    v1.40-2.6.10-pc-0.10 - Added Bamboo
  *    v1.40-2.6.10-pc-0.11 - added Bamboo1, Bamboo Fun, and Hummingbird
+ *    v1.40-2.6.10-pc-0.12 - Added Cintiq 20WSX
  */
 
 /*
@@ -87,7 +88,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.11"
+#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.12"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -891,6 +892,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 63, INTUOS3S,   wacom_intuos_irq },
 	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 63, CINTIQ,     wacom_intuos_irq },
 	{ "Wacom DTF720",         8,  6858,  5506,  511,  0, PL,	 wacom_pl_irq },
+	{ "Wacom Cintiq 20WSX",  10, 86680, 54180, 1023, 63, BEE,	 wacom_intuos_irq },
 	{ "Wacom Cintiq 12WX",   10, 53020, 33440, 1023, 63, BEE,        wacom_intuos_irq },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS,     wacom_intuos_irq },
  	{ }
@@ -944,6 +946,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC5) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC6) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x47) },
 	{ }

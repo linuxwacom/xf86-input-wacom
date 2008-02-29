@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -459,6 +459,7 @@ static struct
 	{ 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
 
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
+	{ 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */ 
 	{ 0xC6, 5080, 5080, &usbCintiqV5   }  /* Cintiq 12WX */ 
 };
 

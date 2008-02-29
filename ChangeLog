@@ -1,3 +1,8 @@
+2008-02-28  Ping Cheng <pingc@wacom.com>
+	* Added support for Cintiq 20WSX
+	* Fixed Bug 1875050 (Kovid Goyal)
+	* Incorporated patch 1901778 (Steven Seed)
+
 2008-02-23  Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
 	* The rescaling patch is now in X.org master database
 	* Updated configure.in

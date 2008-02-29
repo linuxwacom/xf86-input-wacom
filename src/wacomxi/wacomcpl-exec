@@ -52,7 +52,8 @@ set showHelp 0
 set modeToggleB 33
 set ignoreButton 34
 set doubleClickB 35
-set keystrokeB 36
+set displayToggleB 36
+set keystrokeB 37
 
 
 proc updateCurrentScreenInfo {} {
@@ -337,8 +338,8 @@ proc disableButtons {} {
 }
 
 proc getDeviceOptionProc { dev i } {
-    global getOption getOptionDefault Option oldKeys spName numButton 
-    global modeToggleB ignoreButton doubleClickB keystrokeB numStrips
+    global getOption getOptionDefault Option oldKeys spName numButton modeToggleB
+    global displayToggleB ignoreButton doubleClickB keystrokeB numStrips
 
     for { set j 1 } { $j < [ expr $i+1 ] } { incr j 1 } {
 	set value [ exec xsetwacom get $dev $Option($j) ] 
@@ -377,6 +378,7 @@ proc getDeviceOptionProc { dev i } {
 		}
 	    }
 	    set getOption($dev,$Option($j)) $value
+	    set getOptionDefault($dev,$Option($j)) $value1
 	    if { $match } {
 		if { ($value > $doubleClickB) || ($value == 0) } {
 		    if { ![string compare -nocase -length 8 DBLCLICK $value ] } {
@@ -389,12 +391,17 @@ proc getDeviceOptionProc { dev i } {
 		    if { ![string compare -nocase -length 10 MODETOGGLE $value ] } {
 			set getOption($dev,$Option($j)) $modeToggleB
 		    }
+		    if { ![string compare -nocase -length 13 DISPLAYTOGGLE $value ] } {
+			set getOption($dev,$Option($j)) $displayToggleB
+		    }
 		    if { $value == 0 } {
 			set getOption($dev,$Option($j)) $ignoreButton
 		    }
 		}
+		if { $value == 0 } {
+		    set getOptionDefault($dev,$Option($j)) $ignoreButton
+		}
 	    }
-	    set getOptionDefault($dev,$Option($j)) $value1
 	}
     }
 }
@@ -558,7 +565,8 @@ proc displayScreenList { dev } {
 proc updateButton {} {
     global device getDeviceModel sm getOption spName isLCD
     global dm currentW oldKeys numButton cKeys numStrips startS
-    global modeToggleB ignoreButton doubleClickB keystrokeB
+    global modeToggleB ignoreButton doubleClickB keystrokeB 
+    global displayToggleB
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
@@ -590,6 +598,9 @@ proc updateButton {} {
 	    "Mode Toggle"
 		{ set j $modeToggleB
 		 set v "ModeToggle 1" }
+	    "Display Toggle"
+		{ set j $displayToggleB
+		 set v "DisplayToggle 1" }
 	    "KeyStroke"
 		{ set j $keystrokeB 
 		 set v $cKeys($spName($k)) 
@@ -762,17 +773,12 @@ proc initialButton {} {
 
 proc displayMode {} {
     global device getDeviceModel sm smv
-    global dmv dm getOption currentW
+    global dmv dm getOption currentW isLCD
 
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
-    if { ( !(($model >= 48 && $model < 64)  \
-	|| ($model >= 192 && $model < 196)  \
-		|| ($model == 63) \
-		|| ($model == 144) \
-		|| ($model == 198)) ) \
-	    && [ string compare $type "pad" ]  } { 
+    if { !$isLCD($model) && [ string compare $type "pad" ]  } { 
  	set dmv $dm([ expr $getOption($device,Mode)+1 ])
 	tk_optionMenu $currentW.f.mode dmv $dm(1) $dm(2)
 	label $currentW.f.modeL -text "Positioning Mode: "
@@ -800,7 +806,7 @@ proc displaySubWindow { okF deF initial winID cbutton kcurrent} {
 	set currentW .allothers
     }
     toplevel $currentW
-    wm geometry $currentW =650x300
+    wm geometry $currentW =650x425
     wm title $currentW $wName($winID)
     wm transient $currentW .
     wm state $currentW normal
@@ -875,7 +881,7 @@ proc expressKeys { } {
     global db11 db12 db13 db14 startS
     global currentW device numButton spName numStrips
     global Option getOption getDeviceModel cKeys oldKeys 
-    global doubleClickB ignoreButton modeToggleB keystrokeB
+    global displayToggleB ignoreButton keystrokeB
     global numPadRings numPadStrips numPadAbsW numPadRelW
 
     set name(1) "Wheel Up"
@@ -900,9 +906,9 @@ proc expressKeys { } {
 	    set cKeys($Option($i)) ""
 	    set oldKeys($Option($i)) ""
 	}
-	set bmenu [ tk_optionMenu $currentW.f.$cur db$cur \
-	    $db(1) $db(2) $db(3) $db(4) $db(5) $db($ignoreButton) ]
-	$bmenu insert 6 radiobutton -label "$db($keystrokeB)" \
+	set bmenu [ tk_optionMenu $currentW.f.$cur db$cur $db(1) $db(2) \
+	    $db(3) $db(4) $db(5) $db($displayToggleB) $db($ignoreButton) ]
+	$bmenu insert 8 radiobutton -label "$db($keystrokeB)" \
 	    -variable menvar -command "displaySubWindow \
 	    updateKeys 0 initialKeys 5 $cur $curOption"
 
@@ -931,7 +937,7 @@ proc addMenu { curb } {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10 
     global db11 db12 db13 db14 currentW 
     global getOption getDeviceModel cKeys oldKeys device spName
-    global doubleClickB ignoreButton modeToggleB keystrokeB
+    global doubleClickB displayToggleB ignoreButton modeToggleB keystrokeB
 
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
@@ -953,12 +959,13 @@ proc addMenu { curb } {
 
     if { [string compare $type "pad"] } {
 	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
-		$db(3) $db(4) $db(5) $db($doubleClickB) $db($modeToggleB) $db($ignoreButton) ]
-	set i 8
+		$db(3) $db(4) $db(5) $db($doubleClickB) $db($modeToggleB) \
+		$db($displayToggleB) $db($ignoreButton) ]
+	set i 9
     } else {
 	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
-		$db(3) $db(4) $db(5) $db($ignoreButton) ]
-	set i 6
+		$db(3) $db(4) $db(5) $db($displayToggleB) $db($ignoreButton) ]
+	set i 7
     }
 
     set i [expr ($i+1)]
@@ -1080,7 +1087,9 @@ proc initialTip {} {
 
     set Option(1) "PressCurve"
     set Option(2) "ClickForce"
-    getDeviceOptionProc $device 2
+    set Option(3) "RawSample"
+    set Option(4) "Suppress"
+    getDeviceOptionProc $device 4
 
     frame $currentW.f.group -bd 10 -bg beige -width 150 -height 150
     label $currentW.f.group.groupl1 -text "Tip Sensitivity: "
@@ -1106,6 +1115,28 @@ proc initialTip {} {
 		-from 1 -to 21
     grid $currentW.f.group.scale2 -row 3 -column 8
     $currentW.f.group.scale2 set $getOption($device,ClickForce)
+
+    label $currentW.f.group.groupl3 -text "Smoothness: "
+    grid $currentW.f.group.groupl3 -row 5 -column 0
+    label $currentW.f.group.l6 -text "Low"
+    grid $currentW.f.group.l6 -row 6 -column 7
+    label $currentW.f.group.l7 -text "High"
+    grid $currentW.f.group.l7 -row 6 -column 9
+    scale $currentW.f.group.scale3 -orient horizontal -length 100 \
+               -from 1 -to 20
+    grid $currentW.f.group.scale3 -row 5 -column 8
+    $currentW.f.group.scale3 set $getOption($device,RawSample)
+
+    label $currentW.f.group.groupl4 -text "Suppress Points: "
+    grid $currentW.f.group.groupl4 -row 7 -column 0
+    label $currentW.f.group.l8 -text "Low"
+    grid $currentW.f.group.l8 -row 8 -column 7
+    label $currentW.f.group.l9 -text "High"
+    grid $currentW.f.group.l9 -row 8 -column 9
+    scale $currentW.f.group.scale4 -orient horizontal -length 100 \
+               -from 1 -to 20
+    grid $currentW.f.group.scale4 -row 7 -column 8
+    $currentW.f.group.scale4 set $getOption($device,Suppress)
 
     grid $currentW.f.group -row 0 -column 5 
 }
@@ -1133,6 +1164,11 @@ proc updateTip {} {
     set getOption($device,PressCurve) $curve
     updateXinitrc $device ClickForce [ $currentW.f.group.scale2 get ]
     set getOption($device,ClickForce) [ $currentW.f.group.scale2 get ]
+    updateXinitrc $device RawSample [ $currentW.f.group.scale3 get ]
+    set getOption($device,RawSample) [ $currentW.f.group.scale3 get ]
+    updateXinitrc $device Suppress [ $currentW.f.group.scale4 get ]
+    set getOption($device,Suppress) [ $currentW.f.group.scale4 get ]
+
     closeSubWindow
 }
 
@@ -1380,7 +1416,7 @@ proc updateKeys {} {
     global device oldKeys currentb cKeys spName currentW
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
     global db11 db12 db13 db14 currentk
-    global doubleClickB ignoreButton modeToggleB keystrokeB
+    global ignoreButton keystrokeB
 
     set keys [ $currentW.f.panelt.input get 1.0 end ]
 
@@ -1538,7 +1574,11 @@ proc updateModelInfo { } {
     set numPadButtons(183) 4
     set numPadStrips(183) 1
 
-    # Hummingbird
+    # Cintiq 20WSX
+    set numPadButtons(197) 10
+    set numPadStrips(197) 2
+
+    # Hummingbird (Cintiq 12WX)
     set numPadButtons(198) 10
     set numPadStrips(198) 2
 
@@ -1557,7 +1597,8 @@ proc createControls { } {
     global numScreens currentScreen cKeys spName
     global desktopHeight desktopWidth oldKeys numStrips
     global workingTags db dm sm wName bName numButton
-    global doubleClickB ignoreButton modeToggleB keystrokeB
+    global doubleClickB ignoreButton displayToggleB 
+    global modeToggleB keystrokeB
 
     createDeviceList 
     updateModelInfo
@@ -1574,6 +1615,7 @@ proc createControls { } {
     set db(10) "Ignore"
     set db($doubleClickB) "Left Double"
     set db($modeToggleB) "Mode Toggle"
+    set db($displayToggleB) "Display Toggle"
     set db($ignoreButton) "Ignore"
     set db($keystrokeB) "KeyStroke"
     set dm(1) "Relative"

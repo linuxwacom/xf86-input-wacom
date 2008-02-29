@@ -698,6 +698,8 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tDBLCLICK: Emit a double-click button event\n"
 		"\tMODETOGGLE: Toggle absolute/relative tablet mode\n");
 	printf ("\tDISPLAYTOGGLE: Toggle cursor movement among screens\n"
+		"\t    for the selected tool except pad which\n"
+		"\t    applies to all tools asssociated with the tablet\n"
 		"  Modifier: use \"xsetwacom list mod\"\n"
 		"\tto see a list of modifiers and specific keys\n"
 		"  CODE: Button number if emit a button event \n"
