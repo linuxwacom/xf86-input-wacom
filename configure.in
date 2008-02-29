@@ -175,7 +175,8 @@ else
 						16|17) WCM_KERNEL_VER="2.6.16";;
 						18) WCM_KERNEL_VER="2.6.18";;
 						19|20|21) WCM_KERNEL_VER="2.6.19";;
-						*) WCM_KERNEL_VER="2.6.22";;
+						22|23) WCM_KERNEL_VER="2.6.22";;
+						*) WCM_KERNEL_VER="2.6.24";;
 					esac
 				else
 					AC_MSG_WARN([support for kernels older than 2.6.8 has been dropped after 0.7.4])
@@ -228,10 +229,6 @@ else
 				WCM_OPTION_MODVER=$enable_modver, WCM_OPTION_MODVER=yes)
 
 			WCM_KSTACK="-mpreferred-stack-boundary=2"
-			if echo $WCM_ARCHITECTURE | grep "x86_64" >/dev/null; then
-				WCM_KSTACK="-mpreferred-stack-boundary=4 -mcmodel=kernel"
-			fi
-
 			if test "$WCM_OPTION_EVDEV" = yes; then
 				WCM_MODULES="$WCM_MODULES evdev.o"
 			fi
@@ -355,6 +352,7 @@ if test "$WCM_ENV_XLIB" = yes; then
 fi
 
 dnl =======================================================
+WCM_XDRIVER_QUIRKS=
 dnl Check for XFree86 source or X.org SDK
 test -d "x-include" && WCM_XFREE86_DIR="x-include"
 AC_ARG_WITH(x-src,
@@ -375,6 +373,9 @@ if test -n "$WCM_XFREE86_DIR"; then
 		WCM_XFREE86_DIR=
 		AC_MSG_RESULT(xf86Version.h missing)
 		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XFREE86SUBDIR and $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR)
+	fi
+	if test "$WCM_ENV_XFREE86" = "yes"; then
+		WCM_XDRIVER_QUIRKS="Libc-wrapper"
 	fi
 fi
 if test "$WCM_ENV_XFREE86" = yes; then
@@ -428,10 +429,57 @@ if test "$WCM_ENV_XFREE86" != yes; then
 		AC_MSG_CHECKING([for xserver libc-wrapper header-files])
 		if test -f "$WCM_XORGSDK_DIR/xf86_libc.h"; then
 			AC_MSG_RESULT(yes)
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS libc-wrapper"
 		else
 			AC_MSG_RESULT(no)
 			AC_DEFINE(WCM_NO_LIBCWRAPPER,1,[The xserver have no wraps around libc-functions])
 		fi
+
+		WCM_TABLET_SCALING=
+		AC_ARG_ENABLE(quirk-tablet-rescale,
+			AC_HELP_STRING([--enable-quirk-tablet-rescale],
+				[Enable tablet to screen rescale code [[default=when_needed]]]),
+			WCM_TABLET_SCALING=$enableval)
+		if test -z "$WCM_TABLET_SCALING"; then
+			AC_MSG_CHECKING([if scaling tablet to screen size is needed])
+			save_CFLAGS="$CFLAGS"
+			CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+			AC_TRY_COMPILE(, [
+#include <xorg-server.h>
+#include <xorgVersion.h>
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 4, 0, 0, 0)
+# error "X.org < 1.4 doesn't need rescaling code"
+#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 4, 99, 2, 0)
+# error "X.org >= 1.4.99.2 doesn't need rescaling code"
+#endif
+int main(int argc, char** argv) {return 0;}
+], [WCM_TABLET_SCALING=yes], [WCM_TABLET_SCALING=no])
+			CFLAGS="$save_CFLAGS"
+			AC_MSG_RESULT($WCM_TABLET_SCALING)
+		fi
+		if test "$WCM_TABLET_SCALING" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS tablet-screen-scaling"
+			AC_DEFINE(WCM_XORG_TABLET_SCALING,1,
+				[Some X.org versions require that the events are scaled to screen size])
+		fi
+		AC_MSG_CHECKING([if Xorg SDK defines IsXExtensionPointer])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE(, [
+#include <X11/extensions/XI.h>
+#ifndef IsXExtensionPointer
+# error "X.org SDK does not define IsXExtensionPointer"
+#endif
+int main(int argc, char** argv) {return 0;}
+], [WCM_ISXEXTENSIONPOINTER=yes], [WCM_ISXEXTENSIONPOINTER=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_ISXEXTENSIONPOINTER)
+		if test "$WCM_ISXEXTENSIONPOINTER" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS IsXExtensionPointer"
+			AC_DEFINE(WCM_ISXEXTENSIONPOINTER,1,
+				[IsXExtensionPointer is only defined in later X.org releases])
+		fi
+
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
 		case "$WCM_XORGSDK_VER" in
 			1.0*|1.1*|1.2*|1.3*)
@@ -619,11 +667,10 @@ if test "$enable_libwacomxi" != no; then
 		WCM_TCLLIBS="libwacomxi.la"
 		WCM_TCLPKGS="pkgIndex.tcl"
 	fi
-	AM_CONDITIONAL(WACOMXI_INSTALL, true)
 else
 	AC_MSG_RESULT(no)
-	AM_CONDITIONAL(WACOMXI_INSTALL, false)
 fi
+AM_CONDITIONAL(WACOMXI_INSTALL, [test "$WCM_OPTION_LIBWACOMXI" = yes] )
 
 dnl =======================================================
 dnl Check for wacdump build
@@ -859,6 +906,7 @@ AC_OUTPUT(Makefile
 	src/2.6.18/Makefile
 	src/2.6.19/Makefile
 	src/2.6.22/Makefile
+	src/2.6.24/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 
@@ -897,6 +945,7 @@ else
 echo "       wacom_drv.so - no"
 echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 fi
+echo "  wacom*_drv quirks -$WCM_XDRIVER_QUIRKS"
 echo "----------------------------------------"
 
 dnl Check for x86_64 kernel

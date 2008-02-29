@@ -173,7 +173,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		if (common->wcmISDV4Speed != 38400)
 		{
 			common->wcmISDV4Speed = 38400;
-			return isdv4Init(local, NULL, NULL);
+			if(isdv4Init(local, NULL, NULL) != Success)
+				return !Success;
+			return isdv4GetRanges(local);
 		}
 		else
 		{

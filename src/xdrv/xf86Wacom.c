@@ -65,9 +65,10 @@
  * 2007-12-20 47-pc0.7.9-5 - multimonitor support update
  * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
  * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
+ * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-7 $";
+static const char identification[] = "$Identification: 47-0.7.9-8 $";
 
 /****************************************************************************/
 
@@ -260,7 +261,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			topx = priv->topX - priv->tvoffsetX;
 
 		resolution = common->wcmResolX;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topx;
@@ -287,7 +288,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			topy = priv->topY - priv->tvoffsetY;
 
 		resolution = common->wcmResolY;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		if (priv->flags & ABSOLUTE_FLAG) tabletSize -= topy;

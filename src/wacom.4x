@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4x "linuxwacom 0.7.8" "X Version 11"
+.TH WACOM 4x "linuxwacom 0.7.9" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS

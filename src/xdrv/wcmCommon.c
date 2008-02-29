@@ -567,12 +567,29 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_DISPLAYTOGGLE:
-		if (mask)
+		if (mask && priv->numScreen > 1)
 		{
-			int screen = priv->screen_no;
-			if (++screen >= priv->numScreen && priv->numScreen > 1)
-				screen = -1;
-			xf86WcmChangeScreen(local, screen);
+			if (IsPad(priv)) /* toggle display for all tools except pad */
+			{
+				WacomDevicePtr tmppriv;
+				for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
+				{
+					if (!IsPad(tmppriv))
+					{
+						int screen = tmppriv->screen_no;
+						if (++screen >= tmppriv->numScreen)
+							screen = -1;
+						xf86WcmChangeScreen(tmppriv->local, screen);
+					}
+				}
+			}
+			else /* toggle display only for the selected tool */
+			{
+				int screen = priv->screen_no;
+				if (++screen >= priv->numScreen)
+					screen = -1;
+				xf86WcmChangeScreen(local, screen);
+			}
 		}
 		break;
 
@@ -971,7 +988,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (!is_absolute)
 				x *= priv->factorY / priv->factorX;
 
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
+#ifdef WCM_XORG_TABLET_SCALING
 			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 			 * for coordinate conversion at the moment */
 			/* The +-0.4 is to increase the sensitivity in relative mode.

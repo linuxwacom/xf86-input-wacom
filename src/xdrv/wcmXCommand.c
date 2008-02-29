@@ -530,6 +530,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			break;
 		    }
 
+		    xf86WcmInitialScreens(tmppriv->local);
 		    xf86WcmMappingFactor(tmppriv->local);
 		    xf86WcmInitialCoordinates(tmppriv->local, 0);
 		    xf86WcmInitialCoordinates(tmppriv->local, 1);
@@ -969,6 +970,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 
 	if ( param >= XWACOM_PARAM_STOPX0 && param <= XWACOM_PARAM_SBOTTOMY2)
 		return xf86WcmGetDefaultScreenInfo(local, param);
+
+	if (param >= XWACOM_PARAM_BUTTON6 && param <= XWACOM_PARAM_BUTTON32)
+		return 0;
 
 	switch (param)
 	{
