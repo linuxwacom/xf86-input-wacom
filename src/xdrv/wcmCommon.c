@@ -521,14 +521,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 */		/* Dynamically modify the button map as required --
 		 * to be moved in the place where button mappings are changed
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* +1 to be able to support Xorg xserver 1.4, which due to a
-		 * button translation bug will run the translation twice. By
-		 * adding 1 to the button# we're able to support at least a
-		 * simple button1 is button1 mapping. 
-		 */
-		button_idx++;
-#endif
 		local->dev->button->map [button_idx] = button & AC_CODE;
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
@@ -598,12 +590,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		 * to be moved in the place where button mappings are changed.
 		 * Only left double is supported.
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button1 is button1.
-		 */
-		button_idx = 1;
-#endif
 		local->dev->button->map [button_idx] = 1;
 
 		if (mask)
@@ -749,20 +735,12 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	{
 	    case AC_BUTTON:
 		/* send both button on/off in the same event for pad */
-		i = 0;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button4 is button4. This makes it usable if
-		 * no exotic configuration is made.
-		 */
-		i = fakeButton & AC_CODE;
-#endif
-		local->dev->button->map [i] = fakeButton & AC_CODE;
+		local->dev->button->map [0] = fakeButton & AC_CODE;
 	
-		xf86PostButtonEvent(local->dev, is_absolute, i,
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			1,0,naxes,x,y,z,v3,v4,v5);
 
-		xf86PostButtonEvent(local->dev, is_absolute, i,
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			0,0,naxes,x,y,z,v3,v4,v5);
 
 	    break;
