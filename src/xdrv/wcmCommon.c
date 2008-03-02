@@ -430,19 +430,19 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 		{
 			for (j = ksr->minKeyCode; j <= ksr->maxKeyCode; j++)
 				if (ksr->map [(j - ksr->minKeyCode) * ksr->mapWidth] == XK_Shift_L)
-				break;
+					break;
 			if (state)
 				xf86PostKeyboardEvent (keydev, j, 1);
 			for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
 				if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == alt_keysym)
-				break;
+					break;
 			xf86PostKeyboardEvent (keydev, i, state);
-			if (state)
+			if (!state)
 				xf86PostKeyboardEvent (keydev, j, 0);
 		}
 		else
 			xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
-			 keysym, keydev->name);
+					keysym, keydev->name);
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
@@ -452,7 +452,7 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
  * sendAButton --
  *   Send one button event, called by xf86WcmSendButtons
  ****************************************************************************/
-static int wcm_modifier [ ] = 
+static int wcm_modifier [ ] =
 {
 	XK_Shift_L,
 	XK_Control_L,
@@ -535,13 +535,13 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				/* button down to send modifier and key down then key up */
 				if (mask)
 				{
-					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 1);
+					emitKeysym (local->dev, priv->keys[button_idx][i], 1);
 					if (!WcmIsModifier(priv->keys[button_idx][i]))
-						emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
+						emitKeysym (local->dev, priv->keys[button_idx][i], 0);
 				}
 				/* button up to send modifier up */
 				else if (WcmIsModifier(priv->keys[button_idx][i]))
-					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
+					emitKeysym (local->dev, priv->keys[button_idx][i], 0);
 			}
 		}
 		else
@@ -751,14 +751,14 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 			/* modifier and key down then key up events */
 			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
 			{
-				emitKeysym (inputInfo.keyboard, keyP[i], 1);
+				emitKeysym (local->dev, keyP[i], 1);
 				if (!WcmIsModifier(keyP[i]))
-					emitKeysym (inputInfo.keyboard, keyP[i], 0);
+					emitKeysym (local->dev, keyP[i], 0);
 			}
 			/* modifier up events */
 			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
 				if (WcmIsModifier(keyP[i]))
-					emitKeysym (inputInfo.keyboard, keyP[i], 0);
+					emitKeysym (local->dev, keyP[i], 0);
 		}
 		else
 			ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);

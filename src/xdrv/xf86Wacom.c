@@ -110,6 +110,12 @@ WacomModule gWacomModule =
 static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
+static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
+{
+}
+static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
+{
+}
 
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
@@ -307,6 +313,148 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
 
+/* Define our own keymap so we can send key-events with our own device and not
+ * rely on inputInfo.keyboard */
+static KeySym keymap[] = {
+	/* 0x00 */  NoSymbol,		NoSymbol,	XK_Escape,	NoSymbol,
+	/* 0x02 */  XK_1,		XK_exclam,	XK_2,		XK_at,
+	/* 0x04 */  XK_3,		XK_numbersign,	XK_4,		XK_dollar,
+	/* 0x06 */  XK_5,		XK_percent,	XK_6,		XK_asciicircum,
+	/* 0x08 */  XK_7,		XK_ampersand,	XK_8,		XK_asterisk,
+	/* 0x0a */  XK_9,		XK_parenleft,	XK_0,		XK_parenright,
+	/* 0x0c */  XK_minus,		XK_underscore,	XK_equal,	XK_plus,
+	/* 0x0e */  XK_BackSpace,	NoSymbol,	XK_Tab,		XK_ISO_Left_Tab,
+	/* 0x10 */  XK_q,		NoSymbol,	XK_w,		NoSymbol,
+	/* 0x12 */  XK_e,		NoSymbol,	XK_r,		NoSymbol,
+	/* 0x14 */  XK_t,		NoSymbol,	XK_y,		NoSymbol,
+	/* 0x16 */  XK_u,		NoSymbol,	XK_i,		NoSymbol,
+	/* 0x18 */  XK_o,		NoSymbol,	XK_p,		NoSymbol,
+	/* 0x1a */  XK_bracketleft,	XK_braceleft,	XK_bracketright,	XK_braceright,
+	/* 0x1c */  XK_Return,		NoSymbol,	XK_Control_L,	NoSymbol,
+	/* 0x1e */  XK_a,		NoSymbol,	XK_s,		NoSymbol,
+	/* 0x20 */  XK_d,		NoSymbol,	XK_f,		NoSymbol,
+	/* 0x22 */  XK_g,		NoSymbol,	XK_h,		NoSymbol,
+	/* 0x24 */  XK_j,		NoSymbol,	XK_k,		NoSymbol,
+	/* 0x26 */  XK_l,		NoSymbol,	XK_semicolon,	XK_colon,
+	/* 0x28 */  XK_quoteright,	XK_quotedbl,	XK_quoteleft,	XK_asciitilde,
+	/* 0x2a */  XK_Shift_L,		NoSymbol,	XK_backslash,	XK_bar,
+	/* 0x2c */  XK_z,		NoSymbol,	XK_x,		NoSymbol,
+	/* 0x2e */  XK_c,		NoSymbol,	XK_v,		NoSymbol,
+	/* 0x30 */  XK_b,		NoSymbol,	XK_n,		NoSymbol,
+	/* 0x32 */  XK_m,		NoSymbol,	XK_comma,	XK_less,
+	/* 0x34 */  XK_period,		XK_greater,	XK_slash,	XK_question,
+	/* 0x36 */  XK_Shift_R,		NoSymbol,	XK_KP_Multiply,	NoSymbol,
+	/* 0x38 */  XK_Alt_L,		XK_Meta_L,	XK_space,	NoSymbol,
+	/* 0x3a */  XK_Caps_Lock,	NoSymbol,	XK_F1,		NoSymbol,
+	/* 0x3c */  XK_F2,		NoSymbol,	XK_F3,		NoSymbol,
+	/* 0x3e */  XK_F4,		NoSymbol,	XK_F5,		NoSymbol,
+	/* 0x40 */  XK_F6,		NoSymbol,	XK_F7,		NoSymbol,
+	/* 0x42 */  XK_F8,		NoSymbol,	XK_F9,		NoSymbol,
+	/* 0x44 */  XK_F10,		NoSymbol,	XK_Num_Lock,	NoSymbol,
+	/* 0x46 */  XK_Scroll_Lock,	NoSymbol,	XK_KP_Home,	XK_KP_7,
+	/* 0x48 */  XK_KP_Up,		XK_KP_8,	XK_KP_Prior,	XK_KP_9,
+	/* 0x4a */  XK_KP_Subtract,	NoSymbol,	XK_KP_Left,	XK_KP_4,
+	/* 0x4c */  XK_KP_Begin,	XK_KP_5,	XK_KP_Right,	XK_KP_6,
+	/* 0x4e */  XK_KP_Add,		NoSymbol,	XK_KP_End,	XK_KP_1,
+	/* 0x50 */  XK_KP_Down,		XK_KP_2,	XK_KP_Next,	XK_KP_3,
+	/* 0x52 */  XK_KP_Insert,	XK_KP_0,	XK_KP_Delete,	XK_KP_Decimal,
+	/* 0x54 */  NoSymbol,		NoSymbol,	XK_F13,		NoSymbol,
+	/* 0x56 */  XK_less,		XK_greater,	XK_F11,		NoSymbol,
+	/* 0x58 */  XK_F12,		NoSymbol,	XK_F14,		NoSymbol,
+	/* 0x5a */  XK_F15,		NoSymbol,	XK_F16,		NoSymbol,
+	/* 0x5c */  XK_F17,		NoSymbol,	XK_F18,		NoSymbol,
+	/* 0x5e */  XK_F19,		NoSymbol,	XK_F20,		NoSymbol,
+	/* 0x60 */  XK_KP_Enter,	NoSymbol,	XK_Control_R,	NoSymbol,
+	/* 0x62 */  XK_KP_Divide,	NoSymbol,	XK_Print,	XK_Sys_Req,
+	/* 0x64 */  XK_Alt_R,		XK_Meta_R,	NoSymbol,	NoSymbol,
+	/* 0x66 */  XK_Home,		NoSymbol,	XK_Up,		NoSymbol,
+	/* 0x68 */  XK_Prior,		NoSymbol,	XK_Left,	NoSymbol,
+	/* 0x6a */  XK_Right,		NoSymbol,	XK_End,		NoSymbol,
+	/* 0x6c */  XK_Down,		NoSymbol,	XK_Next,	NoSymbol,
+	/* 0x6e */  XK_Insert,		NoSymbol,	XK_Delete,	NoSymbol,
+	/* 0x70 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x72 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x74 */  NoSymbol,		NoSymbol,	XK_KP_Equal,	NoSymbol,
+	/* 0x76 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x78 */  XK_F21,		NoSymbol,	XK_F22,		NoSymbol,
+	/* 0x7a */  XK_F23,		NoSymbol,	XK_F24,		NoSymbol,
+	/* 0x7c */  XK_KP_Separator,	NoSymbol,	XK_Meta_L,	NoSymbol,
+	/* 0x7e */  XK_Meta_R,		NoSymbol,	XK_Multi_key,	NoSymbol,
+	/* 0x80 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x82 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x84 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x86 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x88 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8a */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8c */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8e */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x90 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x92 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x94 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x96 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x98 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9a */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9c */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9e */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xaa */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xac */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xae */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xba */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xbc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xbe */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xca */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xcc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xce */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xda */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xdc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xde */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xea */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xec */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xee */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol
+};
+static struct { KeySym keysym; CARD8 mask; } keymod[] = {
+	{ XK_Shift_L,	ShiftMask },
+	{ XK_Shift_R,	ShiftMask },
+	{ XK_Control_L,	ControlMask },
+	{ XK_Control_R,	ControlMask },
+	{ XK_Caps_Lock,	LockMask },
+	{ XK_Alt_L,	Mod1Mask }, /*AltMask*/
+	{ XK_Alt_R,	Mod1Mask }, /*AltMask*/
+	{ XK_Num_Lock,	Mod2Mask }, /*NumLockMask*/
+	{ XK_Scroll_Lock,	Mod5Mask }, /*ScrollLockMask*/
+	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
+	{ NoSymbol,	0 }
+};
+
 static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -393,15 +541,14 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
-			KeySym keymap[256];
+			CARD8 modmap[MAP_LENGTH];
+			int i,j;
 
-			for (loop = 0; loop < nbkeys; loop++)
-				if ((priv->button [loop] & AC_TYPE) == AC_KEY)
-					keymap [loop] = priv->button [loop] & AC_CODE;
-				else
-					keymap [loop] = NoSymbol;
-			for(loop = nbkeys; loop<256; loop++)
-				keymap [loop] = NoSymbol;
+			memset(modmap, 0, sizeof(modmap));
+			for(i=0; keymod[i].keysym != NoSymbol; i++)
+				for(j=8; j<256; j++)
+					if(keymap[(j-8)*2] == keymod[i].keysym)
+						modmap[j] = keymod[i].mask;
 
 			/* There seems to be a long-standing misunderstanding about
 			 * how a keymap should be defined. All tablet drivers from
@@ -421,12 +568,18 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			/* minKeyCode = 8 because this is the min legal key code */
 			wacom_keysyms.minKeyCode = 8;
 			wacom_keysyms.maxKeyCode = 255;
-			wacom_keysyms.mapWidth = 1;
-			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+			wacom_keysyms.mapWidth = 2;
+			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, modmap) == FALSE)
 			{
 				ErrorF("unable to init key class device\n");
 				return FALSE;
 			}
+		}
+
+		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
+				xf86WcmKbdCtrlCallback) == FALSE) {
+			ErrorF("unable to init kbd feedback device struct\n");
+			return FALSE;
 		}
 
 		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
