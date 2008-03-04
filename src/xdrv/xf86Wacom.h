@@ -22,7 +22,7 @@
 
 /****************************************************************************/
 
-#include <xdrv-config.h>
+#include "../include/xdrv-config.h"
 #include <xf86Version.h>
 #include "../include/Xwacom.h"
 
