@@ -706,11 +706,19 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tor specific keys and any other keys not listed as mod \n");
 	printf ("Examples:\n"
 		"  xsetwacom set stylus Button1 \"button 5\"\n"
+		"\t(emit mouse button 5 event)\n" 
 		"  xsetwacom set stylus Button3 \"dblclick 1\"\n"
+		"\t(emit mouse double left click event)\n" 
 		"  xsetwacom set pad Button2 \"core key ctrl alt F2\"\n"
+		"\t(emit ctrl + alt + F2 key event)\n" 
+		"  xsetwacom set pad Button3 \"core key quotedbl a space test space string quotedbl\"\n"
+		"\t(emit keystroke \"a test string\" event)\n" 
 		"  xsetwacom set pad Button3 \"core key quotedbl a test string quotedbl\"\n"
+		"\t(emit keystroke \"ateststring\" event)\n" 
 		"  xsetwacom set pad striplup \"core key up\"\n"
-		"  xsetwacom set pad stripldn \"core key down\"\n");
+		"\t(emit up arrow key event)\n" 
+		"  xsetwacom set pad stripldn \"core key down\"\n"
+		"\t(emit down arrow key event)\n");
 
 	return 0;
 }
