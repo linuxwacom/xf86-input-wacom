@@ -1,3 +1,9 @@
+2008-03-07  Ping Cheng <pingc@wacom.com>
+	* Updated wacomcpl for keystrokes
+	* Excluded keystroke support for XFree86
+	* Introduced wacom defined keymap (Magnus Vigerlöf)
+	* Support building outside the source-directory (Magnus Vigerlöf)
+
 2008-02-28  Ping Cheng <pingc@wacom.com>
 	* Added support for Cintiq 20WSX
 	* Fixed Bug 1875050 (Kovid Goyal)

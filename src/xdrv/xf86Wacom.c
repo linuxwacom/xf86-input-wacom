@@ -66,9 +66,10 @@
  * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
  * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
+ * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-8 $";
+static const char identification[] = "$Identification: 47-0.7.9-9 $";
 
 /****************************************************************************/
 
@@ -107,6 +108,7 @@ WacomModule gWacomModule =
 	xf86WcmDevReverseConvert,
 };
 
+#ifndef WCM_XFREE86
 static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
@@ -116,6 +118,7 @@ static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
+#endif
 
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
@@ -441,6 +444,7 @@ static KeySym keymap[] = {
 	/* 0xf4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
 	/* 0xf6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol
 };
+
 static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 	{ XK_Shift_L,	ShiftMask },
 	{ XK_Shift_R,	ShiftMask },
@@ -576,6 +580,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			}
 		}
 
+#ifndef WCM_XFREE86
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
 			ErrorF("unable to init kbd feedback device struct\n");
@@ -586,6 +591,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
+#endif
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0

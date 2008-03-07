@@ -368,6 +368,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
+#ifndef WCM_XFREE86
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -448,10 +449,6 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 	xf86PostKeyboardEvent (keydev, i, state);
 }
 
-/*****************************************************************************
- * sendAButton --
- *   Send one button event, called by xf86WcmSendButtons
- ****************************************************************************/
 static int wcm_modifier [ ] =
 {
 	XK_Shift_L,
@@ -474,7 +471,38 @@ static int WcmIsModifier(int keysym)
 		}
 	return match;
 }
+#endif
 
+static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP)
+{
+#if defined WCM_XFREE86
+	ErrorF ("Error: [wacom] your X server doesn't support key events!\n");
+#else
+	if (button & AC_CORE)
+	{
+		int i = 0;
+
+		/* modifier and key down then key up events */
+		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
+		{
+			emitKeysym (local->dev, keyP[i], 1);
+			if (!WcmIsModifier(keyP[i]))
+				emitKeysym (local->dev, keyP[i], 0);
+		}
+		/* modifier up events */
+		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
+			if (WcmIsModifier(keyP[i]))
+				emitKeysym (local->dev, keyP[i], 0);
+	}
+	else
+		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+#endif
+} 
+
+/*****************************************************************************
+ * sendAButton --
+ *   Send one button event, called by xf86WcmSendButtons
+ ****************************************************************************/
 static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
@@ -484,7 +512,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 #endif
-	int i, button_idx, naxes = priv->naxes;
+	int button_idx, naxes = priv->naxes;
 
 	if (IsPad(priv))
 		button -= 8;
@@ -528,24 +556,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_KEY:
-		if (button & AC_CORE)
-		{
-			for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
-			{
-				/* button down to send modifier and key down then key up */
-				if (mask)
-				{
-					emitKeysym (local->dev, priv->keys[button_idx][i], 1);
-					if (!WcmIsModifier(priv->keys[button_idx][i]))
-						emitKeysym (local->dev, priv->keys[button_idx][i], 0);
-				}
-				/* button up to send modifier up */
-				else if (WcmIsModifier(priv->keys[button_idx][i]))
-					emitKeysym (local->dev, priv->keys[button_idx][i], 0);
-			}
-		}
-		else
-			ErrorF ("WARNING: Devices without SendCoreEvents cannot emit key events!\n");
+		sendKeystroke(local, button, priv->keys[button_idx]);
 		break;
 
 	case AC_MODETOGGLE:
@@ -742,26 +753,10 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			0,0,naxes,x,y,z,v3,v4,v5);
-
 	    break;
 
 	    case AC_KEY:
-		if (fakeButton & AC_CORE)
-		{
-			/* modifier and key down then key up events */
-			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
-			{
-				emitKeysym (local->dev, keyP[i], 1);
-				if (!WcmIsModifier(keyP[i]))
-					emitKeysym (local->dev, keyP[i], 0);
-			}
-			/* modifier up events */
-			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
-				if (WcmIsModifier(keyP[i]))
-					emitKeysym (local->dev, keyP[i], 0);
-		}
-		else
-			ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+		sendKeystroke(local, fakeButton, keyP);
 	    break;
 
 	    default:
