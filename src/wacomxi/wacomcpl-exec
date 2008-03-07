@@ -1460,7 +1460,6 @@ proc updateKeys {} {
 	set db$currentb $db($ignoreButton)
     }
 
-puts "oldKey in updateKeys |$oldKeys($spName($currentk))| cKey |$cKeys($spName($currentk))|"
     if { [ string length $cKeys($spName($currentk)) ] > 240 } {
 	helpWindow "Help Window " \
 		"\n\nYou have entered more 240 keys. \n\
