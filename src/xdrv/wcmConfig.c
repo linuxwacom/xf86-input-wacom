@@ -455,26 +455,42 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	local->name = dev->identifier;
 	xfree(fakeLocal);
     
-	/* Serial Device is mandatory */
 	common->wcmDevice = xf86FindOptionValue(local->options, "Device");
 
+#ifdef LINUX_INPUT
+	/* Autoprobe if not given */
+	if (!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) 
+	{
+		common->wcmFlags |= AUTODEV_FLAG;
+		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local))) 
+		{
+			xf86Msg(X_ERROR, "%s: unable to probe device\n",
+				dev->identifier);
+			goto SetupProc_fail;
+		}
+	}
+#else
 	if (!common->wcmDevice)
 	{
 		xf86Msg(X_ERROR, "%s: No Device specified.\n", dev->identifier);
 		goto SetupProc_fail;
 	}
+#endif
 
 	/* Lookup to see if there is another wacom device sharing
 	 * the same serial line.
 	 */
 	localDevices = xf86FirstLocalDevice();
     
-	for (; localDevices != NULL; localDevices = localDevices->next)
+	if (common->wcmDevice)
 	{
-		if (xf86WcmMatchDevice(localDevices,local))
+		for (; localDevices != NULL; localDevices = localDevices->next)
 		{
-			common = priv->common;
-			break;
+			if (xf86WcmMatchDevice(localDevices,local))
+			{
+				common = priv->common;
+				break;
+			}
 		}
 	}
 

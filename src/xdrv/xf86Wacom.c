@@ -647,6 +647,58 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
+#ifdef LINUX_INPUT
+static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
+{
+	struct input_id id;
+	ioctl(fd, EVIOCGID, &id);
+	if (id.vendor == vendor)
+		return TRUE;
+	return FALSE;
+}
+
+/*****************************************************************************
+ * xf86WcmEventAutoDevProbe -- Probe for right input device
+ ****************************************************************************/
+#define DEV_INPUT_EVENT "/dev/input/event%d"
+#define EVDEV_MINORS    32
+char *xf86WcmEventAutoDevProbe (LocalDevicePtr local){	/* We are trying to find the right eventX device */
+	int i, wait = 0;
+	const int max_wait = 2000;
+
+	/* If device is not available after Resume, wait some ms */
+	while (wait <= max_wait) 
+	{
+		for (i = 0; i < EVDEV_MINORS; i++) 
+		{
+			char fname[64];
+			int fd = -1;
+			Bool is_wacom;
+
+			sprintf(fname, DEV_INPUT_EVENT, i);
+			SYSCALL(fd = open(fname, O_RDONLY));
+			if (fd < 0)
+				continue;
+			is_wacom = xf86WcmIsWacomDevice(fd, 0x056a);
+			SYSCALL(close(fd));
+			if (is_wacom) 
+			{
+				ErrorF ("%s Wacom probed device to be %s (waited %d msec)\n",
+					XCONFIG_PROBED, fname, wait);
+				xf86ReplaceStrOption(local->options, "Device", fname);
+				return xf86FindOptionValue(local->options, "Device");
+			}
+		}
+		wait += 100;
+		ErrorF("%s waiting 100 msec (total %dms) for device to become ready\n", local->name, wait); 
+		usleep(100*1000);
+	}
+	ErrorF("%s no synaptics event device found (checked %d nodes, waited %d msec)\n",
+		local->name, i + 1, wait);
+	return FALSE;
+}
+#endif
+
 /*****************************************************************************
  * xf86WcmDevOpen --
  *    Open the physical device and init information structs.
@@ -660,14 +712,22 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
  
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmDevOpen\n"));
 
-	/* Device has been open */
+	/* Device has been open  and not autoprobed */
 	if (priv->wcmDevOpenCount)
 		return TRUE;
 
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		if ((xf86WcmOpen (local) != Success) || (local->fd < 0))
+#ifdef LINUX_INPUT
+		/* Autoprobe if necessary */
+		if ((common->wcmFlags & AUTODEV_FLAG) &&
+		    !(common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+			ErrorF("Cannot probe device\n");
+#endif
+
+		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
+			!common->wcmDevice)
 		{
 			DBG(1, priv->debugLevel, ErrorF("Failed to open "
 				"device (fd=%d)\n", local->fd));

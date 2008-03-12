@@ -332,6 +332,7 @@ struct _WacomDeviceClass
 /* set if the /dev/input driver should wait for SYN_REPORT events as the
    end of record indicator */
 #define USE_SYN_REPORTS_FLAG	8
+#define AUTODEV_FLAG		16
 #endif
 
 #define DEVICE_ISDV4 		0x000C

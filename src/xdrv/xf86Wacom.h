@@ -196,6 +196,9 @@ LocalDevicePtr xf86WcmAllocatePad(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 
+/* device autoprobing */
+char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
+
 /* common tablet initialization regime */
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);
 
