@@ -4,42 +4,10 @@
 #define _XDRV_CONFIG_H_
 
 /* Misc defines moved from the command line */
-#undef AVOID_GLYPHBLT
-#undef _BSD_SOURCE
-#undef BUILDDEBUG
-#undef DPMSExtension
-#undef FUNCPROTO
-#undef GCCUSESGAS
-#undef _GNU_SOURCE
 #undef IN_MODULE
-#undef LBX
-#undef linux
-#undef NARROWPROTO
-#undef NDEBUG
-#undef PIXPRIV
-#undef _POSIX_C_SOURCE
-#undef _POSIX_SOURCE
-#undef RENDER
-#undef SHAPE
-#undef SINGLEDEPTH
-#undef SMART_SCHEDULE
-#undef _SVID_SOURCE
-#undef TOGCUP
-#undef XAPPGROUP
-#undef X_BYTE_ORDER
-#undef XCSECURITY
-#undef XF86BIGFONT
-#undef XF86VIDMODE
 #undef XFree86LOADER
-#undef XFree86Module
-#undef XFree86Server
-#undef XFreeXDGA
 #undef XINPUT
 #undef XKB
-#undef _XOPEN_SOURCE
-#undef XResExtension
-#undef XvExtension
-#undef XvMCExtension
 
 /* Compiling for X.org */
 #undef WCM_XORG
