@@ -19,7 +19,7 @@ DRIVER_INCLUDES = -I../include -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
 endif
 
 if WCM_ENV_XFREE86
-DRIVER_INCLUDES = \
+DRIVER_INCLUDES = -I../include \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/common \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/loader \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/os-support \
