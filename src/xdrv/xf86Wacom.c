@@ -716,7 +716,9 @@ static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-char *xf86WcmEventAutoDevProbe (LocalDevicePtr local){	/* We are trying to find the right eventX device */
+char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
+{
+	/* We are trying to find the right eventX device */
 	int i, wait = 0;
 	const int max_wait = 2000;
 
