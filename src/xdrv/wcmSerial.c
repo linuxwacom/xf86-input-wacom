@@ -256,10 +256,10 @@ int xf86WcmWriteWait(int fd, const char* request)
 		if ((len == -1) && (errno != EAGAIN))
 		{
 			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
-			maxtry = 1;
+			return 0;
 		}
 
-		if (len <= 0) maxtry--;
+		maxtry--;
 
 	} while ((len <= 0) && maxtry);
 
@@ -285,10 +285,10 @@ int xf86WcmWaitForTablet(int fd, char* answer, int size)
 			{
 				ErrorF("Wacom xf86WcmRead error : %s\n",
 						strerror(errno));
-				maxtry = 1;
+				return 0;
 			}
 		}
-	
+		maxtry--;
 	} while ((len <= 0) && maxtry);
 
 	return maxtry;
@@ -309,7 +309,7 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 	if (maxlen < 3)
 		return NULL;
   
-	/* send request string */
+	/* wait for request return */
 	if (!xf86WcmWriteWait(fd, request))
 	{
 		ErrorF("Wacom unable to xf86WcmWrite request string '%s' "
@@ -350,7 +350,6 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 	/* Read until we don't get anything or timeout. */
 
 	len = 2;
-	maxtry = MAXTRY;
 	do
 	{
 		if (len == 2)
@@ -362,20 +361,21 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 					request[0], request[1], MAXTRY);
 				return NULL;
 			}
+			len++;
 		}
 
-		len++;
-
+ErrorF("Wacom xf86WcmWaitForTablet : %s\n", answer);
 		if ((nr = xf86WaitForInput(fd, 1000000)) > 0)
 		{
 			nr = xf86WcmRead(fd, answer+len, 1);
 			if ((nr == -1) && (errno != EAGAIN))
 			{
-				ErrorF("Wacom xf86WcmRead error : %s\n",
+				ErrorF("Wacom xf86WcmRead in xf86WcmSendRequest error : %s\n",
 						strerror(errno));
 				return NULL;
 			}
 		}
+ErrorF("Wacom xf86WcmRead : %s\n", answer);
 
 		if (nr > 0)
 		{
@@ -385,6 +385,9 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 		}
 
 	} while (nr > 0);
+
+	if (len <= 3)
+		return NULL;
 
 	answer[len-1] = '\0';
 
