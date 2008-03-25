@@ -368,7 +368,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
-#ifndef WCM_XFREE86
+#ifdef WCM_KEY_SENDING_SUPPORT
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -471,13 +471,13 @@ static int WcmIsModifier(int keysym)
 		}
 	return match;
 }
-#endif
+#endif /*WCM_KEY_SENDING_SUPPORT*/
 
 static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP)
 {
-#if defined WCM_XFREE86
+#ifndef WCM_KEY_SENDING_SUPPORT
 	ErrorF ("Error: [wacom] your X server doesn't support key events!\n");
-#else
+#else /* WCM_KEY_SENDING_SUPPORT */
 	if (button & AC_CORE)
 	{
 		int i = 0;
@@ -496,8 +496,8 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP)
 	}
 	else
 		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
-#endif
-} 
+#endif /* WCM_KEY_SENDING_SUPPORT */
+}
 
 /*****************************************************************************
  * sendAButton --

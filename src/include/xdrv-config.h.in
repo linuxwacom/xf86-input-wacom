@@ -56,4 +56,7 @@
 /* Some X.org versions require that the events are scaled to screen size */
 #undef WCM_XORG_TABLET_SCALING
 
+/* The X-driver can send key events for a button */
+#undef WCM_KEY_SENDING_SUPPORT
+
 #endif /* _XDRV_CONFIG_H_ */

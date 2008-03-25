@@ -375,7 +375,27 @@ if test -n "$WCM_XFREE86_DIR"; then
 		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XFREE86SUBDIR and $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR)
 	fi
 	if test "$WCM_ENV_XFREE86" = "yes"; then
-		WCM_XDRIVER_QUIRKS="Libc-wrapper"
+		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS libc-wrapper"
+
+		dnl Xfree86 > 4.2 support sending keyevents
+		AC_MSG_CHECKING([if XFree86 support sending keys])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XFREE86_DIR $CFLAGS"
+		AC_TRY_COMPILE(, [
+#include <programs/Xserver/hw/xfree86/xf86Version.h>
+#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4, 3, 0, 0, 0)
+# error "XFree86 < 4.3 doesn't support sending keys"
+#endif
+int main(int argc, char** argv) {return 0;}
+], [WCM_SEND_KEYS=yes], [WCM_SEND_KEYS=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_SEND_KEYS)
+
+		if test "$WCM_SEND_KEYS" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
+			AC_DEFINE(WCM_KEY_SENDING_SUPPORT, 1,
+				[The X-driver can send key events for a button])
+		fi
 	fi
 fi
 if test "$WCM_ENV_XFREE86" = yes; then
@@ -479,6 +499,11 @@ int main(int argc, char** argv) {return 0;}
 			AC_DEFINE(WCM_ISXEXTENSIONPOINTER,1,
 				[IsXExtensionPointer is only defined in later X.org releases])
 		fi
+
+		dnl All X.org versions support sending key-events
+		AC_DEFINE(WCM_KEY_SENDING_SUPPORT, 1,
+			[The X-driver can send key events for a button])
+		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
 
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
 		case "$WCM_XORGSDK_VER" in

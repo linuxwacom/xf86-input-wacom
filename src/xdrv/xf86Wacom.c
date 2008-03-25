@@ -108,7 +108,7 @@ WacomModule gWacomModule =
 	xf86WcmDevReverseConvert,
 };
 
-#ifndef WCM_XFREE86
+#ifdef WCM_KEY_SENDING_SUPPORT
 static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
@@ -118,7 +118,7 @@ static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
-#endif
+#endif /* WCM_KEY_SENDING_SUPPORT */
 
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
@@ -312,6 +312,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	}
 }
 
+#ifdef WCM_KEY_SENDING_SUPPORT
+/*****************************************************************************
+ * xf86WcmRegisterX11Devices --
+ *    Register the X11 input devices with X11 core.
+ ****************************************************************************/
+
 /* Define our own keymap so we can send key-events with our own device and not
  * rely on inputInfo.keyboard */
 static KeySym keymap[] = {
@@ -454,6 +460,7 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
 	{ NoSymbol,	0 }
 };
+#endif /* WCM_KEY_SENDING_SUPPORT */
 
 /*****************************************************************************
  * xf86WcmInitialprivSize --
@@ -596,6 +603,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
 	{
+#ifdef WCM_KEY_SENDING_SUPPORT
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
@@ -634,7 +642,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			}
 		}
 
-#ifndef WCM_XFREE86
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
 			ErrorF("unable to init kbd feedback device struct\n");
@@ -645,7 +652,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
-#endif
+#endif /* WCM_KEY_SENDING_SUPPORT */
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
