@@ -552,7 +552,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		local->dev->button->map [button_idx] = button & AC_CODE;
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
-
 		break;
 
 	case AC_KEY:
@@ -847,7 +846,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
 		(type == STYLUS_ID) ? "stylus" :
 			(type == CURSOR_ID) ? "cursor" : 
-			(type == ERASER_ID) ? "eraser" : "pad",
+			(type == ERASER_ID) ? "eraser" :
+			(type == TOUCH_ID) ? "touch" : "pad",
 		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
@@ -857,18 +857,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		tmp_coord = x;
 		x = y;
-		y = common->wcmMaxY - tmp_coord;
+		y = priv->wcmMaxY - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = y;
 		y = x;
-		x = common->wcmMaxX - tmp_coord;
+		x = priv->wcmMaxX - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		x = common->wcmMaxX - x;
-		y = common->wcmMaxY - y;
+		x = priv->wcmMaxX - x;
+		y = priv->wcmMaxY - y;
 	}
 
 	if (IsCursor(priv)) 
@@ -981,11 +981,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				y += priv->screenTopY[priv->currentScreen];
 			}
 #endif
-			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
-
+			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
+
+			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 		}
 
 		/* not in proximity */
@@ -997,6 +998,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
 				xf86WcmSendButtons(local,0,x,y,z,v3,v4,v5);
+
 			if (priv->oldProximity && local->dev->proximity)
 				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
 		} /* not in proximity */
@@ -1353,6 +1355,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			case CURSOR_DEVICE_ID:
 				ds->device_type = CURSOR_ID;
 				break;
+			case TOUCH_DEVICE_ID:
+				ds->device_type = TOUCH_ID;
+				break;
 			default:
 				ds->device_type = idtotype(ds->device_id);
 		}
@@ -1371,6 +1376,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	 * hand, the one with serial set to 0 if no match with the
 	 * specified serial exists) that is used for this event */
 	for (tool = common->wcmTool; tool; tool = tool->next)
+	{
 		if (tool->typeid == ds->device_type)
 		{
 			if (tool->serial == ds->serial_num)
@@ -1378,10 +1384,12 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else if (!tool->serial)
 				tooldef = tool;
 		}
+	}
 
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldef;
+
 	/* 2: Find the associated area, and its InputDevice */
 	if (tool)
 	{
@@ -1593,7 +1601,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			/* or it gets inside wcmCursorProxoutDist */
 			else
 			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist && ds->proximity)
+				if (abs(filtered.distance - common->wcmMaxCursorDist) > 
+						common->wcmCursorProxoutDist && ds->proximity)
 					return;
 				if (!ds->proximity)
 					return;	
@@ -1620,10 +1629,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 {
-	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
-	WacomToolPtr toollist = common->wcmTool;
-	WacomToolAreaPtr arealist;
-	int temp;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
@@ -1637,26 +1644,6 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	if (model->GetRanges && (model->GetRanges(local) != Success))
 		return !Success;
 	
-	/* Rotation rotates the Max Y and Y */
-	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
-	{
-		temp = common->wcmMaxX;
-		common->wcmMaxX = common->wcmMaxY;
-		common->wcmMaxY = temp;
-	}
-
-	for (; toollist; toollist=toollist->next)
-	{
-		arealist = toollist->arealist;
-		for (; arealist; arealist=arealist->next)
-		{
-			if (!arealist->bottomX) 
-				arealist->bottomX = common->wcmMaxX;
-			if (!arealist->bottomY)
-				arealist->bottomY = common->wcmMaxY;
-		}
-	}
-
 	/* Default threshold value if not set */
 	if (common->wcmThreshold <= 0)
 	{
@@ -1688,18 +1675,18 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	}
 
 	/* change the serial speed, if requested */
-	if (common->wcmLinkSpeed != 9600)
+	if (model->SetLinkSpeed)
 	{
-		if (model->SetLinkSpeed)
+		if (common->wcmLinkSpeed != 9600)
 		{
 			if (model->SetLinkSpeed(local) != Success)
 				return !Success;
 		}
-		else
-		{
-			ErrorF("Tablet does not support setting link "
-				"speed, or not yet implemented\n");
-		}
+	}
+	else
+	{
+		DBG(2, common->debugLevel, ErrorF("Tablet does not support setting link "
+			"speed, or not yet implemented\n"));
 	}
 
 	/* output tablet state as probed */

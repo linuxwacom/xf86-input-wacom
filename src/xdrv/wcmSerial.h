@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2003 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,6 +29,7 @@
 #define WC_COORD "~C\r"          /* request max coordinates */
 #define WC_MODEL "~#\r"          /* request model and ROM version */
 #define WC_ISDV4_QUERY "*"       /* ISDV4 query command */
+#define WC_ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
 #define WC_ISDV4_STOP "0"        /* ISDV4 stop command */
 #define WC_ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
 

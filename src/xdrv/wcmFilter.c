@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2007 by Ping Cheng, Wacom. <pingc@wacom.com> 
+ * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com> 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -219,16 +219,16 @@ static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state,
 	ds->y = y / common->wcmRawSample;
 
 	ds->tiltx = tx / common->wcmRawSample;
-	if (ds->tiltx > 63)
-   		ds->tiltx = 63;	
-	else if (ds->tiltx < -64)
-		ds->tiltx = -64;
+	if (ds->tiltx > common->wcmMaxtiltX/2-1)
+   		ds->tiltx = common->wcmMaxtiltX/2-1;	
+	else if (ds->tiltx < -common->wcmMaxtiltX/2)
+		ds->tiltx = -common->wcmMaxtiltX/2;
 
 	ds->tilty = ty / common->wcmRawSample;
-	if (ds->tilty > 63)
-   		ds->tilty = 63;	
-	else if (ds->tilty < -64)
-		ds->tilty = -64;
+	if (ds->tilty > common->wcmMaxtiltY/2-1)
+   		ds->tilty = common->wcmMaxtiltY/2-1;	
+	else if (ds->tilty < -common->wcmMaxtiltY/2)
+		ds->tilty = -common->wcmMaxtiltY/2;
 }
 
 /*****************************************************************************

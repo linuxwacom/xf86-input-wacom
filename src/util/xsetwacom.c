@@ -32,10 +32,11 @@
 **   2007-06-05 0.1.3 - PC - Support Suppress and TwinView options
 **   2007-07-24 0.1.4 - PC - Support Screen_No option
 **   2008-01-17 0.1.5 - PC - Add DISPLAYTOGGLE command
+**   2008-03-24 0.1.6 - PC - Added Touch for serial Tablet PC (ISDv4)
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.5"
+#define XSETWACOM_VERSION "0.1.6"
 
 #include "../include/util-config.h"
 
@@ -655,6 +656,7 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 		{ WACOMDEVICETYPE_CURSOR, "cursor" },
 		{ WACOMDEVICETYPE_STYLUS, "stylus" },
 		{ WACOMDEVICETYPE_ERASER, "eraser" },
+		{ WACOMDEVICETYPE_TOUCH, "touch" },
 		{ WACOMDEVICETYPE_PAD, "pad" }
 	};
 
@@ -711,8 +713,8 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\t(emit mouse double left click event)\n" 
 		"  xsetwacom set pad Button2 \"core key ctrl alt F2\"\n"
 		"\t(emit ctrl + alt + F2 key event)\n" 
-		"  xsetwacom set pad Button3 \"core key quotedbl a space test space string quotedbl\"\n"
-		"\t(emit keystroke \"a test string\" event)\n" 
+		"  xsetwacom set pad Button3 \"core key quotedbl a space test space string quotedbl\"\n");
+	printf ("\t(emit keystroke \"a test string\" event)\n" 
 		"  xsetwacom set pad Button3 \"core key quotedbl a test string quotedbl\"\n"
 		"\t(emit keystroke \"ateststring\" event)\n" 
 		"  xsetwacom set pad striplup \"core key up\"\n"

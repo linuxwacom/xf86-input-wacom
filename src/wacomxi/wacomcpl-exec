@@ -179,13 +179,16 @@ proc calibrationSequence {which xDev yDev} {
 	updateXinitrc $device topy $yDevMin
 	updateXinitrc $device bottomx $xDevMax
 	updateXinitrc $device bottomy $yDevMax
-	# send the same data to the associated eraser
-	set eraser $getDeviceModel($device,eraser)
-	if { [ string compare $eraser $device ] } {
-	    updateXinitrc $eraser topx $xDevMin
-	    updateXinitrc $eraser topy $yDevMin
-	    updateXinitrc $eraser bottomx $xDevMax
-	    updateXinitrc $eraser bottomy $yDevMax
+	# send the same data to the associated eraser if it is a stylus
+	set type $getDeviceModel($device,type)
+	if { ![ string compare $type "stylus" ] } {
+	    set eraser $getDeviceModel($device,eraser)
+	    if { [ string compare $eraser $device ] } {
+		updateXinitrc $eraser topx $xDevMin
+		updateXinitrc $eraser topy $yDevMin
+		updateXinitrc $eraser bottomx $xDevMax
+		updateXinitrc $eraser bottomy $yDevMax
+	    }
 	}
 
 	destroy .topleft .bottomright
@@ -409,7 +412,7 @@ proc getDeviceOptionProc { dev i } {
 
 proc updateDevice {} {
     global device deviceIndex hasPad isLCD
-    global numScreens getDeviceModel 
+    global numScreens getDeviceModel hasTouch
 
     set olddev $device
     set device [ .workingDev.list get anchor ]
@@ -434,22 +437,20 @@ proc updateDevice {} {
 	    if { $hasPad($model) } {
 		createPanel 0 1 0 0
 	    }
-	} else {
-	   if { $isLCD($model) } { 
-	    	if { ![ string compare $type "stylus" ] } {
-		    createPanel 1 1 0 1
-		} else {
-		    if { [ string compare $type "cursor" ] } {
-			createPanel 1 1 0 0
-		    }
-		}
-	    } else {
-		if { [ string compare $type "cursor" ] } {
-		    createPanel 1 1 1 0
-		} else {
-		    createPanel 0 1 1 0
-		}
+	} elseif { ![ string compare $type "touch" ] } {
+	    if { $hasTouch($model) } {
+		createPanel 0 0 0 1
 	    }
+	} elseif { $isLCD($model) } { 
+	    if { ![ string compare $type "stylus" ] } {
+		createPanel 1 1 0 1
+	    } elseif { [ string compare $type "cursor" ] } {
+		createPanel 1 1 0 0
+	    }
+	} elseif { [ string compare $type "cursor" ] } {
+	    createPanel 1 1 1 0
+	} else {
+	    createPanel 0 1 1 0
 	}
     } else {
 	#
@@ -1541,7 +1542,7 @@ proc createPanel { pressure button mapping calibrate } {
 }
 
 proc updateModelInfo { } {
-    global isLCD numPadButtons numPadRings hasPad
+    global isLCD numPadButtons numPadRings hasPad hasTouch
     global numPadStrips numPadAbsW numPadRelW
 
     for { set i 0 } { $i <= 198 } { incr i 1 } {
@@ -1608,6 +1609,14 @@ proc updateModelInfo { } {
 	    set hasPad($i) 1
 	} else {
 	    set hasPad($i) 0
+	}
+    }
+
+    for { set i 0 } { $i <= 198 } { incr i 1 } {
+	if { $i == 144 || $i == 147 } {
+	    set hasTouch($i) 1
+	} else {
+	    set hasTouch($i) 0
 	}
     }
 }

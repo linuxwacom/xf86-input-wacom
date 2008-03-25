@@ -107,6 +107,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->topY = 0;              /* Y top */
 	priv->bottomX = 0;           /* X bottom */
 	priv->bottomY = 0;           /* Y bottom */
+	priv->wcmMaxX = 0;           /* max tool logical X value */
+	priv->wcmMaxY = 0;           /* max tool logical Y value */
+	priv->wcmResolX = 0;         /* tool X resolution in points/inch */
+	priv->wcmResolY = 0;         /* tool Y resolution in points/inch */
 	priv->sizeX = 0;	     /* active X size */
 	priv->sizeY = 0;	     /* active Y size */
 	priv->factorX = 0.0;         /* X factor */
@@ -117,7 +121,9 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->old_serial = 0;	     /* last active tool's serial */
 	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
 		(IsEraser(priv) ? ERASER_DEVICE_ID : 
-		(IsCursor(priv) ? CURSOR_DEVICE_ID : PAD_DEVICE_ID));
+		(IsCursor(priv) ? CURSOR_DEVICE_ID : 
+		(IsTouch(priv) ? TOUCH_DEVICE_ID :
+		PAD_DEVICE_ID)));
 
 	priv->devReverseCount = 0;   /* flag for relative Reverse call */
 	priv->serial = 0;            /* serial number */
@@ -183,18 +189,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->npadkeys = 0;		   /* Default number of pad keys */
-	common->wcmMaxX = 0;               /* max X value */
-	common->wcmMaxY = 0;               /* max Y value */
-	common->wcmMaxZ = 0;               /* max Z value */
-	common->wcmMaxDist = 0;            /* max distance value */
-	common->wcmResolX = 0;             /* X resolution in points/inch */
-	common->wcmResolY = 0;             /* Y resolution in points/inch */
-	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
-	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmLinkSpeed = 9600;    /* serial link speed */
-	common->wcmISDV4Speed = 19200;  /* serial ISDV4 link speed */
+	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
 	common->debugLevel = 0;         /* shared debug level can only 
 					 * be changed though xsetwacom */
 
@@ -204,7 +202,21 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
-	common->wcmRotate = ROTATE_NONE; /* default tablet rotation to off */
+	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
+	common->wcmMaxX = 0;               /* max digitizer logical X value */
+	common->wcmMaxY = 0;               /* max digitizer logical Y value */
+	common->wcmMaxTouchX = 1024;       /* max touch X value */
+	common->wcmMaxTouchY = 1024;       /* max touch Y value */
+        common->wcmMaxZ = 0;               /* max Z value */
+ 	common->wcmMaxDist = 0;            /* max distance value */
+	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
+	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
+	common->wcmTouchResolX = 0;        /* touch X resolution in points/inch */
+	common->wcmTouchResolY = 0;        /* touch Y resolution in points/inch */
+	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
+	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
+	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
+	common->wcmMaxtiltY = 128;	   /* Max tilt in Y directory */
 	common->wcmMaxCursorDist = 0;	/* Max distance received so far */
 	common->wcmCursorProxoutDist = 0;
 			/* Max mouse distance for proxy-out max/256 units */
@@ -219,7 +231,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->tool = tool;
 	common->wcmTool = tool;
 	tool->next = NULL;          /* next tool in list */
-	tool->typeid = DEVICE_ID(flag); /* tool type (stylus/eraser/cursor/pad) */
+	tool->typeid = DEVICE_ID(flag); /* tool type (stylus/touch/eraser/cursor/pad) */
 	tool->serial = 0;           /* serial id */
 	tool->current = NULL;       /* current area in-prox */
 	tool->arealist = area;      /* list of defined areas */
@@ -243,6 +255,18 @@ LocalDevicePtr xf86WcmAllocateStylus(void)
 
 	if (local)
 		local->type_name = "Wacom Stylus";
+
+	return local;
+}
+
+/* xf86WcmAllocateTouch */
+
+LocalDevicePtr xf86WcmAllocateTouch(void)
+{
+	LocalDevicePtr local = xf86WcmAllocate(XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
+
+	if (local)
+		local->type_name = "Wacom Touch";
 
 	return local;
 }
@@ -427,6 +451,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	if (s && (xf86NameCmp(s, "stylus") == 0))
 		local = xf86WcmAllocateStylus();
+	else if (s && (xf86NameCmp(s, "touch") == 0))
+		local = xf86WcmAllocateTouch();
 	else if (s && (xf86NameCmp(s, "cursor") == 0))
 		local = xf86WcmAllocateCursor();
 	else if (s && (xf86NameCmp(s, "eraser") == 0))
@@ -436,7 +462,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	else
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-				"Must be one of stylus, cursor, eraser, or pad\n",
+				"Must be one of stylus, touch, cursor, eraser, or pad\n",
 				dev->identifier);
 		goto SetupProc_fail;
 	}
@@ -624,7 +650,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * Slightly raised curve might be 0,5,95,100
 	 */
 	s = xf86FindOptionValue(local->options, "PressCurve");
-	if (s && !IsCursor(priv)) 
+	if (s && !IsCursor(priv) && !IsTouch(priv)) 
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
@@ -752,17 +778,23 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: threshold = %d\n", dev->identifier,
 			common->wcmThreshold);
 
-	common->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
-		common->wcmMaxX);
-	if (common->wcmMaxX != 0)
+	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
+		priv->wcmMaxX);
+	if (priv->wcmMaxX != 0)
 		xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
-			common->wcmMaxX);
+			priv->wcmMaxX);
 
-	common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
-		common->wcmMaxY);
-	if (common->wcmMaxY != 0)
+	/* Update tablet logical max X */
+	if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
+
+	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
+		priv->wcmMaxY);
+	if (priv->wcmMaxY != 0)
 		xf86Msg(X_CONFIG, "%s: max y = %d\n", dev->identifier,
-			common->wcmMaxY);
+			priv->wcmMaxY);
+
+	/* Update tablet logical max Y */
+	if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 		common->wcmMaxZ);
@@ -802,7 +834,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
 	}
 
-	/* Cursor stays in one monitor in a multimonitor setup */
+	/* Mouse cursor stays in one monitor in a multimonitor setup */
 	if ( !priv->wcmMMonitor )
 	{
 		priv->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);

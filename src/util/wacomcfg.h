@@ -2,7 +2,7 @@
 ** wacomcfg.h
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2007 - Ping Cheng
+** Copyright (C) 2004-2008 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -43,6 +43,7 @@ typedef enum
 	WACOMDEVICETYPE_STYLUS,
 	WACOMDEVICETYPE_ERASER,
 	WACOMDEVICETYPE_PAD,
+	WACOMDEVICETYPE_TOUCH,
 	WACOMDEVICETYPE_MAX
 } WACOMDEVICETYPE;
 
