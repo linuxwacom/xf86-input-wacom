@@ -473,7 +473,7 @@ static int WcmIsModifier(int keysym)
 }
 #endif /*WCM_KEY_SENDING_SUPPORT*/
 
-static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP)
+static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int kPress)
 {
 #ifndef WCM_KEY_SENDING_SUPPORT
 	ErrorF ("Error: [wacom] your X server doesn't support key events!\n");
@@ -482,17 +482,19 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP)
 	{
 		int i = 0;
 
-		/* modifier and key down then key up events */
 		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
 		{
-			emitKeysym (local->dev, keyP[i], 1);
-			if (!WcmIsModifier(keyP[i]))
+			/* modifier and key down then key up events */
+			if(kPress)
+			{
+				emitKeysym (local->dev, keyP[i], 1);
+				if (!WcmIsModifier(keyP[i]))
+					emitKeysym (local->dev, keyP[i], 0);
+			}
+			/* modifier up events */
+			else if (WcmIsModifier(keyP[i]))
 				emitKeysym (local->dev, keyP[i], 0);
 		}
-		/* modifier up events */
-		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
-			if (WcmIsModifier(keyP[i]))
-				emitKeysym (local->dev, keyP[i], 0);
 	}
 	else
 		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
@@ -555,7 +557,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_KEY:
-		sendKeystroke(local, button, priv->keys[button_idx]);
+		sendKeystroke(local, button, priv->keys[button_idx], mask);
 		break;
 
 	case AC_MODETOGGLE:
@@ -755,7 +757,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
-		sendKeystroke(local, fakeButton, keyP);
+		sendKeystroke(local, fakeButton, keyP, 1);
+		sendKeystroke(local, fakeButton, keyP, 0);
 	    break;
 
 	    default:
