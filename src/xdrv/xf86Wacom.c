@@ -652,7 +652,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
-#endif /* WCM_XFREE86
+#endif /* WCM_XFREE86 */
 #endif /* WCM_KEY_SENDING_SUPPORT */
 	}
 
