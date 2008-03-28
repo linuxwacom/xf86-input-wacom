@@ -510,7 +510,6 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		}
 	}
 	return;
-
 }
 
 /*****************************************************************************
@@ -642,6 +641,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			}
 		}
 
+#ifndef WCM_XFREE86
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
 			ErrorF("unable to init kbd feedback device struct\n");
@@ -652,6 +652,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
+#endif /* WCM_XFREE86
 #endif /* WCM_KEY_SENDING_SUPPORT */
 	}
 
