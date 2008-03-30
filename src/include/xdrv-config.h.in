@@ -27,4 +27,7 @@
 /* The X-driver can send key events for a button */
 #undef WCM_KEY_SENDING_SUPPORT
 
+/* Later X.org version uses dixScreenOrigins for screen positions and sizes */
+#undef WCM_HAVE_DIXSCREENORIGINS
+
 #endif /* _XDRV_CONFIG_H_ */

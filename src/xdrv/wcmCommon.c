@@ -1839,7 +1839,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
-#ifdef WCM_XORG
+#ifdef WCM_HAVE_DIXSCREENORIGINS
 		priv->screenTopX[i] = dixScreenOrigins[i].x;
 		priv->screenTopY[i] = dixScreenOrigins[i].y;
 		priv->screenBottomX[i] = dixScreenOrigins[i].x;
@@ -1848,7 +1848,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
 			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
-#else
+#else /* WCM_HAVE_DIXSCREENORIGINS */
 		if (i > 0)
 		{
 			/* only support left to right in this case */
@@ -1857,7 +1857,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 			priv->screenBottomX[i] = priv->screenTopX[i];
 			priv->screenBottomY[i] = 0;
 		}
-#endif
+#endif /* WCM_HAVE_DIXSCREENORIGINS */
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 

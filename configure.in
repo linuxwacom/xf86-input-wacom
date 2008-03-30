@@ -505,6 +505,21 @@ int main(int argc, char** argv) {return 0;}
 			[The X-driver can send key events for a button])
 		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
 
+		AC_MSG_CHECKING([if Xorg SDK defines dixScreenOrigins])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE(, [
+#include <globals.h>
+int main(int argc, char** argv) {return dixScreenOrigins[0].x;}
+], [WCM_HAVE_DIXSCREENORIGINS=yes], [WCM_HAVE_DIXSCREENORIGINS=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_HAVE_DIXSCREENORIGINS)
+		if test "$WCM_HAVE_DIXSCREENORIGINS" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS dixScreenOrigins"
+			AC_DEFINE(WCM_HAVE_DIXSCREENORIGINS,1,
+				[Later X.org version uses dixScreenOrigins for screen positions and sizes])
+		fi
+
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
 		case "$WCM_XORGSDK_VER" in
 			1.0*|1.1*|1.2*|1.3*)
