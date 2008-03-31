@@ -371,16 +371,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if (value < -1 || value >= priv->numScreen) 
 			return BadValue;
 		else if (priv->screen_no != value)
-		{
-			if (priv->twinview == TV_NONE)
-			{
-				value = -1;
-				priv->currentScreen = 0;
-				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam(SCREEN_NO) TwinView is in "
-					"TV_NONE: cann't change screen_no. \n"));
-			}
 			xf86WcmChangeScreen(local, value);
-		}
 		break;
 	    case XWACOM_PARAM_TWINVIEW:
 		if (priv->twinview != value)
