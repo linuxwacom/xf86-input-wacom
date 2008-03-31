@@ -1,3 +1,8 @@
+2008-03-30  Ping Cheng <pingc@wacom.com>
+	Updated configure.in for keystrokes (Magnus Vigerlöf)
+	Added touch support for serial TabletPC (ISDv4)
+	Added autoprobe patch (Matthias Hopf @ Suse)
+
 2008-03-07  Ping Cheng <pingc@wacom.com>
 	* Updated wacomcpl for keystrokes
 	* Excluded keystroke support for XFree86

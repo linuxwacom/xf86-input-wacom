@@ -97,7 +97,7 @@ struct _WacomModel
  * WacomDeviceRec
  *****************************************************************************/
 
-#define DEVICE_ID(flags) ((flags) & 0x0f)
+#define DEVICE_ID(flags) ((flags) & 0xff)
 #define STYLUS_DEVICE_ID	0x02
 #define TOUCH_DEVICE_ID		0x03
 #define CURSOR_DEVICE_ID	0x06

@@ -372,6 +372,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			return BadValue;
 		else if (priv->screen_no != value)
 		{
+			if (priv->twinview == TV_NONE)
+			{
+				value = -1;
+				priv->currentScreen = 0;
+				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam(SCREEN_NO) TwinView is in "
+					"TV_NONE: cann't change screen_no. \n"));
+			}
 			xf86WcmChangeScreen(local, value);
 		}
 		break;
@@ -381,7 +388,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			if ((value > 2) || (value < 0) || screenInfo.numScreens != 1)
 				return BadValue;
 			priv->twinview = value;
-			xf86WcmChangeScreen(local, priv->screen_no);
+
+			/* Can not restrict the cursor to a particular screen */
+			if (!value)
+			{
+				value = -1;
+				priv->currentScreen = 0;
+				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam(TWINVIEW) TwinView sets to "
+					"TV_NONE: cann't change screen_no. \n"));
+			}
+			else
+				value = priv->screen_no;
+
+			xf86WcmChangeScreen(local, value);
 		}
 		break;
 	    case XWACOM_PARAM_TVRESOLUTION0:
@@ -991,9 +1010,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_BUTTON5:
 		return (param - XWACOM_PARAM_BUTTON1 + 1);
 	case XWACOM_PARAM_MODE:
-                if (IsCursor(priv) || (IsPad(priv) && (priv->flags & COREEVENT_FLAG)))
+		if (IsCursor(priv) || (IsPad(priv) && (priv->flags & COREEVENT_FLAG)))
 			return 0;
-                else
+		else
 			return 1;
 	case XWACOM_PARAM_RELWUP:
 	case XWACOM_PARAM_ABSWUP:
