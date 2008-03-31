@@ -375,7 +375,27 @@ if test -n "$WCM_XFREE86_DIR"; then
 		AC_MSG_RESULT(Tried $WCM_XFREE86_DIR/$XFREE86SUBDIR and $WCM_XFREE86_DIR/xc/$XFREE86SUBDIR)
 	fi
 	if test "$WCM_ENV_XFREE86" = "yes"; then
-		WCM_XDRIVER_QUIRKS="Libc-wrapper"
+		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS libc-wrapper"
+
+		dnl Xfree86 > 4.2 support sending keyevents
+		AC_MSG_CHECKING([if XFree86 support sending keys])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XFREE86_DIR $CFLAGS"
+		AC_TRY_COMPILE(, [
+#include <programs/Xserver/hw/xfree86/xf86Version.h>
+#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4, 3, 0, 0, 0)
+# error "XFree86 < 4.3 doesn't support sending keys"
+#endif
+int main(int argc, char** argv) {return 0;}
+], [WCM_SEND_KEYS=yes], [WCM_SEND_KEYS=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_SEND_KEYS)
+
+		if test "$WCM_SEND_KEYS" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
+			AC_DEFINE(WCM_KEY_SENDING_SUPPORT, 1,
+				[The X-driver can send key events for a button])
+		fi
 	fi
 fi
 if test "$WCM_ENV_XFREE86" = yes; then
@@ -444,7 +464,7 @@ if test "$WCM_ENV_XFREE86" != yes; then
 			AC_MSG_CHECKING([if scaling tablet to screen size is needed])
 			save_CFLAGS="$CFLAGS"
 			CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
-			AC_TRY_COMPILE(, [
+			AC_TRY_COMPILE([
 #include <xorg-server.h>
 #include <xorgVersion.h>
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 4, 0, 0, 0)
@@ -452,8 +472,7 @@ if test "$WCM_ENV_XFREE86" != yes; then
 #elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 4, 99, 2, 0)
 # error "X.org >= 1.4.99.2 doesn't need rescaling code"
 #endif
-int main(int argc, char** argv) {return 0;}
-], [WCM_TABLET_SCALING=yes], [WCM_TABLET_SCALING=no])
+], , [WCM_TABLET_SCALING=yes], [WCM_TABLET_SCALING=no])
 			CFLAGS="$save_CFLAGS"
 			AC_MSG_RESULT($WCM_TABLET_SCALING)
 		fi
@@ -465,19 +484,36 @@ int main(int argc, char** argv) {return 0;}
 		AC_MSG_CHECKING([if Xorg SDK defines IsXExtensionPointer])
 		save_CFLAGS="$CFLAGS"
 		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
-		AC_TRY_COMPILE(, [
+		AC_TRY_COMPILE([
 #include <X11/extensions/XI.h>
 #ifndef IsXExtensionPointer
 # error "X.org SDK does not define IsXExtensionPointer"
 #endif
-int main(int argc, char** argv) {return 0;}
-], [WCM_ISXEXTENSIONPOINTER=yes], [WCM_ISXEXTENSIONPOINTER=no])
+], , [WCM_ISXEXTENSIONPOINTER=yes], [WCM_ISXEXTENSIONPOINTER=no])
 		CFLAGS="$save_CFLAGS"
 		AC_MSG_RESULT($WCM_ISXEXTENSIONPOINTER)
 		if test "$WCM_ISXEXTENSIONPOINTER" = "yes"; then
 			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS IsXExtensionPointer"
 			AC_DEFINE(WCM_ISXEXTENSIONPOINTER,1,
 				[IsXExtensionPointer is only defined in later X.org releases])
+		fi
+
+		dnl All X.org versions support sending key-events
+		AC_DEFINE(WCM_KEY_SENDING_SUPPORT, 1,
+			[The X-driver can send key events for a button])
+		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
+
+		AC_MSG_CHECKING([if Xorg SDK defines dixScreenOrigins])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE([#include <globals.h>], [return dixScreenOrigins[0].x;],
+			[WCM_HAVE_DIXSCREENORIGINS=yes], [WCM_HAVE_DIXSCREENORIGINS=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_HAVE_DIXSCREENORIGINS)
+		if test "$WCM_HAVE_DIXSCREENORIGINS" = "yes"; then
+			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS dixScreenOrigins"
+			AC_DEFINE(WCM_HAVE_DIXSCREENORIGINS,1,
+				[Later X.org version uses dixScreenOrigins for screen positions and sizes])
 		fi
 
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
@@ -817,42 +853,10 @@ fi
 
 dnl =======================================================
 dnl Set default defines in src/include/xdrv-config.h (moved from cmd-line)
-AC_DEFINE(AVOID_GLYPHBLT,,[cmdline substitute])
-AC_DEFINE(_BSD_SOURCE,,[cmdline substitute])
-AC_DEFINE(BUILDDEBUG,,[cmdline substitute])
-AC_DEFINE(DPMSExtension,,[cmdline substitute])
-AC_DEFINE(FUNCPROTO,15,[cmdline substitute])
-AC_DEFINE(GCCUSESGAS,,[cmdline substitute])
-AC_DEFINE(_GNU_SOURCE,,[cmdline substitute])
 AC_DEFINE(IN_MODULE,,[cmdline substitute])
-AC_DEFINE(LBX,,[cmdline substitute])
-AC_DEFINE(linux,,[cmdline substitute])
-AC_DEFINE(NARROWPROTO,,[cmdline substitute])
-AC_DEFINE(NDEBUG,,[cmdline substitute])
-AC_DEFINE(PIXPRIV,,[cmdline substitute])
-AC_DEFINE(_POSIX_C_SOURCE,,[cmdline substitute])
-AC_DEFINE(_POSIX_SOURCE,,[cmdline substitute])
-AC_DEFINE(RENDER,,[cmdline substitute])
-AC_DEFINE(SHAPE,,[cmdline substitute])
-AC_DEFINE(SINGLEDEPTH,,[cmdline substitute])
-AC_DEFINE(SMART_SCHEDULE,,[cmdline substitute])
-AC_DEFINE(_SVID_SOURCE,,[cmdline substitute])
-AC_DEFINE(TOGCUP,,[cmdline substitute])
-AC_DEFINE(XAPPGROUP,,[cmdline substitute])
-AC_DEFINE(X_BYTE_ORDER,X_LITTLE_ENDIAN,[cmdline substitute])
-AC_DEFINE(XCSECURITY,,[cmdline substitute])
-AC_DEFINE(XF86BIGFONT,,[cmdline substitute])
-AC_DEFINE(XF86VIDMODE,,[cmdline substitute])
 AC_DEFINE(XFree86LOADER,,[cmdline substitute])
-AC_DEFINE(XFree86Module,,[cmdline substitute])
-AC_DEFINE(XFree86Server,,[cmdline substitute])
-AC_DEFINE(XFreeXDGA,,[cmdline substitute])
 AC_DEFINE(XINPUT,,[cmdline substitute])
 AC_DEFINE(XKB,,[cmdline substitute])
-AC_DEFINE(_XOPEN_SOURCE,,[cmdline substitute])
-AC_DEFINE(XResExtension,,[cmdline substitute])
-AC_DEFINE(XvExtension,,[cmdline substitute])
-AC_DEFINE(XvMCExtension,,[cmdline substitute])
 
 dnl Separate test output from file-generation output
 echo 

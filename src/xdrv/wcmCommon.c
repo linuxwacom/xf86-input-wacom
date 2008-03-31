@@ -368,6 +368,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
+#ifdef WCM_KEY_SENDING_SUPPORT
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -430,29 +431,25 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 		{
 			for (j = ksr->minKeyCode; j <= ksr->maxKeyCode; j++)
 				if (ksr->map [(j - ksr->minKeyCode) * ksr->mapWidth] == XK_Shift_L)
-				break;
+					break;
 			if (state)
 				xf86PostKeyboardEvent (keydev, j, 1);
 			for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
 				if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == alt_keysym)
-				break;
+					break;
 			xf86PostKeyboardEvent (keydev, i, state);
-			if (state)
+			if (!state)
 				xf86PostKeyboardEvent (keydev, j, 0);
 		}
 		else
 			xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
-			 keysym, keydev->name);
+					keysym, keydev->name);
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
 }
 
-/*****************************************************************************
- * sendAButton --
- *   Send one button event, called by xf86WcmSendButtons
- ****************************************************************************/
-static int wcm_modifier [ ] = 
+static int wcm_modifier [ ] =
 {
 	XK_Shift_L,
 	XK_Control_L,
@@ -474,7 +471,40 @@ static int WcmIsModifier(int keysym)
 		}
 	return match;
 }
+#endif /*WCM_KEY_SENDING_SUPPORT*/
 
+static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int kPress)
+{
+#ifndef WCM_KEY_SENDING_SUPPORT
+	ErrorF ("Error: [wacom] your X server doesn't support key events!\n");
+#else /* WCM_KEY_SENDING_SUPPORT */
+	if (button & AC_CORE)
+	{
+		int i = 0;
+
+		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
+		{
+			/* modifier and key down then key up events */
+			if(kPress)
+			{
+				emitKeysym (local->dev, keyP[i], 1);
+				if (!WcmIsModifier(keyP[i]))
+					emitKeysym (local->dev, keyP[i], 0);
+			}
+			/* modifier up events */
+			else if (WcmIsModifier(keyP[i]))
+				emitKeysym (local->dev, keyP[i], 0);
+		}
+	}
+	else
+		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+#endif /* WCM_KEY_SENDING_SUPPORT */
+}
+
+/*****************************************************************************
+ * sendAButton --
+ *   Send one button event, called by xf86WcmSendButtons
+ ****************************************************************************/
 static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
@@ -484,7 +514,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 #endif
-	int i, button_idx, naxes = priv->naxes;
+	int button_idx, naxes = priv->naxes;
 
 	if (IsPad(priv))
 		button -= 8;
@@ -521,39 +551,13 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 */		/* Dynamically modify the button map as required --
 		 * to be moved in the place where button mappings are changed
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* +1 to be able to support Xorg xserver 1.4, which due to a
-		 * button translation bug will run the translation twice. By
-		 * adding 1 to the button# we're able to support at least a
-		 * simple button1 is button1 mapping. 
-		 */
-		button_idx++;
-#endif
 		local->dev->button->map [button_idx] = button & AC_CODE;
 		xf86PostButtonEvent(local->dev, is_absolute, button_idx,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
-
 		break;
 
 	case AC_KEY:
-		if (button & AC_CORE)
-		{
-			for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
-			{
-				/* button down to send modifier and key down then key up */
-				if (mask)
-				{
-					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 1);
-					if (!WcmIsModifier(priv->keys[button_idx][i]))
-						emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
-				}
-				/* button up to send modifier up */
-				else if (WcmIsModifier(priv->keys[button_idx][i]))
-					emitKeysym (inputInfo.keyboard, priv->keys[button_idx][i], 0);
-			}
-		}
-		else
-			ErrorF ("WARNING: Devices without SendCoreEvents cannot emit key events!\n");
+		sendKeystroke(local, button, priv->keys[button_idx], mask);
 		break;
 
 	case AC_MODETOGGLE:
@@ -598,12 +602,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		 * to be moved in the place where button mappings are changed.
 		 * Only left double is supported.
 		 */
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button1 is button1.
-		 */
-		button_idx = 1;
-#endif
 		local->dev->button->map [button_idx] = 1;
 
 		if (mask)
@@ -749,41 +747,18 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	{
 	    case AC_BUTTON:
 		/* send both button on/off in the same event for pad */
-		i = 0;
-#if defined WCM_XORG && GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 0
-		/* Match the button sent to the actual pos due to a bug in Xorg
-		 * xserver 1.4. I.e. button4 is button4. This makes it usable if
-		 * no exotic configuration is made.
-		 */
-		i = fakeButton & AC_CODE;
-#endif
-		local->dev->button->map [i] = fakeButton & AC_CODE;
+		local->dev->button->map [0] = fakeButton & AC_CODE;
 	
-		xf86PostButtonEvent(local->dev, is_absolute, i,
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			1,0,naxes,x,y,z,v3,v4,v5);
 
-		xf86PostButtonEvent(local->dev, is_absolute, i,
+		xf86PostButtonEvent(local->dev, is_absolute, 0,
 			0,0,naxes,x,y,z,v3,v4,v5);
-
 	    break;
 
 	    case AC_KEY:
-		if (fakeButton & AC_CORE)
-		{
-			/* modifier and key down then key up events */
-			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
-			{
-				emitKeysym (inputInfo.keyboard, keyP[i], 1);
-				if (!WcmIsModifier(keyP[i]))
-					emitKeysym (inputInfo.keyboard, keyP[i], 0);
-			}
-			/* modifier up events */
-			for (i=0; i<((fakeButton & AC_NUM_KEYS)>>20); i++)
-				if (WcmIsModifier(keyP[i]))
-					emitKeysym (inputInfo.keyboard, keyP[i], 0);
-		}
-		else
-			ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+		sendKeystroke(local, fakeButton, keyP, 1);
+		sendKeystroke(local, fakeButton, keyP, 0);
 	    break;
 
 	    default:
@@ -874,7 +849,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
 		(type == STYLUS_ID) ? "stylus" :
 			(type == CURSOR_ID) ? "cursor" : 
-			(type == ERASER_ID) ? "eraser" : "pad",
+			(type == ERASER_ID) ? "eraser" :
+			(type == TOUCH_ID) ? "touch" : "pad",
 		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle));
@@ -884,18 +860,18 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		tmp_coord = x;
 		x = y;
-		y = common->wcmMaxY - tmp_coord;
+		y = priv->wcmMaxY - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = y;
 		y = x;
-		x = common->wcmMaxX - tmp_coord;
+		x = priv->wcmMaxX - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		x = common->wcmMaxX - x;
-		y = common->wcmMaxY - y;
+		x = priv->wcmMaxX - x;
+		y = priv->wcmMaxY - y;
 	}
 
 	if (IsCursor(priv)) 
@@ -994,8 +970,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* The +-0.4 is to increase the sensitivity in relative mode.
 			 * Must be sensitive to which way the tool is moved or one way
 			 * will get a severe penalty for small movements. */
-			x = (int)((double)(x - priv->topX) * priv->factorX + (x>=0?0.4:-0.4));
-			y = (int)((double)(y - priv->topY) * priv->factorY + (y>=0?0.4:-0.4));
+			if(is_absolute) {
+				x -= priv->topX;
+				y -= priv->topY;
+			}
+			x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
+			y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
 			/* map to a specific screen */
 			if (priv->screen_no != -1 || priv->twinview != TV_NONE)
@@ -1004,11 +984,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				y += priv->screenTopY[priv->currentScreen];
 			}
 #endif
-			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
-
+			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
+
+			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 		}
 
 		/* not in proximity */
@@ -1020,6 +1001,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
 				xf86WcmSendButtons(local,0,x,y,z,v3,v4,v5);
+
 			if (priv->oldProximity && local->dev->proximity)
 				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
 		} /* not in proximity */
@@ -1376,6 +1358,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			case CURSOR_DEVICE_ID:
 				ds->device_type = CURSOR_ID;
 				break;
+			case TOUCH_DEVICE_ID:
+				ds->device_type = TOUCH_ID;
+				break;
 			default:
 				ds->device_type = idtotype(ds->device_id);
 		}
@@ -1394,6 +1379,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	 * hand, the one with serial set to 0 if no match with the
 	 * specified serial exists) that is used for this event */
 	for (tool = common->wcmTool; tool; tool = tool->next)
+	{
 		if (tool->typeid == ds->device_type)
 		{
 			if (tool->serial == ds->serial_num)
@@ -1401,10 +1387,12 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else if (!tool->serial)
 				tooldef = tool;
 		}
+	}
 
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldef;
+
 	/* 2: Find the associated area, and its InputDevice */
 	if (tool)
 	{
@@ -1616,7 +1604,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			/* or it gets inside wcmCursorProxoutDist */
 			else
 			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist && ds->proximity)
+				if (abs(filtered.distance - common->wcmMaxCursorDist) > 
+						common->wcmCursorProxoutDist && ds->proximity)
 					return;
 				if (!ds->proximity)
 					return;	
@@ -1643,10 +1632,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 {
-	WacomCommonPtr common = ((WacomDevicePtr)(local->private))->common;
-	WacomToolPtr toollist = common->wcmTool;
-	WacomToolAreaPtr arealist;
-	int temp;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
@@ -1660,26 +1647,6 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	if (model->GetRanges && (model->GetRanges(local) != Success))
 		return !Success;
 	
-	/* Rotation rotates the Max Y and Y */
-	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
-	{
-		temp = common->wcmMaxX;
-		common->wcmMaxX = common->wcmMaxY;
-		common->wcmMaxY = temp;
-	}
-
-	for (; toollist; toollist=toollist->next)
-	{
-		arealist = toollist->arealist;
-		for (; arealist; arealist=arealist->next)
-		{
-			if (!arealist->bottomX) 
-				arealist->bottomX = common->wcmMaxX;
-			if (!arealist->bottomY)
-				arealist->bottomY = common->wcmMaxY;
-		}
-	}
-
 	/* Default threshold value if not set */
 	if (common->wcmThreshold <= 0)
 	{
@@ -1711,18 +1678,18 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	}
 
 	/* change the serial speed, if requested */
-	if (common->wcmLinkSpeed != 9600)
+	if (model->SetLinkSpeed)
 	{
-		if (model->SetLinkSpeed)
+		if (common->wcmLinkSpeed != 9600)
 		{
 			if (model->SetLinkSpeed(local) != Success)
 				return !Success;
 		}
-		else
-		{
-			ErrorF("Tablet does not support setting link "
-				"speed, or not yet implemented\n");
-		}
+	}
+	else
+	{
+		DBG(2, common->debugLevel, ErrorF("Tablet does not support setting link "
+			"speed, or not yet implemented\n"));
 	}
 
 	/* output tablet state as probed */
@@ -1872,7 +1839,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
-#ifdef WCM_XORG
+#ifdef WCM_HAVE_DIXSCREENORIGINS
 		priv->screenTopX[i] = dixScreenOrigins[i].x;
 		priv->screenTopY[i] = dixScreenOrigins[i].y;
 		priv->screenBottomX[i] = dixScreenOrigins[i].x;
@@ -1881,7 +1848,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
 			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
-#else
+#else /* WCM_HAVE_DIXSCREENORIGINS */
 		if (i > 0)
 		{
 			/* only support left to right in this case */
@@ -1890,7 +1857,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 			priv->screenBottomX[i] = priv->screenTopX[i];
 			priv->screenBottomY[i] = 0;
 		}
-#endif
+#endif /* WCM_HAVE_DIXSCREENORIGINS */
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 

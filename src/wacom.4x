@@ -36,7 +36,7 @@ to define multiple devices with different active zones. Each device
 supports the following entries:
 .RS 8
 .TP 4
-.B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"\fP
+.B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"|"touch"\fP
 sets the type of tool the device represents. This option is mandatory.  
 The core options, such as "SendCoreEvents" or "AlwaysCore", are  
 unnecessary in Gimp if you don't need to move system cursor outside 
@@ -44,7 +44,8 @@ of Gimp drawing area.  "pad" is for Intuos 3 or Cintiq 21UX tablet
 ExpressKeys/menu strips, and Graphire 4 or Bamboo tablet buttons, wheel, 
 and/or ring.  It is required  for Intuos3,  Cintiq 21UX, Graphire 4, and 
 Bamboo if you want to use keystroke features.  "pad" is reported as a 
-second tool in the driver. 
+second tool in the driver. "touch" is for the tablet with touch support. 
+Right now only a few serial Tablet PC has this feature. 
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -97,7 +98,8 @@ to or greater than suppress (if tilt is supported);
 sets the mode of the device.  The default value for stylus and 
 eraser is Absolute; cursor is Relative; pad mode is decided 
 according to its core option due to its nature of not moving 
-system cursor: Relative if it is a core device; Absolute, otherwise.
+system cursor: Relative if it is a core device; Absolute, otherwise;
+touch is always in absolute mode.
 .TP 4
 .B Option \fI"TopX"\fP \fI"number"\fP
 X coordinate of the top corner of the active zone.  Default to 0. 

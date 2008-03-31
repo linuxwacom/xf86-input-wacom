@@ -556,7 +556,8 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	int nValues[5];
 	unsigned long ev[NBITS(EV_MAX)];
 	unsigned long abs[NBITS(ABS_MAX)];
-	WacomCommonPtr common =	((WacomDevicePtr)(local->private))->common;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
 
 	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
@@ -858,9 +859,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == ABS_RZ) 
 				ds->rotation = event->value;
 			else if (event->code == ABS_TILT_X)
-				ds->tiltx = event->value - 64;
+				ds->tiltx = event->value - common->wcmMaxtiltX/2;
 			else if (event->code ==  ABS_TILT_Y)
-				ds->tilty = event->value - 64;
+				ds->tilty = event->value - common->wcmMaxtiltY/2;
 			else if (event->code == ABS_PRESSURE)
 				ds->pressure = event->value;
 			else if (event->code == ABS_DISTANCE)
@@ -923,7 +924,13 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 			else if (event->code == BTN_TOUCH)
 			{
-				/* we use the pressure to determine the button 1 */
+			/* reserved for touch now. Ping March 19, 2008
+				DBG(6, common->debugLevel, ErrorF(
+					"USB Touch detected %x\n",
+					event->code));
+				ds->device_type = TOUCH_ID;
+				ds->proximity = event->value;
+			*/
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))

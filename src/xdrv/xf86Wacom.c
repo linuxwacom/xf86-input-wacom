@@ -66,9 +66,10 @@
  * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
  * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
+ * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-8 $";
+static const char identification[] = "$Identification: 47-0.7.9-9 $";
 
 /****************************************************************************/
 
@@ -107,9 +108,17 @@ WacomModule gWacomModule =
 	xf86WcmDevReverseConvert,
 };
 
+#ifdef WCM_KEY_SENDING_SUPPORT
 static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
+static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
+{
+}
+static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
+{
+}
+#endif /* WCM_KEY_SENDING_SUPPORT */
 
 static int xf86WcmInitArea(LocalDevicePtr local)
 {
@@ -121,12 +130,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitArea\n"));
 
 	/* Verify Box */
-	if (priv->topX > common->wcmMaxX)
+	if (priv->topX > priv->wcmMaxX)
 	{
 		area->topX = priv->topX = 0;
 	}
 
-	if (priv->topY > common->wcmMaxY)
+	if (priv->topY > priv->wcmMaxY)
 	{
 		area->topY = priv->topY = 0;
 	}
@@ -135,14 +144,14 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 	if (priv->bottomX < priv->topX || !priv->bottomX)
 	{
-		area->bottomX = priv->bottomX = common->wcmMaxX;
+		area->bottomX = priv->bottomX = priv->wcmMaxX;
 	}
 
 	/* set unconfigured bottom to max */
 	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomY < priv->topY || !priv->bottomY)
 	{
-		area->bottomY = priv->bottomY = common->wcmMaxY;
+		area->bottomY = priv->bottomY = priv->wcmMaxY;
 	}
 
 	if (priv->twinview != TV_NONE)
@@ -167,23 +176,23 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	{
 
 		screenRatio = ((double)priv->maxWidth / (double)priv->maxHeight);
-		tabletRatio = ((double)(common->wcmMaxX - priv->topX) /
-				(double)(common->wcmMaxY - priv->topY));
+		tabletRatio = ((double)(priv->wcmMaxX - priv->topX) /
+				(double)(priv->wcmMaxY - priv->topY));
 
 		DBG(2, priv->debugLevel, ErrorF("screenRatio = %.3g, "
 			"tabletRatio = %.3g\n", screenRatio, tabletRatio));
 
 		if (screenRatio > tabletRatio)
 		{
-			area->bottomX = priv->bottomX = common->wcmMaxX;
-			area->bottomY = priv->bottomY = (common->wcmMaxY - priv->topY) *
+			area->bottomX = priv->bottomX = priv->wcmMaxX;
+			area->bottomY = priv->bottomY = (priv->wcmMaxY - priv->topY) *
 				tabletRatio / screenRatio + priv->topY;
 		}
 		else
 		{
-			area->bottomX = priv->bottomX = (common->wcmMaxX - priv->topX) *
+			area->bottomX = priv->bottomX = (priv->wcmMaxX - priv->topX) *
 				screenRatio / tabletRatio + priv->topX;
-			area->bottomY = priv->bottomY = common->wcmMaxY;
+			area->bottomY = priv->bottomY = priv->wcmMaxY;
 		}
 		/* active tablet size has been changed */
 		xf86WcmMappingFactor(local);
@@ -227,9 +236,11 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	if (xf86Verbose)
 	{
 		ErrorF("%s Wacom device \"%s\" top X=%d top Y=%d "
-				"bottom X=%d bottom Y=%d\n",
+				"bottom X=%d bottom Y=%d "
+				"resol X=%d resol Y=%d\n",
 				XCONFIG_PROBED, local->name, priv->topX,
-				priv->topY, priv->bottomX, priv->bottomY);
+				priv->topY, priv->bottomX, priv->bottomY,
+				priv->wcmResolX, priv->wcmResolY);
 	}
 	return TRUE;
 }
@@ -241,7 +252,6 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
 	int tabletSize = 0, topx = 0, topy = 0;
 	int resolution;
 
@@ -260,7 +270,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		if (priv->flags & ABSOLUTE_FLAG)
 			topx = priv->topX - priv->tvoffsetX;
 
-		resolution = common->wcmResolX;
+		resolution = priv->wcmResolX;
 #ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
@@ -287,7 +297,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		if (priv->flags & ABSOLUTE_FLAG)
 			topy = priv->topY - priv->tvoffsetY;
 
-		resolution = common->wcmResolY;
+		resolution = priv->wcmResolY;
 #ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
@@ -300,6 +310,206 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		InitValuatorAxisStruct(local->dev, 1, topy, tabletSize, 
 			resolution, 0, resolution); 
 	}
+}
+
+#ifdef WCM_KEY_SENDING_SUPPORT
+/*****************************************************************************
+ * xf86WcmRegisterX11Devices --
+ *    Register the X11 input devices with X11 core.
+ ****************************************************************************/
+
+/* Define our own keymap so we can send key-events with our own device and not
+ * rely on inputInfo.keyboard */
+static KeySym keymap[] = {
+	/* 0x00 */  NoSymbol,		NoSymbol,	XK_Escape,	NoSymbol,
+	/* 0x02 */  XK_1,		XK_exclam,	XK_2,		XK_at,
+	/* 0x04 */  XK_3,		XK_numbersign,	XK_4,		XK_dollar,
+	/* 0x06 */  XK_5,		XK_percent,	XK_6,		XK_asciicircum,
+	/* 0x08 */  XK_7,		XK_ampersand,	XK_8,		XK_asterisk,
+	/* 0x0a */  XK_9,		XK_parenleft,	XK_0,		XK_parenright,
+	/* 0x0c */  XK_minus,		XK_underscore,	XK_equal,	XK_plus,
+	/* 0x0e */  XK_BackSpace,	NoSymbol,	XK_Tab,		XK_ISO_Left_Tab,
+	/* 0x10 */  XK_q,		NoSymbol,	XK_w,		NoSymbol,
+	/* 0x12 */  XK_e,		NoSymbol,	XK_r,		NoSymbol,
+	/* 0x14 */  XK_t,		NoSymbol,	XK_y,		NoSymbol,
+	/* 0x16 */  XK_u,		NoSymbol,	XK_i,		NoSymbol,
+	/* 0x18 */  XK_o,		NoSymbol,	XK_p,		NoSymbol,
+	/* 0x1a */  XK_bracketleft,	XK_braceleft,	XK_bracketright,	XK_braceright,
+	/* 0x1c */  XK_Return,		NoSymbol,	XK_Control_L,	NoSymbol,
+	/* 0x1e */  XK_a,		NoSymbol,	XK_s,		NoSymbol,
+	/* 0x20 */  XK_d,		NoSymbol,	XK_f,		NoSymbol,
+	/* 0x22 */  XK_g,		NoSymbol,	XK_h,		NoSymbol,
+	/* 0x24 */  XK_j,		NoSymbol,	XK_k,		NoSymbol,
+	/* 0x26 */  XK_l,		NoSymbol,	XK_semicolon,	XK_colon,
+	/* 0x28 */  XK_quoteright,	XK_quotedbl,	XK_quoteleft,	XK_asciitilde,
+	/* 0x2a */  XK_Shift_L,		NoSymbol,	XK_backslash,	XK_bar,
+	/* 0x2c */  XK_z,		NoSymbol,	XK_x,		NoSymbol,
+	/* 0x2e */  XK_c,		NoSymbol,	XK_v,		NoSymbol,
+	/* 0x30 */  XK_b,		NoSymbol,	XK_n,		NoSymbol,
+	/* 0x32 */  XK_m,		NoSymbol,	XK_comma,	XK_less,
+	/* 0x34 */  XK_period,		XK_greater,	XK_slash,	XK_question,
+	/* 0x36 */  XK_Shift_R,		NoSymbol,	XK_KP_Multiply,	NoSymbol,
+	/* 0x38 */  XK_Alt_L,		XK_Meta_L,	XK_space,	NoSymbol,
+	/* 0x3a */  XK_Caps_Lock,	NoSymbol,	XK_F1,		NoSymbol,
+	/* 0x3c */  XK_F2,		NoSymbol,	XK_F3,		NoSymbol,
+	/* 0x3e */  XK_F4,		NoSymbol,	XK_F5,		NoSymbol,
+	/* 0x40 */  XK_F6,		NoSymbol,	XK_F7,		NoSymbol,
+	/* 0x42 */  XK_F8,		NoSymbol,	XK_F9,		NoSymbol,
+	/* 0x44 */  XK_F10,		NoSymbol,	XK_Num_Lock,	NoSymbol,
+	/* 0x46 */  XK_Scroll_Lock,	NoSymbol,	XK_KP_Home,	XK_KP_7,
+	/* 0x48 */  XK_KP_Up,		XK_KP_8,	XK_KP_Prior,	XK_KP_9,
+	/* 0x4a */  XK_KP_Subtract,	NoSymbol,	XK_KP_Left,	XK_KP_4,
+	/* 0x4c */  XK_KP_Begin,	XK_KP_5,	XK_KP_Right,	XK_KP_6,
+	/* 0x4e */  XK_KP_Add,		NoSymbol,	XK_KP_End,	XK_KP_1,
+	/* 0x50 */  XK_KP_Down,		XK_KP_2,	XK_KP_Next,	XK_KP_3,
+	/* 0x52 */  XK_KP_Insert,	XK_KP_0,	XK_KP_Delete,	XK_KP_Decimal,
+	/* 0x54 */  NoSymbol,		NoSymbol,	XK_F13,		NoSymbol,
+	/* 0x56 */  XK_less,		XK_greater,	XK_F11,		NoSymbol,
+	/* 0x58 */  XK_F12,		NoSymbol,	XK_F14,		NoSymbol,
+	/* 0x5a */  XK_F15,		NoSymbol,	XK_F16,		NoSymbol,
+	/* 0x5c */  XK_F17,		NoSymbol,	XK_F18,		NoSymbol,
+	/* 0x5e */  XK_F19,		NoSymbol,	XK_F20,		NoSymbol,
+	/* 0x60 */  XK_KP_Enter,	NoSymbol,	XK_Control_R,	NoSymbol,
+	/* 0x62 */  XK_KP_Divide,	NoSymbol,	XK_Print,	XK_Sys_Req,
+	/* 0x64 */  XK_Alt_R,		XK_Meta_R,	NoSymbol,	NoSymbol,
+	/* 0x66 */  XK_Home,		NoSymbol,	XK_Up,		NoSymbol,
+	/* 0x68 */  XK_Prior,		NoSymbol,	XK_Left,	NoSymbol,
+	/* 0x6a */  XK_Right,		NoSymbol,	XK_End,		NoSymbol,
+	/* 0x6c */  XK_Down,		NoSymbol,	XK_Next,	NoSymbol,
+	/* 0x6e */  XK_Insert,		NoSymbol,	XK_Delete,	NoSymbol,
+	/* 0x70 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x72 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x74 */  NoSymbol,		NoSymbol,	XK_KP_Equal,	NoSymbol,
+	/* 0x76 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x78 */  XK_F21,		NoSymbol,	XK_F22,		NoSymbol,
+	/* 0x7a */  XK_F23,		NoSymbol,	XK_F24,		NoSymbol,
+	/* 0x7c */  XK_KP_Separator,	NoSymbol,	XK_Meta_L,	NoSymbol,
+	/* 0x7e */  XK_Meta_R,		NoSymbol,	XK_Multi_key,	NoSymbol,
+	/* 0x80 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x82 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x84 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x86 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x88 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8a */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8c */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x8e */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x90 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x92 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x94 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x96 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x98 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9a */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9c */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0x9e */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xa8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xaa */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xac */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xae */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xb8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xba */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xbc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xbe */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xc8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xca */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xcc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xce */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xd8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xda */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xdc */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xde */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xe8 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xea */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xec */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xee */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf0 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf2 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf4 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol,
+	/* 0xf6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol
+};
+
+static struct { KeySym keysym; CARD8 mask; } keymod[] = {
+	{ XK_Shift_L,	ShiftMask },
+	{ XK_Shift_R,	ShiftMask },
+	{ XK_Control_L,	ControlMask },
+	{ XK_Control_R,	ControlMask },
+	{ XK_Caps_Lock,	LockMask },
+	{ XK_Alt_L,	Mod1Mask }, /*AltMask*/
+	{ XK_Alt_R,	Mod1Mask }, /*AltMask*/
+	{ XK_Num_Lock,	Mod2Mask }, /*NumLockMask*/
+	{ XK_Scroll_Lock,	Mod5Mask }, /*ScrollLockMask*/
+	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
+	{ NoSymbol,	0 }
+};
+#endif /* WCM_KEY_SENDING_SUPPORT */
+
+/*****************************************************************************
+ * xf86WcmInitialprivSize --
+ *    Initialize logical size and resolution for individual tool.
+ ****************************************************************************/
+
+static void xf86WcmInitialToolSize(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	WacomToolPtr toollist = common->wcmTool;
+	WacomToolAreaPtr arealist;
+	int temp;
+
+	if (IsTouch(priv))
+	{
+		priv->wcmMaxX = common->wcmMaxTouchX;
+		priv->wcmMaxY = common->wcmMaxTouchY;
+		priv->wcmResolX = common->wcmTouchResolX;
+		priv->wcmResolY = common->wcmTouchResolY;
+	}
+	else
+	{
+		priv->wcmMaxX = common->wcmMaxX;
+		priv->wcmMaxY = common->wcmMaxY;
+		priv->wcmResolX = common->wcmResolX;
+		priv->wcmResolY = common->wcmResolY;
+	}
+
+	/* Rotation rotates the Max Y and Y */
+	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
+	{
+		temp = priv->wcmMaxX;
+		priv->wcmMaxX = priv->wcmMaxY;
+		priv->wcmMaxY = temp;
+	}
+
+	for (; toollist; toollist=toollist->next)
+	{
+		arealist = toollist->arealist;
+		for (; arealist; arealist=arealist->next)
+		{
+			if (!arealist->bottomX) 
+				arealist->bottomX = priv->wcmMaxX;
+			if (!arealist->bottomY)
+				arealist->bottomY = priv->wcmMaxY;
+		}
+	}
+	return;
 }
 
 /*****************************************************************************
@@ -330,6 +540,8 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		IsCursor(priv) ? "cursor" :
 		IsPad(priv) ? "pad" : "eraser",
 		nbbuttons, nbkeys, nbaxes));
+
+	xf86WcmInitialToolSize(local);
 
 	/* initialize screen bounding rect */
 	xf86WcmInitialScreens(local);
@@ -390,18 +602,18 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
 	{
+#ifdef WCM_KEY_SENDING_SUPPORT
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
-			KeySym keymap[256];
+			CARD8 modmap[MAP_LENGTH];
+			int i,j;
 
-			for (loop = 0; loop < nbkeys; loop++)
-				if ((priv->button [loop] & AC_TYPE) == AC_KEY)
-					keymap [loop] = priv->button [loop] & AC_CODE;
-				else
-					keymap [loop] = NoSymbol;
-			for(loop = nbkeys; loop<256; loop++)
-				keymap [loop] = NoSymbol;
+			memset(modmap, 0, sizeof(modmap));
+			for(i=0; keymod[i].keysym != NoSymbol; i++)
+				for(j=8; j<256; j++)
+					if(keymap[(j-8)*2] == keymod[i].keysym)
+						modmap[j] = keymod[i].mask;
 
 			/* There seems to be a long-standing misunderstanding about
 			 * how a keymap should be defined. All tablet drivers from
@@ -421,18 +633,27 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			/* minKeyCode = 8 because this is the min legal key code */
 			wacom_keysyms.minKeyCode = 8;
 			wacom_keysyms.maxKeyCode = 255;
-			wacom_keysyms.mapWidth = 1;
-			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, NULL) == FALSE)
+			wacom_keysyms.mapWidth = 2;
+			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, modmap) == FALSE)
 			{
 				ErrorF("unable to init key class device\n");
 				return FALSE;
 			}
 		}
 
+#ifndef WCM_XFREE86
+		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
+				xf86WcmKbdCtrlCallback) == FALSE) {
+			ErrorF("unable to init kbd feedback device struct\n");
+			return FALSE;
+		}
+
 		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
+#endif /* WCM_XFREE86 */
+#endif /* WCM_KEY_SENDING_SUPPORT */
 	}
 
 #if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
@@ -488,6 +709,60 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
+#ifdef LINUX_INPUT
+static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
+{
+	struct input_id id;
+	ioctl(fd, EVIOCGID, &id);
+	if (id.vendor == vendor)
+		return TRUE;
+	return FALSE;
+}
+
+/*****************************************************************************
+ * xf86WcmEventAutoDevProbe -- Probe for right input device
+ ****************************************************************************/
+#define DEV_INPUT_EVENT "/dev/input/event%d"
+#define EVDEV_MINORS    32
+char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
+{
+	/* We are trying to find the right eventX device */
+	int i, wait = 0;
+	const int max_wait = 2000;
+
+	/* If device is not available after Resume, wait some ms */
+	while (wait <= max_wait) 
+	{
+		for (i = 0; i < EVDEV_MINORS; i++) 
+		{
+			char fname[64];
+			int fd = -1;
+			Bool is_wacom;
+
+			sprintf(fname, DEV_INPUT_EVENT, i);
+			SYSCALL(fd = open(fname, O_RDONLY));
+			if (fd < 0)
+				continue;
+			is_wacom = xf86WcmIsWacomDevice(fd, 0x056a);
+			SYSCALL(close(fd));
+			if (is_wacom) 
+			{
+				ErrorF ("%s Wacom probed device to be %s (waited %d msec)\n",
+					XCONFIG_PROBED, fname, wait);
+				xf86ReplaceStrOption(local->options, "Device", fname);
+				return xf86FindOptionValue(local->options, "Device");
+			}
+		}
+		wait += 100;
+		ErrorF("%s waiting 100 msec (total %dms) for device to become ready\n", local->name, wait); 
+		usleep(100*1000);
+	}
+	ErrorF("%s no synaptics event device found (checked %d nodes, waited %d msec)\n",
+		local->name, i + 1, wait);
+	return FALSE;
+}
+#endif
+
 /*****************************************************************************
  * xf86WcmDevOpen --
  *    Open the physical device and init information structs.
@@ -501,14 +776,22 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
  
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmDevOpen\n"));
 
-	/* Device has been open */
+	/* Device has been open and not autoprobed */
 	if (priv->wcmDevOpenCount)
 		return TRUE;
 
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		if ((xf86WcmOpen (local) != Success) || (local->fd < 0))
+#ifdef LINUX_INPUT
+		/* Autoprobe if necessary */
+		if ((common->wcmFlags & AUTODEV_FLAG) &&
+		    !(common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+			ErrorF("Cannot probe device\n");
+#endif
+
+		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
+			!common->wcmDevice)
 		{
 			DBG(1, priv->debugLevel, ErrorF("Failed to open "
 				"device (fd=%d)\n", local->fd));

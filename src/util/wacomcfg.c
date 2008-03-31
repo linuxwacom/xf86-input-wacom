@@ -2,7 +2,7 @@
 ** wacomcfg.c
 **
 ** Copyright (C) 2003-2004 - John E. Joganic
-** Copyright (C) 2004-2007 - Ping Cheng
+** Copyright (C) 2004-2008 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -26,6 +26,7 @@
 **   2005-11-17 0.0.5 - PC - update mode code
 **   2006-07-17 0.0.6 - PC - Exchange info directly with wacom_drv.o
 **   2007-01-10 0.0.7 - PC - don't display uninitialized tools
+**   2008-03-24 0.0.8 - PC - Added touch for serial TabletPC (ISDv4)
 **
 ****************************************************************************/
 
@@ -181,6 +182,8 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 			pInfo->type = WACOMDEVICETYPE_STYLUS;
 		else if (strstr(devName,"eraser") != NULL)
 			pInfo->type = WACOMDEVICETYPE_ERASER;
+		else if (strstr(devName,"touch") != NULL)
+			pInfo->type = WACOMDEVICETYPE_TOUCH;
 		else if (strstr(devName,"pad") != NULL)
 			pInfo->type = WACOMDEVICETYPE_PAD;
 		else

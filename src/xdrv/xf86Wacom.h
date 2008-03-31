@@ -119,7 +119,8 @@
 #define XI_STYLUS "STYLUS"      /* X device name for the stylus */
 #define XI_CURSOR "CURSOR"      /* X device name for the cursor */
 #define XI_ERASER "ERASER"      /* X device name for the eraser */
-#define XI_PAD    "PAD"         /* X device name for the I3 Pad */
+#define XI_PAD    "PAD"         /* X device name for the Pad */
+#define XI_TOUCH  "TOUCH"       /* X device name for the touch */
 
 /******************************************************************************
  * WacomModule - all globals are packed in a single structure to keep the
@@ -156,7 +157,6 @@ struct _WacomModule
  ****************************************************************************/
 
 #define xf86WcmFlushTablet(fd) xf86FlushInput(fd)
-#define xf86WcmWaitForTablet(fd) xf86WaitForInput((fd), 1000000)
 #define xf86WcmSetSerialSpeed(fd,rate) xf86SetSerialSpeed((fd),(rate))
 
 #define xf86WcmRead(a,b,c) xf86ReadSerial((a),(b),(c))
@@ -195,6 +195,15 @@ LocalDevicePtr xf86WcmAllocateEraser(void);
 LocalDevicePtr xf86WcmAllocatePad(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
+
+/* device autoprobing */
+char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
+
+/* serial write and wait command */
+int xf86WcmWriteWait(int fd, const char* request);
+
+/*wait for tablet data */
+int xf86WcmWaitForTablet(int fd, char * data, int size);
 
 /* common tablet initialization regime */
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);

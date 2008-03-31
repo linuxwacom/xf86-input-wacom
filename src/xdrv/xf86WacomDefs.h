@@ -97,26 +97,30 @@ struct _WacomModel
  * WacomDeviceRec
  *****************************************************************************/
 
-#define DEVICE_ID(flags) ((flags) & 0x0f)
+#define DEVICE_ID(flags) ((flags) & 0xff)
 #define STYLUS_DEVICE_ID	0x02
+#define TOUCH_DEVICE_ID		0x03
 #define CURSOR_DEVICE_ID	0x06
 #define ERASER_DEVICE_ID	0x0A
 #define PAD_DEVICE_ID		0x0F
 
 #define STYLUS_ID		0x00000001
-#define CURSOR_ID		0x00000002
-#define ERASER_ID		0x00000004
-#define PAD_ID			0x00000008
-#define ABSOLUTE_FLAG		0x00000010
-#define KEEP_SHAPE_FLAG		0x00000020
-#define BAUD_19200_FLAG		0x00000040
-#define BUTTONS_ONLY_FLAG	0x00000080
-#define TPCBUTTONS_FLAG		0x00000100
-#define TPCBUTTONONE_FLAG	0x00000200
-#define COREEVENT_FLAG		0x00000400
+#define TOUCH_ID		0x00000002
+#define CURSOR_ID		0x00000004
+#define ERASER_ID		0x00000008
+#define PAD_ID			0x00000010
+
+#define ABSOLUTE_FLAG		0x00000100
+#define KEEP_SHAPE_FLAG		0x00000200
+#define BAUD_19200_FLAG		0x00000400
+#define BUTTONS_ONLY_FLAG	0x00000800
+#define TPCBUTTONS_FLAG		0x00001000
+#define TPCBUTTONONE_FLAG	0x00002000
+#define COREEVENT_FLAG		0x00004000
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
+#define IsTouch(priv)  (DEVICE_ID((priv)->flags) == TOUCH_ID)
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 #define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
 
@@ -136,17 +140,21 @@ struct _WacomDeviceRec
 	LocalDevicePtr local;
 	int debugLevel;
 
-	unsigned int flags;     /* various flags (type, abs, touch...) */
-	int topX;               /* X top */
-	int topY;               /* Y top */
-	int bottomX;            /* X bottom */
-	int bottomY;            /* Y bottom */
+	unsigned int flags;	/* various flags (type, abs, touch...) */
+	int topX;		/* X top */
+	int topY;		/* Y top */
+	int bottomX;		/* X bottom */
+	int bottomY;		/* Y bottom */
 	int sizeX;		/* active X size */
 	int sizeY;		/* active Y size */
-	double factorX;         /* X factor */
-	double factorY;         /* Y factor */
-	unsigned int serial;    /* device serial number */
-	int screen_no;          /* associated screen */
+	int wcmMaxX;		/* max tool logical X value */
+	int wcmMaxY;		/* max tool logical Y value */
+	int wcmResolX;		/* tool X resolution in points/inch */
+	int wcmResolY;		/* tool Y resolution in points/inch */
+	double factorX;		/* X factor */
+	double factorY;		/* Y factor */
+	unsigned int serial;	/* device serial number */
+	int screen_no;		/* associated screen */
 	int screenTopX[32];	/* left cordinate of the associated screen */
 	int screenTopY[32];	/* top cordinate of the associated screen */
 	int screenBottomX[32];	/* right cordinate of the associated screen */
@@ -332,6 +340,7 @@ struct _WacomDeviceClass
 /* set if the /dev/input driver should wait for SYN_REPORT events as the
    end of record indicator */
 #define USE_SYN_REPORTS_FLAG	8
+#define AUTODEV_FLAG		16
 #endif
 
 #define DEVICE_ISDV4 		0x000C
@@ -341,22 +350,28 @@ struct _WacomDeviceClass
 struct _WacomCommonRec 
 {
 	char* wcmDevice;             /* device file name */
-	unsigned char wcmFlags;      /* various flags (handle tilt) */
+	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
 	int tablet_id;		     /* USB tablet ID */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 
 	/* These values are in tablet coordinates */
-	int wcmMaxX;                 /* tablet max X value */
-	int wcmMaxY;                 /* tablet max Y value */
+	int wcmMaxX;        /* tablet max X value */
+	int wcmMaxY;        /* tablet max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
+	int wcmMaxTouchX;            /* max touch X value */
+	int wcmMaxTouchY;            /* max touch Y value */
 	int wcmMaxDist;              /* tablet max distance value */
+	int wcmTouchResolX;          /* touch X resolution in points/inch */
+	int wcmTouchResolY;          /* touch Y resolution in points/inch */
 	int wcmResolX;               /* tablet X resolution in points/inch */
 	int wcmResolY;               /* tablet Y resolution in points/inch */
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100%
 	                              * pressure */
+	int wcmMaxtiltX;	     /* styli max tilt in X directory */ 
+	int wcmMaxtiltY;	     /* styli max tilt in Y directory */ 
 
 	/* These values are in user coordinates */
 	int wcmUserResolX;           /* user-defined X resolution */

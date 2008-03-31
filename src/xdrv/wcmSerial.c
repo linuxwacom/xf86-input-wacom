@@ -241,6 +241,60 @@ static void serialParseP4Common(LocalDevicePtr local, const unsigned char* data,
 	*/
 
 /*****************************************************************************
+ * xf86WcmWrite --
+ *   send a request 
+ ****************************************************************************/
+
+int xf86WcmWriteWait(int fd, const char* request)
+{
+	int len, maxtry = MAXTRY;
+
+	/* send request string */
+	do
+	{
+		len = xf86WriteSerial(fd, request, strlen(request));
+		if ((len == -1) && (errno != EAGAIN))
+		{
+			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
+			return 0;
+		}
+
+		maxtry--;
+
+	} while ((len <= 0) && maxtry);
+
+	return maxtry;
+}
+
+/*****************************************************************************
+ * xf86WcmWaitForTablet --
+ *   wait for tablet data 
+ ****************************************************************************/
+
+int xf86WcmWaitForTablet(int fd, char* answer, int size)
+{
+	int len, maxtry = MAXTRY;
+
+	/* Read size bytes of the answer */
+	do
+	{
+		if ((len = xf86WaitForInput(fd, 1000000)) > 0)
+		{
+			len = xf86WcmRead(fd, answer, size);
+			if ((len == -1) && (errno != EAGAIN))
+			{
+				ErrorF("Wacom xf86WcmRead error : %s\n",
+						strerror(errno));
+				return 0;
+			}
+		}
+		maxtry--;
+	} while ((len <= 0) && maxtry);
+
+	return maxtry;
+}
+
+/*****************************************************************************
  * xf86WcmSendRequest --
  *   send a request and wait for the answer.
  *   the answer must begin with the first two chars of the request.
@@ -249,25 +303,14 @@ static void serialParseP4Common(LocalDevicePtr local, const unsigned char* data,
 
 char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 {
-	int len, nr;
+	int len, nr = 0;
 	int maxtry = MAXTRY;
 
 	if (maxlen < 3)
 		return NULL;
   
-	/* send request string */
-	do
-	{
-		len = xf86WcmWrite(fd, request, strlen(request));
-		if ((len == -1) && (errno != EAGAIN))
-		{
-			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
-			return NULL;
-		}
-		maxtry--;
-	} while ((len == -1) && maxtry);
-
-	if (maxtry == 0)
+	/* wait for request return */
+	if (!xf86WcmWriteWait(fd, request))
 	{
 		ErrorF("Wacom unable to xf86WcmWrite request string '%s' "
 				"after %d tries\n", request, MAXTRY);
@@ -276,92 +319,63 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 
 	do
 	{
-		maxtry = MAXTRY;
-
 		/* Read the first byte of the answer which must
 		 * be equal to the first byte of the request.
 		 */
-		do
-		{
-			if ((nr = xf86WcmWaitForTablet(fd)) > 0)
-			{
-				nr = xf86WcmRead(fd, answer, 1);
-				if ((nr == -1) && (errno != EAGAIN))
-				{
-					ErrorF("Wacom xf86WcmRead error : %s\n",
-							strerror(errno));
-					return NULL;
-				}
-			}
-			maxtry--;
-		} while ((answer[0] != request[0]) && maxtry);
-
-		if (maxtry == 0)
+		maxtry = xf86WcmWaitForTablet(fd, answer, 1);
+		if (answer[0] != request[0])
 		{
 			ErrorF("Wacom unable to read first byte of "
 					"request '%c%c' answer after %d tries\n",
-					request[0], request[1], MAXTRY);
+					request[0], request[1], maxtry);
 			return NULL;
 		}
 
 		/* Read the second byte of the answer which must be equal
 		 * to the second byte of the request. */
-		do
+		if (!xf86WcmWaitForTablet(fd, answer+1, 1))
 		{
-			maxtry = MAXTRY;
-			do
-			{
-				if ((nr = xf86WcmWaitForTablet(fd)) > 0)
-				{
-					nr = xf86WcmRead(fd, answer+1, 1);
-					if ((nr == -1) && (errno != EAGAIN))
-					{
-						ErrorF("Wacom xf86WcmRead error : %s\n",
-								strerror(errno));
-						return NULL;
-					}
-				}
-				maxtry--;
-			} while ((nr <= 0) && maxtry);
+			ErrorF("Wacom unable to read second byte of "
+				"request '%c%c' answer after %d "
+				"tries\n", request[0], request[1], maxtry);
+			return NULL;
+		}
 
-			if (maxtry == 0)
-			{
-				ErrorF("Wacom unable to read second byte of "
-					"request '%c%c' answer after %d "
-					"tries\n", request[0], request[1],
-					MAXTRY);
-				return NULL;
-			}
+		if (answer[1] != request[1])
+			answer[0] = answer[1];
 
-			if (answer[1] != request[1])
-				answer[0] = answer[1];
+	} while ((answer[0] == request[0]) && (answer[1] != request[1]));
 
-		} while ((answer[0] == request[0]) && (answer[1] != request[1]));
-
-	} while ((answer[0] != request[0]) && (answer[1] != request[1]));
 
 	/* Read until we don't get anything or timeout. */
 
 	len = 2;
-	maxtry = MAXTRY;
 	do
 	{
-		do
+		if (len == 2)
 		{
-			if ((nr = xf86WcmWaitForTablet(fd)) > 0)
+			if (!xf86WcmWaitForTablet(fd, answer+len, 1))
 			{
-				nr = xf86WcmRead(fd, answer+len, 1);
-				if ((nr == -1) && (errno != EAGAIN))
-				{
-					ErrorF("Wacom xf86WcmRead error : %s\n", strerror(errno));
-					return NULL;
-				}
+				ErrorF("Wacom unable to read last byte of request '%c%c' "
+					"answer after %d tries\n",
+					request[0], request[1], MAXTRY);
+				return NULL;
 			}
-			else
+			len++;
+		}
+
+ErrorF("Wacom xf86WcmWaitForTablet : %s\n", answer);
+		if ((nr = xf86WaitForInput(fd, 1000000)) > 0)
+		{
+			nr = xf86WcmRead(fd, answer+len, 1);
+			if ((nr == -1) && (errno != EAGAIN))
 			{
-				if (len == 2) maxtry--;
+				ErrorF("Wacom xf86WcmRead in xf86WcmSendRequest error : %s\n",
+						strerror(errno));
+				return NULL;
 			}
-		} while ((nr <= 0) && len == 2 && maxtry);
+		}
+ErrorF("Wacom xf86WcmRead : %s\n", answer);
 
 		if (nr > 0)
 		{
@@ -370,12 +384,6 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 				return NULL;
 		}
 
-		if (maxtry == 0)
-		{
-			ErrorF("Wacom unable to read last byte of request '%c%c' answer after %d tries\n",
-					request[0], request[1], MAXTRY);
-			break;
-		}
 	} while (nr > 0);
 
 	if (len <= 3)
@@ -1234,9 +1242,9 @@ static void serialParseP4Common(LocalDevicePtr local,
 		ds->tiltx = (data[7] & TILT_BITS);
 		ds->tilty = (data[8] & TILT_BITS);
 		if (data[7] & TILT_SIGN_BIT)
-			ds->tiltx -= 64;
+			ds->tiltx -= common->wcmMaxtiltX/2;
 		if (data[8] & TILT_SIGN_BIT)
-			ds->tilty -= 64;
+			ds->tilty -= common->wcmMaxtiltY/2;
 	}
 
 	/* first time into prox */

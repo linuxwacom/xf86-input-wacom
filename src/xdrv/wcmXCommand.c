@@ -279,7 +279,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	    case XWACOM_PARAM_PRESSCURVE:
 	    {
-		if ( !IsCursor(priv) && !IsPad (priv) ) 
+		if ( !IsCursor(priv) && !IsPad (priv) && !IsTouch (priv)) 
 		{
 			char chBuf[64];
 			int x0 = (value >> 24) & 0xFF;
@@ -326,8 +326,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPY, 0);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxX);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
+		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, priv->wcmMaxX);
+		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, priv->wcmMaxY);
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) 
@@ -371,9 +371,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		if (value < -1 || value >= priv->numScreen) 
 			return BadValue;
 		else if (priv->screen_no != value)
-		{
 			xf86WcmChangeScreen(local, value);
-		}
 		break;
 	    case XWACOM_PARAM_TWINVIEW:
 		if (priv->twinview != value)
@@ -381,7 +379,19 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			if ((value > 2) || (value < 0) || screenInfo.numScreens != 1)
 				return BadValue;
 			priv->twinview = value;
-			xf86WcmChangeScreen(local, priv->screen_no);
+
+			/* Can not restrict the cursor to a particular screen */
+			if (!value)
+			{
+				value = -1;
+				priv->currentScreen = 0;
+				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam(TWINVIEW) TwinView sets to "
+					"TV_NONE: cann't change screen_no. \n"));
+			}
+			else
+				value = priv->screen_no;
+
+			xf86WcmChangeScreen(local, value);
 		}
 		break;
 	    case XWACOM_PARAM_TVRESOLUTION0:
@@ -459,16 +469,16 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			return BadValue;
 		}
 		oldRotation = common->wcmRotate;
-		oldMaxX = common->wcmMaxX;
-		oldMaxY = common->wcmMaxY;
+		oldMaxX = priv->wcmMaxX;
+		oldMaxY = priv->wcmMaxY;
 		common->wcmRotate = value;
 		if (((oldRotation == ROTATE_NONE || oldRotation == ROTATE_HALF) && 
 			(value == ROTATE_CW || value == ROTATE_CCW)) ||
 		     ((oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
 			&& (value == ROTATE_NONE || value == ROTATE_HALF)))
 		{
-		    common->wcmMaxX = oldMaxY;
-		    common->wcmMaxY = oldMaxX;
+		    priv->wcmMaxX = oldMaxY;
+		    priv->wcmMaxY = oldMaxX;
 		}
 
 		/* rotate all devices at once! else they get misaligned */
@@ -507,20 +517,20 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		      case ROTATE_CW:
 			tmparea->topX = tmppriv->topX = tmpTopY;
 			tmparea->bottomX = tmppriv->bottomX = tmpBottomY;
-			tmparea->topY = tmppriv->topY = common->wcmMaxY - tmpBottomX;
-			tmparea->bottomY = tmppriv->bottomY = common->wcmMaxY - tmpTopX;
+			tmparea->topY = tmppriv->topY = priv->wcmMaxY - tmpBottomX;
+			tmparea->bottomY = tmppriv->bottomY = priv->wcmMaxY - tmpTopX;
 			break;
 		      case ROTATE_CCW:
-			tmparea->topX = tmppriv->topX = common->wcmMaxX - tmpBottomY;
-			tmparea->bottomX = tmppriv->bottomX = common->wcmMaxX - tmpTopY;
+			tmparea->topX = tmppriv->topX = priv->wcmMaxX - tmpBottomY;
+			tmparea->bottomX = tmppriv->bottomX = priv->wcmMaxX - tmpTopY;
 			tmparea->topY = tmppriv->topY = tmpTopX;
 			tmparea->bottomY = tmppriv->bottomY = tmpBottomX;
 			break;
 		      case ROTATE_HALF:
-			tmparea->topX = tmppriv->topX = common->wcmMaxX - tmpBottomX;
-			tmparea->bottomX = tmppriv->bottomX = common->wcmMaxX - tmpTopX;
-			tmparea->topY = tmppriv->topY= common->wcmMaxY - tmpBottomY;
-			tmparea->bottomY = tmppriv->bottomY = common->wcmMaxY - tmpTopY;
+			tmparea->topX = tmppriv->topX = priv->wcmMaxX - tmpBottomX;
+			tmparea->bottomX = tmppriv->bottomX = priv->wcmMaxX - tmpTopX;
+			tmparea->topY = tmppriv->topY= priv->wcmMaxY - tmpBottomY;
+			tmparea->bottomY = tmppriv->bottomY = priv->wcmMaxY - tmpTopY;
 			break;
 		      default: /* ROTATE_NONE */
 			tmparea->topX = tmppriv->topX = tmpTopX;
@@ -825,7 +835,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_RAWSAMPLE:
 		return common->wcmRawSample;
 	    case XWACOM_PARAM_PRESSCURVE:
-		if (!IsCursor (priv) && !IsPad (priv))
+		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (priv->nPressCtrl [0] << 24) |
 			       (priv->nPressCtrl [1] << 16) |
 			       (priv->nPressCtrl [2] << 8) |
@@ -981,9 +991,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_TOPY:
 		return 0;
 	case XWACOM_PARAM_BOTTOMX:
-		return common->wcmMaxX;
+		return priv->wcmMaxX;
 	case XWACOM_PARAM_BOTTOMY:
-		return common->wcmMaxY;		
+		return priv->wcmMaxY;		
 	case XWACOM_PARAM_BUTTON1:
 	case XWACOM_PARAM_BUTTON2:
 	case XWACOM_PARAM_BUTTON3:
@@ -991,9 +1001,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_BUTTON5:
 		return (param - XWACOM_PARAM_BUTTON1 + 1);
 	case XWACOM_PARAM_MODE:
-                if (IsCursor(priv) || (IsPad(priv) && (priv->flags & COREEVENT_FLAG)))
+		if (IsCursor(priv) || (IsPad(priv) && (priv->flags & COREEVENT_FLAG)))
 			return 0;
-                else
+		else
 			return 1;
 	case XWACOM_PARAM_RELWUP:
 	case XWACOM_PARAM_ABSWUP:
@@ -1016,7 +1026,7 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButtonDefault;
 	case XWACOM_PARAM_PRESSCURVE:
-		if (!IsCursor (priv) && !IsPad (priv))
+		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;
 		return -1;
 	case XWACOM_PARAM_SUPPRESS:

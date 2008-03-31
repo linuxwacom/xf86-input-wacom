@@ -15,11 +15,11 @@ EXTRA_DIST = xf86Wacom.c wcmXCommand.c xf86Wacom.h \
 		../include/Xwacom.h
 
 if WCM_ENV_XORGSDK
-DRIVER_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
+DRIVER_INCLUDES = -I../include -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
 endif
 
 if WCM_ENV_XFREE86
-DRIVER_INCLUDES = \
+DRIVER_INCLUDES = -I../include \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/common \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/loader \
 	-I$(WCM_XFREE86_DIR)/programs/Xserver/hw/xfree86/os-support \
@@ -62,7 +62,7 @@ depend: .depend
 
 .depend: Makefile
 	@rm -f .depend
-	$(CC) -MM $(CFLAGS) $(DEPFLAGS) $(DRIVER_INCLUDES) $(XF86OBJS:%.o=%.c) > .depend
+	$(CC) -MM $(CFLAGS) $(DEPFLAGS) $(DRIVER_INCLUDES) $(XF86OBJS:%.o=$(srcdir)/%.c) > .depend
 
 -include .depend
 
