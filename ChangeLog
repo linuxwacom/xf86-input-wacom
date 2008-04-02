@@ -1,7 +1,13 @@
+2008-04-03  Ping Cheng <pingc@wacom.com>
+	* Minor fixes in kernel and wacomcpl
+	* Removed debug statement in wcmSerial.c
+	* Label 0.7.9-10
+
 2008-03-30  Ping Cheng <pingc@wacom.com>
-	Updated configure.in for keystrokes (Magnus Vigerlöf)
-	Added touch support for serial TabletPC (ISDv4)
-	Added autoprobe patch (Matthias Hopf @ Suse)
+	* Updated configure.in for keystrokes (Magnus Vigerlöf)
+	* Added touch support for serial TabletPC (ISDv4)
+	* Added autoprobe patch (Matthias Hopf @ Suse)
+	* Label 0.7.9-9
 
 2008-03-07  Ping Cheng <pingc@wacom.com>
 	* Updated wacomcpl for keystrokes

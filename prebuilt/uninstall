@@ -1,3 +1,12 @@
+#!/bin/bash
+#uninstall prebuilt wacom X driver and associated utilities
+
+# Make sure the script is running under root
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit
+fi
+
 echo "Removing Wacom X driver related utility programs...."
 rm -f /usr/local/bin/xsetwacom
 rm -f /usr/local/bin/wacdump

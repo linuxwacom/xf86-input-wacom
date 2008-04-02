@@ -364,7 +364,6 @@ char* xf86WcmSendRequest(int fd, const char* request, char* answer, int maxlen)
 			len++;
 		}
 
-ErrorF("Wacom xf86WcmWaitForTablet : %s\n", answer);
 		if ((nr = xf86WaitForInput(fd, 1000000)) > 0)
 		{
 			nr = xf86WcmRead(fd, answer+len, 1);
@@ -375,7 +374,6 @@ ErrorF("Wacom xf86WcmWaitForTablet : %s\n", answer);
 				return NULL;
 			}
 		}
-ErrorF("Wacom xf86WcmRead : %s\n", answer);
 
 		if (nr > 0)
 		{

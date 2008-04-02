@@ -897,8 +897,8 @@ proc expressKeys { } {
 
     set name(1) "Wheel Up"
     set name(2) "Wheel Down"
-    set name(3) "Ring Clockwise"
-    set name(4) "Ring Anticlockwise"
+    set name(3) "Ring Anticlockwise"
+    set name(4) "Ring Clockwise"
     set name(5) "Left Strip Up"
     set name(6) "Left Strip Down"
     set name(7) "Right Strip Up"
@@ -918,8 +918,8 @@ proc expressKeys { } {
 	    set oldKeys($spName($curOption)) ""
 	}
 	set bmenu [ tk_optionMenu $currentW.f.$cur db$cur $db(1) $db(2) \
-	    $db(3) $db(4) $db(5) $db($displayToggleB) $db($ignoreButton) ]
-	$bmenu insert 8 radiobutton -label "$db($keystrokeB)" \
+	    $db(3) $db(4) $db(5) $db($ignoreButton) ]
+	$bmenu insert 7 radiobutton -label "$db($keystrokeB)" \
 	    -variable menvar -command "displaySubWindow \
 	    updateKeys 0 initialKeys 5 $cur $curOption"
 
