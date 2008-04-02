@@ -171,7 +171,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int prox, pressure, id;
+	int prox, pressure;
 	int retval;
 
 	switch (urb->status) {
@@ -198,7 +198,7 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 
 	input_regs(dev, regs);
 	
-	id = ERASER_DEVICE_ID;
+	wacom->id[0] = ERASER_DEVICE_ID;
 	if (prox) {
 
 		pressure = (signed char)((data[7] << 1) | ((data[4] >> 2) & 1));
@@ -233,10 +233,10 @@ static void wacom_pl_irq(struct urb *urb, struct pt_regs *regs)
 		if (wacom->tool[1] != BTN_TOOL_RUBBER) {
 			/* Unknown tool selected default to pen tool */
 			wacom->tool[1] = BTN_TOOL_PEN;
-			id = STYLUS_DEVICE_ID;
+			wacom->id[0] = STYLUS_DEVICE_ID;
 		}
 		input_report_key(dev, wacom->tool[1], prox); /* report in proximity for tool */
-		input_report_abs(dev, ABS_MISC, id); /* report tool id */
+		input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
 		input_report_abs(dev, ABS_X, data[3] | (data[2] << 7) | ((data[1] & 0x03) << 14));
 		input_report_abs(dev, ABS_Y, data[6] | (data[5] << 7) | ((data[4] & 0x03) << 14));
 		input_report_abs(dev, ABS_PRESSURE, pressure);
@@ -272,7 +272,6 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
 	int retval;
-	int id;
 
 	switch (urb->status) {
 	case 0:
@@ -300,15 +299,15 @@ static void wacom_ptu_irq(struct urb *urb, struct pt_regs *regs)
 	{
 		input_report_key(dev, BTN_TOOL_RUBBER, data[1] & 0x20);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x08);
-		id = ERASER_DEVICE_ID;
+		wacom->id[0] = ERASER_DEVICE_ID;
 	}
 	else
 	{
 		input_report_key(dev, BTN_TOOL_PEN, data[1] & 0x20);
 		input_report_key(dev, BTN_TOUCH, data[1] & 0x01);
-		id = STYLUS_DEVICE_ID;
+		wacom->id[0] = STYLUS_DEVICE_ID;
 	}
-	input_report_abs(dev, ABS_MISC, id); /* report tool id */
+	input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
 	input_report_abs(dev, ABS_X, le16_to_cpu(*(__le16 *) &data[2]));
 	input_report_abs(dev, ABS_Y, le16_to_cpu(*(__le16 *) &data[4]));
 	input_report_abs(dev, ABS_PRESSURE, le16_to_cpu(*(__le16 *) &data[6]));
@@ -395,7 +394,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int x, y, id, rw;
+	int x, y, rw;
 	int retval;
 
 	switch (urb->status) {
@@ -423,21 +422,20 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
 	input_regs(dev, regs);
 
-	id = STYLUS_DEVICE_ID;
-	if ((data[1] & 0x80) && ((data[1] & 0x07) || data[2] || data[3] || data[4]
-			|| data[5] || data[6] || (data[7] & 0x07))) {
+	if (data[1] & 0x80) {
 		/* in prox and not a pad data */
 
 
 		switch ((data[1] >> 5) & 3) {
 
 			case 0:	/* Pen */
+				wacom->id[0] = STYLUS_DEVICE_ID;
 				wacom->tool[0] = BTN_TOOL_PEN;
 				break;
 
 			case 1: /* Rubber */
 				wacom->tool[0] = BTN_TOOL_RUBBER;
-				id = ERASER_DEVICE_ID;
+				wacom->id[0] = ERASER_DEVICE_ID;
 				break;
 
 			case 2: /* Mouse with wheel */
@@ -452,7 +450,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 
         	        case 3: /* Mouse without wheel */
 				wacom->tool[0] = BTN_TOOL_MOUSE;
-				id = CURSOR_DEVICE_ID;
+				wacom->id[0] = CURSOR_DEVICE_ID;
 				input_report_key(dev, BTN_LEFT, data[1] & 0x01);
 				input_report_key(dev, BTN_RIGHT, data[1] & 0x02);
 				if ( wacom->features->type == G4 ||
@@ -473,9 +471,9 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_STYLUS, data[1] & 0x02);
 			input_report_key(dev, BTN_STYLUS2, data[1] & 0x04);
 		}
-		input_report_abs(dev, ABS_MISC, id); /* report tool id */
+		input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
 		input_report_key(dev, wacom->tool[0], 1);
-	} else if (!(data[1] & 0x90)) {
+	} else if (wacom->id[0]) {
 		input_report_abs(dev, ABS_X, 0);
 		input_report_abs(dev, ABS_Y, 0);
 		if (wacom->tool[0] == BTN_TOOL_MOUSE) {
@@ -488,6 +486,7 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_STYLUS, 0);
 			input_report_key(dev, BTN_STYLUS2, 0);
 		}
+		wacom->id[0] = 0;
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 		input_report_key(dev, wacom->tool[0], 0);
 	}
@@ -496,33 +495,33 @@ static void wacom_graphire_irq(struct urb *urb, struct pt_regs *regs)
 	/* send pad data */
 	switch (wacom->features->type) {
 	    case G4: 
-		if ( (wacom->serial[1] & 0xc0) != (data[7] & 0xf8) ) {
-			wacom->id[1] = 1;
+		if (data[7] & 0xf8) {
+			wacom->id[1] = PAD_DEVICE_ID;
 			input_report_key(dev, BTN_0, (data[7] & 0x40));
 			input_report_key(dev, BTN_4, (data[7] & 0x80));
 			rw = ((data[7] & 0x18) >> 3) - ((data[7] & 0x20) >> 3);
 			input_report_rel(dev, REL_WHEEL, rw);
 			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
-			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_report_abs(dev, ABS_MISC, wacom->id[1]);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
-		} else if ( wacom->id[1] ) {
+		} else if (wacom->id[1]) {
 			wacom->id[1] = 0;
 			input_report_key(dev, BTN_TOOL_FINGER, 0);
-			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_report_abs(dev, ABS_MISC, 0);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		}
 		input_sync(dev);
 		break;
 	    case MO:
 		if ((data[7] & 0xf8) || (data[8] & 0xff)) {
-			wacom->id[1] = 1;
+			wacom->id[1] = PAD_DEVICE_ID;
 			input_report_key(dev, BTN_0, (data[7] & 0x08));
 			input_report_key(dev, BTN_1, (data[7] & 0x20));
 			input_report_key(dev, BTN_4, (data[7] & 0x10));
 			input_report_key(dev, BTN_5, (data[7] & 0x40));
 			input_report_abs(dev, ABS_WHEEL, (data[8] & 0x7f));
 			input_report_key(dev, BTN_TOOL_FINGER, 0xf0);
-			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_report_abs(dev, ABS_MISC, wacom->id[1]);
 			input_event(dev, EV_MSC, MSC_SERIAL, 0xf0);
 		} else if (wacom->id[1]) {
 			wacom->id[1] = 0;
