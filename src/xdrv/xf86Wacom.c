@@ -69,7 +69,7 @@
  * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-9 $";
+static const char identification[] = "$Identification: 47-0.7.9-10 $";
 
 /****************************************************************************/
 
