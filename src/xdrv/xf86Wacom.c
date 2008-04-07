@@ -67,9 +67,10 @@
  * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
  * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
+ * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-10 $";
+static const char identification[] = "$Identification: 47-0.7.9-11 $";
 
 /****************************************************************************/
 
