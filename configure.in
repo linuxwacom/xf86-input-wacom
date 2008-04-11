@@ -401,6 +401,18 @@ fi
 if test "$WCM_ENV_XFREE86" = yes; then
 	AM_CONDITIONAL(WCM_ENV_XFREE86, true)
 	AC_DEFINE(WCM_XFREE86,1,[Compiling for XFree86])
+	AC_MSG_CHECKING([if XFREE86 defines dixScreenOrigins])
+	save_CFLAGS="$CFLAGS"
+	CFLAGS="-I$WCM_XFREE86_DIR $CFLAGS"
+	AC_TRY_COMPILE([#include <globals.h>], [return dixScreenOrigins[0].x;],
+		[WCM_HAVE_DIXSCREENORIGINS=yes], [WCM_HAVE_DIXSCREENORIGINS=no])
+	CFLAGS="$save_CFLAGS"
+	AC_MSG_RESULT($WCM_HAVE_DIXSCREENORIGINS)
+	if test "$WCM_HAVE_DIXSCREENORIGINS" = "yes"; then
+		WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS dixScreenOrigins"
+		AC_DEFINE(WCM_HAVE_DIXSCREENORIGINS,1,
+		[Later XFree86 version uses dixScreenOrigins for screen positions and sizes])
+	fi
 else
 	AM_CONDITIONAL(WCM_ENV_XFREE86, false)
 fi
@@ -505,18 +517,21 @@ if test "$WCM_ENV_XFREE86" != yes; then
 
 		AC_MSG_CHECKING([if Xorg SDK defines dixScreenOrigins])
 		save_CFLAGS="$CFLAGS"
-		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $XSERVER_CFLAGS $CFLAGS"
 		AC_TRY_COMPILE([#include <globals.h>], [return dixScreenOrigins[0].x;],
 			[WCM_HAVE_DIXSCREENORIGINS=yes], [WCM_HAVE_DIXSCREENORIGINS=no])
 		AC_TRY_COMPILE([
 #include <xorg-server.h>
 #include <xorgVersion.h>
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6, 9, 0, 0, 0)
-# error "X.org 6.8.x doesn't support dixScreenOrigins"
+#if XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(0, 0, 0, 0, 0)
+# error "Invalid X.org version"
+#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(8, 0, 0, 0, 0)
+# error "Invalid X.org version"
 #endif
-], , [WCM_XORG_6_8=yes], [WCM_XORG_6_8=no])
-		# Xorg 6.8.x doesn't support dixScreenOrigins. But globals.h somehow included it.
-		if test "$WCM_XORG_6_8" = "yes"; then
+], , [WCM_INVALID_ORIGINS=no], [WCM_INVALID_ORIGINS=yes])
+		# Xorg 6.8.x doesn't support dixScreenOrigins. But globals.h included it.
+		# And its XORG_VERSION_CURRENT is invalid somehow.
+		if test "$WCM_INVALID_ORIGINS" = "yes"; then
 			WCM_HAVE_DIXSCREENORIGINS=no
 		fi
 		CFLAGS="$save_CFLAGS"

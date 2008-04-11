@@ -1,4 +1,4 @@
-2008-04-07  Ping Cheng <pingc@wacom.com>
+2008-04-11  Ping Cheng <pingc@wacom.com>
 	* Excluded dixScreenOrigins call for Xorg 6.8.x
 	* Synchronized databases
 	* Updated webpages
