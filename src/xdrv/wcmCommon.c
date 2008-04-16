@@ -76,7 +76,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 		if (miPointerCurrentScreen())
 			priv->currentScreen = miPointerCurrentScreen()->myNum;
 #else
@@ -91,7 +91,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 		else if (priv->currentScreen == -1)
 		{
 			/* Get the current screen that the cursor is in */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 			if (miPointerCurrentScreen())
 				priv->currentScreen = miPointerCurrentScreen()->myNum;
 #else
@@ -511,7 +511,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 #endif
 	int button_idx, naxes = priv->naxes;
@@ -531,7 +531,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (!button)  /* ignore this button event */
 		return;
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	/* Switch the device to core mode, if required */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
@@ -623,7 +623,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 	}
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	/* Switch the device out of the core mode, if required */
 	if (!is_core && (button & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, FALSE);
@@ -641,7 +641,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
 #endif
 	DBG(10, priv->debugLevel, ErrorF("sendWheelStripEvents for %s \n", local->name));
@@ -738,7 +738,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		"send fakeButton %x with value = %d \n", 
 		fakeButton, value));
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	/* Switch the device to core mode, if required */
 	if (!is_core && (fakeButton & AC_CORE))
 		xf86XInputSetSendCoreEvents (local, TRUE);
@@ -765,7 +765,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		ErrorF ("WARNING: [%s] unsupported event %x \n", local->name, fakeButton);
 	}
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	/* Switch the device out of the core mode, if required
 	 */
 	if (!is_core && (fakeButton & AC_CORE))
@@ -1455,7 +1455,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	if (!miPointerCurrentScreen())
 #else
 	if (pDev && !miPointerGetScreen(pDev->dev))

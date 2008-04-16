@@ -30,4 +30,7 @@
 /* Later X.org version uses dixScreenOrigins for screen positions and sizes */
 #undef WCM_HAVE_DIXSCREENORIGINS
 
+/* Slightly diffent abi in XINPUT >= 1.0 */
+#undef WCM_XINPUTABI_MAJOR
+
 #endif /* _XDRV_CONFIG_H_ */

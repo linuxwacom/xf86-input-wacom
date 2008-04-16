@@ -85,7 +85,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	local->dev = NULL;
 	local->private = priv;
 	local->private_flags = 0;
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	local->history_size  = 0;
 #endif
 	local->old_x = -1;

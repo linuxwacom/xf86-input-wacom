@@ -584,7 +584,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		nbaxes = priv->naxes = 6;
 
 	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 					  xf86GetMotionEvents,
 					  local->history_size,
 #else
@@ -657,7 +657,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 #endif /* WCM_KEY_SENDING_SUPPORT */
 	}
 
-#if defined WCM_XFREE86 || GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
+#if WCM_XINPUTABI_MAJOR == 0
 	/* allocate motion history buffer if needed */
 	xf86MotionHistoryAllocate(local);
 #endif
