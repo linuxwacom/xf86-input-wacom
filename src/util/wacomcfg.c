@@ -138,8 +138,10 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 #ifndef WCM_ISXEXTENSIONPOINTER
 		if (info->use != IsXExtensionDevice) continue;
 #else
-		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer) continue;
+		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer 
+			&& info->use != IsXExtensionKeyboard) continue;
 #endif
+
 		if (!info->num_classes) continue;
 		nSize += sizeof(WACOMDEVICEINFO);
 		nSize += strlen(info->name) + 1;
@@ -163,7 +165,8 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 #ifndef WCM_ISXEXTENSIONPOINTER
 		if (info->use != IsXExtensionDevice) continue;
 #else
-		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer) continue;
+		if (info->use != IsXExtensionDevice && info->use != IsXExtensionPointer
+			&& info->use != IsXExtensionKeyboard) continue;
 #endif
 		/* ignore uninitialized tools  */
 		if (!info->num_classes) continue;
