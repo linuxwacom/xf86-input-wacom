@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4x "linuxwacom 0.7.9" "X Version 11"
+.TH WACOM 4x "linuxwacom 0.8.0" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -42,10 +42,10 @@ The core options, such as "SendCoreEvents" or "AlwaysCore", are
 unnecessary in Gimp if you don't need to move system cursor outside 
 of Gimp drawing area.  "pad" is for Intuos 3 or Cintiq 21UX tablet 
 ExpressKeys/menu strips, and Graphire 4 or Bamboo tablet buttons, wheel, 
-and/or ring.  It is required  for Intuos3,  Cintiq 21UX, Graphire 4, and 
+and/or ring.  It is required  for Intuos3,  CintiqV5, Graphire 4, and 
 Bamboo if you want to use keystroke features.  "pad" is reported as a 
 second tool in the driver. "touch" is for the tablet with touch support. 
-Right now only a few serial Tablet PC has this feature. 
+Right now only a few Tablet PCs have this feature. 
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -168,11 +168,18 @@ and TopY.  The bottom corner is adjusted to keep the ratio width/height
 of the active zone the same as the screen while maximizing the area
 described by TopX, TopY, BottomX, BottomY.
 .TP 4
-.B Option \fI"DebugLevel"\fP \fInumber \fP
+.B Option \fI"DebugLevel"\fP \fI"number"\fP
 sets the level of debugging info reported.  There are 12 levels, specified by 
 the integers between 1 and 12.  Once it is defined, all the debug messages 
-with a level less than or equal to the number will be logged into 
+with a level less than or equal to the "number" will be logged into 
 /etc/X11/Xorg.0.log.
+.TP 4
+.B Option \fI"CommonDBG"\fP \fI"number"\fP
+sets the level of debugging info for all devices defined for the  
+same tablet. There are 12 levels in use, specified by the 
+integers between 1 and 12. Once it is defined, all the debug 
+messages with a level less than or equal to the "number" will 
+be logged into /etc/X11/Xorg.0.log.
 .TP 4
 .B Option \fI"CursorProx"\fP \fI"number"\fP
 sets the max distance from tablet to stop reporting movement for cursor in relative mode. Default for Intuos series is 10, for Graphire series (including Volitos) is 42.
@@ -193,4 +200,4 @@ Xorg(1x), xorg.conf(5x), xorgconfig(1x), Xserver(1x), X(7).
 Frederic Lepied <lepied@xfree86.org>
 Ping Cheng <pingc@wacom.com>
 John E. Joganic <jej@j-arkadia.com>
-
+Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>

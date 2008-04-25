@@ -381,21 +381,23 @@ if test -n "$WCM_XFREE86_DIR"; then
 		AC_MSG_CHECKING([if XFree86 support sending keys])
 		save_CFLAGS="$CFLAGS"
 		CFLAGS="-I$WCM_XFREE86_DIR $CFLAGS"
-		AC_TRY_COMPILE(, [
+		AC_TRY_COMPILE([
 #include <programs/Xserver/hw/xfree86/xf86Version.h>
 #if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4, 3, 0, 0, 0)
 # error "XFree86 < 4.3 doesn't support sending keys"
 #endif
-int main(int argc, char** argv) {return 0;}
-], [WCM_SEND_KEYS=yes], [WCM_SEND_KEYS=no])
+], , [WCM_SEND_KEYS=yes], [WCM_SEND_KEYS=no])
 		CFLAGS="$save_CFLAGS"
 		AC_MSG_RESULT($WCM_SEND_KEYS)
-
 		if test "$WCM_SEND_KEYS" = "yes"; then
 			WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS key-events"
 			AC_DEFINE(WCM_KEY_SENDING_SUPPORT, 1,
 				[The X-driver can send key events for a button])
 		fi
+
+		dnl Only Xorg has progressed >= 1.0
+		AC_DEFINE(WCM_XINPUTABI_MAJOR, 0,
+			[Slightly diffent abi in XINPUT >= 1.0])
 	fi
 fi
 if test "$WCM_ENV_XFREE86" = yes; then
@@ -403,7 +405,7 @@ if test "$WCM_ENV_XFREE86" = yes; then
 	AC_DEFINE(WCM_XFREE86,1,[Compiling for XFree86])
 	AC_MSG_CHECKING([if XFREE86 defines dixScreenOrigins])
 	save_CFLAGS="$CFLAGS"
-	CFLAGS="-I$WCM_XFREE86_DIR $CFLAGS"
+	CFLAGS="-I$WCM_XFREE86_DIR/programs/Xserver/include -I$WCM_XFREE86_DIR/include $CFLAGS"
 	AC_TRY_COMPILE([#include <globals.h>], [return dixScreenOrigins[0].x;],
 		[WCM_HAVE_DIXSCREENORIGINS=yes], [WCM_HAVE_DIXSCREENORIGINS=no])
 	CFLAGS="$save_CFLAGS"
@@ -541,6 +543,38 @@ if test "$WCM_ENV_XFREE86" != yes; then
 			AC_DEFINE(WCM_HAVE_DIXSCREENORIGINS,1,
 				[Later X.org version uses dixScreenOrigins for screen positions and sizes])
 		fi
+
+		AC_MSG_CHECKING([XInput extension version])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE([
+#include <xf86Module.h>
+#if ABI_XINPUT_VERSION < SET_ABI_VERSION(1, 0)
+# error "XInput extension < 1.0"
+#endif
+], , [WCM_XINPUT_MAJOR=1], [WCM_XINPUT_MAJOR=0])
+		if test "$WCM_XINPUT_MAJOR" = "0"; then
+			AC_MSG_RESULT([< 1.0])
+			AC_DEFINE(WCM_XINPUTABI_MAJOR, 0,
+				[Slightly diffent abi in XINPUT >= 1.0])
+		else
+			AC_TRY_COMPILE([
+#include <xf86Module.h>
+#if ABI_XINPUT_VERSION < SET_ABI_VERSION(2, 0)
+# error "XInput extension < 2.0"
+#endif
+], , [WCM_XINPUT_MAJOR=2], [WCM_XINPUT_MAJOR=1])
+			if test "$WCM_XINPUT_MAJOR" = "1"; then
+				AC_MSG_RESULT([>= 1.0 && < 2.0])
+				AC_DEFINE(WCM_XINPUTABI_MAJOR, 1,
+					[Slightly diffent abi in XINPUT >= 1.0])
+			else
+				AC_MSG_RESULT([>= 2.0])
+				AC_DEFINE(WCM_XINPUTABI_MAJOR, 2,
+					[Slightly diffent abi in XINPUT >= 1.0])
+			fi
+		fi
+		CFLAGS="$save_CFLAGS"
 
 		dnl Try to get rid of a few warnings, X.org 1.4 need c99 
 		case "$WCM_XORGSDK_VER" in
