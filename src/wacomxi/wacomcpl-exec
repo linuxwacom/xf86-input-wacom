@@ -99,9 +99,18 @@ proc pad {name geometry} {
 proc updateXinitrc {device option value} {
 
     if { ![ file exists ~/.xinitrc ] } {
-	exec echo "xsetwacom set $device $option \"$value\"" > ~/.xinitrc
-	exec echo "# run the primary system script" >> ~/.xinitrc
-	exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc
+	if { [ file exists ~/.xsession ] } {
+	    file copy -force ~/.xsession ~/.xsession.bak
+	    file copy -force ~/.xsession /tmp/xsession1
+	    exec sed -e "/xsetwacom set $device $option /d" /tmp/xsession1 > /tmp/wacom
+	    exec echo "xsetwacom set $device $option \"$value\"" > ~/.xsession
+	    exec cat /tmp/wacom >> ~/.xsession
+	    file delete -force /tmp/wacom /tmp/xsession1
+	} else {
+	    exec echo "xsetwacom set $device $option \"$value\"" > ~/.xinitrc
+	    exec echo "# run the primary system script" >> ~/.xinitrc
+	    exec echo ". /etc/X11/xinit/xinitrc" >> ~/.xinitrc
+	}
     } else {
 	file copy -force ~/.xinitrc ~/.xinitrc.bak
 	file copy -force ~/.xinitrc /tmp/xinitrc1
