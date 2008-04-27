@@ -1,3 +1,9 @@
+2008-04-25  Ping Cheng <pingc@wacom.com>
+	* Updated wacom.4x
+	* Update ~/.xsession from wacomcpl for KDE system
+	* Added IsXExtensionKeyboard check for Xserver 1.4 or later in wacomcfg.c
+	* Label 0.8.0
+
 2008-04-11  Ping Cheng <pingc@wacom.com>
 	* Excluded dixScreenOrigins call for Xorg 6.8.x
 	* Synchronized databases
