@@ -2,7 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
-** Copyright (C) 2004 - 2007 - Ping Cheng 
+** Copyright (C) 2004 - 2008 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -30,6 +30,7 @@
 **   2006-05-05 0.7.4 - Removed older 2.6 kernels
 **   2006-07-19 0.7.5 - Support buttons and keys combined
 **   2007-01-10 0.7.7 - Don't list uninitialized tools
+**   2008-05-06 0.8.0 - Support Xorg 7.3 or later
 **
 ****************************************************************************/
 
@@ -41,7 +42,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.7.7"
+#define XIDUMP_VERSION "0.8.0"
 
 #include "../include/util-config.h"
 
@@ -52,6 +53,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XIproto.h>
+#include <X11/keysym.h>
 
 	enum
 	{
@@ -156,8 +158,14 @@ int ListDevices(Display* pDisp, const char* pszDeviceName)
 				(pDev->use == 0) ? "disabled" :
 				(pDev->use == IsXKeyboard) ? "keyboard" :
 				(pDev->use == IsXPointer) ? "pointer" :
-				(pDev->use == IsXExtensionDevice) ? "extension" :
-					"unknown");
+#ifndef WCM_ISXEXTENSIONPOINTER
+				(pDev->use == IsXExtensionDevice) ? 
+#else
+				(pDev->use == IsXExtensionDevice || 
+				 pDev->use == IsXExtensionKeyboard || 
+				 pDev->use == IsXExtensionPointer) ? 
+#endif
+					"extension" : "unknown");
 
 		if (gnVerbose)
 		{
@@ -444,7 +452,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	nTitleRow = nRow;
 	if (pValInfo)
 	{
-		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   ID: Undefined  Serial Number: Undefined",
+		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   ID: Unreported  Serial Number: Unreported",
 				pValInfo->mode == Absolute ? "Absolute" :
 				pValInfo->mode == Relative ? "Relative" : "Unknown");
 		wacscrn_output(nRow,0,chBuf);
@@ -539,13 +547,21 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			else
 			{
 				/* title value */
-				int v = (pMove->axis_data[3]&0xffff0000) >> 16;
 				snprintf(chBuf,sizeof(chBuf),"%s",
 					pValInfo->mode == Absolute ? "Absolute" :
 					pValInfo->mode == Relative ? "Relative" : "Unknown");
 				wacscrn_output(nTitleRow,11,chBuf);
+
+				/* Device/tool ID can only be retrieved through the ToolID option 
+				 * of xsetwacom due to valuator backward compatibility concern
+				 *
+				v = (pMove->axis_data[3]&0xffff0000) >> 16;
 				snprintf(chBuf, sizeof(chBuf), "%10d", v);
 				wacscrn_output(nTitleRow, 25, chBuf);
+
+				 * serial number can only be retrieved through the ToolSerial option
+				 * of xsetwacom due to valuator backward compatibility concern
+				 *
 				v = (pMove->axis_data[4]&0xffff0000) | 
 							((pMove->axis_data[5]&0xffff0000)>>16);
 				if ( v )
@@ -553,6 +569,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 					snprintf(chBuf,sizeof(chBuf), "%12d", v);
 					wacscrn_output(nTitleRow,52,chBuf);
 				}
+				*/
 
 				for (k=0; k<pValInfo->num_axes && k<3; ++k)
 				{

@@ -1597,7 +1597,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 			if (priv->oldProximity)
 			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) > common->wcmCursorProxoutDist)
+				if (abs(filtered.distance - common->wcmMaxCursorDist) 
+						> common->wcmCursorProxoutDist)
 					filtered.proximity = 0;
 			}
 			/* once it is out. Don't let it in until a hard in */
@@ -1694,10 +1695,10 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 
 	/* output tablet state as probed */
 	if (xf86Verbose)
-		ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+		ErrorF("%s Wacom %s tablet speed=%d (%d) maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			XCONFIG_PROBED,
-			model->name, common->wcmLinkSpeed,
+			model->name, common->wcmLinkSpeed, common->wcmISDV4Speed, 
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");

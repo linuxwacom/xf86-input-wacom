@@ -68,9 +68,10 @@
  * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
  * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
  * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
+ * 2008-05-06 47-pc0.8.0-1 - new release
  */
 
-static const char identification[] = "$Identification: 47-0.7.9-11 $";
+static const char identification[] = "$Identification: 47-0.8.0-1 $";
 
 /****************************************************************************/
 
