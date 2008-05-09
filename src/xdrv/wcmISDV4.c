@@ -71,7 +71,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 	DBG(1, priv->debugLevel, ErrorF("initializing ISDV4 tablet\n"));
 
-	/* Try 38400 first */
+	/* Initial baudrate is 38400 */
 	if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 		return !Success;
 
@@ -96,6 +96,8 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
 
+	DBG(1, priv->debugLevel, ErrorF("Querying ISDV4 tablet\n"));
+
 	/* Send stop command to the tablet */
 	err = xf86WcmWrite(local->fd, query, strlen(query));
 	if (err == -1)
@@ -119,28 +121,22 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Read the control data */
 	if (!xf86WcmWaitForTablet(local->fd, data, 11))
 	{
-		ErrorF("Wacom unable to read ISDV4 control data "
-			"after %d tries\n", MAXTRY);
-		return !Success;
-	}
-
-	/* Control data bit check */
-	if ( !(data[0] & 0x40) ) /* baudrate too high? */
-	{
 		/* Try 19200 now */
 		if (common->wcmISDV4Speed != 19200)
 		{
 			common->wcmISDV4Speed = 19200;
-			if(isdv4Init(local, NULL, NULL) != Success)
+			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
-			return isdv4GetRanges(local);
+			return isdv4Query(local, query, data);
 		}
 		else
 		{
-			ErrorF("Wacom Query ISDV4 error magic error in %s query\n", query);
+			ErrorF("Wacom unable to read ISDV4 control data "
+				"after %d tries\n", MAXTRY);
 			return !Success;
 		}
 	}
+
 	return Success;
 }
 
@@ -231,6 +227,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		}
 	}
 
+	DBG(2, priv->debugLevel, ErrorF("isdv4GetRanges speed=%d maxX=%d maxY=%d "
+		"maxZ=%d resX=%d resY=%d \n", common->wcmISDV4Speed, 
+		common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
+		common->wcmResolX, common->wcmResolY));
 	return Success;
 }
 

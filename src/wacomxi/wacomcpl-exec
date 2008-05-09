@@ -192,7 +192,7 @@ proc calibrationSequence {which xDev yDev} {
 	set type $getDeviceModel($device,type)
 	if { ![ string compare $type "stylus" ] } {
 	    set eraser $getDeviceModel($device,eraser)
-	    if { [ string compare $eraser $device ] } {
+	    if { [ string compare $eraser $device ] && $eraser != "" } {
 		updateXinitrc $eraser topx $xDevMin
 		updateXinitrc $eraser topy $yDevMin
 		updateXinitrc $eraser bottomx $xDevMax
@@ -501,6 +501,10 @@ proc createDeviceList {} {
     grid .workingDev.list -row 2 -column 0 
     grid .workingDev.sb -row 2 -sticky nse
     set flag 0
+    foreach dev $devices {
+	# initial related erasers for styli
+	set getDeviceModel($dev,eraser) ""
+    }
     foreach dev $devices {
 	.workingDev.list insert end $dev
 	createScreenList $dev

@@ -1,3 +1,9 @@
+2008-05-09  Ping Cheng <pingc@wacom.com>
+	* Updated xidump for Xserver 1.4 or later
+	* Fixed no eraser calibration issue for LCD tablets
+	* Fixed serial Tablet PC baudrate issue
+	* Label 0.8.0-1
+
 2008-04-25  Ping Cheng <pingc@wacom.com>
 	* Updated wacom.4x
 	* Update ~/.xsession from wacomcpl for KDE system

@@ -54,7 +54,7 @@
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Apr 25, 2008</td></tr>
+</td><td class="menu" align="right">Apr 26, 2008</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -1053,22 +1053,22 @@ The exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="testtablet">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Apr 25 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Apr 25 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Apr 25 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
-Apr 25 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
-Apr 25 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
-Apr 25 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
+Apr 26 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Apr 26 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Apr 26 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
+Apr 26 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
+Apr 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
+Apr 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
 </a></pre>
 <pre class="diff"><a name="testtablet">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Apr 25 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Apr 25 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Apr 25 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Apr 25 21:28:39 sasami kernel: usb.c: registered new driver hid
-Apr 25 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 25 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Apr 25 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Apr 26 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Apr 26 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Apr 26 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Apr 26 21:28:39 sasami kernel: usb.c: registered new driver hid
+Apr 26 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 26 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Apr 26 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -1369,12 +1369,12 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Apr 25 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Apr 25 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Apr 25 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Apr 25 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Apr 25 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 25 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
+Apr 26 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Apr 26 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Apr 26 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Apr 26 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Apr 26 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 26 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
 
 </pre></blockquote>
 
@@ -1505,9 +1505,9 @@ if it cannot find the one you have specified.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Apr 25 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Apr 25 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 25 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Apr 26 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Apr 26 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 26 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.43.  This version number
@@ -1714,10 +1714,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# /sbin/rmmod wacom
 [jej@sasami root]# /sbin/modprobe wacom       (or /sbin/insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Apr 25 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Apr 25 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Apr 25 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Apr 25 17:31:35 sasami kernel: wacom.c: v1.43-0.8.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 26 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Apr 26 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Apr 26 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Apr 26 17:31:35 sasami kernel: wacom.c: v1.43-0.8.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -4737,7 +4737,7 @@ Public License, to permit their use in free software.
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2007 - LinuxWacom -Last updated April 25, 2008<br>
+	Copyright (C) 2002-2008 - LinuxWacom -Last updated April 25, 2008<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>
