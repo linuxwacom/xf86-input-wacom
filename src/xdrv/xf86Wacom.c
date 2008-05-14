@@ -69,9 +69,10 @@
  * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
  * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
  * 2008-05-06 47-pc0.8.0-1 - new release
+ * 2008-05-14 47-pc0.8.0-2 - Update rotation routine
  */
 
-static const char identification[] = "$Identification: 47-0.8.0-1 $";
+static const char identification[] = "$Identification: 47-0.8.0-2 $";
 
 /****************************************************************************/
 
@@ -92,6 +93,7 @@ extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern void xf86WcmRotateScreen(LocalDevicePtr local, int value);
 
 WacomModule gWacomModule =
 {
@@ -171,6 +173,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	}
 
 	/* need maxWidth and maxHeight for keepshape */
+	xf86WcmInitialScreens(local);
 	xf86WcmMappingFactor(local);
 
 	/* Maintain aspect ratio */
@@ -208,7 +211,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	{
 		inlist = priv->tool->arealist;
 
-		/* remove this area from the list */
+		/* remove this overlapped area from the list */
 		for (; inlist; inlist=inlist->next)
 		{
 			if (inlist->next == area)
@@ -475,7 +478,6 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 	WacomCommonPtr common = priv->common;
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
-	int temp;
 
 	if (IsTouch(priv))
 	{
@@ -492,14 +494,6 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		priv->wcmResolY = common->wcmResolY;
 	}
 
-	/* Rotation rotates the Max Y and Y */
-	if (common->wcmRotate==ROTATE_CW || common->wcmRotate==ROTATE_CCW)
-	{
-		temp = priv->wcmMaxX;
-		priv->wcmMaxX = priv->wcmMaxY;
-		priv->wcmMaxY = temp;
-	}
-
 	for (; toollist; toollist=toollist->next)
 	{
 		arealist = toollist->arealist;
@@ -511,6 +505,7 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 				arealist->bottomY = priv->wcmMaxY;
 		}
 	}
+
 	return;
 }
 
@@ -542,16 +537,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		IsCursor(priv) ? "cursor" :
 		IsPad(priv) ? "pad" : "eraser",
 		nbbuttons, nbkeys, nbaxes));
-
-	xf86WcmInitialToolSize(local);
-
-	/* initialize screen bounding rect */
-	xf86WcmInitialScreens(local);
-
-	if (xf86WcmInitArea(local) == FALSE)
-	{
-		return FALSE;
-	}
 
 	for(loop=1; loop<=nbbuttons; loop++)
 		butmap[loop] = loop;
@@ -663,11 +648,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	xf86MotionHistoryAllocate(local);
 #endif
 
-	/* x */
-	xf86WcmInitialCoordinates(local, 0);
+ 	xf86WcmInitialToolSize(local);
 
-	/* y */
-	xf86WcmInitialCoordinates(local, 1);
+	if (xf86WcmInitArea(local) == FALSE)
+	{
+		return FALSE;
+	}
+
+	/* Rotation rotates the Max X and Y */
+	xf86WcmRotateScreen(local, common->wcmRotate);
 
 	/* pressure */
 	InitValuatorAxisStruct(local->dev, 2, 0, 

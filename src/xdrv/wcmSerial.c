@@ -255,7 +255,7 @@ int xf86WcmWriteWait(int fd, const char* request)
 		len = xf86WriteSerial(fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			ErrorF("Wacom xf86WcmWrite error : %s", strerror(errno));
+			ErrorF("Wacom xf86WcmWriteWait error : %s", strerror(errno));
 			return 0;
 		}
 
@@ -1249,9 +1249,9 @@ static void serialParseP4Common(LocalDevicePtr local,
 	if (!last->proximity && ds->proximity)
 		ds->device_type = cur_type;
 	/* check on previous proximity */
-	else if (is_stylus && ds->proximity)
+	else if (ds->buttons && ds->proximity)
 	{
-		/* we were fooled by tip and second
+		/* we might have been fooled by tip and second
 		 * sideswitch when it came into prox */
 		if ((ds->device_type != cur_type) &&
 			(ds->device_type == ERASER_ID))
@@ -1295,8 +1295,9 @@ int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 				((i!=0) && (data[i] & HEADER_BIT)) )
 		{
 			bad = 1;
-			ErrorF("xf86WcmSerialValidate: bad magic at %d "
-				"v=%x l=%d\n", i, data[i], common->wcmPktLength);
+			if (i!=1)
+				ErrorF("xf86WcmSerialValidate: bad magic at %d "
+					"v=%x l=%d\n", i, data[i], common->wcmPktLength);
 			if (i!=0 && (data[i] & HEADER_BIT)) return i;
 		}
 	}
