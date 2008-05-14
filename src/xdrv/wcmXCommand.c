@@ -20,6 +20,7 @@
  * REVISION HISTORY
  *
  * 2007-05-25 0.1 - Initial release - span off from xf86Wacom.c
+ * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateScreen
  */
 
 
@@ -30,6 +31,7 @@
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern void xf86WcmRotateScreen(LocalDevicePtr local, int value);
 
 /*****************************************************************************
  * xf86WcmSetPadCoreMode
@@ -145,12 +147,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	WacomDevicePtr tmppriv;
 	char st[32];
-	int oldRotation;
-	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 	WacomToolAreaPtr area = priv->toolarea;
-	WacomToolAreaPtr tmparea;
 
 	/* We don't reset options to the values that the driver are using.  
 	 * This eliminates confusion when driver is running on default values.
@@ -452,106 +450,10 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		break;
 	   case XWACOM_PARAM_ROTATE:
 		if ((value < 0) || (value > 3)) return BadValue;
-		switch(value) {
-		  case ROTATE_NONE:
-			xf86ReplaceStrOption(local->options, "Rotate", "NONE");
-			break;
-		  case ROTATE_CW:
-			xf86ReplaceStrOption(local->options, "Rotate", "CW");
-			break;
-		  case ROTATE_CCW:
-			xf86ReplaceStrOption(local->options, "Rotate", "CCW");
-			break;
-		  case ROTATE_HALF:
-			xf86ReplaceStrOption(local->options, "Rotate", "HALF");
-			break;
-		  default:
-			return BadValue;
-		}
-		oldRotation = common->wcmRotate;
-		oldMaxX = priv->wcmMaxX;
-		oldMaxY = priv->wcmMaxY;
-		common->wcmRotate = value;
-		if (((oldRotation == ROTATE_NONE || oldRotation == ROTATE_HALF) && 
-			(value == ROTATE_CW || value == ROTATE_CCW)) ||
-		     ((oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
-			&& (value == ROTATE_NONE || value == ROTATE_HALF)))
-		{
-		    priv->wcmMaxX = oldMaxY;
-		    priv->wcmMaxY = oldMaxX;
-		}
-
-		/* rotate all devices at once! else they get misaligned */
-		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
-		{
-		    tmparea = tmppriv->toolarea;
-		    /* recover the unrotated xy-rectangles */
-		    switch (oldRotation) {
-		      case ROTATE_CW:
-			tmpTopX = oldMaxY - tmppriv->bottomY;
-			tmpBottomX = oldMaxY - tmppriv->topY;
-			tmpTopY = tmppriv->topX;
-			tmpBottomY = tmppriv->bottomX;
-			break;
-		      case ROTATE_CCW:
-			tmpTopX = tmppriv->topY;
-			tmpBottomX = tmppriv->bottomY;
-			tmpTopY = oldMaxX - tmppriv->bottomX;
-			tmpBottomY = oldMaxX - tmppriv->topX;
-			break;
-		      case ROTATE_HALF:
-			tmpTopX = oldMaxX - tmppriv->bottomX;
-			tmpBottomX = oldMaxX - tmppriv->topX;
-			tmpTopY = oldMaxY - tmppriv->bottomY;
-			tmpBottomY = oldMaxY - tmppriv->topY;
-			break;
-		      default: /* ROTATE_NONE */
-			tmpTopX = tmppriv->topX;
-			tmpBottomX = tmppriv->bottomX;
-			tmpTopY = tmppriv->topY;
-			tmpBottomY = tmppriv->bottomY;
-			break;
-		    } 
-		    /* and rotate them back */
-		    switch (value) {
-		      case ROTATE_CW:
-			tmparea->topX = tmppriv->topX = tmpTopY;
-			tmparea->bottomX = tmppriv->bottomX = tmpBottomY;
-			tmparea->topY = tmppriv->topY = priv->wcmMaxY - tmpBottomX;
-			tmparea->bottomY = tmppriv->bottomY = priv->wcmMaxY - tmpTopX;
-			break;
-		      case ROTATE_CCW:
-			tmparea->topX = tmppriv->topX = priv->wcmMaxX - tmpBottomY;
-			tmparea->bottomX = tmppriv->bottomX = priv->wcmMaxX - tmpTopY;
-			tmparea->topY = tmppriv->topY = tmpTopX;
-			tmparea->bottomY = tmppriv->bottomY = tmpBottomX;
-			break;
-		      case ROTATE_HALF:
-			tmparea->topX = tmppriv->topX = priv->wcmMaxX - tmpBottomX;
-			tmparea->bottomX = tmppriv->bottomX = priv->wcmMaxX - tmpTopX;
-			tmparea->topY = tmppriv->topY= priv->wcmMaxY - tmpBottomY;
-			tmparea->bottomY = tmppriv->bottomY = priv->wcmMaxY - tmpTopY;
-			break;
-		      default: /* ROTATE_NONE */
-			tmparea->topX = tmppriv->topX = tmpTopX;
-			tmparea->bottomX = tmppriv->bottomX = tmpBottomX;
-			tmparea->topY = tmppriv->topY = tmpTopY;
-			tmparea->bottomY = tmppriv->bottomY = tmpBottomY;
-			break;
-		    }
-
-		    xf86WcmInitialScreens(tmppriv->local);
-		    xf86WcmMappingFactor(tmppriv->local);
-		    xf86WcmInitialCoordinates(tmppriv->local, 0);
-		    xf86WcmInitialCoordinates(tmppriv->local, 1);
-
-		    xf86ReplaceIntOption(tmppriv->local->options, "TopX", tmppriv->topX);
-		    xf86ReplaceIntOption(tmppriv->local->options, "TopY", tmppriv->topY);
-		    xf86ReplaceIntOption(tmppriv->local->options, "BottomX", tmppriv->bottomX);
-		    xf86ReplaceIntOption(tmppriv->local->options, "BottomY", tmppriv->bottomY);
-		}
+		if (common->wcmRotate != value)
+			xf86WcmRotateScreen(local, value);
 		break;
-	      default:
+	   default:
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam invalid param %d\n",param));
 		return BadMatch;
 	}

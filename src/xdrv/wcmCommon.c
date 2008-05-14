@@ -44,6 +44,7 @@ WacomDeviceClass* wcmDeviceClasses[] =
 
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
+extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 
 /*****************************************************************************
  * Static functions
@@ -1867,4 +1868,149 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
 			i, priv->screenBottomX[i], i, priv->screenBottomY[i]));
 	}
+}
+
+/*****************************************************************************
+ * rotateOneTool
+ ****************************************************************************/
+
+static void rotateOneTool(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomToolAreaPtr area = priv->toolarea;
+	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
+
+	DBG(10, priv->debugLevel, ErrorF("rotateOneTool for \"%s\" \n", priv->local->name));
+
+	oldMaxX = priv->wcmMaxX;
+	oldMaxY = priv->wcmMaxY;
+
+	tmpTopX = priv->topX;
+	tmpBottomX = priv->bottomX;
+	tmpTopY = priv->topY;
+	tmpBottomY = priv->bottomY;
+
+	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
+	{
+	    priv->wcmMaxX = oldMaxY;
+	    priv->wcmMaxY = oldMaxX;
+	}
+
+	switch (common->wcmRotate) {
+	      case ROTATE_CW:
+		area->topX = priv->topX = tmpTopY;
+		area->bottomX = priv->bottomX = tmpBottomY;
+		area->topY = priv->topY = oldMaxX - tmpBottomX;
+		area->bottomY = priv->bottomY =oldMaxX - tmpTopX;
+		break;
+	      case ROTATE_CCW:
+		area->topX = priv->topX = oldMaxY - tmpBottomY;
+		area->bottomX = priv->bottomX = oldMaxY - tmpTopY;
+		area->topY = priv->topY = tmpTopX;
+		area->bottomY = priv->bottomY = tmpBottomX;
+		break;
+	      case ROTATE_HALF:
+		area->topX = priv->topX = oldMaxX - tmpBottomX;
+		area->bottomX = priv->bottomX = oldMaxX - tmpTopX;
+		area->topY = priv->topY= oldMaxY - tmpBottomY;
+		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
+		break;
+	}
+	xf86WcmInitialScreens(priv->local);
+	xf86WcmMappingFactor(priv->local);
+	xf86WcmInitialCoordinates(priv->local, 0);
+	xf86WcmInitialCoordinates(priv->local, 1);
+
+	if (tmpTopX != priv->topX)
+		xf86ReplaceIntOption(priv->local->options, "TopX", priv->topX);
+	if (tmpTopY != priv->topY)
+		xf86ReplaceIntOption(priv->local->options, "TopY", priv->topY);
+	if (tmpBottomX != priv->bottomX)
+		xf86ReplaceIntOption(priv->local->options, "BottomX", priv->bottomX);
+	if (tmpBottomY != priv->bottomY)
+		xf86ReplaceIntOption(priv->local->options, "BottomY", priv->bottomY);
+}
+
+/*****************************************************************************
+ * xf86WcmRotateScreen
+ ****************************************************************************/
+
+void xf86WcmRotateScreen(LocalDevicePtr local, int value)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	WacomDevicePtr tmppriv;
+	int oldRotation;
+	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
+
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmRotateScreen for \"%s\" \n", local->name));
+
+	if (common->wcmRotate == value) /* initialization */
+	{
+		rotateOneTool(priv);
+	}
+	else
+	{
+		oldRotation = common->wcmRotate;
+		common->wcmRotate = value;
+
+		/* rotate all devices at once! else they get misaligned */
+		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
+		{
+		    oldMaxX = tmppriv->wcmMaxX;
+		    oldMaxY = tmppriv->wcmMaxY;
+
+		    if (oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
+		    {
+			tmppriv->wcmMaxX = oldMaxY;
+			tmppriv->wcmMaxY = oldMaxX;
+		    }
+
+		    tmpTopX = tmppriv->topX;
+		    tmpBottomX = tmppriv->bottomX;
+		    tmpTopY = tmppriv->topY;
+		    tmpBottomY = tmppriv->bottomY;
+
+		    /* recover to the unrotated xy-rectangles */
+		    switch (oldRotation) {
+		      case ROTATE_CW:
+			tmppriv->topX = oldMaxY - tmpBottomY;
+			tmppriv->bottomX = oldMaxY - tmpTopY;
+			tmppriv->topY = tmpTopX;
+			tmppriv->bottomY = tmpBottomX;
+			break;
+		      case ROTATE_CCW:
+			tmppriv->topX = tmpTopY;
+			tmppriv->bottomX = tmpBottomY;
+			tmppriv->topY = oldMaxX - tmpBottomX;
+			tmppriv->bottomY = oldMaxX - tmpTopX;
+			break;
+		      case ROTATE_HALF:
+			tmppriv->topX = oldMaxX - tmpBottomX;
+			tmppriv->bottomX = oldMaxX - tmpTopX;
+			tmppriv->topY = oldMaxY - tmpBottomY;
+			tmppriv->bottomY = oldMaxY - tmpTopY;
+			break;
+		    }
+
+		    /* and rotate them to the new value */
+		    rotateOneTool(tmppriv);
+
+		    switch(value) {
+			case ROTATE_NONE:
+			    xf86ReplaceStrOption(local->options, "Rotate", "NONE");
+			break;
+			case ROTATE_CW:
+			    xf86ReplaceStrOption(local->options, "Rotate", "CW");
+			break;
+			case ROTATE_CCW:
+			    xf86ReplaceStrOption(local->options, "Rotate", "CCW");
+			break;
+			case ROTATE_HALF:
+			    xf86ReplaceStrOption(local->options, "Rotate", "HALF");
+			break;
+		    }
+		}
+	}
+
 }

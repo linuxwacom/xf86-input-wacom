@@ -1,3 +1,7 @@
+2008-05-14  Ping Cheng <pingc@wacom.com>
+	* Fixed rotation issue
+	* Label 0.8.0-2
+
 2008-05-09  Ping Cheng <pingc@wacom.com>
 	* Updated xidump for Xserver 1.4 or later
 	* Fixed no eraser calibration issue for LCD tablets

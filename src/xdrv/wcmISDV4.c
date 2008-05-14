@@ -99,10 +99,10 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	DBG(1, priv->debugLevel, ErrorF("Querying ISDV4 tablet\n"));
 
 	/* Send stop command to the tablet */
-	err = xf86WcmWrite(local->fd, query, strlen(query));
+	err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
 	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		ErrorF("Wacom xf86WcmWrite ISDV4_STOP error : %s\n", strerror(errno));
 		return !Success;
 	}
 
@@ -113,7 +113,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Send query command to the tablet */
 	if (!xf86WcmWriteWait(local->fd, query))
 	{
-		ErrorF("Wacom unable to xf86WcmWrite request %s query command "
+		ErrorF("Wacom unable to xf86WcmWrite request %s ISDV4 query command "
 			"after %d tries\n", query, MAXTRY);
 		return !Success;
 	}
@@ -121,13 +121,13 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Read the control data */
 	if (!xf86WcmWaitForTablet(local->fd, data, 11))
 	{
-		/* Try 19200 now */
-		if (common->wcmISDV4Speed != 19200)
+		/* Try 19200 if it is not a touch query */
+		if (common->wcmISDV4Speed != 19200 && strcmp(query, WC_ISDV4_TOUCH_QUERY))
 		{
 			common->wcmISDV4Speed = 19200;
 			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
-			return isdv4Query(local, query, data);
+ 			return isdv4Query(local, query, data);
 		}
 		else
 		{
@@ -135,6 +135,13 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 				"after %d tries\n", MAXTRY);
 			return !Success;
 		}
+	}
+
+	/* Control data bit check */
+	if ( !(data[0] & 0x40) )
+	{
+		ErrorF("Wacom Query ISDV4 control data (%x) error in %s query\n", data[0], query);
+		return !Success;
 	}
 
 	return Success;
@@ -216,7 +223,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			}
 		}
 
-		if (common->wcmMaxX && common->wcmPktLength == 5)
+		if (common->wcmMaxX && common->wcmMaxY)
 		{
 			/* Touch resolution */
 			common->wcmTouchResolX = common->wcmMaxTouchX * 
@@ -256,7 +263,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
-	int n, cur_type, channel;
+	int n, cur_type, channel = 0;
 
 	DBG(10, common->debugLevel, ErrorF("isdv4Parse \n"));
 
@@ -268,8 +275,13 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			return 5; /* ignore touch event */
 		else
 		{
-			common->wcmPktLength = 5;
-			channel = 1;
+			if (data[0] & 0x10) /* a touch data */
+			{
+				common->wcmPktLength = 5;
+				channel = 1;
+			}
+			else
+				return 5;
 		}
 	}
 	else
@@ -289,7 +301,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	else
 	{
 		/* Coordinate data bit check */
-		if (data[0] & 0x40) /* control data*/
+		if (data[0] & 0x40) /* control data */
 			return common->wcmPktLength;
 	}
 
@@ -331,9 +343,9 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		if (!last->proximity && ds->proximity) 
 			ds->device_type = cur_type;
 		/* check on previous proximity */
-		else if (cur_type == STYLUS_ID && ds->proximity)
+		else if (ds->buttons && ds->proximity)
 		{
-			/* we were fooled by tip and second
+			/* we might have been fooled by tip and second
 			 * sideswitch when it came into prox */
 			if ((ds->device_type != cur_type) &&
 				(ds->device_type == ERASER_ID))
@@ -345,8 +357,8 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			}
 		}
 
-		ds->device_id = (ds->device_type == CURSOR_ID) ? 
-			CURSOR_DEVICE_ID : STYLUS_DEVICE_ID;
+		ds->device_id = (ds->device_type == ERASER_ID) ? 
+			ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
 
 		/* don't send button 3 event for eraser 
 		 * button 1 event will be sent by testing presure level
