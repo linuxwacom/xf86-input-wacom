@@ -837,12 +837,12 @@ WCM_MODDIR=
 AC_ARG_WITH(xmoduledir,
 	AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
 	WCM_MODDIR="$withval")
-if test -d $WCM_XLIB_DIR/xorg/modules/input; then
+if test -n "$WCM_MODDIR"; then
+	:
+elif test -d $WCM_XLIB_DIR/xorg/modules/input; then
 	WCM_MODDIR=$WCM_XLIB_DIR/xorg/modules/input
 elif test -d $WCM_XLIB_DIR/modules/input; then
 	WCM_MODDIR=$WCM_XLIB_DIR/modules/input
-elif -z "$WCM_MODDIR"; then
-	WCM_OPTION_DLLOADER=no
 fi
 AC_MSG_RESULT($WCM_MODDIR)
 
@@ -852,13 +852,6 @@ AC_MSG_CHECKING(for dynamic driver loading support)
 AC_ARG_ENABLE(dlloader,
 	AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
 	WCM_OPTION_DLLOADER=$enableval)
-if test "$WCM_OPTION_DLLOADER" = yes; then
-	if test -f $WCM_MODDIR/evdev_drv.so -o -f $WCM_MODDIR/kbd_drv.so -o -f $WCM_MODDIR/mouse_drv.so; then
-		WCM_OPTION_DLLOADER=yes
-	else
-		WCM_OPTION_DLLOADER=no
-	fi
-fi
 AC_MSG_RESULT($WCM_OPTION_DLLOADER)
 AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
 
