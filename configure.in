@@ -832,23 +832,27 @@ fi
 dnl =======================================================
 dnl Check for xmoduledir
 AC_MSG_CHECKING(for Wacom X driver module path)
-WCM_OPTION_DLLOADER=yes
 WCM_MODDIR=
 AC_ARG_WITH(xmoduledir,
 	AC_HELP_STRING([--with-xmoduledir], [Specify wacom_drv path explicitly.  Implies --enable-dlloader]),
 	WCM_MODDIR="$withval")
-if test -n "$WCM_MODDIR"; then
-	:
-elif test -d $WCM_XLIB_DIR/xorg/modules/input; then
-	WCM_MODDIR=$WCM_XLIB_DIR/xorg/modules/input
-elif test -d $WCM_XLIB_DIR/modules/input; then
-	WCM_MODDIR=$WCM_XLIB_DIR/modules/input
+if test -z "$WCM_MODDIR"; then
+        if test -d $WCM_XLIB_DIR/xorg/modules/input; then
+               WCM_MODDIR=$WCM_XLIB_DIR/xorg/modules/input
+        elif test -d $WCM_XLIB_DIR/modules/input; then
+               WCM_MODDIR=$WCM_XLIB_DIR/modules/input
+        fi
 fi
 AC_MSG_RESULT($WCM_MODDIR)
 
 dnl =======================================================
 dnl Check for dlloader
 AC_MSG_CHECKING(for dynamic driver loading support)
+if test -n "$WCM_MODDIR"; then
+       WCM_OPTION_DLLOADER=yes
+else
+       WCM_OPTION_DLLOADER=no
+fi
 AC_ARG_ENABLE(dlloader,
 	AC_HELP_STRING([--enable-dlloader], [Use dlloader  [[default=usually]]]),
 	WCM_OPTION_DLLOADER=$enableval)
