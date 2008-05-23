@@ -131,8 +131,8 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		}
 		else
 		{
-			ErrorF("Wacom unable to read ISDV4 control data "
-				"after %d tries\n", MAXTRY);
+			ErrorF("Wacom unable to read ISDV4 %s data "
+				"after %d tries at (%d)\n", query, MAXTRY, common->wcmISDV4Speed);
 			return !Success;
 		}
 	}
@@ -140,8 +140,19 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		ErrorF("Wacom Query ISDV4 control data (%x) error in %s query\n", data[0], query);
-		return !Success;
+		/* Try 19200 if it is not a touch query */
+		if (common->wcmISDV4Speed != 19200 && strcmp(query, WC_ISDV4_TOUCH_QUERY))
+		{
+			common->wcmISDV4Speed = 19200;
+			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+				return !Success;
+ 			return isdv4Query(local, query, data);
+		}
+		else
+		{
+			ErrorF("Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
+			return !Success;
+		}
 	}
 
 	return Success;
