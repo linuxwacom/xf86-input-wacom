@@ -401,7 +401,9 @@ struct _WacomCommonRec
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	char * wcmEraserID;	     /* eraser associated with the stylus */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
+	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
+	int wcmTouchDefault;	     /* default to disable when not supported */
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */

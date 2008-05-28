@@ -345,6 +345,11 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_TPCBUTTON, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
+	{ "Touch",
+		"Turns on/off Touch events (default is enable/on). ",
+		XWACOM_PARAM_TOUCH, VALUE_OPTIONAL, 
+		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
 	{ "CursorProx", 
 		"Sets cursor distance for proximity-out "
 		"in distance from the tablet.  "
@@ -810,11 +815,15 @@ static int ParseValues(int nCount, const char* pszValues, int* nValues,
 		if ((p->nType == BOOLEAN_VALUE) &&
 			(!strcasecmp(pszValues,"on") ||
 			!strcasecmp(pszValues,"true") ||
+			!strcasecmp(pszValues,"enable") ||
+			!strcasecmp(pszValues,"1") ||
 			!strcasecmp(pszValues,"absolute")))
 				*nValue = 1;
 		else if ((p->nType == BOOLEAN_VALUE) &&
 			(!strcasecmp(pszValues,"off") ||
 			!strcasecmp(pszValues,"false") ||
+			!strcasecmp(pszValues,"disable") ||
+			!strcasecmp(pszValues,"0") ||
 			!strcasecmp(pszValues,"relative")))
 				*nValue = 0;
 		else if (p->nType == ACTION_VALUE)

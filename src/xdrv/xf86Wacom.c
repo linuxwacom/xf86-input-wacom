@@ -70,9 +70,10 @@
  * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
  * 2008-05-06 47-pc0.8.0-1 - new release
  * 2008-05-14 47-pc0.8.0-2 - Update rotation routine
+ * 2008-05-28 47-pc0.8.1   - new release
  */
 
-static const char identification[] = "$Identification: 47-0.8.0-2 $";
+static const char identification[] = "$Identification: 47-0.8.1 $";
 
 /****************************************************************************/
 

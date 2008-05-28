@@ -131,8 +131,8 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		}
 		else
 		{
-			ErrorF("Wacom unable to read ISDV4 control data "
-				"after %d tries\n", MAXTRY);
+			ErrorF("Wacom unable to read ISDV4 %s data "
+				"after %d tries at (%d)\n", query, MAXTRY, common->wcmISDV4Speed);
 			return !Success;
 		}
 	}
@@ -140,8 +140,19 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		ErrorF("Wacom Query ISDV4 control data (%x) error in %s query\n", data[0], query);
-		return !Success;
+		/* Try 19200 if it is not a touch query */
+		if (common->wcmISDV4Speed != 19200 && strcmp(query, WC_ISDV4_TOUCH_QUERY))
+		{
+			common->wcmISDV4Speed = 19200;
+			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+				return !Success;
+ 			return isdv4Query(local, query, data);
+		}
+		else
+		{
+			ErrorF("Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
+			return !Success;
+		}
 	}
 
 	return Success;
@@ -164,9 +175,10 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	/* digitizer Y resolution in points/inch */
 	common->wcmResolY = 2540; 	
 
-	common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
-	common->wcmTPCButtonDefault = 1;
 	common->tablet_id = 0x90;
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 
@@ -192,8 +204,13 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			(data[2] << 2) | ( (data[6] & 0x60) >> 5) );      
 		common->wcmMaxY = ( (data[3] << 9) | (data[4] << 2 ) 
 			| ( (data[6] & 0x18) >> 3) );
-		common->wcmMaxtiltX = data[7] + 1;
-		common->wcmMaxtiltY = data[8] + 1;
+		if (data[7] && data[8])
+		{
+			common->wcmMaxtiltX = data[7] + 1;
+			common->wcmMaxtiltY = data[8] + 1;
+			common->wcmFlags |= TILT_ENABLED_FLAG;
+		}
+			
 		common->wcmVersion = ( data[10] | (data[9] << 7) );
 	}
 	else
@@ -225,12 +242,24 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 		if (common->wcmMaxX && common->wcmMaxY)
 		{
+			char *s;
+
 			/* Touch resolution */
 			common->wcmTouchResolX = common->wcmMaxTouchX * 
 				common->wcmResolX / common->wcmMaxX;
 			common->wcmTouchResolY = common->wcmMaxTouchY * 
 				common->wcmResolY / common->wcmMaxY;
 			common->tablet_id = 0x93;
+
+			s = xf86FindOptionValue(local->options, "Touch");
+			if (!s)  /* touch option wasn't set in xorg.conf */
+			{
+				common->wcmTouch = 1;
+			}
+
+			/* TouchDefault was off for all devices */
+			/* defaults to enable when touch is supported */
+			common->wcmTouchDefault = 1;
 		}
 	}
 
@@ -271,7 +300,8 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	if (data[0] & 0x18)
 	{
 		ds = &common->wcmChannel[0].work;
-		if (common->wcmPktLength == 9 && ds->proximity)
+		if ((common->wcmPktLength == 9 && ds->proximity ) || 
+				!common->wcmTouch )
 			return 5; /* ignore touch event */
 		else
 		{

@@ -525,8 +525,6 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	else
 		common->nbuttons = 5;
 
-	common->wcmFlags |= TILT_ENABLED_FLAG;
-
 	return Success;
 }
 
@@ -537,6 +535,10 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
 			= PROXOUT_INTUOS_DISTANCE;
+
+	/* tilt enabled */
+	common->wcmFlags |= TILT_ENABLED_FLAG;
+
 	/* reinitialize max here since 0 is for Graphire series */
 	common->wcmMaxCursorDist = 256;
 
@@ -549,6 +551,9 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
 			= PROXOUT_GRAPHIRE_DISTANCE;
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 int usbWcmGetRanges(LocalDevicePtr local)

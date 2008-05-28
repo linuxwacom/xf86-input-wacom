@@ -448,7 +448,7 @@ proc updateDevice {} {
 	    }
 	} elseif { ![ string compare $type "touch" ] } {
 	    if { $hasTouch($model) } {
-		createPanel 0 0 0 1
+		createPanel 1 0 0 1
 	    }
 	} elseif { $isLCD($model) } { 
 	    if { ![ string compare $type "stylus" ] } {
@@ -1484,6 +1484,23 @@ proc updateKeys {} {
     }
 }
 
+proc disableTouch {} {
+    global wName device
+
+    set touch [ exec xsetwacom get $device touch ]
+
+    if { $touch == 0 } {
+	set wName(1) "Disable"
+	exec xsetwacom set $device touch 1
+	.panel.calibrate configure -state normal
+    } else {
+	set wName(1) "Enable"
+	exec xsetwacom set $device touch 0
+	.panel.calibrate configure -state disabled
+    }
+    .panel.pressure configure -text $wName(1)
+}
+
 proc createPanel { pressure button mapping calibrate } {
     global bName device getOption getDeviceModel currentb 
     global wName startS Option
@@ -1507,10 +1524,29 @@ proc createPanel { pressure button mapping calibrate } {
 	grid .panel.sn -row 0 -column 0 -columnspan 2 -padx 3 -pady 3
     }
 
+    if { $calibrate } {
+	button .panel.calibrate -text "Calibration" \
+	    -command Calibration -state normal
+	grid .panel.calibrate -row 5 -column 3 -columnspan 2 -sticky news -padx 10
+    }
     if { $pressure } {
-	button .panel.pressure -text $wName(1) \
-	    -state normal -command "displaySubWindow \
-	    updateTip defaultTip initialTip 1 0 0"
+	if { ![string compare $getDeviceModel($device,type) "touch"] } {
+	    set touch [ exec xsetwacom get $device touch ]
+	    if { $touch == 0 } {
+		set wName(1) "Enable"
+		.panel.calibrate configure -state disabled
+	    } else {
+		set wName(1) "Disable"
+		.panel.calibrate configure -state normal
+	    }
+	    button .panel.pressure -text $wName(1) \
+		-state normal -command disableTouch
+	} else {
+	    set wName(1) "Feel"
+	    button .panel.pressure -text $wName(1) \
+		-state normal -command "displaySubWindow \
+		 updateTip defaultTip initialTip 1 0 0"
+	}
 	grid .panel.pressure -row 5 -column 0 -columnspan 2 -sticky news -padx 10
     }
     if { $button } {
@@ -1527,18 +1563,14 @@ proc createPanel { pressure button mapping calibrate } {
     }
     if { $mapping } {
 	button .panel.mapping -text $wName(3) \
-	    -state normal -command "displaySubWindow \
-	    updateT defaultT initialT 3 0 0"
+	   -state normal -command "displaySubWindow \
+	   updateT defaultT initialT 3 0 0"
 	grid .panel.mapping -row 6 -column 3 -columnspan 2 -sticky news -padx 10
-    }
-    if { $calibrate } {
-	button .panel.calibrate -text "Calibration" \
-	    -command Calibration -state normal
-	grid .panel.calibrate -row 5 -column 3 -columnspan 2 -sticky news -padx 10
     }
 
     set bName(advanced) 0
-    if { [string compare $getDeviceModel($device,type) "pad"] } { #not a pad
+    if { [string compare $getDeviceModel($device,type) "touch"] &&
+	    [string compare $getDeviceModel($device,type) "pad"] } { #not a pad or touch
 	set Option(1) "Mode"
 	getDeviceOptionProc $device 1
 	set mode $getOption($device,Mode)
@@ -1626,10 +1658,10 @@ proc updateModelInfo { } {
     }
 
     for { set i 0 } { $i <= 198 } { incr i 1 } {
-	if { $i == 144 || $i == 147 } {
-	    set hasTouch($i) 1
+	if { $i == 147 } {
+	   set hasTouch($i) 1
 	} else {
-	    set hasTouch($i) 0
+	   set hasTouch($i) 0
 	}
     }
 }

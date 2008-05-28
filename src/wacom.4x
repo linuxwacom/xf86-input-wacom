@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4x "linuxwacom 0.8.0" "X Version 11"
+.TH WACOM 4x "linuxwacom 0.8.1" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -126,6 +126,10 @@ to Xinput,  use "0" or "button 0".
 .B Option \fI"TPCButton"\fP \fI"on"\fP
 enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus button
 event only when its tip is pressed.  Default to "on" for Tablet PC; "off" for all other models.
+.TP 4
+.B Option \fI"Touch"\fP \fI"on"\fP
+enables the touch event for Tablet PC that supports touch feature,  i.e., system cursor moves 
+when user touches the tablet.  Default to "on" for Tablet PC with touch feature; "off" for all other models.
 .TP 4
 .B Option \fI"Speed"\fP \fI"Rspeed"\fP
 sets the cursor's relative movement speed to Rspeed.  The default value is 1.0.  

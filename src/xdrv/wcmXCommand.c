@@ -353,6 +353,18 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				xf86ReplaceStrOption(local->options, "TPCButton", "off");
 		}
 		break;
+	    case XWACOM_PARAM_TOUCH:
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmTouch != value)
+		{
+			common->wcmTouch = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "Touch", "on");
+			else
+				xf86ReplaceStrOption(local->options, "Touch", "off");
+		}
+		break;
 	    case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 		{
@@ -762,6 +774,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->wcmMMonitor;
 	    case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButton;
+	    case XWACOM_PARAM_TOUCH:
+		return common->wcmTouch;
 	    case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDist;
@@ -927,6 +941,8 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return 1;
 	case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButtonDefault;
+	case XWACOM_PARAM_TOUCH:
+		return common->wcmTouchDefault;
 	case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;
