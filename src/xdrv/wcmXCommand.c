@@ -310,9 +310,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86AddNewOption(local->options, "Speed", st);
 		break;
 	    case XWACOM_PARAM_ACCEL:
-		if ((value < 1) || (value > MAX_ACCEL)) return BadValue;
-		priv->accel = value-1;
-		xf86ReplaceIntOption(local->options, "Accel", priv->accel);
+		if ((value < 1) || (value > MAX_ACCEL)) 
+			return BadValue;
+		else if (priv->accel != value-1)
+		{
+			priv->accel = value-1;
+			xf86ReplaceIntOption(local->options, "Accel", priv->accel);
+		}
 		break;
 	    case XWACOM_PARAM_CLICKFORCE:
 		if ((value < 1) || (value > 21)) return BadValue;
@@ -363,6 +367,15 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				xf86ReplaceStrOption(local->options, "Touch", "on");
 			else
 				xf86ReplaceStrOption(local->options, "Touch", "off");
+		}
+		break;
+	    case XWACOM_PARAM_CAPACITY:
+		if ((value < -1) || (value > 5)) 
+			return BadValue;
+		else if (common->wcmCapacity != value)
+		{
+			common->wcmCapacity = value;
+			xf86ReplaceIntOption(local->options, "Capacity", value);
 		}
 		break;
 	    case XWACOM_PARAM_CURSORPROX:
@@ -776,6 +789,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return common->wcmTPCButton;
 	    case XWACOM_PARAM_TOUCH:
 		return common->wcmTouch;
+	    case XWACOM_PARAM_CAPACITY:
+		return common->wcmCapacity;
 	    case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDist;
@@ -943,6 +958,8 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return common->wcmTPCButtonDefault;
 	case XWACOM_PARAM_TOUCH:
 		return common->wcmTouchDefault;
+	case XWACOM_PARAM_CAPACITY:
+		return common->wcmCapacityDefault;
 	case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;

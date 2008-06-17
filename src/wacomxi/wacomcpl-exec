@@ -48,7 +48,7 @@ set windowSize "540x300"
 
 set device ""
 set deviceIndex 0
-set showHelp 0
+set showHelp 1
 set modeToggleB 33
 set ignoreButton 34
 set doubleClickB 35
@@ -1484,26 +1484,85 @@ proc updateKeys {} {
     }
 }
 
-proc disableTouch {} {
-    global wName device
+proc initialTouch {} {
+    global device getDeviceModel currentW touchButton
+    global getOption getOptionDefault Option
 
-    set touch [ exec xsetwacom get $device touch ]
+    set Option(1) "Touch"
+    set Option(1) "Capacity"
 
-    if { $touch == 0 } {
-	set wName(1) "Disable"
-	exec xsetwacom set $device touch 1
+    getDeviceOptionProc $device 2
+
+    if { $getOption($device,Capacity) < 0 } {
+	checkbutton .panel.pressure -text "Disable Touch" -anchor w \
+	    -variable touchButton -state normal -command switchTouch
+
+	grid .panel.pressure -row 0 -column 2
+    } else {
+	checkbutton $currentW.f.touch -text "Disable Touch" -anchor w \
+	    -variable touchButton -state normal -command switchTouch
+
+	grid $currentW.f.touch -row 0 -column 2
+
+	frame $currentW.f.group -bd 10 -bg beige -width 150 -height 150
+	label $currentW.f.groupL -text "Sensitivity: "
+	grid $currentW.f.groupL -row 2 -column 6
+	scale $currentW.f.group.scale -orient horizontal -length 100 \
+		-from 1 -to 5
+	grid $currentW.f.group.scale -row 2 -column 8
+	$currentW.f.group.scale set $getOption($device,Capacity)
+	label $currentW.f.group.l11 -text "1"
+	grid $currentW.f.group.l11 -row 1 -column 7
+	label $currentW.f.group.l21 -text "5"
+	grid $currentW.f.group.l21 -row 1 -column 9
+	label $currentW.f.group.l1 -text "Low"
+	grid $currentW.f.group.l1 -row 3 -column 7
+	label $currentW.f.group.l2 -text "High"
+	grid $currentW.f.group.l2 -row 3 -column 9
+
+	grid $currentW.f.touch -row 0 -column 2
+	grid $currentW.f.group -row 2 -column 5 
+	grid $currentW.f.groupL -row 2 -column 2
+    }
+}
+
+proc updateTouch {} {
+    global currentW getOptionDefault device
+
+    set value [ $currentW.f.group.scale ]
+    if { $value != $getOption($device,touch) } {
+	updateXinitrc $device Capacity $value
+	set getOption($device,Capacity) $value
+    }
+
+    closeSubWindow
+}
+
+proc defaultTouch {} {
+    global touchButton currentW getOptionDefault device
+
+    set touchButton $getOptionDefault($device,touch)
+    $currentW.f.group.scale set $getOptionDefault($device,Capacity)
+}
+
+proc switchTouch {} {
+    global wName device touchButton
+
+    if { $touchButton != [ exec xsetwacom get $device touch ] } {
+	exec xsetwacom set $device touch $touchButton
+	updateXinitrc $device touch $touchButton
+    }
+
+    if { $touchButton == 0 } {
 	.panel.calibrate configure -state normal
     } else {
-	set wName(1) "Enable"
-	exec xsetwacom set $device touch 0
 	.panel.calibrate configure -state disabled
     }
-    .panel.pressure configure -text $wName(1)
 }
 
 proc createPanel { pressure button mapping calibrate } {
     global bName device getOption getDeviceModel currentb 
-    global wName startS Option
+    global wName startS Option hasCapacity touchButton
 
     frame .panel
     set bName(pressure) $pressure
@@ -1531,16 +1590,16 @@ proc createPanel { pressure button mapping calibrate } {
     }
     if { $pressure } {
 	if { ![string compare $getDeviceModel($device,type) "touch"] } {
-	    set touch [ exec xsetwacom get $device touch ]
-	    if { $touch == 0 } {
-		set wName(1) "Enable"
-		.panel.calibrate configure -state disabled
+	    set Option(1) "Capacity"
+	    getDeviceOptionProc $device 1
+	    if { $getOption($device,Capacity) < 0 } {
+	    	initialTouch
 	    } else {
-		set wName(1) "Disable"
-		.panel.calibrate configure -state normal
+		set wName(1) "Touch"
+		button .panel.pressure -text $wName(1) \
+			-state normal -command "displaySubWindow \
+			updateTouch defaultTouch initialTouch 1 0 0"
 	    }
-	    button .panel.pressure -text $wName(1) \
-		-state normal -command disableTouch
 	} else {
 	    set wName(1) "Feel"
 	    button .panel.pressure -text $wName(1) \
@@ -1588,7 +1647,7 @@ proc createPanel { pressure button mapping calibrate } {
 
 proc updateModelInfo { } {
     global isLCD numPadButtons numPadRings hasPad hasTouch
-    global numPadStrips numPadAbsW numPadRelW
+    global numPadStrips numPadAbsW numPadRelW hasCapacity
 
     for { set i 0 } { $i <= 198 } { incr i 1 } {
 	set isLCD($i) 0 
@@ -1597,6 +1656,9 @@ proc updateModelInfo { } {
 	set numPadStrips($i) 0
 	set numPadAbsW($i) 0
 	set numPadRelW($i) 0
+	set hasPad($i) 0
+	set hasTouch($i) 0
+	set hasCapacity($i) 0
     }
     #PL
     for { set i 48} { $i <= 63 } { incr i 1 } {
@@ -1606,6 +1668,10 @@ proc updateModelInfo { } {
     for { set i 144 } { $i <= 151 } { incr i 1 } {
 	set isLCD($i) 1 
     }
+
+    #Capacitive TabletPC
+    set hasCapacity(154) 1
+
     #Cintiq
     for { set i 192 } { $i <= 198 } { incr i 1 } {
 	set isLCD($i) 1 
@@ -1652,16 +1718,12 @@ proc updateModelInfo { } {
 		|| $numPadStrips($i) || $numPadAbsW($i) 
 		|| $numPadRelW($i) } {
 	    set hasPad($i) 1
-	} else {
-	    set hasPad($i) 0
 	}
     }
 
     for { set i 0 } { $i <= 198 } { incr i 1 } {
 	if { $i == 147 } {
 	   set hasTouch($i) 1
-	} else {
-	   set hasTouch($i) 0
 	}
     }
 }
@@ -1709,12 +1771,13 @@ proc createControls { } {
     set numButton 10
     set numStrips 4
 
-    checkbutton .showHelp -text "Turn Help on" -anchor w \
-	    -variable showHelp -state normal  
+#   Real help will be supported later
+#    checkbutton .showHelp -text "Turn Help on" -anchor w \
+#	    -variable showHelp -state normal  
 
     button .exit -text "Exit" -command "exit 0" -padx 40
     
-    grid .showHelp -row 0 -column 2 -sticky nw -padx 30
+#    grid .showHelp -row 0 -column 2 -sticky nw -padx 30
     grid .exit -row 20 -column 2 -sticky news -padx 20
     grid .workingDev -row 0 -rowspan 25 -column 0 -sticky news -padx 20
 

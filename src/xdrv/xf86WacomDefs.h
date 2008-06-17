@@ -404,6 +404,9 @@ struct _WacomCommonRec
 	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
 	int wcmTouchDefault;	     /* default to disable when not supported */
+	int wcmCapacity;	     /* Capacity is disabled */
+	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported */
+				     /* 3 when capacity is supported */
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */

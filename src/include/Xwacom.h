@@ -38,6 +38,7 @@
 #define XWACOM_PARAM_SCREEN_NO		14
 #define XWACOM_PARAM_COMMONDBG		15
 #define XWACOM_PARAM_RAWSAMPLE		16
+#define XWACOM_PARAM_CAPACITY       	17
 
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101

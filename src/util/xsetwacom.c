@@ -350,10 +350,16 @@ static PARAMINFO gParamInfo[] =
 		XWACOM_PARAM_TOUCH, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
+	{ "Capacity",
+		"Touch sensitivity level (default is 3, "
+		"-1 for none capacitive tools).",
+		XWACOM_PARAM_CAPACITY, VALUE_OPTIONAL, 
+		RANGE, -1, 5, SINGLE_VALUE, 3 },
+
 	{ "CursorProx", 
 		"Sets cursor distance for proximity-out "
 		"in distance from the tablet.  "
-		"default is 10 for Intuos series, "
+		"(default is 10 for Intuos series, "
 		"42 for Graphire series).",
 		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, RANGE, 
 		0, 255, SINGLE_VALUE, 47 },
