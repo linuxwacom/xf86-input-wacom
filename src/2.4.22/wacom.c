@@ -193,7 +193,7 @@ static void wacom_pl_irq(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int prox, pressure, id;
+	int prox, pressure;
 
 	if (urb->status) return;
 
@@ -443,7 +443,7 @@ static void wacom_graphire_irq(struct urb *urb)
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */	
 		input_report_key(dev, wacom->tool[0], 0);
 	}
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, wacom->id[0]);
 
 	/* send pad data */
 	if ( strstr(wacom->features->name, "Graphire4") ) {

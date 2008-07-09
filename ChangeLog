@@ -1,3 +1,7 @@
+2008-07-08  Ping Cheng <pingc@wacom.com>
+	* Added Usb Tablet PC with and without touch support
+	* Label 0.8.1
+
 2008-05-23  Ping Cheng <pingc@wacom.com>
 	* Fixed an issue in configure.in (Ron and Magnus)
 	* Fixed an issue in wcmISDV4.c
@@ -101,29 +105,3 @@
 	* Temporary workaround for Xorg 7.3 (Magnus and Ron)
 	* Support up to 8 screens in xsetwacom
 	* Label 0.7.9
-
-2007-08-15  Ping Cheng <pingc@wacom.com>
-	* Fixed a wacom.c bug for 2.4 and older 2.6's
-	* Fixed a double click issue
-	* Updated wacomcpl
-	* Label 0.7.8-3
-
-2007-07-24  Ping Cheng <pingc@wacom.com>
-	* Fixed a xsetwacom bug
-	* Updated wacomcpl
-	* Label 0.7.8-2
-
-2007-07-12  Ping Cheng <pingc@wacom.com>
-	* Updated HowTo pages
-	* Fixed a control panel button bug
-	* Label 0.7.8-1
-
-2007-06-25  Ping Cheng <pingc@wacom.com>
-	* Merged patch 1689476 (Gregor Richards)
-	* Merged patch 1674472 (Magnus Vigerlöf)
-	* Updated new xsetwacom commands
-	* Updated wacom man page
-	* Updated webpages to make /PRE scalable 
-	* Fixed an older UD pressure calculation error 
-				(Pierre-Alain Tercier) 
-	* Label 0.7.8

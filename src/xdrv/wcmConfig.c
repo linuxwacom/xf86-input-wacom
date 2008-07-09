@@ -198,10 +198,15 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
-	common->wcmEraserID = 0;	/* eraser id associated with the stylus */
+	common->wcmEraserID = 0;	 /* eraser id associated with the stylus */
 	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
+	common->wcmTouch = 0;              /* touch is disabled */
+	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
+	common->wcmCapacity = -1;          /* Capacity is disabled */
+	common->wcmCapacityDefault = 3;    /* default to -1 when capacity isn't supported */
+					   /* 3 when capacity is supported */
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max digitizer logical X value */
 	common->wcmMaxY = 0;               /* max digitizer logical Y value */
@@ -582,6 +587,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmDevCls = &gWacomISDV4Device;
 		xf86Msg(X_CONFIG, "%s: forcing TabletPC ISD V4 protocol\n",
 			dev->identifier);
+		common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
+		common->wcmTPCButtonDefault = 1;
 	}
 
 	s = xf86FindOptionValue(local->options, "Rotate");
@@ -827,12 +834,20 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	/* Tablet PC button applied to the whole tablet. Not just one tool */
-	if ( !common->wcmTPCButton )
-	{
-		common->wcmTPCButton = xf86SetBoolOption(local->options, "TPCButton", 0);
-		if ( common->wcmTPCButton )
-			xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
-	}
+	common->wcmTPCButton = xf86SetBoolOption(local->options, 
+			"TPCButton", common->wcmTPCButtonDefault);
+	if ( common->wcmTPCButton )
+		xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
+
+	/* Touch applies to the whole tablet */
+	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
+	if ( common->wcmTouch )
+		xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+
+	/* Touch capacity applies to the whole tablet */
+	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
+	if ( common->wcmCapacity )
+		xf86Msg(X_CONFIG, "%s: Touch capacity is enabled \n", common->wcmDevice);
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */
 	if ( !priv->wcmMMonitor )

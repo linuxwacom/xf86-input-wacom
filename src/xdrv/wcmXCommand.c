@@ -21,6 +21,7 @@
  *
  * 2007-05-25 0.1 - Initial release - span off from xf86Wacom.c
  * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateScreen
+ * 2008-06-26 0.3 - Added Capacity
  */
 
 
@@ -310,9 +311,13 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86AddNewOption(local->options, "Speed", st);
 		break;
 	    case XWACOM_PARAM_ACCEL:
-		if ((value < 1) || (value > MAX_ACCEL)) return BadValue;
-		priv->accel = value-1;
-		xf86ReplaceIntOption(local->options, "Accel", priv->accel);
+		if ((value < 1) || (value > MAX_ACCEL)) 
+			return BadValue;
+		else if (priv->accel != value-1)
+		{
+			priv->accel = value-1;
+			xf86ReplaceIntOption(local->options, "Accel", priv->accel);
+		}
 		break;
 	    case XWACOM_PARAM_CLICKFORCE:
 		if ((value < 1) || (value > 21)) return BadValue;
@@ -351,6 +356,27 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				xf86ReplaceStrOption(local->options, "TPCButton", "on");
 			else
 				xf86ReplaceStrOption(local->options, "TPCButton", "off");
+		}
+		break;
+	    case XWACOM_PARAM_TOUCH:
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmTouch != value)
+		{
+			common->wcmTouch = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "Touch", "on");
+			else
+				xf86ReplaceStrOption(local->options, "Touch", "off");
+		}
+		break;
+	    case XWACOM_PARAM_CAPACITY:
+		if ((value < -1) || (value > 5)) 
+			return BadValue;
+		else if (common->wcmCapacity != value)
+		{
+			common->wcmCapacity = value;
+			xf86ReplaceIntOption(local->options, "Capacity", value);
 		}
 		break;
 	    case XWACOM_PARAM_CURSORPROX:
@@ -400,37 +426,50 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		else
 		{
 			int sNum = param - XWACOM_PARAM_TVRESOLUTION0;
-			int rX = 0, rY = 0;
-			if (sNum)
-			{
-				rX = priv->tvResolution[0];
-				rY = priv->tvResolution[1];
-				sNum++;
-			}
-			else
-			{
-				rX = priv->tvResolution[2];
-				rY = priv->tvResolution[3];
-			}
-			if ( priv->twinview == TV_ABOVE_BELOW )
-			{
-				rX = value & 0xffff;
-				rY += (value >> 16) & 0xffff;
-			}
-			else
-			{
-				rX += value & 0xffff;
-				rY = (value >> 16) & 0xffff;
-			}
+			int rX = value & 0xffff, rY = (value >> 16) & 0xffff;
 			if (rX > screenInfo.screens[0]->width ||
 					rY > screenInfo.screens[0]->height)
+			{
+				ErrorF("xf86WcmSetParam tvResolution out of range: " 
+					"ResX=%d ResY=%d \n", rX, rY);
 				return BadValue;
-			priv->tvResolution[sNum++] = value & 0xffff;
-			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
-			xf86WcmChangeScreen(local, priv->screen_no);
+			}
+
 			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
-					"to ResX=%d ResY=%d \n",
-				value & 0xffff, (value >> 16) & 0xffff));
+				"tvResolutionX from %d to ResX=%d tvResolutionY "
+				"from %d toResY=%d \n",
+				priv->tvResolution[0], rX, priv->tvResolution[1], rY));
+
+			if ( priv->twinview == TV_ABOVE_BELOW )
+			{
+				if (sNum)
+				{
+					priv->tvResolution[1] = screenInfo.screens[0]->height - rY;
+					priv->tvResolution[2] = rX;
+					priv->tvResolution[3] = rY;
+				}
+				else
+				{
+					priv->tvResolution[0] = rX;
+					priv->tvResolution[1] = rY;
+					priv->tvResolution[3] = screenInfo.screens[0]->height - rY;
+				}
+			}
+			else
+			{
+				if (sNum)
+				{
+					priv->tvResolution[0] = screenInfo.screens[0]->width - rX;
+					priv->tvResolution[2] = rX;
+					priv->tvResolution[3] = rY;
+				}
+				else
+				{
+					priv->tvResolution[0] = rX;
+					priv->tvResolution[1] = rY;
+					priv->tvResolution[2] = screenInfo.screens[0]->width - rX;
+				}
+			}
 		}
 		break;
 	    }
@@ -762,6 +801,10 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->wcmMMonitor;
 	    case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButton;
+	    case XWACOM_PARAM_TOUCH:
+		return common->wcmTouch;
+	    case XWACOM_PARAM_CAPACITY:
+		return common->wcmCapacity;
 	    case XWACOM_PARAM_CURSORPROX:
 		if (IsCursor (priv))
 			return common->wcmCursorProxoutDist;
@@ -927,6 +970,10 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return 1;
 	case XWACOM_PARAM_TPCBUTTON:
 		return common->wcmTPCButtonDefault;
+	case XWACOM_PARAM_TOUCH:
+		return common->wcmTouchDefault;
+	case XWACOM_PARAM_CAPACITY:
+		return common->wcmCapacityDefault;
 	case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;

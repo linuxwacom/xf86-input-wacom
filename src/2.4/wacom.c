@@ -270,7 +270,7 @@ static void wacom_pl_irq(struct urb *urb)
 	wacom->tool[0] = prox; /* Save proximity state */
 	/* end of proximity code */
 	
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, wacom->id[0]);
 }
 
 static void wacom_ptu_irq(struct urb *urb)

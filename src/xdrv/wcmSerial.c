@@ -950,6 +950,9 @@ static void serialInitCintiq(WacomCommonPtr common, const char* id, float versio
 		/* PL-800  */
 		common->wcmMaxZ = 511;
 	}
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 static void serialInitPenPartner(WacomCommonPtr common, const char* id, float version)
@@ -961,6 +964,9 @@ static void serialInitPenPartner(WacomCommonPtr common, const char* id, float ve
 	common->wcmMaxZ = 255;
 	common->wcmResolX = 1000; /* tablet X resolution in points/inch */
 	common->wcmResolY = 1000; /* tablet Y resolution in points/inch */
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 static void serialInitGraphire(WacomCommonPtr common, const char* id, float version)
@@ -975,6 +981,9 @@ static void serialInitGraphire(WacomCommonPtr common, const char* id, float vers
 	common->wcmMaxZ = 511;
 	common->wcmResolX = 1016; /* tablet X resolution in points/inch */
 	common->wcmResolY = 1016; /* tablet Y resolution in points/inch */
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 static void serialInitProtocol4(WacomCommonPtr common, const char* id, float version)
@@ -992,6 +1001,9 @@ static void serialInitProtocol4(WacomCommonPtr common, const char* id, float ver
 		else
 			common->wcmMaxZ = 120;
 	}
+
+	/* tilt disabled */
+	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
 static void serialGetResolution(LocalDevicePtr local)
