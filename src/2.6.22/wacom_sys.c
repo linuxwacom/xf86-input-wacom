@@ -411,7 +411,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (error)
 		goto fail3;
 
-	if (wacom_wac->features->type == TABLETPC) { /* TabletPC second bit 0 is stylus mode*/
+	/* TabletPC second bit 0 is stylus mode*/
+	if (wacom_wac->features->type == TABLETPC)
 		mode = 0;
 
 	/* Ask the tablet to report tablet data. Repeat until it succeeds */
