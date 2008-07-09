@@ -142,7 +142,7 @@ static void wacom_pl_irq(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int prox, pressure, id;
+	int prox, pressure;
 
 	if (urb->status) return;
 
@@ -183,7 +183,7 @@ static void wacom_pl_irq(struct urb *urb)
 				/* report out proximity for previous tool */
 				input_report_abs(dev, ABS_MISC, wacom->id[0]); /* report tool id */
 				input_report_key(dev, wacom->tool[1], 0);
-				input_event(dev, EV_MSC, MSC_SERIAL, id);
+				input_event(dev, EV_MSC, MSC_SERIAL, wacom->id[0]);
 				wacom->tool[1] = BTN_TOOL_PEN;
 				return;
 			}
@@ -216,7 +216,7 @@ static void wacom_pl_irq(struct urb *urb)
 	wacom->tool[0] = prox; /* Save proximity state */
 	/* end of proximity code */
 	
-	input_event(dev, EV_MSC, MSC_SERIAL, id);
+	input_event(dev, EV_MSC, MSC_SERIAL, wacom->id[0]);
 }
 
 static void wacom_ptu_irq(struct urb *urb)

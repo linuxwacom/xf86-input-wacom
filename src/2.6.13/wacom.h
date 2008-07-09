@@ -11,7 +11,7 @@
  *  Copyright (c) 2000 Daniel Egger		<egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied		<flepied@mandrakesoft.com>
  *  Copyright (c) 2004 Panagiotis Issaris	<panagiotis.issaris@mech.kuleuven.ac.be>
- *  Copyright (c) 2002-2007 Ping Cheng		<pingc@wacom.com>
+ *  Copyright (c) 2002-2008 Ping Cheng		<pingc@wacom.com>
  *
  *  ChangeLog:
  *      v0.1 (vp)  - Initial release
@@ -67,6 +67,7 @@
  *    v1.43-2.6.13.1-pc-0.4 - Split wacom.c into 4 files
  *    v1.43-2.6.13.1-pc-0.5 - added Bamboo
  *    v1.43-2.6.13.1-pc-0.6 - Added BambooFun and Hummingbird
+ *    v1.43-2.6.13.1-pc-0.7 - Added USB Tablet PC
  */
 
 /*
@@ -90,7 +91,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.43-2.6.13.1-pc-0.6"
+#define DRIVER_VERSION "v1.43-2.6.13.1-pc-0.7"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"

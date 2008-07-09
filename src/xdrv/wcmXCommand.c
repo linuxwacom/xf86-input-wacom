@@ -21,6 +21,7 @@
  *
  * 2007-05-25 0.1 - Initial release - span off from xf86Wacom.c
  * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateScreen
+ * 2008-06-26 0.3 - Added Capacity
  */
 
 
@@ -425,37 +426,50 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		else
 		{
 			int sNum = param - XWACOM_PARAM_TVRESOLUTION0;
-			int rX = 0, rY = 0;
-			if (sNum)
-			{
-				rX = priv->tvResolution[0];
-				rY = priv->tvResolution[1];
-				sNum++;
-			}
-			else
-			{
-				rX = priv->tvResolution[2];
-				rY = priv->tvResolution[3];
-			}
-			if ( priv->twinview == TV_ABOVE_BELOW )
-			{
-				rX = value & 0xffff;
-				rY += (value >> 16) & 0xffff;
-			}
-			else
-			{
-				rX += value & 0xffff;
-				rY = (value >> 16) & 0xffff;
-			}
+			int rX = value & 0xffff, rY = (value >> 16) & 0xffff;
 			if (rX > screenInfo.screens[0]->width ||
 					rY > screenInfo.screens[0]->height)
+			{
+				ErrorF("xf86WcmSetParam tvResolution out of range: " 
+					"ResX=%d ResY=%d \n", rX, rY);
 				return BadValue;
-			priv->tvResolution[sNum++] = value & 0xffff;
-			priv->tvResolution[sNum] = (value >> 16) & 0xffff;
-			xf86WcmChangeScreen(local, priv->screen_no);
+			}
+
 			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
-					"to ResX=%d ResY=%d \n",
-				value & 0xffff, (value >> 16) & 0xffff));
+				"tvResolutionX from %d to ResX=%d tvResolutionY "
+				"from %d toResY=%d \n",
+				priv->tvResolution[0], rX, priv->tvResolution[1], rY));
+
+			if ( priv->twinview == TV_ABOVE_BELOW )
+			{
+				if (sNum)
+				{
+					priv->tvResolution[1] = screenInfo.screens[0]->height - rY;
+					priv->tvResolution[2] = rX;
+					priv->tvResolution[3] = rY;
+				}
+				else
+				{
+					priv->tvResolution[0] = rX;
+					priv->tvResolution[1] = rY;
+					priv->tvResolution[3] = screenInfo.screens[0]->height - rY;
+				}
+			}
+			else
+			{
+				if (sNum)
+				{
+					priv->tvResolution[0] = screenInfo.screens[0]->width - rX;
+					priv->tvResolution[2] = rX;
+					priv->tvResolution[3] = rY;
+				}
+				else
+				{
+					priv->tvResolution[0] = rX;
+					priv->tvResolution[1] = rY;
+					priv->tvResolution[2] = screenInfo.screens[0]->width - rX;
+				}
+			}
 		}
 		break;
 	    }

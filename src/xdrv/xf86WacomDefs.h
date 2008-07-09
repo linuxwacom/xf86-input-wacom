@@ -260,6 +260,7 @@ struct _WacomDeviceState
 	int y;
 	int buttons;
 	int pressure;
+	int capacity;
 	int tiltx;
 	int tilty;
 	int stripx;

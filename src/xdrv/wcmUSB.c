@@ -338,6 +338,22 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
+	static WacomModel usbTabletPC =
+	{
+		"USB TabletPC",
+		usbInitProtocol4,
+		NULL,                 /* resolution not queried */
+		usbWcmGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		NULL,                 /* input filtering */
+		usbDetectConfig,      /* detect hardware buttons etc */
+	};
+
 /*****************************************************************************
  * usbDetect --
  *   Test if the attached device is USB.
@@ -460,7 +476,11 @@ static struct
 
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
 	{ 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */ 
-	{ 0xC6, 5080, 5080, &usbCintiqV5   }  /* Cintiq 12WX */ 
+	{ 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */ 
+
+	{ 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */ 
+	{ 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
+	{ 0x9A, 2540, 2540, &usbTabletPC   }  /* TabletPC 0x9A */
 };
 
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
@@ -601,12 +621,13 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl xmax value.\n");
 		return !Success;
 	}
-	common->wcmMaxX = nValues[2];
-	if (common->wcmMaxX <= 0)
+
+	if (nValues[2] <= 0)
 	{
 		ErrorF("WACOM: xmax value is wrong.\n");
 		return !Success;
 	}
+	common->wcmMaxX = nValues[2];
 
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
@@ -614,11 +635,47 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl ymax value.\n");
 		return !Success;
 	}
-	common->wcmMaxY = nValues[2];
-	if (common->wcmMaxY <= 0)
+
+	if (nValues[2] <= 0)
 	{
 		ErrorF("WACOM: ymax value is wrong.\n");
 		return !Success;
+	}
+	common->wcmMaxY = nValues[2];
+
+	/* max finger strip X for tablets with Expresskeys
+	 * or max touch logical X for TabletPCs with touch */
+	if (ioctl(local->fd, EVIOCGABS(ABS_RX), nValues) == 0)
+	{
+		if (IsTouch(priv))
+			common->wcmMaxTouchX = nValues[2];
+		else
+			common->wcmMaxStripX = nValues[2];
+	}
+
+	/* max finger strip X */
+	if (ioctl(local->fd, EVIOCGABS(ABS_RY), nValues) == 0)
+	{
+		if (IsTouch(priv))
+			common->wcmMaxTouchY = nValues[2];
+		else
+			common->wcmMaxStripY = nValues[2];
+	}
+
+	if (IsTouch(priv) && common->wcmMaxX && common->wcmMaxY)
+	{
+		common->wcmTouchResolX = common->wcmMaxTouchX *
+			common->wcmResolX / common->wcmMaxX;
+		common->wcmTouchResolY = common->wcmMaxTouchY *
+			common->wcmResolY / common->wcmMaxY;
+		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
+		{
+			ErrorF("WACOM: touch max value(s) was wrong MaxTouchY"
+				" = %d MaxTouchY = %d.\n", common->wcmMaxTouchX,
+				common->wcmMaxTouchY);
+			return !Success;
+		}
+
 	}
 
 	/* max z cannot be configured */
@@ -627,12 +684,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl press max value.\n");
 		return !Success;
 	}
-	common->wcmMaxZ = nValues[2];
-	if (common->wcmMaxZ <= 0)
+	if (nValues[2] <= 0)
 	{
 		ErrorF("WACOM: press max value is wrong.\n");
 		return !Success;
 	}
+	common->wcmMaxZ = nValues[2];
 
 	/* max distance */
 	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), nValues) < 0)
@@ -640,18 +697,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl press max distance.\n");
 		return !Success;
 	}
-	common->wcmMaxDist = nValues[2];
-	if (common->wcmMaxDist < 0)
+	if (nValues[2] < 0)
 	{
 		ErrorF("WACOM: max distance value is wrong.\n");
 		return !Success;
 	}
-
-	/* max fingerstrip X */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RX), nValues) == 0)
-		common->wcmMaxStripX = nValues[2];
-	if (ioctl(local->fd, EVIOCGABS(ABS_RY), nValues) == 0)
-		common->wcmMaxStripY = nValues[2];
+	common->wcmMaxDist = nValues[2];
 
 	return Success;
 }
@@ -668,9 +719,9 @@ static int usbDetectConfig(LocalDevicePtr local)
 
 /* This code will be used when we are ready to report valuators in tablet and tool 
  * specific form, whcih will need to clean InitValuatorAxisStruct() in xf86Wacom.c
- * and all the calls to X related to valuators, such as xf86PostButtonEvent and 
- * xf86PostButtonEvent, etc. Code under util will need to be updaed as well.
- * This will need some time. We put it in the to-do list for now.  Ping 
+ * and all the calls to X that are related to valuators, such as xf86PostButtonEvent and 
+ * xf86PostButtonEvent, etc. Code under util directory will need to be updated as well.
+ * This will take some time. We put it in the to-do list for now.  Ping 
 		unsigned long abs[NBITS(ABS_MAX)];
 		priv->naxes = 0;
 		if (ioctl(local->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) >= 0)
@@ -867,9 +918,12 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				ds->tiltx = event->value - common->wcmMaxtiltX/2;
 			else if (event->code ==  ABS_TILT_Y)
 				ds->tilty = event->value - common->wcmMaxtiltY/2;
-			else if (event->code == ABS_PRESSURE)
-				ds->pressure = event->value;
-			else if (event->code == ABS_DISTANCE)
+			else if (event->code == ABS_PRESSURE) {
+				if (ds->device_type == TOUCH_ID)
+					ds->capacity = event->value;
+				else
+					ds->pressure = event->value;
+			} else if (event->code == ABS_DISTANCE)
 				ds->distance = event->value;
 			else if (event->code == ABS_WHEEL || 
 				    event->code == ABS_Z)
@@ -895,6 +949,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				(event->code == BTN_TOOL_AIRBRUSH))
 			{
 				ds->device_type = STYLUS_ID;
+				ds->device_id = STYLUS_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				DBG(6, common->debugLevel, ErrorF(
 					"USB stylus detected %x\n",
@@ -903,6 +958,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == BTN_TOOL_RUBBER)
 			{
 				ds->device_type = ERASER_ID;
+				ds->device_id = ERASER_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				if (ds->proximity)
 					ds->proximity = ERASER_PROX;
@@ -917,6 +973,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 					"USB mouse detected %x\n",
 					event->code));
 				ds->device_type = CURSOR_ID;
+				ds->device_id = CURSOR_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOOL_FINGER)
@@ -925,17 +982,17 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 					"USB Pad detected %x\n",
 					event->code));
 				ds->device_type = PAD_ID;
+				ds->device_id = PAD_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOUCH)
 			{
-			/* reserved for touch now. Ping March 19, 2008
 				DBG(6, common->debugLevel, ErrorF(
 					"USB Touch detected %x\n",
 					event->code));
 				ds->device_type = TOUCH_ID;
+				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
-			*/
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))

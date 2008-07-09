@@ -205,7 +205,7 @@ void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 
 void input_dev_pl(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_STYLUS2) | BIT(BTN_TOOL_RUBBER);
+	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_STYLUS2);
 }
 
 void input_dev_pt(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
@@ -220,7 +220,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	struct wacom *wacom;
 	struct wacom_wac *wacom_wac;
 	struct input_dev *input_dev;
-	char rep_data[2], limit = 0;
+	char rep_data[2], limit = 0, mode = 2;
 
 	wacom = kzalloc(sizeof(struct wacom), GFP_KERNEL);
 	wacom_wac = kzalloc(sizeof(struct wacom_wac), GFP_KERNEL);
@@ -273,13 +273,17 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 	input_register_device(wacom->dev);
 
+	/* TabletPC second bit 0 is for stylus mode*/
+	if (wacom_wac->features->type == TABLETPC)
+		mode = 0;
+
 	/* Ask the tablet to report tablet data. Repeat until it succeeds */
 	do {
 		rep_data[0] = 2;
-		rep_data[1] = 2;
+		rep_data[1] = mode;
 		usb_set_report(intf, 3, 2, rep_data, 2);
 		usb_get_report(intf, 3, 2, rep_data, 2);
-	} while (rep_data[1] != 2 && limit++ < 5);
+	} while (rep_data[1] != mode && limit++ < 5);
 
 	usb_set_intfdata(intf, wacom);
 	return 0;
