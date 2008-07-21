@@ -908,6 +908,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldZ = z;
 		priv->oldTiltX = tx;
 		priv->oldTiltY = ty;
+		priv->oldCapacity = ds->capacity;
 		priv->oldStripX = ds->stripx;
 		priv->oldStripY = ds->stripy;
 		priv->oldRot = rot;
@@ -1047,6 +1048,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldX = priv->currentX;
 		priv->oldY = priv->currentY;
 		priv->oldZ = z;
+		priv->oldCapacity = ds->capacity;
 		priv->oldTiltX = tx;
 		priv->oldTiltY = ty;
 		priv->oldStripX = ds->stripx;
@@ -1061,6 +1063,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldX = 0;
 		priv->oldY = 0;
 		priv->oldZ = 0;
+		priv->oldCapacity = ds->capacity;
 		priv->oldTiltX = 0;
 		priv->oldTiltY = 0;
 		priv->oldStripX = 0;
@@ -1091,6 +1094,7 @@ static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig
 	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) returnV = 1;
 	if (ABS(dsOrig->tilty - dsNew->tilty) > suppress) returnV = 1;
 	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) returnV = 1;
+	if (ABS(dsOrig->capacity - dsNew->capacity) > suppress) returnV = 1;
 	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) returnV = 1;
 	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress &&
 		(1800 - ABS(dsOrig->rotation - dsNew->rotation)) >  suppress) returnV = 1;
@@ -1436,6 +1440,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				/* Send soft prox-out for the old area */
 				LocalDevicePtr oDev = outprox->device;
 				WacomDeviceState out = { 0 };
+				out.device_type = DEVICE_ID(((WacomDevicePtr)(oDev->private))->flags);
 				DBG(2, common->debugLevel, ErrorF("Soft prox-out for %s\n",
 					outprox->device->name));
 				xf86WcmSendEvents(oDev, &out);
@@ -1479,7 +1484,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		/* button 1 Threshold test */
 		int button = 1;
 		priv = pDev->private;
-		if ( IsStylus(priv) || IsEraser(priv))
+		if (IsStylus(priv) || IsEraser(priv))
 		{
 			if (filtered.pressure < common->wcmThreshold )
 				filtered.buttons &= ~button;
@@ -1487,6 +1492,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				filtered.buttons |= button;
 			/* transform pressure */
 			transPressureCurve(priv,&filtered);
+		}
+
+		/* touch capacity is supported */
+		if (IsTouch(priv) && common->wcmCapacityDefault >= 0)
+		{
+			if ((int)((filtered.capacity * 5) / common->wcmMaxZ) > common->wcmCapacity)
+				filtered.buttons |= button;
 		}
 
 		if (!(priv->flags & ABSOLUTE_FLAG) && !priv->hardProx)

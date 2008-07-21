@@ -192,6 +192,7 @@ struct _WacomDeviceRec
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
+	int oldCapacity;        /* previous capacity */
 	int oldTiltX;           /* previous tilt in x direction */
 	int oldTiltY;           /* previous tilt in y direction */    
 	int oldWheel;           /* previous wheel value */    

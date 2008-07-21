@@ -510,6 +510,17 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolX = WacomModelDesc [i].xRes;
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
+		/* initialize capacity parameters for touch */
+		if (common->tablet_id == 0x9A)
+		{
+			common->wcmCapacity = 0;
+			common->wcmCapacityDefault = 2; 
+		}
+		else
+		{
+			common->wcmCapacity = -1;
+			common->wcmCapacityDefault = -1; 
+		}
 	}
 
 	if (!common->wcmModel)
@@ -887,7 +898,12 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
 		} while (0)
 
-	DBG(6, common->debugLevel, ErrorF("usbParseChannel \n"));
+	if (common->wcmEventCnt == 1 && !common->wcmEvents->type) {
+		DBG(6, common->debugLevel, ErrorF("usbParseChannel no real events received\n"));
+		return;
+	}
+	DBG(6, common->debugLevel, ErrorF("usbParseChannel %d events received\n", common->wcmEventCnt));
+
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
@@ -963,15 +979,15 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				if (ds->proximity)
 					ds->proximity = ERASER_PROX;
 				DBG(6, common->debugLevel, ErrorF(
-					"USB eraser detected %x\n",
-					event->code));
+					"USB eraser detected %x (value=%d)\n",
+					event->code, event->value));
 			}
 			else if ((event->code == BTN_TOOL_MOUSE) ||
 				(event->code == BTN_TOOL_LENS))
 			{
 				DBG(6, common->debugLevel, ErrorF(
-					"USB mouse detected %x\n",
-					event->code));
+					"USB mouse detected %x (value=%d)\n",
+					event->code, event->value));
 				ds->device_type = CURSOR_ID;
 				ds->device_id = CURSOR_DEVICE_ID;
 				ds->proximity = (event->value != 0);
@@ -979,8 +995,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == BTN_TOOL_FINGER)
 			{
 				DBG(6, common->debugLevel, ErrorF(
-					"USB Pad detected %x\n",
-					event->code));
+					"USB Pad detected %x (value=%d)\n",
+					event->code, event->value));
 				ds->device_type = PAD_ID;
 				ds->device_id = PAD_DEVICE_ID;
 				ds->proximity = (event->value != 0);
@@ -988,11 +1004,17 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == BTN_TOUCH)
 			{
 				DBG(6, common->debugLevel, ErrorF(
-					"USB Touch detected %x\n",
-					event->code));
+					"USB Touch detected %x (value=%d)\n",
+					event->code, event->value));
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
+				/* left button is always pressed for touch without capacity 
+				 * For touch with capacity, left button event will be decided
+				 * in wcmCommon.c by capacity threshold
+				 */
+				if (common->wcmCapacityDefault < 0)
+					MOD_BUTTONS (0, event->value);
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))

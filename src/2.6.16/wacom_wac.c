@@ -535,28 +535,42 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 
 int wacom_tpc_irq (struct wacom_wac *wacom, void *wcombo)
 {
-	static int stylusInProx;
+	static int stylusInProx, touchInProx;
 	char *data = wacom->data;
-	int prox = data[1] & 0x20;
+	int prox = data[1] & 0x20, pressure;
 	struct urb *urb = ((struct wacom_combo *)wcombo)->urb;
 
 	if (urb->actual_length == 5 || data[0] == 6) { /* Touch data */
 		if (stylusInProx) { /* stylus is still in prox */
-			return 0;
-		} else if (data[0] & 0x01) {
-			wacom->tool[1] = BTN_TOUCH;
-			wacom->id[0] = TOUCH_DEVICE_ID;
-			wacom_report_abs(wcombo, ABS_X, wacom_le16_to_cpu(&data[1]));
-			wacom_report_abs(wcombo, ABS_Y, wacom_le16_to_cpu(&data[3]));
-			wacom_report_key(wcombo, ABS_MISC, wacom->id[0]);
-			wacom_report_key(wcombo, wacom->tool[1], data[0] & 0x01);
+			touchInProx = 1;
 		} else {
-			wacom_report_abs(wcombo, ABS_MISC, 0);
-			wacom_report_key(wcombo, wacom->tool[1], 0);
+			if (data[0] & 0x03) {
+				if (!touchInProx) {
+					wacom->tool[1] = BTN_TOUCH;
+					wacom->id[0] = TOUCH_DEVICE_ID;
+					wacom_report_abs(wcombo, ABS_X, wacom_le16_to_cpu(&data[1]));
+					wacom_report_abs(wcombo, ABS_Y, wacom_le16_to_cpu(&data[3]));
+					wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
+					wacom_report_key(wcombo, wacom->tool[1], data[0] & 0x01);
+					return 1;
+				}
+			} else {
+				wacom_report_abs(wcombo, ABS_MISC, 0);
+				wacom_report_key(wcombo, wacom->tool[1], 0);
+				touchInProx = 0;
+				return 1;
+			}
 		}
 	} else if (data[0] == 2) { /* Penabled */
+		/* touch was in control */
+		if (wacom->id[0] == TOUCH_DEVICE_ID) { 
+			/* let it go */
+			wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
+			wacom_report_key(wcombo, wacom->tool[1], 0);
+			return 1;
+		}
+		
 		wacom->id[0] = ERASER_DEVICE_ID;
-		wacom->tool[1] = BTN_TOOL_PEN;
 
 		/*
 		 * if going from out of proximity into proximity select between the eraser
@@ -567,14 +581,15 @@ int wacom_tpc_irq (struct wacom_wac *wacom, void *wcombo)
 		if (prox) { /* in prox */
 			if (!wacom->tool[0]) {
 				/* Going into proximity select tool */
-				wacom->tool[1] = (data[1] & 0x04) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
+				wacom->tool[1] = (data[1] & 0x08) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
 				if (wacom->tool[1] == BTN_TOOL_PEN)
 					wacom->id[0] = STYLUS_DEVICE_ID;
-			} else if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[1] & 0x04)) {
+			} else if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[1] & 0x08)) {
 				/*
 				 * was entered with stylus2 pressed 
 				 * report out proximity for previous tool 
 				*/
+				wacom_report_abs(wcombo, ABS_MISC, 0);
 				wacom_report_key(wcombo, wacom->tool[1], 0);
 				wacom_input_sync(wcombo);
 
@@ -583,24 +598,31 @@ int wacom_tpc_irq (struct wacom_wac *wacom, void *wcombo)
 				wacom->id[0] = STYLUS_DEVICE_ID;
 				return 0;
 			}				
+			if (wacom->tool[1] != BTN_TOOL_RUBBER) {
+				/* Unknown tool selected default to pen tool */
+				wacom->tool[1] = BTN_TOOL_PEN;
+				wacom->id[0] = STYLUS_DEVICE_ID;
+			}
 			wacom_report_key(wcombo, BTN_STYLUS, data[1] & 0x02);
 			wacom_report_key(wcombo, BTN_STYLUS2, data[1] & 0x10);
 			wacom_report_abs(wcombo, ABS_X, wacom_le16_to_cpu(&data[2]));
 			wacom_report_abs(wcombo, ABS_Y, wacom_le16_to_cpu(&data[4]));
-			wacom_report_abs(wcombo, ABS_PRESSURE, ((data[7] & 0x01) << 8) | data[6]);
-			wacom_report_key(wcombo, wacom->tool[1], prox);
-			wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
+			pressure = ((data[7] & 0x01) << 8) | data[6];
+			if (pressure < 0) 
+				pressure = 127 - pressure;
+			wacom_report_abs(wcombo, ABS_PRESSURE, pressure);
 		} else {
 			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
 			wacom_report_key(wcombo, BTN_STYLUS, 0);
 			wacom_report_key(wcombo, BTN_STYLUS2, 0);
-			wacom_report_key(wcombo, wacom->tool[1], 0);
-			wacom_report_abs(wcombo, ABS_MISC, 0);
 		}
+		wacom_report_key(wcombo, wacom->tool[1], prox);
+		wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
 		stylusInProx = prox;
 		wacom->tool[0] = prox;
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 int wacom_wac_irq(struct wacom_wac *wacom_wac, void *wcombo)
