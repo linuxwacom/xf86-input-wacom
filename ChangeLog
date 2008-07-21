@@ -1,5 +1,9 @@
+2008-07-21  Ping Cheng <pingc@wacom.com>
+	* Updated USB and serial Tablet PC with touch support
+	* Label 0.8.1-1
+
 2008-07-08  Ping Cheng <pingc@wacom.com>
-	* Added Usb Tablet PC with and without touch support
+	* Added USb Tablet PC with and without touch support
 	* Label 0.8.1
 
 2008-05-23  Ping Cheng <pingc@wacom.com>

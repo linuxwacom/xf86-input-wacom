@@ -1270,6 +1270,7 @@ static void serialParseP4Common(LocalDevicePtr local,
 		{
 			/* send a prox-out for old device */
 			WacomDeviceState out = { 0 };
+			out.device_type = ERASER_ID;
 			xf86WcmEvent(common, 0, &out);
 			ds->device_type = cur_type;
 		}

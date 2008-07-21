@@ -371,7 +371,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		break;
 	    case XWACOM_PARAM_CAPACITY:
-		if ((value < -1) || (value > 5)) 
+		if ((value < -1) || (value > 4)) 
 			return BadValue;
 		else if (common->wcmCapacity != value)
 		{

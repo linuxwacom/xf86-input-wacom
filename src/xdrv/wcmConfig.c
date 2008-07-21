@@ -205,8 +205,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmTouch = 0;              /* touch is disabled */
 	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
-	common->wcmCapacityDefault = 3;    /* default to -1 when capacity isn't supported */
-					   /* 3 when capacity is supported */
+	common->wcmCapacityDefault = 2;    /* default to -1 when capacity isn't supported */
+					   /* 2 when capacity is supported */
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max digitizer logical X value */
 	common->wcmMaxY = 0;               /* max digitizer logical Y value */
@@ -846,7 +846,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Touch capacity applies to the whole tablet */
 	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
-	if ( common->wcmCapacity )
+	if ( common->wcmCapacity >= 0 )
 		xf86Msg(X_CONFIG, "%s: Touch capacity is enabled \n", common->wcmDevice);
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */

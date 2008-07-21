@@ -293,22 +293,40 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
 	int n, cur_type, channel = 0;
+	static int touchInProx;
 
 	DBG(10, common->debugLevel, ErrorF("isdv4Parse \n"));
 
 	/* determine the type of message (touch or stylus)*/
-	if (data[0] & 0x18)
+	if (data[0] & 0x18) /* not a pen */
 	{
-		ds = &common->wcmChannel[0].work;
-		if ((common->wcmPktLength == 9 && ds->proximity ) || 
+ErrorF("isdv4Parse last-prox=%d, length=%d \n", last->proximity, common->wcmPktLength);
+		if ((common->wcmPktLength == 9 && last->proximity ) || 
 				!common->wcmTouch )
+		{
+			if ((data[0] & 0x10) && (!(data[0] & 0x01))) /* a touch out-prox data */
+				touchInProx = 0;
+			else
+				touchInProx = 1;
 			return 5; /* ignore touch event */
+		}
 		else
 		{
 			if (data[0] & 0x10) /* a touch data */
 			{
-				common->wcmPktLength = 5;
-				channel = 1;
+				if (!touchInProx)
+				{
+					common->wcmPktLength = 5;
+					channel = 1;
+				} 
+				else if (!(data[0] & 0x01)) /* touch out-prox */
+				{
+					touchInProx = 0;
+					common->wcmPktLength = 5;
+					channel = 1;
+				} 
+				else 
+					return 5;
 			}
 			else
 				return 5;
@@ -316,8 +334,21 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	}
 	else
 	{
-		common->wcmPktLength = 9;
-		channel = 0;
+ErrorF("---------isdv4Parse in stylus last-stylus-prox=%d, last-touch-prox=%d, length=%d oldid %x\n", last->proximity, common->wcmChannel[1].valid.state.proximity, common->wcmPktLength, DEVICE_ID(priv->flags&0xff));
+		/* touch was in control */
+		if (common->wcmChannel[1].valid.state.proximity)
+		{
+			/* let touch go */
+			WacomDeviceState out = { 0 };
+			out.device_type = TOUCH_ID;
+			xf86WcmEvent(common, 1, &out);
+			return 0;
+		}
+		else
+		{
+			common->wcmPktLength = 9;
+			channel = 0;
+		}
 	}
 
 	if (common->buffer + common->bufpos - data < common->wcmPktLength)

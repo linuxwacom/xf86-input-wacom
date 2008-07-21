@@ -48,7 +48,7 @@ set windowSize "540x300"
 
 set device ""
 set deviceIndex 0
-set showHelp 1
+set showHelp 0
 set modeToggleB 33
 set ignoreButton 34
 set doubleClickB 35
@@ -1486,50 +1486,44 @@ proc updateKeys {} {
 
 proc initialTouch {} {
     global device getDeviceModel currentW touchButton
-    global getOption getOptionDefault Option
+    global getOption getOptionDefault Option hasCapacity
 
+    set model $getDeviceModel($device,model)
     set Option(1) "Touch"
     set Option(1) "Capacity"
 
     getDeviceOptionProc $device 2
 
-    if { $getOption($device,Capacity) < 0 } {
-	checkbutton .panel.pressure -text "Disable Touch" -anchor w \
-	    -variable touchButton -state normal -command switchTouch
+    checkbutton $currentW.f.touch -text "Disable Touch" -anchor w \
+	-variable touchButton -state normal -command switchTouch
 
-	grid .panel.pressure -row 0 -column 2
-    } else {
-	checkbutton $currentW.f.touch -text "Disable Touch" -anchor w \
-	    -variable touchButton -state normal -command switchTouch
+    grid $currentW.f.touch -row 0 -column 2
 
-	grid $currentW.f.touch -row 0 -column 2
+    frame $currentW.f.group -bd 10 -bg beige -width 150 -height 150
+    label $currentW.f.groupL -text "Sensitivity: "
+    grid $currentW.f.groupL -row 2 -column 6
+    scale $currentW.f.group.scale -orient horizontal -length 100 \
+	-from 1 -to 5
+    grid $currentW.f.group.scale -row 2 -column 8
+    $currentW.f.group.scale set $getOption($device,Capacity)
+    label $currentW.f.group.l11 -text "1"
+    grid $currentW.f.group.l11 -row 1 -column 7
+    label $currentW.f.group.l21 -text "5"
+    grid $currentW.f.group.l21 -row 1 -column 9
+    label $currentW.f.group.l1 -text "Low"
+    grid $currentW.f.group.l1 -row 3 -column 7
+    label $currentW.f.group.l2 -text "High"
+    grid $currentW.f.group.l2 -row 3 -column 9
 
-	frame $currentW.f.group -bd 10 -bg beige -width 150 -height 150
-	label $currentW.f.groupL -text "Sensitivity: "
-	grid $currentW.f.groupL -row 2 -column 6
-	scale $currentW.f.group.scale -orient horizontal -length 100 \
-		-from 1 -to 5
-	grid $currentW.f.group.scale -row 2 -column 8
-	$currentW.f.group.scale set $getOption($device,Capacity)
-	label $currentW.f.group.l11 -text "1"
-	grid $currentW.f.group.l11 -row 1 -column 7
-	label $currentW.f.group.l21 -text "5"
-	grid $currentW.f.group.l21 -row 1 -column 9
-	label $currentW.f.group.l1 -text "Low"
-	grid $currentW.f.group.l1 -row 3 -column 7
-	label $currentW.f.group.l2 -text "High"
-	grid $currentW.f.group.l2 -row 3 -column 9
-
-	grid $currentW.f.touch -row 0 -column 2
-	grid $currentW.f.group -row 2 -column 5 
-	grid $currentW.f.groupL -row 2 -column 2
-    }
+    grid $currentW.f.touch -row 0 -column 2
+    grid $currentW.f.group -row 2 -column 5 
+    grid $currentW.f.groupL -row 2 -column 2
 }
 
 proc updateTouch {} {
     global currentW getOptionDefault device
 
-    set value [ $currentW.f.group.scale ]
+    set value [ $currentW.f.group.scale get ]
     if { $value != $getOption($device,touch) } {
 	updateXinitrc $device Capacity $value
 	set getOption($device,Capacity) $value
@@ -1563,6 +1557,7 @@ proc switchTouch {} {
 proc createPanel { pressure button mapping calibrate } {
     global bName device getOption getDeviceModel currentb 
     global wName startS Option hasCapacity touchButton
+    global hasCapacity
 
     frame .panel
     set bName(pressure) $pressure
@@ -1590,15 +1585,16 @@ proc createPanel { pressure button mapping calibrate } {
     }
     if { $pressure } {
 	if { ![string compare $getDeviceModel($device,type) "touch"] } {
-	    set Option(1) "Capacity"
-	    getDeviceOptionProc $device 1
-	    if { $getOption($device,Capacity) < 0 } {
-	    	initialTouch
-	    } else {
+	    set model $getDeviceModel($device,model)
+	    if { $hasCapacity($model) } {
 		set wName(1) "Touch"
 		button .panel.pressure -text $wName(1) \
 			-state normal -command "displaySubWindow \
 			updateTouch defaultTouch initialTouch 1 0 0"
+	    } else {
+		checkbutton .panel.pressure -text "Disable Touch" -anchor w \
+		    -variable touchButton -state normal -command switchTouch
+
 	    }
 	} else {
 	    set wName(1) "Feel"
