@@ -1,9 +1,16 @@
+2008-08-01  Ping Cheng <pingc@wacom.com>
+	* Added kernel 2.6.26 support
+	* Updated USB Tablet PC pressure data in kernel
+	* Merged patches from Danny Kukawka for wacomcpl and xsetwacom
+	* Merged patch 1998051 (Yuri Shchedov) for keystroke
+	* Label 0.8.1-2
+
 2008-07-21  Ping Cheng <pingc@wacom.com>
 	* Updated USB and serial Tablet PC with touch support
 	* Label 0.8.1-1
 
 2008-07-08  Ping Cheng <pingc@wacom.com>
-	* Added USb Tablet PC with and without touch support
+	* Merged USB Tablet PC patch 1949610 (Andrew Zappacky)
 	* Label 0.8.1
 
 2008-05-23  Ping Cheng <pingc@wacom.com>

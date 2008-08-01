@@ -4,7 +4,15 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
-AM_CFLAGS = -Wall -pedantic
+if WCM_ENV_XORGSDK
+WACOMCFG_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
+endif
+
+if WCM_ENV_XFREE86
+WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR)
+endif
+
+AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
 
 # These identify which programs, libraries, and headers could
 # potentially be built or installed depending on the results of
@@ -28,7 +36,7 @@ endif
 
 libwacomcfg_la_SOURCES = wacomcfg.c wacomcfg.h ../include/Xwacom.h
 libwacomcfg_la_LDFLAGS = -no-undefined -version-info @WCM_LIBWACOMCFG_VER@
-libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
+libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@ -lxf86config -lm
 
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h wcmAction.c wcmAction.h ../include/Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la

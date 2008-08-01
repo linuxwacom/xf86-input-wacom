@@ -1429,11 +1429,15 @@ proc initialKeys {} {
     set sk(10) "space"
     set sk(11) "NumLock"
     set sk(12) "BackSpace"
+    set sk(13) "NumpadPlus"
+    set sk(14) "NumpadMinus"
+    set sk(15) "NumpadDivide"
+    set sk(16) "NumpadMultiply"
     set skmenu [ tk_optionMenu $currentW.f.panel.skmenu sk0 "Special Keys 2" ]
     pack $currentW.f.panel.skmenu -side left
     grid $currentW.f.panel.skmenu -row 4 -column 2 
     $skmenu delete 0
-    for { set i 1 } { $i <= 12 } { incr i 1 } {
+    for { set i 1 } { $i <= 16 } { incr i 1 } {
 	$skmenu insert $i radiobutton -label $sk($i) \
 	-variable skmenvar -command \
         { $currentW.f.panelt.input insert end " "; \

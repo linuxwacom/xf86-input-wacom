@@ -272,8 +272,8 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 	} while (limit++ < 5);
 
 	for (i=0; i<hid_desc->wDescriptorLength; i++) {
-		if (report[i] == HID_USAGE_PAGE) {
-			switch (report[i+1]) {
+		if ((unsigned short)report[i] == HID_USAGE_PAGE) {
+			switch ((unsigned short)report[i+1]) {
 			    case HID_USAGE_PAGE_DIGITIZER:
 				usage = WCM_DIGITIZER;
 				i++;
@@ -281,6 +281,12 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			    case HID_USAGE_PAGE_DESKTOP:
 				usage = WCM_DESKTOP;
 				i++;
+				continue;
+			    case HID_USAGE_PAGE_VDEFINED:
+				if (!report[i+3]) {  /* capacity */
+					wacom_wac->features->pressure_max = (unsigned short)report[i+5];
+				}
+				i += 6;
 				continue;
 			}
 		}
@@ -295,9 +301,11 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 							(wacom_le16_to_cpu(&report[i+3]));
 						wacom_wac->features->x_max = (unsigned short)
 							(wacom_le16_to_cpu(&report[i+6]));
+						i += 7;
 					} else if (pen) {
 						wacom_wac->features->x_max = (unsigned short)
 							(wacom_le16_to_cpu(&report[i+3]));
+						i += 4;
 					}
 				} else if (usage == WCM_DIGITIZER) {
 					/* max pressure isn't reported 
@@ -305,8 +313,8 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 							(report[i+4] << 8  | report[i+3]);
 					*/
 					wacom_wac->features->pressure_max = 255;
+					i += 4;
 				}
-				i += 3;
 				break;
 			    case HID_USAGE_Y:
 				if (usage == WCM_DESKTOP) {
@@ -327,13 +335,8 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 		}
 
 		if ((unsigned short)report[i] == HID_COLLECTION) {
-			/* capacity */
-			if (finger && !report[i+1]) {
-				wacom_wac->features->pressure_max = (unsigned short)report[i+4];
-				i= hid_desc->wDescriptorLength;
-			} else {
-				finger = usage = 0;
-			}
+			/* reset UsagePage ans Finger */
+			finger = usage = 0;
 		}
 	}
 }
