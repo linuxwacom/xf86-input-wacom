@@ -1221,7 +1221,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 #ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
-	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && ds.device_type != PAD_ID )
+	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
+		ds.device_type != PAD_ID && ds.device_type != TOUCH_ID )
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 

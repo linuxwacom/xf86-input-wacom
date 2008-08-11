@@ -4,7 +4,15 @@ lib_LTLIBRARIES = libwacomcfg.la
 wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
-AM_CFLAGS = -Wall -pedantic
+if WCM_ENV_XORGSDK
+WACOMCFG_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
+endif
+
+if WCM_ENV_XFREE86
+WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR)
+endif
+
+AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
 
 # These identify which programs, libraries, and headers could
 # potentially be built or installed depending on the results of

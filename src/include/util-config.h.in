@@ -12,4 +12,7 @@
 /* IsXExtensionPointer is only defined in later X.org releases */
 #undef WCM_ISXEXTENSIONPOINTER
 
+/* xf86config lib is only included in some Xorg systems */
+#undef WCM_XF86CONFIG
+
 #endif /* _UTIL_CONFIG_H_ */

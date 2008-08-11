@@ -603,7 +603,7 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_abs(wcombo, ABS_Y, wacom_le16_to_cpu(&data[4]));
 			pressure = ((data[7] & 0x01) << 8) | data[6];
 			if (pressure < 0) 
-				pressure = 127 - pressure;
+				pressure = wacom->features->pressure_max + pressure + 1;
 			wacom_report_abs(wcombo, ABS_PRESSURE, pressure);
 		} else {
 			wacom_report_abs(wcombo, ABS_PRESSURE, 0);

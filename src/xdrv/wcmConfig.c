@@ -213,6 +213,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMaxTouchX = 1024;       /* max touch X value */
 	common->wcmMaxTouchY = 1024;       /* max touch Y value */
         common->wcmMaxZ = 0;               /* max Z value */
+        common->wcmMaxCapacity =0;         /* max capacity value */
  	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
 	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
@@ -377,7 +378,9 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
+#ifndef WCM_UNINIT_CALLED
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
+#endif
 
 	/* free pressure curve */
 	if (priv->pPressCurve)

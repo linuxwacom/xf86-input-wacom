@@ -20,6 +20,7 @@
 ** REVISION HISTORY
 **   2007-02-06 0.0.1-pc - Support keystrokes
 **   2008-01-17 0.0.2-pc - Add Display Toggle
+**   2008-08-01 0.0.3-pc - Merge patch 1998051 (Yuri Shchedov)
 */
 
 /* This pseudo-header file is included both from the X11 driver, and from
@@ -38,11 +39,11 @@
 
 static ACTIONCODE action_code [] =
 {
-	{ "CORE",       AC_CORE },
-	{ "KEY",        AC_KEY },
-	{ "BUTTON",     AC_BUTTON },
-	{ "MODETOGGLE", AC_MODETOGGLE },
-	{ "DBLCLICK",   AC_DBLCLICK },
+	{ "CORE",          AC_CORE },
+	{ "KEY",           AC_KEY },
+	{ "BUTTON",        AC_BUTTON },
+	{ "MODETOGGLE",    AC_MODETOGGLE },
+	{ "DBLCLICK",      AC_DBLCLICK },
 	{ "DISPLAYTOGGLE", AC_DISPLAYTOGGLE }
 };
 
@@ -59,46 +60,50 @@ static ACTIONCODE modifier_code [] =
 
 static ACTIONCODE specific_code [] =
 {
-	{ "F1",		XK_F1 },
-	{ "F2",		XK_F2 },
-	{ "F3",		XK_F3 },
-	{ "F4",		XK_F4 },
-	{ "F5",		XK_F5 },
-	{ "F6",		XK_F6 },
-	{ "F7",		XK_F7 },
-	{ "F8",		XK_F8 },
-	{ "F9",		XK_F9 },
-	{ "F10",	XK_F10 },
-	{ "F11",	XK_F11 },
-	{ "F12",	XK_F12 },
-	{ "Esc",	XK_Escape },
-	{ "Tab",	XK_Tab },
-	{ "CapsLock",	XK_Caps_Lock },
-	{ "Pause",	XK_Pause },
-	{ "ScrollLock",	XK_Scroll_Lock },
-	{ "SysReq",	XK_Sys_Req },
-	{ "Home",	XK_Home },
-	{ "PgUp",	XK_Page_Up },
-	{ "PageUp",	XK_Page_Up },
-	{ "PgDn",	XK_Page_Down },
-	{ "PageDown",	XK_Page_Down },
-	{ "End",	XK_End },
-	{ "Insert",	XK_Insert },
-	{ "Ins",	XK_Insert },
-	{ "Delete",	XK_Delete },
-	{ "Del",	XK_Delete },
-	{ "Left",	XK_Left },
-	{ "Up",		XK_Up },
-	{ "Down",	XK_Down },
-	{ "Right",	XK_Right },
-	{ "BackSpace",	XK_BackSpace },
-	{ "Enter",	XK_Return },
-	{ "NumLock",	XK_Num_Lock },
-	{ "space",	XK_space },
-	{ "quotedbl",   XK_quotedbl },
-	{ "backslash",  XK_backslash },
-	{ "break",	XK_Break },
-	{ "print",	XK_Print }
+	{ "F1",		    XK_F1 },
+	{ "F2",		    XK_F2 },
+	{ "F3",		    XK_F3 },
+	{ "F4",		    XK_F4 },
+	{ "F5",		    XK_F5 },
+	{ "F6",		    XK_F6 },
+	{ "F7",		    XK_F7 },
+	{ "F8",		    XK_F8 },
+	{ "F9",		    XK_F9 },
+	{ "F10",	    XK_F10 },
+	{ "F11",	    XK_F11 },
+	{ "F12",	    XK_F12 },
+	{ "Esc",	    XK_Escape },
+	{ "Tab",	    XK_Tab },
+	{ "CapsLock",	    XK_Caps_Lock },
+	{ "Pause",	    XK_Pause },
+	{ "ScrollLock",	    XK_Scroll_Lock },
+	{ "SysReq",	    XK_Sys_Req },
+	{ "Home",	    XK_KP_Home },
+	{ "PgUp",	    XK_KP_Page_Up },
+	{ "PageUp",	    XK_KP_Page_Up },
+	{ "PgDn",	    XK_KP_Page_Down },
+	{ "PageDown",	    XK_KP_Page_Down },
+	{ "End",	    XK_KP_End },
+	{ "Insert",	    XK_KP_Insert },
+	{ "Ins",	    XK_KP_Insert },
+	{ "Delete",	    XK_KP_Delete },
+	{ "Del",	    XK_KP_Delete },
+	{ "Left",	    XK_KP_Left },
+	{ "Up",		    XK_KP_Up },
+	{ "Down",	    XK_KP_Down },
+	{ "Right",	    XK_KP_Right },
+	{ "BackSpace",	    XK_BackSpace },
+	{ "Enter",	    XK_Return },
+	{ "NumLock",	    XK_Num_Lock },
+	{ "space",	    XK_space },
+	{ "quotedbl",       XK_quotedbl },
+	{ "backslash",      XK_backslash },
+	{ "NumpadPlus",	    XK_KP_Add },
+	{ "NumpadMinus",    XK_KP_Subtract},
+	{ "NumpadDivide",   XK_KP_Divide },
+	{ "NumpadMultiply", XK_KP_Multiply },
+	{ "break",	    XK_Break },
+	{ "print",	    XK_Print }
 };
 
 static ACTIONCODE key_code [] =
