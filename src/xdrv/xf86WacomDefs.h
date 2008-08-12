@@ -409,7 +409,7 @@ struct _WacomCommonRec
 	int wcmTouchDefault;	     /* default to disable when not supported */
 	int wcmCapacity;	     /* disable/enable capacity */
 	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported/disabled */
-				     /* 2 when capacity is supported */
+				     /* 3 when capacity is supported */
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */

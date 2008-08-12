@@ -427,6 +427,7 @@ static struct
 	{ 0x16, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 */ 
 	{ 0x17, 2540, 2540, &usbBambooFun  }, /* BambooFun 4x5 */
 	{ 0x18, 2540, 2540, &usbBambooFun  }, /* BambooFun 6x8 */
+	{ 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/ 
 	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
 	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
@@ -514,7 +515,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		if (common->tablet_id == 0x9A)
 		{
 			common->wcmCapacity = 0;
-			common->wcmCapacityDefault = 2; 
+			common->wcmCapacityDefault = 3; 
 		}
 		else
 		{

@@ -258,7 +258,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				common->wcmMaxCapacity = (int)data[7];
 
 				if (common->wcmMaxCapacity)
-					common->wcmCapacityDefault = 2;
+					common->wcmCapacityDefault = 3;
 				else
 				{
 					common->wcmCapacityDefault = -1;
