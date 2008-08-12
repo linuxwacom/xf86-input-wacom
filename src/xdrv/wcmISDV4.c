@@ -167,14 +167,17 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	/* set parameters */
 	common->wcmProtocolLevel = 4;
 	common->wcmPktLength = 9;       /* length of a packet 
-					 * device packets are 9 bytes long,
-					 * multitouch are only 5 */
+					 * device packets are 9 bytes
+					 * resistive touch is 5 bytes
+					 * capacitive touch is 7 bytes 
+					 */
 
 	/* digitizer X resolution in points/inch */
 	common->wcmResolX = 2540; 	
 	/* digitizer Y resolution in points/inch */
 	common->wcmResolY = 2540; 	
 
+	/* no touch */
 	common->tablet_id = 0x90;
 
 	/* tilt disabled */
@@ -223,24 +226,48 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		{
 			if (data[0] & 0x41)
 			{
-				switch (data[1])
+				/* tablet model */
+				switch (data[2] & 0x07)
 				{
-					case 0x00: /* touch is not supported */
-						common->wcmPktLength = 9;
+					case 0x00:
+						common->wcmPktLength = 5;
+						common->tablet_id = 0x93;
 					break;
-					case 0x0C:
-					    common->wcmMaxTouchX = 4096;
-					    common->wcmMaxTouchY = 4096;
+					case 0x01:
+						common->wcmPktLength = 7;
+						common->tablet_id = 0x9A;
 					break;
-					case 0x0E:
-					    common->wcmMaxTouchX = 16392;
-					    common->wcmMaxTouchY = 16392;
+					case 0x02:
+						common->wcmPktLength = 7;
+						common->tablet_id = 0x9F;
 					break;
+					case 0x03:
+						common->wcmPktLength = 5;
+						common->tablet_id = 0x93;
+					break;
+					case 0x04:
+						common->wcmPktLength = 7;
+						common->tablet_id = 0x9F;
+					break;
+				}
+
+				/* touch logical size */
+				common->wcmMaxTouchX = common->wcmMaxTouchY = (int)data[1];
+
+				/* Max capacity */
+				common->wcmMaxCapacity = (int)data[7];
+
+				if (common->wcmMaxCapacity)
+					common->wcmCapacityDefault = 3;
+				else
+				{
+					common->wcmCapacityDefault = -1;
+					common->wcmCapacity = -1;
 				}
 			}
 		}
 
-		if (common->wcmMaxX && common->wcmMaxY)
+		if (common->wcmMaxX && common->wcmMaxY && common->wcmMaxTouchX)
 		{
 			char *s;
 
@@ -249,7 +276,6 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				common->wcmResolX / common->wcmMaxX;
 			common->wcmTouchResolY = common->wcmMaxTouchY * 
 				common->wcmResolY / common->wcmMaxY;
-			common->tablet_id = 0x93;
 
 			s = xf86FindOptionValue(local->options, "Touch");
 			if (!s)  /* touch option wasn't set in xorg.conf */
@@ -286,6 +312,17 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	return Success;
 }
 
+void setPktLenght(LocalDevicePtr local)
+{
+	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
+
+	if (common->wcmMaxCapacity)
+	common->wcmPktLength = 7;
+	else
+	common->wcmPktLength = 5;
+	return;
+}
+
 static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -300,7 +337,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	/* determine the type of message (touch or stylus)*/
 	if (data[0] & 0x18) /* not a pen */
 	{
-ErrorF("isdv4Parse last-prox=%d, length=%d \n", last->proximity, common->wcmPktLength);
 		if ((common->wcmPktLength == 9 && last->proximity ) || 
 				!common->wcmTouch )
 		{
@@ -308,7 +344,10 @@ ErrorF("isdv4Parse last-prox=%d, length=%d \n", last->proximity, common->wcmPktL
 				touchInProx = 0;
 			else
 				touchInProx = 1;
-			return 5; /* ignore touch event */
+
+			/* ignore touch event */
+			setPktLenght(local);
+			return common->wcmPktLength;
 		}
 		else
 		{
@@ -316,25 +355,32 @@ ErrorF("isdv4Parse last-prox=%d, length=%d \n", last->proximity, common->wcmPktL
 			{
 				if (!touchInProx)
 				{
-					common->wcmPktLength = 5;
+					setPktLenght(local);
 					channel = 1;
 				} 
 				else if (!(data[0] & 0x01)) /* touch out-prox */
 				{
 					touchInProx = 0;
-					common->wcmPktLength = 5;
+					setPktLenght(local);
 					channel = 1;
 				} 
-				else 
-					return 5;
+				else
+				{
+					setPktLenght(local);
+					/* ignore touch event */
+					return common->wcmPktLength;
+				}
 			}
 			else
-				return 5;
+			{
+				setPktLenght(local);
+				/* ignore touch event */
+				return common->wcmPktLength;
+			}
 		}
 	}
 	else
 	{
-ErrorF("---------isdv4Parse in stylus last-stylus-prox=%d, last-touch-prox=%d, length=%d oldid %x\n", last->proximity, common->wcmChannel[1].valid.state.proximity, common->wcmPktLength, DEVICE_ID(priv->flags&0xff));
 		/* touch was in control */
 		if (common->wcmChannel[1].valid.state.proximity)
 		{

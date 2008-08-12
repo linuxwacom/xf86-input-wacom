@@ -359,11 +359,12 @@ struct _WacomCommonRec
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 
 	/* These values are in tablet coordinates */
-	int wcmMaxX;        /* tablet max X value */
-	int wcmMaxY;        /* tablet max Y value */
+	int wcmMaxX;                 /* tablet max X value */
+	int wcmMaxY;                 /* tablet max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
 	int wcmMaxTouchX;            /* max touch X value */
 	int wcmMaxTouchY;            /* max touch Y value */
+	int wcmMaxCapacity;	     /* max capacity value */
 	int wcmMaxDist;              /* tablet max distance value */
 	int wcmTouchResolX;          /* touch X resolution in points/inch */
 	int wcmTouchResolY;          /* touch Y resolution in points/inch */
@@ -406,8 +407,8 @@ struct _WacomCommonRec
 	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
 	int wcmTouchDefault;	     /* default to disable when not supported */
-	int wcmCapacity;	     /* Capacity is disabled */
-	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported */
+	int wcmCapacity;	     /* disable/enable capacity */
+	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported/disabled */
 				     /* 3 when capacity is supported */
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */

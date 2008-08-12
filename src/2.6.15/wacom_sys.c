@@ -181,7 +181,7 @@ static void wacom_close(struct input_dev *dev)
 
 void input_dev_mo(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_1) | BIT(BTN_5);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_1) | BIT(BTN_5);
 	input_set_abs_params(input_dev, ABS_WHEEL, 0, 71, 0, 0);
 }
 
@@ -190,14 +190,14 @@ void input_dev_g4(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->evbit[0] |= BIT(EV_MSC);
 	input_dev->mscbit[0] |= BIT(MSC_SERIAL);
 	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_FINGER);
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_0) | BIT(BTN_4);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_0) | BIT(BTN_4);
 }
 
 void input_dev_g(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
 	input_dev->evbit[0] |= BIT(EV_REL);
 	input_dev->relbit[0] |= BIT(REL_WHEEL);
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE);
+	input_dev->keybit[LONG(BTN_MOUSE)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE);
 	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER) | BIT(BTN_TOOL_MOUSE) | BIT(BTN_STYLUS2);
 	input_set_abs_params(input_dev, ABS_DISTANCE, 0, wacom_wac->features->distance_max, 0, 0);
 }
@@ -205,20 +205,20 @@ void input_dev_g(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 void input_dev_i3s(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
 	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_FINGER);
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3);
 	input_set_abs_params(input_dev, ABS_RX, 0, 4096, 0, 0);
 	input_set_abs_params(input_dev, ABS_Z, -900, 899, 0, 0);
 }
 
 void input_dev_i3(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6) | BIT(BTN_7);
 	input_set_abs_params(input_dev, ABS_RY, 0, 4096, 0, 0);
 }
 
 void input_dev_bee(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_8) | BIT(BTN_9);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_8) | BIT(BTN_9);
 }
 
 void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
@@ -226,7 +226,7 @@ void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->evbit[0] |= BIT(EV_MSC) | BIT(EV_REL);
 	input_dev->mscbit[0] |= BIT(MSC_SERIAL);
 	input_dev->relbit[0] |= BIT(REL_WHEEL);
-	input_dev->keybit[LONG(BTN_LEFT)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE) | BIT(BTN_SIDE) | BIT(BTN_EXTRA);
+	input_dev->keybit[LONG(BTN_MOUSE)] |= BIT(BTN_LEFT) | BIT(BTN_RIGHT) | BIT(BTN_MIDDLE) | BIT(BTN_SIDE) | BIT(BTN_EXTRA);
 	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_RUBBER) | BIT(BTN_TOOL_MOUSE)	| BIT(BTN_TOOL_BRUSH)
 		| BIT(BTN_TOOL_PENCIL) | BIT(BTN_TOOL_AIRBRUSH) | BIT(BTN_TOOL_LENS) | BIT(BTN_STYLUS2);
 	input_set_abs_params(input_dev, ABS_DISTANCE, 0, wacom_wac->features->distance_max, 0, 0);

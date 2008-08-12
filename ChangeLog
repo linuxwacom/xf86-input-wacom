@@ -1,3 +1,10 @@
+2008-08-11  Ping Cheng <pingc@wacom.com>
+	* Merged patch 1994583 (Craig Wiegert) for wacom_sys.c
+	* Merged patch 2035856 (Trifon Trifonov) for Uninit on Xorg 7.3 and later
+	* Modified configure.in for Danny's patch 
+	* Added serial Tablet PC with capacitive touch
+	* Label 0.8.1-3
+
 2008-08-01  Ping Cheng <pingc@wacom.com>
 	* Added kernel 2.6.26 support
 	* Updated USB Tablet PC pressure data in kernel

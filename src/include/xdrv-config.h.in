@@ -24,6 +24,9 @@
 /* Some X.org versions require that the events are scaled to screen size */
 #undef WCM_XORG_TABLET_SCALING
 
+/* Xserver versions 1.4 and later call Uninit before closing a device. */
+#undef WCM_XORG_XSERVER_1_4
+
 /* The X-driver can send key events for a button */
 #undef WCM_KEY_SENDING_SUPPORT
 

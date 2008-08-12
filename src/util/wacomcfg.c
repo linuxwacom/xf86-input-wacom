@@ -46,13 +46,15 @@
 #include <memory.h>
 #include <assert.h>
 
-#include "xf86Parser.h"
+#if WCM_XF86CONFIG
+	#include "xf86Parser.h"
 
-WACOMDEVICETYPE checkIfWacomDevice (XF86ConfigPtr, const char*);
-WACOMDEVICETYPE mapStringToType (const char*);
-XF86ConfigPtr readConfig (char *);
-void VErrorF(const char*, va_list);
-void ErrorF (const char*, ...);
+	WACOMDEVICETYPE checkIfWacomDevice (XF86ConfigPtr, const char*);
+	WACOMDEVICETYPE mapStringToType (const char*);
+	XF86ConfigPtr readConfig (char *);
+	void VErrorF(const char*, va_list);
+	void ErrorF (const char*, ...);
+#endif
 
 /*****************************************************************************
 ** Internal structures
@@ -131,7 +133,9 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	unsigned char* pReq;
 	WACOMDEVICEINFO* pInfo;
 	XDeviceInfo* info;
+#if WCM_XF86CONFIG
 	XF86ConfigPtr conf;
+#endif
 	char devName[64];
 
 	if (!hConfig || !ppInfo || !puCount)
@@ -141,8 +145,10 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	if (!hConfig->pDevs && CfgGetDevs(hConfig))
 		return -1;
 
+#if WCM_XF86CONFIG
 	/* read the config in for wacom devices which don'T use the commnon identifier */
 	conf = readConfig ("/etc/X11/xorg.conf");
+#endif
 
 	/* estimate size of memory needed to hold structures */
 	nSize = nCount = 0;
@@ -194,12 +200,28 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 			devName[j] = tolower(pInfo->pszName[j]);
 		devName[j] = '\0';
 
+#if WCM_XF86CONFIG
 		pInfo->type = mapStringToType (devName);
 
 		if ( pInfo->type == WACOMDEVICETYPE_UNKNOWN ) 
 			pInfo->type = checkIfWacomDevice (conf, pInfo->pszName);
+		else
+#else
+		if (strstr(devName,"cursor") != NULL)
+			pInfo->type = WACOMDEVICETYPE_CURSOR;
+		else if (strstr(devName,"stylus") != NULL)
+			pInfo->type = WACOMDEVICETYPE_STYLUS;
+		else if (strstr(devName,"eraser") != NULL)
+			pInfo->type = WACOMDEVICETYPE_ERASER;
+		else if (strstr(devName,"touch") != NULL)
+ 			pInfo->type = WACOMDEVICETYPE_TOUCH;
+		else if (strstr(devName,"pad") != NULL)
+			pInfo->type = WACOMDEVICETYPE_PAD;
+		else
+			pInfo->type = WACOMDEVICETYPE_UNKNOWN;
 
 		if ( pInfo->type != WACOMDEVICETYPE_UNKNOWN )
+#endif
 		{
 			++pInfo;
 			++nCount;
@@ -214,6 +236,7 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 	return 0;
 }
 
+#if WCM_XF86CONFIG
 WACOMDEVICETYPE checkIfWacomDevice (XF86ConfigPtr conf, const char* pszDeviceName) {
 	XF86ConfInputPtr ip;
 
@@ -267,6 +290,7 @@ WACOMDEVICETYPE mapStringToType (const char* name)
 		return WACOMDEVICETYPE_UNKNOWN;
 	
 }
+#endif
 
 WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	const char* pszDeviceName)
@@ -454,6 +478,7 @@ void WacomConfigFree(void* pvData)
 	free(pvData);
 }
 
+#if WCM_XF86CONFIG
 XF86ConfigPtr readConfig (char *filename) 
 {
 	XF86ConfigPtr conf = 0;
@@ -491,3 +516,4 @@ void ErrorF(const char *f, ...)
 	vfprintf(stderr, f, args);
 	va_end(args);
 }
+#endif

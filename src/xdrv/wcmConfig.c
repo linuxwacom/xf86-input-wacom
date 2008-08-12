@@ -205,14 +205,15 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmTouch = 0;              /* touch is disabled */
 	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
-	common->wcmCapacityDefault = 2;    /* default to -1 when capacity isn't supported */
-					   /* 2 when capacity is supported */
+	common->wcmCapacityDefault = 3;    /* default to -1 when capacity isn't supported */
+					   /* 3 when capacity is supported */
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max digitizer logical X value */
 	common->wcmMaxY = 0;               /* max digitizer logical Y value */
 	common->wcmMaxTouchX = 1024;       /* max touch X value */
 	common->wcmMaxTouchY = 1024;       /* max touch Y value */
         common->wcmMaxZ = 0;               /* max Z value */
+        common->wcmMaxCapacity = 0;        /* max capacity value */
  	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
 	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
@@ -377,7 +378,9 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
+#ifndef WCM_UNINIT_CALLED
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
+#endif
 
 	/* free pressure curve */
 	if (priv->pPressCurve)
