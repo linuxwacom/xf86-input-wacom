@@ -205,7 +205,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmTouch = 0;              /* touch is disabled */
 	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
-	common->wcmCapacityDefault = 3;    /* default to -1 when capacity isn't supported */
+	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
 					   /* 3 when capacity is supported */
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max digitizer logical X value */

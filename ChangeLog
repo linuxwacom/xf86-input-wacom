@@ -1,3 +1,11 @@
+2008-09-01  Ping Cheng <pingc@wacom.com>
+	* Support Xorg 7.3 or newer in wacomcpl
+	* Modified wacom_sys.c according to Bartosz Fabianowski's suggestion
+	* Added a link to Bartosz Fabianowski's FreeBSD Wacom driver download page
+	* Merged bug 2074297 fix (Mike Auty)
+	* Fixed a few minor bugs
+	* Label 0.8.1-4
+
 2008-08-11  Ping Cheng <pingc@wacom.com>
 	* Merged patch 1994583 (Craig Wiegert) for wacom_sys.c
 	* Merged patch 2035856 (Trifon Trifonov) for Uninit on Xorg 7.3 and later
