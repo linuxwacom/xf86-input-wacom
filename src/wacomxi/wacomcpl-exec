@@ -54,7 +54,7 @@ set ignoreButton 34
 set doubleClickB 35
 set displayToggleB 36
 set keystrokeB 37
-
+set maxNumTablets 199
 
 proc updateCurrentScreenInfo {} {
     global device numScreens currentScreen 
@@ -138,8 +138,18 @@ proc calibrationSequence {which xDev yDev} {
     global swapThresh screenWidth screenHeight
     global getDeviceModel screenXBottom screenYBottom
 
+    set scaling [exec xsetwacom get $device xscaling]
+    set bottomX [exec xsetwacom getdefault $device BottomX]
+    set bottomY [exec xsetwacom getdefault $device BottomY]
+    if { $scaling == 1 } {
+	set xNewDev [expr (($xDev - $screenX_org) * $bottomX)]
+	set xDev [expr ($xNewDev / ($screenXBottom - $screenX_org))]
+	set yNewDev [expr (($yDev - $screenY_org) * $bottomY)]
+	set yDev [expr ($yNewDev / ($screenYBottom - $screenY_org))]
+    }
     set calibResults(xDev,$which) $xDev
     set calibResults(yDev,$which) $yDev
+
     if { $which == 0 } {
 	.topleft.m configure -background "#505075"
 	wacomxi::bindevent .topleft.m $device <ButtonRelease> ""
@@ -1488,19 +1498,33 @@ proc updateKeys {} {
     }
 }
 
+proc touchState { theCButton } {
+    global device touchButton getDeviceModel
+
+    set touchButton 0
+    if { $touchButton == [exec xsetwacom get $device touch]  } {
+	  set touchButton 1
+    }
+    checkbutton $theCButton -text "Disable Touch" -anchor w \
+	-variable touchButton -state normal -command switchTouch
+
+    if { $touchButton == 0 } {
+	.panel.calibrate configure -state normal
+    } else {
+	.panel.calibrate configure -state disable
+    }
+}
+
 proc initialTouch {} {
-    global device getDeviceModel currentW touchButton
+    global device getDeviceModel currentW 
     global getOption getOptionDefault Option hasCapacity
 
     set model $getDeviceModel($device,model)
-    set Option(1) "Touch"
     set Option(1) "Capacity"
 
-    getDeviceOptionProc $device 2
+    getDeviceOptionProc $device 1
 
-    checkbutton $currentW.f.touch -text "Disable Touch" -anchor w \
-	-variable touchButton -state normal -command switchTouch
-
+    touchState $currentW.f.touch
     grid $currentW.f.touch -row 0 -column 2
 
     frame $currentW.f.group -bd 10 -bg beige -width 150 -height 150
@@ -1525,10 +1549,10 @@ proc initialTouch {} {
 }
 
 proc updateTouch {} {
-    global currentW getOptionDefault device
+    global currentW getOption device
 
     set value [ $currentW.f.group.scale get ]
-    if { $value != $getOption($device,touch) } {
+    if { $value != $getOption($device,Capacity) } {
 	updateXinitrc $device Capacity $value
 	set getOption($device,Capacity) $value
     }
@@ -1544,18 +1568,19 @@ proc defaultTouch {} {
 }
 
 proc switchTouch {} {
-    global wName device touchButton
+    global device touchButton
 
-    if { $touchButton != [ exec xsetwacom get $device touch ] } {
-	exec xsetwacom set $device touch $touchButton
-	updateXinitrc $device touch $touchButton
-    }
-
-    if { $touchButton == 0 } {
-	.panel.calibrate configure -state normal
-    } else {
-	.panel.calibrate configure -state disabled
-    }
+    if { $touchButton == [ exec xsetwacom get $device touch ] } {
+	if { $touchButton == 0 } {
+	    .panel.calibrate configure -state normal
+	    exec xsetwacom set $device touch 1
+	    updateXinitrc $device touch 1
+	} else {
+	    .panel.calibrate configure -state disabled
+	    exec xsetwacom set $device touch 0
+	    updateXinitrc $device touch 0
+	}
+     }
 }
 
 proc createPanel { pressure button mapping calibrate } {
@@ -1596,9 +1621,7 @@ proc createPanel { pressure button mapping calibrate } {
 			-state normal -command "displaySubWindow \
 			updateTouch defaultTouch initialTouch 1 0 0"
 	    } else {
-		checkbutton .panel.pressure -text "Disable Touch" -anchor w \
-		    -variable touchButton -state normal -command switchTouch
-
+		touchState .panel.pressure
 	    }
 	} else {
 	    set wName(1) "Feel"
@@ -1648,8 +1671,9 @@ proc createPanel { pressure button mapping calibrate } {
 proc updateModelInfo { } {
     global isLCD numPadButtons numPadRings hasPad hasTouch
     global numPadStrips numPadAbsW numPadRelW hasCapacity
+    global maxNumTablets
 
-    for { set i 0 } { $i <= 198 } { incr i 1 } {
+    for { set i 0 } { $i <= $maxNumTablets } { incr i 1 } {
 	set isLCD($i) 0 
 	set numPadButtons($i) 0
 	set numPadRings($i) 0
@@ -1673,7 +1697,7 @@ proc updateModelInfo { } {
     set hasCapacity(154) 1
 
     #Cintiq
-    for { set i 192 } { $i <= 198 } { incr i 1 } {
+    for { set i 192 } { $i <= 199 } { incr i 1 } {
 	set isLCD($i) 1 
     }
 

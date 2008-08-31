@@ -126,7 +126,7 @@ GetDisplayInfo(Display	*dpy)
 		device->xdev = NULL;
 		device->id = device_list[i].id;
 		device->name = Tk_GetUid(device_list[i].name);
-		device->core = ((device_list[i].use == IsXExtensionDevice) ? 0 :
+		device->core = ((device_list[i].use >= IsXExtensionDevice) ? 0 :
 		((device_list[i].use == IsXPointer) ? CORE_POINTER : CORE_KEYBOARD));
 		device->x_index = 0;
 		device->y_index = 1;

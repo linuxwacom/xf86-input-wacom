@@ -50,6 +50,7 @@ struct hid_descriptor
 /* defines to get/set USB message */
 #define USB_REQ_GET_REPORT	0x01
 #define USB_REQ_SET_REPORT	0x09
+#define WAC_HID_FEATURE_REPORT	0x03
 
 static int usb_get_report(struct usb_interface *intf, unsigned char type,
 				unsigned char id, void *buf, int size)
@@ -425,12 +426,12 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	}
 
 	input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
-	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_PEN) |
-		BIT_MASK(BTN_TOUCH) | BIT_MASK(BTN_STYLUS);
+	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_PEN) | BIT_MASK(BTN_STYLUS);
 	input_set_abs_params(input_dev, ABS_X, 0, wacom_wac->features->x_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, wacom_wac->features->y_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, wacom_wac->features->pressure_max, 0, 0);
 	if (wacom_wac->features->type == TABLETPC) {
+		input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOUCH);
 		input_set_abs_params(input_dev, ABS_RX, 0, wacom_wac->features->touch_x_max, 4, 0);
 		input_set_abs_params(input_dev, ABS_RY, 0, wacom_wac->features->touch_y_max, 4, 0);
 	}
@@ -449,21 +450,18 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (error)
 		goto fail3;
 
-	/* TabletPC second bit 0 is stylus mode*/
-	if (wacom_wac->features->type == TABLETPC)
-		mode = 0;
-
-	/* Ask the tablet to report tablet data. Repeat until it succeeds */
-	do {
-		rep_data[0] = 2;
-		rep_data[1] = mode;
-		error = 0;
-		/* TabletPC doesn't need set report call */
-		if (wacom_wac->features->type != TABLETPC)
-			error = usb_set_report(intf, USB_DT_STRING, 2, rep_data, 2);
-		if(error >= 0)
-			error = usb_get_report(intf, USB_DT_STRING, 2, rep_data, 2);
-	} while (((error <= 0) || (rep_data[1] != mode)) && limit++ < 5);
+	/* Ask the tablet to report tablet data if it is not a Tablet PC. 
+	 * Repeat until it succeeds 
+	 */
+	if (wacom_wac->features->type != TABLETPC) {
+		do {
+			rep_data[0] = 2;
+			rep_data[1] = mode;
+			error = error = usb_set_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
+			if(error >= 0)
+				error = usb_get_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
+		} while (((error <= 0) || (rep_data[1] != mode)) && limit++ < 5);
+	}
 
 	usb_set_intfdata(intf, wacom);
 	kfree(report);

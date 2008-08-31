@@ -832,6 +832,12 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->screen_no;
 	    case XWACOM_PARAM_NUMSCREEN:
 		return priv->numScreen;
+	    case XWACOM_PARAM_XSCALING:
+#ifdef WCM_XORG_TABLET_SCALING
+		return 1;
+#else
+		return 0;
+#endif
 	}
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmGetParam invalid param %d\n", param));
 	return -1;

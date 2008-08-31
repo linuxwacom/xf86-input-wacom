@@ -449,6 +449,7 @@ static struct
 	{ 0x39,  508,  508, &usbCintiq     }, /* PL710 */ 
 	{ 0xC0,  508,  508, &usbCintiq     }, /* DTF720 */
 	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */ 
+	{ 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
 
 	{ 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
 	{ 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */
@@ -521,6 +522,19 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		{
 			common->wcmCapacity = -1;
 			common->wcmCapacityDefault = -1; 
+		}
+
+		if (common->tablet_id == 0x9A || common->tablet_id == 0x93)
+		{
+			char *s = xf86FindOptionValue(local->options, "Touch");
+			if ( !s || (strstr(s, "on")) )  /* touch option is on */
+			{
+				common->wcmTouch = 1;
+			}
+
+			/* TouchDefault was off for all devices */
+			/* defaults to enable when touch is supported */
+			common->wcmTouchDefault = 1;
 		}
 	}
 
@@ -1044,6 +1058,10 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 		}
 	} /* next event */
+
+	/* don't send touch event when touch isn't enabled */
+	if (ds->device_type == TOUCH_ID && !common->wcmTouch)
+		return;
 
 	/* it is an out-prox when id or/and serial number is zero for kernel 2.4 */
 	if ((!ds->device_id || !ds->serial_num) && !USE_SYN_REPORTS(common))

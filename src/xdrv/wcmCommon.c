@@ -783,12 +783,6 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int buttons = ds->buttons;
-	int naxes = priv->naxes;
-
-	/* don't emit proximity events if device does not support proximity */
-	if ((local->dev->proximity && !priv->oldProximity))
-		xf86PostProximityEvent(local->dev, 1, 0, naxes,
-			x, y, z, v3, v4, v5);
 
 	if (priv->oldButtons != buttons)
 		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
@@ -972,7 +966,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* The +-0.4 is to increase the sensitivity in relative mode.
 			 * Must be sensitive to which way the tool is moved or one way
 			 * will get a severe penalty for small movements. */
-			if(is_absolute) {
+ 			if(is_absolute) {
 				x -= priv->topX;
 				y -= priv->topY;
 			}
@@ -985,7 +979,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				x += priv->screenTopX[priv->currentScreen];
 				y += priv->screenTopY[priv->currentScreen];
 			}
+			priv->currentSX = x;
+			priv->currentSY = y;
 #endif
+			/* don't emit proximity events if device does not support proximity */
+			if ((local->dev->proximity && !priv->oldProximity))
+				xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+
 			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 				xf86PostMotionEvent(local->dev, is_absolute,
@@ -998,6 +998,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		else
 		{
 			buttons = 0;
+
+#ifdef WCM_XORG_TABLET_SCALING
+			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
+			 * for coordinate conversion at the moment */
+			x = priv->currentSX;
+			y = priv->currentSY;
+#endif
 
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
@@ -1016,6 +1023,11 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			y = 0;
 			if ( v3 || v4 || v5 )
 				xf86WcmSetScreen(local, &x, &y);
+
+			/* don't emit proximity events if device does not support proximity */
+			if ((local->dev->proximity && !priv->oldProximity))
+			xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 			is_proximity = 1;
 			/* xf86PostMotionEvent is only needed to post the valuators

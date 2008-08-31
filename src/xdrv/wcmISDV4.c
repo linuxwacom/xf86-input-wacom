@@ -224,27 +224,20 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		/* Touch might be supported. Send a touch query command */
 		if (isdv4Query(local, WC_ISDV4_TOUCH_QUERY, data) == Success)
 		{
+			/* default to 0x93 (resisitive touch) */
+			common->wcmPktLength = 5;
+			common->tablet_id = 0x93;
+
 			if (data[0] & 0x41)
 			{
 				/* tablet model */
 				switch (data[2] & 0x07)
 				{
-					case 0x00:
-						common->wcmPktLength = 5;
-						common->tablet_id = 0x93;
-					break;
 					case 0x01:
 						common->wcmPktLength = 7;
 						common->tablet_id = 0x9A;
 					break;
 					case 0x02:
-						common->wcmPktLength = 7;
-						common->tablet_id = 0x9F;
-					break;
-					case 0x03:
-						common->wcmPktLength = 5;
-						common->tablet_id = 0x93;
-					break;
 					case 0x04:
 						common->wcmPktLength = 7;
 						common->tablet_id = 0x9F;
@@ -269,16 +262,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 		if (common->wcmMaxX && common->wcmMaxY && common->wcmMaxTouchX)
 		{
-			char *s;
-
-			/* Touch resolution */
-			common->wcmTouchResolX = common->wcmMaxTouchX * 
-				common->wcmResolX / common->wcmMaxX;
-			common->wcmTouchResolY = common->wcmMaxTouchY * 
-				common->wcmResolY / common->wcmMaxY;
-
-			s = xf86FindOptionValue(local->options, "Touch");
-			if (!s)  /* touch option wasn't set in xorg.conf */
+			char *s = xf86FindOptionValue(local->options, "Touch");
+			if ( !s || (strstr(s, "on")) )  /* touch option is on */
 			{
 				common->wcmTouch = 1;
 			}
@@ -286,6 +271,12 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			/* TouchDefault was off for all devices */
 			/* defaults to enable when touch is supported */
 			common->wcmTouchDefault = 1;
+
+			/* Touch resolution */
+			common->wcmTouchResolX = common->wcmMaxTouchX * 
+				common->wcmResolX / common->wcmMaxX;
+			common->wcmTouchResolY = common->wcmMaxTouchY * 
+				common->wcmResolY / common->wcmMaxY;
 		}
 	}
 

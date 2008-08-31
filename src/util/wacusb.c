@@ -222,6 +222,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "MODEL_DTU710",  "Wacom PL710",    9, 0x39 },
 		{ "MODEL_DTF720",  "Wacom DTF720",  10, 0xC0 },
 		{ "MODEL_DTF521",  "Wacom DTF521",  11, 0xC4 },
+		{ "MODEL_DTU1931", "Wacom DTU1931", 12, 0xC7 },
 		{ NULL }
 	};
 
@@ -257,9 +258,10 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 
 	static USBSUBTYPE xBamboo[] =
 	{
-		{ "MTE_450", "Wacom Bamboo", 1, 0x65 },
-		{ "CTE_450", "Wacom BambooFun 4x5", 2, 0x17 },
-		{ "CTE_650", "Wacom BambooFun 6x8", 3, 0x18 },
+		{ "MTE_450", "Wacom Bamboo",         1, 0x65 },
+		{ "CTE_450", "Wacom BambooFun 4x5",  2, 0x17 },
+		{ "CTE_650", "Wacom BambooFun 6x8",  3, 0x18 },
+		{ "CTE_631", "Wacom Bamboo1 Medium", 4, 0x19 },
 		{ NULL }
 	};
 

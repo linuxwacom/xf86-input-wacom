@@ -72,9 +72,10 @@
  * 2008-05-14 47-pc0.8.0-2 - Update rotation routine
  * 2008-07-09 47-pc0.8.1   - new release
  * 2008-07-17 47-pc0.8.1-1 - Support USB TabletPC
+ * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
  */
 
-static const char identification[] = "$Identification: 47-0.8.1-1 $";
+static const char identification[] = "$Identification: 47-0.8.1-4 $";
 
 /****************************************************************************/
 

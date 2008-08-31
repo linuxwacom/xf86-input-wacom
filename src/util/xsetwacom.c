@@ -33,10 +33,11 @@
 **   2007-07-24 0.1.4 - PC - Support Screen_No option
 **   2008-01-17 0.1.5 - PC - Add DISPLAYTOGGLE command
 **   2008-03-24 0.1.6 - PC - Added Touch for serial Tablet PC (ISDv4)
+**   2008-08-27 0.1.7 - PC - Added get XORGVER to xsetwacom
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.6"
+#define XSETWACOM_VERSION "0.1.7"
 
 #include "../include/util-config.h"
 
@@ -606,6 +607,10 @@ static PARAMINFO gParamInfo[] =
 	{ "NumScreen", 
 		"Returns number of screens configured for the desktop. ",
 		XWACOM_PARAM_NUMSCREEN, VALUE_REQUIRED },
+
+	{ "XScaling", 
+		"Returns the status of XSCALING is set or not. ",
+		XWACOM_PARAM_XSCALING, VALUE_REQUIRED },
 
 	{ NULL }
 };

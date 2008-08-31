@@ -768,7 +768,7 @@ if test "$enable_libwacomcfg" != no; then
 		WCM_LIBS="$WCM_LIBS libwacomcfg.la"
 		if test "$WCM_ENV_XF86CONFIG" = yes; then
 			AC_DEFINE(WCM_XF86CONFIG,1,[libxf86config is included])
-			WCM_LIBWACOMCFG_LIBS="-L$WCM_LIBWACOMCFG_LIBS -lxf86config -lm"
+			WCM_LIBWACOMCFG_LIBS="$WCM_LIBWACOMCFG_LIBS -lxf86config -lm"
 		else
 			AC_DEFINE(WCM_XF86CONFIG,0,[libxf86config isn't included])
 		fi

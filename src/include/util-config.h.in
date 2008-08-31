@@ -9,6 +9,9 @@
 /* Enable the Linux Input subsystem */
 #undef WCM_ENABLE_LINUXINPUT
 
+/* Some X.org versions require that the events are scaled to screen size */
+#undef WCM_XORG_TABLET_SCALING
+
 /* IsXExtensionPointer is only defined in later X.org releases */
 #undef WCM_ISXEXTENSIONPOINTER
 
