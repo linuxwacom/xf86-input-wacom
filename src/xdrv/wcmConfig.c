@@ -378,7 +378,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
-#ifndef WCM_UNINIT_CALLED
+#ifndef WCM_XORG_XSERVER_1_4
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
 #endif
 

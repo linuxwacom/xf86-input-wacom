@@ -1308,10 +1308,11 @@ int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
 				((i!=0) && (data[i] & HEADER_BIT)) )
 		{
 			bad = 1;
-			if (i!=1)
+			if (i!=0 && (data[i] & HEADER_BIT)) {
 				ErrorF("xf86WcmSerialValidate: bad magic at %d "
 					"v=%x l=%d\n", i, data[i], common->wcmPktLength);
-			if (i!=0 && (data[i] & HEADER_BIT)) return i;
+				return i;
+			}
 		}
 	}
 	if (bad) return common->wcmPktLength;

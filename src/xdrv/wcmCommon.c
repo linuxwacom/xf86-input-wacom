@@ -1510,7 +1510,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		/* touch capacity is supported */
 		if (IsTouch(priv) && common->wcmCapacityDefault >= 0)
 		{
-			if ((int)((filtered.capacity * 5) / common->wcmMaxZ) > common->wcmCapacity)
+			if (((double)(filtered.capacity * 5) / (double)common->wcmMaxZ) > (5 - common->wcmCapacity))
 				filtered.buttons |= button;
 		}
 
@@ -1850,6 +1850,8 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
 
+	DBG(2, priv->debugLevel, ErrorF("xf86WcmInitialScreens for \"%s\" "
+		"number of screen=%d \n", local->name, screenInfo.numScreens));
 	priv->tvoffsetX = 0;
 	priv->tvoffsetY = 0;
 	if (priv->twinview != TV_NONE)
@@ -1867,14 +1869,17 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
 #ifdef WCM_HAVE_DIXSCREENORIGINS
-		priv->screenTopX[i] = dixScreenOrigins[i].x;
-		priv->screenTopY[i] = dixScreenOrigins[i].y;
-		priv->screenBottomX[i] = dixScreenOrigins[i].x;
-		priv->screenBottomY[i] = dixScreenOrigins[i].y;
+		if (screenInfo.numScreens > 1)
+		{
+			priv->screenTopX[i] = dixScreenOrigins[i].x;
+			priv->screenTopY[i] = dixScreenOrigins[i].y;
+			priv->screenBottomX[i] = dixScreenOrigins[i].x;
+			priv->screenBottomY[i] = dixScreenOrigins[i].y;
 
-		DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
-			"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
+			DBG(10, priv->debugLevel, ErrorF("xf86WcmInitialScreens from dix for \"%s\" "
+				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
+				local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
+		}
 #else /* WCM_HAVE_DIXSCREENORIGINS */
 		if (i > 0)
 		{

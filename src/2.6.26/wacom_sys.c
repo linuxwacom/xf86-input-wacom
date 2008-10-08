@@ -17,6 +17,7 @@
 /* defines to get HID report descriptor */
 #define HID_DEVICET_HID		(USB_TYPE_CLASS | 0x01)
 #define HID_DEVICET_REPORT	(USB_TYPE_CLASS | 0x02)
+#define HID_USAGE_UNDEFINED		0x00
 #define HID_USAGE_PAGE			0x05
 #define HID_USAGE_PAGE_DIGITIZER	0x0d
 #define HID_USAGE_PAGE_DESKTOP		0x01
@@ -271,7 +272,7 @@ void input_dev_pt(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_RUBBER);
 }
 
-static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc, 
+static void wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc, 
 		struct wacom_wac *wacom_wac, char *report)
 {
 	struct usb_device *dev = interface_to_usbdev(intf);
@@ -300,12 +301,6 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			    case HID_USAGE_PAGE_DESKTOP:
 				usage = WCM_DESKTOP;
 				i++;
-				continue;
-			    case HID_USAGE_PAGE_VDEFINED:
-				if (!report[i+3]) {  /* capacity */
-					wacom_wac->features->pressure_max = (unsigned short)report[i+5];
-				}
-				i += 6;
 				continue;
 			}
 		}
@@ -350,6 +345,13 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 				pen = 1;
 				i++;
 				break;
+			    case HID_USAGE_UNDEFINED:
+				if (usage == WCM_DESKTOP && finger) { /* capacity */
+					wacom_wac->features->pressure_max = (unsigned short)
+						(wacom_le16_to_cpu(&report[i+3]));
+				}
+				i += 4;
+				break;
 			}
 		}
 
@@ -369,7 +371,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	struct wacom_wac *wacom_wac;
 	struct input_dev *input_dev;
 	int error = -ENOMEM;
-	char rep_data[2], limit = 0, mode = 2, *report = NULL;
+	char rep_data[2], limit = 0, *report = NULL;
 	struct hid_descriptor *hid_desc;
 
 	wacom = kzalloc(sizeof(struct wacom), GFP_KERNEL);
@@ -422,7 +424,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 		if (!report) {
 			goto fail2;
 		}
-		wacom_paser_hid(intf, hid_desc, wacom_wac, report);
+		wacom_parse_hid(intf, hid_desc, wacom_wac, report);
 	}
 
 	input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
@@ -456,11 +458,11 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (wacom_wac->features->type != TABLETPC) {
 		do {
 			rep_data[0] = 2;
-			rep_data[1] = mode;
-			error = error = usb_set_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
+			rep_data[1] = 2;
+			error = usb_set_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
 			if(error >= 0)
 				error = usb_get_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
-		} while (((error <= 0) || (rep_data[1] != mode)) && limit++ < 5);
+		} while (((error <= 0) || (rep_data[1] != 2)) && limit++ < 5);
 	}
 
 	usb_set_intfdata(intf, wacom);

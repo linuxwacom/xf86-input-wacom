@@ -351,11 +351,6 @@ if test "$WCM_ENV_XLIB" = yes; then
 		CFLAGS="$CFLAGS -D__amd64__"
 		WCM_XSERVER64="-D_XSERVER64"
 	fi
-	AC_MSG_CHECKING(for lib xf86config)
-	if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; then
-		AC_MSG_RESULT([found, $WCM_XLIB_DIR])
-		WCM_ENV_XF86CONFIG=yes
-	fi
 fi
 
 dnl =======================================================
@@ -490,8 +485,8 @@ if test "$WCM_ENV_XFREE86" != yes; then
 #include <xorgVersion.h>
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 4, 0, 0, 0)
 # error "X.org < 1.4 doesn't need rescaling code"
-#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 4, 99, 2, 0)
-# error "X.org >= 1.4.99.2 doesn't need rescaling code"
+#elif XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 4, 1, 0, 0)
+# error "X.org >= 1.4.1 doesn't need rescaling code"
 #endif
 ], , [WCM_TABLET_SCALING=yes], [WCM_TABLET_SCALING=no])
 			CFLAGS="$save_CFLAGS"
@@ -621,6 +616,22 @@ if test "$WCM_ENV_XFREE86" != yes; then
 	fi
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test "$WCM_ENV_XORGSDK" = yes])
+
+AC_MSG_CHECKING(for lib xf86config)
+if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; then
+	if test -f $WCM_XFREE86_DIR/$XFREE86SUBDIR/xf86Parser.h; then
+		AC_MSG_RESULT([found, $WCM_XFREE86_DIR/$XFREE86SUBDIR])
+		WCM_ENV_XF86CONFIG=yes
+		CFLAGS="$CFLAGS -I$WCM_XFREE86_DIR/$XFREE86SUBDIR"
+	elif test -f $WCM_XORGSDK_DIR/xf86Parser.h; then
+		AC_MSG_RESULT([found, $WCM_XORGSDK_DIR])
+		WCM_ENV_XF86CONFIG=yes
+	elif test -f $WCM_XLIB_DIR/../include/xf86Parser.h; then
+		AC_MSG_RESULT([found, $WCM_XLIB_DIR/../include])
+		WCM_ENV_XF86CONFIG=yes
+		CFLAGS="$CFLAGS -I$WCM_XLIB_DIR/../include"	
+	fi
+fi
 
 # Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
@@ -1029,7 +1040,7 @@ echo "           Xorg SDK - $WCM_ENV_XORGSDK $WCM_XORGSDK_DIR"
 echo "          XSERVER64 - $WCM_OPTION_XSERVER64"
 echo "           dlloader - $WCM_OPTION_DLLOADER"
 echo "               XLib - $WCM_ENV_XLIB $WCM_XLIB_DIR"
-echo "         xf86config - $WCM_ENV_XF86CONFIG $WCM_XLIB_DIR"
+echo "         xf86config - $WCM_ENV_XF86CONFIG"
 echo "                TCL - $WCM_ENV_TCL $WCM_TCL_DIR"
 echo "                 TK - $WCM_ENV_TK $WCM_TK_DIR"
 echo "            ncurses - $WCM_ENV_NCURSES"

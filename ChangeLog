@@ -1,3 +1,10 @@
+2008-10-08  Ping Cheng <pingc@wacom.com>
+	* Updated configure.in for Xorg 1.5
+	* USB Tablet PC 0x90, 0x93, 0x9A are supported
+	* Merged Danny's xf86Config patch
+	* Updated wacomcpl for touch w/o capacity
+	* Label 0.8.1-5
+
 2008-09-01  Ping Cheng <pingc@wacom.com>
 	* Support Xorg 7.3 or newer in wacomcpl
 	* Modified wacom_sys.c according to Bartosz Fabianowski's suggestion

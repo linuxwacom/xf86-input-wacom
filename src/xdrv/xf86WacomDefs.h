@@ -164,25 +164,25 @@ struct _WacomDeviceRec
 	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
-	unsigned rupk[256]; /* keystrokes assigned to relative wheel up event (default is button 4) */
+	unsigned rupk[256];     /* keystrokes assigned to relative wheel up event (default is button 4) */
 	int reldn;
-	unsigned rdnk[256]; /* keystrokes assigned to relative wheel down event (default is button 5) */
+	unsigned rdnk[256];     /* keystrokes assigned to relative wheel down event (default is button 5) */
 	int wheelup;
-	unsigned wupk[256]; /* keystrokes assigned to absolute wheel or throttle up event (default is button 4) */
+	unsigned wupk[256];     /* keystrokes assigned to absolute wheel/throttle up event (default is button 4) */
 	int wheeldn;
-	unsigned wdnk[256]; /* keystrokes assigned to absolute wheel or throttle down event (default is button 5) */
+	unsigned wdnk[256];     /* keystrokes assigned to absolute wheel/throttle down event (default is button 5) */
 	int striplup;
-	unsigned slupk[256]; /* keystrokes assigned to left strip up event (default is button 4) */
+	unsigned slupk[256];    /* keystrokes assigned to left strip up event (default is button 4) */
 	int stripldn;
-	unsigned sldnk[256]; /* keystrokes assigned to left strip up event (default is button 5) */
+	unsigned sldnk[256];    /* keystrokes assigned to left strip up event (default is button 5) */
 	int striprup;
-	unsigned srupk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
+	unsigned srupk[256];    /* keystrokes assigned to right strip up event (default is button 4) */
 	int striprdn;
- 	unsigned srdnk[256]; /* keystrokes assigned to right strip up event (default is button 4) */
-	int nbuttons;         /* number of buttons for this subdevice */
-	int naxes;            /* number of axes */
+ 	unsigned srdnk[256];    /* keystrokes assigned to right strip up event (default is button 4) */
+	int nbuttons;           /* number of buttons for this subdevice */
+	int naxes;              /* number of axes */
 
-	WacomCommonPtr common;/* common info pointer */
+	WacomCommonPtr common;  /* common info pointer */
 
 	/* state fields */
 	int currentX;           /* current X position */
@@ -224,8 +224,8 @@ struct _WacomDeviceRec
 	int throttleValue;      /* current throttle value */
 
 	/* JEJ - filters */
-	int* pPressCurve;               /* pressure curve */
-	int nPressCtrl[4];              /* control points for curve */
+	int* pPressCurve;       /* pressure curve */
+	int nPressCtrl[4];      /* control points for curve */
 
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
@@ -362,17 +362,16 @@ struct _WacomCommonRec
 	int wcmMaxX;                 /* tablet max X value */
 	int wcmMaxY;                 /* tablet max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
-	int wcmMaxTouchX;            /* max touch X value */
-	int wcmMaxTouchY;            /* max touch Y value */
+	int wcmMaxTouchX;            /* touch panel max X value */
+	int wcmMaxTouchY;            /* touch panel max Y value */
+	int wcmResolX;		     /* pen tool X resolution in points/inch */
+	int wcmResolY;		     /* pen tool Y resolution in points/inch */
+	int wcmTouchResolX;	     /* touch X resolution in points/inch */
+	int wcmTouchResolY;	     /* touch Y resolution in points/inch */
+	                             /* tablet Z resolution is equivalent
+	                              * to wcmMaxZ which is equal to 100% pressure */
 	int wcmMaxCapacity;	     /* max capacity value */
 	int wcmMaxDist;              /* tablet max distance value */
-	int wcmTouchResolX;          /* touch X resolution in points/inch */
-	int wcmTouchResolY;          /* touch Y resolution in points/inch */
-	int wcmResolX;               /* tablet X resolution in points/inch */
-	int wcmResolY;               /* tablet Y resolution in points/inch */
-	                             /* tablet Z resolution is equivalent
-	                              * to wcmMaxZ which is equal to 100%
-	                              * pressure */
 	int wcmMaxtiltX;	     /* styli max tilt in X directory */ 
 	int wcmMaxtiltY;	     /* styli max tilt in Y directory */ 
 

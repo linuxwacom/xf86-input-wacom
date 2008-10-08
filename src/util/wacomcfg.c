@@ -46,11 +46,11 @@
 #include <memory.h>
 #include <assert.h>
 
+WACOMDEVICETYPE mapStringToType (const char*);
 #if WCM_XF86CONFIG
 	#include "xf86Parser.h"
 
 	WACOMDEVICETYPE checkIfWacomDevice (XF86ConfigPtr, const char*);
-	WACOMDEVICETYPE mapStringToType (const char*);
 	XF86ConfigPtr readConfig (char *);
 	void VErrorF(const char*, va_list);
 	void ErrorF (const char*, ...);
@@ -200,28 +200,14 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 			devName[j] = tolower(pInfo->pszName[j]);
 		devName[j] = '\0';
 
-#if WCM_XF86CONFIG
 		pInfo->type = mapStringToType (devName);
 
+#if WCM_XF86CONFIG
 		if ( pInfo->type == WACOMDEVICETYPE_UNKNOWN ) 
 			pInfo->type = checkIfWacomDevice (conf, pInfo->pszName);
-		else
-#else
-		if (strstr(devName,"cursor") != NULL)
-			pInfo->type = WACOMDEVICETYPE_CURSOR;
-		else if (strstr(devName,"stylus") != NULL)
-			pInfo->type = WACOMDEVICETYPE_STYLUS;
-		else if (strstr(devName,"eraser") != NULL)
-			pInfo->type = WACOMDEVICETYPE_ERASER;
-		else if (strstr(devName,"touch") != NULL)
- 			pInfo->type = WACOMDEVICETYPE_TOUCH;
-		else if (strstr(devName,"pad") != NULL)
-			pInfo->type = WACOMDEVICETYPE_PAD;
-		else
-			pInfo->type = WACOMDEVICETYPE_UNKNOWN;
+#endif
 
 		if ( pInfo->type != WACOMDEVICETYPE_UNKNOWN )
-#endif
 		{
 			++pInfo;
 			++nCount;
@@ -270,12 +256,16 @@ WACOMDEVICETYPE checkIfWacomDevice (XF86ConfigPtr conf, const char* pszDeviceNam
 	
 	return WACOMDEVICETYPE_UNKNOWN;
 }
+#endif
 
 WACOMDEVICETYPE mapStringToType (const char* name) 
 {
 	if (!name)
 		return WACOMDEVICETYPE_UNKNOWN;
 
+	/* No spaces are allowed in Wacom device identifiers */
+	if (strstr(name," ") != NULL)
+		return WACOMDEVICETYPE_UNKNOWN;
 	if (strstr(name,"cursor") != NULL)
 		return WACOMDEVICETYPE_CURSOR;
 	else if (strstr(name,"stylus") != NULL)
@@ -290,7 +280,6 @@ WACOMDEVICETYPE mapStringToType (const char* name)
 		return WACOMDEVICETYPE_UNKNOWN;
 	
 }
-#endif
 
 WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	const char* pszDeviceName)

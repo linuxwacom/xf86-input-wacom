@@ -849,6 +849,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
+	unsigned char * data;
 
  	DBG(10, common->debugLevel, ErrorF("xf86WcmReadPacket: device=%s"
 		" fd=%d \n", common->wcmDevice, local->fd));
@@ -884,7 +885,22 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	pos = 0;
 
-	/* while there are whole packets present, parse data */
+	/* while there are whole packets present, check the packet length
+	 * for ISDv4 packet since it's different for pen and touch
+	 */
+	if (common->wcmForceDevice == DEVICE_ISDV4) 
+	{
+		common->wcmPktLength = 9;
+		data = common->buffer;
+		if ( data[0] & 0x18 )
+		{
+			if (common->wcmMaxCapacity)
+				common->wcmPktLength = 7;
+			else
+				common->wcmPktLength = 5;
+		}
+	}
+
 	while ((common->bufpos - pos) >=  common->wcmPktLength)
 	{
 		/* parse packet */
@@ -895,6 +911,19 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			break;
 		}
 		pos += cnt;
+
+		if (common->wcmDevCls != &gWacomUSBDevice) 
+		{
+			common->wcmPktLength = 9;
+			data = common->buffer + pos;
+			if ( data[0] & 0x18 )
+			{
+				if (common->wcmMaxCapacity)
+					common->wcmPktLength = 7;
+				else
+					common->wcmPktLength = 5;
+			}
+		}
 	}
  
 	if (pos)

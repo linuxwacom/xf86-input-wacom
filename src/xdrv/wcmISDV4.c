@@ -150,8 +150,13 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		}
 		else
 		{
-			ErrorF("Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
-			return !Success;
+			/* Reread the control data since with some vendors it fails the first time */
+			xf86WcmWaitForTablet(local->fd, data, 11);
+			if ( !(data[0] & 0x40) )
+			{
+				ErrorF("Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
+				return !Success;
+			}
 		}
 	}
 
@@ -194,6 +199,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	char data[BUFFER_SIZE];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
+	char * s;
 
 	DBG(2, priv->debugLevel, ErrorF("getting ISDV4 Ranges\n"));
 
@@ -201,8 +207,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	if (isdv4Query(local, WC_ISDV4_QUERY, data) == Success)
 	{
 		/* transducer data */
-		common->wcmMaxZ = ( data[5] | 
-			((data[6] & 0x07) << 7) );
+		common->wcmMaxZ = ( data[5] | ((data[6] & 0x07) << 7) );
 		common->wcmMaxX = ( (data[1] << 9) | 
 			(data[2] << 2) | ( (data[6] & 0x60) >> 5) );      
 		common->wcmMaxY = ( (data[3] << 9) | (data[4] << 2 ) 
@@ -221,13 +226,19 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	if (common->wcmISDV4Speed != 19200)
 	{
+		/* default to 0x93 (resistive touch) */
+		common->wcmPktLength = 5;
+		common->tablet_id = 0x93;
+
+		s = xf86FindOptionValue(local->options, "Touch");
+		if ( !s || (strstr(s, "on")) )  /* touch option is on */
+		{
+			common->wcmTouch = 1;
+		}
+
 		/* Touch might be supported. Send a touch query command */
 		if (isdv4Query(local, WC_ISDV4_TOUCH_QUERY, data) == Success)
 		{
-			/* default to 0x93 (resisitive touch) */
-			common->wcmPktLength = 5;
-			common->tablet_id = 0x93;
-
 			if (data[0] & 0x41)
 			{
 				/* tablet model */
@@ -244,14 +255,24 @@ static int isdv4GetRanges(LocalDevicePtr local)
 					break;
 				}
 
-				/* touch logical size */
-				common->wcmMaxTouchX = common->wcmMaxTouchY = (int)data[1];
+				/* touch logical size for tablet PC with touch */
+				if (data[1])
+				{
+					common->wcmMaxTouchX = common->wcmMaxTouchY = (int)(1 << data[1]);
+				}
 
 				/* Max capacity */
-				common->wcmMaxCapacity = (int)data[7];
+				common->wcmMaxCapacity = (int)(1 << data[7]);
 
 				if (common->wcmMaxCapacity)
+				{
 					common->wcmCapacityDefault = 3;
+					common->wcmCapacity = 3;
+					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
+						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5))); 
+					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
+						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3))); 
+				}
 				else
 				{
 					common->wcmCapacityDefault = -1;
@@ -260,30 +281,28 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			}
 		}
 
-		if (common->wcmMaxX && common->wcmMaxY && common->wcmMaxTouchX)
+		/* TouchDefault was off for all devices
+		 * defaults to enable when touch is supported 
+		 */
+		if (common->wcmTouch)
 		{
-			char *s = xf86FindOptionValue(local->options, "Touch");
-			if ( !s || (strstr(s, "on")) )  /* touch option is on */
-			{
-				common->wcmTouch = 1;
-			}
-
-			/* TouchDefault was off for all devices */
-			/* defaults to enable when touch is supported */
 			common->wcmTouchDefault = 1;
+		}
 
-			/* Touch resolution */
-			common->wcmTouchResolX = common->wcmMaxTouchX * 
-				common->wcmResolX / common->wcmMaxX;
-			common->wcmTouchResolY = common->wcmMaxTouchY * 
-				common->wcmResolY / common->wcmMaxY;
+		if (common->wcmMaxX && common->wcmMaxY && !common->wcmTouchResolX)
+		{
+			/* Some touch tablet don't report physical size */
+			common->wcmTouchResolX = common->wcmMaxTouchX / 
+				(common->wcmResolX * common->wcmMaxX);
+			common->wcmTouchResolY = common->wcmMaxTouchY / 
+				(common->wcmResolY * common->wcmMaxY);
 		}
 	}
 
 	DBG(2, priv->debugLevel, ErrorF("isdv4GetRanges speed=%d maxX=%d maxY=%d "
-		"maxZ=%d resX=%d resY=%d \n", common->wcmISDV4Speed, 
+		"maxZ=%d TouchresX=%d TouchresY=%d \n", common->wcmISDV4Speed, 
 		common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
-		common->wcmResolX, common->wcmResolY));
+		common->wcmTouchResolX, common->wcmTouchResolY));
 	return Success;
 }
 
@@ -303,17 +322,6 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	return Success;
 }
 
-void setPktLenght(LocalDevicePtr local)
-{
-	WacomCommonPtr common = ((WacomDevicePtr)local->private)->common;
-
-	if (common->wcmMaxCapacity)
-	common->wcmPktLength = 7;
-	else
-	common->wcmPktLength = 5;
-	return;
-}
-
 static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -328,7 +336,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	/* determine the type of message (touch or stylus)*/
 	if (data[0] & 0x18) /* not a pen */
 	{
-		if ((common->wcmPktLength == 9 && last->proximity ) || 
+		if ((last->device_id != TOUCH_DEVICE_ID && last->device_id && last->proximity ) || 
 				!common->wcmTouch )
 		{
 			if ((data[0] & 0x10) && (!(data[0] & 0x01))) /* a touch out-prox data */
@@ -337,7 +345,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 				touchInProx = 1;
 
 			/* ignore touch event */
-			setPktLenght(local);
 			return common->wcmPktLength;
 		}
 		else
@@ -346,25 +353,21 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			{
 				if (!touchInProx)
 				{
-					setPktLenght(local);
 					channel = 1;
 				} 
 				else if (!(data[0] & 0x01)) /* touch out-prox */
 				{
 					touchInProx = 0;
-					setPktLenght(local);
 					channel = 1;
 				} 
 				else
 				{
-					setPktLenght(local);
 					/* ignore touch event */
 					return common->wcmPktLength;
 				}
 			}
 			else
 			{
-				setPktLenght(local);
 				/* ignore touch event */
 				return common->wcmPktLength;
 			}
@@ -381,11 +384,8 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			xf86WcmEvent(common, 1, &out);
 			return 0;
 		}
-		else
-		{
-			common->wcmPktLength = 9;
-			channel = 0;
-		}
+		common->wcmPktLength = 9;
+		channel = 0;
 	}
 
 	if (common->buffer + common->bufpos - data < common->wcmPktLength)
@@ -407,11 +407,17 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	if (common->wcmPktLength == 5 ) /* a touch */
+	if (common->wcmPktLength == 5 || common->wcmPktLength == 7) /* a touch */
 	{
-		/* MultiTouch input only has 5 bytes of data */
+		/* touch without capacity has 5 bytes of data 
+		 * touch with capacity has 7 bytes of data
+		 */
 		ds->x = (((int)data[1]) << 7) | ((int)data[2]);
 		ds->y = (((int)data[3]) << 7) | ((int)data[4]);
+		if (common->wcmPktLength == 7)
+		{
+			ds->capacity = (((int)data[5]) << 7) | ((int)data[6]);
+		}
 		ds->buttons = ds->proximity = data[0] & 0x01;
 		ds->device_type = TOUCH_ID;
 		ds->device_id = TOUCH_DEVICE_ID;

@@ -17,6 +17,7 @@
 /* defines to get HID report descriptor */
 #define HID_DEVICET_HID		(USB_TYPE_CLASS | 0x01)
 #define HID_DEVICET_REPORT	(USB_TYPE_CLASS | 0x02)
+#define HID_USAGE_UNDEFINED		0x00
 #define HID_USAGE_PAGE			0x05
 #define HID_USAGE_PAGE_DIGITIZER	0x0d
 #define HID_USAGE_PAGE_DESKTOP		0x01
@@ -271,12 +272,6 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 				usage = WCM_DESKTOP;
 				i++;
 				continue;
-			    case HID_USAGE_PAGE_VDEFINED:
-				if (!report[i+3]) {  /* capacity */
-					wacom_wac->features->pressure_max = (unsigned short)report[i+5];
-				}
-				i += 6;
-				continue;
 			}
 		}
 
@@ -319,6 +314,13 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			    case HID_USAGE_STYLUS:
 				pen = 1;
 				i++;
+				break;
+			    case HID_USAGE_UNDEFINED:
+				if (usage == WCM_DESKTOP && finger) { /* capacity */
+					wacom_wac->features->pressure_max = (unsigned short)
+						(wacom_le16_to_cpu(&report[i+3]));
+				}
+				i += 4;
 				break;
 			}
 		}

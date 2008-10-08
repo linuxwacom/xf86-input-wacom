@@ -515,7 +515,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		/* initialize capacity parameters for touch */
 		if (common->tablet_id == 0x9A)
 		{
-			common->wcmCapacity = 0;
+			common->wcmCapacity = 3;
 			common->wcmCapacityDefault = 3; 
 		}
 		else
