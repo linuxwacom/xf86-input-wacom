@@ -146,8 +146,12 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 		return -1;
 
 #if WCM_XF86CONFIG
-	/* read the config in for wacom devices which don'T use the commnon identifier */
+	/* read the config in for wacom devices which don't use the commnon identifier */
+    #if WCM_XORG
 	conf = readConfig ("/etc/X11/xorg.conf");
+    #else
+	conf = readConfig ("/etc/X11/XF86Config");
+    #endif
 #endif
 
 	/* estimate size of memory needed to hold structures */

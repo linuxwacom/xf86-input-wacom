@@ -189,7 +189,6 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
-
 /*****************************************************************************
  * isdv4GetRanges -- get ranges of the device
  ****************************************************************************/
@@ -230,16 +229,11 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		common->wcmPktLength = 5;
 		common->tablet_id = 0x93;
 
-		s = xf86FindOptionValue(local->options, "Touch");
-		if ( !s || (strstr(s, "on")) )  /* touch option is on */
-		{
-			common->wcmTouch = 1;
-		}
-
 		/* Touch might be supported. Send a touch query command */
 		if (isdv4Query(local, WC_ISDV4_TOUCH_QUERY, data) == Success)
 		{
-			if (data[0] & 0x41)
+			/* (data[2] & 0x07) == 0 is for resistive touch */
+			if ((data[0] & 0x41) && (data[2] & 0x07))
 			{
 				/* tablet model */
 				switch (data[2] & 0x07)
@@ -269,9 +263,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 					common->wcmCapacityDefault = 3;
 					common->wcmCapacity = 3;
 					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
-						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5))); 
+						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5)));
 					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
-						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3))); 
+						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3)));
 				}
 				else
 				{
@@ -279,6 +273,12 @@ static int isdv4GetRanges(LocalDevicePtr local)
 					common->wcmCapacity = -1;
 				}
 			}
+		}
+
+		s = xf86FindOptionValue(local->options, "Touch");
+		if ( !s || (strstr(s, "on")) )  /* touch option is on */
+		{
+			common->wcmTouch = 1;
 		}
 
 		/* TouchDefault was off for all devices

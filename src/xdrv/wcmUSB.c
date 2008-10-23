@@ -1016,7 +1016,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				ds->device_id = PAD_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 			}
-			else if (event->code == BTN_TOUCH)
+			else if (event->code == BTN_TOOL_DOUBLETAP)
 			{
 				DBG(6, common->debugLevel, ErrorF(
 					"USB Touch detected %x (value=%d)\n",

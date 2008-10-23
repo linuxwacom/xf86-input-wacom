@@ -177,7 +177,8 @@ else
 						19|20|21) WCM_KERNEL_VER="2.6.19";;
 						22|23) WCM_KERNEL_VER="2.6.22";;
 						24|25) WCM_KERNEL_VER="2.6.24";;
-						*) WCM_KERNEL_VER="2.6.26";;
+						26) WCM_KERNEL_VER="2.6.26";;
+						*) WCM_KERNEL_VER="2.6.27";;
 					esac
 				else
 					AC_MSG_WARN([support for kernels older than 2.6.8 has been dropped after 0.7.4])
@@ -913,7 +914,7 @@ if test "$WCM_OPTION_DLLOADER" = yes; then
 	fi
 fi
 AC_MSG_RESULT($WCM_OPTION_DLLOADER)
-AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" == "yes")
+AM_CONDITIONAL(WCM_DLLOADER, test "$WCM_OPTION_DLLOADER" = "yes")
 
 dnl =======================================================
 dnl Check for wacomdrv build
@@ -929,7 +930,7 @@ if test "$WCM_OPTION_WACOMDRV" != "no"; then
 	else
 		AC_MSG_RESULT(yes)
 		WCM_OPTION_WACOMDRV=yes
-		if test "$WCM_OPTION_DLLOADER" == "yes" ; then
+		if test "$WCM_OPTION_DLLOADER" = "yes" ; then
 			WCM_XF86MODULES="wacom_drv.so"
 		else
 			WCM_XF86MODULES="wacom_drv.o"
@@ -1025,6 +1026,7 @@ AC_OUTPUT(Makefile
 	src/2.6.22/Makefile
 	src/2.6.24/Makefile
 	src/2.6.26/Makefile
+	src/2.6.27/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 
@@ -1057,7 +1059,7 @@ echo "         usbmouse.o - $WCM_OPTION_USBMOUSE"
 echo "            evdev.o - $WCM_OPTION_EVDEV"
 echo "         mousedev.o - $WCM_OPTION_MOUSEDEV"
 echo "            input.o - $WCM_OPTION_INPUT"
-if test "$WCM_OPTION_DLLOADER" == "yes" ; then
+if test "$WCM_OPTION_DLLOADER" = "yes" ; then
 echo "       wacom_drv.so - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 echo "        wacom_drv.o - no"
 else

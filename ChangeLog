@@ -1,3 +1,10 @@
+2008-10-23  Ping Cheng <pingc@wacom.com>
+	* Fixed a configure.in bug (Bartosz Fabianowski)
+	* Added kernel 2.6.27 support
+	* Use BTN_TOOL_DOUBLETAP for USB Tablet PC touch event
+	* Unified USB BTN_TOUCH event for mousedev before X server starts
+	* Label 0.8.1-6
+
 2008-10-08  Ping Cheng <pingc@wacom.com>
 	* Updated configure.in for Xorg 1.5
 	* USB Tablet PC 0x90, 0x93, 0x9A are supported

@@ -222,7 +222,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int *value0, int *value1)
 		if (screenToSet != -1)
 		{
 			letfPadding = priv->screenTopX[screenToSet];
-			topPadding = priv->screenBottomX[screenToSet];
+			topPadding = priv->screenTopY[screenToSet];
 		}
 		else
 		{
@@ -784,7 +784,7 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int buttons = ds->buttons;
 
-	if (priv->oldButtons != buttons)
+	if (priv->oldButtons != buttons || (!priv->oldProximity && !buttons))
 		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
 	/* emulate wheel/strip events when defined */
@@ -820,7 +820,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-
 	int v3, v4, v5;
 	int no_jitter; 
 	double relacc, param;
@@ -907,6 +906,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldStripY = ds->stripy;
 		priv->oldRot = rot;
 		priv->oldThrottle = throttle;
+		priv->oldButtons = 0;
 	}
 	if (!is_absolute)
 	{
@@ -991,7 +991,10 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
 
-			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
+			if (priv->oldProximity || !IsTouch(priv))
+				sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
+			else
+				buttons = 0;
 		}
 
 		/* not in proximity */
@@ -1234,7 +1237,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 #ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
-		ds.device_type != PAD_ID && ds.device_type != TOUCH_ID )
+		ds.device_type != PAD_ID )
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 
@@ -1497,6 +1500,50 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		/* button 1 Threshold test */
 		int button = 1;
 		priv = pDev->private;
+
+#ifdef WCM_ENABLE_LINUXINPUT
+		if (common->wcmDevCls == &gWacomUSBDevice && IsTouch(priv) && !ds->proximity)
+		{
+			priv->hardProx = 0;
+		}		
+
+		if (common->wcmDevCls == &gWacomUSBDevice && (IsStylus(priv) || IsEraser(priv)))
+		{
+			priv->hardProx = 1;
+		}
+		
+		/* send a touch out for USB Tablet PCs */
+		if (common->wcmDevCls == &gWacomUSBDevice && !IsTouch(priv) 
+			&& common->wcmTouchDefault && !priv->oldProximity)
+		{ 
+			LocalDevicePtr localDevices = xf86FirstLocalDevice();
+			WacomCommonPtr tempcommon = NULL;
+			WacomDevicePtr temppriv = NULL;
+
+			/* Lookup to see if associated touch was enabled */
+			for (; localDevices != NULL; localDevices = localDevices->next)
+			{
+				if (strstr(localDevices->drv->driverName, "wacom"))
+				{
+					temppriv = (WacomDevicePtr) localDevices->private;
+					tempcommon = temppriv->common;
+
+					if ((tempcommon->tablet_id == common->tablet_id) && 
+						IsTouch(temppriv) && temppriv->oldProximity)
+					{
+						/* Send soft prox-out for touch first */
+						WacomDeviceState out = { 0 };
+						out.device_type = DEVICE_ID(temppriv->flags);
+						DBG(2, common->debugLevel, ErrorF(
+							"Send soft prox-out for %s first\n",
+							localDevices->name));
+						xf86WcmSendEvents(localDevices, &out);
+					}
+				}
+			}
+		}
+#endif /* WCM_ENABLE_LINUXINPUT */
+
 		if (IsStylus(priv) || IsEraser(priv))
 		{
 			if (filtered.pressure < common->wcmThreshold )
@@ -1508,13 +1555,14 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 
 		/* touch capacity is supported */
-		if (IsTouch(priv) && common->wcmCapacityDefault >= 0)
+		if (IsTouch(priv) && (common->wcmCapacityDefault >= 0) && !priv->hardProx)
 		{
-			if (((double)(filtered.capacity * 5) / (double)common->wcmMaxZ) > (5 - common->wcmCapacity))
+			if (((double)(filtered.capacity * 5) / 
+					(double)common->wcmMaxZ) > 
+					(5 - common->wcmCapacity))
 				filtered.buttons |= button;
 		}
-
-		if (!(priv->flags & ABSOLUTE_FLAG) && !priv->hardProx)
+		else if (!(priv->flags & ABSOLUTE_FLAG) && !priv->hardProx)
 		{
 			/* initial current max distance */
 			if (strstr(common->wcmModel->name, "Intuos"))
@@ -1522,8 +1570,10 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else
 				common->wcmMaxCursorDist = 0;
 		}
+
 		/* Store current hard prox for next use */
-		priv->hardProx = ds->proximity;		
+		if (!IsTouch(priv))
+			priv->hardProx = ds->proximity;		
 
 		/* User-requested filtering comes next */
 

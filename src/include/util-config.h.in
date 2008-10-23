@@ -3,6 +3,12 @@
 #ifndef _UTIL_CONFIG_H_
 #define _UTIL_CONFIG_H_
 
+/* Compiling for X.org */
+#undef WCM_XORG
+ 
+/* Compiling for XFree86 */
+#undef WCM_XFREE86
+
 /* ncurses header files available */
 #undef WCM_ENABLE_NCURSES
 

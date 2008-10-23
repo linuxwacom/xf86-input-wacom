@@ -75,7 +75,7 @@
  * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
  */
 
-static const char identification[] = "$Identification: 47-0.8.1-4 $";
+static const char identification[] = "$Identification: 47-0.8.1-6 $";
 
 /****************************************************************************/
 
@@ -698,6 +698,12 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	{
 		/* absolute wheel */
 		InitValuatorAxisStruct(local->dev, 5, 0, 1023, 1, 1, 1);
+	}
+
+	if (IsTouch(priv))
+	{
+		/* hard prox out */
+		priv->hardProx = 0;
 	}
 
 	return TRUE;

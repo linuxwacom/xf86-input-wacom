@@ -91,7 +91,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.43-2.6.13.1-pc-0.7"
+#define DRIVER_VERSION "v1.43-2.6.13.1-pc-0.8"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
