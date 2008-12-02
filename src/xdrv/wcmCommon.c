@@ -266,7 +266,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 		"buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) && !IsEraser(priv) )
+	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) )
 	{
 		if ( buttons & 1 )
 		{
@@ -991,10 +991,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
 
-			if (priv->oldProximity || !IsTouch(priv))
-				sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
-			else
-				buttons = 0;
+			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 		}
 
 		/* not in proximity */

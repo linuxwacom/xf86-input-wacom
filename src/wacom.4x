@@ -1,7 +1,7 @@
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/input/wacom/wacom.man,v 1.1 2001/01/24 00:06:39 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WACOM 4x "linuxwacom 0.8.1" "X Version 11"
+.TH WACOM 4x "linuxwacom 0.8.2" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
@@ -58,17 +58,17 @@ tells the driver to dialog with the tablet the USB way.  This option is
 mandatory for USB tablets.
 .TP 4
 .B Option \fI"ForceDevice"\fP \fI"ISDV4"\fP
-tells the driver to dialog with the tablet the Tablet PC way.  Right now 
-we only support serial Tablet PC. It is a special Wacom IV protocol, 
-called ISDV4 protocol.  This option is mandatory for Tablet PC.
+tells the driver to dialog with the tablet the serial Tablet PC way.  It 
+is a special Wacom IV protocol, called ISDV4 protocol.  This option is 
+mandatory for serial Tablet PCs only.
 .TP 4
 .B Option \fI"Suppress"\fP \fI"Inumber"\fP
 sets the position increment under which not to transmit coordinates.
 This entry must be specified only in the first Wacom subsection if you have
-multiple devices for one tablet. If you don't specify this entry, the default value,
-which is 2, will be used. To disable suppression, the entry should be specified as 0.
-When suppress is defined,  an event will be sent only when at least one of the 
-following conditions is met:
+multiple devices for one tablet. If you don't specify this entry, the default 
+value,  which is 2, will be used. To disable suppression, the entry should be 
+specified as 0.  When suppress is defined,  an event will be sent only when at 
+least one of the following conditions is met:
 
         the change between the current X coordinate and the previous one is
 greater than suppress;
@@ -113,7 +113,7 @@ X coordinate of the bottom corner of the active zone.  Default to width of the t
 .B Option \fI"BottomY"\fP \fI"number"\fP
 Y coordinate of the bottom corner of the active zone.  Default to height of the tablet.
 .TP 4
-.B Option \fI"ButtonsOnly"\fP \fI"on"\fP
+.B Option \fI"ButtonsOnly"\fP \fI"on"|"off"\fP
 disables the device's motion events.  Default to off.
 .TP 4
 .B Option \fI"ButtonM"\fP \fI"AC"\fP
@@ -123,13 +123,20 @@ to 32. The default action reported to Xinput is mouse button M click.
 To ignore the button click, i.e., to not report any button click event 
 to Xinput,  use "0" or "button 0".  
 .TP 4
-.B Option \fI"TPCButton"\fP \fI"on"\fP
-enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus button
-event only when its tip is pressed.  Default to "on" for Tablet PC; "off" for all other models.
+.B Option \fI"TPCButton"\fP \fI"on"|"off"\fP
+enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus 
+button event only when its tip is pressed.  Default to "on" for Tablet PCs; 
+"off" for all other models.
 .TP 4
-.B Option \fI"Touch"\fP \fI"on"\fP
-enables the touch event for Tablet PC that supports touch feature,  i.e., system cursor moves 
-when user touches the tablet.  Default to "on" for Tablet PC with touch feature; "off" for all other models.
+.B Option \fI"Touch"\fP \fI"on"|"off"\fP
+enables the touch event for Tablet PC that supports touch feature,  i.e., 
+system cursor moves when user touches the tablet.  Default to "on" for 
+Tablet PCs with touch feature; "off" for all other models.
+.TP 4
+.B Option \fI"Capacity"\fP \fI"number"\fP
+sets touch sensitivity level for capacitive touch device, where number 
+can be an integer from -1 to 5.  Default is 3 for capacitive tools and 
+-1 for none capacitive tools.
 .TP 4
 .B Option \fI"Speed"\fP \fI"Rspeed"\fP
 sets the cursor's relative movement speed to Rspeed.  The default value is 1.0.  
@@ -156,6 +163,9 @@ this option if your screens are displaying in the same resolutions.
 .B Option \fI"ScreenNo"\fP \fI"n"\fP
 In a multi-monitor environment, specifies the screen number in which the cursor can move.
 .TP 4
+.B Option \fI"MMonitor"\fP \fI"n"\fP
+turns on/off across monitor movement on a non-TwinView multi-monitor desktop. The default is "on".
+.TP 4
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
 rotates the tablet orientation clockwise (CCW) or anti-clockwise (CW) or 180 degrees (HALF). The default is "NONE".
 .TP 4
@@ -166,7 +176,7 @@ from 0..100. The input for
 	slightly depressed curve (firmer) might be "5,0,100,95"; 
 	slightly raised curve (softer) might be "0,5,95,100".
 .TP 4
-.B Option \fI"KeepShape"\fP \fI"on"\fP
+.B Option \fI"KeepShape"\fP \fI"on"|"off"\fP
 When this option is enabled, the active zone  begins according to TopX
 and TopY.  The bottom corner is adjusted to keep the ratio width/height
 of the active zone the same as the screen while maximizing the area

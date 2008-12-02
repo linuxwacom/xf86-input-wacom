@@ -73,9 +73,10 @@
  * 2008-07-09 47-pc0.8.1   - new release
  * 2008-07-17 47-pc0.8.1-1 - Support USB TabletPC
  * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
+ * 2008-11-11 47-pc0.8.2 - new release
  */
 
-static const char identification[] = "$Identification: 47-0.8.1-6 $";
+static const char identification[] = "$Identification: 47-0.8.2 $";
 
 /****************************************************************************/
 
@@ -531,8 +532,14 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
-	nbkeys = nbbuttons;         /* Same number of keys since any button may be */
-	                            /* configured as an either mouse button or key */
+	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
+	                             * configured as an either mouse button or key */
+
+	if (!nbbuttons)
+		nbbuttons = nbkeys = 1;	    /* Xserver 1.5 or later crashes when 
+			            	     * nbbuttons = 0 while sending a beep 
+			             	     * This is only a workaround. 
+				     	     */
 
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmRegisterX11Devices "
 		"(%s) %d buttons, %d keys, %d axes\n",
@@ -757,7 +764,7 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		ErrorF("%s waiting 100 msec (total %dms) for device to become ready\n", local->name, wait); 
 		usleep(100*1000);
 	}
-	ErrorF("%s no synaptics event device found (checked %d nodes, waited %d msec)\n",
+	ErrorF("%s no Wacom event device found (checked %d nodes, waited %d msec)\n",
 		local->name, i + 1, wait);
 	return FALSE;
 }

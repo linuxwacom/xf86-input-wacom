@@ -1,3 +1,10 @@
+2008-12-01  Ping Cheng <pingc@wacom.com>
+	* Added workaround for X Server 1.5 to send beep
+	* Patch from Vicenç (vicencb@gmail.com)
+	* Patch from Rene van Paassen (rene.vanpaassen@gmail.com)
+	* web pages updated
+	* Label 0.8.2
+
 2008-10-23  Ping Cheng <pingc@wacom.com>
 	* Fixed a configure.in bug (Bartosz Fabianowski)
 	* Added kernel 2.6.27 support
