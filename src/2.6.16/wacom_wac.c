@@ -372,6 +372,7 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_key(wcombo, BTN_STYLUS, 0);
 			wacom_report_key(wcombo, BTN_STYLUS2, 0);
 			wacom_report_abs(wcombo, ABS_WHEEL, 0);
+			wacom_report_abs(wcombo, ABS_Z, 0);
 		}
 		wacom_report_key(wcombo, wacom->tool[idx], 0);
 		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
@@ -425,7 +426,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 	/* tool number */
 	idx = data[1] & 0x01;
 
-	/* pad packets. Works as a second tool and is always in prox */
+	/* pad packets. Works as a second tool */
 	if (data[0] == 12) {
 		/* initiate the pad as a device */
 		if (wacom->tool[1] != BTN_TOOL_FINGER)
@@ -445,11 +446,13 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 		wacom_report_abs(wcombo, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
 		if ((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) | 
-			data[2] | (data[3] & 0x1f) | data[4])
+			data[2] | (data[3] & 0x1f) | data[4]) {
 			wacom_report_key(wcombo, wacom->tool[1], 1);
-		else
+			wacom_report_abs(wcombo, ABS_MISC, PAD_DEVICE_ID);
+		} else {
 			wacom_report_key(wcombo, wacom->tool[1], 0);
-		wacom_report_abs(wcombo, ABS_MISC, PAD_DEVICE_ID); 
+			wacom_report_abs(wcombo, ABS_MISC, 0); 
+		}
 		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, 0xffffffff);
                 return 1;
 	}

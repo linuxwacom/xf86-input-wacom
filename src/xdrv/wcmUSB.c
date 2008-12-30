@@ -526,15 +526,21 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 
 		if (common->tablet_id == 0x9A || common->tablet_id == 0x93)
 		{
-			char *s = xf86FindOptionValue(local->options, "Touch");
-			if ( !s || (strstr(s, "on")) )  /* touch option is on */
-			{
-				common->wcmTouch = 1;
-			}
-
 			/* TouchDefault was off for all devices */
-			/* defaults to enable when touch is supported */
+			/* except when touch is supported */
 			common->wcmTouchDefault = 1;
+			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+
+			/* check if touch was turned off in xorg.conf */
+			common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
+			if ( common->wcmTouch )
+				xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+
+			/* Tablet PC button applied to the whole tablet. Not just one tool */
+			common->wcmTPCButton = xf86SetBoolOption(local->options, 
+					"TPCButton", common->wcmTPCButtonDefault);
+			if ( common->wcmTPCButton )
+				xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
 		}
 	}
 
@@ -690,10 +696,10 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 	if (IsTouch(priv) && common->wcmMaxX && common->wcmMaxY)
 	{
-		common->wcmTouchResolX = common->wcmMaxTouchX *
-			common->wcmResolX / common->wcmMaxX;
-		common->wcmTouchResolY = common->wcmMaxTouchY *
-			common->wcmResolY / common->wcmMaxY;
+		common->wcmTouchResolX = (int)((double)(common->wcmMaxTouchX *
+			common->wcmResolX) / (double)common->wcmMaxX + 0.5);
+		common->wcmTouchResolY = (int)((double)(common->wcmMaxTouchY *
+			common->wcmResolY) / (double)common->wcmMaxY + 0.5);
 		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
 		{
 			ErrorF("WACOM: touch max value(s) was wrong MaxTouchY"
@@ -794,7 +800,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	if (common->wcmEventCnt >=
 		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
 	{
-		ErrorF("usbParse: Exceeded event queue (%d)\n",
+		ErrorF("usbParse: Exceeded event queue (%d) \n",
 				common->wcmEventCnt);
 		common->wcmEventCnt = 0;
 		common->wcmLastToolSerial = 0;
@@ -889,7 +895,8 @@ static void usbParseEvent(LocalDevicePtr local,
 	{
 		/* this should never happen in normal use */
 		ErrorF("usbParse: Exceeded channel count; "
-			"ignoring.\n");
+			"ignoring the events.\n");
+		common->wcmEventCnt = 0;
 		return;
 
 	}

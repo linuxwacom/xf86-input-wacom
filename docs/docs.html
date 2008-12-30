@@ -54,7 +54,7 @@
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Apr 26, 2008</td></tr>
+</td><td class="menu" align="right">Dec 08, 2008</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -86,97 +86,8 @@ distributions.  As of December 2002, this project has transformed into
 the Linux Wacom Project.  Work on this
 document is on-going so if you find an error, have a question, or have
 something to add, please send an email to: 
-</a><a href="mailto:linuxwacom-discuss@lists.sf.net?subject=LinuxWacom">linuxwacom-discuss@lists.sf.net</a>.<a name="success">
-</a></p><h2><a name="success">1.1 - Success Stories</a></h2>
-<p><a name="success">This page documents different distributions tested by myself or 
-reported from the users in the discussion mailing list. If you have 
-success stories for a distribution or version not mentioned, let me 
-know so I can update the page.
-
-</a></p><ul>
-<a name="success">	</a><li><a name="success"> Redhat
-	</a><ul>
-<a name="success">		</a><li><a name="success"> Fedora Core 5 - tested on kernel 2.6.16 &amp; 2.6.17, X.org 7.0.0. See </a><a href="http://linuxwacom.sourceforge.net/minihowto">Mini-Howto</a>
-(It has been reported that the new kernel update, 2.6.18-1.2200.fc5,
-has problem with input devices. Please DO NOT update to
-2.6.18-1.2200.fc5) </li><li> Fedora Core 4 - tested on kernel 2.6.14 &amp; 2.6.12, X.org 6.8
-		</li><li> Fedora Core 3 - tested on kernel 2.6.11-1.14_FC3 &amp; 2.6.9, X.org 6.8 (see <a href="#debwacomnosrc">Building wacom driver On Fedora Core 3</a>)
-		</li><li> Fedora Core 2 final - tested on kernel 2.6.5-1.358
-		</li><li> Fedora Core 2 test1 - tested on kernel 2.6.1-1
-		</li><li> Fedora Core 1 - tested on kernel ???
-		</li><li> Redhat 9.0 - tested on kernel 2.4.20-6, 2.4.22, 2.4.24, 2.6.0, &amp; 2.6.2
-		</li><li> Redhat 8.0 - tested on kernel 2.4.18-17.8.0, 2.4.18-18.8.0, 2.4.18-19.8.0, &amp; 2.4.18-24.8.0
-		</li><li> Redhat 7.3 - tested on kernel 2.4.18-17.7.x
-		</li><li> Redhat 7.2 - tested on kernel 2.4.18-17.7.x
-		</li><li> Redhat Enterprise Linux 3 - tested on kernel 2.4.21-4
-		</li><li> Redhat Enterprise Linux 4 - tested on kernel 2.6.9
-
-	</li></ul>
-	</li><li> Mandrake
-	<ul>
-		<li> Mandriva 2006 32bit december club - tested on 2.6.12-12mdksmp X.org 6.9.0
-		</li><li> Mandriva 2006 (Powerpack) - tested on 2.6.12-12mdksmp X.org 6.8.99.900 (6.9.0 RC 0)
-		</li><li> Mandrake 10.0 - tested on 2.6.3 and X?
-		</li><li> Mandrake 9.1
-		</li><li> Mandrake 9.0 - tested on ???
-		</li><li> Mandrake 8.2 - tested on kernel 2.4.18-6mdk
-	</li></ul>
-	</li><li> Gentoo
-	<ul>
-		<li> Gentoo 2005.0, Xorg-X11 6.8.2-r4 &amp; 6.8.2-r1, linux-2.6.13-gentoo-r3 &amp; linux-2.6.11-gentoo-r6
-		</li><li> Gentoo 2004.2, Xorg-X11 6.7.0, linux-2.6.8-rc3-mm2
-		</li><li> Gentoo 2004.1, Xorg-X11 6.7.0, kernel 2.4.25 &amp; 2.6.5
-		</li><li> Gentoo 1.4rc,  XFree86 4.2.0,  kernel 2.4.19
-		</li><li> Gentoo 1.4,  XFree86 4.3.0-r5, kernel 2.6.3 (<b>can not run wacomcpl and xsetwacom</b>)
-	</li></ul>
-	</li><li> Debian
-	<ul>
-		<li>Debian (sid) - XFree86 4.3 on 2.6.6 (see <a href="#debwcmdrv">Installing wacom driver On Debian</a>)
-		</li><li>Debian (sid) - XFree86 4.3(?) on 2.6.0 (<b>can not run wacomcpl and xsetwacom</b>)
-		</li><li>Mepis 200310 (Debian unstable) - XFree86 4.3 on 2.4.22
-		</li><li>Debian Woody - XFree86 4.2 on 2.4.20
-		</li><li>Debian Stable 3.0 - XFree86 4.3 on 2.4.18 (<b>can not run wacomcpl and xsetwacom</b>)
-		</li><li>Debian Stable - XFree86 4.1 
-	</li></ul>
-	</li><li> Slackware
-	<ul>
-		<li>Slackware 10.2, kernel 2.6.16.9
-		</li><li>Slackware 10.2, kernel 2.4.31
-		</li><li>Slackware 10.1, kernel 2.6.11-rc4 &amp; 2.4.29,  X.org 6.8.2
-		</li><li>Slackware 10.0, kernel 2.4.26,  X.org 6.7.0
-		</li><li>Slackware 9.1, with 2.4.22
-		</li><li>Slackware 9.0
-		</li><li>Slackware 8.1, (standard release)
-	</li></ul>
-	</li><li> SuSE
-	<ul>
-		<li>Suse Linux 9.3, kernel 2.6.11.4-21.8
-		</li><li>Suse Linux 9.2 Pro, kernel 2.6.8,  X.org 6.8.1 (see <a href="#susewacom">Building wacom driver On Suse 9.2</a>)
-		</li><li>Suse Linux 9.1, kernel 2.6.4 &amp; 2.6.5,  XFree 4.3.99 (4.4.0 RC 2)
-		</li><li>Suse Linux 8.0, kernel 2.4.18, XFree 4.2
-	</li></ul>
-	</li><li> Ubuntu
-	<ul>
-		<li>Ubuntu 6.06 Dapper Drake (refer to <a href="https://wiki.ubuntu.com/Wacom">Ubuntu Wiki - Wacom </a> for details)
-		</li><li>Ubuntu 5.04 (Hoary), kernel 2.6.10-5, X.Org 6.8.2-10
-		</li><li>Ubuntu Breezy, kernel 2.6.12, X.Org 6.8
-	</li></ul>
-	</li><li> FreeBSD
-	<ul>
-		<li>version 4.10, serial only
-	</li></ul>
-	</li><li> Source Mage
-	<ul>
-		<li>gcc 3.2.2, Linux 2.4.21-pre4-ac3, XFree86 4.2.1 and 4.3.0
-	</li></ul>
-	</li><li> PowerMac
-	<ul>
-		<li>Yellow Dog Linux 3.0.1 [Redhat variant for PPC] (see 
-	<a href="#ppcwcmdrv">Building wacom driver On PowerMac</a>)
-	</li></ul>
-</li></ul>
-<a name="howto">
-</a><h2><a name="howto">1.2 - How To Use This Document</a></h2>
+</a><a href="mailto:linuxwacom-discuss@lists.sf.net?subject=LinuxWacom">linuxwacom-discuss@lists.sf.net</a>.<a name="howto">
+</a></p><h2><a name="howto">1.1 - How To Use This Document</a></h2>
 <p><a name="howto">In terms of document organization, if you have not figured it out already,
 you can browse the document one page at a time, or you can click on the
 </a><a href="http://linuxwacom.sourceforge.net/index.php/howto/all">ALL</a> link and view the entire
@@ -205,7 +116,7 @@ ignore the tablet until we're ready.   Otherwise, X will just get in the way.
 intact, print this out, switch to runlevel 3, and follow along from the
 console.  An HTML version of this document can be found in the docs directory at <a href="http://linuxwacom.cvs.sourceforge.net/linuxwacom/linuxwacom-dev/docs/">docs.html</a>.  
 <a name="theory">
-</a></p><h2><a name="theory">1.3 - Wacom Driver Theory of Operation</a></h2>
+</a></p><h2><a name="theory">1.2 - Wacom Driver Theory of Operation</a></h2>
 <p><a name="theory">Wacom tablets are available in serial and USB configurations.  They are
 also sold as embedded products in certain tablet PC's.  I will cover all
 three types, but the serial case is the most straightforward,
@@ -282,19 +193,12 @@ the USB kernel driver to the gimp application.
 <p><a name="starthere">This section is devoted to preparing your system for the installation.
 Every distribution handles kernel modules and file locations a bit differently,
 so the goal here is to return everything to a known state.
-In some cases, your distribution may have automatically loaded certain
-modules which you will now need to unload.
-USB users will need to pay specific attention to discussions related to
+
+</a></p><p><a name="starthere">USB users will need to pay specific attention to discussions related to
 kernel drivers and modules.  Serial tablet users have it much easier, and
-can bypass this.  Both users will need to make changes to the XFree86
+can bypass this.  Both users will need to make changes to the XFree86/Xorg
 configuration file.
 
-</a></p><p><a name="starthere"> Incidentally, some distributions detect new hardware on boot.  If you
-allow Redhat's "anaconda" for instance
-to automatically configure (or remove) your USB tablet, it may undo some of
-the settings you will make here.  Until Redhat's installation program
-recognizes Wacom tablets as non-HID devices by default, you are best off in
-my opinion to <i>not</i> allow it to configure the device.  Just a warning.
 </a><a name="beforestart">
 </a></p><h2><a name="beforestart">2.1 - Before We Start</a></h2>
 <p><a name="beforestart">From the beginning, let's make certain that we are on the
@@ -309,6 +213,10 @@ file for references to wacom, wcm, or tablet.  If X persists in trying to
 interact with the tablet, things will only be problematic later.  The log 
 file is often found at /var/log/XFree86.0.log or /var/log/Xorg.0.log.
 
+</a></p><p><a name="beforestart">To be prepared for the coming steps, it would be nice if you know what
+X server and Linux kernel versions are running on your system. The <i>X -version</i>
+command reveals those information for you.
+
 </a></p><p><a name="beforestart">If you have a USB tablet, you need to check Wacom kernel drvier first 
 </a><a href="#kernel">The USB Kernel Driver</a>.  
 Serial tablet or Tablet PC users can go directly to the next section 
@@ -316,9 +224,9 @@ Serial tablet or Tablet PC users can go directly to the next section
 <a name="download">
 </a></p><h2><a name="download">2.2 - Downloading the Code</a></h2>
 
-<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0.tar.bz2">linuxwacom-0.8.0.tar.bz2</a> is the stable package and contains
+<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a> is the stable package and contains
 files that you will need to get your serial or USB tablet working.  The
-current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.9-11.tar.bz2">linuxwacom-0.7.9-11.tar.bz2</a> is also available and may be
+current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.1-6.tar.bz2">linuxwacom-0.8.1-6.tar.bz2</a> is also available and may be
 used by people who are willing to help test new features.  I will never put a 
 beta package on this site that I am not running myself on my primary 
 development machine.  So you can be certain that if there are any obvious
@@ -327,9 +235,9 @@ show stoppers, they will be fixed before you get to see them.
 </p><p>Unpacking the tarball is usually a one-step process, but I show both
 steps in case the typical -jxf option doesn't work with tar.
 
-</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.0.tar.bz2
-[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.0.tar
-[jej@ayukawa jej]$ cd linuxwacom-0.8.0</pre></blockquote>
+</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.2.tar.bz2
+[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.2.tar
+[jej@ayukawa jej]$ cd linuxwacom-0.8.2</pre></blockquote>
 
 Once in the package directory, you need only to configure and build the code.
 This is described in more detail as you continue.  The executables and 
@@ -340,7 +248,7 @@ installation procedures depend on the kernel source you use.
 and release dates.  Otherwise, let's continue.
 
 
-</p><h3>Stable files included for linuxwacom-0.8.0:</h3>
+</p><h3>Stable files included for linuxwacom-0.8.2:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th align="left">Comment</th></tr>
 <tr><td valign="top">configure</td><td valign="top">- configure script for distribution independent builds</td></tr>
@@ -381,9 +289,9 @@ and release dates.  Otherwise, let's continue.
 <tr><td valign="top">src/2.4.30x86-64/evdev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
 <tr><td valign="top">src/2.4.30x86-64/mousedev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
 <tr><td valign="top">src/2.6.x/wacom.c</td><td valign="top">- replacement kernel driver for kernel 2.6.x where x can be 8 to 10</td></tr>
-<tr><td valign="top">src/2.6.x/wacom_sys.c</td><td valign="top">- wacom kernel driver specific to each major kernel release, where x can be 11 to 19</td></tr>
-<tr><td valign="top">src/2.6.x/wacom_wac.c</td><td valign="top">- wacom kernel driver processes tablet specific information, where x can be 16 or 19</td></tr>
-<tr><td valign="top">src/2.6.x/wacom.h</td><td valign="top">- wacom kernel driver header specific to each major kernel release, where x can be 11 to 19</td></tr>
+<tr><td valign="top">src/2.6.x/wacom_sys.c</td><td valign="top">- wacom kernel driver specific to each major kernel release, where x can be 11 to 27</td></tr>
+<tr><td valign="top">src/2.6.x/wacom_wac.c</td><td valign="top">- wacom kernel driver processes tablet specific information, where x can be 16 or 27</td></tr>
+<tr><td valign="top">src/2.6.x/wacom.h</td><td valign="top">- wacom kernel driver header specific to each major kernel release, where x can be 11 to 27</td></tr>
 <tr><td valign="top">src/2.6.16/wacom_wac.h</td><td valign="top">- part of wacom kernel driver header for tablet specific declaration and definitions </td></tr>
 <tr><td valign="top">src/2.6.x/hid-core.c</td><td valign="top">- replacement kernel driver for kernel 2.6.x where x can be 8 to 16, use only if needed</td></tr>
 <tr><td valign="top">src/xdrv/xf86Wacom.c</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. Binary available in prebuilt directory.</td></tr>
@@ -407,7 +315,8 @@ and release dates.  Otherwise, let's continue.
 <h3>Stable Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0.tar.bz2">linuxwacom-0.8.0.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-04-25</td><td valign="top">Support:
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-12-04</td><td valign="top">Support: USB Tablet PC with and without touch; kernels up to 2.6.27; Bamboo1 and Monarch; new wacomcpl features.</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0-3.tar.bz2">linuxwacom-0.8.0-3.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-05-23</td><td valign="top">Support:
 kernels up to 2.6.25; Keystrokes for both buttons and expresskeys; New
 tablets: Bamboo series and Cintiq 12WX &amp; 20WSX, and so much more
 that you can not afford to miss.</td></tr>
@@ -432,7 +341,8 @@ programs for x86_32 and x86_64 systems. Adds many new xsetwacom options.</td></t
 <h3>Beta Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.9-11.tar.bz2">linuxwacom-0.7.9-11.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-4-11</td><td valign="top">Support
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.1-6.tar.bz2">linuxwacom-0.8.1-6.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-10-24</td><td valign="top">Support USB Tablet PC with and without touch. Support kernel 2.6.27</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.9-11.tar.bz2">linuxwacom-0.7.9-11.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-04-11</td><td valign="top">Support
 kernel 2.6.22 &amp; 2.6.24. Temporary workaround for Xorg 7.3. Support
 Bamboo series and Cintiq 12WX &amp; 20WSX. Updated wacomcpl for
 keystrokes. Support serial Tablet PC with touch.</td></tr>
@@ -590,19 +500,19 @@ for future readers.
 </a><a name="install">
 </a></p><h2><a name="install">2.4 - Install from Prebuilt </a></h2>
 
-<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.8.0/prebuilt;  one for x86-32 
+<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.8.2/prebuilt;  one for x86-32 
 systems, the other for x86-64 systems.  
 
 </a></p><p><a name="install">If you don't plan to change anything in the driver, following steps will install the prebuilt files for you:
 
-</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.0/prebuilt
+</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.2/prebuilt
 [jej@ayukawa prebuilt]$ su
 [jej@ayukawa prebuilt]# ./uninstall
 [jej@ayukawa prebuilt]# ./install
 </a></pre></blockquote>
 
 <p><a name="install">Serial tablet (most Tablet PCs are serial) users can skip the rest 
-sections and go to </a><a href="#wacdump">Using wacdump</a> page for details on viewing the tablet output now.  
+sections and go to </a><a href="#wacdump">Viewing Wacom Data (wacdump)</a> page for details on viewing the tablet output now.  
 
 </p><p>If you use an older USB tablet and your running kernel was
 released 6 months later than your tablet was first seen in market, you
@@ -977,7 +887,7 @@ checking for ld used by g++... /usr/bin/ld -m elf_x86_64
 <a name="kernel">
 </a><h1><a name="kernel">3.0 - The USB Kernel Driver</a></h1>
 <p><a name="kernel">Serial tablet users rejoice: you can skip this entire section.  Please
-go to the </a><a href="#wacdump">Using wacdump</a> page for details on viewing the tablet output.
+go to the </a><a href="#wacdump">Viewing Wacom Data (wacdump)</a> page for details on viewing the tablet output.
 USB users stay put; we need to tweak your kernel.
 
 </p><p>Kernel modules must be recompiled for each new kernel so I can't
@@ -1053,22 +963,22 @@ The exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="testtablet">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Apr 26 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Apr 26 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Apr 26 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
-Apr 26 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
-Apr 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
-Apr 26 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
+Dec 08 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Dec 08 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Dec 08 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
+Dec 08 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
+Dec 08 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
+Dec 08 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
 </a></pre>
 <pre class="diff"><a name="testtablet">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Apr 26 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Apr 26 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Apr 26 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Apr 26 21:28:39 sasami kernel: usb.c: registered new driver hid
-Apr 26 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 26 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Apr 26 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Dec 08 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Dec 08 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Dec 08 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Dec 08 21:28:39 sasami kernel: usb.c: registered new driver hid
+Dec 08 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Dec 08 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Dec 08 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -1085,24 +995,21 @@ driver <i>did not get control</i>.  Either hid or usbmouse did.
 <pre></pre></pre></blockquote>
 <a name="newwacom">
 </a><h2><a name="newwacom">3.2 - Updated wacom.c</a></h2>
-<p><a name="newwacom">The wacom.c driver that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0.tar.bz2">linuxwacom-0.8.0.tar.bz2</a> supports Bamboo, which will be available in kernel version 2.6.23. 
+<p><a name="newwacom">The wacom kernel driver (wacom_wac.c and wacom_sys.c) that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a> supports USB Tablet PC, Bamboo1 Medium, and Monarch, which will be available in kernel version 2.6.28. 
 
 </p><p>The driver also added a few new xsetwacom commands that help you change X driver settings from user space.
 
-</p><div class="diff">On newer kernel versions, 2.6.8 or later, you can
-link Wacom USB tablet to "/dev/input/wacom". It can be done by adding
-the following rules in /etc/udev/rules.d/10-wacom.rules. Some
-distributions use a different number for the file name. Please look for
-proper one with wacom under /etc/udev/rules.d.
-<blockquote><pre>KERNEL=="event*", SYSFS{idVendor}=="056a", NAME="input/%k", SYMLINK="input/wacom" 
+</p><div class="diff">
+<p>On kernel versions 2.6.8 or later, you can link Wacom USB tablet to "/dev/input/wacom".  
+It can be done by adding the following rules in /etc/udev/rules.d/60-wacom.rules.  
+Some distributions use a different number for the file name. Please look for proper one 
+with wacom under /etc/udev/rules.d.
+</p><blockquote><pre>KERNEL=="event*", ATTRS{idVendor}=="056a", SYMLINK="input/wacom" 
 </pre></blockquote>
 </div>
 
 <div class="diff">
-<p>Some Fedora Core and RHEL releases use SYSFS{manufacturer}="WACOM" 
-instead of SYSFS{idVendor}=="056a" in the file, which is wrong. You need 
-to modify it. Some can not translate NAME="input/%k". You need to remove 
-it. 
+<p> On older kernels, SYSFS is used instead of ATTRS.
 </p></div>
 
 <p>If you have more than one Wacom tablets plugged on the system, specify  the link with product id is recommanded (refer to <a href="#testtablet">Testing Tablet Detection</a> to see the ways to get your tablet's product id). Below is an example from Debian GNU/Linux distribution:
@@ -1114,69 +1021,96 @@ it.
 #
 # Should you do so, PLEASE CO-ORDINATE ANY CHANGES OR ADDITIONS
 # of new devices with Ron <ron@debian.org> so that we can try
-# to present users with with a standard set of device nodes
+# to present users with a standard set of device nodes
 # which they can rely on across the board.
 
-# Convenience link for the common case of a single tablet.
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYMLINK="input/wacom"
-
-# You probably won't need this IMPORT rule, since an earlier file is
-# likely to have already done it, but the rule that follows it does
-# depend on that having happened to set ID_PATH.
-# IMPORT{program}="path_id %p"
+KERNEL!="event[0-9]*", GOTO="wacom_end"
 
 # Port specific link for users of multiple tablets of the same type.
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", ENV{ID_PATH}=="?*", SYMLINK+="input/by-path/$env{ID_PATH}-wacom"
+# The ID_PATH variable is set by the "path_id" script in an earlier rule file.
+ATTRS{idVendor}=="056a", ENV{ID_PATH}=="?*", SYMLINK="input/by-path/$env{ID_PATH}-wacom"
+
+# Multiple interface support for stylus and touch devices.
+DRIVERS=="wacom", ATTRS{bInterfaceNumber}=="00", ENV{WACOM_TYPE}="stylus"
+DRIVERS=="wacom", ATTRS{bInterfaceNumber}=="01", ENV{WACOM_TYPE}="touch"
 
 # Type-named links for multiple tablets.  If you want to use multiple
 # tablets of the _same_ type, you will probably need to use the links
 # from /dev/input/by-path to identify which is plugged into what usb
-# port.  For different types though, just pick your links from the
-# list below.
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0000", SYMLINK+="input/tablet-penpartner"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0010", SYMLINK+="input/tablet-graphire"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0011", SYMLINK+="input/tablet-graphire2-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0012", SYMLINK+="input/tablet-graphire2-5x7"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0013", SYMLINK+="input/tablet-graphire3"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0014", SYMLINK+="input/tablet-graphire3-6x8"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0015", SYMLINK+="input/tablet-graphire4-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0016", SYMLINK+="input/tablet-graphire4-6x8"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0060", SYMLINK+="input/tablet-volito"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0061", SYMLINK+="input/tablet-penstation2"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0062", SYMLINK+="input/tablet-volito2-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0063", SYMLINK+="input/tablet-volito2-2x3"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0064", SYMLINK+="input/tablet-penpartner2"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0065", SYMLINK+="input/tablet-bamboo"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0020", SYMLINK+="input/tablet-intuos-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0021", SYMLINK+="input/tablet-intuos-6x8"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0022", SYMLINK+="input/tablet-intuos-9x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0023", SYMLINK+="input/tablet-intuos-12x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0024", SYMLINK+="input/tablet-intuos-12x18"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0030", SYMLINK+="input/tablet-pl400"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0031", SYMLINK+="input/tablet-pl500"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0032", SYMLINK+="input/tablet-pl600"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0033", SYMLINK+="input/tablet-pl600sx"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0034", SYMLINK+="input/tablet-pl550"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0035", SYMLINK+="input/tablet-pl800"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0037", SYMLINK+="input/tablet-pl700"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0038", SYMLINK+="input/tablet-pl510"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0039", SYMLINK+="input/tablet-dtu710"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c0", SYMLINK+="input/tablet-dtf521"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c4", SYMLINK+="input/tablet-dtf720"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0003", SYMLINK+="input/tablet-cintiq_partner"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0041", SYMLINK+="input/tablet-intuos2-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0042", SYMLINK+="input/tablet-intuos2-6x8"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0043", SYMLINK+="input/tablet-intuos2-9x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0044", SYMLINK+="input/tablet-intuos2-12x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0045", SYMLINK+="input/tablet-intuos2-12x18"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b0", SYMLINK+="input/tablet-intuos3-4x5"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b1", SYMLINK+="input/tablet-intuos3-6x8"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b2", SYMLINK+="input/tablet-intuos3-9x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b3", SYMLINK+="input/tablet-intuos3-12x12"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b4", SYMLINK+="input/tablet-intuos3-12x19"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b5", SYMLINK+="input/tablet-intuos3-6x11"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="003f", SYMLINK+="input/tablet-cintiq21ux"
-KERNEL=="event[0-9]*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0047", SYMLINK+="input/tablet-intuos2-6x8a"
+# port.  For different tablet types though, just pick your links from
+# the list below.
+#
+# We override SYMLINK for tabletpc devices because the by-path link
+# is not required with such devices, there will only ever be one.
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0000", SYMLINK+="input/tablet-penpartner"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0003", SYMLINK+="input/tablet-cintiq_partner"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0010", SYMLINK+="input/tablet-graphire"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0011", SYMLINK+="input/tablet-graphire2-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0012", SYMLINK+="input/tablet-graphire2-5x7"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0013", SYMLINK+="input/tablet-graphire3"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0014", SYMLINK+="input/tablet-graphire3-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0015", SYMLINK+="input/tablet-graphire4-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0016", SYMLINK+="input/tablet-graphire4-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0017", SYMLINK+="input/tablet-bamboofun-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0018", SYMLINK+="input/tablet-bamboofun-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0019", SYMLINK+="input/tablet-bamboo1-medium"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0020", SYMLINK+="input/tablet-intuos-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0021", SYMLINK+="input/tablet-intuos-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0022", SYMLINK+="input/tablet-intuos-9x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0023", SYMLINK+="input/tablet-intuos-12x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0024", SYMLINK+="input/tablet-intuos-12x18"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0030", SYMLINK+="input/tablet-pl400"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0031", SYMLINK+="input/tablet-pl500"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0032", SYMLINK+="input/tablet-pl600"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0033", SYMLINK+="input/tablet-pl600sx"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0034", SYMLINK+="input/tablet-pl550"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0035", SYMLINK+="input/tablet-pl800"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0037", SYMLINK+="input/tablet-pl700"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0038", SYMLINK+="input/tablet-pl510"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0039", SYMLINK+="input/tablet-dtu710"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="003f", SYMLINK+="input/tablet-cintiq21ux"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0041", SYMLINK+="input/tablet-intuos2-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0042", SYMLINK+="input/tablet-intuos2-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0043", SYMLINK+="input/tablet-intuos2-9x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0044", SYMLINK+="input/tablet-intuos2-12x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0045", SYMLINK+="input/tablet-intuos2-12x18"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0047", SYMLINK+="input/tablet-intuos2-6x8a"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0060", SYMLINK+="input/tablet-volito"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0061", SYMLINK+="input/tablet-penstation2"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0062", SYMLINK+="input/tablet-volito2-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0063", SYMLINK+="input/tablet-volito2-2x3"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0064", SYMLINK+="input/tablet-penpartner2"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0065", SYMLINK+="input/tablet-bamboo"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0069", SYMLINK+="input/tablet-bamboo1"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0081", SYMLINK+="input/tablet-graphire_bt-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0090",  SYMLINK="input/tablet-tpc90"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0093",  SYMLINK="input/tablet-tpc93-$env{WACOM_TYPE}"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="009a",  SYMLINK="input/tablet-tpc9a-$env{WACOM_TYPE}"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b0", SYMLINK+="input/tablet-intuos3-4x5"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b1", SYMLINK+="input/tablet-intuos3-6x8"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b2", SYMLINK+="input/tablet-intuos3-9x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b3", SYMLINK+="input/tablet-intuos3-12x12"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b4", SYMLINK+="input/tablet-intuos3-12x19"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b5", SYMLINK+="input/tablet-intuos3-6x11"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c0", SYMLINK+="input/tablet-dtf521"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c4", SYMLINK+="input/tablet-dtf720"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c5", SYMLINK+="input/tablet-cintiq20wsx"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c6", SYMLINK+="input/tablet-cintiq12wx"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c7", SYMLINK+="input/tablet-dtu1931"
+
+# Convenience links for the common case of a single tablet.  We could do just this:
+#ATTRS{idVendor}=="056a", SYMLINK+="input/wacom-$env{WACOM_TYPE}"
+# but for legacy reasons, we keep the input/wacom link as the generic stylus device.
+ATTRS{idVendor}=="056a", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/wacom"
+ATTRS{idVendor}=="056a", ENV{WACOM_TYPE}=="touch", SYMLINK+="input/wacom-touch"
+
+# Check and repossess the device if a module other than the wacom one
+# is already bound to it.
+ATTRS{idVendor}=="056a", ACTION=="add", RUN+="check_driver wacom $devpath $env{ID_BUS}"
+
+LABEL="wacom_end"
+
+
 </ron@debian.org></pre></blockquote>
 </div>
 
@@ -1369,12 +1303,12 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Apr 26 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Apr 26 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Apr 26 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Apr 26 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Apr 26 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 26 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
+Dec 08 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Dec 08 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Dec 08 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Dec 08 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Dec 08 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Dec 08 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
 
 </pre></blockquote>
 
@@ -1505,17 +1439,17 @@ if it cannot find the one you have specified.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Apr 26 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Apr 26 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.0</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Apr 26 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Dec 08 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Dec 08 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Dec 08 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.43.  This version number
-is 1.43-0.8.0 so the correct driver was loaded.</a></p>
+is 1.43-0.8.2 so the correct driver was loaded.</a></p>
 <a name="buildhid">
 </a><h2><a name="buildhid">3.8 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.4)</a></h2>
 
-<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0.tar.bz2">linuxwacom-0.8.0.tar.bz2</a>
+<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a>
 file, you will find mousedev.c, usbmouse.c, hid-core.c, evdev.c, and
 input.c files which have special exceptions for wacom. These files are
 not built by default, so you will need to reconfigure the package and
@@ -1574,7 +1508,7 @@ files to get .o.gz files.</span>
 <a name="buildhid6">
 </a><h2><a name="buildhid6">3.9 - Building (usb)hid.ko (for kernel 2.6)</a></h2>
 
-<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0.tar.bz2">linuxwacom-0.8.0.tar.bz2</a>
+<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a>
 file, you will find hid-core.c, which have special exceptions for
 wacom. This file is not built by default, so you will need to
 reconfigure the package and run make again. </p><p class="diff">Note, for kernel 2.6.18 and later, no need to build hid any more. For other kernels, refer to <a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
@@ -1687,7 +1621,7 @@ can go on to solutions.
 </a></p><p><a name="newtablet">The next section assumes you have things working up to this point.
 
 </a><a name="viewdata">
-</a></p><h2><a name="viewdata">3.11 - Viewing the Raw Data</a></h2>
+</a></p><h2><a name="viewdata">3.11 - Viewing the Raw Data (xxd)</a></h2>
 <p><a name="viewdata">View the raw data from the tablet, by returning to the /dev/input 
 directory and streaming the data directly from the device.  Be patient 
 here because this is where a lot of people are getting stuck.
@@ -1714,10 +1648,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# /sbin/rmmod wacom
 [jej@sasami root]# /sbin/modprobe wacom       (or /sbin/insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Apr 26 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Apr 26 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Apr 26 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Apr 26 17:31:35 sasami kernel: wacom.c: v1.43-0.8.0 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Dec 08 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Dec 08 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Dec 08 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Dec 08 17:31:35 sasami kernel: wacom.c: v1.43-0.8.2 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -1739,7 +1673,7 @@ You should get streams of data when the mouse and pen are moved
 around the surface of the tablet.  It is this device that X will
 look at for mouse movement.  Use Ctrl-C to exit xxd.
 </a><a name="wacdump">
-</a></p><h1><a name="wacdump">4.0 - Using wacdump</a></h1>
+</a></p><h1><a name="wacdump">4.0 - Viewing Wacom Data (wacdump)</a></h1>
 <p><a name="wacdump">The wacdump program parses and displays raw data from the Linux event
 subsystem or serial port.  It is very handy for verifying that your
 tablet works without having to hassle with X server.  Generally, you
@@ -1880,17 +1814,17 @@ or the simple GUI control panel <a href="#wacomcpl">wacomcpl</a> while Wacom dri
 
 </p><p>However, adding the InputDevice sections to your XF86Config/
 xorg.conf file for Wacom devices is required. You should add these 
-devices to the <a href="#srvlayout">ServerLayout</a> section of your XF86Config/xorg.conf file too.
+devices to the <a href="#srvlayout">ServerLayout</a> section of your XF86Config/xorg.conf 
+file too.
 
-</p><p>We assume you are running Either XFree86 4.2 or later Or Xorg.   <span class="diff">On
-some distributions, this file is called XF86Config-4. Notice that the
-serial and USB configurations are different, so only include the
-appropriate lines. The default serial and USB devices are given. For
-Tablet PCs, options "Device" and "ForceDevice" should be included. You
+</p><p>We assume you are running Either XFree86 4.2 or later Or Xorg.   
+<span class="diff">On some distributions, this file is called XF86Config-4.  
+Notice that the serial and USB configurations are different, so only 
+include the appropriate lines.  The default serial and USB devices are given. 
+For Tablet PCs, options "Device" and "ForceDevice" should be included.  You
 should also change the device (e.g. ttyS0) to the correct one for your
-tablet. Tablet PC and Cintiq/PL/DTF models don't support cursor type. </span>  All the new driver options are listed in the manual page below.
-
-
+tablet. Tablet PC and Cintiq/PL/DTF models don't support cursor type. 
+</span>  All the new driver options are listed in the manual page below.
 
 
 </p><blockquote><pre>Section "InputDevice"
@@ -1900,7 +1834,7 @@ tablet. Tablet PC and Cintiq/PL/DTF models don't support cursor type. </span>  A
   <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
   Option        "Type"          "stylus"
   <b>Option        "USB"           "on"                  # USB ONLY</b>
-  <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
+  <b>Option        "ForceDevice"   "ISDV4"               # Serial Tablet PC ONLY</b>
 EndSection
 
 Section "InputDevice"
@@ -1910,7 +1844,7 @@ Section "InputDevice"
   <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
   Option        "Type"          "eraser"
   <b>Option        "USB"           "on"                  # USB ONLY</b>
-  <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
+  <b>Option        "ForceDevice"   "ISDV4"               # Serial Tablet PC ONLY</b>
 EndSection
 
 Section "InputDevice"
@@ -1920,7 +1854,7 @@ Section "InputDevice"
   <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
   Option        "Type"          "cursor"
   <b>Option        "USB"           "on"                  # USB ONLY</b>
-  <b>Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY</b>
+  <b>Option        "ForceDevice"   "ISDV4"               # Serial Tablet PC ONLY</b>
 EndSection
 
 <b># This section is for Intuos3, CintiqV5, Graphire4, or Bamboo</b>
@@ -1940,7 +1874,7 @@ Section "InputDevice"
   <b>Option        "Device"        "/dev/ttyS0"          # SERIAL ONLY</b>
   <b>Option        "Device"        "/dev/input/event0"   # USB ONLY</b>
   Option        "Type"          "touch"
-  Option        "ForceDevice"   "ISDV4"               # Tablet PC ONLY
+  <b>Option        "ForceDevice"   "ISDV4"               # Serial Tablet PC ONLY</b>
   <b>Option        "USB"           "on"                  # USB ONLY</b>
 EndSection
 </pre></blockquote>
@@ -1949,9 +1883,9 @@ EndSection
 to XInput.  Notice that all four reference the same device /dev/ttyS0 or
 /dev/input/event0 depending on whether its a serial or USB tablet.
 
-</p><p>The configuration options listed by your system's man page may
-be way out of date. Below is an updated wacom man page which will be
-installed by default when you issue <i>make install</i>. </p>
+</p><p>The configuration options listed by your system's man page may be way out of date.  
+Below is an updated wacom man page which will be installed by default when you issue 
+<i>make install</i>. </p>
 
 <blockquote><pre>WACOM(4)                                                              WACOM(4)
 
@@ -1989,16 +1923,17 @@ CONFIGURATION DETAILS
        supports the following entries:
 
                Option "Type" "stylus"|"eraser"|"cursor"|"touch"|"pad"
-                   sets the type of tool the device represents.  This option is
-                   mandatory. The core options, such as "SendCoreEvents" or "AlwaysCore", 
-                   are unnecessary in Gimp if you don't need to move system cursor 
-                   outside of Gimp drawing area.  "pad" is for Intuos 3 and  CintiqV5 
-                   ExpressKeys and menu strips, or Graphire 4 and Bamboo 
-		   tablet buttons and wheel/ring.  It is required for Intuos3, 
-                   CintiqV5, Graphire 4, or Bamboo if you want to use keystroke   
-                   features.  "pad" is reported as a second tool in the driver. 
-                   "touch" is for the tablet with touch support.  Right now only a few 
-                   Tablet PCs have this feature.
+                   sets the type of tool the device represents. This option is
+                   mandatory.  The core options,  such as  "SendCoreEvents" or
+                   "AlwaysCore",  are unnecessary in Gimp if you don't need to
+                   move system cursor outside of Gimp  drawing area.  "pad" is 
+                   for Intuos 3 and  CintiqV5  ExpressKeys and menu strips, or 
+                   Graphire 4 and Bamboo  tablet buttons and wheel/ring. It is
+                   required for Intuos3,  CintiqV5,  Graphire 4,  or Bamboo if 
+                   you want to use keystroke features. "pad" is  reported as a  
+                   second tool in the  driver.  "touch" is for the tablet with 
+                   touch support.  Right now only a few  Tablet PCs  have this
+                   feature.
 
                Option "Device" "path"
                    sets the path to the special file which  represents  serial
@@ -2012,10 +1947,10 @@ CONFIGURATION DETAILS
                    This option is mandatory for USB tablets.
 
                Option "ForceDevice" "ISDV4"
-                   tells the driver to dialog  with the  tablet the  Tablet PC
-                   way.  Right now we only support serial Tablet PC.  It is a 
-                   special Wacom IV protocol,  called ISDV4 protocol.  This 
-		   option is mandatory for Tablet PC.
+                   tells the  driver to  dialog  with the  tablet  the  serial
+                   Tablet PC way.  It is a special  Wacom IV protocol,  called
+                   ISDV4  protocol. This option is mandatory for serial Tablet 
+                   PCs only.
 
                Option "DeviceName" "name"
                    sets the name of the X device.
@@ -2026,28 +1961,29 @@ CONFIGURATION DETAILS
                    first Wacom subsection if you have multiple devices for one
                    tablet.  The default value is 2.  If you don't specify this
                    entry or your  value is  less  than  the  default  vaule or 
-                   greater than 100, the default value will be used.  To disable 
-		   suppression, the entry should be specified as 0.
+                   greater  than 100,  the  default  value  will be  used.  To 
+                   disable suppression, the entry should be specified as 0.
                    When  suppress is defined,  an event will be sent only when
                    at least one of the following conditions is met:
 
-		   the change between the current X coordinate and the previous 
+                   the  change  between  the  current  X  coordinate  and  the
+                   previous one is greater than suppress;
+
+                   the  change  between  the  current  Y  coordinate  and  the
+                   previous one is greater than suppress;
+
+                   the change between the  current pressure  and the  previous
                    one is greater than suppress;
 
-                   the change between the current Y coordinate and the previous 
-                   one is greater than suppress;
+                   the  change  between the  current  degree  of  rotation and
+                   the previous one of the transducer is greater than suppress;
 
-                   the change between the current pressure and the previous one 
-                   is greater than suppress;
-
-                   the change  between the  current  degree of rotation and the 
-                   previous one of the transducer is greater than suppress;
-
-                   the change between the current absolute wheel value and the  
+                   the change between the current absolute wheel value and the
                    previous one is equal to or greater than suppress;
 
-                   the change between the current tilt value and the previous one 
-                   is equal to or greater than suppress (if tilt is supported);
+                   the change  between the current tilt value and the previous 
+                   one  is  equal to or  greater  than  suppress  (if  tilt is
+                   supported);
 
                    relative wheel value has changed;
 
@@ -2056,39 +1992,52 @@ CONFIGURATION DETAILS
                    proximity has changed.		   
 
                Option "Mode" "Relative"|"Absolute"
-                   sets the mode of the device.  The default value for stylus and 
-                   eraser is Absolute; cursor is Relative; pad mode is decided 
-                   according to its core option due to its nature of not moving 
-                   system cursor: Relative if it is a core device; Absolute, otherwise.
+                   sets the  mode of the device.  The default value for stylus
+                   and  eraser is Absolute;  cursor is  Relative;  pad mode is
+                   decided  according to its core  option due to its nature of
+                   not moving system cursor:  Relative if it is a core device;
+                   Absolute, otherwise.
 
                Option "TopX" "number"
-                   X coordinate of the top corner of the active zone. Default to 0. 
+                   X  coordinate  of  the  top  corner  of  the  active  zone.
+                   Default to 0. 
 
                Option "TopY" "number"
-                   Y coordinate of the top corner of the active zone.  Default to 0.
+                   Y  coordinate  of  the  top  corner  of  the  active  zone. 
+                   Default to 0.
 
                Option "BottomX" "number"
-                   X coordinate of the bottom corner of the active zone.  Default 
-                   to width of the tablet.
+                   X  coordinate of  the bottom  corner  of the  active  zone.
+                   Default to width of the tablet.
 
                Option "BottomY" "number"
-                   Y coordinate of the bottom corner of the active zone.  Default 
-                   to height of the tablet.
+                   Y  coordinate  of the  bottom  corner of  the active  zone.
+                   Default to height of the tablet.
 
-               Option "ButtonsOnly" "on"
+               Option "ButtonsOnly" "on"|"off"
                    disables the device's motion events.  Default to off.
 
                Option "ButtonM" "AC"
-                   reports an action AC when button M is pressed,  where M
-                   is one of the device supported  button numbers,  it can be 1
-                   to 32. The default action reported to Xinput is mouse button M click.    
-		   To ignore the button click, i.e., to not report any button click event 
-		   to Xinput,  use "0" or "button 0".  
+                   reports an action AC  when button M is pressed,  where M is
+                   one of the device supported button numbers,  it can be 1 to
+                   32. The default action reported to Xinput is mouse button M   
+                   click.  To ignore the button click, i.e., to not report any
+                   button click event to Xinput,  use "0" or "button 0".  
 
-               Option "TPCButton" "on"
+               Option "TPCButton" "on"|"off"
                    enables the  stylus  buttons as  Tablet PC  buttons,  i.e.,
                    reports  stylus button event only  when its tip is pressed. 
-                   Default to  "on" for  Tablet PC;  "off"  for all other models.
+                   Default to "on" for Tablet PCs; "off" for all other models.
+
+               Option "Touch" "on"|"off"
+                   enables  the touch  device  for  models that  support touch
+                   feature. Default to "on" for tablets with touch; "off"  for
+                   all other models.
+
+               Option "Capacity" "number"
+                   sets  touch  sensitivity level for capacitive touch device, 
+                   where number can be  an integer from -1 to 5.  Default is 3
+                   for capacitive tools and -1 for none capacitive tools. 
 
                Option "Speed" "Rspeed"
                    sets the cursor's  relative  movement speed to Rspeed.  The
@@ -2098,10 +2047,10 @@ CONFIGURATION DETAILS
                    movement. A Rspeed too close to 0 is not recommanded.
 
                Option "Twinview" "horizontal"|"vertical"|"none"
-                   sets the  orientation of  TwinView to map the tablet to one 
-                   screen  and to be able to  move the screen  cursor from one 
-		   screen  to the  other  when tool  reaches  the  edge of the
-		   tablet.  The cursor can be constrained in a specific screen 
+                   sets the  orientation of  TwinView to map the tablet to one
+                   screen  and to be able to  move the screen  cursor from one
+                   screen  to the  other  when tool  reaches  the  edge of the
+                   tablet.  The cursor can be constrained in a specific screen 
                    if  "ScreenNo"  option is  added.   If you  want to map the
                    tablet  to the  whole  desktop,   you  should  NOT add this
                    option.  The default is "none".
@@ -2113,13 +2062,17 @@ CONFIGURATION DETAILS
                    option will be set to:
                             Option "TVResolution" "1024x768,1280x1024"
 
-                   This option is used  only when TwinView option is not none.  
-		   It is  unnecessary to add this  option if  your screens are 
+                   This option is used  only when TwinView option is not none.
+		   It is  unnecessary to add this  option if  your screens are
                    displaying in the same resolutions.
 
                Option "ScreenNo" "n"
                    In a multi-monitor environment, specifies the screen number
                    in which the cursor can move.
+
+               Option "MMonitor" "on"|"off"
+                   turns  on/off  across  monitor  movement on a  non-TwinView
+                   multi-monitor desktop. The default is "on".
 
                Option "Rotate" "CW"|"CCW"|"HALF"|"NONE"
                    rotates the tablet orientation clockwise (CCW) or anti-
@@ -2141,23 +2094,25 @@ CONFIGURATION DETAILS
                    TopY, BottomX, BottomY.
 
                Option "DebugLevel" "number"
-                   sets the level of debugging info reported for the  defined 
-                   device. There are 12 levels in use, specified by the  integers  
-                   between 1 and 12. Once it is defined, all the debug  messages  
-                   with a level less than or equal to the "number" will be logged  
-                   into /etc/X11/XFree86.0.log or /etc/X11/Xorg.0.log.
+                   sets the level of debugging info  reported for the  defined
+                   device.  There  are  12  levels  in use,  specified  by the
+                   integers  between 1 and 12.  Once it is  defined,  all  the
+                   debug  messages  with a  level  less  than or  equal to the
+                   "number"  will  be  logged  into  /etc/X11/XFree86.0.log or
+                   /etc/X11/Xorg.0.log.
 
                Option "CommonDBG" "number"
-                   sets the level of debugging info for all devices defined for the  
-                   same tablet. There are 12 levels in use, specified by the 
-                   integers between 1 and 12. Once it is defined, all the debug 
-                   messages with a level less than or equal to the "number" will 
-                   be logged into /etc/X11/XFree86.0.log or /etc/X11/Xorg.0.log.
+                   sets the level of  debugging info for all  devices  defined
+                   for the same tablet.  There are 12 levels in use, specified
+                   by the integers between 1 and 12.  Once it is defined,  all 
+                   the debug  messages with a  level less than or equal to the
+                   "number"  will  be  logged  into  /etc/X11/XFree86.0.log or 
+                   /etc/X11/Xorg.0.log.
 
                Option "CursorProx" "number"
-                   sets the max distance from tablet to stop reporting  movement 
-                   for cursor in relative mode.  Default for Intuos  series 
-                   is 10,  Graphire series (including Volitos) is 42.
+                   sets  the  max  distance  from  tablet  to  stop  reporting
+                   movement  for  cursor in relative mode.  Default for Intuos  
+                   series is 10, Graphire series (including Volitos) is 42.
 
                Option "Serial" "number"
                    sets the serial number associated with the physical device.
@@ -2289,7 +2244,7 @@ are running right, the following lines appear in my log file.
 (II) LoadModule: "wacom"
 (II) Loading /usr/X11R6/lib/modules/input/wacom_drv.o
 (II) Module wacom: vendor="The XFree86 Project"
-(II) Wacom driver level: <b>47-0.8.0</b> $
+(II) Wacom driver level: <b>47-0.8.2</b> $
 (II) XINPUT: Adding extended input device "eraser" (type: Wacom Eraser)
 (II) XINPUT: Adding extended input device "stylus" (type: Wacom Stylus)
 (II) XINPUT: Adding extended input device "cursor" (type: Wacom Cursor)
@@ -2301,8 +2256,8 @@ suppress=0
 (==) Wacom Eraser top X=0 top Y=0 bottom X=30480 bottom Y=30480
 </a></pre></blockquote>
 
-<a name="restartx">Notice the driver version 47-0.8.0 above.  This is the new stable
-wacom_drv.o driver.  The beta driver is currently 47-0.7.9-11.
+<a name="restartx">Notice the driver version 47-0.8.2 above.  This is the new stable
+wacom_drv.o driver.  The beta driver is currently 47-0.8.1-6.
 
 </a><p><a name="restartx">First things first, you should lift the mouse off the tablet and place it
 back down.  This seems to help reset things internally.  When you replace the
@@ -2342,7 +2297,7 @@ a particular device will set it as the primary pointing device.
 </a></pre></blockquote>
 
 <a name="xidump">
-</a><h1><a name="xidump">6.0 - Using xidump</a></h1>
+</a><h1><a name="xidump">6.0 - Viewing XInput Events (xidump)</a></h1>
 <p><a name="xidump">The xidump program is similar to wacdump, but it parses and displays
 event data from the XFree86 XInput extension rather than from the tablet
 itself.  This is useful for seeing what programs like gimp and gsumi are
@@ -2634,31 +2589,32 @@ int main()
 </div></blockquote>
 
 <a name="wacomcpl">
-</a><h1><a name="wacomcpl">8.0 - Using wacomcpl</a></h1>
+</a><h1><a name="wacomcpl">8.0 - GUI-Based (tcl/tk) Wacom Control Panel(wacomcpl)</a></h1>
 <p><a name="wacomcpl">wacomcpl is a simple graphic Wacom driver configuration tool.  It 
 changes the pressure sensitivity, click threshold, button functions,  
 cursor mode, speed, mapping, etc. without having to manually modify   
 XF86Config/xorg.conf file.  For Cintiq and Tablet PC users,  it is 
 also a tool to calibrate the tablet.  wacomcpl should be launched 
-when you login as yourself since .xinitrc,  a file under your home 
-directory, will be updated locally each time you run wacomcpl.  
-The .xinitrc stores the preferences you selected through wacomcpl 
-for your next login.  The goal is to give each user a chance to use 
-his/her own preference on a shared system.
+when you login as yourself since .xinitrc (or .xsession),  a file 
+under your home directory, will be updated locally each time you 
+run wacomcpl.  The .xinitrc (or .xsession) stores the preferences 
+you selected through wacomcpl for your next login.  The goal is to 
+give each user a chance to use his/her own preference on a shared system.
 
 </a></p><div class="diff">
 <p><a name="wacomcpl">If you want all users on one system to share some settings, you can 
-copy those lines started with xsetwacom in ~/.xinitrc to /etc/xinitrc. 
+copy those lines started with xsetwacom in ~/.xinitrc (or ~/.xsession) 
+to /etc/X11/xinit/xinitrc (/etc/X11/xinit/Xsession). 
 
-</a></p><p><a name="wacomcpl">If your system doesn't execute .xinitrc at login, each time after 
-exiting from wacomcpl,  you will need to copy those xsetwacom lines 
-in .xinitrc to a startup script (.bashrc, .cshrc, .profile, etc.) that 
-your system launches. You can also modify wacomcpl-exec to automate 
-this step. 
+</a></p><p><a name="wacomcpl">If your system doesn't execute .xinitrc (or .xsession) at login, each 
+time after exiting from wacomcpl,  you will need to copy those xsetwacom 
+lines in .xinitrc (or .xsession) to a startup script (.bashrc, .cshrc, 
+.profile, etc.) that your system launches. You can also modify wacomcpl-exec 
+to automate this step. 
 
-</a></p><p><a name="wacomcpl">However,  it is reported that there are older systems on which can not run wacomcpl 
-due to some XFree86 interface error.  Please check </a><a href="#success">Success Stories</a> page to see if your system is in question.  
-The workaround is to add the configuration options to your X config file, refer to <a href="#x11">Configuring X11</a> page for details.
+</a></p><p><a name="wacomcpl">However,  it is reported that there are older systems on which can not run 
+wacomcpl due to some XFree86 interface error.  The workaround is to add the 
+configuration options to your X config file, refer to </a><a href="#x11">Configuring X11</a> page for details.
 </p></div>
 
 <p><b>Running wacomcpl</b>
@@ -2672,7 +2628,7 @@ wacom_drv.(s)o. We strongly recommand to build and install the
 wacom_drv.(s)o and wacomcpl from the same release package since the out
 of sync wacom_drv.(s)o and wacomcpl may crash your X server.
 <a name="xsetwacom">
-</a></p><h1><a name="xsetwacom">9.0 - Using xsetwacom</a></h1>
+</a></p><h1><a name="xsetwacom">9.0 - Command Line Configuration Interface  (xsetwacom)</a></h1>
 <p><a name="xsetwacom">The xsetwacom is a command-line Wacom driver configuration tool.  It 
 changes the pressure sensitivity, click threshold, button functions, 
 cursor mode and speed, and much more without having to manually modify 
@@ -2807,6 +2763,9 @@ button1 (the tip) is pressed, then:
    mmonitor      on|off                   turns on/off across monitor movement on (non-TwinView) 
 				          multi-monitor desktop
    TPCButton     on|off                   turns on/off the buttons as Tablet PC buttons
+   Touch         on|off                   turns on/off Touch events (default is enable/on for tablets with touch).
+   Capacity      integer (-1 - 5)         sets the touch sensitivity level for capacitive touch device 
+					  (default is 3 for capacitive tools, -1 for none capacitive tools).
    CursorProx    integer (distance)       sets cursor distance margin for proximity-out 
 				          in distance from the tablet surface
    Rotate        none|cw|ccw|half         sets the rotation of the tablet. 
@@ -2879,10 +2838,10 @@ xsetwacom set Stylus0 TPCButton 1
 at login, you can add those xsetwacom commands into the startup script
 (.bashrc, .cshrc, .profile, etc.) that your system launches, for
 example, you should use .Xsession instead of .xinitrc on Debian.
-</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can not run on some older systems due to a XFree86 interface error.  Please check </a><a href="#success">Success Stories</a>
-page to see if your system is in question. A generic solution to this
-issue is directly adding your configuration options to the
-/etc/X11/XF86Config file. Please refer to <a href="#x11">Configuring X11</a> for details. 
+</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can
+not run on some older systems due to a XFree86 interface error. A
+generic solution to this issue is directly adding your configuration
+options to the /etc/X11/XF86Config file. Please refer to </a><a href="#x11">Configuring X11</a> for details. 
 </p></div>
 
 <p><b>More examples</b>
@@ -3028,17 +2987,84 @@ rerunning gimp was necessary before his airbrush worked correctly.  If you
 are having trouble, it's worth a shot.
 
 </a></p><p><a name="gimp">Good luck!
-</a><a name="contact">
-</a></p><h1><a name="contact">11.0 - Contacts</a></h1>
+</a><a name="gimp">
+</a></p><h1><a name="gimp">11.0 - Tablet-Screen Mapping</a></h1>
+
+<p><a name="gimp">This page explains how multi-monitor settings are
+supported and how to use the InputDevices options to setup your desired
+tablet-to-screen mapping. </a></p><p><a name="gimp">Linux Wacom X driver (wacom_drv.so) mainly
+supports three types of dual/multi-monitor setup in use with X server
+on Linux: TwinView, Xinerama, as well as non-TwinView and non-Xinerama
+case, where you normally can move the cursor from one screen to the
+other, but you can not move an application window, such as a terminal,
+from one screen to the other.
+<b>TwinView setup </b>
+
+</a></p><p><a name="gimp">By TwinView setup, we mean the two screens are configured in such a way that X "thinks" it only has one screen.  
+
+</a></p><p><a name="gimp">There are three kinds of tablet-to-screen mappings in this setup: 
+
+</a></p><p><a name="gimp">1.	map the tablet to the whole desktop; 
+</a></p><p><a name="gimp"> In this case, there is no extra option
+required in the InputDevices section for Wacom driver in your X11's
+configuration file. So this is the default state for TwinView setup.
+</a></p><p><a name="gimp">2.	map the tablet to one screen at a time, but can switch screens at wish;
+</a></p><p><a name="gimp">	Option "TwinView" is used in the InputDevices section of the X11's configuration file to configure Wacom driver. 
+
+</a></p><p><a name="gimp"> This feature was initially supported by
+Dreamwork developers. Their idea was to maximize the accuracy of the
+tablet on one screen and be able to move the cursor between screens
+without issuing a command (such as xsetwacom) or press a button (such
+as display toggle). The tradeoff is that you lost about 60 tablet count
+of points on the side that enables the screen switch. </a></p><p><a name="gimp">3.	map the tablet to a specific screen.
+</a></p><p><a name="gimp"> Option "TwinView", "TVResolution0",
+"TVResolution1", and "ScreenNo" are used in the InputDevices section of
+the X11's configuration file to configure Wacom driver . Detailed use
+of these options can be found by "man wacom".
+</a></p><div class="diff">
+<p><a name="gimp">I saw some settings with Xinerama in their xorg.conf
+files in fact fall to TwinView setup since the whole desktop is
+reported as one screen. Use <i>xsetwacom get stylus NumScreen</i> to
+see how many screen you have. You need to use this command without
+adding any screen mapping related options in your xorg.conf file.
+</a></p></div>
+
+<a name="gimp"><b>Xinerama setup </b>
+
+</a><p><a name="gimp">1.	map the tablet to the whole desktop; 
+</a></p><p><a name="gimp"> No extra option required in the InputDevices
+section for Wacom driver in your X11's configuration file to support
+this setup. It is the default state.
+</a></p><p><a name="gimp">2.	map the tablet to one screen at a time, but can switch screens with the regular mouse or a user defined button/app;
+</a></p><p><a name="gimp"> Option "MMonitor" "off" is used in the
+InputDevices section of the X11's configuration file to configure Wacom
+driver. The cursor will stay in the screen where you started to use the
+configured Wacom device. You can change screens by moving the cursor
+with another device/app, such as system mouse or another Wacom device
+which is not configured with "MMonitor" "off", then use the configured
+Wacom device in that screen.
+</a></p><p><a name="gimp">3.	map the tablet to a specific screen. 
+</a></p><p><a name="gimp">	Only option "ScreenNo" is needed to configure Wacom driver in this setting.
+
+<b>non-TwinView and non-Xinerama setup </b>
+
+</a></p><p><a name="gimp">In this setup, we only support tablet to a
+specific screen mapping, that is, you have to map the tablet to a
+specific screen by option "ScreenNo".
+</a></p><p><a href="#inputdev">X11 InputDevices Options</a> details all options for your Wacom device that we mentioned above.
+
+
+<a name="contact">
+</a></p><h1><a name="contact">12.0 - Contacts</a></h1>
 <p><a name="contact">Ping Cheng can be contacted at the following email address:
 </a><a href="mailto:%20pingc@wacom.com?SUBJECT=WACOM">pingc@wacom.com</a>.
 <a name="appendix">
-</a></p><h1><a name="appendix">12.0 - Appendix</a></h1>
+</a></p><h1><a name="appendix">13.0 - Appendix</a></h1>
 <p><a name="appendix">This section is for everything that is either not critical or simply
 too complex to describe in the document above without becoming overly
 distracting.
 </a><a name="dump">
-</a></p><h2><a name="dump">12.1 - Building wacdump and xidump</a></h2>
+</a></p><h2><a name="dump">13.1 - Building wacdump and xidump</a></h2>
 
 <p><a name="dump"><b>Building wacdump</b>
 
@@ -3113,7 +3139,7 @@ other programs that are specified in the build options.  The output file is
 called 'xidump' and is located in the linuxwacom package's src/util directory.
 It is installed by running <i>make install</i>.
 </a><a name="xset">
-</a></p><h2><a name="xset">12.2 - Building xsetwacom</a></h2>
+</a></p><h2><a name="xset">13.2 - Building xsetwacom</a></h2>
 
 <p><a name="xset"><b>Building xsetwacom</b>
 
@@ -3180,7 +3206,7 @@ strongly recommand to build and install wacom_drv.(s)o and xsetwacom from
 the same release package since the out of sync wacom_drv.(s)o and xsetwacom 
 may crash your X server.
 </a><a name="cpl">
-</a></p><h2><a name="cpl">12.3 - Building wacomcpl</a></h2>
+</a></p><h2><a name="cpl">13.3 - Building wacomcpl</a></h2>
 
 <p><a name="cpl">wacomcpl is written in tcl/tk.  It uses libwacomxi.so and xsetwacom to 
 communicate with Wacom XFree86/Xorg driver,  wacom_drv.(s)o.  So,  to run 
@@ -3356,7 +3382,7 @@ package's src/wacomxi and src/wacomxi/.libs directories. They will be
 installed by running <i>make install (you need to switch to superuser 
 to run this command)</i>.
 </a><a name="builddrv">
-</a></p><h2><a name="builddrv">12.4 - Building wacom_drv.o from Scratch</a></h2>
+</a></p><h2><a name="builddrv">13.4 - Building wacom_drv.o from Scratch</a></h2>
 <h3><a name="builddrv">Introduction</a></h3>
 
 <p><a name="builddrv">I should tell you out-right that this is a time consuming process.
@@ -3539,7 +3565,7 @@ can probably remove all the non-essential directories, but be careful; the
 dependency tree in X is huge.
 
 <a name="debwcmdrv">
-</a></p><h2><a name="debwcmdrv">12.5 - Installing wacom driver On Debian</a></h2>
+</a></p><h2><a name="debwcmdrv">13.5 - Installing wacom driver On Debian</a></h2>
 <a name="debwcmdrv">The following documentation for building wacom driver on Debian was 
 written by Olivier Lecarme.  You can also refer to Olivier's page  
 </a><a href="http://www.i3s.unice.fr/%7Eol/success.html">here</a> for updates.
@@ -3728,7 +3754,7 @@ Gimp-user discussion lists, especially Carol Spears, Karine Delvare, Ping Cheng,
 
 </pre>
 <a name="ppcwcmdrv">
-</a><h2><a name="ppcwcmdrv">12.6 - Building wacom driver On PowerMac</a></h2>
+</a><h2><a name="ppcwcmdrv">13.6 - Building wacom driver On PowerMac</a></h2>
 <a name="ppcwcmdrv">The following documentation for building wacom driver on PowerMac [silver]
 was written by Joseph E. Sacco.  If you have any problems or questions,
 go ahead and post them to the list, or send email to me directly.  I'll 
@@ -4032,7 +4058,7 @@ XFree86 command  'xsetmode' works fine.
 -Joseph 
 </vojtech@suse.cz></a></pre>
 <a name="debwacomnosrc">
-</a><h2><a name="debwacomnosrc">12.7 - Building wacom driver On Fedora Core 3</a></h2>
+</a><h2><a name="debwacomnosrc">13.7 - Building wacom driver On Fedora Core 3</a></h2>
 <a name="debwacomnosrc">The following documentation for building wacom kernel modules and x.org 
 driver on Fedora Core 3 was written by Paul Duffy. If you have any problems 
 or questions, go ahead and post them to the list, or send email to me directly.  
@@ -4321,7 +4347,7 @@ regards, Paul
 
 </arch></arch></a></pre>
 <a name="susewacom">
-</a><h2><a name="susewacom">12.8 - Building wacom driver On Suse 9.2</a></h2>
+</a><h2><a name="susewacom">13.8 - Building wacom driver On Suse 9.2</a></h2>
 
 <a name="susewacom">Nico Kadel-Garcia has provided a changed SPEC file for SuSE 9.2.
 You can download the spec </a><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1117278&amp;group_id=69596&amp;atid=525124">here</a>. 
@@ -4334,7 +4360,7 @@ generating symlinks into /usr/include/X11 at compilation
 time, and it's done. ". Nico said on Mar 21 2005.
 
 </pre><a name="laptop">
-</a><h2><a name="laptop">12.9 - Laptop Suspend/Resume Tips</a></h2>
+</a><h2><a name="laptop">13.9 - Laptop Suspend/Resume Tips</a></h2>
 <a name="laptop">Thomas Netter (tnetter at iniDOTunizhDOTc) kindly provided a solution 
 to the following problem: 
 
@@ -4369,7 +4395,7 @@ Therefore, old airline operations apply: Extinguish LEDs before take-off!
 -Thomas
 </a></pre></blockquote>
 <a name="lic">
-</a><h2><a name="lic">12.10 - GNU Free Document License</a></h2>
+</a><h2><a name="lic">13.10 - GNU Free Document License</a></h2>
 <a name="lic">Version 1.2, November 2002<br>
 <br>
 Copyright (C) 2000,2001,2002  Free Software Foundation, Inc.<br>
@@ -4737,8 +4763,9 @@ Public License, to permit their use in free software.
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2008 - LinuxWacom -Last updated April 25, 2008<br>
+	Copyright (C) 2002-2008 - LinuxWacom -Last updated December 4, 2008<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>
+
 </body></html>

@@ -1440,15 +1440,11 @@ proc initialKeys {} {
     set sk(10) "space"
     set sk(11) "NumLock"
     set sk(12) "BackSpace"
-    set sk(13) "NumpadPlus"
-    set sk(14) "NumpadMinus"
-    set sk(15) "NumpadDivide"
-    set sk(16) "NumpadMultiply"
     set skmenu [ tk_optionMenu $currentW.f.panel.skmenu sk0 "Special Keys 2" ]
     pack $currentW.f.panel.skmenu -side left
     grid $currentW.f.panel.skmenu -row 4 -column 2 
     $skmenu delete 0
-    for { set i 1 } { $i <= 16 } { incr i 1 } {
+    for { set i 1 } { $i <= 12 } { incr i 1 } {
 	$skmenu insert $i radiobutton -label $sk($i) \
 	-variable skmenvar -command \
         { $currentW.f.panelt.input insert end " "; \
@@ -1456,6 +1452,35 @@ proc initialKeys {} {
 	$currentW.f.panelt.input insert end $skmenvar; \
 	$currentW.f.panelt.input insert end " " }
     }
+
+    set kp(1) "KPPgUp"
+    set kp(2) "KPPgDn"
+    set kp(3) "KPLeft"
+    set kp(4) "KPUp"
+    set kp(5) "KPDown"
+    set kp(6) "KPRight"
+    set kp(7) "KPPlus"
+    set kp(8) "KPMinus"
+    set kp(9) "KPDivide"
+    set kp(10) "KPMultiply"
+    set kp(11) "KPEnd"
+    set kp(12) "KPInsert"
+    set kp(13) "KPDelete"
+    set kp(14) "KPEnter"
+    set kp(15) "KPHome"
+    set kpmenu [ tk_optionMenu $currentW.f.panel.kpmenu kp0 "KeyPad Keys" ]
+    pack $currentW.f.panel.kpmenu -side left
+    grid $currentW.f.panel.kpmenu -row 5 -column 2 
+    $kpmenu delete 0
+    for { set i 1 } { $i <= 15 } { incr i 1 } {
+	$kpmenu insert $i radiobutton -label $kp($i) \
+	-variable kpmenvar -command \
+        { $currentW.f.panelt.input insert end " "; \
+	global kpmenvar; \
+	$currentW.f.panelt.input insert end $kpmenvar; \
+	$currentW.f.panelt.input insert end " " }
+    }
+
     grid $currentW.f.panelt -row 0 -column 0
     grid $currentW.f.panel -row 0 -column 2 
 }

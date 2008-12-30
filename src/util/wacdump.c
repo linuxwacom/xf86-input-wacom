@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wacdump.c
 **
-** Copyright (C) 2002 - 2006 - John E. Joganic and Ping Cheng
+** Copyright (C) 2002 - 2008 - John E. Joganic and Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -33,6 +33,7 @@
 **   2005-02-17 0.7.1 - added Graphire 4
 **   2006-02-27 0.7.3 - added DTF 521, I3 12x12 & 12x19
 **   2006-05-05 0.7.4 - Removed older 2.6 kernels
+**   2008-12-31 0.8.2 - Support USB Tabket PCs
 **
 ****************************************************************************/
 
@@ -49,7 +50,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define WACDUMP_VER "0.7.4"
+#define WACDUMP_VER "0.8.2"
 
 /* from linux/input.h */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -258,7 +259,7 @@ static void DisplaySerialValue(unsigned int uField)
 	static const char* xszTool[WACOMTOOLTYPE_MAX] =
 	{
 		"NONE", "PEN", "PENCIL", "BRUSH", "ERASER", "AIRBRUSH",
-		"MOUSE", "LENS", "PAD"
+		"MOUSE", "LENS", "PAD", "TOUCH"
 	};
 
 	int bBold = 0;

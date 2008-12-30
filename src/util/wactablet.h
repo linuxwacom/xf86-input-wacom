@@ -2,7 +2,7 @@
 ** wactablet.h
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2007 - Ping Cheng
+** Copyright (C) 2003 - 2008 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -72,7 +72,8 @@ struct _WACOMMODEL
 #define WACOMTOOLTYPE_MOUSE     0x06
 #define WACOMTOOLTYPE_LENS      0x07
 #define WACOMTOOLTYPE_PAD       0x08
-#define WACOMTOOLTYPE_MAX       0x09
+#define WACOMTOOLTYPE_TOUCH	0x09
+#define WACOMTOOLTYPE_MAX       0x0A
 
 #define WACOMBUTTON_LEFT        0
 #define WACOMBUTTON_MIDDLE      1

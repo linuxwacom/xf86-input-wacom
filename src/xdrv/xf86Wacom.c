@@ -74,9 +74,10 @@
  * 2008-07-17 47-pc0.8.1-1 - Support USB TabletPC
  * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
  * 2008-11-11 47-pc0.8.2 - new release
+ * 2008-12-22 47-pc0.8.2-1 - fixed a few issues
  */
 
-static const char identification[] = "$Identification: 47-0.8.2 $";
+static const char identification[] = "$Identification: 47-0.8.2-1 $";
 
 /****************************************************************************/
 
@@ -576,7 +577,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			return FALSE;
 	}
 
-	if (nbaxes || nbaxes > 6)
+	if (!nbaxes || nbaxes > 6)
 		nbaxes = priv->naxes = 6;
 
 	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
@@ -584,7 +585,9 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 					  xf86GetMotionEvents,
 					  local->history_size,
 #else
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
 					  GetMotionHistory,
+#endif
 					  GetMotionHistorySize(),
 #endif
 					  ((priv->flags & ABSOLUTE_FLAG) ?
@@ -899,9 +902,9 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	pos = 0;
 
 	/* while there are whole packets present, check the packet length
-	 * for ISDv4 packet since it's different for pen and touch
+	 * for serial ISDv4 packet since it's different for pen and touch
 	 */
-	if (common->wcmForceDevice == DEVICE_ISDV4) 
+	if (common->wcmForceDevice == DEVICE_ISDV4 && common->wcmDevCls != &gWacomUSBDevice) 
 	{
 		common->wcmPktLength = 9;
 		data = common->buffer;
@@ -927,14 +930,24 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 		if (common->wcmDevCls != &gWacomUSBDevice) 
 		{
-			common->wcmPktLength = 9;
 			data = common->buffer + pos;
 			if ( data[0] & 0x18 )
 			{
-				if (common->wcmMaxCapacity)
-					common->wcmPktLength = 7;
-				else
-					common->wcmPktLength = 5;
+				if (common->wcmPktLength == 9)
+				{
+					DBG(1, common->debugLevel, 
+						ErrorF("xf86WcmReadPacket: not a pen data any more \n"));
+					break;	
+				}
+			}
+			else
+			{
+				if (common->wcmPktLength != 9)
+				{
+					DBG(1, common->debugLevel, 
+						ErrorF("xf86WcmReadPacket: not a touch data any more \n"));
+					break;	
+				}
 			}
 		}
 	}

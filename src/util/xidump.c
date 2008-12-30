@@ -31,6 +31,7 @@
 **   2006-07-19 0.7.5 - Support buttons and keys combined
 **   2007-01-10 0.7.7 - Don't list uninitialized tools
 **   2008-05-06 0.8.0 - Support Xorg 7.3 or later
+**   2008-12-31 0.8.2 - Support USB Tabket PCs
 **
 ****************************************************************************/
 
@@ -42,7 +43,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.8.0"
+#define XIDUMP_VERSION "0.8.2"
 
 #include "../include/util-config.h"
 

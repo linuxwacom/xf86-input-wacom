@@ -271,6 +271,14 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xTabletPC[] =
+	{
+		{ "TPC-090", "Wacom Tablet PC90", 1, 0x90 },
+		{ "TPC-093", "Wacom Tablet PC93", 2, 0x93 },
+		{ "TPC-09A", "Wacom Tablet PC9A", 3, 0x9A },
+		{ NULL }
+	};
+
 	static USBSUBTYPE xCintiqV5[] =
 	{
 		{ "DTZ-21ux",  "Wacom Cintiq 21UX",  1, 0x3F },
@@ -307,6 +315,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "vol", "Volito", WACOMDEVICE_VOLITO, xVolito, 1 },
 		{ "vol2", "Volito2", WACOMDEVICE_VOLITO2, xVolito2, 1 },
 		{ "mo", "Bamboo", WACOMDEVICE_MO, xBamboo, 2 },
+		{ "tpc", "Tablet PC", WACOMDEVICE_TPC, xTabletPC, 1 },
 		{ NULL }
 	};
 
@@ -629,7 +638,8 @@ static int USBIdentifyModel(USBTABLET* pUSB)
 				ISBITSET(keybits,BTN_TOOL_AIRBRUSH) ||
 				ISBITSET(keybits,BTN_TOOL_FINGER) ||
 				ISBITSET(keybits,BTN_TOOL_MOUSE) ||
-				ISBITSET(keybits,BTN_TOOL_LENS))
+				ISBITSET(keybits,BTN_TOOL_LENS) ||
+				ISBITSET(keybits,BTN_TOOL_DOUBLETAP))
 			pUSB->state[0].uValid |= BIT(WACOMFIELD_PROXIMITY) |
 					BIT(WACOMFIELD_TOOLTYPE);
 
@@ -779,6 +789,7 @@ static int USBParseKEY(USBTABLET* pUSB, struct input_event* pEv)
 		case BTN_TOOL_MOUSE: tool = WACOMTOOLTYPE_MOUSE; break;
 		case BTN_TOOL_FINGER: tool = WACOMTOOLTYPE_PAD; break;
 		case BTN_TOOL_LENS: tool = WACOMTOOLTYPE_LENS; break;
+		case BTN_TOOL_DOUBLETAP: tool = WACOMTOOLTYPE_TOUCH; break;
 		default:
 			for (i = 0; i < gNumPadKeys; i++)
 				if (pEv->code == gPadKeys [i])

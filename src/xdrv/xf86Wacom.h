@@ -23,7 +23,12 @@
 /****************************************************************************/
 
 #include "../include/xdrv-config.h"
-#include <xf86Version.h>
+#ifdef WCM_XORG_XSERVER_1_6
+   #include <xorg-server.h>
+   #include <xorgVersion.h>
+#else
+   #include <xf86Version.h>
+#endif
 #include "../include/Xwacom.h"
 
 /*****************************************************************************

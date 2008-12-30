@@ -27,6 +27,9 @@
 /* Xserver versions 1.4 and later call Uninit before closing a device. */
 #undef WCM_XORG_XSERVER_1_4
 
+/* Xserver versions 1.6 and later changed a few interfaces. */
+#undef WCM_XORG_XSERVER_1_6
+
 /* The X-driver can send key events for a button */
 #undef WCM_KEY_SENDING_SUPPORT
 

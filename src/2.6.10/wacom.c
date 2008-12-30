@@ -88,7 +88,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.12"
+#define DRIVER_VERSION "v1.40 - 2.6.10-pc-0.13"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -636,6 +636,7 @@ static int wacom_intuos_inout(struct urb *urb)
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_report_abs(dev, ABS_WHEEL, 0);
+			input_report_abs(dev, ABS_Z, 0);
 		}
 		input_report_key(dev, wacom->tool[idx], 0);
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
@@ -712,7 +713,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	/* tool number */
 	idx = data[1] & 0x01;
 
-	/* pad packets. Works as a second tool and is always in prox */
+	/* pad packets. Works as a second tool */
 	if (data[0] == 12)
 	{
 		/* initiate the pad as a device */
@@ -733,11 +734,13 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		input_report_abs(dev, ABS_RY, ((data[3] & 0x1f) << 8) | data[4]);
 
 		if((data[5] & 0x1f) | (data[6] & 0x1f) | (data[1] & 0x1f) | 
-			data[2] | (data[3] & 0x1f) | data[4])
+			data[2] | (data[3] & 0x1f) | data[4]) {
 			input_report_key(dev, wacom->tool[1], 1);
-		else
+			input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+		} else {
 			input_report_key(dev, wacom->tool[1], 0);
-		input_report_abs(dev, ABS_MISC, PAD_DEVICE_ID);
+			input_report_abs(dev, ABS_MISC, 0);
+		}
 		input_event(dev, EV_MSC, MSC_SERIAL, 0xffffffff);
 		input_sync(dev);
 		goto exit;

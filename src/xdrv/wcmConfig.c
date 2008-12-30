@@ -573,6 +573,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	if (IsPad(priv))
 		xf86WcmSetPadCoreMode(local);
+else
+xf86Msg(X_CONFIG, "%s (%s) is not a pad \n", local->name, dev->identifier);
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
@@ -590,8 +592,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmDevCls = &gWacomISDV4Device;
 		xf86Msg(X_CONFIG, "%s: forcing TabletPC ISD V4 protocol\n",
 			dev->identifier);
-		common->wcmTPCButton = 1;	/* Tablet PC buttons on by default */
-		common->wcmTPCButtonDefault = 1;
+		common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
 	}
 
 	s = xf86FindOptionValue(local->options, "Rotate");
@@ -840,7 +841,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	common->wcmTPCButton = xf86SetBoolOption(local->options, 
 			"TPCButton", common->wcmTPCButtonDefault);
 	if ( common->wcmTPCButton )
-		xf86Msg(X_CONFIG, "%s: Tablet PC buttons on \n", common->wcmDevice);
+	xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
 
 	/* Touch applies to the whole tablet */
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
@@ -993,7 +994,11 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	MODULEVENDORSTRING,
 	MODINFOSTRING1,
 	MODINFOSTRING2,
+#ifdef WCM_XORG_XSERVER_1_6
+	XORG_VERSION_CURRENT,
+#else
 	XF86_VERSION_CURRENT,
+#endif
 	1, 0, 0,
 	ABI_CLASS_XINPUT,
 	ABI_XINPUT_VERSION,

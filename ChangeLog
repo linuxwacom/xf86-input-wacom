@@ -1,3 +1,11 @@
+2008-12-31  Ping Cheng <pingc@wacom.com>
+	* Updated patch 1998051 for none KP buttons
+	* Updated wcmUSB.c to ignore unparsed data
+	* Updated wacom_wac.c with Bartosz' suggestion
+	* Fixed bug 2432258
+	* Support Xorg 1.6.0
+	* Label 0.8.2-1
+
 2008-12-01  Ping Cheng <pingc@wacom.com>
 	* Added workaround for X Server 1.5 to send beep
 	* Patch from Vicenç (vicencb@gmail.com)
