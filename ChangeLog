@@ -1,3 +1,9 @@
+2009-01-19  Ping Cheng <pingc@wacom.com>
+	* Patch to support Xorg server 1.6 from Alexia Death
+	* Patch for "usbParse: Exceeded channel" workaround from Markus Gaugusch 
+	* Fixed Bug #2499414
+	* Label 0.8.2-2
+
 2008-12-31  Ping Cheng <pingc@wacom.com>
 	* Updated patch 1998051 for none KP buttons
 	* Updated wcmUSB.c to ignore unparsed data

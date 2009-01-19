@@ -815,6 +815,11 @@ static void usbParseEvent(LocalDevicePtr local,
 	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
 		/* save the serial number so we can look up the channel number later */
+		if (event->value == 0) /* serial number should never be 0 */
+		{
+			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
+			return;
+		}
 		common->wcmLastToolSerial = event->value;
 
 		/* if SYN_REPORT is end of record indicator, we are done */
@@ -847,7 +852,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	channel = -1;
 	if (common->wcmProtocolLevel == 4)
 	{
-		/* Protocol 4 don't support tool serial numbers */
+		/* Protocol 4 doesn't support tool serial numbers */
 		if (common->wcmLastToolSerial == 0xf0)
 			channel = 1;
 		else
@@ -859,7 +864,7 @@ static void usbParseEvent(LocalDevicePtr local,
 			common->wcmChannel[channel].work.proximity = 1;
 		}
 	}
-	else
+	else if (common->wcmLastToolSerial) /* serial number should never be 0 */
 	{
 		/* find existing channel */
 		for (i=0; i<MAX_CHANNELS; ++i)

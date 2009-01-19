@@ -54,7 +54,7 @@
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Dec 08, 2008</td></tr>
+</td><td class="menu" align="right">Jan 17, 2009</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -66,7 +66,7 @@
 <a href="http://linuxwacom.sourceforge.net/index.php/howto/main">MAIN</a>&nbsp;&nbsp;&nbsp;<a href="http://linuxwacom.sourceforge.net/index.php/howto/copy">NEXT</a>&nbsp;&nbsp;&nbsp;<a href="http://linuxwacom.sourceforge.net/index.php/howto/toc">INDEX</a>&nbsp;&nbsp;&nbsp;<a href="http://linuxwacom.sourceforge.net/index.php/howto/all"><b>ALL</b></a>&nbsp;&nbsp;&nbsp;</center><br><br>
 <a name="copy">
 </a><center>
-<a name="copy">Copyright (C) 2002-2008 - LinuxWacom<br>
+<a name="copy">Copyright (C) 2002-2009 - LinuxWacom<br>
 <br>
 Permission is granted to copy, distribute and/or modify this document<br>
 under the terms of the GNU Free Documentation License, Version 1.2<br>
@@ -224,7 +224,7 @@ Serial tablet or Tablet PC users can go directly to the next section
 <a name="download">
 </a></p><h2><a name="download">2.2 - Downloading the Code</a></h2>
 
-<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a> is the stable package and contains
+<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a> is the stable package and contains
 files that you will need to get your serial or USB tablet working.  The
 current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.1-6.tar.bz2">linuxwacom-0.8.1-6.tar.bz2</a> is also available and may be
 used by people who are willing to help test new features.  I will never put a 
@@ -235,9 +235,9 @@ show stoppers, they will be fixed before you get to see them.
 </p><p>Unpacking the tarball is usually a one-step process, but I show both
 steps in case the typical -jxf option doesn't work with tar.
 
-</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.2.tar.bz2
-[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.2.tar
-[jej@ayukawa jej]$ cd linuxwacom-0.8.2</pre></blockquote>
+</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.2-1.tar.bz2
+[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.2-1.tar
+[jej@ayukawa jej]$ cd linuxwacom-0.8.2-1</pre></blockquote>
 
 Once in the package directory, you need only to configure and build the code.
 This is described in more detail as you continue.  The executables and 
@@ -248,7 +248,7 @@ installation procedures depend on the kernel source you use.
 and release dates.  Otherwise, let's continue.
 
 
-</p><h3>Stable files included for linuxwacom-0.8.2:</h3>
+</p><h3>Stable files included for linuxwacom-0.8.2-1:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th align="left">Comment</th></tr>
 <tr><td valign="top">configure</td><td valign="top">- configure script for distribution independent builds</td></tr>
@@ -315,7 +315,7 @@ and release dates.  Otherwise, let's continue.
 <h3>Stable Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-12-04</td><td valign="top">Support: USB Tablet PC with and without touch; kernels up to 2.6.27; Bamboo1 and Monarch; new wacomcpl features.</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-12-31</td><td valign="top">Support: USB Tablet PC with and without touch; kernels up to 2.6.27; Bamboo1 and Monarch; new wacomcpl features.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0-3.tar.bz2">linuxwacom-0.8.0-3.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-05-23</td><td valign="top">Support:
 kernels up to 2.6.25; Keystrokes for both buttons and expresskeys; New
 tablets: Bamboo series and Cintiq 12WX &amp; 20WSX, and so much more
@@ -500,12 +500,12 @@ for future readers.
 </a><a name="install">
 </a></p><h2><a name="install">2.4 - Install from Prebuilt </a></h2>
 
-<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.8.2/prebuilt;  one for x86-32 
+<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.8.2-1/prebuilt;  one for x86-32 
 systems, the other for x86-64 systems.  
 
 </a></p><p><a name="install">If you don't plan to change anything in the driver, following steps will install the prebuilt files for you:
 
-</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.2/prebuilt
+</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.2-1/prebuilt
 [jej@ayukawa prebuilt]$ su
 [jej@ayukawa prebuilt]# ./uninstall
 [jej@ayukawa prebuilt]# ./install
@@ -638,6 +638,13 @@ of the document identifies which options are needed and when.<br><br>
 <tr><td>--enable-xsetwacom</td><td><b>yes</b></td>
 		<td>xsetwacom XFree86 wacom driver configuration 
  		comannd</td></tr>
+<tr><td>--enable-quirk-tablet-rescale</td><td>best guess</td>
+		<td>Enable tablet to screen rescale code.  <b> Note: </b>
+		If you have TwinView setup running on a X server 1.4 and later, 
+		and your mappping doesn't properly, enable this option may 
+		resolve the issue.</td></tr>
+<tr><td>--enable-quirk-Uninit-called</td><td>best guess</td>
+		<td>Enable Uninit called</td></tr>
 <tr><td>--enable-hid</td><td>no</td>
 		<td>hid.o replacement kernel driver (not normally 
 		needed)</td></tr>
@@ -651,7 +658,7 @@ of the document identifies which options are needed and when.<br><br>
 		<td>mousedev.o replacement kernel driver (not 
 		normally needed)</td></tr>
 <tr><td>--enable-wacomdrv</td><td><b>yes</b></td>
-		<td>wacom_drv.o XFree86 driver (binary is 
+		<td>wacom_drv.o XFree86/Xorg driver (binary is 
 		available in prebuilt directory)</td></tr>
 <tr><td>--enable-modver=yes|no</td><td>best guess</td>
 		<td>enables kernel module versioning; usually 
@@ -963,22 +970,22 @@ The exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="testtablet">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Dec 08 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Dec 08 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Dec 08 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
-Dec 08 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
-Dec 08 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
-Dec 08 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
+Jan 17 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Jan 17 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Jan 17 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
+Jan 17 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
+Jan 17 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
+Jan 17 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
 </a></pre>
 <pre class="diff"><a name="testtablet">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Dec 08 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Dec 08 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Dec 08 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Dec 08 21:28:39 sasami kernel: usb.c: registered new driver hid
-Dec 08 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 08 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Dec 08 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Jan 17 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Jan 17 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Jan 17 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Jan 17 21:28:39 sasami kernel: usb.c: registered new driver hid
+Jan 17 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 17 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Jan 17 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -995,7 +1002,7 @@ driver <i>did not get control</i>.  Either hid or usbmouse did.
 <pre></pre></pre></blockquote>
 <a name="newwacom">
 </a><h2><a name="newwacom">3.2 - Updated wacom.c</a></h2>
-<p><a name="newwacom">The wacom kernel driver (wacom_wac.c and wacom_sys.c) that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a> supports USB Tablet PC, Bamboo1 Medium, and Monarch, which will be available in kernel version 2.6.28. 
+<p><a name="newwacom">The wacom kernel driver (wacom_wac.c and wacom_sys.c) that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a> supports USB Tablet PC, Bamboo1 Medium, and Monarch, which will be available in kernel version 2.6.28. 
 
 </p><p>The driver also added a few new xsetwacom commands that help you change X driver settings from user space.
 
@@ -1303,12 +1310,12 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Dec 08 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Dec 08 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Dec 08 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Dec 08 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Dec 08 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 08 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
+Jan 17 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Jan 17 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Jan 17 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Jan 17 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Jan 17 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.2-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 17 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
 
 </pre></blockquote>
 
@@ -1439,17 +1446,17 @@ if it cannot find the one you have specified.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Dec 08 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Dec 08 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Dec 08 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Jan 17 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Jan 17 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.2-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 17 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.43.  This version number
-is 1.43-0.8.2 so the correct driver was loaded.</a></p>
+is 1.43-0.8.2-1 so the correct driver was loaded.</a></p>
 <a name="buildhid">
 </a><h2><a name="buildhid">3.8 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.4)</a></h2>
 
-<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a>
+<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a>
 file, you will find mousedev.c, usbmouse.c, hid-core.c, evdev.c, and
 input.c files which have special exceptions for wacom. These files are
 not built by default, so you will need to reconfigure the package and
@@ -1508,7 +1515,7 @@ files to get .o.gz files.</span>
 <a name="buildhid6">
 </a><h2><a name="buildhid6">3.9 - Building (usb)hid.ko (for kernel 2.6)</a></h2>
 
-<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2.tar.bz2">linuxwacom-0.8.2.tar.bz2</a>
+<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a>
 file, you will find hid-core.c, which have special exceptions for
 wacom. This file is not built by default, so you will need to
 reconfigure the package and run make again. </p><p class="diff">Note, for kernel 2.6.18 and later, no need to build hid any more. For other kernels, refer to <a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
@@ -1648,10 +1655,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# /sbin/rmmod wacom
 [jej@sasami root]# /sbin/modprobe wacom       (or /sbin/insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Dec 08 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Dec 08 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Dec 08 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Dec 08 17:31:35 sasami kernel: wacom.c: v1.43-0.8.2 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Jan 17 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Jan 17 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Jan 17 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Jan 17 17:31:35 sasami kernel: wacom.c: v1.43-0.8.2-1 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -2130,7 +2137,7 @@ SEE ALSO
 
 AUTHORS
        Frederic Lepied &lt;lepied@xfree86.org&gt;, Ping  Cheng &lt;pingc@wacom.com&gt;,
-       John E. Joganic &lt;jej@j�&#8364;&#144;arkadia.com&gt;, Magnus Vigerlöf &lt;Magnus.Vigerlof@ipbo.se&gt;
+       John E. Joganic &lt;jej@j‐arkadia.com&gt;, Magnus Vigerlöf &lt;Magnus.Vigerlof@ipbo.se&gt;
 
 X Version 11                      linuxwacom 0.8.0                     WACOM(4)
 </pre></blockquote>
@@ -2244,7 +2251,7 @@ are running right, the following lines appear in my log file.
 (II) LoadModule: "wacom"
 (II) Loading /usr/X11R6/lib/modules/input/wacom_drv.o
 (II) Module wacom: vendor="The XFree86 Project"
-(II) Wacom driver level: <b>47-0.8.2</b> $
+(II) Wacom driver level: <b>47-0.8.2-1</b> $
 (II) XINPUT: Adding extended input device "eraser" (type: Wacom Eraser)
 (II) XINPUT: Adding extended input device "stylus" (type: Wacom Stylus)
 (II) XINPUT: Adding extended input device "cursor" (type: Wacom Cursor)
@@ -2256,7 +2263,7 @@ suppress=0
 (==) Wacom Eraser top X=0 top Y=0 bottom X=30480 bottom Y=30480
 </a></pre></blockquote>
 
-<a name="restartx">Notice the driver version 47-0.8.2 above.  This is the new stable
+<a name="restartx">Notice the driver version 47-0.8.2-1 above.  This is the new stable
 wacom_drv.o driver.  The beta driver is currently 47-0.8.1-6.
 
 </a><p><a name="restartx">First things first, you should lift the mouse off the tablet and place it
@@ -2318,14 +2325,17 @@ to what they are receiving.  If you are having trouble with pressure in
 gimp, chances are that xidump will demonstrate the same problem.
 xidump does not require root access to use.
 
-
 </a></p><p><a name="xidump"><b>Running xidump</b>
 
-</a></p><p><a name="xidump">xidump takes one argument, the input device specified in your XF86Config
-file.  Ordinarily, this would be either stylus, cursor, or eraser, but you
-can get a complete list by running xidump with the list option '-l'.  xidump
-has the additional feature of dumping all the device capabilities by
-specifying the verbose option '-v'.  Both are demonstrated below.
+</a></p><p><a name="xidump">xidump takes one argument, the input device specified in your 
+XF86Config/xorg.conf file.  It is the Identifier entry in the 
+InputDevice section. Normally they are either stylus, cursor, eraser, 
+touch, or pad.  You can get a complete list by running xidump 
+with the list option '-l'.  xidump has the additional feature of dumping all 
+the device capabilities by specifying the verbose option '-v'.  Both are 
+demonstrated below.
+
+</a></p><p><a name="xidump">Note: The device identifiers (input_device) are case sensitive. 
 
 </a></p><blockquote><pre><a name="xidump">[jej@ayukawa src]$ ./xidump -l
 eraser                         extension
@@ -2634,7 +2644,11 @@ changes the pressure sensitivity, click threshold, button functions,
 cursor mode and speed, and much more without having to manually modify 
 XF86Config or xorg.conf file. 
 
-</a></p><p><a name="xsetwacom">The basic usage and options can be viewed by issuing <i>xsetwacom</i>
+</a></p><p><a name="xsetwacom">The basic usage and options can be viewed by issuing <i>xsetwacom</i>.
+
+</a></p><p><a name="xsetwacom"><b>Note: </b>The device identifiers (dev_name) are case sensitive. You should 
+use the dev_name exactly the same as <i>xsetwacom list</i> shows. The examples 
+below assume that Stylus, cursor, and pad are used.
 
 </a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa linuxwacom]$xsetwacom
 Usage: xsetwacom [options] [command [arguments...]]
@@ -2822,11 +2836,11 @@ yourself, the driver will be set to the options you choose.
 </a></p><p><a name="xsetwacom">Below is an example of my .xinitrc:
 
 </a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa jej]$ more .xinitrc
-xsetwacom set Stylus0 TopX 10
-xsetwacom set Stylus0 TopY 67
-xsetwacom set Stylus0 BottomX 7170
-xsetwacom set Stylus0 BottomY 5778
-xsetwacom set Stylus0 TPCButton 1
+xsetwacom set Stylus TopX 10
+xsetwacom set Stylus TopY 67
+xsetwacom set Stylus BottomX 7170
+xsetwacom set Stylus BottomY 5778
+xsetwacom set Stylus TPCButton 1
 # run the primary system script
 . /etc/X11/xinit/xinitrc
 </a></pre></blockquote>
@@ -2987,71 +3001,74 @@ rerunning gimp was necessary before his airbrush worked correctly.  If you
 are having trouble, it's worth a shot.
 
 </a></p><p><a name="gimp">Good luck!
-</a><a name="gimp">
-</a></p><h1><a name="gimp">11.0 - Tablet-Screen Mapping</a></h1>
+</a><a name="multimonitor">
+</a></p><h1><a name="multimonitor">11.0 - Tablet-Screen Mapping</a></h1>
 
-<p><a name="gimp">This page explains how multi-monitor settings are
-supported and how to use the InputDevices options to setup your desired
-tablet-to-screen mapping. </a></p><p><a name="gimp">Linux Wacom X driver (wacom_drv.so) mainly
-supports three types of dual/multi-monitor setup in use with X server
-on Linux: TwinView, Xinerama, as well as non-TwinView and non-Xinerama
-case, where you normally can move the cursor from one screen to the
-other, but you can not move an application window, such as a terminal,
-from one screen to the other.
-<b>TwinView setup </b>
+<p><a name="multimonitor">This page explains how multi-monitor settings
+are supported and how to use the InputDevices options to setup your
+desired tablet-to-screen mapping. </a></p><p><a name="multimonitor">Linux Wacom X driver (wacom_drv.so)
+mainly supports three types of dual/multi-monitor setup in use with X
+server on Linux: TwinView, Xinerama, as well as non-TwinView and
+non-Xinerama case, where you normally can move the cursor from one
+screen to the other, but you can not move an application window, such
+as a terminal, from one screen to the other.
+</a></p><p><a name="multimonitor"><b>TwinView setup </b>
 
-</a></p><p><a name="gimp">By TwinView setup, we mean the two screens are configured in such a way that X "thinks" it only has one screen.  
+</a></p><p><a name="multimonitor">By TwinView setup, we mean the two screens are configured in such a way that X "thinks" it only has one screen.  
 
-</a></p><p><a name="gimp">There are three kinds of tablet-to-screen mappings in this setup: 
+</a></p><p><a name="multimonitor">There are three kinds of tablet-to-screen mappings in this setup: 
 
-</a></p><p><a name="gimp">1.	map the tablet to the whole desktop; 
-</a></p><p><a name="gimp"> In this case, there is no extra option
-required in the InputDevices section for Wacom driver in your X11's
-configuration file. So this is the default state for TwinView setup.
-</a></p><p><a name="gimp">2.	map the tablet to one screen at a time, but can switch screens at wish;
-</a></p><p><a name="gimp">	Option "TwinView" is used in the InputDevices section of the X11's configuration file to configure Wacom driver. 
+</a></p><p><a name="multimonitor">1.	map the tablet to the whole desktop; 
+</a></p><p><a name="multimonitor"> In this case, there is no extra
+option required in the InputDevices section for Wacom driver in your
+X11's configuration file. So this is the default state for TwinView
+setup.
+</a></p><p><a name="multimonitor">2.	map the tablet to one screen at a time, but can switch screens at wish;
+</a></p><p><a name="multimonitor">	Option "TwinView" is used in the InputDevices section of the X11's configuration file to configure Wacom driver. 
 
-</a></p><p><a name="gimp"> This feature was initially supported by
-Dreamwork developers. Their idea was to maximize the accuracy of the
+</a></p><p><a name="multimonitor"> This feature was initially supported
+by Dreamwork developers. Their idea was to maximize the accuracy of the
 tablet on one screen and be able to move the cursor between screens
 without issuing a command (such as xsetwacom) or press a button (such
 as display toggle). The tradeoff is that you lost about 60 tablet count
-of points on the side that enables the screen switch. </a></p><p><a name="gimp">3.	map the tablet to a specific screen.
-</a></p><p><a name="gimp"> Option "TwinView", "TVResolution0",
+of points on the side that enables the screen switch. </a></p><p><a name="multimonitor">3.	map the tablet to a specific screen.
+</a></p><p><a name="multimonitor"> Option "TwinView", "TVResolution0",
 "TVResolution1", and "ScreenNo" are used in the InputDevices section of
 the X11's configuration file to configure Wacom driver . Detailed use
 of these options can be found by "man wacom".
 </a></p><div class="diff">
-<p><a name="gimp">I saw some settings with Xinerama in their xorg.conf
-files in fact fall to TwinView setup since the whole desktop is
-reported as one screen. Use <i>xsetwacom get stylus NumScreen</i> to
-see how many screen you have. You need to use this command without
-adding any screen mapping related options in your xorg.conf file.
+<p><a name="multimonitor">I've seen displays with Xinerama in their
+xorg.conf files in fact fall into TwinView setup since the whole
+desktop is reported as one screen. Use <i>xsetwacom get stylus NumScreen</i>
+to see how many screen you have. You need to use this command without
+adding any screen mapping related options in your xorg.conf file for
+Wacom device.
 </a></p></div>
 
-<a name="gimp"><b>Xinerama setup </b>
+<a name="multimonitor"><b>Xinerama setup </b>
 
-</a><p><a name="gimp">1.	map the tablet to the whole desktop; 
-</a></p><p><a name="gimp"> No extra option required in the InputDevices
-section for Wacom driver in your X11's configuration file to support
-this setup. It is the default state.
-</a></p><p><a name="gimp">2.	map the tablet to one screen at a time, but can switch screens with the regular mouse or a user defined button/app;
-</a></p><p><a name="gimp"> Option "MMonitor" "off" is used in the
-InputDevices section of the X11's configuration file to configure Wacom
-driver. The cursor will stay in the screen where you started to use the
-configured Wacom device. You can change screens by moving the cursor
-with another device/app, such as system mouse or another Wacom device
-which is not configured with "MMonitor" "off", then use the configured
-Wacom device in that screen.
-</a></p><p><a name="gimp">3.	map the tablet to a specific screen. 
-</a></p><p><a name="gimp">	Only option "ScreenNo" is needed to configure Wacom driver in this setting.
+</a><p><a name="multimonitor">1.	map the tablet to the whole desktop; 
+</a></p><p><a name="multimonitor"> No extra option required in the
+InputDevices section for Wacom driver in your X11's configuration file
+to support this setup. It is the default state.
+</a></p><p><a name="multimonitor">2.	map the tablet to one screen at a time, but can switch screens with the regular mouse or a user defined button/app;
+</a></p><p><a name="multimonitor"> Option "MMonitor" "off" is used in
+the InputDevices section of the X11's configuration file to configure
+Wacom driver. The cursor will stay in the screen where you started to
+use the configured Wacom device. You can change screens by moving the
+cursor with another device/app, such as system mouse or another Wacom
+device which is not configured with "MMonitor" "off", then use the
+configured Wacom device in that screen.
+</a></p><p><a name="multimonitor">3.	map the tablet to a specific screen. 
+</a></p><p><a name="multimonitor">	Only option "ScreenNo" is needed to configure Wacom driver in this setting.
 
-<b>non-TwinView and non-Xinerama setup </b>
+</a></p><p><a name="multimonitor"><b>non-TwinView and non-Xinerama setup </b>
 
-</a></p><p><a name="gimp">In this setup, we only support tablet to a
-specific screen mapping, that is, you have to map the tablet to a
-specific screen by option "ScreenNo".
-</a></p><p><a href="#inputdev">X11 InputDevices Options</a> details all options for your Wacom device that we mentioned above.
+</a></p><p><a name="multimonitor">In this setup, we only support tablet
+to a specific screen mapping, that is, you have to map the tablet to a
+specific screen by option "ScreenNo". Otherwise, your tablet may be
+mapped half on the first screen and the other half on the second
+screen. </a></p><p><a href="#inputdev">X11 InputDevices Options</a> details all options for your Wacom device that we mentioned above.
 
 
 <a name="contact">
@@ -4763,7 +4780,7 @@ Public License, to permit their use in free software.
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2008 - LinuxWacom -Last updated December 4, 2008<br>
+	Copyright (C) 2002-2009 - LinuxWacom -Last updated January 5, 2009<br>
 	This website and its contents are
 	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
 </div>

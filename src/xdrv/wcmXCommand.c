@@ -471,6 +471,25 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				}
 			}
 		}
+		/* initial screen info */
+		priv->screenTopX[0] = 0;
+		priv->screenTopY[0] = 0;
+		priv->screenBottomX[0] = priv->tvResolution[0];
+		priv->screenBottomY[0] = priv->tvResolution[1];
+		if (priv->twinview == TV_ABOVE_BELOW)
+		{
+			priv->screenTopX[1] = 0;
+			priv->screenTopY[1] = priv->tvResolution[1];
+			priv->screenBottomX[1] = priv->tvResolution[2];
+			priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
+		}
+		if (priv->twinview == TV_LEFT_RIGHT)
+		{
+			priv->screenTopX[1] = priv->tvResolution[0];
+			priv->screenTopY[1] = 0;
+			priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
+			priv->screenBottomY[1] = priv->tvResolution[3];
+		}
 		break;
 	    }
 	    case XWACOM_PARAM_COREEVENT:

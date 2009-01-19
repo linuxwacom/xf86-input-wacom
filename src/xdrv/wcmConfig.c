@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2009 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -139,17 +139,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	for (i=0; i<MAX_BUTTONS; i++)
 		priv->button[i] = IsPad (priv) ?
 			(AC_BUTTON | (MAX_MOUSE_BUTTONS/2 + i + 1)) : (AC_BUTTON | (i + 1));
-/*	for (i=MAX_MOUSE_BUTTONS/2; i<MAX_BUTTONS; i++)
-		priv->button[i] = IsPad (priv) ?
-			(AC_KEY | (XK_F1 + i)) : (AC_BUTTON | (i + 1));
-*/
-	/* Now for backward compatibility make some keys emit button events
-	 * with button indices 9-16...
-	 */
-/*	if (IsPad (priv))
-		for (i = 0; i < 8; i++)
-			priv->button[i] = (AC_BUTTON | (i + 9));
-*/
+
 	for (i=0; i<MAX_BUTTONS; i++)
 		for (j=0; j<256; j++)
 			priv->keys[i][j] = 0;
@@ -386,7 +376,14 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	if (priv->pPressCurve)
 		xfree(priv->pPressCurve);
     
+#ifndef WCM_XORG_XSERVER_1_6
+	/* don't free priv for X server 1.6 or later here
+	 * otherwise X server crashes 
+	 */
 	xfree(priv);
+	local->private = NULL;
+#endif
+
 	xf86DeleteInput(local, 0);    
 }
 
