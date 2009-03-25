@@ -2,7 +2,7 @@
 ** wacusb.c
 **
 ** Copyright (C) 2002 - 2004 - John E. Joganic
-** Copyright (C) 2003 - 2008 - Ping Cheng
+** Copyright (C) 2003 - 2009 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -46,6 +46,10 @@
 
 #ifndef MSC_SERIAL
 #define MSC_SERIAL 0x00
+#endif
+
+#ifndef BTN_TOOL_DOUBLETAP
+#define BTN_TOOL_DOUBLETAP 0x14d
 #endif
 
 /*****************************************************************************
@@ -299,6 +303,15 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ NULL }
 	};
 
+	static USBSUBTYPE xIntuos4[] =
+	{
+		{ "PTK-440",  "Wacom Intuos4 4x6",   1, 0xB8 },
+		{ "PTK-640",  "Wacom Intuos4 6x9",   2, 0xB9 },
+		{ "PTK-840",  "Wacom Intuos4 8x13",  3, 0xBA },
+		{ "PTZ-1240", "Wacom Intuos4 12x19", 4, 0xBB },
+		{ NULL }
+	};
+
 	static USBDEVICE xWacomDevices[] =
 	{
 		{ "pp", "PenPartner", WACOMDEVICE_PENPARTNER, xPenPartner, 1 },
@@ -309,6 +322,7 @@ static int USBIdentifyModel(USBTABLET* pUSB);
 		{ "int", "Intuos", WACOMDEVICE_INTUOS, xIntuos, 2 },
 		{ "int2", "Intuos2", WACOMDEVICE_INTUOS2, xIntuos2, 2 },
 		{ "int3", "Intuos3", WACOMDEVICE_INTUOS3, xIntuos3, 2 },
+		{ "int4", "Intuos4", WACOMDEVICE_INTUOS3, xIntuos4, 2 },
 		{ "ctq", "Cintiq (V5)", WACOMDEVICE_CINTIQV5, xCintiqV5, 2 },
 		{ "pl", "Cintiq (PL)", WACOMDEVICE_CINTIQ, xCintiq, 1 },
 		{ "ptu", "Cintiq Partner (PTU)", WACOMDEVICE_PTU, xCintiqPartner, 1 },

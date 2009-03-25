@@ -11,7 +11,7 @@
  *  Copyright (c) 2000 Daniel Egger		<egger@suse.de>
  *  Copyright (c) 2001 Frederic Lepied		<flepied@mandrakesoft.com>
  *  Copyright (c) 2004 Panagiotis Issaris	<panagiotis.issaris@mech.kuleuven.ac.be>
- *  Copyright (c) 2002-2008 Ping Cheng		<pingc@wacom.com>
+ *  Copyright (c) 2002-2009 Ping Cheng		<pingc@wacom.com>
  *
  *  ChangeLog:
  *      v0.1 (vp)  - Initial release
@@ -86,7 +86,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.46-pc0.4"
+#define DRIVER_VERSION "v1.46-pc0.5"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -125,6 +125,8 @@ extern void input_dev_g4(struct input_dev *input_dev, struct wacom_wac *wacom_wa
 extern void input_dev_g(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
 extern void input_dev_i3s(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
 extern void input_dev_i3(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
+extern void input_dev_i4s(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
+extern void input_dev_i4(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
 extern void input_dev_bee(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
 extern void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac);
 extern void input_dev_pl(struct input_dev *input_dev, struct wacom_wac *wacom_wac);

@@ -1,6 +1,6 @@
 /*
  * Copyright 2003 by John Joganic <john@joganic.com>
- * Copyright 2003 - 2008 by Ping Cheng <pingc@wacom.com> 
+ * Copyright 2003 - 2009 by Ping Cheng <pingc@wacom.com> 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -95,6 +95,7 @@
 #define XWACOM_PARAM_TVRESOLUTION0	207
 #define XWACOM_PARAM_TVRESOLUTION1	208
 #define XWACOM_PARAM_COREEVENT		209
+#define XWACOM_PARAM_THRESHOLD	 	210
 
 #define XWACOM_PARAM_GETONLYPARAM	320
 #define XWACOM_PARAM_TID		321
@@ -138,6 +139,9 @@
 #define TV_NONE 		0
 #define TV_ABOVE_BELOW 		1
 #define TV_LEFT_RIGHT		2
+#define TV_BELOW_ABOVE		3
+#define TV_RIGHT_LEFT		4
+#define TV_MAX			4
 
 #define ROTATE_NONE 		0
 #define ROTATE_CW 		1

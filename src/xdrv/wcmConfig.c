@@ -137,8 +137,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	/* Default button and expresskey values */
 	for (i=0; i<MAX_BUTTONS; i++)
-		priv->button[i] = IsPad (priv) ?
-			(AC_BUTTON | (MAX_MOUSE_BUTTONS/2 + i + 1)) : (AC_BUTTON | (i + 1));
+		priv->button[i] = (AC_BUTTON | (i + 1));
 
 	for (i=0; i<MAX_BUTTONS; i++)
 		for (j=0; j<256; j++)
@@ -148,8 +147,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->relup = 5;			/* Default relative wheel up event */
 	priv->reldn = 4;			/* Default relative wheel down event */
 	
-	priv->wheelup = IsPad (priv) ? 5 : 0;	/* Default absolute wheel up event */
-	priv->wheeldn = IsPad (priv) ? 4 : 0;	/* Default absolute wheel down event */
+	priv->wheelup = IsPad (priv) ? 4 : 0;	/* Default absolute wheel up event */
+	priv->wheeldn = IsPad (priv) ? 5 : 0;	/* Default absolute wheel down event */
 	priv->striplup = 4;			/* Default left strip up event */
 	priv->stripldn = 5;			/* Default left strip down event */
 	priv->striprup = 4;			/* Default right strip up event */
@@ -161,12 +160,14 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	priv->maxWidth = 0;			/* max active screen width */
 	priv->maxHeight = 0;			/* max active screen height */
+	priv->leftPadding = 0;			/* left padding for virtual tablet */
+	priv->topPadding = 0;			/* top padding for virtual tablet */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
 	priv->tvoffsetX = 0;			/* none X edge offset for TwinView setup */
 	priv->tvoffsetY = 0;			/* none Y edge offset for TwinView setup */
 	for (i=0; i<4; i++)
 		priv->tvResolution[i] = 0;	/* unconfigured twinview resolution */
-	priv->wcmMMonitor = 1;		/* enabled (=1) to support multi-monitor desktop. */
+	priv->wcmMMonitor = 1;			/* enabled (=1) to support multi-monitor desktop. */
 						/* disabled (=0) when user doesn't want to move the */
 						/* cursor from one screen to another screen */
 
@@ -376,13 +377,10 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	if (priv->pPressCurve)
 		xfree(priv->pPressCurve);
     
-#ifndef WCM_XORG_XSERVER_1_6
-	/* don't free priv for X server 1.6 or later here
-	 * otherwise X server crashes 
+	/* free priv here otherwise X server 1.6 or later crashes 
 	 */
 	xfree(priv);
 	local->private = NULL;
-#endif
 
 	xf86DeleteInput(local, 0);    
 }
@@ -570,8 +568,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	if (IsPad(priv))
 		xf86WcmSetPadCoreMode(local);
-else
-xf86Msg(X_CONFIG, "%s (%s) is not a pad \n", local->name, dev->identifier);
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
@@ -835,10 +831,13 @@ xf86Msg(X_CONFIG, "%s (%s) is not a pad \n", local->name, dev->identifier);
 	}
 
 	/* Tablet PC button applied to the whole tablet. Not just one tool */
-	common->wcmTPCButton = xf86SetBoolOption(local->options, 
+	if ( priv->flags & STYLUS_ID )
+	{
+		common->wcmTPCButton = xf86SetBoolOption(local->options, 
 			"TPCButton", common->wcmTPCButtonDefault);
-	if ( common->wcmTPCButton )
-	xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
+		if ( common->wcmTPCButton )
+			xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
+	}
 
 	/* Touch applies to the whole tablet */
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
@@ -916,13 +915,20 @@ xf86Msg(X_CONFIG, "%s (%s) is not a pad \n", local->name, dev->identifier);
 	if (s) xf86Msg(X_CONFIG, "%s: Twinview = %s\n", dev->identifier, s);
 	if (s && xf86NameCmp(s, "none") == 0) 
 		priv->twinview = TV_NONE;
-	else if (s && xf86NameCmp(s, "horizontal") == 0) 
+	else if ((s && xf86NameCmp(s, "horizontal") == 0) ||
+			(s && xf86NameCmp(s, "rightof") == 0)) 
 		priv->twinview = TV_LEFT_RIGHT;
-	else if (s && xf86NameCmp(s, "vertical") == 0) 
+	else if ((s && xf86NameCmp(s, "vertical") == 0) ||
+			(s && xf86NameCmp(s, "belowof") == 0)) 
 		priv->twinview = TV_ABOVE_BELOW;
+	else if (s && xf86NameCmp(s, "leftof") == 0) 
+		priv->twinview = TV_RIGHT_LEFT;
+	else if (s && xf86NameCmp(s, "aboveof") == 0) 
+		priv->twinview = TV_BELOW_ABOVE;
 	else if (s) 
 	{
-		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical or horizontal). Using none.\n",
+		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical (belowof), "
+			"horizontal (rightof), aboveof, or leftof). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
 	}
@@ -1003,7 +1009,11 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	{0, 0, 0, 0}  /* signature, to be patched into the file by a tool */
 };
 
-XF86ModuleData wacomModuleData =
+#ifdef WCM_XFREE86
+    XF86ModuleData wacomModuleData =
+#else
+    _X_EXPORT XF86ModuleData wacomModuleData =
+#endif
 {
 	&xf86WcmVersionRec,
 	xf86WcmPlug,

@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,6 +43,10 @@
 
 #ifndef BTN_TASK
 #define BTN_TASK 0x117
+#endif
+
+#ifndef BTN_TOOL_DOUBLETAP
+#define BTN_TOOL_DOUBLETAP 0x14d
 #endif
 
 static Bool usbDetect(LocalDevicePtr);
@@ -290,6 +294,22 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
+	static WacomModel usbIntuos4 =
+	{
+		"USB Intuos4",
+		usbInitProtocol5,
+		NULL,                 /* resolution not queried */
+		usbWcmGetRanges,
+		NULL,                 /* reset not supported */
+		NULL,                 /* tilt automatically enabled */
+		NULL,                 /* suppress implemented in software */
+		NULL,                 /* link speed unsupported */
+		NULL,                 /* start not supported */
+		usbParse,
+		xf86WcmFilterIntuos,  /* input filtering recommended */
+		usbDetectConfig,      /* detect hardware buttons etc */
+	};
+
 	static WacomModel usbVolito =
 	{
 		"USB Volito",
@@ -476,6 +496,11 @@ static struct
 	{ 0xB5, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x11 */
 	{ 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
 
+	{ 0xB8, 5080, 5080, &usbIntuos4    }, /* Intuos4 4x6 */
+	{ 0xB9, 5080, 5080, &usbIntuos4    }, /* Intuos4 6x9 */
+	{ 0xBA, 5080, 5080, &usbIntuos4    }, /* Intuos4 8x13 */
+	{ 0xBB, 5080, 5080, &usbIntuos4    }, /* Intuos4 12x19*/
+
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
 	{ 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */ 
 	{ 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */ 
@@ -524,23 +549,31 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 			common->wcmCapacityDefault = -1; 
 		}
 
-		if (common->tablet_id == 0x9A || common->tablet_id == 0x93)
+		if (common->tablet_id == 0x9A || common->tablet_id == 0x93 || common->tablet_id == 0x90)
 		{
-			/* TouchDefault was off for all devices */
-			/* except when touch is supported */
-			common->wcmTouchDefault = 1;
-			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+			if (common->tablet_id != 0x90)
+			{
+				/* TouchDefault was off for all devices */
+				/* except when touch is supported */
+				common->wcmTouchDefault = 1;
 
-			/* check if touch was turned off in xorg.conf */
-			common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
-			if ( common->wcmTouch )
-				xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+				/* check if touch was turned off in xorg.conf */
+				common->wcmTouch = xf86SetBoolOption(local->options, 
+						"Touch", common->wcmTouchDefault);
+				if ( common->wcmTouch )
+					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+			}
 
 			/* Tablet PC button applied to the whole tablet. Not just one tool */
-			common->wcmTPCButton = xf86SetBoolOption(local->options, 
+			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+			if ( priv->flags & STYLUS_ID )
+			{
+				common->wcmTPCButton = xf86SetBoolOption(local->options, 
 					"TPCButton", common->wcmTPCButtonDefault);
-			if ( common->wcmTPCButton )
-				xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
+				if ( common->wcmTPCButton )
+					xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", 
+						common->wcmDevice);
+			}
 		}
 	}
 
@@ -750,7 +783,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 		priv->nbuttons = common->npadkeys;
 
 /* This code will be used when we are ready to report valuators in tablet and tool 
- * specific form, whcih will need to clean InitValuatorAxisStruct() in xf86Wacom.c
+ * specific form, which will need to clean InitValuatorAxisStruct() in xf86Wacom.c
  * and all the calls to X that are related to valuators, such as xf86PostButtonEvent and 
  * xf86PostButtonEvent, etc. Code under util directory will need to be updated as well.
  * This will take some time. We put it in the to-do list for now.  Ping 
@@ -1064,7 +1097,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				for (nkeys = 0; nkeys < common->npadkeys; nkeys++)
 					if (event->code == common->padkey_code [nkeys])
 					{
-						MOD_BUTTONS ((MAX_MOUSE_BUTTONS/2+nkeys), event->value);
+						MOD_BUTTONS (nkeys, event->value);
 						break;
 					}
 			}

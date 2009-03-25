@@ -9,7 +9,7 @@ WACOMCFG_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
 endif
 
 if WCM_ENV_XFREE86
-WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR)
+WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR) $(HAL_CFLAGS)
 endif
 
 AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
@@ -18,6 +18,7 @@ AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
 # potentially be built or installed depending on the results of
 # the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
+libexec_PROGRAMS = hal-setup-wacom
 
 # Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
@@ -40,3 +41,8 @@ libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h wcmAction.c wcmAction.h ../include/Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
+
+hal_setup_wacom_SOURCES = hal-setup-wacom.c
+hal_setup_wacom_LDADD = $(HAL_LIBS)
+
+

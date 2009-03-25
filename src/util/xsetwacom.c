@@ -2,7 +2,7 @@
 ** xsetwacom.c
 **
 ** Copyright (C) 2003 - John E. Joganic
-** Copyright (C) 2004-2008 - Ping Cheng
+** Copyright (C) 2004-2009 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -34,10 +34,11 @@
 **   2008-01-17 0.1.5 - PC - Add DISPLAYTOGGLE command
 **   2008-03-24 0.1.6 - PC - Added Touch for serial Tablet PC (ISDv4)
 **   2008-08-27 0.1.7 - PC - Added get XORGVER to xsetwacom
+**   2009-02-27 0.1.8 - PC - Added LeftOf and AboveOf to TwinView
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.7"
+#define XSETWACOM_VERSION "0.1.8"
 
 #include "../include/util-config.h"
 
@@ -105,6 +106,8 @@ static const char* tv_char[] =
 	"none",
 	"vertical",
 	"horizontal",
+	"aboveof"
+	"leftof"
 	"NULL"
 };
 
@@ -302,7 +305,7 @@ static PARAMINFO gParamInfo[] =
 
 	{ "CommonDBG",
 		"Level of debugging statements applied to all devices "
-		"associated with the same tablet. default is 0 (off). ",
+		"associated with the same tablet. \n\t\t   default is 0 (off). ",
 		XWACOM_PARAM_COMMONDBG, VALUE_OPTIONAL, RANGE, 
 		0, 100, SINGLE_VALUE, 0 },
 
@@ -329,10 +332,10 @@ static PARAMINFO gParamInfo[] =
 		0, 100, PACKED_CURVE, 0x00006464},
 
 	{ "TwinView",
-		"Sets the mapping to TwinView horizontal/vertical/none. "
-		"Values = none, vertical, horizontal (default is none).",
+		"Sets the mapping to TwinView horizontal/vertical/leftof/aboveof/none. \n"
+		"\t\t   Values = none, vertical, horizontal, leftof, aboveof (default is none).",
 		XWACOM_PARAM_TWINVIEW, VALUE_OPTIONAL, RANGE, 
-		TV_NONE, TV_LEFT_RIGHT, SINGLE_VALUE, TV_NONE },
+		TV_NONE, TV_MAX, SINGLE_VALUE, TV_NONE },
 
 	{ "Mode",
 		"Switches cursor movement mode (default is absolute/on). ",
@@ -353,21 +356,23 @@ static PARAMINFO gParamInfo[] =
 
 	{ "Capacity",
 		"Touch sensitivity level (default is 3, "
-		"-1 for none capacitive tools).",
+		"-1 for none capacitive tools). ",
 		XWACOM_PARAM_CAPACITY, VALUE_OPTIONAL, 
 		RANGE, -1, 5, SINGLE_VALUE, 3 },
 
 	{ "CursorProx", 
 		"Sets cursor distance for proximity-out "
-		"in distance from the tablet.  "
-		"(default is 10 for Intuos series, "
-		"42 for Graphire series).",
+		"in distance from the tablet.  \n"
+		"\t\t   (default is 10 for Intuos series, "
+		"42 for Graphire series). ",
 		XWACOM_PARAM_CURSORPROX, VALUE_OPTIONAL, RANGE, 
 		0, 255, SINGLE_VALUE, 47 },
 		
 	{ "Rotate",
 		"Sets the rotation of the tablet. "
-		"Values = NONE, CW, CCW, HALF (default is NONE).",
+		"Values = NONE, CW, CCW, HALF (default is NONE). \n"
+		"\t\t   Tablet mappings applied after this command will "
+		"be based on the new tablet orientation. ",
 		XWACOM_PARAM_ROTATE, VALUE_OPTIONAL, RANGE, 
 		ROTATE_NONE, ROTATE_HALF, SINGLE_VALUE, ROTATE_NONE },
 
@@ -437,6 +442,11 @@ static PARAMINFO gParamInfo[] =
 		"(default is 6)",
 		XWACOM_PARAM_CLICKFORCE, VALUE_OPTIONAL, RANGE, 
 		1, 21, SINGLE_VALUE, 6 },	
+
+	{ "Threshold",
+		"Sets tip/eraser pressure threshold directly to the pressure "
+		"(default is 6*MaxZ/100)",
+		XWACOM_PARAM_THRESHOLD, VALUE_REQUIRED },	
 
 	{ "Accel",
 		"Sets relative cursor movement acceleration "
@@ -1152,13 +1162,14 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		}
 		break;
 	default:
-		if ( ((value & AC_TYPE) != AC_KEY) &&  
-			((value & AC_TYPE) != AC_MODETOGGLE) &&
-			((value & AC_TYPE) != AC_DBLCLICK) &&
-			((value & AC_TYPE) != AC_DISPLAYTOGGLE) )
-			printf ("%d\n", value);
-		else
+		if ( (p->nType == ACTION_VALUE) && 
+			(((value & AC_TYPE) == AC_KEY) ||  
+			((value & AC_TYPE) == AC_MODETOGGLE) ||
+			((value & AC_TYPE) == AC_DBLCLICK) ||
+			((value & AC_TYPE) == AC_DISPLAYTOGGLE)) )
 			printf ("%s\n", strval);
+		else
+			printf ("%d\n", value);
 		break;
 	}
 }

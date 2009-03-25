@@ -223,6 +223,19 @@ void input_dev_i3(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_set_abs_params(input_dev, ABS_RY, 0, 4096, 0, 0);
 }
 
+void input_dev_i4s(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
+{
+	input_dev->keybit[LONG(BTN_DIGI)] |= BIT(BTN_TOOL_FINGER);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_0) | BIT(BTN_1) | BIT(BTN_2) | BIT(BTN_3);
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_4) | BIT(BTN_5) | BIT(BTN_6);
+	input_set_abs_params(input_dev, ABS_Z, -900, 899, 0, 0);
+}
+
+void input_dev_i4(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
+{
+	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_7) | BIT(BTN_8);
+}
+
 void input_dev_bee(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
 	input_dev->keybit[LONG(BTN_MISC)] |= BIT(BTN_8) | BIT(BTN_9);
@@ -388,6 +401,15 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	BUG_ON(wacom_wac->features->pktlen > 10);
 
 	endpoint = &intf->cur_altsetting->endpoint[0].desc;
+
+	/* Initialize touch_x_max and touch_y_max in case it is not defined */
+	if (wacom_wac->features->type == TABLETPC) {
+		wacom_wac->features->touch_x_max = 1023;
+		wacom_wac->features->touch_y_max = 1023;
+	} else {
+		wacom_wac->features->touch_x_max = 0;
+		wacom_wac->features->touch_y_max = 0;
+	}
 
 	/* TabletPC need to retrieve the physical and logical maximum from report descriptor */
 	if (wacom_wac->features->type == TABLETPC) {

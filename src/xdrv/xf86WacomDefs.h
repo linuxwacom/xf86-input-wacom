@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -161,6 +161,8 @@ struct _WacomDeviceRec
 	int screenBottomY[32];	/* bottom cordinate of the associated screen */
 	int maxWidth;		/* max active screen width */
 	int maxHeight;		/* max active screen height */
+	int leftPadding;	/* left padding for virtual tablet */
+	int topPadding;		/* top padding for virtual tablet */
 	int button[MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;

@@ -1,3 +1,14 @@
+2009-03-26  Ping Cheng <pingc@wacom.com>
+	* Patch "Don't touch the button map" from Thomas Jaeger
+	* Patch 2653696 from Matthew Garret
+	* Patch 2653697 from Peter Hutterer
+	* Removed kernels 2.4.x and 2.6.8 support
+	* Updated TwinView and Xinerama mapping
+	* Bug 2517856 fixed by Calvin Walton
+	* Fixed bug 2578477 
+	* Support Intuos4
+	* Label 0.8.3
+
 2009-01-19  Ping Cheng <pingc@wacom.com>
 	* Patch to support Xorg server 1.6 from Alexia Death
 	* Patch for "usbParse: Exceeded channel" workaround from Markus Gaugusch 

@@ -2,7 +2,7 @@
 ** xidump.c
 **
 ** Copyright (C) 2003 - 2004 - John E. Joganic
-** Copyright (C) 2004 - 2008 - Ping Cheng 
+** Copyright (C) 2004 - 2009 - Ping Cheng 
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -32,6 +32,7 @@
 **   2007-01-10 0.7.7 - Don't list uninitialized tools
 **   2008-05-06 0.8.0 - Support Xorg 7.3 or later
 **   2008-12-31 0.8.2 - Support USB Tabket PCs
+**   2009-03-06 0.8.3 - Support Intuos4
 **
 ****************************************************************************/
 
@@ -43,7 +44,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define XIDUMP_VERSION "0.8.2"
+#define XIDUMP_VERSION "0.8.3"
 
 #include "../include/util-config.h"
 
@@ -416,7 +417,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	int nRow=0, nTitleRow, nPressRow, nProxRow, nFocusRow, nButtonRow,
        		nKeyRow, nValRow;
 	int nMaxPress=100, nMinPress=0;
-	int bStylus = 0;
+	int bTilt = 0;
 	char chBuf[1024];
 	XEvent event;
 	XAnyEvent* pAny;
@@ -445,19 +446,16 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 		pClass = (XAnyClassPtr)((char*)pClass + pClass->length);
 	}
 
-	snprintf(chBuf,sizeof(chBuf),"InputDevice: %s",pDevInfo->name);
-	wacscrn_output(nRow,0,chBuf);
-	nRow += 1;
-
 	/* display valuator related info */
 	nTitleRow = nRow;
 	if (pValInfo)
 	{
-		snprintf(chBuf,sizeof(chBuf),"Valuators: %s   ID: Unreported  Serial Number: Unreported",
+		snprintf(chBuf,sizeof(chBuf),"InputDevice: %s    Valuators: %s",pDevInfo->name, 
 				pValInfo->mode == Absolute ? "Absolute" :
 				pValInfo->mode == Relative ? "Relative" : "Unknown");
 		wacscrn_output(nRow,0,chBuf);
-		nRow += 2;
+		nRow += 1;
+
 		nValRow = nRow;
 		nRow += 6;
 
@@ -470,10 +468,11 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 		nMaxPress = pValInfo->axes[2].max_value;
 		nMinPress = pValInfo->axes[2].min_value;
 
-		/* should be a better way to identify the stylus */
+		/* Decide tilts or rotation/throttle */
 		if ((pValInfo->axes[3].min_value == -64) &&
 			(pValInfo->axes[4].min_value == -64))
-			bStylus = 1;
+			bTilt = 1;
+
 
 		for (k=0; k<pValInfo->num_axes && k<6; ++k)
 		{
@@ -481,8 +480,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 				k == 0 ? " x-axis " :
 				k == 1 ? " y-axis " :
 				k == 2 ? "pressure" :
-				k == 3 ? (bStylus ? " x-tilt " : "rotation" ) :
-				k == 4 ? (bStylus ? " y-tilt " : "throttle" ) :
+				k == 3 ? (bTilt ? " x-tilt " : "rotation" ) :
+				k == 4 ? (bTilt ? " y-tilt " : "throttle" ) :
 				k == 5 ? "  wheel " : "  error ");
 
 			snprintf(chBuf,sizeof(chBuf),"%+06d",
@@ -498,6 +497,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 	}
 
 	nPressRow = nRow++;
+
 	nProxRow = nRow++;
 	nFocusRow = nRow++;
 	nButtonRow = nRow++;
@@ -547,12 +547,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			}
 			else
 			{
-				/* title value */
-				snprintf(chBuf,sizeof(chBuf),"%s",
-					pValInfo->mode == Absolute ? "Absolute" :
-					pValInfo->mode == Relative ? "Relative" : "Unknown");
-				wacscrn_output(nTitleRow,11,chBuf);
-
 				/* Device/tool ID can only be retrieved through the ToolID option 
 				 * of xsetwacom due to valuator backward compatibility concern
 				 *
@@ -709,19 +703,15 @@ static int RawRunDefault(Display* pDisp, XDeviceInfo* pDevInfo)
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
 			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
-			int v = (pMove->axis_data[4]&0xffff0000) | 
-					((pMove->axis_data[5]&0xffff0000)>>16);
 
 			printf("Motion: x=%+6d y=%+6d p=%4d tx=%+4d ty=%+4d "
-				"w=%+5d ID: %4d Serial: %11d \n",
+				"w=%+5d \n",
 					pMove->axis_data[0],
 					pMove->axis_data[1],
 					pMove->axis_data[2],
 					(short)(pMove->axis_data[3]&0xffff),
 					(short)(pMove->axis_data[4]&0xffff),
-					(short)(pMove->axis_data[5]&0xffff),
-					(pMove->axis_data[3]&0xffff0000)>>16,
-					v);
+					(short)(pMove->axis_data[5]&0xffff));
 
 		}
 		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
@@ -1056,6 +1046,8 @@ int main(int argc, char** argv)
 	const char* pa;
 	Display* pDisp = NULL;
 	const char* pszDeviceName = NULL;
+	char sCallString[256], serialNum[256], toolID[256];
+	FILE* ptr;
 
 	++argv;
 	while ((pa = *(argv++)) != NULL)
@@ -1131,6 +1123,19 @@ int main(int argc, char** argv)
 		Usage(1);
 	}
 
+	/* get tool ID and serial number from xsetwacom */
+	if (pszDeviceName)
+	{
+		sprintf(sCallString, "xsetwacom get %s toolId", pszDeviceName);
+		if ((ptr = popen(sCallString, "r")) != NULL)
+			fgets(toolID, 32, ptr);
+		pclose(ptr);
+		sprintf(sCallString, "xsetwacom get %s ToolSerial", pszDeviceName);
+		if ((ptr = popen(sCallString, "r")) != NULL)
+			fgets(serialNum, 32, ptr);
+		pclose(ptr);
+	}
+		
 	/* default to first valid UI, if not specified */
 	if (pUI == NULL)
 		pUI = gpUIs[0];

@@ -135,16 +135,14 @@ proc updateXinitrc {device option value} {
 proc calibrationSequence {which xDev yDev} {
     global device calibResults screenY_org screenX_org
     global workingTags screenTags size numScreens
-    global swapThresh screenWidth screenHeight
+    global swapThresh screenWidth screenHeight getOptionDefault
     global getDeviceModel screenXBottom screenYBottom
 
     set scaling [exec xsetwacom get $device xscaling]
-    set bottomX [exec xsetwacom getdefault $device BottomX]
-    set bottomY [exec xsetwacom getdefault $device BottomY]
     if { $scaling == 1 } {
-	set xNewDev [expr (($xDev - $screenX_org) * $bottomX)]
+	set xNewDev [expr (($xDev - $screenX_org) * $getOptionDefault($device,BottomX))]
 	set xDev [expr ($xNewDev / ($screenXBottom - $screenX_org))]
-	set yNewDev [expr (($yDev - $screenY_org) * $bottomY)]
+	set yNewDev [expr (($yDev - $screenY_org) * $getOptionDefault($device,BottomY))]
 	set yDev [expr ($yNewDev / ($screenYBottom - $screenY_org))]
     }
     set calibResults(xDev,$which) $xDev
@@ -160,6 +158,17 @@ proc calibrationSequence {which xDev yDev} {
 	.bottomright.m configure -background "#505075"
 	wacomxi::bindevent .bottomright.m $device <ButtonRelease> ""	
 	set borderOffset [expr ($size / 2 )]
+
+	# set tablet values to normal
+	if { $calibResults(xDev,0) > [expr ($getOptionDefault($device,BottomX) / 2)] } {
+	    set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
+	    set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
+	}
+	if { $calibResults(yDev,0) > [expr ($getOptionDefault($device,BottomY) / 2)] } {
+	    set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
+	    set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
+	}
+
 	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
  	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
  	set widthX [expr $screenWidth-$size]
@@ -223,8 +232,13 @@ proc calibrationSequence {which xDev yDev} {
 proc Calibration {} {
     global numScreens device screenTags getOption Option
 
-    set Option(1) "Mode"
-    getDeviceOptionProc $device 1
+    set Option(1) "TopX"
+    set Option(2) "TopY"
+    set Option(3) "BottomX"
+    set Option(4) "BottomY"
+    set Option(5) "Mode"
+
+    getDeviceOptionProc $device 5
     set mode $getOption($device,Mode)
     if { $mode != 1 } {
 	disableButtons
@@ -421,7 +435,7 @@ proc getDeviceOptionProc { dev i } {
 			set getOption($dev,$Option($j)) $ignoreButton
 		    }
 		}
-		if { $value == 0 } {
+		if { $value1 == 0 } {
 		    set getOptionDefault($dev,$Option($j)) $ignoreButton
 		}
 	    }
@@ -635,7 +649,7 @@ proc updateButton {} {
 		 } }
 	    "Ignore"
 		{ set j $ignoreButton
-		 set v "Button 0" }
+		 set v "Button $j" }
 	}
 	set getOption($device,$spName($k)) $j
 	updateXinitrc $device $spName($k) $v
@@ -672,17 +686,17 @@ proc updateButton {} {
 
 proc defaultButton {} {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
-    global db11 db12 db13 db14 isLCD spName
-    global dm sm dmv smv numButton startS numStrips
+    global db11 db12 db13 db14 isLCD
+    global dm sm dmv smv numButton startS numStrips spName
     global device getOptionDefault getDeviceModel
-
     for { set i 1 } { $i <= $numButton } { incr i 1 } {
 	set db$i $db($getOptionDefault($device,$spName($i)))
     }
 
     if { $startS } {
 	for { set i $startS } { $i <= [ expr ($startS+$numStrips-1) ] } { incr i 1 } {
-	    set db$i $db($getOptionDefault($device,$spName([ expr ($numButton+$i) ])))
+	    set k [ expr ($numButton+$i-$startS+1) ]
+	    set db$k $db($getOptionDefault($device,$spName($k)))
 	}
     }
 
@@ -913,9 +927,9 @@ proc closeTabWindow {} {
 
 proc expressKeys { } {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10
-    global db11 db12 db13 db14 startS getOption
+    global db11 db12 db13 db14 startS 
     global currentW device numButton spName numStrips
-    global getDeviceModel cKeys oldKeys 
+    global getDeviceModel cKeys oldKeys getOption
     global displayToggleB ignoreButton keystrokeB
     global numPadRings numPadStrips numPadAbsW numPadRelW
 
@@ -970,21 +984,15 @@ proc expressKeys { } {
 
 proc addMenu { curb } {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10 
-    global db11 db12 db13 db14 currentW 
-    global getOption getDeviceModel cKeys oldKeys device spName
-    global doubleClickB displayToggleB ignoreButton modeToggleB keystrokeB
+    global db11 db12 db13 db14 currentW device spName
+    global getOption getDeviceModel cKeys oldKeys keystrokeB
+    global doubleClickB displayToggleB ignoreButton modeToggleB
 
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
     set opt $getOption($device,$spName($curb))
     if { $opt == "" } { set opt $curb }
-    if { ![string compare $type "pad"] } { 
-	# values 30 or larger are special functions
-	if { ($opt > 8 && $opt < 30) } {
-	    set opt [ expr ($opt-8) ] 
-	}
-    }
  
     set db$curb $db($opt) 
     #reset keys
@@ -1264,13 +1272,16 @@ proc initialSet {} {
     set tv(0) "None"
     set tv(1) "Vertical"
     set tv(2) "Horizontal"
-    for { set i 0 } { $i < 3 } { incr i 1 } {
+    set tv(3) "AboveOf"
+    set tv(4) "LeftOf"
+
+    for { set i 0 } { $i < 5 } { incr i 1 } {
 	if { $tvID == $i } {
 	    set tvd $tv($i)
 	}
     }
 
-    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) 
+    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4)
     grid $currentW.f.tv -row 2 -column 0 
     grid $currentW.f.tvmenu -row 2 -column 1
 
@@ -1314,6 +1325,12 @@ proc updateSet {} {
     }
     if { ![ string compare $tv "Vertical" ] } {
 	set tv 1
+    }
+    if { ![ string compare $tv "LeftOf" ] } {
+	set tv 4
+    }
+    if { ![ string compare $tv "AboveOf" ] } {
+	set tv 3
     }
 
     set tvID [ exec xsetwacom get $device TwinView ]
@@ -1637,7 +1654,6 @@ proc createPanel { pressure button mapping calibrate } {
     # buttons and expresskeys
     getNumButton $type
     setspName
-
     set SN [ exec xsetwacom get $device ToolSerial ]
     if { $SN && [string compare type "pad"] } {
 	set hexSN [format %X $SN]
@@ -1782,6 +1798,13 @@ proc updateModelInfo { } {
     # Hummingbird (Cintiq 12WX)
     set numPadButtons(198) 10
     set numPadStrips(198) 2
+
+    set numPadButtons(184) 7
+    set numPadRings(184) 1
+    for { set i 185 } { $i <= 187 } { incr i 1 } {
+	set numPadButtons($i) 9
+	set numPadRings($i) 1
+    }
 
     for { set i 0 } { $i <= 198 } { incr i 1 } {
 	if { $numPadButtons($i) || $numPadRings($i) 

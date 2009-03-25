@@ -1,5 +1,5 @@
 AC_PREREQ(2.58)
-AC_INIT(linuxwacom, 0.8.2)
+AC_INIT(linuxwacom, 0.8.3)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -80,10 +80,6 @@ dnl Enable linux specific features if linux kernel is detected.
 dnl  kernel source, module versioning, etc
 WCM_OPTION_WACOM=no
 WCM_OPTION_HID=no
-WCM_OPTION_USBMOUSE=no
-WCM_OPTION_EVDEV=no
-WCM_OPTION_MOUSEDEV=no
-WCM_OPTION_INPUT=no
 WCM_OPTION_MODVER=no
 WCM_PATCH_HID=
 WCM_ENV_KERNEL=no
@@ -108,7 +104,7 @@ else
 		WCM_KERNEL_DIR=
 		dnl Kernel source not specified, guess where it is
 		for i in /lib/modules/`uname -r`/source /lib/modules/`uname -r`/build \
-			/usr/src/linux /usr/src/linux-`uname -r` /usr/src/linux-2.4 \
+			/usr/src/linux /usr/src/linux-`uname -r` \
 			/usr/src/linux-2.6; do
 			if test -f "$i/include/linux/input.h"; then
 				WCM_KERNEL_DIR=$i
@@ -123,7 +119,7 @@ else
 			echo "*** WARNING:"
 			echo "*** Unable to guess kernel source directory"
 			echo "***   Looked at /lib/modules/`uname -r`/source, /lib/modules/`uname -r`/build,"
-			echo "***     /usr/src/linux, /usr/src/linux-`uname -r`, /usr/src/linux-2.4, and"
+			echo "***     /usr/src/linux, /usr/src/linux-`uname -r`, and"
 			echo "***     /usr/src/linux-2.6"
 			echo "*** Kernel modules will not be built"
 			echo "***"
@@ -155,17 +151,10 @@ else
 			AC_MSG_RESULT([$MODUTS])
 			MINOR=`echo $MODUTS | sed 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`
 			if echo $MODUTS | grep "^2.4" >/dev/null; then
-				WCM_KERNEL_VER="2.4"
-				test $MINOR -ge 20 && WCM_PATCH_HID="(value_patch)"
-				test $MINOR -ge 22 && WCM_KERNEL_VER="2.4.22"
-				if echo $WCM_ARCHITECTURE | grep "x86_64" >/dev/null; then
-					AC_MSG_WARN([module compilation not supported on x86-64 for Linux 2.4-kernels ])
-					WCM_KERNEL_VER=
-				fi
+				AC_MSG_WARN([support for kernel 2.4.x has been dropped after 0.8.2])
 			elif echo $MODUTS | grep "^2.6" >/dev/null; then
-				if test $MINOR -ge 8; then
+				if test $MINOR -ge 9; then
 					case $MINOR in
-						8) WCM_KERNEL_VER="2.6.8";;
 						9) WCM_KERNEL_VER="2.6.9";;
 						10) WCM_KERNEL_VER="2.6.10";;
 						11|12) WCM_KERNEL_VER="2.6.11";;
@@ -181,7 +170,7 @@ else
 						*) WCM_KERNEL_VER="2.6.27";;
 					esac
 				else
-					AC_MSG_WARN([support for kernels older than 2.6.8 has been dropped after 0.7.4])
+					AC_MSG_WARN([support for kernels older than 2.6.9 has been dropped after 0.7.4])
 				fi
 			else
 				AC_MSG_WARN(kernel version $MODUTS not supported)
@@ -213,80 +202,7 @@ else
 		if test "$WCM_OPTION_WACOM" = yes; then
 			WCM_MODULES="$WCM_MODULES wacom.o"
 		fi
-		if echo $WCM_KERNEL_VER | grep "^2.4" >/dev/null; then
-			AC_ARG_ENABLE(usbmouse,
-				AC_HELP_STRING([--enable-usbmouse], [Enable building usbmouse.o [[default=no]]]),
-				WCM_OPTION_USBMOUSE=$enable_usbmouse)
-			AC_ARG_ENABLE(evdev,
-				AC_HELP_STRING([--enable-evdev], [Enable building evdev.o [[default=no]]]),
-				WCM_OPTION_EVDEV=$enable_evdev)
-			AC_ARG_ENABLE(mousedev,
-				AC_HELP_STRING([--enable-mousedev], [Enable building mousedev.o [[default=no]]]),
-				WCM_OPTION_MOUSEDEV=$enable_mousedev)
-			AC_ARG_ENABLE(input,
-				AC_HELP_STRING([--enable-input], [Enable building input.o [[default=no]]]),
-				WCM_OPTION_INPUT=$enable_input)
-			AC_ARG_ENABLE(modver,
-				AC_HELP_STRING([--enable-modver], [Enable kernel module versioning [[default=usually]]]),
-				WCM_OPTION_MODVER=$enable_modver, WCM_OPTION_MODVER=yes)
-
-			WCM_KSTACK="-mpreferred-stack-boundary=2"
-			if test "$WCM_OPTION_EVDEV" = yes; then
-				WCM_MODULES="$WCM_MODULES evdev.o"
-			fi
-			if test "$WCM_OPTION_USBMOUSE" = yes; then
-				if test "$WCM_KERNEL_VER" = "2.4.22"; then
-					if test -f $WCM_KERNEL_DIR/drivers/usb/usbmouse.c; then
-						cp $WCM_KERNEL_DIR/drivers/usb/usbmouse.c src/$WCM_KERNEL_VER
-						WCM_MODULES="$WCM_MODULES usbmouse.o"
-					else
-						AC_MSG_WARN(usbmouse.c not found in kernel source)
-						WCM_OPTION_USBMOUSE=no
-					fi
-				else
-					WCM_MODULES="$WCM_MODULES usbmouse.o"
-				fi
-			fi
-			if test "$WCM_OPTION_MOUSEDEV" = yes; then
-				WCM_MODULES="$WCM_MODULES mousedev.o"
-			fi
-			if test "$WCM_OPTION_INPUT" = yes; then
-				if test "$WCM_KERNEL_VER" = "2.4.22"; then
-					if test -f $WCM_KERNEL_DIR/drivers/input/input.c; then
-						cp $WCM_KERNEL_DIR/drivers/input/input.c src/$WCM_KERNEL_VER
-						WCM_MODULES="$WCM_MODULES input.o"
-					else
-						AC_MSG_WARN(input.c not found in kernel source)
-						WCM_OPTION_INPUT=no
-					fi
-				else
-					WCM_MODULES="$WCM_MODULES input.o"
-				fi
-			fi
-			if test "$WCM_OPTION_HID" = yes; then
-				if test "$WCM_KERNEL_VER" = "2.4.22"; then
-					if test -f $WCM_KERNEL_DIR/drivers/usb/hid-input.c; then
-						cp $WCM_KERNEL_DIR/drivers/usb/hid-input.c src/$WCM_KERNEL_VER
-						cp $WCM_KERNEL_DIR/drivers/usb/hiddev.c src/$WCM_KERNEL_VER
-						WCM_MODULES="$WCM_MODULES hid.o"
-					else
-						AC_MSG_WARN(hid-input.c/hiddev.c not found in kernel source)
-						WCM_OPTION_HID=no
-					fi
-				else
-					WCM_MODULES="$WCM_MODULES hid.o"
-				fi
-
-				if echo "$WCM_PATCH_HID" | grep value_patch >/dev/null; then
-					AC_DEFINE(WCM_PATCH_DRVALUE,1,[Need the dr.wValue patch])
-				else
-					AC_DEFINE(WCM_PATCH_DRVALUE,0,[Need the dr.wValue patch])
-				fi
-			fi
-			if test $WCM_OPTION_MODVER = yes; then
-				WCM_MODVER="-DCONFIG_MODVERSIONS -DMODVERSIONS -include $WCM_KERNEL_DIR/include/linux/modversions.h"
-			fi
-		elif echo $WCM_KERNEL_VER | grep "^2.6" >/dev/null 2>&1; then
+		if echo $WCM_KERNEL_VER | grep "^2.6" >/dev/null 2>&1; then
 			MINOR=`echo $WCM_KERNEL_VER | cut -f 3 -d.`
 			if test $MINOR -ge 18; then
 				WCM_OPTION_HID=no
@@ -421,6 +337,11 @@ if test "$WCM_ENV_XFREE86" = yes; then
 else
 	AM_CONDITIONAL(WCM_ENV_XFREE86, false)
 fi
+
+PKG_CHECK_MODULES(HAL, [hal])
+AC_SUBST([HAL_CFLAGS])
+AC_SUBST([HAL_LIBS])
+
 dnl Check for X.org SDK
 if test "$WCM_ENV_XFREE86" != yes; then
 	AC_ARG_WITH(xorg-sdk,
@@ -536,7 +457,10 @@ if test "$WCM_ENV_XFREE86" != yes; then
 ], , [WCM_XORG_XSERVER_1_6=yes], [WCM_XORG_XSERVER_1_6=no])
 		CFLAGS="$save_CFLAGS"
 		AC_MSG_RESULT($WCM_XORG_XSERVER_1_6)
-		AC_MSG_CHECKING([if Xorg SDK defines IsXExtensionPointer])
+		if test "$WCM_XORG_XSERVER_1_6" = "yes"; then
+			AC_DEFINE(WCM_XORG_XSERVER_1_6, 1,
+				[Using version 1.6 or later of X.org])
+		fi
 		save_CFLAGS="$CFLAGS"
 		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
 		AC_TRY_COMPILE([
@@ -1013,19 +937,12 @@ AC_SUBST(WCM_XSETWACOM_LIBS)
 AC_SUBST(WCM_DEPFLAGS)
 AC_SUBST(WCM_OPTION_WACOM)
 AC_SUBST(WCM_OPTION_HID)
-AC_SUBST(WCM_OPTION_EVDEV)
-AC_SUBST(WCM_OPTION_MOUSEDEV)
-AC_SUBST(WCM_OPTION_USBMOUSE)
-AC_SUBST(WCM_OPTION_INPUT)
 
 AC_OUTPUT(Makefile
 	mkxincludes
 	src/Makefile
 	src/util/Makefile
 	src/xdrv/Makefile
-	src/2.4/Makefile
-	src/2.4.22/Makefile
-	src/2.6.8/Makefile
 	src/2.6.9/Makefile
 	src/2.6.10/Makefile
 	src/2.6.11/Makefile
@@ -1067,10 +984,6 @@ echo "        libwacomcfg - $WCM_OPTION_LIBWACOMCFG"
 echo "         libwacomxi - $WCM_OPTION_LIBWACOMXI"
 echo "          xsetwacom - $WCM_OPTION_XSETWACOM"
 echo "              hid.o - $WCM_OPTION_HID $WCM_PATCH_HID"
-echo "         usbmouse.o - $WCM_OPTION_USBMOUSE"
-echo "            evdev.o - $WCM_OPTION_EVDEV"
-echo "         mousedev.o - $WCM_OPTION_MOUSEDEV"
-echo "            input.o - $WCM_OPTION_INPUT"
 if test "$WCM_OPTION_DLLOADER" = "yes" ; then
 echo "       wacom_drv.so - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV"
 echo "        wacom_drv.o - no"
@@ -1080,15 +993,3 @@ echo "        wacom_drv.o - $WCM_OPTION_WACOMDRV $WCM_MODDIR $WCM_PATCH_WACOMDRV
 fi
 echo "  wacom*_drv quirks -$WCM_XDRIVER_QUIRKS"
 echo "----------------------------------------"
-
-dnl Check for x86_64 kernel
-if echo $WCM_KERNEL_VER | grep "2.4" >/dev/null && echo "$WCM_ARCHITECTURE" | grep "x86_64" >/dev/null; then
-	echo ""
-	echo "***"
-	echo "*** Note:"
-	echo "*** For x86-64 kernel, we only support kernel 2.4.30 and kernel 2.6.* "
-	echo "*** To compile Wacom related kernel 2.4.30 modules for x86-64, you need to "
-	echo "*** copy the source files from src/2.4.30x86-64 to your kernel source tree "
-	echo "*** and build the drivers there "
-	echo "*** "
-fi

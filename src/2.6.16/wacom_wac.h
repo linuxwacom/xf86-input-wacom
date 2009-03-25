@@ -27,6 +27,9 @@ enum {
 	INTUOS3L,
 	CINTIQ,
 	WACOM_BEE,
+	INTUOS4S,
+	INTUOS4,
+	INTUOS4L,
 	WACOM_MO,
 	TABLETPC,
 	MAX_TYPE
@@ -45,7 +48,7 @@ struct wacom_features {
 };
 
 struct wacom_wac {
-	signed char *data;
+	unsigned char *data;
         int tool[2];
         int id[2];
         __u32 serial[2];

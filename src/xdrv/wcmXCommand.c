@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2007-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,8 +20,9 @@
  * REVISION HISTORY
  *
  * 2007-05-25 0.1 - Initial release - span off from xf86Wacom.c
- * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateScreen
+ * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateTablet
  * 2008-06-26 0.3 - Added Capacity
+ * 2009-03-16 0.4 - Added leftOF for TwinView
  */
 
 
@@ -31,8 +32,8 @@
 #include "wcmFilter.h"
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
+extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
 extern void xf86WcmInitialScreens(LocalDevicePtr local);
-extern void xf86WcmRotateScreen(LocalDevicePtr local, int value);
 
 /*****************************************************************************
  * xf86WcmSetPadCoreMode
@@ -135,7 +136,6 @@ void xf86WcmChangeScreen(LocalDevicePtr local, int value)
 	if (priv->screen_no != -1)
 		priv->currentScreen = priv->screen_no;
 	xf86WcmInitialScreens(local);
-	xf86WcmMappingFactor(local);
 	xf86WcmInitialCoordinates(local, 0);
 	xf86WcmInitialCoordinates(local, 1);
 }
@@ -326,6 +326,11 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86ReplaceIntOption(local->options, "Threshold", 
 				common->wcmThreshold);
 		break;
+	    case XWACOM_PARAM_THRESHOLD:
+		common->wcmThreshold = value;
+		xf86ReplaceIntOption(local->options, "Threshold", 
+				common->wcmThreshold);
+		break;
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPY, 0);
@@ -400,7 +405,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TWINVIEW:
 		if (priv->twinview != value)
 		{
-			if ((value > 2) || (value < 0) || screenInfo.numScreens != 1)
+			if ((value > TV_MAX) || (value < TV_NONE) || screenInfo.numScreens != 1)
 				return BadValue;
 			priv->twinview = value;
 
@@ -471,25 +476,9 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				}
 			}
 		}
-		/* initial screen info */
-		priv->screenTopX[0] = 0;
-		priv->screenTopY[0] = 0;
-		priv->screenBottomX[0] = priv->tvResolution[0];
-		priv->screenBottomY[0] = priv->tvResolution[1];
-		if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			priv->screenTopX[1] = 0;
-			priv->screenTopY[1] = priv->tvResolution[1];
-			priv->screenBottomX[1] = priv->tvResolution[2];
-			priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
-		}
-		if (priv->twinview == TV_LEFT_RIGHT)
-		{
-			priv->screenTopX[1] = priv->tvResolution[0];
-			priv->screenTopY[1] = 0;
-			priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
-			priv->screenBottomY[1] = priv->tvResolution[3];
-		}
+
+		/* reset screen info */
+		xf86WcmChangeScreen(local, priv->screen_no);
 		break;
 	    }
 	    case XWACOM_PARAM_COREEVENT:
@@ -509,7 +498,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	   case XWACOM_PARAM_ROTATE:
 		if ((value < 0) || (value > 3)) return BadValue;
 		if (common->wcmRotate != value)
-			xf86WcmRotateScreen(local, value);
+			xf86WcmRotateTablet(local, value);
 		break;
 	   default:
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam invalid param %d\n",param));
@@ -814,6 +803,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_CLICKFORCE:
 		return !common->wcmMaxZ ? 0 :
 			(int) (((common->wcmThreshold + 0.5) * 100) / common->wcmMaxZ);
+	    case XWACOM_PARAM_THRESHOLD:
+		return !common->wcmMaxZ ? 0 : common->wcmThreshold;
 	    case XWACOM_PARAM_XYDEFAULT:
 		return -1;
 	    case XWACOM_PARAM_MMT:
@@ -844,7 +835,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		else
 		{
 			int sNum = param - XWACOM_PARAM_TVRESOLUTION0;
-			return priv->tvResolution[sNum++] | (priv->tvResolution[sNum] << 16);
+			return priv->tvResolution[sNum] | (priv->tvResolution[sNum + 1] << 16);
 		}
 	    }
 	    case XWACOM_PARAM_SCREEN_NO:
@@ -991,6 +982,11 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return 0;
 	case XWACOM_PARAM_CLICKFORCE:
 		return 6;
+	case XWACOM_PARAM_THRESHOLD:
+		if (strstr(common->wcmModel->name, "Intuos4"))
+			return (common->wcmMaxZ * 3 / 25);
+		else
+			return (common->wcmMaxZ * 3 / 50);
 	case XWACOM_PARAM_MMT:
 		return 1;
 	case XWACOM_PARAM_TPCBUTTON:

@@ -12,7 +12,7 @@ EXTRA_DIST = xf86Wacom.c wcmXCommand.c xf86Wacom.h \
 		wcmSerial.c wcmISDV4.c wcmUSB.c \
 		wcmCommon.c wcmCompat.c wcmConfig.c \
 		wcmFilter.c wcmFilter.h wcmSerial.h \
-		../include/Xwacom.h
+		../include/Xwacom.h wcmTilt2Rotation.c
 
 if WCM_ENV_XORGSDK
 DRIVER_INCLUDES = -I../include -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
@@ -41,7 +41,7 @@ endif
 
 XF86OBJS = xf86Wacom.o wcmSerial.o wcmUSB.o wcmISDV4.o \
 	wcmXCommand.o wcmCommon.o wcmCompat.o wcmConfig.o \
-	wcmFilter.o
+	wcmFilter.o wcmTilt2Rotation.o
 
 $(XF86OBJS):
 	$(CC) $(CFLAGS) $(WCM_DEPFLAGS) $(DLLOADER) -pipe $(WCM_CLEVEL) \
