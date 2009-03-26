@@ -18,7 +18,9 @@ AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
 # potentially be built or installed depending on the results of
 # the configuration.
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
+if WCM_HAVE_HAL
 libexec_PROGRAMS = hal-setup-wacom
+endif
 
 # Source dependencies
 wacdump_SOURCES = wacdump.c wacscrn.c wacscrn.h \
@@ -42,7 +44,9 @@ libwacomcfg_la_LIBADD = @WCM_LIBWACOMCFG_LIBS@
 xsetwacom_SOURCES = xsetwacom.c wacomcfg.h wcmAction.c wcmAction.h ../include/Xwacom.h
 xsetwacom_LDADD = libwacomcfg.la
 
+if WCM_HAVE_HAL
 hal_setup_wacom_SOURCES = hal-setup-wacom.c
 hal_setup_wacom_LDADD = $(HAL_LIBS)
+endif
 
 

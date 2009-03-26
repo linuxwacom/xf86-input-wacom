@@ -30,6 +30,17 @@ dnl Configuration
 WCM_MODVER=
 WCM_ENV_XFREE86=no
 WCM_ENV_XORGSDK=no
+WCM_XDRIVER_QUIRKS=
+
+#dnl Check for HAL
+have_hal=no
+PKG_CHECK_MODULES(HAL, hal >= 0.5.0, have_hal=yes, have_hal=no)
+if test "x$have_hal" = "xyes"; then
+	AC_SUBST([HAL_CFLAGS])
+	AC_SUBST([HAL_LIBS])
+	WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS hal"
+fi
+AM_CONDITIONAL(WCM_HAVE_HAL, test "x$have_hal" = "xyes")
 
 dnl Setup paths based on configuration parameters
 WCM_PREFIX=$prefix
@@ -271,7 +282,6 @@ if test "$WCM_ENV_XLIB" = yes; then
 fi
 
 dnl =======================================================
-WCM_XDRIVER_QUIRKS=
 dnl Check for XFree86 source or X.org SDK
 test -d "x-include" && WCM_XFREE86_DIR="x-include"
 AC_ARG_WITH(x-src,
@@ -337,10 +347,6 @@ if test "$WCM_ENV_XFREE86" = yes; then
 else
 	AM_CONDITIONAL(WCM_ENV_XFREE86, false)
 fi
-
-PKG_CHECK_MODULES(HAL, [hal])
-AC_SUBST([HAL_CFLAGS])
-AC_SUBST([HAL_LIBS])
 
 dnl Check for X.org SDK
 if test "$WCM_ENV_XFREE86" != yes; then
