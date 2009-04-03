@@ -75,10 +75,11 @@
  * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
  * 2008-11-11 47-pc0.8.2 - new release
  * 2008-12-22 47-pc0.8.2-1 - fixed a few issues
- * 2009-02-20 47-pc0.8.3 - new release
+ * 2009-03-26 47-pc0.8.3 - Added Intuos4 support
+ * 2009-04-03 47-pc0.8.3-2 - HAL support
  */
 
-static const char identification[] = "$Identification: 47-0.8.3 $";
+static const char identification[] = "$Identification: 47-0.8.3-2 $";
 
 /****************************************************************************/
 
@@ -301,7 +302,7 @@ void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
 
 	if (!(priv->flags & ABSOLUTE_FLAG)) return;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE))
+	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -338,7 +339,7 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
 	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE))
+	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -952,11 +953,11 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 	/* move data until we exhaust the device */
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
+		/* verify that there is still data in pipe */
+		if (!xf86WcmReady(local)) break;
+
 		/* dispatch */
 		common->wcmDevCls->Read(local);
-
-		/* verify that there is still data in pipe */
-		if (!xf86WcmReady(local->fd)) break;
 	}
 
 	/* report how well we're doing */

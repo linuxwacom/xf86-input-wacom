@@ -789,7 +789,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	if (priv->serial && serial != priv->serial)
 	{
 		DBG(10, priv->debugLevel, ErrorF("[%s] serial number"
-			" is %d but your system configured %d", 
+			" is %u but your system configured %u", 
 			local->name, serial, (int)priv->serial));
 		return;
 	}
@@ -812,13 +812,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		tx, ty, wheel, rot, throttle));
 
 	/* rotation mixes x and y up a bit */
-	if (common->wcmRotate == ROTATE_CCW)
+	if (common->wcmRotate == ROTATE_CW)
 	{
 		tmp_coord = x;
 		x = y;
 		y = priv->wcmMaxY - tmp_coord;
 	}
-	else if (common->wcmRotate == ROTATE_CW)
+	else if (common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = y;
 		y = x;
@@ -844,7 +844,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 	DBG(6, priv->debugLevel, ErrorF("[%s] %s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
-		"\tserial=%d\tbutton=%s\tbuttons=%d\n",
+		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
 		local->name,
 		is_absolute ? "abs" : "rel",
 		is_proximity,
@@ -1685,7 +1685,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	else
 	{
 		DBG(11, common->debugLevel, ErrorF("no device matches with"
-				" id=%d, serial=%d\n",
+				" id=%d, serial=%u\n",
 				ds->device_type, ds->serial_num));
 	}
 }
@@ -1993,13 +1993,13 @@ static void rotateOneTool(WacomDevicePtr priv)
 	}
 
 	switch (common->wcmRotate) {
-	      case ROTATE_CCW:
+	      case ROTATE_CW:
 		area->topX = priv->topX = tmpTopY;
 		area->bottomX = priv->bottomX = tmpBottomY;
 		area->topY = priv->topY = oldMaxX - tmpBottomX;
 		area->bottomY = priv->bottomY =oldMaxX - tmpTopX;
 		break;
-	      case ROTATE_CW:
+	      case ROTATE_CCW:
 		area->topX = priv->topX = oldMaxY - tmpBottomY;
 		area->bottomX = priv->bottomX = oldMaxY - tmpTopY;
 		area->topY = priv->topY = tmpTopX;
@@ -2068,13 +2068,13 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 
 		    /* recover to the unrotated xy-rectangles */
 		    switch (oldRotation) {
-		      case ROTATE_CCW:
+		      case ROTATE_CW:
 			tmppriv->topX = oldMaxY - tmpBottomY;
 			tmppriv->bottomX = oldMaxY - tmpTopY;
 			tmppriv->topY = tmpTopX;
 			tmppriv->bottomY = tmpBottomX;
 			break;
-		      case ROTATE_CW:
+		      case ROTATE_CCW:
 			tmppriv->topX = tmpTopY;
 			tmppriv->bottomX = tmpBottomY;
 			tmppriv->topY = oldMaxX - tmpBottomX;

@@ -1,3 +1,10 @@
+2009-04-03  Ping Cheng <pingc@wacom.com>
+	* Support kernels 2.6.28 and 2.6.29
+	* Added 10-linuxwacom.fdi from Peter Hutterer
+	* Updated install/uninstall and util/Makefile.am to support HAL
+	* Patch 2653689 from Peter Hutterer
+	* Label 0.8.3-2
+
 2009-03-26  Ping Cheng <pingc@wacom.com>
 	* Patch "Don't touch the button map" from Thomas Jaeger
 	* Patch 2653696 from Matthew Garret

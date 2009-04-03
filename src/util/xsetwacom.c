@@ -1056,6 +1056,8 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 				snprintf (strval, sizeof (strval), 
 					"%s", option_char[value] );
 		}
+		else if (p->nParamID == XWACOM_PARAM_TOOLSERIAL)
+			snprintf (strval, sizeof (strval), "%u", value);
 		else
 			snprintf (strval, sizeof (strval), "%d", value);
                 break;

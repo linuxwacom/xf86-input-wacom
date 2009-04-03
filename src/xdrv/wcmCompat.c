@@ -32,10 +32,13 @@ int xf86WcmWait(int t)
 	return err;
 }
 
-int xf86WcmReady(int fd)
+int xf86WcmReady(LocalDevicePtr local)
 {
-	int n = xf86WaitForInput(fd, 0);
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	int n = xf86WaitForInput(local->fd, 0);
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmReady for %s with %d numbers of data\n", local->name, n));
+
 	if (n >= 0) return n ? 1 : 0;
-	ErrorF("Wacom select error : %s\n", strerror(errno));
+	ErrorF("Wacom select error : %s for %s \n", strerror(errno), local->name);
 	return 0;
 }

@@ -783,18 +783,18 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmThreshold);
 
 	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
-		priv->wcmMaxX);
-	if (priv->wcmMaxX != 0)
-		xf86Msg(X_CONFIG, "%s: max x = %d\n", dev->identifier,
+		common->wcmMaxX);
+	if (priv->wcmMaxX > 0)
+		xf86Msg(X_CONFIG, "%s: max x set to %d by xorg.conf\n", dev->identifier,
 			priv->wcmMaxX);
 
 	/* Update tablet logical max X */
 	if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
 
 	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
-		priv->wcmMaxY);
-	if (priv->wcmMaxY != 0)
-		xf86Msg(X_CONFIG, "%s: max y = %d\n", dev->identifier,
+		common->wcmMaxY);
+	if (priv->wcmMaxY > 0)
+		xf86Msg(X_CONFIG, "%s: max y set to %d by xorg.conf\n", dev->identifier,
 			priv->wcmMaxY);
 
 	/* Update tablet logical max Y */
@@ -1009,10 +1009,10 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	{0, 0, 0, 0}  /* signature, to be patched into the file by a tool */
 };
 
-#ifdef WCM_XFREE86
-    XF86ModuleData wacomModuleData =
-#else
+#ifdef _X_EXPORT
     _X_EXPORT XF86ModuleData wacomModuleData =
+#else
+    XF86ModuleData wacomModuleData =
 #endif
 {
 	&xf86WcmVersionRec,

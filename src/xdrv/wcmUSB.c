@@ -216,7 +216,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 
 	static WacomModel usbCintiq =
 	{
-		"USB Cintiq",
+		"USB PL/Cintiq",
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
@@ -576,6 +576,11 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 			}
 		}
 	}
+	else
+	{
+		ErrorF("%x is not supported by linuxwacom.\n", sID[1]);
+		return FALSE;
+	}
 
 	if (!common->wcmModel)
 	{
@@ -917,8 +922,7 @@ static void usbParseEvent(LocalDevicePtr local,
 			{
 				if (!common->wcmChannel[i].work.proximity)
 				{
-					memset(&common->wcmChannel[i],0,
-							sizeof(WacomChannel));
+					memset(&common->wcmChannel[i],0,sizeof(WacomChannel));
 					/* in case the in-prox event was missing */
 					common->wcmChannel[i].work.proximity = 1;
 					channel = i;
@@ -931,15 +935,28 @@ static void usbParseEvent(LocalDevicePtr local,
 	/* fresh out of channels */
 	if (channel < 0)
 	{
-		/* this should never happen in normal use */
-		ErrorF("usbParse: Exceeded channel count; "
-			"ignoring the events.\n");
-		common->wcmEventCnt = 0;
+		/* This should never happen in normal use.
+		 * So something was wrong. Let's start over again. 
+		 * Force prox-out for all channels.
+		 */
+		for (i=0; i<MAX_CHANNELS; ++i)
+		{
+			if (common->wcmChannel[i].work.proximity)
+			{
+				common->wcmChannel[i].work.proximity = 0;
+				/* dispatch event */
+				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
+			}
+		}
+		ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
+			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
+			(int)GetTimeInMillis());
 		return;
 
 	}
+	else
+		usbParseChannel(local,channel,common->wcmLastToolSerial);
 
-	usbParseChannel(local,channel,common->wcmLastToolSerial);
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }

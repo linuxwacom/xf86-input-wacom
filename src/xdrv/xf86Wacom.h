@@ -191,7 +191,7 @@ struct _WacomModule
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 int xf86WcmWait(int t);
-int xf86WcmReady(int fd);
+int xf86WcmReady(LocalDevicePtr local);
 
 LocalDevicePtr xf86WcmAllocate(char* name, int flag);
 LocalDevicePtr xf86WcmAllocateStylus(void);

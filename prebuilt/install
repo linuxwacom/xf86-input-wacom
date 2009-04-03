@@ -93,6 +93,13 @@ if [ -n "$drv" ]; then
 	/usr/bin/install -c xidump /usr/local/bin/xidump
 	/usr/bin/install -c .libs/xsetwacom /usr/local/bin/xsetwacom
 	echo "Installed under /usr/local/bin"
+	test -z "/usr/local/libexec" || /bin/mkdir -p "/usr/local/libexec"
+	/usr/bin/install -c hal-setup-wacom /usr/local/libexec/hal-setup-wacom
+	test -z "/usr/local/share/hal/fdi/policy/20thirdparty" || /bin/mkdir -p "/usr/local/share/hal/fdi/policy/20thirdparty"
+	/usr/bin/install -c '10-linuxwacom.fdi' '/usr/local/share/hal/fdi/policy/20thirdparty/10-linuxwacom.fdi'
+	echo "hal-setup-wacom installed under /usr/local/libexec"
+	echo "10-linuxwacom.fdi installed under /usr/local/share/hal/fdi/policy/20thirdparty"
+	test -z "/usr/local/include/wacomcfg" || /bin/mkdir -p "/usr/local/include/wacomcfg"
 	test -z "/usr/local/include/wacomcfg" || mkdir -p -- "/usr/local/include/wacomcfg"
 	/usr/bin/install -c -m 644 'wacomcfg.h' '/usr/local/include/wacomcfg/wacomcfg.h'
 	echo

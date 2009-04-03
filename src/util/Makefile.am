@@ -5,11 +5,11 @@ wacomcfgdir = $(includedir)/wacomcfg
 wacomcfg_HEADERS = wacomcfg.h
 
 if WCM_ENV_XORGSDK
-WACOMCFG_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
+WACOMCFG_INCLUDES = -I$(WCM_XORGSDK_DIR) $(X_CFLAGS) $(HAL_CFLAGS)
 endif
 
 if WCM_ENV_XFREE86
-WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR) $(HAL_CFLAGS)
+WACOMCFG_INCLUDES = -I$(WCM_XFREE86_DIR)
 endif
 
 AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
@@ -20,6 +20,8 @@ AM_CFLAGS = -Wall -pedantic $(WACOMCFG_INCLUDES)
 EXTRA_PROGRAMS = wacdump xidump xsetwacom 
 if WCM_HAVE_HAL
 libexec_PROGRAMS = hal-setup-wacom
+fdidir = $(prefix)/share/hal/fdi/policy/20thirdparty
+fdi_SCRIPTS = 10-linuxwacom.fdi
 endif
 
 # Source dependencies

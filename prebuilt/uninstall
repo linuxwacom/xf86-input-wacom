@@ -7,6 +7,8 @@ if [ "$(id -u)" != "0" ]; then
    exit
 fi
 
+echo "Please remove linuxwacom package if your system has an existing one"
+
 echo "Removing Wacom X driver related utility programs...."
 rm -f /usr/local/bin/xsetwacom
 rm -f /usr/local/bin/wacdump
@@ -14,12 +16,22 @@ rm -f /usr/local/bin/xidump
 rm -f /usr/bin/xsetwacom
 rm -f /usr/bin/wacdump
 rm -f /usr/bin/xidump
+rm -f /usr/local/libexec/hal-setup-wacom
+rm -f /usr/local/share/hal/fdi/policy/20thirdparty/10-linuxwacom.fdi
 rm -f /usr/local/lib/libwacomcfg.la /usr/local/lib/libwacomcfg.so.0.0.1 /usr/local/lib/libwacomcfg.so.0 /usr/local/lib/libwacomcf.so /usr/local/lib/libwacomcfg.a
 rm -f /usr/local/include/wacomcfg/wacomcfg.h
 rm -f /usr/local/bin/wacomcpl
 rm -f /usr/local/bin/wacomcpl-exec
 rm -f /usr/local/lib/TkXInput/pkgIndex.tcl
 rm -f /usr/local/lib/TkXInput/libwacomxi.la /usr/local/lib/TkXInput/libwacomxi.so.0.0.0 /usr/local/lib/TkXInput/libwacomxi.so.0 /usr/local/lib/TkXInput/libwacomxi.so /usr/local/lib/TkXInput/libwacomxi.a
+rm -f /usr/libexec/hal-setup-wacom
+rm -f /usr/share/hal/fdi/policy/20thirdparty/10-linuxwacom.fdi
+rm -f /usr/lib/libwacomcfg.la /usr/lib/libwacomcfg.so.0.0.1 /usr/lib/libwacomcfg.so.0 /usr/lib/libwacomcf.so /usr/lib/libwacomcfg.a
+rm -f /usr/include/wacomcfg/wacomcfg.h
+rm -f /usr/bin/wacomcpl
+rm -f /usr/bin/wacomcpl-exec
+rm -f /usr/lib/TkXInput/pkgIndex.tcl
+rm -f /usr/lib/TkXInput/libwacomxi.la /usr/lib/TkXInput/libwacomxi.so.0.0.0 /usr/lib/TkXInput/libwacomxi.so.0 /usr/lib/TkXInput/libwacomxi.so /usr/lib/TkXInput/libwacomxi.a
 rm -f /etc/wacom.dat
 rm -f /etc/X11/wcm.*
 echo "Wacom X driver related utility programs have been removed"

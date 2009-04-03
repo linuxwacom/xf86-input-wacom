@@ -1,14 +1,17 @@
 README
-July 09, 2007
+April 03, 2009
 
 ==============================================================================
-Most end users would probably only need to update the Wacom X driver and the /etc/X11/xorg.conf file to use the rich features that Wacom tablets offer. The steps could be as simple as:
+Most end users would probably only need to update the Wacom X driver and the 
+/etc/X11/xorg.conf file to use the rich features that Wacom tablets offer. 
+The steps could be as simple as:
 
 download the package then
     $ bunzip2 linuxwacom.tar.bz2
     $ tar xvf linuxwacom.tar
     $ cd linuxwacom/prebuilt
     $ su
+    # yum remove linuxwacom
     # ./uninstall
     # ./install
     # cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak
@@ -17,7 +20,9 @@ download the package then
 
 ==============================================================================
 
-However, if you have a USB tablet which is newer than your running kernel, i.e., the tablet is not supported by your running kernel, or you are a developer who is willing to build the driver from the source, there are extra work waiting for you.
+However, if you have a USB tablet which is newer than your running kernel, i.e., 
+the tablet is not supported by your running kernel, or you are a developer who is 
+willing to build the driver from the source, there are extra work waiting for you.
 
 ==============================================================================
 
@@ -31,24 +36,25 @@ As you would expect, run configure and make.  Configure options are explained be
 
 CONFIGURE OPTIONS:
 
-This file contains hints for building the sources.  There are a number of
-build targets, some of which are not built automatically.  Here is the
+This file contains hints for building the sources.  There are a number of build
+ targets, some of which are not built automatically.  Here is the
 breakdown:
 
       wacom.o: not built by default (--enable-wacom, --disable-wacom)
       wacdump: built by default (--enable-wacdump, --disable-wacdump)
-        hid.o: not built by default (--enable-hid, --disable-hid)
-      evdev.o: not built by default (--enable-evdev, --disable-evdev for kernel 2.4.x only)
-   mousedev.o: not built by default (--enable-mousedev, --disable-mousedev. It is used for kernel 2.4.x only)
-   usbmouse.o: not built by default (--enable-usbmouse, --disable-usbmouse. It is used  for kernel 2.4.x only)
-      input.o: not built by default (--enable-input, --disable-input. It is used  for kernel 2.4.x only)
+       xidump: built by default (--enable-xidump, --disable-xidump)
+    xsetwacom: built by default (--enable-xsetwacom, --disable-xsetwacom)
+        hid.o: not built by default (--enable-hid, --disable-hid;  Only kernels 2.6.18 or older need it.)
   wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
 
 There are many options, and configure will attempt to guess the correct
 values for most of them.  By default, only wacomcpl, xsetwacom,  wacom_drv.o, 
 xidump, and wacdump program are built.
 
-Please surf the HOWTO page at http://linuxwacom.sf.net/index.php/howto/main to find the proper options if the default building environment doesn't work for you.
+Please surf the HOWTO page at http://linuxwacom.sf.net/index.php/howto/main 
+(or the miniHOWTO at http://linuxwacom.sourceforge.net/index.php/minihowto if 
+you run a Fedora system) to find the proper options if the default building 
+environment doesn't work for you.
 
 ==============================================================================
 
