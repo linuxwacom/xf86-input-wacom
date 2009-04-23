@@ -1008,8 +1008,9 @@ proc addMenu { curb } {
 	set i 9
     } else {
 	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
-		$db(3) $db(4) $db(5) $db($displayToggleB) $db($ignoreButton) ]
-	set i 7
+		$db(3) $db(4) $db(5) $db($doubleClickB) $db($displayToggleB) \
+		$db($ignoreButton) ]
+	set i 8
     }
 
     set i [expr ($i+1)]

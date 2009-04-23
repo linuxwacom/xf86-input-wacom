@@ -635,6 +635,8 @@ static int wacom_intuos_inout(struct urb *urb)
 		input_report_abs(dev, ABS_X, 0);
 		input_report_abs(dev, ABS_Y, 0);
 		input_report_abs(dev, ABS_DISTANCE, 0);
+		input_report_abs(dev, ABS_TILT_X, 0);
+		input_report_abs(dev, ABS_TILT_Y, 0);
 		if (wacom->tool[idx] >= BTN_TOOL_MOUSE) {
 			input_report_key(dev, BTN_LEFT, 0);
 			input_report_key(dev, BTN_MIDDLE, 0);
@@ -645,8 +647,6 @@ static int wacom_intuos_inout(struct urb *urb)
 			input_report_abs(dev, ABS_RZ, 0);
  		} else {
 			input_report_abs(dev, ABS_PRESSURE, 0);
-			input_report_abs(dev, ABS_TILT_X, 0);
-			input_report_abs(dev, ABS_TILT_Y, 0);
 			input_report_key(dev, BTN_STYLUS, 0);
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOUCH, 0);

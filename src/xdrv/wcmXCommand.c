@@ -23,6 +23,7 @@
  * 2008-05-14 0.2 - Rotate through routine xf86WcmRotateTablet
  * 2008-06-26 0.3 - Added Capacity
  * 2009-03-16 0.4 - Added leftOF for TwinView
+ * 2009-04-21 0.5 - Added set serial option
  */
 
 
@@ -330,6 +331,15 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		common->wcmThreshold = value;
 		xf86ReplaceIntOption(local->options, "Threshold", 
 				common->wcmThreshold);
+		break;
+	    case XWACOM_PARAM_TOOLSERIAL:
+		if (common->wcmProtocolLevel != 5)
+			return BadValue;
+		if (priv->serial != value)
+		{
+			priv->serial = value; 
+			xf86ReplaceIntOption(local->options, "Serial", priv->serial);
+		}
 		break;
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);

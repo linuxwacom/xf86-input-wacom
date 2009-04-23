@@ -370,13 +370,13 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
  		} else {
 			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
-			wacom_report_abs(wcombo, ABS_TILT_X, 0);
-			wacom_report_abs(wcombo, ABS_TILT_Y, 0);
 			wacom_report_key(wcombo, BTN_STYLUS, 0);
 			wacom_report_key(wcombo, BTN_STYLUS2, 0);
 			wacom_report_abs(wcombo, ABS_WHEEL, 0);
 			wacom_report_abs(wcombo, ABS_Z, 0);
 		}
+		wacom_report_abs(wcombo, ABS_TILT_X, 0);
+		wacom_report_abs(wcombo, ABS_TILT_Y, 0);
 		wacom_report_key(wcombo, wacom->tool[idx], 0);
 		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
 		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
@@ -638,6 +638,7 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 			}
 		} else if (touchOut || !prox) { /* force touch out-prox */
 			wacom_report_abs(wcombo, ABS_MISC, TOUCH_DEVICE_ID);
+			wacom_report_key(wcombo, wacom->tool[1], 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
 			touchOut = 0;
 			touchInProx = 1;
@@ -787,65 +788,66 @@ void wacom_init_input_dev(struct input_dev *input_dev, struct wacom_wac *wacom_w
 }
 
 static struct wacom_features wacom_features[] = {
-	{ "Wacom Penpartner",    7,   5040,  3780,  255,  0, PENPARTNER },
-        { "Wacom Graphire",      8,  10206,  7422,  511, 63, GRAPHIRE },
-	{ "Wacom Graphire2 4x5", 8,  10206,  7422,  511, 63, GRAPHIRE },
-	{ "Wacom Graphire2 5x7", 8,  13918, 10206,  511, 63, GRAPHIRE },
-	{ "Wacom Graphire3",     8,  10208,  7424,  511, 63, GRAPHIRE },
-	{ "Wacom Graphire3 6x8", 8,  16704, 12064,  511, 63, GRAPHIRE },
-	{ "Wacom Graphire4 4x5", 8,  10208,  7424,  511, 63, WACOM_G4 },
-	{ "Wacom Graphire4 6x8", 8,  16704, 12064,  511, 63, WACOM_G4 },
-	{ "Wacom BambooFun 4x5", 9,  14760,  9225,  511, 63, WACOM_MO },
-	{ "Wacom BambooFun 6x8", 9,  21648, 13530,  511, 63, WACOM_MO },
-	{ "Wacom Bamboo1 Medium",8,  16704, 12064,  511, 63, GRAPHIRE },
-	{ "Wacom Volito",        8,   5104,  3712,  511, 63, GRAPHIRE },
-	{ "Wacom PenStation2",   8,   3250,  2320,  255, 63, GRAPHIRE },
-	{ "Wacom Volito2 4x5",   8,   5104,  3712,  511, 63, GRAPHIRE },
-	{ "Wacom Volito2 2x3",   8,   3248,  2320,  511, 63, GRAPHIRE },
-	{ "Wacom PenPartner2",   8,   3250,  2320,  511, 63, GRAPHIRE },
-	{ "Wacom Bamboo",        9,  14760,  9225,  511, 63, WACOM_MO },
-	{ "Wacom Bamboo1",	 8,   5104,  3712,  511, 63, GRAPHIRE },
-	{ "Wacom Intuos 4x5",   10,  12700, 10600, 1023, 31, INTUOS },
-	{ "Wacom Intuos 6x8",   10,  20320, 16240, 1023, 31, INTUOS },
-	{ "Wacom Intuos 9x12",  10,  30480, 24060, 1023, 31, INTUOS },
-	{ "Wacom Intuos 12x12", 10,  30480, 31680, 1023, 31, INTUOS },
-	{ "Wacom Intuos 12x18", 10,  45720, 31680, 1023, 31, INTUOS },
-	{ "Wacom PL400",         8,   5408,  4056,  255,  0, PL },
-	{ "Wacom PL500",         8,   6144,  4608,  255,  0, PL },
-	{ "Wacom PL600",         8,   6126,  4604,  255,  0, PL },
-	{ "Wacom PL600SX",       8,   6260,  5016,  255,  0, PL },
-	{ "Wacom PL550",         8,   6144,  4608,  511,  0, PL },
-	{ "Wacom PL800",         8,   7220,  5780,  511,  0, PL },
-	{ "Wacom PL700",         8,   6758,  5406,  511,  0, PL },
-	{ "Wacom PL510",         8,   6282,  4762,  511,  0, PL },
-	{ "Wacom DTU710",        8,  34080, 27660,  511,  0, PL },
-	{ "Wacom DTF521",        8,   6282,  4762,  511,  0, PL },
-	{ "Wacom DTF720",        8,   6858,  5506,  511,  0, PL },
-	{ "Wacom DTU1931",       8,  37832, 30305,  511,  0, PL },
-	{ "Wacom Cintiq Partner",8,  20480, 15360,  511,  0, PTU },
-	{ "Wacom Intuos2 4x5",   10, 12700, 10600, 1023, 31, INTUOS },
-	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
-	{ "Wacom Intuos2 9x12",  10, 30480, 24060, 1023, 31, INTUOS },
-	{ "Wacom Intuos2 12x12", 10, 30480, 31680, 1023, 31, INTUOS },
-	{ "Wacom Intuos2 12x18", 10, 45720, 31680, 1023, 31, INTUOS },
-	{ "Wacom Intuos3 4x5",   10, 25400, 20320, 1023, 63, INTUOS3S },
-	{ "Wacom Intuos3 6x8",   10, 40640, 30480, 1023, 63, INTUOS3 },
-	{ "Wacom Intuos3 9x12",  10, 60960, 45720, 1023, 63, INTUOS3 },
-	{ "Wacom Intuos3 12x12", 10, 60960, 60960, 1023, 63, INTUOS3L },
-	{ "Wacom Intuos3 12x19", 10, 97536, 60960, 1023, 63, INTUOS3L },
-	{ "Wacom Intuos3 6x11",  10, 54204, 31750, 1023, 63, INTUOS3 },
-	{ "Wacom Intuos3 4x6",   10, 31496, 19685, 1023, 63, INTUOS3S },
-	{ "Wacom Intuos4 4x6",   10, 31496, 19685, 2047, 63, INTUOS4S },
-	{ "Wacom Intuos4 6x9",   10, 44704, 27940, 2047, 63, INTUOS4 },
-	{ "Wacom Intuos4 8x13",  10, 65024, 40640, 2047, 63, INTUOS4L },
-	{ "Wacom Intuos4 12x19", 10, 97536, 60960, 2047, 63, INTUOS4L },
-	{ "Wacom Cintiq 21UX",   10, 87200, 65600, 1023, 63, CINTIQ },
-	{ "Wacom Cintiq 20WSX",  10, 86680, 54180, 1023, 63, WACOM_BEE },
-	{ "Wacom Cintiq 12WX",   10, 53020, 33440, 1023, 63, WACOM_BEE },
-	{ "Wacom ISDv4 90",       8, 26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom ISDv4 93",       8, 26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom ISDv4 9A",       8, 26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS },
+	{ "Wacom Penpartner",         7,   5040,  3780,  255,  0, PENPARTNER },
+        { "Wacom Graphire",           8,  10206,  7422,  511, 63, GRAPHIRE },
+	{ "Wacom Graphire2 4x5",      8,  10206,  7422,  511, 63, GRAPHIRE },
+	{ "Wacom Graphire2 5x7",      8,  13918, 10206,  511, 63, GRAPHIRE },
+	{ "Wacom Graphire3",          8,  10208,  7424,  511, 63, GRAPHIRE },
+	{ "Wacom Graphire3 6x8",      8,  16704, 12064,  511, 63, GRAPHIRE },
+	{ "Wacom Graphire4 4x5",      8,  10208,  7424,  511, 63, WACOM_G4 },
+	{ "Wacom Graphire4 6x8",      8,  16704, 12064,  511, 63, WACOM_G4 },
+	{ "Wacom BambooFun 4x5",      9,  14760,  9225,  511, 63, WACOM_MO },
+	{ "Wacom BambooFun 6x8",      9,  21648, 13530,  511, 63, WACOM_MO },
+	{ "Wacom Bamboo1 Medium",     8,  16704, 12064,  511, 63, GRAPHIRE },
+	{ "Wacom Volito",             8,   5104,  3712,  511, 63, GRAPHIRE },
+	{ "Wacom PenStation2",        8,   3250,  2320,  255, 63, GRAPHIRE },
+	{ "Wacom Volito2 4x5",        8,   5104,  3712,  511, 63, GRAPHIRE },
+	{ "Wacom Volito2 2x3",        8,   3248,  2320,  511, 63, GRAPHIRE },
+	{ "Wacom PenPartner2",        8,   3250,  2320,  511, 63, GRAPHIRE },
+	{ "Wacom Bamboo",             9,  14760,  9225,  511, 63, WACOM_MO },
+	{ "Wacom Bamboo1",	      8,   5104,  3712,  511, 63, GRAPHIRE },
+	{ "Wacom Intuos 4x5",        10,  12700, 10600, 1023, 31, INTUOS },
+	{ "Wacom Intuos 6x8",        10,  20320, 16240, 1023, 31, INTUOS },
+	{ "Wacom Intuos 9x12",       10,  30480, 24060, 1023, 31, INTUOS },
+	{ "Wacom Intuos 12x12",      10,  30480, 31680, 1023, 31, INTUOS },
+	{ "Wacom Intuos 12x18",      10,  45720, 31680, 1023, 31, INTUOS },
+	{ "Wacom PL400",              8,   5408,  4056,  255,  0, PL },
+	{ "Wacom PL500",              8,   6144,  4608,  255,  0, PL },
+	{ "Wacom PL600",              8,   6126,  4604,  255,  0, PL },
+	{ "Wacom PL600SX",            8,   6260,  5016,  255,  0, PL },
+	{ "Wacom PL550",              8,   6144,  4608,  511,  0, PL },
+	{ "Wacom PL800",              8,   7220,  5780,  511,  0, PL },
+	{ "Wacom PL700",              8,   6758,  5406,  511,  0, PL },
+	{ "Wacom PL510",              8,   6282,  4762,  511,  0, PL },
+	{ "Wacom DTU710",             8,  34080, 27660,  511,  0, PL },
+	{ "Wacom DTF521",             8,   6282,  4762,  511,  0, PL },
+	{ "Wacom DTF720",             8,   6858,  5506,  511,  0, PL },
+	{ "Wacom DTU1931",            8,  37832, 30305,  511,  0, PL },
+	{ "Wacom Cintiq Partner",     8,  20480, 15360,  511,  0, PTU },
+	{ "Wacom Intuos2 4x5",       10, 12700, 10600, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 6x8",       10, 20320, 16240, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 9x12",      10, 30480, 24060, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 12x12",     10, 30480, 31680, 1023, 31, INTUOS },
+	{ "Wacom Intuos2 12x18",     10, 45720, 31680, 1023, 31, INTUOS },
+	{ "Wacom Intuos3 4x5",       10, 25400, 20320, 1023, 63, INTUOS3S },
+	{ "Wacom Intuos3 6x8",       10, 40640, 30480, 1023, 63, INTUOS3 },
+	{ "Wacom Intuos3 9x12",      10, 60960, 45720, 1023, 63, INTUOS3 },
+	{ "Wacom Intuos3 12x12",     10, 60960, 60960, 1023, 63, INTUOS3L },
+	{ "Wacom Intuos3 12x19",     10, 97536, 60960, 1023, 63, INTUOS3L },
+	{ "Wacom Intuos3 6x11",      10, 54204, 31750, 1023, 63, INTUOS3 },
+	{ "Wacom Intuos3 4x6",       10, 31496, 19685, 1023, 63, INTUOS3S },
+	{ "Wacom Intuos4 4x6",       10, 31496, 19685, 2047, 63, INTUOS4S },
+	{ "Wacom Intuos4 6x9",       10, 44704, 27940, 2047, 63, INTUOS4 },
+	{ "Wacom Intuos4 8x13",      10, 65024, 40640, 2047, 63, INTUOS4L },
+	{ "Wacom Intuos4 12x19",     10, 97536, 60960, 2047, 63, INTUOS4L },
+	{ "Wacom Cintiq 21UX",       10, 87200, 65600, 1023, 63, CINTIQ },
+	{ "Wacom Cintiq 20WSX",      10, 86680, 54180, 1023, 63, WACOM_BEE },
+	{ "Wacom Cintiq 12WX",       10, 53020, 33440, 1023, 63, WACOM_BEE },
+	{ "Wacom Graphire Bluetooth", 8, 10208,  7424,  511, 63, WACOM_G4 },
+	{ "Wacom ISDv4 90",           8, 26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom ISDv4 93",           8, 26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom ISDv4 9A",           8, 26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom Intuos2 6x8",       10, 20320, 16240, 1023, 31, INTUOS },
 	{ }
 };
 
@@ -905,6 +907,7 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x3F) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC5) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC6) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x81) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x90) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x93) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x9A) },

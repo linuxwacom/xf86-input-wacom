@@ -15,7 +15,8 @@ EXTRA_DIST = xf86Wacom.c wcmXCommand.c xf86Wacom.h \
 		../include/Xwacom.h wcmTilt2Rotation.c
 
 if WCM_ENV_XORGSDK
-DRIVER_INCLUDES = -I../include -I$(WCM_XORGSDK_DIR) $(X_CFLAGS)
+DRIVER_INCLUDES = -I../include -I$(WCM_XORGSDK_DIR) $(X_CFLAGS) @XORG_CFLAGS@
+
 endif
 
 if WCM_ENV_XFREE86

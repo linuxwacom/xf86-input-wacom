@@ -577,6 +577,11 @@ if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; t
 	fi
 fi
 
+if test "$WCM_ENV_XFREE86" != yes; then
+	PKG_CHECK_MODULES(XORG, [xorg-server])
+	AC_SUBST([XORG_CFLAGS])
+fi
+
 # Define X_CFLAGS, X_LIBS, X_EXTRA_LIBS and X_PRELIBS as required if X
 # is found, else defines X_DISPLAY_MISSING.  We need at least X_CFLAGS.
 AC_PATH_XTRA

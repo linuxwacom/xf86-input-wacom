@@ -521,7 +521,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		button, mask, priv->button[button], 
 		local->name, (priv->button[button] & AC_CORE) ? "yes" : "no"));
 
-	switch (button & AC_TYPE)
+	switch (priv->button[button] & AC_TYPE)
 	{
 	case AC_BUTTON:
 		xf86PostButtonEvent(local->dev, is_absolute, priv->button[button] & AC_CODE,
@@ -575,7 +575,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 			/* Left button down */
 			xf86PostButtonEvent(local->dev, is_absolute,
 				1,1,0,naxes, rx,ry,rz,v3,v4,v5);
-
 			/* Left button up */
 			xf86PostButtonEvent(local->dev, is_absolute,
 				1,0,0,naxes,rx,ry,rz,v3,v4,v5);
@@ -746,6 +745,7 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int buttons = ds->buttons;
 
+	/* send button events when state changed or first time in prox and button unpresses */
 	if (priv->oldButtons != buttons || (!priv->oldProximity && !buttons))
 		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
@@ -1528,7 +1528,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				int tol = common->wcmMaxZ / 250;
 				if (strstr(common->wcmModel->name, "Intuos4"))
 					tol = common->wcmMaxZ / 125;
-				if (filtered.pressure < common->wcmThreshold + tol)
+				if (filtered.pressure < common->wcmThreshold - tol)
 					filtered.buttons &= ~button;
 			}
 			/* transform pressure */
@@ -1543,7 +1543,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					(5 - common->wcmCapacity))
 				filtered.buttons |= button;
 		}
-		else if (!(priv->flags & ABSOLUTE_FLAG) && !priv->hardProx)
+		else if (IsCursor(priv) && !priv->hardProx)
 		{
 			/* initial current max distance */
 			if (strstr(common->wcmModel->name, "Intuos"))
@@ -1613,7 +1613,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			double delty = filtered.y - priv->oldY;
 			deltx *= priv->factorY*priv->speed;
 			delty *= priv->factorY*priv->speed;
-
+	
 			if (ABS(deltx)<1 && ABS(delty)<1) 
 			{
 				/* don't move the cursor */
@@ -1624,7 +1624,11 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					filtered.y = priv->oldY;
 				}
 				else /* no other events to send */
+				{
+					DBG(10, common->debugLevel, ErrorF(
+						"Ignore non-movement relative data \n"));
 					return;
+				}
 			}
 			else
 			{
@@ -1637,10 +1641,11 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			}
 		}
 
-		/* force out-prox when distance is outside wcmCursorProxoutDist. */
-		if (!(priv->flags & ABSOLUTE_FLAG))
+		/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
+		if (IsCursor(priv))
 		{
-			if (strstr(common->wcmModel->name, "Intuos"))
+			/* force out-prox when distance is outside wcmCursorProxoutDist. */
+			if (common->wcmProtocolLevel == 5)
 			{
 				if (common->wcmMaxCursorDist > filtered.distance)
 					common->wcmMaxCursorDist = filtered.distance;

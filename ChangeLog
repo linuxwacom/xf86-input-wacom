@@ -1,3 +1,11 @@
+2009-04-23  Ping Cheng <pingc@wacom.com>
+	* Updated README
+	* Updated GPL to version 2
+	* Updated wacom_wac.c
+	* Brought configure.in and inlcude files in-sync with Fedora 10/11
+	* Fixed a few button and in-prox/out-prox issues
+	* Label 0.8.3-3
+
 2009-04-03  Ping Cheng <pingc@wacom.com>
 	* Support kernels 2.6.28 and 2.6.29
 	* Added 10-linuxwacom.fdi from Peter Hutterer

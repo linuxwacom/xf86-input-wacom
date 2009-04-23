@@ -24,8 +24,6 @@ export WCM_OPTION_WACOM
 all:
 # Copy Wacom specific code which is common to all kernel releases
 ifeq ($(WCM_OPTION_WACOM),yes)
-	cp -f ../2.6.19/wacom_wac.c .
-	cp -f ../2.6.22/wacom_wac.h .
 	cp -f ../2.6.27/wacom.h .
 endif 
 	@echo '    Building linuxwacom drivers for 2.6 kernel.'

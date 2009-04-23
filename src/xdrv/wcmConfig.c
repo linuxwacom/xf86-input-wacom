@@ -217,8 +217,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmMaxCursorDist = 0;	/* Max distance received so far */
 	common->wcmCursorProxoutDist = 0;
 			/* Max mouse distance for proxy-out max/256 units */
-	common->wcmCursorProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE; 
-			/* default to Graphire */
+	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE; 
+			/* default to Intuos */
 	common->wcmSuppress = DEFAULT_SUPPRESS;    
 			/* transmit position if increment is superior */
 	common->wcmRawSample = DEFAULT_SAMPLES;    

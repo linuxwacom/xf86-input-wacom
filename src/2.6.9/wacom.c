@@ -644,14 +644,14 @@ static int wacom_intuos_inout(struct urb *urb)
 			input_report_abs(dev, ABS_RZ, 0);
  		} else {
 			input_report_abs(dev, ABS_PRESSURE, 0);
-			input_report_abs(dev, ABS_TILT_X, 0);
-			input_report_abs(dev, ABS_TILT_Y, 0);
 			input_report_key(dev, BTN_STYLUS, 0);
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_report_abs(dev, ABS_WHEEL, 0);
 			input_report_abs(dev, ABS_Z, 0);
 		}
+		input_report_abs(dev, ABS_TILT_X, 0);
+		input_report_abs(dev, ABS_TILT_Y, 0);
 		input_report_key(dev, wacom->tool[idx], 0);
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */
 		input_event(dev, EV_MSC, MSC_SERIAL, wacom->serial[idx]);

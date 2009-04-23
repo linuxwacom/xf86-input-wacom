@@ -363,6 +363,9 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 
 	/* Exit report */
 	if ((data[1] & 0xfe) == 0x80) {
+		/* reset all states otherwise we lose the initial states
+		 * when in-prox next time 
+		 */
 		wacom_report_abs(wcombo, ABS_X, 0);
 		wacom_report_abs(wcombo, ABS_Y, 0);
 		wacom_report_abs(wcombo, ABS_DISTANCE, 0);
@@ -377,13 +380,13 @@ static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
  		} else {
 			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
-			wacom_report_abs(wcombo, ABS_TILT_X, 0);
-			wacom_report_abs(wcombo, ABS_TILT_Y, 0);
 			wacom_report_key(wcombo, BTN_STYLUS, 0);
 			wacom_report_key(wcombo, BTN_STYLUS2, 0);
 			wacom_report_abs(wcombo, ABS_WHEEL, 0);
 			wacom_report_abs(wcombo, ABS_Z, 0);
 		}
+		wacom_report_abs(wcombo, ABS_TILT_X, 0);
+		wacom_report_abs(wcombo, ABS_TILT_Y, 0);
 		wacom_report_key(wcombo, wacom->tool[idx], 0);
 		wacom_report_abs(wcombo, ABS_MISC, 0); /* reset tool id */
 		wacom_input_event(wcombo, EV_MSC, MSC_SERIAL, wacom->serial[idx]);
@@ -646,6 +649,7 @@ int wacom_tpc_irq (struct wacom_wac *wacom, void *wcombo)
 			}
 		} else if (touchOut || !prox) { /* force touch out-prox */
 			wacom_report_abs(wcombo, ABS_MISC, TOUCH_DEVICE_ID);
+			wacom_report_key(wcombo, wacom->tool[1], 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
 			touchOut = 0;
 			touchInProx = 1;

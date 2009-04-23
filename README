@@ -1,12 +1,21 @@
 README
-April 03, 2009
+April 23, 2009
 
 ==============================================================================
-Most end users would probably only need to update the Wacom X driver and the 
-/etc/X11/xorg.conf file to use the rich features that Wacom tablets offer. 
-The steps could be as simple as:
+Most end users would probably only need to update the /etc/X11/xorg.conf file 
+and sometime probably the Wacom X driver as well to use the rich features that 
+Wacom tablets offer.  The steps could be as simple as:
 
-download the package then
+    $ su
+    # cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak
+    # gedit /etc/X11/xorg.conf
+
+then follow the step listed at http://linuxwacom.sourceforge.net/index.php/howto/x11
+or "man wacom" if you don't have network access to add sections for Wacom device.
+
+If by some reason your distribution doesn't have include Wacom driver or you want to 
+to use the newer release, you can download the package then
+
     $ bunzip2 linuxwacom.tar.bz2
     $ tar xvf linuxwacom.tar
     $ cd linuxwacom/prebuilt
@@ -14,8 +23,6 @@ download the package then
     # yum remove linuxwacom
     # ./uninstall
     # ./install
-    # cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak
-    # gedit /etc/X11/xorg.conf
     # reboot
 
 ==============================================================================

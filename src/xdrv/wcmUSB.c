@@ -248,7 +248,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 
 	static WacomModel usbIntuos =
 	{
-		"USB Intuos",
+		"USB Intuos1",
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
@@ -931,13 +931,20 @@ static void usbParseEvent(LocalDevicePtr local,
 			}
 		}
 	}
+	else /* ignore non-serial number tools for V5 models */
+	{
+		common->wcmLastToolSerial = 0;
+		common->wcmEventCnt = 0;
+		return;
+	}
 
 	/* fresh out of channels */
 	if (channel < 0)
 	{
 		/* This should never happen in normal use.
-		 * So something was wrong. Let's start over again. 
-		 * Force prox-out for all channels.
+		 * User is probably using more than one tools on the tablet.
+		 * Or moving the tablet around while using a tool.
+		 * Let's start over again. Force prox-out for all channels.
 		 */
 		for (i=0; i<MAX_CHANNELS; ++i)
 		{
@@ -951,8 +958,6 @@ static void usbParseEvent(LocalDevicePtr local,
 		ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
 			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
 			(int)GetTimeInMillis());
-		return;
-
 	}
 	else
 		usbParseChannel(local,channel,common->wcmLastToolSerial);

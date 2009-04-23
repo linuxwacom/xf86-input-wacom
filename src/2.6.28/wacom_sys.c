@@ -491,7 +491,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	 * Ask the tablet to report tablet data if it is not a Tablet PC.
 	 * Repeat until it succeeds
 	 */
-	if (wacom_wac->features->type != TABLETPC) {
+	if ((wacom_wac->features->type != TABLETPC) && (wacom_wac->features->type != WACOM_GB)) {
 		do {
 			rep_data[0] = 2;
 			rep_data[1] = 2;

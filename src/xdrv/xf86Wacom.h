@@ -64,6 +64,7 @@
 #endif
 
 #include <misc.h>
+#define inline __inline__
 #include <xf86.h>
 #define NEED_XF86_TYPES
 #if !defined(DGUX)
