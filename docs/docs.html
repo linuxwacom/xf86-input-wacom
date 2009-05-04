@@ -1,6 +1,7 @@
-<html><head><title>The Linux Wacom Project</title>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
-
+<title>The Linux Wacom Project</title>
 <style><!--
 	BODY { background: #FFFFFF; font: 10pt helvetica; color: black }
 	.motd { font:12pt helvetica; color: navy }
@@ -34,12 +35,13 @@
 		_white-space: pre; 
 		width: 99%;
 	}
---></style></head><body topmargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
+--></style>
+</head><body topmargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tbody><tr><td class="head" align="center" valign="middle">
 <div class="title">The Linux Wacom Project </div>
 
-</td><td class="head" align="right" valign="middle" width="125"><a href="http://sourceforge.net/"><img src="docs_files/sflogo.php" alt="SourceForge.net Logo" border="0" height="37" width="125"></a></td></tr>
+</td><td class="head" align="right" valign="middle" width="125"><a href="http://sourceforge.net/"><img src="docs_files/sflogo.png" alt="SourceForge.net Logo" border="0" height="37" width="125"></a></td></tr>
 </tbody></table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tbody><tr><td colspan="2" bgcolor="white"><img src="docs_files/null.gif" height="1" width="1"></td></tr>
@@ -49,12 +51,11 @@
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/news">News</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/faq">FAQ</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/dl">Downloads</a>&nbsp;&nbsp; |
-	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/doc">Documentation</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/help">Help</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://sourceforge.net/projects/linuxwacom">Development</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/toc">TOC</a>&nbsp;&nbsp; |
 	&nbsp;&nbsp;<a class="menu" href="http://linuxwacom.sourceforge.net/index.php/all">All</a>&nbsp;&nbsp;
-</td><td class="menu" align="right">Jan 17, 2009</td></tr>
+</td><td class="menu" align="right">Apr 29, 2009</td></tr>
 <tr><td colspan="2" bgcolor="#000066"><img src="docs_files/null.gif" height="4" width="1"></td></tr>
 <tr><td colspan="2" bgcolor="#aaaaaa"><img src="docs_files/null.gif" height="2" width="1"></td></tr>
 </tbody></table>
@@ -69,11 +70,11 @@
 <a name="copy">Copyright (C) 2002-2009 - LinuxWacom<br>
 <br>
 Permission is granted to copy, distribute and/or modify this document<br>
-under the terms of the GNU Free Documentation License, Version 1.2<br>
-or any later version published by the Free Software Foundation;<br>
-with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.<br>
-A copy of the license is included in the section entitled
-</a><a href="#lic">GNU<br>Free Documentation License</a>.<br>
+under the terms of the GNU GENERAL PUBLIC LICENSE as published by the<br>
+Free Software Foundation; either version 2 of the License, or <br>
+(at your option) any later version. A copy of the license is <br>
+included in the section entitled
+</a><a href="#lic">GNU Free Documentation License</a>.<br>
 </center>
 <br>
 <br>
@@ -224,9 +225,9 @@ Serial tablet or Tablet PC users can go directly to the next section
 <a name="download">
 </a></p><h2><a name="download">2.2 - Downloading the Code</a></h2>
 
-<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a> is the stable package and contains
+<p><a name="download">The file </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-2.tar.bz2">linuxwacom-0.8.2-2.tar.bz2</a> is the stable package and contains
 files that you will need to get your serial or USB tablet working.  The
-current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.1-6.tar.bz2">linuxwacom-0.8.1-6.tar.bz2</a> is also available and may be
+current beta package <a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.3-3.tar.bz2">linuxwacom-0.8.3-3.tar.bz2</a> is also available and may be
 used by people who are willing to help test new features.  I will never put a 
 beta package on this site that I am not running myself on my primary 
 development machine.  So you can be certain that if there are any obvious
@@ -235,9 +236,9 @@ show stoppers, they will be fixed before you get to see them.
 </p><p>Unpacking the tarball is usually a one-step process, but I show both
 steps in case the typical -jxf option doesn't work with tar.
 
-</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.2-1.tar.bz2
-[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.2-1.tar
-[jej@ayukawa jej]$ cd linuxwacom-0.8.2-1</pre></blockquote>
+</p><blockquote><pre>[jej@ayukawa jej]$ bunzip2 linuxwacom-0.8.2-2.tar.bz2
+[jej@ayukawa jej]$ tar -xf linuxwacom-0.8.2-2.tar
+[jej@ayukawa jej]$ cd linuxwacom-0.8.2-2</pre></blockquote>
 
 Once in the package directory, you need only to configure and build the code.
 This is described in more detail as you continue.  The executables and 
@@ -248,7 +249,7 @@ installation procedures depend on the kernel source you use.
 and release dates.  Otherwise, let's continue.
 
 
-</p><h3>Stable files included for linuxwacom-0.8.2-1:</h3>
+</p><h3>Stable files included for linuxwacom-0.8.2-2:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th align="left">Comment</th></tr>
 <tr><td valign="top">configure</td><td valign="top">- configure script for distribution independent builds</td></tr>
@@ -270,28 +271,13 @@ and release dates.  Otherwise, let's continue.
 <tr><td valign="top">src/util/wacomcfg.c</td><td valign="top">- configuration option library for xsetwacom</td></tr>
 <tr><td valign="top">src/util/wcmAction.c</td><td valign="top">- keystroke and modifier encoding/decoding</td></tr>
 <tr><td valign="top">src/util/wcmAction.h</td><td valign="top">- keystroke routine definitions</td></tr>
+<tr><td valign="top">src/util/hal-setup-wacom.c</td><td valign="top">- a HAL service program for Wacom devices</td></tr>
+<tr><td valign="top">src/util/10-linuxwacom.fdi</td><td valign="top">- a HAL script for Wacom devices</td></tr>
 <tr><td valign="top">src/include/Xwacom.h</td><td valign="top">- configuration options for xsetwacom</td></tr>
-<tr><td valign="top">src/2.4/wacom.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20)</td></tr>
-<tr><td valign="top">src/2.4/usbmouse.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20), use only if needed</td></tr>
-<tr><td valign="top">src/2.4/hid-core.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20), use only if needed</td></tr>
-<tr><td valign="top">src/2.4/evdev.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20), use only if needed</td></tr>
-<tr><td valign="top">src/2.4/mousedev.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20), use only if needed</td></tr>
-<tr><td valign="top">src/2.4/input.c</td><td valign="top">- replacement kernel driver for kernel older than 2.4.22 (tested on 2.4.18/19/20), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.22/wacom.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24)</td></tr>
-<tr><td valign="top">src/2.4.22/usbmouse.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.22/hid-core.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.22/evdev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.22/mousedev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.22/input.c</td><td valign="top">- replacement kernel driver for kernel 2.4.22 or newer (tested on 2.4.22/23/24), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.30x86-64/wacom.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system)</td></tr>
-<tr><td valign="top">src/2.4.30x86-64/usbmouse.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.30x86-6/hid-core.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.30x86-64/evdev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
-<tr><td valign="top">src/2.4.30x86-64/mousedev.c</td><td valign="top">- replacement kernel driver for kernel 2.4.30 or newer (tested on 2.4.30 AMD 64bit system), use only if needed</td></tr>
-<tr><td valign="top">src/2.6.x/wacom.c</td><td valign="top">- replacement kernel driver for kernel 2.6.x where x can be 8 to 10</td></tr>
-<tr><td valign="top">src/2.6.x/wacom_sys.c</td><td valign="top">- wacom kernel driver specific to each major kernel release, where x can be 11 to 27</td></tr>
-<tr><td valign="top">src/2.6.x/wacom_wac.c</td><td valign="top">- wacom kernel driver processes tablet specific information, where x can be 16 or 27</td></tr>
-<tr><td valign="top">src/2.6.x/wacom.h</td><td valign="top">- wacom kernel driver header specific to each major kernel release, where x can be 11 to 27</td></tr>
+<tr><td valign="top">src/2.6.x/wacom.c</td><td valign="top">- replacement kernel driver for kernel 2.6.x where x can be 9 and 10</td></tr>
+<tr><td valign="top">src/2.6.x/wacom_sys.c</td><td valign="top">- wacom kernel driver specific to each major kernel release, where x can be 11 to 28</td></tr>
+<tr><td valign="top">src/2.6.x/wacom_wac.c</td><td valign="top">- wacom kernel driver processes tablet specific information, where x can be 16 or 28</td></tr>
+<tr><td valign="top">src/2.6.x/wacom.h</td><td valign="top">- wacom kernel driver header specific to each major kernel release, where x can be 11 to 28</td></tr>
 <tr><td valign="top">src/2.6.16/wacom_wac.h</td><td valign="top">- part of wacom kernel driver header for tablet specific declaration and definitions </td></tr>
 <tr><td valign="top">src/2.6.x/hid-core.c</td><td valign="top">- replacement kernel driver for kernel 2.6.x where x can be 8 to 16, use only if needed</td></tr>
 <tr><td valign="top">src/xdrv/xf86Wacom.c</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. Binary available in prebuilt directory.</td></tr>
@@ -306,6 +292,7 @@ and release dates.  Otherwise, let's continue.
 <tr><td valign="top">src/xdrv/wcmSerial.c</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. Serial tablet support</td></tr>
 <tr><td valign="top">src/xdrv/wcmSerial.h</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. Serial tablet support</td></tr>
 <tr><td valign="top">src/xdrv/wcmUSB.c</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. USB tablet support</td></tr>
+<tr><td valign="top">src/xdrv/wcmTilt2Rotation.c</td><td valign="top">- source for wacom_drv.o; requires XFree86/Xorg build environment to compile. Converting mouse tilt to rotation</td></tr>
 <tr><td valign="top">src/wacomxi/wacomcpl-exec</td><td valign="top">- a graphic configuration tool for wacom XFree86 driver</td></tr>
 <tr><td valign="top">src/wacomxi/wacomxi.c</td><td valign="top">- calibration library for xsetwacom</td></tr>
 <tr><td valign="top">src/wacomxi/wacomxi.h</td><td valign="top">- calibration library for xsetwacom</td></tr>
@@ -315,7 +302,7 @@ and release dates.  Otherwise, let's continue.
 <h3>Stable Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
-<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-12-31</td><td valign="top">Support: USB Tablet PC with and without touch; kernels up to 2.6.27; Bamboo1 and Monarch; new wacomcpl features.</td></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-2.tar.bz2">linuxwacom-0.8.2-2.tar.bz2</a></td><td valign="top">-</td><td valign="top">2009-01-19</td><td valign="top">Support: USB Tablet PC with and without touch; kernels up to 2.6.28; Bamboo1 and Monarch; new wacomcpl features.</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.0-3.tar.bz2">linuxwacom-0.8.0-3.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-05-23</td><td valign="top">Support:
 kernels up to 2.6.25; Keystrokes for both buttons and expresskeys; New
 tablets: Bamboo series and Cintiq 12WX &amp; 20WSX, and so much more
@@ -341,6 +328,7 @@ programs for x86_32 and x86_64 systems. Adds many new xsetwacom options.</td></t
 <h3>Beta Packages by Version and Date:</h3>
 <table border="0" cellspacing="5">
 <tbody><tr><th align="left">File</th><th></th><th align="left">Date</th><th align="left">Comment</th></tr>
+<tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.3-3.tar.bz2">linuxwacom-0.8.3-3.tar.bz2</a></td><td valign="top">-</td><td valign="top">2009-04-27</td><td valign="top">Support Inutos4 tablets. Support kernel upto 2.6.29. Support Xorg 1.6. Updated multi-monitor suppport</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.1-6.tar.bz2">linuxwacom-0.8.1-6.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-10-24</td><td valign="top">Support USB Tablet PC with and without touch. Support kernel 2.6.27</td></tr>
 <tr><td valign="top"><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.7.9-11.tar.bz2">linuxwacom-0.7.9-11.tar.bz2</a></td><td valign="top">-</td><td valign="top">2008-04-11</td><td valign="top">Support
 kernel 2.6.22 &amp; 2.6.24. Temporary workaround for Xorg 7.3. Support
@@ -500,12 +488,14 @@ for future readers.
 </a><a name="install">
 </a></p><h2><a name="install">2.4 - Install from Prebuilt </a></h2>
 
-<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under linuxwacom-0.8.2-1/prebuilt;  one for x86-32 
-systems, the other for x86-64 systems.  
+<p><a name="install">We have created 2 sets of prebuilt Wacom X driver and its utility programs under 
+linuxwacom-0.8.2-2/prebuilt;  one for x86-32 systems, the other for x86-64 systems.  
 
 </a></p><p><a name="install">If you don't plan to change anything in the driver, following steps will install the prebuilt files for you:
 
-</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.2-1/prebuilt
+</a></p><p><a name="install"><b>Note:</b> Please remove the existing linuxwacom package first if your system has one.
+
+</a></p><blockquote><pre><a name="install">[jej@ayukawa jej]$ cd linuxwacom-0.8.2-2/prebuilt
 [jej@ayukawa prebuilt]$ su
 [jej@ayukawa prebuilt]# ./uninstall
 [jej@ayukawa prebuilt]# ./install
@@ -514,11 +504,10 @@ systems, the other for x86-64 systems.
 <p><a name="install">Serial tablet (most Tablet PCs are serial) users can skip the rest 
 sections and go to </a><a href="#wacdump">Viewing Wacom Data (wacdump)</a> page for details on viewing the tablet output now.  
 
-</p><p>If you use an older USB tablet and your running kernel was
-released 6 months later than your tablet was first seen in market, you
-most probably can skip next section of this chapter and the whole
-chapter 4 too. If you would like to make certain, continue to next
-section. <a name="config">
+</p><p>If you use an older USB tablet and your running kernel was released 6 months later than 
+your tablet was first seen in market, you most probably can skip next section of this chapter 
+and the whole chapter 4 too. If you would like to make certain, continue to next section.  
+<a name="config">
 </a></p><h2><a name="config">2.5 - Configuring the Package</a></h2>
 
 <p><a name="config">This section describes how to configure the package.  You can run 
@@ -536,6 +525,9 @@ XFree86/Xorg driver from scratch.  Lastly, remember that for every
 </a></p><p><a name="config">The configuration options are listed on this page. You can also 
 see the online list by issuing <i>./configure -help</i> under 
 linuxwacom's base directory.
+
+</a></p><p><a name="config"><b>Note: </b> You should remove the existing linuxwacom package on 
+your system before installing the drivers and utilities from this project.
 
 </a></p><h3><a name="config">Building Kernel Modules - USB Only</a></h3>
 
@@ -606,15 +598,16 @@ different setting, use the --with-arch option described below.
 
 </p><h3>Linux Specific Features</h3>
 
-<p>The Linux wacom driver uses the Linux input subsystem, as does the
-USB portions of the XFree86/Xorg driver. Consequently, if you are
-building on a non-Linux system, the USB code will not work for you.
-This is detected, and a comment to that effect is added to the
-configuration summary. I recognize that FreeBSD and similar systems
-have USB support; however, until someone can bridge the gap between the
-FreeBSD kernel and the XFree86/X.org driver, the problem is largely
-unsolved. Contributions are of course welcome. The Linux-specific
+<p>The Linux wacom driver uses the Linux input subsystem, as does the 
+USB portions of the XFree86/Xorg driver.  Consequently, if you are 
+building on a non-Linux system, the USB code will not work for you.  
+This is detected, and a comment to that effect is added to the 
+configuration summary.  I recognize that FreeBSD and similar systems 
+have USB support;  however, until someone can bridge the gap between 
+the FreeBSD kernel and the XFree86/X.org driver, the problem is largely 
+unsolved.  Contributions are of course welcome.  The Linux-specific 
 features can be enabled/disabled using the --with-linux argument.
+
 </p><h3>Configuration Options</h3>
 
 The following options are provided as reference.  Normally, you will 
@@ -970,22 +963,22 @@ The exact output depends a lot on your particular kernel and distribution.
 
 </a></p><blockquote><pre><a name="testtablet">This is Redhat 8.0 (2.4.18-17.8.0):<br>
 [jej@ayukawa usb]# tail /var/log/messages
-Jan 17 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
-Jan 17 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
-Jan 17 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
-Jan 17 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
-Jan 17 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
-Jan 17 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
+Apr 29 21:26:11 ayukawa kernel: hub.c: USB new device connect on bus2/2, assigned device number 2
+Apr 29 21:26:11 ayukawa kernel: <b>input0: Wacom Intuos2 12x12</b> on usb2:2.0
+Apr 29 21:26:11 ayukawakernel: <b>wacom.c: Setting tablet report for tablet data</b>
+Apr 29 21:26:11 ayukawa kernel: <b>wacom.c: input1: Wacom Intuos2  12x12</b> on usb1:6.0
+Apr 29 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup wacom hid for USB product <b>56a/44</b>/115
+Apr 29 21:26:14 ayukawa /etc/hotplug/usb.agent: Setup mousedev for USB product <b>56a/44</b>/115
 </a></pre>
 <pre class="diff"><a name="testtablet">And here it is again on Redhat 7.2 (2.4.18-17.7.x):<br>
 [jej@sasami root]# tail /var/log/messages
-Jan 17 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
-Jan 17 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
-Jan 17 21:28:39 sasami kernel: usb.c: registered new driver hiddev
-Jan 17 21:28:39 sasami kernel: usb.c: registered new driver hid
-Jan 17 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jan 17 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
-Jan 17 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
+Apr 29 21:28:38 sasami kernel: hub.c: USB new device connect on bus1/1, assigned device number 2
+Apr 29 21:28:38 sasami kernel: <b>input0: Wacom Intuos2 12x12</b> on usb1:2.0
+Apr 29 21:28:39 sasami kernel: usb.c: registered new driver hiddev
+Apr 29 21:28:39 sasami kernel: usb.c: registered new driver hid
+Apr 29 21:28:39 sasami kernel: hid-core.c: v1.8.1 Andreas Gal, Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 29 21:28:39 sasami kernel: hid-core.c: USB HID support drivers
+Apr 29 21:28:39 sasami kernel: mice: <b>PS/2 mouse</b> device common for all mice
 </a></pre>
 </blockquote>
 
@@ -1002,24 +995,46 @@ driver <i>did not get control</i>.  Either hid or usbmouse did.
 <pre></pre></pre></blockquote>
 <a name="newwacom">
 </a><h2><a name="newwacom">3.2 - Updated wacom.c</a></h2>
-<p><a name="newwacom">The wacom kernel driver (wacom_wac.c and wacom_sys.c) that is available in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a> supports USB Tablet PC, Bamboo1 Medium, and Monarch, which will be available in kernel version 2.6.28. 
+<p><a name="newwacom">The wacom kernel driver (wacom_wac.c and wacom_sys.c) that is available 
+in </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-2.tar.bz2">linuxwacom-0.8.2-2.tar.bz2</a> supports USB Tablet PC, Bamboo1 Medium, and 
+Monarch, which will be available in kernel version 2.6.28. 
 
-</p><p>The driver also added a few new xsetwacom commands that help you change X driver settings from user space.
+</p><p>You can link Wacom USB tablet to "/dev/input/wacom".  It can be done 
+by adding the following rules in /etc/udev/rules.d/60-wacom.rules.  Some 
+distributions use a different number for the file name. Please look for 
+proper one with wacom under /etc/udev/rules.d.
+
+</p><p>Below are examples from Debian GNU/Linux distribution:
+
+</p><p><b>60-wacom.rules on systems using ATTRS</b> 
+
+</p><p><b>1. </b>Systems with only one Wacom device
 
 </p><div class="diff">
-<p>On kernel versions 2.6.8 or later, you can link Wacom USB tablet to "/dev/input/wacom".  
-It can be done by adding the following rules in /etc/udev/rules.d/60-wacom.rules.  
-Some distributions use a different number for the file name. Please look for proper one 
-with wacom under /etc/udev/rules.d.
-</p><blockquote><pre>KERNEL=="event*", ATTRS{idVendor}=="056a", SYMLINK="input/wacom" 
+<blockquote><pre># udev rules for wacom tablets.
+
+KERNEL!="event[0-9]*", GOTO="wacom_end"
+
+# Multiple interface support for stylus and touch devices.
+DRIVERS=="wacom", ATTRS{bInterfaceNumber}=="00", ENV{WACOM_TYPE}="stylus"
+DRIVERS=="wacom", ATTRS{bInterfaceNumber}=="01", ENV{WACOM_TYPE}="touch"
+
+# Convenience links for the common case of a single tablet.  We could do just this:
+#ATTRS{idVendor}=="056a", SYMLINK+="input/wacom-$env{WACOM_TYPE}"
+# but for legacy reasons, we keep the input/wacom link as the generic stylus device.
+ATTRS{idVendor}=="056a", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/wacom"
+ATTRS{idVendor}=="056a", ENV{WACOM_TYPE}=="touch", SYMLINK+="input/wacom-touch"
+
+# Check and repossess the device if a module other than the wacom one
+# is already bound to it.
+ATTRS{idVendor}=="056a", ACTION=="add", RUN+="check_driver wacom $devpath $env{ID_BUS}"
+
+LABEL="wacom_end"
+
 </pre></blockquote>
 </div>
 
-<div class="diff">
-<p> On older kernels, SYSFS is used instead of ATTRS.
-</p></div>
-
-<p>If you have more than one Wacom tablets plugged on the system, specify  the link with product id is recommanded (refer to <a href="#testtablet">Testing Tablet Detection</a> to see the ways to get your tablet's product id). Below is an example from Debian GNU/Linux distribution:
+<p><b>2. </b>Systems with more than one Wacom devices
 
 </p><div class="diff">
 <blockquote><pre># udev rules for wacom tablets.
@@ -1090,20 +1105,25 @@ ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0064", SYMLINK+="input/tablet-penpar
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0065", SYMLINK+="input/tablet-bamboo"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0069", SYMLINK+="input/tablet-bamboo1"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0081", SYMLINK+="input/tablet-graphire_bt-6x8"
-ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0090",  SYMLINK="input/tablet-tpc90"
-ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0093",  SYMLINK="input/tablet-tpc93-$env{WACOM_TYPE}"
-ATTRS{idVendor}=="056a", ATTRS{idProduct}=="009a",  SYMLINK="input/tablet-tpc9a-$env{WACOM_TYPE}"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0090", SYMLINK="input/tablet-tpc90"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="0093", SYMLINK="input/tablet-tpc93-$env{WACOM_TYPE}"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="009a", SYMLINK="input/tablet-tpc9a-$env{WACOM_TYPE}"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b0", SYMLINK+="input/tablet-intuos3-4x5"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b1", SYMLINK+="input/tablet-intuos3-6x8"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b2", SYMLINK+="input/tablet-intuos3-9x12"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b3", SYMLINK+="input/tablet-intuos3-12x12"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b4", SYMLINK+="input/tablet-intuos3-12x19"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b5", SYMLINK+="input/tablet-intuos3-6x11"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b7", SYMLINK+="input/tablet-intuos3-4x6"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b8", SYMLINK+="input/tablet-intuos4-4x6"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00b9", SYMLINK+="input/tablet-intuos4-6x9"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00ba", SYMLINK+="input/tablet-intuos4-8x13"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00bb", SYMLINK+="input/tablet-intuos4-12x19"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c0", SYMLINK+="input/tablet-dtf521"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c4", SYMLINK+="input/tablet-dtf720"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c5", SYMLINK+="input/tablet-cintiq20wsx"
 ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c6", SYMLINK+="input/tablet-cintiq12wx"
-ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c7", SYMLINK+="input/tablet-dtu1931"
+ATTRS{idVendor}=="056a", ATTRS{idProduct}=="00c7", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/tablet-dtu1931"
 
 # Convenience links for the common case of a single tablet.  We could do just this:
 #ATTRS{idVendor}=="056a", SYMLINK+="input/wacom-$env{WACOM_TYPE}"
@@ -1121,65 +1141,124 @@ LABEL="wacom_end"
 </ron@debian.org></pre></blockquote>
 </div>
 
-<div class="diff">Newer Mandriva Linux (Mandriva 2007 Spring and later)
-has an application called mousedrake which takes care of the setup and
-configuration of linuxwacom driver. If you use Mandriva Linux and you
-see InputDevice sections for Wacom device in your Xorg.conf, chances
-are your system is ready for you to draw. </div>
+<p><b>60-wacom.rules on systems using SYSFS</b> 
 
-<a name="buildwacom">
-</a><h2><a name="buildwacom">3.3 - Building wacom.c (for kernel 2.4)</a></h2>
+</p><p><b>1. </b>Systems with only one Wacom device
 
-<a name="buildwacom">To build the wacom.o kernel module, you need configure the package with 
---enable-wacom option.  The kernel sources are required as described on 
-the </a><a href="#config">configuration</a> page.  Here's how the configuration should generally look:
+</p><div class="diff">
+<blockquote><pre># udev rules for wacom devices
+# will create:
+#	/dev/input/wacom
+#	/dev/input/wacom-touch
+BUS=="usb", KERNEL=="event*", SYSFS{bInterfaceNumber}=="00", ENV{WACOM_TYPE}="stylus"
+BUS=="usb", KERNEL=="event*", SYSFS{bInterfaceNumber}=="01", ENV{WACOM_TYPE}="touch"
 
-<blockquote><pre>[jej@ayukawa linuxwacom]$ ./configure --enable-wacom
-...
-checking for valid kernel source tree... <b>ok</b>
-...
-----------------------------------------
-  BUILD ENVIRONMENT:
-       architecture - i686
-       linux kernel - <b>yes 2.4</b>
-  module versioning - yes
-             kernel - <b>yes /usr/src/linux</b>
-            XFree86 - no
-               XLib - yes /usr/X11R6
-                TCL - yes /usr
-                 TK - yes /usr
-            ncurses - yes
-                GTK - 2.0.6
-
-  BUILD OPTIONS:
-            wacom.o - <b>yes</b>
-            wacdump - yes
-             xidump - yes
-        libwacomcfg - yes
-         libwacomxi - yes
-          xsetwacom - yes
-              hid.o - no
-         usbmouse.o - no
-            evdev.o - no
-         mousedev.o - no
-            input.o - no
-        tabletdev.o - no
-        wacom_drv.o - no
-----------------------------------------
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/wacom"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", ENV{WACOM_TYPE}=="touch", SYMLINK+="input/wacom-touch"
 </pre></blockquote>
+</div>
 
-<p>As shown above,  the kernel directory was detected and the wacom.o
-module will be built.  If the kernel option shows "no",  you will need
-to specify the --with-kernel option and the correct directory.
+<p><b>2. </b>Systems with more than one Wacom devices
 
-</p><p>To build the driver,  just run <i>make</i>.  
+</p><div class="diff">
+<blockquote><pre># udev rules for wacom devices
+# will create:
+#	/dev/input/wacom
+#	/dev/input/wacom-tablets/<model>
+#	/dev/input/wacom-tablets/<model>-<device id="">
+#
+# The last rule is intended for cases when you have more than one tablet
+# of the same model. The id is usb port dependent.
+#
+BUS=="usb", KERNEL=="event*", SYSFS{bInterfaceNumber}=="00", ENV{WACOM_TYPE}="stylus"
+BUS=="usb", KERNEL=="event*", SYSFS{bInterfaceNumber}=="01", ENV{WACOM_TYPE}="touch"
 
-</p><p>The output will be a file called wacom.o.  It is located in the 
-linuxwacom package's src/2.4 directory for versions older than 2.4.22. 
-For versions 2.4.22 or newer,  it is in src/2.4.22 directory.  This is 
-your replacement driver.
+# Type-named links for multiple tablets.  If you want to use multiple
+# tablets of the _same_ type, you will probably need to use the links
+# from /dev/input/wacom-tablets to identify which is plugged into what usb
+# port.  For different tablet types though, just pick your links from
+# the list below.
+#
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0000", SYMLINK+="input/wacom-tablets/penpartner input/wacom-tablets/penpartner-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0010", SYMLINK+="input/wacom-tablets/graphire input/wacom-tablets/graphire-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0011", SYMLINK+="input/wacom-tablets/graphire2-4x5 input/wacom-tablets/graphire2-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0012", SYMLINK+="input/wacom-tablets/graphire2-5x7 input/wacom-tablets/graphire2-5x7-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0013", SYMLINK+="input/wacom-tablets/graphire3 input/wacom-tablets/graphire3-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0014", SYMLINK+="input/wacom-tablets/graphire3-6x8 input/wacom-tablets/graphire3-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0015", SYMLINK+="input/wacom-tablets/graphire4-4x5 input/wacom-tablets/graphire4-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0016", SYMLINK+="input/wacom-tablets/graphire4-6x8 input/wacom-tablets/graphire4-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0017", SYMLINK+="input/wacom-tablets/bamboofun-4x5 input/wacom-tablets/bamboofun-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0018", SYMLINK+="input/wacom-tablet/bamboofun-6x8 input/wacom-tablets/bamboofun-6x8"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0019", SYMLINK+="input/wacom-tablet/bamboo1-medium input/wacom-tablets/bamboo1-medium"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0060", SYMLINK+="input/wacom-tablets/volito input/wacom-tablets/volito-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0061", SYMLINK+="input/wacom-tablets/penstation2 input/wacom-tablets/penstation2-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0062", SYMLINK+="input/wacom-tablets/volito2-4x5 input/wacom-tablets/volito2-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0063", SYMLINK+="input/wacom-tablets/volito2-2x3 input/wacom-tablets/volito2-2x3-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0064", SYMLINK+="input/wacom-tablets/penpartner2 input/wacom-tablets/penpartner2-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0020", SYMLINK+="input/wacom-tablets/intuos-4x5 input/wacom-tablets/intuos-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0021", SYMLINK+="input/wacom-tablets/intuos-6x8 input/wacom-tablets/intuos-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0022", SYMLINK+="input/wacom-tablets/intuos-9x12 input/wacom-tablets/intuos-9x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0023", SYMLINK+="input/wacom-tablets/intuos-12x12 input/wacom-tablets/intuos-12x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0024", SYMLINK+="input/wacom-tablets/intuos-12x18 input/wacom-tablets/intuos-12x18-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0030", SYMLINK+="input/wacom-tablets/pl400 input/wacom-tablets/pl400-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0031", SYMLINK+="input/wacom-tablets/pl500 input/wacom-tablets/pl500-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0032", SYMLINK+="input/wacom-tablets/pl600 input/wacom-tablets/pl600-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0033", SYMLINK+="input/wacom-tablets/pl600sx input/wacom-tablets/pl600sx-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0034", SYMLINK+="input/wacom-tablets/pl550 input/wacom-tablets/pl550-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0035", SYMLINK+="input/wacom-tablets/pl800 input/wacom-tablets/pl800-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0037", SYMLINK+="input/wacom-tablets/pl700 input/wacom-tablets/pl700-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0038", SYMLINK+="input/wacom-tablets/pl510 input/wacom-tablets/pl510-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0039", SYMLINK+="input/wacom-tablets/dtu710 input/wacom-tablets/dtu710-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c0", SYMLINK+="input/wacom-tablets/dtf521 input/wacom-tablets/dtf521-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c4", SYMLINK+="input/wacom-tablets/dtf720 input/wacom-tablets/dtf720-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0003", SYMLINK+="input/wacom-tablets/cintiq_partner input/wacom-tablets/cintiq_partner-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0041", SYMLINK+="input/wacom-tablets/intuos2-4x5 input/wacom-tablets/intuos2-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0042", SYMLINK+="input/wacom-tablets/intuos2-6x8 input/wacom-tablets/intuos2-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0043", SYMLINK+="input/wacom-tablets/intuos2-9x12 input/wacom-tablets/intuos2-9x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0044", SYMLINK+="input/wacom-tablets/intuos2-12x12 input/wacom-tablets/intuos2-12x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0045", SYMLINK+="input/wacom-tablets/intuos2-12x18 input/wacom-tablets/intuos2-12x18-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b0", SYMLINK+="input/wacom-tablets/intuos3-4x5 input/wacom-tablets/intuos3-4x5-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b1", SYMLINK+="input/wacom-tablets/intuos3-6x8 input/wacom-tablets/intuos3-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b2", SYMLINK+="input/wacom-tablets/intuos3-9x12 input/wacom-tablets/intuos3-9x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b3", SYMLINK+="input/wacom-tablets/intuos3-12x12 input/wacom-tablets/intuos3-12x12-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b4", SYMLINK+="input/wacom-tablets/intuos3-12x19 input/wacom-tablets/intuos3-12x19-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b5", SYMLINK+="input/wacom-tablets/intuos3-6x11 input/wacom-tablets/intuos3-6x11-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="003f", SYMLINK+="input/wacom-tablets/cintiq21ux input/wacom-tablets/cintiq21ux-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0047", SYMLINK+="input/wacom-tablets/intuos2-6x8a input/wacom-tablets/intuos2-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b7", SYMLINK+="input/wacom-tablets/intuos3-4x6 input/wacom-tablets/intuos3-4x6-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b8", SYMLINK+="input/wacom-tablets/intuos4-4x6 input/wacom-tablets/intuos4-4x6-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00b9", SYMLINK+="input/wacom-tablets/intuos4-6x9 input/wacom-tablets/intuos4-6x9-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00ba", SYMLINK+="input/wacom-tablets/intuos4-8x13 input/wacom-tablets/intuos4-8x13-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00bb", SYMLINK+="input/wacom-tablets/intuos4-12x19 input/wacom-tablets/intuos4-12x19-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0065", SYMLINK+="input/wacom-tablets/bamboo input/wacom-tablets/bamboo-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c6", SYMLINK+="input/wacom-tablets/cintiq12wx input/wacom-tablets/cintiq12wx-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c5", SYMLINK+="input/wacom-tablets/cintiq20wsx input/wacom-tablets/cintiq20wsx-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="00c7", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/wacom-tablets/dtu1931 input/wacom-tablets/dtu1931-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0069", SYMLINK+="input/wacom-tablets/bamboo1 input/wacom-tablets/bamboo1-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0081", SYMLINK+="input/wacom-tablets/graphire_bt-6x8 input/wacom-tablets/graphire_bt-6x8-%b"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0090", SYMLINK="input/wacom-tablets/tpc90"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="0093", SYMLINK="input/wacom-tablets/tpc93-$env{WACOM_TYPE}"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", SYSFS{idProduct}=="009a", SYMLINK="input/wacom-tablets/tpc9a-$env{WACOM_TYPE}"
+
+# Convenience links for the common case of a single tablet.  We could do just this:
+#SYSFS{idVendor}=="056a", SYMLINK+="input/wacom-$env{WACOM_TYPE}"
+# but for legacy reasons, we keep the input/wacom link as the generic stylus device.
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", ENV{WACOM_TYPE}!="touch", SYMLINK+="input/wacom"
+BUS=="usb", KERNEL=="event*", SYSFS{idVendor}=="056a", ENV{WACOM_TYPE}=="touch", SYMLINK+="input/wacom-touch"
+
+</device></model></model></pre></blockquote>
+</div>
+
+
+<div class="diff">
+Newer Mandriva Linux (Mandriva 2007 Spring and later) has an application called 
+mousedrake which takes care of the setup and configuration of linuxwacom driver.  
+If you use Mandriva Linux and you see InputDevice sections for Wacom device in 
+your Xorg.conf, chances are your Wacom tablet is ready for you to draw. 
+</div>
+
 <a name="buildwacom6">
-</a></p><h2><a name="buildwacom6">3.4 - Building wacom.c (for kernel 2.6)</a></h2>
+</a><h2><a name="buildwacom6">3.3 - Building wacom.c</a></h2>
 
 <a name="buildwacom6">To build the wacom.ko kernel module, you need to configure wacom as a kernel 
 module under your kernel source tree first.  The kernel sources are required 
@@ -1273,7 +1352,7 @@ the kernel. An example for kernel 2.6.9 is as following: </p><blockquote><pre>
 	 </pre></blockquote> 	 
 	 </div>
 <a name="testwacom">
-</a><h2><a name="testwacom">3.5 - Testing If wacom.(k)o Will Load</a></h2>
+</a><h2><a name="testwacom">3.4 - Testing If wacom.(k)o Will Load</a></h2>
 <p><a name="testwacom">Before we install the wacom driver, we need to test that it will load
 properly.  We do this by loading the driver manually.  We will also 
 </a><a href="#root">need to be root</a> to do this.
@@ -1310,12 +1389,12 @@ this from happening.  To be certain, you can check the log file for the
 correct version number.
 
 </p><blockquote><pre>[root@ayukawa src]# tail /var/log/messages
-Jan 17 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
-Jan 17 20:34:41 ayukawa kernel: Reporting max 30480, 31680
-Jan 17 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
-Jan 17 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
-Jan 17 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.2-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jan 17 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
+Apr 29 20:34:41 ayukawa kernel: usb.c: registered new driver wacom
+Apr 29 20:34:41 ayukawa kernel: Reporting max 30480, 31680
+Apr 29 20:34:41 ayukawa kernel: wacom.c: Setting tablet report for tablet data
+Apr 29 20:34:41 ayukawa kernel: input0: Wacom Intuos2 12x12 on usb2:3.0
+Apr 29 20:34:41 ayukawa kernel: wacom.c: <b>$1.43-0.8.2-2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 29 20:34:41 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver
 
 </pre></blockquote>
 
@@ -1329,7 +1408,7 @@ available from the Linux Wacom Project.
 and build with module versioning disabled.  If it loads without a hitch,
 move on to the next part.
 <a name="installwacom">
-</a></p><h2><a name="installwacom">3.6 - Installing wacom.(k)o</a></h2>
+</a></p><h2><a name="installwacom">3.5 - Installing wacom.(k)o</a></h2>
 
 <pre class="diff"><p><a name="installwacom">For Kernel 2.4.x, replace wacom.ko with wacom.o where it is used.
 </a></p></pre>
@@ -1422,7 +1501,7 @@ versioning enabled and recompile.
 
 </pre>
 <a name="loadwacom">
-</a><h2><a name="loadwacom">3.7 - Loading the wacom Driver</a></h2>
+</a><h2><a name="loadwacom">3.6 - Loading the wacom Driver</a></h2>
 
 <pre class="diff"><p><a name="loadwacom">For Kernel 2.6.x, replace wacom.o with wacom.ko where it is used. 
 </a></p></pre>
@@ -1446,76 +1525,17 @@ if it cannot find the one you have specified.
 Here's a copy of the messages from my version of the driver.
 
 </a></p><blockquote><pre><a name="loadwacom">[jej@ayukawa usb]# grep -i wacom /var/log/messages | tail
-Jan 17 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
-Jan 17 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.2-1</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
-Jan 17 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
+Apr 29 21:23:35 ayukawa kernel: usb.c: registered new driver wacom
+Apr 29 21:23:35 ayukawa kernel: wacom.c: <b>v1.43-0.8.2-2</b> Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 29 21:23:35 ayukawa kernel: wacom.c: USB Wacom Graphire and Wacom Intuos tablet driver (MODIFIED)
 </a></pre></blockquote>
 
 <p><a name="loadwacom">The original driver was version 1.43.  This version number
-is 1.43-0.8.2-1 so the correct driver was loaded.</a></p>
-<a name="buildhid">
-</a><h2><a name="buildhid">3.8 - Building usbmouse.o, evdev.o, mousedev.o, and hid.o (for kernel 2.4)</a></h2>
-
-<p><a name="buildhid">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a>
-file, you will find mousedev.c, usbmouse.c, hid-core.c, evdev.c, and
-input.c files which have special exceptions for wacom. These files are
-not built by default, so you will need to reconfigure the package and
-run make again.
-</p><p>If your kernel is older than 2.4.22, the modules will be built
-using the sources at src/2.4. If your kernel is 2.4.22 or newer, the
-modules will be built using the sources at src/2.4.22. <span class="diff">input.o is only needed for kernels older than 2.4.22.</span>
-
-</p><blockquote><pre>[jej@ayukawa wacom]$./configure --enable-hid --enable-usbmouse --enable-mousedev --enable-evdev --enable-input --with-kernel=your-kernel-src-dir
-...
-  BUILD OPTIONS:
-              hid.o - <b>yes</b>
-         usbmouse.o - <b>yes</b>
-            evdev.o - <b>yes</b>
-         mousedev.o - <b>yes</b>
-            input.o - <b>yes</b>
-...
-[jej@ayukawa wacom]$ make
-</pre></blockquote>
-
-<p>First off, if the code does not build, and you cannot chase the
-problem down yourself, send me a line. If your kernel is much older
-than 2.4.18, then you may have to resign yourself to the fact that the
-2.4.19 drivers are not going to work for you. I would recommend
-upgrading your kernel.
-</p><p>Before installing the drivers, please backup the originals.
-Then, use the following steps to install the drivers into the proper
-directories. Use <i>locate</i> as you did for the wacom.o file if necessary.
-
-</p><p>For systems with kernel 2.4 and older than kernel 2.4.22:
-
-</p><blockquote><pre>[jej@ayukawa wacom]$su
-[jej@ayukawa wacom]#cd src/2.4
-[jej@ayukawa 2.4]#cp hid.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/usb
-[jej@ayukawa 2.4]#cp usbmouse.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/usb
-[jej@ayukawa 2.4]#cp evdev.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/input
-[jej@ayukawa 2.4]#cp mousedev.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/input
-[jej@ayukawa 2.4]#cp input.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/input
-[jej@ayukawa 2.4]#reboot
-</pre></blockquote>
-
-<p>For systems with kernel 2.4.22 or newer:
-
-</p><blockquote><pre>[jej@ayukawa wacom]$su
-[jej@ayukawa wacom]#cd src/2.4.22
-[jej@ayukawa 2.4.22]#cp hid.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/usb
-[jej@ayukawa 2.4.22]#cp usbmouse.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/usb
-[jej@ayukawa 2.4.22]#cp evdev.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/input
-[jej@ayukawa 2.4.22]#cp mousedev.o /lib/modules/<b>your-kernel-ver</b>/kernel/drivers/input
-[jej@ayukawa 2.4.22]#reboot
-</pre></blockquote>
-
-<span class="diff">As before with some other distributions, if the files in the
-kernel module directory are compressed, you'll need to run gzip on the .o
-files to get .o.gz files.</span>
+is 1.43-0.8.2-2 so the correct driver was loaded.</a></p>
 <a name="buildhid6">
-</a><h2><a name="buildhid6">3.9 - Building (usb)hid.ko (for kernel 2.6)</a></h2>
+</a><h2><a name="buildhid6">3.7 - Building (usb)hid.ko</a></h2>
 
-<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-1.tar.bz2">linuxwacom-0.8.2-1.tar.bz2</a>
+<p><a name="buildhid6">In the </a><a href="http://prdownloads.sourceforge.net/linuxwacom/linuxwacom-0.8.2-2.tar.bz2">linuxwacom-0.8.2-2.tar.bz2</a>
 file, you will find hid-core.c, which have special exceptions for
 wacom. This file is not built by default, so you will need to
 reconfigure the package and run make again. </p><p class="diff">Note, for kernel 2.6.18 and later, no need to build hid any more. For other kernels, refer to <a href="#testtablet">Testing Tablet Detection</a> to see if you need to build hid or not.</p>
@@ -1591,7 +1611,7 @@ directory to the source tree and rebuild the kernel. An example for kernel 2.6.9
 </div>
 
 <a name="newtablet">
-</a><h2><a name="newtablet">3.10 - Unknown Tablet?</a></h2>
+</a><h2><a name="newtablet">3.8 - Unknown Tablet?</a></h2>
 <a name="newtablet">To determine whether your device is listed in the driver, we need to determine
 the device identifier.  It can be discovered by issuing <i>more /proc/bus/usb/devices</i>:
 
@@ -1609,22 +1629,22 @@ E:  Ad=81(I) Atr=03(Int.) MxPS=  10 Ivl=5ms
 <p><a name="newtablet">In this case, the tablet identifier is in Vendor=056a ProdID=<b>0044</b>.
 The model (<b>Product=XD-1212-U</b>) is determined by ProdID; the Intuos2 12x12 is 0x44 for instance.
 
-</a></p><p><a name="newtablet">In the wacom.c/wacom_wac.c file, you
-will find a table called "wacom_ids". Look for your device identifier.
-Only the identifiers listed are handled by the wacom driver, so if it
-is missing, it needs to be added. Also look for routine
-usb_hid_configure() in hid-core.c. At the beginning of the routine, we
-added the following lines to let HID driver ignore all Wacom devices:
+</a></p><p><a name="newtablet">In the wacom.c (kernel 2.6.9/10) or wacom_wac.c (kernels 2.6.11 or later) file under linuxwacom/src/2.6.x, 
+you will find a table called "wacom_ids".  Look for your device identifier.  Only the identifiers listed are 
+handled by the wacom driver, so if it is missing, it needs to be added.  Also look for routine usb_hid_configure() 
+in hid-core.c if you are running a kernel older than 2.6.18.  At the beginning of the routine, we added the 
+following lines to let HID driver ignore all Wacom devices:
+
 </a></p><blockquote><pre><a name="newtablet">	/* ignore all Wacom devices */
 	if (dev-&gt;descriptor.idVendor == USB_VENDOR_ID_WACOM)
 		return NULL;
 </a></pre></blockquote>
 
-<p><a name="newtablet">If you've gotten this far, and still cannot get
-it to work, email me with your device identifier and as much of an
-explanation of where things did and did not work as described. I'll see
-what I can do about at least finding out why it did not work. Then we
-can go on to solutions.
+<p><a name="newtablet">If you've gotten this far, and still cannot get it to work, email me 
+with your device identifier and as much of an explanation of where things did and did not work as 
+described.  I'll see what I can do about at least finding out why it did not work.  Then we can 
+go on to solutions.
+
 </a></p><p><a name="newtablet">The next section assumes you have things working up to this point.
 
 </a><a name="viewdata">
@@ -1655,10 +1675,10 @@ If no output occurs on those ports, reload the drive:
 </a></p><blockquote><pre><a name="viewdata">[jej@sasami root]# /sbin/rmmod wacom
 [jej@sasami root]# /sbin/modprobe wacom       (or /sbin/insmod mydir/src/wacom.o)
 [jej@sasami root]# tail /var/log/messages
-Jan 17 17:31:31 sasami kernel: usb.c: deregistering driver wacom
-Jan 17 17:31:34 sasami kernel: usb.c: registered new driver wacom
-Jan 17 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
-Jan 17 17:31:35 sasami kernel: wacom.c: v1.43-0.8.2-1 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
+Apr 29 17:31:31 sasami kernel: usb.c: deregistering driver wacom
+Apr 29 17:31:34 sasami kernel: usb.c: registered new driver wacom
+Apr 29 17:31:35 sasami kernel: input0: Wacom Intuos2 12x12 on usb1:2.0
+Apr 29 17:31:35 sasami kernel: wacom.c: v1.43-0.8.2-2 Vojtech Pavlik &lt;vojtech@suse.cz&gt;
 </a></pre></blockquote>
 
 <p><a name="viewdata">The device driver and the tablet occassionally get out of
@@ -2053,7 +2073,7 @@ CONFIGURATION DETAILS
                    but greater  than 0 will slow  down the  cursor's  relative 
                    movement. A Rspeed too close to 0 is not recommanded.
 
-               Option "Twinview" "horizontal"|"vertical"|"none"
+               Option "Twinview" "horizontal"|"vertical"|"leftof"|"aboveof"|"none"
                    sets the  orientation of  TwinView to map the tablet to one
                    screen  and to be able to  move the screen  cursor from one
                    screen  to the  other  when tool  reaches  the  edge of the
@@ -2079,10 +2099,12 @@ CONFIGURATION DETAILS
 
                Option "MMonitor" "on"|"off"
                    turns  on/off  across  monitor  movement on a  non-TwinView
-                   multi-monitor desktop. The default is "on".
+                   multi-monitor desktop. If you have specific tablet mappings, 
+                   i.e.  TopX/Y or BottomX/Y  were set,  the  mapping  will be 
+                   applied before rotation.  The default is "on".
 
                Option "Rotate" "CW"|"CCW"|"HALF"|"NONE"
-                   rotates the tablet orientation clockwise (CCW) or anti-
+                   rotates  the tablet  orientation  counterclockwise (CCW) or 
                    clockwise (CW) or 180 degrees (HALF). The default is "NONE".
 
                Option "PressCurve" "x1,y1,x2,y2"
@@ -2137,12 +2159,12 @@ SEE ALSO
 
 AUTHORS
        Frederic Lepied &lt;lepied@xfree86.org&gt;, Ping  Cheng &lt;pingc@wacom.com&gt;,
-       John E. Joganic &lt;jej@j‐arkadia.com&gt;, Magnus Vigerlöf &lt;Magnus.Vigerlof@ipbo.se&gt;
+       John E. Joganic &lt;jej@j�&#8364;&#144;arkadia.com&gt;, Magnus Vigerlöf &lt;Magnus.Vigerlof@ipbo.se&gt;
 
 X Version 11                      linuxwacom 0.8.0                     WACOM(4)
 </pre></blockquote>
 <a name="mouse1">
-</a><h2><a name="mouse1">5.2 - Mouse1 (for all kernel 2.4 systems and some 2.6 systems)</a></h2>
+</a><h2><a name="mouse1">5.2 - Mouse1 (for some 2.6 systems)</a></h2>
 <p><a name="mouse1">This section largely deals with interaction problems between the mouse1
 device, PS/2 mouse, and USB tablets.  Serial users can ignore this part.
 
@@ -2251,7 +2273,7 @@ are running right, the following lines appear in my log file.
 (II) LoadModule: "wacom"
 (II) Loading /usr/X11R6/lib/modules/input/wacom_drv.o
 (II) Module wacom: vendor="The XFree86 Project"
-(II) Wacom driver level: <b>47-0.8.2-1</b> $
+(II) Wacom driver level: <b>47-0.8.2-2</b> $
 (II) XINPUT: Adding extended input device "eraser" (type: Wacom Eraser)
 (II) XINPUT: Adding extended input device "stylus" (type: Wacom Stylus)
 (II) XINPUT: Adding extended input device "cursor" (type: Wacom Cursor)
@@ -2263,8 +2285,8 @@ suppress=0
 (==) Wacom Eraser top X=0 top Y=0 bottom X=30480 bottom Y=30480
 </a></pre></blockquote>
 
-<a name="restartx">Notice the driver version 47-0.8.2-1 above.  This is the new stable
-wacom_drv.o driver.  The beta driver is currently 47-0.8.1-6.
+<a name="restartx">Notice the driver version 47-0.8.2-2 above.  This is the new stable
+wacom_drv.o driver.  The beta driver is currently 47-0.8.3-3.
 
 </a><p><a name="restartx">First things first, you should lift the mouse off the tablet and place it
 back down.  This seems to help reset things internally.  When you replace the
@@ -2673,9 +2695,9 @@ returns the parameter's raw value; <i>xsetwacom -x get</i> returns the value in 
 form; and <i>xsetwacom -s get</i> returns the value in shell command form.
 
 </a></p><p><a name="xsetwacom">The most used xsetwacom command is <i>xsetwacom set dev_name param [values...]</i>,
-where param is an option which will be set to values in wacom_drv.o
-after excuting xsetwacom. To better understand the use of this command,
-let's see some examples. Assume that you use <i>Stylus</i> as your Wacom tool's Identifier, which is considered as dev_name in xsetwacom command. 
+where param is an option which will be set to values in wacom_drv.o after excuting xsetwacom. 
+To better understand the use of this command, let's see some examples. Assume that you use 
+<i>Stylus</i> as your Wacom tool's Identifier, which is considered as dev_name in xsetwacom command. 
 
 </a></p><p><a name="xsetwacom">If you want to change <i>Stylus's</i> mode from absolute (default) to relative, then:
 
@@ -2738,7 +2760,9 @@ button1 (the tip) is pressed, then:
 
 <p><a name="xsetwacom"><b>xsetwacom supported parameters</b>
 
-</a></p><p><a name="xsetwacom">Below is a list of the parameters and their values used by <i>xsetwacom</i> command (a similar output can be viewed by <i>xsetwacom list param</i>.  All functions apply to the associated tool unless explicitly stated otherwise):
+</a></p><p><a name="xsetwacom">Below is a list of the parameters and their values used by <i>xsetwacom</i> command (a similar 
+output can be viewed by <i>xsetwacom list param</i>.  All functions apply to the associated tool 
+unless explicitly stated otherwise):
 
 </a></p><blockquote><pre><a name="xsetwacom">   param         [values...]              results
 ------------------------------------------------------------------
@@ -2768,11 +2792,14 @@ button1 (the tip) is pressed, then:
    Suppress      integer (0 - 100)        number of data trimmed for the tools associated 
 					  with the same tablet.
    Screen_No     integer (-1 - 5)         sets screen number the tablet is mapped to.
-   TwinView      none|vertical|horizontal sets the mapping to TwinView.
+   TwinView      none|vertical|horizontal 
+                 |leftof|aboveof          sets the mapping to TwinView. Tablet mappings applied after 
+					  this command will be based on the new tablet orientation.
    TVResolution0 width x height           sets MetaModes option for TwinView Screen 0.
    TVResolution1 width x height           sets MetaModes option for TwinView Screen 1.
    SpeedLevel    integer (1 - 11)         sets relative cursor movement speed
-   ClickForce    integer (1 - 21)         sets tip/eraser pressure threshold
+   ClickForce    integer (1 - 21)         sets tip/eraser pressure threshold with clickforce scale
+   Threshold     integer                  sets tip/eraser pressure threshold directly to the pressure
    xyDefault                              resets the bounding coordinates to default in tablet units
    mmonitor      on|off                   turns on/off across monitor movement on (non-TwinView) 
 				          multi-monitor desktop
@@ -2830,9 +2857,9 @@ StripRUp/StripRUp	Right Touch Strip on Intuos3 and V5 Cintiq (Cintiq 21UX/12WX/2
 
 <p><a name="xsetwacom"><b>Automatically excuting predefined xsetwacom commands at logging in</b>
 
-</a></p><p><a name="xsetwacom">The xsetwacom commands can be added to
-the .xinitrc under your home directory so next time when you login as
-yourself, the driver will be set to the options you choose.
+</a></p><p><a name="xsetwacom">The xsetwacom commands can be added to the .xinitrc under your home directory so next time when 
+you login as yourself, the driver will be set to the options you choose.
+
 </a></p><p><a name="xsetwacom">Below is an example of my .xinitrc:
 
 </a></p><blockquote><pre><a name="xsetwacom">[jej@ayukawa jej]$ more .xinitrc
@@ -2848,14 +2875,13 @@ xsetwacom set Stylus TPCButton 1
 <div class="diff">
 <p><a name="xsetwacom">To see what's under your home directory, use <i>ls -al ~</i>.
 
-</a></p><p><a name="xsetwacom">If your system doesn't execute .xinitrc
-at login, you can add those xsetwacom commands into the startup script
-(.bashrc, .cshrc, .profile, etc.) that your system launches, for
-example, you should use .Xsession instead of .xinitrc on Debian.
-</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can
-not run on some older systems due to a XFree86 interface error. A
-generic solution to this issue is directly adding your configuration
-options to the /etc/X11/XF86Config file. Please refer to </a><a href="#x11">Configuring X11</a> for details. 
+</a></p><p><a name="xsetwacom">If your system doesn't execute .xinitrc at login, you can add those xsetwacom commands into the 
+startup script (.bashrc, .cshrc, .profile, etc.) that your system launches, for example, you should 
+use .Xsession instead of .xinitrc on Debian.
+
+</a></p><p><a name="xsetwacom">It has been reported that xsetwacom can not run on some older systems due to a XFree86 interface 
+error.  A generic solution to this issue is directly adding your configuration options to the 
+/etc/X11/XF86Config file.  Please refer to </a><a href="#x11">Configuring X11</a> for details. 
 </p></div>
 
 <p><b>More examples</b>
@@ -2864,9 +2890,9 @@ options to the /etc/X11/XF86Config file. Please refer to </a><a href="#x11">Conf
 
 </p><p>	<b>1.</b> Usage of keystroke and modifiers
 
-</p><p>keystroke and modifiers can be used through buttons,
-ExpressKeys, wheels, Touch Strips, and Touch Ring. A list of supported
-modifiers and special keys can be viewed through <i>xsetwacom list mod</i>.  Special keys are symbols that go together to represent one XInput key event. 
+</p><p>keystroke and modifiers can be used through buttons, ExpressKeys, wheels, Touch Strips, and 
+Touch Ring.  A list of supported modifiers and special keys can be viewed through 
+<i>xsetwacom list mod</i>.  Special keys are symbols that go together to represent one XInput key event. 
 
 </p><p>In the following example, <b>Up</b> represents the <b>up arrow</b> key:
 
@@ -2880,7 +2906,8 @@ modifiers and special keys can be viewed through <i>xsetwacom list mod</i>.  Spe
 </p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor button4 "key core \Up"   
 </pre></blockquote>
 
-<p>If you press button4 on your Wacom puck, Xinput will receive an <b>U</b> and a <b>p</b> events, i.e., <b>Up</b> would be displayed on your active console or application.
+<p>If you press button4 on your Wacom puck, Xinput will receive an <b>U</b> and a <b>p</b> events, 
+i.e., <b>Up</b> would be displayed on your active console or application.
 
 </p><p>Sending <b>down arrow</b> event when button5 is pressed:
 
@@ -2902,10 +2929,9 @@ StripLDn, StripRUp, and StripRDn.
 
 </p><p>	<b>2.</b> Changing debug level while driver is running
 
-</p><p>xsetwacom supports 2 ways of enabling/disabling debugging
-information, for individual device and/or for all tools associated with
-the same tablet, through parameters DebugLevel and CommonDBG. For
-example,
+</p><p>xsetwacom supports 2 ways of enabling/disabling debugging information, for individual device 
+and/or for all tools associated with the same tablet, through parameters DebugLevel and CommonDBG. For example,
+
 </p><blockquote><pre>[jej@ayukawa jej]$ xsetwacom set cursor DebugLevel 10
 </pre></blockquote>
 
@@ -2932,30 +2958,29 @@ by the corresponding get command. For example:
 
 which means device <b>cursor</b> was not set to TwinView display.
 
-<p>Two other parameters, TVResolution0 and TVResolution1, made the
-change of MetaModes option in TwinView setup possible when system is
-running. TVResolution0 sets MetaModes option for TwinView Screen 0,
-while TVResolution1 sets MetaModes option for TwinView Screen 1.
-However, you need to make sure that the MetaModes you are going to set
-is the same as the TwinView setup in your xorg.conf for Nvidia Graphic
-card driver.
+<p>Two other parameters, TVResolution0 and TVResolution1, made the change of MetaModes option 
+in TwinView setup possible when system is running. TVResolution0 sets MetaModes option for 
+TwinView Screen 0,  while TVResolution1 sets MetaModes option for TwinView Screen 1.  
+However,  you need to make sure that the MetaModes you are going to set is the same as 
+the TwinView setup in your xorg.conf for Nvidia Graphic card driver.
+
 </p><p>	<b>4.</b> Changing Suppress and RawSample to filter the raw data
 
-</p><p>Use of Suppress will reduce the number of raw data we process in
-the driver. So, unless you know what you are doing, changing Suppress
-is not recommended. Valid values for Suppress is 0 to 100, where 0
-means raw data is used as is. Suppress less than 101 means data will be
-used only when its change compared to the last processed event is
-larger than Suppress in points. Default is 2.
-</p><p>RawSample was originally introduced to smooth x/y coordinates
-to a certain degree. A four-points averaging was tested and convinced
-to be effective. In 0.7.8, we made RawSample changeable through
-xsetwacom. However, same as with Suppress, changing RawSample is not
-recommended. The maximum value can be as large as 20. But the default
-stays at 4.
-</p><p>Both Suppress and RawSample apply to the devices on the same
-tablet, that is, it is global to all devices associated with the same
-tablet.
+</p><p>Use of Suppress will reduce the number of raw data we process in the driver.  So, unless 
+you know what you are doing, changing Suppress is not recommended. Valid values for Suppress 
+is 0 to 100, where 0 means raw data is used as is.   Suppress less than 101 means data will 
+be used only when its change compared to the last processed event is larger than Suppress in 
+points.  Default is 2.
+
+</p><p>RawSample was originally introduced to smooth x/y coordinates to a certain degree.   
+A four-points averaging was tested and convinced to be effective.   In 0.7.8, we made 
+RawSample changeable through xsetwacom.   However,  same as with Suppress, changing 
+RawSample is not recommended.  The maximum value can be as large as 20.   
+But the default stays at 4.
+
+</p><p>Both Suppress and RawSample apply to the devices on the same tablet,  that is,   
+it is global to all devices associated with the same tablet.
+
 <a name="gimp">
 </a></p><h1><a name="gimp">10.0 - Working With Gimp</a></h1>
 <div class="diff"><a name="gimp">It has been suggested that gimp should be recompiled from
@@ -3714,7 +3739,7 @@ Section "InputDevice"
    Option "USB" "on"
 EndSection 
 
-   3. The section dealing with your normal mouse must be considered too. See <a href="#mouse1">Mouse1 (for all kernel 2.4 systems and some 2.6 systems)</a>. 
+   3. The section dealing with your normal mouse must be considered too. See <a href="#mouse1">Mouse1 (for some 2.6 systems)</a>. 
 I didn't use /dev/psaux nor /dev/input/mice. /dev/input/mouse0 works for a PS/2 
 mouse. For a USB mouse, there is a problem mentioned in the <b>Remaining problems</b>.
 
@@ -4412,377 +4437,293 @@ Therefore, old airline operations apply: Extinguish LEDs before take-off!
 -Thomas
 </a></pre></blockquote>
 <a name="lic">
-</a><h2><a name="lic">13.10 - GNU Free Document License</a></h2>
-<a name="lic">Version 1.2, November 2002<br>
+</a><h2><a name="lic">13.10 - GNU GENERAL PUBLIC LICENSE</a></h2>
+<a name="lic">		    GNU GENERAL PUBLIC LICENSE<br>
+		       Version 2, June 1991<br>
 <br>
-Copyright (C) 2000,2001,2002  Free Software Foundation, Inc.<br>
-59 Temple Place, Suite 330, Boston, MA  02111-1307  USA<br>
-Everyone is permitted to copy and distribute verbatim copies<br>
-of this license document, but changing it is not allowed.<br>
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.<br>
+                          675 Mass Ave, Cambridge, MA 02139, USA<br>
+ Everyone is permitted to copy and distribute verbatim copies<br>
+ of this license document, but changing it is not allowed.<br>
 <br>
-0. PREAMBLE<br>
+			    Preamble<br>
 <br>
-</a><p><a name="lic">The purpose of this License is to make a manual,
-textbook, or other functional and useful document "free" in the sense
-of freedom: to assure everyone the effective freedom to copy and
-redistribute it, with or without modifying it, either commercially or
-noncommercially. Secondarily, this License preserves for the author and
-publisher a way to get credit for their work, while not being
-considered responsible for modifications made by others.
-</a></p><p><a name="lic">This License is a kind of "copyleft", which
-means that derivative works of the document must themselves be free in
-the same sense. It complements the GNU General Public License, which is
-a copyleft license designed for free software.
-</a></p><p><a name="lic">We have designed this License in order to use
-it for manuals for free software, because free software needs free
-documentation: a free program should come with manuals providing the
-same freedoms that the software does. But this License is not limited
-to software manuals; it can be used for any textual work, regardless of
-subject matter or whether it is published as a printed book. We
-recommend this License principally for works whose purpose is
-instruction or reference.
-</a></p><p><a name="lic">1. APPLICABILITY AND DEFINITIONS
+ </a><p><a name="lic"> The licenses for most software are designed to take away your
+freedom to share and change it.  By contrast, the GNU General Public
+License is intended to guarantee your freedom to share and change free
+software--to make sure the software is free for all its users.  This
+General Public License applies to most of the Free Software
+Foundation's software and to any other program whose authors commit to
+using it.  (Some other Free Software Foundation software is covered by
+the GNU Library General Public License instead.)  You can apply it to
+your programs, too.
 
-</a></p><p><a name="lic">This License applies to any manual or other
-work, in any medium, that contains a notice placed by the copyright
-holder saying it can be distributed under the terms of this License.
-Such a notice grants a world-wide, royalty-free license, unlimited in
-duration, to use that work under the conditions stated herein. The
-"Document", below, refers to any such manual or work. Any member of the
-public is a licensee, and is addressed as "you". You accept the license
-if you copy, modify or distribute the work in a way requiring
-permission under copyright law.
-</a></p><p><a name="lic">A "Modified Version" of the Document means
-any work containing the Document or a portion of it, either copied
-verbatim, or with modifications and/or translated into another
-language.
-</a></p><p><a name="lic">A "Secondary Section" is a named appendix or
-a front-matter section of the Document that deals exclusively with the
-relationship of the publishers or authors of the Document to the
-Document's overall subject (or to related matters) and contains nothing
-that could fall directly within that overall subject. (Thus, if the
-Document is in part a textbook of mathematics, a Secondary Section may
-not explain any mathematics.) The relationship could be a matter of
-historical connection with the subject or with related matters, or of
-legal, commercial, philosophical, ethical or political position
-regarding them.
-</a></p><p><a name="lic">The "Invariant Sections" are certain
-Secondary Sections whose titles are designated, as being those of
-Invariant Sections, in the notice that says that the Document is
-released under this License. If a section does not fit the above
-definition of Secondary then it is not allowed to be designated as
-Invariant. The Document may contain zero Invariant Sections. If the
-Document does not identify any Invariant Sections then there are none.
-</a></p><p><a name="lic">The "Cover Texts" are certain short passages
-of text that are listed, as Front-Cover Texts or Back-Cover Texts, in
-the notice that says that the Document is released under this License.
-A Front-Cover Text may be at most 5 words, and a Back-Cover Text may be
-at most 25 words.
-</a></p><p><a name="lic">A "Transparent" copy of the Document means a
-machine-readable copy, represented in a format whose specification is
-available to the general public, that is suitable for revising the
-document straightforwardly with generic text editors or (for images
-composed of pixels) generic paint programs or (for drawings) some
-widely available drawing editor, and that is suitable for input to text
-formatters or for automatic translation to a variety of formats
-suitable for input to text formatters. A copy made in an otherwise
-Transparent file format whose markup, or absence of markup, has been
-arranged to thwart or discourage subsequent modification by readers is
-not Transparent. An image format is not Transparent if used for any
-substantial amount of text. A copy that is not "Transparent" is called
-"Opaque".
-</a></p><p><a name="lic">Examples of suitable formats for Transparent
-copies include plain ASCII without markup, Texinfo input format, LaTeX
-input format, SGML or XML using a publicly available DTD, and
-standard-conforming simple HTML, PostScript or PDF designed for human
-modification. Examples of transparent image formats include PNG, XCF
-and JPG. Opaque formats include proprietary formats that can be read
-and edited only by proprietary word processors, SGML or XML for which
-the DTD and/or processing tools are not generally available, and the
-machine-generated HTML, PostScript or PDF produced by some word
-processors for output purposes only.
-</a></p><p><a name="lic">The "Title Page" means, for a printed book,
-the title page itself, plus such following pages as are needed to hold,
-legibly, the material this License requires to appear in the title
-page. For works in formats which do not have any title page as such,
-"Title Page" means the text near the most prominent appearance of the
-work's title, preceding the beginning of the body of the text.
-</a></p><p><a name="lic">A section "Entitled XYZ" means a named
-subunit of the Document whose title either is precisely XYZ or contains
-XYZ in parentheses following text that translates XYZ in another
-language. (Here XYZ stands for a specific section name mentioned below,
-such as "Acknowledgements", "Dedications", "Endorsements", or
-"History".) To "Preserve the Title" of such a section when you modify
-the Document means that it remains a section "Entitled XYZ" according
-to this definition.
-</a></p><p><a name="lic">The Document may include Warranty Disclaimers
-next to the notice which states that this License applies to the
-Document. These Warranty Disclaimers are considered to be included by
-reference in this License, but only as regards disclaiming warranties:
-any other implication that these Warranty Disclaimers may have is void
-and has no effect on the meaning of this License.
-</a></p><p><a name="lic">2. VERBATIM COPYING
+</a></p><p><a name="lic">  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+this service if you wish), that you receive source code or can get it
+if you want it, that you can change the software or use pieces of it
+in new free programs; and that you know you can do these things.
 
-</a></p><p><a name="lic">You may copy and distribute the Document in
-any medium, either commercially or noncommercially, provided that this
-License, the copyright notices, and the license notice saying this
-License applies to the Document are reproduced in all copies, and that
-you add no other conditions whatsoever to those of this License. You
-may not use technical measures to obstruct or control the reading or
-further copying of the copies you make or distribute. However, you may
-accept compensation in exchange for copies. If you distribute a large
-enough number of copies you must also follow the conditions in section
-3.
-</a></p><p><a name="lic">You may also lend copies, under the same conditions stated above, and you may publicly display copies.
+</a></p><p><a name="lic">  To protect your rights, we need to make restrictions that forbid
+anyone to deny you these rights or to ask you to surrender the rights.
+These restrictions translate to certain responsibilities for you if you
+distribute copies of the software, or if you modify it.
 
-</a></p><p><a name="lic">3. COPYING IN QUANTITY
+</a></p><p><a name="lic">  For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must give the recipients all the rights that
+you have.  You must make sure that they, too, receive or can get the
+source code.  And you must show them these terms so they know their
+rights.
 
-</a></p><p><a name="lic">If you publish printed copies (or copies in
-media that commonly have printed covers) of the Document, numbering
-more than 100, and the Document's license notice requires Cover Texts,
-you must enclose the copies in covers that carry, clearly and legibly,
-all these Cover Texts: Front-Cover Texts on the front cover, and
-Back-Cover Texts on the back cover. Both covers must also clearly and
-legibly identify you as the publisher of these copies. The front cover
-must present the full title with all words of the title equally
-prominent and visible. You may add other material on the covers in
-addition. Copying with changes limited to the covers, as long as they
-preserve the title of the Document and satisfy these conditions, can be
-treated as verbatim copying in other respects.
-</a></p><p><a name="lic">If the required texts for either cover are
-too voluminous to fit legibly, you should put the first ones listed (as
-many as fit reasonably) on the actual cover, and continue the rest onto
-adjacent pages.
-</a></p><p><a name="lic">If you publish or distribute Opaque copies of
-the Document numbering more than 100, you must either include a
-machine-readable Transparent copy along with each Opaque copy, or state
-in or with each Opaque copy a computer-network location from which the
-general network-using public has access to download using
-public-standard network protocols a complete Transparent copy of the
-Document, free of added material. If you use the latter option, you
-must take reasonably prudent steps, when you begin distribution of
-Opaque copies in quantity, to ensure that this Transparent copy will
-remain thus accessible at the stated location until at least one year
-after the last time you distribute an Opaque copy (directly or through
-your agents or retailers) of that edition to the public.
-</a></p><p><a name="lic">It is requested, but not required, that you
-contact the authors of the Document well before redistributing any
-large number of copies, to give them a chance to provide you with an
-updated version of the Document.
-</a></p><p><a name="lic">4. MODIFICATIONS
+</a></p><p><a name="lic">  We protect your rights with two steps: (1) copyright the software, and
+(2) offer you this license which gives you legal permission to copy,
+distribute and/or modify the software.
 
-</a></p><p><a name="lic">You may copy and distribute a Modified Version
-of the Document under the conditions of sections 2 and 3 above,
-provided that you release the Modified Version under precisely this
-License, with the Modified Version filling the role of the Document,
-thus licensing distribution and modification of the Modified Version to
-whoever possesses a copy of it. In addition, you must do these things
-in the Modified Version:
-</a></p><ul>
-<li><a name="lic">A. Use in the Title Page (and on the covers, if any)
-a title distinct from that of the Document, and from those of previous
-versions (which should, if there were any, be listed in the History
-section of the Document). You may use the same title as a previous
-version if the original publisher of that version gives permission.
-</a></li><li><a name="lic">B. List on the Title Page, as authors, one
-or more persons or entities responsible for authorship of the
-modifications in the Modified Version, together with at least five of
-the principal authors of the Document (all of its principal authors, if
-it has fewer than five), unless they release you from this requirement.
-</a></li><li><a name="lic">C. State on the Title page the name of the publisher of the Modified Version, as the publisher.
-</a></li><li><a name="lic">D. Preserve all the copyright notices of the Document.
-</a></li><li><a name="lic">E. Add an appropriate copyright notice for your modifications adjacent to the other copyright notices.
-</a></li><li><a name="lic">F. Include, immediately after the copyright
-notices, a license notice giving the public permission to use the
-Modified Version under the terms of this License, in the form shown in
-the Addendum below.
-</a></li><li><a name="lic">G. Preserve in that license notice the full
-lists of Invariant Sections and required Cover Texts given in the
-Document's license notice.
-</a></li><li><a name="lic">H. Include an unaltered copy of this License.
-</a></li><li><a name="lic">I. Preserve the section Entitled "History",
-Preserve its Title, and add to it an item stating at least the title,
-year, new authors, and publisher of the Modified Version as given on
-the Title Page. If there is no section Entitled "History" in the
-Document, create one stating the title, year, authors, and publisher of
-the Document as given on its Title Page, then add an item describing
-the Modified Version as stated in the previous sentence.
-</a></li><li><a name="lic">J. Preserve the network location, if any,
-given in the Document for public access to a Transparent copy of the
-Document, and likewise the network locations given in the Document for
-previous versions it was based on. These may be placed in the "History"
-section. You may omit a network location for a work that was published
-at least four years before the Document itself, or if the original
-publisher of the version it refers to gives permission.
-</a></li><li><a name="lic">K. For any section Entitled
-"Acknowledgements" or "Dedications", Preserve the Title of the section,
-and preserve in the section all the substance and tone of each of the
-contributor acknowledgements and/or dedications given therein.
-</a></li><li><a name="lic">L. Preserve all the Invariant Sections of
-the Document, unaltered in their text and in their titles. Section
-numbers or the equivalent are not considered part of the section
-titles.
-</a></li><li><a name="lic">M. Delete any section Entitled "Endorsements". Such a section may not be included in the Modified Version.
-</a></li><li><a name="lic">N. Do not retitle any existing section to be Entitled "Endorsements" or to conflict in title with any Invariant Section.
-</a></li><li><a name="lic">O. Preserve any Warranty Disclaimers.
-</a></li></ul>
+</a></p><p><a name="lic">  Also, for each author's protection and ours, we want to make certain
+that everyone understands that there is no warranty for this free
+software.  If the software is modified by someone else and passed on, we
+want its recipients to know that what they have is not the original, so
+that any problems introduced by others will not reflect on the original
+authors' reputations.
 
-<p><a name="lic">If the Modified Version includes new front-matter
-sections or appendices that qualify as Secondary Sections and contain
-no material copied from the Document, you may at your option designate
-some or all of these sections as invariant. To do this, add their
-titles to the list of Invariant Sections in the Modified Version's
-license notice. These titles must be distinct from any other section
-titles.
-</a></p><p><a name="lic">You may add a section Entitled
-"Endorsements", provided it contains nothing but endorsements of your
-Modified Version by various parties--for example, statements of peer
-review or that the text has been approved by an organization as the
-authoritative definition of a standard.
-</a></p><p><a name="lic">You may add a passage of up to five words as
-a Front-Cover Text, and a passage of up to 25 words as a Back-Cover
-Text, to the end of the list of Cover Texts in the Modified Version.
-Only one passage of Front-Cover Text and one of Back-Cover Text may be
-added by (or through arrangements made by) any one entity. If the
-Document already includes a cover text for the same cover, previously
-added by you or by arrangement made by the same entity you are acting
-on behalf of, you may not add another; but you may replace the old one,
-on explicit permission from the previous publisher that added the old
-one.
-</a></p><p><a name="lic">The author(s) and publisher(s) of the
-Document do not by this License give permission to use their names for
-publicity for or to assert or imply endorsement of any Modified
-Version.
-</a></p><p><a name="lic">5. COMBINING DOCUMENTS
+</a></p><p><a name="lic">  Finally, any free program is threatened constantly by software
+patents.  We wish to avoid the danger that redistributors of a free
+program will individually obtain patent licenses, in effect making the
+program proprietary.  To prevent this, we have made it clear that any
+patent must be licensed for everyone's free use or not licensed at all.
 
-</a></p><p><a name="lic">You may combine the Document with other
-documents released under this License, under the terms defined in
-section 4 above for modified versions, provided that you include in the
-combination all of the Invariant Sections of all of the original
-documents, unmodified, and list them all as Invariant Sections of your
-combined work in its license notice, and that you preserve all their
-Warranty Disclaimers.
-</a></p><p><a name="lic">The combined work need only contain one copy
-of this License, and multiple identical Invariant Sections may be
-replaced with a single copy. If there are multiple Invariant Sections
-with the same name but different contents, make the title of each such
-section unique by adding at the end of it, in parentheses, the name of
-the original author or publisher of that section if known, or else a
-unique number. Make the same adjustment to the section titles in the
-list of Invariant Sections in the license notice of the combined work.
-</a></p><p><a name="lic">In the combination, you must combine any
-sections Entitled "History" in the various original documents, forming
-one section Entitled "History"; likewise combine any sections Entitled
-"Acknowledgements", and any sections Entitled "Dedications". You must
-delete all sections Entitled "Endorsements."
-</a></p><p><a name="lic">6. COLLECTIONS OF DOCUMENTS
+</a></p><p><a name="lic">  The precise terms and conditions for copying, distribution and
+modification follow.
 
-</a></p><p><a name="lic">You may make a collection consisting of the
-Document and other documents released under this License, and replace
-the individual copies of this License in the various documents with a
-single copy that is included in the collection, provided that you
-follow the rules of this License for verbatim copying of each of the
-documents in all other respects.
-</a></p><p><a name="lic">You may extract a single document from such a
-collection, and distribute it individually under this License, provided
-you insert a copy of this License into the extracted document, and
-follow this License in all other respects regarding verbatim copying of
-that document.
-</a></p><p><a name="lic">7. AGGREGATION WITH INDEPENDENT WORKS
+		    GNU GENERAL PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
-</a></p><p><a name="lic">A compilation of the Document or its
-derivatives with other separate and independent documents or works, in
-or on a volume of a storage or distribution medium, is called an
-"aggregate" if the copyright resulting from the compilation is not used
-to limit the legal rights of the compilation's users beyond what the
-individual works permit. When the Document is included an aggregate,
-this License does not apply to the other works in the aggregate which
-are not themselves derivative works of the Document.
-</a></p><p><a name="lic">If the Cover Text requirement of section 3 is
-applicable to these copies of the Document, then if the Document is
-less than one half of the entire aggregate, the Document's Cover Texts
-may be placed on covers that bracket the Document within the aggregate,
-or the electronic equivalent of covers if the Document is in electronic
-form. Otherwise they must appear on printed covers that bracket the
-whole aggregate.
-</a></p><p><a name="lic">8. TRANSLATION
+</a></p><p><a name="lic">  0. This License applies to any program or other work which contains
+a notice placed by the copyright holder saying it may be distributed
+under the terms of this General Public License.  The "Program", below,
+refers to any such program or work, and a "work based on the Program"
+means either the Program or any derivative work under copyright law:
+that is to say, a work containing the Program or a portion of it,
+either verbatim or with modifications and/or translated into another
+language.  (Hereinafter, translation is included without limitation in
+the term "modification".)  Each licensee is addressed as "you".
 
-</a></p><p><a name="lic">Translation is considered a kind of
-modification, so you may distribute translations of the Document under
-the terms of section 4. Replacing Invariant Sections with translations
-requires special permission from their copyright holders, but you may
-include translations of some or all Invariant Sections in addition to
-the original versions of these Invariant Sections. You may include a
-translation of this License, and all the license notices in the
-Document, and any Warrany Disclaimers, provided that you also include
-the original English version of this License and the original versions
-of those notices and disclaimers. In case of a disagreement between the
-translation and the original version of this License or a notice or
-disclaimer, the original version will prevail.
-</a></p><p><a name="lic">If a section in the Document is Entitled
-"Acknowledgements", "Dedications", or "History", the requirement
-(section 4) to Preserve its Title (section 1) will typically require
-changing the actual title.
-</a></p><p><a name="lic">9. TERMINATION
+</a></p><p><a name="lic">Activities other than copying, distribution and modification are not
+covered by this License; they are outside its scope.  The act of
+running the Program is not restricted, and the output from the Program
+is covered only if its contents constitute a work based on the
+Program (independent of having been made by running the Program).
+Whether that is true depends on what the Program does.
 
-</a></p><p><a name="lic">You may not copy, modify, sublicense, or
-distribute the Document except as expressly provided for under this
-License. Any other attempt to copy, modify, sublicense or distribute
-the Document is void, and will automatically terminate your rights
-under this License. However, parties who have received copies, or
-rights, from you under this License will not have their licenses
-terminated so long as such parties remain in full compliance.
-</a></p><p><a name="lic">10. FUTURE REVISIONS OF THIS LICENSE
+</a></p><p><a name="lic">  1. You may copy and distribute verbatim copies of the Program's
+source code as you receive it, in any medium, provided that you
+conspicuously and appropriately publish on each copy an appropriate
+copyright notice and disclaimer of warranty; keep intact all the
+notices that refer to this License and to the absence of any warranty;
+and give any other recipients of the Program a copy of this License
+along with the Program.
 
-</a></p><p><a name="lic">The Free Software Foundation may publish new,
-revised versions of the GNU Free Documentation License from time to
-time. Such new versions will be similar in spirit to the present
-version, but may differ in detail to address new problems or concerns.
-See http://www.gnu.org/copyleft/.
-</a></p><p><a name="lic">Each version of the License is given a
-distinguishing version number. If the Document specifies that a
-particular numbered version of this License "or any later version"
-applies to it, you have the option of following the terms and
-conditions either of that specified version or of any later version
-that has been published (not as a draft) by the Free Software
-Foundation. If the Document does not specify a version number of this
-License, you may choose any version ever published (not as a draft) by
-the Free Software Foundation.
-</a></p><p><a name="lic">HOW TO USE THIS LICENSE FOR YOUR DOCUMENTS
+</a></p><p><a name="lic">You may charge a fee for the physical act of transferring a copy, and
+you may at your option offer warranty protection in exchange for a fee.
 
-</a></p><p><a name="lic">To use this License in a document you have
-written, include a copy of the License in the document and put the
-following copyright and license notices just after the title page:
-</a></p><blockquote><pre><a name="lic">      Copyright (c)  YEAR  YOUR NAME.
-      Permission is granted to copy, distribute and/or modify this document
-      under the terms of the GNU Free Documentation License, Version 1.2
-      or any later version published by the Free Software Foundation;
-      with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-      A copy of the license is included in the section entitled "GNU
-      Free Documentation License".
-</a></pre></blockquote>
+</a></p><p><a name="lic">  2. You may modify your copy or copies of the Program or any portion
+of it, thus forming a work based on the Program, and copy and
+distribute such modifications or work under the terms of Section 1
+above, provided that you also meet all of these conditions:
 
-<p><a name="lic">If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts, replace the "with...Texts." line with this:
+</a></p><p><a name="lic">    a) You must cause the modified files to carry prominent notices
+    stating that you changed the files and the date of any change.
 
-</a></p><blockquote><pre><a name="lic">    with the Invariant Sections being LIST THEIR TITLES, with the
-    Front-Cover Texts being LIST, and with the Back-Cover Texts being LIST.
-</a></pre></blockquote>
+</a></p><p><a name="lic">    b) You must cause any work that you distribute or publish, that in
+    whole or in part contains or is derived from the Program or any
+    part thereof, to be licensed as a whole at no charge to all third
+    parties under the terms of this License.
 
-<p><a name="lic">If you have Invariant Sections without Cover Texts, or
-some other combination of the three, merge those two alternatives to
-suit the situation.
-</a></p><p><a name="lic">If your document contains nontrivial examples
-of program code, we recommend releasing these examples in parallel
-under your choice of free software license, such as the GNU General
-Public License, to permit their use in free software.
+</a></p><p><a name="lic">    c) If the modified program normally reads commands interactively
+    when run, you must cause it, when started running for such
+    interactive use in the most ordinary way, to print or display an
+    announcement including an appropriate copyright notice and a
+    notice that there is no warranty (or else, saying that you provide
+    a warranty) and that users may redistribute the program under
+    these conditions, and telling the user how to view a copy of this
+    License.  (Exception: if the Program itself is interactive but
+    does not normally print such an announcement, your work based on
+    the Program is not required to print an announcement.
+
+</a></p><p><a name="lic">These requirements apply to the modified work as a whole.  If
+identifiable sections of that work are not derived from the Program,
+and can be reasonably considered independent and separate works in
+themselves, then this License, and its terms, do not apply to those
+sections when you distribute them as separate works.  But when you
+distribute the same sections as part of a whole which is a work based
+on the Program, the distribution of the whole must be on the terms of
+this License, whose permissions for other licensees extend to the
+entire whole, and thus to each and every part regardless of who wrote it.
+
+</a></p><p><a name="lic">Thus, it is not the intent of this section to claim rights or contest
+your rights to work written entirely by you; rather, the intent is to
+exercise the right to control the distribution of derivative or
+collective works based on the Program.
+
+</a></p><p><a name="lic">In addition, mere aggregation of another work not based on the Program
+with the Program (or with a work based on the Program) on a volume of
+a storage or distribution medium does not bring the other work under
+the scope of this License.
+
+</a></p><p><a name="lic">  3. You may copy and distribute the Program (or a work based on it,
+under Section 2) in object code or executable form under the terms of
+Sections 1 and 2 above provided that you also do one of the following:
+
+</a></p><p><a name="lic">    a) Accompany it with the complete corresponding machine-readable
+    source code, which must be distributed under the terms of Sections
+    1 and 2 above on a medium customarily used for software interchange; or,
+
+</a></p><p><a name="lic">    b) Accompany it with a written offer, valid for at least three
+    years, to give any third party, for a charge no more than your
+    cost of physically performing source distribution, a complete
+    machine-readable copy of the corresponding source code, to be
+    distributed under the terms of Sections 1 and 2 above on a medium
+    customarily used for software interchange; or,
+
+</a></p><p><a name="lic">    c) Accompany it with the information you received as to the offer
+    to distribute corresponding source code.  (This alternative is
+    allowed only for noncommercial distribution and only if you
+    received the program in object code or executable form with such
+    an offer, in accord with Subsection b above.)
+
+</a></p><p><a name="lic">The source code for a work means the preferred form of the work for
+making modifications to it.  For an executable work, complete source
+code means all the source code for all modules it contains, plus any
+associated interface definition files, plus the scripts used to
+control compilation and installation of the executable.  However, as a
+special exception, the source code distributed need not include
+anything that is normally distributed (in either source or binary
+form) with the major components (compiler, kernel, and so on) of the
+operating system on which the executable runs, unless that component
+itself accompanies the executable.
+
+</a></p><p><a name="lic">If distribution of executable or object code is made by offering
+access to copy from a designated place, then offering equivalent
+access to copy the source code from the same place counts as
+distribution of the source code, even though third parties are not
+compelled to copy the source along with the object code.
+
+</a></p><p><a name="lic">  4. You may not copy, modify, sublicense, or distribute the Program
+except as expressly provided under this License.  Any attempt
+otherwise to copy, modify, sublicense or distribute the Program is
+void, and will automatically terminate your rights under this License.
+However, parties who have received copies, or rights, from you under
+this License will not have their licenses terminated so long as such
+parties remain in full compliance.
+
+</a></p><p><a name="lic">  5. You are not required to accept this License, since you have not
+signed it.  However, nothing else grants you permission to modify or
+distribute the Program or its derivative works.  These actions are
+prohibited by law if you do not accept this License.  Therefore, by
+modifying or distributing the Program (or any work based on the
+Program), you indicate your acceptance of this License to do so, and
+all its terms and conditions for copying, distributing or modifying
+the Program or works based on it.
+
+</a></p><p><a name="lic">  6. Each time you redistribute the Program (or any work based on the
+Program), the recipient automatically receives a license from the
+original licensor to copy, distribute or modify the Program subject to
+these terms and conditions.  You may not impose any further
+restrictions on the recipients' exercise of the rights granted herein.
+You are not responsible for enforcing compliance by third parties to
+this License.
+
+</a></p><p><a name="lic">  7. If, as a consequence of a court judgment or allegation of patent
+infringement or for any other reason (not limited to patent issues),
+conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot
+distribute so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you
+may not distribute the Program at all.  For example, if a patent
+license would not permit royalty-free redistribution of the Program by
+all those who receive copies directly or indirectly through you, then
+the only way you could satisfy both it and this License would be to
+refrain entirely from distribution of the Program.
+
+</a></p><p><a name="lic">If any portion of this section is held invalid or unenforceable under
+any particular circumstance, the balance of the section is intended to
+apply and the section as a whole is intended to apply in other
+circumstances.
+
+</a></p><p><a name="lic">It is not the purpose of this section to induce you to infringe any
+patents or other property right claims or to contest validity of any
+such claims; this section has the sole purpose of protecting the
+integrity of the free software distribution system, which is
+implemented by public license practices.  Many people have made
+generous contributions to the wide range of software distributed
+through that system in reliance on consistent application of that
+system; it is up to the author/donor to decide if he or she is willing
+to distribute software through any other system and a licensee cannot
+impose that choice.
+
+</a></p><p><a name="lic">This section is intended to make thoroughly clear what is believed to
+be a consequence of the rest of this License.
+
+</a></p><p><a name="lic">  8. If the distribution and/or use of the Program is restricted in
+certain countries either by patents or by copyrighted interfaces, the
+original copyright holder who places the Program under this License
+may add an explicit geographical distribution limitation excluding
+those countries, so that distribution is permitted only in or among
+countries not thus excluded.  In such case, this License incorporates
+the limitation as if written in the body of this License.
+
+</a></p><p><a name="lic">  9. The Free Software Foundation may publish revised and/or new versions
+of the General Public License from time to time.  Such new versions will
+be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+</a></p><p><a name="lic">Each version is given a distinguishing version number.  If the Program
+specifies a version number of this License which applies to it and "any
+later version", you have the option of following the terms and conditions
+either of that version or of any later version published by the Free
+Software Foundation.  If the Program does not specify a version number of
+this License, you may choose any version ever published by the Free Software
+Foundation.
+
+</a></p><p><a name="lic">  10. If you wish to incorporate parts of the Program into other free
+programs whose distribution conditions are different, write to the author
+to ask for permission.  For software which is copyrighted by the Free
+Software Foundation, write to the Free Software Foundation; we sometimes
+make exceptions for this.  Our decision will be guided by the two goals
+of preserving the free status of all derivatives of our free software and
+of promoting the sharing and reuse of software generally.
+
+			    NO WARRANTY
+
+</a></p><p><a name="lic">  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
+TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
+PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+REPAIR OR CORRECTION.
+
+</a></p><p><a name="lic">  12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
+TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
+YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
+PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+		     END OF TERMS AND CONDITIONS
 </a></p></td></tr></tbody></table></center>
 
 <br><br>
 
 <div class="copy" align="center">
-	Copyright (C) 2002-2009 - LinuxWacom -Last updated January 5, 2009<br>
-	This website and its contents are
-	<a class="copy" href="http://linuxwacom.sourceforge.net/index.php/lic">licensed under the GNU FDL</a>.<br>
+	Copyright (C) 2002-2009 - LinuxWacom -Last updated April 29, 2009<br>
+	This website and its contents are licensed under the GNU GENERAL PUBLIC LICENSE.<br>
 </div>
-
 </body></html>

@@ -554,10 +554,11 @@ static int wacom_intuos_inout(struct urb *urb)
 	struct wacom *wacom = urb->context;
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
-	int idx;
+	int idx = 0;
 
 	/* tool number */
-	idx = data[1] & 0x01;
+	if (wacom->features->type == INTUOS)
+		idx = data[1] & 0x01;
 
 	/* Enter report */
 	if ((data[1] & 0xfc) == 0xc0) 
@@ -702,7 +703,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	unsigned char *data = wacom->data;
 	struct input_dev *dev = &wacom->dev;
 	unsigned int t;
-	int idx;
+	int idx = 0;
 	int retval;
 
 	switch (urb->status) {
@@ -728,7 +729,8 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 	input_regs(dev, regs);
 
 	/* tool number */
-	idx = data[1] & 0x01;
+	if (wacom->features->type == INTUOS)
+		idx = data[1] & 0x01;
 
 	/* pad packets. Works as a second tool */
 	if (data[0] == 12)
@@ -886,7 +888,7 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 		}
 		/* Lens cursor packets */
 		else if ((wacom->features->type < INTUOS3S || wacom->features->type == INTUOS3L ||
-				wacom->features->type == INTUOS4L) && (wacom->tool[idx] = BTN_TOOL_LENS))
+				wacom->features->type == INTUOS4L) && (wacom->tool[idx] == BTN_TOOL_LENS))
 		{
 			input_report_key(dev, BTN_LEFT,   data[8] & 0x01);
 			input_report_key(dev, BTN_MIDDLE, data[8] & 0x02);

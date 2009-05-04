@@ -577,7 +577,7 @@ if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; t
 	fi
 fi
 
-if test "$WCM_ENV_XFREE86" != yes; then
+if test "$WCM_ENV_XFREE86" != yes -o "$WCM_XORG_XSERVER_1_4" != yes; then
 	PKG_CHECK_MODULES(XORG, [xorg-server])
 	AC_SUBST([XORG_CFLAGS])
 fi

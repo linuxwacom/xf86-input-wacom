@@ -303,10 +303,11 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 static int wacom_intuos_inout(struct wacom_wac *wacom, void *wcombo)
 {
 	unsigned char *data = wacom->data;
-	int idx;
+	int idx = 0;
 
 	/* tool number */
-	idx = data[1] & 0x01;
+	if (wacom->features->type == INTUOS)
+		idx = data[1] & 0x01;
 
 	/* Enter report */
 	if ((data[1] & 0xfc) == 0xc0) {
@@ -446,7 +447,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 {
 	unsigned char *data = wacom->data;
 	unsigned int t;
-	int idx, result;
+	int idx = 0, result;
 
 	if (data[0] != 2 && data[0] != 5 && data[0] != 6 && data[0] != 12) {
 		dbg("wacom_intuos_irq: received unknown report #%d", data[0]);
@@ -454,7 +455,8 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 	}
 
 	/* tool number */
-	idx = data[1] & 0x01;
+	if (wacom->features->type == INTUOS)
+		idx = data[1] & 0x01;
 
 	/* pad packets. Works as a second tool and is always in prox */
 	if (data[0] == 12) {
@@ -603,7 +605,7 @@ static int wacom_intuos_irq(struct wacom_wac *wacom, void *wcombo)
 				}
 			}
 		} else if ((wacom->features->type < INTUOS3S || wacom->features->type == INTUOS3L ||
-				wacom->features->type == INTUOS4L) && (wacom->tool[idx] = BTN_TOOL_LENS)) {
+				wacom->features->type == INTUOS4L) && (wacom->tool[idx] == BTN_TOOL_LENS)) {
 			/* Lens cursor packets */
 			wacom_report_key(wcombo, BTN_LEFT,   data[8] & 0x01);
 			wacom_report_key(wcombo, BTN_MIDDLE, data[8] & 0x02);
