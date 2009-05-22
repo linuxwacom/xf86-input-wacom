@@ -332,7 +332,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86ReplaceIntOption(local->options, "Threshold", 
 				common->wcmThreshold);
 		break;
-	    case XWACOM_PARAM_TOOLSERIAL:
+	    case XWACOM_PARAM_SERIAL:
 		if (common->wcmProtocolLevel != 5)
 			return BadValue;
 		if (priv->serial != value)
@@ -835,6 +835,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return priv->old_device_id;
 	    case XWACOM_PARAM_TOOLSERIAL:
 		return priv->old_serial;
+	    case XWACOM_PARAM_SERIAL:
+		return priv->serial;
 	    case XWACOM_PARAM_TWINVIEW:
 		return priv->twinview;
 	    case XWACOM_PARAM_TVRESOLUTION0:
@@ -844,7 +846,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 			return -1;
 		else
 		{
-			int sNum = param - XWACOM_PARAM_TVRESOLUTION0;
+			int sNum = 2 * (param - XWACOM_PARAM_TVRESOLUTION0);
 			return priv->tvResolution[sNum] | (priv->tvResolution[sNum + 1] << 16);
 		}
 	    }

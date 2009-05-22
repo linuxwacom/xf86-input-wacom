@@ -472,15 +472,15 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		/* don't send button 3 event for eraser 
 		 * button 1 event will be sent by testing presure level
 		 */
-		if (ds->device_type == ERASER_ID && ds->buttons&4)
+		if ((ds->device_type == ERASER_ID) && ds->buttons&4)
 		{
 			ds->buttons = 0;
 			ds->device_id = ERASER_DEVICE_ID;
 		}
 
 		DBG(8, priv->debugLevel, ErrorF("isdv4Parse %s\n",
-			ds->device_type == ERASER_ID ? "ERASER " :
-			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
+			(ds->device_type == ERASER_ID) ? "ERASER " :
+			(ds->device_type == STYLUS_ID) ? "STYLUS" : "NONE"));
 	}
 	xf86WcmEvent(common, channel, ds);
 	return common->wcmPktLength;

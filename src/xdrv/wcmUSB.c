@@ -840,8 +840,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	{
 		ErrorF("usbParse: Exceeded event queue (%d) \n",
 				common->wcmEventCnt);
-		common->wcmEventCnt = 0;
-		common->wcmLastToolSerial = 0;
+		goto skipEvent;
 		return;
 	}
 
@@ -856,6 +855,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		if (event->value == 0) /* serial number should never be 0 */
 		{
 			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
+			goto skipEvent;
 			return;
 		}
 		common->wcmLastToolSerial = event->value;
@@ -904,6 +904,13 @@ static void usbParseEvent(LocalDevicePtr local,
 	}
 	else if (common->wcmLastToolSerial) /* serial number should never be 0 */
 	{
+		/* ignore events without information */
+		if (common->wcmEventCnt <= 2) {
+			ErrorF("%s - usbParse: dropping empty event for serial %d\n", 
+				common->wcmLastToolSerial);
+			goto skipEvent;
+		}
+
 		/* find existing channel */
 		for (i=0; i<MAX_CHANNELS; ++i)
 		{
@@ -931,12 +938,6 @@ static void usbParseEvent(LocalDevicePtr local,
 			}
 		}
 	}
-	else /* ignore non-serial number tools for V5 models */
-	{
-		common->wcmLastToolSerial = 0;
-		common->wcmEventCnt = 0;
-		return;
-	}
 
 	/* fresh out of channels */
 	if (channel < 0)
@@ -948,20 +949,32 @@ static void usbParseEvent(LocalDevicePtr local,
 		 */
 		for (i=0; i<MAX_CHANNELS; ++i)
 		{
-			if (common->wcmChannel[i].work.proximity)
+			if (common->wcmChannel[i].work.proximity && (common->wcmChannel[i].work.serial_num != -1))
 			{
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
 				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
+
+				/* reset the channel */
+				memset(&common->wcmChannel[i],0,sizeof(WacomChannel));
+				/* in case the in-prox event was missing */
+				common->wcmChannel[i].work.proximity = 1;
+				/* use this free channel for the current event */
+				channel = i;
 			}
 		}
 		ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
 			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
 			(int)GetTimeInMillis());
 	}
-	else
-		usbParseChannel(local,channel,common->wcmLastToolSerial);
 
+	/* handle event if we found a channel */
+	if (channel >= 0)
+	{
+		usbParseChannel(local,channel,common->wcmLastToolSerial);
+	}
+
+skipEvent:
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
@@ -1127,7 +1140,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	} /* next event */
 
 	/* don't send touch event when touch isn't enabled */
-	if (ds->device_type == TOUCH_ID && !common->wcmTouch)
+	if ((ds->device_type == TOUCH_ID) && !common->wcmTouch)
 		return;
 
 	/* it is an out-prox when id or/and serial number is zero for kernel 2.4 */
@@ -1135,7 +1148,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
  		ds->proximity = 0;
 
 	/* DTF720 doesn't support eraser */
-	if (common->tablet_id == 0xC0 && ds->device_type == ERASER_ID) 
+	if ((common->tablet_id == 0xC0) && (ds->device_type == ERASER_ID)) 
 	{
 		DBG(10, common->debugLevel, ErrorF("usbParseChannel "
 			"DTF 720 doesn't support eraser "));

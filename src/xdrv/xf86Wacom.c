@@ -77,9 +77,11 @@
  * 2008-12-22 47-pc0.8.2-1 - fixed a few issues
  * 2009-03-26 47-pc0.8.3 - Added Intuos4 support
  * 2009-04-03 47-pc0.8.3-2 - HAL support
+ * 2009-05-08 47-pc0.8.3-4 - Fixed a pad button issue
+ * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
  */
 
-static const char identification[] = "$Identification: 47-0.8.3-2 $";
+static const char identification[] = "$Identification: 47-0.8.3-5 $";
 
 /****************************************************************************/
 

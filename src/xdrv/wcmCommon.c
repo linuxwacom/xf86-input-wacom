@@ -226,7 +226,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	xf86WcmVirtaulTabletPadding(local);
 	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
 	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
-		
+
 	if (x >= screenInfo.screens[screenToSet]->width)
 		x = screenInfo.screens[screenToSet]->width - 1;
 	if (y >= screenInfo.screens[screenToSet]->height)
@@ -254,7 +254,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 		"buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) )
+	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) && !IsTouch(priv) )
 	{
 		if ( buttons & 1 )
 		{
@@ -947,6 +947,22 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
 			y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
+			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
+			{
+				x -= priv->screenTopX[priv->currentScreen];
+				y -= priv->screenTopY[priv->currentScreen];
+			}
+
+			if (priv->screen_no != -1)
+			{
+				if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+					x = priv->screenBottomX[priv->currentScreen];
+				if (x < 0) x = 0;
+				if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+					y = priv->screenBottomY[priv->currentScreen];
+				if (y < 0) y = 0;
+	
+			}
 			priv->currentSX = x;
 			priv->currentSY = y;
 #endif
@@ -985,6 +1001,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	else
 	{
+
 		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
 			x = 0;
@@ -1205,7 +1222,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 #ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
-		ds.device_type != PAD_ID )
+		(ds.device_type != PAD_ID) )
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 
@@ -1243,7 +1260,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 		fs->x[0] = ds.x;
 		fs->y[0] = ds.y;
-		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
+		if (HANDLE_TILT(common) && ((ds.device_type == STYLUS_ID) || (ds.device_type == ERASER_ID)))
 		{
 			for (i=common->wcmRawSample - 1; i>0; i--)
 			{
@@ -1253,7 +1270,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			fs->tiltx[0] = ds.tiltx;
 			fs->tilty[0] = ds.tilty;
 		}
-		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw && ds.device_type != PAD_ID)
+
+		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw && (ds.device_type != PAD_ID))
 		{
 			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 			{
@@ -1263,7 +1281,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 				return; /* discard */
 			}
 		}
-
 		/* Discard unwanted data */
 		suppress = xf86WcmSuppress(common, pLast, &ds);
 		if (!suppress)
@@ -1284,8 +1301,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (common->wcmRawSample - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
+	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 	commonDispatchDevice(common,channel,pChannel, suppress);
 	resetSampleCounter(pChannel);
 }
@@ -1368,7 +1385,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					break;
 				}
 	}
-
 	DBG(10, common->debugLevel, ErrorF("commonDispatchDevice device type = %d\n", ds->device_type));
 	/* Find the device the current events are meant for */
 	/* 1: Find the tool (the one with correct serial or in second
@@ -1604,7 +1620,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		if (!(priv->flags & ABSOLUTE_FLAG))
+		if (!(priv->flags & ABSOLUTE_FLAG) && !IsPad(priv))
 		{
 			/* To improve the accuracy of relative x/y,
 			 * don't send motion event when there is no movement.

@@ -69,6 +69,7 @@
  *    v1.40-2.6.9-pc-0.12 - added Bamboo1, Bamboo Fun, and Hummingbird
  *    v1.40-2.6.9-pc-0.13 - Added Cintiq 20WSX
  *    v1.40-2.6.9-pc-0.14 - Added Intuos4
+ *    v1.40-2.6.9-pc-0.15 - Fixed an expresskey bug
  */
 
 /*
@@ -90,7 +91,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.9-pc-0.14"
+#define DRIVER_VERSION "v1.40 - 2.6.9-pc-0.15"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -748,6 +749,9 @@ static void wacom_intuos_irq(struct urb *urb, struct pt_regs *regs)
 			input_report_key(dev, BTN_6, (data[3] & 0x20));
 			if (data[1] & 0x80) {
 				input_report_abs(dev, ABS_WHEEL, (data[1] & 0x7f));
+			} else {
+				/* Out of proximity, clear wheel value. */
+				input_report_abs(dev, ABS_WHEEL, 0);
 			}
 			if (wacom->features->type != INTUOS4S) {
 				input_report_key(dev, BTN_7, (data[3] & 0x40));

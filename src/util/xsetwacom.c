@@ -35,10 +35,11 @@
 **   2008-03-24 0.1.6 - PC - Added Touch for serial Tablet PC (ISDv4)
 **   2008-08-27 0.1.7 - PC - Added get XORGVER to xsetwacom
 **   2009-02-27 0.1.8 - PC - Added LeftOf and AboveOf to TwinView
+**   2009-05-18 0.1.9 - PC - Support get/set serial command
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.8"
+#define XSETWACOM_VERSION "0.1.9"
 
 #include "../include/util-config.h"
 
@@ -605,6 +606,10 @@ static PARAMINFO gParamInfo[] =
 	{ "ToolSerial", 
 		"Returns the serial number of the associated device. ",
 		XWACOM_PARAM_TOOLSERIAL, VALUE_REQUIRED },
+
+	{ "Serial", 
+		"Returns/sets the serial number of the chosen device. ",
+		XWACOM_PARAM_SERIAL, VALUE_REQUIRED },
 
 	{ "TabletID", 
 		"Returns the tablet ID of the associated device. ",

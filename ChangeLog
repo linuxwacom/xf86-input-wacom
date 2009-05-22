@@ -1,6 +1,14 @@
+2009-05-22  Ping Cheng <pingc@wacom.com>
+	* Fixed a menu strip out-prox issue in wacom_wac.c (Sylvain Giasson)
+	* Fixed a relative mode button issue for ExpressKeys
+	* Updated --enable-quirk-tablet-rescale support
+	* Split TOOLSEIAL from SERIAL for xsetwacom
+	* Support boundary cases of "usbParse: Exceeded channel" (Stefan Schimanski)
+	* Label 0.8.3-5
+
 2009-05-01  Ping Cheng <pingc@wacom.com>
 	* Updated web pages and docs
-	* Fixed a tool index bug in wacom_wac.c
+	* Fixed a tool index bug in wacom_wac.c (Sylvain Giasson)
 	* Updated configure.in for Xorg earlier than 7.0
 	* Label 0.8.3-4
 
