@@ -1,3 +1,10 @@
+2009-06-28  Ping Cheng <pingc@wacom.com>
+	* Added support for DFT720a
+	* Fixed DFT720 and DTF521 product ID swap issue in wacom_wac.c
+	* Added ABS_Z out-prox event for the newer kernels
+	* Support kernel 2.6.31
+	* Label 0.8.3-6
+
 2009-05-22  Ping Cheng <pingc@wacom.com>
 	* Fixed a menu strip out-prox issue in wacom_wac.c (Sylvain Giasson)
 	* Fixed a relative mode button issue for ExpressKeys

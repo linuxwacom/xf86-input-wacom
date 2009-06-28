@@ -91,7 +91,7 @@
 /*
  * Version Information
  */
-#define DRIVER_VERSION "v1.40 - 2.6.9-pc-0.15"
+#define DRIVER_VERSION "v1.40 - 2.6.9-pc-0.16"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>"
 #define DRIVER_DESC "USB Wacom Graphire and Wacom Intuos tablet driver"
 #define DRIVER_LICENSE "GPL"
@@ -650,7 +650,8 @@ static int wacom_intuos_inout(struct urb *urb)
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_report_abs(dev, ABS_WHEEL, 0);
-			input_report_abs(dev, ABS_Z, 0);
+			if(wacom->features->type >= INTUOS3S)
+				input_report_abs(dev, ABS_Z, 0);
 		}
 		input_report_abs(dev, ABS_TILT_X, 0);
 		input_report_abs(dev, ABS_TILT_Y, 0);
@@ -947,6 +948,7 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom DTU710",        8,  34080, 27660,  511,  0, PL,	 wacom_pl_irq },
 	{ "Wacom DTF521",        8,   6282,  4762,  511,  0, PL,         wacom_pl_irq },
 	{ "Wacom DTF720",        8,   6858,  5506,  511,  0, PL,	 wacom_pl_irq },
+	{ "Wacom DTF720a",       8,   6858,  5506,  511,  0, PL,	 wacom_pl_irq },
 	{ "Wacom Cintiq Partner",8,  20480, 15360,  511,  0, PL,         wacom_ptu_irq },
 	{ "Wacom Intuos2 4x5",   10, 12700, 10600, 1023, 31, INTUOS,     wacom_intuos_irq },
 	{ "Wacom Intuos2 6x8",   10, 20320, 16240, 1023, 31, INTUOS,     wacom_intuos_irq },
@@ -1003,8 +1005,9 @@ static struct usb_device_id wacom_ids[] = {
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x37) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x38) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x39) },
-	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC4) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC0) },
+	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0xC2) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x03) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x41) },
 	{ USB_DEVICE(USB_VENDOR_ID_WACOM, 0x42) },

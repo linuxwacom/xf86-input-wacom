@@ -79,9 +79,10 @@
  * 2009-04-03 47-pc0.8.3-2 - HAL support
  * 2009-05-08 47-pc0.8.3-4 - Fixed a pad button issue
  * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
+ * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
  */
 
-static const char identification[] = "$Identification: 47-0.8.3-5 $";
+static const char identification[] = "$Identification: 47-0.8.3-6 $";
 
 /****************************************************************************/
 

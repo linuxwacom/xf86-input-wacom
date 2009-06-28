@@ -653,7 +653,8 @@ static int wacom_intuos_inout(struct urb *urb)
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_report_abs(dev, ABS_WHEEL, 0);
-			input_report_abs(dev, ABS_Z, 0);
+			if(wacom->features->type >= INTUOS3S)
+				input_report_abs(dev, ABS_Z, 0);
 		}
 		input_report_key(dev, wacom->tool[idx], 0);
 		input_report_abs(dev, ABS_MISC, 0); /* reset tool id */

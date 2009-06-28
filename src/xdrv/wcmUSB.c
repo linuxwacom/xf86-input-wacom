@@ -468,6 +468,7 @@ static struct
 	{ 0x38,  508,  508, &usbCintiq     }, /* PL510 */
 	{ 0x39,  508,  508, &usbCintiq     }, /* PL710 */ 
 	{ 0xC0,  508,  508, &usbCintiq     }, /* DTF720 */
+	{ 0xC2,  508,  508, &usbCintiq     }, /* DTF720a */
 	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */ 
 	{ 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
 
@@ -895,47 +896,53 @@ static void usbParseEvent(LocalDevicePtr local,
 			channel = 1;
 		else
 			channel = 0;
-		if (!common->wcmChannel[channel].work.proximity)
-		{
-			memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
-			/* in case the in-prox event was missing */
-			common->wcmChannel[channel].work.proximity = 1;
-		}
 	}
 	else if (common->wcmLastToolSerial) /* serial number should never be 0 */
 	{
 		/* ignore events without information */
-		if (common->wcmEventCnt <= 2) {
+		if (common->wcmEventCnt <= 2) 
+		{
 			ErrorF("%s - usbParse: dropping empty event for serial %d\n", 
-				common->wcmLastToolSerial);
+				local->name, common->wcmLastToolSerial);
 			goto skipEvent;
 		}
 
-		/* find existing channel */
-		for (i=0; i<MAX_CHANNELS; ++i)
+		/* dual input is supported */
+		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->name, "Intuos2") )
 		{
-			if (common->wcmChannel[i].work.proximity &&
-			   common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
-			{
-				channel = i;
-				break;
-			}
-		}
-
-		/* find an empty channel */
-		if (channel < 0)
-		{
+			/* find existing channel */
 			for (i=0; i<MAX_CHANNELS; ++i)
 			{
-				if (!common->wcmChannel[i].work.proximity)
+				if (common->wcmChannel[i].work.proximity && 
+			  		common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
 				{
-					memset(&common->wcmChannel[i],0,sizeof(WacomChannel));
-					/* in case the in-prox event was missing */
-					common->wcmChannel[i].work.proximity = 1;
 					channel = i;
 					break;
 				}
 			}
+
+			/* find an empty channel */
+			if (channel < 0)
+			{
+				for (i=0; i<MAX_CHANNELS; ++i)
+				{
+					if (!common->wcmChannel[i].work.proximity)
+					{
+						channel = i;
+						break;
+					}
+				}
+			}
+		}
+		else  /* one transducer plus expresskey (pad) is supported */
+		{
+			if (common->wcmLastToolSerial == -1)  /* pad */
+				channel = 1;
+			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
+				    (common->wcmChannel[0].work.serial_num == common->wcmLastToolSerial)) ||
+					!common->wcmChannel[0].work.proximity ) /* new transducer */
+				channel = 0;
+			
 		}
 	}
 
@@ -943,8 +950,6 @@ static void usbParseEvent(LocalDevicePtr local,
 	if (channel < 0)
 	{
 		/* This should never happen in normal use.
-		 * User is probably using more than one tools on the tablet.
-		 * Or moving the tablet around while using a tool.
 		 * Let's start over again. Force prox-out for all channels.
 		 */
 		for (i=0; i<MAX_CHANNELS; ++i)
@@ -954,25 +959,23 @@ static void usbParseEvent(LocalDevicePtr local,
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
 				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
-
-				/* reset the channel */
-				memset(&common->wcmChannel[i],0,sizeof(WacomChannel));
-				/* in case the in-prox event was missing */
-				common->wcmChannel[i].work.proximity = 1;
-				/* use this free channel for the current event */
-				channel = i;
 			}
 		}
-		ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
+		DBG(1, common->debugLevel, ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
 			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
-			(int)GetTimeInMillis());
+			(int)GetTimeInMillis()));
+		goto skipEvent;
 	}
 
-	/* handle event if we found a channel */
-	if (channel >= 0)
+	if (!common->wcmChannel[channel].work.proximity)
 	{
-		usbParseChannel(local,channel,common->wcmLastToolSerial);
+		memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
+		/* in case the in-prox event was missing */
+		common->wcmChannel[channel].work.proximity = 1;
 	}
+
+	/* dispatch event */
+	usbParseChannel(local,channel,common->wcmLastToolSerial);
 
 skipEvent:
 	common->wcmLastToolSerial = 0;
@@ -987,6 +990,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
+	DBG(6, common->debugLevel, ErrorF("usbParseChannel %d events received\n", common->wcmEventCnt));
 	#define MOD_BUTTONS(bit, value) do { \
 		shift = 1<<bit; \
 		ds->buttons = (((value) != 0) ? \
@@ -997,7 +1001,6 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 		DBG(6, common->debugLevel, ErrorF("usbParseChannel no real events received\n"));
 		return;
 	}
-	DBG(6, common->debugLevel, ErrorF("usbParseChannel %d events received\n", common->wcmEventCnt));
 
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
@@ -1147,8 +1150,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	if ((!ds->device_id || !ds->serial_num) && !USE_SYN_REPORTS(common))
  		ds->proximity = 0;
 
-	/* DTF720 doesn't support eraser */
-	if ((common->tablet_id == 0xC0) && (ds->device_type == ERASER_ID)) 
+	/* DTF720 and DTF720a don't support eraser */
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && (ds->device_type == ERASER_ID)) 
 	{
 		DBG(10, common->debugLevel, ErrorF("usbParseChannel "
 			"DTF 720 doesn't support eraser "));
