@@ -80,9 +80,10 @@
  * 2009-05-08 47-pc0.8.3-4 - Fixed a pad button issue
  * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
  * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
+ * 2009-07-14 47-pc0.8.3-7 - Support Nvidia Xinerama setting
  */
 
-static const char identification[] = "$Identification: 47-0.8.3-6 $";
+static const char identification[] = "$Identification: 47-0.8.3-7 $";
 
 /****************************************************************************/
 
@@ -200,13 +201,13 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		area->bottomY = priv->bottomY = priv->wcmMaxY;
 	}
 
-	if (priv->twinview != TV_NONE)
+	if (priv->twinview > TV_XINERAMA)
 		priv->numScreen = 2;
 
 	if (priv->screen_no != -1 &&
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{
-		if (priv->twinview == TV_NONE || priv->screen_no != 1)
+		if (priv->twinview <= TV_XINERAMA)
 		{
 			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
 					local->name, priv->screen_no);
@@ -305,7 +306,7 @@ void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
 
 	if (!(priv->flags & ABSOLUTE_FLAG)) return;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -342,7 +343,7 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
 	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -382,9 +383,9 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		{
 			topx = priv->topX;
 			bottomx = priv->sizeX + priv->topX;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
 				topx += priv->tvoffsetX;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
+			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
 				bottomx -= priv->tvoffsetX;
 		}
 
@@ -406,9 +407,9 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		{
 			topy = priv->topY;
 			bottomy = priv->sizeY + priv->topY;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
 				topy += priv->tvoffsetY;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
+			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
 				bottomy -= priv->tvoffsetY;
 		}
 
@@ -1203,7 +1204,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	{
 		v0 -= priv->topX;
 		v1 -= priv->topY;
-		if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+		if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
 		{
 			v0 -= priv->tvoffsetX;
 			v1 -= priv->tvoffsetY;
@@ -1213,7 +1214,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	*x = (double)v0 * priv->factorX + 0.5;
 	*y = (double)v1 * priv->factorY + 0.5;
 
-	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
+	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
 	{
 		*x -= priv->screenTopX[priv->currentScreen];
 		*y -= priv->screenTopY[priv->currentScreen];

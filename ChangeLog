@@ -1,6 +1,12 @@
+2009-07-30  Ping Cheng <pingc@wacom.com>
+	* Support Nvidia non-TwinView setting
+	* Updated webpages and man page
+	* Fixed bug 2789354 for Graphire
+	* Label 0.8.4
+
 2009-06-28  Ping Cheng <pingc@wacom.com>
 	* Added support for DFT720a
-	* Fixed DFT720 and DTF521 product ID swap issue in wacom_wac.c
+	* Fixed DFT720 and DTF521 product ID swapped issue in wacom_wac.c
 	* Added ABS_Z out-prox event for the newer kernels
 	* Support kernel 2.6.31
 	* Label 0.8.3-6

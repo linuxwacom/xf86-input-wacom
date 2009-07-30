@@ -436,7 +436,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TVRESOLUTION0:
 	    case XWACOM_PARAM_TVRESOLUTION1:
 	    {
-		if (priv->twinview == TV_NONE)
+		if (priv->twinview <= TV_XINERAMA)
 			return -1;
 		else
 		{
@@ -842,7 +842,7 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 	    case XWACOM_PARAM_TVRESOLUTION0:
 	    case XWACOM_PARAM_TVRESOLUTION1:
 	    {
-		if (priv->twinview == TV_NONE)
+		if (priv->twinview <= TV_XINERAMA)
 			return -1;
 		else
 		{

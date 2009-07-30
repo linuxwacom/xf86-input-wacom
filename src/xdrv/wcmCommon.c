@@ -141,7 +141,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 
-	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
+	if (priv->twinview > TV_XINERAMA && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
 	{
 		if (priv->twinview == TV_LEFT_RIGHT)
 		{
@@ -938,7 +938,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
  			if(is_absolute) {
 				x -= priv->topX;
 				y -= priv->topY;
-				if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+				if (priv->currentScreen == 1 && priv->twinview > TV_XINERAMA)
 				{
 					x -= priv->tvoffsetX;
 					y -= priv->tvoffsetY;
@@ -947,7 +947,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
 			y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
-			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
+			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
 			{
 				x -= priv->screenTopX[priv->currentScreen];
 				y -= priv->screenTopY[priv->currentScreen];
@@ -1831,7 +1831,7 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	if (priv->twinview == TV_NONE)
+	if (priv->twinview <= TV_XINERAMA)
 		return;
 
 	priv->numScreen = 2;
@@ -1941,7 +1941,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		"number of screen=%d \n", local->name, screenInfo.numScreens));
 	priv->tvoffsetX = 0;
 	priv->tvoffsetY = 0;
-	if (priv->twinview != TV_NONE)
+	if (priv->twinview > TV_XINERAMA)
 	{
 		xf86WcmInitialTVScreens(local);
 		return;

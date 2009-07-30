@@ -138,11 +138,12 @@
 #define XWACOM_PARAM_TOOLSERIAL		384
 
 #define TV_NONE 		0
-#define TV_ABOVE_BELOW 		1
-#define TV_LEFT_RIGHT		2
-#define TV_BELOW_ABOVE		3
-#define TV_RIGHT_LEFT		4
-#define TV_MAX			4
+#define TV_XINERAMA		1
+#define TV_ABOVE_BELOW 		2
+#define TV_LEFT_RIGHT		3
+#define TV_BELOW_ABOVE		4
+#define TV_RIGHT_LEFT		5
+#define TV_MAX			5
 
 #define ROTATE_NONE 		0
 #define ROTATE_CW 		1

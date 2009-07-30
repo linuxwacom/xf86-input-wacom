@@ -132,19 +132,63 @@ proc updateXinitrc {device option value} {
     }
 }
 
+proc verifycalibResults { } {
+    global calibResults device getOptionDefault
+
+    set tol_offset [expr ($getOptionDefault($device,BottomY) / 20)]
+    set tol_left [expr (($getOptionDefault($device,BottomY) / 2) - $tol_offset)]
+    set tol_right [expr (($getOptionDefault($device,BottomY) / 2) + $tol_offset)]
+    set tol_bottom [expr ($getOptionDefault($device,BottomY) - $tol_offset)]
+
+    # set tablet Y values to normal when offset is by whole of the tablet size.
+    # Whole has to be first and we do it two times to make sure.
+    if { $calibResults(yDev,0) > $tol_bottom } {
+	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
+	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
+    } elseif { $calibResults(yDev,0) > $tol_bottom } {
+	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
+	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
+    } elseif { ($calibResults(yDev,0) > $tol_left) && ($calibResults(yDev,0) < $tol_right) } {
+	# set tablet Y values to normal when offset is by half tablet size
+	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - ($getOptionDefault($device,BottomY) / 2))]
+	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - ($getOptionDefault($device,BottomY) / 2))]
+    }
+
+    set tol_offset [expr ($getOptionDefault($device,BottomX) / 20)]
+    set tol_left [expr (($getOptionDefault($device,BottomX) / 2) - $tol_offset)]
+    set tol_right [expr (($getOptionDefault($device,BottomX) / 2) + $tol_offset)]
+    set tol_bottom [expr ($getOptionDefault($device,BottomX) - $tol_offset)]
+
+    # set tablet X values to normal when offset is by whole of the tablet size. 
+    # Whole has to be first and we do it two times to make sure.
+    if { $calibResults(xDev,0) > $tol_bottom } {
+	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
+	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
+    } elseif { $calibResults(xDev,0) > $tol_bottom } {
+	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
+	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
+    } elseif { ($calibResults(xDev,0) > $tol_left) && ($calibResults(xDev,0) < $tol_right) } {
+	# set tablet X values to normal when offset is by half tablet size
+	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - ($getOptionDefault($device,BottomX) / 2))]
+	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - ($getOptionDefault($device,BottomX) / 2))]
+    }
+}
+
 proc calibrationSequence {which xDev yDev} {
     global device calibResults screenY_org screenX_org
     global workingTags screenTags size numScreens
     global swapThresh screenWidth screenHeight getOptionDefault
     global getDeviceModel screenXBottom screenYBottom
+    global calibX_org calibY_org calibX_botm calibY_botm
 
     set scaling [exec xsetwacom get $device xscaling]
     if { $scaling == 1 } {
-	set xNewDev [expr (($xDev - $screenX_org) * $getOptionDefault($device,BottomX))]
-	set xDev [expr ($xNewDev / ($screenXBottom - $screenX_org))]
-	set yNewDev [expr (($yDev - $screenY_org) * $getOptionDefault($device,BottomY))]
-	set yDev [expr ($yNewDev / ($screenYBottom - $screenY_org))]
+	set xNewDev [expr (($xDev - $calibX_org) * $getOptionDefault($device,BottomX))]
+	set xDev [expr ($xNewDev / ($calibX_botm - $calibX_org))]
+	set yNewDev [expr (($yDev - $calibY_org) * $getOptionDefault($device,BottomY))]
+	set yDev [expr ($yNewDev / ($calibY_botm - $calibY_org))]
     }
+
     set calibResults(xDev,$which) $xDev
     set calibResults(yDev,$which) $yDev
 
@@ -159,23 +203,7 @@ proc calibrationSequence {which xDev yDev} {
 	wacomxi::bindevent .bottomright.m $device <ButtonRelease> ""	
 	set borderOffset [expr ($size / 2 )]
 
-	# set tablet values to normal
-	if { $calibResults(xDev,0) > [expr ($getOptionDefault($device,BottomX) / 2)] } {
-	    set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
-	    set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
-	}
-	if { $calibResults(yDev,0) > [expr ($getOptionDefault($device,BottomY) / 2)] } {
-	    set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
-	    set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
-	}
-
-	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
- 	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
- 	set widthX [expr $screenWidth-$size]
- 	set heightX [expr $screenHeight-$size]
-
-	#
-	# A rough verification of the click
+	# A direction verification of the click
 	set clickCheck 0
 	set xDevMin $calibResults(xDev,0)
 	set xDevMax $calibResults(xDev,1)
@@ -198,6 +226,15 @@ proc calibrationSequence {which xDev yDev} {
 		If you are pretty sure that you have clicked on the center\n\
 		of the pink crosshair, you are fine. Otherwise, try it again."
 	}
+
+	# A starting point verification of the click. 
+	verifycalibResults
+
+	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
+ 	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
+ 	set widthX [expr $screenWidth-$size]
+ 	set heightX [expr $screenHeight-$size]
+
 	set xDevMin [expr $xDevMin - ($borderOffset * $widthDev / $widthX)]
 	set xDevMax [expr $xDevMax + ($borderOffset * $widthDev / $widthX)]
 	set yDevMin [expr $yDevMin - ($borderOffset * $heightDev / $heightX)]
@@ -230,16 +267,23 @@ proc calibrationSequence {which xDev yDev} {
 }
 
 proc Calibration {} {
-    global numScreens device screenTags getOption Option
+    global numScreens device screenTags getOption Option 
+    global calibX_org calibY_org calibX_botm calibY_botm tvID
+    global screenX_org screenY_org screenXBottom screenYBottom
+    global screenWidth screenHeight
 
+    # mainly to get the defaults
     set Option(1) "TopX"
     set Option(2) "TopY"
     set Option(3) "BottomX"
     set Option(4) "BottomY"
     set Option(5) "Mode"
+    set Option(6) "TwinView"
 
-    getDeviceOptionProc $device 5
+    getDeviceOptionProc $device 6
     set mode $getOption($device,Mode)
+    set tvID $getOption($device,TwinView)
+
     if { $mode != 1 } {
 	disableButtons
 	messageWindow "Warning " "\n\nDevice $device is in relative mode. \n\
@@ -247,6 +291,18 @@ proc Calibration {} {
 		Please swith $device's mode and try again. "
 	closeTabWindow
 	return
+    }
+
+    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is not in xorg.conf
+	set calibX_org 0
+	set calibY_org 0
+	set calibX_botm $screenWidth
+	set calibY_botm $screenHeight
+    } else {
+	set calibX_org $screenX_org
+	set calibY_org $screenY_org
+	set calibX_botm $screenXBottom
+	set calibY_botm $screenYBottom
     }
 
     bindtags .workingDev.list .
@@ -263,17 +319,16 @@ proc Calibration {} {
 }
 
 proc startCalibration {} {
-    global device calibResults
-    global screenX_org screenY_org size numScreens
-    global screenWidth screenHeight screenXBottom screenYBottom
+    global device size numScreens
+    global calibResults calibX_org calibY_org calibX_botm calibY_botm
     
     if { $numScreens($device) > 1 } {
 	bindtags .screen.list.list .
     }
 
-    set y_coor [ expr $screenYBottom-$size*(abs($screenYBottom)/$screenYBottom) ]
-    set x_coor [ expr $screenXBottom-$size*(abs($screenXBottom)/$screenXBottom) ]
-    pad .topleft +$screenX_org+$screenY_org
+    set y_coor [ expr $calibY_botm-$size*(abs($calibY_botm)/$calibY_botm) ]
+    set x_coor [ expr $calibX_botm-$size*(abs($calibX_botm)/$calibX_botm) ]
+    pad .topleft +$calibX_org+$calibY_org
     pad .bottomright +$x_coor+$y_coor
     update
     #
@@ -1226,7 +1281,7 @@ proc defaultTip {} {
 
 proc initialSet {} {
     global device getDeviceModel getOption Option
-    global tvd snd currentW
+    global tvd tvID snd currentW
 
     # used by both TwinView and non TwinView multimonitor setup
     label $currentW.f.sns -text "Display Mapping: "
@@ -1271,25 +1326,26 @@ proc initialSet {} {
 
     label $currentW.f.tv -text "TwinView Setup: "
     set tv(0) "None"
-    set tv(1) "Vertical"
-    set tv(2) "Horizontal"
-    set tv(3) "AboveOf"
-    set tv(4) "LeftOf"
+    set tv(1) "Xinerama"
+    set tv(2) "Vertical"
+    set tv(3) "Horizontal"
+    set tv(4) "AboveOf"
+    set tv(5) "LeftOf"
 
-    for { set i 0 } { $i < 5 } { incr i 1 } {
+    for { set i 0 } { $i < 6 } { incr i 1 } {
 	if { $tvID == $i } {
 	    set tvd $tv($i)
 	}
     }
 
-    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4)
+    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4) tv(5)
     grid $currentW.f.tv -row 2 -column 0 
     grid $currentW.f.tvmenu -row 2 -column 1
 
     $currentW.f.tvmenu configure -state normal
     if { $numS == 1 } {
 	label $currentW.f.message1 -text "Please click on \"Cancel\" "
-	label $currentW.f.message2 -text "if your X server isn't in TwinView setup." 
+	label $currentW.f.message2 -text "if your Video card isn't from Nvidia." 
 	grid $currentW.f.message1 -row 0 -column 0
 	grid $currentW.f.message2 -row 0 -column 1
     } elseif { !$tvID } {
@@ -1298,7 +1354,7 @@ proc initialSet {} {
 }
 
 proc updateSet {} {
-    global device currentW tvd snd
+    global device currentW tvd snd tvID
 
     set numS [ exec xsetwacom get $device NumScreen ]
 
@@ -1321,20 +1377,22 @@ proc updateSet {} {
     if { ![ string compare $tv "None" ] } {
 	set tv 0
     }
-    if { ![ string compare $tv "Horizontal" ] } {
-	set tv 2
-    }
-    if { ![ string compare $tv "Vertical" ] } {
+    if { ![ string compare $tv "Xinerama" ] } {
 	set tv 1
     }
-    if { ![ string compare $tv "LeftOf" ] } {
-	set tv 4
-    }
-    if { ![ string compare $tv "AboveOf" ] } {
+    if { ![ string compare $tv "Horizontal" ] } {
 	set tv 3
     }
+    if { ![ string compare $tv "Vertical" ] } {
+	set tv 2
+    }
+    if { ![ string compare $tv "LeftOf" ] } {
+	set tv 5
+    }
+    if { ![ string compare $tv "AboveOf" ] } {
+	set tv 4
+    }
 
-    set tvID [ exec xsetwacom get $device TwinView ]
     if { $tv != $tvID } {
 	updateXinitrc $device TwinView $tv
 	set getOption($device,TwinView) $tv

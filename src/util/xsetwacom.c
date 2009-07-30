@@ -36,6 +36,7 @@
 **   2008-08-27 0.1.7 - PC - Added get XORGVER to xsetwacom
 **   2009-02-27 0.1.8 - PC - Added LeftOf and AboveOf to TwinView
 **   2009-05-18 0.1.9 - PC - Support get/set serial command
+**   2009-07-14 0.2.0 - PC - Support Nvidia Xinerama setting
 **
 ****************************************************************************/
 
@@ -105,6 +106,7 @@ struct _PARAMINFO
 static const char* tv_char[] = 
 {
 	"none",
+	"xinerama"
 	"vertical",
 	"horizontal",
 	"aboveof"
@@ -333,8 +335,9 @@ static PARAMINFO gParamInfo[] =
 		0, 100, PACKED_CURVE, 0x00006464},
 
 	{ "TwinView",
-		"Sets the mapping to TwinView horizontal/vertical/leftof/aboveof/none. \n"
-		"\t\t   Values = none, vertical, horizontal, leftof, aboveof (default is none).",
+		"Sets the mapping to TwinView xinerama/horizontal/vertical/leftof/aboveof/none. \n"
+		"\t\t   Values = none, vertical, horizontal, leftof, aboveof, xinerama "
+		"(default is none).",
 		XWACOM_PARAM_TWINVIEW, VALUE_OPTIONAL, RANGE, 
 		TV_NONE, TV_MAX, SINGLE_VALUE, TV_NONE },
 

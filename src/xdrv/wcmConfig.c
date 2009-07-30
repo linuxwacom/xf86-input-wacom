@@ -925,10 +925,12 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->twinview = TV_RIGHT_LEFT;
 	else if (s && xf86NameCmp(s, "aboveof") == 0) 
 		priv->twinview = TV_BELOW_ABOVE;
+	else if (s && xf86NameCmp(s, "xinerama") == 0) 
+		priv->twinview = TV_XINERAMA;
 	else if (s) 
 	{
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical (belowof), "
-			"horizontal (rightof), aboveof, or leftof). Using none.\n",
+			"horizontal (rightof), aboveof, leftof, xinerama). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
 	}

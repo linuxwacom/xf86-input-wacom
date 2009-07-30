@@ -156,7 +156,7 @@ static int wacom_graphire_irq(struct wacom_wac *wacom, void *wcombo)
 	unsigned char *data = wacom->data;
 	int x, y, rw;
 
-	if ((data[0] != 2) || (data[0] != 0x03)) {
+	if ((data[0] != 2) && (data[0] != 0x03)) { /* 0x03 for GB data */
 		dbg("wacom_graphire_irq: received unknown report #%d", data[0]);
 		return 0;
 	}

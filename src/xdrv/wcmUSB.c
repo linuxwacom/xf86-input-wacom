@@ -246,7 +246,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
-	static WacomModel usbIntuos =
+	static WacomModel usbIntuos1 =
 	{
 		"USB Intuos1",
 		usbInitProtocol5,
@@ -450,11 +450,11 @@ static struct
 	{ 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/ 
 	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
-	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
-	{ 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
-	{ 0x22, 2540, 2540, &usbIntuos     }, /* Intuos 9x12 */
-	{ 0x23, 2540, 2540, &usbIntuos     }, /* Intuos 12x12 */
-	{ 0x24, 2540, 2540, &usbIntuos     }, /* Intuos 12x18 */
+	{ 0x20, 2540, 2540, &usbIntuos1    }, /* Intuos 4x5 */
+	{ 0x21, 2540, 2540, &usbIntuos1    }, /* Intuos 6x8 */
+	{ 0x22, 2540, 2540, &usbIntuos1    }, /* Intuos 9x12 */
+	{ 0x23, 2540, 2540, &usbIntuos1    }, /* Intuos 12x12 */
+	{ 0x24, 2540, 2540, &usbIntuos1    }, /* Intuos 12x18 */
 
 	{ 0x03,  508,  508, &usbCintiqPartner }, /* PTU600 */
 
