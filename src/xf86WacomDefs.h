@@ -176,8 +176,8 @@ struct _WacomDeviceRec
 	int maxHeight;		/* max active screen height */
 	int leftPadding;	/* left padding for virtual tablet */
 	int topPadding;		/* top padding for virtual tablet */
-	int button[MAX_BUTTONS];/* buttons assignments */
-	unsigned keys[MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
+	int button[WCM_MAX_BUTTONS];/* buttons assignments */
+	unsigned keys[WCM_MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
 	unsigned rupk[256];     /* keystrokes assigned to relative wheel up event (default is button 4) */
 	int reldn;
@@ -401,7 +401,7 @@ struct _WacomCommonRec
 
 	int nbuttons;                /* total number of buttons */
 	int npadkeys;                /* number of pad keys in the above array */
-	int padkey_code[MAX_BUTTONS];/* hardware codes for buttons */
+	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
 
 	WacomDevicePtr wcmDevices;   /* list of devices sharing same port */
 	int wcmPktLength;            /* length of a packet */
