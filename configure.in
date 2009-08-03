@@ -4,8 +4,6 @@ AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
 AM_CONFIG_HEADER(src/include/xdrv-config.h)
-AM_CONFIG_HEADER(src/include/kernel-config.h)
-AM_CONFIG_HEADER(src/include/util-config.h)
 
 AC_PROG_CC
 AC_PROG_AWK

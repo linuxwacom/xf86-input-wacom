@@ -1,4 +1,4 @@
-SUBDIRS = . wacomxi util xdrv @WCM_KERNEL_VER@
+SUBDIRS = . xdrv
 
 wmanpagedir = @mandir@/man4
 wmanpage_HEADERS = wacom.4x.gz

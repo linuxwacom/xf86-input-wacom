@@ -1,9 +1,0 @@
-#! /bin/sh
-
-aclocal
-if test $? != 0; then exit; fi
-libtoolize --force --copy
-if test $? != 0; then exit; fi
-automake --foreign --add-missing
-if test $? != 0; then exit; fi
-autoconf
