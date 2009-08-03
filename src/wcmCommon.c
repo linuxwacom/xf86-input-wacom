@@ -298,6 +298,8 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
+#if 0
+/* FIXME: This needs to be using XKB.*/
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -424,6 +426,7 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int 
 	else
 		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
 }
+#endif
 
 /*****************************************************************************
  * sendAButton --
@@ -456,7 +459,9 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_KEY:
+#if 0 /* FIXME: */
 		sendKeystroke(local, priv->button[button], priv->keys[button], mask);
+#endif
 		break;
 
 	case AC_MODETOGGLE:
@@ -633,8 +638,10 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
+#if 0 /* FIXME */
 		sendKeystroke(local, fakeButton, keyP, 1);
 		sendKeystroke(local, fakeButton, keyP, 0);
+#endif
 	    break;
 
 	    default:
