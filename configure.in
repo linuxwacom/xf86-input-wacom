@@ -1,6 +1,6 @@
 AC_PREREQ(2.58)
 AC_INIT(linuxwacom, 0.8.3)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
 AM_CONFIG_HEADER(src/include/xdrv-config.h)
@@ -933,8 +933,6 @@ AC_SUBST(WCM_XF86MODULES)
 AC_SUBST(WCM_ARCH)
 AC_SUBST(WCM_KSTACK)
 AC_SUBST(WCM_MODVER)
-AC_SUBST(WCM_KERNEL_DIR)
-AC_SUBST(WCM_KERNEL_VER)
 AC_SUBST(WCM_XFREE86_DIR)
 AC_SUBST(WCM_XORGSDK_DIR)
 AC_SUBST(WCM_MODDIR)
@@ -952,27 +950,8 @@ AC_SUBST(WCM_OPTION_WACOM)
 AC_SUBST(WCM_OPTION_HID)
 
 AC_OUTPUT(Makefile
-	mkxincludes
 	src/Makefile
-	src/util/Makefile
-	src/xdrv/Makefile
-	src/2.6.9/Makefile
-	src/2.6.10/Makefile
-	src/2.6.11/Makefile
-	src/2.6.13/Makefile
-	src/2.6.14/Makefile
-	src/2.6.15/Makefile
-	src/2.6.16/Makefile
-	src/2.6.18/Makefile
-	src/2.6.19/Makefile
-	src/2.6.22/Makefile
-	src/2.6.24/Makefile
-	src/2.6.26/Makefile
-	src/2.6.27/Makefile
-	src/2.6.28/Makefile
-	src/2.6.31/Makefile
-	src/wacomxi/Makefile
-	src/wacomxi/wacomcpl)
+	src/xdrv/Makefile)
 
 echo ""
 echo "----------------------------------------"
