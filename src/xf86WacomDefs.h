@@ -123,8 +123,8 @@ struct _WacomModel
 #define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
 
 #define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
-#define MAX_BUTTONS		32	/* maximum number of tablet buttons */
-#define MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer
+#define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
+#define WCM_MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer
                                          * (which are treated as mouse buttons,
                                          * not as keys like tablet menu buttons). 
 					 * For backword compability support, 

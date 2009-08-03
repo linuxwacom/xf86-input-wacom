@@ -241,7 +241,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 				priv->flags |= TPCBUTTONS_FLAG;
 
 				/* send all pressed buttons down */
-				for (button=1; button<=MAX_BUTTONS; button++)
+				for (button=1; button<=WCM_MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ( buttons & mask ) 
@@ -254,7 +254,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			}
 			else
 			{
-				for (button=2; button<=MAX_BUTTONS; button++)
+				for (button=2; button<=WCM_MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ((mask & priv->oldButtons) != (mask & buttons))
@@ -271,7 +271,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			priv->flags &= ~TPCBUTTONS_FLAG;
 
 			/* send all pressed buttons up */
-			for (button=1; button<=MAX_BUTTONS; button++)
+			for (button=1; button<=WCM_MAX_BUTTONS; button++)
 			{
 				mask = 1 << (button-1);
 				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
@@ -285,7 +285,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 	else  /* normal buttons */
 	{
-		for (button=1; button<=MAX_BUTTONS; button++)
+		for (button=1; button<=WCM_MAX_BUTTONS; button++)
 		{
 			mask = 1 << (button-1);
 			if ((mask & priv->oldButtons) != (mask & buttons))

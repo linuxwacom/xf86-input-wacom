@@ -140,14 +140,14 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->nPressCtrl [3] = 100;  /* pressure curve y1 */
 
 	/* Default button and expresskey values */
-	for (i=0; i<MAX_BUTTONS; i++)
+	for (i=0; i<WCM_MAX_BUTTONS; i++)
 		priv->button[i] = (AC_BUTTON | (i + 1));
 
-	for (i=0; i<MAX_BUTTONS; i++)
+	for (i=0; i<WCM_MAX_BUTTONS; i++)
 		for (j=0; j<256; j++)
 			priv->keys[i][j] = 0;
 
-	priv->nbuttons = MAX_BUTTONS;		/* Default number of buttons */
+	priv->nbuttons = WCM_MAX_BUTTONS;		/* Default number of buttons */
 	priv->relup = 5;			/* Default relative wheel up event */
 	priv->reldn = 4;			/* Default relative wheel down event */
 	
@@ -843,7 +843,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 
-	for (i=0; i<MAX_BUTTONS; i++)
+	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
 		sprintf(b, "Button%d", i+1);
 		s = xf86SetStrOption(local->options, b, NULL);

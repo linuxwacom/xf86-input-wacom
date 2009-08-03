@@ -635,11 +635,11 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	unsigned char butmap[MAX_BUTTONS+1];
+	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-        Atom btn_labels[MAX_BUTTONS] = {0};
+        Atom btn_labels[WCM_MAX_BUTTONS] = {0};
         Atom axis_labels[MAX_VALUATORS] = {0};
 #endif
 
