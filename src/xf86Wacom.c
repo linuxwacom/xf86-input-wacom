@@ -53,6 +53,13 @@ static const char identification[] = "$Identification: xf86-input-wacom-0.8.3-6 
 #include "config.h"
 #endif
 
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+#include <xserver-properties.h>
+#endif
+
+
+
 void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
 void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
 
@@ -348,6 +355,9 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution;
 	int bottomx = priv->wcmMaxX, bottomy = priv->wcmMaxY;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+        Atom label;
+#endif
 
 	xf86WcmMappingFactor(local);
 
@@ -362,6 +372,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				topx += priv->tvoffsetX;
 			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
 				bottomx -= priv->tvoffsetX;
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+                } else {
+                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
+#endif
 		}
 
 		resolution = priv->wcmResolX;
@@ -373,8 +389,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			resolution = (int)((double)resolution * priv->factorX + 0.5);
 		}
 
-		InitValuatorAxisStruct(local->dev, 0, topx, bottomx, 
-			resolution, 0, resolution); 
+		InitValuatorAxisStruct(local->dev, 0,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+                        label,
+#endif
+                        topx, bottomx,
+			resolution, 0, resolution);
 	}
 	else /* y ax */
 	{
@@ -386,6 +406,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				topy += priv->tvoffsetY;
 			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
 				bottomy -= priv->tvoffsetY;
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+                } else {
+                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
+#endif
 		}
 
 		resolution = priv->wcmResolY;
@@ -397,8 +423,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 			resolution = (int)((double)resolution * priv->factorY + 0.5);
 		}
 
-		InitValuatorAxisStruct(local->dev, 1, topy, bottomy, 
-			resolution, 0, resolution); 
+		InitValuatorAxisStruct(local->dev, 1,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+                        label,
+#endif
+                        topy, bottomy,
+			resolution, 0, resolution);
 	}
 	return;
 }
@@ -605,6 +635,10 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	unsigned char butmap[MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+        Atom btn_labels[MAX_BUTTONS] = {0};
+        Atom axis_labels[MAX_VALUATORS] = {0};
+#endif
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -631,7 +665,12 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	for(loop=1; loop<=nbbuttons; loop++)
 		butmap[loop] = loop;
 
-	if (InitButtonClassDeviceStruct(local->dev, nbbuttons, butmap) == FALSE)
+	/* FIXME: button labels would be nice */
+	if (InitButtonClassDeviceStruct(local->dev, nbbuttons,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					btn_labels,
+#endif
+					butmap) == FALSE)
 	{
 		ErrorF("unable to allocate Button class device\n");
 		return FALSE;
@@ -659,7 +698,12 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	if (!nbaxes || nbaxes > 6)
 		nbaxes = priv->naxes = 6;
 
+	/* axis_labels is just zeros, we set up each valuator with the
+	 * correct property later */
 	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					  axis_labels,
+#endif
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
 					  GetMotionHistory,
 #endif
@@ -737,14 +781,25 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	xf86WcmRotateTablet(local, common->wcmRotate);
 
 	/* pressure */
-	InitValuatorAxisStruct(local->dev, 2, 0, 
-		common->wcmMaxZ, 1, 1, 1);
+	InitValuatorAxisStruct(local->dev, 2,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
+#endif
+		0, common->wcmMaxZ, 1, 1, 1);
 
 	if (IsCursor(priv))
 	{
 		/* z-rot and throttle */
-		InitValuatorAxisStruct(local->dev, 3, -900, 899, 1, 1, 1);
-		InitValuatorAxisStruct(local->dev, 4, -1023, 1023, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 3,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ),
+#endif
+		-900, 899, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 4,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE),
+#endif
+		-1023, 1023, 1, 1, 1);
 	}
 	else if (IsPad(priv))
 	{
@@ -752,15 +807,31 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		if (strstr(common->wcmModel->name, "Intuos3") || 
 			strstr(common->wcmModel->name, "CintiqV5")) 
 		{
-			InitValuatorAxisStruct(local->dev, 3, 0, common->wcmMaxStripX, 1, 1, 1);
-			InitValuatorAxisStruct(local->dev, 4, 0, common->wcmMaxStripY, 1, 1, 1);
+			InitValuatorAxisStruct(local->dev, 3,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				0, /* XXX what is this axis?*/
+#endif
+				0, common->wcmMaxStripX, 1, 1, 1);
+			InitValuatorAxisStruct(local->dev, 4,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				0, /* XXX what is this axis?*/
+#endif
+				0, common->wcmMaxStripY, 1, 1, 1);
 		}
 	}
 	else
 	{
 		/* tilt-x and tilt-y */
-		InitValuatorAxisStruct(local->dev, 3, -64, 63, 1, 1, 1);
-		InitValuatorAxisStruct(local->dev, 4, -64, 63, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 3,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
+#endif
+				-64, 63, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 4,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y),
+#endif
+				-64, 63, 1, 1, 1);
 	}
 
 	if ((strstr(common->wcmModel->name, "Intuos3") || 
@@ -768,16 +839,28 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		strstr(common->wcmModel->name, "Intuos4")) 
 			&& IsStylus(priv))
 		/* Art Marker Pen rotation */
-		InitValuatorAxisStruct(local->dev, 5, -900, 899, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				0, /* XXX what is this axis?*/
+#endif
+				-900, 899, 1, 1, 1);
 	else if ((strstr(common->wcmModel->name, "Bamboo") ||
 		strstr(common->wcmModel->name, "Intuos4"))
 			&& IsPad(priv))
 		/* Touch ring */
-		InitValuatorAxisStruct(local->dev, 5, 0, 71, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				0, /* XXX what is this axis?*/
+#endif
+				0, 71, 1, 1, 1);
 	else
 	{
 		/* absolute wheel */
-		InitValuatorAxisStruct(local->dev, 5, 0, 1023, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
+#endif
+				0, 1023, 1, 1, 1);
 	}
 
 	if (IsTouch(priv))
