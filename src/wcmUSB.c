@@ -20,8 +20,6 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
-#ifdef WCM_ENABLE_LINUXINPUT
-
 #include <sys/utsname.h>
 
 /* support for compiling module on kernels older than 2.6 */
@@ -246,7 +244,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
-	static WacomModel usbIntuos1 =
+	static WacomModel usbIntuos =
 	{
 		"USB Intuos1",
 		usbInitProtocol5,
@@ -450,11 +448,11 @@ static struct
 	{ 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/ 
 	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
-	{ 0x20, 2540, 2540, &usbIntuos1    }, /* Intuos 4x5 */
-	{ 0x21, 2540, 2540, &usbIntuos1    }, /* Intuos 6x8 */
-	{ 0x22, 2540, 2540, &usbIntuos1    }, /* Intuos 9x12 */
-	{ 0x23, 2540, 2540, &usbIntuos1    }, /* Intuos 12x12 */
-	{ 0x24, 2540, 2540, &usbIntuos1    }, /* Intuos 12x18 */
+	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
+	{ 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
+	{ 0x22, 2540, 2540, &usbIntuos     }, /* Intuos 9x12 */
+	{ 0x23, 2540, 2540, &usbIntuos     }, /* Intuos 12x12 */
+	{ 0x24, 2540, 2540, &usbIntuos     }, /* Intuos 12x18 */
 
 	{ 0x03,  508,  508, &usbCintiqPartner }, /* PTU600 */
 
@@ -842,7 +840,6 @@ static void usbParseEvent(LocalDevicePtr local,
 		ErrorF("usbParse: Exceeded event queue (%d) \n",
 				common->wcmEventCnt);
 		goto skipEvent;
-		return;
 	}
 
 	/* save it for later */
@@ -857,7 +854,6 @@ static void usbParseEvent(LocalDevicePtr local,
 		{
 			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
 			goto skipEvent;
-			return;
 		}
 		common->wcmLastToolSerial = event->value;
 
@@ -908,7 +904,8 @@ static void usbParseEvent(LocalDevicePtr local,
 		}
 
 		/* dual input is supported */
-		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->name, "Intuos2") )
+		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->
+name, "Intuos2") )
 		{
 			/* find existing channel */
 			for (i=0; i<MAX_CHANNELS; ++i)
@@ -961,9 +958,9 @@ static void usbParseEvent(LocalDevicePtr local,
 				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
 			}
 		}
-		DBG(1, common->debugLevel, ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
-			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
-			(int)GetTimeInMillis()));
+		DBG(1, common->debugLevel, ErrorF("usbParse (%s with serial number: %u) at %d: "
+			"Exceeded channel count; ignoring the events.\n", local->name, 
+			common->wcmLastToolSerial, (int)GetTimeInMillis()));
 		goto skipEvent;
 	}
 
@@ -1001,6 +998,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 		DBG(6, common->debugLevel, ErrorF("usbParseChannel no real events received\n"));
 		return;
 	}
+	DBG(6, common->debugLevel, ErrorF("usbParseChannel %d events received\n", common->wcmEventCnt));
 
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
@@ -1151,7 +1149,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
  		ds->proximity = 0;
 
 	/* DTF720 and DTF720a don't support eraser */
-	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && (ds->device_type == ERASER_ID)) 
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
+		(ds->device_type == ERASER_ID)) 
 	{
 		DBG(10, common->debugLevel, ErrorF("usbParseChannel "
 			"DTF 720 doesn't support eraser "));
@@ -1161,5 +1160,3 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	/* dispatch event */
 	xf86WcmEvent(common, channel, ds);
 }
-
-#endif /* WCM_ENABLE_LINUXINPUT */

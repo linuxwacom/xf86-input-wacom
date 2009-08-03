@@ -18,29 +18,17 @@
  */
 
 #include "xf86Wacom.h"
-#include "../include/Xwacom.h"
-
-/*
-#if XF86_VERSION_MAJOR < 4
- *
- * There is a bug in XFree86 for combined left click and
- * other button. It'll lost left up when releases.
- * This should be removed if XFree86 fixes the problem.
- * This bug happens on Xorg as well.
-#  define XF86_BUTTON1_BUG
-#endif
-*/
-#define XF86_BUTTON1_BUG
+#include "Xwacom.h"
 
 WacomDeviceClass* wcmDeviceClasses[] =
 {
-#ifdef WCM_ENABLE_LINUXINPUT
 	&gWacomUSBDevice,
-#endif
 	&gWacomISDV4Device,
-	&gWacomSerialDevice,
 	NULL
 };
+
+void xf86WcmInitialScreens(LocalDevicePtr local);
+void xf86WcmRotateTablet(LocalDevicePtr local, int value);
 
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
@@ -77,13 +65,8 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
-#if WCM_XINPUTABI_MAJOR == 0
-		if (miPointerCurrentScreen())
-			priv->currentScreen = miPointerCurrentScreen()->myNum;
-#else
 		if (miPointerGetScreen(local->dev))
 			priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
-#endif
 	}
 	else
 	{
@@ -92,13 +75,8 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 		else if (priv->currentScreen == -1)
 		{
 			/* Get the current screen that the cursor is in */
-#if WCM_XINPUTABI_MAJOR == 0
-			if (miPointerCurrentScreen())
-				priv->currentScreen = miPointerCurrentScreen()->myNum;
-#else
 			if (miPointerGetScreen(local->dev))
 				priv->currentScreen = miPointerGetScreen(local->dev)->myNum;
-#endif
 		}
 	}
 	if (priv->currentScreen == -1) /* tool on the tablet */
@@ -141,7 +119,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 
-	if (priv->twinview > TV_XINERAMA && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
+	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
 	{
 		if (priv->twinview == TV_LEFT_RIGHT)
 		{
@@ -226,7 +204,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	xf86WcmVirtaulTabletPadding(local);
 	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
 	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
-
+		
 	if (x >= screenInfo.screens[screenToSet]->width)
 		x = screenInfo.screens[screenToSet]->width - 1;
 	if (y >= screenInfo.screens[screenToSet]->height)
@@ -247,7 +225,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry, 
 		int rz, int v3, int v4, int v5)
 {
-	int button, mask, bsent = 0;
+	int button, mask;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	DBG(6, priv->debugLevel, ErrorF("xf86WcmSendButtons "
@@ -262,53 +240,25 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			{
 				priv->flags |= TPCBUTTONS_FLAG;
 
-				bsent = 0;
-
 				/* send all pressed buttons down */
-				for (button=2; button<=MAX_BUTTONS; button++)
+				for (button=1; button<=MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ( buttons & mask ) 
 					{
-						bsent = 1;
 						/* set to the configured button */
 						sendAButton(local, button-1, 1, rx, ry, 
 							rz, v3, v4, v5);
 					}
 				}
-				
-#ifdef XF86_BUTTON1_BUG
-				/* only send button one when nothing else was sent */
-				if ( !bsent && (buttons & 1) )
-				{
-					priv->flags |= TPCBUTTONONE_FLAG;
-					sendAButton(local, 0, 1, rx, ry, 
-						rz, v3, v4, v5);
-				}
-#endif
 			}
 			else
 			{
-				bsent = 0;
 				for (button=2; button<=MAX_BUTTONS; button++)
 				{
 					mask = 1 << (button-1);
 					if ((mask & priv->oldButtons) != (mask & buttons))
 					{
-#ifdef XF86_BUTTON1_BUG
-						/* Send button one up before any button down is sent.
-						 * There is a bug in XFree86 for combined left click and 
-						 * other button. It'll lost left up when releases.
-						 * This should be removed if XFree86 fixes the problem.
-						 */
-						if (priv->flags & TPCBUTTONONE_FLAG && !bsent)
-						{
-							priv->flags &= ~TPCBUTTONONE_FLAG;
-							sendAButton(local, 0, 0, rx, ry, rz, 
-								v3, v4, v5);
-							bsent = 1;
-						}
-#endif
 						/* set to the configured buttons */
 						sendAButton(local, button-1, mask & buttons, 
 							rx, ry, rz, v3, v4, v5);
@@ -321,7 +271,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			priv->flags &= ~TPCBUTTONS_FLAG;
 
 			/* send all pressed buttons up */
-			for (button=2; button<=MAX_BUTTONS; button++)
+			for (button=1; button<=MAX_BUTTONS; button++)
 			{
 				mask = 1 << (button-1);
 				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
@@ -331,15 +281,6 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 						rz, v3, v4, v5);
 				}
 			}
-#ifdef XF86_BUTTON1_BUG
-			/* This is also part of the workaround of the XFree86 bug mentioned above
-			 */
-			if (priv->flags & TPCBUTTONONE_FLAG)
-			{
-				priv->flags &= ~TPCBUTTONONE_FLAG;
-				sendAButton(local, 0, 0, rx, ry, rz, v3, v4, v5);
-			}
-#endif
 		}
 	}
 	else  /* normal buttons */
@@ -357,7 +298,6 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
-#ifdef WCM_KEY_SENDING_SUPPORT
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -460,13 +400,9 @@ static int WcmIsModifier(int keysym)
 		}
 	return match;
 }
-#endif /*WCM_KEY_SENDING_SUPPORT*/
 
 static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int kPress)
 {
-#ifndef WCM_KEY_SENDING_SUPPORT
-	ErrorF ("Error: [wacom] your X server doesn't support key events!\n");
-#else /* WCM_KEY_SENDING_SUPPORT */
 	if (button & AC_CORE)
 	{
 		int i = 0;
@@ -487,7 +423,6 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int 
 	}
 	else
 		ErrorF ("WARNING: [%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
-#endif /* WCM_KEY_SENDING_SUPPORT */
 }
 
 /*****************************************************************************
@@ -500,19 +435,11 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-#if WCM_XINPUTABI_MAJOR == 0
-	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
-#endif
+
 	int naxes = priv->naxes;
 
 	if (!priv->button[button])  /* ignore this button event */
 		return;
-
-#if WCM_XINPUTABI_MAJOR == 0
-	/* Switch the device to core mode, if required */
-	if (!is_core && (button & AC_CORE))
-		xf86XInputSetSendCoreEvents (local, TRUE);
-#endif
 
 	DBG(4, priv->debugLevel, ErrorF(
 		"sendAButton TPCButton(%s) button=%d state=%d " 
@@ -585,12 +512,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
 		break;
 	}
-
-#if WCM_XINPUTABI_MAJOR == 0
-	/* Switch the device out of the core mode, if required */
-	if (!is_core && (button & AC_CORE))
-		xf86XInputSetSendCoreEvents (local, FALSE);
-#endif
 }
 
 /*****************************************************************************
@@ -605,9 +526,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-#if WCM_XINPUTABI_MAJOR == 0
-	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
-#endif
+
 	DBG(10, priv->debugLevel, ErrorF("sendWheelStripEvents for %s \n", local->name));
 
 	/* emulate events for relative wheel */
@@ -702,11 +621,6 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		"send fakeButton %x with value = %d \n", 
 		fakeButton, value));
 
-#if WCM_XINPUTABI_MAJOR == 0
-	/* Switch the device to core mode, if required */
-	if (!is_core && (fakeButton & AC_CORE))
-		xf86XInputSetSendCoreEvents (local, TRUE);
-#endif
 	switch (fakeButton & AC_TYPE)
 	{
 	    case AC_BUTTON:
@@ -726,13 +640,6 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    default:
 		ErrorF ("WARNING: [%s] unsupported event %x \n", local->name, fakeButton);
 	}
-
-#if WCM_XINPUTABI_MAJOR == 0
-	/* Switch the device out of the core mode, if required
-	 */
-	if (!is_core && (fakeButton & AC_CORE))
-		xf86XInputSetSendCoreEvents (local, FALSE);
-#endif
 }
 
 /*****************************************************************************
@@ -929,43 +836,45 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				y += priv->topPadding;
 			}
 
-#ifdef WCM_XORG_TABLET_SCALING
-			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-			 * for coordinate conversion at the moment */
-			/* The +-0.4 is to increase the sensitivity in relative mode.
-			 * Must be sensitive to which way the tool is moved or one way
-			 * will get a severe penalty for small movements. */
- 			if(is_absolute) {
-				x -= priv->topX;
-				y -= priv->topY;
-				if (priv->currentScreen == 1 && priv->twinview > TV_XINERAMA)
-				{
-					x -= priv->tvoffsetX;
-					y -= priv->tvoffsetY;
+			if (common->wcmScaling)
+			{
+				/* In the case that xf86WcmDevConvert doesn't get called.
+				 * The +-0.4 is to increase the sensitivity in relative mode.
+				 * Must be sensitive to which way the tool is moved or one way
+				 * will get a severe penalty for small movements.
+				 */
+ 				if(is_absolute) {
+					x -= priv->topX;
+					y -= priv->topY;
+					if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+					{
+						x -= priv->tvoffsetX;
+						y -= priv->tvoffsetY;
+					}
 				}
-			}
-			x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
-			y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
+				x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
+				y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
-			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
-			{
-				x -= priv->screenTopX[priv->currentScreen];
-				y -= priv->screenTopY[priv->currentScreen];
-			}
+				if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
+				{
+					x -= priv->screenTopX[priv->currentScreen];
+					y -= priv->screenTopY[priv->currentScreen];
+				}
 
-			if (priv->screen_no != -1)
-			{
-				if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-					x = priv->screenBottomX[priv->currentScreen];
-				if (x < 0) x = 0;
-				if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-					y = priv->screenBottomY[priv->currentScreen];
-				if (y < 0) y = 0;
+				if (priv->screen_no != -1)
+				{
+					if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+						x = priv->screenBottomX[priv->currentScreen];
+					if (x < 0) x = 0;
+					if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+						y = priv->screenBottomY[priv->currentScreen];
+					if (y < 0) y = 0;
 	
+				}
+				priv->currentSX = x;
+				priv->currentSY = y;
 			}
-			priv->currentSX = x;
-			priv->currentSY = y;
-#endif
+
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
 				xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
@@ -983,12 +892,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		{
 			buttons = 0;
 
-#ifdef WCM_XORG_TABLET_SCALING
-			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-			 * for coordinate conversion at the moment */
-			x = priv->currentSX;
-			y = priv->currentSY;
-#endif
+			if (common->wcmScaling)
+			{
+				/* In the case that xf86WcmDevConvert doesn't called */
+				x = priv->currentSX;
+				y = priv->currentSY;
+			}
 
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
@@ -1001,7 +910,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	else
 	{
-
 		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
 			x = 0;
@@ -1142,7 +1050,7 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 		return !Success;
 	}
 
-	/* Detect device class; default is serial device */
+	/* Detect device class; default is USB device */
 	for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
 	{
 		if ((*ppDevCls)->Detect(local))
@@ -1219,10 +1127,9 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample,
 		pChannel->nSamples));
 
-#ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
-		(ds.device_type != PAD_ID) )
+		ds.device_type != PAD_ID )
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 
@@ -1230,7 +1137,6 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		++pChannel->nSamples;
 		return; /* discard */
 	}
-#endif
 
 	if (strstr(common->wcmModel->name, "Intuos4"))
 	{
@@ -1260,7 +1166,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 		fs->x[0] = ds.x;
 		fs->y[0] = ds.y;
-		if (HANDLE_TILT(common) && ((ds.device_type == STYLUS_ID) || (ds.device_type == ERASER_ID)))
+		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
 		{
 			for (i=common->wcmRawSample - 1; i>0; i--)
 			{
@@ -1270,8 +1176,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 			fs->tiltx[0] = ds.tiltx;
 			fs->tilty[0] = ds.tilty;
 		}
-
-		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw && (ds.device_type != PAD_ID))
+		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw && ds.device_type != PAD_ID)
 		{
 			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 			{
@@ -1281,6 +1186,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 				return; /* discard */
 			}
 		}
+
 		/* Discard unwanted data */
 		suppress = xf86WcmSuppress(common, pLast, &ds);
 		if (!suppress)
@@ -1301,8 +1207,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		pChannel->valid.states,
 		sizeof(WacomDeviceState) * (common->wcmRawSample - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
-
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
+
 	commonDispatchDevice(common,channel,pChannel, suppress);
 	resetSampleCounter(pChannel);
 }
@@ -1385,6 +1291,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					break;
 				}
 	}
+
 	DBG(10, common->debugLevel, ErrorF("commonDispatchDevice device type = %d\n", ds->device_type));
 	/* Find the device the current events are meant for */
 	/* 1: Find the tool (the one with correct serial or in second
@@ -1468,11 +1375,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-#if WCM_XINPUTABI_MAJOR == 0
-	if (!miPointerCurrentScreen())
-#else
 	if (pDev && !miPointerGetScreen(pDev->dev))
-#endif
 	{
 		ErrorF("xf86WcmEvent: Wacom driver can not get Current Screen ID\n");
 		ErrorF("Please remove Wacom tool from the tablet and bring it back again.\n");
@@ -1490,7 +1393,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		int button = 1;
 		priv = pDev->private;
 
-#ifdef WCM_ENABLE_LINUXINPUT
 		if (common->wcmDevCls == &gWacomUSBDevice && IsTouch(priv) && !ds->proximity)
 		{
 			priv->hardProx = 0;
@@ -1531,7 +1433,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				}
 			}
 		}
-#endif /* WCM_ENABLE_LINUXINPUT */
 
 		if (IsStylus(priv) || IsEraser(priv))
 		{
@@ -1620,7 +1521,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		#endif /* throttle */
 
-		if (!(priv->flags & ABSOLUTE_FLAG) && !IsPad(priv))
+		if ((!(priv->flags & ABSOLUTE_FLAG)) && (!IsPad(priv)))
 		{
 			/* To improve the accuracy of relative x/y,
 			 * don't send motion event when there is no movement.
@@ -1765,27 +1666,12 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 			return !Success;
 	}
 
-	/* change the serial speed, if requested */
-	if (model->SetLinkSpeed)
-	{
-		if (common->wcmLinkSpeed != 9600)
-		{
-			if (model->SetLinkSpeed(local) != Success)
-				return !Success;
-		}
-	}
-	else
-	{
-		DBG(2, common->debugLevel, ErrorF("Tablet does not support setting link "
-			"speed, or not yet implemented\n"));
-	}
-
 	/* output tablet state as probed */
 	if (xf86Verbose)
-		ErrorF("%s Wacom %s tablet speed=%d (%d) maxX=%d maxY=%d maxZ=%d "
+		ErrorF("%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			XCONFIG_PROBED,
-			model->name, common->wcmLinkSpeed, common->wcmISDV4Speed, 
+			model->name, common->wcmISDV4Speed, 
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
@@ -1831,7 +1717,7 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	if (priv->twinview <= TV_XINERAMA)
+	if (priv->twinview == TV_NONE)
 		return;
 
 	priv->numScreen = 2;
@@ -1941,7 +1827,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		"number of screen=%d \n", local->name, screenInfo.numScreens));
 	priv->tvoffsetX = 0;
 	priv->tvoffsetY = 0;
-	if (priv->twinview > TV_XINERAMA)
+	if (priv->twinview != TV_NONE)
 	{
 		xf86WcmInitialTVScreens(local);
 		return;
@@ -1955,7 +1841,6 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	priv->screenBottomY[0] = 0;
 	for (i=0; i<screenInfo.numScreens; i++)
 	{
-#ifdef WCM_HAVE_DIXSCREENORIGINS
 		if (screenInfo.numScreens > 1)
 		{
 			priv->screenTopX[i] = dixScreenOrigins[i].x;
@@ -1967,16 +1852,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
 				local->name, i, priv->screenTopX[i], i, priv->screenTopY[i]));
 		}
-#else /* WCM_HAVE_DIXSCREENORIGINS */
-		if (i > 0)
-		{
-			/* only support left to right in this case */
-			priv->screenTopX[i] = priv->screenBottomX[i-1];
-			priv->screenTopY[i] = 0;
-			priv->screenBottomX[i] = priv->screenTopX[i];
-			priv->screenBottomY[i] = 0;
-		}
-#endif /* WCM_HAVE_DIXSCREENORIGINS */
+
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 

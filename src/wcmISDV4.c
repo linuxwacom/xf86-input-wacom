@@ -18,8 +18,13 @@
  */
 
 #include "xf86Wacom.h"
-#include "wcmSerial.h"
+/*#include "wcmSerial.h"*/
 #include "wcmFilter.h"
+
+#define WC_ISDV4_QUERY "*"       /* ISDV4 query command */
+#define WC_ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
+#define WC_ISDV4_STOP "0"        /* ISDV4 stop command */
+#define WC_ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
 
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
@@ -27,6 +32,7 @@ static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
+static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -48,6 +54,33 @@ static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
 	};
+
+/*****************************************************************************
+ * xf86WcmSerialValidate -- validates serial packet; returns 0 on success,
+ *   positive number of bytes to skip on error.
+ ****************************************************************************/
+
+static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
+{
+	int i, bad = 0;
+
+	/* check magic */
+	for (i=0; i<common->wcmPktLength; ++i)
+	{
+		if ( ((i==0) && !(data[i] & HEADER_BIT)) || 
+				((i!=0) && (data[i] & HEADER_BIT)) )
+		{
+			bad = 1;
+			if (i!=0 && (data[i] & HEADER_BIT)) {
+				ErrorF("xf86WcmSerialValidate: bad magic at %d "
+					"v=%x l=%d\n", i, data[i], common->wcmPktLength);
+				return i;
+			}
+		}
+	}
+	if (bad) return common->wcmPktLength;
+	else return 0;
+}
 
 /*****************************************************************************
  * isdv4Detect -- Test if the attached device is ISDV4.
@@ -472,15 +505,15 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		/* don't send button 3 event for eraser 
 		 * button 1 event will be sent by testing presure level
 		 */
-		if ((ds->device_type == ERASER_ID) && ds->buttons&4)
+		if (ds->device_type == ERASER_ID && ds->buttons&4)
 		{
 			ds->buttons = 0;
 			ds->device_id = ERASER_DEVICE_ID;
 		}
 
 		DBG(8, priv->debugLevel, ErrorF("isdv4Parse %s\n",
-			(ds->device_type == ERASER_ID) ? "ERASER " :
-			(ds->device_type == STYLUS_ID) ? "STYLUS" : "NONE"));
+			ds->device_type == ERASER_ID ? "ERASER " :
+			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
 	}
 	xf86WcmEvent(common, channel, ds);
 	return common->wcmPktLength;

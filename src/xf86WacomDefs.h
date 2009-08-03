@@ -23,11 +23,9 @@
 /*****************************************************************************
  * General Defines
  ****************************************************************************/
-#ifdef WCM_ENABLE_LINUXINPUT
 #include <asm/types.h>
 #include <linux/input.h>
 #define MAX_USB_EVENTS 32
-#endif /* WCM_ENABLE_LINUXINPUT */
 
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
 #define MAX_ACCEL 7             /* number of acceleration levels */
@@ -132,6 +130,21 @@ struct _WacomModel
 					 * For backword compability support, 
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
+/* get/set/property */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+
+typedef struct _PROPINFO PROPINFO;
+
+struct _PROPINFO
+{
+	Atom wcmProp;
+	char paramName[32];
+	int nParamID;
+	int nFormat;
+	int nSize;
+	int nDefault;
+};
+#endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
 
 struct _WacomDeviceRec
 {
@@ -231,6 +244,11 @@ struct _WacomDeviceRec
 
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
+
+	/* get/set/property */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+	PROPINFO gPropInfo[XWACOM_PARAM_MAXPARAM];
+#endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
 };
 
 /******************************************************************************
@@ -326,12 +344,8 @@ struct _WacomDeviceClass
 	void (*Read)(LocalDevicePtr local);   /* reads device */
 };
 
-#ifdef WCM_ENABLE_LINUXINPUT
 	extern WacomDeviceClass gWacomUSBDevice;
-#endif
-
 	extern WacomDeviceClass gWacomISDV4Device;
-	extern WacomDeviceClass gWacomSerialDevice;
 
 /******************************************************************************
  * WacomCommonRec
@@ -340,12 +354,11 @@ struct _WacomDeviceClass
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 #define RAW_FILTERING_FLAG      4
-#ifdef WCM_ENABLE_LINUXINPUT
 /* set if the /dev/input driver should wait for SYN_REPORT events as the
-   end of record indicator */
+ * end of record indicator or not 
+*/
 #define USE_SYN_REPORTS_FLAG	8
 #define AUTODEV_FLAG		16
-#endif
 
 #define DEVICE_ISDV4 		0x000C
 
@@ -398,7 +411,6 @@ struct _WacomCommonRec
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
-	unsigned int wcmLinkSpeed;   /* serial link speed */
 	unsigned int wcmISDV4Speed;  /* serial ISDV4 link speed */
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
@@ -416,24 +428,21 @@ struct _WacomCommonRec
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */
 	int wcmSuppress;        	 /* transmit position on delta > supress */
 	int wcmRawSample;	     /* Number of raw data used to filter an event */
+	int wcmScaling;		     /* dealing with missing calling DevConvert case. Default 0 */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
 
-#ifdef WCM_ENABLE_LINUXINPUT
 	int wcmLastToolSerial;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
-#endif
 
 	WacomToolPtr wcmTool; /* List of unique tools */
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
 #define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
-#ifdef WCM_ENABLE_LINUXINPUT
 #define USE_SYN_REPORTS(comm) ((comm)->wcmFlags & USE_SYN_REPORTS_FLAG)
-#endif
 
 /******************************************************************************
  * WacomTool

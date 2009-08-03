@@ -18,13 +18,10 @@
  */
 
 /*
- * This driver is currently able to handle Wacom IV, V, and ISDV4 protocols.
+ * This driver is currently able to handle Wacom IV, V, ISDV4, and bluetooth protocols.
  *
  * Wacom V protocol work done by Raph Levien <raph@gtk.org> and
  * Frédéric Lepied <lepied@xfree86.org>.
- *
- * Many thanks to Dave Fleck from Wacom for the help provided to
- * build this driver.
  *
  * Modified for Linux USB by MATSUMURA Namihiko,
  * Daniel Egger, Germany. <egger@suse.de>,
@@ -33,78 +30,55 @@
  * Aaron Optimizer Digulla <digulla@hepe.com>,
  * Jonathan Layes <jonathan@layes.com>,
  * John Joganic <jej@j-arkadia.com>.
- * 
- * Support for hot plug-n-play by 
  * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>.
+ *
+ * Many thanks to Peter Hutterer <peter.hutterer@redhat.com> 
+ *		for providing Xorg, HAL and freedesktop support
  */
 
 /*
  * REVISION HISTORY
  *
- * 2005-10-17 47-pc0.7.1 - Added DTU710, DTF720, G4
- * 2005-11-17 47-pc0.7.1-1 - Report tool serial number and ID to Xinput
- * 2005-12-02 47-pc0.7.1-2 - Grap the USB port so /dev/input/mice won't get it
- * 2005-12-21 47-pc0.7.2 - new release
- * 2006-03-21 47-pc0.7.3 - new release
- * 2006-03-31 47-pc0.7.3-1 - new release
- * 2006-05-03 47-pc0.7.4 - new release
- * 2006-07-17 47-pc0.7.5 - Support button/key combined events
- * 2006-11-13 47-pc0.7.7 - Updated Xinerama setup support
- * 2007-01-31 47-pc0.7.7-3 - multiarea support
- * 2007-02-09 47-pc0.7.7-5 - Support keystrokes
- * 2007-03-28 47-pc0.7.7-7 - multiarea support
- * 2007-03-29 47-pc0.7.7-8 - clean up code
- * 2007-05-01 47-pc0.7.7-9 - fixed 2 bugs
- * 2007-05-18 47-pc0.7.7-10 - support new xsetwacom commands
- * 2007-06-05 47-pc0.7.7-11 - Test Ron's patches
- * 2007-06-15 47-pc0.7.7-12 - enable changing number of raw data 
- * 2007-06-25 47-pc0.7.8 - new release
- * 2007-10-25 47-pc0.7.9-1 - Support multimonitors in both horizonal and vertical settings
- * 2007-11-21 47-pc0.7.9-3 - Updated TwinView screen switch offset
- * 2007-12-07 47-pc0.7.9-4 - Support Cintiq 12WX and Bamboo
- * 2007-12-20 47-pc0.7.9-5 - multimonitor support update
- * 2008-01-08 47-pc0.7.9-6 - Configure script change for Xorg 7.3 support
- * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
- * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
- * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
- * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
- * 2008-05-06 47-pc0.8.0-1 - new release
- * 2008-05-14 47-pc0.8.0-2 - Update rotation routine
- * 2008-07-09 47-pc0.8.1   - new release
- * 2008-07-17 47-pc0.8.1-1 - Support USB TabletPC
- * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
- * 2008-11-11 47-pc0.8.2 - new release
- * 2008-12-22 47-pc0.8.2-1 - fixed a few issues
- * 2009-03-26 47-pc0.8.3 - Added Intuos4 support
- * 2009-04-03 47-pc0.8.3-2 - HAL support
- * 2009-05-08 47-pc0.8.3-4 - Fixed a pad button issue
- * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
- * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
- * 2009-07-14 47-pc0.8.3-7 - Support Nvidia Xinerama setting
+ * 2009-06-28 0.8.3-6 - Initial support for xf86-input-wacom with xorg-x11-server 1.6 and HAL
  */
 
-static const char identification[] = "$Identification: 47-0.8.3-7 $";
+static const char identification[] = "$Identification: xf86-input-wacom-0.8.3-6 $";
 
 /****************************************************************************/
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
+void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+    extern void InitWcmDeviceProperties(LocalDevicePtr local);
+    extern int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
+                BOOL checkonly);
+#endif
+
+extern Bool usbWcmInit(LocalDevicePtr pDev);
+extern int usbWcmGetRanges(LocalDevicePtr local);
+extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
+extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
+
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
 static void xf86WcmDevReadInput(LocalDevicePtr local);
 static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
+int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
 static void xf86WcmDevClose(LocalDevicePtr local);
 static int xf86WcmDevProc(DeviceIntPtr pWcm, int what);
 static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
 static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
-extern Bool usbWcmInit(LocalDevicePtr pDev);
-extern int usbWcmGetRanges(LocalDevicePtr local);
-extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
-extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
-extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
@@ -115,25 +89,25 @@ WacomModule gWacomModule =
 	xf86WcmDevOpen,
 	xf86WcmDevReadInput,
 	xf86WcmDevControlProc,
+	xf86WcmDevChangeControl,
 	xf86WcmDevClose,
 	xf86WcmDevProc,
-	xf86WcmDevChangeControl,
 	xf86WcmDevSwitchMode,
 	xf86WcmDevConvert,
 	xf86WcmDevReverseConvert,
 };
 
-#ifdef WCM_KEY_SENDING_SUPPORT
 static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
+
 static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 {
 }
+
 static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
-#endif /* WCM_KEY_SENDING_SUPPORT */
 
 /*****************************************************************************
  * xf86WcmDesktopSize --
@@ -201,13 +175,13 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		area->bottomY = priv->bottomY = priv->wcmMaxY;
 	}
 
-	if (priv->twinview > TV_XINERAMA)
+	if (priv->twinview != TV_NONE)
 		priv->numScreen = 2;
 
 	if (priv->screen_no != -1 &&
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{
-		if (priv->twinview <= TV_XINERAMA)
+		if (priv->twinview == TV_NONE || priv->screen_no != 1)
 		{
 			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
 					local->name, priv->screen_no);
@@ -306,7 +280,7 @@ void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
 
 	if (!(priv->flags & ABSOLUTE_FLAG)) return;
 
-	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -343,7 +317,7 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
 	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
 
-	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -371,6 +345,7 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution;
 	int bottomx = priv->wcmMaxX, bottomy = priv->wcmMaxY;
 
@@ -383,20 +358,20 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		{
 			topx = priv->topX;
 			bottomx = priv->sizeX + priv->topX;
-			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
+			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
 				topx += priv->tvoffsetX;
-			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
+			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
 				bottomx -= priv->tvoffsetX;
 		}
 
 		resolution = priv->wcmResolX;
-#ifdef WCM_XORG_TABLET_SCALING
-		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-		 * for coordinate conversion at the moment */
-		topx = 0;
-		bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
-		resolution = (int)((double)resolution * priv->factorX + 0.5);
-#endif
+		if (common->wcmScaling)
+		{
+			/* In case xf86WcmDevConvert didn't get called */
+			topx = 0;
+			bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
+			resolution = (int)((double)resolution * priv->factorX + 0.5);
+		}
 
 		InitValuatorAxisStruct(local->dev, 0, topx, bottomx, 
 			resolution, 0, resolution); 
@@ -407,20 +382,20 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		{
 			topy = priv->topY;
 			bottomy = priv->sizeY + priv->topY;
-			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
+			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
 				topy += priv->tvoffsetY;
-			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
+			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
 				bottomy -= priv->tvoffsetY;
 		}
 
 		resolution = priv->wcmResolY;
-#ifdef WCM_XORG_TABLET_SCALING
-		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-		 * for coordinate conversion at the moment */
-		topy = 0;
-		bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
-		resolution = (int)((double)resolution * priv->factorY + 0.5);
-#endif
+		if (common->wcmScaling)
+		{
+			/* In case xf86WcmDevConvert didn't get called */
+			topy = 0;
+			bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
+			resolution = (int)((double)resolution * priv->factorY + 0.5);
+		}
 
 		InitValuatorAxisStruct(local->dev, 1, topy, bottomy, 
 			resolution, 0, resolution); 
@@ -428,7 +403,6 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	return;
 }
 
-#ifdef WCM_KEY_SENDING_SUPPORT
 /*****************************************************************************
  * xf86WcmRegisterX11Devices --
  *    Register the X11 input devices with X11 core.
@@ -576,7 +550,6 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
 	{ NoSymbol,	0 }
 };
-#endif /* WCM_KEY_SENDING_SUPPORT */
 
 /*****************************************************************************
  * xf86WcmInitialprivSize --
@@ -629,7 +602,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	CARD8 butmap[MAX_BUTTONS+1];
+	unsigned char butmap[MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
 
@@ -687,15 +660,10 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		nbaxes = priv->naxes = 6;
 
 	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
-#if WCM_XINPUTABI_MAJOR == 0
-					  xf86GetMotionEvents,
-					  local->history_size,
-#else
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
 					  GetMotionHistory,
 #endif
 					  GetMotionHistorySize(),
-#endif
 					  ((priv->flags & ABSOLUTE_FLAG) ?
 					  Absolute : Relative) | 
 					  OutOfProximity ) == FALSE)
@@ -708,7 +676,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
 	{
-#ifdef WCM_KEY_SENDING_SUPPORT
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
@@ -747,7 +714,6 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			}
 		}
 
-#ifndef WCM_XFREE86
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
 			ErrorF("unable to init kbd feedback device struct\n");
@@ -758,14 +724,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
 		}
-#endif /* WCM_XFREE86 */
-#endif /* WCM_KEY_SENDING_SUPPORT */
 	}
-
-#if WCM_XINPUTABI_MAJOR == 0
-	/* allocate motion history buffer if needed */
-	xf86MotionHistoryAllocate(local);
-#endif
 
  	xf86WcmInitialToolSize(local);
 
@@ -827,10 +786,14 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		priv->hardProx = 0;
 	}
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+	InitWcmDeviceProperties(local);
+	XIRegisterPropertyHandler(local->dev, xf86WcmSetProperty, NULL, NULL);
+#endif
+
 	return TRUE;
 }
 
-#ifdef LINUX_INPUT
 static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
 {
 	struct input_id id;
@@ -882,7 +845,6 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		local->name, i + 1, wait);
 	return FALSE;
 }
-#endif
 
 /*****************************************************************************
  * xf86WcmDevOpen --
@@ -904,12 +866,10 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-#ifdef LINUX_INPUT
 		/* Autoprobe if necessary */
 		if ((common->wcmFlags & AUTODEV_FLAG) &&
 		    !(common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
 			ErrorF("Cannot probe device\n");
-#endif
 
 		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
 			!common->wcmDevice)
@@ -1082,12 +1042,24 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	}
 }
 
+int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	DBG(3, priv->debugLevel, ErrorF("xf86WcmDevChangeControl called\n"));
+	return Success;
+}
+
 /*****************************************************************************
  * xf86WcmDevControlProc --
  ****************************************************************************/
 
 static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
+	LocalDevicePtr local = (LocalDevicePtr)device->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+	DBG(4, priv->debugLevel, ErrorF("Wacom Dev Control Proc called\n"));
+	return;
 }
 
 /*****************************************************************************
@@ -1204,7 +1176,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	{
 		v0 -= priv->topX;
 		v1 -= priv->topY;
-		if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
+		if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
 		{
 			v0 -= priv->tvoffsetX;
 			v1 -= priv->tvoffsetY;
@@ -1214,7 +1186,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	*x = (double)v0 * priv->factorX + 0.5;
 	*y = (double)v1 * priv->factorY + 0.5;
 
-	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
+	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
 	{
 		*x -= priv->screenTopX[priv->currentScreen];
 		*y -= priv->screenTopY[priv->currentScreen];
@@ -1275,3 +1247,4 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 
 	return TRUE;
 }
+

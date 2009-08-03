@@ -17,8 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __XF86_XWACOM_H
-#define __XF86_XWACOM_H
+#ifndef __XORG_XWACOM_H
+#define __XORG_XWACOM_H
 
 #include <X11/keysym.h>
 
@@ -39,7 +39,7 @@
 #define XWACOM_PARAM_COMMONDBG		15
 #define XWACOM_PARAM_RAWSAMPLE		16
 #define XWACOM_PARAM_CAPACITY       	17
-#define XWACOM_PARAM_SERIAL		18
+#define XWACOM_PARAM_TOOLSERIAL		18
 
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101
@@ -99,9 +99,10 @@
 #define XWACOM_PARAM_THRESHOLD	 	210
 
 #define XWACOM_PARAM_GETONLYPARAM	320
-#define XWACOM_PARAM_TID		321
-#define XWACOM_PARAM_TOOLID		322
+#define XWACOM_PARAM_TOOLID		348
+#define XWACOM_PARAM_TID		349
 #define XWACOM_PARAM_NUMSCREEN		350
+/* The followings are defined together */
 #define XWACOM_PARAM_STOPX0		351
 #define XWACOM_PARAM_STOPY0		352
 #define XWACOM_PARAM_SBOTTOMX0		353
@@ -134,16 +135,21 @@
 #define XWACOM_PARAM_STOPY7		380
 #define XWACOM_PARAM_SBOTTOMX7		381
 #define XWACOM_PARAM_SBOTTOMY7		382
+/* End of together */
 #define XWACOM_PARAM_XSCALING		383
-#define XWACOM_PARAM_TOOLSERIAL		384
+#define XWACOM_PARAM_SERIAL		384
+
+#define XWACOM_PARAM_MAXPARAM		( XWACOM_PARAM_TOOLSERIAL + \
+	(XWACOM_PARAM_BUTTON32 - XWACOM_PARAM_BUTTON1 + 1) + (XWACOM_PARAM_STRIPRDN - \
+	XWACOM_PARAM_RELWUP + 1) + (XWACOM_PARAM_THRESHOLD - XWACOM_PARAM_SPEEDLEVEL + 1) + \
+	(XWACOM_PARAM_SERIAL - XWACOM_PARAM_TOOLID + 1) )
 
 #define TV_NONE 		0
-#define TV_XINERAMA		1
-#define TV_ABOVE_BELOW 		2
-#define TV_LEFT_RIGHT		3
-#define TV_BELOW_ABOVE		4
-#define TV_RIGHT_LEFT		5
-#define TV_MAX			5
+#define TV_ABOVE_BELOW 		1
+#define TV_LEFT_RIGHT		2
+#define TV_BELOW_ABOVE		3
+#define TV_RIGHT_LEFT		4
+#define TV_MAX			4
 
 #define ROTATE_NONE 		0
 #define ROTATE_CW 		1
@@ -167,4 +173,4 @@
 #define AC_CORE             0x10000000	/* Always emit a core event */
 #define AC_EVENT            0xf00f0000	/* Mask to isolate event flag */
 
-#endif /* __XF86_XWACOM_H */
+#endif /* __XORG_XWACOM_H */

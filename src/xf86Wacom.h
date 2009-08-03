@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,22 +20,15 @@
 #ifndef __XF86_XF86WACOM_H
 #define __XF86_XF86WACOM_H
 
-/****************************************************************************/
+#include <xorg-server.h>
+#include <xorgVersion.h>
 
-#include "../include/xdrv-config.h"
-#ifdef WCM_XORG_XSERVER_1_6
-   #include <xorg-server.h>
-   #include <xorgVersion.h>
-#else
-   #include <xf86Version.h>
-#endif
-#include "../include/Xwacom.h"
+#include "Xwacom.h"
 
 /*****************************************************************************
  * Linux Input Support
  ****************************************************************************/
 
-#ifdef WCM_ENABLE_LINUXINPUT
 #include <asm/types.h>
 #include <linux/input.h>
 
@@ -49,42 +42,30 @@
 
 #define MAX_USB_EVENTS 32
 
-#endif /* WCM_ENABLE_LINUXINPUT */
-
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50
-
-/*****************************************************************************
- * XFree86 V4.x Headers
- ****************************************************************************/
-
-#ifndef XFree86LOADER
-#include <unistd.h>
-#include <errno.h>
-#endif
 
 #include <misc.h>
 #define inline __inline__
 #include <xf86.h>
+#if !defined(NEED_XF86_TYPES)
 #define NEED_XF86_TYPES
+#endif
 #if !defined(DGUX)
 # include <xisb.h>
-/* X.org recently kicked out the libc-wrapper */
-# ifdef WCM_NO_LIBCWRAPPER
-#  include <string.h>
-#  include <errno.h>
-# else
-#  include <xf86_ansic.h>
-# endif
+# include <string.h>
+# include <errno.h>
 #endif
+
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 #include <X11/keysym.h>
 #include <mipointer.h>
+#include <fcntl.h>
 
-#ifdef XFree86LOADER
-#include <xf86Module.h>
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+# include <X11/Xatom.h>
 #endif
 
 /*****************************************************************************
@@ -143,9 +124,9 @@ struct _WacomModule
 	int (*DevOpen)(DeviceIntPtr pWcm);
 	void (*DevReadInput)(LocalDevicePtr local);
 	void (*DevControlProc)(DeviceIntPtr device, PtrCtrl* ctrl);
+	int (*DevChangeControl)(LocalDevicePtr local, xDeviceCtl* control);
 	void (*DevClose)(LocalDevicePtr local);
 	int (*DevProc)(DeviceIntPtr pWcm, int what);
-	int (*DevChangeControl)(LocalDevicePtr local, xDeviceCtl* control);
 	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
 	Bool (*DevConvert)(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
@@ -193,12 +174,6 @@ struct _WacomModule
 
 int xf86WcmWait(int t);
 int xf86WcmReady(LocalDevicePtr local);
-
-LocalDevicePtr xf86WcmAllocate(char* name, int flag);
-LocalDevicePtr xf86WcmAllocateStylus(void);
-LocalDevicePtr xf86WcmAllocateCursor(void);
-LocalDevicePtr xf86WcmAllocateEraser(void);
-LocalDevicePtr xf86WcmAllocatePad(void);
 
 Bool xf86WcmOpen(LocalDevicePtr local);
 

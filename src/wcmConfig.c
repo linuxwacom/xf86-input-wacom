@@ -20,11 +20,18 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
+static LocalDevicePtr xf86WcmAllocate(char* name, int flag);
+static LocalDevicePtr xf86WcmAllocateStylus(void);
+static LocalDevicePtr xf86WcmAllocateCursor(void);
+static LocalDevicePtr xf86WcmAllocateEraser(void);
+static LocalDevicePtr xf86WcmAllocatePad(void);
+static LocalDevicePtr xf86WcmAllocateTouch(void);
+
 /*****************************************************************************
  * xf86WcmAllocate --
  ****************************************************************************/
 
-LocalDevicePtr xf86WcmAllocate(char* name, int flag)
+static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 {
 	LocalDevicePtr local;
 	WacomDevicePtr priv;
@@ -85,9 +92,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	local->dev = NULL;
 	local->private = priv;
 	local->private_flags = 0;
-#if WCM_XINPUTABI_MAJOR == 0
-	local->history_size  = 0;
-#endif
 	local->old_x = -1;
 	local->old_y = -1;
 
@@ -182,12 +186,11 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->npadkeys = 0;		   /* Default number of pad keys */
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmThreshold = 0;       /* unconfigured threshold */
-	common->wcmLinkSpeed = 9600;    /* serial link speed */
 	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
 	common->debugLevel = 0;         /* shared debug level can only 
 					 * be changed though xsetwacom */
 
-	common->wcmDevCls = &gWacomSerialDevice; /* device-specific functions */
+	common->wcmDevCls = &gWacomUSBDevice; /* device-specific functions */
 	common->wcmModel = NULL;                 /* model-specific functions */
 	common->wcmEraserID = 0;	 /* eraser id associated with the stylus */
 	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
@@ -246,7 +249,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 /* xf86WcmAllocateStylus */
 
-LocalDevicePtr xf86WcmAllocateStylus(void)
+static LocalDevicePtr xf86WcmAllocateStylus(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 
@@ -258,7 +261,7 @@ LocalDevicePtr xf86WcmAllocateStylus(void)
 
 /* xf86WcmAllocateTouch */
 
-LocalDevicePtr xf86WcmAllocateTouch(void)
+static LocalDevicePtr xf86WcmAllocateTouch(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
 
@@ -270,7 +273,7 @@ LocalDevicePtr xf86WcmAllocateTouch(void)
 
 /* xf86WcmAllocateCursor */
 
-LocalDevicePtr xf86WcmAllocateCursor(void)
+static LocalDevicePtr xf86WcmAllocateCursor(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_CURSOR, CURSOR_ID);
 
@@ -282,7 +285,7 @@ LocalDevicePtr xf86WcmAllocateCursor(void)
 
 /* xf86WcmAllocateEraser */
 
-LocalDevicePtr xf86WcmAllocateEraser(void)
+static LocalDevicePtr xf86WcmAllocateEraser(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
 
@@ -294,7 +297,7 @@ LocalDevicePtr xf86WcmAllocateEraser(void)
 
 /* xf86WcmAllocatePad */
 
-LocalDevicePtr xf86WcmAllocatePad(void)
+static LocalDevicePtr xf86WcmAllocatePad(void)
 {
 	LocalDevicePtr local = xf86WcmAllocate(XI_PAD, PAD_ID);
 
@@ -369,9 +372,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
-#ifndef WCM_XORG_XSERVER_1_4
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
-#endif
 
 	/* free pressure curve */
 	if (priv->pPressCurve)
@@ -421,7 +422,7 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
-/* xf86WcmInit - called when the module subsection is found in XF86Config */
+/* xf86WcmInit - called when the module is found */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
@@ -444,8 +445,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	fakeLocal->conf_idev = dev;
 
-	/* Force default serial port options to exist because the serial init
-	 * phasis is based on those values.
+	/* Force default port options to exist because the init
+	 * phase is based on those values.
 	 */
 	xf86CollectInputOptions(fakeLocal, default_options, NULL);
 
@@ -486,7 +487,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
     
 	common->wcmDevice = xf86FindOptionValue(local->options, "Device");
 
-#ifdef LINUX_INPUT
 	/* Autoprobe if not given */
 	if (!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) 
 	{
@@ -498,17 +498,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			goto SetupProc_fail;
 		}
 	}
-#else
-	if (!common->wcmDevice)
-	{
-		xf86Msg(X_ERROR, "%s: No Device specified.\n", dev->identifier);
-		goto SetupProc_fail;
-	}
-#endif
 
-	/* Lookup to see if there is another wacom device sharing
-	 * the same serial line.
-	 */
+	/* Lookup to see if there is another wacom device sharing the same port */
 	localDevices = xf86FirstLocalDevice();
     
 	if (common->wcmDevice)
@@ -624,7 +615,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmFlags |= RAW_FILTERING_FLAG;
 	}
 
-#ifdef WCM_ENABLE_LINUXINPUT
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
 	{
@@ -639,13 +629,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		common->wcmDevCls = &gWacomUSBDevice;
 		xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);
 	}
-#else
-	if (xf86SetBoolOption(local->options, "USB", 0))
-	{
-		ErrorF("The USB version of the driver isn't "
-			"available for your platform\n");
-	}
-#endif
 
 	/* pressure curve takes control points x1,y1,x2,y2
 	 * values in range from 0..100.
@@ -776,6 +759,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		}
 	}
 
+	common->wcmScaling = 0;
+
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
 	if (common->wcmThreshold > 0)
@@ -881,13 +866,13 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		switch(val)
 		{
 			case 38400:
-				common->wcmLinkSpeed = 38400;
+				common->wcmISDV4Speed = 38400;
 				break;
 			case 19200:
-				common->wcmLinkSpeed = 19200;
+				common->wcmISDV4Speed = 19200;
 				break;
 			case 9600:
-				common->wcmLinkSpeed = 9600;
+				common->wcmISDV4Speed = 9600;
 				break;
 			default:
 				xf86Msg(X_ERROR, "%s: Illegal speed value "
@@ -925,12 +910,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->twinview = TV_RIGHT_LEFT;
 	else if (s && xf86NameCmp(s, "aboveof") == 0) 
 		priv->twinview = TV_BELOW_ABOVE;
-	else if (s && xf86NameCmp(s, "xinerama") == 0) 
-		priv->twinview = TV_XINERAMA;
 	else if (s) 
 	{
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical (belowof), "
-			"horizontal (rightof), aboveof, leftof, xinerama). Using none.\n",
+			"horizontal (rightof), aboveof, or leftof). Using none.\n",
 			dev->identifier);
 		priv->twinview = TV_NONE;
 	}
@@ -955,9 +938,6 @@ SetupProc_fail:
 	return NULL;
 }
 
-#ifdef XFree86LOADER
-static
-#endif
 InputDriverRec WACOM =
 {
 	1,             /* driver version */
@@ -969,20 +949,15 @@ InputDriverRec WACOM =
 	0              /* ref count */
 };
 
-/******************************************************************************
- * XFree86 V4 Dynamic Module Initialization
- *****************************************************************************/
 
-#ifdef XFree86LOADER
-
-/* xf86WcmUnplug - called when the module subsection is found in XF86Config */
+/* xf86WcmUnplug - Uninitialize the device */
 
 static void xf86WcmUnplug(pointer p)
 {
 	ErrorF("xf86WcmUnplug\n");
 }
 
-/* xf86WcmPlug - called when the module subsection is found in XF86Config */
+/* xf86WcmPlug - called by the module loader */
 
 static pointer xf86WcmPlug(pointer module, pointer options, int* errmaj,
 		int* errmin)
@@ -999,11 +974,7 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	MODULEVENDORSTRING,
 	MODINFOSTRING1,
 	MODINFOSTRING2,
-#ifdef WCM_XORG_XSERVER_1_6
 	XORG_VERSION_CURRENT,
-#else
-	XF86_VERSION_CURRENT,
-#endif
 	1, 0, 0,
 	ABI_CLASS_XINPUT,
 	ABI_XINPUT_VERSION,
@@ -1011,15 +982,10 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	{0, 0, 0, 0}  /* signature, to be patched into the file by a tool */
 };
 
-#ifdef _X_EXPORT
-    _X_EXPORT XF86ModuleData wacomModuleData =
-#else
-    XF86ModuleData wacomModuleData =
-#endif
+_X_EXPORT XF86ModuleData wacomModuleData =
 {
 	&xf86WcmVersionRec,
 	xf86WcmPlug,
 	xf86WcmUnplug
 };
 
-#endif /* XFree86LOADER */
