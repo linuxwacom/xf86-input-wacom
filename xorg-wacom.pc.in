@@ -1,0 +1,6 @@
+sdkdir=@sdkdir@
+
+Name: xorg-wacom
+Description: X.Org Wacom Tablet driver.
+Version: @PACKAGE_VERSION@
+Cflags: -I${sdkdir}
