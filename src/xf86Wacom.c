@@ -438,6 +438,8 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
 
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 /* Define our own keymap so we can send key-events with our own device and not
  * rely on inputInfo.keyboard */
 static KeySym keymap[] = {
@@ -580,6 +582,7 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
 	{ NoSymbol,	0 }
 };
+#endif
 
 /*****************************************************************************
  * xf86WcmInitialprivSize --
@@ -720,6 +723,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
 	{
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 		if (nbkeys)
 		{
 			KeySymsRec wacom_keysyms;
@@ -763,7 +767,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			ErrorF("unable to init kbd feedback device struct\n");
 			return FALSE;
 		}
-
+#endif
 		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
 			ErrorF("unable to init led feedback device struct\n");
 			return FALSE;
