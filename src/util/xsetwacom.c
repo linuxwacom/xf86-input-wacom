@@ -37,6 +37,7 @@
 **   2009-02-27 0.1.8 - PC - Added LeftOf and AboveOf to TwinView
 **   2009-05-18 0.1.9 - PC - Support get/set serial command
 **   2009-07-14 0.2.0 - PC - Support Nvidia Xinerama setting
+**   2009-08-24 0.2.1 - PC - Add SCREENTOGGLE command
 **
 ****************************************************************************/
 
@@ -733,12 +734,18 @@ static int ListParam(WACOMCONFIG *hConfig, char** argv)
 		"\tBUTTON: Emit a button event\n"
 		"\tDBLCLICK: Emit a double-click button event\n"
 		"\tMODETOGGLE: Toggle absolute/relative tablet mode\n");
-	printf ("\tDISPLAYTOGGLE: Toggle cursor movement among screens\n"
-		"\t    for the selected tool except pad which\n"
-		"\t    applies to all tools asssociated with the tablet\n"
+	printf ("\tDISPLAYTOGGLE: Toggle cursor movement among all displays \n"
+		"\t    which include individual screens plus the whole desktop \n"
+		"\t    for the selected tool if it is not a pad. \n"
+		"\t    When the tool is a pad, the function applies to all \n"
+		"\t    tools that are asssociated with the tablet\n");
+	printf ("\tSCREENTOGGLE: Toggle cursor movement among all screens \n"
+		"\t    for the selected tool if it is not a pad. \n"
+		"\t    When the tool is a pad, the function applies to all \n"
+		"\t    tools that are asssociated with the tablet\n"
 		"  Modifier: use \"xsetwacom list mod\"\n"
-		"\tto see a list of modifiers and specific keys\n"
-		"  CODE: Button number if emit a button event \n"
+		"\t  to see a list of modifiers and specific keys\n"
+		"  CODE: Button number if emitting a button event; \n"
 		"\tor specific keys and any other keys not listed as mod \n");
 	printf ("Examples:\n"
 		"  xsetwacom set stylus Button1 \"button 5\"\n"
@@ -1098,6 +1105,9 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 		    case AC_MODETOGGLE:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "MODETOGGLE ");
 			break;
+		    case AC_SCREENTOGGLE:
+			sl += snprintf (strval + sl, sizeof (strval) - sl, "SCREENTOGGLE ");
+			break;
 		    case AC_DBLCLICK:
 			sl += snprintf (strval + sl, sizeof (strval) - sl, "DBLCLICK ");
 			break;
@@ -1176,6 +1186,7 @@ static void DisplayValue (WACOMDEVICE *hDev, const char *devname, PARAMINFO *p,
 			(((value & AC_TYPE) == AC_KEY) ||  
 			((value & AC_TYPE) == AC_MODETOGGLE) ||
 			((value & AC_TYPE) == AC_DBLCLICK) ||
+			((value & AC_TYPE) == AC_SCREENTOGGLE) ||
 			((value & AC_TYPE) == AC_DISPLAYTOGGLE)) )
 			printf ("%s\n", strval);
 		else

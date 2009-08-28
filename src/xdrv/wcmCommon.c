@@ -545,7 +545,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	case AC_DISPLAYTOGGLE:
 		if (mask && priv->numScreen > 1)
 		{
-			if (IsPad(priv)) /* toggle display for all tools except pad */
+			if (IsPad(priv)) /* toggle display (individual screens plus the whole desktop) for all tools except pad */
 			{
 				WacomDevicePtr tmppriv;
 				for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
@@ -559,11 +559,38 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 					}
 				}
 			}
-			else /* toggle display only for the selected tool */
+			else /* toggle display (individual screens plus the whole desktop) only for the selected tool */
 			{
 				int screen = priv->screen_no;
 				if (++screen >= priv->numScreen)
 					screen = -1;
+				xf86WcmChangeScreen(local, screen);
+			}
+		}
+		break;
+
+	case AC_SCREENTOGGLE:
+		if (mask && priv->numScreen > 1)
+		{
+			if (IsPad(priv)) /* toggle screens for all tools except pad */
+			{
+				WacomDevicePtr tmppriv;
+				for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
+				{
+					if (!IsPad(tmppriv))
+					{
+						int screen = tmppriv->screen_no;
+						if (++screen >= tmppriv->numScreen)
+							screen = 0;
+						xf86WcmChangeScreen(tmppriv->local, screen);
+					}
+				}
+			}
+			else /* toggle screens only for the selected tool */
+			{
+				int screen = priv->screen_no;
+				if (++screen >= priv->numScreen)
+					screen = 0;
 				xf86WcmChangeScreen(local, screen);
 			}
 		}
@@ -602,6 +629,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		int x, int y, int z, int v3, int v4, int v5)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common = priv->common;
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
@@ -630,6 +658,19 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	if ( ds->abswheel != priv->oldWheel )
 	{
 		value = priv->oldWheel - ds->abswheel;
+		if ((strstr(common->wcmModel->name, "Bamboo") ||
+		strstr(common->wcmModel->name, "Intuos4"))
+			&& IsPad(priv))
+		{
+			/* deal with MAX_FINGER_WHEEL to 0 and 0 to MAX_FINGER_WHEEL switching */
+			if (abs(priv->oldWheel - ds->abswheel) > (MAX_FINGER_WHEEL/2))
+			{
+				if (priv->oldWheel > ds->abswheel)
+					value -= MAX_FINGER_WHEEL;
+				else
+					value += MAX_FINGER_WHEEL;
+			}
+		}
 		if ( value > 0 )
 		{
 			fakeButton = priv->wheelup;

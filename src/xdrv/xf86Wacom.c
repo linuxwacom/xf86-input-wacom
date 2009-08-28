@@ -81,9 +81,10 @@
  * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
  * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
  * 2009-07-14 47-pc0.8.3-7 - Support Nvidia Xinerama setting
+ * 2009-08-25 47-pc0.8.4-1 - Support ScreenToggle
  */
 
-static const char identification[] = "$Identification: 47-0.8.3-7 $";
+static const char identification[] = "$Identification: 47-0.8.4-1 $";
 
 /****************************************************************************/
 
@@ -814,7 +815,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		strstr(common->wcmModel->name, "Intuos4"))
 			&& IsPad(priv))
 		/* Touch ring */
-		InitValuatorAxisStruct(local->dev, 5, 0, 71, 1, 1, 1);
+		InitValuatorAxisStruct(local->dev, 5, 0, MAX_FINGER_WHEEL, 1, 1, 1);
 	else
 	{
 		/* absolute wheel */

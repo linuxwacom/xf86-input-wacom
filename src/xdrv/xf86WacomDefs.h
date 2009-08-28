@@ -35,6 +35,7 @@
 #define MAX_SUPPRESS 100        /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
 #define MAXTRY 3                /* max number of try to receive magic number */
+#define MAX_FINGER_WHEEL 71     /* max value of finger wheel */
 
 /* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 

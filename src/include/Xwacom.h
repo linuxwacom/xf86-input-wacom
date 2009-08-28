@@ -161,7 +161,8 @@
 #define AC_KEY              0x00010000	/* Emit key events */
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
 #define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
-#define AC_DISPLAYTOGGLE    0x00040000 /* Toggle among screens */
+#define AC_DISPLAYTOGGLE    0x00040000  /* Toggle among displays (screen plus whole desktop) */
+#define AC_SCREENTOGGLE     0x00050000  /* Toggle among screens */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
 #define AC_NUM_KEYS         0x0ff00000  /* The mask to isolate number of keys to send */
 #define AC_CORE             0x10000000	/* Always emit a core event */

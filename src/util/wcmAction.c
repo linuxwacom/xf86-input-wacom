@@ -1,7 +1,7 @@
 /*****************************************************************************
 ** wcmAction.c
 **
-** Copyright (C) 2007 - 2008 - Ping Cheng
+** Copyright (C) 2007 - 2009 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -22,7 +22,8 @@
 **   2008-01-17 0.0.2-pc - Add Display Toggle
 **   2008-08-01 0.0.3-pc - Merge patch 1998051 (Yuri Shchedov)
 **   2008-12-10 0.0.4-pc - Updated patch 1998051 for none KP buttons
-*/
+**   2009-08-24 0.0.5-pc - Add Screen Toggle
+*/ 
 
 /* This pseudo-header file is included both from the X11 driver, and from
  * tools (notably xsetwacom). The reason is to have the function defined
@@ -45,7 +46,8 @@ static ACTIONCODE action_code [] =
 	{ "BUTTON",        AC_BUTTON },
 	{ "MODETOGGLE",    AC_MODETOGGLE },
 	{ "DBLCLICK",      AC_DBLCLICK },
-	{ "DISPLAYTOGGLE", AC_DISPLAYTOGGLE }
+	{ "DISPLAYTOGGLE", AC_DISPLAYTOGGLE },
+	{ "SCREENTOGGLE",  AC_SCREENTOGGLE }
 };
 
 static ACTIONCODE modifier_code [] =
@@ -258,6 +260,7 @@ int xf86WcmDecode (const char *dev, const char *but, const char *ev, unsigned * 
 	case AC_MODETOGGLE:
 	case AC_DBLCLICK:
 	case AC_DISPLAYTOGGLE:
+	case AC_SCREENTOGGLE:
 	    break;
 	case AC_KEY:
 	    if (!strlen(ev_p))

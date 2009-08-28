@@ -1,6 +1,11 @@
+2009-08-28  Ping Cheng <pingc@wacom.com>
+	* Updated wacomcpl for Nvidia non-TwinView setting
+	* Fixed ring event jump accrossing 0 and 71 points
+	* Label 0.8.4-1
+
 2009-07-30  Ping Cheng <pingc@wacom.com>
 	* Support Nvidia non-TwinView setting
-	* Updated webpages and man page
+	* Updated webpages and man pages 
 	* Fixed bug 2789354 for Graphire
 	* Label 0.8.4
 

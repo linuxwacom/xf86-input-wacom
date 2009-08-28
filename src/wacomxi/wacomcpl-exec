@@ -53,7 +53,8 @@ set modeToggleB 33
 set ignoreButton 34
 set doubleClickB 35
 set displayToggleB 36
-set keystrokeB 37
+set screenToggleB 37
+set keystrokeB 38
 set maxNumTablets 199
 
 proc updateCurrentScreenInfo {} {
@@ -133,44 +134,46 @@ proc updateXinitrc {device option value} {
 }
 
 proc verifycalibResults { } {
-    global calibResults device getOptionDefault
+    global device getOptionDefault xDevMin xDevMax yDevMin yDevMax
 
-    set tol_offset [expr ($getOptionDefault($device,BottomY) / 20)]
-    set tol_left [expr (($getOptionDefault($device,BottomY) / 2) - $tol_offset)]
-    set tol_right [expr (($getOptionDefault($device,BottomY) / 2) + $tol_offset)]
+    set tol_offset [expr ($getOptionDefault($device,BottomY) / 4)]
+    set tol_left [expr ($getOptionDefault($device,BottomY) - $tol_offset) / 2]
+    set tol_right [expr ($getOptionDefault($device,BottomY) + $tol_offset) / 2]
     set tol_bottom [expr ($getOptionDefault($device,BottomY) - $tol_offset)]
 
     # set tablet Y values to normal when offset is by whole of the tablet size.
     # Whole has to be first and we do it two times to make sure.
-    if { $calibResults(yDev,0) > $tol_bottom } {
-	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
-	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
-    } elseif { $calibResults(yDev,0) > $tol_bottom } {
-	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - $getOptionDefault($device,BottomY))]
-	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - $getOptionDefault($device,BottomY))]
-    } elseif { ($calibResults(yDev,0) > $tol_left) && ($calibResults(yDev,0) < $tol_right) } {
+    if { $yDevMin > $tol_bottom } {
+	set yDevMin [expr ($yDevMin - $getOptionDefault($device,BottomY))]
+	set yDevMax [expr ($yDevMax - $getOptionDefault($device,BottomY))]
+    } 
+    if { $yDevMin > $tol_bottom } {
+	set yDevMin [expr ($yDevMin - $getOptionDefault($device,BottomY))]
+	set yDevMax [expr ($yDevMax - $getOptionDefault($device,BottomY))]
+    } elseif { ($yDevMin > $tol_left) && ($yDevMin < $tol_right) } {
 	# set tablet Y values to normal when offset is by half tablet size
-	set calibResults(yDev,0) [expr ($calibResults(yDev,0) - ($getOptionDefault($device,BottomY) / 2))]
-	set calibResults(yDev,1) [expr ($calibResults(yDev,1) - ($getOptionDefault($device,BottomY) / 2))]
+	set yDevMin [expr ($yDevMin - ($getOptionDefault($device,BottomY) / 2))]
+	set yDevMax [expr ($yDevMax - ($getOptionDefault($device,BottomY) / 2))]
     }
 
-    set tol_offset [expr ($getOptionDefault($device,BottomX) / 20)]
-    set tol_left [expr (($getOptionDefault($device,BottomX) / 2) - $tol_offset)]
-    set tol_right [expr (($getOptionDefault($device,BottomX) / 2) + $tol_offset)]
+    set tol_offset [expr ($getOptionDefault($device,BottomX) / 4)]
+    set tol_left [expr ($getOptionDefault($device,BottomX) - $tol_offset) / 2]
+    set tol_right [expr ($getOptionDefault($device,BottomX) + $tol_offset) / 2]
     set tol_bottom [expr ($getOptionDefault($device,BottomX) - $tol_offset)]
 
     # set tablet X values to normal when offset is by whole of the tablet size. 
     # Whole has to be first and we do it two times to make sure.
-    if { $calibResults(xDev,0) > $tol_bottom } {
-	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
-	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
-    } elseif { $calibResults(xDev,0) > $tol_bottom } {
-	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - $getOptionDefault($device,BottomX))]
-	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - $getOptionDefault($device,BottomX))]
-    } elseif { ($calibResults(xDev,0) > $tol_left) && ($calibResults(xDev,0) < $tol_right) } {
+    if { $xDevMin > $tol_bottom } {
+	set xDevMin [expr ($xDevMin - $getOptionDefault($device,BottomX))]
+	set xDevMax [expr ($xDevMax - $getOptionDefault($device,BottomX))]
+    } 
+    if { $xDevMin > $tol_bottom } {
+	set xDevMin [expr ($xDevMin - $getOptionDefault($device,BottomX))]
+	set xDevMax [expr ($xDevMax - $getOptionDefault($device,BottomX))]
+    } elseif { ($xDevMin > $tol_left) && ($xDevMin < $tol_right) } {
 	# set tablet X values to normal when offset is by half tablet size
-	set calibResults(xDev,0) [expr ($calibResults(xDev,0) - ($getOptionDefault($device,BottomX) / 2))]
-	set calibResults(xDev,1) [expr ($calibResults(xDev,1) - ($getOptionDefault($device,BottomX) / 2))]
+	set xDevMin [expr ($xDevMin - ($getOptionDefault($device,BottomX) / 2))]
+	set xDevMax [expr ($xDevMax - ($getOptionDefault($device,BottomX) / 2))]
     }
 }
 
@@ -180,6 +183,7 @@ proc calibrationSequence {which xDev yDev} {
     global swapThresh screenWidth screenHeight getOptionDefault
     global getDeviceModel screenXBottom screenYBottom
     global calibX_org calibY_org calibX_botm calibY_botm
+    global xDevMin xDevMax yDevMin yDevMax
 
     set scaling [exec xsetwacom get $device xscaling]
     if { $scaling == 1 } {
@@ -227,19 +231,19 @@ proc calibrationSequence {which xDev yDev} {
 		of the pink crosshair, you are fine. Otherwise, try it again."
 	}
 
-	# A starting point verification of the click. 
+	# Verifying the end results 
 	verifycalibResults
 
-	set widthDev [expr $calibResults(xDev,1) - $calibResults(xDev,0)]
- 	set heightDev [expr $calibResults(yDev,1) - $calibResults(yDev,0)]
- 	set widthX [expr $screenWidth-$size]
- 	set heightX [expr $screenHeight-$size]
+	set widthDev [expr $xDevMax - $xDevMin]
+	set heightDev [expr $yDevMax - $yDevMin]
+ 	set widthX [expr $screenWidth - $size]
+ 	set heightX [expr $screenHeight - $size]
 
 	set xDevMin [expr $xDevMin - ($borderOffset * $widthDev / $widthX)]
 	set xDevMax [expr $xDevMax + ($borderOffset * $widthDev / $widthX)]
 	set yDevMin [expr $yDevMin - ($borderOffset * $heightDev / $heightX)]
 	set yDevMax [expr $yDevMax + ($borderOffset * $heightDev / $heightX)]
-	
+
 	updateXinitrc $device topx $xDevMin
 	updateXinitrc $device topy $yDevMin
 	updateXinitrc $device bottomx $xDevMax
@@ -293,7 +297,7 @@ proc Calibration {} {
 	return
     }
 
-    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is not in xorg.conf
+    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is different in xorg.conf
 	set calibX_org 0
 	set calibY_org 0
 	set calibX_botm $screenWidth
@@ -430,7 +434,7 @@ proc disableButtons {} {
 
 proc getDeviceOptionProc { dev i } {
     global getOption getOptionDefault Option oldKeys modeToggleB
-    global displayToggleB ignoreButton doubleClickB keystrokeB 
+    global displayToggleB ignoreButton screenToggleB doubleClickB keystrokeB 
     global numStrips numControls numButton spName
 
     for { set j 1 } { $j < [ expr $i+1 ] } { incr j 1 } {
@@ -485,6 +489,9 @@ proc getDeviceOptionProc { dev i } {
 		    }
 		    if { ![string compare -nocase -length 13 DISPLAYTOGGLE $value ] } {
 			set getOption($dev,$Option($j)) $displayToggleB
+		    }
+		    if { ![string compare -nocase -length 12 SCREENTOGGLE $value ] } {
+			set getOption($dev,$Option($j)) $screenToggleB
 		    }
 		    if { $value == 0 } {
 			set getOption($dev,$Option($j)) $ignoreButton
@@ -659,7 +666,7 @@ proc updateButton {} {
     global device getDeviceModel sm getOption spName isLCD
     global dm currentW oldKeys numButton cKeys numStrips startS
     global modeToggleB ignoreButton doubleClickB keystrokeB 
-    global displayToggleB
+    global displayToggleB screenToggleB
 
     set type $getDeviceModel($device,type)
     set model $getDeviceModel($device,model)
@@ -694,6 +701,9 @@ proc updateButton {} {
 	    "Display Toggle"
 		{ set j $displayToggleB
 		 set v "DisplayToggle 1" }
+	    "Screen Toggle"
+		{ set j $screenToggleB
+		 set v "ScreenToggle 1" }
 	    "KeyStroke"
 		{ set j $keystrokeB 
 		 if { $cKeys($spName($k)) == "" } {
@@ -985,7 +995,7 @@ proc expressKeys { } {
     global db11 db12 db13 db14 startS 
     global currentW device numButton spName numStrips
     global getDeviceModel cKeys oldKeys getOption
-    global displayToggleB ignoreButton keystrokeB
+    global displayToggleB ignoreButton keystrokeB screenToggleB
     global numPadRings numPadStrips numPadAbsW numPadRelW
 
     set name(1) "Wheel Up"
@@ -1040,15 +1050,15 @@ proc expressKeys { } {
 proc addMenu { curb } {
     global db db1 db2 db3 db4 db5 db6 db7 db8 db9 db10 
     global db11 db12 db13 db14 currentW device spName
-    global getOption getDeviceModel cKeys oldKeys keystrokeB
-    global doubleClickB displayToggleB ignoreButton modeToggleB
+    global getOption getDeviceModel cKeys oldKeys 
+    global keystrokeB doubleClickB screenToggleB
+    global displayToggleB ignoreButton modeToggleB
 
     set model $getDeviceModel($device,model)
     set type $getDeviceModel($device,type)
 
     set opt $getOption($device,$spName($curb))
     if { $opt == "" } { set opt $curb }
- 
     set db$curb $db($opt) 
     #reset keys
     if { $opt != $keystrokeB } {
@@ -1059,12 +1069,12 @@ proc addMenu { curb } {
     if { [string compare $type "pad"] } {
 	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
 		$db(3) $db(4) $db(5) $db($doubleClickB) $db($modeToggleB) \
-		$db($displayToggleB) $db($ignoreButton) ]
+		$db($displayToggleB) $db($screenToggleB) $db($ignoreButton) ]
 	set i 9
     } else {
 	set bmenu [ tk_optionMenu $currentW.f.$curb db$curb $db(1) $db(2) \
 		$db(3) $db(4) $db(5) $db($doubleClickB) $db($displayToggleB) \
-		$db($ignoreButton) ]
+		$db($screenToggleB) $db($ignoreButton) ]
 	set i 8
     }
 
@@ -1338,7 +1348,7 @@ proc initialSet {} {
 	}
     }
 
-    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4) tv(5)
+    tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4) $tv(5)
     grid $currentW.f.tv -row 2 -column 0 
     grid $currentW.f.tvmenu -row 2 -column 1
 
@@ -1885,7 +1895,7 @@ proc createControls { } {
     global desktopHeight desktopWidth oldKeys numStrips
     global workingTags db dm sm wName bName numButton
     global doubleClickB ignoreButton displayToggleB 
-    global modeToggleB keystrokeB
+    global modeToggleB keystrokeB screenToggleB 
 
     createDeviceList 
     updateModelInfo
@@ -1903,6 +1913,7 @@ proc createControls { } {
     set db($doubleClickB) "Left Double"
     set db($modeToggleB) "Mode Toggle"
     set db($displayToggleB) "Display Toggle"
+    set db($screenToggleB) "Screen Toggle"
     set db($ignoreButton) "Ignore"
     set db($keystrokeB) "KeyStroke"
     set dm(1) "Relative"
