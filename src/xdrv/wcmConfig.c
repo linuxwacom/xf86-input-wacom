@@ -160,8 +160,6 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	priv->maxWidth = 0;			/* max active screen width */
 	priv->maxHeight = 0;			/* max active screen height */
-	priv->leftPadding = 0;			/* left padding for virtual tablet */
-	priv->topPadding = 0;			/* top padding for virtual tablet */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
 	priv->tvoffsetX = 0;			/* none X edge offset for TwinView setup */
 	priv->tvoffsetY = 0;			/* none Y edge offset for TwinView setup */

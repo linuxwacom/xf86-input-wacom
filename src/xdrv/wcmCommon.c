@@ -46,7 +46,6 @@ extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
-extern void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
 extern void xf86WcmTilt2R(WacomDeviceStatePtr ds);
 
 /*****************************************************************************
@@ -69,7 +68,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 void xf86WcmMappingFactor(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
- 
+ 	int screenX, screenY;
+
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmMappingFactor \n"));
 
 	xf86WcmVirtaulTabletSize(local);
@@ -104,14 +104,21 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	if (priv->currentScreen == -1) /* tool on the tablet */
 		priv->currentScreen = 0;
 
+ 	screenX = priv->maxWidth;
+	screenY = priv->maxHeight;
+	if (priv->screen_no != -1 || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor) )
+	{
+ 		screenX = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen];
+		screenY = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen];
+	}
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmMappingFactor"
 		" Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
 		" to maxWidth =%d maxHeight =%d\n", 
 		priv->bottomX, priv->bottomY, priv->sizeX, priv->sizeY, 
-		priv->maxWidth, priv->maxHeight));
+		screenX, screenY));
 
-	priv->factorX = (double)priv->maxWidth / (double)priv->sizeX;
-	priv->factorY = (double)priv->maxHeight / (double)priv->sizeY;
+	priv->factorX = (double)screenX / (double)priv->sizeX;
+	priv->factorY = (double)screenY / (double)priv->sizeY;
 	DBG(2, priv->debugLevel, ErrorF("X factor = %.3g, Y factor = %.3g\n",
 		priv->factorX, priv->factorY));
 }
@@ -223,9 +230,10 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 		return;
 	}
 
-	xf86WcmVirtaulTabletPadding(local);
-	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
-	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
+	priv->currentScreen = screenToSet;
+	xf86WcmMappingFactor(local);
+	x = ((double)v0 * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
+	y = ((double)v1 * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
 
 	if (x >= screenInfo.screens[screenToSet]->width)
 		x = screenInfo.screens[screenToSet]->width - 1;
@@ -235,7 +243,6 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	xf86XInputSetScreen(local, screenToSet, x, y);
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmSetScreen current=%d ToSet=%d\n", 
 			priv->currentScreen, screenToSet));
-	priv->currentScreen = screenToSet;
 }
 
 /*****************************************************************************
@@ -962,13 +969,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			 */
 			if (!is_absolute)
 				x *= priv->factorY / priv->factorX;
- 			else
-			{
-				/* Padding virtual values */
-				xf86WcmVirtaulTabletPadding(local);
-				x += priv->leftPadding;
-				y += priv->topPadding;
-			}
 
 #ifdef WCM_XORG_TABLET_SCALING
 			/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
@@ -988,7 +988,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
 			y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
-			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
+			if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA) && (priv->screen_no == -1))
 			{
 				x -= priv->screenTopX[priv->currentScreen];
 				y -= priv->screenTopY[priv->currentScreen];
@@ -996,16 +996,25 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 			if (priv->screen_no != -1)
 			{
-				if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-					x = priv->screenBottomX[priv->currentScreen];
+				if (priv->twinview <= TV_XINERAMA)
+				{
+					if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+						x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen];
+					if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+						y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen];
+				}
 				if (x < 0) x = 0;
-				if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-					y = priv->screenBottomY[priv->currentScreen];
 				if (y < 0) y = 0;
 	
 			}
+			if (priv->twinview > TV_XINERAMA)
+			{
+				x += priv->screenTopX[priv->currentScreen];
+				y += priv->screenTopY[priv->currentScreen];
+			}
 			priv->currentSX = x;
 			priv->currentSY = y;
+			DBG(6, priv->debugLevel, ErrorF("WCM_XORG_TABLET_SCALING Convert v0=%d v1=%d to x=%d y=%d\n", ds->x, ds->y, x, y));
 #endif
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
@@ -2074,7 +2083,6 @@ static void rotateOneTool(WacomDevicePtr priv)
 		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
 		break;
 	}
-	xf86WcmMappingFactor(priv->local);
 	xf86WcmInitialCoordinates(priv->local, 0);
 	xf86WcmInitialCoordinates(priv->local, 1);
 

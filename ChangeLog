@@ -1,3 +1,7 @@
+2009-09-16  Ping Cheng <pingc@wacom.com>
+	* Fixed a mapping issue introduced by non-TwinView support
+	* Label 0.8.4-2
+
 2009-08-28  Ping Cheng <pingc@wacom.com>
 	* Updated wacomcpl for Nvidia non-TwinView setting
 	* Fixed ring event jump accrossing 0 and 71 points

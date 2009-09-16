@@ -82,9 +82,10 @@
  * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
  * 2009-07-14 47-pc0.8.3-7 - Support Nvidia Xinerama setting
  * 2009-08-25 47-pc0.8.4-1 - Support ScreenToggle
+ * 2009-09-16 47-pc0.8.4-2 - fixed a break in TwinView setting
  */
 
-static const char identification[] = "$Identification: 47-0.8.4-1 $";
+static const char identification[] = "$Identification: 47-0.8.4-2 $";
 
 /****************************************************************************/
 
@@ -146,10 +147,12 @@ static void xf86WcmDesktopSize(LocalDevicePtr local)
 	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
 
 	xf86WcmInitialScreens(local);
+
 	minX = priv->screenTopX[0];
 	minY = priv->screenTopY[0];
 	maxX = priv->screenBottomX[0];
 	maxY = priv->screenBottomY[0];
+
 	if (priv->numScreen != 1)
 	{
 		for (i = 1; i < priv->numScreen; i++)
@@ -164,6 +167,7 @@ static void xf86WcmDesktopSize(LocalDevicePtr local)
 				maxY = priv->screenBottomY[i];
 		}
 	}
+
 	priv->maxWidth = maxX - minX;
 	priv->maxHeight = maxY - minY;
 } 
@@ -209,6 +213,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{
 		if (priv->twinview <= TV_XINERAMA)
+		{
+			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
+					local->name, priv->screen_no);
+			priv->screen_no = -1;
+		}
+		else if (priv->screen_no > 1)
 		{
 			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
 					local->name, priv->screen_no);
@@ -294,45 +304,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
- ****************************************************************************/
-
-void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i;
-
-	priv->leftPadding = 0;
-	priv->topPadding = 0;
-
-	if (!(priv->flags & ABSOLUTE_FLAG)) return;
-
-	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
-	{
-		i = priv->currentScreen;
-
-		priv->leftPadding = priv->bottomX - priv->topX -priv->tvoffsetX;
- 		priv->topPadding = priv->bottomY - priv->topY - priv->tvoffsetY;
-
-		priv->leftPadding = (int)(((double)priv->screenTopX[i] * priv->leftPadding )
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-
-		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-	}
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtaulTabletPadding for \"%s\" "
-		"x=%d y=%d \n", local->name, priv->leftPadding, priv->topPadding));
-	return;
-}
-
-/*****************************************************************************
  * xf86WcmVirtaulTabletSize(LocalDevicePtr local)
  ****************************************************************************/
 
 void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i, tabletSize;
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
@@ -344,22 +321,6 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
 	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
 
-	if ((priv->screen_no != -1) || (priv->twinview > TV_XINERAMA) || (!priv->wcmMMonitor))
-	{
-		i = priv->currentScreen;
-
-		tabletSize = priv->sizeX;
-		priv->sizeX += (int)(((double)priv->screenTopX[i] * tabletSize)
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-		priv->sizeX += (int)((double)((priv->maxWidth - priv->screenBottomX[i])
-			* tabletSize) / ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-
-		tabletSize = priv->sizeY;
-		priv->sizeY += (int)((double)(priv->screenTopY[i] * tabletSize)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
-			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-	}
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtaulTabletSize for \"%s\" "
 		"x=%d y=%d \n", local->name, priv->sizeX, priv->sizeY));
 	return;
@@ -395,7 +356,10 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		topx = 0;
-		bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
+		bottomx = priv->sizeX;
+		if ((priv->twinview == TV_LEFT_RIGHT) || (priv->twinview == TV_RIGHT_LEFT))
+			bottomx *= 2;
+		bottomx = (int)((double)bottomx * priv->factorX + 0.5);
 		resolution = (int)((double)resolution * priv->factorX + 0.5);
 #endif
 
@@ -419,7 +383,10 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
 		topy = 0;
-		bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
+		bottomy = priv->sizeY;
+		if ((priv->twinview == TV_ABOVE_BELOW) || (priv->twinview == TV_BELOW_ABOVE))
+			bottomy *= 2;
+		bottomy = (int)((double)bottomy * priv->factorY + 0.5);
 		resolution = (int)((double)resolution * priv->factorY + 0.5);
 #endif
 
@@ -993,6 +960,8 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	if (len <= 0)
 	{
+		ErrorF("Error reading wacom device : %s\n", strerror(errno));
+
 		/* In case of error, we assume the device has been
 		 * disconnected. So we close it and iterate over all
 		 * wcmDevices to actually close associated devices. */
@@ -1002,7 +971,6 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			if (wDev->local->fd >= 0)
 				xf86WcmDevProc(wDev->local->dev, DEVICE_OFF);
 		}
-		ErrorF("Error reading wacom device : %s\n", strerror(errno));
 		return;
 	}
 
@@ -1215,7 +1183,13 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 	*x = (double)v0 * priv->factorX + 0.5;
 	*y = (double)v1 * priv->factorY + 0.5;
 
-	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA))
+	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview > TV_XINERAMA))
+	{
+		*x += priv->screenTopX[priv->currentScreen];
+		*y += priv->screenTopY[priv->currentScreen];
+	}
+
+	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview <= TV_XINERAMA) && (priv->screen_no == -1))
 	{
 		*x -= priv->screenTopX[priv->currentScreen];
 		*y -= priv->screenTopY[priv->currentScreen];
@@ -1223,11 +1197,14 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 
 	if (priv->screen_no != -1)
 	{
-		if (*x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-			*x = priv->screenBottomX[priv->currentScreen];
+		if (priv->twinview <= TV_XINERAMA)
+		{
+			if (*x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
+				*x = priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen];
+			if (*y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
+				*y = priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen];
+		}
 		if (*x < 0) *x = 0;
-		if (*y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-			*y = priv->screenBottomY[priv->currentScreen];
 		if (*y < 0) *y = 0;
 	
 	}

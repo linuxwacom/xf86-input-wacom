@@ -273,8 +273,6 @@ proc calibrationSequence {which xDev yDev} {
 proc Calibration {} {
     global numScreens device screenTags getOption Option 
     global calibX_org calibY_org calibX_botm calibY_botm tvID
-    global screenX_org screenY_org screenXBottom screenYBottom
-    global screenWidth screenHeight
 
     # mainly to get the defaults
     set Option(1) "TopX"
@@ -297,18 +295,6 @@ proc Calibration {} {
 	return
     }
 
-    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is different in xorg.conf
-	set calibX_org 0
-	set calibY_org 0
-	set calibX_botm $screenWidth
-	set calibY_botm $screenHeight
-    } else {
-	set calibX_org $screenX_org
-	set calibY_org $screenY_org
-	set calibX_botm $screenXBottom
-	set calibY_botm $screenYBottom
-    }
-
     bindtags .workingDev.list .
     if { $numScreens($device) > 1 } {
 	displayScreenList $device
@@ -323,13 +309,26 @@ proc Calibration {} {
 }
 
 proc startCalibration {} {
-    global device size numScreens
+    global device size numScreens tvID
     global calibResults calibX_org calibY_org calibX_botm calibY_botm
+    global screenX_org screenY_org screenXBottom screenYBottom
+    global screenWidth screenHeight 
     
     if { $numScreens($device) > 1 } {
 	bindtags .screen.list.list .
     }
 
+    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is different in xorg.conf
+	set calibX_org 0
+	set calibY_org 0
+	set calibX_botm $screenWidth
+	set calibY_botm $screenHeight
+    } else {
+	set calibX_org $screenX_org
+	set calibY_org $screenY_org
+	set calibX_botm $screenXBottom
+	set calibY_botm $screenYBottom
+    }
     set y_coor [ expr $calibY_botm-$size*(abs($calibY_botm)/$calibY_botm) ]
     set x_coor [ expr $calibX_botm-$size*(abs($calibX_botm)/$calibX_botm) ]
     pad .topleft +$calibX_org+$calibY_org
