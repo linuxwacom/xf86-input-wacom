@@ -33,6 +33,9 @@ static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
 static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* data);
+static int xf86WcmWaitForTablet(int fd, char * data, int size);
+static int xf86WcmWriteWait(int fd, const char* request);
+
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -519,3 +522,56 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	return common->wcmPktLength;
 }
 
+/*****************************************************************************
+ * xf86WcmWrite --
+ *   send a request
+ ****************************************************************************/
+
+static int xf86WcmWriteWait(int fd, const char* request)
+{
+	int len, maxtry = MAXTRY;
+
+	/* send request string */
+	do
+	{
+		len = xf86WriteSerial(fd, request, strlen(request));
+		if ((len == -1) && (errno != EAGAIN))
+		{
+			ErrorF("Wacom xf86WcmWriteWait error : %s", strerror(errno));
+			return 0;
+		}
+
+		maxtry--;
+
+	} while ((len <= 0) && maxtry);
+
+	return maxtry;
+}
+
+/*****************************************************************************
+ * xf86WcmWaitForTablet --
+ *   wait for tablet data
+ ****************************************************************************/
+
+static int xf86WcmWaitForTablet(int fd, char* answer, int size)
+{
+	int len, maxtry = MAXTRY;
+
+	/* Read size bytes of the answer */
+	do
+	{
+		if ((len = xf86WaitForInput(fd, 1000000)) > 0)
+		{
+			len = xf86WcmRead(fd, answer, size);
+			if ((len == -1) && (errno != EAGAIN))
+			{
+				ErrorF("Wacom xf86WcmRead error : %s\n",
+						strerror(errno));
+				return 0;
+			}
+		}
+		maxtry--;
+	} while ((len <= 0) && maxtry);
+
+	return maxtry;
+}

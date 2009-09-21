@@ -180,12 +180,6 @@ Bool xf86WcmOpen(LocalDevicePtr local);
 /* device autoprobing */
 char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
 
-/* serial write and wait command */
-int xf86WcmWriteWait(int fd, const char* request);
-
-/*wait for tablet data */
-int xf86WcmWaitForTablet(int fd, char * data, int size);
-
 /* common tablet initialization regime */
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);
 
