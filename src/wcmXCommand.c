@@ -792,8 +792,14 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 				priv->gPropInfo[i].nParamID <= XWACOM_PARAM_STRIPRDN)
 			xf86WcmSetButtonParam (local, priv->gPropInfo[i].nParamID, 
 				*(CARD32*)prop->data);
-		else
+		else if (prop->format == 8)
+			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD8*)prop->data);
+		else if (prop->format == 16)
+			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD16*)prop->data);
+		else if (prop->format == 32)
 			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD32*)prop->data);
+		else
+			return BadMatch;
 		i = XWACOM_PARAM_MAXPARAM;
 	}
 	else
