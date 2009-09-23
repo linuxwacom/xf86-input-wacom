@@ -377,9 +377,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	/* free pressure curve */
 	if (priv->pPressCurve)
 		xfree(priv->pPressCurve);
-    
-	/* free priv here otherwise X server 1.6 or later crashes 
-	 */
+
 	xfree(priv);
 	local->private = NULL;
 
