@@ -22,23 +22,6 @@
 
 #include <sys/utsname.h>
 
-/* support for compiling module on kernels older than 2.6 */
-#ifndef EV_MSC
-#define EV_MSC 0x04
-#endif
-
-#ifndef MSC_SERIAL
-#define MSC_SERIAL 0x00
-#endif
-
-#ifndef EV_SYN
-#define EV_SYN 0x00
-#endif
-
-#ifndef SYN_REPORT
-#define SYN_REPORT 0
-#endif
-
 #ifndef BTN_TASK
 #define BTN_TASK 0x117
 #endif
@@ -659,19 +642,9 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		return !Success;
 	}
 
-	/* determine if this version of the kernel uses SYN_REPORT or MSC_SERIAL
-	   to indicate end of record for a complete tablet event */
-	if (ISBITSET(ev,EV_SYN))
-	{
-		common->wcmFlags |= USE_SYN_REPORTS_FLAG;
-	}
-	else
-	{
-		ErrorF("WACOM: Kernel doesn't support SYN_REPORT\n");
-		common->wcmFlags &= ~USE_SYN_REPORTS_FLAG;
-	}
+        common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 
-	if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
+        if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl abs bits.\n");
 		return !Success;
@@ -829,7 +802,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	WacomCommonPtr common = priv->common;
 
 	DBG(10, common->debugLevel, ErrorF("usbParseEvent \n"));
-	/* store events until we receive the MSC_SERIAL containing
+	/* store events until we receive the SYN_REPORT containing
 	 * the serial number; without it we cannot determine the
 	 * correct channel. */
 
@@ -845,25 +818,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	/* Check for end of record indicator.  On 2.4 kernels MSC_SERIAL is used
-	   but on 2.6 and later kernels SYN_REPORT is used.  */
-	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
-	{
-		/* save the serial number so we can look up the channel number later */
-		if (event->value == 0) /* serial number should never be 0 */
-		{
-			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
-			goto skipEvent;
-		}
-		common->wcmLastToolSerial = event->value;
-
-		/* if SYN_REPORT is end of record indicator, we are done */
-		if (USE_SYN_REPORTS(common))
-			return;
-
-		/* fall through to deliver the X event */
-	}
-	else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+	if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
 		/* if we got a SYN_REPORT but weren't expecting one, change over to
 		   using SYN_REPORT as the end of record indicator */
@@ -879,7 +834,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	}
 	else
 	{
-		/* not an MSC_SERIAL or SYN_REPORT, bail out */
+		/* not an SYN_REPORT, bail out */
 		return;
 	}
 
@@ -1143,10 +1098,6 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	/* don't send touch event when touch isn't enabled */
 	if ((ds->device_type == TOUCH_ID) && !common->wcmTouch)
 		return;
-
-	/* it is an out-prox when id or/and serial number is zero for kernel 2.4 */
-	if ((!ds->device_id || !ds->serial_num) && !USE_SYN_REPORTS(common))
- 		ds->proximity = 0;
 
 	/* DTF720 and DTF720a don't support eraser */
 	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
