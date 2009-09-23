@@ -614,14 +614,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
 	{
-		static int already_tried_it = 0;
-		/* best effort attempt at loading the wacom and evdev
-		 * kernel modules. try it just once */
-		if (!already_tried_it) {
-			already_tried_it = 1;
-			(void)xf86LoadKernelModule("wacom");
-			(void)xf86LoadKernelModule("evdev");
-    		}
 		common->wcmDevCls = &gWacomUSBDevice;
 		xf86Msg(X_CONFIG, "%s: reading USB link\n", dev->identifier);
 	}
