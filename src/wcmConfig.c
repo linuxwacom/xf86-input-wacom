@@ -372,8 +372,6 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
-	gWacomModule.DevProc(local->dev, DEVICE_OFF);
-
 	/* free pressure curve */
 	if (priv->pPressCurve)
 		xfree(priv->pPressCurve);
