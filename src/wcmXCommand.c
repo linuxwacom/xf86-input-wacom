@@ -501,20 +501,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmChangeScreen(local, priv->screen_no);
 		break;
 	    }
-	    case XWACOM_PARAM_COREEVENT:
-		if ((value != 0) && (value != 1)) return BadValue;
-		/* Change the local flags. But not the configure file */
-		if (value)
-		{
-			local->flags |= XI86_ALWAYS_CORE;
-/*			xf86XInputSetSendCoreEvents (local, TRUE);
-*/		}
-		else
-		{
-			local->flags &= ~XI86_ALWAYS_CORE;
-/*			xf86XInputSetSendCoreEvents (local, FALSE);
-*/		}
-		break;
 	   case XWACOM_PARAM_ROTATE:
 		if ((value < 0) || (value > 3)) return BadValue;
 		if (common->wcmRotate != value)
@@ -711,8 +697,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 		(priv->tvResolution[0] | (priv->tvResolution[1] << 16)) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TVRESOLUTION1", XWACOM_PARAM_TVRESOLUTION1, 32, 1, 
 		(priv->tvResolution[2] | (priv->tvResolution[3] << 16)) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "COREEVENT", XWACOM_PARAM_COREEVENT, 8, 1, 
-		((local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER)) ? 1 : 0) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "THRESHOLD", XWACOM_PARAM_THRESHOLD, 8, 1, 
 		(!common->wcmMaxZ ? 0 : common->wcmThreshold) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOOLSERIAL", XWACOM_PARAM_TOOLSERIAL, 32, 1,  priv->old_serial };
