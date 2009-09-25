@@ -692,16 +692,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "COMMONDBG", XWACOM_PARAM_COMMONDBG, 8, 1, common->debugLevel };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RAWSAMPLE", XWACOM_PARAM_RAWSAMPLE, 8, 1, common->wcmRawSample };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "CAPACITY", XWACOM_PARAM_CAPACITY, 8, 1, common->wcmCapacity };
-
-	for (j=0; j<32; j++)
-	{
-		char st[32];
-		sprintf(st, "%d", (j+1));
-		priv->gPropInfo[++i] = (PROPINFO) { 0, "BUTTON", XWACOM_PARAM_BUTTON1+j, 32, 1, priv->button[j] };
-		strncat(priv->gPropInfo[i].paramName, st, strlen(st));
-		priv->gPropInfo[i].paramName[6+strlen(st)] = '\0';
-	}
-
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RELWUP", XWACOM_PARAM_RELWUP, 32, 1, priv->relup };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RELWDN", XWACOM_PARAM_RELWDN, 32, 1, priv->reldn };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "ABSWUP", XWACOM_PARAM_ABSWUP, 32, 1, priv->wheelup };
