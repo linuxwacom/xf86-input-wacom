@@ -62,7 +62,7 @@ tells the driver to dialog with the tablet the serial Tablet PC way.  It
 is a special Wacom IV protocol, called ISDV4 protocol.  This option is 
 mandatory for serial Tablet PCs only.
 .TP 4
-.B Option \fI"Suppress"\fP \fI"Inumber"\fP
+.B Option \fI"Suppress"\fP \fI"number"\fP
 sets the position increment under which not to transmit coordinates.
 This entry must be specified only in the first Wacom subsection if you have
 multiple devices for one tablet. If you don't specify this entry, the default 
@@ -107,7 +107,7 @@ X coordinate of the top corner of the active zone.  Default to 0.
 .B Option \fI"TopY"\fP \fI"number"\fP
 Y coordinate of the top corner of the active zone.  Default to 0.
 .TP 4
-.B Option \fI"BottomX"\fP \fI"Inumber"\fP
+.B Option \fI"BottomX"\fP \fI"number"\fP
 X coordinate of the bottom corner of the active zone.  Default to width of the tablet.
 .TP 4
 .B Option \fI"BottomY"\fP \fI"number"\fP
