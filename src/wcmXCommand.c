@@ -655,7 +655,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOOLID", XWACOM_PARAM_TOOLID, 16, 1, priv->old_device_id };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TABLETID", XWACOM_PARAM_TID, 16, 1, common->tablet_id };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "SERIAL", XWACOM_PARAM_SERIAL, 32, 1, priv->serial };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "NUMSCREEN", XWACOM_PARAM_NUMSCREEN, 8, 1, priv->numScreen };
 
 	/* this property may be needed for Nvidia Xinerama setup, which doesn't call DevConvert */
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "XSCALING", XWACOM_PARAM_XSCALING, 32, 1, common->wcmScaling };
