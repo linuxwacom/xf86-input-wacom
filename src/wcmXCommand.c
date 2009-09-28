@@ -656,28 +656,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TABLETID", XWACOM_PARAM_TID, 16, 1, common->tablet_id };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "SERIAL", XWACOM_PARAM_SERIAL, 32, 1, priv->serial };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "NUMSCREEN", XWACOM_PARAM_NUMSCREEN, 8, 1, priv->numScreen };
-	for (j=0; j<8; j++)
-	{
-		char st[32];
 
-		sprintf(st, "%d", j);
-		priv->gPropInfo[++i] = (PROPINFO) { 0, "STOPX", XWACOM_PARAM_STOPX0+j, 16, 1, 
-			priv->screenTopX[j] };
-		strncat(priv->gPropInfo[i].paramName, st, strlen(st));
-		priv->gPropInfo[i].paramName[5+strlen(st)] = '\0';
-		priv->gPropInfo[++i] = (PROPINFO) { 0, "STOPY", XWACOM_PARAM_STOPY0+j, 16, 1, 
-			priv->screenTopY[j] };
-		strncat(priv->gPropInfo[i].paramName, st, strlen(st));
-		priv->gPropInfo[i].paramName[5+strlen(st)] = '\0';
-		priv->gPropInfo[++i] = (PROPINFO) { 0, "SBOTTOMX", XWACOM_PARAM_SBOTTOMX0+j, 16, 1, 
-			priv->screenBottomX[j] };
-		strncat(priv->gPropInfo[i].paramName, st, strlen(st));
-		priv->gPropInfo[i].paramName[8+strlen(st)] = '\0';
-		priv->gPropInfo[++i] = (PROPINFO) { 0, "SBOTTOMY", XWACOM_PARAM_SBOTTOMY0+j, 16, 1, 
-			priv->screenBottomY[j] };
-		strncat(priv->gPropInfo[i].paramName, st, strlen(st));
-		priv->gPropInfo[i].paramName[8+strlen(st)] = '\0';
-	}
 	/* this property may be needed for Nvidia Xinerama setup, which doesn't call DevConvert */
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "XSCALING", XWACOM_PARAM_XSCALING, 32, 1, common->wcmScaling };
 
