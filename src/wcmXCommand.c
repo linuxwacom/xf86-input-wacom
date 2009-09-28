@@ -160,7 +160,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	char st[32];
-	WacomToolAreaPtr area = priv->toolarea;
 
 	/* We don't reset options to the values that the driver are using.  
 	 * This eliminates confusion when driver is running on default values.
@@ -241,22 +240,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 			xf86WcmMappingFactor(local);
 			xf86WcmInitialCoordinates(local, 1);
-		}
-		break;
-	    case XWACOM_PARAM_DEBUGLEVEL:
-		if ((value < 0) || (value > 100)) return BadValue;
-		if (priv->debugLevel != value)
-		{
-			xf86ReplaceIntOption(local->options, "DebugLevel", value);
-			priv->debugLevel = value;
-		}
-		break;
-	    case XWACOM_PARAM_COMMONDBG:
-		if ((value < 0) || (value > 100)) return BadValue;
-		if (common->debugLevel != value)
-		{
-			xf86ReplaceIntOption(local->options, "CommonDBG", value);
-			common->debugLevel = value;
 		}
 		break;
 	    case XWACOM_PARAM_SUPPRESS:
@@ -656,7 +639,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "BOTTOMX", XWACOM_PARAM_BOTTOMX, 32, 1, priv->bottomX };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "BOTTOMY", XWACOM_PARAM_BOTTOMY, 32, 1, priv->bottomY };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "PRESSCURVE", XWACOM_PARAM_PRESSCURVE, 32, 1, ((100 << 8) | 100) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "DEBUGLEVEL", XWACOM_PARAM_DEBUGLEVEL, 8, 1, priv->debugLevel };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TPCBUTTON", XWACOM_PARAM_TPCBUTTON, 8, 1, common->wcmTPCButton };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOUCH", XWACOM_PARAM_TOUCH, 8, 1, common->wcmTouch };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "CURSORPROX", XWACOM_PARAM_CURSORPROX, 16, 1, common->wcmCursorProxoutDist };
@@ -664,7 +646,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TWINVIEW", XWACOM_PARAM_TWINVIEW, 8, 1, priv->twinview };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "SUPPRESS", XWACOM_PARAM_SUPPRESS, 8, 1, common->wcmSuppress };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "SCREEN_NO", XWACOM_PARAM_SCREEN_NO, 8, 1, priv->screen_no };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "COMMONDBG", XWACOM_PARAM_COMMONDBG, 8, 1, common->debugLevel };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RAWSAMPLE", XWACOM_PARAM_RAWSAMPLE, 8, 1, common->wcmRawSample };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "CAPACITY", XWACOM_PARAM_CAPACITY, 8, 1, common->wcmCapacity };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RELWUP", XWACOM_PARAM_RELWUP, 32, 1, priv->relup };
