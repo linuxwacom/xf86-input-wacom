@@ -287,22 +287,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		break;
 	    }
-	    case XWACOM_PARAM_SPEEDLEVEL:
-		if ((value < 1) || (value > 11)) return BadValue;
-		if (value > 6) priv->speed = 2.00*((double)value - 6.00);
-		else priv->speed = ((double)value) / 6.00;
-		sprintf(st, "%.3f", priv->speed);
-		xf86AddNewOption(local->options, "Speed", st);
-		break;
-	    case XWACOM_PARAM_ACCEL:
-		if ((value < 1) || (value > MAX_ACCEL)) 
-			return BadValue;
-		else if (priv->accel != value-1)
-		{
-			priv->accel = value-1;
-			xf86ReplaceIntOption(local->options, "Accel", priv->accel);
-		}
-		break;
 	    case XWACOM_PARAM_CLICKFORCE:
 		if ((value < 1) || (value > 21)) return BadValue;
 		common->wcmThreshold = (int)((double)
@@ -656,9 +640,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPLDN", XWACOM_PARAM_STRIPLDN, 32, 1, priv->stripldn };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPRUP", XWACOM_PARAM_STRIPRUP, 32, 1, priv->striprup };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPRDN", XWACOM_PARAM_STRIPRDN, 32, 1, priv->striprdn };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "SPEEDLEVEL", XWACOM_PARAM_SPEEDLEVEL, 8, 1, 6 };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "CLICKFORCE", XWACOM_PARAM_CLICKFORCE, 8, 1, 6 };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "ACCEL", XWACOM_PARAM_ACCEL, 8, 1, (priv->accel + 1) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "XYDEFAULT", XWACOM_PARAM_XYDEFAULT, 8, 1, -1 };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "MMT", XWACOM_PARAM_MMT, 8, 1, priv->wcmMMonitor  };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "RAWFILTE", XWACOM_PARAM_RAWFILTER, 8, 1,
