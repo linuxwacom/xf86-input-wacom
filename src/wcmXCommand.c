@@ -304,16 +304,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		}
 		break;
 	    }
-	    case XWACOM_PARAM_MODE:
-	    {
-		int is_absolute = priv->flags & ABSOLUTE_FLAG;
-		if ((value < 0) || (value > 1)) return BadValue;
-		if (value != is_absolute)
-		{
-			xf86WcmDevSwitchModeCall(local, value);
-		}
-		break;
-	    }
 	    case XWACOM_PARAM_SPEEDLEVEL:
 		if ((value < 1) || (value > 11)) return BadValue;
 		if (value > 6) priv->speed = 2.00*((double)value - 6.00);
@@ -667,7 +657,6 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "BOTTOMY", XWACOM_PARAM_BOTTOMY, 32, 1, priv->bottomY };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "PRESSCURVE", XWACOM_PARAM_PRESSCURVE, 32, 1, ((100 << 8) | 100) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "DEBUGLEVEL", XWACOM_PARAM_DEBUGLEVEL, 8, 1, priv->debugLevel };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "MODE", XWACOM_PARAM_MODE, 8, 1, ((priv->flags & ABSOLUTE_FLAG) ? 1 : 0) };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TPCBUTTON", XWACOM_PARAM_TPCBUTTON, 8, 1, common->wcmTPCButton };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOUCH", XWACOM_PARAM_TOUCH, 8, 1, common->wcmTouch };
 	priv->gPropInfo[++i] = (PROPINFO) { 0, "CURSORPROX", XWACOM_PARAM_CURSORPROX, 16, 1, common->wcmCursorProxoutDist };
