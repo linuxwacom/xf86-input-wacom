@@ -244,11 +244,6 @@ struct _WacomDeviceRec
 
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
-
-	/* get/set/property */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-	PROPINFO gPropInfo[XWACOM_PARAM_MAXPARAM];
-#endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
 };
 
 /******************************************************************************

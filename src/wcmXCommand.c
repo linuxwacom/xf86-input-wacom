@@ -151,6 +151,8 @@ void xf86WcmChangeScreen(LocalDevicePtr local, int value)
 	xf86WcmInitialCoordinates(local, 1);
 }
 
+#if 0 /* FIXME: to be removed when property transition is complete. */
+
 /*****************************************************************************
  * xf86WcmSetParam
  ****************************************************************************/
@@ -159,104 +161,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	char st[32];
 
 	/* We don't reset options to the values that the driver are using.  
 	 * This eliminates confusion when driver is running on default values.
 	 */
 	switch (param)
 	{
-	    case XWACOM_PARAM_TOPX:
-		if ( priv->topX != value)
-		{
-			/* check if value overlaps with existing ones */
-			area->topX = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
-			{
-				area->topX = priv->topX;
-				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam TopX overlaps with another area \n"));
-				return BadValue;
-			}
-
-			/* Area definition is ok */
-			xf86ReplaceIntOption(local->options, "TopX", value);
-			priv->topX = xf86SetIntOption(local->options, "TopX", 0);
-			xf86WcmMappingFactor(local);
-			xf86WcmInitialCoordinates(local, 0);
-		}
-		break;
-	    case XWACOM_PARAM_TOPY:
-		if ( priv->topY != value)
-		{
-			/* check if value overlaps with existing ones */
-			area->topY = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
-			{
-				area->topY = priv->topY;
-				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam TopY overlap with another area \n"));
-				return BadValue;
-			}
-
-			/* Area definition is ok */
-			xf86ReplaceIntOption(local->options, "TopY", value);
-			priv->topY = xf86SetIntOption(local->options, "TopY", 0);
-			xf86WcmMappingFactor(local);
-			xf86WcmInitialCoordinates(local, 1);
-		}
-		break;
-	    case XWACOM_PARAM_BOTTOMX:
-		if ( priv->bottomX != value)
-		{
-			/* check if value overlaps with existing ones */
-			area->bottomX = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
-			{
-				area->bottomX = priv->bottomX;
-				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam BottomX overlap with another area \n"));
-				return BadValue;
-			}
-
-			/* Area definition is ok */
-			xf86ReplaceIntOption(local->options, "BottomX", value);
-			priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-			xf86WcmMappingFactor(local);
-			xf86WcmInitialCoordinates(local, 0);
-		}
-		break;
-	    case XWACOM_PARAM_BOTTOMY:
-		if ( priv->bottomY != value)
-		{
-			/* check if value overlaps with existing ones */
-			area->bottomY = value;
-			if (xf86WcmAreaListOverlap(area, priv->tool->arealist))
-			{
-				area->bottomY = priv->bottomY;
-				DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam BottomY overlap with another area \n"));
-				return BadValue;
-			}
-
-			/* Area definition is ok */
-			xf86ReplaceIntOption(local->options, "BottomY", value);
-			priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-			xf86WcmMappingFactor(local);
-			xf86WcmInitialCoordinates(local, 1);
-		}
-		break;
-	    case XWACOM_PARAM_SUPPRESS:
-		if ((value < 0) || (value > 100)) return BadValue;
-		if (common->wcmSuppress != value)
-		{
-			xf86ReplaceIntOption(local->options, "Suppress", value);
-			common->wcmSuppress = value;
-		}
-		break;
-	    case XWACOM_PARAM_RAWSAMPLE:
-		if ((value < 1) || (value > XWACOM_MAX_SAMPLES)) return BadValue;
-		if (common->wcmRawSample != value)
-		{
-			common->wcmRawSample = value;
-		}
-		break;
 	    case XWACOM_PARAM_RAWFILTER:
 		if ((value < 0) || (value > 1)) return BadValue;
 		if (value) 
@@ -269,35 +179,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			common->wcmFlags &= ~(RAW_FILTERING_FLAG);
 			xf86ReplaceStrOption(local->options, "RawFilter", "Off");
 		}
-		break;
-	    case XWACOM_PARAM_PRESSCURVE:
-	    {
-		if ( !IsCursor(priv) && !IsPad (priv) && !IsTouch (priv)) 
-		{
-			char chBuf[64];
-			int x0 = (value >> 24) & 0xFF;
-			int y0 = (value >> 16) & 0xFF;
-			int x1 = (value >> 8) & 0xFF;
-			int y1 = value & 0xFF;
-			if ((x0 > 100) || (y0 > 100) || (x1 > 100) || (y1 > 100))
-			    return BadValue;
-			snprintf(chBuf,sizeof(chBuf),"%d,%d,%d,%d",x0,y0,x1,y1);
-			xf86ReplaceStrOption(local->options, "PressCurve",chBuf);
-			xf86WcmSetPressureCurve(priv,x0,y0,x1,y1);
-		}
-		break;
-	    }
-	    case XWACOM_PARAM_CLICKFORCE:
-		if ((value < 1) || (value > 21)) return BadValue;
-		common->wcmThreshold = (int)((double)
-				(value*common->wcmMaxZ)/100.00+0.5);
-		xf86ReplaceIntOption(local->options, "Threshold", 
-				common->wcmThreshold);
-		break;
-	    case XWACOM_PARAM_THRESHOLD:
-		common->wcmThreshold = value;
-		xf86ReplaceIntOption(local->options, "Threshold", 
-				common->wcmThreshold);
 		break;
 	    case XWACOM_PARAM_SERIAL:
 		if (common->wcmProtocolLevel != 5)
@@ -321,57 +202,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			
 			xf86WcmMappingFactor(local);
 		}
-		break;
-	    case XWACOM_PARAM_TPCBUTTON:
-		if ((value != 0) && (value != 1)) 
-			return BadValue;
-		else if (common->wcmTPCButton != value)
-		{
-			common->wcmTPCButton = value;
-			if (value)
-				xf86ReplaceStrOption(local->options, "TPCButton", "on");
-			else
-				xf86ReplaceStrOption(local->options, "TPCButton", "off");
-		}
-		break;
-	    case XWACOM_PARAM_TOUCH:
-		if ((value != 0) && (value != 1)) 
-			return BadValue;
-		else if (common->wcmTouch != value)
-		{
-			common->wcmTouch = value;
-			if (value)
-				xf86ReplaceStrOption(local->options, "Touch", "on");
-			else
-				xf86ReplaceStrOption(local->options, "Touch", "off");
-		}
-		break;
-	    case XWACOM_PARAM_CAPACITY:
-		if ((value < -1) || (value > 5)) 
-			return BadValue;
-		else if (common->wcmCapacity != value)
-		{
-			common->wcmCapacity = value;
-			xf86ReplaceIntOption(local->options, "Capacity", value);
-		}
-		break;
-	    case XWACOM_PARAM_CURSORPROX:
-		if (IsCursor (priv))
-		{
-			if ((value > 255) || (value < 0))
-				return BadValue;
-			else if (common->wcmCursorProxoutDist != value)
-			{
-				xf86ReplaceIntOption(local->options, "CursorProx",value);
-				common->wcmCursorProxoutDist = value;
-			}
-		}
-		break;
-	    case XWACOM_PARAM_SCREEN_NO:
-		if (value < -1 || value >= priv->numScreen) 
-			return BadValue;
-		else if (priv->screen_no != value)
-			xf86WcmChangeScreen(local, value);
 		break;
 	    case XWACOM_PARAM_TWINVIEW:
 		if (priv->twinview != value)
@@ -403,19 +233,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		{
 			int sNum = param - XWACOM_PARAM_TVRESOLUTION0;
 			int rX = value & 0xffff, rY = (value >> 16) & 0xffff;
-			if (rX > screenInfo.screens[0]->width ||
-					rY > screenInfo.screens[0]->height)
-			{
-				ErrorF("xf86WcmSetParam tvResolution out of range: " 
-					"ResX=%d ResY=%d \n", rX, rY);
-				return BadValue;
-			}
-
-			DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam " 
-				"tvResolutionX from %d to ResX=%d tvResolutionY "
-				"from %d toResY=%d \n",
-				priv->tvResolution[0], rX, priv->tvResolution[1], rY));
-
 			if ( priv->twinview == TV_ABOVE_BELOW )
 			{
 				if (sNum)
@@ -452,11 +269,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 		xf86WcmChangeScreen(local, priv->screen_no);
 		break;
 	    }
-	   case XWACOM_PARAM_ROTATE:
-		if ((value < 0) || (value > 3)) return BadValue;
-		if (common->wcmRotate != value)
-			xf86WcmRotateTablet(local, value);
-		break;
 	   case XWACOM_PARAM_XSCALING:
 		if ((value != 0) || (value != 1)) return BadValue;
 		if (common->wcmScaling != value)
@@ -567,8 +379,23 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 	}
 	return Success;
 }
+#endif
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+
+Atom prop_area;
+Atom prop_rotation;
+Atom prop_pressurecurve;
+Atom prop_serials;
+Atom prop_strip_buttons;
+Atom prop_wheel_buttons;
+Atom prop_tv_resolutions;
+Atom prop_screen_no;
+Atom prop_cursorprox;
+Atom prop_capacity;
+Atom prop_threshold;
+Atom prop_suppress;
+Atom prop_extrabuttons;
 
 static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, int *values)
 {
@@ -608,60 +435,69 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	int i = 0, j = 0;
+        int values[9];
 
 	DBG(10, priv->debugLevel, ErrorF("InitWcmDeviceProperties for %s \n", local->name));
 
-	priv->gPropInfo[i] = (PROPINFO) { 0, "TOPX", XWACOM_PARAM_TOPX, 32, 1, priv->topX };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOPY", XWACOM_PARAM_TOPY, 32, 1, priv->topY };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "BOTTOMX", XWACOM_PARAM_BOTTOMX, 32, 1, priv->bottomX };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "BOTTOMY", XWACOM_PARAM_BOTTOMY, 32, 1, priv->bottomY };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "PRESSCURVE", XWACOM_PARAM_PRESSCURVE, 32, 1, ((100 << 8) | 100) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TPCBUTTON", XWACOM_PARAM_TPCBUTTON, 8, 1, common->wcmTPCButton };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOUCH", XWACOM_PARAM_TOUCH, 8, 1, common->wcmTouch };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "CURSORPROX", XWACOM_PARAM_CURSORPROX, 16, 1, common->wcmCursorProxoutDist };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "ROTATE", XWACOM_PARAM_ROTATE, 8, 1, common->wcmRotate };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TWINVIEW", XWACOM_PARAM_TWINVIEW, 8, 1, priv->twinview };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "SUPPRESS", XWACOM_PARAM_SUPPRESS, 8, 1, common->wcmSuppress };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "SCREEN_NO", XWACOM_PARAM_SCREEN_NO, 8, 1, priv->screen_no };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "RAWSAMPLE", XWACOM_PARAM_RAWSAMPLE, 8, 1, common->wcmRawSample };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "CAPACITY", XWACOM_PARAM_CAPACITY, 8, 1, common->wcmCapacity };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "RELWUP", XWACOM_PARAM_RELWUP, 32, 1, priv->relup };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "RELWDN", XWACOM_PARAM_RELWDN, 32, 1, priv->reldn };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "ABSWUP", XWACOM_PARAM_ABSWUP, 32, 1, priv->wheelup };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "ABSWDN", XWACOM_PARAM_ABSWDN, 32, 1, priv->wheeldn };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPLUP", XWACOM_PARAM_STRIPLUP, 32, 1, priv->striplup };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPLDN", XWACOM_PARAM_STRIPLDN, 32, 1, priv->stripldn };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPRUP", XWACOM_PARAM_STRIPRUP, 32, 1, priv->striprup };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "STRIPRDN", XWACOM_PARAM_STRIPRDN, 32, 1, priv->striprdn };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "CLICKFORCE", XWACOM_PARAM_CLICKFORCE, 8, 1, 6 };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "XYDEFAULT", XWACOM_PARAM_XYDEFAULT, 8, 1, -1 };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "MMT", XWACOM_PARAM_MMT, 8, 1, priv->wcmMMonitor  };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "RAWFILTE", XWACOM_PARAM_RAWFILTER, 8, 1,
-		((common->wcmFlags & RAW_FILTERING_FLAG) ? 1 : 0) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TVRESOLUTION0", XWACOM_PARAM_TVRESOLUTION0, 32, 1, 
-		(priv->tvResolution[0] | (priv->tvResolution[1] << 16)) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TVRESOLUTION1", XWACOM_PARAM_TVRESOLUTION1, 32, 1, 
-		(priv->tvResolution[2] | (priv->tvResolution[3] << 16)) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "THRESHOLD", XWACOM_PARAM_THRESHOLD, 8, 1, 
-		(!common->wcmMaxZ ? 0 : common->wcmThreshold) };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOOLSERIAL", XWACOM_PARAM_TOOLSERIAL, 32, 1,  priv->old_serial };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TOOLID", XWACOM_PARAM_TOOLID, 16, 1, priv->old_device_id };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "TABLETID", XWACOM_PARAM_TID, 16, 1, common->tablet_id };
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "SERIAL", XWACOM_PARAM_SERIAL, 32, 1, priv->serial };
+        values[0] = priv->topX;
+        values[1] = priv->topY;
+        values[2] = priv->bottomX;
+        values[3] = priv->bottomY;
+        prop_area = InitWcmAtom(local->dev, "Wacom Area", 32, 4, values);
 
-	/* this property may be needed for Nvidia Xinerama setup, which doesn't call DevConvert */
-	priv->gPropInfo[++i] = (PROPINFO) { 0, "XSCALING", XWACOM_PARAM_XSCALING, 32, 1, common->wcmScaling };
+        values[0] = common->wcmRotate;
+        prop_rotation = InitWcmAtom(local->dev, "Wacom Rotation", 8, 1, values);
 
-	for (i=0; i<XWACOM_PARAM_MAXPARAM; i++)
-	{
-		DBG(10, priv->debugLevel, ErrorF("InitWcmDeviceProperties for %dth entry %s \n", 
-			i, priv->gPropInfo[i].paramName));
-		priv->gPropInfo[i].wcmProp = InitWcmAtom(local->dev, 
-			(char *)priv->gPropInfo[i].paramName, 
-			priv->gPropInfo[i].nFormat, priv->gPropInfo[i].nSize, 
-			&priv->gPropInfo[i].nDefault);
-	}
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = 100;
+        values[3] = 100;
+        prop_pressurecurve = InitWcmAtom(local->dev, "Wacom Pressurecurve", 32, 4, values);
+
+        values[0] = common->tablet_id;
+        values[1] = priv->old_serial;
+        values[2] = priv->old_device_id;
+        values[3] = priv->serial;
+        prop_serials = InitWcmAtom(local->dev, "Wacom Serial IDs", 32, 4, values);
+
+        values[0] = priv->striplup;
+        values[1] = priv->stripldn;
+        values[2] = priv->striprup;
+        values[3] = priv->striprdn;
+        prop_strip_buttons = InitWcmAtom(local->dev, "Wacom Strip Buttons", 8, 4, values);
+
+        values[0] = priv->relup;
+        values[1] = priv->reldn;
+        values[2] = priv->wheelup;
+        values[3] = priv->wheeldn;
+        prop_wheel_buttons = InitWcmAtom(local->dev, "Wacom Wheel Buttons", 8, 4, values);
+
+        values[0] = priv->tvResolution[0];
+        values[1] = priv->tvResolution[1];
+        values[2] = priv->tvResolution[2];
+        values[3] = priv->tvResolution[3];
+        prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TV Resolutions", 32, 4, values);
+
+        values[0] = priv->screen_no;
+        prop_screen_no = InitWcmAtom(local->dev, "Wacom ScreenNumber", 8, 1, values);
+
+        values[0] = common->wcmCursorProxoutDist;
+        prop_cursorprox = InitWcmAtom(local->dev, "Wacom Proximity Threshold", 32, 1, values);
+
+        values[0] = common->wcmCapacity;
+        prop_capacity = InitWcmAtom(local->dev, "Wacom Touch Capacity", 32, 1, values);
+
+        values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
+        prop_threshold = InitWcmAtom(local->dev, "Wacom Pressure Threshold", 32, 1, values);
+
+        values[0] = common->wcmSuppress;
+        values[1] = common->wcmRawSample;
+        prop_suppress = InitWcmAtom(local->dev, "Wacom Sample and Suppress", 32, 2, values);
+
+        values[0] = common->wcmTPCButton;
+        values[1] = common->wcmTouch;
+        prop_extrabuttons = InitWcmAtom(local->dev, "Wacom Extra Buttons", 8, 2, values);
+
 }
 
 int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -669,40 +505,241 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 {
     LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
     WacomDevicePtr priv = (WacomDevicePtr) local->private;
-    int i = 0;
+    WacomCommonPtr common = priv->common;
 
     DBG(10, priv->debugLevel, ErrorF("xf86WcmSetProperty for %s \n", local->name));
 
-    /* If checkonly is set, no parameters may be changed. So just return. */
-    if (checkonly)
+    if (property == prop_area)
     {
-	return Success;
+        INT32 *values = (INT32*)prop->data;
+        WacomToolArea area;
+
+        if (prop->size != 4 || prop->format != 32)
+            return BadValue;
+
+        area.topX = values[0];
+        area.topY = values[1];
+        area.bottomX = values[2];
+        area.bottomY = values[3];
+
+        if (xf86WcmAreaListOverlap(&area, priv->tool->arealist))
+            return BadValue;
+
+        if (!checkonly)
+        {
+            /* Invalid range resets axis to defaults */
+            if (values[0] >= values[2])
+            {
+                values[0] = 0;
+                values[2] = priv->wcmMaxX;
+            }
+
+            if (values[1] >= values[3]);
+            {
+                values[1] = 0;
+                values[3] = priv->wcmMaxY;
+            }
+
+            priv->topX = values[0];
+            priv->topY = values[1];
+            priv->bottomX = values[2];
+            priv->bottomY = values[3];
+            xf86WcmMappingFactor(local);
+            xf86WcmInitialCoordinates(local, 0); /* XXX: not sure */
+        }
+    } else if (property == prop_pressurecurve)
+    {
+        INT32 *pcurve;
+
+        if (prop->size != 4 || prop->format != 32)
+            return BadValue;
+
+        pcurve = (INT32*)prop->data;
+
+        if ((pcurve[0] > 100) || (pcurve[1] > 100) ||
+            (pcurve[2] > 100) || (pcurve[3] > 100))
+            return BadValue;
+
+        if (IsCursor(priv) || IsPad (priv) || IsTouch (priv))
+            return BadValue;
+
+        if (!checkonly)
+            xf86WcmSetPressureCurve (priv, pcurve[0], pcurve[1],
+                                     pcurve[2], pcurve[3]);
+    } else if (property == prop_suppress)
+    {
+        CARD32 *values;
+
+        if (prop->size != 2 || prop->format != 32)
+            return BadValue;
+
+        values = (CARD32*)prop->data;
+
+        if ((values[0] < 0) || (values[0] > 100))
+            return BadValue;
+
+        if ((values[1] < 0) || (values[1] > XWACOM_MAX_SAMPLES))
+            return BadValue;
+
+        if (!checkonly)
+        {
+            common->wcmSuppress = values[0];
+            common->wcmRawSample = values[1];
+        }
+    } else if (property == prop_rotation)
+    {
+        CARD8 value;
+        if (prop->size != 1 || prop->format != 8)
+            return BadValue;
+
+        value = *(CARD8*)prop->data;
+
+        if (value > 3)
+            return BadValue;
+
+        if (!checkonly && common->wcmRotate != value)
+            xf86WcmRotateTablet(local, value);
+    } else if (property == prop_serials)
+    {
+        return BadValue; /* Read-only */
+    } else if (property == prop_strip_buttons)
+    {
+        CARD8 *values;
+
+        if (prop->size != 4 || prop->format != 8)
+            return BadValue;
+
+        values = (CARD8*)prop->data;
+
+        if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
+            values[1] > WCM_MAX_MOUSE_BUTTONS ||
+            values[2] > WCM_MAX_MOUSE_BUTTONS ||
+            values[3] > WCM_MAX_MOUSE_BUTTONS)
+            return BadValue;
+
+        if (!checkonly)
+        {
+            /* FIXME: needs to take AC_* into account */
+            priv->striplup = values[0];
+            priv->stripldn = values[1];
+            priv->striprup = values[2];
+            priv->striprdn = values[3];
+        }
+
+    } else if (property == prop_wheel_buttons)
+    {
+        CARD8 *values;
+
+        if (prop->size != 4 || prop->format != 8)
+            return BadValue;
+
+        values = (CARD8*)prop->data;
+
+        if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
+            values[1] > WCM_MAX_MOUSE_BUTTONS ||
+            values[2] > WCM_MAX_MOUSE_BUTTONS ||
+            values[3] > WCM_MAX_MOUSE_BUTTONS)
+            return BadValue;
+
+        if (!checkonly)
+        {
+            /* FIXME: needs to take AC_* into account */
+            priv->relup = values[0];
+            priv->reldn = values[1];
+            priv->wheelup = values[2];
+            priv->wheeldn = values[3];
+        }
+    } else if (property == prop_tv_resolutions)
+    {
+        /* FIXME: */
+    } else if (property == prop_screen_no)
+    {
+        CARD8 value;
+
+        if (prop->size != 1 || prop->format != 8)
+            return BadValue;
+
+        value = *(CARD8*)prop->data;
+
+        if (value < -1 || value >= priv->numScreen)
+            return BadValue;
+
+        if (checkonly)
+        {
+            if (priv->screen_no != value)
+                xf86WcmChangeScreen(local, value);
+            priv->screen_no = value;
+        }
+    } else if (property == prop_cursorprox)
+    {
+        CARD32 value;
+
+        if (prop->size != 1 || prop->format != 32)
+            return BadValue;
+
+        if (!IsCursor (priv))
+            return BadValue;
+
+        value = *(CARD32*)prop->data;
+
+        if (value > 255)
+            return BadValue;
+
+        if (!checkonly && common->wcmCursorProxoutDist != value)
+            common->wcmCursorProxoutDist = value;
+    } else if (property == prop_capacity)
+    {
+        INT32 value;
+
+        if (prop->size != 1 || prop->format != 32)
+            return BadValue;
+
+        value = *(INT32*)prop->data;
+
+        if ((value < -1) || (value > 5))
+            return BadValue;
+
+        if (!checkonly && common->wcmCapacity != value)
+            common->wcmCapacity = value;
+
+    } else if (property == prop_threshold)
+    {
+        CARD32 value;
+
+        if (prop->size != 1 || prop->format != 32)
+            return BadValue;
+
+        value = *(CARD32*)prop->data;
+
+        if ((value < 1) || (value > 21))
+            return BadValue;
+
+        if (!checkonly && common->wcmThreshold != value)
+            common->wcmThreshold = value;
+    } else if (property == prop_extrabuttons)
+    {
+        CARD8 *values = (CARD8*)prop->data;
+
+        if (prop->size != 2 || prop->format != 8)
+            return BadValue;
+
+        /* TCPButton */
+        if ((values[0] != 0) && (values[0] != 1))
+            return BadValue;
+
+        /* TOUCH */
+        if ((values[1] != 0) && (values[1] != 1))
+            return BadValue;
+
+        if (!checkonly)
+        {
+            if (common->wcmTPCButton != values[0])
+                common->wcmTPCButton = values[0];
+            if (common->wcmTouch != values[1])
+                common->wcmTouch = values[1];
+        }
     }
 
-    while (i<XWACOM_PARAM_MAXPARAM)
-    {
-	if ( priv->gPropInfo[i].wcmProp == property )
-	{
-        	if (prop->size != priv->gPropInfo[i].nSize || prop->format != priv->gPropInfo[i].nFormat || prop->type != XA_INTEGER)
-			return BadMatch;
-
-		if (priv->gPropInfo[i].nParamID >= XWACOM_PARAM_BUTTON1 && 
-				priv->gPropInfo[i].nParamID <= XWACOM_PARAM_STRIPRDN)
-			xf86WcmSetButtonParam (local, priv->gPropInfo[i].nParamID, 
-				*(CARD32*)prop->data);
-		else if (prop->format == 8)
-			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD8*)prop->data);
-		else if (prop->format == 16)
-			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD16*)prop->data);
-		else if (prop->format == 32)
-			xf86WcmSetParam (local, priv->gPropInfo[i].nParamID, *(CARD32*)prop->data);
-		else
-			return BadMatch;
-		i = XWACOM_PARAM_MAXPARAM;
-	}
-	else
-		i++;
-    } 
     return Success;
 }
 #endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
