@@ -218,7 +218,7 @@ The default is MaxPressure*3/50.
 .SH "SEE ALSO"
 Xorg(1x), xorg.conf(5x), xorgconfig(1x), Xserver(1x), X(7).
 .SH AUTHORS
-Frederic Lepied <lepied@xfree86.org>
-Ping Cheng <pingc@wacom.com>
-John E. Joganic <jej@j-arkadia.com>
+Frederic Lepied <lepied@xfree86.org>,
+Ping Cheng <pingc@wacom.com>,
+John E. Joganic <jej@j-arkadia.com>,
 Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
