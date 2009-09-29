@@ -308,12 +308,6 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 			xf86ReplaceIntOption(local->options, "Serial", priv->serial);
 		}
 		break;
-	    case XWACOM_PARAM_XYDEFAULT:
-		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);
-		xf86WcmSetParam (local, XWACOM_PARAM_TOPY, 0);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, priv->wcmMaxX);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, priv->wcmMaxY);
-		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) 
 			return BadValue;
