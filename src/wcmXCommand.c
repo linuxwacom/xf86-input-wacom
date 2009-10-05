@@ -395,7 +395,8 @@ Atom prop_cursorprox;
 Atom prop_capacity;
 Atom prop_threshold;
 Atom prop_suppress;
-Atom prop_extrabuttons;
+Atom prop_touch;
+Atom prop_hover;
 
 static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, int *values)
 {
@@ -494,10 +495,11 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     values[1] = common->wcmRawSample;
     prop_suppress = InitWcmAtom(local->dev, "Wacom Sample and Suppress", 32, 2, values);
 
-    values[0] = common->wcmTPCButton;
-    values[1] = common->wcmTouch;
-    prop_extrabuttons = InitWcmAtom(local->dev, "Wacom Extra Buttons", 8, 2, values);
+    values[0] = common->wcmTouch;
+    prop_touch = InitWcmAtom(local->dev, "Wacom Enable Touch", 8, 1, values);
 
+    values[0] = !common->wcmTPCButton;
+    prop_hover = InitWcmAtom(local->dev, "Wacom Hover Click", 8, 1, values);
 }
 
 int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -716,28 +718,30 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
         if (!checkonly && common->wcmThreshold != value)
             common->wcmThreshold = value;
-    } else if (property == prop_extrabuttons)
+    } else if (property == prop_touch)
     {
         CARD8 *values = (CARD8*)prop->data;
 
-        if (prop->size != 2 || prop->format != 8)
+        if (prop->size != 1 || prop->format != 8)
             return BadValue;
 
-        /* TCPButton */
         if ((values[0] != 0) && (values[0] != 1))
             return BadValue;
 
-        /* TOUCH */
-        if ((values[1] != 0) && (values[1] != 1))
+        if (!checkonly && common->wcmTouch != values[1])
+	    common->wcmTouch = values[1];
+    } else if (property == prop_hover)
+    {
+        CARD8 *values = (CARD8*)prop->data;
+
+        if (prop->size != 1 || prop->format != 8)
             return BadValue;
 
-        if (!checkonly)
-        {
-            if (common->wcmTPCButton != values[0])
-                common->wcmTPCButton = values[0];
-            if (common->wcmTouch != values[1])
-                common->wcmTouch = values[1];
-        }
+        if ((values[0] != 0) && (values[0] != 1))
+            return BadValue;
+
+        if (!checkonly && common->wcmTPCButton != !values[0])
+	    common->wcmTPCButton = !values[0];
     }
 
     return Success;
