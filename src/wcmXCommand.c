@@ -433,70 +433,70 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, i
 
 void InitWcmDeviceProperties(LocalDevicePtr local)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common = priv->common;
-        int values[9];
+    WacomDevicePtr priv = (WacomDevicePtr) local->private;
+    WacomCommonPtr common = priv->common;
+    int values[9];
 
-	DBG(10, priv->debugLevel, ErrorF("InitWcmDeviceProperties for %s \n", local->name));
+    DBG(10, priv->debugLevel, ErrorF("InitWcmDeviceProperties for %s \n", local->name));
 
-        values[0] = priv->topX;
-        values[1] = priv->topY;
-        values[2] = priv->bottomX;
-        values[3] = priv->bottomY;
-        prop_area = InitWcmAtom(local->dev, "Wacom Area", 32, 4, values);
+    values[0] = priv->topX;
+    values[1] = priv->topY;
+    values[2] = priv->bottomX;
+    values[3] = priv->bottomY;
+    prop_area = InitWcmAtom(local->dev, "Wacom Area", 32, 4, values);
 
-        values[0] = common->wcmRotate;
-        prop_rotation = InitWcmAtom(local->dev, "Wacom Rotation", 8, 1, values);
+    values[0] = common->wcmRotate;
+    prop_rotation = InitWcmAtom(local->dev, "Wacom Rotation", 8, 1, values);
 
-        values[0] = 0;
-        values[1] = 0;
-        values[2] = 100;
-        values[3] = 100;
-        prop_pressurecurve = InitWcmAtom(local->dev, "Wacom Pressurecurve", 32, 4, values);
+    values[0] = 0;
+    values[1] = 0;
+    values[2] = 100;
+    values[3] = 100;
+    prop_pressurecurve = InitWcmAtom(local->dev, "Wacom Pressurecurve", 32, 4, values);
 
-        values[0] = common->tablet_id;
-        values[1] = priv->old_serial;
-        values[2] = priv->old_device_id;
-        values[3] = priv->serial;
-        prop_serials = InitWcmAtom(local->dev, "Wacom Serial IDs", 32, 4, values);
+    values[0] = common->tablet_id;
+    values[1] = priv->old_serial;
+    values[2] = priv->old_device_id;
+    values[3] = priv->serial;
+    prop_serials = InitWcmAtom(local->dev, "Wacom Serial IDs", 32, 4, values);
 
-        values[0] = priv->striplup;
-        values[1] = priv->stripldn;
-        values[2] = priv->striprup;
-        values[3] = priv->striprdn;
-        prop_strip_buttons = InitWcmAtom(local->dev, "Wacom Strip Buttons", 8, 4, values);
+    values[0] = priv->striplup;
+    values[1] = priv->stripldn;
+    values[2] = priv->striprup;
+    values[3] = priv->striprdn;
+    prop_strip_buttons = InitWcmAtom(local->dev, "Wacom Strip Buttons", 8, 4, values);
 
-        values[0] = priv->relup;
-        values[1] = priv->reldn;
-        values[2] = priv->wheelup;
-        values[3] = priv->wheeldn;
-        prop_wheel_buttons = InitWcmAtom(local->dev, "Wacom Wheel Buttons", 8, 4, values);
+    values[0] = priv->relup;
+    values[1] = priv->reldn;
+    values[2] = priv->wheelup;
+    values[3] = priv->wheeldn;
+    prop_wheel_buttons = InitWcmAtom(local->dev, "Wacom Wheel Buttons", 8, 4, values);
 
-        values[0] = priv->tvResolution[0];
-        values[1] = priv->tvResolution[1];
-        values[2] = priv->tvResolution[2];
-        values[3] = priv->tvResolution[3];
-        prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TV Resolutions", 32, 4, values);
+    values[0] = priv->tvResolution[0];
+    values[1] = priv->tvResolution[1];
+    values[2] = priv->tvResolution[2];
+    values[3] = priv->tvResolution[3];
+    prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TV Resolutions", 32, 4, values);
 
-        values[0] = priv->screen_no;
-        prop_screen_no = InitWcmAtom(local->dev, "Wacom ScreenNumber", 8, 1, values);
+    values[0] = priv->screen_no;
+    prop_screen_no = InitWcmAtom(local->dev, "Wacom ScreenNumber", 8, 1, values);
 
-        values[0] = common->wcmCursorProxoutDist;
-        prop_cursorprox = InitWcmAtom(local->dev, "Wacom Proximity Threshold", 32, 1, values);
+    values[0] = common->wcmCursorProxoutDist;
+    prop_cursorprox = InitWcmAtom(local->dev, "Wacom Proximity Threshold", 32, 1, values);
 
-        values[0] = common->wcmCapacity;
-        prop_capacity = InitWcmAtom(local->dev, "Wacom Touch Capacity", 32, 1, values);
+    values[0] = common->wcmCapacity;
+    prop_capacity = InitWcmAtom(local->dev, "Wacom Touch Capacity", 32, 1, values);
 
-        values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
-        prop_threshold = InitWcmAtom(local->dev, "Wacom Pressure Threshold", 32, 1, values);
+    values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
+    prop_threshold = InitWcmAtom(local->dev, "Wacom Pressure Threshold", 32, 1, values);
 
-        values[0] = common->wcmSuppress;
-        values[1] = common->wcmRawSample;
-        prop_suppress = InitWcmAtom(local->dev, "Wacom Sample and Suppress", 32, 2, values);
+    values[0] = common->wcmSuppress;
+    values[1] = common->wcmRawSample;
+    prop_suppress = InitWcmAtom(local->dev, "Wacom Sample and Suppress", 32, 2, values);
 
-        values[0] = common->wcmTPCButton;
-        values[1] = common->wcmTouch;
-        prop_extrabuttons = InitWcmAtom(local->dev, "Wacom Extra Buttons", 8, 2, values);
+    values[0] = common->wcmTPCButton;
+    values[1] = common->wcmTouch;
+    prop_extrabuttons = InitWcmAtom(local->dev, "Wacom Extra Buttons", 8, 2, values);
 
 }
 
