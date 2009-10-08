@@ -19,6 +19,7 @@ missing
 stamp-h1
 .libs
 .deps
+m4
 *.o
 *.[0-9]
 *.pc
