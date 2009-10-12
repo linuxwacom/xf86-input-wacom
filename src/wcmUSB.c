@@ -818,7 +818,25 @@ static void usbParseEvent(LocalDevicePtr local,
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
+	{
+		/* we don't report serial numbers for some tools
+		 * but we never report a serial number with a value of 0 */
+		if (event->value == 0)
+		{
+			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
+			goto skipEvent;
+		}
+
+		/* save the serial number so we can look up the channel number later */
+		common->wcmLastToolSerial = event->value;
+
+		/* if SYN_REPORT is end of record indicator, we are done */
+		if (USE_SYN_REPORTS(common))
+			return;
+
+		/* fall through to deliver the X event */
+	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
 		/* if we got a SYN_REPORT but weren't expecting one, change over to
 		   using SYN_REPORT as the end of record indicator */
@@ -830,11 +848,11 @@ static void usbParseEvent(LocalDevicePtr local,
 			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 		}
 
-		/* fall through to deliver the X event */
+		/* end of record. fall through to deliver the X event */
 	}
 	else
 	{
-		/* not an SYN_REPORT, bail out */
+		/* not an SYN_REPORT and not an SYN_REPORT, bail out */
 		return;
 	}
 
@@ -897,6 +915,8 @@ name, "Intuos2") )
 			
 		}
 	}
+	else
+		goto skipEvent;
 
 	/* fresh out of channels */
 	if (channel < 0)
