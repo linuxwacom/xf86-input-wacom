@@ -383,14 +383,16 @@ static int xf86WcmSetButtonParam(LocalDevicePtr local, int param, int value)
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 
-Atom prop_area;
 Atom prop_rotation;
+Atom prop_tablet_area;
+Atom prop_screen_area;
 Atom prop_pressurecurve;
 Atom prop_serials;
 Atom prop_strip_buttons;
 Atom prop_wheel_buttons;
+Atom prop_display;
 Atom prop_tv_resolutions;
-Atom prop_screen_no;
+Atom prop_screen;
 Atom prop_cursorprox;
 Atom prop_capacity;
 Atom prop_threshold;
@@ -405,7 +407,7 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, i
     uint8_t val_8[4];
     uint16_t val_16[4];
     uint32_t val_32[4];
-    pointer converted;
+    pointer converted = val_32;
 
     for (i = 0; i < nvalues; i++)
     {
@@ -444,7 +446,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     values[1] = priv->topY;
     values[2] = priv->bottomX;
     values[3] = priv->bottomY;
-    prop_area = InitWcmAtom(local->dev, "Wacom Area", 32, 4, values);
+    prop_tablet_area = InitWcmAtom(local->dev, "Wacom Tablet Area", 32, 4, values);
 
     values[0] = common->wcmRotate;
     prop_rotation = InitWcmAtom(local->dev, "Wacom Rotation", 8, 1, values);
@@ -477,16 +479,25 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     values[1] = priv->tvResolution[1];
     values[2] = priv->tvResolution[2];
     values[3] = priv->tvResolution[3];
-    prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TV Resolutions", 32, 4, values);
+    prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TwinView Resolution", 32, 4, values);
+
 
     values[0] = priv->screen_no;
-    prop_screen_no = InitWcmAtom(local->dev, "Wacom ScreenNumber", 8, 1, values);
+    values[1] = priv->twinview;
+    values[2] = priv->wcmMMonitor;
+    prop_display = InitWcmAtom(local->dev, "Wacom Display Options", 8, 3, values);
+
+    values[0] = priv->screenTopX[priv->currentScreen];
+    values[1] = priv->screenTopY[priv->currentScreen];
+    values[2] = priv->screenBottomX[priv->currentScreen];
+    values[3] = priv->screenBottomY[priv->currentScreen];
+    prop_screen = InitWcmAtom(local->dev, "Wacom Screen Area", 32, 4, values);
 
     values[0] = common->wcmCursorProxoutDist;
     prop_cursorprox = InitWcmAtom(local->dev, "Wacom Proximity Threshold", 32, 1, values);
 
     values[0] = common->wcmCapacity;
-    prop_capacity = InitWcmAtom(local->dev, "Wacom Touch Capacity", 32, 1, values);
+    prop_capacity = InitWcmAtom(local->dev, "Wacom Capacity", 32, 1, values);
 
     values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
     prop_threshold = InitWcmAtom(local->dev, "Wacom Pressure Threshold", 32, 1, values);
@@ -511,7 +522,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
     DBG(10, priv->debugLevel, ErrorF("xf86WcmSetProperty for %s \n", local->name));
 
-    if (property == prop_area)
+    if (property == prop_tablet_area)
     {
         INT32 *values = (INT32*)prop->data;
         WacomToolArea area;
@@ -547,7 +558,8 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             priv->bottomX = values[2];
             priv->bottomY = values[3];
             xf86WcmMappingFactor(local);
-            xf86WcmInitialCoordinates(local, 0); /* XXX: not sure */
+            xf86WcmInitialCoordinates(local, 0);
+            xf86WcmInitialCoordinates(local, 1);
         }
     } else if (property == prop_pressurecurve)
     {
@@ -651,26 +663,53 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             priv->wheelup = values[2];
             priv->wheeldn = values[3];
         }
-    } else if (property == prop_tv_resolutions)
+    } else if (property == prop_screen)
     {
-        /* FIXME: */
-    } else if (property == prop_screen_no)
+        /* Long-term, this property should be removed, there's other ways to
+         * get the screen resolution. For now, we leave it in for backwards
+         * compat */
+        return BadValue; /* Read-only */
+    } else if (property == prop_display)
     {
-        CARD8 value;
+        INT8 *values;
 
-        if (prop->size != 1 || prop->format != 8)
+        if (prop->size != 3 || prop->format != 8)
             return BadValue;
 
-        value = *(CARD8*)prop->data;
+        values = (INT8*)prop->data;
 
-        if (value < -1 || value >= priv->numScreen)
+        if (values[0] < -1 || values[0] >= priv->numScreen)
             return BadValue;
 
-        if (checkonly)
+        if (values[1] < TV_NONE || values[1] > TV_MAX)
+            return BadValue;
+
+        if ((values[2] != 0) && (values[2] != 1))
+            return BadValue;
+
+        if (!checkonly)
         {
-            if (priv->screen_no != value)
-                xf86WcmChangeScreen(local, value);
-            priv->screen_no = value;
+            if (priv->screen_no != values[0])
+                xf86WcmChangeScreen(local, values[0]);
+            priv->screen_no = values[0];
+
+            if (priv->twinview != values[1])
+            {
+		int screen = priv->screen_no;
+                priv->twinview = values[1];
+
+                /* Can not restrict the cursor to a particular screen */
+                if (!values[1] && (screenInfo.numScreens == 1))
+                {
+                    screen = -1;
+                    priv->currentScreen = 0;
+                    DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam TwinView sets to "
+                        "TV_NONE: cann't change screen_no. \n"));
+                }
+                xf86WcmChangeScreen(local, screen);
+            }
+
+            priv->wcmMMonitor = values[2];
         }
     } else if (property == prop_cursorprox)
     {
@@ -687,7 +726,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         if (value > 255)
             return BadValue;
 
-        if (!checkonly && common->wcmCursorProxoutDist != value)
+        if (!checkonly)
             common->wcmCursorProxoutDist = value;
     } else if (property == prop_capacity)
     {
@@ -701,7 +740,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         if ((value < -1) || (value > 5))
             return BadValue;
 
-        if (!checkonly && common->wcmCapacity != value)
+        if (!checkonly)
             common->wcmCapacity = value;
 
     } else if (property == prop_threshold)
@@ -716,7 +755,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         if ((value < 1) || (value > 21))
             return BadValue;
 
-        if (!checkonly && common->wcmThreshold != value)
+        if (!checkonly)
             common->wcmThreshold = value;
     } else if (property == prop_touch)
     {
@@ -742,8 +781,33 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
         if (!checkonly && common->wcmTPCButton != !values[0])
 	    common->wcmTPCButton = !values[0];
-    }
+    } else if (property == prop_tv_resolutions)
+    {
+        CARD32 *values;
 
+        if (prop->size != 4 || prop->format != 32)
+            return BadValue;
+
+        values = (CARD32*)prop->data;
+
+	/* non-TwinView settings can not set TwinView RESOLUTION */
+        if ((priv->twinview == TV_NONE) || (values[0] < 0) ||
+                (values[1] < 0) || (values[2] < 0) || (values[3] < 0) ||
+		((values[0] + values[2]) != screenInfo.screens[0]->width) ||
+		((values[1] + values[3]) != screenInfo.screens[0]->height))
+            return BadValue;
+
+        if (!checkonly)
+        {
+            priv->tvResolution[0] = values[0];
+            priv->tvResolution[1] = values[1];
+            priv->tvResolution[2] = values[2];
+            priv->tvResolution[3] = values[3];
+
+            /* reset screen info */
+            xf86WcmChangeScreen(local, priv->screen_no);
+        }
+    }
     return Success;
 }
 #endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
