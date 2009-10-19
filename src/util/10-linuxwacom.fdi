@@ -10,6 +10,7 @@
 	<append key="wacom.types" type="strlist">eraser</append>
 	<append key="wacom.types" type="strlist">cursor</append>
 	<append key="wacom.types" type="strlist">pad</append>
+	<append key="wacom.types" type="strlist">touch</append>
       </match>
     </match>
     <match key="info.capabilities" contains="serial">

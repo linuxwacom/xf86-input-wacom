@@ -40,6 +40,7 @@
 #define XWACOM_PARAM_RAWSAMPLE		16
 #define XWACOM_PARAM_CAPACITY       	17
 #define XWACOM_PARAM_SERIAL		18
+#define XWACOM_PARAM_GESTURE       	19
 
 /* The followings are defined together */
 #define XWACOM_PARAM_BUTTON1    	101

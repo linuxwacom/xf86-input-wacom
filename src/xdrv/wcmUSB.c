@@ -24,29 +24,17 @@
 
 #include <sys/utsname.h>
 
-/* support for compiling module on kernels older than 2.6 */
-#ifndef EV_MSC
-#define EV_MSC 0x04
-#endif
-
-#ifndef MSC_SERIAL
-#define MSC_SERIAL 0x00
-#endif
-
-#ifndef EV_SYN
-#define EV_SYN 0x00
-#endif
-
-#ifndef SYN_REPORT
-#define SYN_REPORT 0
-#endif
-
+/* Defines on newer kernels */
 #ifndef BTN_TASK
 #define BTN_TASK 0x117
 #endif
 
 #ifndef BTN_TOOL_DOUBLETAP
 #define BTN_TOOL_DOUBLETAP 0x14d
+#endif
+
+#ifndef BTN_TOOL_TRIPLETAP
+#define BTN_TOOL_TRIPLETAP 0x14e
 #endif
 
 static Bool usbDetect(LocalDevicePtr);
@@ -508,7 +496,10 @@ static struct
 
 	{ 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */ 
 	{ 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
-	{ 0x9A, 2540, 2540, &usbTabletPC   }  /* TabletPC 0x9A */
+	{ 0x9A, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x9A */
+	{ 0x9F,   10,   10, &usbTabletPC   }, /* CapPlus  0x9F */
+	{ 0xE2,   10,   10, &usbTabletPC   }, /* TabletPC 0xE2 */ 
+	{ 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
 };
 
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
@@ -538,21 +529,10 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolX = WacomModelDesc [i].xRes;
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
-		/* initialize capacity parameters for touch */
-		if (common->tablet_id == 0x9A)
-		{
-			common->wcmCapacity = 3;
-			common->wcmCapacityDefault = 3; 
-		}
-		else
-		{
-			common->wcmCapacity = -1;
-			common->wcmCapacityDefault = -1; 
-		}
 
-		if (common->tablet_id == 0x9A || common->tablet_id == 0x93 || common->tablet_id == 0x90)
+		if (strstr(common->wcmModel->name, "TabletPC"))
 		{
-			if (common->tablet_id != 0x90)
+			if (common->tablet_id != 0x90) 
 			{
 				/* TouchDefault was off for all devices */
 				/* except when touch is supported */
@@ -560,9 +540,22 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 
 				/* check if touch was turned off in xorg.conf */
 				common->wcmTouch = xf86SetBoolOption(local->options, 
-						"Touch", common->wcmTouchDefault);
+					"Touch", common->wcmTouchDefault);
 				if ( common->wcmTouch )
 					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+
+				if(common->tablet_id == 0xE2 || common->tablet_id == 0xE3)
+				{
+					/* GestureDefault was off for all devices */
+					/* except when multi-touch is supported */
+					common->wcmGestureDefault = 0;
+
+					/* check if gesture was turned off in xorg.conf */
+					common->wcmGesture = xf86SetBoolOption(local->options, 
+						"Gesture", common->wcmGestureDefault);
+					if ( common->wcmTouch && common->wcmGesture )
+						xf86Msg(X_CONFIG, "%s: Touch Gesture is enabled \n", common->wcmDevice);
+				}
 			}
 
 			/* Tablet PC button applied to the whole tablet. Not just one tool */
@@ -661,17 +654,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		return !Success;
 	}
 
-	/* determine if this version of the kernel uses SYN_REPORT or MSC_SERIAL
-	   to indicate end of record for a complete tablet event */
-	if (ISBITSET(ev,EV_SYN))
-	{
-		common->wcmFlags |= USE_SYN_REPORTS_FLAG;
-	}
-	else
-	{
-		ErrorF("WACOM: Kernel doesn't support SYN_REPORT\n");
-		common->wcmFlags &= ~USE_SYN_REPORTS_FLAG;
-	}
+	common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 
 	if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
@@ -692,13 +675,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl xmax value.\n");
 		return !Success;
 	}
-
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: xmax value is wrong.\n");
-		return !Success;
-	}
-	common->wcmMaxX = nValues[2];
+	common->wcmMaxX = nValues[2];  /* no pen if it is 1 */
 
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
@@ -706,44 +683,57 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl ymax value.\n");
 		return !Success;
 	}
+	common->wcmMaxY = nValues[2];  /* no pen if it is 1 */
 
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: ymax value is wrong.\n");
-		return !Success;
-	}
-	common->wcmMaxY = nValues[2];
-
-	/* max finger strip X for tablets with Expresskeys
-	 * or max touch logical X for TabletPCs with touch */
+	/* max finger strip X for tablets with Expresskeys 
+	 * or touch logical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), nValues) == 0)
 	{
-		if (IsTouch(priv))
+		if (common->wcmTouchDefault)
 			common->wcmMaxTouchX = nValues[2];
 		else
 			common->wcmMaxStripX = nValues[2];
+
+		DBG(3, common->debugLevel, ErrorF("%s - usbWcmGetRanges: Got ABS_RX %d\n", 
+				local->name, nValues[2]));
 	}
 
-	/* max finger strip X */
+	/* max finger strip y for tablets with Expresskeys  
+	 * or touch logical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), nValues) == 0)
 	{
-		if (IsTouch(priv))
+		if (common->wcmTouchDefault)
 			common->wcmMaxTouchY = nValues[2];
 		else
 			common->wcmMaxStripY = nValues[2];
 	}
 
-	if (IsTouch(priv) && common->wcmMaxX && common->wcmMaxY)
+	/* touch physical X for TabletPCs with touch */
+	if (ioctl(local->fd, EVIOCGABS(ABS_Z), nValues) == 0)
 	{
-		common->wcmTouchResolX = (int)((double)(common->wcmMaxTouchX *
-			common->wcmResolX) / (double)common->wcmMaxX + 0.5);
-		common->wcmTouchResolY = (int)((double)(common->wcmMaxTouchY *
-			common->wcmResolY) / (double)common->wcmMaxY + 0.5);
+		if (common->wcmTouchDefault)
+			common->wcmTouchResolX = nValues[2];
+	}
+
+	/* touch physical Y for TabletPCs with touch */
+	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), nValues) == 0)
+	{
+		if (common->wcmTouchDefault)
+			common->wcmTouchResolY = nValues[2];
+	}
+
+	if (common->wcmTouchDefault && common->wcmTouchResolX)
+	{
+		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
+			 / ((double)common->wcmMaxTouchX) + 0.5);
+		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
+			 / ((double)common->wcmMaxTouchY) + 0.5);
+
 		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
 		{
-			ErrorF("WACOM: touch max value(s) was wrong MaxTouchY"
-				" = %d MaxTouchY = %d.\n", common->wcmMaxTouchX,
-				common->wcmMaxTouchY);
+			ErrorF("WACOM: touch resolution value(s) was wrong resX"
+				" = %d resY = %d.\n", common->wcmTouchResolX,
+				common->wcmTouchResolY);
 			return !Success;
 		}
 
@@ -755,22 +745,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl press max value.\n");
 		return !Success;
 	}
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: press max value is wrong.\n");
-		return !Success;
-	}
 	common->wcmMaxZ = nValues[2];
 
 	/* max distance */
 	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), nValues) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl press max distance.\n");
-		return !Success;
-	}
-	if (nValues[2] < 0)
-	{
-		ErrorF("WACOM: max distance value is wrong.\n");
 		return !Success;
 	}
 	common->wcmMaxDist = nValues[2];
@@ -842,32 +822,31 @@ static void usbParseEvent(LocalDevicePtr local,
 		ErrorF("usbParse: Exceeded event queue (%d) \n",
 				common->wcmEventCnt);
 		goto skipEvent;
-		return;
 	}
 
 	/* save it for later */
 	common->wcmEvents[common->wcmEventCnt++] = *event;
 
-	/* Check for end of record indicator.  On 2.4 kernels MSC_SERIAL is used
-	   but on 2.6 and later kernels SYN_REPORT is used.  */
 	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
-		/* save the serial number so we can look up the channel number later */
-		if (event->value == 0) /* serial number should never be 0 */
+		/* we don't report serial numbers for some tools
+		 * But we should never report a serail number with a value of 0 */
+		if (event->value == 0)
 		{
 			ErrorF("usbParse: Ignoring event from invalid serial 0\n");
 			goto skipEvent;
-			return;
 		}
-		common->wcmLastToolSerial = event->value;
+
+	        /* save the serial number so we can look up the channel number later */
+	        common->wcmLastToolSerial = event->value;
 
 		/* if SYN_REPORT is end of record indicator, we are done */
 		if (USE_SYN_REPORTS(common))
 			return;
 
 		/* fall through to deliver the X event */
-	}
-	else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
+
+	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
 		/* if we got a SYN_REPORT but weren't expecting one, change over to
 		   using SYN_REPORT as the end of record indicator */
@@ -879,11 +858,11 @@ static void usbParseEvent(LocalDevicePtr local,
 			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 		}
 
-		/* fall through to deliver the X event */
+		/* end of record. fall through to deliver the X event */
 	}
 	else
 	{
-		/* not an MSC_SERIAL or SYN_REPORT, bail out */
+		/* not an MSC_SERIAL and not an SYN_REPORT, bail out */
 		return;
 	}
 
@@ -942,9 +921,10 @@ static void usbParseEvent(LocalDevicePtr local,
 				    (common->wcmChannel[0].work.serial_num == common->wcmLastToolSerial)) ||
 					!common->wcmChannel[0].work.proximity ) /* new transducer */
 				channel = 0;
-			
 		}
 	}
+	else
+		goto skipEvent;
 
 	/* fresh out of channels */
 	if (channel < 0)
@@ -1107,12 +1087,23 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
-				/* left button is always pressed for touch without capacity 
-				 * For touch with capacity, left button event will be decided
-				 * in wcmCommon.c by capacity threshold
+				/* Left button is always pressed for touch without capacity
+				 * when the first finger touch event received.
+				 * For touch with capacity enabled, left button event will be decided
+				 * in wcmCommon.c by capacity threshold.
 				 */
 				if (common->wcmCapacityDefault < 0)
 					MOD_BUTTONS (0, event->value);
+			}
+			else if (event->code == BTN_TOOL_TRIPLETAP)
+			{
+				DBG(6, common->debugLevel, ErrorF(
+					"USB Touch second finger detected %x (value=%d)\n",
+					event->code, event->value));
+				ds->device_type = TOUCH_ID;
+				ds->device_id = TOUCH_DEVICE_ID;
+				ds->proximity = event->value;
+				/* Second finger events will be combined with the first finger data */
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))
@@ -1146,12 +1137,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	if ((ds->device_type == TOUCH_ID) && !common->wcmTouch)
 		return;
 
-	/* it is an out-prox when id or/and serial number is zero for kernel 2.4 */
-	if ((!ds->device_id || !ds->serial_num) && !USE_SYN_REPORTS(common))
- 		ds->proximity = 0;
-
 	/* DTF720 and DTF720a don't support eraser */
-	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && (ds->device_type == ERASER_ID)) 
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
+			(ds->device_type == ERASER_ID)) 
 	{
 		DBG(10, common->debugLevel, ErrorF("usbParseChannel "
 			"DTF 720 doesn't support eraser "));

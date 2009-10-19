@@ -9,6 +9,10 @@
 #ifndef WACOM_WAC_H
 #define WACOM_WAC_H
 
+/* maximum packet length for USB devices */
+#define WACOM_PKGLEN_MAX	32
+
+/* device IDs */
 #define STYLUS_DEVICE_ID	0x02
 #define TOUCH_DEVICE_ID		0x03
 #define CURSOR_DEVICE_ID	0x06
@@ -32,6 +36,7 @@ enum {
 	WACOM_BEE,
 	WACOM_MO,
 	TABLETPC,
+	TABLETPC2FG,
 	WACOM_GB,
 	MAX_TYPE
 };
@@ -44,8 +49,12 @@ struct wacom_features {
 	int pressure_max;
 	int distance_max;
 	int type;
+	int touch_x_res;
+	int touch_y_res;
 	int touch_x_max;
 	int touch_y_max;
+	unsigned char unit;
+	unsigned char unitExpo;
 };
 
 struct wacom_wac {

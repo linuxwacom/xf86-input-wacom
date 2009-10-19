@@ -73,19 +73,22 @@
  * 2008-07-09 47-pc0.8.1   - new release
  * 2008-07-17 47-pc0.8.1-1 - Support USB TabletPC
  * 2008-08-27 47-pc0.8.1-4 - Support Bamboo1 Meadium and Monarch
- * 2008-11-11 47-pc0.8.2 - new release
+ * 2008-11-11 47-pc0.8.2   - new release
  * 2008-12-22 47-pc0.8.2-1 - fixed a few issues
- * 2009-03-26 47-pc0.8.3 - Added Intuos4 support
+ * 2009-03-26 47-pc0.8.3   - Added Intuos4 support
  * 2009-04-03 47-pc0.8.3-2 - HAL support
  * 2009-05-08 47-pc0.8.3-4 - Fixed a pad button issue
  * 2009-05-22 47-pc0.8.3-5 - Support Nvidia Xinerama
  * 2009-06-26 47-pc0.8.3-6 - Support DTF720a
  * 2009-07-14 47-pc0.8.3-7 - Support Nvidia Xinerama setting
  * 2009-08-25 47-pc0.8.4-1 - Support ScreenToggle
- * 2009-09-16 47-pc0.8.4-2 - fixed a break in TwinView setting
+ * 2009-09-16 47-pc0.8.4-2 - Fixed a break in TwinView setting
+ * 2009-10-06 47-pc0.8.4-3 - Minor fix in TwinView setting 
+ * 2009-10-15 47-pc0.8.4-4 - added calibration-only wacomcpl
+ * 2009-10-19 47-pc0.8.5   - Added support for TPC (0xE2, 0xE3 & 0x9F)
  */
 
-static const char identification[] = "$Identification: 47-0.8.4-2 $";
+static const char identification[] = "$Identification: 47-0.8.5 $";
 
 /****************************************************************************/
 
@@ -290,15 +293,6 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
 			local->conf_idev->identifier);
 		return FALSE;
-	}
-	if (xf86Verbose)
-	{
-		ErrorF("%s Wacom device \"%s\" top X=%d top Y=%d "
-				"bottom X=%d bottom Y=%d "
-				"resol X=%d resol Y=%d\n",
-				XCONFIG_PROBED, local->name, priv->topX,
-				priv->topY, priv->bottomX, priv->bottomY,
-				priv->wcmResolX, priv->wcmResolY);
 	}
 	return TRUE;
 }
@@ -573,6 +567,12 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		priv->wcmResolY = common->wcmResolY;
 	}
 
+	DBG(2, common->debugLevel, ErrorF("Wacom \"%s\" "
+		"max X=%d max Y=%d resol X=%d resol Y=%d\n",
+		local->name, common->wcmMaxX, common->wcmMaxY,
+		priv->wcmResolX, priv->wcmResolY));
+
+
 	for (; toollist; toollist=toollist->next)
 	{
 		arealist = toollist->arealist;
@@ -584,6 +584,11 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 				arealist->bottomY = priv->wcmMaxY;
 		}
 	}
+
+	DBG(2, common->debugLevel, ErrorF("Wacom device \"%s\" "
+		"top X=%d top Y=%d bottom X=%d bottom Y=%d \n",
+		local->name, priv->topX, priv->topY, 
+		priv->bottomX, priv->bottomY));
 
 	return;
 }
@@ -939,6 +944,9 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 		DBG(10, priv->debugLevel, ErrorF("xf86WcmDevReadInput: Read (%d)\n",loop));
 }					
 
+/* it is always the first device that was added to the server reads the packets. 
+ * The actual device that translates the packets will be decided in commonDispatchDevice later.
+ */
 void xf86WcmReadPacket(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -986,14 +994,14 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	 */
 	if (common->wcmForceDevice == DEVICE_ISDV4 && common->wcmDevCls != &gWacomUSBDevice) 
 	{
-		common->wcmPktLength = 9;
+		common->wcmPktLength = WACOM_PKGLEN_TPC;
 		data = common->buffer;
 		if ( data[0] & 0x18 )
 		{
 			if (common->wcmMaxCapacity)
-				common->wcmPktLength = 7;
+				common->wcmPktLength = WACOM_PKGLEN_TOUCH;
 			else
-				common->wcmPktLength = 5;
+				common->wcmPktLength = WACOM_PKGLEN_TOUCH0;
 		}
 	}
 
@@ -1013,7 +1021,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			data = common->buffer + pos;
 			if ( data[0] & 0x18 )
 			{
-				if (common->wcmPktLength == 9)
+				if (common->wcmPktLength == WACOM_PKGLEN_TPC)
 				{
 					DBG(1, common->debugLevel, 
 						ErrorF("xf86WcmReadPacket: not a pen data any more \n"));
@@ -1022,7 +1030,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			}
 			else
 			{
-				if (common->wcmPktLength != 9)
+				if (common->wcmPktLength != WACOM_PKGLEN_TPC)
 				{
 					DBG(1, common->debugLevel, 
 						ErrorF("xf86WcmReadPacket: not a touch data any more \n"));

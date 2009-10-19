@@ -1,3 +1,14 @@
+2009-10-19  Ping Cheng <pingc@wacom.com>
+	* Added Cap+ (9F) touch support (Camille Moncelier)
+	* Added TabletPC (E2 and E3) support
+	* Merged Thomas Jaeger's xidump patch
+	* Merged Peter Hutterer's remove kernel 2.4 support patch
+	* Updated 10-linuxwacom.fdi for touch
+	* Don't allow HAL add tools defined in xorg.conf again
+	* Added calibration-only feature to wacomcpl (Oleg Gaier)
+	* Fixed a package configuration issue for Xorgs 6.7 - 7.2 
+	* Label 0.8.5
+
 2009-09-16  Ping Cheng <pingc@wacom.com>
 	* Fixed a mapping issue introduced by non-TwinView support
 	* Label 0.8.4-2

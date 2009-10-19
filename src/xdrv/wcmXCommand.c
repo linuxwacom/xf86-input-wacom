@@ -24,6 +24,7 @@
  * 2008-06-26 0.3 - Added Capacity
  * 2009-03-16 0.4 - Added leftOF for TwinView
  * 2009-04-21 0.5 - Added set serial option
+ * 2009-09-31 0.6 - Added dual touch
  */
 
 
@@ -385,6 +386,18 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				xf86ReplaceStrOption(local->options, "Touch", "off");
 		}
 		break;
+	    case XWACOM_PARAM_GESTURE:
+		if ((value != 0) && (value != 1)) 
+			return BadValue;
+		else if (common->wcmGesture != value)
+		{
+			common->wcmGesture = value;
+			if (value)
+				xf86ReplaceStrOption(local->options, "Gesture", "on");
+			else
+				xf86ReplaceStrOption(local->options, "Gesture", "off");
+		}
+		break;
 	    case XWACOM_PARAM_CAPACITY:
 		if ((value < -1) || (value > 5)) 
 			return BadValue;
@@ -415,12 +428,12 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_TWINVIEW:
 		if (priv->twinview != value)
 		{
-			if ((value > TV_MAX) || (value < TV_NONE) || screenInfo.numScreens != 1)
+			if ((value > TV_MAX) || (value < TV_NONE))
 				return BadValue;
 			priv->twinview = value;
 
-			/* Can not restrict the cursor to a particular screen */
-			if (!value)
+			/* Can not restrict the cursor to a particular screen for TwinView case here */
+			if (!value && (screenInfo.numScreens == 1))
 			{
 				value = -1;
 				priv->currentScreen = 0;
@@ -455,7 +468,7 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 				"from %d toResY=%d \n",
 				priv->tvResolution[0], rX, priv->tvResolution[1], rY));
 
-			if ( priv->twinview == TV_ABOVE_BELOW )
+			if ((priv->twinview == TV_ABOVE_BELOW) || (priv->twinview == TV_BELOW_ABOVE))
 			{
 				if (sNum)
 				{
@@ -823,6 +836,8 @@ static int xf86WcmGetParam(LocalDevicePtr local, int param)
 		return common->wcmTPCButton;
 	    case XWACOM_PARAM_TOUCH:
 		return common->wcmTouch;
+	    case XWACOM_PARAM_GESTURE:
+		return common->wcmGesture;
 	    case XWACOM_PARAM_CAPACITY:
 		return common->wcmCapacity;
 	    case XWACOM_PARAM_CURSORPROX:
@@ -1007,6 +1022,8 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 		return common->wcmTouchDefault;
 	case XWACOM_PARAM_CAPACITY:
 		return common->wcmCapacityDefault;
+	case XWACOM_PARAM_GESTURE:
+		return common->wcmGestureDefault;
 	case XWACOM_PARAM_PRESSCURVE:
 		if (!IsCursor (priv) && !IsPad (priv) && !IsTouch (priv))
 			return (0 << 24) | (0 << 16) | (100 << 8) | 100;

@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -171,11 +171,11 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
 	/* set parameters */
 	common->wcmProtocolLevel = 4;
-	common->wcmPktLength = 9;       /* length of a packet 
-					 * device packets are 9 bytes
-					 * resistive touch is 5 bytes
-					 * capacitive touch is 7 bytes 
-					 */
+	common->wcmPktLength = WACOM_PKGLEN_TPC;        /* length of a packet 
+							 * device packets are 9 bytes
+							 * resistive touch is 5 bytes
+							 * capacitive touch is 7 bytes 
+							 */
 
 	/* digitizer X resolution in points/inch */
 	common->wcmResolX = 2540; 	
@@ -226,7 +226,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	if (common->wcmISDV4Speed != 19200)
 	{
 		/* default to 0x93 (resistive touch) */
-		common->wcmPktLength = 5;
+		common->wcmPktLength = WACOM_PKGLEN_TOUCH0;
 		common->tablet_id = 0x93;
 
 		/* Touch might be supported. Send a touch query command */
@@ -244,12 +244,12 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				switch (data[2] & 0x07)
 				{
 					case 0x01:
-						common->wcmPktLength = 7;
+						common->wcmPktLength = WACOM_PKGLEN_TOUCH;
 						common->tablet_id = 0x9A;
 					break;
 					case 0x02:
 					case 0x04:
-						common->wcmPktLength = 7;
+						common->wcmPktLength = WACOM_PKGLEN_TOUCH;
 						common->tablet_id = 0x9F;
 					break;
 				}
@@ -265,17 +265,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 				if (common->wcmMaxCapacity)
 				{
-					common->wcmCapacityDefault = 3;
-					common->wcmCapacity = 3;
 					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
 						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5)));
 					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
 						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3)));
-				}
-				else
-				{
-					common->wcmCapacityDefault = -1;
-					common->wcmCapacity = -1;
 				}
 			}
 		}
@@ -287,12 +280,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		}
 
 		/* TouchDefault was off for all devices
-		 * defaults to enable when touch is supported 
+		 * defaults to enable when it is a touch device 
 		 */
-		if (common->wcmTouch)
-		{
-			common->wcmTouchDefault = 1;
-		}
+		common->wcmTouchDefault = 1;
 
 		if (common->wcmMaxX && common->wcmMaxY && !common->wcmTouchResolX)
 		{
@@ -389,7 +379,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			xf86WcmEvent(common, 1, &out);
 			return 0;
 		}
-		common->wcmPktLength = 9;
+		common->wcmPktLength = WACOM_PKGLEN_TPC;
 		channel = 0;
 	}
 
@@ -412,14 +402,14 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	if (common->wcmPktLength == 5 || common->wcmPktLength == 7) /* a touch */
+	if (common->wcmPktLength == WACOM_PKGLEN_TOUCH0 || common->wcmPktLength == WACOM_PKGLEN_TOUCH) /* a touch */
 	{
 		/* touch without capacity has 5 bytes of data 
 		 * touch with capacity has 7 bytes of data
 		 */
 		ds->x = (((int)data[1]) << 7) | ((int)data[2]);
 		ds->y = (((int)data[3]) << 7) | ((int)data[4]);
-		if (common->wcmPktLength == 7)
+		if (common->wcmPktLength == WACOM_PKGLEN_TOUCH)
 		{
 			ds->capacity = (((int)data[5]) << 7) | ((int)data[6]);
 		}

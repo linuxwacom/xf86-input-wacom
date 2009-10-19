@@ -43,6 +43,12 @@
 #define PROXOUT_INTUOS_DISTANCE		10
 #define PROXOUT_GRAPHIRE_DISTANCE	42
 
+/* packet length for individual models */
+#define WACOM_PKGLEN_TOUCH0	 5
+#define WACOM_PKGLEN_TOUCH	 7
+#define WACOM_PKGLEN_GRAPHIRE 	 8
+#define WACOM_PKGLEN_TPC 	 9
+
 #define HEADER_BIT      0x80
 #define ZAXIS_SIGN_BIT  0x40
 #define ZAXIS_BIT       0x04
@@ -360,15 +366,15 @@ struct _WacomCommonRec
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 
 	/* These values are in tablet coordinates */
-	int wcmMaxX;                 /* tablet max X value */
-	int wcmMaxY;                 /* tablet max Y value */
+	int wcmMaxX;                 /* tablet logical max X value */
+	int wcmMaxY;                 /* tablet logical max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
-	int wcmMaxTouchX;            /* touch panel max X value */
-	int wcmMaxTouchY;            /* touch panel max Y value */
+	int wcmMaxTouchX;            /* touch panel logical max X value */
+	int wcmMaxTouchY;            /* touch panel logical max Y value */
 	int wcmResolX;		     /* pen tool X resolution in points/inch */
 	int wcmResolY;		     /* pen tool Y resolution in points/inch */
-	int wcmTouchResolX;	     /* touch X resolution in points/inch */
-	int wcmTouchResolY;	     /* touch Y resolution in points/inch */
+	int wcmTouchResolX;	     /* touch X resolution in points/mm */
+	int wcmTouchResolY;	     /* touch Y resolution in points/mm */
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100% pressure */
 	int wcmMaxCapacity;	     /* max capacity value */
@@ -406,7 +412,9 @@ struct _WacomCommonRec
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
-	int wcmTouchDefault;	     /* default to disable when not supported */
+	int wcmTouchDefault;	     /* default touch to disable when not supported */
+	int wcmGesture;	     	     /* disable/enable touch gesture */
+	int wcmGestureDefault;       /* default touch gesture to disable when not supported */
 	int wcmCapacity;	     /* disable/enable capacity */
 	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported/disabled */
 				     /* 3 when capacity is supported */

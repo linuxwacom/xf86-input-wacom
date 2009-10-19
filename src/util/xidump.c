@@ -540,7 +540,6 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 			wacscrn_output(nFocusRow,12,"OUT ");
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
-			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
 			if (!pValInfo)
 			{
 				wacscrn_output(23,0,"Unexpected valuator data received.");
@@ -568,7 +567,8 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 
 				for (k=0; k<pValInfo->num_axes && k<3; ++k)
 				{
-					snprintf(chBuf, sizeof(chBuf), "%+06d", pMove->axis_data[k]);
+					snprintf(chBuf, sizeof(chBuf), "%+06d", 
+						((XDeviceMotionEvent*)pAny)->axis_data[k]);
 					wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
 
 				}
@@ -576,7 +576,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 				for (k=3; k<pValInfo->num_axes && k<6; ++k)
 				{
 					snprintf(chBuf, sizeof(chBuf), "%+06d", 
-							(short)(pMove->axis_data[k]&0xffff));
+						(short)(((XDeviceMotionEvent*)pAny)->axis_data[k]&0xffff));
 					wacscrn_output(nValRow+1, 12 + k * 10, chBuf);
 
 				}
@@ -586,7 +586,7 @@ static int CursesRun(Display* pDisp, XDeviceInfo* pDevInfo, FORMATTYPE fmt)
 					char* c;
 					int s, nPos;
 					wacscrn_standout();
-					nPos = pMove->axis_data[2];
+					nPos = ((XDeviceMotionEvent*)pAny)->axis_data[2];
 
 					if (nPos < nMinPress)
 					{
@@ -702,16 +702,14 @@ static int RawRunDefault(Display* pDisp, XDeviceInfo* pDevInfo)
 			printf("Focus Out\n");
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
-			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
-
 			printf("Motion: x=%+6d y=%+6d p=%4d tx=%+4d ty=%+4d "
 				"w=%+5d \n",
-					pMove->axis_data[0],
-					pMove->axis_data[1],
-					pMove->axis_data[2],
-					(short)(pMove->axis_data[3]&0xffff),
-					(short)(pMove->axis_data[4]&0xffff),
-					(short)(pMove->axis_data[5]&0xffff));
+					((XDeviceMotionEvent*)pAny)->axis_data[0],
+					((XDeviceMotionEvent*)pAny)->axis_data[1],
+					((XDeviceMotionEvent*)pAny)->axis_data[2],
+					(short)(((XDeviceMotionEvent*)pAny)->axis_data[3]&0xffff),
+					(short)(((XDeviceMotionEvent*)pAny)->axis_data[4]&0xffff),
+					(short)(((XDeviceMotionEvent*)pAny)->axis_data[5]&0xffff));
 
 		}
 		else if ((pAny->type == gnInputEvent[INPUTEVENT_BTN_PRESS]) ||
@@ -747,9 +745,9 @@ static int RawRunAccel(Display* pDisp, XDeviceInfo* pDevInfo)
 	XEvent event;
 	XAnyEvent* pAny;
 	int prox=0, head=0, tail=0, points=0, prev=-1;
-	int x[16], y[16];
+	int x[16], y[16], t;
 	double d[16], dd[16], vx[16], vy[16], ax[16], ay[16],
-		dx, dy, dvx, dvy, m, a;
+		dx, dy, dvx, dvy, m, a, ti;
 
 	while (1)
 	{
@@ -762,10 +760,13 @@ static int RawRunAccel(Display* pDisp, XDeviceInfo* pDevInfo)
 			{ prox=head=tail=points=0; prev=-1; }
 		else if (pAny->type == gnInputEvent[INPUTEVENT_MOTION_NOTIFY])
 		{
-			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)pAny;
-			x[head] = pMove->axis_data[0];
-			y[head] = pMove->axis_data[1];
-			d[head] = (double)pMove->time;
+			XDeviceMotionEvent* pMove = (XDeviceMotionEvent*)&event;
+			t = pMove->axis_data[0];
+			x[head] = t;
+			t = ((XDeviceMotionEvent*)&event)->axis_data[1];
+			y[head] = t;
+			ti = ((XDeviceMotionEvent*)&event)->time;
+			d[head] = ti;
 
 			if (prev >= 0)
 			{
@@ -901,31 +902,15 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	int nRtn;
 	XDevice* pDev;
 	XDeviceInfoPtr pDevInfo;
-	Window wnd;
 	int nEventListCnt = 0;
 	XEventClass eventList[32];
 	XEventClass cls;
-
-	/* create a window to receive events */
-	wnd = XCreateWindow(pDisp,
-			DefaultRootWindow(pDisp), /* parent */
-			0,0,10,10, /* placement */
-			0, /* border width */
-			0, /* depth */
-			InputOutput, /* class */
-			CopyFromParent, /* visual */
-			0, /* valuemask */
-			NULL); /* attributes */
-
-	/* mapping appears to be necessary */
-	XMapWindow(pDisp,wnd);
 
 	/* get the device by name */
 	pDevInfo = GetDevice(pDisp,pszDeviceName);
 	if (!pDevInfo)
 	{
 		fprintf(stderr,"Unable to find input device '%s'\n",pszDeviceName);
-		XDestroyWindow(pDisp,wnd);
 		return 1;
 	}
 
@@ -934,7 +919,6 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	if (!pDev)
 	{
 		fprintf(stderr,"Unable to open input device '%s'\n",pszDeviceName);
-		XDestroyWindow(pDisp,wnd);
 		return 1;
 	}
 
@@ -1007,7 +991,7 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	/* XSelectExtensionEvent(pDisp,wnd,eventList,nEventListCnt); */
 
 	/* grab device - work whether pointer is in active window or not */
-	XGrabDevice(pDisp,pDev,wnd,
+	XGrabDevice(pDisp,pDev,DefaultRootWindow(pDisp),
 			0, /* no owner events */
 			nEventListCnt, eventList, /* events */
 			GrabModeAsync, /* don't queue, give me whatever you got */
@@ -1027,7 +1011,6 @@ int Run(Display* pDisp, UI* pUI, FORMATTYPE fmt, const char* pszDeviceName)
 	XUngrabDevice(pDisp,pDev,CurrentTime);
 	XFree(pDev);
 	XCloseDisplay(pDisp);
-	XDestroyWindow(pDisp,wnd);
 
 	return nRtn;
 }
@@ -1046,8 +1029,6 @@ int main(int argc, char** argv)
 	const char* pa;
 	Display* pDisp = NULL;
 	const char* pszDeviceName = NULL;
-	char sCallString[256], serialNum[256], toolID[256];
-	FILE* ptr;
 
 	++argv;
 	while ((pa = *(argv++)) != NULL)
@@ -1123,7 +1104,7 @@ int main(int argc, char** argv)
 		Usage(1);
 	}
 
-	/* get tool ID and serial number from xsetwacom */
+/* examples to get tool ID and serial number from xsetwacom
 	if (pszDeviceName)
 	{
 		sprintf(sCallString, "xsetwacom get %s toolId", pszDeviceName);
@@ -1135,7 +1116,7 @@ int main(int argc, char** argv)
 			fgets(serialNum, 32, ptr);
 		pclose(ptr);
 	}
-		
+*/
 	/* default to first valid UI, if not specified */
 	if (pUI == NULL)
 		pUI = gpUIs[0];

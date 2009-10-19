@@ -9,6 +9,12 @@ exec wish -f "$0" ${1+"$@"}
 #
 # Based on calibrate 1998-99 Patrick Lecoanet --
 #
+# There are two ways to run this program:
+#  wacomcpl:  full control panel features with pressure and button configuration, 
+#		tablet and screen mapping, as well as calibration. 
+#
+#  wacomcpl calibrate dev: fesatures calibration for a LCD device (identified as dev)
+#
 # This code is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
@@ -55,7 +61,8 @@ set doubleClickB 35
 set displayToggleB 36
 set screenToggleB 37
 set keystrokeB 38
-set maxNumTablets 199
+set maxNumTablets 227
+set calibration_sequence_only	0
 
 proc updateCurrentScreenInfo {} {
     global device numScreens currentScreen 
@@ -184,6 +191,7 @@ proc calibrationSequence {which xDev yDev} {
     global getDeviceModel screenXBottom screenYBottom
     global calibX_org calibY_org calibX_botm calibY_botm
     global xDevMin xDevMax yDevMin yDevMax
+    global calibration_sequence_only
 
     set scaling [exec xsetwacom get $device xscaling]
     if { $scaling == 1 } {
@@ -265,7 +273,11 @@ proc calibrationSequence {which xDev yDev} {
 	    .screen.list.label configure -text ""
  	    bindtags .screen.list.list $screenTags
 	} else {
-	    closeTabWindow
+            if { $calibration_sequence_only == 1 } {
+                exit 0
+	    } else {
+		closeTabWindow
+	    }
 	}
     }
 }
@@ -504,6 +516,34 @@ proc getDeviceOptionProc { dev i } {
     }
 }
 
+proc CreateDevicePanel { type model } {
+    global hasPad isLCD hasTouch hasGesture
+
+    if { ![ string compare $type "pad" ] } {
+	if { $hasPad($model) } {
+	    createPanel 0 1 0 0
+	}
+    } elseif { ![ string compare $type "touch" ] } {
+	if { $hasTouch($model) } {
+	    if { $hasGesture($model) } {
+		createPanel 1 1 0 1
+	    } else {
+		createPanel 1 0 0 1
+	    }
+	}
+    } elseif { $isLCD($model) } { 
+	if { ![ string compare $type "stylus" ] } {
+	    createPanel 1 1 0 1
+	} elseif { [ string compare $type "cursor" ] } {
+	    createPanel 1 1 0 0
+	}
+    } elseif { [ string compare $type "cursor" ] } {
+	createPanel 1 1 1 0
+    } else {
+	createPanel 0 1 1 0
+    }
+}
+
 proc updateDevice {} {
     global device deviceIndex hasPad isLCD
     global numScreens getDeviceModel hasTouch
@@ -527,26 +567,7 @@ proc updateDevice {} {
 	set model $getDeviceModel($device,model)
 	set type $getDeviceModel($device,type)
 	destroy .panel
-	if { ![ string compare $type "pad" ] } {
-	    if { $hasPad($model) } {
-		createPanel 0 1 0 0
-	    }
-	} elseif { ![ string compare $type "touch" ] } {
-	    if { $hasTouch($model) } {
-		createPanel 1 0 0 1
-	    }
-	} elseif { $isLCD($model) } { 
-	    if { ![ string compare $type "stylus" ] } {
-
-		createPanel 1 1 0 1
-	    } elseif { [ string compare $type "cursor" ] } {
-		createPanel 1 1 0 0
-	    }
-	} elseif { [ string compare $type "cursor" ] } {
-	    createPanel 1 1 1 0
-	} else {
-	    createPanel 0 1 1 0
-	}
+	CreateDevicePanel $type $model
     } else {
 	#
 	# Update the entry indicator
@@ -1325,8 +1346,8 @@ proc initialSet {} {
 	}
     }
 
-    grid $currentW.f.sns -row 3 -column 0 
-    grid $currentW.f.snsmenu -row 3 -column 1
+    grid $currentW.f.sns -row 5 -column 0 
+    grid $currentW.f.snsmenu -row 5 -column 1
     if { $numS > 1 } {
 	$currentW.f.snsmenu configure -state normal
     } else {
@@ -1348,18 +1369,19 @@ proc initialSet {} {
     }
 
     tk_optionMenu $currentW.f.tvmenu tvd $tv(0) $tv(1) $tv(2) $tv(3) $tv(4) $tv(5)
-    grid $currentW.f.tv -row 2 -column 0 
-    grid $currentW.f.tvmenu -row 2 -column 1
+    grid $currentW.f.tv -row 4 -column 0 
+    grid $currentW.f.tvmenu -row 4 -column 1
 
     $currentW.f.tvmenu configure -state normal
-    if { $numS == 1 } {
-	label $currentW.f.message1 -text "Please click on \"Cancel\" "
-	label $currentW.f.message2 -text "if your Video card isn't from Nvidia." 
-	grid $currentW.f.message1 -row 0 -column 0
-	grid $currentW.f.message2 -row 0 -column 1
-    } elseif { !$tvID } {
-	$currentW.f.tvmenu configure -state disable
-    }
+    label $currentW.f.message1 -text "\nThe \"TwinView Setup\" option "
+    label $currentW.f.message2 -text "is only for Nvidia graphic card."
+    label $currentW.f.message3 -text "If your graphic card is not from Nvidia, "
+    label $currentW.f.message4 -text "please leave the option as \"None\".\n"
+ 
+    grid $currentW.f.message1 -row 0 -column 1
+    grid $currentW.f.message2 -row 1 -column 1
+    grid $currentW.f.message3 -row 2 -column 1
+    grid $currentW.f.message4 -row 3 -column 1
 }
 
 proc updateSet {} {
@@ -1620,6 +1642,23 @@ proc touchState { theCButton } {
 	-variable touchButton -state normal -command "switchTouch 0"
 }
 
+proc gestureState { theCButton } {
+    global device touchButton getDeviceModel hasGesture gestureButton
+
+    set gestureButton 0
+    # gesture supported and touch is on 
+    if { $touchButton} {
+	if { $gestureButton == [exec xsetwacom get $device gesture]  } {
+	    set gestureButton 1
+	}
+	checkbutton $theCButton -text "Disable Touch Gesture" -anchor w \
+	    -variable touchButton -state normal -command switchGesture
+    } else {
+	checkbutton $theCButton -text "Disable Touch Gesture" -anchor w \
+	    -variable gestureButton -state disabled -command switchGesture
+    }
+}
+
 proc initialTouch {} {
     global device getDeviceModel currentW 
     global getOption getOptionDefault Option hasCapacity
@@ -1686,7 +1725,7 @@ proc defaultTouch {} {
 }
 
 proc switchTouch { window } {
-    global device touchButton
+    global device touchButton gestureButton hasGesture
 
     # don't send the command for touch with capacity
     if { [ exec xsetwacom getdefault $device capacity ] >= 0 && $window == 0 } {
@@ -1698,10 +1737,32 @@ proc switchTouch { window } {
 	    .panel.calibrate configure -state normal
 	    exec xsetwacom set $device touch 1
 	    updateXinitrc $device touch 1
+	    if { $hasGesture } {
+		.panel.button configure -state normal
+	    }
 	} else {
 	    .panel.calibrate configure -state disabled
 	    exec xsetwacom set $device touch 0
 	    updateXinitrc $device touch 0
+	    if { $hasGesture } {
+		.panel.button configure -state disabled
+	    }
+	}
+   }
+}
+
+proc switchGesture { } {
+    global device touchButton gestureButton hasGesture
+
+    if { $touchGesture == [ exec xsetwacom get $device gesture ] } {
+	if { $touchGesture == 0 } {
+	    .panel.button configure -state normal
+	    exec xsetwacom set $device gesture 1
+	    updateXinitrc $device gesture 1
+	} else {
+	    .panel.button configure -state disabled
+	    exec xsetwacom set $device gesture 0
+	    updateXinitrc $device gesture 0
 	}
    }
 }
@@ -1709,7 +1770,7 @@ proc switchTouch { window } {
 proc createPanel { pressure button mapping calibrate } {
     global bName device getOption getDeviceModel currentb 
     global wName startS Option hasCapacity touchButton
-    global hasCapacity
+    global hasCapacity hasGesture
 
     frame .panel
     set bName(pressure) $pressure
@@ -1748,7 +1809,7 @@ proc createPanel { pressure button mapping calibrate } {
 		    .panel.calibrate configure -state disable
 		}
 	    } else {
-		touchState .panel.pressure
+		touchState .panel.pressure 
 	    }
 	} else {
 	    set wName(1) "Feel"
@@ -1759,6 +1820,12 @@ proc createPanel { pressure button mapping calibrate } {
 	grid .panel.pressure -row 5 -column 0 -columnspan 2 -sticky news -padx 10
     }
     if { $button } {
+	if { ![string compare $getDeviceModel($device,type) "touch"] } {
+	    set model $getDeviceModel($device,model)
+	    if { $hasGesture($model) } {
+		gestureState .panel.button 
+	    }
+	}
 	if { ![string compare $getDeviceModel($device,type) "pad"] } {
 	    button .panel.button -text $wName(6) \
 		-state normal -command "displaySubWindow \
@@ -1798,7 +1865,7 @@ proc createPanel { pressure button mapping calibrate } {
 proc updateModelInfo { } {
     global isLCD numPadButtons numPadRings hasPad hasTouch
     global numPadStrips numPadAbsW numPadRelW hasCapacity
-    global maxNumTablets
+    global maxNumTablets hasGesture 
 
     for { set i 0 } { $i <= $maxNumTablets } { incr i 1 } {
 	set isLCD($i) 0 
@@ -1810,21 +1877,19 @@ proc updateModelInfo { } {
 	set hasPad($i) 0
 	set hasTouch($i) 0
 	set hasCapacity($i) 0
+	set hasGesture($i) 0
     }
     #PL
     for { set i 48} { $i <= 63 } { incr i 1 } {
 	set isLCD($i) 1 
     }
     #TabletPC
-    for { set i 144 } { $i <= 151 } { incr i 1 } {
+    for { set i 151 } { $i <= 166 } { incr i 1 } {
 	set isLCD($i) 1 
     }
-
-    #Capacitive TabletPC
-    set hasCapacity(154) 1
-    set hasCapacity(159) 1
-    set isLCD(154) 1
-    set isLCD(159) 1
+    #TabletPC with 2FG touch
+    set isLCD(226) 1 
+    set isLCD(227) 1 
 
     #Cintiq
     for { set i 192 } { $i <= 199 } { incr i 1 } {
@@ -1867,6 +1932,7 @@ proc updateModelInfo { } {
     set numPadButtons(198) 10
     set numPadStrips(198) 2
 
+    # I4
     set numPadButtons(184) 7
     set numPadRings(184) 1
     for { set i 185 } { $i <= 187 } { incr i 1 } {
@@ -1874,7 +1940,7 @@ proc updateModelInfo { } {
 	set numPadRings($i) 1
     }
 
-    for { set i 0 } { $i <= 198 } { incr i 1 } {
+    for { set i 0 } { $i <= $maxNumTablets } { incr i 1 } {
 	if { $numPadButtons($i) || $numPadRings($i) 
 		|| $numPadStrips($i) || $numPadAbsW($i) 
 		|| $numPadRelW($i) } {
@@ -1882,10 +1948,14 @@ proc updateModelInfo { } {
 	}
     }
 
-    for { set i 0 } { $i <= 198 } { incr i 1 } {
-	if { $i == 147 || $i == 154 || $i == 159 } {
+    # one finger 
+    for { set i 154 } { $i <= 166 } { incr i 1 } {
 	   set hasTouch($i) 1
-	}
+    }
+
+    # 2FG
+    for { set i 226 } { $i <= 227 } { incr i 1 } {
+	   set hasTouch($i) 1
     }
 }
 
@@ -1949,10 +2019,23 @@ proc createControls { } {
     grid rowconfigure . 7 -weight 5
 }
 
+proc CalibrateOnly { dev } {
+    global device calibration_sequence_only getDeviceModel
+    set calibration_sequence_only 1
+    set device $dev
+    CreateDevicePanel $getDeviceModel($device,type) $getDeviceModel($device,model)
+    Calibration
+}
+
 createControls
 
 wm title . "Wacom Control Panel"
-wm geometry . =$windowSize+$origin_x+$origin_y
+if { $argc > 1 && [lindex $argv 0] == "calibrate" } {
+    wm geometry . =0x0+0+0
+    CalibrateOnly [lindex $argv 1]
+} else {
+    wm geometry . =$windowSize+$origin_x+$origin_y
+}
 
 #
 # Local Variables:

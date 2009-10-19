@@ -1,5 +1,5 @@
 AC_PREREQ(2.58)
-AC_INIT(linuxwacom, 0.8.3)
+AC_INIT(linuxwacom, 0.8.5)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -179,8 +179,7 @@ else
 						24|25) WCM_KERNEL_VER="2.6.24";;
 						26) WCM_KERNEL_VER="2.6.26";;
 						27) WCM_KERNEL_VER="2.6.27";;
-						28|29|30) WCM_KERNEL_VER="2.6.28";;
-						*) WCM_KERNEL_VER="2.6.31";;
+						*) WCM_KERNEL_VER="2.6.28";;
 					esac
 				else
 					AC_MSG_WARN([support for kernels older than 2.6.9 has been dropped after 0.8.2])
@@ -562,23 +561,25 @@ if test "$WCM_ENV_XFREE86" != yes; then
 fi
 AM_CONDITIONAL(WCM_ENV_XORGSDK, [test "$WCM_ENV_XORGSDK" = yes])
 
-AC_MSG_CHECKING(for lib xf86config)
-if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; then
-	if test -f $WCM_XFREE86_DIR/$XFREE86SUBDIR/xf86Parser.h; then
-		AC_MSG_RESULT([found, $WCM_XFREE86_DIR/$XFREE86SUBDIR])
-		WCM_ENV_XF86CONFIG=yes
-		CFLAGS="$CFLAGS -I$WCM_XFREE86_DIR/$XFREE86SUBDIR"
-	elif test -f $WCM_XORGSDK_DIR/xf86Parser.h; then
-		AC_MSG_RESULT([found, $WCM_XORGSDK_DIR])
-		WCM_ENV_XF86CONFIG=yes
-	elif test -f $WCM_XLIB_DIR/../include/xf86Parser.h; then
-		AC_MSG_RESULT([found, $WCM_XLIB_DIR/../include])
-		WCM_ENV_XF86CONFIG=yes
-		CFLAGS="$CFLAGS -I$WCM_XLIB_DIR/../include"	
+if test "$WCM_XORG_XSERVER_1_6" == yes; then
+	AC_MSG_CHECKING(for lib xf86config)
+	if test -f $WCM_XLIB_DIR/libxf86config.a -o -f $WCM_XLIB_DIR/libxf86config.so; then
+		if test -f $WCM_XFREE86_DIR/$XFREE86SUBDIR/xf86Parser.h; then
+			AC_MSG_RESULT([found, $WCM_XFREE86_DIR/$XFREE86SUBDIR])
+			WCM_ENV_XF86CONFIG=yes
+			CFLAGS="$CFLAGS -I$WCM_XFREE86_DIR/$XFREE86SUBDIR"
+		elif test -f $WCM_XORGSDK_DIR/xf86Parser.h; then
+			AC_MSG_RESULT([found, $WCM_XORGSDK_DIR])
+			WCM_ENV_XF86CONFIG=yes
+		elif test -f $WCM_XLIB_DIR/../include/xf86Parser.h; then
+			AC_MSG_RESULT([found, $WCM_XLIB_DIR/../include])
+			WCM_ENV_XF86CONFIG=yes
+			CFLAGS="$CFLAGS -I$WCM_XLIB_DIR/../include"	
+		fi
 	fi
 fi
 
-if test "$WCM_ENV_XFREE86" != yes -o "$WCM_XORG_XSERVER_1_4" != yes; then
+if test "$WCM_ENV_XFREE86" != yes -a "$WCM_XORG_XSERVER_1_4" == yes; then
 	PKG_CHECK_MODULES(XORG, [xorg-server])
 	AC_SUBST([XORG_CFLAGS])
 fi
@@ -970,7 +971,6 @@ AC_OUTPUT(Makefile
 	src/2.6.26/Makefile
 	src/2.6.27/Makefile
 	src/2.6.28/Makefile
-	src/2.6.31/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 

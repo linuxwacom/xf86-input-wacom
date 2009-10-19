@@ -38,6 +38,7 @@
 **   2009-05-18 0.1.9 - PC - Support get/set serial command
 **   2009-07-14 0.2.0 - PC - Support Nvidia Xinerama setting
 **   2009-08-24 0.2.1 - PC - Add SCREENTOGGLE command
+**   2009-09-31 0.2.2 - PC - Add Dual Touch
 **
 ****************************************************************************/
 
@@ -357,6 +358,11 @@ static PARAMINFO gParamInfo[] =
 	{ "Touch",
 		"Turns on/off Touch events (default is enable/on). ",
 		XWACOM_PARAM_TOUCH, VALUE_OPTIONAL, 
+		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
+
+	{ "Gesture",
+		"Turns on/off Touch Gesture (default is enable/on). ",
+		XWACOM_PARAM_GESTURE, VALUE_OPTIONAL, 
 		RANGE, 0, 1, BOOLEAN_VALUE, 1 },
 
 	{ "Capacity",

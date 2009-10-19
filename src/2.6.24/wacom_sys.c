@@ -29,13 +29,11 @@
 #define HID_USAGE_FINGER		0x22
 #define HID_USAGE_STYLUS		0x20
 #define HID_COLLECTION			0xc0
-#define HID_USAGE_PAGE_VDEFINED		0xff
 
 enum {
 	WCM_UNDEFINED = 0,
 	WCM_DESKTOP,
-	WCM_DIGITIZER,
-	MAX_USAGE_PAGE
+	WCM_DIGITIZER
 };
 
 struct hid_descriptor
@@ -267,12 +265,32 @@ void input_dev_pt(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_RUBBER);
 }
 
-static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc, 
-		struct wacom_wac *wacom_wac, char *report)
+void input_dev_tpc(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
+{
+	input_set_abs_params(input_dev, ABS_RX, 0, wacom_wac->features->touch_x_max, 4, 0);
+	input_set_abs_params(input_dev, ABS_RY, 0, wacom_wac->features->touch_y_max, 4, 0);
+	input_set_abs_params(input_dev, ABS_Z, 0, wacom_wac->features->touch_x_res, 0, 0);
+	input_set_abs_params(input_dev, ABS_RZ, 0, wacom_wac->features->touch_y_res, 0, 0);
+	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_DOUBLETAP);
+}
+
+void input_dev_tpc2fg(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
+{
+	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_TRIPLETAP);
+}
+
+static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc, 
+		struct wacom_wac *wacom_wac)
 {
 	struct usb_device *dev = interface_to_usbdev(intf);
-	char limit = 0, result = 0;
-	int i = 0, usage = WCM_UNDEFINED, finger = 0, pen = 0;
+	struct wacom_features *features = wacom_wac->features;
+	char limit = 0;
+	int i = 0, usage = WCM_UNDEFINED, finger = 0, pen = 0, result = 0;
+	unsigned char *report;
+
+	report = kzalloc(hid_desc->wDescriptorLength, GFP_KERNEL);
+	if (!report)
+		return -ENOMEM;
 
 	/* retrive report descriptors */
 	do {
@@ -284,11 +302,15 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			report,
 			hid_desc->wDescriptorLength,
 			5000); /* 5 secs */
-	} while (limit++ < 5);
+	} while (result < 0 && limit++ < 5);
+
+	/* No need to parse the Descriptor. It isn't an error though */
+	if (result < 0)
+		goto out;
 
 	for (i=0; i<hid_desc->wDescriptorLength; i++) {
-		if ((unsigned short)report[i] == HID_USAGE_PAGE) {
-			switch ((unsigned short)report[i+1]) {
+		if (report[i] == HID_USAGE_PAGE) {
+			switch (report[i+1]) {
 			    case HID_USAGE_PAGE_DIGITIZER:
 				usage = WCM_DIGITIZER;
 				i++;
@@ -300,19 +322,20 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			}
 		}
 
-		if ((unsigned short)report[i] == HID_USAGE) {
-			switch ((unsigned short)report[i+1]) {
+		if (report[i] == HID_USAGE) {
+			switch (report[i+1]) {
 			    case HID_USAGE_X:
 				if (usage == WCM_DESKTOP) {
 					if (finger) {
-						wacom_wac->features->touch_x_max = 
-						wacom_wac->features->touch_y_max = (unsigned short)
-							(wacom_le16_to_cpu(&report[i+3]));
-						wacom_wac->features->x_max = (unsigned short)
-							(wacom_le16_to_cpu(&report[i+6]));
-						i += 7;
+						features->touch_x_max =
+							wacom_le16_to_cpu(&report[i + 3]);
+						features->touch_x_res =
+							wacom_le16_to_cpu(&report[i + 6]);
+						features->unit = report[i + 9];
+						features->unitExpo = report[i + 11];
+						i += 12;
 					} else if (pen) {
-						wacom_wac->features->x_max = (unsigned short)
+						features->x_max = 
 							(wacom_le16_to_cpu(&report[i+3]));
 						i += 4;
 					}
@@ -321,16 +344,31 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 					wacom_wac->features->pressure_max = (unsigned short)
 							(report[i+4] << 8  | report[i+3]);
 					*/
-					wacom_wac->features->pressure_max = 255;
+					features->pressure_max = 255;
 					i += 4;
 				}
 				break;
 			    case HID_USAGE_Y:
 				if (usage == WCM_DESKTOP) {
-					wacom_wac->features->y_max = (unsigned short)
-						(wacom_le16_to_cpu(&report[i+3]));
+					if (finger) {
+						if (strstr(features->name, "Wacom ISDv4 E")) {
+							features->touch_y_max =
+								wacom_le16_to_cpu(&report[i + 3]);
+							features->touch_y_res =
+								wacom_le16_to_cpu(&report[i + 6]);
+							i += 7;
+						} else {
+							features->touch_y_max =
+								features->touch_x_max;
+							features->touch_y_res =
+								wacom_le16_to_cpu(&report[i + 3]);
+							i += 4;
+						}
+					} else if (pen) {
+						features->y_max = (wacom_le16_to_cpu(&report[i+3]));
+						i += 4;
+					}
 				}
-				i += 4;
 				break;
 			    case HID_USAGE_FINGER:
 				finger = 1;
@@ -342,7 +380,7 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 				break;
 			    case HID_USAGE_UNDEFINED:
 				if (usage == WCM_DESKTOP && finger) { /* capacity */
-					wacom_wac->features->pressure_max = (unsigned short)
+					features->pressure_max = 
 						(wacom_le16_to_cpu(&report[i+3]));
 				}
 				i += 4;
@@ -350,11 +388,17 @@ static void wacom_paser_hid(struct usb_interface *intf, struct hid_descriptor *h
 			}
 		}
 
-		if ((unsigned short)report[i] == HID_COLLECTION) {
-			/* reset UsagePage ans Finger */
+		if (report[i] == HID_COLLECTION) {
+			/* reset UsagePage an Finger */
 			finger = usage = 0;
+			break;
 		}
 	}
+
+ out:
+	result = 0;
+	kfree(report);
+	return result;
 }
 
 static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *id)
@@ -366,7 +410,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	struct wacom_wac *wacom_wac;
 	struct input_dev *input_dev;
 	int error = -ENOMEM;
-	char rep_data[2], limit = 0, mode = 2, *report = NULL;
+	char rep_data[2], limit = 0, report_id = 2;
 	struct hid_descriptor *hid_desc;
 
 	wacom = kzalloc(sizeof(struct wacom), GFP_KERNEL);
@@ -375,7 +419,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (!wacom || !input_dev || !wacom_wac)
 		goto fail1;
 
-	wacom_wac->data = usb_buffer_alloc(dev, 10, GFP_KERNEL, &wacom->data_dma);
+	wacom_wac->data = usb_buffer_alloc(dev, WACOM_PKGLEN_MAX, GFP_KERNEL, &wacom->data_dma);
 	if (!wacom_wac->data)
 		goto fail1;
 
@@ -389,7 +433,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	strlcat(wacom->phys, "/input0", sizeof(wacom->phys));
 
 	wacom_wac->features = get_wacom_feature(id);
-	BUG_ON(wacom_wac->features->pktlen > 10);
+	BUG_ON(wacom_wac->features->pktlen > WACOM_PKGLEN_MAX);
 
 	input_dev->name = wacom_wac->features->name;
 	wacom->wacom_wac = wacom_wac;
@@ -405,16 +449,11 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	endpoint = &intf->cur_altsetting->endpoint[0].desc;
 
 	/* Initialize touch_x_max and touch_y_max in case it is not defined */
-	if (wacom_wac->features->type == TABLETPC) {
+	if (wacom_wac->features->type == TABLETPC || wacom_wac->features->type == TABLETPC2FG) {
 		wacom_wac->features->touch_x_max = 1023;
 		wacom_wac->features->touch_y_max = 1023;
-	} else {
-		wacom_wac->features->touch_x_max = 0;
-		wacom_wac->features->touch_y_max = 0;
-	}
 
-	/* TabletPC need to retrieve the physical and logical maximum from report descriptor */
-	if (wacom_wac->features->type == TABLETPC) {
+		/* TabletPC need to retrieve the physical and logical maximum from report descriptor */
 		if (usb_get_extra_descriptor(interface, HID_DEVICET_HID, &hid_desc)) {
 	    		if (usb_get_extra_descriptor(&interface->endpoint[0], 
 				HID_DEVICET_REPORT, &hid_desc)) {
@@ -422,11 +461,12 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 				goto fail2;
 			}
 		}
-		report = kzalloc(hid_desc->wDescriptorLength, GFP_KERNEL);
-		if (!report) {
+		error = wacom_parse_hid(intf, hid_desc, wacom_wac);
+		if (error)
 			goto fail2;
-		}
-		wacom_paser_hid(intf, hid_desc, wacom_wac, report);
+	} else {
+		wacom_wac->features->touch_x_max = 0;
+		wacom_wac->features->touch_y_max = 0;
 	}
 
 	input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
@@ -435,11 +475,6 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	input_set_abs_params(input_dev, ABS_X, 0, wacom_wac->features->x_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, wacom_wac->features->y_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, wacom_wac->features->pressure_max, 0, 0);
-	if (wacom_wac->features->type == TABLETPC) {
-		input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_DOUBLETAP);
-		input_set_abs_params(input_dev, ABS_RX, 0, wacom_wac->features->touch_x_max, 4, 0);
-		input_set_abs_params(input_dev, ABS_RY, 0, wacom_wac->features->touch_y_max, 4, 0);
-	}
 	input_dev->absbit[BIT_WORD(ABS_MISC)] |= BIT_MASK(ABS_MISC);
 
 	wacom_init_input_dev(input_dev, wacom_wac);
@@ -455,25 +490,36 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (error)
 		goto fail3;
 
-	/* Ask the tablet to report tablet data if it is not a Tablet PC. 
-	 * Repeat until it succeeds 
+	/* Ask the tablet to report tablet data if it is not a regular Tablet PC. 
+	 * Repeat 3 times since on some systems the first 2 may fail.
 	 */
-	if (wacom_wac->features->type != TABLETPC) {
+	if (wacom_wac->features->type == TABLETPC2FG) {
+		do {
+			rep_data[0] = 3;
+			rep_data[1] = 4;
+			report_id = 3;
+			error = usb_set_report(intf, WAC_HID_FEATURE_REPORT,
+						report_id, rep_data, 2);
+			if (error >= 0)
+				error = usb_get_report(intf,
+						WAC_HID_FEATURE_REPORT, report_id,
+						rep_data, 3);
+		} while ((error < 0 || rep_data[1] != 4) && limit++ < 3);
+	} else if (wacom_wac->features->type != TABLETPC) {
 		do {
 			rep_data[0] = 2;
-			rep_data[1] = mode;
-			error = usb_set_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
+			rep_data[1] = 2;
+			error = usb_set_report(intf, WAC_HID_FEATURE_REPORT, report_id, rep_data, 2);
 			if(error >= 0)
-				error = usb_get_report(intf, WAC_HID_FEATURE_REPORT, 2, rep_data, 2);
-		} while (((error <= 0) || (rep_data[1] != mode)) && limit++ < 5);
+				error = usb_get_report(intf, WAC_HID_FEATURE_REPORT, report_id, rep_data, 2);
+		} while (((error <= 0) || (rep_data[1] != 2)) && limit++ < 3);
 	}
 
 	usb_set_intfdata(intf, wacom);
-	kfree(report);
 	return 0;
 
  fail3:	usb_free_urb(wacom->irq);
- fail2:	usb_buffer_free(dev, 10, wacom_wac->data, wacom->data_dma);
+ fail2:	usb_buffer_free(dev, WACOM_PKGLEN_MAX, wacom_wac->data, wacom->data_dma);
  fail1:	input_free_device(input_dev);
 	kfree(wacom);
 	kfree(wacom_wac);
@@ -489,7 +535,8 @@ static void wacom_disconnect(struct usb_interface *intf)
 		usb_kill_urb(wacom->irq);
 		input_unregister_device(wacom->dev);
 		usb_free_urb(wacom->irq);
-		usb_buffer_free(interface_to_usbdev(intf), 10, wacom->wacom_wac->data, wacom->data_dma);
+		usb_buffer_free(interface_to_usbdev(intf), WACOM_PKGLEN_MAX, 
+			wacom->wacom_wac->data, wacom->data_dma);
 		kfree(wacom->wacom_wac);
 		kfree(wacom);
 	}

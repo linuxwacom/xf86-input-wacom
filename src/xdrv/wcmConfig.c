@@ -193,6 +193,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmTouch = 0;              /* touch is disabled */
 	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
+	common->wcmGesture = 0;            /* touch Gesture is disabled */
+	common->wcmGestureDefault = 0; 	   /* default to disable when touch Gesture isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
 	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
 					   /* 3 when capacity is supported */
@@ -206,8 +208,8 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
  	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
 	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
-	common->wcmTouchResolX = 0;        /* touch X resolution in points/inch */
-	common->wcmTouchResolY = 0;        /* touch Y resolution in points/inch */
+	common->wcmTouchResolX = 0;        /* touch X resolution in points/mm */
+	common->wcmTouchResolY = 0;        /* touch Y resolution in points/mm */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
@@ -367,8 +369,11 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
-#ifndef WCM_XORG_XSERVER_1_4
+	/* Xservers 1.4 and later but earlier than 1.6 need this call */
+#ifdef WCM_XORG_XSERVER_1_4
+   #ifndef WCM_XORG_XSERVER_1_6
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
+   #endif
 #endif
 
 	/* free pressure curve */
@@ -419,6 +424,86 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
+static Bool supportStylus(char * identifier)
+{
+	if (strstr(identifier, "Wacom Intuos") || strstr(identifier, "Wacom Cintiq") || 
+		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
+		strstr(identifier, "Wacom Volito") || strstr(identifier, "Wacom PenPartner") ||
+		strstr(identifier, "Wacom PL") || strstr(identifier, "Wacom DTU") || 
+		(strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "Wacom ISDv4 E2")) ||
+			strstr(identifier, "Wacom DTF" ))
+		return 1;
+
+	return 0;
+}
+
+static Bool supportEraser(char * identifier)
+{
+	if (strstr(identifier, "Wacom Intuos") || strstr(identifier, "Wacom Cintiq") || 
+		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
+		strstr(identifier, "Wacom PenPartner") ||
+		strstr(identifier, "Wacom PL") || strstr(identifier, "Wacom DTU") || 
+		(strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "Wacom ISDv4 E2")) ||
+			strstr(identifier, "Wacom DTF" ))
+		return 1;
+
+	return 0;
+}
+
+static Bool supportCursor(char * identifier)
+{
+	if (strstr(identifier, "Wacom Intuos") ||  
+		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
+			strstr(identifier, "Wacom PenPartner"))
+		return 1;
+
+	return 0;
+}
+
+static Bool supportPad(char * identifier)
+{
+	if (strstr(identifier, "Wacom Intuos3") ||  strstr(identifier, "Wacom Intuos4") ||
+		strstr(identifier, "Wacom Graphire4") || strstr(identifier, "Wacom Bamboo") ||
+			(strstr(identifier, "Wacom Cintiq") && strstr(identifier, "X")))
+		return 1;
+
+	return 0;
+}
+
+static Bool supportTouch(char * identifier)
+{
+	if (strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "90"))
+		return 1;
+
+	return 0;
+}
+
+/* xf86WcmCheckModelnType - Choose supported type for a hotplugged model */
+static Bool xf86WcmCheckModelnType(IDevPtr dev, LocalDevicePtr pLocal)
+{
+	char * type = xf86FindOptionValue(pLocal->options, "Type");
+	char castType[32] = "";
+	int i = 0;	
+
+	for (i=0; i<strlen(type); i++)
+		castType[i] = (char)tolower(type[i]);
+
+	/* Check the device model to see if the type is supported or not.
+	 * Yes, let it go.  No, don't initialize it.
+	 */
+	if (supportStylus(dev->identifier) && strstr(type, "stylus")) return 1;
+
+	if (supportEraser(dev->identifier) && strstr(type, "eraser")) return 1;
+
+	if (supportCursor(dev->identifier) && strstr(type, "cursor")) return 1;
+
+	if (supportPad(dev->identifier) && strstr(type, "pad")) return 1;
+
+	if (supportTouch(dev->identifier) && strstr(type, "touch")) return 1;
+
+	return 0;
+}
+
 /* xf86WcmInit - called when the module subsection is found in XF86Config */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -430,6 +515,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
+	static int calledByConf = 0;
 
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
@@ -446,6 +532,27 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * phasis is based on those values.
 	 */
 	xf86CollectInputOptions(fakeLocal, default_options, NULL);
+
+	/* who called us? */
+	if (!strcmp(xf86CheckStrOption(fakeLocal->options, "_source", ""), "server/hal"))
+	{
+ 		if (calledByConf)
+		{
+			xf86Msg(X_INFO, "WACOM: Don't add duplicated device %s \n", dev->identifier);
+			xfree(fakeLocal);
+			return NULL;
+		} else if (!xf86WcmCheckModelnType(dev, fakeLocal)) {
+				xf86Msg(X_INFO, "WACOM: Device %s does not support type: %s\n", 
+					dev->identifier, xf86FindOptionValue(fakeLocal->options, "Type"));
+				xfree(fakeLocal);
+				return NULL;
+		}
+	} else {
+		/* we were called from xorg.conf. We assume users want their own settings
+		 * So, don't create a LocalDevice for the same tool if hal/udev calls again.
+		 */
+		calledByConf = 1;
+	}
 
 	/* Type is mandatory */
 	s = xf86FindOptionValue(fakeLocal->options, "Type");
@@ -783,20 +890,24 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
 		common->wcmMaxX);
 	if (priv->wcmMaxX > 0)
+	{
 		xf86Msg(X_CONFIG, "%s: max x set to %d by xorg.conf\n", dev->identifier,
 			priv->wcmMaxX);
 
-	/* Update tablet logical max X */
-	if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
+		/* Update tablet logical max X */
+		if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
+	}
 
 	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
 		common->wcmMaxY);
 	if (priv->wcmMaxY > 0)
+	{
 		xf86Msg(X_CONFIG, "%s: max y set to %d by xorg.conf\n", dev->identifier,
 			priv->wcmMaxY);
 
-	/* Update tablet logical max Y */
-	if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
+		/* Update tablet logical max Y */
+		if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
+	}
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 		common->wcmMaxZ);
@@ -841,6 +952,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
 	if ( common->wcmTouch )
 		xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+
+	/* Touch gesture applies to the whole tablet */
+	common->wcmGesture = xf86SetBoolOption(local->options, "Touch", common->wcmGestureDefault);
+	if ( common->wcmGesture )
+		xf86Msg(X_CONFIG, "%s: Touch gesture is enabled \n", common->wcmDevice);
 
 	/* Touch capacity applies to the whole tablet */
 	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);

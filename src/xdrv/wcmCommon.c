@@ -261,7 +261,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 		"buttons=%d for %s\n", buttons, local->name));
 
 	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) && !IsTouch(priv) )
+	if ( common->wcmTPCButton && IsStylus(priv) )
 	{
 		if ( buttons & 1 )
 		{
@@ -842,6 +842,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		return;
 	}
 
+	/* don't move the cursor when going out-prox */
+	if (!ds->proximity)
+	{
+		x = priv->oldX;
+		y = priv->oldY;
+	}
+
 	/* use tx and ty to report stripx and stripy */
 	if (type == PAD_ID)
 	{
@@ -1014,7 +1021,8 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			}
 			priv->currentSX = x;
 			priv->currentSY = y;
-			DBG(6, priv->debugLevel, ErrorF("WCM_XORG_TABLET_SCALING Convert v0=%d v1=%d to x=%d y=%d\n", ds->x, ds->y, x, y));
+			DBG(6, priv->debugLevel, ErrorF("WCM_XORG_TABLET_SCALING Convert"
+				" v0=%d v1=%d to x=%d y=%d\n", ds->x, ds->y, x, y));
 #endif
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
@@ -1255,6 +1263,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = (int)GetTimeInMillis();
+
 	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent: "
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
@@ -1272,7 +1281,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 #ifdef WCM_ENABLE_LINUXINPUT
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
-		(ds.device_type != PAD_ID) )
+		(ds.device_type != PAD_ID) && (ds.device_type != TOUCH_ID))
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 
@@ -1524,7 +1533,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	if (pDev && !miPointerGetScreen(pDev->dev))
 #endif
 	{
-		ErrorF("xf86WcmEvent: Wacom driver can not get Current Screen ID\n");
+		ErrorF("commonDispatchDevice: Wacom driver can not get Current Screen ID\n");
 		ErrorF("Please remove Wacom tool from the tablet and bring it back again.\n");
 		return;
 	}
@@ -1567,7 +1576,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					temppriv = (WacomDevicePtr) localDevices->private;
 					tempcommon = temppriv->common;
 
-					if ((tempcommon->tablet_id == common->tablet_id) && 
+					if (((tempcommon->tablet_id == common->tablet_id) || /* same model */
+						strstr(common->wcmModel->name, "ISDV4") || /* a serial Tablet PC */
+						strstr(common->wcmModel->name, "TabletPC")) && /* an USB TabletPC */
 						IsTouch(temppriv) && temppriv->oldProximity)
 					{
 						/* Send soft prox-out for touch first */
