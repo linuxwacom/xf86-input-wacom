@@ -708,6 +708,13 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		return;
 	}
 
+	/* don't move the cursor when going out-prox */
+	if (!ds->proximity)
+	{
+		x = priv->oldX;
+		y = priv->oldY;
+	}
+
 	/* use tx and ty to report stripx and stripy */
 	if (type == PAD_ID)
 	{
@@ -1136,7 +1143,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
-		ds.device_type != PAD_ID )
+		ds.device_type != PAD_ID && (ds.device_type != TOUCH_ID) )
 	{
 		DBG(11, common->debugLevel, 
 			ErrorF("discarded %dth USB data.\n", 

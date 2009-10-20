@@ -519,19 +519,8 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolX = WacomModelDesc [i].xRes;
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
-		/* initialize capacity parameters for touch */
-		if (common->tablet_id == 0x9A)
-		{
-			common->wcmCapacity = 3;
-			common->wcmCapacityDefault = 3; 
-		}
-		else
-		{
-			common->wcmCapacity = -1;
-			common->wcmCapacityDefault = -1; 
-		}
 
-		if (common->tablet_id == 0x9A || common->tablet_id == 0x93 || common->tablet_id == 0x90)
+		if (strstr(common->wcmModel->name, "TabletPC"))
 		{
 			if (common->tablet_id != 0x90)
 			{
@@ -663,24 +652,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl xmax value.\n");
 		return !Success;
 	}
-
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: xmax value is wrong.\n");
-		return !Success;
-	}
 	common->wcmMaxX = nValues[2];
 
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl ymax value.\n");
-		return !Success;
-	}
-
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: ymax value is wrong.\n");
 		return !Success;
 	}
 	common->wcmMaxY = nValues[2];
@@ -695,7 +672,8 @@ int usbWcmGetRanges(LocalDevicePtr local)
 			common->wcmMaxStripX = nValues[2];
 	}
 
-	/* max finger strip X */
+	/* max finger strip Y for tablets with Expresskeys
+	 * or max touch logical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), nValues) == 0)
 	{
 		if (IsTouch(priv))
@@ -704,17 +682,33 @@ int usbWcmGetRanges(LocalDevicePtr local)
 			common->wcmMaxStripY = nValues[2];
 	}
 
+	/* touch physical X for TabletPCs with touch */
+	if (ioctl(local->fd, EVIOCGABS(ABS_Z), nValues) == 0)
+	{
+		if (common->wcmTouchDefault)
+			common->wcmTouchResolX = nValues[2];
+	}
+
+	/* touch physical Y for TabletPCs with touch */
+	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), nValues) == 0)
+	{
+		if (common->wcmTouchDefault)
+			common->wcmTouchResolY = nValues[2];
+	}
+
+	if (common->wcmTouchDefault && common->wcmTouchResolX)
 	if (IsTouch(priv) && common->wcmMaxX && common->wcmMaxY)
 	{
-		common->wcmTouchResolX = (int)((double)(common->wcmMaxTouchX *
-			common->wcmResolX) / (double)common->wcmMaxX + 0.5);
-		common->wcmTouchResolY = (int)((double)(common->wcmMaxTouchY *
-			common->wcmResolY) / (double)common->wcmMaxY + 0.5);
+		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
+			 / ((double)common->wcmMaxTouchX) + 0.5);
+		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
+			 / ((double)common->wcmMaxTouchY) + 0.5);
+
 		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
 		{
-			ErrorF("WACOM: touch max value(s) was wrong MaxTouchY"
-				" = %d MaxTouchY = %d.\n", common->wcmMaxTouchX,
-				common->wcmMaxTouchY);
+			ErrorF("WACOM: touch resolution value(s) was wrong TouchResolX"
+				" = %d MaxTouchY = %d.\n", common->wcmTouchResolX,
+				common->wcmTouchResolY);
 			return !Success;
 		}
 
@@ -726,22 +720,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl press max value.\n");
 		return !Success;
 	}
-	if (nValues[2] <= 0)
-	{
-		ErrorF("WACOM: press max value is wrong.\n");
-		return !Success;
-	}
 	common->wcmMaxZ = nValues[2];
 
 	/* max distance */
 	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), nValues) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl press max distance.\n");
-		return !Success;
-	}
-	if (nValues[2] < 0)
-	{
-		ErrorF("WACOM: max distance value is wrong.\n");
 		return !Success;
 	}
 	common->wcmMaxDist = nValues[2];

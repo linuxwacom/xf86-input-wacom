@@ -211,8 +211,8 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
  	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
 	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
-	common->wcmTouchResolX = 0;        /* touch X resolution in points/inch */
-	common->wcmTouchResolY = 0;        /* touch Y resolution in points/inch */
+	common->wcmTouchResolX = 0;        /* touch X resolution in points/mm */
+	common->wcmTouchResolY = 0;        /* touch Y resolution in points/mm */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */

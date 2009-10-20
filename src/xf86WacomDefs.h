@@ -376,8 +376,8 @@ struct _WacomCommonRec
 	int wcmMaxTouchY;            /* touch panel max Y value */
 	int wcmResolX;		     /* pen tool X resolution in points/inch */
 	int wcmResolY;		     /* pen tool Y resolution in points/inch */
-	int wcmTouchResolX;	     /* touch X resolution in points/inch */
-	int wcmTouchResolY;	     /* touch Y resolution in points/inch */
+	int wcmTouchResolX;	     /* touch X resolution in points/mm */
+	int wcmTouchResolY;	     /* touch Y resolution in points/mm */
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100% pressure */
 	int wcmMaxCapacity;	     /* max capacity value */
