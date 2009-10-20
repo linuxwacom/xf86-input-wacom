@@ -802,7 +802,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	WacomCommonPtr common = priv->common;
 
 	DBG(10, common->debugLevel, ErrorF("usbParseEvent \n"));
-	/* store events until we receive the SYN_REPORT containing
+	/* store events until we receive the MSC_SERIAL containing
 	 * the serial number; without it we cannot determine the
 	 * correct channel. */
 
@@ -871,8 +871,8 @@ static void usbParseEvent(LocalDevicePtr local,
 		/* ignore events without information */
 		if (common->wcmEventCnt <= 2) 
 		{
-			ErrorF("%s - usbParse: dropping empty event for serial %d\n", 
-				local->name, common->wcmLastToolSerial);
+			DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event"
+				"for serial %d\n", local->name, common->wcmLastToolSerial));
 			goto skipEvent;
 		}
 
