@@ -40,9 +40,15 @@
  * REVISION HISTORY
  *
  * 2009-06-28 0.8.3-6 - Initial support for xf86-input-wacom with xorg-x11-server 1.6 and HAL
+ * 2009-10-23 0.8.4   - Avoid duplicated devices
  */
 
 /****************************************************************************/
+
+#include "xf86Wacom.h"
+#include "wcmFilter.h"
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -57,6 +63,7 @@
 
 void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
 void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
+Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
     extern void InitWcmDeviceProperties(LocalDevicePtr local);
@@ -873,13 +880,21 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
-static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
+Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
 {
-	struct input_id id;
-	ioctl(fd, EVIOCGID, &id);
-	if (id.vendor == vendor)
+	int fd = -1;
+
+	SYSCALL(fd = open(fname, O_RDONLY));
+	if (fd < 0)
+		return FALSE;
+
+	ioctl(fd, EVIOCGID, id);
+	SYSCALL(close(fd));
+
+	if (id->vendor == 0x056a)
 		return TRUE;
-	return FALSE;
+	else
+		return FALSE;
 }
 
 /*****************************************************************************
@@ -899,20 +914,18 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		for (i = 0; i < EVDEV_MINORS; i++) 
 		{
 			char fname[64];
-			int fd = -1;
+			struct input_id id;
 			Bool is_wacom;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
-			SYSCALL(fd = open(fname, O_RDONLY));
-			if (fd < 0)
-				continue;
-			is_wacom = xf86WcmIsWacomDevice(fd, 0x056a);
-			SYSCALL(close(fd));
+			is_wacom = xf86WcmIsWacomDevice(fname, &id);
 			if (is_wacom) 
 			{
 				xf86Msg(X_ERROR, "%s Wacom probed device to be %s (waited %d msec)\n",
 					XCONFIG_PROBED, fname, wait);
 				xf86ReplaceStrOption(local->options, "Device", fname);
+
+				/* this assumes there is only one Wacom device on the system */
 				return xf86FindOptionValue(local->options, "Device");
 			}
 		}
@@ -935,7 +948,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 	WacomCommonPtr common = priv->common;
- 
+	struct stat st;
+
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmDevOpen\n"));
 
 	/* Device has been open and not autoprobed */
@@ -963,6 +977,19 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			local->fd = -1;
 			return FALSE;
 		}
+
+		if (fstat(local->fd, &st) == -1)
+		{
+			/* can not access major/minor */
+			DBG(1, priv->debugLevel, xf86Msg(X_ERROR, "%s: stat failed (%s). "
+				"cannot check status.\n", local->name, strerror(errno)));
+
+			/* older systems don't support the required ioctl.
+			 * So, we have to let it pass */
+			common->min_maj = 0;
+		}
+		else
+			common->min_maj = st.st_rdev;
 		common->fd = local->fd;
 		common->fd_refs = 1;
 	}

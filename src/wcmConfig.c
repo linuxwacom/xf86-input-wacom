@@ -23,6 +23,10 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+
+extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
 
 static LocalDevicePtr xf86WcmAllocate(char* name, int flag);
 static LocalDevicePtr xf86WcmAllocateStylus(void);
@@ -185,6 +189,7 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleLimit = -1;
 	
 	common->wcmDevice = "";                  /* device file name */
+	common->min_maj = 0;			 /* device major and minor */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->npadkeys = 0;		   /* Default number of pad keys */
@@ -396,7 +401,7 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	char * type;
 
 	if ((pLocal != pMatch) &&
-		(pMatch->device_control == gWacomModule.DevProc) &&
+		strstr(pMatch->drv->driverName, "wacom") &&
 		!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
 	{
 		DBG(2, priv->debugLevel, ErrorF(
@@ -422,6 +427,111 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
+/* xf86WcmCheckTypeAndSource - Check if both devices have the same type OR
+ * the device has been used in xorg.conf: don't add the tool by hal/udev
+ * if user has defined at least one tool for the device in xorg.conf */
+static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr pLocal)
+{
+	int match = 1;
+	char* fsource = xf86CheckStrOption(fakeLocal->options, "_source", "");
+	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
+	char* type = xf86FindOptionValue(fakeLocal->options, "Type");
+	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
+
+	/* only add the new tool if the matching major/minor
+	 * was from the same source */
+	if (!strcmp(fsource, psource))
+	{
+		/* and the tools have different types */
+		if (strcmp(type, xf86FindOptionValue(pLocal->options, "Type")))
+			match = 0;
+	}
+	DBG(2, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmCheckTypeAndSource "
+		"device %s from %s %s \n", fakeLocal->name, fsource,
+		match ? "will be added" : "will be ignored"));
+
+	return match;
+}
+
+/* check if the device has been added.
+ * Open the device and check it's major/minor, then compare this with every
+ * other wacom device listed in the config. If they share the same
+ * major/minor and the same source/type, fail.
+ */
+static int wcmIsDuplicate(char* device, LocalDevicePtr local)
+{
+	struct stat st;
+	int isInUse = 0;
+	LocalDevicePtr localDevices = NULL;
+	WacomCommonPtr common = NULL;
+
+	/* open the port */
+	do {
+		local->fd = open(device, O_RDONLY, 0);
+	} while (local->fd < 0 && errno == EINTR);
+
+	if (local->fd < 0)
+	{
+		/* can not open the device */
+		xf86Msg(X_ERROR, "Unable to open Wacom device \"%s\".\n", device);
+		isInUse = 2;
+		goto ret;
+	}
+
+	if (fstat(local->fd, &st) == -1)
+	{
+		/* can not access major/minor to check device duplication */
+		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
+				local->name, strerror(errno));
+
+		/* older systems don't support the required ioctl.  let it pass */
+		goto ret;
+	}
+
+	if (st.st_rdev)
+	{
+		localDevices = xf86FirstLocalDevice();
+
+		for (; localDevices != NULL; localDevices = localDevices->next)
+		{
+			device = xf86CheckStrOption(localDevices->options, "Device", NULL);
+
+			/* device can be NULL on some distros */
+			if (!device || !strstr(localDevices->drv->driverName, "wacom"))
+				continue;
+
+			common = ((WacomDevicePtr)localDevices->private)->common;
+			if (local != localDevices &&
+				common->min_maj &&
+				common->min_maj == st.st_rdev)
+			{
+				/* device matches with another added port */
+				if (xf86WcmCheckTypeAndSource(local, localDevices))
+				{
+					xf86Msg(X_WARNING, "%s: device file already in use by %s. "
+						"Ignoring.\n", local->name, localDevices->name);
+					isInUse = 4;
+					goto ret;
+				}
+			}
+		}
+	}
+	else
+	{
+		/* major/minor can never be 0, right? */
+		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
+			"Something was wrong.\n", local->name);
+		isInUse = 5;
+	}
+ret:
+	if (local->fd >= 0)
+	{
+		close(local->fd);
+		local->fd = -1;
+	}
+	return isInUse;
+}
+
 /* xf86WcmInit - called when the module is found */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -433,6 +543,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
+	char*		device;
+	static int	numberWacom = 0;
 
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
@@ -444,11 +556,22 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		return NULL;
 
 	fakeLocal->conf_idev = dev;
+	fakeLocal->name = dev->identifier;
 
 	/* Force default port options to exist because the init
 	 * phase is based on those values.
 	 */
 	xf86CollectInputOptions(fakeLocal, default_options, NULL);
+
+	device = xf86CheckStrOption(fakeLocal->options, "Device", NULL);
+
+	/* leave the undefined device for auto-dev to deal with later */
+	if(device)
+	{
+		/* check if the device has been added */
+		if (wcmIsDuplicate(device, fakeLocal))
+			goto SetupProc_fail;
+	}
 
 	/* Type is mandatory */
 	s = xf86FindOptionValue(fakeLocal->options, "Type");
@@ -487,8 +610,12 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
     
 	common->wcmDevice = xf86FindOptionValue(local->options, "Device");
 
-	/* Autoprobe if not given */
-	if (!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) 
+	/* Autoprobe if not given
+	 * Hotplugging is supported. Do we still need this?
+	 * Maybe add an ifdef for hal/udev?
+	 * Only use this once since AutoDevProbe doesn't check the existing tools
+	 */
+	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) && numberWacom)
 	{
 		common->wcmFlags |= AUTODEV_FLAG;
 		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local))) 
@@ -762,7 +889,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
 		common->wcmMaxX);
 	if (priv->wcmMaxX > 0)
-		xf86Msg(X_CONFIG, "%s: max x set to %d by xorg.conf\n", dev->identifier,
+		xf86Msg(X_CONFIG, "%s: max x set to %d \n", dev->identifier,
 			priv->wcmMaxX);
 
 	/* Update tablet logical max X */
@@ -771,7 +898,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
 		common->wcmMaxY);
 	if (priv->wcmMaxY > 0)
-		xf86Msg(X_CONFIG, "%s: max y set to %d by xorg.conf\n", dev->identifier,
+		xf86Msg(X_CONFIG, "%s: max y set to %d \n", dev->identifier,
 			priv->wcmMaxY);
 
 	/* Update tablet logical max Y */
@@ -912,6 +1039,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* mark the device configured */
 	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
+
+	/* keep a local count so we know if "auto-dev" is necessary or not */
+	numberWacom++;
 
 	/* return the LocalDevice */
 	return (local);

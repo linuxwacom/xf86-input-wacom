@@ -362,6 +362,7 @@ struct _WacomDeviceClass
 struct _WacomCommonRec 
 {
 	char* wcmDevice;             /* device file name */
+	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
 	int tablet_id;		     /* USB tablet ID */
