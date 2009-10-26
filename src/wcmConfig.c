@@ -532,6 +532,124 @@ ret:
 	return isInUse;
 }
 
+static struct
+{
+	__u16 productID;
+	__u16 flags;
+} validType [] =
+{
+	{ 0x00, STYLUS_ID }, /* PenPartner */
+	{ 0x10, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire */
+	{ 0x11, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 4x5 */
+	{ 0x12, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 5x7 */
+
+	{ 0x13, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 4x5 */
+	{ 0x14, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 6x8 */
+
+	{ 0x15, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 4x5 */
+	{ 0x16, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 */
+	{ 0x17, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 4x5 */
+	{ 0x18, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 6x8 */
+	{ 0x19, STYLUS_ID | ERASER_ID                      }, /* Bamboo1 Medium*/
+	{ 0x81, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 BlueTooth */
+
+	{ 0x20, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 4x5 */
+	{ 0x21, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 6x8 */
+	{ 0x22, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 9x12 */
+	{ 0x23, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x12 */
+	{ 0x24, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x18 */
+
+	{ 0x03, STYLUS_ID | ERASER_ID }, /* PTU600 */
+	{ 0x30, STYLUS_ID | ERASER_ID }, /* PL400 */
+	{ 0x31, STYLUS_ID | ERASER_ID }, /* PL500 */
+	{ 0x32, STYLUS_ID | ERASER_ID }, /* PL600 */
+	{ 0x33, STYLUS_ID | ERASER_ID }, /* PL600SX */
+	{ 0x34, STYLUS_ID | ERASER_ID }, /* PL550 */
+	{ 0x35, STYLUS_ID | ERASER_ID }, /* PL800 */
+	{ 0x37, STYLUS_ID | ERASER_ID }, /* PL700 */
+	{ 0x38, STYLUS_ID | ERASER_ID }, /* PL510 */
+	{ 0x39, STYLUS_ID | ERASER_ID }, /* PL710 */
+	{ 0xC0, STYLUS_ID | ERASER_ID }, /* DTF720 */
+	{ 0xC2, STYLUS_ID | ERASER_ID }, /* DTF720a */
+	{ 0xC4, STYLUS_ID | ERASER_ID }, /* DTF521 */
+	{ 0xC7, STYLUS_ID | ERASER_ID }, /* DTU1931 */
+
+	{ 0x41, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 4x5 */
+	{ 0x42, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8 */
+	{ 0x43, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 9x12 */
+	{ 0x44, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x12 */
+	{ 0x45, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x18 */
+	{ 0x47, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8  */
+
+	{ 0x60, STYLUS_ID }, /* Volito */
+	{ 0x61, STYLUS_ID }, /* PenStation */
+	{ 0x62, STYLUS_ID }, /* Volito2 4x5 */
+	{ 0x63, STYLUS_ID }, /* Volito2 2x3 */
+	{ 0x64, STYLUS_ID }, /* PenPartner2 */
+
+	{ 0x65, STYLUS_ID | ERASER_ID | CURSOR_ID |  PAD_ID }, /* Bamboo */
+	{ 0x69, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Bamboo1 */
+
+	{ 0xB0, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x5 */
+	{ 0xB1, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x8 */
+	{ 0xB2, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 9x12 */
+	{ 0xB3, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x12 */
+	{ 0xB4, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x19 */
+	{ 0xB5, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x11 */
+	{ 0xB7, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x6 */
+
+	{ 0xB8, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 4x6 */
+	{ 0xB9, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 6x9 */
+	{ 0xBA, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 8x13 */
+	{ 0xBB, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 12x19*/
+
+	{ 0x3F, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 21UX */
+	{ 0xC5, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 20WSX */
+	{ 0xC6, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 12WX */
+
+	{ 0x90, STYLUS_ID | ERASER_ID }, /* TabletPC 0x90 */
+	{ 0x93, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x93 */
+	{ 0x9A, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x9A */
+	{ 0x9F, TOUCH_ID }, /* CapPlus  0x9F */
+	{ 0xE2, TOUCH_ID }, /* TabletPC 0xE2 */
+	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID }  /* TabletPC 0xE3 */
+};
+
+static struct
+{
+	const char* type;
+	__u16 id;
+} wcmTypeAndID [] =
+{
+	{ "stylus", STYLUS_ID },
+	{ "eraser", ERASER_ID },
+	{ "cursor", CURSOR_ID },
+	{ "touch",  TOUCH_ID  },
+	{ "pad",    PAD_ID    }
+};
+
+/* validate tool type for device/product */
+static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id)
+{
+	int i, j, ret = 0;
+	char* type = xf86FindOptionValue(local->options, "Type");
+
+	/* walkthrough all supported models */
+	for (i = 0; i < sizeof (validType) / sizeof (validType [0]); i++)
+	{
+		if (validType[i].productID == id)
+		{
+
+			/* walkthrough all types */
+			for (j = 0; j < sizeof (wcmTypeAndID) / sizeof (wcmTypeAndID [0]); j++)
+			    if (!strcmp(wcmTypeAndID[j].type, type))
+				if (wcmTypeAndID[j].id & validType[i].flags)
+					ret = 1;
+		}
+	}
+	return ret;
+}
+
 /* xf86WcmInit - called when the module is found */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -545,6 +663,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	LocalDevicePtr localDevices;
 	char*		device;
 	static int	numberWacom = 0;
+	struct input_id id;
 
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
@@ -565,9 +684,16 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	device = xf86CheckStrOption(fakeLocal->options, "Device", NULL);
 
-	/* leave the undefined device for auto-dev to deal with later */
+	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
 	{
+		if (!xf86WcmIsWacomDevice(device, &id))
+			goto SetupProc_fail;
+
+		/* check if the type is valid for the device */
+		if(!wcmIsAValidType(device, fakeLocal, id.product))
+			goto SetupProc_fail;
+
 		/* check if the device has been added */
 		if (wcmIsDuplicate(device, fakeLocal))
 			goto SetupProc_fail;
@@ -618,7 +744,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) && numberWacom)
 	{
 		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local))) 
+		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
 		{
 			xf86Msg(X_ERROR, "%s: unable to probe device\n",
 				dev->identifier);
