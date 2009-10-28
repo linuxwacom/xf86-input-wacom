@@ -42,8 +42,6 @@
  * 2009-06-28 0.8.3-6 - Initial support for xf86-input-wacom with xorg-x11-server 1.6 and HAL
  */
 
-static const char identification[] = "$Identification: xf86-input-wacom-0.8.3-6 $";
-
 /****************************************************************************/
 
 #include "xf86Wacom.h"
@@ -57,8 +55,6 @@ static const char identification[] = "$Identification: xf86-input-wacom-0.8.3-6 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
 #endif
-
-
 
 void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
 void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
@@ -87,7 +83,6 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 
 WacomModule gWacomModule =
 {
-	identification, /* version */
 	NULL,           /* input driver pointer */
 
 	/* device procedures */

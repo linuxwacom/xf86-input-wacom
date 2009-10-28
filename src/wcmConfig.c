@@ -950,8 +950,6 @@ static void xf86WcmUnplug(pointer p)
 static pointer xf86WcmPlug(pointer module, pointer options, int* errmaj,
 		int* errmin)
 {
-	xf86Msg(X_INFO, "Wacom driver level: %s\n",
-		gWacomModule.identification + strlen("$Identification: "));
 	xf86AddInputDriver(&WACOM, module, 0);
 	return module;
 }
@@ -963,7 +961,7 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XORG_VERSION_CURRENT,
-	1, 0, 0,
+	PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR, PACKAGE_VERSION_PATCHLEVEL,
 	ABI_CLASS_XINPUT,
 	ABI_XINPUT_VERSION,
 	MOD_CLASS_XINPUT,

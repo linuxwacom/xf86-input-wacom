@@ -117,8 +117,6 @@ typedef struct _WacomModule WacomModule;
 
 struct _WacomModule
 {
-	const char* identification;
-
 	InputDriverPtr wcmDrv;
 
 	int (*DevOpen)(DeviceIntPtr pWcm);
