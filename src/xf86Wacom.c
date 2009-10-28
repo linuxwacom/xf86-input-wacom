@@ -69,8 +69,6 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
                 BOOL checkonly);
 #endif
 
-extern Bool usbWcmInit(LocalDevicePtr pDev);
-extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
 extern void xf86WcmInitialScreens(LocalDevicePtr local);
