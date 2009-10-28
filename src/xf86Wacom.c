@@ -44,13 +44,12 @@
 
 /****************************************************************************/
 
-#include "xf86Wacom.h"
-#include "wcmFilter.h"
-
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
+#include "xf86Wacom.h"
+#include "wcmFilter.h"
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>

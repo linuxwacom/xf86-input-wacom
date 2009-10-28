@@ -25,12 +25,12 @@
 
 /****************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
