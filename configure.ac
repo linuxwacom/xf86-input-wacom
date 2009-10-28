@@ -46,6 +46,11 @@ XORG_DEFAULT_OPTIONS
 
 AH_TOP([#include "xorg-server.h"])
 
+AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
+                                    [Enable debugging (default: disabled)]),
+                                    [DEBUGGING=$enableval], [DEBUGGING=no])
+
+
 AC_ARG_WITH(xorg-module-dir,
             AC_HELP_STRING([--with-xorg-module-dir=DIR],
                            [Default xorg module directory [[default=$libdir/xorg/modules]]]),
@@ -53,6 +58,11 @@ AC_ARG_WITH(xorg-module-dir,
             [moduledir="$libdir/xorg/modules"])
 inputdir=${moduledir}/input
 AC_SUBST(inputdir)
+
+if test "x$DEBUGGING" = xyes; then
+       AC_DEFINE(DEBUG, 1, [Enable debugging code])
+fi
+AM_CONDITIONAL(DEBUG, [test "x$DEBUGGING" = xyes])
 
 # Checks for extensions
 XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)

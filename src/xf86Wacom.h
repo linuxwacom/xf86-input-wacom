@@ -83,11 +83,7 @@
 #ifdef DBG
 #undef DBG
 #endif
-#ifdef DEBUG
-#undef DEBUG
-#endif
 
-#define DEBUG 1
 #if DEBUG
 #define DBG(lvl, dLevel, f) do { if ((lvl) <= dLevel) f; } while (0)
 #else
