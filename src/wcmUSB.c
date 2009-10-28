@@ -495,7 +495,7 @@ static struct
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
-	short sID[4];
+	struct input_id sID;
 	unsigned long keys[NBITS(KEY_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -504,13 +504,13 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
-	ioctl(local->fd, EVIOCGID, sID);
+	ioctl(local->fd, EVIOCGID, &sID);
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
 
 	/* vendor is wacom */
-	if (sID[1] == 0x056A)
+	if (sID.vendor == 0x056A)
 	{
-		common->tablet_id = sID[2];
+		common->tablet_id = sID.product;
 
 		for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
 			if (common->tablet_id == WacomModelDesc [i].model_id)
@@ -549,7 +549,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	}
 	else
 	{
-		ErrorF("%x is not supported by linuxwacom.\n", sID[1]);
+		ErrorF("%x is not supported by linuxwacom.\n", sID.vendor);
 		return FALSE;
 	}
 
@@ -619,7 +619,7 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 
 int usbWcmGetRanges(LocalDevicePtr local)
 {
-	int nValues[5];
+	struct input_absinfo absinfo;
 	unsigned long ev[NBITS(EV_MAX)];
 	unsigned long abs[NBITS(ABS_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -647,53 +647,53 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	/* max x */
-	if (ioctl(local->fd, EVIOCGABS(ABS_X), nValues) < 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl xmax value.\n");
 		return !Success;
 	}
-	common->wcmMaxX = nValues[2];
+	common->wcmMaxX = absinfo.maximum;
 
 	/* max y */
-	if (ioctl(local->fd, EVIOCGABS(ABS_Y), nValues) < 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl ymax value.\n");
 		return !Success;
 	}
-	common->wcmMaxY = nValues[2];
+	common->wcmMaxY = absinfo.maximum;
 
 	/* max finger strip X for tablets with Expresskeys
 	 * or max touch logical X for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RX), nValues) == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
 		if (IsTouch(priv))
-			common->wcmMaxTouchX = nValues[2];
+			common->wcmMaxTouchX = absinfo.maximum;
 		else
-			common->wcmMaxStripX = nValues[2];
+			common->wcmMaxStripX = absinfo.maximum;
 	}
 
 	/* max finger strip Y for tablets with Expresskeys
 	 * or max touch logical Y for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RY), nValues) == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
 		if (IsTouch(priv))
-			common->wcmMaxTouchY = nValues[2];
+			common->wcmMaxTouchY = absinfo.maximum;
 		else
-			common->wcmMaxStripY = nValues[2];
+			common->wcmMaxStripY = absinfo.maximum;
 	}
 
 	/* touch physical X for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_Z), nValues) == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_Z), &absinfo) == 0)
 	{
 		if (common->wcmTouchDefault)
-			common->wcmTouchResolX = nValues[2];
+			common->wcmTouchResolX = absinfo.maximum;
 	}
 
 	/* touch physical Y for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), nValues) == 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), &absinfo) == 0)
 	{
 		if (common->wcmTouchDefault)
-			common->wcmTouchResolY = nValues[2];
+			common->wcmTouchResolY = absinfo.maximum;
 	}
 
 	if (common->wcmTouchDefault && common->wcmTouchResolX)
@@ -715,20 +715,20 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	/* max z cannot be configured */
-	if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), nValues) < 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), &absinfo) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl press max value.\n");
 		return !Success;
 	}
-	common->wcmMaxZ = nValues[2];
+	common->wcmMaxZ = absinfo.maximum;
 
 	/* max distance */
-	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), nValues) < 0)
+	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) < 0)
 	{
 		ErrorF("WACOM: unable to ioctl press max distance.\n");
 		return !Success;
 	}
-	common->wcmMaxDist = nValues[2];
+	common->wcmMaxDist = absinfo.maximum;
 
 	return Success;
 }
