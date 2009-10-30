@@ -73,6 +73,7 @@ DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
 
 AC_OUTPUT([Makefile
+           fdi/Makefile
            src/Makefile
            man/Makefile
            include/Makefile

@@ -23,7 +23,7 @@ AUTOMAKE_OPTIONS = foreign
 # Ensure headers are installed below $(prefix) for distcheck
 DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg'
 
-SUBDIRS = src man include
+SUBDIRS = fdi src man include
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xorg-wacom.pc
