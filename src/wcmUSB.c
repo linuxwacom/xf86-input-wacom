@@ -682,7 +682,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or max touch logical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
-		if (IsTouch(priv))
+		if (common->wcmTouchDefault)
 			common->wcmMaxTouchX = absinfo.maximum;
 		else
 			common->wcmMaxStripX = absinfo.maximum;
@@ -692,7 +692,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or max touch logical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
-		if (IsTouch(priv))
+		if (common->wcmTouchDefault)
 			common->wcmMaxTouchY = absinfo.maximum;
 		else
 			common->wcmMaxStripY = absinfo.maximum;
@@ -713,7 +713,6 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	if (common->wcmTouchDefault && common->wcmTouchResolX)
-	if (IsTouch(priv) && common->wcmMaxX && common->wcmMaxY)
 	{
 		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
 			 / ((double)common->wcmMaxTouchX) + 0.5);
@@ -731,31 +730,12 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	/* max z cannot be configured */
-	if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), &absinfo) < 0)
-	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl press max value.\n");
-		return !Success;
-	}
-	if (absinfo.maximum <= 0)
-	{
-		xf86Msg(X_ERROR, "WACOM: press max value is wrong.\n");
-		return !Success;
-	}
-	common->wcmMaxZ = absinfo.maximum;
+	if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), &absinfo) == 0)
+		common->wcmMaxZ = absinfo.maximum;
 
 	/* max distance */
-	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) < 0)
-	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl press max distance.\n");
-		return !Success;
-	}
-
-	if (absinfo.maximum < 0)
-	{
-		xf86Msg(X_ERROR, "WACOM: max distance value is wrong.\n");
-		return !Success;
-	}
-	common->wcmMaxDist = absinfo.maximum;
+	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
+		common->wcmMaxDist = absinfo.maximum;
 
 	return Success;
 }
