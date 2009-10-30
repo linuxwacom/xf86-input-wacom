@@ -862,7 +862,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		/* ignore events without information */
 		if (common->wcmEventCnt <= 2) 
 		{
-			DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event"
+			DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event "
 				"for serial %d\n", local->name, common->wcmLastToolSerial));
 			goto skipEvent;
 		}

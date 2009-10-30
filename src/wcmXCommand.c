@@ -473,8 +473,8 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
                 {
                     screen = -1;
                     priv->currentScreen = 0;
-                    DBG(10, priv->debugLevel, ErrorF("xf86WcmSetParam TwinView sets to "
-                        "TV_NONE: cann't change screen_no. \n"));
+                    DBG(10, priv->debugLevel, ErrorF("xf86WcmSetProperty TwinView sets to "
+                        "TV_NONE: can't change screen_no. \n"));
                 }
                 xf86WcmChangeScreen(local, screen);
             }
