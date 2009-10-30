@@ -75,7 +75,7 @@ static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* dat
 		{
 			bad = 1;
 			if (i!=0 && (data[i] & HEADER_BIT)) {
-				ErrorF("xf86WcmSerialValidate: bad magic at %d "
+				xf86Msg(X_ERROR, "xf86WcmSerialValidate: bad magic at %d "
 					"v=%x l=%d\n", i, data[i], common->wcmPktLength);
 				return i;
 			}
@@ -138,7 +138,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
 	{
-		ErrorF("Wacom xf86WcmWrite ISDV4_STOP error : %s\n", strerror(errno));
+		xf86Msg(X_ERROR, "Wacom xf86WcmWrite ISDV4_STOP error : %s\n", strerror(errno));
 		return !Success;
 	}
 
@@ -149,7 +149,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Send query command to the tablet */
 	if (!xf86WcmWriteWait(local->fd, query))
 	{
-		ErrorF("Wacom unable to xf86WcmWrite request %s ISDV4 query command "
+		xf86Msg(X_ERROR, "Wacom unable to xf86WcmWrite request %s ISDV4 query command "
 			"after %d tries\n", query, MAXTRY);
 		return !Success;
 	}
@@ -167,7 +167,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		}
 		else
 		{
-			ErrorF("Wacom unable to read ISDV4 %s data "
+			xf86Msg(X_ERROR, "Wacom unable to read ISDV4 %s data "
 				"after %d tries at (%d)\n", query, MAXTRY, common->wcmISDV4Speed);
 			return !Success;
 		}
@@ -190,7 +190,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 			xf86WcmWaitForTablet(local->fd, data, 11);
 			if ( !(data[0] & 0x40) )
 			{
-				ErrorF("Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
+				xf86Msg(X_ERROR, "Wacom ISDV4 control data (%x) error in %s query\n", data[0], query);
 				return !Success;
 			}
 		}
@@ -356,7 +356,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 
 	if (err == -1)
 	{
-		ErrorF("Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		xf86Msg(X_ERROR, "Wacom xf86WcmWrite error : %s\n", strerror(errno));
 		return !Success;
 	}
 
@@ -537,7 +537,7 @@ static int xf86WcmWriteWait(int fd, const char* request)
 		len = xf86WriteSerial(fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			ErrorF("Wacom xf86WcmWriteWait error : %s", strerror(errno));
+			xf86Msg(X_ERROR, "Wacom xf86WcmWriteWait error : %s", strerror(errno));
 			return 0;
 		}
 
@@ -565,7 +565,7 @@ static int xf86WcmWaitForTablet(int fd, char* answer, int size)
 			len = xf86WcmRead(fd, answer, size);
 			if ((len == -1) && (errno != EAGAIN))
 			{
-				ErrorF("Wacom xf86WcmRead error : %s\n",
+				xf86Msg(X_ERROR, "Wacom xf86WcmRead error : %s\n",
 						strerror(errno));
 				return 0;
 			}

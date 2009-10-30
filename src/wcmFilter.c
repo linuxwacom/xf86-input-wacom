@@ -51,7 +51,7 @@ void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 			(FILTER_PRESSURE_RES + 1));
 		if (!pDev->pPressCurve)
 		{
-			ErrorF("xf86WcmSetPressureCurve: failed to "
+			xf86Msg(X_ERROR, "xf86WcmSetPressureCurve: failed to "
 				"allocate memory for curve\n");
 			return;
 		}
