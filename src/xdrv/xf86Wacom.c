@@ -33,8 +33,6 @@
  * Aaron Optimizer Digulla <digulla@hepe.com>,
  * Jonathan Layes <jonathan@layes.com>,
  * John Joganic <jej@j-arkadia.com>.
- * 
- * Support for hot plug-n-play by 
  * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>.
  */
 
@@ -86,14 +84,21 @@
  * 2009-10-06 47-pc0.8.4-3 - Minor fix in TwinView setting 
  * 2009-10-15 47-pc0.8.4-4 - added calibration-only wacomcpl
  * 2009-10-19 47-pc0.8.5   - Added support for TPC (0xE2, 0xE3 & 0x9F)
+ * 2009-10-31 47-pc0.8.5-1 - Avoid duplicated devices for Xorg 1.4 and later
  */
 
-static const char identification[] = "$Identification: 47-0.8.5 $";
+static const char identification[] = "$Identification: 47-0.8.5-1 $";
 
 /****************************************************************************/
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
+#ifdef WCM_XORG_XSERVER_1_4
+    #include <fcntl.h>
+    #ifndef _XF86_ANSIC_H
+	#include <sys/stat.h>
+    #endif
+#endif
 
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
 static void xf86WcmDevReadInput(LocalDevicePtr local);
@@ -803,16 +808,26 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
-#ifdef LINUX_INPUT
-static Bool xf86WcmIsWacomDevice (int fd, CARD16 vendor)
+#ifdef WCM_XORG_XSERVER_1_4
+Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
 {
-	struct input_id id;
-	ioctl(fd, EVIOCGID, &id);
-	if (id.vendor == vendor)
-		return TRUE;
-	return FALSE;
-}
+	int fd = -1;
 
+	fd = open(fname, O_RDONLY);
+	if (fd < 0)
+		return FALSE;
+
+	ioctl(fd, EVIOCGID, id);
+	close(fd);
+
+	if (id->vendor == 0x056a)
+		return TRUE;
+	else
+		return FALSE;
+}
+#endif  /* WCM_XORG_XSERVER_1_4 */
+
+#ifdef LINUX_INPUT
 /*****************************************************************************
  * xf86WcmEventAutoDevProbe -- Probe for right input device
  ****************************************************************************/
@@ -832,13 +847,10 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 			char fname[64];
 			int fd = -1;
 			Bool is_wacom;
+			struct input_id id;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
-			SYSCALL(fd = open(fname, O_RDONLY));
-			if (fd < 0)
-				continue;
-			is_wacom = xf86WcmIsWacomDevice(fd, 0x056a);
-			SYSCALL(close(fd));
+			is_wacom = xf86WcmIsWacomDevice(fname, &id);
 			if (is_wacom) 
 			{
 				ErrorF ("%s Wacom probed device to be %s (waited %d msec)\n",
@@ -867,7 +879,14 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
 	WacomCommonPtr common = priv->common;
- 
+#ifdef WCM_XORG_XSERVER_1_4
+    #ifdef _XF86_ANSIC_H
+	struct xf86stat st;
+    #else
+	struct stat st;
+    #endif
+#endif
+
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmDevOpen\n"));
 
 	/* Device has been open and not autoprobed */
@@ -897,6 +916,25 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			local->fd = -1;
 			return FALSE;
 		}
+#ifdef WCM_XORG_XSERVER_1_4
+	#ifdef _XF86_ANSIC_H
+		if (xf86fstat(local->fd, &st) == -1)
+	#else
+		if (fstat(local->fd, &st) == -1)
+	#endif
+		{
+			/* can not access major/minor */
+			DBG(1, priv->debugLevel, xf86Msg(X_ERROR, "%s: stat failed (%s). "
+				"cannot check status.\n", local->name, strerror(errno)));
+
+			/* older systems don't support the required ioctl.  
+			 * So, we have to let it pass */
+			common->min_maj = 0;
+		}
+		else
+			common->min_maj = st.st_rdev;
+#endif   /* WCM_XORG_XSERVER_1_4 */
+
 		common->fd = local->fd;
 		common->fd_refs = 1;
 	}
@@ -968,12 +1006,12 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	if (len <= 0)
 	{
-		ErrorF("Error reading wacom device : %s\n", strerror(errno));
-
 		/* In case of error, we assume the device has been
 		 * disconnected. So we close it and iterate over all
 		 * wcmDevices to actually close associated devices. */
 		WacomDevicePtr wDev = common->wcmDevices;
+		xf86Msg(X_ERROR, "Error reading wacom device : %s\n",
+			strerror(errno));
 		for(; wDev; wDev = wDev->next)
 		{
 			if (wDev->local->fd >= 0)

@@ -39,10 +39,11 @@
 **   2009-07-14 0.2.0 - PC - Support Nvidia Xinerama setting
 **   2009-08-24 0.2.1 - PC - Add SCREENTOGGLE command
 **   2009-09-31 0.2.2 - PC - Add Dual Touch
+**   2009-10-31 0.2.3 - PC - Support spaced names from hot-plugged devices
 **
 ****************************************************************************/
 
-#define XSETWACOM_VERSION "0.1.9"
+#define XSETWACOM_VERSION "0.2.3"
 
 #include "../include/util-config.h"
 
@@ -691,6 +692,7 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 	const char* pszType;
 	WACOMDEVICEINFO* pInfo;
 	unsigned int i, j, uCount;
+	char nameOut[60];
 
 	static TYPEXLAT xTypes[] =
 	{
@@ -714,7 +716,18 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 			if (xTypes[j].type == pInfo[i].type)
 				pszType = xTypes[j].pszText;
 
-		fprintf(stdout,"%-16s %-10s\n",pInfo[i].pszName,pszType);
+		/* tcl/tk (wacomcpl) has problem to process spaced names 
+		 * so we make the name into one string */
+		for(j=0; j<strlen(pInfo[i].pszName); j++)
+		{
+			if(pInfo[i].pszName[j] == ' ') 
+				nameOut[j] = '_';
+			else
+				nameOut[j] = pInfo[i].pszName[j];
+		}
+		nameOut[strlen(pInfo[i].pszName)] = '\0';
+
+		fprintf(stdout,"%s     %s\n", nameOut, pszType);
 	}
 
 	WacomConfigFree(pInfo);

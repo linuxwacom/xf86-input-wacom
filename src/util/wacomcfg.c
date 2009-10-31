@@ -2,7 +2,7 @@
 ** wacomcfg.c
 **
 ** Copyright (C) 2003-2004 - John E. Joganic
-** Copyright (C) 2004-2008 - Ping Cheng
+** Copyright (C) 2004-2009 - Ping Cheng
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public License
@@ -28,6 +28,7 @@
 **   2007-01-10 0.0.7 - PC - don't display uninitialized tools
 **   2008-03-24 0.0.8 - PC - Added touch for serial TabletPC (ISDv4)
 **   2008-07-31 0.0.9 - PC - Added patches from Danny Kukawka
+**   2009-10-29 0.1.0 - PC - Support hot-plugged names
 **
 ****************************************************************************/
 
@@ -203,7 +204,6 @@ int WacomConfigListDevices(WACOMCONFIG *hConfig, WACOMDEVICEINFO** ppInfo,
 		for (j=0; j<strlen(pInfo->pszName); j++)
 			devName[j] = tolower(pInfo->pszName[j]);
 		devName[j] = '\0';
-
 		pInfo->type = mapStringToType (devName);
 
 #if WCM_XF86CONFIG
@@ -267,8 +267,9 @@ WACOMDEVICETYPE mapStringToType (const char* name)
 	if (!name)
 		return WACOMDEVICETYPE_UNKNOWN;
 
-	/* No spaces are allowed in Wacom device identifiers */
-	if (strstr(name," ") != NULL)
+	/* If there is a white space in the name, 
+		the "wacom" string has to be in it too */
+	if (strstr(name," ") != NULL && strstr(name,"wacom") == NULL)
 		return WACOMDEVICETYPE_UNKNOWN;
 	if (strstr(name,"cursor") != NULL)
 		return WACOMDEVICETYPE_CURSOR;
@@ -288,10 +289,11 @@ WACOMDEVICETYPE mapStringToType (const char* name)
 WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	const char* pszDeviceName)
 {
-	int i;
+	int i, j;
 	WACOMDEVICE* pInt;
 	XDevice* pDev;
 	XDeviceInfo *pDevInfo = NULL, *info;
+	char nameOut[60];
 
 	/* sanity check input */
 	if (!hConfig || !pszDeviceName) { errno=EINVAL; return NULL; }
@@ -304,7 +306,18 @@ WACOMDEVICE * WacomConfigOpenDevice(WACOMCONFIG * hConfig,
 	for (i=0; i<hConfig->nDevCnt; ++i)
 	{
 		info = hConfig->pDevs + i;
-		if (!strcmp(info->name, pszDeviceName) && info->num_classes)
+
+		/* convert the underscores back to spaces for name */
+		for(j=0; j<strlen(pszDeviceName); j++)
+		{
+			if(pszDeviceName[j] == '_') 
+				nameOut[j] = ' ';
+			else
+				nameOut[j] = pszDeviceName[j];
+		}
+		nameOut[strlen(pszDeviceName)] = '\0';
+
+		if (!strcmp(info->name, nameOut) && info->num_classes)
 			pDevInfo = info;
 	}
 

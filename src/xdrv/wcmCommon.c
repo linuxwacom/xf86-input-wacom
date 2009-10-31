@@ -1261,7 +1261,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	 * will need to change the values (ie. for error correction) */
 	ds = *pState;
 
-	/* timestamp the state for velocity and acceleration analysis */
+	/* timestamp to track the last event sent */
 	ds.sample = (int)GetTimeInMillis();
 
 	DBG(10, common->debugLevel, ErrorF("xf86WcmEvent: "

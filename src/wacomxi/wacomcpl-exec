@@ -50,7 +50,7 @@ set line_size 30
 
 set origin_x [ expr ($desktopWidth/2) - ($desktopWidth/4) ]
 set origin_y [ expr ($desktopHeight/2) - ($desktopHeight/4) ]
-set windowSize "540x300"
+set windowSize "600x300"
 
 set device ""
 set deviceIndex 0
@@ -191,7 +191,7 @@ proc calibrationSequence {which xDev yDev} {
     global getDeviceModel screenXBottom screenYBottom
     global calibX_org calibY_org calibX_botm calibY_botm
     global xDevMin xDevMax yDevMin yDevMax
-    global calibration_sequence_only
+    global calibration_sequence_only orig_device
 
     set scaling [exec xsetwacom get $device xscaling]
     if { $scaling == 1 } {
@@ -206,13 +206,13 @@ proc calibrationSequence {which xDev yDev} {
 
     if { $which == 0 } {
 	.topleft.m configure -background "#505075"
-	wacomxi::bindevent .topleft.m $device <ButtonRelease> ""
+	wacomxi::bindevent .topleft.m $orig_device <ButtonRelease> ""
 	.bottomright.m configure -background "#df94df"
-	wacomxi::bindevent .bottomright.m $device <ButtonRelease> \
+	wacomxi::bindevent .bottomright.m $orig_device <ButtonRelease> \
 		{calibrationSequence 1 %0 %1}
     } elseif { $which == 1 } {
 	.bottomright.m configure -background "#505075"
-	wacomxi::bindevent .bottomright.m $device <ButtonRelease> ""	
+	wacomxi::bindevent .bottomright.m $orig_device <ButtonRelease> ""	
 	set borderOffset [expr ($size / 2 )]
 
 	# A direction verification of the click
@@ -321,7 +321,7 @@ proc Calibration {} {
 }
 
 proc startCalibration {} {
-    global device size numScreens tvID
+    global device size numScreens tvID orig_device
     global calibResults calibX_org calibY_org calibX_botm calibY_botm
     global screenX_org screenY_org screenXBottom screenYBottom
     global screenWidth screenHeight 
@@ -330,7 +330,10 @@ proc startCalibration {} {
 	bindtags .screen.list.list .
     }
 
-    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is different in xorg.conf
+    # convert underscores back to spaces for wacomxi.c
+    regsub -all {_} $device " " orig_device
+
+    if { $tvID == 1 } { # Nvidia Xinerama setup starts at (0,0) even when it is not in xorg.conf
 	set calibX_org 0
 	set calibY_org 0
 	set calibX_botm $screenWidth
@@ -351,7 +354,7 @@ proc startCalibration {} {
     catch {unset calibResults}
     exec xsetwacom set $device xydefault
     .topleft.m configure -background "#df94df"
-    wacomxi::bindevent .topleft.m $device <ButtonRelease> \
+    wacomxi::bindevent .topleft.m $orig_device <ButtonRelease> \
 		{calibrationSequence 0 %0 %1}
     helpWindow "Help Window " \
 		"\n\nPlease click on the center of \n\
@@ -518,7 +521,6 @@ proc getDeviceOptionProc { dev i } {
 
 proc CreateDevicePanel { type model } {
     global hasPad isLCD hasTouch hasGesture
-
     if { ![ string compare $type "pad" ] } {
 	if { $hasPad($model) } {
 	    createPanel 0 1 0 0
@@ -545,7 +547,7 @@ proc CreateDevicePanel { type model } {
 }
 
 proc updateDevice {} {
-    global device deviceIndex hasPad isLCD
+    global device deviceIndex hasPad isLCD orig_device
     global numScreens getDeviceModel hasTouch
 
     set olddev $device
@@ -555,8 +557,11 @@ proc updateDevice {} {
 	#
 	# Clear old state related to preceding device
 	#
-	wacomxi::bindevent . $device <ButtonPress> ""
-	wacomxi::bindevent . $device <ButtonRelease> ""
+
+	# convert underscores back to spaces for wacomxi.c
+	regsub -all {_} $olddev " " orig_device
+	wacomxi::bindevent . $orig_device <ButtonPress> ""
+	wacomxi::bindevent . $orig_device <ButtonRelease> ""
     }
 
     if { $device != ""} {
@@ -583,6 +588,7 @@ proc createDeviceList {} {
     set index 0
     set devices ""
     set dev [ lindex $infoString $index ]
+
     while { $dev != "" } {
 	set index [ expr $index+1 ]
 	set type [ lindex $infoString $index ]
@@ -599,13 +605,13 @@ proc createDeviceList {} {
     frame .workingDev
     label .workingDev.title -text "Select the Device:"
     label .workingDev.label -background gray
-    listbox .workingDev.list -width 16 -height 12 \
+    listbox .workingDev.list -width 28 -height 12 \
 	    -yscrollcommand ".workingDev.sb set"
     scrollbar .workingDev.sb -width 10 \
 	    -command ".workingDev.list yview"
-    grid .workingDev.title -row 0 -column 0 -columnspan 3 -sticky we
-    grid .workingDev.label -row 1 -column 0 -columnspan 3 -sticky we
-    grid .workingDev.list -row 2 -column 0 
+    grid .workingDev.title -row 0 -column 0 -columnspan 5 -sticky we
+    grid .workingDev.label -row 1 -column 0 -columnspan 5 -sticky we
+    grid .workingDev.list -row 2 -column 0
     grid .workingDev.sb -row 2 -sticky nse
     set flag 0
     foreach dev $devices {
@@ -1884,7 +1890,7 @@ proc updateModelInfo { } {
 	set isLCD($i) 1 
     }
     #TabletPC
-    for { set i 151 } { $i <= 166 } { incr i 1 } {
+    for { set i 144 } { $i <= 159 } { incr i 1 } {
 	set isLCD($i) 1 
     }
     #TabletPC with 2FG touch
@@ -1949,7 +1955,7 @@ proc updateModelInfo { } {
     }
 
     # one finger 
-    for { set i 154 } { $i <= 166 } { incr i 1 } {
+    for { set i 147 } { $i <= 159 } { incr i 1 } {
 	   set hasTouch($i) 1
     }
 

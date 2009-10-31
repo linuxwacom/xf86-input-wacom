@@ -4,10 +4,18 @@
 #define _XDRV_CONFIG_H_
 
 /* Misc defines moved from the command line */
-#undef IN_MODULE
-#undef XFree86LOADER
-#undef XINPUT
-#undef XKB
+#ifndef IN_MODULE
+	#undef IN_MODULE
+#endif
+#ifndef XFree86LOADER
+	#undef XFree86LOADER
+#endif
+#ifndef XINPUT
+	#undef XINPUT
+#endif
+#ifndef XKB
+	#undef XKB
+#endif
 
 /* Compiling for X.org */
 #undef WCM_XORG

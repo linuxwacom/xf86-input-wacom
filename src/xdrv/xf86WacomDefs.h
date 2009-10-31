@@ -364,6 +364,7 @@ struct _WacomCommonRec
 	int tablet_id;		     /* USB tablet ID */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
+	dev_t min_maj;               /* minor/major number */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet logical max X value */

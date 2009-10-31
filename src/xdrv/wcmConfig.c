@@ -19,6 +19,13 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
+#ifdef WCM_XORG_XSERVER_1_4
+    #include <fcntl.h>
+    #ifndef _XF86_ANSIC_H
+	#include <sys/stat.h>
+    #endif
+    extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
+#endif
 
 /*****************************************************************************
  * xf86WcmAllocate --
@@ -175,6 +182,9 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleLimit = -1;
 	
 	common->wcmDevice = "";                  /* device file name */
+#ifdef WCM_XORG_XSERVER_1_6
+	common->min_maj = 0;			 /* device major and minor */
+#endif
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->npadkeys = 0;		   /* Default number of pad keys */
@@ -424,86 +434,235 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
-static Bool supportStylus(char * identifier)
-{
-	if (strstr(identifier, "Wacom Intuos") || strstr(identifier, "Wacom Cintiq") || 
-		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
-		strstr(identifier, "Wacom Volito") || strstr(identifier, "Wacom PenPartner") ||
-		strstr(identifier, "Wacom PL") || strstr(identifier, "Wacom DTU") || 
-		(strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "Wacom ISDv4 E2")) ||
-			strstr(identifier, "Wacom DTF" ))
-		return 1;
+#ifdef WCM_XORG_XSERVER_1_4
 
-	return 0;
+/* xf86WcmCheckTypeAndSource - Check if both devices have the same type OR
+ * the device has been used in xorg.conf: don't add the tool by hal/udev 
+ * if user has defined at least one tool for the device in xorg.conf */
+
+static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr pLocal)
+{
+	int match = 1;
+	char* fsource = xf86CheckStrOption(fakeLocal->options, "_source", "");
+	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
+	char* type = xf86FindOptionValue(fakeLocal->options, "Type");
+	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
+
+	/* only add the new tool if the matching major/minor
+	 * was from the same source */
+	if (!strcmp(fsource, psource))
+	{
+		/* and the tools have different types */
+		if (strcmp(type, xf86FindOptionValue(pLocal->options, "Type")))
+			match = 0;
+	}
+	DBG(2, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmCheckTypeAndSource "
+		"device %s from %s %s \n", fakeLocal->name, fsource,
+		match ? "will be added" : "will be ignored"));
+	return match;
 }
 
-static Bool supportEraser(char * identifier)
+/* check if the device has been added */
+static int wcmIsDuplicate(char* device, LocalDevicePtr local)
 {
-	if (strstr(identifier, "Wacom Intuos") || strstr(identifier, "Wacom Cintiq") || 
-		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
-		strstr(identifier, "Wacom PenPartner") ||
-		strstr(identifier, "Wacom PL") || strstr(identifier, "Wacom DTU") || 
-		(strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "Wacom ISDv4 E2")) ||
-			strstr(identifier, "Wacom DTF" ))
-		return 1;
+#ifdef _XF86_ANSIC_H
+	struct xf86stat st;
+#else
+	struct stat st;
+#endif
+	int isInUse = 0;
+	LocalDevicePtr localDevices = NULL;
+	WacomCommonPtr common = NULL;
 
-	return 0;
+	/* open the port */
+	do {
+        	local->fd = open(device, O_RDONLY, 0);
+	} while (local->fd < 0 && errno == EINTR);
+
+	if (local->fd < 0)
+	{
+		/* can not open the device */
+        	xf86Msg(X_ERROR, "Unable to open Wacom device \"%s\".\n", device);
+		isInUse = 2;
+		goto ret;
+	}
+
+#ifdef _XF86_ANSIC_H
+	if (xf86fstat(local->fd, &st) == -1)
+#else
+	if (fstat(local->fd, &st) == -1)
+#endif
+	{
+		/* can not access major/minor to check device duplication */
+		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
+                		local->name, strerror(errno));
+
+		/* older systems don't support the required ioctl.  let it pass */
+		goto ret;
+	}
+
+	if ((int)st.st_rdev)
+	{
+		localDevices = xf86FirstLocalDevice();
+
+		for (; localDevices != NULL; localDevices = localDevices->next)
+		{
+			device = xf86CheckStrOption(localDevices->options, "Device", NULL);
+
+			/* device can be NULL on some distros */
+			if (!device || !strstr(localDevices->drv->driverName, "wacom"))
+				continue;
+
+			common = ((WacomDevicePtr)localDevices->private)->common;
+			if (local != localDevices &&
+				common->min_maj &&
+				common->min_maj == st.st_rdev)
+			{
+				/* device matches with another added port */
+				if (xf86WcmCheckTypeAndSource(local, localDevices))
+				{
+					xf86Msg(X_WARNING, "%s: device file already in use by %s. "
+						"Ignoring.\n", local->name, localDevices->name);
+					isInUse = 4;
+					goto ret;
+				}
+			}
+ 		}
+	}
+	else
+	{
+		/* major/minor can never be 0, right? */
+		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
+			"Something was wrong.\n", local->name);
+		isInUse = 5;
+	}
+ret:
+	if (local->fd >= 0)
+	{ 
+		close(local->fd);
+		local->fd = -1;
+	}
+	return isInUse;
 }
 
-static Bool supportCursor(char * identifier)
+static struct
 {
-	if (strstr(identifier, "Wacom Intuos") ||  
-		strstr(identifier, "Wacom Graphire") || strstr(identifier, "Wacom Bamboo") ||
-			strstr(identifier, "Wacom PenPartner"))
-		return 1;
-
-	return 0;
-}
-
-static Bool supportPad(char * identifier)
+	__u16 productID;
+	__u16 flags;
+} validType [] =
 {
-	if (strstr(identifier, "Wacom Intuos3") ||  strstr(identifier, "Wacom Intuos4") ||
-		strstr(identifier, "Wacom Graphire4") || strstr(identifier, "Wacom Bamboo") ||
-			(strstr(identifier, "Wacom Cintiq") && strstr(identifier, "X")))
-		return 1;
+	{ 0x00, STYLUS_ID }, /* PenPartner */
+	{ 0x10, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire */
+	{ 0x11, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 4x5 */
+	{ 0x12, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 5x7 */
 
-	return 0;
-}
+	{ 0x13, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 4x5 */
+	{ 0x14, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 6x8 */
 
-static Bool supportTouch(char * identifier)
+	{ 0x15, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 4x5 */
+	{ 0x16, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 */ 
+	{ 0x17, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 4x5 */
+	{ 0x18, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 6x8 */
+	{ 0x19, STYLUS_ID | ERASER_ID                      }, /* Bamboo1 Medium*/ 
+	{ 0x81, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 BlueTooth */
+
+	{ 0x20, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 4x5 */
+	{ 0x21, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 6x8 */
+	{ 0x22, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 9x12 */
+	{ 0x23, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x12 */
+	{ 0x24, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x18 */
+
+	{ 0x03, STYLUS_ID | ERASER_ID }, /* PTU600 */
+	{ 0x30, STYLUS_ID | ERASER_ID }, /* PL400 */
+	{ 0x31, STYLUS_ID | ERASER_ID }, /* PL500 */
+	{ 0x32, STYLUS_ID | ERASER_ID }, /* PL600 */
+	{ 0x33, STYLUS_ID | ERASER_ID }, /* PL600SX */
+	{ 0x34, STYLUS_ID | ERASER_ID }, /* PL550 */
+	{ 0x35, STYLUS_ID | ERASER_ID }, /* PL800 */
+	{ 0x37, STYLUS_ID | ERASER_ID }, /* PL700 */
+	{ 0x38, STYLUS_ID | ERASER_ID }, /* PL510 */
+	{ 0x39, STYLUS_ID | ERASER_ID }, /* PL710 */ 
+	{ 0xC0, STYLUS_ID | ERASER_ID }, /* DTF720 */
+	{ 0xC2, STYLUS_ID | ERASER_ID }, /* DTF720a */
+	{ 0xC4, STYLUS_ID | ERASER_ID }, /* DTF521 */ 
+	{ 0xC7, STYLUS_ID | ERASER_ID }, /* DTU1931 */
+
+	{ 0x41, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 4x5 */
+	{ 0x42, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8 */
+	{ 0x43, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 9x12 */
+	{ 0x44, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x12 */
+	{ 0x45, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x18 */
+	{ 0x47, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8  */
+
+	{ 0x60, STYLUS_ID }, /* Volito */ 
+	{ 0x61, STYLUS_ID }, /* PenStation */
+	{ 0x62, STYLUS_ID }, /* Volito2 4x5 */
+	{ 0x63, STYLUS_ID }, /* Volito2 2x3 */
+	{ 0x64, STYLUS_ID }, /* PenPartner2 */
+
+	{ 0x65, STYLUS_ID | ERASER_ID | CURSOR_ID |  PAD_ID }, /* Bamboo */
+	{ 0x69, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Bamboo1 */ 
+
+	{ 0xB0, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x5 */
+	{ 0xB1, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x8 */
+	{ 0xB2, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 9x12 */
+	{ 0xB3, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x12 */
+	{ 0xB4, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x19 */
+	{ 0xB5, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x11 */
+	{ 0xB7, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x6 */
+
+	{ 0xB8, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 4x6 */
+	{ 0xB9, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 6x9 */
+	{ 0xBA, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 8x13 */
+	{ 0xBB, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 12x19*/
+
+	{ 0x3F, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 21UX */ 
+	{ 0xC5, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 20WSX */ 
+	{ 0xC6, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 12WX */ 
+
+	{ 0x90, STYLUS_ID | ERASER_ID }, /* TabletPC 0x90 */ 
+	{ 0x93, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x93 */
+	{ 0x9A, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x9A */
+	{ 0x9F, TOUCH_ID }, /* CapPlus  0x9F */
+	{ 0xE2, TOUCH_ID }, /* TabletPC 0xE2 */ 
+	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID }  /* TabletPC 0xE3 */
+};
+
+static struct
 {
-	if (strstr(identifier, "Wacom ISDv4") && !strstr(identifier, "90"))
-		return 1;
-
-	return 0;
-}
-
-/* xf86WcmCheckModelnType - Choose supported type for a hotplugged model */
-static Bool xf86WcmCheckModelnType(IDevPtr dev, LocalDevicePtr pLocal)
+	const char* type;
+	__u16 id;
+} wcmTypeAndID [] =
 {
-	char * type = xf86FindOptionValue(pLocal->options, "Type");
-	char castType[32] = "";
-	int i = 0;	
+	{ "stylus", STYLUS_ID },
+	{ "eraser", ERASER_ID },
+	{ "cursor", CURSOR_ID },
+	{ "touch",  TOUCH_ID  },
+	{ "pad",    PAD_ID    }
+};
 
-	for (i=0; i<strlen(type); i++)
-		castType[i] = (char)tolower(type[i]);
+/* validate tool type for device/product */
+static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id)
+{
+	int i, j, ret = 0;
+	char* type = xf86FindOptionValue(local->options, "Type");
 
-	/* Check the device model to see if the type is supported or not.
-	 * Yes, let it go.  No, don't initialize it.
-	 */
-	if (supportStylus(dev->identifier) && strstr(type, "stylus")) return 1;
+	/* walkthrough all supported models */
+	for (i = 0; i < sizeof (validType) / sizeof (validType [0]); i++)
+	{
+		if (validType[i].productID == id)
+		{
 
-	if (supportEraser(dev->identifier) && strstr(type, "eraser")) return 1;
-
-	if (supportCursor(dev->identifier) && strstr(type, "cursor")) return 1;
-
-	if (supportPad(dev->identifier) && strstr(type, "pad")) return 1;
-
-	if (supportTouch(dev->identifier) && strstr(type, "touch")) return 1;
-
-	return 0;
+			/* walkthrough all types */
+			for (j = 0; j < sizeof (wcmTypeAndID) / sizeof (wcmTypeAndID [0]); j++)
+			    if (!strcmp(wcmTypeAndID[j].type, type))
+				if (wcmTypeAndID[j].id & validType[i].flags)
+					ret = 1;
+		}		
+	}
+	return ret;
 }
-
+#endif   /* WCM_XORG_XSERVER_1_4 */
 /* xf86WcmInit - called when the module subsection is found in XF86Config */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -515,8 +674,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
-	static int calledByConf = 0;
-
+#ifdef WCM_XORG_XSERVER_1_4
+	char*		device;
+	struct input_id id;
+#endif
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
@@ -533,27 +694,25 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	xf86CollectInputOptions(fakeLocal, default_options, NULL);
 
-	/* who called us? */
-	if (!strcmp(xf86CheckStrOption(fakeLocal->options, "_source", ""), "server/hal"))
-	{
- 		if (calledByConf)
-		{
-			xf86Msg(X_INFO, "WACOM: Don't add duplicated device %s \n", dev->identifier);
-			xfree(fakeLocal);
-			return NULL;
-		} else if (!xf86WcmCheckModelnType(dev, fakeLocal)) {
-				xf86Msg(X_INFO, "WACOM: Device %s does not support type: %s\n", 
-					dev->identifier, xf86FindOptionValue(fakeLocal->options, "Type"));
-				xfree(fakeLocal);
-				return NULL;
-		}
-	} else {
-		/* we were called from xorg.conf. We assume users want their own settings
-		 * So, don't create a LocalDevice for the same tool if hal/udev calls again.
-		 */
-		calledByConf = 1;
-	}
+#ifdef WCM_XORG_XSERVER_1_4
+        device = xf86CheckStrOption(fakeLocal->options, "Device", NULL);
+        fakeLocal->name = dev->identifier;
 
+        /* leave the undefined for auto-dev (if enabled) to deal with */
+        if(device)
+        {
+                if (!xf86WcmIsWacomDevice(device, &id))
+                        goto SetupProc_fail;
+
+                /* check if the type is valid for the device */
+                if(!wcmIsAValidType(device, fakeLocal, id.product))
+                        goto SetupProc_fail;
+
+                /* check if the device has been added */
+                if (wcmIsDuplicate(device, fakeLocal))
+                        goto SetupProc_fail;
+        }
+#endif   /* WCM_XORG_XSERVER_1_4 */
 	/* Type is mandatory */
 	s = xf86FindOptionValue(fakeLocal->options, "Type");
 

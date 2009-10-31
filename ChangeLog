@@ -1,13 +1,29 @@
+2009-10-31  Ping Cheng <pingc@wacom.com>
+	* Avoid duplicated devices
+	* Validate tool type before adding it
+	* Use struct input_id and struct input_absinfo in wcmUSB.c
+		- for kernel cross version compatibility support
+	* Support device names with white spaces in xsetwacom and wacomcpl 
+		- for hot-plugged devices
+	* Fine tuned configure.in (tested by Camille Moncelier)
+	* Label 0.8.5-1
+
 2009-10-19  Ping Cheng <pingc@wacom.com>
 	* Added Cap+ (9F) touch support (Camille Moncelier)
 	* Added TabletPC (E2 and E3) support
 	* Merged Thomas Jaeger's xidump patch
 	* Merged Peter Hutterer's remove kernel 2.4 support patch
 	* Updated 10-linuxwacom.fdi for touch
-	* Don't allow HAL add tools defined in xorg.conf again
+	* Don't allow HAL add tools that were defined in xorg.conf again
 	* Added calibration-only feature to wacomcpl (Oleg Gaier)
 	* Fixed a package configuration issue for Xorgs 6.7 - 7.2 
 	* Label 0.8.5
+
+2009-10-07  Ping Cheng <pingc@wacom.com>
+	* Fixed a minor TwinView bug in xsetwacom command
+	* Fixed a serial number = 0 case in wcmUSB.c
+	* Fixed a crash issue on Xserver 1.6 or later
+	* Label 0.8.4-3
 
 2009-09-16  Ping Cheng <pingc@wacom.com>
 	* Fixed a mapping issue introduced by non-TwinView support
@@ -156,86 +172,3 @@
 	* Update ~/.xsession from wacomcpl for KDE system
 	* Added IsXExtensionKeyboard check for Xserver 1.4 or later in wacomcfg.c
 	* Label 0.8.0
-
-2008-04-11  Ping Cheng <pingc@wacom.com>
-	* Excluded dixScreenOrigins call for Xorg 6.8.x
-	* Synchronized databases
-	* Updated webpages
-	* Label 0.7.9-11
-
-2008-04-03  Ping Cheng <pingc@wacom.com>
-	* Minor fixes in kernel and wacomcpl
-	* Removed debug statement in wcmSerial.c
-	* Label 0.7.9-10
-
-2008-03-30  Ping Cheng <pingc@wacom.com>
-	* Updated configure.in for keystrokes (Magnus Vigerlöf)
-	* Added touch support for serial TabletPC (ISDv4)
-	* Added autoprobe patch (Matthias Hopf @ Suse)
-	* Label 0.7.9-9
-
-2008-03-07  Ping Cheng <pingc@wacom.com>
-	* Updated wacomcpl for keystrokes
-	* Excluded keystroke support for XFree86
-	* Introduced wacom defined keymap (Magnus Vigerlöf)
-	* Support building outside the source-directory (Magnus Vigerlöf)
-
-2008-02-28  Ping Cheng <pingc@wacom.com>
-	* Added support for Cintiq 20WSX
-	* Fixed Bug 1875050 (Kovid Goyal)
-	* Incorporated patch 1901778 (Steven Seed)
-
-2008-02-23  Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
-	* The rescaling patch is now in X.org master database
-	* Updated configure.in
-	* Added 2.6.24 support
-	* Updated kernel 2.4 make file
-
-2008-01-22  Ping Cheng <pingc@wacom.com>
-	* Updarted xsetwacom for Cintiq 12WX, Bamboo1, and BambooFun
-	* Regrouped the routines for coming Xorg 7.3 hot-plug support (Magnus Vigerlöf)
-	* refer to http://git.debian.org/?p=collab-maint/linux-wacom.git;a=summary for detailed changes
-	* Label 0.7.9-7
-
-2008-01-10  Ping Cheng <pingc@wacom.com>
-	* Label 0.7.9-6
-
-2008-01-02  Ping Cheng <pingc@wacom.com>
-	* Updated build and configure scripts (Magnus Vigerlöf)
-	* Support Xorg 7.3 with multimonitors
-	* Unified screen, tablet, and cordinate initialization
-
-2007-12-19  Ping Cheng <pingc@wacom.com>
-	* Support multimonitor setup on 4 directions
-
-2007-12-13  Ping Cheng <pingc@wacom.com>
-	* Updated wacomcpl
-	* Incorporated Xorg 7.3 workaround from Magnus Vigerlöf
-	* Label 0.7.9-4
-
-2007-11-28  Ping Cheng <pingc@wacom.com>
-	* Clean support of outbound tracking for Bamboo, etc
-	* Updated kernel 2.4.x code
-	* Label 0.7.9-3
-
-2007-11-28  Ping Cheng <pingc@wacom.com>
-	* Updated TwinView support to eliminate the unnecessary tvoffset (bug 1812593)
-	* Incorporated Bartosz Fabianowski's patch (bug 1831998)
-	* Patch 1818295 from Alexander V. Inyukhin
-	* Patch 1834712 from Magnus Vigerlöf 
-	* Fixed bug 1791005 (protocol 4 tablets don't support serial numbers)
-	* Patch 1839008 from Magnus Vigerlöf 
-
-2007-11-12  Ping Cheng <pingc@wacom.com>
-	* Support legacy kernels
-	* Label 0.7.9-2
-
-2007-11-08  Ping Cheng <pingc@wacom.com>
-	* Added support for BambooFun, Bamboo1 and Hummingbird
-	* Support multimonitors horizontally and vertically in the same configuration
-
-2007-10-24  Ping Cheng <pingc@wacom.com>
-	* Added support for 2.6.22
-	* Temporary workaround for Xorg 7.3 (Magnus and Ron)
-	* Support up to 8 screens in xsetwacom
-	* Label 0.7.9

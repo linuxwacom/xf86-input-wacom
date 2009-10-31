@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com> 
+ * Copyright 2002-2009 by Ping Cheng, Wacom. <pingc@wacom.com> 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,8 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
-static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds);
+static void filterIntuosStylus(WacomCommonPtr common, 
+		WacomFilterStatePtr state, WacomDeviceStatePtr ds);
 
 /*****************************************************************************
  * xf86WcmSetPressureCurve -- apply user-defined curve to pressure values
@@ -204,7 +205,8 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1)
  *   but also cuts down quite a bit on jitter.
  ****************************************************************************/
 
-static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds)
+static void filterIntuosStylus(WacomCommonPtr common, 
+		WacomFilterStatePtr state, WacomDeviceStatePtr ds)
 {
 	int x=0, y=0, tx=0, ty=0, i;
 
@@ -244,7 +246,8 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceState *pLast;
 	int *x, *y, i; 
 
-	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with " 			"common->wcmRawSample = %d \n", common->wcmRawSample));
+	DBG(10, common->debugLevel, ErrorF("xf86WcmFilterCoord with "
+ 			"common->wcmRawSample = %d \n", common->wcmRawSample));
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
 
