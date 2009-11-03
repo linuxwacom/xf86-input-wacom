@@ -653,7 +653,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	WacomCommonPtr common = NULL;
 	char		*s, b[12];
 	int		i, oldButton;
-	LocalDevicePtr localDevices;
 	char*		device;
 	static int	numberWacom = 0;
 	struct input_id id;
@@ -746,10 +745,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	/* Lookup to see if there is another wacom device sharing the same port */
-	localDevices = xf86FirstLocalDevice();
-    
 	if (common->wcmDevice)
 	{
+		LocalDevicePtr localDevices = xf86FirstLocalDevice();
 		for (; localDevices != NULL; localDevices = localDevices->next)
 		{
 			if (xf86WcmMatchDevice(localDevices,local))
