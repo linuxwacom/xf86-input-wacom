@@ -262,10 +262,10 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	}
 	if (xf86Verbose)
 	{
-		xf86Msg(X_INFO, "%s Wacom device \"%s\" top X=%d top Y=%d "
+		xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
 				"bottom X=%d bottom Y=%d "
 				"resol X=%d resol Y=%d\n",
-				XCONFIG_PROBED, local->name, priv->topX,
+				local->name, priv->topX,
 				priv->topY, priv->bottomX, priv->bottomY,
 				priv->wcmResolX, priv->wcmResolY);
 	}
@@ -674,26 +674,26 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 #endif
 					butmap) == FALSE)
 	{
-		xf86Msg(X_ERROR, "unable to allocate Button class device\n");
+		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", local->name);
 		return FALSE;
 	}
 
 	if (InitFocusClassDeviceStruct(local->dev) == FALSE)
 	{
-		xf86Msg(X_ERROR, "unable to init Focus class device\n");
+		xf86Msg(X_ERROR, "%s: unable to init Focus class device\n", local->name);
 		return FALSE;
 	}
 
 	if (InitPtrFeedbackClassDeviceStruct(local->dev,
 		xf86WcmDevControlProc) == FALSE)
 	{
-		xf86Msg(X_ERROR, "unable to init ptr feedback\n");
+		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", local->name);
 		return FALSE;
 	}
 
 	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
 	{
-			xf86Msg(X_ERROR, "unable to init proximity class device\n");
+			xf86Msg(X_ERROR, "%s: unable to init proximity class device\n", local->name);
 			return FALSE;
 	}
 
@@ -714,7 +714,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 					  Absolute : Relative) | 
 					  OutOfProximity ) == FALSE)
 	{
-		xf86Msg(X_ERROR, "unable to allocate Valuator class device\n");
+		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", local->name);
 		return FALSE;
 	}
 
@@ -756,19 +756,19 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			wacom_keysyms.mapWidth = 2;
 			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, modmap) == FALSE)
 			{
-				xf86Msg(X_ERROR, "unable to init key class device\n");
+				xf86Msg(X_ERROR, "%s: unable to init key class device\n", local->name);
 				return FALSE;
 			}
 		}
 
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
-			xf86Msg(X_ERROR, "unable to init kbd feedback device struct\n");
+			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", local->name);
 			return FALSE;
 		}
 #endif
 		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
-			xf86Msg(X_ERROR, "unable to init led feedback device struct\n");
+			xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", local->name);
 			return FALSE;
 		}
 	}
@@ -921,8 +921,8 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 			is_wacom = xf86WcmIsWacomDevice(fname, &id);
 			if (is_wacom) 
 			{
-				xf86Msg(X_ERROR, "%s Wacom probed device to be %s (waited %d msec)\n",
-					XCONFIG_PROBED, fname, wait);
+				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
+					local->name, fname, wait);
 				xf86ReplaceStrOption(local->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
@@ -930,10 +930,10 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 			}
 		}
 		wait += 100;
-		xf86Msg(X_ERROR, "%s waiting 100 msec (total %dms) for device to become ready\n", local->name, wait);
+		xf86Msg(X_ERROR, "%s: waiting 100 msec (total %dms) for device to become ready\n", local->name, wait);
 		usleep(100*1000);
 	}
-	xf86Msg(X_ERROR, "%s no Wacom event device found (checked %d nodes, waited %d msec)\n",
+	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
 		local->name, i + 1, wait);
 	return FALSE;
 }
@@ -962,7 +962,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		/* Autoprobe if necessary */
 		if ((common->wcmFlags & AUTODEV_FLAG) &&
 		    !(common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
-			xf86Msg(X_ERROR, "Cannot probe device\n");
+			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
 
 		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
 			!common->wcmDevice)
@@ -1067,7 +1067,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			if (wDev->local->fd >= 0)
 				xf86WcmDevProc(wDev->local->dev, DEVICE_OFF);
 		}
-		xf86Msg(X_ERROR, "Error reading wacom device : %s\n", strerror(errno));
+		xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", local->name, strerror(errno));
 		return;
 	}
 
@@ -1256,7 +1256,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 
 		default:
-			xf86Msg(X_ERROR, "wacom unsupported mode=%d\n", what);
+			xf86Msg(X_ERROR, "%s: wacom unsupported mode=%d\n", local->name, what);
 			return !Success;
 			break;
 	} /* end switch */

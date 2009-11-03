@@ -45,6 +45,6 @@ int xf86WcmReady(LocalDevicePtr local)
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmReady for %s with %d numbers of data\n", local->name, n));
 
 	if (n >= 0) return n ? 1 : 0;
-	xf86Msg(X_ERROR, "Wacom select error : %s for %s \n", strerror(errno), local->name);
+	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
 	return 0;
 }

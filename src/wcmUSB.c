@@ -378,7 +378,7 @@ static Bool usbDetect(LocalDevicePtr local)
 
 	if (err < 0)
 	{
-		xf86Msg(X_ERROR, "usbDetect: can not ioctl version\n");
+		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", local->name);
 		return 0;
 	}
 #ifdef EVIOCGRAB
@@ -386,10 +386,10 @@ static Bool usbDetect(LocalDevicePtr local)
 	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
 
 	if (err < 0) 
-		xf86Msg(X_ERROR, "%s Wacom X driver can't grab event device, errno=%d\n",
+		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device, errno=%d\n",
 				local->name, errno);
 	else 
-		xf86Msg(X_ERROR, "%s Wacom X driver grabbed event device\n", local->name);
+		xf86Msg(X_ERROR, "%s: Wacom X driver grabbed event device\n", local->name);
 #endif
 	return 1;
 }
@@ -538,7 +538,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmTouch = xf86SetBoolOption(local->options, 
 						"Touch", common->wcmTouchDefault);
 				if ( common->wcmTouch )
-					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
+					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", local->name);
 			}
 
 			/* Tablet PC button applied to the whole tablet. Not just one tool */
@@ -549,13 +549,13 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 					"TPCButton", common->wcmTPCButtonDefault);
 				if ( common->wcmTPCButton )
 					xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", 
-						common->wcmDevice);
+						local->name);
 			}
 		}
 	}
 	else
 	{
-		xf86Msg(X_ERROR, "%x is not supported by linuxwacom.\n", sID.vendor);
+		xf86Msg(X_ERROR, "Vendor %x is not supported by this driver.\n", sID.vendor);
 		return FALSE;
 	}
 
@@ -568,7 +568,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	/* Determine max number of buttons */
 	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl key bits.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl key bits.\n", local->name);
 		return FALSE;
 	}
 
@@ -633,7 +633,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl event bits.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl event bits.\n", local->name);
 		return !Success;
 	}
 
@@ -641,27 +641,27 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
         if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl abs bits.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl abs bits.\n", local->name);
 		return !Success;
 	}
 
 	/* absolute values */
 	if (!ISBITSET(ev,EV_ABS))
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl max values.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl max values.\n", local->name);
 		return !Success;
 	}
 
 	/* max x */
 	if (ioctl(local->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl xmax value.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", local->name);
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: xmax value is wrong.\n");
+		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", local->name);
 		return !Success;
 	}
 	common->wcmMaxX = absinfo.maximum;
@@ -669,13 +669,13 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: unable to ioctl ymax value.\n");
+		xf86Msg(X_ERROR, "%s: unable to ioctl ymax value.\n", local->name);
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: ymax value is wrong.\n");
+		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", local->name);
 		return !Success;
 	}
 	common->wcmMaxY = absinfo.maximum;
@@ -723,8 +723,8 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
 		{
-			xf86Msg(X_ERROR, "WACOM: touch resolution value(s) was wrong TouchResolX"
-				" = %d MaxTouchY = %d.\n", common->wcmTouchResolX,
+			xf86Msg(X_ERROR, "%s: touch resolution value(s) was wrong TouchResolX"
+				" = %d MaxTouchY = %d.\n", local->name, common->wcmTouchResolX,
 				common->wcmTouchResolY);
 			return !Success;
 		}
@@ -803,8 +803,8 @@ static void usbParseEvent(LocalDevicePtr local,
 	if (common->wcmEventCnt >=
 		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
 	{
-		xf86Msg(X_ERROR, "usbParse: Exceeded event queue (%d) \n",
-				common->wcmEventCnt);
+		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
+			local->name, common->wcmEventCnt);
 		goto skipEvent;
 	}
 
@@ -817,7 +817,8 @@ static void usbParseEvent(LocalDevicePtr local,
 		 * but we never report a serial number with a value of 0 */
 		if (event->value == 0)
 		{
-			xf86Msg(X_ERROR, "usbParse: Ignoring event from invalid serial 0\n");
+			xf86Msg(X_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
+				local->name);
 			goto skipEvent;
 		}
 
@@ -835,7 +836,8 @@ static void usbParseEvent(LocalDevicePtr local,
 		   using SYN_REPORT as the end of record indicator */
 		if (! USE_SYN_REPORTS(common))
 		{
-			xf86Msg(X_ERROR, "WACOM: Got unexpected SYN_REPORT, changing mode\n");
+			xf86Msg(X_ERROR, "%s: Got unexpected SYN_REPORT, changing mode\n",
+				local->name);
 
 			/* we can expect SYN_REPORT's from now on */
 			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
@@ -1018,7 +1020,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			if (event->code == REL_WHEEL)
 				ds->relwheel = -event->value;
 			else
-				xf86Msg(X_ERROR, "wacom: rel event recv'd (%d)!\n", event->code);
+				xf86Msg(X_ERROR, "%s: rel event recv'd (%d)!\n",
+					local->name, event->code);
 		}
 
 		else if (event->type == EV_KEY)

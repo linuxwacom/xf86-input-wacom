@@ -116,8 +116,8 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (priv->screen_no != -1 && priv->screen_no >= priv->numScreen)
 	{
-		xf86Msg(X_ERROR, "xf86WcmSetScreen Screen%d is larger than number of available screens (%d)\n",
-			priv->screen_no, priv->numScreen);
+		xf86Msg(X_ERROR, "%s: xf86WcmSetScreen Screen%d is larger than number of available screens (%d)\n",
+			local->name, priv->screen_no, priv->numScreen);
 		priv->screen_no = -1;
 	}
 
@@ -377,8 +377,8 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 				xf86PostKeyboardEvent (keydev, j, 0);
 		}
 		else
-			xf86Msg (X_WARNING, "Couldn't find key with code %08x on keyboard device %s\n",
-					keysym, keydev->name);
+			xf86Msg (X_WARNING, "%s: Couldn't find key with code %08x on keyboard device %s\n",
+					keydev->name, keysym, keydev->name);
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
@@ -428,7 +428,7 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int 
 		}
 	}
 	else
-		xf86Msg(X_WARNING, "[%s] without SendCoreEvents. Cannot emit key events!\n", local->name);
+		xf86Msg(X_WARNING, "%s: without SendCoreEvents. Cannot emit key events!\n", local->name);
 }
 #endif
 
@@ -649,7 +649,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    default:
-		xf86Msg(X_WARNING, "[%s] unsupported event %x \n", local->name, fakeButton);
+		xf86Msg(X_WARNING, "%s: unsupported event %x \n", local->name, fakeButton);
 	}
 }
 
@@ -1065,8 +1065,8 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0)
 	{
-		xf86Msg(X_ERROR, "Error opening %s : %s\n", common->wcmDevice,
-			strerror(errno));
+		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", local->name,
+			common->wcmDevice, strerror(errno));
 		return !Success;
 	}
 
@@ -1661,8 +1661,8 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 			common->wcmThreshold = common->wcmMaxZ * 3 / 25;
 		else
 			common->wcmThreshold = common->wcmMaxZ * 3 / 50;
-		xf86Msg(X_INFO, "%s Wacom using pressure threshold of %d for button 1\n",
-			XCONFIG_PROBED, common->wcmThreshold);
+		xf86Msg(X_PROBED, "%s: using pressure threshold of %d for button 1\n",
+			local->name, common->wcmThreshold);
 	}
 
 	/* Reset tablet to known state */
@@ -1688,9 +1688,9 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 
 	/* output tablet state as probed */
 	if (xf86Verbose)
-		xf86Msg(X_INFO, "%s Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+		xf86Msg(X_PROBED, "%s: Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
-			XCONFIG_PROBED,
+			local->name,
 			model->name, common->wcmISDV4Speed, 
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
