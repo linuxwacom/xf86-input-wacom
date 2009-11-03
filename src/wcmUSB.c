@@ -368,9 +368,11 @@ static Bool usbDetect(LocalDevicePtr local)
 {
 	int version;
 	int err;
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(1, priv->debugLevel, ErrorF("usbDetect\n"));
+#endif
 
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 

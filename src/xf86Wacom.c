@@ -1150,8 +1150,10 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 {
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	DBG(3, priv->debugLevel, ErrorF("xf86WcmDevChangeControl called\n"));
+#endif
 	return Success;
 }
 
@@ -1161,10 +1163,12 @@ int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 
 static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
+#ifdef DEBUG
 	LocalDevicePtr local = (LocalDevicePtr)device->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(4, priv->debugLevel, ErrorF("Wacom Dev Control Proc called\n"));
+#endif
 	return;
 }
 

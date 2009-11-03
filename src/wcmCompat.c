@@ -38,7 +38,9 @@ int xf86WcmWait(int t)
 
 int xf86WcmReady(LocalDevicePtr local)
 {
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+#endif
 	int n = xf86WaitForInput(local->fd, 0);
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmReady for %s with %d numbers of data\n", local->name, n));
 

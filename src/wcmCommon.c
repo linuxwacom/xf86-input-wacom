@@ -681,10 +681,12 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
+#ifdef DEBUG
+	int is_button = !!(ds->buttons);
+#endif
 	int type = ds->device_type;
 	int id = ds->device_id;
 	int serial = (int)ds->serial_num;
-	int is_button = !!(ds->buttons);
 	int is_proximity = ds->proximity;
 	int x = ds->x;
 	int y = ds->y;

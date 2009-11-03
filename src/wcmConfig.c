@@ -436,7 +436,9 @@ static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr p
 	char* fsource = xf86CheckStrOption(fakeLocal->options, "_source", "");
 	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
 	char* type = xf86FindOptionValue(fakeLocal->options, "Type");
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
+#endif
 
 	/* only add the new tool if the matching major/minor
 	 * was from the same source */

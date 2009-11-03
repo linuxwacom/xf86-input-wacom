@@ -121,11 +121,12 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 {
 	LocalDevicePtr local = (LocalDevicePtr)dev->public.devicePrivate;
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(3, priv->debugLevel, ErrorF("xf86WcmSwitchMode dev=%p mode=%d\n", 
 		(void *)dev, mode));
-
+#endif
 	/* Share this call with sendAButton in wcmCommon.c */
 	return xf86WcmDevSwitchModeCall(local, mode);
 }
