@@ -41,50 +41,32 @@ static LocalDevicePtr xf86WcmAllocateTouch(void);
 
 static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 {
-	LocalDevicePtr local;
-	WacomDevicePtr priv;
-	WacomCommonPtr common;
+	LocalDevicePtr   local  = NULL;
+	WacomDevicePtr   priv   = NULL;
+	WacomCommonPtr   common = NULL;
+	WacomToolPtr     tool   = NULL;
+	WacomToolAreaPtr area   = NULL;
 	int i, j;
-	WacomToolPtr     tool;
-	WacomToolAreaPtr area;
 
 	priv = xcalloc(1, sizeof(WacomDeviceRec));
 	if (!priv)
-		return NULL;
+		goto error;
 
 	common = xcalloc(1, sizeof(WacomCommonRec));
 	if (!common)
-	{
-		xfree(priv);
-		return NULL;
-	}
+		goto error;
 
 	tool = xcalloc(1, sizeof(WacomTool));
 	if(!tool)
-	{
-		xfree(priv);
-		xfree(common);
-		return NULL;
-	}
+		goto error;
 
 	area = xcalloc(1, sizeof(WacomToolArea));
-	if(!area)
-	{
-		xfree(tool);
-		xfree(priv);
-		xfree(common);
-		return NULL;
-	}
+	if (!area)
+		goto error;
 
 	local = xf86AllocateInput(gWacomModule.wcmDrv, 0);
 	if (!local)
-	{
-		xfree(area);
-		xfree(tool);
-		xfree(priv);
-		xfree(common);
-		return NULL;
-	}
+		goto error;
 
 	local->name = name;
 	local->flags = 0;
@@ -254,6 +236,17 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	area->device = local; /* associated WacomDevice */
 
 	return local;
+
+error:
+	if (area)
+	    xfree(area);
+	if (tool)
+	    xfree(tool);
+	if (common)
+	    xfree(common);
+        if (priv)
+            xfree(priv);
+        return NULL;
 }
 
 /* xf86WcmAllocateStylus */
