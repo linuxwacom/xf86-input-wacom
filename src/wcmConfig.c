@@ -466,9 +466,7 @@ static int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	WacomCommonPtr common = NULL;
 
 	/* open the port */
-	do {
-		local->fd = open(device, O_RDONLY, 0);
-	} while (local->fd < 0 && errno == EINTR);
+        SYSCALL(local->fd = open(device, O_RDONLY, 0));
 
 	if (local->fd < 0)
 	{
