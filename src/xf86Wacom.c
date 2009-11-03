@@ -891,7 +891,7 @@ Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
 	ioctl(fd, EVIOCGID, id);
 	SYSCALL(close(fd));
 
-	if (id->vendor == 0x056a)
+	if (id->vendor == WACOM_VENDOR_ID)
 		return TRUE;
 	else
 		return FALSE;

@@ -26,6 +26,7 @@
 #include <asm/types.h>
 #include <linux/input.h>
 #define MAX_USB_EVENTS 32
+#define WACOM_VENDOR_ID 0x056a  /* vendor ID on the kernel device */
 
 #define DEFAULT_SPEED 1.0       /* default relative cursor speed */
 #define MAX_ACCEL 7             /* number of acceleration levels */

@@ -514,7 +514,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
 
 	/* vendor is wacom */
-	if (sID.vendor == 0x056A)
+	if (sID.vendor == WACOM_VENDOR_ID)
 	{
 		common->tablet_id = sID.product;
 
