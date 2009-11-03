@@ -48,18 +48,18 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	WacomToolPtr     tool;
 	WacomToolAreaPtr area;
 
-	priv = (WacomDevicePtr) xcalloc(1, sizeof(WacomDeviceRec));
+	priv = xcalloc(1, sizeof(WacomDeviceRec));
 	if (!priv)
 		return NULL;
 
-	common = (WacomCommonPtr) xcalloc(1, sizeof(WacomCommonRec));
+	common = xcalloc(1, sizeof(WacomCommonRec));
 	if (!common)
 	{
 		xfree(priv);
 		return NULL;
 	}
 
-	tool = (WacomToolPtr) xcalloc(1, sizeof(WacomTool));
+	tool = xcalloc(1, sizeof(WacomTool));
 	if(!tool)
 	{
 		xfree(priv);
@@ -67,7 +67,7 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		return NULL;
 	}
 
-	area = (WacomToolAreaPtr) xcalloc(1, sizeof(WacomToolArea));
+	area = xcalloc(1, sizeof(WacomToolArea));
 	if(!area)
 	{
 		xfree(tool);
@@ -670,7 +670,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	gWacomModule.wcmDrv = drv;
 
-	fakeLocal = (LocalDevicePtr) xcalloc(1, sizeof(LocalDeviceRec));
+	fakeLocal = xcalloc(1, sizeof(LocalDeviceRec));
 	if (!fakeLocal)
 		return NULL;
 
