@@ -28,20 +28,19 @@
 
 extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
 
-static LocalDevicePtr xf86WcmAllocate(char* name, int flag);
-static LocalDevicePtr xf86WcmAllocateStylus(void);
-static LocalDevicePtr xf86WcmAllocateCursor(void);
-static LocalDevicePtr xf86WcmAllocateEraser(void);
-static LocalDevicePtr xf86WcmAllocatePad(void);
-static LocalDevicePtr xf86WcmAllocateTouch(void);
+static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
+static int xf86WcmAllocateStylus(LocalDevicePtr local);
+static int xf86WcmAllocateCursor(LocalDevicePtr local);
+static int xf86WcmAllocateEraser(LocalDevicePtr local);
+static int xf86WcmAllocatePad(LocalDevicePtr local);
+static int xf86WcmAllocateTouch(LocalDevicePtr local);
 
 /*****************************************************************************
  * xf86WcmAllocate --
  ****************************************************************************/
 
-static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
+static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag)
 {
-	LocalDevicePtr   local  = NULL;
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
 	WacomToolPtr     tool   = NULL;
@@ -62,10 +61,6 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 
 	area = xcalloc(1, sizeof(WacomToolArea));
 	if (!area)
-		goto error;
-
-	local = xf86AllocateInput(gWacomModule.wcmDrv, 0);
-	if (!local)
 		goto error;
 
 	local->name = name;
@@ -235,7 +230,7 @@ static LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	area->bottomY = 0;    /* Y bottom */
 	area->device = local; /* associated WacomDevice */
 
-	return local;
+	return 1;
 
 error:
 	if (area)
@@ -246,93 +241,93 @@ error:
 	    xfree(common);
         if (priv)
             xfree(priv);
-        return NULL;
+        return 0;
 }
 
 /* xf86WcmAllocateStylus */
 
-static LocalDevicePtr xf86WcmAllocateStylus(void)
+static int xf86WcmAllocateStylus(LocalDevicePtr local)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
+	int rc = xf86WcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 
-	if (local)
+	if (rc)
 		local->type_name = "Wacom Stylus";
 
-	return local;
+	return rc;
 }
 
 /* xf86WcmAllocateTouch */
 
-static LocalDevicePtr xf86WcmAllocateTouch(void)
+static int xf86WcmAllocateTouch(LocalDevicePtr local)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
+	int rc = xf86WcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
 
-	if (local)
+	if (rc)
 		local->type_name = "Wacom Touch";
 
-	return local;
+	return rc;
 }
 
 /* xf86WcmAllocateCursor */
 
-static LocalDevicePtr xf86WcmAllocateCursor(void)
+static int xf86WcmAllocateCursor(LocalDevicePtr local)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_CURSOR, CURSOR_ID);
+	int rc = xf86WcmAllocate(local, XI_CURSOR, CURSOR_ID);
 
-	if (local)
+	if (rc)
 		local->type_name = "Wacom Cursor";
 
-	return local;
+	return rc;
 }
 
 /* xf86WcmAllocateEraser */
 
-static LocalDevicePtr xf86WcmAllocateEraser(void)
+static int xf86WcmAllocateEraser(LocalDevicePtr local)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
+	int rc = xf86WcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
 
-	if (local)
+	if (rc)
 		local->type_name = "Wacom Eraser";
 
-	return local;
+	return rc;
 }
 
 /* xf86WcmAllocatePad */
 
-static LocalDevicePtr xf86WcmAllocatePad(void)
+static int xf86WcmAllocatePad(LocalDevicePtr local)
 {
-	LocalDevicePtr local = xf86WcmAllocate(XI_PAD, PAD_ID);
+	int rc = xf86WcmAllocate(local, XI_PAD, PAD_ID);
 
-	if (local)
+	if (rc)
 		local->type_name = "Wacom Pad";
 
-	return local;
+	return rc;
 }
 
-static LocalDevicePtr xf86WcmAllocateByType(IDevPtr dev, char *type)
+static int xf86WcmAllocateByType(LocalDevicePtr local, char *type)
 {
-	LocalDevicePtr local;
+	int rc = 0;
 
 	if (!type)
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
 				"Must be one of stylus, touch, cursor, eraser, or pad\n",
-				dev->identifier);
-		return NULL;
+				local->name);
+		return rc;
 	}
 
 	if (xf86NameCmp(type, "stylus") == 0)
-		local = xf86WcmAllocateStylus();
+		rc = xf86WcmAllocateStylus(local);
 	else if (xf86NameCmp(type, "touch") == 0)
-		local = xf86WcmAllocateTouch();
+		rc = xf86WcmAllocateTouch(local);
 	else if (xf86NameCmp(type, "cursor") == 0)
-		local = xf86WcmAllocateCursor();
+		rc = xf86WcmAllocateCursor(local);
 	else if (xf86NameCmp(type, "eraser") == 0)
-		local = xf86WcmAllocateEraser();
+		rc = xf86WcmAllocateEraser(local);
 	else if (xf86NameCmp(type, "pad") == 0)
-		local = xf86WcmAllocatePad();
+		rc = xf86WcmAllocatePad(local);
 
-	return local;
+	return rc;
 }
 
 
@@ -450,12 +445,12 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 /* xf86WcmCheckTypeAndSource - Check if both devices have the same type OR
  * the device has been used in xorg.conf: don't add the tool by hal/udev
  * if user has defined at least one tool for the device in xorg.conf */
-static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr pLocal)
+static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr local, LocalDevicePtr pLocal)
 {
 	int match = 1;
-	char* fsource = xf86CheckStrOption(fakeLocal->options, "_source", "");
+	char* fsource = xf86CheckStrOption(local->options, "_source", "");
 	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
-	char* type = xf86FindOptionValue(fakeLocal->options, "Type");
+	char* type = xf86FindOptionValue(local->options, "Type");
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
 #endif
@@ -469,7 +464,7 @@ static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr p
 			match = 0;
 	}
 	DBG(2, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmCheckTypeAndSource "
-		"device %s from %s %s \n", fakeLocal->name, fsource,
+		"device %s from %s %s \n", local->name, fsource,
 		match ? "will be added" : "will be ignored"));
 
 	return match;
@@ -521,10 +516,11 @@ static int wcmIsDuplicate(char* device, LocalDevicePtr local)
 			if (!device || !strstr(localDevices->drv->driverName, "wacom"))
 				continue;
 
+			if (local == localDevices)
+				continue;
+
 			common = ((WacomDevicePtr)localDevices->private)->common;
-			if (local != localDevices &&
-				common->min_maj &&
-				common->min_maj == st.st_rdev)
+			if (common->min_maj && common->min_maj == st.st_rdev)
 			{
 				/* device matches with another added port */
 				if (xf86WcmCheckTypeAndSource(local, localDevices))
@@ -676,7 +672,6 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	LocalDevicePtr local = NULL;
-	LocalDevicePtr fakeLocal = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	char		*s, *type, b[12];
@@ -690,19 +685,18 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	gWacomModule.wcmDrv = drv;
 
-	fakeLocal = xcalloc(1, sizeof(LocalDeviceRec));
-	if (!fakeLocal)
-		return NULL;
+	if (!(local = xf86AllocateInput(drv, 0)))
+		goto SetupProc_fail;
 
-	fakeLocal->conf_idev = dev;
-	fakeLocal->name = dev->identifier;
+	local->conf_idev = dev;
+	local->name = dev->identifier;
 
 	/* Force default port options to exist because the init
 	 * phase is based on those values.
 	 */
-	xf86CollectInputOptions(fakeLocal, default_options, NULL);
+	xf86CollectInputOptions(local, default_options, NULL);
 
-	device = xf86CheckStrOption(fakeLocal->options, "Device", NULL);
+	device = xf86CheckStrOption(local->options, "Device", NULL);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
@@ -711,29 +705,23 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			goto SetupProc_fail;
 
 		/* check if the type is valid for the device */
-		if(!wcmIsAValidType(device, fakeLocal, id.product))
+		if(!wcmIsAValidType(device, local, id.product))
 			goto SetupProc_fail;
 
 		/* check if the device has been added */
-		if (wcmIsDuplicate(device, fakeLocal))
+		if (wcmIsDuplicate(device, local))
 			goto SetupProc_fail;
 	}
 
 	/* Type is mandatory */
-	type = xf86FindOptionValue(fakeLocal->options, "Type");
-	local = xf86WcmAllocateByType(dev, type);
+	type = xf86FindOptionValue(local->options, "Type");
 
-	if (!local)
+	if (!xf86WcmAllocateByType(local, type))
 		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;
 	common = priv->common;
 
-	local->options = fakeLocal->options;
-	local->conf_idev = fakeLocal->conf_idev;
-	local->name = dev->identifier;
-	xfree(fakeLocal);
-    
 	common->wcmDevice = xf86FindOptionValue(local->options, "Device");
 
 	/* Autoprobe if not given
@@ -1185,7 +1173,7 @@ SetupProc_fail:
 	if (priv)
 		xfree(priv);
 	if (local)
-		xfree(local);
+	    xf86DeleteInput(local, 0);
 	return NULL;
 }
 
