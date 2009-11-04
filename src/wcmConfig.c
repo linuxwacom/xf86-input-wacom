@@ -309,6 +309,33 @@ static LocalDevicePtr xf86WcmAllocatePad(void)
 	return local;
 }
 
+static LocalDevicePtr xf86WcmAllocateByType(IDevPtr dev, char *type)
+{
+	LocalDevicePtr local;
+
+	if (!type)
+	{
+		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
+				"Must be one of stylus, touch, cursor, eraser, or pad\n",
+				dev->identifier);
+		return NULL;
+	}
+
+	if (xf86NameCmp(type, "stylus") == 0)
+		local = xf86WcmAllocateStylus();
+	else if (xf86NameCmp(type, "touch") == 0)
+		local = xf86WcmAllocateTouch();
+	else if (xf86NameCmp(type, "cursor") == 0)
+		local = xf86WcmAllocateCursor();
+	else if (xf86NameCmp(type, "eraser") == 0)
+		local = xf86WcmAllocateEraser();
+	else if (xf86NameCmp(type, "pad") == 0)
+		local = xf86WcmAllocatePad();
+
+	return local;
+}
+
+
 /* xf86WcmPointInArea - check whether the point is within the area */
 
 Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y)
@@ -652,7 +679,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	LocalDevicePtr fakeLocal = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	char		*s, b[12];
+	char		*s, *type, b[12];
 	int		i, oldButton;
 	char*		device;
 	static int	numberWacom = 0;
@@ -693,31 +720,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	/* Type is mandatory */
-	s = xf86FindOptionValue(fakeLocal->options, "Type");
+	type = xf86FindOptionValue(fakeLocal->options, "Type");
+	local = xf86WcmAllocateByType(dev, type);
 
-	if (s && (xf86NameCmp(s, "stylus") == 0))
-		local = xf86WcmAllocateStylus();
-	else if (s && (xf86NameCmp(s, "touch") == 0))
-		local = xf86WcmAllocateTouch();
-	else if (s && (xf86NameCmp(s, "cursor") == 0))
-		local = xf86WcmAllocateCursor();
-	else if (s && (xf86NameCmp(s, "eraser") == 0))
-		local = xf86WcmAllocateEraser();
-	else if (s && (xf86NameCmp(s, "pad") == 0))
-		local = xf86WcmAllocatePad();
-	else
-	{
-		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-				"Must be one of stylus, touch, cursor, eraser, or pad\n",
-				dev->identifier);
-		goto SetupProc_fail;
-	}
-    
 	if (!local)
-	{
-		xfree(fakeLocal);
-		return NULL;
-	}
+		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;
 	common = priv->common;
