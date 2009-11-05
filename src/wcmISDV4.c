@@ -579,3 +579,4 @@ static int xf86WcmWaitForTablet(int fd, char* answer, int size)
 
 	return maxtry;
 }
+/* vim: set noexpandtab shiftwidth=8: */

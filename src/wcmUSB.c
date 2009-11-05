@@ -1127,3 +1127,4 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	/* dispatch event */
 	xf86WcmEvent(common, channel, ds);
 }
+/* vim: set noexpandtab shiftwidth=8: */

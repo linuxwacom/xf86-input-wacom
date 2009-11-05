@@ -582,3 +582,4 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
     return Success;
 }
 #endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
+/* vim: set noexpandtab shiftwidth=8: */

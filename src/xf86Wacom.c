@@ -1358,3 +1358,4 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	return TRUE;
 }
 
+/* vim: set noexpandtab shiftwidth=8: */

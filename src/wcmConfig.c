@@ -1262,3 +1262,4 @@ _X_EXPORT XF86ModuleData wacomModuleData =
 	xf86WcmUnplug
 };
 
+/* vim: set noexpandtab shiftwidth=8: */

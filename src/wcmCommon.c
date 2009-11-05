@@ -2025,3 +2025,4 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 		}
 	}
 }
+/* vim: set noexpandtab shiftwidth=8: */

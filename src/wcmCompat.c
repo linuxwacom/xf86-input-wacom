@@ -48,3 +48,4 @@ int xf86WcmReady(LocalDevicePtr local)
 	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
 	return 0;
 }
+/* vim: set noexpandtab shiftwidth=8: */

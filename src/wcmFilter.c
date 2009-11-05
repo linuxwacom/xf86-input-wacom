@@ -284,3 +284,4 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	return 0; /* lookin' good */
 }
+/* vim: set noexpandtab shiftwidth=8: */
