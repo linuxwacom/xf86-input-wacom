@@ -326,14 +326,28 @@ static const char *default_options[] =
 static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-    
+	WacomDevicePtr dev = priv->common->wcmDevices;
+	WacomDevicePtr *prev = &priv->common->wcmDevices;
+
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
+
+	while(dev)
+	{
+		if (dev == priv)
+		{
+			*prev = dev->next;
+			break;
+		}
+		prev = &dev->next;
+		dev = dev->next;
+	}
 
 	/* free pressure curve */
 	xfree(priv->pPressCurve);
 
 	xfree(priv);
 	local->private = NULL;
+
 
 	xf86DeleteInput(local, 0);    
 }
