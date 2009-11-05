@@ -228,15 +228,11 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	return 1;
 
 error:
-	if (area)
-	    xfree(area);
-	if (tool)
-	    xfree(tool);
-	if (common)
-	    xfree(common);
-        if (priv)
-            xfree(priv);
-        return 0;
+	xfree(area);
+	xfree(tool);
+	xfree(common);
+	xfree(priv);
+	return 0;
 }
 
 static int xf86WcmAllocateByType(LocalDevicePtr local, char *type)
@@ -332,8 +328,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
 	/* free pressure curve */
-	if (priv->pPressCurve)
-		xfree(priv->pPressCurve);
+	xfree(priv->pPressCurve);
 
 	xfree(priv);
 	local->private = NULL;
@@ -1099,14 +1094,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	return (local);
 
 SetupProc_fail:
-	if(area)
-		xfree(area);
-	if(tool)
-		xfree(tool);
-	if (common)
-		xfree(common);
-	if (priv)
-		xfree(priv);
+	xfree(area);
+	xfree(tool);
+	xfree(common);
+	xfree(priv);
 	if (local)
 	    xf86DeleteInput(local, 0);
 	return NULL;
