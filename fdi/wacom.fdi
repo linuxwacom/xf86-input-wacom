@@ -5,14 +5,12 @@
     <match key="info.category" contains="input">
       <match key="info.product" contains_outof="Wacom;WALTOP">
 	<merge key="input.x11_driver" type="string">wacom</merge>
-	<merge key="input.x11_options.Type" type="string">stylus</merge>
       </match>
     </match>
     <match key="info.capabilities" contains="serial">
       <match key="@info.parent:pnp.id" contains_outof="WACf001;WACf002;WACf003;WACf004;WACf005;WACf006;WACf007;WACf008;WACf009;WACf00a;WACf00b;WACf00c;FUJ02e5">
 	<append key="info.capabilities" type="strlist">input</append>
 	<merge key="input.x11_driver" type="string">wacom</merge>
-	<merge key="input.x11_options.Type" type="string">stylus</merge>
 	<merge key="input.x11_options.ForceDevice" type="string">ISDV4</merge>
 	<merge key="input.device" type="copy_property">serial.device</merge>
       </match>
@@ -21,7 +19,6 @@
     <match key="info.product" contains="HID 1b96:0001">
       <match key="info.parent" contains="if0">
        <merge key="input.x11_driver" type="string">wacom</merge>
-       <merge key="input.x11_options.Type" type="string">stylus</merge>
       </match>
     </match>
   </device>
@@ -31,7 +28,6 @@
       <match key="info.product" contains="WACOM">
         <match key="info.product" contains="Tablet">
           <merge key="input.x11_driver" type="string">wacom</merge>
-          <merge key="input.x11_options.Type" type="string">stylus</merge>
         </match>
       </match>
     </match>

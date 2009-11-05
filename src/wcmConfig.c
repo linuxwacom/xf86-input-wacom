@@ -326,11 +326,35 @@ static const char *default_options[] =
 static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomDevicePtr dev = priv->common->wcmDevices;
-	WacomDevicePtr *prev = &priv->common->wcmDevices;
+	WacomDevicePtr dev;
+	WacomDevicePtr *prev;
 
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
+	if (priv->isParent)
+	{
+		/* HAL removal sees the parent device removed first. */
+		WacomDevicePtr next;
+		dev = priv->common->wcmDevices;
+
+		xf86Msg(X_INFO, "%s: removing automatically added devices.\n",
+			local->name);
+
+		while(dev)
+		{
+			next = dev->next;
+			if (!dev->isParent && dev->uniq == priv->uniq)
+			{
+				xf86Msg(X_INFO, "%s: removing dependent device '%s'\n",
+					local->name, dev->local->name);
+				DeleteInputDeviceRequest(dev->local->dev);
+			}
+			dev = next;
+		}
+	}
+
+	prev = &priv->common->wcmDevices;
+	dev = *prev;
 	while(dev)
 	{
 		if (dev == priv)
@@ -607,6 +631,9 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local,
 	int j, ret = 0;
 	struct wcmProduct *product;
 
+	if (!type)
+	    return ret;
+
 	product = wcmFindProduct(id);
 	if (!product)
 		return ret;
@@ -623,6 +650,141 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local,
 	return ret;
 }
 
+/**
+ * Duplicate xf86 options, replace the "type" option with the given type
+ * (and the name with "$name $type" and convert them to InputOption */
+static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char *type)
+{
+	pointer original = local->options;
+	InputOption *iopts = NULL, *new;
+	InputInfoRec dummy;
+	char *name;
+
+	memset(&dummy, 0, sizeof(dummy));
+	xf86CollectInputOptions(&dummy, NULL, original);
+
+	name = xcalloc(strlen(local->name) + strlen(type) + 2, 1);
+	sprintf(name, "%s %s", local->name, type);
+
+	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
+	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
+	xfree(name);
+
+	while(dummy.options)
+	{
+		new = xcalloc(1, sizeof(InputOption));
+
+		new->key = xf86OptionName(dummy.options);
+		new->value = xf86OptionValue(dummy.options);
+		new->next = iopts;
+		iopts = new;
+		dummy.options = xf86NextOption(dummy.options);
+	}
+	return iopts;
+}
+
+static void wcmFreeInputOpts(InputOption* opts)
+{
+	InputOption *tmp = opts;
+	while(opts)
+	{
+		tmp = opts->next;
+		xfree(opts->key);
+		xfree(opts->value);
+		xfree(opts);
+		opts = tmp;
+	}
+}
+
+/**
+ * Hotplug one device of the given type.
+ * Device has the same options as the "parent" device, type is one of
+ * erasor, stylus, pad, etc.
+ * Name of the new device is set automatically to "<device name> <type>".
+ */
+static void wcmHotplug(LocalDevicePtr local, const char *type)
+{
+	DeviceIntPtr dev; /* dummy */
+	InputOption *input_options;
+
+	input_options = wcmOptionDupConvert(local, type);
+
+	NewInputDeviceRequest(input_options, &dev);
+	wcmFreeInputOpts(input_options);
+}
+
+static void wcmHotplugOthers(LocalDevicePtr local, unsigned short id)
+{
+	int i, skip = 1;
+	struct wcmProduct *product;
+
+	product = wcmFindProduct(id);
+	if (!product)
+		return;
+
+        xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", local->name);
+        /* same loop is used to init the first device, if we get here we
+         * need to start at the second one */
+	for (i = 0; i < ARRAY_SIZE(wcmTypeAndID); i++)
+	{
+		if (wcmTypeAndID[i].id & product->flags)
+		{
+			if (skip)
+				skip = 0;
+			else
+				wcmHotplug(local, wcmTypeAndID[i].type);
+		}
+	}
+        xf86Msg(X_INFO, "%s: hotplugging completed.\n", local->name);
+}
+
+/**
+ * Return 1 if the device needs auto-hotplugging from within the driver.
+ * This is the case if we don't get passed a "type" option (invalid in
+ * xorg.conf configurations) and we come from HAL or whatever future config
+ * backend.
+ *
+ * This changes the source to _driver/wacom, all auto-hotplugged devices
+ * will have the same source.
+ */
+static int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
+			      unsigned short id)
+{
+	char *source = xf86CheckStrOption(local->options, "_source", "");
+	struct wcmProduct *product;
+	int i;
+
+	if (*type) /* type specified, don't hotplug */
+		return 0;
+
+	/* Only supporting HAL so far */
+	if (strcmp(source, "server/hal"))
+		return 0;
+
+	/* no type specified, so we need to pick the first one applicable
+	 * for our product */
+	product = wcmFindProduct(id);
+	if (!product)
+		return 0;
+
+	for (i = 0; i < ARRAY_SIZE(wcmTypeAndID); i++)
+	{
+		if (wcmTypeAndID[i].id & product->flags)
+		{
+			*type = strdup(wcmTypeAndID[i].type);
+			break;
+		}
+	}
+
+	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", local->name, *type);
+	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", local->name);
+
+	local->options = xf86AddNewOption(local->options, "Type", *type);
+	local->options = xf86ReplaceStrOption(local->options, "_source", "_driver/wacom");
+
+	return 1;
+}
+
 /* xf86WcmInit - called for each input devices with the driver set to
  * "wacom" */
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -635,6 +797,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char*		device;
 	static int	numberWacom = 0;
 	struct input_id id;
+	int		need_hotplug = 0;
 
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
@@ -653,14 +816,23 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86CollectInputOptions(local, default_options, NULL);
 
 	device = xf86CheckStrOption(local->options, "Device", NULL);
+
+	if(device && !xf86WcmIsWacomDevice(device, &id))
+            goto SetupProc_fail;
+
 	type = xf86FindOptionValue(local->options, "Type");
+	need_hotplug = wcmNeedAutoHotplug(local, &type, id.product);
+
+	/* If a device is hotplugged, the current time is taken as uniq
+	 * stamp for this group of devices. On removal, this helps us
+	 * identify which other devices need to be removed. */
+	if (need_hotplug)
+		local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
+						      currentTime.milliseconds);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
 	{
-		if (!xf86WcmIsWacomDevice(device, &id))
-			goto SetupProc_fail;
-
 		/* check if the type is valid for the device */
 		if(!wcmIsAValidType(device, local, id.product, type))
 			goto SetupProc_fail;
@@ -710,6 +882,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
+
+	priv->uniq = xf86CheckIntOption(local->options, "_wacom uniq", 0);
 
 	/* Optional configuration */
 
@@ -1113,6 +1287,12 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* keep a local count so we know if "auto-dev" is necessary or not */
 	numberWacom++;
+
+	if (need_hotplug)
+	{
+		priv->isParent = 1;
+		wcmHotplugOthers(local, id.product);
+	}
 
 	/* return the LocalDevice */
 	return (local);
