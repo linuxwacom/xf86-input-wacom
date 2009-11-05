@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
 
 static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
@@ -582,13 +584,13 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id
 	char* type = xf86FindOptionValue(local->options, "Type");
 
 	/* walkthrough all supported models */
-	for (i = 0; i < sizeof (validType) / sizeof (validType [0]); i++)
+	for (i = 0; i < ARRAY_SIZE(validType); i++)
 	{
 		if (validType[i].productID == id)
 		{
 
 			/* walkthrough all types */
-			for (j = 0; j < sizeof (wcmTypeAndID) / sizeof (wcmTypeAndID [0]); j++)
+			for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
 			    if (!strcmp(wcmTypeAndID[j].type, type))
 				if (wcmTypeAndID[j].id & validType[i].flags)
 					ret = 1;
