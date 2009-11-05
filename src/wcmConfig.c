@@ -29,17 +29,12 @@
 extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
 
 static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
-static int xf86WcmAllocateStylus(LocalDevicePtr local);
-static int xf86WcmAllocateCursor(LocalDevicePtr local);
-static int xf86WcmAllocateEraser(LocalDevicePtr local);
-static int xf86WcmAllocatePad(LocalDevicePtr local);
-static int xf86WcmAllocateTouch(LocalDevicePtr local);
 
 /*****************************************************************************
  * xf86WcmAllocate --
  ****************************************************************************/
 
-static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag)
+static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -63,7 +58,7 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag)
 	if (!area)
 		goto error;
 
-	local->name = name;
+	local->type_name = type_name;
 	local->flags = 0;
 	local->device_control = gWacomModule.DevProc;
 	local->read_input = gWacomModule.DevReadInput;
@@ -244,66 +239,6 @@ error:
         return 0;
 }
 
-/* xf86WcmAllocateStylus */
-
-static int xf86WcmAllocateStylus(LocalDevicePtr local)
-{
-	int rc = xf86WcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
-
-	if (rc)
-		local->type_name = "Wacom Stylus";
-
-	return rc;
-}
-
-/* xf86WcmAllocateTouch */
-
-static int xf86WcmAllocateTouch(LocalDevicePtr local)
-{
-	int rc = xf86WcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
-
-	if (rc)
-		local->type_name = "Wacom Touch";
-
-	return rc;
-}
-
-/* xf86WcmAllocateCursor */
-
-static int xf86WcmAllocateCursor(LocalDevicePtr local)
-{
-	int rc = xf86WcmAllocate(local, XI_CURSOR, CURSOR_ID);
-
-	if (rc)
-		local->type_name = "Wacom Cursor";
-
-	return rc;
-}
-
-/* xf86WcmAllocateEraser */
-
-static int xf86WcmAllocateEraser(LocalDevicePtr local)
-{
-	int rc = xf86WcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
-
-	if (rc)
-		local->type_name = "Wacom Eraser";
-
-	return rc;
-}
-
-/* xf86WcmAllocatePad */
-
-static int xf86WcmAllocatePad(LocalDevicePtr local)
-{
-	int rc = xf86WcmAllocate(local, XI_PAD, PAD_ID);
-
-	if (rc)
-		local->type_name = "Wacom Pad";
-
-	return rc;
-}
-
 static int xf86WcmAllocateByType(LocalDevicePtr local, char *type)
 {
 	int rc = 0;
@@ -317,15 +252,15 @@ static int xf86WcmAllocateByType(LocalDevicePtr local, char *type)
 	}
 
 	if (xf86NameCmp(type, "stylus") == 0)
-		rc = xf86WcmAllocateStylus(local);
+		rc = xf86WcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 	else if (xf86NameCmp(type, "touch") == 0)
-		rc = xf86WcmAllocateTouch(local);
+		rc = xf86WcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
 	else if (xf86NameCmp(type, "cursor") == 0)
-		rc = xf86WcmAllocateCursor(local);
+		rc = xf86WcmAllocate(local, XI_CURSOR, CURSOR_ID);
 	else if (xf86NameCmp(type, "eraser") == 0)
-		rc = xf86WcmAllocateEraser(local);
+		rc = xf86WcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
 	else if (xf86NameCmp(type, "pad") == 0)
-		rc = xf86WcmAllocatePad(local);
+		rc = xf86WcmAllocate(local, XI_PAD, PAD_ID);
 
 	return rc;
 }
