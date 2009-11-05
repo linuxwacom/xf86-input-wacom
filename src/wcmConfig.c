@@ -311,7 +311,6 @@ Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
 
 static const char *default_options[] =
 {
-	"BaudRate",    "9600",
 	"StopBits",    "1",
 	"DataBits",    "8",
 	"Parity",      "None",
@@ -1140,21 +1139,17 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		}
 	}
 
-	/* baud rate */
-	{
+	if (common->wcmForceDevice == DEVICE_ISDV4)
+        {
 		int val;
-		val = xf86SetIntOption(local->options, "BaudRate", 0);
+		val = xf86SetIntOption(local->options, "BaudRate", 9600);
 
 		switch(val)
 		{
 			case 38400:
-				common->wcmISDV4Speed = 38400;
-				break;
 			case 19200:
-				common->wcmISDV4Speed = 19200;
-				break;
 			case 9600:
-				common->wcmISDV4Speed = 9600;
+				common->wcmISDV4Speed = val;
 				break;
 			default:
 				xf86Msg(X_ERROR, "%s: Illegal speed value "
@@ -1162,7 +1157,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 					local->name);
 				break;
 		}
-	} /* baud rate */
+	}
 
 	priv->speed = xf86SetRealOption(local->options, "Speed", DEFAULT_SPEED);
 	priv->accel = xf86SetIntOption(local->options, "Accel", 0);
