@@ -671,8 +671,8 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id
 	return ret;
 }
 
-/* xf86WcmInit - called when the module is found */
-
+/* xf86WcmInit - called for each input devices with the driver set to
+ * "wacom" */
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	LocalDevicePtr local = NULL;
