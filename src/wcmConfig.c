@@ -578,10 +578,10 @@ static struct
 };
 
 /* validate tool type for device/product */
-static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id)
+static int wcmIsAValidType(char* device, LocalDevicePtr local,
+			   unsigned short id, char* type)
 {
 	int i, j, ret = 0;
-	char* type = xf86FindOptionValue(local->options, "Type");
 
 	/* walkthrough all supported models */
 	for (i = 0; i < ARRAY_SIZE(validType); i++)
@@ -629,6 +629,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86CollectInputOptions(local, default_options, NULL);
 
 	device = xf86CheckStrOption(local->options, "Device", NULL);
+	type = xf86FindOptionValue(local->options, "Type");
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
@@ -637,16 +638,13 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			goto SetupProc_fail;
 
 		/* check if the type is valid for the device */
-		if(!wcmIsAValidType(device, local, id.product))
+		if(!wcmIsAValidType(device, local, id.product, type))
 			goto SetupProc_fail;
 
 		/* check if the device has been added */
 		if (wcmIsDuplicate(device, local))
 			goto SetupProc_fail;
 	}
-
-	/* Type is mandatory */
-	type = xf86FindOptionValue(local->options, "Type");
 
 	if (!xf86WcmAllocateByType(local, type))
 		goto SetupProc_fail;
