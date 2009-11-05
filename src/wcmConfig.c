@@ -593,7 +593,10 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local,
 			for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
 			    if (!strcmp(wcmTypeAndID[j].type, type))
 				if (wcmTypeAndID[j].id & validType[i].flags)
+				{
 					ret = 1;
+					break;
+				}
 		}
 	}
 	return ret;
