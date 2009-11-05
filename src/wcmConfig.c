@@ -923,11 +923,19 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	/* ISDV4 support */
 	s = xf86SetStrOption(local->options, "ForceDevice", NULL);
 
-	if (s && (xf86NameCmp(s, "ISDV4") == 0))
+	if (s)
 	{
-		common->wcmForceDevice=DEVICE_ISDV4;
-		common->wcmDevCls = &gWacomISDV4Device;
-		common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+		if (xf86NameCmp(s, "ISDV4") == 0)
+		{
+			common->wcmForceDevice=DEVICE_ISDV4;
+			common->wcmDevCls = &gWacomISDV4Device;
+			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+		} else
+		{
+			xf86Msg(X_ERROR, "%s: invalid ForceDevice option '%s'.\n",
+				local->name, s);
+			goto SetupProc_fail;
+		}
 	}
 
 	s = xf86SetStrOption(local->options, "Rotate", NULL);
@@ -940,6 +948,12 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmRotate=ROTATE_CCW;
 		else if (xf86NameCmp(s, "HALF") ==0)
 			common->wcmRotate=ROTATE_HALF;
+		else if (xf86NameCmp(s, "NONE") !=0)
+		{
+			xf86Msg(X_ERROR, "%s: invalid Rotate option '%s'.\n",
+				local->name, s);
+			goto SetupProc_fail;
+		}
 	}
 
 	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
