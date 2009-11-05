@@ -848,7 +848,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv = (WacomDevicePtr) local->private;
 	common = priv->common;
 
-	common->wcmDevice = xf86FindOptionValue(local->options, "Device");
+	common->wcmDevice = xf86SetStrOption(local->options, "Device", NULL);
 
 	/* Autoprobe if not given
 	 * Hotplugging is supported. Do we still need this?
@@ -886,23 +886,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->uniq = xf86CheckIntOption(local->options, "_wacom uniq", 0);
 
 	/* Optional configuration */
-
-	xf86Msg(X_CONFIG, "%s: device is %s\n", local->name,
-			common->wcmDevice);
-
 	priv->debugLevel = xf86SetIntOption(local->options,
-		"DebugLevel", priv->debugLevel);
-	if (priv->debugLevel > 0)
-		xf86Msg(X_CONFIG, "%s: debug level set to %d\n",
-			local->name, priv->debugLevel);
-
+					    "DebugLevel", priv->debugLevel);
 	common->debugLevel = xf86SetIntOption(local->options,
-		"CommonDBG", common->debugLevel);
-	if (common->debugLevel > 0)
-		xf86Msg(X_CONFIG, "%s: tablet common debug level set to %d\n",
-			local->name, common->debugLevel);
-
-	s = xf86FindOptionValue(local->options, "Mode");
+					      "CommonDBG", common->debugLevel);
+	s = xf86SetStrOption(local->options, "Mode", NULL);
 
 	if (s && (xf86NameCmp(s, "absolute") == 0))
 		priv->flags |= ABSOLUTE_FLAG;
@@ -932,22 +920,17 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
 		priv->flags |= COREEVENT_FLAG;
 
-	xf86Msg(X_CONFIG, "%s: in %s mode\n", local->name,
-		(priv->flags & ABSOLUTE_FLAG) ? "absolute" : "relative");
-
 	/* ISDV4 support */
-	s = xf86FindOptionValue(local->options, "ForceDevice");
+	s = xf86SetStrOption(local->options, "ForceDevice", NULL);
 
 	if (s && (xf86NameCmp(s, "ISDV4") == 0))
 	{
 		common->wcmForceDevice=DEVICE_ISDV4;
 		common->wcmDevCls = &gWacomISDV4Device;
-		xf86Msg(X_CONFIG, "%s: forcing TabletPC ISD V4 protocol\n",
-			local->name);
 		common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
 	}
 
-	s = xf86FindOptionValue(local->options, "Rotate");
+	s = xf86SetStrOption(local->options, "Rotate", NULL);
 
 	if (s)
 	{
@@ -957,8 +940,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			common->wcmRotate=ROTATE_CCW;
 		else if (xf86NameCmp(s, "HALF") ==0)
 			common->wcmRotate=ROTATE_HALF;
-		xf86Msg(X_CONFIG, "%s: Rotation is set to %s\n",
-			local->name, s);
 	}
 
 	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
@@ -970,7 +951,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		if (common->wcmSuppress < DEFAULT_SUPPRESS)
 			common->wcmSuppress = DEFAULT_SUPPRESS;
 	}
-	xf86Msg(X_CONFIG, "%s: suppress value is %d\n", local->name, common->wcmSuppress);
 
 	if (xf86SetBoolOption(local->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
@@ -986,10 +966,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	if (xf86SetBoolOption(local->options, "USB",
 			(common->wcmDevCls == &gWacomUSBDevice)))
-	{
 		common->wcmDevCls = &gWacomUSBDevice;
-		xf86Msg(X_CONFIG, "%s: reading USB link\n", local->name);
-	}
 
 	/* pressure curve takes control points x1,y1,x2,y2
 	 * values in range from 0..100.
@@ -997,7 +974,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * Slightly depressed curve might be 5,0,100,95
 	 * Slightly raised curve might be 0,5,95,100
 	 */
-	s = xf86FindOptionValue(local->options, "PressCurve");
+	s = xf86SetStrOption(local->options, "PressCurve", NULL);
 	if (s && !IsCursor(priv) && !IsTouch(priv)) 
 	{
 		int a,b,c,d;
@@ -1009,8 +986,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		else
 		{
 			xf86WcmSetPressureCurve(priv,a,b,c,d);
-			xf86Msg(X_CONFIG, "%s: PressCurve %d,%d,%d,%d\n",
-				local->name, a,b,c,d);
 		}
 	}
 
@@ -1027,7 +1002,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * for a desktop of monitor 1 at 1024x768 and 
 	 * monitor 2 at 1280x1024
 	 */
-	s = xf86FindOptionValue(local->options, "TVResolution");
+	s = xf86SetStrOption(local->options, "TVResolution", NULL);
 	if (s)
 	{
 		int a,b,c,d;
@@ -1041,46 +1016,19 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			priv->tvResolution[1] = b;
 			priv->tvResolution[2] = c;
 			priv->tvResolution[3] = d;
-			xf86Msg(X_CONFIG, "%s: TVResolution %d,%d %d,%d\n",
-				local->name, a,b,c,d);
 		}
 	}
     
 	priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", -1);
-	if (priv->screen_no != -1)
-		xf86Msg(X_CONFIG, "%s: attached screen number %d\n",
-			local->name, priv->screen_no);
  
 	if (xf86SetBoolOption(local->options, "KeepShape", 0))
-	{
 		priv->flags |= KEEP_SHAPE_FLAG;
-		xf86Msg(X_CONFIG, "%s: keeps shape\n", local->name);
-	}
 
 	priv->topX = xf86SetIntOption(local->options, "TopX", 0);
-	if (priv->topX != 0)
-		xf86Msg(X_CONFIG, "%s: top x = %d\n", local->name,
-			priv->topX);
-
 	priv->topY = xf86SetIntOption(local->options, "TopY", 0);
-	if (priv->topY != 0)
-		xf86Msg(X_CONFIG, "%s: top y = %d\n", local->name,
-			priv->topY);
-
 	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-	if (priv->bottomX != 0)
-		xf86Msg(X_CONFIG, "%s: bottom x = %d\n", local->name,
-			priv->bottomX);
-
 	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-	if (priv->bottomY != 0)
-		xf86Msg(X_CONFIG, "%s: bottom y = %d\n", local->name,
-			priv->bottomY);
-
 	priv->serial = xf86SetIntOption(local->options, "Serial", 0);
-	if (priv->serial != 0)
-		xf86Msg(X_CONFIG, "%s: serial number = %u\n", local->name,
-			priv->serial);
 
 	tool = priv->tool;
 	area = priv->toolarea;
@@ -1127,85 +1075,45 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
-	if (common->wcmThreshold > 0)
-		xf86Msg(X_CONFIG, "%s: threshold = %d\n", local->name,
-			common->wcmThreshold);
 
 	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
-		common->wcmMaxX);
-	if (priv->wcmMaxX > 0)
-		xf86Msg(X_CONFIG, "%s: max x set to %d \n", local->name,
-			priv->wcmMaxX);
+					 common->wcmMaxX);
 
 	/* Update tablet logical max X */
 	if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
 
 	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
-		common->wcmMaxY);
-	if (priv->wcmMaxY > 0)
-		xf86Msg(X_CONFIG, "%s: max y set to %d \n", local->name,
-			priv->wcmMaxY);
+					 common->wcmMaxY);
 
 	/* Update tablet logical max Y */
 	if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
-		common->wcmMaxZ);
-	if (common->wcmMaxZ != 0)
-		xf86Msg(X_CONFIG, "%s: max z = %d\n", local->name,
-			common->wcmMaxZ);
-
+					   common->wcmMaxZ);
 	common->wcmUserResolX = xf86SetIntOption(local->options, "ResolutionX",
-		common->wcmUserResolX);
-	if (common->wcmUserResolX != 0)
-		xf86Msg(X_CONFIG, "%s: resol x = %d\n", local->name,
-			common->wcmUserResolX);
-
+						 common->wcmUserResolX);
 	common->wcmUserResolY = xf86SetIntOption(local->options, "ResolutionY",
-		common->wcmUserResolY);
-	if (common->wcmUserResolY != 0)
-		xf86Msg(X_CONFIG, "%s: resol y = %d\n", local->name,
-			common->wcmUserResolY);
-
+						 common->wcmUserResolY);
 	common->wcmUserResolZ = xf86SetIntOption(local->options, "ResolutionZ",
-		common->wcmUserResolZ);
-	if (common->wcmUserResolZ != 0)
-		xf86Msg(X_CONFIG, "%s: resol z = %d\n", local->name,
-			common->wcmUserResolZ);
-
+						 common->wcmUserResolZ);
 	if (xf86SetBoolOption(local->options, "ButtonsOnly", 0))
-	{
 		priv->flags |= BUTTONS_ONLY_FLAG;
-		xf86Msg(X_CONFIG, "%s: buttons only\n", local->name);
-	}
 
 	/* Tablet PC button applied to the whole tablet. Not just one tool */
 	if ( priv->flags & STYLUS_ID )
-	{
-		common->wcmTPCButton = xf86SetBoolOption(local->options, 
-			"TPCButton", common->wcmTPCButtonDefault);
-		if ( common->wcmTPCButton )
-			xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", common->wcmDevice);
-	}
+		common->wcmTPCButton = xf86SetBoolOption(local->options,
+							 "TPCButton",
+							 common->wcmTPCButtonDefault);
 
 	/* Touch applies to the whole tablet */
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
-	if ( common->wcmTouch )
-		xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
 
 	/* Touch capacity applies to the whole tablet */
 	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
-	if ( common->wcmCapacity >= 0 )
-		xf86Msg(X_CONFIG, "%s: Touch capacity is enabled \n", common->wcmDevice);
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */
 	if ( !priv->wcmMMonitor )
-	{
 		priv->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
-		if ( !priv->wcmMMonitor )
-			xf86Msg(X_CONFIG, "%s: Cursor will stay in one monitor \n", common->wcmDevice);
-	}
-
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
@@ -1215,10 +1123,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		{
 			oldButton = priv->button[i];
 			priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
-
-			if (oldButton != priv->button[i])
-				xf86Msg(X_CONFIG, "%s: button%d assigned to %d\n",
-					local->name, i+1, priv->button[i]);
 		}
 	}
 
@@ -1244,24 +1148,12 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 					local->name);
 				break;
 		}
-
-		if (xf86Verbose && !(xf86SetBoolOption(local->options, "USB", 0)))
-			xf86Msg(X_CONFIG, "%s: serial speed %u\n",
-				local->name, val);
 	} /* baud rate */
 
 	priv->speed = xf86SetRealOption(local->options, "Speed", DEFAULT_SPEED);
-	if (priv->speed != DEFAULT_SPEED)
-		xf86Msg(X_CONFIG, "%s: speed = %.3f\n", local->name,
-			priv->speed);
-
 	priv->accel = xf86SetIntOption(local->options, "Accel", 0);
-	if (priv->accel)
-		xf86Msg(X_CONFIG, "%s: Accel = %d\n", local->name,
-			priv->accel);
 
-	s = xf86FindOptionValue(local->options, "Twinview");
-	if (s) xf86Msg(X_CONFIG, "%s: Twinview = %s\n", local->name, s);
+	s = xf86SetStrOption(local->options, "Twinview", NULL);
 	if (s && xf86NameCmp(s, "none") == 0) 
 		priv->twinview = TV_NONE;
 	else if ((s && xf86NameCmp(s, "horizontal") == 0) ||
