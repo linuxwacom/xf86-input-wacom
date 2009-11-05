@@ -481,7 +481,7 @@ ret:
 	return isInUse;
 }
 
-static struct
+static struct wcmProduct
 {
 	__u16 productID;
 	__u16 flags;
@@ -577,28 +577,35 @@ static struct
 	{ "pad",    PAD_ID    }
 };
 
+static struct wcmProduct* wcmFindProduct(unsigned short id)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(validType); i++)
+		if (validType[i].productID == id)
+			return &validType[i];
+	return NULL;
+}
+
 /* validate tool type for device/product */
 static int wcmIsAValidType(char* device, LocalDevicePtr local,
 			   unsigned short id, char* type)
 {
-	int i, j, ret = 0;
+	int j, ret = 0;
+	struct wcmProduct *product;
 
-	/* walkthrough all supported models */
-	for (i = 0; i < ARRAY_SIZE(validType); i++)
-	{
-		if (validType[i].productID == id)
-		{
+	product = wcmFindProduct(id);
+	if (!product)
+		return ret;
 
-			/* walkthrough all types */
-			for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
-			    if (!strcmp(wcmTypeAndID[j].type, type))
-				if (wcmTypeAndID[j].id & validType[i].flags)
-				{
-					ret = 1;
-					break;
-				}
-		}
-	}
+	/* walkthrough all types */
+	for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
+		if (!strcmp(wcmTypeAndID[j].type, type))
+			if (wcmTypeAndID[j].id & product->flags)
+			{
+				ret = 1;
+				break;
+			}
+
 	return ret;
 }
 
