@@ -134,17 +134,6 @@ struct _WacomModule
 #include "xf86WacomDefs.h"
 
 /*****************************************************************************
- * XFree86 V4 Inlined Functions and Prototypes
- ****************************************************************************/
-
-
-#define XCONFIG_PROBED "(==)"
-#define XCONFIG_GIVEN "(**)"
-#define xf86Verbose 1
-#undef PRIVATE
-#define PRIVATE(x) XI_PRIVATE(x)
-
-/*****************************************************************************
  * General Inlined functions and Prototypes
  ****************************************************************************/
 /* BIG HAIRY WARNING:

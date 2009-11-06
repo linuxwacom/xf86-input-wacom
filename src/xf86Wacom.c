@@ -260,15 +260,12 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 			local->conf_idev->identifier);
 		return FALSE;
 	}
-	if (xf86Verbose)
-	{
-		xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
-				"bottom X=%d bottom Y=%d "
-				"resol X=%d resol Y=%d\n",
-				local->name, priv->topX,
-				priv->topY, priv->bottomX, priv->bottomY,
-				priv->wcmResolX, priv->wcmResolY);
-	}
+	xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
+			"bottom X=%d bottom Y=%d "
+			"resol X=%d resol Y=%d\n",
+			local->name, priv->topX,
+			priv->topY, priv->bottomX, priv->bottomY,
+			priv->wcmResolX, priv->wcmResolY);
 	return TRUE;
 }
 
@@ -946,7 +943,7 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	struct stat st;
 
@@ -1202,7 +1199,7 @@ static void xf86WcmDevClose(LocalDevicePtr local)
 static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)PRIVATE(pWcm);
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(2, priv->debugLevel, ErrorF("BEGIN xf86WcmProc dev=%p priv=%p "
 			"type=%s(%s) flags=%d fd=%d what=%s\n",

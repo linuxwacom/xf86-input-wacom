@@ -1687,8 +1687,7 @@ int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	}
 
 	/* output tablet state as probed */
-	if (xf86Verbose)
-		xf86Msg(X_PROBED, "%s: Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+	xf86Msg(X_PROBED, "%s: Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			local->name,
 			model->name, common->wcmISDV4Speed, 
