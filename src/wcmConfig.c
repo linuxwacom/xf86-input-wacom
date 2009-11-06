@@ -1239,7 +1239,6 @@ InputDriverRec WACOM =
 
 static void xf86WcmUnplug(pointer p)
 {
-	xf86Msg(X_INFO, "xf86WcmUnplug\n");
 }
 
 /* xf86WcmPlug - called by the module loader */
