@@ -112,7 +112,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 	DBG(1, priv->debugLevel, ErrorF("initializing ISDV4 tablet\n"));
 
 	/* Initial baudrate is 38400 */
-	if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+	if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 		return !Success;
 
 	if(id)
@@ -139,7 +139,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	DBG(1, priv->debugLevel, ErrorF("Querying ISDV4 tablet\n"));
 
 	/* Send stop command to the tablet */
-	err = xf86WcmWrite(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
+	err = xf86WriteSerial(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
 	{
 		xf86Msg(X_ERROR, "%s: xf86WcmWrite ISDV4_STOP error : %s\n", local->name, strerror(errno));
@@ -165,7 +165,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		if (common->wcmISDV4Speed != 19200 && strcmp(query, WC_ISDV4_TOUCH_QUERY))
 		{
 			common->wcmISDV4Speed = 19200;
-			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
  			return isdv4Query(local, query, data);
 		}
@@ -184,7 +184,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		if (common->wcmISDV4Speed != 19200 && strcmp(query, WC_ISDV4_TOUCH_QUERY))
 		{
 			common->wcmISDV4Speed = 19200;
-			if (xf86WcmSetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
  			return isdv4Query(local, query, data);
 		}
@@ -356,7 +356,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	int err;
 
 	/* Tell the tablet to start sending coordinates */
-	err = xf86WcmWrite(local->fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING)));
+	err = xf86WriteSerial(local->fd, WC_ISDV4_SAMPLING, (strlen(WC_ISDV4_SAMPLING)));
 
 	if (err == -1)
 	{
@@ -566,7 +566,7 @@ static int xf86WcmWaitForTablet(int fd, char* answer, int size)
 	{
 		if ((len = xf86WaitForInput(fd, 1000000)) > 0)
 		{
-			len = xf86WcmRead(fd, answer, size);
+			len = xf86ReadSerial(fd, answer, size);
 			if ((len == -1) && (errno != EAGAIN))
 			{
 				xf86Msg(X_ERROR, "Wacom xf86WcmRead error : %s\n",

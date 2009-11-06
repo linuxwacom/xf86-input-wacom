@@ -972,7 +972,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 			if (local->fd >= 0)
 			{
 				DBG(1, priv->debugLevel, ErrorF("Closing device\n"));
-				xf86WcmClose(local->fd);
+				xf86CloseSerial(local->fd);
 			}
 			local->fd = -1;
 			return FALSE;
@@ -1053,7 +1053,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 		" remaining=%d\n", common->bufpos, remaining));
 
 	/* fill buffer with as much data as we can handle */
-	len = xf86WcmRead(local->fd,
+	len = xf86ReadSerial(local->fd,
 		common->buffer + common->bufpos, remaining);
 
 	if (len <= 0)
@@ -1189,7 +1189,7 @@ static void xf86WcmDevClose(LocalDevicePtr local)
 		if (!--common->fd_refs)
 		{
 			DBG(1, common->debugLevel, ErrorF("Closing device; uninitializing.\n"));
-	    		xf86WcmClose (common->fd);
+			xf86CloseSerial (common->fd);
 		}
 	}
 }

@@ -137,12 +137,6 @@ struct _WacomModule
  * XFree86 V4 Inlined Functions and Prototypes
  ****************************************************************************/
 
-#define xf86WcmFlushTablet(fd) xf86FlushInput(fd)
-#define xf86WcmSetSerialSpeed(fd,rate) xf86SetSerialSpeed((fd),(rate))
-
-#define xf86WcmRead(a,b,c) xf86ReadSerial((a),(b),(c))
-#define xf86WcmWrite(a,b,c) xf86WriteSerial((a),(char*)(b),(c))
-#define xf86WcmClose(a) xf86CloseSerial((a))
 
 #define XCONFIG_PROBED "(==)"
 #define XCONFIG_GIVEN "(**)"
