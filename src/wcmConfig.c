@@ -1108,6 +1108,24 @@ error:
 	return 0;
 }
 
+static int wcmAutoProbeDevice(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common =  priv->common;
+
+	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")))
+	{
+		common->wcmFlags |= AUTODEV_FLAG;
+		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+		{
+			xf86Msg(X_ERROR, "%s: unable to probe device\n",
+				local->name);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 
 /* xf86WcmInit - called for each input devices with the driver set to
  * "wacom" */
@@ -1163,21 +1181,10 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	common->wcmDevice = device;
 
-	/* Autoprobe if not given
-	 * Hotplugging is supported. Do we still need this?
-	 * Maybe add an ifdef for hal/udev?
-	 * Only use this once since AutoDevProbe doesn't check the existing tools
-	 */
-	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) && numberWacom)
-	{
-		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
-		{
-			xf86Msg(X_ERROR, "%s: unable to probe device\n",
-				local->name);
+	/* Auto-probe the device if required, otherwise just noop. */
+	if (numberWacom)
+		if (!wcmAutoProbeDevice(local))
 			goto SetupProc_fail;
-		}
-	}
 
 	/* Lookup to see if there is another wacom device sharing the same port */
 	if (common->wcmDevice)
