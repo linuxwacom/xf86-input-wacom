@@ -388,8 +388,6 @@ static Bool usbDetect(LocalDevicePtr local)
 	if (err < 0) 
 		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device, errno=%d\n",
 				local->name, errno);
-	else 
-		xf86Msg(X_ERROR, "%s: Wacom X driver grabbed event device\n", local->name);
 #endif
 	return 1;
 }
