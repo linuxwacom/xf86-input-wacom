@@ -781,6 +781,11 @@ static int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
 	local->options = xf86AddNewOption(local->options, "Type", *type);
 	local->options = xf86ReplaceStrOption(local->options, "_source", "_driver/wacom");
 
+	/* If a device is hotplugged, the current time is taken as uniq
+	 * stamp for this group of devices. On removal, this helps us
+	 * identify which other devices need to be removed. */
+	local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
+						currentTime.milliseconds);
 	return 1;
 }
 
@@ -1137,13 +1142,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	type = xf86FindOptionValue(local->options, "Type");
 	need_hotplug = wcmNeedAutoHotplug(local, &type, id.product);
-
-	/* If a device is hotplugged, the current time is taken as uniq
-	 * stamp for this group of devices. On removal, this helps us
-	 * identify which other devices need to be removed. */
-	if (need_hotplug)
-		local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
-						      currentTime.milliseconds);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
