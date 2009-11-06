@@ -28,6 +28,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <wacom-properties.h>
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
@@ -226,75 +227,75 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     values[1] = priv->topY;
     values[2] = priv->bottomX;
     values[3] = priv->bottomY;
-    prop_tablet_area = InitWcmAtom(local->dev, "Wacom Tablet Area", 32, 4, values);
+    prop_tablet_area = InitWcmAtom(local->dev, WACOM_PROP_TABLET_AREA, 32, 4, values);
 
     values[0] = common->wcmRotate;
-    prop_rotation = InitWcmAtom(local->dev, "Wacom Rotation", 8, 1, values);
+    prop_rotation = InitWcmAtom(local->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
     values[0] = 0;
     values[1] = 0;
     values[2] = 100;
     values[3] = 100;
-    prop_pressurecurve = InitWcmAtom(local->dev, "Wacom Pressurecurve", 32, 4, values);
+    prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
 
     values[0] = common->tablet_id;
     values[1] = priv->old_serial;
     values[2] = priv->old_device_id;
     values[3] = priv->serial;
-    prop_serials = InitWcmAtom(local->dev, "Wacom Serial IDs", 32, 4, values);
+    prop_serials = InitWcmAtom(local->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
 
     values[0] = priv->striplup;
     values[1] = priv->stripldn;
     values[2] = priv->striprup;
     values[3] = priv->striprdn;
-    prop_strip_buttons = InitWcmAtom(local->dev, "Wacom Strip Buttons", 8, 4, values);
+    prop_strip_buttons = InitWcmAtom(local->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
 
     values[0] = priv->relup;
     values[1] = priv->reldn;
     values[2] = priv->wheelup;
     values[3] = priv->wheeldn;
-    prop_wheel_buttons = InitWcmAtom(local->dev, "Wacom Wheel Buttons", 8, 4, values);
+    prop_wheel_buttons = InitWcmAtom(local->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
 
     values[0] = priv->tvResolution[0];
     values[1] = priv->tvResolution[1];
     values[2] = priv->tvResolution[2];
     values[3] = priv->tvResolution[3];
-    prop_tv_resolutions = InitWcmAtom(local->dev, "Wacom TwinView Resolution", 32, 4, values);
+    prop_tv_resolutions = InitWcmAtom(local->dev, WACOM_PROP_TWINVIEW_RES, 32, 4, values);
 
 
     values[0] = priv->screen_no;
     values[1] = priv->twinview;
     values[2] = priv->wcmMMonitor;
-    prop_display = InitWcmAtom(local->dev, "Wacom Display Options", 8, 3, values);
+    prop_display = InitWcmAtom(local->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
 
     values[0] = priv->screenTopX[priv->currentScreen];
     values[1] = priv->screenTopY[priv->currentScreen];
     values[2] = priv->screenBottomX[priv->currentScreen];
     values[3] = priv->screenBottomY[priv->currentScreen];
-    prop_screen = InitWcmAtom(local->dev, "Wacom Screen Area", 32, 4, values);
+    prop_screen = InitWcmAtom(local->dev, WACOM_PROP_SCREENAREA, 32, 4, values);
 
     values[0] = common->wcmCursorProxoutDist;
-    prop_cursorprox = InitWcmAtom(local->dev, "Wacom Proximity Threshold", 32, 1, values);
+    prop_cursorprox = InitWcmAtom(local->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
 
     values[0] = common->wcmCapacity;
-    prop_capacity = InitWcmAtom(local->dev, "Wacom Capacity", 32, 1, values);
+    prop_capacity = InitWcmAtom(local->dev, WACOM_PROP_CAPACITY, 32, 1, values);
 
     values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
-    prop_threshold = InitWcmAtom(local->dev, "Wacom Pressure Threshold", 32, 1, values);
+    prop_threshold = InitWcmAtom(local->dev, WACOM_PROP_PRESSURE_THRESHOLD, 32, 1, values);
 
     values[0] = common->wcmSuppress;
     values[1] = common->wcmRawSample;
-    prop_suppress = InitWcmAtom(local->dev, "Wacom Sample and Suppress", 32, 2, values);
+    prop_suppress = InitWcmAtom(local->dev, WACOM_PROP_SAMPLE, 32, 2, values);
 
     values[0] = common->wcmTouch;
-    prop_touch = InitWcmAtom(local->dev, "Wacom Enable Touch", 8, 1, values);
+    prop_touch = InitWcmAtom(local->dev, WACOM_PROP_TOUCH, 8, 1, values);
 
     values[0] = !common->wcmTPCButton;
-    prop_hover = InitWcmAtom(local->dev, "Wacom Hover Click", 8, 1, values);
+    prop_hover = InitWcmAtom(local->dev, WACOM_PROP_HOVER, 8, 1, values);
 
 
     values[0] = MakeAtom(local->type_name, strlen(local->type_name), TRUE);
-    prop_tooltype = InitWcmAtom(local->dev, "Wacom Tool Type", -32, 1, values);
+    prop_tooltype = InitWcmAtom(local->dev, WACOM_PROP_TOOL_TYPE, -32, 1, values);
 }
 
 int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
