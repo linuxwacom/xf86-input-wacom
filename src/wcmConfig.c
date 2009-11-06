@@ -1130,7 +1130,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	xf86CollectInputOptions(local, default_options, NULL);
 
-	device = xf86CheckStrOption(local->options, "Device", NULL);
+	device = xf86SetStrOption(local->options, "Device", NULL);
 
 	if(device && !xf86WcmIsWacomDevice(device, &id))
 		goto SetupProc_fail;
@@ -1163,7 +1163,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv = (WacomDevicePtr) local->private;
 	common = priv->common;
 
-	common->wcmDevice = xf86SetStrOption(local->options, "Device", NULL);
+	common->wcmDevice = device;
 
 	/* Autoprobe if not given
 	 * Hotplugging is supported. Do we still need this?
