@@ -784,104 +784,17 @@ static int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
 	return 1;
 }
 
-/* xf86WcmInit - called for each input devices with the driver set to
- * "wacom" */
-static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
+static int wcmParseOptions(LocalDevicePtr local)
 {
-	LocalDevicePtr local = NULL;
-	WacomDevicePtr priv = NULL;
-	WacomCommonPtr common = NULL;
-	char		*s, *type, b[12];
+	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr  common = priv->common;
+	char            *s, b[12];
 	int		i, oldButton;
-	char*		device;
-	static int	numberWacom = 0;
-	struct input_id id;
-	int		need_hotplug = 0;
-
-	WacomToolPtr tool = NULL;
+	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
-	gWacomModule.wcmDrv = drv;
 
-	if (!(local = xf86AllocateInput(drv, 0)))
-		goto SetupProc_fail;
-
-	local->conf_idev = dev;
-	local->name = dev->identifier;
-
-	/* Force default port options to exist because the init
-	 * phase is based on those values.
-	 */
-	xf86CollectInputOptions(local, default_options, NULL);
-
-	device = xf86CheckStrOption(local->options, "Device", NULL);
-
-	if(device && !xf86WcmIsWacomDevice(device, &id))
-            goto SetupProc_fail;
-
-	type = xf86FindOptionValue(local->options, "Type");
-	need_hotplug = wcmNeedAutoHotplug(local, &type, id.product);
-
-	/* If a device is hotplugged, the current time is taken as uniq
-	 * stamp for this group of devices. On removal, this helps us
-	 * identify which other devices need to be removed. */
-	if (need_hotplug)
-		local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
-						      currentTime.milliseconds);
-
-	/* leave the undefined for auto-dev (if enabled) to deal with */
-	if(device)
-	{
-		/* check if the type is valid for the device */
-		if(!wcmIsAValidType(device, local, id.product, type))
-			goto SetupProc_fail;
-
-		/* check if the device has been added */
-		if (wcmIsDuplicate(device, local))
-			goto SetupProc_fail;
-	}
-
-	if (!xf86WcmAllocateByType(local, type))
-		goto SetupProc_fail;
-
-	priv = (WacomDevicePtr) local->private;
-	common = priv->common;
-
-	common->wcmDevice = xf86SetStrOption(local->options, "Device", NULL);
-
-	/* Autoprobe if not given
-	 * Hotplugging is supported. Do we still need this?
-	 * Maybe add an ifdef for hal/udev?
-	 * Only use this once since AutoDevProbe doesn't check the existing tools
-	 */
-	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) && numberWacom)
-	{
-		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
-		{
-			xf86Msg(X_ERROR, "%s: unable to probe device\n",
-				local->name);
-			goto SetupProc_fail;
-		}
-	}
-
-	/* Lookup to see if there is another wacom device sharing the same port */
-	if (common->wcmDevice)
-	{
-		LocalDevicePtr localDevices = xf86FirstLocalDevice();
-		for (; localDevices != NULL; localDevices = localDevices->next)
-		{
-			if (xf86WcmMatchDevice(localDevices,local))
-			{
-				common = priv->common;
-				break;
-			}
-		}
-	}
-
-	/* Process the common options. */
-	xf86ProcessCommonOptions(local, local->options);
-
+	/* Special option set for auto-hotplugged devices only */
 	priv->uniq = xf86CheckIntOption(local->options, "_wacom uniq", 0);
 
 	/* Optional configuration */
@@ -933,7 +846,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		{
 			xf86Msg(X_ERROR, "%s: invalid ForceDevice option '%s'.\n",
 				local->name, s);
-			goto SetupProc_fail;
+			goto error;
 		}
 	}
 
@@ -951,7 +864,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		{
 			xf86Msg(X_ERROR, "%s: invalid Rotate option '%s'.\n",
 				local->name, s);
-			goto SetupProc_fail;
+			goto error;
 		}
 	}
 
@@ -1183,6 +1096,110 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		priv->twinview = TV_NONE;
 	}
 
+	return 1;
+error:
+	xfree(area);
+	xfree(tool);
+	return 0;
+}
+
+
+/* xf86WcmInit - called for each input devices with the driver set to
+ * "wacom" */
+static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
+{
+	LocalDevicePtr local = NULL;
+	WacomDevicePtr priv = NULL;
+	WacomCommonPtr common = NULL;
+	char		*type;
+	char*		device;
+	static int	numberWacom = 0;
+	struct input_id id;
+	int		need_hotplug = 0;
+
+	gWacomModule.wcmDrv = drv;
+
+	if (!(local = xf86AllocateInput(drv, 0)))
+		goto SetupProc_fail;
+
+	local->conf_idev = dev;
+	local->name = dev->identifier;
+
+	/* Force default port options to exist because the init
+	 * phase is based on those values.
+	 */
+	xf86CollectInputOptions(local, default_options, NULL);
+
+	device = xf86CheckStrOption(local->options, "Device", NULL);
+
+	if(device && !xf86WcmIsWacomDevice(device, &id))
+		goto SetupProc_fail;
+
+	type = xf86FindOptionValue(local->options, "Type");
+	need_hotplug = wcmNeedAutoHotplug(local, &type, id.product);
+
+	/* If a device is hotplugged, the current time is taken as uniq
+	 * stamp for this group of devices. On removal, this helps us
+	 * identify which other devices need to be removed. */
+	if (need_hotplug)
+		local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
+						      currentTime.milliseconds);
+
+	/* leave the undefined for auto-dev (if enabled) to deal with */
+	if(device)
+	{
+		/* check if the type is valid for the device */
+		if(!wcmIsAValidType(device, local, id.product, type))
+			goto SetupProc_fail;
+
+		/* check if the device has been added */
+		if (wcmIsDuplicate(device, local))
+			goto SetupProc_fail;
+	}
+
+	if (!xf86WcmAllocateByType(local, type))
+		goto SetupProc_fail;
+
+	priv = (WacomDevicePtr) local->private;
+	common = priv->common;
+
+	common->wcmDevice = xf86SetStrOption(local->options, "Device", NULL);
+
+	/* Autoprobe if not given
+	 * Hotplugging is supported. Do we still need this?
+	 * Maybe add an ifdef for hal/udev?
+	 * Only use this once since AutoDevProbe doesn't check the existing tools
+	 */
+	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")) && numberWacom)
+	{
+		common->wcmFlags |= AUTODEV_FLAG;
+		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+		{
+			xf86Msg(X_ERROR, "%s: unable to probe device\n",
+				local->name);
+			goto SetupProc_fail;
+		}
+	}
+
+	/* Lookup to see if there is another wacom device sharing the same port */
+	if (common->wcmDevice)
+	{
+		LocalDevicePtr localDevices = xf86FirstLocalDevice();
+		for (; localDevices != NULL; localDevices = localDevices->next)
+		{
+			if (xf86WcmMatchDevice(localDevices,local))
+			{
+				common = priv->common;
+				break;
+			}
+		}
+	}
+
+	/* Process the common options. */
+	xf86ProcessCommonOptions(local, local->options);
+	if (!wcmParseOptions(local))
+		goto SetupProc_fail;
+
 	/* mark the device configured */
 	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
 
@@ -1199,8 +1216,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	return (local);
 
 SetupProc_fail:
-	xfree(area);
-	xfree(tool);
 	xfree(common);
 	xfree(priv);
 	if (local)
