@@ -24,5 +24,5 @@ bin_PROGRAMS = \
 
 INCLUDES=-I$(top_srcdir)/include/
 
-xsetwacom_LDFLAGS = $(X11_LIBS)
+xsetwacom_LDFLAGS = $(X11_LIBS) -lm
 
