@@ -170,7 +170,9 @@ Atom prop_threshold;
 Atom prop_suppress;
 Atom prop_touch;
 Atom prop_hover;
+Atom prop_tooltype;
 
+/* Special case: format -32 means type is XA_ATOM */
 static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, int *values)
 {
     int i;
@@ -179,6 +181,13 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, i
     uint16_t val_16[4];
     uint32_t val_32[4];
     pointer converted = val_32;
+    Atom type = XA_INTEGER;
+
+    if (format == -32)
+    {
+	    type = XA_ATOM;
+	    format = 32;
+    }
 
     for (i = 0; i < nvalues; i++)
     {
@@ -198,7 +207,7 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, i
     }
 
     atom = MakeAtom(name, strlen(name), TRUE);
-    XIChangeDeviceProperty(dev, atom, XA_INTEGER, format,
+    XIChangeDeviceProperty(dev, atom, type, format,
                            PropModeReplace, nvalues,
                            converted, FALSE);
     XISetDevicePropertyDeletable(dev, atom, FALSE);
@@ -282,6 +291,10 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 
     values[0] = !common->wcmTPCButton;
     prop_hover = InitWcmAtom(local->dev, "Wacom Hover Click", 8, 1, values);
+
+
+    values[0] = MakeAtom(local->type_name, strlen(local->type_name), TRUE);
+    prop_tooltype = InitWcmAtom(local->dev, "Wacom Tool Type", -32, 1, values);
 }
 
 int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
