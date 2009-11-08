@@ -244,15 +244,20 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 			{
 				priv->flags |= TPCBUTTONS_FLAG;
 
-				/* send all pressed buttons down */
-				for (button=1; button<=WCM_MAX_BUTTONS; button++)
-				{
-					mask = 1 << (button-1);
-					if ( buttons & mask ) 
+				if (buttons == 1) {
+					/* Button 1 pressed */
+					sendAButton(local, 0, 1, rx, ry, rz, v3, v4, v5);
+				} else {
+					/* send all pressed buttons down */
+					for (button=2; button<=WCM_MAX_BUTTONS; button++)
 					{
-						/* set to the configured button */
-						sendAButton(local, button-1, 1, rx, ry, 
-							rz, v3, v4, v5);
+						mask = 1 << (button-1);
+						if ( buttons & mask )
+						{
+							/* set to the configured button */
+							sendAButton(local, button-1, 1, rx, ry,
+									rz, v3, v4, v5);
+						}
 					}
 				}
 			}
