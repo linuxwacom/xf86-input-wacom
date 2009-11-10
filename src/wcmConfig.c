@@ -598,7 +598,10 @@ static struct wcmProduct
 	{ 0x9A, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x9A */
 	{ 0x9F, TOUCH_ID }, /* CapPlus  0x9F */
 	{ 0xE2, TOUCH_ID }, /* TabletPC 0xE2 */
-	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID }  /* TabletPC 0xE3 */
+	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID },  /* TabletPC 0xE3 */
+
+	/* Catchall for unknown products */
+	{ 0xFF, STYLUS_ID | ERASER_ID | TOUCH_ID | CURSOR_ID | PAD_ID }
 };
 
 static struct
@@ -620,7 +623,8 @@ static struct wcmProduct* wcmFindProduct(unsigned short id)
 	for (i = 0; i < ARRAY_SIZE(validType); i++)
 		if (validType[i].productID == id)
 			return &validType[i];
-	return NULL;
+
+	return &validType[ARRAY_SIZE(validType) - 1];
 }
 
 /* validate tool type for device/product */
@@ -634,8 +638,6 @@ static int wcmIsAValidType(char* device, LocalDevicePtr local,
 	    return ret;
 
 	product = wcmFindProduct(id);
-	if (!product)
-		return ret;
 
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
@@ -718,8 +720,6 @@ static void wcmHotplugOthers(LocalDevicePtr local, unsigned short id)
 	struct wcmProduct *product;
 
 	product = wcmFindProduct(id);
-	if (!product)
-		return;
 
         xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", local->name);
         /* same loop is used to init the first device, if we get here we
@@ -763,8 +763,6 @@ static int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
 	/* no type specified, so we need to pick the first one applicable
 	 * for our product */
 	product = wcmFindProduct(id);
-	if (!product)
-		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(wcmTypeAndID); i++)
 	{
