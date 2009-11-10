@@ -23,7 +23,7 @@
 
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
-static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
+static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
@@ -235,7 +235,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			/* (data[2] & 0x07) == 0 is for resistive touch */
 			if (!(data[2] & 0x07) && data[1])
 			{
-				common->wcmMaxTouchX = common->wcmMaxTouchY = (int)(1 << data[1]);
+				common->wcmMaxX = common->wcmMaxY = (int)(1 << data[1]);
 			}
 
 			if ((data[0] & 0x41) && (data[2] & 0x07))
@@ -257,7 +257,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				/* touch logical size for tablet PC with touch */
 				if (data[1])
 				{
-					common->wcmMaxTouchX = common->wcmMaxTouchY = (int)(1 << data[1]);
+					common->wcmMaxX = common->wcmMaxY = (int)(1 << data[1]);
 				}
 
 				/* Max capacity */
@@ -265,9 +265,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 				if (common->wcmMaxCapacity)
 				{
-					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
+					common->wcmResolX = common->wcmMaxX / ( 2540 * 
 						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5)));
-					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
+					common->wcmResolX = common->wcmMaxX / ( 2540 * 
 						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3)));
 				}
 			}
@@ -283,21 +283,12 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		 * defaults to enable when it is a touch device 
 		 */
 		common->wcmTouchDefault = 1;
-
-		if (common->wcmMaxX && common->wcmMaxY && !common->wcmTouchResolX)
-		{
-			/* Some touch tablet don't report physical size */
-			common->wcmTouchResolX = (int)((double)(common->wcmMaxTouchX * 
-				common->wcmResolX) / (double)common->wcmMaxX + 0.5);
-			common->wcmTouchResolY = (int)((double)(common->wcmMaxTouchY * 
-				common->wcmResolY) / (double)common->wcmMaxY + 0.5);
-		}
 	}
 
 	DBG(2, priv->debugLevel, ErrorF("isdv4GetRanges speed=%d maxX=%d maxY=%d "
 		"maxZ=%d TouchresX=%d TouchresY=%d \n", common->wcmISDV4Speed, 
 		common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
-		common->wcmTouchResolX, common->wcmTouchResolY));
+		common->wcmResolX, common->wcmResolY));
 	return Success;
 }
 
@@ -328,6 +319,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 
 	DBG(10, common->debugLevel, ErrorF("isdv4Parse \n"));
 
+	channel = 0;
 	/* determine the type of message (touch or stylus)*/
 	if (data[0] & 0x18) /* not a pen */
 	{
@@ -353,7 +345,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 				else if (!(data[0] & 0x01)) /* touch out-prox */
 				{
 					touchInProx = 0;
-					channel = 1;
+					channel = 0;
 				} 
 				else
 				{
@@ -374,9 +366,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		if (common->wcmChannel[1].valid.state.proximity)
 		{
 			/* let touch go */
-			WacomDeviceState out = { 0 };
-			out.device_type = TOUCH_ID;
-			xf86WcmEvent(common, 1, &out);
+			xf86WcmSoftOut(common, 1);
 			return 0;
 		}
 		common->wcmPktLength = WACOM_PKGLEN_TPC;
@@ -402,7 +392,8 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	if (common->wcmPktLength == WACOM_PKGLEN_TOUCH0 || common->wcmPktLength == WACOM_PKGLEN_TOUCH) /* a touch */
+	if (common->wcmPktLength == WACOM_PKGLEN_TOUCH0 || 
+		common->wcmPktLength == WACOM_PKGLEN_TOUCH) /* a touch */
 	{
 		/* touch without capacity has 5 bytes of data 
 		 * touch with capacity has 7 bytes of data
@@ -450,8 +441,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 				(ds->device_type == ERASER_ID))
 			{
 				/* send a prox-out for old device */
-				WacomDeviceState out = { 0 };
-				xf86WcmEvent(common, 0, &out);
+				xf86WcmSoftOut(common, 0);
 				ds->device_type = cur_type;
 			}
 		}

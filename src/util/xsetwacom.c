@@ -109,11 +109,11 @@ struct _PARAMINFO
 static const char* tv_char[] = 
 {
 	"none",
-	"xinerama"
+	"xinerama",
 	"vertical",
 	"horizontal",
-	"aboveof"
-	"leftof"
+	"aboveof",
+	"leftof",
 	"NULL"
 };
 
@@ -692,7 +692,7 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 	const char* pszType;
 	WACOMDEVICEINFO* pInfo;
 	unsigned int i, j, uCount;
-	char nameOut[60];
+	char nameOut[60] = "";
 
 	static TYPEXLAT xTypes[] =
 	{
@@ -712,13 +712,14 @@ static int ListDev(WACOMCONFIG *hConfig, char** argv)
 	for (i=0; i<uCount; ++i)
 	{
 		pszType = "unknown";
+		nameOut[0] = 0; /* end of string */
 		for (j=0; j<sizeof(xTypes)/sizeof(*xTypes); ++j)
 			if (xTypes[j].type == pInfo[i].type)
 				pszType = xTypes[j].pszText;
 
 		/* tcl/tk (wacomcpl) has problem to process spaced names 
-		 * so we make the name into one string */
-		for(j=0; j<strlen(pInfo[i].pszName); j++)
+		 * so we make them into the one string */
+		for (j=0; j<strlen(pInfo[i].pszName); j++)
 		{
 			if(pInfo[i].pszName[j] == ' ') 
 				nameOut[j] = '_';
@@ -898,11 +899,14 @@ static int ParseValues(int nCount, const char* pszValues, int* nValues,
 			if (p->nParamID == XWACOM_PARAM_TWINVIEW)
 				option_char = tv_char;
 			for (j = p->nMin; j <= p->nMax; j++)
+			{
 				if (!strcasecmp(pszValues, option_char[j]))
 				{
 					check = 1;
 					*nValue = j;
+					break;
 				}
+			}
  			if (!check)
 			{
 				fprintf(stderr,"ParseValues: Value '%s' is "

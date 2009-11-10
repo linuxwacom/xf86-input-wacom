@@ -1,5 +1,5 @@
 AC_PREREQ(2.58)
-AC_INIT(linuxwacom, 0.8.5)
+AC_INIT(linuxwacom, 0.8.5-2)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -456,6 +456,22 @@ if test "$WCM_ENV_XFREE86" != yes; then
 ], , [WCM_XORG_XORG=yes], [WCM_XORG_XORG=no])
 	CFLAGS="$save_CFLAGS"
 	AC_MSG_RESULT($WCM_XORG_XORG)
+		AC_MSG_CHECKING([if Xorg server is version 1.5.2 or later])
+		save_CFLAGS="$CFLAGS"
+		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"
+		AC_TRY_COMPILE([
+#include <xorg-server.h>
+#include <xorgVersion.h>
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 5, 2, 0, 0)
+# error "X.org < 1.5.2 "
+#endif
+], , [WCM_XORG_XSERVER_1_5_2=yes], [WCM_XORG_XSERVER_1_5_2=no])
+		CFLAGS="$save_CFLAGS"
+		AC_MSG_RESULT($WCM_XORG_XSERVER_1_5_2)
+		if test "$WCM_XORG_XSERVER_1_5_2" = "yes"; then
+			AC_DEFINE(WCM_XORG_XSERVER_1_5_2, 1,
+				[Using version 1.5.2 or later of X.org])
+		fi
 		AC_MSG_CHECKING([if Xorg server is version 1.6 or later])
 		save_CFLAGS="$CFLAGS"
 		CFLAGS="-I$WCM_XORGSDK_DIR $CFLAGS"

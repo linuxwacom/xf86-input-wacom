@@ -49,7 +49,7 @@ static int usbParse(LocalDevicePtr local, const unsigned char* data);
 static int usbDetectConfig(LocalDevicePtr local);
 static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event);
-static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
+static void usbParseChannel(LocalDevicePtr local, int channel);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
@@ -398,12 +398,6 @@ static Bool usbDetect(LocalDevicePtr local)
 /*****************************************************************************
  * wcmusbInit --
  ****************************************************************************/
-#define BIT(x)		(1<<((x) & (BITS_PER_LONG - 1)))
-#define BITS_PER_LONG	(sizeof(long) * 8)
-#define NBITS(x)	((((x)-1)/BITS_PER_LONG)+1)
-#define ISBITSET(x,y)	((x)[LONG(y)] & BIT(y))
-#define OFF(x)		((x)%BITS_PER_LONG)
-#define LONG(x)		((x)/BITS_PER_LONG)
 
 /* Key codes used to mark tablet buttons -- must be in sync
  * with the keycode array in wacom.c kernel driver.
@@ -548,13 +542,14 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				{
 					/* GestureDefault was off for all devices */
 					/* except when multi-touch is supported */
-					common->wcmGestureDefault = 0;
+					common->wcmGestureDefault = 1;
 
 					/* check if gesture was turned off in xorg.conf */
 					common->wcmGesture = xf86SetBoolOption(local->options, 
 						"Gesture", common->wcmGestureDefault);
 					if ( common->wcmTouch && common->wcmGesture )
-						xf86Msg(X_CONFIG, "%s: Touch Gesture is enabled \n", common->wcmDevice);
+						xf86Msg(X_CONFIG, "%s: "
+							"Touch Gesture is enabled \n", common->wcmDevice);
 				}
 			}
 
@@ -686,11 +681,11 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	common->wcmMaxY = absinfo.maximum;
 
 	/* max finger strip X for tablets with Expresskeys 
-	 * or touch logical X for TabletPCs with touch */
+	 * or touch physical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
 		if (common->wcmTouchDefault)
-			common->wcmMaxTouchX = absinfo.maximum;
+			common->wcmResolX = absinfo.maximum;
 		else
 			common->wcmMaxStripX = absinfo.maximum;
 
@@ -698,45 +693,22 @@ int usbWcmGetRanges(LocalDevicePtr local)
 				local->name, absinfo.maximum));
 	}
 
-	/* max finger strip y for tablets with Expresskeys  
-	 * or touch logical Y for TabletPCs with touch */
+	/* max finger strip y for tablets with Expresskeys
+	 * or touch physical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
 		if (common->wcmTouchDefault)
-			common->wcmMaxTouchY = absinfo.maximum;
+			common->wcmResolY = absinfo.maximum;
 		else
 			common->wcmMaxStripY = absinfo.maximum;
 	}
 
-	/* touch physical X for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_Z), &absinfo) == 0)
+	if (common->wcmTouchDefault && common->wcmMaxX && common->wcmResolX)
 	{
-		if (common->wcmTouchDefault)
-			common->wcmTouchResolX = absinfo.maximum;
-	}
-
-	/* touch physical Y for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), &absinfo) == 0)
-	{
-		if (common->wcmTouchDefault)
-			common->wcmTouchResolY = absinfo.maximum;
-	}
-
-	if (common->wcmTouchDefault && common->wcmTouchResolX)
-	{
-		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
-			 / ((double)common->wcmMaxTouchX) + 0.5);
-		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
-			 / ((double)common->wcmMaxTouchY) + 0.5);
-
-		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
-		{
-			ErrorF("WACOM: touch resolution value(s) was wrong resX"
-				" = %d resY = %d.\n", common->wcmTouchResolX,
-				common->wcmTouchResolY);
-			return !Success;
-		}
-
+		common->wcmResolX = (int)(((double)common->wcmResolX)
+			 / ((double)common->wcmMaxX) + 0.5);
+		common->wcmResolY = (int)(((double)common->wcmResolY)
+			 / ((double)common->wcmMaxY) + 0.5);
 	}
 
 	/* max z cannot be configured */
@@ -795,10 +767,89 @@ static int usbParse(LocalDevicePtr local, const unsigned char* data)
 	return common->wcmPktLength;
 }
 
-static void usbParseEvent(LocalDevicePtr local,
-	const struct input_event* event)
+
+static int usbChooseChannel(WacomCommonPtr common, int serial)
 {
-	int i, channel;
+	/* figure out the channel to use based on serial number */
+	int i, channel = -1;
+	if (common->wcmProtocolLevel == 4)
+	{
+		/* Protocol 4 doesn't support tool serial numbers */
+		if (serial == 0xf0)
+			channel = 1;
+		else
+			channel = 0;
+	}
+	else if (serial) /* serial number should never be 0 for V5 devices */
+	{
+		/* dual input is supported */
+		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->name, "Intuos2") )
+		{
+			/* find existing channel */
+			for (i=0; i<MAX_CHANNELS; ++i)
+			{
+				if (common->wcmChannel[i].work.proximity && 
+			  		common->wcmChannel[i].work.serial_num == serial)
+				{
+					channel = i;
+					break;
+				}
+			}
+
+			/* find an empty channel */
+			if (channel < 0)
+			{
+				for (i=0; i<MAX_CHANNELS; ++i)
+				{
+					if (!common->wcmChannel[i].work.proximity)
+					{
+						channel = i;
+						break;
+					}
+				}
+			}
+		}
+		else  /* one transducer plus expresskey (pad) is supported */
+		{
+			if (serial == -1)  /* pad */
+				channel = 1;
+			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
+				    (common->wcmChannel[0].work.serial_num == serial)) ||
+					!common->wcmChannel[0].work.proximity ) /* new transducer */
+				channel = 0;
+		}
+	}
+
+	/* fresh out of channels */
+	if (channel < 0)
+	{
+		/* This should never happen in normal use.
+		 * Let's start over again. Force prox-out for all channels.
+		 */
+		for (i=0; i<MAX_CHANNELS; ++i)
+		{
+			if (common->wcmChannel[i].work.proximity && 
+					(common->wcmChannel[i].work.serial_num != -1))
+			{
+				common->wcmChannel[i].work.proximity = 0;
+				/* dispatch event */
+				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
+			}
+		}
+		DBG(1, common->debugLevel, ErrorF("usbParse (device with serial number: %u)"
+			" at %d: Exceeded channel count; ignoring the events.\n", 
+			serial, (int)GetTimeInMillis()));
+	}
+	else
+		common->wcmLastToolSerial = serial;
+
+	return channel;
+}
+
+static void usbParseEvent(LocalDevicePtr local, 
+		const struct input_event* event)
+{
+	int channel;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
@@ -829,8 +880,7 @@ static void usbParseEvent(LocalDevicePtr local,
 			goto skipEvent;
 		}
 
-	        /* save the serial number so we can look up the channel number later */
-	        common->wcmLastToolSerial = event->value;
+		common->wcmLastToolSerial = event->value;
 
 		/* if SYN_REPORT is end of record indicator, we are done */
 		if (USE_SYN_REPORTS(common))
@@ -858,86 +908,18 @@ static void usbParseEvent(LocalDevicePtr local,
 		return;
 	}
 
-	/* figure out the channel to use based on serial number */
-	channel = -1;
-	if (common->wcmProtocolLevel == 4)
+	/* ignore events without information */
+	if (common->wcmEventCnt <= 2) 
 	{
-		/* Protocol 4 doesn't support tool serial numbers */
-		if (common->wcmLastToolSerial == 0xf0)
-			channel = 1;
-		else
-			channel = 0;
-	}
-	else if (common->wcmLastToolSerial) /* serial number should never be 0 */
-	{
-		/* ignore events without information */
-		if (common->wcmEventCnt <= 2) 
-		{
-			DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event for serial %d\n", 
-				local->name, common->wcmLastToolSerial));
-			goto skipEvent;
-		}
-
-		/* dual input is supported */
-		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->name, "Intuos2") )
-		{
-			/* find existing channel */
-			for (i=0; i<MAX_CHANNELS; ++i)
-			{
-				if (common->wcmChannel[i].work.proximity && 
-			  		common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
-				{
-					channel = i;
-					break;
-				}
-			}
-
-			/* find an empty channel */
-			if (channel < 0)
-			{
-				for (i=0; i<MAX_CHANNELS; ++i)
-				{
-					if (!common->wcmChannel[i].work.proximity)
-					{
-						channel = i;
-						break;
-					}
-				}
-			}
-		}
-		else  /* one transducer plus expresskey (pad) is supported */
-		{
-			if (common->wcmLastToolSerial == -1)  /* pad */
-				channel = 1;
-			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
-				    (common->wcmChannel[0].work.serial_num == common->wcmLastToolSerial)) ||
-					!common->wcmChannel[0].work.proximity ) /* new transducer */
-				channel = 0;
-		}
-	}
-	else
-		goto skipEvent;
-
-	/* fresh out of channels */
-	if (channel < 0)
-	{
-		/* This should never happen in normal use.
-		 * Let's start over again. Force prox-out for all channels.
-		 */
-		for (i=0; i<MAX_CHANNELS; ++i)
-		{
-			if (common->wcmChannel[i].work.proximity && (common->wcmChannel[i].work.serial_num != -1))
-			{
-				common->wcmChannel[i].work.proximity = 0;
-				/* dispatch event */
-				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
-			}
-		}
-		DBG(1, common->debugLevel, ErrorF("usbParse (%s with serial number: %u) at %d: Exceeded channel count; "
-			"ignoring the events.\n", local->name, common->wcmLastToolSerial, 
-			(int)GetTimeInMillis()));
+		DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event for serial %d\n", 
+			local->name, common->wcmLastToolSerial));
 		goto skipEvent;
 	}
+
+	channel = usbChooseChannel(common, common->wcmLastToolSerial);
+
+	/* couldn't decide channel? invalid data */
+	if (channel == -1) goto skipEvent;
 
 	if (!common->wcmChannel[channel].work.proximity)
 	{
@@ -947,14 +929,14 @@ static void usbParseEvent(LocalDevicePtr local,
 	}
 
 	/* dispatch event */
-	usbParseChannel(local,channel,common->wcmLastToolSerial);
+	usbParseChannel(local, channel);
 
 skipEvent:
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
-static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
+static void usbParseChannel(LocalDevicePtr local, int channel)
 {
 	int i, shift, nkeys;
 	WacomDeviceState* ds;
@@ -977,7 +959,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
-	ds->serial_num = serial;
+	ds->serial_num = common->wcmLastToolSerial;
 
 	/* loop through all events in group */
 	for (i=0; i<common->wcmEventCnt; ++i)
@@ -1035,7 +1017,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				(event->code == BTN_TOOL_AIRBRUSH))
 			{
 				ds->device_type = STYLUS_ID;
-				ds->device_id = STYLUS_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = STYLUS_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				DBG(6, common->debugLevel, ErrorF(
 					"USB stylus detected %x\n",
@@ -1044,7 +1028,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == BTN_TOOL_RUBBER)
 			{
 				ds->device_type = ERASER_ID;
-				ds->device_id = ERASER_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = ERASER_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				if (ds->proximity)
 					ds->proximity = ERASER_PROX;
@@ -1059,7 +1045,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 					"USB mouse detected %x (value=%d)\n",
 					event->code, event->value));
 				ds->device_type = CURSOR_ID;
-				ds->device_id = CURSOR_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = CURSOR_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOOL_FINGER)
@@ -1073,12 +1061,18 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 			else if (event->code == BTN_TOOL_DOUBLETAP)
 			{
+				WacomChannelPtr pChannel = common->wcmChannel + channel;
+				WacomDeviceState dslast = pChannel->valid.state;
 				DBG(6, common->debugLevel, ErrorF(
 					"USB Touch detected %x (value=%d)\n",
 					event->code, event->value));
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
+				/* time stamp for 2GT gesture events */
+				if ((ds->proximity && !dslast.proximity) ||
+					    (!ds->proximity && dslast.proximity))
+					ds->sample = (int)GetTimeInMillis();
 				/* Left button is always pressed for touch without capacity
 				 * when the first finger touch event received.
 				 * For touch with capacity enabled, left button event will be decided
@@ -1089,13 +1083,20 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 			else if (event->code == BTN_TOOL_TRIPLETAP)
 			{
+				WacomChannelPtr pChannel = common->wcmChannel + channel;
+				WacomDeviceState dslast = pChannel->valid.state;
 				DBG(6, common->debugLevel, ErrorF(
 					"USB Touch second finger detected %x (value=%d)\n",
 					event->code, event->value));
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
-				/* Second finger events will be combined with the first finger data */
+				/* time stamp for 2GT gesture events */
+				if ((ds->proximity && !dslast.proximity) ||
+					    (!ds->proximity && dslast.proximity))
+					ds->sample = (int)GetTimeInMillis();
+				/* Second finger events will be considered in 
+				 * combination with the first finger data */
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))

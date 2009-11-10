@@ -85,17 +85,18 @@
  * 2009-10-15 47-pc0.8.4-4 - added calibration-only wacomcpl
  * 2009-10-19 47-pc0.8.5   - Added support for TPC (0xE2, 0xE3 & 0x9F)
  * 2009-10-31 47-pc0.8.5-1 - Avoid duplicated devices for Xorg 1.4 and later
+ * 2009-11-6 47-pc0.8.5-2 - Validate tool type associated with device
  */
 
-static const char identification[] = "$Identification: 47-0.8.5-1 $";
+static const char identification[] = "$Identification: 47-0.8.5-2 $";
 
 /****************************************************************************/
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #ifdef WCM_XORG_XSERVER_1_4
-    #include <fcntl.h>
     #ifndef _XF86_ANSIC_H
+	#include <fcntl.h>
 	#include <sys/stat.h>
     #endif
 #endif
@@ -114,7 +115,7 @@ extern int usbWcmGetRanges(LocalDevicePtr local);
 extern int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl* control);
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
-extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern int xf86WcmInitArea(LocalDevicePtr local);
 
 WacomModule gWacomModule =
 {
@@ -143,259 +144,7 @@ static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
-#endif /* WCM_KEY_SENDING_SUPPORT */
 
-/*****************************************************************************
- * xf86WcmDesktopSize --
- *   calculate the whole desktop size 
- ****************************************************************************/
-static void xf86WcmDesktopSize(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
-
-	xf86WcmInitialScreens(local);
-
-	minX = priv->screenTopX[0];
-	minY = priv->screenTopY[0];
-	maxX = priv->screenBottomX[0];
-	maxY = priv->screenBottomY[0];
-
-	if (priv->numScreen != 1)
-	{
-		for (i = 1; i < priv->numScreen; i++)
-		{
-			if (priv->screenTopX[i] < minX)
-				minX = priv->screenTopX[i];
-			if (priv->screenTopY[i] < minY)
-				minY = priv->screenTopY[i];
-			if (priv->screenBottomX[i] > maxX)
-				maxX = priv->screenBottomX[i];
-			if (priv->screenBottomY[i] > maxY)
-				maxY = priv->screenBottomY[i];
-		}
-	}
-
-	priv->maxWidth = maxX - minX;
-	priv->maxHeight = maxY - minY;
-} 
-
-static int xf86WcmInitArea(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomToolAreaPtr area = priv->toolarea, inlist;
-	WacomCommonPtr common = priv->common;
-	double screenRatio, tabletRatio;
-
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitArea\n"));
-
-	/* Verify Box */
-	if (priv->topX > priv->wcmMaxX)
-	{
-		area->topX = priv->topX = 0;
-	}
-
-	if (priv->topY > priv->wcmMaxY)
-	{
-		area->topY = priv->topY = 0;
-	}
-
-	/* set unconfigured bottom to max */
-	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-	if (priv->bottomX < priv->topX || !priv->bottomX)
-	{
-		area->bottomX = priv->bottomX = priv->wcmMaxX;
-	}
-
-	/* set unconfigured bottom to max */
-	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-	if (priv->bottomY < priv->topY || !priv->bottomY)
-	{
-		area->bottomY = priv->bottomY = priv->wcmMaxY;
-	}
-
-	if (priv->twinview > TV_XINERAMA)
-		priv->numScreen = 2;
-
-	if (priv->screen_no != -1 &&
-		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
-	{
-		if (priv->twinview <= TV_XINERAMA)
-		{
-			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
-					local->name, priv->screen_no);
-			priv->screen_no = -1;
-		}
-		else if (priv->screen_no > 1)
-		{
-			ErrorF("%s: invalid screen number %d, resetting to default (-1) \n",
-					local->name, priv->screen_no);
-			priv->screen_no = -1;
-		}
-	}
-
-	/* need maxWidth and maxHeight for keepshape */
-	xf86WcmDesktopSize(local);
-
-	/* Maintain aspect ratio to the whole desktop
-	 * May need to consider a specific screen in multimonitor settings
-	 */
-	if (priv->flags & KEEP_SHAPE_FLAG)
-	{
-
-		screenRatio = ((double)priv->maxWidth / (double)priv->maxHeight);
-		tabletRatio = ((double)(priv->wcmMaxX - priv->topX) /
-				(double)(priv->wcmMaxY - priv->topY));
-
-		DBG(2, priv->debugLevel, ErrorF("screenRatio = %.3g, "
-			"tabletRatio = %.3g\n", screenRatio, tabletRatio));
-
-		if (screenRatio > tabletRatio)
-		{
-			area->bottomX = priv->bottomX = priv->wcmMaxX;
-			area->bottomY = priv->bottomY = (priv->wcmMaxY - priv->topY) *
-				tabletRatio / screenRatio + priv->topY;
-		}
-		else
-		{
-			area->bottomX = priv->bottomX = (priv->wcmMaxX - priv->topX) *
-				screenRatio / tabletRatio + priv->topX;
-			area->bottomY = priv->bottomY = priv->wcmMaxY;
-		}
-	}
-	/* end keep shape */ 
-
-	inlist = priv->tool->arealist;
-
-	/* The first one in the list is always valid */
-	if (area != inlist && xf86WcmAreaListOverlap(area, inlist))
-	{
-		inlist = priv->tool->arealist;
-
-		/* remove this overlapped area from the list */
-		for (; inlist; inlist=inlist->next)
-		{
-			if (inlist->next == area)
-			{
-				inlist->next = area->next;
-				xfree(area);
-				priv->toolarea = NULL;
- 			break;
-			}
-		}
-
-		/* Remove this device from the common struct */
-		if (common->wcmDevices == priv)
-			common->wcmDevices = priv->next;
-		else
-		{
-			WacomDevicePtr tmp = common->wcmDevices;
-			while(tmp->next && tmp->next != priv)
-				tmp = tmp->next;
-			if(tmp)
-				tmp->next = priv->next;
-		}
-		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
-			local->conf_idev->identifier);
-		return FALSE;
-	}
-	return TRUE;
-}
-
-/*****************************************************************************
- * xf86WcmVirtaulTabletSize(LocalDevicePtr local)
- ****************************************************************************/
-
-void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-
-	if (!(priv->flags & ABSOLUTE_FLAG))
-	{
-		priv->sizeX = priv->bottomX - priv->topX;
-		priv->sizeY = priv->bottomY - priv->topY;
-		return;
-	}
-
-	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
-	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
-
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtaulTabletSize for \"%s\" "
-		"x=%d y=%d \n", local->name, priv->sizeX, priv->sizeY));
-	return;
-}
-
-/*****************************************************************************
- * xf86WcmInitialCoordinates
- ****************************************************************************/
-
-void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int topx = 0, topy = 0, resolution;
-	int bottomx = priv->wcmMaxX, bottomy = priv->wcmMaxY;
-
-	xf86WcmMappingFactor(local);
-
-	/* x ax */
-	if ( !axes )
-	{
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			topx = priv->topX;
-			bottomx = priv->sizeX + priv->topX;
-			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
-				topx += priv->tvoffsetX;
-			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
-				bottomx -= priv->tvoffsetX;
-		}
-
-		resolution = priv->wcmResolX;
-#ifdef WCM_XORG_TABLET_SCALING
-		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-		 * for coordinate conversion at the moment */
-		topx = 0;
-		bottomx = priv->sizeX;
-		if ((priv->twinview == TV_LEFT_RIGHT) || (priv->twinview == TV_RIGHT_LEFT))
-			bottomx *= 2;
-		bottomx = (int)((double)bottomx * priv->factorX + 0.5);
-		resolution = (int)((double)resolution * priv->factorX + 0.5);
-#endif
-
-		InitValuatorAxisStruct(local->dev, 0, topx, bottomx, 
-			resolution, 0, resolution); 
-	}
-	else /* y ax */
-	{
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			topy = priv->topY;
-			bottomy = priv->sizeY + priv->topY;
-			if ((priv->currentScreen == 1) && (priv->twinview > TV_XINERAMA))
-				topy += priv->tvoffsetY;
-			if ((priv->currentScreen == 0) && (priv->twinview > TV_XINERAMA))
-				bottomy -= priv->tvoffsetY;
-		}
-
-		resolution = priv->wcmResolY;
-#ifdef WCM_XORG_TABLET_SCALING
-		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
-		 * for coordinate conversion at the moment */
-		topy = 0;
-		bottomy = priv->sizeY;
-		if ((priv->twinview == TV_ABOVE_BELOW) || (priv->twinview == TV_BELOW_ABOVE))
-			bottomy *= 2;
-		bottomy = (int)((double)bottomy * priv->factorY + 0.5);
-		resolution = (int)((double)resolution * priv->factorY + 0.5);
-#endif
-
-		InitValuatorAxisStruct(local->dev, 1, topy, bottomy, 
-			resolution, 0, resolution); 
-	}
-	return;
-}
-
-#ifdef WCM_KEY_SENDING_SUPPORT
 /*****************************************************************************
  * xf86WcmRegisterX11Devices --
  *    Register the X11 input devices with X11 core.
@@ -557,25 +306,10 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
 
-	if (IsTouch(priv))
-	{
-		priv->wcmMaxX = common->wcmMaxTouchX;
-		priv->wcmMaxY = common->wcmMaxTouchY;
-		priv->wcmResolX = common->wcmTouchResolX;
-		priv->wcmResolY = common->wcmTouchResolY;
-	}
-	else
-	{
-		priv->wcmMaxX = common->wcmMaxX;
-		priv->wcmMaxY = common->wcmMaxY;
-		priv->wcmResolX = common->wcmResolX;
-		priv->wcmResolY = common->wcmResolY;
-	}
-
-	DBG(2, common->debugLevel, ErrorF("Wacom \"%s\" "
+	DBG(2, priv->debugLevel, ErrorF("Wacom \"%s\" "
 		"max X=%d max Y=%d resol X=%d resol Y=%d\n",
 		local->name, common->wcmMaxX, common->wcmMaxY,
-		priv->wcmResolX, priv->wcmResolY));
+		common->wcmResolX, common->wcmResolY));
 
 
 	for (; toollist; toollist=toollist->next)
@@ -584,13 +318,13 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		for (; arealist; arealist=arealist->next)
 		{
 			if (!arealist->bottomX) 
-				arealist->bottomX = priv->wcmMaxX;
+				arealist->bottomX = common->wcmMaxX;
 			if (!arealist->bottomY)
-				arealist->bottomY = priv->wcmMaxY;
+				arealist->bottomY = common->wcmMaxY;
 		}
 	}
 
-	DBG(2, common->debugLevel, ErrorF("Wacom device \"%s\" "
+	DBG(2, priv->debugLevel, ErrorF("Wacom device \"%s\" "
 		"top X=%d top Y=%d bottom X=%d bottom Y=%d \n",
 		local->name, priv->topX, priv->topY, 
 		priv->bottomX, priv->bottomY));
@@ -813,7 +547,7 @@ Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
 {
 	int fd = -1;
 
-	fd = open(fname, O_RDONLY);
+	SYSCALL(fd = open(fname, O_RDONLY));
 	if (fd < 0)
 		return FALSE;
 

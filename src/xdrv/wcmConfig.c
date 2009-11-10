@@ -20,11 +20,9 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #ifdef WCM_XORG_XSERVER_1_4
-    #include <fcntl.h>
-    #ifndef _XF86_ANSIC_H
-	#include <sys/stat.h>
-    #endif
     extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
+    extern Bool wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id);
+    extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
 #endif
 
 /*****************************************************************************
@@ -108,24 +106,20 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->oldTiltY = 0;         /* previous tilt in y direction */
 	priv->oldStripX = 0;	    /* previous left strip value */
 	priv->oldStripY = 0;	    /* previous right strip value */
-	priv->oldButtons = 0;        /* previous buttons state */
-	priv->oldWheel = 0;          /* previous wheel */
-	priv->topX = 0;              /* X top */
-	priv->topY = 0;              /* Y top */
-	priv->bottomX = 0;           /* X bottom */
-	priv->bottomY = 0;           /* Y bottom */
-	priv->wcmMaxX = 0;           /* max tool logical X value */
-	priv->wcmMaxY = 0;           /* max tool logical Y value */
-	priv->wcmResolX = 0;         /* tool X resolution in points/inch */
-	priv->wcmResolY = 0;         /* tool Y resolution in points/inch */
-	priv->sizeX = 0;	     /* active X size */
-	priv->sizeY = 0;	     /* active Y size */
-	priv->factorX = 0.0;         /* X factor */
-	priv->factorY = 0.0;         /* Y factor */
-	priv->common = common;       /* common info pointer */
-	priv->oldProximity = 0;      /* previous proximity */
-	priv->hardProx = 1;	     /* previous hardware proximity */
-	priv->old_serial = 0;	     /* last active tool's serial */
+	priv->oldButtons = 0;       /* previous buttons state */
+	priv->oldWheel = 0;         /* previous wheel */
+	priv->topX = 0;             /* X top */
+	priv->topY = 0;             /* Y top */
+	priv->bottomX = 0;          /* X bottom */
+	priv->bottomY = 0;          /* Y bottom */
+	priv->sizeX = 0;	    /* active X size */
+	priv->sizeY = 0;	    /* active Y size */
+	priv->factorX = 0.0;        /* X factor */
+	priv->factorY = 0.0;        /* Y factor */
+	priv->common = common;      /* common info pointer */
+	priv->oldProximity = 0;     /* previous proximity */
+	priv->hardProx = 1;	    /* previous hardware proximity */
+	priv->old_serial = 0;	    /* last active tool's serial */
 	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
 		(IsEraser(priv) ? ERASER_DEVICE_ID : 
 		(IsCursor(priv) ? CURSOR_DEVICE_ID : 
@@ -151,15 +145,15 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 			priv->keys[i][j] = 0;
 
 	priv->nbuttons = MAX_BUTTONS;		/* Default number of buttons */
-	priv->relup = 5;			/* Default relative wheel up event */
-	priv->reldn = 4;			/* Default relative wheel down event */
+	priv->relup = SCROLL_UP;		/* Default relative wheel up event */
+	priv->reldn = SCROLL_DOWN;		/* Default relative wheel down event */
 	
-	priv->wheelup = IsPad (priv) ? 4 : 0;	/* Default absolute wheel up event */
-	priv->wheeldn = IsPad (priv) ? 5 : 0;	/* Default absolute wheel down event */
-	priv->striplup = 4;			/* Default left strip up event */
-	priv->stripldn = 5;			/* Default left strip down event */
-	priv->striprup = 4;			/* Default right strip up event */
-	priv->striprdn = 5;			/* Default right strip down event */
+	priv->wheelup = IsPad (priv) ? SCROLL_DOWN : 0;	/* Default absolute wheel up event */
+	priv->wheeldn = IsPad (priv) ? SCROLL_UP : 0;	/* Default absolute wheel down event */
+	priv->striplup = SCROLL_DOWN;			/* Default left strip up event */
+	priv->stripldn = SCROLL_UP;		/* Default left strip down event */
+	priv->striprup = SCROLL_DOWN;		/* Default right strip up event */
+	priv->striprdn = SCROLL_UP;		/* Default right strip down event */
 	priv->naxes = 6;			/* Default number of axes */
 	priv->debugLevel = 0;			/* debug level */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
@@ -182,9 +176,7 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	priv->throttleLimit = -1;
 	
 	common->wcmDevice = "";                  /* device file name */
-#ifdef WCM_XORG_XSERVER_1_6
 	common->min_maj = 0;			 /* device major and minor */
-#endif
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->npadkeys = 0;		   /* Default number of pad keys */
@@ -203,23 +195,24 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmTouch = 0;              /* touch is disabled */
 	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
+	common->wcmGestureMode = 0;        /* touch is not in Gesture mode */
 	common->wcmGesture = 0;            /* touch Gesture is disabled */
 	common->wcmGestureDefault = 0; 	   /* default to disable when touch Gesture isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
-	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
+	common->wcmCapacityDefault = -1;   /* default to -1 when capacity isn't supported */
 					   /* 3 when capacity is supported */
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
-	common->wcmMaxX = 0;               /* max digitizer logical X value */
-	common->wcmMaxY = 0;               /* max digitizer logical Y value */
-	common->wcmMaxTouchX = 1024;       /* max touch X value */
-	common->wcmMaxTouchY = 1024;       /* max touch Y value */
+	common->wcmMaxX = 0;               /* max tool logical X value */
+	common->wcmMaxY = 0;               /* max tool logical Y value */
         common->wcmMaxZ = 0;               /* max Z value */
+	common->wcmResolX = 0;               /* tool X resolution in 
+				            * points/inch for penabled
+				            * points/mm for touch */
+	common->wcmResolY = 0;               /* tool Y resolution in 
+				            * points/inch for penabled
+				            * points/mm for touch */
         common->wcmMaxCapacity = 0;        /* max capacity value */
  	common->wcmMaxDist = 0;            /* max distance value */
-	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
-	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
-	common->wcmTouchResolX = 0;        /* touch X resolution in points/mm */
-	common->wcmTouchResolY = 0;        /* touch Y resolution in points/mm */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
@@ -233,6 +226,10 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 			/* transmit position if increment is superior */
 	common->wcmRawSample = DEFAULT_SAMPLES;    
 			/* number of raw data to be used to for filtering */
+#ifdef WCM_ENABLE_LINUXINPUT
+	common->wcmLastToolSerial = 0;
+	common->wcmEventCnt = 0;
+#endif
 
 	/* tool */
 	priv->tool = tool;
@@ -379,9 +376,9 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
     
 	DBG(1, priv->debugLevel, ErrorF("xf86WcmUninit\n"));
 
-	/* Xservers 1.4 and later but earlier than 1.6 need this call */
+	/* Xservers 1.4 and later but earlier than 1.5.2 need this call */
 #ifdef WCM_XORG_XSERVER_1_4
-   #ifndef WCM_XORG_XSERVER_1_6
+   #ifndef WCM_XORG_XSERVER_1_5_2
 	gWacomModule.DevProc(local->dev, DEVICE_OFF);
    #endif
 #endif
@@ -427,6 +424,8 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 		}
 		xfree(common);
 		common = priv->common = privMatch->common;
+
+		/* insert the device to the front of the wcmDevices list */
 		priv->next = common->wcmDevices;
 		common->wcmDevices = priv;
 		return 1;
@@ -434,235 +433,6 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
-#ifdef WCM_XORG_XSERVER_1_4
-
-/* xf86WcmCheckTypeAndSource - Check if both devices have the same type OR
- * the device has been used in xorg.conf: don't add the tool by hal/udev 
- * if user has defined at least one tool for the device in xorg.conf */
-
-static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr fakeLocal, LocalDevicePtr pLocal)
-{
-	int match = 1;
-	char* fsource = xf86CheckStrOption(fakeLocal->options, "_source", "");
-	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
-	char* type = xf86FindOptionValue(fakeLocal->options, "Type");
-	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
-
-	/* only add the new tool if the matching major/minor
-	 * was from the same source */
-	if (!strcmp(fsource, psource))
-	{
-		/* and the tools have different types */
-		if (strcmp(type, xf86FindOptionValue(pLocal->options, "Type")))
-			match = 0;
-	}
-	DBG(2, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmCheckTypeAndSource "
-		"device %s from %s %s \n", fakeLocal->name, fsource,
-		match ? "will be added" : "will be ignored"));
-	return match;
-}
-
-/* check if the device has been added */
-static int wcmIsDuplicate(char* device, LocalDevicePtr local)
-{
-#ifdef _XF86_ANSIC_H
-	struct xf86stat st;
-#else
-	struct stat st;
-#endif
-	int isInUse = 0;
-	LocalDevicePtr localDevices = NULL;
-	WacomCommonPtr common = NULL;
-
-	/* open the port */
-	do {
-        	local->fd = open(device, O_RDONLY, 0);
-	} while (local->fd < 0 && errno == EINTR);
-
-	if (local->fd < 0)
-	{
-		/* can not open the device */
-        	xf86Msg(X_ERROR, "Unable to open Wacom device \"%s\".\n", device);
-		isInUse = 2;
-		goto ret;
-	}
-
-#ifdef _XF86_ANSIC_H
-	if (xf86fstat(local->fd, &st) == -1)
-#else
-	if (fstat(local->fd, &st) == -1)
-#endif
-	{
-		/* can not access major/minor to check device duplication */
-		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
-                		local->name, strerror(errno));
-
-		/* older systems don't support the required ioctl.  let it pass */
-		goto ret;
-	}
-
-	if ((int)st.st_rdev)
-	{
-		localDevices = xf86FirstLocalDevice();
-
-		for (; localDevices != NULL; localDevices = localDevices->next)
-		{
-			device = xf86CheckStrOption(localDevices->options, "Device", NULL);
-
-			/* device can be NULL on some distros */
-			if (!device || !strstr(localDevices->drv->driverName, "wacom"))
-				continue;
-
-			common = ((WacomDevicePtr)localDevices->private)->common;
-			if (local != localDevices &&
-				common->min_maj &&
-				common->min_maj == st.st_rdev)
-			{
-				/* device matches with another added port */
-				if (xf86WcmCheckTypeAndSource(local, localDevices))
-				{
-					xf86Msg(X_WARNING, "%s: device file already in use by %s. "
-						"Ignoring.\n", local->name, localDevices->name);
-					isInUse = 4;
-					goto ret;
-				}
-			}
- 		}
-	}
-	else
-	{
-		/* major/minor can never be 0, right? */
-		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
-			"Something was wrong.\n", local->name);
-		isInUse = 5;
-	}
-ret:
-	if (local->fd >= 0)
-	{ 
-		close(local->fd);
-		local->fd = -1;
-	}
-	return isInUse;
-}
-
-static struct
-{
-	__u16 productID;
-	__u16 flags;
-} validType [] =
-{
-	{ 0x00, STYLUS_ID }, /* PenPartner */
-	{ 0x10, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire */
-	{ 0x11, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 4x5 */
-	{ 0x12, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 5x7 */
-
-	{ 0x13, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 4x5 */
-	{ 0x14, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 6x8 */
-
-	{ 0x15, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 4x5 */
-	{ 0x16, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 */ 
-	{ 0x17, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 4x5 */
-	{ 0x18, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 6x8 */
-	{ 0x19, STYLUS_ID | ERASER_ID                      }, /* Bamboo1 Medium*/ 
-	{ 0x81, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 BlueTooth */
-
-	{ 0x20, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 4x5 */
-	{ 0x21, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 6x8 */
-	{ 0x22, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 9x12 */
-	{ 0x23, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x12 */
-	{ 0x24, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x18 */
-
-	{ 0x03, STYLUS_ID | ERASER_ID }, /* PTU600 */
-	{ 0x30, STYLUS_ID | ERASER_ID }, /* PL400 */
-	{ 0x31, STYLUS_ID | ERASER_ID }, /* PL500 */
-	{ 0x32, STYLUS_ID | ERASER_ID }, /* PL600 */
-	{ 0x33, STYLUS_ID | ERASER_ID }, /* PL600SX */
-	{ 0x34, STYLUS_ID | ERASER_ID }, /* PL550 */
-	{ 0x35, STYLUS_ID | ERASER_ID }, /* PL800 */
-	{ 0x37, STYLUS_ID | ERASER_ID }, /* PL700 */
-	{ 0x38, STYLUS_ID | ERASER_ID }, /* PL510 */
-	{ 0x39, STYLUS_ID | ERASER_ID }, /* PL710 */ 
-	{ 0xC0, STYLUS_ID | ERASER_ID }, /* DTF720 */
-	{ 0xC2, STYLUS_ID | ERASER_ID }, /* DTF720a */
-	{ 0xC4, STYLUS_ID | ERASER_ID }, /* DTF521 */ 
-	{ 0xC7, STYLUS_ID | ERASER_ID }, /* DTU1931 */
-
-	{ 0x41, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 4x5 */
-	{ 0x42, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8 */
-	{ 0x43, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 9x12 */
-	{ 0x44, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x12 */
-	{ 0x45, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x18 */
-	{ 0x47, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8  */
-
-	{ 0x60, STYLUS_ID }, /* Volito */ 
-	{ 0x61, STYLUS_ID }, /* PenStation */
-	{ 0x62, STYLUS_ID }, /* Volito2 4x5 */
-	{ 0x63, STYLUS_ID }, /* Volito2 2x3 */
-	{ 0x64, STYLUS_ID }, /* PenPartner2 */
-
-	{ 0x65, STYLUS_ID | ERASER_ID | CURSOR_ID |  PAD_ID }, /* Bamboo */
-	{ 0x69, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Bamboo1 */ 
-
-	{ 0xB0, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x5 */
-	{ 0xB1, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x8 */
-	{ 0xB2, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 9x12 */
-	{ 0xB3, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x12 */
-	{ 0xB4, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 12x19 */
-	{ 0xB5, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 6x11 */
-	{ 0xB7, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos3 4x6 */
-
-	{ 0xB8, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 4x6 */
-	{ 0xB9, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 6x9 */
-	{ 0xBA, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 8x13 */
-	{ 0xBB, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 12x19*/
-
-	{ 0x3F, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 21UX */ 
-	{ 0xC5, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 20WSX */ 
-	{ 0xC6, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 12WX */ 
-
-	{ 0x90, STYLUS_ID | ERASER_ID }, /* TabletPC 0x90 */ 
-	{ 0x93, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x93 */
-	{ 0x9A, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x9A */
-	{ 0x9F, TOUCH_ID }, /* CapPlus  0x9F */
-	{ 0xE2, TOUCH_ID }, /* TabletPC 0xE2 */ 
-	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID }  /* TabletPC 0xE3 */
-};
-
-static struct
-{
-	const char* type;
-	__u16 id;
-} wcmTypeAndID [] =
-{
-	{ "stylus", STYLUS_ID },
-	{ "eraser", ERASER_ID },
-	{ "cursor", CURSOR_ID },
-	{ "touch",  TOUCH_ID  },
-	{ "pad",    PAD_ID    }
-};
-
-/* validate tool type for device/product */
-static int wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id)
-{
-	int i, j, ret = 0;
-	char* type = xf86FindOptionValue(local->options, "Type");
-
-	/* walkthrough all supported models */
-	for (i = 0; i < sizeof (validType) / sizeof (validType [0]); i++)
-	{
-		if (validType[i].productID == id)
-		{
-
-			/* walkthrough all types */
-			for (j = 0; j < sizeof (wcmTypeAndID) / sizeof (wcmTypeAndID [0]); j++)
-			    if (!strcmp(wcmTypeAndID[j].type, type))
-				if (wcmTypeAndID[j].id & validType[i].flags)
-					ret = 1;
-		}		
-	}
-	return ret;
-}
-#endif   /* WCM_XORG_XSERVER_1_4 */
 /* xf86WcmInit - called when the module subsection is found in XF86Config */
 
 static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -704,11 +474,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
                 if (!xf86WcmIsWacomDevice(device, &id))
                         goto SetupProc_fail;
 
-                /* check if the type is valid for the device */
+               /* check if the type is valid for the device */
                 if(!wcmIsAValidType(device, fakeLocal, id.product))
                         goto SetupProc_fail;
 
-                /* check if the device has been added */
+               /* check if the device has been added */
                 if (wcmIsDuplicate(device, fakeLocal))
                         goto SetupProc_fail;
         }
@@ -1046,26 +816,20 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: threshold = %d\n", dev->identifier,
 			common->wcmThreshold);
 
-	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
+	common->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
 		common->wcmMaxX);
-	if (priv->wcmMaxX > 0)
+	if (common->wcmMaxX > 0)
 	{
-		xf86Msg(X_CONFIG, "%s: max x set to %d by xorg.conf\n", dev->identifier,
-			priv->wcmMaxX);
-
-		/* Update tablet logical max X */
-		if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
+		xf86Msg(X_CONFIG, "%s: max x set to %d \n", dev->identifier,
+			common->wcmMaxX);
 	}
 
-	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
+	common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
 		common->wcmMaxY);
-	if (priv->wcmMaxY > 0)
+	if (common->wcmMaxY > 0)
 	{
-		xf86Msg(X_CONFIG, "%s: max y set to %d by xorg.conf\n", dev->identifier,
-			priv->wcmMaxY);
-
-		/* Update tablet logical max Y */
-		if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
+		xf86Msg(X_CONFIG, "%s: max y set to %d \n", dev->identifier,
+			common->wcmMaxY);
 	}
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",

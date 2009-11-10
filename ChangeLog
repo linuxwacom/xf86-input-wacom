@@ -1,3 +1,11 @@
+2009-11-09  Ping Cheng <pingc@wacom.com>
+	* Added right click, scroll, and zoom for two finger touch
+	* Updated kernel driver
+	* Validating tool by retriving device type from kernel driver
+	* Fixed a bug in xsetwacom TWINVIEW option
+	* Fixed a device id issue in xsetwacom TOOLID option
+	* Label 0.8.5-2
+
 2009-10-31  Ping Cheng <pingc@wacom.com>
 	* Avoid duplicated devices
 	* Validate tool type before adding it

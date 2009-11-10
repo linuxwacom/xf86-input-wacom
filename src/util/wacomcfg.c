@@ -281,8 +281,8 @@ WACOMDEVICETYPE mapStringToType (const char* name)
 		return WACOMDEVICETYPE_TOUCH;
 	else if (strstr(name,"pad") != NULL)
 		return WACOMDEVICETYPE_PAD;
-	else
-		return WACOMDEVICETYPE_UNKNOWN;
+	else   /* HAL eliminated stylus in the name for stylus */
+		return WACOMDEVICETYPE_STYLUS;
 	
 }
 

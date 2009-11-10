@@ -37,7 +37,6 @@ enum {
 	WACOM_MO,
 	TABLETPC,
 	TABLETPC2FG,
-	WACOM_GB,
 	MAX_TYPE
 };
 
@@ -49,10 +48,9 @@ struct wacom_features {
 	int pressure_max;
 	int distance_max;
 	int type;
-	int touch_x_res;
-	int touch_y_res;
-	int touch_x_max;
-	int touch_y_max;
+	int device_type;
+	int x_phy;
+	int y_phy;
 	unsigned char unit;
 	unsigned char unitExpo;
 };

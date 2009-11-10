@@ -233,5 +233,11 @@ int xf86WcmSetPadCoreMode(LocalDevicePtr local);
 /* calculate the proper tablet to screen mapping factor */
 void xf86WcmMappingFactor(LocalDevicePtr local);
 
+/* send a soft prox-out event for local */
+void xf86WcmSoftOutEvent(LocalDevicePtr local);
+
+/* send a soft prox-out event for device at the channel  */
+void xf86WcmSoftOut(WacomCommonPtr common, int channel);
+
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

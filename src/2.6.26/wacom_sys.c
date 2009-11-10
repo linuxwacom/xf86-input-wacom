@@ -214,6 +214,7 @@ void input_dev_g(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 	input_dev->keybit[BIT_WORD(BTN_MOUSE)] |= BIT_MASK(BTN_LEFT) |
 		BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE);
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_RUBBER) |
+		BIT_MASK(BTN_TOOL_PEN) | BIT_MASK(BTN_STYLUS) |
 		BIT_MASK(BTN_TOOL_MOUSE) | BIT_MASK(BTN_STYLUS2);
 	input_set_abs_params(input_dev, ABS_DISTANCE, 0, wacom_wac->features->distance_max, 0, 0);
 }
@@ -261,6 +262,7 @@ void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 		BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE) |
 		BIT_MASK(BTN_SIDE) | BIT_MASK(BTN_EXTRA);
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_RUBBER) |
+		BIT_MASK(BTN_TOOL_PEN) | BIT_MASK(BTN_STYLUS) |
 		BIT_MASK(BTN_TOOL_MOUSE) | BIT_MASK(BTN_TOOL_BRUSH) |
 		BIT_MASK(BTN_TOOL_PENCIL) | BIT_MASK(BTN_TOOL_AIRBRUSH) |
 		BIT_MASK(BTN_TOOL_LENS) | BIT_MASK(BTN_STYLUS2);
@@ -274,7 +276,8 @@ void input_dev_i(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 
 void input_dev_pl(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_STYLUS2);
+	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_PEN) |
+		BIT_MASK(BTN_STYLUS) | BIT_MASK(BTN_STYLUS2);
 }
 
 void input_dev_pt(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
@@ -284,16 +287,20 @@ void input_dev_pt(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 
 void input_dev_tpc(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_set_abs_params(input_dev, ABS_RX, 0, wacom_wac->features->touch_x_max, 4, 0);
-	input_set_abs_params(input_dev, ABS_RY, 0, wacom_wac->features->touch_y_max, 4, 0);
-	input_set_abs_params(input_dev, ABS_Z, 0, wacom_wac->features->touch_x_res, 0, 0);
-	input_set_abs_params(input_dev, ABS_RZ, 0, wacom_wac->features->touch_y_res, 0, 0);
-	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_DOUBLETAP);
+	if (wacom_wac->features->device_type == BTN_TOOL_DOUBLETAP) {
+		input_set_abs_params(input_dev, ABS_RX, 0, wacom_wac->features->x_phy, 0, 0);
+		input_set_abs_params(input_dev, ABS_RY, 0, wacom_wac->features->y_phy, 0, 0);
+		input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_DOUBLETAP);
+	}
 }
 
 void input_dev_tpc2fg(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 {
-	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_TRIPLETAP);
+	if (wacom_wac->features->device_type == BTN_TOOL_DOUBLETAP) {
+		input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_TRIPLETAP);
+		input_dev->evbit[0] |= BIT_MASK(EV_MSC);
+		input_dev->mscbit[0] |= BIT_MASK(MSC_SERIAL);
+	}
 }
 
 static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc, 
@@ -344,14 +351,16 @@ static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hi
 			    case HID_USAGE_X:
 				if (usage == WCM_DESKTOP) {
 					if (finger) {
-						features->touch_x_max =
+						features->device_type = BTN_TOOL_DOUBLETAP;
+						features->x_max =
 							wacom_le16_to_cpu(&report[i + 3]);
-						features->touch_x_res =
+						features->x_phy =
 							wacom_le16_to_cpu(&report[i + 6]);
 						features->unit = report[i + 9];
 						features->unitExpo = report[i + 11];
 						i += 12;
 					} else if (pen) {
+						features->device_type = BTN_TOOL_PEN;
 						features->x_max = (wacom_le16_to_cpu(&report[i+3]));
 						i += 4;
 					}
@@ -367,20 +376,22 @@ static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hi
 			    case HID_USAGE_Y:
 				if (usage == WCM_DESKTOP) {
 					if (finger) {
+						features->device_type = BTN_TOOL_DOUBLETAP;
 						if (strstr(features->name, "Wacom ISDv4 E")) {
-							features->touch_y_max =
+							features->y_max =
 								wacom_le16_to_cpu(&report[i + 3]);
-							features->touch_y_res =
+							features->y_phy =
 								wacom_le16_to_cpu(&report[i + 6]);
 							i += 7;
 						} else {
-							features->touch_y_max =
-								features->touch_x_max;
-							features->touch_y_res =
+							features->y_max =
+								features->x_max;
+							features->y_phy =
 								wacom_le16_to_cpu(&report[i + 3]);
 							i += 4;
 						}
 					} else if (pen) {
+						features->device_type = BTN_TOOL_PEN;
 						features->y_max = (wacom_le16_to_cpu(&report[i+3]));
 						i += 4;
 					}
@@ -453,6 +464,10 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	wacom_wac->features = get_wacom_feature(id);
 	BUG_ON(wacom_wac->features->pktlen > WACOM_PKGLEN_MAX);
 
+	/* default device to penabled */
+	if (features->device_type)
+		features->device_type = BTN_TOOL_PEN;	
+
 	input_dev->name = wacom_wac->features->name;
 	wacom->wacom_wac = wacom_wac;
 	usb_to_input_id(dev, &input_dev->id);
@@ -466,10 +481,7 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 
 	endpoint = &intf->cur_altsetting->endpoint[0].desc;
 
-	/* Initialize touch_x_max and touch_y_max in case it is not defined */
 	if (wacom_wac->features->type == TABLETPC || wacom_wac->features->type == TABLETPC2FG) {
-		wacom_wac->features->touch_x_max = 1023;
-		wacom_wac->features->touch_y_max = 1023;
 
 		/* TabletPC need to retrieve the physical and logical maximum from report descriptor */
 		if (usb_get_extra_descriptor(interface, HID_DEVICET_HID, &hid_desc)) {
@@ -482,14 +494,16 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 		error = wacom_parse_hid(intf, hid_desc, wacom_wac);
 		if (error)
 			goto fail2;
-	} else {
-		wacom_wac->features->touch_x_max = 0;
-		wacom_wac->features->touch_y_max = 0;
+
+		/* touch device found but size is not defined. use default */
+		if (wacom_wac->features->device_type == BTN_TOOL_DOUBLETAP && !wacom_wac->features->x_max) {
+			wacom_wac->features->x_max = 1023;
+			wacom_wac->features->y_max = 1023;
+		}
 	}
 
 	input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
-	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOOL_PEN) | BIT_MASK(BTN_STYLUS) | 
-			BIT_MASK(BTN_TOUCH);
+	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOUCH);
 	input_set_abs_params(input_dev, ABS_X, 0, wacom_wac->features->x_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, wacom_wac->features->y_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, wacom_wac->features->pressure_max, 0, 0);

@@ -25,7 +25,7 @@
 static Bool serialDetect(LocalDevicePtr pDev);
 static Bool serialInit(LocalDevicePtr pDev, char* id, float *version);
 
-static int serialInitTablet(LocalDevicePtr local, char* id, float *version);
+static int serialInitTablet(LocalDevicePtr pDev, char* id, float *version);
 static void serialInitIntuos(WacomCommonPtr common, const char* id, float version);
 static void serialInitIntuos2(WacomCommonPtr common, const char* id, float version);
 static void serialInitCintiq(WacomCommonPtr common, const char* id, float version);
@@ -700,7 +700,7 @@ static int serialParseProtocol5(LocalDevicePtr local, const unsigned char* data)
 	/* Protocol 5 devices support 2 data channels */
 	channel = data[0] & 0x01;
 
-	/* pick up where we left off, minus relative values */
+	 /* pick up where we left off, minus relative values */
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
@@ -1269,9 +1269,7 @@ static void serialParseP4Common(LocalDevicePtr local,
 			(ds->device_type == ERASER_ID))
 		{
 			/* send a prox-out for old device */
-			WacomDeviceState out = { 0 };
-			out.device_type = ERASER_ID;
-			xf86WcmEvent(common, 0, &out);
+			xf86WcmSoftOut(common, 0);
 			ds->device_type = cur_type;
 		}
 	}

@@ -33,9 +33,9 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
+extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
-extern void xf86WcmInitialScreens(LocalDevicePtr local);
 
 /*****************************************************************************
  * xf86WcmSetPadCoreMode
@@ -119,27 +119,6 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 
 	/* Share this call with sendAButton in wcmCommon.c */
 	return xf86WcmDevSwitchModeCall(local, mode);
-}
-
-/*****************************************************************************
- * xf86WcmChangeScreen
- ****************************************************************************/
-
-void xf86WcmChangeScreen(LocalDevicePtr local, int value)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-
-	if (priv->screen_no != value)
-	{
-		priv->screen_no = value;
-		xf86ReplaceIntOption(local->options, "ScreenNo", value);
-	}
-
-	if (priv->screen_no != -1)
-		priv->currentScreen = priv->screen_no;
-	xf86WcmInitialScreens(local);
-	xf86WcmInitialCoordinates(local, 0);
-	xf86WcmInitialCoordinates(local, 1);
 }
 
 /*****************************************************************************
@@ -345,8 +324,8 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPY, 0);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, priv->wcmMaxX);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, priv->wcmMaxY);
+		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxX);
+		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) 
@@ -979,9 +958,9 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_TOPY:
 		return 0;
 	case XWACOM_PARAM_BOTTOMX:
-		return priv->wcmMaxX;
+		return common->wcmMaxX;
 	case XWACOM_PARAM_BOTTOMY:
-		return priv->wcmMaxY;		
+		return common->wcmMaxY;		
 	case XWACOM_PARAM_BUTTON1:
 	case XWACOM_PARAM_BUTTON2:
 	case XWACOM_PARAM_BUTTON3:
