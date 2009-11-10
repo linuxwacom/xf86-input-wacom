@@ -88,7 +88,7 @@
  * 2009-11-6 47-pc0.8.5-2 - Validate tool type associated with device
  */
 
-static const char identification[] = "$Identification: 47-0.8.5-2 $";
+static const char identification[] = "$Identification: 47-0.8.5-3 $";
 
 /****************************************************************************/
 
@@ -317,10 +317,20 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		arealist = toollist->arealist;
 		for (; arealist; arealist=arealist->next)
 		{
-			if (!arealist->bottomX) 
-				arealist->bottomX = common->wcmMaxX;
+			if (!arealist->bottomX)
+			{
+				if ( !IsTouch(priv) )
+					arealist->bottomX = common->wcmMaxX;
+				else
+					arealist->bottomX = common->wcmMaxTouchX;
+			}
 			if (!arealist->bottomY)
-				arealist->bottomY = common->wcmMaxY;
+			{
+				if ( !IsTouch(priv) )
+					arealist->bottomY = common->wcmMaxY;
+				else
+					arealist->bottomY = common->wcmMaxTouchY;
+			}
 		}
 	}
 

@@ -324,8 +324,16 @@ static int xf86WcmSetParam(LocalDevicePtr local, int param, int value)
 	    case XWACOM_PARAM_XYDEFAULT:
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPX, 0);
 		xf86WcmSetParam (local, XWACOM_PARAM_TOPY, 0);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxX);
-		xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
+		if ( !IsTouch(priv) )
+		{
+			xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxX);
+			xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxY);
+		}
+		else
+		{
+			xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMX, common->wcmMaxTouchX);
+			xf86WcmSetParam (local, XWACOM_PARAM_BOTTOMY, common->wcmMaxTouchY);
+		}
 		break;
 	    case XWACOM_PARAM_MMT:
 		if ((value != 0) && (value != 1)) 
@@ -958,9 +966,15 @@ static int xf86WcmGetDefaultParam(LocalDevicePtr local, int param)
 	case XWACOM_PARAM_TOPY:
 		return 0;
 	case XWACOM_PARAM_BOTTOMX:
-		return common->wcmMaxX;
+		if ( !IsTouch(priv) )
+			return common->wcmMaxX;
+		else
+			return common->wcmMaxTouchX;
 	case XWACOM_PARAM_BOTTOMY:
-		return common->wcmMaxY;		
+		if ( !IsTouch(priv) )
+			return common->wcmMaxY;		
+		else
+			return common->wcmMaxTouchY;
 	case XWACOM_PARAM_BUTTON1:
 	case XWACOM_PARAM_BUTTON2:
 	case XWACOM_PARAM_BUTTON3:

@@ -63,16 +63,23 @@ int xf86WcmInitArea(LocalDevicePtr local)
 	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
 	double screenRatio, tabletRatio;
+	int bottomx = common->wcmMaxX, bottomy = common->wcmMaxY;
 
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmInitArea\n"));
 
+	if (IsTouch(priv))
+	{
+		bottomx = common->wcmMaxTouchX, 
+		bottomy = common->wcmMaxTouchY;
+	}
+
 	/* Verify Box */
-	if (priv->topX > common->wcmMaxX)
+	if (priv->topX > bottomx)
 	{
 		area->topX = priv->topX = 0;
 	}
 
-	if (priv->topY > common->wcmMaxY)
+	if (priv->topY > bottomy)
 	{
 		area->topY = priv->topY = 0;
 	}
@@ -81,14 +88,14 @@ int xf86WcmInitArea(LocalDevicePtr local)
 	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 	if (priv->bottomX < priv->topX || !priv->bottomX)
 	{
-		area->bottomX = priv->bottomX = common->wcmMaxX;
+		area->bottomX = priv->bottomX = bottomx;
 	}
 
 	/* set unconfigured bottom to max */
 	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomY < priv->topY || !priv->bottomY)
 	{
-		area->bottomY = priv->bottomY = common->wcmMaxY;
+		area->bottomY = priv->bottomY = bottomy;
 	}
 
 	if (priv->twinview > TV_XINERAMA)
@@ -121,23 +128,23 @@ int xf86WcmInitArea(LocalDevicePtr local)
 	{
 
 		screenRatio = ((double)priv->maxWidth / (double)priv->maxHeight);
-		tabletRatio = ((double)(common->wcmMaxX - priv->topX) /
-				(double)(common->wcmMaxY - priv->topY));
+		tabletRatio = ((double)(bottomx - priv->topX) /
+				(double)(bottomy - priv->topY));
 
 		DBG(2, priv->debugLevel, ErrorF("screenRatio = %.3g, "
 			"tabletRatio = %.3g\n", screenRatio, tabletRatio));
 
 		if (screenRatio > tabletRatio)
 		{
-			area->bottomX = priv->bottomX = common->wcmMaxX;
-			area->bottomY = priv->bottomY = (common->wcmMaxY - priv->topY) *
+			area->bottomX = priv->bottomX = bottomx;
+			area->bottomY = priv->bottomY = (bottomy - priv->topY) *
 				tabletRatio / screenRatio + priv->topY;
 		}
 		else
 		{
-			area->bottomX = priv->bottomX = (common->wcmMaxX - priv->topX) *
+			area->bottomX = priv->bottomX = (bottomx - priv->topX) *
 				screenRatio / tabletRatio + priv->topX;
-			area->bottomY = priv->bottomY = common->wcmMaxY;
+			area->bottomY = priv->bottomY = bottomy;
 		}
 	}
 	/* end keep shape */ 
@@ -213,6 +220,12 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	WacomCommonPtr common = priv->common;
 	int bottomx = common->wcmMaxX, bottomy = common->wcmMaxY;
 
+	if (IsTouch(priv))
+	{
+		bottomx = common->wcmMaxTouchX, 
+		bottomy = common->wcmMaxTouchY;
+	}
+
 	xf86WcmMappingFactor(local);
 
 	/* x ax */
@@ -228,7 +241,10 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				bottomx -= priv->tvoffsetX;
 		}
 
-		resolution = common->wcmResolX;
+		if (!IsTouch(priv))
+			resolution = common->wcmResolX;
+		else
+			resolution = common->wcmTouchResolX;
 #ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
@@ -255,7 +271,10 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 				bottomy -= priv->tvoffsetY;
 		}
 
-		resolution = common->wcmResolY;
+		if (!IsTouch(priv))
+			resolution = common->wcmResolY;
+		else
+			resolution = common->wcmTouchResolY;
 #ifdef WCM_XORG_TABLET_SCALING
 		/* Ugly hack for Xorg 7.3, which doesn't call xf86WcmDevConvert
 		 * for coordinate conversion at the moment */
@@ -742,8 +761,16 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	DBG(10, priv->debugLevel, ErrorF("rotateOneTool for \"%s\" \n", priv->local->name));
 
-	oldMaxX = common->wcmMaxX;
-	oldMaxY = common->wcmMaxY;
+	if ( !IsTouch(priv) )
+	{
+		oldMaxX = common->wcmMaxX;
+		oldMaxY = common->wcmMaxY;
+	}
+	else
+	{
+		oldMaxX = common->wcmMaxTouchX;
+		oldMaxY = common->wcmMaxTouchY;
+	}
 
 	tmpTopX = priv->topX;
 	tmpBottomX = priv->bottomX;
@@ -752,8 +779,16 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
 	{
-	    common->wcmMaxX = oldMaxY;
-	    common->wcmMaxY = oldMaxX;
+		if ( !IsTouch(priv) )
+		{
+		    common->wcmMaxX = oldMaxY;
+		    common->wcmMaxY = oldMaxX;
+		}
+		else
+		{
+		    common->wcmMaxTouchX = oldMaxY;
+		    common->wcmMaxTouchY = oldMaxX;
+		}
 	}
 
 	switch (common->wcmRotate) {
@@ -815,13 +850,26 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 		/* rotate all devices at once! else they get misaligned */
 		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
 		{
-		    oldMaxX = common->wcmMaxX;
-		    oldMaxY = common->wcmMaxY;
+		    if ( !IsTouch(priv) )
+		    {
+			oldMaxX = common->wcmMaxX;
+			oldMaxY = common->wcmMaxY;
+		    }
+		    else
+		    {
+			oldMaxX = common->wcmMaxTouchX;
+			oldMaxY = common->wcmMaxTouchY;
+		    }
 
 		    if (oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
 		    {
 			common->wcmMaxX = oldMaxY;
 			common->wcmMaxY = oldMaxX;
+		    }
+		    else
+		    {
+			common->wcmMaxTouchX = oldMaxY;
+			common->wcmMaxTouchY = oldMaxX;
 		    }
 
 		    tmpTopX = tmppriv->topX;

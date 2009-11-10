@@ -235,7 +235,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			/* (data[2] & 0x07) == 0 is for resistive touch */
 			if (!(data[2] & 0x07) && data[1])
 			{
-				common->wcmMaxX = common->wcmMaxY = (int)(1 << data[1]);
+				common->wcmMaxTouchX = common->wcmMaxTouchY = (int)(1 << data[1]);
 			}
 
 			if ((data[0] & 0x41) && (data[2] & 0x07))
@@ -257,7 +257,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				/* touch logical size for tablet PC with touch */
 				if (data[1])
 				{
-					common->wcmMaxX = common->wcmMaxY = (int)(1 << data[1]);
+					common->wcmMaxTouchX = common->wcmMaxTouchY = (int)(1 << data[1]);
 				}
 
 				/* Max capacity */
@@ -265,9 +265,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 				if (common->wcmMaxCapacity)
 				{
-					common->wcmResolX = common->wcmMaxX / ( 2540 * 
+					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
 						((data[3] << 9) | (data[4] << 2) | ((data[2] & 0x60) >> 5)));
-					common->wcmResolX = common->wcmMaxX / ( 2540 * 
+					common->wcmTouchResolX = common->wcmMaxTouchX / ( 2540 * 
 						((data[5] << 9) | (data[6] << 2) | ((data[2] & 0x18) >> 3)));
 				}
 			}

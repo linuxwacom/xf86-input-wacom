@@ -204,14 +204,16 @@ LocalDevicePtr xf86WcmAllocate(char* name, int flag)
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max tool logical X value */
 	common->wcmMaxY = 0;               /* max tool logical Y value */
-        common->wcmMaxZ = 0;               /* max Z value */
-	common->wcmResolX = 0;               /* tool X resolution in 
-				            * points/inch for penabled
-				            * points/mm for touch */
-	common->wcmResolY = 0;               /* tool Y resolution in 
-				            * points/inch for penabled
-				            * points/mm for touch */
-        common->wcmMaxCapacity = 0;        /* max capacity value */
+ 	common->wcmMaxTouchX = 0;          /* max touch logical X value */
+	common->wcmMaxTouchY = 0;          /* max touch logical Y value */
+	common->wcmMaxZ = 0;               /* max Z value */
+	common->wcmResolX = 0;             /* tool X resolution in 
+				            * points/inch for penabled */
+	common->wcmTouchResolX = 0;        /* touch X resolution in points/mm */
+	common->wcmResolY = 0;             /* tool Y resolution in 
+				            * points/inch for penabled */
+	common->wcmTouchResolY = 0;        /* touch y resolution in points/mm */
+	common->wcmMaxCapacity = 0;        /* max capacity value */
  	common->wcmMaxDist = 0;            /* max distance value */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */

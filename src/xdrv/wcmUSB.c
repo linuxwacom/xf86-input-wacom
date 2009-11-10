@@ -670,7 +670,10 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl xmax value.\n");
 		return !Success;
 	}
-	common->wcmMaxX = absinfo.maximum;
+	if ( !IsTouch(priv) )
+		common->wcmMaxX = absinfo.maximum;
+	else
+		common->wcmMaxTouchX = absinfo.maximum;
 
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
@@ -678,14 +681,17 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		ErrorF("WACOM: unable to ioctl ymax value.\n");
 		return !Success;
 	}
-	common->wcmMaxY = absinfo.maximum;
+	if ( !IsTouch(priv) )
+		common->wcmMaxY = absinfo.maximum;
+	else
+		common->wcmMaxTouchY = absinfo.maximum;
 
 	/* max finger strip X for tablets with Expresskeys 
 	 * or touch physical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
-		if (common->wcmTouchDefault)
-			common->wcmResolX = absinfo.maximum;
+		if ( IsTouch(priv) )
+			common->wcmTouchResolX = absinfo.maximum;
 		else
 			common->wcmMaxStripX = absinfo.maximum;
 
@@ -697,18 +703,18 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or touch physical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
-		if (common->wcmTouchDefault)
-			common->wcmResolY = absinfo.maximum;
+		if ( IsTouch(priv) )
+			common->wcmTouchResolY = absinfo.maximum;
 		else
 			common->wcmMaxStripY = absinfo.maximum;
 	}
 
-	if (common->wcmTouchDefault && common->wcmMaxX && common->wcmResolX)
+	if (IsTouch(priv) && common->wcmMaxTouchX && common->wcmTouchResolX)
 	{
-		common->wcmResolX = (int)(((double)common->wcmResolX)
-			 / ((double)common->wcmMaxX) + 0.5);
-		common->wcmResolY = (int)(((double)common->wcmResolY)
-			 / ((double)common->wcmMaxY) + 0.5);
+		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
+			 / ((double)common->wcmMaxTouchX) + 0.5);
+		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
+			 / ((double)common->wcmMaxTouchY) + 0.5);
 	}
 
 	/* max z cannot be configured */

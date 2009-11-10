@@ -633,18 +633,33 @@ void xf86WcmRotateCoordinates(LocalDevicePtr local, int x, int y)
 	{
 		tmp_coord = x;
 		x = y;
-		y = common->wcmMaxY - tmp_coord;
+
+		if (!IsTouch(priv))
+			y = common->wcmMaxY - tmp_coord;
+		else
+			y = common->wcmMaxTouchY - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = y;
 		y = x;
-		x = common->wcmMaxX - tmp_coord;
+		if (!IsTouch(priv))
+			x = common->wcmMaxX - tmp_coord;
+		else
+			x = common->wcmMaxTouchX - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		x = common->wcmMaxX - x;
-		y = common->wcmMaxY - y;
+		if (!IsTouch(priv))
+		{
+			x = common->wcmMaxX - x;
+			y = common->wcmMaxY - y;
+		}
+		else
+		{
+			x = common->wcmMaxTouchX - x;
+			y = common->wcmMaxTouchY - y;
+		}
 	}
 }
 
