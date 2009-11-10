@@ -551,11 +551,6 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 			}
 		}
 	}
-	else
-	{
-		xf86Msg(X_ERROR, "Vendor %x is not supported by this driver.\n", sID.vendor);
-		return FALSE;
-	}
 
 	if (!common->wcmModel)
 	{
