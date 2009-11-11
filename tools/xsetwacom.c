@@ -46,6 +46,7 @@ typedef struct _param
 } param_t;
 
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -274,7 +275,7 @@ static param_t parameters[] =
 
 	{ "Mode",
 		"Switches cursor movement mode (default is absolute/on). ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, set_mode
 	},
 
 	{ "TPCButton",
@@ -816,6 +817,30 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	else
 		map[btn_no - 1] = atoi(argv[0]);
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
+	XFlush(dpy);
+}
+
+static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	int mode = Absolute;
+	if (argc < 1)
+	{
+		usage();
+		return;
+	}
+
+	if (strcasecmp(argv[0], "Relative") == 0)
+		mode = Relative;
+	else if (strcasecmp(argv[0], "Absolute") == 0)
+		mode = Absolute;
+	else
+	{
+		printf("Invalid device mode. Use 'Relative' or 'Absolute'.\n");
+		return;
+	}
+
+
+	XSetDeviceMode(dpy, dev, mode);
 	XFlush(dpy);
 }
 
