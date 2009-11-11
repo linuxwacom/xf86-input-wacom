@@ -1516,50 +1516,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		/* User-requested transformations come last */
 
-		#if 0
-
-		/* not quite ready for prime-time;
-		 * it needs to be possible to disable,
-		 * and returning throttle to zero does
-		 * not reset the wheel, yet. */
-
-		int sampleTime, ticks;
-
-		/* get the sample time */
-		sampleTime = GetTimeInMillis(); 
-		
-		ticks = ThrottleToRate(ds->throttle);
-
-		/* throttle filter */
-		if (!ticks)
-		{
-			priv->throttleLimit = -1;
-		}
-		else if ((priv->throttleStart > sampleTime) ||
-			(priv->throttleLimit == -1))
-		{
-			priv->throttleStart = sampleTime;
-			priv->throttleLimit = sampleTime + ticks;
-		}
-		else if (priv->throttleLimit < sampleTime)
-		{
-			DBG(6, priv->debugLevel, ErrorF("LIMIT REACHED: "
-				"s=%d l=%d n=%d v=%d "
-				"N=%d\n", priv->throttleStart,
-				priv->throttleLimit, sampleTime,
-				ds->throttle, sampleTime + ticks));
-
-			ds->relwheel = (ds->throttle > 0) ? 1 :
-					(ds->throttle < 0) ? -1 : 0;
-
-			priv->throttleStart = sampleTime;
-			priv->throttleLimit = sampleTime + ticks;
-		}
-		else
-			priv->throttleLimit = priv->throttleStart + ticks;
-
-		#endif /* throttle */
-
 		if ((!(priv->flags & ABSOLUTE_FLAG)) && (!IsPad(priv)))
 		{
 			/* To improve the accuracy of relative x/y,
