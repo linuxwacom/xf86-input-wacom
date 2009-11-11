@@ -282,7 +282,7 @@ static param_t parameters[] =
 		"Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
-		NULL, 0, 0, not_implemented
+		WACOM_PROP_HOVER, 8, 0, NULL
 	},
 
 	{ "Touch",
@@ -363,7 +363,7 @@ static param_t parameters[] =
 	{ "RawFilter",
 		"Enables and disables filtering of raw data, "
 		"default is true/on.",
-		NULL, 0, 0, not_implemented
+		WACOM_PROP_SAMPLE, 8, 0, NULL
 	},
 
 	{ "SpeedLevel",
@@ -374,7 +374,7 @@ static param_t parameters[] =
 	{ "ClickForce",
 		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
 		"(default is 6)",
-		NULL, 0, 0, not_implemented
+		WACOM_PROP_PRESSURE_THRESHOLD, 32, 0, NULL
 	},
 
 	{ "Accel",
