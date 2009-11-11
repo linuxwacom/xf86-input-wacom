@@ -1021,7 +1021,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 				(event->code == BTN_TOOL_AIRBRUSH))
 			{
 				ds->device_type = STYLUS_ID;
-				ds->device_id = STYLUS_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = STYLUS_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				DBG(6, common->debugLevel, ErrorF(
 					"USB stylus detected %x\n",
@@ -1030,7 +1032,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			else if (event->code == BTN_TOOL_RUBBER)
 			{
 				ds->device_type = ERASER_ID;
-				ds->device_id = ERASER_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = ERASER_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				if (ds->proximity)
 					ds->proximity = ERASER_PROX;
@@ -1045,7 +1049,9 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 					"USB mouse detected %x (value=%d)\n",
 					event->code, event->value));
 				ds->device_type = CURSOR_ID;
-				ds->device_id = CURSOR_DEVICE_ID;
+				/* V5 tools use ABS_MISC to report device_id */
+				if (common->wcmProtocolLevel == 4)
+					ds->device_id = CURSOR_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 			}
 			else if (event->code == BTN_TOOL_FINGER)
