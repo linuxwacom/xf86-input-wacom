@@ -42,11 +42,11 @@ typedef struct _param
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
 	const int prop_offset;	/* offset (index) into the property values */
-	void (*func)(Display *dpy, XDevice *dev, int argc, char **argv); /* handler function, if appropriate */
+	void (*func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
 } param_t;
 
-static void map_button(Display *dpy, XDevice *dev, int argc, char **argv);
-static void not_implemented(Display *dpy, XDevice *dev, int argc, char **argv)
+static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
 }
@@ -778,6 +778,47 @@ static void list(Display *dpy, int argc, char **argv)
 		printf("unknown argument to list.\n");
 }
 
+static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	int nmap = 256;
+	unsigned char map[nmap];
+	int i, btn_no = 0;
+	int slen = strlen("Button");
+	int ref_button = -1; /* xsetwacom set <name> Button1 "Button 5" */
+
+	if (argc <= 0)
+		return;
+
+	for(i = 0; i < strlen(argv[0]); i++)
+	{
+		if (!isdigit(argv[0][i]))
+		{
+			if (strlen(argv[0]) >= slen + 2 &&
+			    strncmp(argv[0], "button ", slen + 1) == 0)
+			{
+				ref_button = atoi(&argv[0][slen + 1]);
+				break;
+			}
+			printf("Invalid argument '%s' for button mapping.\n",
+				argv[0]);
+			return;
+		}
+	}
+
+	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+		return;
+
+	btn_no = atoi(&param->name[strlen("Button")]);
+
+	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
+	if (ref_button != -1)
+		map[btn_no - 1] = map[ref_button - 1];
+	else
+		map[btn_no - 1] = atoi(argv[0]);
+	XSetDeviceButtonMapping(dpy, dev, map, nmap);
+	XFlush(dpy);
+}
+
 static void set(Display *dpy, int argc, char **argv)
 {
 	param_t *param;
@@ -810,7 +851,7 @@ static void set(Display *dpy, int argc, char **argv)
 		goto out;
 	} else if (param->func)
 	{
-		param->func(dpy, dev, argc - 2, &argv[2]);
+		param->func(dpy, dev, param, argc - 2, &argv[2]);
 		goto out;
 	}
 
