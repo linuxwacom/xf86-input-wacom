@@ -329,13 +329,19 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             if (values[0] >= values[2])
             {
                 values[0] = 0;
-                values[2] = priv->wcmMaxX;
+		if (!IsTouch(priv))
+	            values[2] = common->wcmMaxX;
+		else
+	            values[2] = common->wcmMaxTouchX;
             }
 
             if (values[1] >= values[3]);
             {
                 values[1] = 0;
-                values[3] = priv->wcmMaxY;
+		if (!IsTouch(priv))
+	            values[3] = common->wcmMaxY;
+		else
+	            values[3] = common->wcmMaxTouchY;
             }
 
             priv->topX = values[0];

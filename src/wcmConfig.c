@@ -93,10 +93,6 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->topY = 0;              /* Y top */
 	priv->bottomX = 0;           /* X bottom */
 	priv->bottomY = 0;           /* Y bottom */
-	priv->wcmMaxX = 0;           /* max tool logical X value */
-	priv->wcmMaxY = 0;           /* max tool logical Y value */
-	priv->wcmResolX = 0;         /* tool X resolution in points/inch */
-	priv->wcmResolY = 0;         /* tool Y resolution in points/inch */
 	priv->sizeX = 0;	     /* active X size */
 	priv->sizeY = 0;	     /* active Y size */
 	priv->factorX = 0.0;         /* X factor */
@@ -1004,18 +1000,20 @@ static int wcmParseOptions(LocalDevicePtr local)
 
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
-
-	priv->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
+	if (!IsTouch(priv))
+		common->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
 					 common->wcmMaxX);
+	else
+		common->wcmMaxTouchX = xf86SetIntOption(local->options, "MaxX",
+					 common->wcmMaxTouchX);
 
-	/* Update tablet logical max X */
-	if (!IsTouch(priv)) common->wcmMaxX = priv->wcmMaxX;
 
-	priv->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
+	if (!IsTouch(priv))
+		common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
 					 common->wcmMaxY);
-
-	/* Update tablet logical max Y */
-	if (!IsTouch(priv)) common->wcmMaxY = priv->wcmMaxY;
+	else
+		common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
+					 common->wcmMaxTouchY);
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 					   common->wcmMaxZ);

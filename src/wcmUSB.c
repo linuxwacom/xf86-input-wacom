@@ -657,7 +657,10 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", local->name);
 		return !Success;
 	}
-	common->wcmMaxX = absinfo.maximum;
+	if (!IsTouch(priv))
+		common->wcmMaxX = absinfo.maximum;
+	else
+		common->wcmMaxTouchX = absinfo.maximum;
 
 	/* max y */
 	if (ioctl(local->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
@@ -671,14 +674,17 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", local->name);
 		return !Success;
 	}
-	common->wcmMaxY = absinfo.maximum;
+	if (!IsTouch(priv))
+		common->wcmMaxY = absinfo.maximum;
+	else
+		common->wcmMaxTouchY = absinfo.maximum;
 
 	/* max finger strip X for tablets with Expresskeys
 	 * or max touch logical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
-		if (common->wcmTouchDefault)
-			common->wcmMaxTouchX = absinfo.maximum;
+		if (IsTouch(priv))
+			common->wcmTouchResolX = absinfo.maximum;
 		else
 			common->wcmMaxStripX = absinfo.maximum;
 	}
@@ -687,27 +693,13 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or max touch logical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
-		if (common->wcmTouchDefault)
-			common->wcmMaxTouchY = absinfo.maximum;
+		if (IsTouch(priv))
+			common->wcmTouchResolY = absinfo.maximum;
 		else
 			common->wcmMaxStripY = absinfo.maximum;
 	}
 
-	/* touch physical X for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_Z), &absinfo) == 0)
-	{
-		if (common->wcmTouchDefault)
-			common->wcmTouchResolX = absinfo.maximum;
-	}
-
-	/* touch physical Y for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RZ), &absinfo) == 0)
-	{
-		if (common->wcmTouchDefault)
-			common->wcmTouchResolY = absinfo.maximum;
-	}
-
-	if (common->wcmTouchDefault && common->wcmTouchResolX)
+	if (IsTouch(priv) && common->wcmTouchResolX && common->wcmMaxTouchX)
 	{
 		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
 			 / ((double)common->wcmMaxTouchX) + 0.5);

@@ -748,18 +748,32 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		tmp_coord = x;
 		x = y;
-		y = priv->wcmMaxY - tmp_coord;
+		if (!IsTouch(priv))
+			y = common->wcmMaxY - tmp_coord;
+		else
+			y = common->wcmMaxTouchY - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = y;
 		y = x;
-		x = priv->wcmMaxX - tmp_coord;
+		if (!IsTouch(priv))
+			x = common->wcmMaxX - tmp_coord;
+		else
+			y = common->wcmMaxTouchX - tmp_coord;
 	}
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		x = priv->wcmMaxX - x;
-		y = priv->wcmMaxY - y;
+		if (!IsTouch(priv))
+		{
+			x = common->wcmMaxX - x;
+			y = common->wcmMaxY - y;
+		}
+		else
+		{
+			x = common->wcmMaxTouchX - x;
+			y = common->wcmMaxTouchY - y;
+		}
 	}
 
 	if (IsCursor(priv)) 
@@ -1899,8 +1913,16 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	DBG(10, priv->debugLevel, ErrorF("rotateOneTool for \"%s\" \n", priv->local->name));
 
-	oldMaxX = priv->wcmMaxX;
-	oldMaxY = priv->wcmMaxY;
+	if (!IsTouch(priv))
+	{
+		oldMaxX = common->wcmMaxX;
+		oldMaxY = common->wcmMaxY;
+	}
+	else
+	{
+		oldMaxX = common->wcmMaxTouchX;
+		oldMaxY = common->wcmMaxTouchY;
+	}
 
 	tmpTopX = priv->topX;
 	tmpBottomX = priv->bottomX;
@@ -1909,8 +1931,16 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
 	{
-	    priv->wcmMaxX = oldMaxY;
-	    priv->wcmMaxY = oldMaxX;
+		if (!IsTouch(priv))
+		{
+		    common->wcmMaxX = oldMaxY;
+		    common->wcmMaxY = oldMaxX;
+		}
+		else
+		{
+		    common->wcmMaxTouchX = oldMaxY;
+		    common->wcmMaxTouchY = oldMaxX;
+		}
 	}
 
 	switch (common->wcmRotate) {
@@ -1973,13 +2003,29 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 		/* rotate all devices at once! else they get misaligned */
 		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
 		{
-		    oldMaxX = tmppriv->wcmMaxX;
-		    oldMaxY = tmppriv->wcmMaxY;
+		    if (!IsTouch(priv))
+		    {
+			oldMaxX = common->wcmMaxX;
+			oldMaxY = common->wcmMaxY;
+		    }
+		    else
+		    {
+			oldMaxX = common->wcmMaxTouchX;
+			oldMaxY = common->wcmMaxTouchY;
+		    }
 
 		    if (oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
 		    {
-			tmppriv->wcmMaxX = oldMaxY;
-			tmppriv->wcmMaxY = oldMaxX;
+			if (!IsTouch(priv))
+			{
+				common->wcmMaxX = oldMaxY;
+				common->wcmMaxY = oldMaxX;
+			}
+			else
+			{
+				common->wcmMaxTouchX = oldMaxY;
+				common->wcmMaxTouchY = oldMaxX;
+			}
 		    }
 
 		    tmpTopX = tmppriv->topX;
