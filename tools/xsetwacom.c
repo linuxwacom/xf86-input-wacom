@@ -612,13 +612,13 @@ static void usage(void)
 	" -v, --verbose              - verbose output\n"
 	" -V, --version              - version info\n"
 	" -d, --display disp_name    - override default display\n"
-	" -s, --shell                - generate shell commands for 'get'\n"
-	" -x, --xconf                - generate X.conf lines for 'get'\n");
+	" -s, --shell                - generate shell commands for 'get' [not implemented]\n"
+	" -x, --xconf                - generate X.conf lines for 'get' [not implemented]\n");
 
 	printf(
 	"\nCommands:\n"
 	" list [dev|param]           - display known devices, parameters \n"
-	" list mod                   - display supported modifier and specific keys for keystokes\n"
+	" list mod                   - display supported modifier and specific keys for keystokes [not implemented}\n"
 	" set dev_name param [values...] - set device parameter by name\n"
 	" get dev_name param [param...] - get current device parameter(s) value by name\n"
 	" getdefault dev_name param [param...] - get device parameter(s) default value by name\n");
@@ -762,7 +762,8 @@ static void list_param(Display *dpy)
 
 	while(param->name)
 	{
-		printf("%-16s - %16s\n", param->name, param->desc);
+		printf("%-16s - %16s%s\n", param->name, param->desc,
+			(param->func == not_implemented) ? " [not implemented]" : "");
 		param++;
 	}
 }
