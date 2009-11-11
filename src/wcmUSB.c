@@ -34,6 +34,10 @@
 #define BTN_TOOL_DOUBLETAP 0x14d
 #endif
 
+#ifndef BTN_TOOL_TRIPLETAP
+#define BTN_TOOL_TRIPLETAP 0x14e
+#endif
+
 static Bool usbDetect(LocalDevicePtr);
 Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
 
@@ -1055,18 +1059,41 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 			}
 			else if (event->code == BTN_TOOL_DOUBLETAP)
 			{
+				WacomChannelPtr pChannel = common->wcmChannel + channel;
+				WacomDeviceState dslast = pChannel->valid.state;
 				DBG(6, common->debugLevel, ErrorF(
 					"USB Touch detected %x (value=%d)\n",
 					event->code, event->value));
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = event->value;
+				/* time stamp for 2FGT gesture events */
+				if ((ds->proximity && !dslast.proximity) ||
+					    (!ds->proximity && dslast.proximity))
+					ds->sample = (int)GetTimeInMillis();
 				/* left button is always pressed for touch without capacity 
 				 * For touch with capacity, left button event will be decided
 				 * in wcmCommon.c by capacity threshold
 				 */
 				if (common->wcmCapacityDefault < 0)
 					MOD_BUTTONS (0, event->value);
+			}
+			else if (event->code == BTN_TOOL_TRIPLETAP)
+			{
+				WacomChannelPtr pChannel = common->wcmChannel + channel;
+				WacomDeviceState dslast = pChannel->valid.state;
+				DBG(6, common->debugLevel, ErrorF(
+					"USB Touch second finger detected %x (value=%d)\n",
+					event->code, event->value));
+				ds->device_type = TOUCH_ID;
+				ds->device_id = TOUCH_DEVICE_ID;
+				ds->proximity = event->value;
+				/* time stamp for 2GT gesture events */
+				if ((ds->proximity && !dslast.proximity) ||
+					    (!ds->proximity && dslast.proximity))
+					ds->sample = (int)GetTimeInMillis();
+				/* Second finger events will be considered in
+				 * combination with the first finger data */
 			}
 			else if ((event->code == BTN_STYLUS) ||
 				(event->code == BTN_MIDDLE))
