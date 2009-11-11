@@ -22,6 +22,8 @@
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -499,6 +501,56 @@ static void version(void)
 {
 	printf("%d.%d.%d\n", PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR,
 			     PACKAGE_VERSION_PATCHLEVEL);
+}
+
+static XDevice* find_device(Display *display, char *name)
+{
+	XDeviceInfo	*devices;
+	XDeviceInfo	*found = NULL;
+	XDevice		*dev = NULL;
+	int		i, num_devices;
+	int		len = strlen(name);
+	Bool		is_id = True;
+	XID		id = -1;
+
+	for(i = 0; i < len; i++)
+	{
+		if (!isdigit(name[i]))
+		{
+			is_id = False;
+			break;
+		}
+	}
+
+	if (is_id)
+		id = atoi(name);
+
+	devices = XListInputDevices(display, &num_devices);
+
+	for(i = 0; i < num_devices; i++)
+	{
+		if (((devices[i].use >= IsXExtensionDevice)) &&
+			((!is_id && strcmp(devices[i].name, name) == 0) ||
+			 (is_id && devices[i].id == id)))
+		{
+			if (found) {
+				fprintf(stderr, "Warning: There are multiple devices named \"%s\".\n"
+						"To ensure the correct one is selected, please use "
+						"the device ID instead.\n\n", name);
+				found = NULL;
+				break;
+			} else {
+				found = &devices[i];
+			}
+		}
+	}
+
+	if (found)
+		dev = XOpenDevice(display, found->id);
+
+	XFreeDeviceList(devices);
+
+	return dev;
 }
 
 static void list_one_device(Display *dpy, XDeviceInfo *info)
