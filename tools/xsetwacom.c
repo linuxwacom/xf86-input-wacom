@@ -263,7 +263,7 @@ static param_t parameters[] =
 
 	{ "PressCurve",
 		"Bezier curve for pressure (default is 0 0 100 100). ",
-		WACOM_PROP_PRESSURECURVE, 0, 0, NULL, /* FIXME: handler func */
+		WACOM_PROP_PRESSURECURVE, 32, 0, NULL,
 	},
 
 	{ "TwinView",
@@ -830,6 +830,7 @@ static void set(Display *dpy, int argc, char **argv)
 	double val;
 	long *n;
 	char *b;
+	int i;
 
 	if (argc < 3)
 	{
@@ -863,31 +864,34 @@ static void set(Display *dpy, int argc, char **argv)
 		goto out;
 	}
 
-	val = atof(argv[2]);
-
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
 
-	switch(param->prop_format)
+	for (i = 0; i < argc - 2; i++)
 	{
-	    case 8:
-		if (format != param->prop_format || type != XA_INTEGER) {
-		    fprintf(stderr, "   %-23s = format mismatch (%d)\n",
-			    param->name, format);
-		    break;
+		val = atof(argv[i + 2]);
+
+		switch(param->prop_format)
+		{
+			case 8:
+				if (format != param->prop_format || type != XA_INTEGER) {
+					fprintf(stderr, "   %-23s = format mismatch (%d)\n",
+							param->name, format);
+					break;
+				}
+				b = (char*)data;
+				b[param->prop_offset + i] = rint(val);
+				break;
+			case 32:
+				if (format != param->prop_format || type != XA_INTEGER) {
+					fprintf(stderr, "   %-23s = format mismatch (%d)\n",
+							param->name, format);
+					break;
+				}
+				n = (long*)data;
+				n[param->prop_offset + i] = rint(val);
+				break;
 		}
-		b = (char*)data;
-		b[param->prop_offset] = rint(val);
-		break;
-	    case 32:
-		if (format != param->prop_format || type != XA_INTEGER) {
-		    fprintf(stderr, "   %-23s = format mismatch (%d)\n",
-			    param->name, format);
-		    break;
-		}
-		n = (long*)data;
-		n[param->prop_offset] = rint(val);
-		break;
 	}
 
 	XChangeDeviceProperty(dpy, dev, prop, type, format,
