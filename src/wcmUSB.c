@@ -399,12 +399,6 @@ static Bool usbDetect(LocalDevicePtr local)
 /*****************************************************************************
  * wcmusbInit --
  ****************************************************************************/
-#define BIT(x)		(1<<((x) & (BITS_PER_LONG - 1)))
-#define BITS_PER_LONG	(sizeof(long) * 8)
-#define NBITS(x)	((((x)-1)/BITS_PER_LONG)+1)
-#define ISBITSET(x,y)	((x)[LONG(y)] & BIT(y))
-#define OFF(x)		((x)%BITS_PER_LONG)
-#define LONG(x)		((x)/BITS_PER_LONG)
 
 /* Key codes used to mark tablet buttons -- must be in sync
  * with the keycode array in wacom.c kernel driver.
