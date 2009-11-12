@@ -195,7 +195,8 @@ int wcmIsAValidType(LocalDevicePtr local, const char* type)
 	/* test if the tool is defined in the kernel */
 	if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys)), keys) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: wcmIsAValidType unable to ioctl key bits.\n");
+		xf86Msg(X_ERROR, "%s: wcmIsAValidType unable to ioctl key bits.\n",
+			local->name);
 		return FALSE;
 	}
 	close(fd);
@@ -674,3 +675,4 @@ int wcmAutoProbeDevice(LocalDevicePtr local)
 	}
 	return 1;
 }
+/* vim: set noexpandtab shiftwidth=8: */
