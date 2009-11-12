@@ -28,15 +28,13 @@
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
-extern int wcmIsAValidType(char* device, LocalDevicePtr local,
-			      unsigned short id, char* type);
+extern Bool xf86WcmIsWacomDevice (char* fname);
+extern int wcmIsAValidType(LocalDevicePtr local, const char* type);
 extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
-extern int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
-			      unsigned short id);
+extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 extern int wcmParseOptions(LocalDevicePtr local);
-extern void wcmHotplugOthers(LocalDevicePtr local, unsigned short id);
+extern void wcmHotplugOthers(LocalDevicePtr local);
 
 static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
 
@@ -241,7 +239,7 @@ error:
 	return 0;
 }
 
-static int xf86WcmAllocateByType(LocalDevicePtr local, char *type)
+static int xf86WcmAllocateByType(LocalDevicePtr local, const char *type)
 {
 	int rc = 0;
 
@@ -422,10 +420,9 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	LocalDevicePtr local = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	char		*type;
+	const char*	type;
 	char*		device;
 	static int	numberWacom = 0;
-	struct input_id id;
 	int		need_hotplug = 0;
 
 	gWacomModule.wcmDrv = drv;
@@ -443,17 +440,17 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
 
-	if(device && !xf86WcmIsWacomDevice(device, &id))
+	if(device && !xf86WcmIsWacomDevice(device))
 		goto SetupProc_fail;
 
 	type = xf86FindOptionValue(local->options, "Type");
-	need_hotplug = wcmNeedAutoHotplug(local, &type, id.product);
+	need_hotplug = wcmNeedAutoHotplug(local, &type);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
 	{
 		/* check if the type is valid for the device */
-		if(!wcmIsAValidType(device, local, id.product, type))
+		if(!wcmIsAValidType(local, type))
 			goto SetupProc_fail;
 
 		/* check if the device has been added */
@@ -502,7 +499,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(local, id.product);
+		wcmHotplugOthers(local);
 	}
 
 	/* return the LocalDevice */

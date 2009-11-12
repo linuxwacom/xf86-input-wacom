@@ -63,7 +63,7 @@
 
 void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
 void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
-Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
+Bool xf86WcmIsWacomDevice (char* fname);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
     extern void InitWcmDeviceProperties(LocalDevicePtr local);
@@ -892,18 +892,19 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
-Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
+Bool xf86WcmIsWacomDevice (char* fname)
 {
 	int fd = -1;
+	struct input_id id;
 
 	SYSCALL(fd = open(fname, O_RDONLY));
 	if (fd < 0)
 		return FALSE;
 
-	ioctl(fd, EVIOCGID, id);
+	ioctl(fd, EVIOCGID, &id);
 	SYSCALL(close(fd));
 
-	if (id->vendor == WACOM_VENDOR_ID)
+	if (id.vendor == WACOM_VENDOR_ID)
 		return TRUE;
 	else
 		return FALSE;
@@ -926,11 +927,10 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		for (i = 0; i < EVDEV_MINORS; i++) 
 		{
 			char fname[64];
-			struct input_id id;
 			Bool is_wacom;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
-			is_wacom = xf86WcmIsWacomDevice(fname, &id);
+			is_wacom = xf86WcmIsWacomDevice(fname);
 			if (is_wacom) 
 			{
 				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",

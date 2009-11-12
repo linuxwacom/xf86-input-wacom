@@ -52,6 +52,10 @@
 #define TILT_SIGN_BIT   0x40
 #define TILT_BITS       0x3F
 
+#ifndef BTN_TOOL_DOUBLETAP
+#define BTN_TOOL_DOUBLETAP 0x14d
+#endif
+
 /* defines to discriminate second side button and the eraser */
 #define ERASER_PROX     4
 #define OTHER_PROX      1

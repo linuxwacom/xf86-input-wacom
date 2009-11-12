@@ -33,11 +33,9 @@
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 
-int wcmIsAValidType(char* device, LocalDevicePtr local,
-			      unsigned short id, char* type);
-int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
-			      unsigned short id);
-void wcmHotplugOthers(LocalDevicePtr local, unsigned short id);
+int wcmIsAValidType(LocalDevicePtr local, const char *type);
+int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
+void wcmHotplugOthers(LocalDevicePtr local);
 int wcmAutoProbeDevice(LocalDevicePtr local);
 int wcmParseOptions(LocalDevicePtr local);
 int wcmIsDuplicate(char* device, LocalDevicePtr local);
@@ -149,193 +147,60 @@ ret:
 	return isInUse;
 }
 
-static struct wcmProduct
-{
-	__u16 productID;
-	__u16 flags;
-} validType [] =
-{
-	{ 0x00, STYLUS_ID }, /* PenPartner */
-	{ 0x10, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire */
-	{ 0x11, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 4x5 */
-	{ 0x12, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire2 5x7 */
-
-	{ 0x13, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 4x5 */
-	{ 0x14, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Graphire3 6x8 */
-
-	{ 0x15, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 4x5 */
-	{ 0x16, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 */
-	{ 0x17, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 4x5 */
-	{ 0x18, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* BambooFun 6x8 */
-	{ 0x19, STYLUS_ID | ERASER_ID                      }, /* Bamboo1 Medium*/
-	{ 0x81, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Graphire4 6x8 BlueTooth */
-
-	{ 0x20, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 4x5 */
-	{ 0x21, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 6x8 */
-	{ 0x22, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 9x12 */
-	{ 0x23, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x12 */
-	{ 0x24, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos 12x18 */
-
-	{ 0x03, STYLUS_ID | ERASER_ID }, /* PTU600 */
-	{ 0x30, STYLUS_ID | ERASER_ID }, /* PL400 */
-	{ 0x31, STYLUS_ID | ERASER_ID }, /* PL500 */
-	{ 0x32, STYLUS_ID | ERASER_ID }, /* PL600 */
-	{ 0x33, STYLUS_ID | ERASER_ID }, /* PL600SX */
-	{ 0x34, STYLUS_ID | ERASER_ID }, /* PL550 */
-	{ 0x35, STYLUS_ID | ERASER_ID }, /* PL800 */
-	{ 0x37, STYLUS_ID | ERASER_ID }, /* PL700 */
-	{ 0x38, STYLUS_ID | ERASER_ID }, /* PL510 */
-	{ 0x39, STYLUS_ID | ERASER_ID }, /* PL710 */
-	{ 0xC0, STYLUS_ID | ERASER_ID }, /* DTF720 */
-	{ 0xC2, STYLUS_ID | ERASER_ID }, /* DTF720a */
-	{ 0xC4, STYLUS_ID | ERASER_ID }, /* DTF521 */
-	{ 0xC7, STYLUS_ID | ERASER_ID }, /* DTU1931 */
-
-	{ 0x41, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 4x5 */
-	{ 0x42, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8 */
-	{ 0x43, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 9x12 */
-	{ 0x44, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x12 */
-	{ 0x45, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 12x18 */
-	{ 0x47, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Intuos2 6x8  */
-
-	{ 0x60, STYLUS_ID }, /* Volito */
-	{ 0x61, STYLUS_ID }, /* PenStation */
-	{ 0x62, STYLUS_ID }, /* Volito2 4x5 */
-	{ 0x63, STYLUS_ID }, /* Volito2 2x3 */
-	{ 0x64, STYLUS_ID }, /* PenPartner2 */
-
-	{ 0x65, STYLUS_ID | ERASER_ID | CURSOR_ID |  PAD_ID }, /* Bamboo */
-	{ 0x69, STYLUS_ID | ERASER_ID | CURSOR_ID }, /* Bamboo1 */
-
-	{ 0xB0, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 4x5 */
-	{ 0xB1, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 6x8 */
-	{ 0xB2, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 9x12 */
-	{ 0xB3, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 12x12 */
-	{ 0xB4, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 12x19 */
-	{ 0xB5, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 6x11 */
-	{ 0xB7, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos3 4x6 */
-
-	{ 0xB8, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 4x6 */
-	{ 0xB9, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 6x9 */
-	{ 0xBA, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 8x13 */
-	{ 0xBB, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Intuos4 12x19*/
-
-	{ 0x3F, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 21UX */
-	{ 0xC5, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 20WSX */
-	{ 0xC6, STYLUS_ID | ERASER_ID | CURSOR_ID | PAD_ID }, /* Cintiq 12WX */
-
-	{ 0x90, STYLUS_ID | ERASER_ID }, /* TabletPC 0x90 */
-	{ 0x93, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x93 */
-	{ 0x9A, STYLUS_ID | ERASER_ID  | TOUCH_ID }, /* TabletPC 0x9A */
-	{ 0x9F, TOUCH_ID }, /* CapPlus  0x9F */
-	{ 0xE2, TOUCH_ID }, /* TabletPC 0xE2 */
-	{ 0xE3, STYLUS_ID | ERASER_ID | TOUCH_ID },  /* TabletPC 0xE3 */
-
-	/* Catchall for unknown products */
-	{ 0xFF, STYLUS_ID | ERASER_ID | TOUCH_ID | CURSOR_ID | PAD_ID }
-};
-
 static struct
 {
 	const char* type;
-	__u16 id;
-} wcmTypeAndID [] =
+	__u16 tool;
+} wcmType [] =
 {
-	{ "stylus", STYLUS_ID },
-	{ "eraser", ERASER_ID },
-	{ "cursor", CURSOR_ID },
-	{ "touch",  TOUCH_ID  },
-	{ "pad",    PAD_ID    }
+	{ "stylus", BTN_TOOL_PEN       },
+	{ "stylus", BTN_TOOL_BRUSH     },
+	{ "stylus", BTN_TOOL_PENCIL    },
+	{ "stylus", BTN_TOOL_AIRBRUSH  },
+	{ "eraser", BTN_TOOL_RUBBER    },
+	{ "cursor", BTN_TOOL_MOUSE     },
+	{ "cursor", BTN_TOOL_LENS      },
+	{ "touch",  BTN_TOOL_DOUBLETAP },
+	{ "pad",    BTN_TOOL_FINGER    }
 };
 
-static struct wcmProduct* wcmFindProduct(unsigned short id)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(validType); i++)
-		if (validType[i].productID == id)
-			return &validType[i];
-
-	return &validType[ARRAY_SIZE(validType) - 1];
-}
-
-static Bool checkValidType(char* type, struct wcmProduct *product)
+static Bool checkValidType(const char* type, unsigned long* keys)
 {
 	int j, ret = FALSE;
 
 	/* walkthrough all types */
-	for (j = 0; j < ARRAY_SIZE(wcmTypeAndID); j++)
+	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
-		if (!strcmp(wcmTypeAndID[j].type, type))
-			if (wcmTypeAndID[j].id & product->flags)
-			{
+		if (!strcmp(wcmType[j].type, type))
+			if (ISBITSET (keys, wcmType[j].tool))
 				ret = TRUE;
-				break;
-			}
 	}
 	return ret;
 }
 
-static Bool aTouchPort(char* device)
+/* validate tool type for device/product */
+int wcmIsAValidType(LocalDevicePtr local, const char* type)
 {
+	int ret = 0;
 	int fd = -1;
 	unsigned long keys[NBITS(KEY_MAX)];
+	char* device;
+
+	device = xf86SetStrOption(local->options, "Device", NULL);
 
 	SYSCALL(fd = open(device, O_RDONLY));
 	if (fd < 0)
 		return FALSE;
 
-	/* test if BTN_TOOL_DOUBLETAP set or not for touch device */
+	/* test if the tool is defined in the kernel */
 	if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys)), keys) < 0)
 	{
-		xf86Msg(X_ERROR, "WACOM: aTouchPort unable to ioctl key bits.\n");
+		xf86Msg(X_ERROR, "WACOM: wcmIsAValidType unable to ioctl key bits.\n");
 		return FALSE;
 	}
 	close(fd);
 
-	/* BTN_TOOL_DOUBLETAP is used to define touch tools */
-	if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
-		return TRUE;
-	else
-		return FALSE;
-}
-
-/* validate tool type for device/product */
-int wcmIsAValidType(char* device, LocalDevicePtr local,
-			   unsigned short id, char* type)
-{
-	int ret = 0;
-	struct wcmProduct *product;
-
-	if (!type)
-	    return ret;
-	else
-	{
-		product = wcmFindProduct(id);
-
-		/* touch tool has its own port.
-		 * we need to distinguish it from the others first */
-		if (checkValidType("touch", product))
-		{
-			if (aTouchPort(device))
-			{
-				/* A touch port. Type has to be touch */
-				if (!strcmp(type, "touch"))
-					return 1;
-				else
-					return 0;
-			}
-			else
-			{
-				/* Not a touch port. Type can not be touch */
-				if (!strcmp(type, "touch"))
-					return 0;
-			}
-		}
-	}
-
-	/* not a touch tool or touch is not support for the id
-	 * walkthrough all types */
-	ret = checkValidType(type, product);
+	ret = checkValidType(type, keys);
 
 	return ret;
 }
@@ -403,24 +268,23 @@ static void wcmHotplug(LocalDevicePtr local, const char *type)
 	wcmFreeInputOpts(input_options);
 }
 
-void wcmHotplugOthers(LocalDevicePtr local, unsigned short id)
+void wcmHotplugOthers(LocalDevicePtr local)
 {
 	int i, skip = 1;
-	struct wcmProduct *product;
-
-	product = wcmFindProduct(id);
+	char*		device;
 
         xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", local->name);
+	device = xf86SetStrOption(local->options, "Device", NULL);
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
-	for (i = 0; i < ARRAY_SIZE(wcmTypeAndID); i++)
+	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmTypeAndID[i].id & product->flags)
+		if (wcmIsAValidType(local, wcmType[i].type))
 		{
 			if (skip)
 				skip = 0;
 			else
-				wcmHotplug(local, wcmTypeAndID[i].type);
+				wcmHotplug(local, wcmType[i].type);
 		}
 	}
         xf86Msg(X_INFO, "%s: hotplugging completed.\n", local->name);
@@ -435,11 +299,9 @@ void wcmHotplugOthers(LocalDevicePtr local, unsigned short id)
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
  */
-int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
-			      unsigned short id)
+int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 {
 	char *source = xf86CheckStrOption(local->options, "_source", "");
-	struct wcmProduct *product;
 	int i;
 
 	if (*type) /* type specified, don't hotplug */
@@ -450,14 +312,12 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, char **type,
 		return 0;
 
 	/* no type specified, so we need to pick the first one applicable
-	 * for our product */
-	product = wcmFindProduct(id);
-
-	for (i = 0; i < ARRAY_SIZE(wcmTypeAndID); i++)
+	 * for our device */
+	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmTypeAndID[i].id & product->flags)
+		if (wcmIsAValidType(local, wcmType[i].type))
 		{
-			*type = strdup(wcmTypeAndID[i].type);
+			*type = strdup(wcmType[i].type);
 			break;
 		}
 	}
