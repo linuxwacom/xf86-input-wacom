@@ -439,10 +439,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86CollectInputOptions(local, default_options, NULL);
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
-
-	if(device && !xf86WcmIsWacomDevice(device))
-		goto SetupProc_fail;
-
 	type = xf86FindOptionValue(local->options, "Type");
 	need_hotplug = wcmNeedAutoHotplug(local, &type);
 
