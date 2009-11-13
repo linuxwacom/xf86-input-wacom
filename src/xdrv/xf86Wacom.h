@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,7 +47,24 @@
 #undef BUS_ISA
 #endif
 
+/* Defines to acccess new tool types in kernel */
+#ifndef BTN_TOOL_DOUBLETAP
+#define BTN_TOOL_DOUBLETAP 0x14d
+#endif
+
 #define MAX_USB_EVENTS 32
+
+/* Defines to access kernels defines */
+#define HEADER_BIT      0x80
+#define ZAXIS_SIGN_BIT  0x40
+#define ZAXIS_BIT       0x04
+#define ZAXIS_BITS      0x3F
+#define POINTER_BIT     0x20
+#define PROXIMITY_BIT   0x40
+#define BUTTON_FLAG     0x08
+#define BUTTONS_BITS    0x78
+#define TILT_SIGN_BIT   0x40
+#define TILT_BITS       0x3F
 
 #endif /* WCM_ENABLE_LINUXINPUT */
 

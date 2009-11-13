@@ -29,10 +29,6 @@
 #define BTN_TASK 0x117
 #endif
 
-#ifndef BTN_TOOL_DOUBLETAP
-#define BTN_TOOL_DOUBLETAP 0x14d
-#endif
-
 #ifndef BTN_TOOL_TRIPLETAP
 #define BTN_TOOL_TRIPLETAP 0x14e
 #endif

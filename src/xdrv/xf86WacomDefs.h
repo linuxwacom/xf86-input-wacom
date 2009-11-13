@@ -57,17 +57,6 @@
 #define WACOM_PKGLEN_GRAPHIRE 	 8
 #define WACOM_PKGLEN_TPC 	 9
 
-#define HEADER_BIT      0x80
-#define ZAXIS_SIGN_BIT  0x40
-#define ZAXIS_BIT       0x04
-#define ZAXIS_BITS      0x3F
-#define POINTER_BIT     0x20
-#define PROXIMITY_BIT   0x40
-#define BUTTON_FLAG     0x08
-#define BUTTONS_BITS    0x78
-#define TILT_SIGN_BIT   0x40
-#define TILT_BITS       0x3F
-
 /* defines to discriminate second side button and the eraser */
 #define ERASER_PROX     4
 #define OTHER_PROX      1

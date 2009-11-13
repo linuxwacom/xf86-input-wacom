@@ -65,7 +65,7 @@
  * 2008-01-17 47-pc0.7.9-7 - Preparing for hotplug-aware driver
  * 2008-02-27 47-pc0.7.9-8 - Support Cintiq 20
  * 2008-03-07 47-pc0.7.9-9 - Support keystrokes in wacomcpl
- * 2008-04-07 47-pc0.7.9-11 - Synchronized databases
+ * 2008-04-07 47-pc0.7.9-11- Synchronized databases
  * 2008-05-06 47-pc0.8.0-1 - new release
  * 2008-05-14 47-pc0.8.0-2 - Update rotation routine
  * 2008-07-09 47-pc0.8.1   - new release
@@ -85,10 +85,11 @@
  * 2009-10-15 47-pc0.8.4-4 - added calibration-only wacomcpl
  * 2009-10-19 47-pc0.8.5   - Added support for TPC (0xE2, 0xE3 & 0x9F)
  * 2009-10-31 47-pc0.8.5-1 - Avoid duplicated devices for Xorg 1.4 and later
- * 2009-11-6 47-pc0.8.5-2 - Validate tool type associated with device
+ * 2009-11-6 47-pc0.8.5-2  - Validate tool type associated with device
+ * 2009-11-6 47-pc0.8.5-4  - Allow multiple tools to be defined for one type
  */
 
-static const char identification[] = "$Identification: 47-0.8.5-3 $";
+static const char identification[] = "$Identification: 47-0.8.5-4 $";
 
 /****************************************************************************/
 

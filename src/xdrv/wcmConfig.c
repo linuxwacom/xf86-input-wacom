@@ -21,7 +21,7 @@
 #include "wcmFilter.h"
 #ifdef WCM_XORG_XSERVER_1_4
     extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
-    extern Bool wcmIsAValidType(char* device, LocalDevicePtr local, unsigned short id);
+    extern Bool wcmIsAValidType(char* device, LocalDevicePtr local);
     extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
 #endif
 
@@ -477,7 +477,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
                         goto SetupProc_fail;
 
                /* check if the type is valid for the device */
-                if(!wcmIsAValidType(device, fakeLocal, id.product))
+                if(!wcmIsAValidType(device, fakeLocal))
                         goto SetupProc_fail;
 
                /* check if the device has been added */
