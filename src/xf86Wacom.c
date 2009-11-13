@@ -36,17 +36,14 @@
  *		for providing Xorg, HAL and freedesktop support
  */
 
-#include "xf86Wacom.h"
-#include "wcmFilter.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "xf86Wacom.h"
-#include "wcmFilter.h"
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
