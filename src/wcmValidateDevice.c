@@ -40,31 +40,47 @@ int wcmAutoProbeDevice(LocalDevicePtr local);
 int wcmParseOptions(LocalDevicePtr local);
 int wcmIsDuplicate(char* device, LocalDevicePtr local);
 
-/* xf86WcmCheckTypeAndSource - Check if both devices have the same type OR
- * the device has been used in xorg.conf: don't add the tool by hal/udev
- * if user has defined at least one tool for the device in xorg.conf */
-static Bool xf86WcmCheckTypeAndSource(LocalDevicePtr local, LocalDevicePtr pLocal)
+/* xf86WcmCheckSource - Check if there is another source defined this device
+ * before or not: don't add the tool by hal/udev if user has defined at least
+ * one tool for the device in xorg.conf. One device can have multiple tools
+ * with the same type to individualize tools with serial number or areas */
+static Bool xf86WcmCheckSource(LocalDevicePtr local, dev_t min_maj)
 {
-	int match = 1;
+	int match = 0;
+	char* device;
 	char* fsource = xf86CheckStrOption(local->options, "_source", "");
-	char* psource = xf86CheckStrOption(pLocal->options, "_source", "");
-	char* type = xf86FindOptionValue(local->options, "Type");
-#ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr) pLocal->private;
-#endif
+	LocalDevicePtr pDevices = xf86FirstLocalDevice();
+	WacomCommonPtr pCommon = NULL;
+	char* psource;
 
-	/* only add the new tool if the matching major/minor
-	 * was from the same source */
-	if (!strcmp(fsource, psource))
+	for (; pDevices != NULL; pDevices = pDevices->next)
 	{
-		/* and the tools have different types */
-		if (strcmp(type, xf86FindOptionValue(pLocal->options, "Type")))
-			match = 0;
-	}
-	DBG(2, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmCheckTypeAndSource "
-		"device %s from %s %s \n", local->name, fsource,
-		match ? "will be added" : "will be ignored"));
+		device = xf86CheckStrOption(pDevices->options, "Device", NULL);
 
+		/* device can be NULL on some distros */
+		if (!device || !strstr(pDevices->drv->driverName, "wacom"))
+			continue;
+
+		if (local != pDevices)
+		{
+			psource = xf86CheckStrOption(pDevices->options, "_source", "");
+			pCommon = ((WacomDevicePtr)pDevices->private)->common;
+			if (pCommon->min_maj &&
+				pCommon->min_maj == min_maj)
+			{
+				/* only add the new tool if the matching major/minor
+				* was from the same source */
+				if (strcmp(fsource, psource))
+				{
+					match = 1;
+					break;
+				}
+			}
+		}
+	}
+	if (match)
+		xf86Msg(X_WARNING, "%s: device file already in use by %s. "
+			"Ignoring.\n", local->name, pDevices->name);
 	return match;
 }
 
@@ -77,18 +93,21 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 {
 	struct stat st;
 	int isInUse = 0;
-	LocalDevicePtr localDevices = NULL;
-	WacomCommonPtr common = NULL;
+	char* lsource = xf86CheckStrOption(local->options, "_source", "");
+
+	local->fd = -1;
+
+	/* always allow xorg.conf defined tools to be added */
+	if (!strlen(lsource)) goto ret;
 
 	/* open the port */
         SYSCALL(local->fd = open(device, O_RDONLY, 0));
-
 	if (local->fd < 0)
 	{
 		/* can not open the device */
 		xf86Msg(X_ERROR, "%s: Unable to open Wacom device \"%s\".\n",
 			local->name, device);
-		isInUse = 2;
+		isInUse = 1;
 		goto ret;
 	}
 
@@ -104,31 +123,11 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 
 	if (st.st_rdev)
 	{
-		localDevices = xf86FirstLocalDevice();
-
-		for (; localDevices != NULL; localDevices = localDevices->next)
+		/* device matches with another added port */
+		if (xf86WcmCheckSource(local, st.st_rdev))
 		{
-			device = xf86CheckStrOption(localDevices->options, "Device", NULL);
-
-			/* device can be NULL on some distros */
-			if (!device || !strstr(localDevices->drv->driverName, "wacom"))
-				continue;
-
-			if (local == localDevices)
-				continue;
-
-			common = ((WacomDevicePtr)localDevices->private)->common;
-			if (common->min_maj && common->min_maj == st.st_rdev)
-			{
-				/* device matches with another added port */
-				if (xf86WcmCheckTypeAndSource(local, localDevices))
-				{
-					xf86Msg(X_WARNING, "%s: device file already in use by %s. "
-						"Ignoring.\n", local->name, localDevices->name);
-					isInUse = 4;
-					goto ret;
-				}
-			}
+			isInUse = 3;
+			goto ret;
 		}
 	}
 	else
@@ -136,7 +135,7 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 		/* major/minor can never be 0, right? */
 		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
 			"Something was wrong.\n", local->name);
-		isInUse = 5;
+		isInUse = 4;
 	}
 ret:
 	if (local->fd >= 0)
@@ -154,12 +153,8 @@ static struct
 } wcmType [] =
 {
 	{ "stylus", BTN_TOOL_PEN       },
-	{ "stylus", BTN_TOOL_BRUSH     },
-	{ "stylus", BTN_TOOL_PENCIL    },
-	{ "stylus", BTN_TOOL_AIRBRUSH  },
 	{ "eraser", BTN_TOOL_RUBBER    },
 	{ "cursor", BTN_TOOL_MOUSE     },
-	{ "cursor", BTN_TOOL_LENS      },
 	{ "touch",  BTN_TOOL_DOUBLETAP },
 	{ "pad",    BTN_TOOL_FINGER    }
 };
