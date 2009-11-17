@@ -47,6 +47,8 @@
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
+#include <X11/extensions/XKB.h>
+#include <xkbsrv.h>
 #endif
 
 void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
@@ -435,7 +437,6 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	return;
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 /* Define our own keymap so we can send key-events with our own device and not
  * rely on inputInfo.keyboard */
 static KeySym keymap[] = {
@@ -565,6 +566,7 @@ static KeySym keymap[] = {
 	/* 0xf6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol
 };
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 	{ XK_Shift_L,	ShiftMask },
 	{ XK_Shift_R,	ShiftMask },
@@ -758,6 +760,27 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
 				xf86WcmKbdCtrlCallback) == FALSE) {
 			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", local->name);
+			return FALSE;
+		}
+#elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, xf86WcmKbdCtrlCallback)) {
+#define SYMS_PER_KEY 2
+			KeySymsRec syms;
+			CARD8 modmap[MAP_LENGTH];
+			int num_keys = XkbMaxLegalKeyCode - XkbMinLegalKeyCode + 1;
+
+			syms.map = keymap;
+			syms.mapWidth = SYMS_PER_KEY;
+			syms.minKeyCode = XkbMinLegalKeyCode;
+			syms.maxKeyCode = XkbMaxLegalKeyCode;
+
+			memset(modmap, 0, sizeof(modmap));
+			modmap[XkbMinLegalKeyCode + 2] = ShiftMask;
+			XkbApplyMappingChange(local->dev, &syms, syms.minKeyCode, num_keys, NULL, // modmap,
+					serverClient);
+		} else
+		{
+			xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", local->name);
 			return FALSE;
 		}
 #endif

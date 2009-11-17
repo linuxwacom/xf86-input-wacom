@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 #include "Xwacom.h"
+#include <xkbsrv.h>
 
 WacomDeviceClass* wcmDeviceClasses[] =
 {
@@ -307,8 +308,6 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	}
 }
 
-#if 0
-/* FIXME: This needs to be using XKB.*/
 /*****************************************************************************
  * emitKeysym --
  *   Emit a keydown/keyup event
@@ -344,7 +343,7 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 	int i, j, alt_keysym = 0;
 
 	/* Now that we have the keycode look for key index */
-	KeySymsRec *ksr = &keydev->key->curKeySyms;
+	KeySymsRec *ksr = XkbGetCoreMap(keydev);
 
 	for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
 		if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == keysym)
@@ -384,9 +383,11 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 		else
 			xf86Msg (X_WARNING, "%s: Couldn't find key with code %08x on keyboard device %s\n",
 					keydev->name, keysym, keydev->name);
+		xfree(ksr);
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
+	xfree(ksr);
 }
 
 static int wcm_modifier [ ] =
@@ -435,7 +436,6 @@ static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int 
 	else
 		xf86Msg(X_WARNING, "%s: without SendCoreEvents. Cannot emit key events!\n", local->name);
 }
-#endif
 
 /*****************************************************************************
  * sendAButton --
@@ -468,9 +468,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		break;
 
 	case AC_KEY:
-#if 0 /* FIXME: */
 		sendKeystroke(local, priv->button[button], priv->keys[button], mask);
-#endif
 		break;
 
 	case AC_MODETOGGLE:
@@ -647,10 +645,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
-#if 0 /* FIXME */
 		sendKeystroke(local, fakeButton, keyP, 1);
 		sendKeystroke(local, fakeButton, keyP, 0);
-#endif
 	    break;
 
 	    default:
