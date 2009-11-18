@@ -32,14 +32,6 @@
 #include <asm/types.h>
 #include <linux/input.h>
 
-/* keithp - a hack to avoid redefinitions of these in xf86str.h */
-#ifdef BUS_PCI
-#undef BUS_PCI
-#endif
-#ifdef BUS_ISA
-#undef BUS_ISA
-#endif
-
 #define MAX_USB_EVENTS 32
 
 /* max number of input events to read in one read call */
@@ -48,14 +40,9 @@
 #include <misc.h>
 #define inline __inline__
 #include <xf86.h>
-#if !defined(NEED_XF86_TYPES)
-#define NEED_XF86_TYPES
-#endif
-#if !defined(DGUX)
-# include <xisb.h>
-# include <string.h>
-# include <errno.h>
-#endif
+#include <xisb.h>
+#include <string.h>
+#include <errno.h>
 
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
