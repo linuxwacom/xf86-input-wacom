@@ -28,8 +28,6 @@
 #define MAX_USB_EVENTS 32
 #define WACOM_VENDOR_ID 0x056a  /* vendor ID on the kernel device */
 
-#define DEFAULT_SPEED 1.0       /* default relative cursor speed */
-#define MAX_ACCEL 7             /* number of acceleration levels */
 #define DEFAULT_SUPPRESS 2      /* default suppress */
 #define MAX_SUPPRESS 100        /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
@@ -230,8 +228,6 @@ struct _WacomDeviceRec
 	int old_device_id;	/* last in prox device id */
 	int old_serial;		/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
-	double speed;           /* relative mode speed */
-	int accel;              /* relative mode acceleration */
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
 	int twinview;	        /* using twinview mode of gfx card */

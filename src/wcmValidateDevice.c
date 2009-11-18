@@ -617,9 +617,6 @@ int wcmParseOptions(LocalDevicePtr local)
 		}
 	}
 
-	priv->speed = xf86SetRealOption(local->options, "Speed", DEFAULT_SPEED);
-	priv->accel = xf86SetIntOption(local->options, "Accel", 0);
-
 	s = xf86SetStrOption(local->options, "Twinview", NULL);
 	if (s && xf86NameCmp(s, "none") == 0)
 		priv->twinview = TV_NONE;

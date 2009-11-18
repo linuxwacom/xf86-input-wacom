@@ -708,8 +708,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int naxes = priv->naxes;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 	int v3, v4, v5;
-	int no_jitter; 
-	double relacc, param;
 
 	if (priv->serial && serial != priv->serial)
 	{
@@ -820,34 +818,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		x -= priv->oldX;
 		y -= priv->oldY;
-
-		/* don't apply speed for fairly small increments */
-		no_jitter = (priv->speed*3 > 4) ? priv->speed*3 : 4;
-		relacc = (MAX_ACCEL-priv->accel)*(MAX_ACCEL-priv->accel);
-		if (ABS(x) > no_jitter)
-		{
-			param = priv->speed;
-
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(x)/relacc : 0;
-			}
-			/* don't apply acceleration when too fast. */
-			x *= param > 20.00 ? 20.00 : param;
-		}
-		if (ABS(y) > no_jitter)
-		{
-			param = priv->speed;
-			/* apply acceleration only when priv->speed > DEFAULT_SPEED */
-			if (priv->speed > DEFAULT_SPEED )
-			{
-				param += priv->accel > 0 ? abs(y)/relacc : 0;
-
-			}
-			/* don't apply acceleration when too fast. */
-			y *= param > 20.00 ? 20.00 : param;
-		}		
 	}
 
 	if (type != PAD_ID)
@@ -1523,8 +1493,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			 */
 			double deltx = filtered.x - priv->oldX;
 			double delty = filtered.y - priv->oldY;
-			deltx *= priv->factorX*priv->speed;
-			delty *= priv->factorY*priv->speed;
+			deltx *= priv->factorX;
+			delty *= priv->factorY;
 	
 			if (ABS(deltx)<1 && ABS(delty)<1) 
 			{
@@ -1545,9 +1515,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else
 			{
 				int temp = deltx;
-				deltx = (double)temp/(priv->factorX*priv->speed);
+				deltx = (double)temp/(priv->factorX);
 				temp = delty;
-				delty = (double)temp/(priv->factorY*priv->speed);
+				delty = (double)temp/(priv->factorY);
 				filtered.x = deltx + priv->oldX;
 				filtered.y = delty + priv->oldY;
 			}

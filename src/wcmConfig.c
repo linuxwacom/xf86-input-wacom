@@ -116,8 +116,6 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->devReverseCount = 0;   /* flag for relative Reverse call */
 	priv->serial = 0;            /* serial number */
 	priv->screen_no = -1;        /* associated screen */
-	priv->speed = DEFAULT_SPEED; /* rel. mode speed */
-	priv->accel = 0;	     /* rel. mode acceleration */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
