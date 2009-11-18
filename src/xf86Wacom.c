@@ -36,15 +36,6 @@
  *		for providing Xorg, HAL and freedesktop support
  */
 
-/*
- * REVISION HISTORY
- *
- * 2009-06-28 0.8.3-6 - Initial support for xf86-input-wacom with xorg-x11-server 1.6 and HAL
- * 2009-10-23 0.8.4   - Avoid duplicated devices
- */
-
-/****************************************************************************/
-
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #include <sys/stat.h>

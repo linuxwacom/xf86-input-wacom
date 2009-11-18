@@ -16,15 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/*
- * REVISION HISTORY
- *
- * 2009-05-18 0.1 - Initial release as xf86-input-wacom project for xorg 1.6 and hal
- */
-
-
-/****************************************************************************/
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
