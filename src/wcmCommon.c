@@ -1523,7 +1523,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			 */
 			double deltx = filtered.x - priv->oldX;
 			double delty = filtered.y - priv->oldY;
-			deltx *= priv->factorY*priv->speed;
+			deltx *= priv->factorX*priv->speed;
 			delty *= priv->factorY*priv->speed;
 	
 			if (ABS(deltx)<1 && ABS(delty)<1) 
@@ -1545,7 +1545,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else
 			{
 				int temp = deltx;
-				deltx = (double)temp/(priv->factorY*priv->speed);
+				deltx = (double)temp/(priv->factorX*priv->speed);
 				temp = delty;
 				delty = (double)temp/(priv->factorY*priv->speed);
 				filtered.x = deltx + priv->oldX;
