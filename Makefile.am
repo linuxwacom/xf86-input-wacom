@@ -28,7 +28,7 @@ SUBDIRS = fdi src man include
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xorg-wacom.pc
 
-EXTRA_DIST = ChangeLog
+EXTRA_DIST = ChangeLog GPL
 
 MAINTAINERCLEANFILES=ChangeLog
 
