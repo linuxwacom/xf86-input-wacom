@@ -26,8 +26,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
 extern Bool xf86WcmIsWacomDevice (char* fname);
 extern int wcmIsAValidType(LocalDevicePtr local, const char* type);
 extern int wcmIsDuplicate(char* device, LocalDevicePtr local);

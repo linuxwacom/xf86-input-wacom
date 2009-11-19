@@ -32,6 +32,8 @@
 #include <asm/types.h>
 #include <linux/input.h>
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 #define MAX_USB_EVENTS 32
 
 /* max number of input events to read in one read call */
