@@ -158,6 +158,9 @@ static Bool checkValidType(const char* type, unsigned long* keys)
 {
 	int j, ret = FALSE;
 
+	if (!type)
+		return FALSE;
+
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
@@ -315,6 +318,9 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 			break;
 		}
 	}
+
+	if (!*type)
+		return 0;
 
 	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", local->name, *type);
 	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", local->name);
