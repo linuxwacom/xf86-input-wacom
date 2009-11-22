@@ -3,7 +3,7 @@
 <deviceinfo version="0.2">
   <device>
     <match key="info.category" contains="input">
-      <match key="info.product" contains_outof="Wacom;WALTOP">
+      <match key="info.product" contains_outof="Wacom;WALTOP;WACOM">
 	<merge key="input.x11_driver" type="string">wacom</merge>
       </match>
     </match>
@@ -19,16 +19,6 @@
     <match key="info.product" contains="HID 1b96:0001">
       <match key="info.parent" contains="if0">
        <merge key="input.x11_driver" type="string">wacom</merge>
-      </match>
-    </match>
-  </device>
-  <!-- Match the Wacom Bluetooth A5 pen tablet -->
-  <device>
-    <match key="info.capabilities" contains="input.mouse">
-      <match key="info.product" contains="WACOM">
-        <match key="info.product" contains="Tablet">
-          <merge key="input.x11_driver" type="string">wacom</merge>
-        </match>
       </match>
     </match>
   </device>
