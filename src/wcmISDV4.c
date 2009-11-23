@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,8 +78,9 @@ static int xf86WcmSerialValidate(WacomCommonPtr common, const unsigned char* dat
 		{
 			bad = 1;
 			if (i!=0 && (data[i] & HEADER_BIT)) {
-				xf86Msg(X_ERROR, "xf86WcmSerialValidate: bad magic at %d "
-					"v=%x l=%d\n", i, data[i], common->wcmPktLength);
+				xf86Msg(X_WARNING, "xf86WcmSerialValidate: "
+					"bad magic at %d v=%x l=%d\n", i,
+					data[i], common->wcmPktLength);
 				return i;
 			}
 		}
@@ -141,7 +142,8 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	err = xf86WriteSerial(local->fd, WC_ISDV4_STOP, strlen(WC_ISDV4_STOP));
 	if (err == -1)
 	{
-		xf86Msg(X_ERROR, "%s: xf86WcmWrite ISDV4_STOP error : %s\n", local->name, strerror(errno));
+		xf86Msg(X_WARNING, "%s: xf86WcmWrite ISDV4_STOP error : %s\n",
+			 local->name, strerror(errno));
 		return !Success;
 	}
 
@@ -152,8 +154,9 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Send query command to the tablet */
 	if (!xf86WcmWriteWait(local->fd, query))
 	{
-		xf86Msg(X_ERROR, "%s: unable to xf86WcmWrite request %s ISDV4 query command "
-			"after %d tries\n", local->name, query, MAXTRY);
+		xf86Msg(X_WARNING, "%s: unable to xf86WcmWrite request %s "
+			"ISDV4 query command after %d tries\n", local->name,
+			 query, MAXTRY);
 		return !Success;
 	}
 
@@ -170,8 +173,9 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		}
 		else
 		{
-			xf86Msg(X_ERROR, "%s: unable to read ISDV4 %s data "
-				"after %d tries at (%d)\n", local->name, query, MAXTRY, common->wcmISDV4Speed);
+			xf86Msg(X_WARNING, "%s: unable to read ISDV4 %s data "
+				"after %d tries at (%d)\n", local->name, query,
+				 MAXTRY, common->wcmISDV4Speed);
 			return !Success;
 		}
 	}
@@ -193,7 +197,9 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 			xf86WcmWaitForTablet(local->fd, data, 11);
 			if ( !(data[0] & 0x40) )
 			{
-				xf86Msg(X_ERROR, "%s: ISDV4 control data (%x) error in %s query\n", local->name, data[0], query);
+				xf86Msg(X_WARNING, "%s: ISDV4 control data "
+					"(%x) error in %s query\n",
+					local->name, data[0], query);
 				return !Success;
 			}
 		}
