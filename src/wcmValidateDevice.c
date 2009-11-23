@@ -163,7 +163,10 @@ static Bool checkValidType(const char* type, unsigned long* keys)
 	{
 		if (!strcmp(wcmType[j].type, type))
 			if (ISBITSET (keys, wcmType[j].tool))
+			{
 				ret = TRUE;
+				break;
+			}
 	}
 	return ret;
 }
