@@ -251,7 +251,6 @@ struct _WacomDeviceRec
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
-	uint32_t uniq;		/* unique identifier for the parent */
 };
 
 /******************************************************************************

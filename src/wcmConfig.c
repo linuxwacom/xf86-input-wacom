@@ -340,7 +340,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		while(dev)
 		{
 			next = dev->next;
-			if (!dev->isParent && dev->uniq == priv->uniq)
+			if (!dev->isParent)
 			{
 				xf86Msg(X_INFO, "%s: removing dependent device '%s'\n",
 					local->name, dev->local->name);

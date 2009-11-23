@@ -322,11 +322,6 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 	local->options = xf86AddNewOption(local->options, "Type", *type);
 	local->options = xf86ReplaceStrOption(local->options, "_source", "_driver/wacom");
 
-	/* If a device is hotplugged, the current time is taken as uniq
-	 * stamp for this group of devices. On removal, this helps us
-	 * identify which other devices need to be removed. */
-	local->options = xf86ReplaceIntOption(local->options,"_wacom uniq",
-						currentTime.milliseconds);
 	return 1;
 }
 
@@ -338,10 +333,6 @@ int wcmParseOptions(LocalDevicePtr local)
 	int		i, oldButton;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
-
-
-	/* Special option set for auto-hotplugged devices only */
-	priv->uniq = xf86CheckIntOption(local->options, "_wacom uniq", 0);
 
 	/* Optional configuration */
 	priv->debugLevel = xf86SetIntOption(local->options,
