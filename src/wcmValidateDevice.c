@@ -603,18 +603,17 @@ int wcmParseOptions(LocalDevicePtr local)
 	if (common->wcmForceDevice == DEVICE_ISDV4)
         {
 		int val;
-		val = xf86SetIntOption(local->options, "BaudRate", 9600);
+		val = xf86SetIntOption(local->options, "BaudRate", 38400);
 
 		switch(val)
 		{
 			case 38400:
 			case 19200:
-			case 9600:
 				common->wcmISDV4Speed = val;
 				break;
 			default:
 				xf86Msg(X_ERROR, "%s: Illegal speed value "
-					"(must be 9600 or 19200 or 38400).",
+					"(must be 19200 or 38400).",
 					local->name);
 				break;
 		}
