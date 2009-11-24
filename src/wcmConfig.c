@@ -503,7 +503,11 @@ SetupProc_fail:
 	xfree(common);
 	xfree(priv);
 	if (local)
-	    xf86DeleteInput(local, 0);
+	{
+		local->private = NULL;
+		xf86DeleteInput(local, 0);
+	}
+
 	return NULL;
 }
 
