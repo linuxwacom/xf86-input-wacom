@@ -435,12 +435,6 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	return;
 }
 
-/*****************************************************************************
- * xf86WcmRegisterX11Devices --
- *    Register the X11 input devices with X11 core.
- ****************************************************************************/
-
-
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 /* Define our own keymap so we can send key-events with our own device and not
  * rely on inputInfo.keyboard */
