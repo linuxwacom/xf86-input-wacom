@@ -581,7 +581,7 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 #endif
 
 /*****************************************************************************
- * xf86WcmInitialprivSize --
+ * xf86WcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
 
