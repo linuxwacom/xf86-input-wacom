@@ -72,4 +72,10 @@
 /* Atom, 1 value */
 #define WACOM_PROP_TOOL_TYPE "Wacom Tool Type"
 
+/* Atom, X values where X is the number of physical buttons.
+   Each value points to an atom containing the sequence of actions performed
+   if this button is pressed. If the value is None, no action is performed.
+ */
+#define WACOM_PROP_BUTTON_ACTIONS "Wacom Button Actions"
+
 #endif

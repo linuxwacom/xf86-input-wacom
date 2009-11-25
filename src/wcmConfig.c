@@ -123,7 +123,7 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 
 	/* Default button and expresskey values */
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
-		priv->button[i] = (AC_BUTTON | (i + 1));
+		priv->button[i] = i + 1;
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 		for (j=0; j<256; j++)

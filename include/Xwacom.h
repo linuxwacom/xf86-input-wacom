@@ -36,18 +36,26 @@
 
 #define XWACOM_MAX_SAMPLES	20
 
-/* The following flags are used for XWACOM_PARAM_BUTTON# values to mark
+/* The following flags are used for button action property values to mark
  * the type of event that should be emitted when that button is pressed;
- * combined together they form an Action Code (AC).
+ * combined together they form an Action Code (AC). Each button has up to
+ * 256 actions on press, where a zero terminates the actions.
+ *
+ * e.g.
+ * AC_KEY | AC_KEYBTNPRESS | XK_H is a key press for 'H'.
+ * AC_BUTTON | AC_KEYBTNPRESS | 1 is a button press for 1
+ * AC_BUTTON | 1 is a button release for 1
+ *
+ * if no action is set for a button, the button behaves normally.
  */
 #define AC_CODE             0x0000ffff	/* Mask to isolate button number or key code */
-#define AC_BUTTON           0x00000000	/* Emit button events */
 #define AC_KEY              0x00010000	/* Emit key events */
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
 #define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
 #define AC_DISPLAYTOGGLE    0x00040000 /* Toggle among screens */
+#define AC_BUTTON           0x00080000	/* Emit button events */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
-#define AC_NUM_KEYS         0x0ff00000  /* The mask to isolate number of keys to send */
+#define AC_KEYBTNPRESS      0x00100000  /* bit set for key/button presses */
 #define AC_CORE             0x10000000	/* Always emit a core event */
 #define AC_EVENT            0xf00f0000	/* Mask to isolate event flag */
 

@@ -391,51 +391,35 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 #endif
 }
 
-static int wcm_modifier [ ] =
+static void toggleDisplay(LocalDevicePtr local)
 {
-	XK_Shift_L,
-	XK_Control_L,
-	XK_Meta_L,
-	XK_Alt_L,
-	XK_Super_L,
-	XK_Hyper_L,
-	0
-};
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common = priv->common;
 
-static int WcmIsModifier(int keysym)
-{
-	int j = 0, match = 0;
-	while (wcm_modifier[j])
-		if (wcm_modifier[j++] == keysym)
-		{
-			match = 1;
-			break;
-		}
-	return match;
-}
-
-static void sendKeystroke(LocalDevicePtr local, int button, unsigned *keyP, int kPress)
-{
-	if (button & AC_CORE)
+	if (priv->numScreen > 1)
 	{
-		int i = 0;
-
-		for (i=0; i<((button & AC_NUM_KEYS)>>20); i++)
+		if (IsPad(priv)) /* toggle display for all tools except pad */
 		{
-			/* modifier and key down then key up events */
-			if(kPress)
+			WacomDevicePtr tmppriv;
+			for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
 			{
-				emitKeysym (local->dev, keyP[i], 1);
-				if (!WcmIsModifier(keyP[i]))
-					emitKeysym (local->dev, keyP[i], 0);
+				if (!IsPad(tmppriv))
+				{
+					int screen = tmppriv->screen_no;
+					if (++screen >= tmppriv->numScreen)
+						screen = -1;
+					xf86WcmChangeScreen(tmppriv->local, screen);
+				}
 			}
-			/* modifier up events */
-			else if (WcmIsModifier(keyP[i]))
-				emitKeysym (local->dev, keyP[i], 0);
+		}
+		else /* toggle display only for the selected tool */
+		{
+			int screen = priv->screen_no;
+			if (++screen >= priv->numScreen)
+				screen = -1;
+			xf86WcmChangeScreen(local, screen);
 		}
 	}
-	else
-		xf86Msg(X_WARNING, "%s: without SendCoreEvents. Cannot emit key events!\n", local->name);
 }
 
 /*****************************************************************************
@@ -446,8 +430,11 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+#ifdef DEBUG
 	WacomCommonPtr common = priv->common;
+#endif
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+	int i;
 
 	int naxes = priv->naxes;
 
@@ -461,69 +448,62 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		button, mask, priv->button[button], 
 		local->name, (priv->button[button] & AC_CORE) ? "yes" : "no"));
 
-	switch (priv->button[button] & AC_TYPE)
+	if (!priv->keys[button][0])
 	{
-	case AC_BUTTON:
-		xf86PostButtonEvent(local->dev, is_absolute, priv->button[button] & AC_CODE,
-			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
-		break;
+		/* No button action configured, send button */
+		xf86PostButtonEvent(local->dev, is_absolute, priv->button[button], (mask != 0), 0, naxes,
+				    rx, ry, rz, v3, v4, v5);
+		return;
+	}
 
-	case AC_KEY:
-		sendKeystroke(local, priv->button[button], priv->keys[button], mask);
-		break;
+	/* Actions only trigger on press, not release */
+	for (i = 0; mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	{
+		unsigned int action = priv->keys[button][i];
 
-	case AC_MODETOGGLE:
-		if (mask)
+		if (!action)
+			break;
+
+		switch ((action & AC_TYPE))
 		{
-			int mode = Absolute;
-			if (is_absolute)
-				mode = Relative;
-			xf86WcmDevSwitchModeCall(local, mode);
-		}
-		break;
-
-	case AC_DISPLAYTOGGLE:
-		if (mask && priv->numScreen > 1)
-		{
-			if (IsPad(priv)) /* toggle display for all tools except pad */
-			{
-				WacomDevicePtr tmppriv;
-				for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
+			case AC_BUTTON:
 				{
-					if (!IsPad(tmppriv))
-					{
-						int screen = tmppriv->screen_no;
-						if (++screen >= tmppriv->numScreen)
-							screen = -1;
-						xf86WcmChangeScreen(tmppriv->local, screen);
-					}
+					int btn_no = (action & AC_CODE);
+					int is_press = (action & AC_KEYBTNPRESS);
+					xf86PostButtonEvent(local->dev,
+							    is_absolute, btn_no,
+							    is_press, 0, naxes,
+							    rx, ry, rz, v3, v4, v5);
 				}
-			}
-			else /* toggle display only for the selected tool */
-			{
-				int screen = priv->screen_no;
-				if (++screen >= priv->numScreen)
-					screen = -1;
-				xf86WcmChangeScreen(local, screen);
-			}
+				break;
+			case AC_KEY:
+				{
+					int key_sym = (action & AC_CODE);
+					int is_press = (action & AC_KEYBTNPRESS);
+					emitKeysym(local->dev, key_sym, is_press);
+				}
+				break;
+			case AC_MODETOGGLE:
+				if (mask)
+					xf86WcmDevSwitchModeCall(local,
+							(is_absolute) ? Relative : Absolute); /* not a typo! */
+				break;
+			/* FIXME: this should be implemented as 4 values,
+			 * there's no reason to have a DBLCLICK */
+			case AC_DBLCLICK:
+				xf86PostButtonEvent(local->dev, is_absolute,
+						    1,1,0,naxes, rx,ry,rz,v3,v4,v5);
+				xf86PostButtonEvent(local->dev, is_absolute,
+						    1,0,0,naxes,rx,ry,rz,v3,v4,v5);
+				xf86PostButtonEvent(local->dev, is_absolute,
+						    1,1,0,naxes, rx,ry,rz,v3,v4,v5);
+				xf86PostButtonEvent(local->dev, is_absolute,
+						    1,0,0,naxes,rx,ry,rz,v3,v4,v5);
+				break;
+			case AC_DISPLAYTOGGLE:
+				toggleDisplay(local);
+				break;
 		}
-		break;
-
-	case AC_DBLCLICK:
-		if (mask)
-		{
-			/* Left button down */
-			xf86PostButtonEvent(local->dev, is_absolute,
-				1,1,0,naxes, rx,ry,rz,v3,v4,v5);
-			/* Left button up */
-			xf86PostButtonEvent(local->dev, is_absolute,
-				1,0,0,naxes,rx,ry,rz,v3,v4,v5);
-		}
-
-		/* Left button down/up upon mask is 1/0 */
-		xf86PostButtonEvent(local->dev, is_absolute, 1, 
-			mask != 0,0,naxes,rx,ry,rz,v3,v4,v5);
-		break;
 	}
 }
 
@@ -646,8 +626,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
-		sendKeystroke(local, fakeButton, keyP, 1);
-		sendKeystroke(local, fakeButton, keyP, 0);
+		    emitKeysym(local->dev, (fakeButton & AC_CODE), 1);
+		    emitKeysym(local->dev, (fakeButton & AC_CODE), 0);
 	    break;
 
 	    default:
