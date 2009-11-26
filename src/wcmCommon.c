@@ -343,7 +343,11 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 	int i, j, alt_keysym = 0;
 
 	/* Now that we have the keycode look for key index */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	KeySymsRec *ksr = XkbGetCoreMap(keydev);
+#else
+	KeySymsRec *ksr = &keydev->key->curKeySyms;
+#endif
 
 	for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
 		if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == keysym)
@@ -383,11 +387,15 @@ static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
 		else
 			xf86Msg (X_WARNING, "%s: Couldn't find key with code %08x on keyboard device %s\n",
 					keydev->name, keysym, keydev->name);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		xfree(ksr);
+#endif
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	xfree(ksr);
+#endif
 }
 
 static int wcm_modifier [ ] =
