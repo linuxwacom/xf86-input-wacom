@@ -441,8 +441,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
 	{
-		/* check if the type is valid for the device */
-		if(!wcmIsAValidType(local, type))
+		/* check if the type is valid for those don't need hotplug */
+		if(!need_hotplug && !wcmIsAValidType(local, type))
 			goto SetupProc_fail;
 
 		/* check if the device has been added */
