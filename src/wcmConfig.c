@@ -27,12 +27,14 @@
 #include <fcntl.h>
 
 extern Bool xf86WcmIsWacomDevice (char* fname);
-extern int wcmIsAValidType(LocalDevicePtr local, const char* type);
+extern Bool wcmIsAValidType(const char* type, unsigned long* keys);
 extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
-extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
+extern int wcmNeedAutoHotplug(LocalDevicePtr local,
+	const char **type, unsigned long* keys);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 extern int wcmParseOptions(LocalDevicePtr local);
-extern void wcmHotplugOthers(LocalDevicePtr local);
+extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
+extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 
 static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
 
@@ -420,6 +422,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	char*		device;
 	static int	numberWacom = 0;
 	int		need_hotplug = 0;
+	unsigned long   keys[NBITS(KEY_MAX)];
 
 	gWacomModule.wcmDrv = drv;
 
@@ -434,15 +437,18 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	xf86CollectInputOptions(local, default_options, NULL);
 
+	/* initialize supported keys */
+	wcmDeviceTypeKeys(local, keys);
+
 	device = xf86SetStrOption(local->options, "Device", NULL);
 	type = xf86FindOptionValue(local->options, "Type");
-	need_hotplug = wcmNeedAutoHotplug(local, &type);
+	need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
 	if(device)
 	{
 		/* check if the type is valid for those don't need hotplug */
-		if(!need_hotplug && !wcmIsAValidType(local, type))
+		if(!need_hotplug && !wcmIsAValidType(type, keys))
 			goto SetupProc_fail;
 
 		/* check if the device has been added */
@@ -491,7 +497,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(local);
+		wcmHotplugOthers(local, keys);
 	}
 
 	/* return the LocalDevice */
