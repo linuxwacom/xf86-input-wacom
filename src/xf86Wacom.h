@@ -141,8 +141,6 @@ struct _WacomModule
 int xf86WcmWait(int t);
 int xf86WcmReady(LocalDevicePtr local);
 
-Bool xf86WcmOpen(LocalDevicePtr local);
-
 /* device autoprobing */
 char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
 

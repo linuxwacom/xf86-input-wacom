@@ -24,14 +24,6 @@
 #include "xf86Wacom.h"
 #include "Xwacom.h"
 #include <xkbsrv.h>
-#include <linux/serial.h>
-
-WacomDeviceClass* wcmDeviceClasses[] =
-{
-	&gWacomUSBDevice,
-	&gWacomISDV4Device,
-	NULL
-};
 
 void xf86WcmInitialScreens(LocalDevicePtr local);
 void xf86WcmRotateTablet(LocalDevicePtr local, int value);
@@ -1040,67 +1032,6 @@ static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig
 	DBG(10, common->debugLevel, ErrorF("xf86WcmSuppress at level = %d"
 		" return value = %d\n", suppress, returnV));
 	return returnV;
-}
-
-/*****************************************************************************
- * xf86WcmOpen --
- ****************************************************************************/
-
-Bool xf86WcmOpen(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-	WacomDeviceClass** ppDevCls;
-	char id[BUFFER_SIZE];
-	float version;
-	int rc;
-	struct serial_struct ser;
-
-	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
-
-	local->fd = xf86OpenSerial(local->options);
-	if (local->fd < 0)
-	{
-		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", local->name,
-			common->wcmDevice, strerror(errno));
-		return !Success;
-	}
-
-	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
-
-	/* we initialized wcmDeviceClasses to USB
-	 * Bluetooth is also considered as USB */
-	if (rc == 0) /* serial device */
-	{
-		/* only ISDV4 are supported on X server 1.7 and later */
-		common->wcmForceDevice = DEVICE_ISDV4;
-		common->wcmDevCls = &gWacomISDV4Device;
-
-		/* Tablet PC buttons on by default */
-		common->wcmTPCButtonDefault = 1;
-	}
-	else
-	{
-		/* Detect device class; default is USB device */
-		for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
-		{
-			if ((*ppDevCls)->Detect(local))
-			{
-				common->wcmDevCls = *ppDevCls;
-				break;
-			}
-		}
-	}
-
-	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(local, id, &version) != Success ||
-		xf86WcmInitTablet(local, id, version) != Success)
-	{
-		xf86CloseSerial(local->fd);
-		local->fd = -1;
-		return !Success;
-	}
-	return Success;
 }
 
 /* reset raw data counters for filters */

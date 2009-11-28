@@ -18,7 +18,8 @@
  */
 
 /*
- * This driver is currently able to handle Wacom IV, V, ISDV4, and bluetooth protocols.
+ * This driver is currently able to handle USB Wacom IV and V, serial ISDV4,
+ * and bluetooth protocols.
  *
  * Wacom V protocol work done by Raph Levien <raph@gtk.org> and
  * Frédéric Lepied <lepied@xfree86.org>.
@@ -29,11 +30,9 @@
  * Brion Vibber <brion@pobox.com>,
  * Aaron Optimizer Digulla <digulla@hepe.com>,
  * Jonathan Layes <jonathan@layes.com>,
- * John Joganic <jej@j-arkadia.com>.
- * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>.
- *
- * Many thanks to Peter Hutterer <peter.hutterer@redhat.com> 
- *		for providing Xorg, HAL and freedesktop support
+ * John Joganic <jej@j-arkadia.com>,
+ * Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>,
+ * Peter Hutterer <peter.hutterer@redhat.com>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,6 +41,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <linux/serial.h>
 
 #include "xf86Wacom.h"
 
@@ -958,6 +958,66 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
 		local->name, i + 1, wait);
 	return FALSE;
+}
+
+/*****************************************************************************
+ * xf86WcmOpen --
+ ****************************************************************************/
+
+static Bool xf86WcmOpen(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	char id[BUFFER_SIZE];
+	float version;
+	int rc;
+	struct serial_struct ser;
+
+	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
+
+	local->fd = xf86OpenSerial(local->options);
+	if (local->fd < 0)
+	{
+		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", local->name,
+			common->wcmDevice, strerror(errno));
+		return !Success;
+	}
+
+	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
+
+	/* we initialized wcmDeviceClasses to USB
+	 * Bluetooth is also considered as USB */
+	if (rc == 0) /* serial device */
+	{
+		/* only ISDV4 are supported on X server 1.7 and later */
+		common->wcmForceDevice=DEVICE_ISDV4;
+		common->wcmDevCls = &gWacomISDV4Device;
+
+		/* Tablet PC buttons on by default */
+		common->wcmTPCButtonDefault = 1;
+	}
+	else
+	{
+		/* Detect USB device class */
+		if ((&gWacomUSBDevice)->Detect(local))
+			common->wcmDevCls = &gWacomUSBDevice;
+		else
+		{
+			xf86Msg(X_ERROR, "%s: xf86WcmOpen found undetectable "
+				" %s \n", local->name, common->wcmDevice);
+			return !Success;
+		}
+	}
+
+	/* Initialize the tablet */
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		xf86WcmInitTablet(local, id, version) != Success)
+	{
+		xf86CloseSerial(local->fd);
+		local->fd = -1;
+		return !Success;
+	}
+	return Success;
 }
 
 /*****************************************************************************
