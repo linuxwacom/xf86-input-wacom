@@ -1165,14 +1165,19 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	 */
 	if (common->wcmForceDevice == DEVICE_ISDV4 && common->wcmDevCls != &gWacomUSBDevice) 
 	{
-		common->wcmPktLength = 9;
 		data = common->buffer;
-		if ( data[0] & 0x18 )
+		/* choose wcmPktLength if it is not an out-prox event */
+		if (data[0])
+			common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
+
+		if ( data[0] & 0x10 )
 		{
-			if (common->wcmMaxCapacity)
-				common->wcmPktLength = 7;
-			else
-				common->wcmPktLength = 5;
+			/* set touch PktLength */
+			common->wcmPktLength = WACOM_PKGLEN_TOUCH93;
+			if ((common->tablet_id == 0x9A) || (common->tablet_id == 0x9F))
+				common->wcmPktLength = WACOM_PKGLEN_TOUCH9A;
+			if ((common->tablet_id == 0xE2) || (common->tablet_id == 0xE3))
+				common->wcmPktLength = WACOM_PKGLEN_TOUCH2FG;
 		}
 	}
 
@@ -1186,29 +1191,6 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 			break;
 		}
 		pos += cnt;
-
-		if (common->wcmDevCls != &gWacomUSBDevice) 
-		{
-			data = common->buffer + pos;
-			if ( data[0] & 0x18 )
-			{
-				if (common->wcmPktLength == 9)
-				{
-					DBG(1, common->debugLevel, 
-						ErrorF("xf86WcmReadPacket: not a pen data any more \n"));
-					break;	
-				}
-			}
-			else
-			{
-				if (common->wcmPktLength != 9)
-				{
-					DBG(1, common->debugLevel, 
-						ErrorF("xf86WcmReadPacket: not a touch data any more \n"));
-					break;	
-				}
-			}
-		}
 	}
  
 	if (pos)

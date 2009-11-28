@@ -29,13 +29,6 @@
 #define WC_ISDV4_STOP "0"        /* ISDV4 stop command */
 #define WC_ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
 
-/* packet length for individual models */
-#define WACOM_PKGLEN_TOUCH93    5
-#define WACOM_PKGLEN_TOUCH9A    7
-#define WACOM_PKGLEN_TPCPEN     9
-#define WACOM_PKGLEN_TPCCTL     11
-#define WACOM_PKGLEN_TOUCH2FG   13
-
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
@@ -223,11 +216,8 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
 	/* set parameters */
 	common->wcmProtocolLevel = 4;
-	common->wcmPktLength = 9;       /* length of a packet 
-					 * device packets are 9 bytes
-					 * resistive touch is 5 bytes
-					 * capacitive touch is 7 bytes 
-					 */
+	/* length of a packet */
+	common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
 
 	/* digitizer X resolution in points/inch */
 	common->wcmResolX = 2540; 	
@@ -365,6 +355,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		else
 			common->wcmTouchDefault = 0;
 
+		/* update touch info */
+		common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
+			common->wcmTouchDefault);
+
 		common->wcmVersion = ( data[10] | (data[9] << 7) );
 		ret = Success;
 
@@ -407,13 +401,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	/* determine the type of message (touch or stylus) */
 	if (data[0] & 0x10) /* a touch data */
 	{
-		/* set touch PktLength */
-		common->wcmPktLength = WACOM_PKGLEN_TOUCH93;
-		if ((common->tablet_id == 0x9A) || (common->tablet_id == 0x9F))
-			common->wcmPktLength = WACOM_PKGLEN_TOUCH9A;
-		if ((common->tablet_id == 0xE2) || (common->tablet_id == 0xE3))
-
-			common->wcmPktLength = WACOM_PKGLEN_TOUCH2FG;
 		if ((last->device_id != TOUCH_DEVICE_ID && last->device_id &&
 				 last->proximity ) || !common->wcmTouch)
 		{
@@ -431,7 +418,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			out.device_type = TOUCH_ID;
 			xf86WcmEvent(common, channel, &out);
 		}
-		common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
 	}
 
 	if (common->buffer + common->bufpos - data < common->wcmPktLength)
