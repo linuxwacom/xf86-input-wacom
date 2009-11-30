@@ -204,10 +204,6 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 	/* serial ISDV4 devices */
 	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
 	{
-		/* default to penabled */
-		keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
-		keys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
-
 		if (str) /* id in name */
 		{
 			str = str + 4;
@@ -225,15 +221,18 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 			file = fopen(sysfs_id, "r");
 
 			/* return true since it falls to default */
-			if (!file)
-				return 1;
-
-			ret = (fscanf(file, "WACf%x\n", &id) <= 0);
+			if (file)
+			{
+				/* make sure we fall to default */
+				if (fscanf(file, "WACf%x\n", &id) <= 0)
+					id = 0;
+			}
 			fclose(file);
-
-			if (ret)
-				return 1;
 		}
+
+		/* default to penabled */
+		keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
+		keys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
 
 		/* id < 0x008 are only penabled */
 		if (id > 0x007)
