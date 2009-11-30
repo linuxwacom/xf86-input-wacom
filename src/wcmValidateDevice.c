@@ -400,8 +400,6 @@ int wcmParseOptions(LocalDevicePtr local)
 	int		i, oldButton;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
-	int fd, rc;
-	struct serial_struct ser;
 
 	/* Optional configuration */
 	priv->debugLevel = xf86SetIntOption(local->options,
@@ -437,30 +435,6 @@ int wcmParseOptions(LocalDevicePtr local)
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
 		priv->flags |= COREEVENT_FLAG;
-
-	SYSCALL(fd = open(common->wcmDevice, O_RDONLY));
-	if (!fd)
-	{
-		xf86Msg(X_WARNING, "%s: failed to open %s in "
-			"wcmParseOptions", local->name,
-			common->wcmDevice);
-		goto error;
-	}
-	rc = ioctl(fd, TIOCGSERIAL, &ser);
-	close(fd);
-
-	/* not a serial device. Must be USB (bluetooth is considered as USB) */
-	if (rc)
-		common->wcmDevCls = &gWacomUSBDevice;
-	else  /* serial device */
-	{
-		/* We only support serial ISDV4 devices for X server 1.7+ */
-		common->wcmForceDevice = DEVICE_ISDV4;
-		common->wcmDevCls = &gWacomISDV4Device;
-
-		/* Tablet PC buttons on by default */
-		common->wcmTPCButtonDefault = 1;
-	}
 
 	s = xf86SetStrOption(local->options, "Rotate", NULL);
 

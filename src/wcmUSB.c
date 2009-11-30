@@ -378,10 +378,7 @@ static Bool usbDetect(LocalDevicePtr local)
 
 	if (err < 0)
 	{
-		if (errno == EIO)
-			xf86Msg(X_INFO, "%s: USB I/O error. Device may be serial.\n", local->name);
-		else
-			xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", local->name);
+		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", local->name);
 		return 0;
 	}
 #ifdef EVIOCGRAB

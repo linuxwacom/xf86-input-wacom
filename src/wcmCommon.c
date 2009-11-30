@@ -24,6 +24,7 @@
 #include "xf86Wacom.h"
 #include "Xwacom.h"
 #include <xkbsrv.h>
+#include <linux/serial.h>
 
 WacomDeviceClass* wcmDeviceClasses[] =
 {
@@ -1052,6 +1053,8 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 	WacomDeviceClass** ppDevCls;
 	char id[BUFFER_SIZE];
 	float version;
+	int rc;
+	struct serial_struct ser;
 
 	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
 
@@ -1063,13 +1066,29 @@ Bool xf86WcmOpen(LocalDevicePtr local)
 		return !Success;
 	}
 
-	/* Detect device class; default is USB device */
-	for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
+	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
+
+	/* we initialized wcmDeviceClasses to USB
+	 * Bluetooth is also considered as USB */
+	if (rc == 0) /* serial device */
 	{
-		if ((*ppDevCls)->Detect(local))
+		/* only ISDV4 are supported on X server 1.7 and later */
+		common->wcmForceDevice = DEVICE_ISDV4;
+		common->wcmDevCls = &gWacomISDV4Device;
+
+		/* Tablet PC buttons on by default */
+		common->wcmTPCButtonDefault = 1;
+	}
+	else
+	{
+		/* Detect device class; default is USB device */
+		for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
 		{
-			common->wcmDevCls = *ppDevCls;
-			break;
+			if ((*ppDevCls)->Detect(local))
+			{
+				common->wcmDevCls = *ppDevCls;
+				break;
+			}
 		}
 	}
 
