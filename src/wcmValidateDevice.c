@@ -226,8 +226,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 				/* make sure we fall to default */
 				if (fscanf(file, "WACf%x\n", &id) <= 0)
 					id = 0;
+
+				fclose(file);
 			}
-			fclose(file);
 		}
 
 		/* default to penabled */
