@@ -14,7 +14,7 @@
       </match>
     </match>
     <match key="info.capabilities" contains="serial">
-      <match key="@info.parent:pnp.id" contains_outof="WACf001;WACf002;WACf003;WACf004;WACf005;WACf006;WACf007;WACf008;WACf009;WACf00a;WACf00b;WACf00c;FUJ02e5">
+      <match key="@info.parent:pnp.id" contains_outof="WACf;FUJ02e5;FUJ02e7">
 	<append key="info.capabilities" type="strlist">input</append>
 	<merge key="input.x11_driver" type="string">wacom</merge>
 	<merge key="input.x11_options.Type" type="string">stylus</merge>
@@ -22,7 +22,7 @@
 	<merge key="input.device" type="copy_property">serial.device</merge>
 	<append key="info.callouts.add" type="strlist">hal-setup-wacom</append>
 	<append key="wacom.types" type="strlist">eraser</append>
-        <match key="@info.parent:pnp.id" contains_outof="WACf008;WACf009">
+        <match key="@info.parent:pnp.id" contains_outof="WACf008;WACf009;WACf008A;WACf00B;WACf00C;WACf00D;WACf00E;WACf010;FUJ02e7">
 	  <!-- Serial tablets with touch capabilities -->
 	  <append key="wacom.types" type="strlist">touch</append>
 	</match>

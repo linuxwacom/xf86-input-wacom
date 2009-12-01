@@ -20,9 +20,10 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #ifdef WCM_XORG_XSERVER_1_4
-    extern Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id);
-    extern Bool wcmIsAValidType(char* device, LocalDevicePtr local);
+    extern Bool xf86WcmIsWacomDevice (char* fname);
+    extern Bool wcmIsAValidType(const char *type, unsigned long* keys);
     extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
+    extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 #endif
 
 /*****************************************************************************
@@ -443,13 +444,11 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	LocalDevicePtr fakeLocal = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
+	const char*	type;
 	char		*s, b[12];
 	int		i, oldButton;
 	LocalDevicePtr localDevices;
-#ifdef WCM_XORG_XSERVER_1_4
 	char*		device;
-	struct input_id id;
-#endif
 	WacomToolPtr tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
@@ -466,37 +465,42 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	xf86CollectInputOptions(fakeLocal, default_options, NULL);
 
-#ifdef WCM_XORG_XSERVER_1_4
         device = xf86CheckStrOption(fakeLocal->options, "Device", NULL);
         fakeLocal->name = dev->identifier;
 
+	/* Type is mandatory */
+	type = xf86FindOptionValue(fakeLocal->options, "Type");
+
         /* leave the undefined for auto-dev (if enabled) to deal with */
+#ifdef WCM_XORG_XSERVER_1_4
         if(device)
         {
-                if (!xf86WcmIsWacomDevice(device, &id))
-                        goto SetupProc_fail;
+		unsigned long keys[NBITS(KEY_MAX)];
+	        if (!xf86WcmIsWacomDevice(device))
+        	        goto SetupProc_fail;
 
-               /* check if the type is valid for the device */
-                if(!wcmIsAValidType(device, fakeLocal))
-                        goto SetupProc_fail;
+		/* initialize supported keys */
+		wcmDeviceTypeKeys(fakeLocal, keys);
 
-               /* check if the device has been added */
+        	/* check if the type is valid for the device */
+        	if(!wcmIsAValidType(type, keys))
+        	        goto SetupProc_fail;
+
+                /* check if the device has been added */
                 if (wcmIsDuplicate(device, fakeLocal))
                         goto SetupProc_fail;
         }
 #endif   /* WCM_XORG_XSERVER_1_4 */
-	/* Type is mandatory */
-	s = xf86FindOptionValue(fakeLocal->options, "Type");
 
-	if (s && (xf86NameCmp(s, "stylus") == 0))
+	if (type && (xf86NameCmp(type, "stylus") == 0))
 		local = xf86WcmAllocateStylus();
-	else if (s && (xf86NameCmp(s, "touch") == 0))
+	else if (type && (xf86NameCmp(type, "touch") == 0))
 		local = xf86WcmAllocateTouch();
-	else if (s && (xf86NameCmp(s, "cursor") == 0))
+	else if (type && (xf86NameCmp(type, "cursor") == 0))
 		local = xf86WcmAllocateCursor();
-	else if (s && (xf86NameCmp(s, "eraser") == 0))
+	else if (type && (xf86NameCmp(type, "eraser") == 0))
 		local = xf86WcmAllocateEraser();
-	else if (s && (xf86NameCmp(s, "pad") == 0))
+	else if (type && (xf86NameCmp(type, "pad") == 0))
 		local = xf86WcmAllocatePad();
 	else
 	{
@@ -879,7 +883,8 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
 
 	/* Touch gesture applies to the whole tablet */
-	common->wcmGesture = xf86SetBoolOption(local->options, "Touch", common->wcmGestureDefault);
+	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture", 
+			common->wcmGestureDefault);
 	if ( common->wcmGesture )
 		xf86Msg(X_CONFIG, "%s: Touch gesture is enabled \n", common->wcmDevice);
 

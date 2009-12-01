@@ -1,5 +1,5 @@
 AC_PREREQ(2.58)
-AC_INIT(linuxwacom, 0.8.5-2)
+AC_INIT(linuxwacom, 0.8.5)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -600,7 +600,7 @@ if test "$WCM_XORG_XSERVER_1_6" == yes; then
 	fi
 fi
 
-if test "$WCM_XORG_XSERVER_1_4" == yes -a "$WCM_XORG_XSERVER_1_6" != yes; then
+if test "$WCM_XORG_XSERVER_1_4" == yes -a "$WCM_XORG_XSERVER_1_5_2" != yes; then
 	WCM_XDRIVER_QUIRKS="$WCM_XDRIVER_QUIRKS Uninit-called"
 fi
 

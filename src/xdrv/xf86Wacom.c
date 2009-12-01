@@ -85,11 +85,12 @@
  * 2009-10-15 47-pc0.8.4-4 - added calibration-only wacomcpl
  * 2009-10-19 47-pc0.8.5   - Added support for TPC (0xE2, 0xE3 & 0x9F)
  * 2009-10-31 47-pc0.8.5-1 - Avoid duplicated devices for Xorg 1.4 and later
- * 2009-11-6 47-pc0.8.5-2  - Validate tool type associated with device
- * 2009-11-6 47-pc0.8.5-4  - Allow multiple tools to be defined for one type
+ * 2009-11-06 47-pc0.8.5-2 - Validate tool type associated with device
+ * 2009-11-11 47-pc0.8.5-4 - Allow multiple tools to be defined for one type
+ * 2009-11-24 47-pc0.8.5-5 - Support hotplugging for serial ISDV4
  */
 
-static const char identification[] = "$Identification: 47-0.8.5-4 $";
+static const char identification[] = "$Identification: 47-0.8.5-5 $";
 
 /****************************************************************************/
 
@@ -101,6 +102,16 @@ static const char identification[] = "$Identification: 47-0.8.5-4 $";
 	#include <sys/stat.h>
     #endif
 #endif
+
+WacomDeviceClass* wcmDeviceClasses[] =
+{
+#ifdef WCM_ENABLE_LINUXINPUT
+	&gWacomUSBDevice,
+#endif
+	&gWacomISDV4Device,
+	&gWacomSerialDevice,
+	NULL
+};
 
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
 static void xf86WcmDevReadInput(LocalDevicePtr local);
@@ -554,18 +565,24 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 }
 
 #ifdef WCM_XORG_XSERVER_1_4
-Bool xf86WcmIsWacomDevice (char* fname, struct input_id* id)
+Bool xf86WcmIsWacomDevice (char* fname)
 {
 	int fd = -1;
+	struct input_id id;
 
 	SYSCALL(fd = open(fname, O_RDONLY));
 	if (fd < 0)
 		return FALSE;
 
-	ioctl(fd, EVIOCGID, id);
-	close(fd);
+	if (ioctl(fd, EVIOCGID, &id) < 0)
+	{
+		SYSCALL(close(fd));
+		return FALSE;
+	}
 
-	if (id->vendor == 0x056a)
+	SYSCALL(close(fd));
+
+	if (id.vendor == 0x056a)
 		return TRUE;
 	else
 		return FALSE;
@@ -613,6 +630,49 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 	return FALSE;
 }
 #endif
+
+/*****************************************************************************
+ * xf86WcmOpen --
+ ****************************************************************************/
+
+Bool xf86WcmOpen(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	WacomDeviceClass** ppDevCls;
+	char id[BUFFER_SIZE];
+	float version;
+
+	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
+
+	local->fd = xf86OpenSerial(local->options);
+	if (local->fd < 0)
+	{
+		ErrorF("Error opening %s : %s\n", common->wcmDevice,
+			strerror(errno));
+		return !Success;
+	}
+
+	/* Detect device class; default is serial device */
+	for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
+	{
+		if ((*ppDevCls)->Detect(local))
+		{
+			common->wcmDevCls = *ppDevCls;
+			break;
+		}
+	}
+
+	/* Initialize the tablet */
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		xf86WcmInitTablet(local, id, version) != Success)
+	{
+		xf86CloseSerial(local->fd);
+		local->fd = -1;
+		return !Success;
+	}
+	return Success;
+}
 
 /*****************************************************************************
  * xf86WcmDevOpen --
@@ -777,14 +837,18 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	 */
 	if (common->wcmForceDevice == DEVICE_ISDV4 && common->wcmDevCls != &gWacomUSBDevice) 
 	{
-		common->wcmPktLength = WACOM_PKGLEN_TPC;
 		data = common->buffer;
-		if ( data[0] & 0x18 )
+		if (data[0])
+			common->wcmPktLength = WACOM_PKGLEN_TPC;
+
+		if ( data[0] & 0x10 )
 		{
-			if (common->wcmMaxCapacity)
+			/* set touch PktLength */
+			common->wcmPktLength = WACOM_PKGLEN_TOUCH0;
+			if ((common->tablet_id == 0x9a) || (common->tablet_id == 0x9f))
 				common->wcmPktLength = WACOM_PKGLEN_TOUCH;
-			else
-				common->wcmPktLength = WACOM_PKGLEN_TOUCH0;
+			if ((common->tablet_id == 0xe2) || (common->tablet_id == 0xe3))
+				common->wcmPktLength = WACOM_PKGLEN_TOUCH2FG;
 		}
 	}
 

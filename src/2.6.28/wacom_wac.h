@@ -12,6 +12,15 @@
 /* maximum packet length for USB devices */
 #define WACOM_PKGLEN_MAX	32
 
+/* packet length for individual models */
+#define WACOM_PKGLEN_PENPRTN	 7
+#define WACOM_PKGLEN_GRAPHIRE	 8
+#define WACOM_PKGLEN_BBFUN 	 9
+#define WACOM_PKGLEN_INTUOS 	10
+#define WACOM_PKGLEN_PENABLED	 8
+#define WACOM_PKGLEN_TPC1FG	 5
+#define WACOM_PKGLEN_TPC2FG 	14
+
 /* device IDs */
 #define STYLUS_DEVICE_ID	0x02
 #define TOUCH_DEVICE_ID		0x03

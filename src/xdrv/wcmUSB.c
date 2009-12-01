@@ -375,7 +375,7 @@ static Bool usbDetect(LocalDevicePtr local)
 
 	if (err < 0)
 	{
-		ErrorF("usbDetect: can not ioctl version\n");
+		xf86Msg(X_WARNING, "usbDetect: can not ioctl version\n");
 		return 0;
 	}
 #ifdef EVIOCGRAB

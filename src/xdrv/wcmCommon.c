@@ -32,16 +32,6 @@
 */
 #define XF86_BUTTON1_BUG
 
-WacomDeviceClass* wcmDeviceClasses[] =
-{
-#ifdef WCM_ENABLE_LINUXINPUT
-	&gWacomUSBDevice,
-#endif
-	&gWacomISDV4Device,
-	&gWacomSerialDevice,
-	NULL
-};
-
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 extern void xf86WcmTilt2R(WacomDeviceStatePtr ds);
@@ -736,7 +726,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		v4 = ty;
 	}
 	v5 = wheel;
-
 	DBG(6, priv->debugLevel, ErrorF("[%s] %s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
@@ -1018,49 +1007,6 @@ static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig
 	return returnV;
 }
 
-/*****************************************************************************
- * xf86WcmOpen --
- ****************************************************************************/
-
-Bool xf86WcmOpen(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-	WacomDeviceClass** ppDevCls;
-	char id[BUFFER_SIZE];
-	float version;
-
-	DBG(1, priv->debugLevel, ErrorF("opening %s\n", common->wcmDevice));
-
-	local->fd = xf86OpenSerial(local->options);
-	if (local->fd < 0)
-	{
-		ErrorF("Error opening %s : %s\n", common->wcmDevice,
-			strerror(errno));
-		return !Success;
-	}
-
-	/* Detect device class; default is serial device */
-	for (ppDevCls=wcmDeviceClasses; *ppDevCls!=NULL; ++ppDevCls)
-	{
-		if ((*ppDevCls)->Detect(local))
-		{
-			common->wcmDevCls = *ppDevCls;
-			break;
-		}
-	}
-
-	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(local, id, &version) != Success ||
-		xf86WcmInitTablet(local, id, version) != Success)
-	{
-		xf86CloseSerial(local->fd);
-		local->fd = -1;
-		return !Success;
-	}
-	return Success;
-}
-
 /* reset raw data counters for filters */
 static void resetSampleCounter(const WacomChannelPtr pChannel)
 {
@@ -1196,8 +1142,12 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
+/* gesture needs keystroke */
+#ifndef WCM_KEY_SENDING_SUPPORT
+	common->wcmGesture = 0;
+#endif
 	/* process second finger data if exists */
-	if (ds.device_type == TOUCH_ID)
+	if ((ds.device_type == TOUCH_ID) && common->wcmTouch && common->wcmGesture)
 	{
 		WacomChannelPtr pOtherChannel;
 		WacomDeviceState dsOther;
@@ -1211,7 +1161,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 		/* This is the only place to reset gesture mode
 		 * once a gesture mode is entered */
-		if (!ds.proximity && !dsOther.proximity && common->wcmGestureMode)
+		if (!ds.proximity && !dsOther.proximity)
 		{
 			common->wcmGestureMode = 0;
 
@@ -1223,12 +1173,11 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 		{
 			/* don't move the cursor if in gesture mode
 			 * wait for second finger data to process gestures */
-			if (!channel && common->wcmTouch &&
-				common->wcmGesture && common->wcmGestureMode)
+			if (!channel && common->wcmGestureMode)
 				goto ret;
 
 			/* process gesture when both touch and geature are enabled */
-			if (channel && common->wcmTouch && common->wcmGesture)
+			if (channel)
 			{
 				xf86WcmFingerTapToClick(common);
 				goto ret;

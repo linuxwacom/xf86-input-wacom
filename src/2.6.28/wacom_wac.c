@@ -1,7 +1,7 @@
 /*
  * drivers/input/tablet/wacom_wac.c
  *
- *  USB Wacom Graphire and Wacom Intuos tablet support - Wacom specific code
+ *  USB Wacom tablet support - Wacom specific code
  *
  */
 
@@ -13,14 +13,6 @@
  */
 #include "wacom.h"
 #include "wacom_wac.h"
-
-/* packet length for individual models */
-#define WACOM_PKGLEN_PENPRTN	 7
-#define WACOM_PKGLEN_GRAPHIRE 	 8
-#define WACOM_PKGLEN_BBFUN 	 9
-#define WACOM_PKGLEN_INTUOS 	10
-#define WACOM_PKGLEN_TPC1FG	 5
-#define WACOM_PKGLEN_TPC2FG 	14
 
 static int wacom_penpartner_irq(struct wacom_wac *wacom, void *wcombo)
 {
@@ -846,7 +838,6 @@ int wacom_wac_irq(struct wacom_wac *wacom_wac, void *wcombo)
 			return wacom_intuos_irq(wacom_wac, wcombo);
 
 		case TABLETPC:
-
 		case TABLETPC2FG:
 			return wacom_tpc_irq(wacom_wac, wcombo);
 
@@ -893,7 +884,7 @@ void wacom_init_input_dev(struct input_dev *input_dev, struct wacom_wac *wacom_w
 			/* fall through */
 		case TABLETPC:
 			input_dev_tpc(input_dev, wacom_wac);
-			if (wacom_wac->features->device_type == BTN_TOOL_DOUBLETAP)
+			if (wacom_wac->features->device_type != BTN_TOOL_PEN)
 				break;  /* no need to process stylus stuff */
 
 			/* fall through */
@@ -964,11 +955,11 @@ static struct wacom_features wacom_features[] = {
 	{ "Wacom Cintiq 21UX",        WACOM_PKGLEN_INTUOS,    87200, 65600, 1023, 63, CINTIQ },
 	{ "Wacom Cintiq 20WSX",       WACOM_PKGLEN_INTUOS,    86680, 54180, 1023, 63, WACOM_BEE },
 	{ "Wacom Cintiq 12WX",        WACOM_PKGLEN_INTUOS,    53020, 33440, 1023, 63, WACOM_BEE },
-	{ "Wacom DTU1931",            WACOM_PKGLEN_GRAPHIRE,  37832, 30305,  511,  0, PL },
-	{ "Wacom ISDv4 90",           WACOM_PKGLEN_GRAPHIRE,  26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom ISDv4 93",           WACOM_PKGLEN_GRAPHIRE,  26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom ISDv4 9A",           WACOM_PKGLEN_GRAPHIRE,  26202, 16325,  255,  0, TABLETPC },
-	{ "Wacom ISDv4 9F",           WACOM_PKGLEN_GRAPHIRE,  26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom DTU1931",            WACOM_PKGLEN_PENABLED,  37832, 30305,  511,  0, PL },
+	{ "Wacom ISDv4 90",           WACOM_PKGLEN_PENABLED,  26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom ISDv4 93",           WACOM_PKGLEN_PENABLED,  26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom ISDv4 9A",           WACOM_PKGLEN_PENABLED,  26202, 16325,  255,  0, TABLETPC },
+	{ "Wacom ISDv4 9F",           WACOM_PKGLEN_PENABLED,  26202, 16325,  255,  0, TABLETPC },
 	{ "Wacom ISDv4 E2",           WACOM_PKGLEN_TPC2FG,    26202, 16325,  255,  0, TABLETPC2FG },
 	{ "Wacom ISDv4 E3",           WACOM_PKGLEN_TPC2FG,    26202, 16325,  255,  0, TABLETPC2FG },
 	{ "Wacom Intuos2 6x8",        WACOM_PKGLEN_INTUOS,    20320, 16240, 1023, 31, INTUOS },

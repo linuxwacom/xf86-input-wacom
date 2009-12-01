@@ -17,9 +17,10 @@
  */
 
 #include "xf86Wacom.h"
+#ifdef WCM_KEY_SENDING_SUPPORT
 #include <math.h>
 
-// Defines for 2FC Gesture
+/* Defines for 2FC Gesture */
 #define WACOM_DIST_IN_POINT		300
 #define WACOM_APART_IN_POINT		350
 #define WACOM_MOTION_IN_POINT		50
@@ -34,7 +35,7 @@
 #define GESTURE_ZOOM_MODE		4
 
 
-// Defines for Tap Add-a-Finger to Click
+/* Defines for Tap Add-a-Finger to Click */
 #define WACOM_TAP_TIME_IN_MS		150
 
 extern void xf86WcmRotateCoordinates(LocalDevicePtr local, int x, int y);
@@ -389,4 +390,4 @@ static void xf86WcmFingerZoom(WacomDevicePtr priv)
 		common->wcmGestureState[1] = ds[1];
 	}
 }
-
+#endif /* WCM_KEY_SENDING_SUPPORT */

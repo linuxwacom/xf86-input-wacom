@@ -609,15 +609,15 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 
 	if (urb->actual_length == 5 || data[0] == 6) { /* Touch data */	
 		if (urb->actual_length == 5) {  /* with touch */
-			prox = data[0] & 0x03;
+			prox = data[0] & 0x01;
 		} else {  /* with capacity */
-			prox = data[1] & 0x03;
+			prox = data[1] & 0x01;
 		}
 
 		if (!stylusInProx) { /* stylus not in prox */
 			if (prox) { 
 				if (touchInProx) {
-					wacom->tool[1] = BTN_TOOL_DOUBLETAP;
+					wacom->tool[0] = BTN_TOOL_DOUBLETAP;
 					wacom->id[0] = TOUCH_DEVICE_ID;
 					if (urb->actual_length != 5) {
 						wacom_report_abs(wcombo, ABS_X, wacom_le16_to_cpu(&data[2]));
@@ -630,13 +630,13 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 						wacom_report_key(wcombo, BTN_TOUCH, 1);
 					}
 					wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
-					wacom_report_key(wcombo, wacom->tool[1], prox & 0x01);
+					wacom_report_key(wcombo, wacom->tool[0], prox & 0x01);
 					touchOut = 1;
 					return 1;
 				}
 			} else {
 				wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
-				wacom_report_key(wcombo, wacom->tool[1], prox & 0x01);
+				wacom_report_key(wcombo, wacom->tool[0], prox & 0x01);
 				wacom_report_key(wcombo, BTN_TOUCH, 0);
 				touchOut = 0;
 				touchInProx = 1;
@@ -644,7 +644,7 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 			}
 		} else if (touchOut || !prox) { /* force touch out-prox */
 			wacom_report_abs(wcombo, ABS_MISC, TOUCH_DEVICE_ID);
-			wacom_report_key(wcombo, wacom->tool[1], 0);
+			wacom_report_key(wcombo, wacom->tool[0], 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
 			touchOut = 0;
 			touchInProx = 1;
@@ -655,38 +655,14 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 
 		touchInProx = 0;
 
-		wacom->id[0] = ERASER_DEVICE_ID;
-
-		/*
-		 * if going from out of proximity into proximity select between the eraser
-		 * and the pen based on the state of the stylus2 button, choose eraser if
-		 * pressed else choose pen. if not a proximity change from out to in, send
-		 * an out of proximity for previous tool then a in for new tool.
-		 */
-		if (prox) { /* in prox */
-			if (!wacom->tool[0]) {
-				/* Going into proximity select tool */
-				wacom->tool[1] = (data[1] & 0x08) ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
-				if (wacom->tool[1] == BTN_TOOL_PEN)
+		if (prox) { /* pen in prox */
+			if (!wacom->id[0]) {
+				wacom->tool[0] = (data[1] & 0x0c) ? 
+                                        BTN_TOOL_RUBBER : BTN_TOOL_PEN;				
+				if (wacom->tool[0] == BTN_TOOL_PEN)
 					wacom->id[0] = STYLUS_DEVICE_ID;
-			} else if (wacom->tool[1] == BTN_TOOL_RUBBER && !(data[1] & 0x08)) {
-				/*
-				 * was entered with stylus2 pressed 
-				 * report out proximity for previous tool 
-				*/
-				wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
-				wacom_report_key(wcombo, wacom->tool[1], 0);
-				wacom_input_sync(wcombo);
-
-				/* set new tool */
-				wacom->tool[1] = BTN_TOOL_PEN;
-				wacom->id[0] = STYLUS_DEVICE_ID;
-				return 0;
-			}				
-			if (wacom->tool[1] != BTN_TOOL_RUBBER) {
-				/* Unknown tool selected default to pen tool */
-				wacom->tool[1] = BTN_TOOL_PEN;
-				wacom->id[0] = STYLUS_DEVICE_ID;
+				else
+					wacom->id[0] = ERASER_DEVICE_ID;
 			}
 			wacom_report_key(wcombo, BTN_STYLUS, data[1] & 0x02);
 			wacom_report_key(wcombo, BTN_STYLUS2, data[1] & 0x10);
@@ -698,15 +674,19 @@ int wacom_tpc_irq(struct wacom_wac *wacom, void *wcombo)
 			wacom_report_abs(wcombo, ABS_PRESSURE, pressure);
 			wacom_report_key(wcombo, BTN_TOUCH, pressure);
 		} else {
+			wacom_report_abs(wcombo, ABS_X, 0);
+			wacom_report_abs(wcombo, ABS_Y, 0);
 			wacom_report_abs(wcombo, ABS_PRESSURE, 0);
 			wacom_report_key(wcombo, BTN_TOUCH, 0);
 			wacom_report_key(wcombo, BTN_STYLUS, 0);
 			wacom_report_key(wcombo, BTN_STYLUS2, 0);
+                        wacom->id[0] = 0;
+                        /* pen is out so touch can be enabled now */
+                        touchInProx = 1;
 		}
-		wacom_report_key(wcombo, wacom->tool[1], prox);
+		wacom_report_key(wcombo, wacom->tool[0], prox);
 		wacom_report_abs(wcombo, ABS_MISC, wacom->id[0]);
 		stylusInProx = prox;
-		wacom->tool[0] = prox;
 		return 1;
 	}
 	return 0;

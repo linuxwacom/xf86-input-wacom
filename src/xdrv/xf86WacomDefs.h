@@ -56,6 +56,8 @@
 #define WACOM_PKGLEN_TOUCH	 7
 #define WACOM_PKGLEN_GRAPHIRE 	 8
 #define WACOM_PKGLEN_TPC 	 9
+#define WACOM_PKGLEN_TPCCTL     11
+#define WACOM_PKGLEN_TOUCH2FG   13
 
 /* defines to discriminate second side button and the eraser */
 #define ERASER_PROX     4
