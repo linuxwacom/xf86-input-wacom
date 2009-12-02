@@ -616,6 +616,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 	switch (fakeButton & AC_TYPE)
 	{
+	    case 0: /* no spec. action defined */
 	    case AC_BUTTON:
 		/* send both button on/off in the same event for pad */	
 		xf86PostButtonEvent(local->dev, is_absolute, fakeButton & AC_CODE,
