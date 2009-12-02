@@ -46,7 +46,8 @@ static int usbParse(LocalDevicePtr local, const unsigned char* data);
 static int usbDetectConfig(LocalDevicePtr local);
 static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event);
-static void usbParseChannel(LocalDevicePtr local, int channel, int serial);
+static void usbParseChannel(LocalDevicePtr local, int channel);
+static int usbChooseChannel(WacomCommonPtr common, int serial);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
@@ -766,10 +767,89 @@ static int usbParse(LocalDevicePtr local, const unsigned char* data)
 	return common->wcmPktLength;
 }
 
+static int usbChooseChannel(WacomCommonPtr common, int serial)
+{
+	/* figure out the channel to use based on serial number */
+	int i, channel = -1;
+	if (common->wcmProtocolLevel == 4)
+	{
+		/* Protocol 4 doesn't support tool serial numbers */
+		if (serial == 0xf0)
+			channel = 1;
+		else
+			channel = 0;
+	}
+	else if (serial) /* serial number should never be 0 for V5 devices */
+	{
+		/* dual input is supported */
+		if ( strstr(common->wcmModel->name, "Intuos1") ||
+				strstr(common->wcmModel->name, "Intuos2") )
+		{
+			/* find existing channel */
+			for (i=0; i<MAX_CHANNELS; ++i)
+			{
+				if (common->wcmChannel[i].work.proximity &&
+					common->wcmChannel[i].work.serial_num == serial)
+				{
+					channel = i;
+					break;
+				}
+			}
+
+			/* find an empty channel */
+			if (channel < 0)
+			{
+				for (i=0; i<MAX_CHANNELS; ++i)
+				{
+					if (!common->wcmChannel[i].work.proximity)
+					{
+						channel = i;
+						break;
+					}
+				}
+			}
+		}
+		else  /* one transducer plus expresskey (pad) is supported */
+		{
+			if (serial == -1)  /* pad */
+				channel = 1;
+			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
+				    (common->wcmChannel[0].work.serial_num == serial)) ||
+					!common->wcmChannel[0].work.proximity ) /* new transducer */
+				channel = 0;
+		}
+	}
+
+	/* fresh out of channels */
+	if (channel < 0)
+	{
+		/* This should never happen in normal use.
+		 * Let's start over again. Force prox-out for all channels.
+		 */
+		for (i=0; i<MAX_CHANNELS; ++i)
+		{
+			if (common->wcmChannel[i].work.proximity &&
+					(common->wcmChannel[i].work.serial_num != -1))
+			{
+				common->wcmChannel[i].work.proximity = 0;
+				/* dispatch event */
+				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
+			}
+		}
+		DBG(1, common->debugLevel, ErrorF("usbParse (device with serial number: %u)"
+			" at %d: Exceeded channel count; ignoring the events.\n",
+			serial, (int)GetTimeInMillis()));
+	}
+	else
+		common->wcmLastToolSerial = serial;
+
+	return channel;
+}
+
 static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event)
 {
-	int i, channel;
+	int channel;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
@@ -830,88 +910,18 @@ static void usbParseEvent(LocalDevicePtr local,
 		return;
 	}
 
-	/* figure out the channel to use based on serial number */
-	channel = -1;
-	if (common->wcmProtocolLevel == 4)
+	/* ignore events without information */
+	if (common->wcmEventCnt <= 2)
 	{
-		/* Protocol 4 doesn't support tool serial numbers */
-		if (common->wcmLastToolSerial == 0xf0)
-			channel = 1;
-		else
-			channel = 0;
-	}
-	else if (common->wcmLastToolSerial) /* serial number should never be 0 */
-	{
-		/* ignore events without information */
-		if (common->wcmEventCnt <= 2) 
-		{
-			DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event "
-				"for serial %d\n", local->name, common->wcmLastToolSerial));
-			goto skipEvent;
-		}
-
-		/* dual input is supported */
-		if ( strstr(common->wcmModel->name, "Intuos1") || strstr(common->wcmModel->
-name, "Intuos2") )
-		{
-			/* find existing channel */
-			for (i=0; i<MAX_CHANNELS; ++i)
-			{
-				if (common->wcmChannel[i].work.proximity && 
-			  		common->wcmChannel[i].work.serial_num == common->wcmLastToolSerial)
-				{
-					channel = i;
-					break;
-				}
-			}
-
-			/* find an empty channel */
-			if (channel < 0)
-			{
-				for (i=0; i<MAX_CHANNELS; ++i)
-				{
-					if (!common->wcmChannel[i].work.proximity)
-					{
-						channel = i;
-						break;
-					}
-				}
-			}
-		}
-		else  /* one transducer plus expresskey (pad) is supported */
-		{
-			if (common->wcmLastToolSerial == -1)  /* pad */
-				channel = 1;
-			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
-				    (common->wcmChannel[0].work.serial_num == common->wcmLastToolSerial)) ||
-					!common->wcmChannel[0].work.proximity ) /* new transducer */
-				channel = 0;
-			
-		}
-	}
-	else
-		goto skipEvent;
-
-	/* fresh out of channels */
-	if (channel < 0)
-	{
-		/* This should never happen in normal use.
-		 * Let's start over again. Force prox-out for all channels.
-		 */
-		for (i=0; i<MAX_CHANNELS; ++i)
-		{
-			if (common->wcmChannel[i].work.proximity && (common->wcmChannel[i].work.serial_num != -1))
-			{
-				common->wcmChannel[i].work.proximity = 0;
-				/* dispatch event */
-				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
-			}
-		}
-		DBG(1, common->debugLevel, ErrorF("usbParse (%s with serial number: %u) at %d: "
-			"Exceeded channel count; ignoring the events.\n", local->name, 
-			common->wcmLastToolSerial, (int)GetTimeInMillis()));
+		DBG(3, common->debugLevel, ErrorF("%s - usbParse: dropping empty event"
+			" for serial %d\n", local->name, common->wcmLastToolSerial));
 		goto skipEvent;
 	}
+
+	channel = usbChooseChannel(common, common->wcmLastToolSerial);
+
+	/* couldn't decide channel? invalid data */
+	if (channel == -1) goto skipEvent;
 
 	if (!common->wcmChannel[channel].work.proximity)
 	{
@@ -921,14 +931,14 @@ name, "Intuos2") )
 	}
 
 	/* dispatch event */
-	usbParseChannel(local,channel,common->wcmLastToolSerial);
+	usbParseChannel(local,channel);
 
 skipEvent:
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
-static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
+static void usbParseChannel(LocalDevicePtr local, int channel)
 {
 	int i, shift, nkeys;
 	WacomDeviceState* ds;
@@ -952,7 +962,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel, int serial)
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
-	ds->serial_num = serial;
+	ds->serial_num = common->wcmLastToolSerial;
 
 	/* loop through all events in group */
 	for (i=0; i<common->wcmEventCnt; ++i)
