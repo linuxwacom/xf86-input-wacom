@@ -729,26 +729,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 
 	DBG(10, common->debugLevel, ErrorF("usbDetectConfig \n"));
 	if (IsPad (priv))
-	{
 		priv->nbuttons = common->npadkeys;
-
-/* This code will be used when we are ready to report valuators in tablet and tool 
- * specific form, which will need to clean InitValuatorAxisStruct() in xf86Wacom.c
- * and all the calls to X that are related to valuators, such as xf86PostButtonEvent and 
- * xf86PostButtonEvent, etc. Code under util directory will need to be updated as well.
- * This will take some time. We put it in the to-do list for now.  Ping 
-		unsigned long abs[NBITS(ABS_MAX)];
-		priv->naxes = 0;
-		if (ioctl(local->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) >= 0)
-		{
-			if (ISBITSET (abs, ABS_RX))
-				priv->naxes++;
-			if (ISBITSET (abs, ABS_RY))
-				priv->naxes++;
-			if (!priv->naxes)
-				priv->flags |= BUTTONS_ONLY_FLAG;
-		}
-*/	}
 	else
 		priv->nbuttons = common->nbuttons;
 
