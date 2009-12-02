@@ -62,6 +62,20 @@ static int xf86WcmWriteWait(int fd, const char* request);
 	};
 
 /*****************************************************************************
+ * XFree86 V4 Functions
+ ****************************************************************************/
+
+static int xf86WcmWait(int t)
+{
+	int err = xf86WaitForInput(-1, ((t) * 1000));
+	if (err != -1)
+		return Success;
+
+	xf86Msg(X_ERROR, "Wacom select error : %s\n", strerror(errno));
+	return err;
+}
+
+/*****************************************************************************
  * xf86WcmSerialValidate -- validates serial packet; returns 0 on success,
  *   positive number of bytes to skip on error.
  ****************************************************************************/

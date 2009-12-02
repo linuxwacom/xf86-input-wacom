@@ -22,19 +22,6 @@
 
 #include "xf86Wacom.h"
 
-/*****************************************************************************
- * XFree86 V4 Functions
- ****************************************************************************/
-
-int xf86WcmWait(int t)
-{
-	int err = xf86WaitForInput(-1, ((t) * 1000));
-	if (err != -1)
-		return Success;
-
-	xf86Msg(X_ERROR, "Wacom select error : %s\n", strerror(errno));
-	return err;
-}
 
 int xf86WcmReady(LocalDevicePtr local)
 {
