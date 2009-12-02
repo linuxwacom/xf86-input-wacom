@@ -33,7 +33,7 @@ AM_CFLAGS = $(XORG_CFLAGS)
 INCLUDES=-I$(top_srcdir)/include/
 
 @DRIVER_NAME@_drv_la_SOURCES = xf86Wacom.c xf86Wacom.h \
-	wcmCommon.c wcmCompat.c wcmConfig.c wcmISDV4.c \
+	wcmCommon.c wcmConfig.c wcmISDV4.c \
 	wcmFilter.c wcmFilter.h xf86WacomDefs.h \
 	wcmTilt2Rotation.c wcmUSB.c wcmXCommand.c \
 	wcmValidateDevice.c

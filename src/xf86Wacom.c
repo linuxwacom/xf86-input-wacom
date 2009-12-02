@@ -67,6 +67,7 @@ extern void xf86WcmInitialScreens(LocalDevicePtr local);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
+static int xf86WcmReady(LocalDevicePtr local);
 static void xf86WcmDevReadInput(LocalDevicePtr local);
 static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
@@ -1087,6 +1088,19 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		return FALSE;
 
 	return TRUE;
+}
+
+static int xf86WcmReady(LocalDevicePtr local)
+{
+#ifdef DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+#endif
+	int n = xf86WaitForInput(local->fd, 0);
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmReady for %s with %d numbers of data\n", local->name, n));
+
+	if (n >= 0) return n ? 1 : 0;
+	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
+	return 0;
 }
 
 /*****************************************************************************

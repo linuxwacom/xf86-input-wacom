@@ -145,8 +145,6 @@ struct _WacomModule
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
-int xf86WcmReady(LocalDevicePtr local);
-
 /* device autoprobing */
 char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
 
