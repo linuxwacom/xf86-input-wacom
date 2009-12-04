@@ -366,21 +366,10 @@ static param_t parameters[] =
 		WACOM_PROP_SAMPLE, 8, 0, NULL
 	},
 
-	{ "SpeedLevel",
-		"Sets relative cursor movement speed (default is 6). ",
-		NULL, 0, 0, not_implemented
-	},
-
 	{ "ClickForce",
 		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
 		"(default is 6)",
 		WACOM_PROP_PRESSURE_THRESHOLD, 32, 0, NULL
-	},
-
-	{ "Accel",
-		"Sets relative cursor movement acceleration "
-		"(default is 1)",
-		NULL, 0, 0, not_implemented
 	},
 
 	{ "xyDefault",
