@@ -604,8 +604,7 @@ static void usage(void)
 	" list [dev|param]           - display known devices, parameters \n"
 	" list mod                   - display supported modifier and specific keys for keystokes [not implemented}\n"
 	" set dev_name param [values...] - set device parameter by name\n"
-	" get dev_name param [param...] - get current device parameter(s) value by name\n"
-	" getdefault dev_name param [param...] - get device parameter(s) default value by name\n");
+	" get dev_name param [param...] - get current device parameter(s) value by name\n");
 }
 
 
@@ -973,9 +972,6 @@ out:
 	XCloseDevice(dpy, dev);
 }
 
-static void getdefault(Display *dpy)
-{
-}
 
 int main (int argc, char **argv)
 {
@@ -1050,8 +1046,6 @@ int main (int argc, char **argv)
 			set(dpy, argc - (optind + 1), &argv[optind + 1]);
 		else if (strcmp(argv[optind], "get") == 0)
 			get(dpy, argc - (optind + 1), &argv[optind + 1]);
-		else if (strcmp(argv[optind], "getdefault") == 0)
-			getdefault(dpy);
 		else
 			usage();
 	}
