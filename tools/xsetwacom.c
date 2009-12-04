@@ -22,6 +22,7 @@
 #endif
 
 #include <wacom-properties.h>
+#include "Xwacom.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -763,6 +764,152 @@ static void list(Display *dpy, int argc, char **argv)
 		printf("unknown argument to list.\n");
 }
 
+/*
+   Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
+   Returns 1 on success or 0 otherwise.
+ */
+static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data)
+{
+	int i;
+	int nitems = 0;
+
+	for (i = 0; i < argc; i++)
+	{
+		KeySym ks = XStringToKeysym(argv[i]);
+		data[nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
+		data[nitems++] = AC_KEY | ks;
+	}
+
+	*ndata += nitems;
+	return i;
+}
+
+/* Join a bunch of argv into a string, then split up again at the spaces
+ * into words. Returns a char** array sized *nwords, each element pointing
+ * to s strdup'd string.
+ * Memory to be freed by the caller.
+ */
+static char** strjoinsplit(int argc, char **argv, int *nwords)
+{
+	char buff[1024] = { 0 };
+	char **words	= NULL;
+	char *tmp, *tok;
+
+	while(argc--)
+	{
+		if (strlen(buff) + strlen(*argv) + 1 >= sizeof(buff))
+			break;
+
+		strcat(buff, (const char*)(*argv)++);
+		strcat(buff, " ");
+	}
+
+	for (tmp = buff; tmp && *tmp != '\0'; tmp = index((const char*)tmp, ' ') + 1)
+		(*nwords)++;
+
+	words = calloc(*nwords, sizeof(char*));
+
+	*nwords = 0;
+	tok = strtok(buff, " ");
+	while(tok)
+	{
+		words[(*nwords)++] = strdup(tok);
+		tok = strtok(NULL, " ");
+	}
+
+	return words;
+}
+
+
+/* Handles complex button mappings through button actions. */
+static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	Atom btnact_prop, prop;
+	unsigned long *data, *btnact_data;
+	int slen = strlen("Button");
+	int btn_no;
+	Atom type;
+	int format;
+	unsigned long btnact_nitems, nitems, bytes_after;
+	int need_update = 0;
+	int i;
+	int nwords = 0;
+	char **words = NULL;
+
+	struct keywords {
+		const char *keyword;
+		int (*func)(int, char **, unsigned long*, unsigned long *);
+	} keywords[] = {
+		{"key", special_map_keystrokes},
+		{ NULL, NULL }
+	};
+
+
+	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+		return;
+
+	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+	if (!btnact_prop)
+		return;
+
+	btn_no = atoi(&param->name[strlen("Button")]);
+
+	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+				AnyPropertyType, &type, &format, &btnact_nitems,
+				&bytes_after, (unsigned char**)&btnact_data);
+
+	if (btn_no > btnact_nitems)
+		return;
+
+	/* some atom already assigned, modify that */
+	if (btnact_data[btn_no])
+		prop = btnact_data[btn_no];
+	else
+	{
+		char buff[64];
+		sprintf(buff, "Wacom button action %d", btn_no);
+		prop = XInternAtom(dpy, buff, False);
+
+		btnact_data[btn_no] = prop;
+		need_update = 1;
+	}
+
+	data = calloc(sizeof(long), 256);
+	nitems = 0;
+
+	/* translate cmdline commands */
+	words = strjoinsplit(argc, argv, &nwords);
+	for (i = 0; i < nwords; i++)
+	{
+		int j;
+		for (j = 0; keywords[j].keyword; j++)
+			if (strcasecmp(words[i], keywords[j].keyword) == 0)
+				i += keywords[j].func(nwords - i - 1,
+						      &words[i + 1],
+						      &nitems, data);
+	}
+
+	XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
+				PropModeReplace,
+				(unsigned char*)data, nitems);
+
+	if (need_update)
+		XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+					PropModeReplace,
+					(unsigned char*)btnact_data,
+					btnact_nitems);
+	XFlush(dpy);
+}
+
+/*
+   Supports three variations.
+   xsetwacom set device Button1 1
+	- maps button 1 to logical button 1
+   xsetwacom set device Button1 "Button 5"
+	- maps button 1 to the same logical button button 5 is mapped
+   xsetwacom set device Button1 "key a b c d"
+	- maps button 1 to key events a b c d
+ */
 static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
 	int nmap = 256;
@@ -784,8 +931,8 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 				ref_button = atoi(&argv[0][slen + 1]);
 				break;
 			}
-			printf("Invalid argument '%s' for button mapping.\n",
-				argv[0]);
+
+			special_map_buttons(dpy, dev, param, argc, argv);
 			return;
 		}
 	}
