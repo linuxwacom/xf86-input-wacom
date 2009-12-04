@@ -383,11 +383,6 @@ static param_t parameters[] =
 		WACOM_PROP_DISPLAY_OPTS, 8, 2,
 	},
 
-	{ "CoreEvent",
-		"Turns on/off device to send core event. "
-		"default is decided by X driver and xorg.conf ",
-	},
-
 	{ "STopX0",
 		"Screen 0 left coordinate in pixels. ",
 		WACOM_PROP_SCREENAREA, 32, 0, NULL
