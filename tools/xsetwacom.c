@@ -765,6 +765,41 @@ static void list(Display *dpy, int argc, char **argv)
 }
 
 /*
+ * Convert a list of random modifiers to strings that can be passed into
+ * XStringToKeysym
+ */
+static char *convert_modifier(const char *modifier)
+{
+	struct modifier {
+		char *name;
+		char *converted;
+	} modmap[] = {
+		{"ctrl", "Control_L"},
+		{"ctl", "Control_L"},
+		{"control", "Control_L"},
+		{"lctrl", "Control_L"},
+		{"rctrl", "Control_R"},
+
+		{"alt", "Alt_L"},
+		{"lalt", "Alt_L"},
+		{"ralt", "Alt_R"},
+
+		{"shift", "Shift_L"},
+		{"lshift", "Shift_L"},
+		{"rshift", "Shift_R"},
+
+		{ NULL, NULL }
+	};
+
+	struct modifier *m = modmap;
+
+	while(m->name && strcasecmp(modifier, m->name))
+		m++;
+
+	return m->converted;
+}
+
+/*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
  */
@@ -775,9 +810,49 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 
 	for (i = 0; i < argc; i++)
 	{
-		KeySym ks = XStringToKeysym(argv[i]);
-		data[nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
-		data[nitems++] = AC_KEY | ks;
+		KeySym ks;
+		int need_press = 0, need_release = 0;
+		char *key = argv[i];
+
+		if (strlen(key) > 1)
+		{
+			switch(key[0])
+			{
+				case '+':
+					need_press = 1;
+					key++;
+					break;
+				case '-':
+					need_release = 1;
+					key++;
+					break;
+				default:
+					break;
+			}
+
+			/* Function keys must be uppercased */
+			if (strlen(key) > 1)
+			{
+				if (strlen(key) >= 2 && key[0] == 'f' && isdigit(key[1]))
+					*key = toupper(*key);
+				else
+					key = convert_modifier(key);
+			}
+
+			if (!key)
+			{
+				fprintf(stderr, "Invalid key '%s'.\n", argv[i]);
+				break;
+			}
+
+		} else
+			need_press = need_release = 1;
+
+		ks = XStringToKeysym(key);
+		if (need_press)
+			data[nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
+		if (need_release)
+			data[nitems++] = AC_KEY | ks;
 	}
 
 	*ndata += nitems;
