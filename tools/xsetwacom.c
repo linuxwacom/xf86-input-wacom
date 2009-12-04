@@ -919,6 +919,63 @@ out:
 
 static void get(Display *dpy, int argc, char **argv)
 {
+	param_t *param;
+	XDevice *dev = NULL;
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	if (argc < 2)
+	{
+		usage();
+		return;
+	}
+
+	dev = find_device(dpy, argv[0]);
+	if (!dev)
+	{
+		printf("Cannot find device '%s'.\n", argv[0]);
+		return;
+	}
+
+	param = find_parameter(argv[1]);
+	if (!param)
+	{
+		printf("Unknown parameter name '%s'.\n", argv[1]);
+		goto out;
+	} else if (param->func)
+	{
+		param->func(dpy, dev, param, argc - 2, &argv[2]);
+		goto out;
+	}
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		goto out;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	switch(param->prop_format)
+	{
+		case 8:
+			printf(" %d\n", data[param->prop_offset]);
+			break;
+		case 32:
+			{
+				long *ldata = (long*)data;
+				printf(" %ld\n", ldata[param->prop_offset]);
+				break;
+			}
+	}
+
+out:
+	XCloseDevice(dpy, dev);
 }
 
 static void getdefault(Display *dpy)
