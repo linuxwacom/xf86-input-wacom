@@ -488,7 +488,10 @@ static struct
 
 	{ 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */ 
 	{ 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
-	{ 0x9A, 2540, 2540, &usbTabletPC   }  /* TabletPC 0x9A */
+	{ 0x9A, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x9A */
+	{ 0x9F,   10,   10, &usbTabletPC   }, /* CapPlus  0x9F */
+	{ 0xE2,   10,   10, &usbTabletPC   }, /* TabletPC 0xE2 */
+	{ 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
 };
 
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
@@ -675,7 +678,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		common->wcmMaxTouchY = absinfo.maximum;
 
 	/* max finger strip X for tablets with Expresskeys
-	 * or max touch logical X for TabletPCs with touch */
+	 * or touch physical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
 		if (IsTouch(priv))
@@ -685,7 +688,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	/* max finger strip Y for tablets with Expresskeys
-	 * or max touch logical Y for TabletPCs with touch */
+	 * or touch physical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
 		if (IsTouch(priv))
@@ -752,6 +755,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 {
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
+
 	if (common->wcmProtocolLevel == 4)
 	{
 		/* Protocol 4 doesn't support tool serial numbers */
@@ -1058,7 +1062,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 				if ((ds->proximity && !dslast.proximity) ||
 					    (!ds->proximity && dslast.proximity))
 					ds->sample = (int)GetTimeInMillis();
-				/* left button is always pressed for touch without capacity 
+				/* left button is always pressed for touch without capacity
+				 * when the first finger touch event received.
 				 * For touch with capacity, left button event will be decided
 				 * in wcmCommon.c by capacity threshold
 				 */
