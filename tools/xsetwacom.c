@@ -50,6 +50,7 @@ typedef struct _param
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -79,161 +80,161 @@ static param_t parameters[] =
 
 	{ "Button1",
 		"X11 event to which button 1 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button2",
 		"X11 event to which button 2 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button3",
 		"X11 event to which button 3 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button4",
 		"X11 event to which button 4 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button5",
 		"X11 event to which button 5 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button6",
 		"X11 event to which button 6 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button7",
 		"X11 event to which button 7 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button8",
 		"X11 event to which button 8 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button9",
 		"X11 event to which button 9 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button10",
 		"X11 event to which button 10 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button11",
 		"X11 event to which button 11 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button12",
 		"X11 event to which button 12 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button13",
 		"X11 event to which button 13 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button14",
 		"X11 event to which button 14 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button15",
 		"X11 event to which button 15 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button16",
 		"X11 event to which button 16 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button17",
 		"X11 event to which button 17 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button18",
 		"X11 event to which button 18 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button19",
 		"X11 event to which button 19 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button20",
 		"X11 event to which button 20 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button21",
 		"X11 event to which button 21 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button22",
 		"X11 event to which button 22 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button23",
 		"X11 event to which button 23 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 	{ "Button24",
 		"X11 event to which button 24 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button25",
 		"X11 event to which button 25 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button26",
 		"X11 event to which button 26 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button27",
 		"X11 event to which button 27 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button28",
 		"X11 event to which button 28 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button29",
 		"X11 event to which button 29 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button30",
 		"X11 event to which button 30 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button31",
 		"X11 event to which button 31 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "Button32",
 		"X11 event to which button 32 should be mapped. ",
-		NULL, 0, 0, map_button
+		NULL, 0, 0, map_button, get_button
 	},
 
 	{ "DebugLevel",
@@ -1165,6 +1166,27 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 
 	printf("\n");
 
+}
+
+static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
+			char **argv)
+{
+	int nmap = 256;
+	unsigned char map[nmap];
+	int btn_no = 0;
+	int slen = strlen("Button");
+
+	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+		return;
+
+	btn_no = atoi(&param->name[strlen("Button")]);
+
+	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
+
+	printf("%d\n", map[btn_no - 1]);
+
+	XSetDeviceButtonMapping(dpy, dev, map, nmap);
+	XFlush(dpy);
 }
 
 static void get(Display *dpy, int argc, char **argv)
