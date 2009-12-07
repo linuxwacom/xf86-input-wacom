@@ -61,525 +61,690 @@ static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc
 
 static param_t parameters[] =
 {
-	{ "TopX",
-		"Bounding rect left coordinate in tablet units. ",
-		WACOM_PROP_TABLET_AREA, 32, 0, NULL, NULL,
+	{
+		.name = "TopX",
+		.desc = "Bounding rect left coordinate in tablet units. ",
+		.prop_name = WACOM_PROP_TABLET_AREA,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "TopY",
-		"Bounding rect top coordinate in tablet units . ",
-		WACOM_PROP_TABLET_AREA, 32, 1, NULL,
+	{
+		.name = "TopY",
+		.desc = "Bounding rect top coordinate in tablet units . ",
+		.prop_name = WACOM_PROP_TABLET_AREA,
+		.prop_format = 32,
+		.prop_offset = 1,
 	},
-
-	{ "BottomX",
-		"Bounding rect right coordinate in tablet units. ",
-		WACOM_PROP_TABLET_AREA, 32, 2, NULL,
+	{
+		.name = "BottomX",
+		.desc = "Bounding rect right coordinate in tablet units. ",
+		.prop_name = WACOM_PROP_TABLET_AREA,
+		.prop_format = 32,
+		.prop_offset = 2,
 	},
-
-	{ "BottomY",
-		"Bounding rect bottom coordinate in tablet units. ",
-		WACOM_PROP_TABLET_AREA, 32, 3, NULL,
+	{
+		.name = "BottomY",
+		.desc = "Bounding rect bottom coordinate in tablet units. ",
+		.prop_name = WACOM_PROP_TABLET_AREA,
+		.prop_format = 32,
+		.prop_offset = 3,
 	},
-
-	{ "Button1",
-		"X11 event to which button 1 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button1",
+		.desc = "X11 event to which button 1 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button2",
-		"X11 event to which button 2 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button2",
+		.desc = "X11 event to which button 2 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button3",
-		"X11 event to which button 3 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button3",
+		.desc = "X11 event to which button 3 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button4",
-		"X11 event to which button 4 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button4",
+		.desc = "X11 event to which button 4 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button5",
-		"X11 event to which button 5 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button5",
+		.desc = "X11 event to which button 5 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button6",
-		"X11 event to which button 6 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button6",
+		.desc = "X11 event to which button 6 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button7",
-		"X11 event to which button 7 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button7",
+		.desc = "X11 event to which button 7 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button8",
-		"X11 event to which button 8 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button8",
+		.desc = "X11 event to which button 8 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button9",
-		"X11 event to which button 9 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button9",
+		.desc = "X11 event to which button 9 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button10",
-		"X11 event to which button 10 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button10",
+		.desc = "X11 event to which button 10 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button11",
-		"X11 event to which button 11 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button11",
+		.desc = "X11 event to which button 11 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button12",
-		"X11 event to which button 12 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button12",
+		.desc = "X11 event to which button 12 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button13",
-		"X11 event to which button 13 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button13",
+		.desc = "X11 event to which button 13 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button14",
-		"X11 event to which button 14 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button14",
+		.desc = "X11 event to which button 14 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button15",
-		"X11 event to which button 15 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button15",
+		.desc = "X11 event to which button 15 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button16",
-		"X11 event to which button 16 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button16",
+		.desc = "X11 event to which button 16 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button17",
-		"X11 event to which button 17 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button17",
+		.desc = "X11 event to which button 17 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button18",
-		"X11 event to which button 18 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button18",
+		.desc = "X11 event to which button 18 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button19",
-		"X11 event to which button 19 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button19",
+		.desc = "X11 event to which button 19 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button20",
-		"X11 event to which button 20 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button20",
+		.desc = "X11 event to which button 20 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button21",
-		"X11 event to which button 21 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button21",
+		.desc = "X11 event to which button 21 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button22",
-		"X11 event to which button 22 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button22",
+		.desc = "X11 event to which button 22 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button23",
-		"X11 event to which button 23 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button23",
+		.desc = "X11 event to which button 23 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-	{ "Button24",
-		"X11 event to which button 24 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button24",
+		.desc = "X11 event to which button 24 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button25",
-		"X11 event to which button 25 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button25",
+		.desc = "X11 event to which button 25 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button26",
-		"X11 event to which button 26 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button26",
+		.desc = "X11 event to which button 26 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button27",
-		"X11 event to which button 27 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button27",
+		.desc = "X11 event to which button 27 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button28",
-		"X11 event to which button 28 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button28",
+		.desc = "X11 event to which button 28 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button29",
-		"X11 event to which button 29 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button29",
+		.desc = "X11 event to which button 29 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button30",
-		"X11 event to which button 30 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button30",
+		.desc = "X11 event to which button 30 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button31",
-		"X11 event to which button 31 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button31",
+		.desc = "X11 event to which button 31 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "Button32",
-		"X11 event to which button 32 should be mapped. ",
-		NULL, 0, 0, map_button, get_button
+	{
+		.name = "Button32",
+		.desc = "X11 event to which button 32 should be mapped. ",
+		.set_func = map_button,
+		.get_func = get_button,
 	},
-
-	{ "DebugLevel",
-		"Level of debugging trace for individual devices, "
+	{
+		.name = "DebugLevel",
+		.desc = "Level of debugging trace for individual devices, "
 		"default is 0 (off). ",
-		NULL, 0, 0, not_implemented, not_implemented
+		.set_func = not_implemented,
+		.get_func = not_implemented,
 	},
-
-	{ "CommonDBG",
-		"Level of debugging statements applied to all devices "
+	{
+		.name = "CommonDBG",
+		.desc = "Level of debugging statements applied to all devices "
 		"associated with the same tablet. default is 0 (off). ",
-		NULL, 0, 0, not_implemented, not_implemented
+		.set_func = not_implemented,
+		.get_func = not_implemented,
 	},
-
-	{ "Suppress",
-		"Number of points trimmed, default is 2. ",
-		WACOM_PROP_SAMPLE, 32, 1,
+	{
+		.name = "Suppress",
+		.desc = "Number of points trimmed, default is 2. ",
+		.prop_name = WACOM_PROP_SAMPLE,
+		.prop_format = 32,
+		.prop_offset = 1,
 	},
-
-	{ "RawSample",
-		"Number of raw data used to filter the points, "
+	{
+		.name = "RawSample",
+		.desc = "Number of raw data used to filter the points, "
 		"default is 4. ",
-		WACOM_PROP_SAMPLE, 32, 0,
+		.prop_name = WACOM_PROP_SAMPLE,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "Screen_No",
-		"Sets/gets screen number the tablet is mapped to, "
+	{
+		.name = "Screen_No",
+		.desc = "Sets/gets screen number the tablet is mapped to, "
 		"default is -1. ",
-		WACOM_PROP_DISPLAY_OPTS, 8, 0,
+		.prop_name = WACOM_PROP_DISPLAY_OPTS,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "PressCurve",
-		"Bezier curve for pressure (default is 0 0 100 100). ",
-		WACOM_PROP_PRESSURECURVE, 32, 0, NULL, get_presscurve
+	{
+		.name = "PressCurve",
+		.desc = "Bezier curve for pressure (default is 0 0 100 100). ",
+		.prop_name = WACOM_PROP_PRESSURECURVE,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.get_func = get_presscurve,
 	},
-
-	{ "TwinView",
-		"Sets the mapping to TwinView horizontal/vertical/none. "
+	{
+		.name = "TwinView",
+		.desc = "Sets the mapping to TwinView horizontal/vertical/none. "
 		"Values = none, vertical, horizontal (default is none).",
-		WACOM_PROP_TWINVIEW_RES, 8, 1, NULL, NULL
+		.prop_name = WACOM_PROP_TWINVIEW_RES,
+		.prop_format = 8,
+		.prop_offset = 1,
 	},
-
-	{ "Mode",
-		"Switches cursor movement mode (default is absolute/on). ",
-		NULL, 0, 0, set_mode, get_mode
+	{
+		.name = "Mode",
+		.desc = "Switches cursor movement mode (default is absolute/on). ",
+		.set_func = set_mode,
+		.get_func = get_mode,
 	},
-
-	{ "TPCButton",
-		"Turns on/off Tablet PC buttons. "
+	{
+		.name = "TPCButton",
+		.desc = "Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
-		WACOM_PROP_HOVER, 8, 0, NULL, NULL
+		.prop_name = WACOM_PROP_HOVER,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "Touch",
-		"Turns on/off Touch events (default is enable/on). ",
-		WACOM_PROP_TOUCH, 8, 0
+	{
+		.name = "Touch",
+		.desc = "Turns on/off Touch events (default is enable/on). ",
+		.prop_name = WACOM_PROP_TOUCH,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "Capacity",
-		"Touch sensitivity level (default is 3, "
+	{
+		.name = "Capacity",
+		.desc = "Touch sensitivity level (default is 3, "
 		"-1 for none capacitive tools).",
-		WACOM_PROP_CAPACITY, 8, 0,
+		.prop_name = WACOM_PROP_CAPACITY,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "CursorProx",
-		"Sets cursor distance for proximity-out "
+	{
+		.name = "CursorProx",
+		.desc = "Sets cursor distance for proximity-out "
 		"in distance from the tablet.  "
 		"(default is 10 for Intuos series, "
 		"42 for Graphire series).",
-		WACOM_PROP_PROXIMITY_THRESHOLD, 32, 0,
+		.prop_name = WACOM_PROP_PROXIMITY_THRESHOLD,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "Rotate",
-		"Sets the rotation of the tablet. "
+	{
+		.name = "Rotate",
+		.desc = "Sets the rotation of the tablet. "
 		"Values = NONE, CW, CCW, HALF (default is NONE).",
-		WACOM_PROP_ROTATION, 8, 0, set_rotate, get_rotate
+		.prop_name = WACOM_PROP_ROTATION,
+		.set_func = set_rotate,
+		.get_func = get_rotate,
 	},
-
-	{ "RelWUp",
-		"X11 event to which relative wheel up should be mapped. ",
-		WACOM_PROP_WHEELBUTTONS, 8, 0,
+	{
+		.name = "RelWUp",
+		.desc = "X11 event to which relative wheel up should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "RelWDn",
-		"X11 event to which relative wheel down should be mapped. ",
-		WACOM_PROP_WHEELBUTTONS, 8, 1,
+	{
+		.name = "RelWDn",
+		.desc = "X11 event to which relative wheel down should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 1,
 	},
-
-	{ "AbsWUp",
-		"X11 event to which absolute wheel up should be mapped. ",
-		WACOM_PROP_WHEELBUTTONS, 8, 2,
+	{
+		.name = "AbsWUp",
+		.desc = "X11 event to which absolute wheel up should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 2,
 	},
-
-	{ "AbsWDn",
-		"X11 event to which absolute wheel down should be mapped. ",
-		WACOM_PROP_WHEELBUTTONS, 8, 3,
+	{
+		.name = "AbsWDn",
+		.desc = "X11 event to which absolute wheel down should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 3,
 	},
-
-	{ "StripLUp",
-		"X11 event to which left strip up should be mapped. ",
-		WACOM_PROP_STRIPBUTTONS, 8, 0,
+	{
+		.name = "StripLUp",
+		.desc = "X11 event to which left strip up should be mapped. ",
+		.prop_name = WACOM_PROP_STRIPBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "StripLDn",
-		"X11 event to which left strip down should be mapped. ",
-		WACOM_PROP_STRIPBUTTONS, 8, 1,
+	{
+		.name = "StripLDn",
+		.desc = "X11 event to which left strip down should be mapped. ",
+		.prop_name = WACOM_PROP_STRIPBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 1,
 	},
-
-	{ "StripRUp",
-		"X11 event to which right strip up should be mapped. ",
-		WACOM_PROP_STRIPBUTTONS, 8, 2,
+	{
+		.name = "StripRUp",
+		.desc = "X11 event to which right strip up should be mapped. ",
+		.prop_name = WACOM_PROP_STRIPBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 2,
 	},
-
-	{ "StripRDn",
-		"X11 event to which right strip down should be mapped. ",
-		WACOM_PROP_STRIPBUTTONS, 8, 3,
+	{
+		.name = "StripRDn",
+		.desc = "X11 event to which right strip down should be mapped. ",
+		.prop_name = WACOM_PROP_STRIPBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 3,
 	},
-
-	{ "TVResolution0",
-		"Sets MetaModes option for TwinView Screen 0. ",
-		WACOM_PROP_TWINVIEW_RES, 32, 0,
+	{
+		.name = "TVResolution0",
+		.desc = "Sets MetaModes option for TwinView Screen 0. ",
+		.prop_name = WACOM_PROP_TWINVIEW_RES,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "TVResolution1",
-		"Sets MetaModes option for TwinView Screen 1. ",
-		WACOM_PROP_TWINVIEW_RES, 32, 1,
+	{
+		.name = "TVResolution1",
+		.desc = "Sets MetaModes option for TwinView Screen 1. ",
+		.prop_name = WACOM_PROP_TWINVIEW_RES,
+		.prop_format = 32,
+		.prop_offset = 1,
 	},
-
-	{ "RawFilter",
-		"Enables and disables filtering of raw data, "
+	{
+		.name = "RawFilter",
+		.desc = "Enables and disables filtering of raw data, "
 		"default is true/on.",
-		WACOM_PROP_SAMPLE, 8, 0, NULL, NULL
+		.prop_name = WACOM_PROP_SAMPLE,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
-
-	{ "ClickForce",
-		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
+	{
+		.name = "ClickForce",
+		.desc = "Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
 		"(default is 6)",
-		WACOM_PROP_PRESSURE_THRESHOLD, 32, 0, NULL, NULL
+		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "xyDefault",
-		"Resets the bounding coordinates to default in tablet units. ",
-		NULL, 0, 0, not_implemented, not_implemented
+	{
+		.name = "xyDefault",
+		.desc = "Resets the bounding coordinates to default in tablet units. ",
+		.set_func = not_implemented,
+		.get_func = not_implemented,
 	},
-
-	{ "mmonitor",
-		"Turns on/off across monitor movement in "
+	{
+		.name = "mmonitor",
+		.desc = "Turns on/off across monitor movement in "
 		"multi-monitor desktop, default is on ",
-		WACOM_PROP_DISPLAY_OPTS, 8, 2,
+		.prop_name = WACOM_PROP_DISPLAY_OPTS,
+		.prop_format = 8,
+		.prop_offset = 2,
 	},
-
-	{ "STopX0",
-		"Screen 0 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 0, NULL, NULL
+	{
+		.name = "STopX0",
+		.desc = "Screen 0 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "STopY0",
-		"Screen 0 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 1, NULL, NULL
+	{
+		.name = "STopY0",
+		.desc = "Screen 0 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 1,
 	},
-
-	{ "SBottomX0",
-		"Screen 0 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 2, NULL, NULL
+	{
+		.name = "SBottomX0",
+		.desc = "Screen 0 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 2,
 	},
-
-	{ "SBottomY0",
-		"Screen 0 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 3, NULL, NULL
+	{
+		.name = "SBottomY0",
+		.desc = "Screen 0 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 3,
 	},
-
-	{ "STopX1",
-		"Screen 1 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 4, NULL, NULL
+	{
+		.name = "STopX1",
+		.desc = "Screen 1 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 4,
 	},
-
-	{ "STopY1",
-		"Screen 1 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 5, NULL, NULL
+	{
+		.name = "STopY1",
+		.desc = "Screen 1 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 5,
 	},
-
-	{ "SBottomX1",
-		"Screen 1 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 6, NULL, NULL
+	{
+		.name = "SBottomX1",
+		.desc = "Screen 1 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 6,
 	},
-
-	{ "SBottomY1",
-		"Screen 1 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 7, NULL, NULL
+	{
+		.name = "SBottomY1",
+		.desc = "Screen 1 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 7,
 	},
-
-	{ "STopX2",
-		"Screen 2 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 8, NULL, NULL
+	{
+		.name = "STopX2",
+		.desc = "Screen 2 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 8,
 	},
-
-	{ "STopY2",
-		"Screen 2 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 9, NULL, NULL
+	{
+		.name = "STopY2",
+		.desc = "Screen 2 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 9,
 	},
-
-	{ "SBottomX2",
-		"Screen 2 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 10, NULL, NULL
+	{
+		.name = "SBottomX2",
+		.desc = "Screen 2 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
 	},
-
-	{ "SBottomY2",
-		"Screen 2 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 11, NULL, NULL
+	{
+		.name = "SBottomY2",
+		.desc = "Screen 2 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 11,
 	},
-
-	{ "STopX3",
-		"Screen 3 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 12, NULL, NULL
+	{
+		.name = "STopX3",
+		.desc = "Screen 3 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 12,
 	},
-
-	{ "STopY3",
-		"Screen 3 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 13, NULL, NULL
+	{
+		.name = "STopY3",
+		.desc = "Screen 3 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 13,
 	},
-
-	{ "SBottomX3",
-		"Screen 3 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 14, NULL, NULL
+	{
+		.name = "SBottomX3",
+		.desc = "Screen 3 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 14,
 	},
-
-	{ "SBottomY3",
-		"Screen 3 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 15, NULL, NULL
+	{
+		.name = "SBottomY3",
+		.desc = "Screen 3 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 15,
 	},
-
-	{ "STopX4",
-		"Screen 4 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 16, NULL, NULL
+	{
+		.name = "STopX4",
+		.desc = "Screen 4 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 16,
 	},
-
-	{ "STopY4",
-		"Screen 4 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 17, NULL, NULL
+	{
+		.name = "STopY4",
+		.desc = "Screen 4 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 17,
 	},
-
-	{ "SBottomX4",
-		"Screen 4 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 18, NULL, NULL
+	{
+		.name = "SBottomX4",
+		.desc = "Screen 4 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 18,
 	},
-
-	{ "SBottomY4",
-		"Screen 4 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 19, NULL, NULL
+	{
+		.name = "SBottomY4",
+		.desc = "Screen 4 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 19,
 	},
-
-	{ "STopX5",
-		"Screen 5 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 20, NULL, NULL
+	{
+		.name = "STopX5",
+		.desc = "Screen 5 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 20,
 	},
-
-	{ "STopY5",
-		"Screen 5 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 21, NULL, NULL
+	{
+		.name = "STopY5",
+		.desc = "Screen 5 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 21,
 	},
-
-	{ "SBottomX5",
-		"Screen 5 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 22, NULL, NULL
+	{
+		.name = "SBottomX5",
+		.desc = "Screen 5 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 22,
 	},
-
-	{ "SBottomY5",
-		"Screen 5 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 23, NULL, NULL
+	{
+		.name = "SBottomY5",
+		.desc = "Screen 5 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 23,
 	},
-
-	{ "STopX6",
-		"Screen 6 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 24, NULL, NULL
+	{
+		.name = "STopX6",
+		.desc = "Screen 6 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 24,
 	},
-
-	{ "STopY6",
-		"Screen 6 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 25, NULL, NULL
+	{
+		.name = "STopY6",
+		.desc = "Screen 6 top coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 25,
 	},
-
-	{ "SBottomX6",
-		"Screen 6 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 26, NULL, NULL
+	{
+		.name = "SBottomX6",
+		.desc = "Screen 6 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 26,
 	},
-
-	{ "SBottomY6",
-		"Screen 6 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 27, NULL, NULL
+	{
+		.name = "SBottomY6",
+		.desc = "Screen 6 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 27,
 	},
-
-	{ "STopX7",
-		"Screen 7 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 28, NULL, NULL
+	{
+		.name = "STopX7",
+		.desc = "Screen 7 left coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 28,
 	},
-
-	{ "STopY7",
+	{
+		.name = "STopY7",
 		"Screen 7 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 29, NULL, NULL
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 29,
 	},
-
-	{ "SBottomX7",
-		"Screen 7 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 30, NULL, NULL
+	{
+		.name = "SBottomX7",
+		.desc = "Screen 7 right coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 30,
 	},
-
-	{ "SBottomY7",
-		"Screen 7 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 31, NULL, NULL
+	{
+		.name = "SBottomY7",
+		.desc = "Screen 7 bottom coordinate in pixels. ",
+		.prop_name = WACOM_PROP_SCREENAREA,
+		.prop_format = 32,
+		.prop_offset = 31,
 	},
-
-	{ "ToolID",
-		"Returns the ID of the associated device. ",
-		WACOM_PROP_TOOL_TYPE, 32, 0, NULL, NULL
+	{
+		.name = "ToolID",
+		.desc = "Returns the ID of the associated device. ",
+		.prop_name = WACOM_PROP_TOOL_TYPE,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "ToolSerial",
-		"Returns the serial number of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 3, NULL, NULL
+	{
+		.name = "ToolSerial",
+		.desc = "Returns the serial number of the associated device. ",
+		.prop_name = WACOM_PROP_SERIALIDS,
+		.prop_format = 32,
+		.prop_offset = 3,
 	},
-
-	{ "TabletID",
-		"Returns the tablet ID of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 0, NULL, NULL
+	{
+		.name = "TabletID",
+		.desc = "Returns the tablet ID of the associated device. ",
+		.prop_name = WACOM_PROP_SERIALIDS,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "GetTabletID",
-		"Returns the tablet ID of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 0, NULL, NULL
+	{
+		.name = "GetTabletID",
+		.desc = "Returns the tablet ID of the associated device. ",
+		.prop_name = WACOM_PROP_SERIALIDS,
+		.prop_format = 32,
+		.prop_offset = 0,
 	},
-
-	{ "NumScreen",
-		"Returns number of screens configured for the desktop. ",
-		NULL, 0, 0, not_implemented, not_implemented
+	{
+		.name = "NumScreen",
+		.desc = "Returns number of screens configured for the desktop. ",
+		.set_func = not_implemented,
+		.get_func = not_implemented,
 	},
-
-	{ "XScaling",
-		"Returns the status of XSCALING is set or not. ",
-		NULL, 0, 0, not_implemented, not_implemented
+	{
+		.name = "XScaling",
+		.desc = "Returns the status of XSCALING is set or not. ",
+		.set_func = not_implemented,
+		.get_func = not_implemented,
 	},
-
 	{ NULL }
 };
 
