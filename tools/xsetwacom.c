@@ -51,6 +51,8 @@ static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -311,7 +313,7 @@ static param_t parameters[] =
 	{ "Rotate",
 		"Sets the rotation of the tablet. "
 		"Values = NONE, CW, CCW, HALF (default is NONE).",
-		WACOM_PROP_ROTATION, 8, 0,
+		WACOM_PROP_ROTATION, 8, 0, set_rotate, get_rotate
 	},
 
 	{ "RelWUp",
@@ -1065,6 +1067,58 @@ static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	XFlush(dpy);
 }
 
+static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	int rotation = 0;
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	if (argc != 1)
+		goto error;
+
+	if (strcasecmp(argv[0], "CW") == 0)
+		rotation = 1;
+	else if (strcasecmp(argv[0], "CCW") == 0)
+		rotation = 2;
+	else if (strcasecmp(argv[0], "HALF") == 0)
+		rotation = 3;
+	else if (strcasecmp(argv[0], "NONE") == 0)
+		rotation = 0;
+	else
+		goto error;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		return;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems == 0 || format != 8)
+	{
+		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
+			param->name);
+		return;
+	}
+
+	*data = rotation;
+	XChangeDeviceProperty(dpy, dev, prop, type, format,
+				PropModeReplace, data, nitems);
+	XFlush(dpy);
+
+	return;
+
+error:
+	fprintf(stderr, "Usage: xsetwacom rotate <device name> [NONE | CW | CCW | HALF]\n");
+	return;
+}
+
 static void set(Display *dpy, int argc, char **argv)
 {
 	param_t *param;
@@ -1153,6 +1207,54 @@ static void set(Display *dpy, int argc, char **argv)
 out:
 	XCloseDevice(dpy, dev);
 }
+
+static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	char *rotation = NULL;
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		return;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems == 0 || format != 8)
+	{
+		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
+			param->name);
+		return;
+	}
+
+	switch(*data)
+	{
+		case 0:
+			rotation = "NONE";
+			break;
+		case 1:
+			rotation = "CW";
+			break;
+		case 2:
+			rotation = "CCW";
+			break;
+		case 3:
+			rotation = "HALF";
+			break;
+	}
+
+	printf("%s\n", rotation);
+
+	return;
+}
+
 
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 				char **argv)
