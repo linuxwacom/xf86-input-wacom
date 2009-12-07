@@ -240,13 +240,13 @@ static param_t parameters[] =
 	{ "DebugLevel",
 		"Level of debugging trace for individual devices, "
 		"default is 0 (off). ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, not_implemented, not_implemented
 	},
 
 	{ "CommonDBG",
 		"Level of debugging statements applied to all devices "
 		"associated with the same tablet. default is 0 (off). ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, not_implemented, not_implemented
 	},
 
 	{ "Suppress",
@@ -378,7 +378,7 @@ static param_t parameters[] =
 
 	{ "xyDefault",
 		"Resets the bounding coordinates to default in tablet units. ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, not_implemented, not_implemented
 	},
 
 	{ "mmonitor",
@@ -569,12 +569,12 @@ static param_t parameters[] =
 
 	{ "NumScreen",
 		"Returns number of screens configured for the desktop. ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, not_implemented, not_implemented
 	},
 
 	{ "XScaling",
 		"Returns the status of XSCALING is set or not. ",
-		NULL, 0, 0, not_implemented
+		NULL, 0, 0, not_implemented, not_implemented
 	},
 
 	{ NULL }
