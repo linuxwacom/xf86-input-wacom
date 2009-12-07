@@ -1113,6 +1113,12 @@ static void set(Display *dpy, int argc, char **argv)
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
 
+	if (nitems <= param->prop_offset)
+	{
+		fprintf(stderr, "Property offset doesn't exist.\n");
+		return;
+	}
+
 	for (i = 0; i < argc - 2; i++)
 	{
 		val = atof(argv[i + 2]);
@@ -1248,6 +1254,13 @@ static void get(Display *dpy, int argc, char **argv)
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems <= param->prop_offset)
+	{
+		fprintf(stderr, "Property offset doesn't exist.\n");
+		return;
+	}
+
 
 	switch(param->prop_format)
 	{
