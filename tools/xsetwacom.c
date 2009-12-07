@@ -898,6 +898,13 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 	return words;
 }
 
+static int get_button_number_from_string(const char* string)
+{
+	int slen = strlen("Button");
+	if (slen >= strlen(string) || strncasecmp(string, "Button", slen))
+		return -1;
+	return atoi(&string[strlen("Button")]);
+}
 
 /* Handles complex button mappings through button actions. */
 static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -930,7 +937,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	if (!btnact_prop)
 		return;
 
-	btn_no = atoi(&param->name[strlen("Button")]);
+	btn_no = get_button_number_from_string(param->name);
 
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				AnyPropertyType, &type, &format, &btnact_nitems,
@@ -993,7 +1000,6 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	int nmap = 256;
 	unsigned char map[nmap];
 	int i, btn_no = 0;
-	int slen = strlen("Button");
 	int ref_button = -1; /* xsetwacom set <name> Button1 "Button 5" */
 
 	if (argc <= 0)
@@ -1003,22 +1009,18 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	{
 		if (!isdigit(argv[0][i]))
 		{
-			if (strlen(argv[0]) >= slen + 2 &&
-			    strncmp(argv[0], "button ", slen + 1) == 0)
-			{
-				ref_button = atoi(&argv[0][slen + 1]);
+			ref_button = get_button_number_from_string(argv[0]);
+			if (ref_button != -1)
 				break;
-			}
 
 			special_map_buttons(dpy, dev, param, argc, argv);
 			return;
 		}
 	}
 
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+	btn_no = get_button_number_from_string(param->name);
+	if (btn_no == -1)
 		return;
-
-	btn_no = atoi(&param->name[strlen("Button")]);
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 	if (ref_button != -1)
@@ -1174,12 +1176,10 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 	int nmap = 256;
 	unsigned char map[nmap];
 	int btn_no = 0;
-	int slen = strlen("Button");
 
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+	btn_no = get_button_number_from_string(param->name);
+	if (btn_no == -1)
 		return;
-
-	btn_no = atoi(&param->name[strlen("Button")]);
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
