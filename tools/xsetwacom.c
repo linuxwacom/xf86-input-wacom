@@ -49,6 +49,7 @@ typedef struct _param
 
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -281,7 +282,7 @@ static param_t parameters[] =
 
 	{ "Mode",
 		"Switches cursor movement mode (default is absolute/on). ",
-		NULL, 0, 0, set_mode
+		NULL, 0, 0, set_mode, get_mode
 	},
 
 	{ "TPCButton",
@@ -1206,6 +1207,38 @@ static void set(Display *dpy, int argc, char **argv)
 
 out:
 	XCloseDevice(dpy, dev);
+}
+
+static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	XDeviceInfo *info, *d;
+	int ndevices, i;
+	XValuatorInfoPtr v;
+
+	info = XListInputDevices(dpy, &ndevices);
+	while(ndevices--)
+	{
+		d = &info[ndevices];
+		if (d->id == dev->device_id)
+			break;
+	}
+
+	if (!ndevices) /* device id 0 is reserved and can't be our device */
+		return;
+
+
+	v = (XValuatorInfoPtr)d->inputclassinfo;
+	for (i = 0; i < d->num_classes; i++)
+	{
+		if (v->class == ValuatorClass)
+		{
+			printf("%s\n", (v->mode == Absolute) ? "Absolute" : "Relative");
+			break;
+		}
+		v = (XValuatorInfoPtr)((char*)v + v->length);
+	}
+
+	XFreeDeviceList(info);
 }
 
 static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
