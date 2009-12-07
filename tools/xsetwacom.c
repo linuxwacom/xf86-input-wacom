@@ -49,6 +49,7 @@ typedef struct _param
 
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -266,7 +267,7 @@ static param_t parameters[] =
 
 	{ "PressCurve",
 		"Bezier curve for pressure (default is 0 0 100 100). ",
-		WACOM_PROP_PRESSURECURVE, 32, 0, NULL,
+		WACOM_PROP_PRESSURECURVE, 32, 0, NULL, get_presscurve
 	},
 
 	{ "TwinView",
@@ -1132,6 +1133,38 @@ static void set(Display *dpy, int argc, char **argv)
 
 out:
 	XCloseDevice(dpy, dev);
+}
+
+static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
+				char **argv)
+{
+	Atom prop, type;
+	int format, i;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		return;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (param->prop_format != 32)
+		return;
+
+	for (i = 0; i < nitems; i++)
+	{
+		long *ldata = (long*)data;
+		printf(" %ld", ldata[param->prop_offset + i]);
+	}
+
+	printf("\n");
+
 }
 
 static void get(Display *dpy, int argc, char **argv)
