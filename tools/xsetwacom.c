@@ -43,7 +43,8 @@ typedef struct _param
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
 	const int prop_offset;	/* offset (index) into the property values */
-	void (*func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
+	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
+	void (*get_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function for getting, if appropriate */
 } param_t;
 
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -57,7 +58,7 @@ static param_t parameters[] =
 {
 	{ "TopX",
 		"Bounding rect left coordinate in tablet units. ",
-		WACOM_PROP_TABLET_AREA, 32, 0, NULL,
+		WACOM_PROP_TABLET_AREA, 32, 0, NULL, NULL,
 	},
 
 	{ "TopY",
@@ -271,7 +272,7 @@ static param_t parameters[] =
 	{ "TwinView",
 		"Sets the mapping to TwinView horizontal/vertical/none. "
 		"Values = none, vertical, horizontal (default is none).",
-		WACOM_PROP_TWINVIEW_RES, 8, 1, NULL
+		WACOM_PROP_TWINVIEW_RES, 8, 1, NULL, NULL
 	},
 
 	{ "Mode",
@@ -283,7 +284,7 @@ static param_t parameters[] =
 		"Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
-		WACOM_PROP_HOVER, 8, 0, NULL
+		WACOM_PROP_HOVER, 8, 0, NULL, NULL
 	},
 
 	{ "Touch",
@@ -364,13 +365,13 @@ static param_t parameters[] =
 	{ "RawFilter",
 		"Enables and disables filtering of raw data, "
 		"default is true/on.",
-		WACOM_PROP_SAMPLE, 8, 0, NULL
+		WACOM_PROP_SAMPLE, 8, 0, NULL, NULL
 	},
 
 	{ "ClickForce",
 		"Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
 		"(default is 6)",
-		WACOM_PROP_PRESSURE_THRESHOLD, 32, 0, NULL
+		WACOM_PROP_PRESSURE_THRESHOLD, 32, 0, NULL, NULL
 	},
 
 	{ "xyDefault",
@@ -386,182 +387,182 @@ static param_t parameters[] =
 
 	{ "STopX0",
 		"Screen 0 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 0, NULL
+		WACOM_PROP_SCREENAREA, 32, 0, NULL, NULL
 	},
 
 	{ "STopY0",
 		"Screen 0 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 1, NULL
+		WACOM_PROP_SCREENAREA, 32, 1, NULL, NULL
 	},
 
 	{ "SBottomX0",
 		"Screen 0 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 2, NULL
+		WACOM_PROP_SCREENAREA, 32, 2, NULL, NULL
 	},
 
 	{ "SBottomY0",
 		"Screen 0 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 3, NULL
+		WACOM_PROP_SCREENAREA, 32, 3, NULL, NULL
 	},
 
 	{ "STopX1",
 		"Screen 1 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 4, NULL
+		WACOM_PROP_SCREENAREA, 32, 4, NULL, NULL
 	},
 
 	{ "STopY1",
 		"Screen 1 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 5, NULL
+		WACOM_PROP_SCREENAREA, 32, 5, NULL, NULL
 	},
 
 	{ "SBottomX1",
 		"Screen 1 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 6, NULL
+		WACOM_PROP_SCREENAREA, 32, 6, NULL, NULL
 	},
 
 	{ "SBottomY1",
 		"Screen 1 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 7, NULL
+		WACOM_PROP_SCREENAREA, 32, 7, NULL, NULL
 	},
 
 	{ "STopX2",
 		"Screen 2 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 8, NULL
+		WACOM_PROP_SCREENAREA, 32, 8, NULL, NULL
 	},
 
 	{ "STopY2",
 		"Screen 2 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 9, NULL
+		WACOM_PROP_SCREENAREA, 32, 9, NULL, NULL
 	},
 
 	{ "SBottomX2",
 		"Screen 2 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 10, NULL
+		WACOM_PROP_SCREENAREA, 32, 10, NULL, NULL
 	},
 
 	{ "SBottomY2",
 		"Screen 2 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 11, NULL
+		WACOM_PROP_SCREENAREA, 32, 11, NULL, NULL
 	},
 
 	{ "STopX3",
 		"Screen 3 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 12, NULL
+		WACOM_PROP_SCREENAREA, 32, 12, NULL, NULL
 	},
 
 	{ "STopY3",
 		"Screen 3 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 13, NULL
+		WACOM_PROP_SCREENAREA, 32, 13, NULL, NULL
 	},
 
 	{ "SBottomX3",
 		"Screen 3 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 14, NULL
+		WACOM_PROP_SCREENAREA, 32, 14, NULL, NULL
 	},
 
 	{ "SBottomY3",
 		"Screen 3 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 15, NULL
+		WACOM_PROP_SCREENAREA, 32, 15, NULL, NULL
 	},
 
 	{ "STopX4",
 		"Screen 4 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 16, NULL
+		WACOM_PROP_SCREENAREA, 32, 16, NULL, NULL
 	},
 
 	{ "STopY4",
 		"Screen 4 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 17, NULL
+		WACOM_PROP_SCREENAREA, 32, 17, NULL, NULL
 	},
 
 	{ "SBottomX4",
 		"Screen 4 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 18, NULL
+		WACOM_PROP_SCREENAREA, 32, 18, NULL, NULL
 	},
 
 	{ "SBottomY4",
 		"Screen 4 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 19, NULL
+		WACOM_PROP_SCREENAREA, 32, 19, NULL, NULL
 	},
 
 	{ "STopX5",
 		"Screen 5 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 20, NULL
+		WACOM_PROP_SCREENAREA, 32, 20, NULL, NULL
 	},
 
 	{ "STopY5",
 		"Screen 5 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 21, NULL
+		WACOM_PROP_SCREENAREA, 32, 21, NULL, NULL
 	},
 
 	{ "SBottomX5",
 		"Screen 5 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 22, NULL
+		WACOM_PROP_SCREENAREA, 32, 22, NULL, NULL
 	},
 
 	{ "SBottomY5",
 		"Screen 5 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 23, NULL
+		WACOM_PROP_SCREENAREA, 32, 23, NULL, NULL
 	},
 
 	{ "STopX6",
 		"Screen 6 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 24, NULL
+		WACOM_PROP_SCREENAREA, 32, 24, NULL, NULL
 	},
 
 	{ "STopY6",
 		"Screen 6 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 25, NULL
+		WACOM_PROP_SCREENAREA, 32, 25, NULL, NULL
 	},
 
 	{ "SBottomX6",
 		"Screen 6 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 26, NULL
+		WACOM_PROP_SCREENAREA, 32, 26, NULL, NULL
 	},
 
 	{ "SBottomY6",
 		"Screen 6 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 27, NULL
+		WACOM_PROP_SCREENAREA, 32, 27, NULL, NULL
 	},
 
 	{ "STopX7",
 		"Screen 7 left coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 28, NULL
+		WACOM_PROP_SCREENAREA, 32, 28, NULL, NULL
 	},
 
 	{ "STopY7",
 		"Screen 7 top coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 29, NULL
+		WACOM_PROP_SCREENAREA, 32, 29, NULL, NULL
 	},
 
 	{ "SBottomX7",
 		"Screen 7 right coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 30, NULL
+		WACOM_PROP_SCREENAREA, 32, 30, NULL, NULL
 	},
 
 	{ "SBottomY7",
 		"Screen 7 bottom coordinate in pixels. ",
-		WACOM_PROP_SCREENAREA, 32, 31, NULL
+		WACOM_PROP_SCREENAREA, 32, 31, NULL, NULL
 	},
 
 	{ "ToolID",
 		"Returns the ID of the associated device. ",
-		WACOM_PROP_TOOL_TYPE, 32, 0, NULL
+		WACOM_PROP_TOOL_TYPE, 32, 0, NULL, NULL
 	},
 
 	{ "ToolSerial",
 		"Returns the serial number of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 3, NULL
+		WACOM_PROP_SERIALIDS, 32, 3, NULL, NULL
 	},
 
 	{ "TabletID",
 		"Returns the tablet ID of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 0, NULL
+		WACOM_PROP_SERIALIDS, 32, 0, NULL, NULL
 	},
 
 	{ "GetTabletID",
 		"Returns the tablet ID of the associated device. ",
-		WACOM_PROP_SERIALIDS, 32, 0, NULL
+		WACOM_PROP_SERIALIDS, 32, 0, NULL, NULL
 	},
 
 	{ "NumScreen",
@@ -747,7 +748,7 @@ static void list_param(Display *dpy)
 	while(param->name)
 	{
 		printf("%-16s - %16s%s\n", param->name, param->desc,
-			(param->func == not_implemented) ? " [not implemented]" : "");
+			(param->set_func == not_implemented) ? " [not implemented]" : "");
 		param++;
 	}
 }
@@ -1081,9 +1082,9 @@ static void set(Display *dpy, int argc, char **argv)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
-	} else if (param->func)
+	} else if (param->set_func)
 	{
-		param->func(dpy, dev, param, argc - 2, &argv[2]);
+		param->set_func(dpy, dev, param, argc - 2, &argv[2]);
 		goto out;
 	}
 
@@ -1160,9 +1161,9 @@ static void get(Display *dpy, int argc, char **argv)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
-	} else if (param->func)
+	} else if (param->get_func)
 	{
-		param->func(dpy, dev, param, argc - 2, &argv[2]);
+		param->get_func(dpy, dev, param, argc - 2, &argv[2]);
 		goto out;
 	}
 
