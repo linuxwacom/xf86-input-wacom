@@ -300,11 +300,13 @@ void input_dev_tpc2fg(struct input_dev *input_dev, struct wacom_wac *wacom_wac)
 }
 
 static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hid_desc,
-		struct wacom_features *features)
+			   struct wacom_features *features)
 {
 	struct usb_device *dev = interface_to_usbdev(intf);
 	char limit = 0;
-	int i = 0, usage = WCM_UNDEFINED, finger = 0, pen = 0, result = 0;
+	/* result has to be defined as int for some devices */
+	int result = 0;
+	int i = 0, usage = WCM_UNDEFINED, finger = 0, pen = 0;
 	unsigned char *report;
 
 	report = kzalloc(hid_desc->wDescriptorLength, GFP_KERNEL);
@@ -445,15 +447,17 @@ static int wacom_parse_hid(struct usb_interface *intf, struct hid_descriptor *hi
 	return result;
 }
 
-static int wacom_reset_report(struct usb_interface *intf, struct wacom_features *features)
+static int wacom_query_tablet_data(struct usb_interface *intf, struct wacom_features *features)
 {
-	char rep_data[4], limit = 0, report_id = 2;
+	unsigned char *rep_data;
+	int limit = 0, report_id = 2;
 	int error = -ENOMEM;
-	/*
-	 * Ask to report tablet data if it is 2FGT or not a Tablet PC.
-	 * Repeat 3 times since on some systems the first 2 may fail.
-	 */
 
+	rep_data = kmalloc(2, GFP_KERNEL);
+	if (!rep_data)
+		return error;
+
+	/* ask to report tablet data if it is 2FGT or not a Tablet PC */
 	if (features->device_type == BTN_TOOL_TRIPLETAP) {
 		do {
 			rep_data[0] = 3;
@@ -465,7 +469,7 @@ static int wacom_reset_report(struct usb_interface *intf, struct wacom_features 
 				error = usb_get_report(intf,
 					WAC_HID_FEATURE_REPORT, report_id,
 					rep_data, 3);
-		} while ((error < 0 || rep_data[1] != 4) && limit++ < 3);
+		} while ((error < 0 || rep_data[1] != 4) && limit++ < 5);
 	} else if ((features->type != TABLETPC) && (features->type != TABLETPC2FG)) {
 		do {
 			rep_data[0] = 2;
@@ -476,9 +480,12 @@ static int wacom_reset_report(struct usb_interface *intf, struct wacom_features 
 				error = usb_get_report(intf,
 					WAC_HID_FEATURE_REPORT, report_id,
 					rep_data, 2);
-		} while ((error < 0 || rep_data[1] != 2) && limit++ < 3);
+		} while ((error < 0 || rep_data[1] != 2) && limit++ < 5);
 	}
-	return error;
+
+	kfree(rep_data);
+
+	return error < 0 ? error : 0;
 }
 
 static int wacom_retrieve_hid_descriptor(struct usb_interface *intf,
@@ -572,9 +579,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_dev->keybit[BIT_WORD(BTN_DIGI)] |= BIT_MASK(BTN_TOUCH);
 
-	input_set_abs_params(input_dev, ABS_X, 0, features->x_max, 4, 0);	
+	input_set_abs_params(input_dev, ABS_X, 0, features->x_max, 4, 0);
 	input_set_abs_params(input_dev, ABS_Y, 0, features->y_max, 4, 0);
-	
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, features->pressure_max, 0, 0);
 	input_dev->absbit[BIT_WORD(ABS_MISC)] |= BIT_MASK(ABS_MISC);
 
@@ -591,8 +597,8 @@ static int wacom_probe(struct usb_interface *intf, const struct usb_device_id *i
 	if (error)
 		goto fail3;
 
-	/* switch to wacom mode if needed */
-	wacom_reset_report(intf, features);
+	/* Note that if query fails it is not a hard failure */
+	wacom_query_tablet_data(intf, features);
 
 	usb_set_intfdata(intf, wacom);
 	return 0;
@@ -642,7 +648,7 @@ static int wacom_resume(struct usb_interface *intf)
 		rv = usb_submit_urb(wacom->irq, GFP_NOIO);
 		/* switch to wacom mode if needed */
 		if (!wacom_retrieve_hid_descriptor(intf, features))
-			wacom_reset_report(intf, features);
+			wacom_query_tablet_data(intf, features);
 	} else
 		rv = 0;
 	mutex_unlock(&wacom->lock);
