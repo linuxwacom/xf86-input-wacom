@@ -351,8 +351,8 @@ void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys)
 /**
  * Return 1 if the device needs auto-hotplugging from within the driver.
  * This is the case if we don't get passed a "type" option (invalid in
- * xorg.conf configurations) and we come from HAL or whatever future config
- * backend.
+ * xorg.conf configurations) and we come from HAL, udev or whatever future
+ * config backend.
  *
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
@@ -366,8 +366,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
 	if (*type) /* type specified, don't hotplug */
 		return 0;
 
-	/* Only supporting HAL so far */
-	if (strcmp(source, "server/hal"))
+	if (strcmp(source, "server/hal") && strcmp(source, "server/udev"))
 		return 0;
 
 	/* no type specified, so we need to pick the first one applicable
