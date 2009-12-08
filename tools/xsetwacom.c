@@ -34,6 +34,9 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput.h>
 
+#define TRACE(...) \
+	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
+
 static int verbose = False;
 
 typedef struct _param
@@ -812,6 +815,8 @@ static XDevice* find_device(Display *display, char *name)
 
 	for(i = 0; i < num_devices; i++)
 	{
+		TRACE("Checking device '%s' (%ld).\n", devices[i].name, devices[i].id);
+
 		if (((devices[i].use >= IsXExtensionDevice)) &&
 			((!is_id && strcmp(devices[i].name, name) == 0) ||
 			 (is_id && devices[i].id == id)))
@@ -829,7 +834,10 @@ static XDevice* find_device(Display *display, char *name)
 	}
 
 	if (found)
+	{
+		TRACE("Device '%s' (%ld) found.\n", found->name, found->id);
 		dev = XOpenDevice(display, found->id);
+	}
 
 	XFreeDeviceList(devices);
 
@@ -877,6 +885,8 @@ static void list_one_device(Display *dpy, XDeviceInfo *info)
 			}
 
 			XFree(data);
+		} else {
+			TRACE("'%s' (%ld) is not a wacom device.\n", info->name, info->id);
 		}
 
 		XFree(atoms);
@@ -904,6 +914,7 @@ static void list_devices(Display *dpy)
 		if (info[i].use == IsXPointer || info[i].use == IsXKeyboard)
 			continue;
 
+		TRACE("Found device '%s' (%ld).\n", info[i].name, info[i].id);
 		list_one_device(dpy, &info[i]);
 	}
 
@@ -925,6 +936,7 @@ static void list_param(Display *dpy)
 
 static void list(Display *dpy, int argc, char **argv)
 {
+	TRACE("'list' requested.\n");
 	if (argc == 0)
 		list_devices(dpy);
 	else if (strcmp(argv[0], "dev") == 0)
@@ -1097,6 +1109,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 		{ NULL, NULL }
 	};
 
+	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
 
 	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
 		return;
@@ -1173,6 +1186,8 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	if (argc <= 0)
 		return;
 
+	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
+
 	for(i = 0; i < strlen(argv[0]); i++)
 	{
 		if (!isdigit(argv[0][i]))
@@ -1218,6 +1233,8 @@ static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 		return;
 	}
 
+	TRACE("Set mode '%s' for device %ld.\n", argv[0], dev->device_id);
+
 	if (strcasecmp(argv[0], "Relative") == 0)
 		mode = Relative;
 	else if (strcasecmp(argv[0], "Absolute") == 0)
@@ -1243,6 +1260,8 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	if (argc != 1)
 		goto error;
+
+	TRACE("Rotate '%s' for device %ld.\n", argv[0], dev->device_id);
 
 	if (strcasecmp(argv[0], "CW") == 0)
 		rotation = 1;
@@ -1303,6 +1322,8 @@ static void set(Display *dpy, int argc, char **argv)
 		usage();
 		return;
 	}
+
+	TRACE("'set' requested for '%s'.\n", argv[0]);
 
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
@@ -1391,6 +1412,7 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	if (!ndevices) /* device id 0 is reserved and can't be our device */
 		return;
 
+	TRACE("Getting mode for device %ld.\n", dev->device_id);
 
 	v = (XValuatorInfoPtr)d->inputclassinfo;
 	for (i = 0; i < d->num_classes; i++)
@@ -1421,6 +1443,8 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 			param->name);
 		return;
 	}
+
+	TRACE("Getting rotation for device %ld.\n", dev->device_id);
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
@@ -1470,6 +1494,8 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 		return;
 	}
 
+	TRACE("Getting pressure curve for device %ld.\n", dev->device_id);
+
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
 
@@ -1497,6 +1523,8 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 	if (btn_no == -1)
 		return;
 
+	TRACE("Getting button map curve for device %ld.\n", dev->device_id);
+
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
 	if (btn_no > nmap)
@@ -1520,11 +1548,7 @@ static void get(Display *dpy, int argc, char **argv)
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
 
-	if (argc < 2)
-	{
-		usage();
-		return;
-	}
+	TRACE("'get' requested for '%s'.\n", argv[0]);
 
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
@@ -1637,6 +1661,8 @@ int main (int argc, char **argv)
 				return 0;
 		}
 	}
+
+	TRACE("Display is '%s'.\n", display);
 
 	dpy = XOpenDisplay(display);
 	if (!dpy)
