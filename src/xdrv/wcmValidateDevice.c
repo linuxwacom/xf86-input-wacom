@@ -156,7 +156,6 @@ static struct
 Bool wcmIsAValidType(const char* type, unsigned long* keys)
 {
 	int j, ret = FALSE;
-ErrorF("wcmIsAValidType type %s \n", type);
 	if (!type)
 		return ret;
 
@@ -170,7 +169,6 @@ ErrorF("wcmIsAValidType type %s \n", type);
 				break;
 			}
 	}
-ErrorF("wcmIsAValidType found type %s %d \n", type, ret);
 	return ret;
 }
 
@@ -221,6 +219,7 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 				/* make sure we fall to default */
 				if (fscanf(file, "WACf%x\n", &id) <= 0)
 					id = 0;
+				fclose(file);
 			}
 		}
 		/* default to penabled */

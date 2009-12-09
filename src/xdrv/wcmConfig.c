@@ -20,7 +20,6 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #ifdef WCM_XORG_XSERVER_1_4
-    extern Bool xf86WcmIsWacomDevice (char* fname);
     extern Bool wcmIsAValidType(const char *type, unsigned long* keys);
     extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
     extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
@@ -476,8 +475,6 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
         if(device)
         {
 		unsigned long keys[NBITS(KEY_MAX)];
-	        if (!xf86WcmIsWacomDevice(device))
-        	        goto SetupProc_fail;
 
 		/* initialize supported keys */
 		wcmDeviceTypeKeys(fakeLocal, keys);

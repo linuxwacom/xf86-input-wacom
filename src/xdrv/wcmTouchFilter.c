@@ -152,8 +152,10 @@ void xf86WcmFingerTapToClick(WacomCommonPtr common)
 				{
 					/* send left up before sending right down */
 			    		if (!common->wcmGestureMode)
+					{
+						common->wcmGestureMode = GESTURE_TAP_MODE;
 						xf86WcmSwitchLeftClick(priv);
-					common->wcmGestureMode = GESTURE_TAP_MODE;
+					}
 
 					/* right button down */
 					xf86PostButtonEvent(priv->local->dev, 
@@ -179,8 +181,10 @@ void xf86WcmFingerTapToClick(WacomCommonPtr common)
 			    /* fingers moved apart more than WACOM_APART_IN_POINT
 			     * zoom mode is entered */
 			    if (!common->wcmGestureMode)
+			    {
+			        common->wcmGestureMode = GESTURE_ZOOM_MODE;
 				xf86WcmSwitchLeftClick(priv);
-			    common->wcmGestureMode = GESTURE_ZOOM_MODE;
+			    }
 			    xf86WcmFingerZoom(priv);
 			}
 
@@ -192,8 +196,10 @@ void xf86WcmFingerTapToClick(WacomCommonPtr common)
 			    /* send scroll event when both fingers move in 
 			     * the same direction */
 			    if (!common->wcmGestureMode)
+			    {
+			        common->wcmGestureMode = GESTURE_SCROLL_MODE;
 				xf86WcmSwitchLeftClick(priv);
-			    common->wcmGestureMode = GESTURE_SCROLL_MODE;
+			    }
 			    xf86WcmFingerScroll(priv);
 			}
 		}

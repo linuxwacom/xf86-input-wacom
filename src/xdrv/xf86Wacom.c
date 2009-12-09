@@ -88,9 +88,10 @@
  * 2009-11-06 47-pc0.8.5-2 - Validate tool type associated with device
  * 2009-11-11 47-pc0.8.5-4 - Allow multiple tools to be defined for one type
  * 2009-11-24 47-pc0.8.5-5 - Support hotplugging for serial ISDV4
+ * 2009-12-08 47-pc0.8.5-6 - Add new serial ISDV4 devices
  */
 
-static const char identification[] = "$Identification: 47-0.8.5-5 $";
+static const char identification[] = "$Identification: 47-0.8.5-6 $";
 
 /****************************************************************************/
 
@@ -565,7 +566,8 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 }
 
 #ifdef WCM_XORG_XSERVER_1_4
-Bool xf86WcmIsWacomDevice (char* fname)
+#ifdef LINUX_INPUT
+static Bool xf86WcmIsWacomDevice (char* fname)
 {
 	int fd = -1;
 	struct input_id id;
@@ -587,9 +589,7 @@ Bool xf86WcmIsWacomDevice (char* fname)
 	else
 		return FALSE;
 }
-#endif  /* WCM_XORG_XSERVER_1_4 */
 
-#ifdef LINUX_INPUT
 /*****************************************************************************
  * xf86WcmEventAutoDevProbe -- Probe for right input device
  ****************************************************************************/
@@ -607,12 +607,10 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		for (i = 0; i < EVDEV_MINORS; i++) 
 		{
 			char fname[64];
-			int fd = -1;
 			Bool is_wacom;
-			struct input_id id;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
-			is_wacom = xf86WcmIsWacomDevice(fname, &id);
+			is_wacom = xf86WcmIsWacomDevice(fname);
 			if (is_wacom) 
 			{
 				ErrorF ("%s Wacom probed device to be %s (waited %d msec)\n",
@@ -629,7 +627,8 @@ char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
 		local->name, i + 1, wait);
 	return FALSE;
 }
-#endif
+#endif  /* LINUX_INPUT */
+#endif  /* WCM_XORG_XSERVER_1_4 */
 
 /*****************************************************************************
  * xf86WcmOpen --
@@ -839,6 +838,9 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 	{
 		data = common->buffer;
 		if (data[0])
+			common->wcmPktLength = WACOM_PKGLEN_TPC;
+		else if ((common->tablet_id != 0x9f) &&
+			(common->tablet_id != 0xe2)) /* penabled as default */
 			common->wcmPktLength = WACOM_PKGLEN_TPC;
 
 		if ( data[0] & 0x10 )

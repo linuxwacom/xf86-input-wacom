@@ -1,3 +1,10 @@
+2009-12-08  Ping Cheng <pingc@wacom.com>
+	* Merged src/2.6.28 into src/2.6.27 so we have less files to worry
+	* Removed src/2.6.28
+	* Updated src/2.6.27 to version 1.52 in the kernel tree
+	* Support new serial Tablet PCs
+	* Label 0.8.5-6
+
 2009-11-30  Ping Cheng <pingc@wacom.com>
 	* Fixed a kernel driver bug for E3
 	* Updated serial ISDv4 support with newer protocol

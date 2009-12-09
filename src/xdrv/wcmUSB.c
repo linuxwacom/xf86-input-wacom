@@ -385,8 +385,6 @@ static Bool usbDetect(LocalDevicePtr local)
 	if (err < 0) 
 		ErrorF("%s Wacom X driver can't grab event device, errno=%d\n",
 				local->name, errno);
-	else 
-		ErrorF("%s Wacom X driver grabbed event device\n", local->name);
 #endif
 	return 1;
 }
@@ -528,37 +526,28 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				/* except when touch is supported */
 				common->wcmTouchDefault = 1;
 
-				/* check if touch was turned off in xorg.conf */
-				common->wcmTouch = xf86SetBoolOption(local->options, 
-					"Touch", common->wcmTouchDefault);
-				if ( common->wcmTouch )
-					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", common->wcmDevice);
-
 				if(common->tablet_id == 0xE2 || common->tablet_id == 0xE3)
 				{
 					/* GestureDefault was off for all devices */
 					/* except when multi-touch is supported */
 					common->wcmGestureDefault = 1;
-
-					/* check if gesture was turned off in xorg.conf */
-					common->wcmGesture = xf86SetBoolOption(local->options, 
-						"Gesture", common->wcmGestureDefault);
-					if ( common->wcmTouch && common->wcmGesture )
-						xf86Msg(X_CONFIG, "%s: "
-							"Touch Gesture is enabled \n", common->wcmDevice);
 				}
-			}
 
-			/* Tablet PC button applied to the whole tablet. Not just one tool */
-			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
-			if ( priv->flags & STYLUS_ID )
-			{
-				common->wcmTPCButton = xf86SetBoolOption(local->options, 
-					"TPCButton", common->wcmTPCButtonDefault);
-				if ( common->wcmTPCButton )
-					xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", 
-						common->wcmDevice);
+				/* Tablet PC button applied to the whole tablet. Not just one tool */
+				common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
 			}
+		}
+
+		/* check if touch was turned off in xorg.conf */
+		common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
+
+		/* check if gesture was turned off in xorg.conf */
+		common->wcmGesture = xf86SetBoolOption(local->options, "Gesture", common->wcmGestureDefault);
+
+		if ( priv->flags & STYLUS_ID )
+		{
+			common->wcmTPCButton = xf86SetBoolOption(local->options, 
+				"TPCButton", common->wcmTPCButtonDefault);
 		}
 	}
 	else

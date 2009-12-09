@@ -178,8 +178,7 @@ else
 						22|23) WCM_KERNEL_VER="2.6.22";;
 						24|25) WCM_KERNEL_VER="2.6.24";;
 						26) WCM_KERNEL_VER="2.6.26";;
-						27) WCM_KERNEL_VER="2.6.27";;
-						*) WCM_KERNEL_VER="2.6.28";;
+						*) WCM_KERNEL_VER="2.6.27";;
 					esac
 				else
 					AC_MSG_WARN([support for kernels older than 2.6.9 has been dropped after 0.8.2])
@@ -995,7 +994,6 @@ AC_OUTPUT(Makefile
 	src/2.6.24/Makefile
 	src/2.6.26/Makefile
 	src/2.6.27/Makefile
-	src/2.6.28/Makefile
 	src/wacomxi/Makefile
 	src/wacomxi/wacomcpl)
 
