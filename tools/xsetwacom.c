@@ -57,6 +57,7 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -474,7 +475,10 @@ static param_t parameters[] =
 	{
 		.name = "xyDefault",
 		.desc = "Resets the bounding coordinates to default in tablet units. ",
-		.set_func = not_implemented,
+		.prop_name = WACOM_PROP_TABLET_AREA,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.set_func = set_xydefault,
 		.get_func = not_implemented,
 	},
 	{
@@ -1222,6 +1226,44 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 		map[btn_no - 1] = atoi(argv[0]);
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+}
+
+static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	Atom prop, type;
+	int format;
+	unsigned char* data = NULL;
+	unsigned long nitems, bytes_after;
+	long *ldata;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		goto out;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems <= param->prop_offset)
+	{
+		fprintf(stderr, "Property offset doesn't exist, this is a bug.\n");
+		goto out;
+	}
+
+	ldata = (long*)data;
+	ldata[0] = -1;
+	ldata[1] = -1;
+	ldata[2] = -1;
+	ldata[3] = -1;
+
+	XChangeDeviceProperty(dpy, dev, prop, type, format,
+				PropModeReplace, data, nitems);
+	XFlush(dpy);
+out:
+	free(data);
 }
 
 static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
