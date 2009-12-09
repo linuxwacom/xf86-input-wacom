@@ -776,10 +776,10 @@ static void usage(void)
 
 	printf(
 	"\nCommands:\n"
-	" list [dev|param]           - display known devices, parameters \n"
-	" list mod                   - display supported modifier and specific keys for keystokes [not implemented}\n"
-	" set dev_name param [values...] - set device parameter by name\n"
-	" get dev_name param [param...] - get current device parameter(s) value by name\n");
+	" --list [dev|param]           - display known devices, parameters \n"
+	" --list mod                   - display supported modifier and specific keys for keystokes [not implemented}\n"
+	" --set dev_name param [values...] - set device parameter by name\n"
+	" --get dev_name param [param...] - get current device parameter(s) value by name\n");
 }
 
 
@@ -1610,6 +1610,7 @@ int main (int argc, char **argv)
 	int optidx;
 	char *display = NULL;
 	Display *dpy;
+	int do_list = 0, do_set = 0, do_get = 0;
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
@@ -1618,6 +1619,9 @@ int main (int argc, char **argv)
 		{"display", 1, (int*)display, 0},
 		{"shell", 0, NULL, 0},
 		{"xconf", 0, NULL, 0},
+		{"list", 0, NULL, 0},
+		{"set", 0, NULL, 0},
+		{"get", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1638,8 +1642,12 @@ int main (int argc, char **argv)
 					case 2: version(); break;
 					case 3:
 					case 4:
+					case 5:
 						printf("Not implemented\n");
 						break;
+					case 6: do_list = 1; break;
+					case 7: do_set = 1; break;
+					case 8: do_get = 1; break;
 				}
 				break;
 			case 'd':
@@ -1671,17 +1679,35 @@ int main (int argc, char **argv)
 		return -1;
 	}
 
-	if (optind < argc)
+	if (!do_list && !do_get && !do_set)
 	{
-		if (strcmp(argv[optind], "list") == 0)
-			list(dpy, argc - (optind + 1), &argv[optind + 1]);
-		else if (strcmp(argv[optind], "set") == 0)
-			set(dpy, argc - (optind + 1), &argv[optind + 1]);
-		else if (strcmp(argv[optind], "get") == 0)
-			get(dpy, argc - (optind + 1), &argv[optind + 1]);
-		else
+		if (optind < argc)
+		{
+			if (strcmp(argv[optind], "list") == 0)
+			{
+				do_list = 1;
+				optind++;
+			} else if (strcmp(argv[optind], "set") == 0)
+			{
+				do_set = 1;
+				optind++;
+			} else if (strcmp(argv[optind], "get") == 0)
+			{
+				do_get = 1;
+				optind++;
+			}
+			else
+				usage();
+		} else
 			usage();
 	}
+
+	if (do_list)
+		list(dpy, argc - optind, &argv[optind]);
+	else if (do_set)
+		set(dpy, argc - optind, &argv[optind]);
+	else if (do_get)
+		get(dpy, argc - optind, &argv[optind]);
 
 	XCloseDisplay(dpy);
 	return 0;
