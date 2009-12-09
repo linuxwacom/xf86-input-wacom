@@ -1267,7 +1267,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		 */
 		WacomToolAreaPtr outprox = NULL;
 		if (tool->current && tool->arealist->next && 
-			!xf86WcmPointInArea(tool->current, ds->x, ds->y))
+			!WcmPointInArea(tool->current, ds->x, ds->y))
 		{
 			outprox = tool->current;
 			tool->current = NULL;
@@ -1284,7 +1284,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		{
 			WacomToolAreaPtr area = tool->arealist;
 			for(; area; area = area->next)
-				if (xf86WcmPointInArea(area, ds->x, ds->y))
+				if (WcmPointInArea(area, ds->x, ds->y))
 					break;
 			tool->current = area;
 		}
@@ -1937,9 +1937,9 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 	}
 }
 
-/* xf86WcmPointInArea - check whether the point is within the area */
+/* WcmPointInArea - check whether the point is within the area */
 
-Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y)
+Bool WcmPointInArea(WacomToolAreaPtr area, int x, int y)
 {
 	if (area->topX <= x && x <= area->bottomX &&
 	    area->topY <= y && y <= area->bottomY)
@@ -1947,28 +1947,28 @@ Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y)
 	return 0;
 }
 
-/* xf86WcmAreasOverlap - check if two areas are overlapping */
+/* WcmAreasOverlap - check if two areas are overlapping */
 
-static Bool xf86WcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
+static Bool WcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
 {
-	if (xf86WcmPointInArea(area1, area2->topX, area2->topY) ||
-	    xf86WcmPointInArea(area1, area2->topX, area2->bottomY) ||
-	    xf86WcmPointInArea(area1, area2->bottomX, area2->topY) ||
-	    xf86WcmPointInArea(area1, area2->bottomX, area2->bottomY))
+	if (WcmPointInArea(area1, area2->topX, area2->topY) ||
+	    WcmPointInArea(area1, area2->topX, area2->bottomY) ||
+	    WcmPointInArea(area1, area2->bottomX, area2->topY) ||
+	    WcmPointInArea(area1, area2->bottomX, area2->bottomY))
 		return 1;
-	if (xf86WcmPointInArea(area2, area1->topX, area1->topY) ||
-	    xf86WcmPointInArea(area2, area1->topX, area1->bottomY) ||
-	    xf86WcmPointInArea(area2, area1->bottomX, area1->topY) ||
-	    xf86WcmPointInArea(area2, area1->bottomX, area1->bottomY))
+	if (WcmPointInArea(area2, area1->topX, area1->topY) ||
+	    WcmPointInArea(area2, area1->topX, area1->bottomY) ||
+	    WcmPointInArea(area2, area1->bottomX, area1->topY) ||
+	    WcmPointInArea(area2, area1->bottomX, area1->bottomY))
 	        return 1;
 	return 0;
 }
 
-/* xf86WcmAreaListOverlaps - check if the area overlaps any area in the list */
-Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
+/* WcmAreaListOverlaps - check if the area overlaps any area in the list */
+Bool WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
 {
 	for (; list; list=list->next)
-		if (area != list && xf86WcmAreasOverlap(list, area))
+		if (area != list && WcmAreasOverlap(list, area))
 			return 1;
 	return 0;
 }

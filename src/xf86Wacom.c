@@ -227,7 +227,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	inlist = priv->tool->arealist;
 
 	/* The first one in the list is always valid */
-	if (area != inlist && xf86WcmAreaListOverlap(area, inlist))
+	if (area != inlist && WcmAreaListOverlap(area, inlist))
 	{
 		inlist = priv->tool->arealist;
 

@@ -161,8 +161,8 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDevice
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 
 /* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
-Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y);
-Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
+Bool WcmPointInArea(WacomToolAreaPtr area, int x, int y);
+Bool WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* Change pad's mode according to it core event status */
 int xf86WcmSetPadCoreMode(LocalDevicePtr local);
