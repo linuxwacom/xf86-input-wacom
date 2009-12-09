@@ -160,7 +160,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDevice
 /* dispatches data to XInput event system */
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 
-/* generic area check for wcmConfig.c, xf86Wacom.c, and wcmCommon.c */
+/* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
 Bool xf86WcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool xf86WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
