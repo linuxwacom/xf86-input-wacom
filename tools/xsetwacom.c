@@ -1310,7 +1310,7 @@ static void set(Display *dpy, int argc, char **argv)
 	XDevice *dev = NULL;
 	Atom prop, type;
 	int format;
-	unsigned char* data;
+	unsigned char* data = NULL;
 	unsigned long nitems, bytes_after;
 	double val;
 	long *n;
@@ -1357,7 +1357,7 @@ static void set(Display *dpy, int argc, char **argv)
 	if (nitems <= param->prop_offset)
 	{
 		fprintf(stderr, "Property offset doesn't exist.\n");
-		return;
+		goto out;
 	}
 
 	for (i = 0; i < argc - 2; i++)
@@ -1393,6 +1393,7 @@ static void set(Display *dpy, int argc, char **argv)
 
 out:
 	XCloseDevice(dpy, dev);
+	free(data);
 }
 
 static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
