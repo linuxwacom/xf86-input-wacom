@@ -430,6 +430,12 @@ static struct
 	{ 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/ 
 	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
+	{ 0xD1, 2540, 2540, &usbBamboo     }, /* CTL-460 */
+	{ 0xD4, 2540, 2540, &usbBamboo     }, /* CTH-461 */
+	{ 0xD3, 2540, 2540, &usbBamboo     }, /* CTL-660 */
+	{ 0xD2, 2540, 2540, &usbBamboo     }, /* CTL-461/S */
+	{ 0xD0, 2540, 2540, &usbBamboo     }, /* Bamboo Touch */
+
 	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
 	{ 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
 	{ 0x22, 2540, 2540, &usbIntuos     }, /* Intuos 9x12 */
@@ -497,6 +503,7 @@ static struct
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
+	int is_bamboo_touch;
 	struct input_id sID;
 	unsigned long keys[NBITS(KEY_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -522,11 +529,16 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 
+		is_bamboo_touch = (common->tablet_id == 0xD0) ||
+		                  (common->tablet_id == 0xD1) ||
+		                  (common->tablet_id == 0xD2) ||
+		                  (common->tablet_id == 0xD3);
+
 		if (!common->wcmModel)
 			xf86Msg(X_ERROR, "this model is not supported\n");
-		else if (strstr(common->wcmModel->name, "TabletPC"))
+		else if (strstr(common->wcmModel->name, "TabletPC") || is_bamboo_touch)
 		{
-			if (common->tablet_id != 0x90)
+			if (common->tablet_id != 0x90) /* TabletPC 0x90 */
 			{
 				/* TouchDefault was off for all devices */
 				/* except when touch is supported */
@@ -539,15 +551,18 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", local->name);
 			}
 
-			/* Tablet PC button applied to the whole tablet. Not just one tool */
-			common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
-			if ( priv->flags & STYLUS_ID )
+			if (!is_bamboo_touch)
 			{
-				common->wcmTPCButton = xf86SetBoolOption(local->options, 
-					"TPCButton", common->wcmTPCButtonDefault);
-				if ( common->wcmTPCButton )
-					xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n", 
-						local->name);
+				/* Tablet PC button applied to the whole tablet. Not just one tool */
+				common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
+				if ( priv->flags & STYLUS_ID )
+				{
+					common->wcmTPCButton = xf86SetBoolOption(local->options,
+						"TPCButton", common->wcmTPCButtonDefault);
+					if ( common->wcmTPCButton )
+						xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n",
+							local->name);
+				}
 			}
 		}
 	}
