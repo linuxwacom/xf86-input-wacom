@@ -1394,6 +1394,8 @@ static void set(Display *dpy, int argc, char **argv)
 	long *n;
 	char *b;
 	int i;
+	char **values;
+	int nvals;
 
 	if (argc < 3)
 	{
@@ -1438,9 +1440,11 @@ static void set(Display *dpy, int argc, char **argv)
 		goto out;
 	}
 
-	for (i = 0; i < argc - 2; i++)
+	values = strjoinsplit(argc - 2, &argv[2], &nvals);
+
+	for (i = 0; i < nvals; i++)
 	{
-		val = atof(argv[i + 2]);
+		val = atof(values[i]);
 
 		switch(param->prop_format)
 		{
@@ -1469,6 +1473,9 @@ static void set(Display *dpy, int argc, char **argv)
 				PropModeReplace, data, nitems);
 	XFlush(dpy);
 
+	for (i = 0; i < nvals; i++)
+		free(values[i]);
+	free(values);
 out:
 	XCloseDevice(dpy, dev);
 	free(data);
