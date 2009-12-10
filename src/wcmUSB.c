@@ -522,7 +522,9 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 
-		if (strstr(common->wcmModel->name, "TabletPC"))
+		if (!common->wcmModel)
+			xf86Msg(X_ERROR, "this model is not supported\n");
+		else if (strstr(common->wcmModel->name, "TabletPC"))
 		{
 			if (common->tablet_id != 0x90)
 			{
