@@ -48,7 +48,7 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	WacomCommonPtr   common = NULL;
 	WacomToolPtr     tool   = NULL;
 	WacomToolAreaPtr area   = NULL;
-	int i, j;
+	int i;
 
 	priv = xcalloc(1, sizeof(WacomDeviceRec));
 	if (!priv)
@@ -86,35 +86,14 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->next = NULL;
 	priv->local = local;
 	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
-	priv->oldX = 0;             /* previous X position */
-	priv->oldY = 0;             /* previous Y position */
-	priv->oldZ = 0;             /* previous pressure */
-	priv->oldTiltX = 0;         /* previous tilt in x direction */
-	priv->oldTiltY = 0;         /* previous tilt in y direction */
-	priv->oldStripX = 0;	    /* previous left strip value */
-	priv->oldStripY = 0;	    /* previous right strip value */
-	priv->oldButtons = 0;        /* previous buttons state */
-	priv->oldWheel = 0;          /* previous wheel */
-	priv->topX = 0;              /* X top */
-	priv->topY = 0;              /* Y top */
-	priv->bottomX = 0;           /* X bottom */
-	priv->bottomY = 0;           /* Y bottom */
-	priv->sizeX = 0;	     /* active X size */
-	priv->sizeY = 0;	     /* active Y size */
-	priv->factorX = 0.0;         /* X factor */
-	priv->factorY = 0.0;         /* Y factor */
 	priv->common = common;       /* common info pointer */
-	priv->oldProximity = 0;      /* previous proximity */
 	priv->hardProx = 1;	     /* previous hardware proximity */
-	priv->old_serial = 0;	     /* last active tool's serial */
 	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
 		(IsEraser(priv) ? ERASER_DEVICE_ID : 
 		(IsCursor(priv) ? CURSOR_DEVICE_ID : 
 		(IsTouch(priv) ? TOUCH_DEVICE_ID :
 		PAD_DEVICE_ID)));
 
-	priv->devReverseCount = 0;   /* flag for relative Reverse call */
-	priv->serial = 0;            /* serial number */
 	priv->screen_no = -1;        /* associated screen */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
@@ -125,14 +104,10 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 		priv->button[i] = i + 1;
 
-	for (i=0; i<WCM_MAX_BUTTONS; i++)
-		for (j=0; j<256; j++)
-			priv->keys[i][j] = 0;
-
 	priv->nbuttons = WCM_MAX_BUTTONS;		/* Default number of buttons */
 	priv->relup = 5;			/* Default relative wheel up event */
 	priv->reldn = 4;			/* Default relative wheel down event */
-	
+
 	priv->wheelup = IsPad (priv) ? 4 : 0;	/* Default absolute wheel up event */
 	priv->wheeldn = IsPad (priv) ? 5 : 0;	/* Default absolute wheel down event */
 	priv->striplup = 4;			/* Default left strip up event */
@@ -140,47 +115,25 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->striprup = 4;			/* Default right strip up event */
 	priv->striprdn = 5;			/* Default right strip down event */
 	priv->naxes = 6;			/* Default number of axes */
-	priv->debugLevel = 0;			/* debug level */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = -1;                /* current screen in display */
-
-	priv->maxWidth = 0;			/* max active screen width */
-	priv->maxHeight = 0;			/* max active screen height */
-	priv->leftPadding = 0;			/* left padding for virtual tablet */
-	priv->topPadding = 0;			/* top padding for virtual tablet */
 	priv->twinview = TV_NONE;		/* not using twinview gfx */
-	priv->tvoffsetX = 0;			/* none X edge offset for TwinView setup */
-	priv->tvoffsetY = 0;			/* none Y edge offset for TwinView setup */
-	for (i=0; i<4; i++)
-		priv->tvResolution[i] = 0;	/* unconfigured twinview resolution */
 	priv->wcmMMonitor = 1;			/* enabled (=1) to support multi-monitor desktop. */
 						/* disabled (=0) when user doesn't want to move the */
 						/* cursor from one screen to another screen */
 
 	/* JEJ - throttle sampling code */
-	priv->throttleValue = 0;
-	priv->throttleStart = 0;
 	priv->throttleLimit = -1;
-	
+
 	common->wcmDevice = "";                  /* device file name */
-	common->min_maj = 0;			 /* device major and minor */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
-	common->npadkeys = 0;		   /* Default number of pad keys */
 	common->wcmProtocolLevel = 4;      /* protocol level */
-	common->wcmThreshold = 0;       /* unconfigured threshold */
 	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
-	common->debugLevel = 0;         /* shared debug level can only 
-					 * be changed though xsetwacom */
 
 	common->wcmDevCls = &gWacomUSBDevice; /* device-specific functions */
-	common->wcmModel = NULL;                 /* model-specific functions */
-	common->wcmEraserID = 0;	 /* eraser id associated with the stylus */
-	common->wcmTPCButtonDefault = 0; /* default Tablet PC button support is off */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
-	common->wcmTouch = 0;              /* touch is disabled */
-	common->wcmTouchDefault = 0; 	   /* default to disable when touch isn't supported */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
 	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
 					   /* 3 when capacity is supported */
@@ -189,20 +142,10 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	common->wcmMaxY = 0;               /* max digitizer logical Y value */
 	common->wcmMaxTouchX = 1024;       /* max touch X value */
 	common->wcmMaxTouchY = 1024;       /* max touch Y value */
-        common->wcmMaxZ = 0;               /* max Z value */
-        common->wcmMaxCapacity = 0;        /* max capacity value */
- 	common->wcmMaxDist = 0;            /* max distance value */
-	common->wcmResolX = 0;             /* digitizer X resolution in points/inch */
-	common->wcmResolY = 0;             /* digitizer Y resolution in points/inch */
-	common->wcmTouchResolX = 0;        /* touch X resolution in points/mm */
-	common->wcmTouchResolY = 0;        /* touch Y resolution in points/mm */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
 	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
 	common->wcmMaxtiltY = 128;	   /* Max tilt in Y directory */
-	common->wcmMaxCursorDist = 0;	/* Max distance received so far */
-	common->wcmCursorProxoutDist = 0;
-			/* Max mouse distance for proxy-out max/256 units */
 	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE; 
 			/* default to Intuos */
 	common->wcmSuppress = DEFAULT_SUPPRESS;    
@@ -215,16 +158,11 @@ static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	common->wcmTool = tool;
 	tool->next = NULL;          /* next tool in list */
 	tool->typeid = DEVICE_ID(flag); /* tool type (stylus/touch/eraser/cursor/pad) */
-	tool->serial = 0;           /* serial id */
-	tool->current = NULL;       /* current area in-prox */
 	tool->arealist = area;      /* list of defined areas */
+
 	/* tool area */
 	priv->toolarea = area;
 	area->next = NULL;    /* next area in list */
-	area->topX = 0;       /* X top */
-	area->topY = 0;       /* Y top */
-	area->bottomX = 0;    /* X bottom */
-	area->bottomY = 0;    /* Y bottom */
 	area->device = local; /* associated WacomDevice */
 
 	return 1;
