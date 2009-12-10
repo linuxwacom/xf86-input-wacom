@@ -68,6 +68,8 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void set_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
@@ -345,9 +347,11 @@ static param_t parameters[] =
 		.name = "TwinView",
 		.desc = "Sets the mapping to TwinView horizontal/vertical/none. "
 		"Values = none, vertical, horizontal (default is none).",
-		.prop_name = WACOM_PROP_TWINVIEW_RES,
+		.prop_name = WACOM_PROP_DISPLAY_OPTS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.get_func = get_twinview,
+		.set_func = set_twinview,
 	},
 	{
 		.name = "Mode",
@@ -1382,6 +1386,57 @@ error:
 	return;
 }
 
+static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	int twinview = 0;
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	if (argc != 1)
+		goto error;
+
+	TRACE("TwinView '%s' for device %ld.\n", argv[0], dev->device_id);
+
+	if (strcasecmp(argv[0], "none") == 0)
+		twinview = TV_NONE;
+	else if (strcasecmp(argv[0], "horizontal") == 0)
+		twinview = TV_LEFT_RIGHT;
+	else if (strcasecmp(argv[0], "vertical") == 0)
+		twinview = TV_ABOVE_BELOW;
+	else
+		goto error;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		return;
+	}
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems == 0 || format != 8)
+	{
+		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
+			param->name);
+		return;
+	}
+
+	data[param->prop_offset] = twinview;
+	XChangeDeviceProperty(dpy, dev, prop, type, format,
+				PropModeReplace, data, nitems);
+	XFlush(dpy);
+
+	return;
+
+error:
+	fprintf(stderr, "Usage: xsetwacom rotate <device name> [NONE | CW | CCW | HALF]\n");
+	return;
+}
 static void set(Display *dpy, int argc, char **argv)
 {
 	param_t *param;
@@ -1563,6 +1618,47 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	return;
 }
 
+static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	char *twinview = NULL;
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
+	prop = XInternAtom(dpy, param->prop_name, True);
+	if (!prop)
+	{
+		fprintf(stderr, "Property for '%s' not available.\n",
+			param->name);
+		return;
+	}
+
+	TRACE("Getting twinview setting for device %ld.\n", dev->device_id);
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+
+	if (nitems == 0 || format != 8)
+	{
+		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
+			param->name);
+		return;
+	}
+
+	switch(data[param->prop_offset])
+	{
+		case TV_NONE: twinview = "none"; break;
+		case TV_ABOVE_BELOW: twinview = "vertical"; break;
+		case TV_LEFT_RIGHT: twinview = "horizontal"; break;
+		default:
+				    break;
+	}
+
+	print_value(param, "%s", twinview);
+
+	return;
+}
 
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 				char **argv)
