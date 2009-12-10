@@ -25,6 +25,7 @@
 #include "Xwacom.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -39,6 +40,12 @@
 
 static int verbose = False;
 
+enum printformat {
+	FORMAT_DEFAULT,
+	FORMAT_XORG_CONF,
+	FORMAT_SHELL
+};
+
 typedef struct _param
 {
 	const char *name;	/* param name as specified by the user */
@@ -48,6 +55,10 @@ typedef struct _param
 	const int prop_offset;	/* offset (index) into the property values */
 	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
 	void (*get_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function for getting, if appropriate */
+
+	/* filled in by get() */
+	char *device_name;
+	enum printformat printformat;
 } param_t;
 
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -765,6 +776,31 @@ static param_t* find_parameter(char *name)
 	return param->name ? param : NULL;
 }
 
+static void print_value(param_t *param, const char *msg, ...)
+{
+	va_list va_args;
+	va_start(va_args, msg);
+	switch(param->printformat)
+	{
+		case FORMAT_XORG_CONF:
+			printf("Option \"%s\" \"", param->name);
+			vprintf(msg, va_args);
+			printf("\"\n");
+			break;
+		case FORMAT_SHELL:
+			printf("xsetwacom set \"%s\" \"%s\" \"",
+					param->device_name, param->name);
+			vprintf(msg, va_args);
+			printf("\"\n");
+			break;
+		default:
+			vprintf(msg, va_args);
+			printf("\n");
+			break;
+	}
+
+	va_end(va_args);
+}
 
 static void usage(void)
 {
@@ -775,8 +811,8 @@ static void usage(void)
 	" -v, --verbose              - verbose output\n"
 	" -V, --version              - version info\n"
 	" -d, --display disp_name    - override default display\n"
-	" -s, --shell                - generate shell commands for 'get' [not implemented]\n"
-	" -x, --xconf                - generate X.conf lines for 'get' [not implemented]\n");
+	" -s, --shell                - generate shell commands for 'get'\n"
+	" -x, --xconf                - generate X.conf lines for 'get'\n");
 
 	printf(
 	"\nCommands:\n"
@@ -1462,7 +1498,7 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	{
 		if (v->class == ValuatorClass)
 		{
-			printf("%s\n", (v->mode == Absolute) ? "Absolute" : "Relative");
+			print_value(param, "%s\n", (v->mode == Absolute) ? "Absolute" : "Relative");
 			break;
 		}
 		v = (XValuatorInfoPtr)((char*)v + v->length);
@@ -1515,7 +1551,7 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 			break;
 	}
 
-	printf("%s\n", rotation);
+	print_value(param, "%s", rotation);
 
 	return;
 }
@@ -1528,6 +1564,8 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 	int format, i;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
+	char buff[256] = {0};
+	long *ldata;
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 	if (!prop)
@@ -1545,14 +1583,13 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 	if (param->prop_format != 32)
 		return;
 
-	for (i = 0; i < nitems; i++)
-	{
-		long *ldata = (long*)data;
-		printf(" %ld", ldata[param->prop_offset + i]);
-	}
+	ldata = (long*)data;
+	if (nitems)
+		sprintf(buff, "%ld", ldata[param->prop_offset]);
+	for (i = 1; i < nitems; i++)
+		sprintf(&buff[strlen(buff)], " %ld", ldata[param->prop_offset + i]);
 
-	printf("\n");
-
+	print_value(param, "%s", buff);
 }
 
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
@@ -1576,13 +1613,13 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 		return;
 	}
 
-	printf("%d\n", map[btn_no - 1]);
+	print_value(param, "%d", map[btn_no - 1]);
 
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
 }
 
-static void get(Display *dpy, int argc, char **argv)
+static void get(Display *dpy, enum printformat printformat, int argc, char **argv)
 {
 	param_t *param;
 	XDevice *dev = NULL;
@@ -1605,7 +1642,13 @@ static void get(Display *dpy, int argc, char **argv)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
-	} else if (param->get_func)
+	} else
+	{
+		param->printformat = printformat;
+		param->device_name = argv[0];
+	}
+
+	if (param->get_func)
 	{
 		param->get_func(dpy, dev, param, argc - 2, &argv[2]);
 		goto out;
@@ -1632,12 +1675,12 @@ static void get(Display *dpy, int argc, char **argv)
 	switch(param->prop_format)
 	{
 		case 8:
-			printf(" %d\n", data[param->prop_offset]);
+			print_value(param, "%d", data[param->prop_offset]);
 			break;
 		case 32:
 			{
 				long *ldata = (long*)data;
-				printf(" %ld\n", ldata[param->prop_offset]);
+				print_value(param, "%ld\n", ldata[param->prop_offset]);
 				break;
 			}
 	}
@@ -1654,6 +1697,7 @@ int main (int argc, char **argv)
 	char *display = NULL;
 	Display *dpy;
 	int do_list = 0, do_set = 0, do_get = 0;
+	enum printformat format = FORMAT_DEFAULT;
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
@@ -1683,10 +1727,13 @@ int main (int argc, char **argv)
 					case 0: usage(); break;
 					case 1: verbose = True; break;
 					case 2: version(); break;
-					case 3:
+					case 3: /* display */
+						break;
 					case 4:
+						format = FORMAT_SHELL;
+						break;
 					case 5:
-						printf("Not implemented\n");
+						format = FORMAT_XORG_CONF;
 						break;
 					case 6: do_list = 1; break;
 					case 7: do_set = 1; break;
@@ -1697,8 +1744,10 @@ int main (int argc, char **argv)
 				display = optarg;
 				break;
 			case 's':
+				format = FORMAT_SHELL;
+				break;
 			case 'x':
-				printf("Not implemented\n");
+				format = FORMAT_XORG_CONF;
 				break;
 			case 'v':
 				verbose = True;
@@ -1750,7 +1799,7 @@ int main (int argc, char **argv)
 	else if (do_set)
 		set(dpy, argc - optind, &argv[optind]);
 	else if (do_get)
-		get(dpy, argc - optind, &argv[optind]);
+		get(dpy, format, argc - optind, &argv[optind]);
 
 	XCloseDisplay(dpy);
 	return 0;
