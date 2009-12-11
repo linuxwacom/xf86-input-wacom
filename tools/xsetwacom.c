@@ -46,6 +46,10 @@ enum printformat {
 	FORMAT_SHELL
 };
 
+enum prop_flags {
+	PROP_FLAG_BOOLEAN = 1
+};
+
 typedef struct _param
 {
 	const char *name;	/* param name as specified by the user */
@@ -53,6 +57,7 @@ typedef struct _param
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
 	const int prop_offset;	/* offset (index) into the property values */
+	const unsigned int prop_flags;
 	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
 	void (*get_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function for getting, if appropriate */
 
@@ -367,6 +372,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_HOVER,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
 		.name = "Touch",
@@ -374,6 +380,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TOUCH,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
 		.name = "Capacity",
@@ -478,6 +485,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
 		.name = "ClickForce",
@@ -1437,6 +1445,21 @@ error:
 	fprintf(stderr, "Usage: xsetwacom rotate <device name> [NONE | CW | CCW | HALF]\n");
 	return;
 }
+
+static int convert_value_from_user(param_t *param, char *value)
+{
+	int val;
+
+	if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "off") == 0)
+			val = 0;
+	else if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "on") == 0)
+			val = 1;
+	else
+		val = atoi(value);
+
+	return val;
+}
+
 static void set(Display *dpy, int argc, char **argv)
 {
 	param_t *param;
@@ -1499,7 +1522,7 @@ static void set(Display *dpy, int argc, char **argv)
 
 	for (i = 0; i < nvals; i++)
 	{
-		val = atof(values[i]);
+		val = convert_value_from_user(param, values[i]);
 
 		switch(param->prop_format)
 		{
@@ -1778,7 +1801,16 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	switch(param->prop_format)
 	{
 		case 8:
-			print_value(param, "%d", data[param->prop_offset]);
+			{
+				char str[10] = {0};
+				int val = data[param->prop_offset];
+
+				if (param->prop_flags & PROP_FLAG_BOOLEAN)
+					sprintf(str, "%s", val ?  "on" : "off");
+				else
+					sprintf(str, "%d", val);
+				print_value(param, "%s", str);
+			}
 			break;
 		case 32:
 			{
