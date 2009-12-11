@@ -538,16 +538,15 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		/* a single touch device */
 		if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
 		{
-			/* TouchDefault was off for all devices */
-			/* except when touch is supported */
+			/* TouchDefault was off for all devices
+			 * except when touch is supported */
 			common->wcmTouchDefault = 1;
 		}
 		else if (common->wcmModel &&
 			strstr(common->wcmModel->name, "TabletPC"))
 		{
-			/* Tablet PC button applied to the whole tablet.
-			 * Not just one tool.
-			 * For penabled TabletPCs. TabletPC is on by default */
+			/* For penabled Tablet PCs, Tablet PC Button
+			 * are on by default */
 			common->wcmTPCButtonDefault = 1;
 		}
 

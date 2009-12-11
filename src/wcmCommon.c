@@ -229,8 +229,8 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	DBG(6, priv->debugLevel, ErrorF("xf86WcmSendButtons "
 		"buttons=%d for %s\n", buttons, local->name));
 
-	/* Tablet PC buttons. */
-	if ( common->wcmTPCButton && !IsCursor(priv) && !IsPad(priv) && !IsTouch(priv) )
+	/* Tablet PC buttons only apply to penabled devices */
+	if (common->wcmTPCButton && (priv->flags & STYLUS_ID))
 	{
 		if ( buttons & 1 )
 		{
