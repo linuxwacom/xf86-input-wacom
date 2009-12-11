@@ -550,6 +550,14 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 			 * For penabled TabletPCs. TabletPC is on by default */
 			common->wcmTPCButtonDefault = 1;
 		}
+
+		/* 2FG touch device */
+		if (ISBITSET (keys, BTN_TOOL_TRIPLETAP))
+		{
+			/* GestureDefault was off for all devices
+			 * except when multi-touch is supported */
+			common->wcmGestureDefault = 1;
+		}
 	}
 
 	if (!common->wcmModel)
@@ -561,6 +569,10 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	/* check if touch was turned off in xorg.conf */
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
 		common->wcmTouchDefault);
+
+	/* Touch gesture applies to the whole tablet */
+	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
+		common->wcmGestureDefault);
 
 	/* check if TPCButton was turned off in xorg.conf for pen */
 	if (priv->flags & STYLUS_ID)

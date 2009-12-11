@@ -618,6 +618,10 @@ int wcmParseOptions(LocalDevicePtr local)
 	/* Touch applies to the whole tablet */
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
 
+	/* Touch gesture applies to the whole tablet */
+	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
+			common->wcmGestureDefault);
+
 	/* Touch capacity applies to the whole tablet */
 	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
 
