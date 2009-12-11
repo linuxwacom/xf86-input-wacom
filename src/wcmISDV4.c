@@ -468,6 +468,28 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 		ds->buttons = ds->proximity = data[0] & 0x01;
 		ds->device_type = TOUCH_ID;
 		ds->device_id = TOUCH_DEVICE_ID;
+
+		if (common->wcmPktLength == WACOM_PKGLEN_TOUCH2FG)
+		{
+			if ((data[0] & 0x02) || (!(data[0] & 0x02) &&
+					 lastTemp->proximity))
+			{
+				/* Got 2FGT. Send the first one if received */
+				if (ds->proximity || (!ds->proximity &&
+						 last->proximity))
+					xf86WcmEvent(common, channel, ds);
+
+				channel = 1;
+				ds = &common->wcmChannel[channel].work;
+				RESET_RELATIVE(*ds);
+				ds->x = (((int)data[7]) << 7) | ((int)data[8]);
+				ds->y = (((int)data[9]) << 7) | ((int)data[10]);
+				ds->device_type = TOUCH_ID;
+				ds->device_id = TOUCH_DEVICE_ID;
+				ds->proximity = data[0] & 0x02;
+			}
+		}
+
 		DBG(8, priv->debugLevel, ErrorF("isdv4Parse MultiTouch "
 			"%s proximity \n", ds->proximity ? "in" : "out of"));
 	}
@@ -520,26 +542,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			ds->device_id = ERASER_DEVICE_ID;
 		}
 
-		if (common->wcmPktLength == WACOM_PKGLEN_TOUCH2FG)
-		{
-			if ((data[0] & 0x02) || (!(data[0] & 0x02) &&
-					 lastTemp->proximity))
-			{
-				/* Got 2FGT. Send the first one if received */
-				if (ds->proximity || (!ds->proximity &&
-						 last->proximity))
-					xf86WcmEvent(common, channel, ds);
-
-				channel = 1;
-				ds = &common->wcmChannel[channel].work;
-				RESET_RELATIVE(*ds);
-				ds->x = (((int)data[7]) << 7) | ((int)data[8]);
-				ds->y = (((int)data[9]) << 7) | ((int)data[10]);
-				ds->device_type = TOUCH_ID;
-				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = data[0] & 0x02;
-			}
-		}
 		DBG(8, priv->debugLevel, ErrorF("isdv4Parse %s\n",
 			ds->device_type == ERASER_ID ? "ERASER " :
 			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE"));
