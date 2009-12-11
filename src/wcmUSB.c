@@ -504,7 +504,7 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
 	struct input_id sID;
-	unsigned long keys[NBITS(KEY_MAX)];
+	unsigned long keys[NBITS(KEY_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
@@ -633,8 +633,8 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 int usbWcmGetRanges(LocalDevicePtr local)
 {
 	struct input_absinfo absinfo;
-	unsigned long ev[NBITS(EV_MAX)];
-	unsigned long abs[NBITS(ABS_MAX)];
+	unsigned long ev[NBITS(EV_MAX)] = {0};
+	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
 
