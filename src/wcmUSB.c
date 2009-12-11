@@ -503,7 +503,6 @@ static struct
 Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
-	int is_bamboo_touch;
 	struct input_id sID;
 	unsigned long keys[NBITS(KEY_MAX)];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -515,6 +514,13 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	/* fetch vendor, product, and model name */
 	ioctl(local->fd, EVIOCGID, &sID);
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
+
+	/* retrieve tool type, device type and buttons from the kernel */
+	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: unable to ioctl key bits.\n", local->name);
+		return FALSE;
+	}
 
 	/* vendor is wacom */
 	if (sID.vendor == WACOM_VENDOR_ID)
@@ -529,28 +535,20 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 
-		is_bamboo_touch = (common->tablet_id == 0xD0) ||
-		                  (common->tablet_id == 0xD1) ||
-		                  (common->tablet_id == 0xD2) ||
-		                  (common->tablet_id == 0xD3);
-
-		if (!common->wcmModel)
-			xf86Msg(X_ERROR, "this model is not supported\n");
-		else if (strstr(common->wcmModel->name, "TabletPC") || is_bamboo_touch)
+		/* a single touch device */
+		if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
 		{
-			if (common->tablet_id != 0x90) /* TabletPC 0x90 */
-			{
-				/* TouchDefault was off for all devices */
-				/* except when touch is supported */
-				common->wcmTouchDefault = 1;
-
-			}
-
-			if (!is_bamboo_touch)
-			{
-				/* Tablet PC button applied to the whole tablet. Not just one tool */
-				common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
-			}
+			/* TouchDefault was off for all devices */
+			/* except when touch is supported */
+			common->wcmTouchDefault = 1;
+		}
+		else if (common->wcmModel &&
+			strstr(common->wcmModel->name, "TabletPC"))
+		{
+			/* Tablet PC button applied to the whole tablet.
+			 * Not just one tool.
+			 * For penabled TabletPCs. TabletPC is on by default */
+			common->wcmTPCButtonDefault = 1;
 		}
 	}
 
@@ -564,16 +562,10 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
 		common->wcmTouchDefault);
 
+	/* check if TPCButton was turned off in xorg.conf for pen */
 	if (priv->flags & STYLUS_ID)
 		common->wcmTPCButton = xf86SetBoolOption(local->options,
 			"TPCButton", common->wcmTPCButtonDefault);
-
-	/* Determine max number of buttons */
-	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
-	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl key bits.\n", local->name);
-		return FALSE;
-	}
 
 	/* Find out supported button codes - except mouse button codes
 	 * BTN_LEFT and BTN_RIGHT, which are always fixed. */
