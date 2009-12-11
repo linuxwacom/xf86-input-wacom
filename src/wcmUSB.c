@@ -544,25 +544,12 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				/* except when touch is supported */
 				common->wcmTouchDefault = 1;
 
-				/* check if touch was turned off in xorg.conf */
-				common->wcmTouch = xf86SetBoolOption(local->options, 
-						"Touch", common->wcmTouchDefault);
-				if ( common->wcmTouch )
-					xf86Msg(X_CONFIG, "%s: Touch is enabled \n", local->name);
 			}
 
 			if (!is_bamboo_touch)
 			{
 				/* Tablet PC button applied to the whole tablet. Not just one tool */
 				common->wcmTPCButtonDefault = 1; /* Tablet PC buttons on by default */
-				if ( priv->flags & STYLUS_ID )
-				{
-					common->wcmTPCButton = xf86SetBoolOption(local->options,
-						"TPCButton", common->wcmTPCButtonDefault);
-					if ( common->wcmTPCButton )
-						xf86Msg(X_CONFIG, "%s: Tablet PC buttons are on \n",
-							local->name);
-				}
 			}
 		}
 	}
@@ -572,6 +559,14 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		common->wcmModel = &usbUnknown;
 		common->wcmResolX = common->wcmResolY = 1016;
 	}
+
+	/* check if touch was turned off in xorg.conf */
+	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
+		common->wcmTouchDefault);
+
+	if (priv->flags & STYLUS_ID)
+		common->wcmTPCButton = xf86SetBoolOption(local->options,
+			"TPCButton", common->wcmTPCButtonDefault);
 
 	/* Determine max number of buttons */
 	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
