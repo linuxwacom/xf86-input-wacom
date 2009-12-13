@@ -44,7 +44,10 @@ AC_PROG_LIBTOOL
 AC_PROG_CC
 XORG_DEFAULT_OPTIONS
 
-AH_TOP([#include "xorg-server.h"])
+AH_TOP([
+#ifndef WACOM_TOOLS
+#include "xorg-server.h"
+#endif])
 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
                                     [Enable debugging (default: disabled)]),
@@ -76,6 +79,8 @@ AC_ARG_WITH([sdkdir], [],
     [sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`])
 AC_SUBST([sdkdir])
 
+PKG_CHECK_MODULES(X11, x11 xi)
+
 # Checks for header files.
 AC_HEADER_STDC
 
@@ -87,4 +92,5 @@ AC_OUTPUT([Makefile
            src/Makefile
            man/Makefile
            include/Makefile
+           tools/Makefile
            xorg-wacom.pc])

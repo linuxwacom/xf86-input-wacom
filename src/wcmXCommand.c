@@ -317,6 +317,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         area.bottomX = values[2];
         area.bottomY = values[3];
 
+	/* FIXME: this will always be the case? */
         if (WcmAreaListOverlap(&area, priv->tool->arealist))
             return BadValue;
 

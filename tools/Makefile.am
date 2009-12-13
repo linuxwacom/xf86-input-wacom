@@ -1,4 +1,4 @@
-#  Copyright 2005 Adam Jackson.
+#  Copyright 2009 Red Hat, Inc.
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -17,24 +17,12 @@
 #  ADAM JACKSON BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+AM_CFLAGS = $(XORG_CFLAGS) $(X11_CFLAGS)
 
-AUTOMAKE_OPTIONS = foreign
+bin_PROGRAMS = \
+	xsetwacom
 
-# Ensure headers are installed below $(prefix) for distcheck
-DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg'
+INCLUDES=-I$(top_srcdir)/include/
 
-SUBDIRS = fdi src man include tools
+xsetwacom_LDFLAGS = $(X11_LIBS) -lm
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = xorg-wacom.pc
-
-EXTRA_DIST = ChangeLog GPL
-
-MAINTAINERCLEANFILES=ChangeLog
-
-.PHONY: ChangeLog
-
-ChangeLog:
-	$(CHANGELOG_CMD)
-
-dist-hook: ChangeLog
