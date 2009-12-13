@@ -98,9 +98,11 @@ static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
 static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 {
 }
+#endif
 
 static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
