@@ -333,7 +333,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	            values[2] = common->wcmMaxTouchX;
             }
 
-            if (values[1] >= values[3]);
+            if (values[1] >= values[3])
             {
                 values[1] = 0;
 		if (!IsTouch(priv))
