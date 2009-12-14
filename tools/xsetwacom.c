@@ -1756,6 +1756,12 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 
 	TRACE("'get' requested for '%s'.\n", argv[0]);
 
+	if (argc < 2)
+	{
+		usage();
+		return;
+	}
+
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
 	{
