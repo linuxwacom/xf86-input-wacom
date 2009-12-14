@@ -51,8 +51,8 @@
 #include <xkbsrv.h>
 #endif
 
-void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
-void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
+void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
+void xf86WcmVirtualTabletSize(LocalDevicePtr local);
 Bool xf86WcmIsWacomDevice (char* fname);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
@@ -270,10 +270,10 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
+ * xf86WcmVirtualTabletPadding(LocalDevicePtr local)
  ****************************************************************************/
 
-void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
+void xf86WcmVirtualTabletPadding(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
@@ -296,16 +296,16 @@ void xf86WcmVirtaulTabletPadding(LocalDevicePtr local)
 		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
 			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtaulTabletPadding for \"%s\" "
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtualTabletPadding for \"%s\" "
 		"x=%d y=%d \n", local->name, priv->leftPadding, priv->topPadding));
 	return;
 }
 
 /*****************************************************************************
- * xf86WcmVirtaulTabletSize(LocalDevicePtr local)
+ * xf86WcmVirtualTabletSize(LocalDevicePtr local)
  ****************************************************************************/
 
-void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
+void xf86WcmVirtualTabletSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i, tabletSize;
@@ -336,7 +336,7 @@ void xf86WcmVirtaulTabletSize(LocalDevicePtr local)
 		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
 			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtaulTabletSize for \"%s\" "
+	DBG(10, priv->debugLevel, ErrorF("xf86WcmVirtualTabletSize for \"%s\" "
 		"x=%d y=%d \n", local->name, priv->sizeX, priv->sizeY));
 	return;
 }

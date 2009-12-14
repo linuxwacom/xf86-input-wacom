@@ -31,8 +31,8 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value);
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void xf86WcmVirtaulTabletSize(LocalDevicePtr local);
-extern void xf86WcmVirtaulTabletPadding(LocalDevicePtr local);
+extern void xf86WcmVirtualTabletSize(LocalDevicePtr local);
+extern void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
 extern void xf86WcmTilt2R(WacomDeviceStatePtr ds);
 
 /*****************************************************************************
@@ -58,7 +58,7 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
  
 	DBG(10, priv->debugLevel, ErrorF("xf86WcmMappingFactor \n"));
 
-	xf86WcmVirtaulTabletSize(local);
+	xf86WcmVirtualTabletSize(local);
 	
 	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
@@ -199,7 +199,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 		return;
 	}
 
-	xf86WcmVirtaulTabletPadding(local);
+	xf86WcmVirtualTabletPadding(local);
 	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
 	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
 		
@@ -818,7 +818,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
  			else
 			{
 				/* Padding virtual values */
-				xf86WcmVirtaulTabletPadding(local);
+				xf86WcmVirtualTabletPadding(local);
 				x += priv->leftPadding;
 				y += priv->topPadding;
 			}
