@@ -1000,10 +1000,10 @@ static void list(Display *dpy, int argc, char **argv)
 }
 
 /*
- * Convert a list of random modifiers to strings that can be passed into
+ * Convert a list of random special keys to strings that can be passed into
  * XStringToKeysym
  */
-static char *convert_modifier(const char *modifier)
+static char *convert_specialkey(const char *modifier)
 {
 	struct modifier {
 		char *name;
@@ -1023,6 +1023,19 @@ static char *convert_modifier(const char *modifier)
 		{"lshift", "Shift_L"},
 		{"rshift", "Shift_R"},
 
+		{"f1", "F1"}, {"f2", "F2"}, {"f3", "F3"},
+		{"f4", "F4"}, {"f5", "F5"}, {"f6", "F6"},
+		{"f7", "F7"}, {"f8", "F8"}, {"f9", "F9"},
+		{"f10", "F10"}, {"f11", "F11"}, {"f12", "F12"},
+		{"f13", "F13"}, {"f14", "F14"}, {"f15", "F15"},
+		{"f16", "F16"}, {"f17", "F17"}, {"f18", "F18"},
+		{"f19", "F19"}, {"f20", "F20"}, {"f21", "F21"},
+		{"f22", "F22"}, {"f23", "F23"}, {"f24", "F24"},
+		{"f25", "F25"}, {"f26", "F26"}, {"f27", "F27"},
+		{"f28", "F28"}, {"f29", "F29"}, {"f30", "F30"},
+		{"f31", "F31"}, {"f32", "F32"}, {"f33", "F33"},
+		{"f34", "F34"}, {"f35", "F35"},
+
 		{ NULL, NULL }
 	};
 
@@ -1031,7 +1044,7 @@ static char *convert_modifier(const char *modifier)
 	while(m->name && strcasecmp(modifier, m->name))
 		m++;
 
-	return m->converted;
+	return m->converted ? m->converted : (char*)modifier;
 }
 
 /*
@@ -1067,14 +1080,9 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 
 			/* Function keys must be uppercased */
 			if (strlen(key) > 1)
-			{
-				if (strlen(key) >= 2 && key[0] == 'f' && isdigit(key[1]))
-					*key = toupper(*key);
-				else
-					key = convert_modifier(key);
-			}
+				key = convert_specialkey(key);
 
-			if (!key)
+			if (!key || !XStringToKeysym(key))
 			{
 				fprintf(stderr, "Invalid key '%s'.\n", argv[i]);
 				break;
