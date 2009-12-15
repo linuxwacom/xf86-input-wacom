@@ -34,7 +34,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
 		unsigned long* keys);
 void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
 int wcmAutoProbeDevice(LocalDevicePtr local);
-int wcmParseOptions(LocalDevicePtr local);
+int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 int wcmIsDuplicate(char* device, LocalDevicePtr local);
 int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 
@@ -394,7 +394,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
 	return 1;
 }
 
-int wcmParseOptions(LocalDevicePtr local)
+int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
@@ -617,8 +617,25 @@ int wcmParseOptions(LocalDevicePtr local)
 							 "TPCButton",
 							 common->wcmTPCButtonDefault);
 
-	/* Touch applies to the whole tablet */
-	common->wcmTouch = xf86SetBoolOption(local->options, "Touch", common->wcmTouchDefault);
+	/* a single touch device */
+	if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
+	{
+		/* TouchDefault was off for all devices
+		 * except when touch is supported */
+		common->wcmTouchDefault = 1;
+	}
+
+	/* 2FG touch device */
+	if (ISBITSET (keys, BTN_TOOL_TRIPLETAP))
+	{
+		/* GestureDefault was off for all devices
+		 * except when multi-touch is supported */
+		common->wcmGestureDefault = 1;
+	}
+
+	/* check if touch was turned off in xorg.conf */
+	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
+		common->wcmTouchDefault);
 
 	/* Touch gesture applies to the whole tablet */
 	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",

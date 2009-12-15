@@ -535,27 +535,12 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 
-		/* a single touch device */
-		if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
-		{
-			/* TouchDefault was off for all devices
-			 * except when touch is supported */
-			common->wcmTouchDefault = 1;
-		}
-		else if (common->wcmModel &&
+		if (common->wcmModel &&
 			strstr(common->wcmModel->name, "TabletPC"))
 		{
 			/* For penabled Tablet PCs, Tablet PC Button
 			 * are on by default */
 			common->wcmTPCButtonDefault = 1;
-		}
-
-		/* 2FG touch device */
-		if (ISBITSET (keys, BTN_TOOL_TRIPLETAP))
-		{
-			/* GestureDefault was off for all devices
-			 * except when multi-touch is supported */
-			common->wcmGestureDefault = 1;
 		}
 	}
 
@@ -564,14 +549,6 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		common->wcmModel = &usbUnknown;
 		common->wcmResolX = common->wcmResolY = 1016;
 	}
-
-	/* check if touch was turned off in xorg.conf */
-	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
-		common->wcmTouchDefault);
-
-	/* Touch gesture applies to the whole tablet */
-	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
-		common->wcmGestureDefault);
 
 	/* check if TPCButton was turned off in xorg.conf for pen */
 	if (priv->flags & STYLUS_ID)

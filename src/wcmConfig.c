@@ -32,7 +32,7 @@ extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
 extern int wcmNeedAutoHotplug(LocalDevicePtr local,
 	const char **type, unsigned long* keys);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
-extern int wcmParseOptions(LocalDevicePtr local);
+extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
 extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 
@@ -386,7 +386,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
-	if (!wcmParseOptions(local))
+	if (!wcmParseOptions(local, keys))
 		goto SetupProc_fail;
 
 	/* mark the device configured */

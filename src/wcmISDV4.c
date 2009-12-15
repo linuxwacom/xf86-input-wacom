@@ -362,23 +362,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				 (int)(1 << data[1]);
 
 		if (data[1])
-		{
 			common->wcmTouchResolX = common->wcmTouchResolY = 10;
-			common->wcmTouchDefault = 1;
-		}
-		else
-			common->wcmTouchDefault = 0;
-
-		/* update touch info */
-		common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
-			common->wcmTouchDefault);
-
-		if ((common->tablet_id == 0xE2) ||
-					(common->tablet_id == 0xE3))
-			common->wcmGestureDefault = 1;
-
-		common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
-			 common->wcmGestureDefault);
 
 		common->wcmVersion = ( data[10] | (data[9] << 7) );
 		ret = Success;
