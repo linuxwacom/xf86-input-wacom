@@ -477,7 +477,13 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 				/* Got 2FGT. Send the first one if received */
 				if (ds->proximity || (!ds->proximity &&
 						 last->proximity))
+				{
+					/* time stamp for 2FGT gesture events */
+					if ((ds->proximity && !last->proximity) ||
+						    (!ds->proximity && last->proximity))
+						ds->sample = (int)GetTimeInMillis();
 					xf86WcmEvent(common, channel, ds);
+				}
 
 				channel = 1;
 				ds = &common->wcmChannel[channel].work;
@@ -487,6 +493,10 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
 				ds->proximity = data[0] & 0x02;
+				/* time stamp for 2FGT gesture events */
+				if ((ds->proximity && !lastTemp->proximity) ||
+					    (!ds->proximity && lastTemp->proximity))
+					ds->sample = (int)GetTimeInMillis();
 			}
 		}
 
