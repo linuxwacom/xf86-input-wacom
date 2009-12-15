@@ -1171,6 +1171,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 		return;
 
 	btn_no = get_button_number_from_string(param->name);
+	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
 
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				AnyPropertyType, &type, &format, &btnact_nitems,
@@ -1185,7 +1186,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	else
 	{
 		char buff[64];
-		sprintf(buff, "Wacom button action %d", btn_no);
+		sprintf(buff, "Wacom button action %d", (btn_no + 1));
 		prop = XInternAtom(dpy, buff, False);
 
 		btnact_data[btn_no] = prop;
