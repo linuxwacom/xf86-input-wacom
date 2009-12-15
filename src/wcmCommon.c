@@ -423,6 +423,25 @@ static void toggleDisplay(LocalDevicePtr local)
 }
 
 /*****************************************************************************
+ * countPresses
+ *   Count the number of key/button presses not released for the given key
+ *   array.
+ ****************************************************************************/
+static int countPresses(int keybtn, unsigned int* keys, int size)
+{
+	int i, act, count = 0;
+
+	for (i = 0; i < size; i++)
+	{
+		act = keys[i];
+		if ((act & AC_CODE) == keybtn)
+			count += (act & AC_KEYBTNPRESS) ? 1 : -1;
+	}
+
+	return count;
+}
+
+/*****************************************************************************
  * sendAButton --
  *   Send one button event, called by xf86WcmSendButtons
  ****************************************************************************/
@@ -504,6 +523,45 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				toggleDisplay(local);
 				break;
 		}
+	}
+
+	/* Release all non-released keys for this button. */
+	for (i = 0; !mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	{
+		unsigned int action = priv->keys[button][i];
+
+		switch ((action & AC_TYPE))
+		{
+			case AC_BUTTON:
+				{
+					int btn_no = (action & AC_CODE);
+
+					/* don't care about releases here */
+					if (!(action & AC_KEYBTNPRESS))
+						break;
+
+					if (countPresses(btn_no, &priv->keys[button][i],
+							ARRAY_SIZE(priv->keys[button]) - i))
+						xf86PostButtonEvent(local->dev,
+								is_absolute, btn_no,
+								0, 0, naxes,
+								rx, ry, rz, v3, v4, v5);
+				}
+				break;
+			case AC_KEY:
+				{
+					int key_sym = (action & AC_CODE);
+
+					/* don't care about releases here */
+					if (!(action & AC_KEYBTNPRESS))
+						break;
+
+					if (countPresses(key_sym, &priv->keys[button][i],
+							ARRAY_SIZE(priv->keys[button]) - i))
+						emitKeysym(local->dev, key_sym, 0);
+				}
+		}
+
 	}
 }
 
