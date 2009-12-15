@@ -251,6 +251,7 @@ struct _WacomDeviceRec
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
+	Atom btn_actions[WCM_MAX_BUTTONS]; /* property handlers to listen to */
 };
 
 /******************************************************************************

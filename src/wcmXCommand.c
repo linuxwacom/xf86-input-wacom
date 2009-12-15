@@ -300,7 +300,6 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
     LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
     WacomDevicePtr priv = (WacomDevicePtr) local->private;
     WacomCommonPtr common = priv->common;
-    static Atom btn_actions[WCM_MAX_MOUSE_BUTTONS] = { 0 };
 
     DBG(10, priv->debugLevel, ErrorF("xf86WcmSetProperty for %s \n", local->name));
 
@@ -636,19 +635,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         {
             /* any action property needs to be registered for this handler. */
             for (i = 0; i < prop->size; i++)
-            {
-                if (!values[i])
-                    continue;
-
-                for (j = 0; j < ARRAY_SIZE(btn_actions); j++)
-                {
-                    if (!btn_actions[j])
-                    {
-                        btn_actions[j] = values[i];
-                        break;
-                    }
-                }
-            }
+                priv->btn_actions[i] = values[i];
 
             for (i = 0; i < prop->size; i++)
             {
@@ -668,11 +655,11 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         int i, j;
 
         /* check all properties used for button actions */
-        for (i = 0; i < ARRAY_SIZE(btn_actions); i++)
-            if (!btn_actions[i] || btn_actions[i] == property)
+        for (i = 0; i < ARRAY_SIZE(priv->btn_actions); i++)
+            if (priv->btn_actions[i] == property)
                 break;
 
-        if (i < ARRAY_SIZE(btn_actions))
+        if (i < ARRAY_SIZE(priv->btn_actions))
         {
             CARD32 *data;
             int code;
