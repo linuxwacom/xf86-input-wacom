@@ -239,6 +239,8 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 		if (id > 0x007)
 		{
 			keys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
+			if (id > 0x0a)
+				keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
 		}
 
 		/* no pen 2FGT */
