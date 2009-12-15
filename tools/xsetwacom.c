@@ -1047,6 +1047,30 @@ static char *convert_specialkey(const char *modifier)
 	return m->converted ? m->converted : (char*)modifier;
 }
 
+static int is_modifier(const char* modifier)
+{
+	const char *modifiers[] = {
+		"Control_L",
+		"Control_R",
+		"Alt_L",
+		"Alt_R",
+		"Shift_L",
+		"Shift_R",
+		NULL,
+	};
+
+	const char **m = modifiers;
+
+	while(*m)
+	{
+		if (strcmp(modifier, *m) == 0)
+			return 1;
+		m++;
+	}
+
+	return 0;
+}
+
 /*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
@@ -1075,6 +1099,7 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 					key++;
 					break;
 				default:
+					need_press = need_release = 1;
 					break;
 			}
 
@@ -1087,6 +1112,9 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 				fprintf(stderr, "Invalid key '%s'.\n", argv[i]);
 				break;
 			}
+
+			if (is_modifier(key) && (need_press && need_release))
+				need_release = 0;
 
 		} else
 			need_press = need_release = 1;
