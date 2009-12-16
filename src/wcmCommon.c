@@ -34,6 +34,7 @@ extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmVirtualTabletSize(LocalDevicePtr local);
 extern void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
 extern void xf86WcmTilt2R(WacomDeviceStatePtr ds);
+extern void xf86WcmFingerTapToClick(WacomCommonPtr common);
 
 /*****************************************************************************
  * Static functions
@@ -1211,7 +1212,50 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
+	/* process second finger data if exists
+	 * and both touch and geature are enabled */
+	if ((ds.device_type == TOUCH_ID) &&
+		common->wcmTouch && common->wcmGesture)
+	{
+		WacomChannelPtr pOtherChannel;
+		WacomDeviceState dsOther;
+
+		/* exit gesture mode when both fingers are out */
+		if (channel)
+			pOtherChannel = common->wcmChannel;
+		else
+			pOtherChannel = common->wcmChannel + 1;
+		dsOther = pOtherChannel->valid.state;
+
+		/* This is the only place to reset gesture mode
+		 * once a gesture mode is entered */
+		if (!ds.proximity && !dsOther.proximity)
+		{
+			common->wcmGestureMode = 0;
+
+			/* send a touch out-prox event here
+			 * in case the FF was out before the SF */
+			channel = 0;
+		}
+		else
+		{
+			/* don't move the cursor if in gesture mode
+			 * wait for second finger data to process gestures */
+			if (!channel && common->wcmGestureMode)
+				goto ret;
+
+			/* process gesture */
+			if (channel)
+			{
+				xf86WcmFingerTapToClick(common);
+				goto ret;
+			}
+		}
+	}
+
+	/* everything else falls here */
 	commonDispatchDevice(common,channel,pChannel, suppress);
+ret:
 	resetSampleCounter(pChannel);
 }
 

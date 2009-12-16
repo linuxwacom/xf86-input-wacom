@@ -36,5 +36,5 @@ INCLUDES=-I$(top_srcdir)/include/
 	wcmCommon.c wcmConfig.c wcmISDV4.c \
 	wcmFilter.c wcmFilter.h xf86WacomDefs.h \
 	wcmTilt2Rotation.c wcmUSB.c wcmXCommand.c \
-	wcmValidateDevice.c
+	wcmValidateDevice.c wcmTouchFilter.c
 
