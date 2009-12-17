@@ -1150,6 +1150,8 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 		strcat(buff, " ");
 	}
 
+	*nwords = 0;
+
 	for (tmp = buff; tmp && *tmp != '\0'; tmp = index((const char*)tmp, ' ') + 1)
 		(*nwords)++;
 
