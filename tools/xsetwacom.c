@@ -1620,7 +1620,7 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	{
 		if (v->class == ValuatorClass)
 		{
-			print_value(param, "%s\n", (v->mode == Absolute) ? "Absolute" : "Relative");
+			print_value(param, "%s", (v->mode == Absolute) ? "Absolute" : "Relative");
 			break;
 		}
 		v = (XValuatorInfoPtr)((char*)v + v->length);
@@ -1858,7 +1858,7 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 		case 32:
 			{
 				long *ldata = (long*)data;
-				print_value(param, "%ld\n", ldata[param->prop_offset]);
+				print_value(param, "%ld", ldata[param->prop_offset]);
 				break;
 			}
 	}
