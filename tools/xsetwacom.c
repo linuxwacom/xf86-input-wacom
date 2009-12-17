@@ -76,6 +76,7 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 static void set_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
@@ -775,6 +776,12 @@ static param_t parameters[] =
 		.desc = "Returns the status of XSCALING is set or not. ",
 		.set_func = not_implemented,
 		.get_func = not_implemented,
+	},
+	{
+		.name = "all",
+		.desc = "Get value for all parameters.",
+		.set_func = not_implemented,
+		.get_func = get_all,
 	},
 	{ NULL }
 };
@@ -1783,6 +1790,22 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+}
+
+static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	param_t *p = parameters;
+
+	while(p->name)
+	{
+		if (p != param)
+		{
+			p->device_name = param->device_name;
+			p->printformat = param->printformat;
+			get_param(dpy, dev, p, argc, argv);
+		}
+		p++;
+	}
 }
 
 static void get(Display *dpy, enum printformat printformat, int argc, char **argv)
