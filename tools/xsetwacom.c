@@ -76,6 +76,7 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 static void set_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	printf("Not implemented.\n");
@@ -1788,10 +1789,6 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 {
 	param_t *param;
 	XDevice *dev = NULL;
-	Atom prop, type;
-	int format;
-	unsigned char* data;
-	unsigned long nitems, bytes_after;
 
 	TRACE("'get' requested for '%s'.\n", argv[0]);
 
@@ -1812,17 +1809,29 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	if (!param)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
-		goto out;
+		return;
 	} else
 	{
 		param->printformat = printformat;
 		param->device_name = argv[0];
 	}
 
+	get_param(dpy, dev, param, argc - 2, &argv[2]);
+
+	XCloseDevice(dpy, dev);
+}
+
+static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	Atom prop, type;
+	int format;
+	unsigned char* data;
+	unsigned long nitems, bytes_after;
+
 	if (param->get_func)
 	{
-		param->get_func(dpy, dev, param, argc - 2, &argv[2]);
-		goto out;
+		param->get_func(dpy, dev, param, argc, argv);
+		return;
 	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
@@ -1830,7 +1839,7 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	{
 		fprintf(stderr, "Property for '%s' not available.\n",
 			param->name);
-		goto out;
+		return;
 	}
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
@@ -1864,9 +1873,6 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 				break;
 			}
 	}
-
-out:
-	XCloseDevice(dpy, dev);
 }
 
 
