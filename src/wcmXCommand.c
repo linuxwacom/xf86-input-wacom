@@ -84,7 +84,6 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
 		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
-		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}
@@ -92,7 +91,6 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
-		xf86WcmMappingFactor(local);
 		xf86WcmInitialCoordinates(local, 0);
 		xf86WcmInitialCoordinates(local, 1);
 	}
@@ -345,7 +343,6 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             priv->topY = values[1];
             priv->bottomX = values[2];
             priv->bottomY = values[3];
-            xf86WcmMappingFactor(local);
             xf86WcmInitialCoordinates(local, 0);
             xf86WcmInitialCoordinates(local, 1);
         }

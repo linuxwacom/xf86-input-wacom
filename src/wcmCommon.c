@@ -1926,7 +1926,6 @@ static void rotateOneTool(WacomDevicePtr priv)
 		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
 		break;
 	}
-	xf86WcmMappingFactor(priv->local);
 	xf86WcmInitialCoordinates(priv->local, 0);
 	xf86WcmInitialCoordinates(priv->local, 1);
 
