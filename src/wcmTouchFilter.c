@@ -35,6 +35,8 @@
 
 #define WCM_SCROLL_UP                 5	/* vertical up */
 #define WCM_SCROLL_DOWN               4	/* vertical down */
+#define WCM_SCROLL_LEFT               6	/* horizontal left */
+#define WCM_SCROLL_RIGHT              7	/* horizontal right */
 
 
 /* Defines for Tap Add-a-Finger to Click */
@@ -272,13 +274,29 @@ static void xf86WcmSendHorizontalScrollEvent(WacomDevicePtr priv,
 	{
 		if (dist > 0)
 		{
-			emitKeysym (priv->local->dev, left, 1);
-			emitKeysym (priv->local->dev, left, 0);
+			/* button down */
+			xf86PostButtonEvent(priv->local->dev,
+					priv->flags & ABSOLUTE_FLAG,
+					left,1,0,priv->naxes, priv->oldX,
+					priv->oldY,0,0,0,0);
+			/* button up */
+			xf86PostButtonEvent(priv->local->dev,
+					priv->flags & ABSOLUTE_FLAG,
+					left,0,0,priv->naxes, priv->oldX,
+					priv->oldY,0,0,0,0);
 		}
 		else
 		{
-			emitKeysym (priv->local->dev, right, 1);
-			emitKeysym (priv->local->dev, right, 0);
+			/* button down */
+			xf86PostButtonEvent(priv->local->dev,
+					priv->flags & ABSOLUTE_FLAG,
+					right,1,0,priv->naxes, priv->oldX,
+					priv->oldY,0,0,0,0);
+			/* button up */
+			xf86PostButtonEvent(priv->local->dev,
+					priv->flags & ABSOLUTE_FLAG,
+					right,0,0,priv->naxes, priv->oldX,
+					priv->oldY,0,0,0,0);
 		}
 	}
 }
@@ -348,7 +366,8 @@ static void xf86WcmFingerScroll(WacomDevicePtr priv)
 				if (abs(dist) > WACOM_PARA_MOTION_IN_POINT)
 				{
 					gesture = 1;
-					xf86WcmSendHorizontalScrollEvent(priv, dist, XK_Left, XK_Right);
+					xf86WcmSendHorizontalScrollEvent(priv, dist,
+						WCM_SCROLL_LEFT, WCM_SCROLL_RIGHT);
 				}
 			}
 		}
