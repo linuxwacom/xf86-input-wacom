@@ -552,8 +552,8 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
         if ((values[0] != 0) && (values[0] != 1))
             return BadValue;
 
-        if (!checkonly && common->wcmTouch != values[1])
-	    common->wcmTouch = values[1];
+        if (!checkonly && common->wcmTouch != values[0])
+	    common->wcmTouch = values[0];
     } else if (property == prop_hover)
     {
         CARD8 *values = (CARD8*)prop->data;
