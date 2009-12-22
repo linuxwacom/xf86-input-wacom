@@ -36,10 +36,10 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
 static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds);
 
 /*****************************************************************************
- * xf86WcmSetPressureCurve -- apply user-defined curve to pressure values
+ * wcmSetPressureCurve -- apply user-defined curve to pressure values
  ****************************************************************************/
 
-void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
+void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	int x1, int y1)
 {
 	int i;
@@ -55,7 +55,7 @@ void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 			(FILTER_PRESSURE_RES + 1));
 		if (!pDev->pPressCurve)
 		{
-			xf86Msg(X_ERROR, "%s: xf86WcmSetPressureCurve: failed to "
+			xf86Msg(X_ERROR, "%s: wcmSetPressureCurve: failed to "
 				"allocate memory for curve\n", pDev->local->name);
 			return;
 		}
@@ -236,10 +236,10 @@ static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state,
 }
 
 /*****************************************************************************
- * xf86WcmFilterCoord -- provide noise correction to all transducers
+ * wcmFilterCoord -- provide noise correction to all transducers
  ****************************************************************************/
 
-int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
+int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds)
 {
 	/* Only noise correction should happen here. If there's a problem that
@@ -248,7 +248,7 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceState *pLast;
 	int *x, *y, i; 
 
-	DBG(10, common->debugLevel, xf86Msg(X_INFO, "xf86WcmFilterCoord with "
+	DBG(10, common->debugLevel, xf86Msg(X_INFO, "wcmFilterCoord with "
 			"common->wcmRawSample = %d \n", common->wcmRawSample));
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
@@ -269,10 +269,10 @@ int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 }
 
 /*****************************************************************************
- * xf86WcmFilterIntuos -- provide error correction to Intuos and Intuos2
+ * wcmFilterIntuos -- provide error correction to Intuos and Intuos2
  ****************************************************************************/
 
-int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
+int wcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds)
 {
 	/* Only error correction should happen here. If there's a problem that
@@ -281,7 +281,7 @@ int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	if (ds->device_type != CURSOR_ID)
 		filterIntuosStylus(common, &pChannel->rawFilter, ds);
 	else
-		xf86WcmFilterCoord(common, pChannel, ds);
+		wcmFilterCoord(common, pChannel, ds);
 
 	return 0; /* lookin' good */
 }

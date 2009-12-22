@@ -495,7 +495,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 				local->name);
 		else
 		{
-			xf86WcmSetPressureCurve(priv,a,b,c,d);
+			wcmSetPressureCurve(priv,a,b,c,d);
 		}
 	}
 
@@ -714,7 +714,7 @@ int wcmAutoProbeDevice(LocalDevicePtr local)
 	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")))
 	{
 		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+		if (! (common->wcmDevice = wcmEventAutoDevProbe (local)))
 		{
 			xf86Msg(X_ERROR, "%s: unable to probe device\n",
 				local->name);

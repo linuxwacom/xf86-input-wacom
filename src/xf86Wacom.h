@@ -146,16 +146,16 @@ struct _WacomModule
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 /* device autoprobing */
-char *xf86WcmEventAutoDevProbe (LocalDevicePtr local);
+char *wcmEventAutoDevProbe (LocalDevicePtr local);
 
 /* common tablet initialization regime */
 int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);
 
 /* standard packet handler */
-void xf86WcmReadPacket(LocalDevicePtr local);
+void wcmReadPacket(LocalDevicePtr local);
 
 /* handles suppression, filtering, and dispatch. */
-void xf86WcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
+void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);

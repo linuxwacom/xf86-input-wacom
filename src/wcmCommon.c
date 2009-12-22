@@ -1088,11 +1088,11 @@ static void resetSampleCounter(const WacomChannelPtr pChannel)
 }
 
 /*****************************************************************************
- * xf86WcmEvent -
+ * wcmEvent -
  *   Handles suppression, transformation, filtering, and event dispatch.
  ****************************************************************************/
 
-void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
+void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	const WacomDeviceState* pState)
 {
 	WacomDeviceState* pLast;
@@ -1104,7 +1104,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
 
-	DBG(10, common->debugLevel, xf86Msg(X_INFO, "xf86WcmEvent at channel = %d\n", channel));
+	DBG(10, common->debugLevel, xf86Msg(X_INFO, "wcmEvent at channel = %d\n", channel));
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
@@ -1116,7 +1116,7 @@ void xf86WcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = (int)GetTimeInMillis();
-	DBG(10, common->debugLevel, xf86Msg(X_INFO, "xf86WcmEvent: "
+	DBG(10, common->debugLevel, xf86Msg(X_INFO, "wcmEvent: "
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
 		"t=%d df=%d px=%d st=%d cs=%d \n",
@@ -1423,7 +1423,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	 * access errors to the device */
 	if (pDev && !miPointerGetScreen(pDev->dev))
 	{
-		xf86Msg(X_ERROR, "xf86WcmEvent: Wacom driver can not get Current Screen ID\n");
+		xf86Msg(X_ERROR, "wcmEvent: Wacom driver can not get Current Screen ID\n");
 		xf86Msg(X_ERROR, "Please remove Wacom tool from the tablet and bring it back again.\n");
 		return;
 	}

@@ -924,11 +924,11 @@ Bool xf86WcmIsWacomDevice (char* fname)
 }
 
 /*****************************************************************************
- * xf86WcmEventAutoDevProbe -- Probe for right input device
+ * wcmEventAutoDevProbe -- Probe for right input device
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-char *xf86WcmEventAutoDevProbe (LocalDevicePtr local)
+char *wcmEventAutoDevProbe (LocalDevicePtr local)
 {
 	/* We are trying to find the right eventX device */
 	int i, wait = 0;
@@ -1046,7 +1046,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	{
 		/* Autoprobe if necessary */
 		if ((common->wcmFlags & AUTODEV_FLAG) &&
-		    !(common->wcmDevice = xf86WcmEventAutoDevProbe (local)))
+		    !(common->wcmDevice = wcmEventAutoDevProbe (local)))
 			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
 
 		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
@@ -1135,19 +1135,19 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 		DBG(10, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmDevReadInput: Read (%d)\n",loop));
 }					
 
-void xf86WcmReadPacket(LocalDevicePtr local)
+void wcmReadPacket(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
 	unsigned char * data;
 
-	DBG(10, common->debugLevel, xf86Msg(X_INFO, "xf86WcmReadPacket: device=%s"
+	DBG(10, common->debugLevel, xf86Msg(X_INFO, "wcmReadPacket: device=%s"
 		" fd=%d \n", common->wcmDevice, local->fd));
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
-	DBG(1, common->debugLevel, xf86Msg(X_INFO, "xf86WcmReadPacket: pos=%d"
+	DBG(1, common->debugLevel, xf86Msg(X_INFO, "wcmReadPacket: pos=%d"
 		" remaining=%d\n", common->bufpos, remaining));
 
 	/* fill buffer with as much data as we can handle */
@@ -1171,7 +1171,7 @@ void xf86WcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, common->debugLevel, xf86Msg(X_INFO, "xf86WcmReadPacket buffer has %d bytes\n",
+	DBG(10, common->debugLevel, xf86Msg(X_INFO, "wcmReadPacket buffer has %d bytes\n",
 		common->bufpos));
 
 	pos = 0;

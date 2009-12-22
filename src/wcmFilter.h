@@ -24,11 +24,11 @@
 
 /****************************************************************************/
 
-void xf86WcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
+void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	int x1, int y1);
-int xf86WcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
+int wcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
-int xf86WcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
+int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
 
 /****************************************************************************/

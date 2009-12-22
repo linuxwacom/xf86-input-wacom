@@ -53,7 +53,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 	{
 		usbDetect,
 		usbWcmInit,
-		xf86WcmReadPacket,
+		wcmReadPacket,
 	};
 
 	static WacomModel usbUnknown =
@@ -84,7 +84,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -100,7 +100,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -116,7 +116,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -132,7 +132,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -148,7 +148,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -164,7 +164,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -180,7 +180,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -196,7 +196,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -244,7 +244,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterIntuos,  /* input filtering recommended */
+		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -260,7 +260,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterIntuos,  /* input filtering recommended */
+		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -276,7 +276,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterIntuos,  /* input filtering recommended */
+		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -292,7 +292,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterIntuos,  /* input filtering recommended */
+		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -308,7 +308,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -324,7 +324,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterCoord,   /* input filtering */
+		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -340,7 +340,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
-		xf86WcmFilterIntuos,  /* input filtering recommended */
+		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
 	};
 
@@ -810,7 +810,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 			{
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
-				xf86WcmEvent(common, i, &common->wcmChannel[i].work);
+				wcmEvent(common, i, &common->wcmChannel[i].work);
 			}
 		}
 		DBG(1, common->debugLevel, xf86Msg(X_INFO, "usbParse (device with serial number: %u)"
@@ -1121,6 +1121,6 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	}
 
 	/* dispatch event */
-	xf86WcmEvent(common, channel, ds);
+	wcmEvent(common, channel, ds);
 }
 /* vim: set noexpandtab shiftwidth=8: */

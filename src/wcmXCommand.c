@@ -372,7 +372,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             return BadValue;
 
         if (!checkonly)
-            xf86WcmSetPressureCurve (priv, pcurve[0], pcurve[1],
+            wcmSetPressureCurve (priv, pcurve[0], pcurve[1],
                                      pcurve[2], pcurve[3]);
     } else if (property == prop_suppress)
     {
