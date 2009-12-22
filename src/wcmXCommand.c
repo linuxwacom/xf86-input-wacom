@@ -304,45 +304,54 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
     if (property == prop_tablet_area)
     {
         INT32 *values = (INT32*)prop->data;
-        WacomToolArea area;
+        WacomToolAreaPtr area = priv->toolarea;
 
         if (prop->size != 4 || prop->format != 32)
             return BadValue;
 
-        area.topX = values[0];
-        area.topY = values[1];
-        area.bottomX = values[2];
-        area.bottomY = values[3];
+        /* value validation is unnecessary since we let utility programs, such as
+         * xsetwacom and userland control panel take care of the validation role.
+         * when all four values are set to -1, it is an area reset (xydefault) */
+        if ((values[0] != -1) || (values[1] != -1) ||
+            (values[2] != -1) || (values[3] != -1))
+        {
+            WacomToolArea tmp_area = *area;
 
-	/* FIXME: this will always be the case? */
-        if (WcmAreaListOverlap(&area, priv->tool->arealist))
-            return BadValue;
+            area->topX = values[0];
+            area->topY = values[1];
+            area->bottomX = values[2];
+            area->bottomY = values[3];
+
+            /* validate the area */
+            if (WcmAreaListOverlap(area, priv->tool->arealist))
+            {
+                *area = tmp_area;
+                return BadValue;
+            }
+            *area = tmp_area;
+        }
 
         if (!checkonly)
         {
-            /* Invalid range resets axis to defaults */
-            if (values[0] >= values[2])
+            if ((values[0] == -1) && (values[1] == -1) &&
+                (values[2] == -1) && (values[3] == -1))
             {
                 values[0] = 0;
-		if (!IsTouch(priv))
-	            values[2] = common->wcmMaxX;
-		else
-	            values[2] = common->wcmMaxTouchX;
-            }
-
-            if (values[1] >= values[3])
-            {
                 values[1] = 0;
-		if (!IsTouch(priv))
+                if (!IsTouch(priv))
+	            values[2] = common->wcmMaxX;
+                else
+	            values[2] = common->wcmMaxTouchX;
+                if (!IsTouch(priv))
 	            values[3] = common->wcmMaxY;
-		else
+                else
 	            values[3] = common->wcmMaxTouchY;
             }
 
-            priv->topX = values[0];
-            priv->topY = values[1];
-            priv->bottomX = values[2];
-            priv->bottomY = values[3];
+            priv->topX = area->topX = values[0];
+            priv->topY = area->topY = values[1];
+            priv->bottomX = area->bottomX = values[2];
+            priv->bottomY = area->bottomY = values[3];
             xf86WcmInitialCoordinates(local, 0);
             xf86WcmInitialCoordinates(local, 1);
         }
