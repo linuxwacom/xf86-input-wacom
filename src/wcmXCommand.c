@@ -50,11 +50,11 @@ int xf86WcmSetPadCoreMode(LocalDevicePtr local)
 	/* Pad is always in relative mode when it's a core device.
 	 * Always in absolute mode when it is not a core device.
 	 */
-	DBG(10, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSetPadCoreMode (%p)"
+	DBG(10, priv->debugLevel, "xf86WcmSetPadCoreMode (%p)"
 		" is always in %s mode when it %s core device\n",
 		(void *)local->dev, 
 		!is_core ? "absolute" : "relative", 
-		is_core ? "is" : "isn't"));
+		is_core ? "is" : "isn't");
 	if (is_core)
 		priv->flags &= ~ABSOLUTE_FLAG;
 	else
@@ -71,8 +71,8 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
-	DBG(3, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSwitchModeCall for %s to mode=%d\n",
-		local->name, mode));
+	DBG(3, priv->debugLevel, "xf86WcmSwitchModeCall for %s to mode=%d\n",
+		local->name, mode);
 
 	/* Pad is always in relative mode when it's a core device.
 	 * Always in absolute mode when it is not a core device.
@@ -96,8 +96,8 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	}
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
-		DBG(10, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSwitchModeCall"
-			" for %s invalid mode=%d\n", local->name, mode));
+		DBG(10, priv->debugLevel, "xf86WcmSwitchModeCall"
+			" for %s invalid mode=%d\n", local->name, mode);
 		return BadMatch;
 	}
 
@@ -114,8 +114,8 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(3, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSwitchMode dev=%p mode=%d\n",
-		(void *)dev, mode));
+	DBG(3, priv->debugLevel, "xf86WcmSwitchMode dev=%p mode=%d\n",
+		(void *)dev, mode);
 #endif
 	/* Share this call with sendAButton in wcmCommon.c */
 	return xf86WcmDevSwitchModeCall(local, mode);
@@ -211,7 +211,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     WacomCommonPtr common = priv->common;
     int values[WCM_MAX_MOUSE_BUTTONS];
 
-    DBG(10, priv->debugLevel, xf86Msg(X_INFO, "InitWcmDeviceProperties for %s \n", local->name));
+    DBG(10, priv->debugLevel, "InitWcmDeviceProperties for %s \n", local->name);
 
     values[0] = priv->topX;
     values[1] = priv->topY;
@@ -299,7 +299,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
     WacomDevicePtr priv = (WacomDevicePtr) local->private;
     WacomCommonPtr common = priv->common;
 
-    DBG(10, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSetProperty for %s \n", local->name));
+    DBG(10, priv->debugLevel, "xf86WcmSetProperty for %s \n", local->name);
 
     if (property == prop_tablet_area)
     {
@@ -497,8 +497,8 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
                 {
                     screen = -1;
                     priv->currentScreen = 0;
-                    DBG(10, priv->debugLevel, xf86Msg(X_INFO, "xf86WcmSetProperty TwinView sets to "
-                        "TV_NONE: can't change screen_no. \n"));
+                    DBG(10, priv->debugLevel, "xf86WcmSetProperty TwinView sets to "
+                        "TV_NONE: can't change screen_no. \n");
                 }
                 xf86WcmChangeScreen(local, screen);
             }

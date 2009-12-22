@@ -74,9 +74,13 @@
 #endif
 
 #if DEBUG
-#define DBG(lvl, dLevel, f) do { if ((lvl) <= dLevel) f; } while (0)
+#define DBG(lvl, dLevel, ...) \
+	do { \
+		if ((lvl) <= dLevel) \
+			xf86Msg(X_INFO, __VA_ARGS__); \
+	} while (0)
 #else
-#define DBG(lvl, dLevel, f)
+#define DBG(lvl, dLevel, ...)
 #endif
 
 /*****************************************************************************
