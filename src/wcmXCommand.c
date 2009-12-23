@@ -160,6 +160,9 @@ Atom prop_touch;
 Atom prop_hover;
 Atom prop_tooltype;
 Atom prop_btnactions;
+#ifdef DEBUG
+Atom prop_debuglevels;
+#endif
 
 /* Special case: format -32 means type is XA_ATOM */
 static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, int *values)
@@ -288,6 +291,12 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     /* default to no actions */
     memset(values, 0, sizeof(values));
     prop_btnactions = InitWcmAtom(local->dev, WACOM_PROP_BUTTON_ACTIONS, -32, WCM_MAX_MOUSE_BUTTONS, values);
+
+#ifdef DEBUG
+    values[0] = priv->debugLevel;
+    values[1] = common->debugLevel;
+    prop_debuglevels = InitWcmAtom(local->dev, WACOM_PROP_DEBUGLEVELS, 8, 2, values);
+#endif
 }
 
 int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -599,6 +608,24 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
             /* reset screen info */
             xf86WcmChangeScreen(local, priv->screen_no);
         }
+#ifdef DEBUG
+    } else if (property == prop_debuglevels)
+    {
+        CARD8 *values;
+
+        if (prop->size != 2 || prop->format != 8)
+            return BadMatch;
+
+        values = (CARD8*)prop->data;
+        if (values[0] > 10 || values[1] > 10)
+            return BadValue;
+
+        if (!checkonly)
+        {
+            priv->debugLevel = values[0];
+            common->debugLevel = values[1];
+        }
+#endif
     } else if (property == prop_btnactions)
     {
         Atom *values;

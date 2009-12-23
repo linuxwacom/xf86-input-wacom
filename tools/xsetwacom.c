@@ -309,15 +309,17 @@ static param_t parameters[] =
 		.name = "DebugLevel",
 		.desc = "Level of debugging trace for individual devices, "
 		"default is 0 (off). ",
-		.set_func = not_implemented,
-		.get_func = not_implemented,
+		.prop_name = WACOM_PROP_DEBUGLEVELS,
+		.prop_format = 8,
+		.prop_offset = 0,
 	},
 	{
 		.name = "CommonDBG",
 		.desc = "Level of debugging statements applied to all devices "
 		"associated with the same tablet. default is 0 (off). ",
-		.set_func = not_implemented,
-		.get_func = not_implemented,
+		.prop_name = WACOM_PROP_DEBUGLEVELS,
+		.prop_format = 8,
+		.prop_offset = 1,
 	},
 	{
 		.name = "Suppress",

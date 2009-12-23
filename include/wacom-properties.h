@@ -78,4 +78,10 @@
  */
 #define WACOM_PROP_BUTTON_ACTIONS "Wacom Button Actions"
 
+/* 8 bit, 2 values, priv->debugLevel and common->debugLevel. This property
+ * is for use in the driver only and only enabled if --enable-debug is
+ * given. No client may rely on this property being present or working.
+ */
+#define WACOM_PROP_DEBUGLEVELS "Wacom Debug Levels"
+
 #endif
