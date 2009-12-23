@@ -281,7 +281,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		if (!common->wcmMaxX || !common->wcmMaxY)
 			common->tablet_id = 0xE2;
 
-		DBG(2, priv->debugLevel, "isdv4GetRanges Pen speed=%d "
+		DBG(2, priv->debugLevel, "Pen speed=%d "
 			"maxX=%d maxY=%d maxZ=%d resX=%d resY=%d \n",
 			common->wcmISDV4Speed, common->wcmMaxX, common->wcmMaxY,
 			common->wcmMaxZ, common->wcmResolX, common->wcmResolY);
@@ -367,7 +367,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		common->wcmVersion = ( data[10] | (data[9] << 7) );
 		ret = Success;
 
-		DBG(2, priv->debugLevel, "isdv4GetRanges touch speed=%d "
+		DBG(2, priv->debugLevel, "touch speed=%d "
 			"maxTouchX=%d maxTouchY=%d TouchresX=%d TouchresY=%d \n",
 			common->wcmISDV4Speed, common->wcmMaxTouchX,
 			common->wcmMaxTouchY, common->wcmTouchResolX,
@@ -401,7 +401,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	WacomDeviceState* ds;
 	int n, cur_type, channel = 0;
 
-	DBG(10, common->debugLevel, "isdv4Parse \n");
+	DBG(10, common->debugLevel, "\n");
 
 	/* determine the type of message (touch or stylus) */
 	if (data[0] & 0x10) /* a touch data */
@@ -484,7 +484,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			}
 		}
 
-		DBG(8, priv->debugLevel, "isdv4Parse MultiTouch "
+		DBG(8, priv->debugLevel, "MultiTouch "
 			"%s proximity \n", ds->proximity ? "in" : "out of");
 	}
 	else
@@ -536,7 +536,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			ds->device_id = ERASER_DEVICE_ID;
 		}
 
-		DBG(8, priv->debugLevel, "isdv4Parse %s\n",
+		DBG(8, priv->debugLevel, "%s\n",
 			ds->device_type == ERASER_ID ? "ERASER " :
 			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE");
 	}

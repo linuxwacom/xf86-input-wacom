@@ -56,8 +56,8 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 void xf86WcmMappingFactor(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
- 
-	DBG(10, priv->debugLevel, "xf86WcmMappingFactor \n");
+
+	DBG(10, priv->debugLevel, "\n"); /* just prints function name */
 
 	xf86WcmVirtualTabletSize(local);
 	
@@ -81,9 +81,9 @@ void xf86WcmMappingFactor(LocalDevicePtr local)
 	if (priv->currentScreen == -1) /* tool on the tablet */
 		priv->currentScreen = 0;
 
-	DBG(10, priv->debugLevel, "xf86WcmMappingFactor"
-		" Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
-		" to maxWidth =%d maxHeight =%d\n", 
+	DBG(10, priv->debugLevel,
+		"Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
+		" to maxWidth =%d maxHeight =%d\n",
 		priv->bottomX, priv->bottomY, priv->sizeX, priv->sizeY, 
 		priv->maxWidth, priv->maxHeight);
 
@@ -106,7 +106,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int screenToSet = -1, i, j, x, y, tabletSize = 0;
 
-	DBG(6, priv->debugLevel, "xf86WcmSetScreen v0=%d v1=%d "
+	DBG(6, priv->debugLevel, "v0=%d v1=%d "
 		"currentScreen=%d\n", v0, v1, priv->currentScreen);
 
 	if (priv->screen_no != -1 && priv->screen_no >= priv->numScreen)
@@ -152,7 +152,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 			if (v0 > priv->topY && v0 <= priv->topY + priv->tvoffsetY)
 				priv->currentScreen = 1;
 		}
-		DBG(10, priv->debugLevel, "xf86WcmSetScreen TwinView setup screenToSet=%d\n",
+		DBG(10, priv->debugLevel, "TwinView setup screenToSet=%d\n",
 			priv->currentScreen);
 	}
 
@@ -194,7 +194,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (screenToSet == -1)
 	{
-		DBG(3, priv->debugLevel, "xf86WcmSetScreen Error: "
+		DBG(3, priv->debugLevel, "Error: "
 			"Can not find valid screen (currentScreen=%d)\n",
 			priv->currentScreen);
 		return;
@@ -210,7 +210,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 		y = screenInfo.screens[screenToSet]->height - 1;
 
 	xf86XInputSetScreen(local, screenToSet, x, y);
-	DBG(10, priv->debugLevel, "xf86WcmSetScreen current=%d ToSet=%d\n",
+	DBG(10, priv->debugLevel, "current=%d ToSet=%d\n",
 			priv->currentScreen, screenToSet);
 	priv->currentScreen = screenToSet;
 }
@@ -227,8 +227,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	int button, mask;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	DBG(6, priv->debugLevel, "xf86WcmSendButtons "
-		"buttons=%d for %s\n", buttons, local->name);
+	DBG(6, priv->debugLevel, "buttons=%d for %s\n", buttons, local->name);
 
 	/* Tablet PC buttons only apply to penabled devices */
 	if (common->wcmTPCButton && (priv->flags & STYLUS_ID))
@@ -461,7 +460,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 	if (!priv->button[button])  /* ignore this button event */
 		return;
 
-	DBG(4, priv->debugLevel, "sendAButton TPCButton(%s) button=%d state=%d " 
+	DBG(4, priv->debugLevel, "TPCButton(%s) button=%d state=%d " 
 		"code=%08x, for %s coreEvent=%s \n", 
 		common->wcmTPCButton ? "on" : "off", 
 		button, mask, priv->button[button], 
@@ -578,7 +577,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
-	DBG(10, priv->debugLevel, "sendWheelStripEvents for %s \n", local->name);
+	DBG(10, priv->debugLevel, "strip events for %s \n", local->name);
 
 	/* emulate events for relative wheel */
 	if ( ds->relwheel )
@@ -668,8 +667,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 	if (!fakeButton) return;
 
-	DBG(10, priv->debugLevel, "sendWheelStripEvents "
-		"send fakeButton %x with value = %d \n", 
+	DBG(10, priv->debugLevel, "send fakeButton %x with value = %d \n",
 		fakeButton, value);
 
 	switch (fakeButton & AC_TYPE)
@@ -1068,7 +1066,7 @@ static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig
 		dsNew->y = dsOrig->y;
 	}
 
-	DBG(10, common->debugLevel, "xf86WcmSuppress at level = %d"
+	DBG(10, common->debugLevel, "level = %d"
 		" return value = %d\n", suppress, returnV);
 	return returnV;
 }
@@ -1103,7 +1101,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
 
-	DBG(10, common->debugLevel, "wcmEvent at channel = %d\n", channel);
+	DBG(10, common->debugLevel, "channel = %d\n", channel);
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
@@ -1115,7 +1113,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	/* timestamp the state for velocity and acceleration analysis */
 	ds.sample = (int)GetTimeInMillis();
-	DBG(10, common->debugLevel, "wcmEvent: "
+	DBG(10, common->debugLevel,
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
 		"t=%d df=%d px=%d st=%d cs=%d \n",
@@ -1337,7 +1335,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				}
 	}
 
-	DBG(10, common->debugLevel, "commonDispatchDevice device type = %d\n", ds->device_type);
+	DBG(10, common->debugLevel, "device type = %d\n", ds->device_type);
 	/* Find the device the current events are meant for */
 	/* 1: Find the tool (the one with correct serial or in second
 	 * hand, the one with serial set to 0 if no match with the
@@ -1804,7 +1802,7 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 		priv->screenBottomY[1] = priv->tvResolution[1];
 	}
 
-	DBG(10, priv->debugLevel, "xf86WcmInitialTVScreens for \"%s\" "
+	DBG(10, priv->debugLevel, "\"%s\":"
 		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
 		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
 		local->name, priv->screenTopX[0], priv->screenTopY[0],
@@ -1822,7 +1820,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
 
-	DBG(2, priv->debugLevel, "xf86WcmInitialScreens for \"%s\" "
+	DBG(2, priv->debugLevel, "\"%s\":"
 		"number of screen=%d \n", local->name, screenInfo.numScreens);
 	priv->tvoffsetX = 0;
 	priv->tvoffsetY = 0;
@@ -1847,7 +1845,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 			priv->screenBottomX[i] = dixScreenOrigins[i].x;
 			priv->screenBottomY[i] = dixScreenOrigins[i].y;
 
-			DBG(10, priv->debugLevel, "xf86WcmInitialScreens from dix for \"%s\" "
+			DBG(10, priv->debugLevel, "from dix for \"%s\" "
 				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
 				local->name, i, priv->screenTopX[i], i,
 				priv->screenTopY[i]);
@@ -1856,7 +1854,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 
-		DBG(10, priv->debugLevel, "xf86WcmInitialScreens for \"%s\" "
+		DBG(10, priv->debugLevel, "\"%s\":"
 			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
 			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
 			i, priv->screenBottomX[i], i, priv->screenBottomY[i]);
@@ -1873,7 +1871,7 @@ static void rotateOneTool(WacomDevicePtr priv)
 	WacomToolAreaPtr area = priv->toolarea;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
-	DBG(10, priv->debugLevel, "rotateOneTool for \"%s\" \n", priv->local->name);
+	DBG(10, priv->debugLevel, "\"%s\"", priv->local->name);
 
 	if (!IsTouch(priv))
 	{
@@ -1950,7 +1948,7 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 	int oldRotation;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
-	DBG(10, priv->debugLevel, "xf86WcmRotateTablet for \"%s\" \n", local->name);
+	DBG(10, priv->debugLevel, "\"%s\":\n", local->name);
 
 	if (common->wcmRotate == value) /* initialization */
 	{

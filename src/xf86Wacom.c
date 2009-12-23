@@ -148,7 +148,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	double screenRatio, tabletRatio;
 	int bottomx = common->wcmMaxX, bottomy = common->wcmMaxY;
 
-	DBG(10, priv->debugLevel, "xf86WcmInitArea\n");
+	DBG(10, priv->debugLevel, "\n");
 
 	if (IsTouch(priv))
 	{
@@ -296,7 +296,7 @@ void xf86WcmVirtualTabletPadding(LocalDevicePtr local)
 		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
 			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv->debugLevel, "xf86WcmVirtualTabletPadding for \"%s\" "
+	DBG(10, priv->debugLevel, "\"%s\" "
 		"x=%d y=%d \n", local->name, priv->leftPadding, priv->topPadding);
 	return;
 }
@@ -336,7 +336,7 @@ void xf86WcmVirtualTabletSize(LocalDevicePtr local)
 		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
 			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv->debugLevel, "xf86WcmVirtualTabletSize for \"%s\" "
+	DBG(10, priv->debugLevel, "\"%s\" "
 		"x=%d y=%d \n", local->name, priv->sizeX, priv->sizeY);
 	return;
 }
@@ -656,7 +656,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			             	     * This is only a workaround. 
 				     	     */
 
-	DBG(10, priv->debugLevel, "xf86WcmRegisterX11Devices "
+	DBG(10, priv->debugLevel,
 		"(%s) %d buttons, %d keys, %d axes\n",
 		IsStylus(priv) ? "stylus" :
 		IsCursor(priv) ? "cursor" :
@@ -1035,7 +1035,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 	WacomCommonPtr common = priv->common;
 	struct stat st;
 
-	DBG(10, priv->debugLevel, "xf86WcmDevOpen\n");
+	DBG(10, priv->debugLevel, "\n");
 
 	/* Device has been open and not autoprobed */
 	if (priv->wcmDevOpenCount)
@@ -1098,7 +1098,7 @@ static int xf86WcmReady(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 #endif
 	int n = xf86WaitForInput(local->fd, 0);
-	DBG(10, priv->debugLevel, "xf86WcmReady for %s with %d numbers of data\n", local->name, n);
+	DBG(10, priv->debugLevel, "%s with %d numbers of data\n", local->name, n);
 
 	if (n >= 0) return n ? 1 : 0;
 	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
@@ -1130,9 +1130,9 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 
 	/* report how well we're doing */
 	if (loop >= MAX_READ_LOOPS)
-		DBG(1, priv->debugLevel, "xf86WcmDevReadInput: Can't keep up!!!\n");
+		DBG(1, priv->debugLevel, "Can't keep up!!!\n");
 	else if (loop > 0)
-		DBG(10, priv->debugLevel, "xf86WcmDevReadInput: Read (%d)\n",loop);
+		DBG(10, priv->debugLevel, "Read (%d)\n",loop);
 }					
 
 void wcmReadPacket(LocalDevicePtr local)
@@ -1142,12 +1142,12 @@ void wcmReadPacket(LocalDevicePtr local)
 	int len, pos, cnt, remaining;
 	unsigned char * data;
 
-	DBG(10, common->debugLevel, "wcmReadPacket: device=%s"
+	DBG(10, common->debugLevel, "device=%s"
 		" fd=%d \n", common->wcmDevice, local->fd);
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
-	DBG(1, common->debugLevel, "wcmReadPacket: pos=%d"
+	DBG(1, common->debugLevel, "pos=%d"
 		" remaining=%d\n", common->bufpos, remaining);
 
 	/* fill buffer with as much data as we can handle */
@@ -1171,7 +1171,7 @@ void wcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, common->debugLevel, "wcmReadPacket buffer has %d bytes\n",
+	DBG(10, common->debugLevel, "buffer has %d bytes\n",
 		common->bufpos);
 
 	pos = 0;
@@ -1232,7 +1232,7 @@ int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 {
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	DBG(3, priv->debugLevel, "xf86WcmDevChangeControl called\n");
+	DBG(3, priv->debugLevel, "\n");
 #endif
 	return Success;
 }
@@ -1247,7 +1247,7 @@ static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 	LocalDevicePtr local = (LocalDevicePtr)device->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(4, priv->debugLevel, "Wacom Dev Control Proc called\n");
+	DBG(4, priv->debugLevel, "called\n");
 #endif
 	return;
 }
@@ -1284,7 +1284,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(2, priv->debugLevel, "BEGIN xf86WcmProc dev=%p priv=%p "
+	DBG(2, priv->debugLevel, "BEGIN dev=%p priv=%p "
 			"type=%s(%s) flags=%d fd=%d what=%s\n",
 			(void *)pWcm, (void *)priv,
 			IsStylus(priv) ? "stylus" :
@@ -1306,7 +1306,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			priv->wcmInitKeyClassCount = 0;
 			if (!xf86WcmDevOpen(pWcm))
 			{
-				DBG(1, priv->debugLevel, "xf86WcmProc INIT FAILED\n");
+				DBG(1, priv->debugLevel, "INIT FAILED\n");
 				return !Success;
 			}
 			priv->wcmInitKeyClassCount++;
@@ -1316,7 +1316,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_ON:
 			if (!xf86WcmDevOpen(pWcm))
 			{
-				DBG(1, priv->debugLevel, "xf86WcmProc ON FAILED\n");
+				DBG(1, priv->debugLevel, "ON FAILED\n");
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
@@ -1341,7 +1341,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 	} /* end switch */
 
-	DBG(2, priv->debugLevel, "END xf86WcmProc Success \n");
+	DBG(2, priv->debugLevel, "END Success \n");
 	return Success;
 }
 
@@ -1356,7 +1356,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
     
-	DBG(6, priv->debugLevel, "xf86WcmDevConvert v0=%d v1=%d on screen %d \n",
+	DBG(6, priv->debugLevel, "v0=%d v1=%d on screen %d \n",
 		 v0, v1, priv->currentScreen);
 
 	if (first != 0 || num == 1) 
@@ -1392,7 +1392,7 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 		if (*y < 0) *y = 0;
 	
 	}
-	DBG(6, priv->debugLevel, "xf86WcmDevConvert v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y);
+	DBG(6, priv->debugLevel, "v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y);
 	return TRUE;
 }
 
@@ -1409,7 +1409,7 @@ static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int i = 0;
 
-	DBG(6, priv->debugLevel, "xf86WcmDevReverseConvert x=%d y=%d \n", x, y);
+	DBG(6, priv->debugLevel, "x=%d y=%d \n", x, y);
 	priv->currentSX = x;
 	priv->currentSY = y;
 

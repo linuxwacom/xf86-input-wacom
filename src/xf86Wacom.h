@@ -76,8 +76,10 @@
 #if DEBUG
 #define DBG(lvl, dLevel, ...) \
 	do { \
-		if ((lvl) <= dLevel) \
-			xf86Msg(X_INFO, __VA_ARGS__); \
+		if ((lvl) <= dLevel) { \
+			xf86Msg(X_INFO, "%s: ", __func__); \
+			xf86Msg(X_NONE, __VA_ARGS__); \
+		} \
 	} while (0)
 #else
 #define DBG(lvl, dLevel, ...)

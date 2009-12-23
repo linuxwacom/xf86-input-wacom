@@ -372,7 +372,7 @@ static Bool usbDetect(LocalDevicePtr local)
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
-	DBG(1, priv->debugLevel, "usbDetect\n");
+	DBG(1, priv->debugLevel, "\n");
 #endif
 
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
@@ -722,7 +722,7 @@ static int usbDetectConfig(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(10, common->debugLevel, "usbDetectConfig \n");
+	DBG(10, common->debugLevel, "\n");
 	if (IsPad (priv))
 		priv->nbuttons = common->npadkeys;
 	else
@@ -813,7 +813,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 				wcmEvent(common, i, &common->wcmChannel[i].work);
 			}
 		}
-		DBG(1, common->debugLevel, "usbParse (device with serial number: %u)"
+		DBG(1, common->debugLevel, "device with serial number: %u"
 			" at %d: Exceeded channel count; ignoring the events.\n",
 			serial, (int)GetTimeInMillis());
 	}
@@ -830,7 +830,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(10, common->debugLevel, "usbParseEvent \n");
+	DBG(10, common->debugLevel, "\n");
 	/* store events until we receive the MSC_SERIAL containing
 	 * the serial number; without it we cannot determine the
 	 * correct channel. */
@@ -890,7 +890,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	/* ignore events without information */
 	if (common->wcmEventCnt <= 2)
 	{
-		DBG(3, common->debugLevel, "%s - usbParse: dropping empty event"
+		DBG(3, common->debugLevel, "%s: dropping empty event"
 			" for serial %d\n", local->name, common->wcmLastToolSerial);
 		goto skipEvent;
 	}
@@ -923,7 +923,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
-	DBG(6, common->debugLevel, "usbParseChannel %d events received\n", common->wcmEventCnt);
+	DBG(6, common->debugLevel, "%d events received\n", common->wcmEventCnt);
 	#define MOD_BUTTONS(bit, value) do { \
 		shift = 1<<bit; \
 		ds->buttons = (((value) != 0) ? \
@@ -931,10 +931,10 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 		} while (0)
 
 	if (common->wcmEventCnt == 1 && !common->wcmEvents->type) {
-		DBG(6, common->debugLevel, "usbParseChannel no real events received\n");
+		DBG(6, common->debugLevel, "no real events received\n");
 		return;
 	}
-	DBG(6, common->debugLevel, "usbParseChannel %d events received\n", common->wcmEventCnt);
+	DBG(6, common->debugLevel, "%d events received\n", common->wcmEventCnt);
 
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
@@ -945,7 +945,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	for (i=0; i<common->wcmEventCnt; ++i)
 	{
 		event = common->wcmEvents + i;
-		DBG(11, common->debugLevel, "usbParseChannel "
+		DBG(11, common->debugLevel,
 			"event[%d]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value);
 
@@ -1115,7 +1115,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
 		(ds->device_type == ERASER_ID)) 
 	{
-		DBG(10, common->debugLevel, "usbParseChannel "
+		DBG(10, common->debugLevel,
 			"DTF 720 doesn't support eraser ");
 		return;
 	}

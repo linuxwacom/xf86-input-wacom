@@ -248,7 +248,7 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceState *pLast;
 	int *x, *y, i; 
 
-	DBG(10, common->debugLevel, "wcmFilterCoord with "
+	DBG(10, common->debugLevel,
 			"common->wcmRawSample = %d \n", common->wcmRawSample);
 	x = pChannel->rawFilter.x;
 	y = pChannel->rawFilter.y;
