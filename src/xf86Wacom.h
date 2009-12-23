@@ -74,15 +74,15 @@
 #endif
 
 #if DEBUG
-#define DBG(lvl, dLevel, ...) \
+#define DBG(lvl, priv, ...) \
 	do { \
-		if ((lvl) <= dLevel) { \
+		if ((lvl) <= priv->debugLevel) { \
 			xf86Msg(X_INFO, "%s: ", __func__); \
 			xf86Msg(X_NONE, __VA_ARGS__); \
 		} \
 	} while (0)
 #else
-#define DBG(lvl, dLevel, ...)
+#define DBG(lvl, priv, ...)
 #endif
 
 /*****************************************************************************

@@ -229,7 +229,7 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
 
-	DBG(1, priv->debugLevel, "\n");
+	DBG(1, priv, "\n");
 
 	if (priv->isParent)
 	{
@@ -289,8 +289,7 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 		strstr(pMatch->drv->driverName, "wacom") &&
 		!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
 	{
-		DBG(2, priv->debugLevel,
-			"port share between"
+		DBG(2, priv, "port share between"
 			" %s and %s\n", pLocal->name, pMatch->name);
 		type = xf86FindOptionValue(pMatch->options, "Type");
 		if ( type && (strstr(type, "eraser")) )

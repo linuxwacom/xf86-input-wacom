@@ -129,7 +129,7 @@ void xf86WcmFingerTapToClick(WacomCommonPtr common)
 					secondChannel->valid.states[1] };
 	int direction = 0;
 
-	DBG(10, priv->debugLevel, "\n");
+	DBG(10, priv, "\n");
 
 	/* skip initial second finger event */
 	if (!dsLast[1].proximity)
@@ -316,7 +316,7 @@ static void xf86WcmFingerScroll(WacomDevicePtr priv)
 	int gesture = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 
-	DBG(10, priv->debugLevel, "\n");
+	DBG(10, priv, "\n");
 
 	/* initialize the points so we can rotate them */
 	filterd.x[0] = ds[0].x;
@@ -391,7 +391,7 @@ static void xf86WcmFingerZoom(WacomDevicePtr priv)
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
 
-	DBG(10, priv->debugLevel, "\n");
+	DBG(10, priv, "\n");
 
 	dist = touchDistance(ds[0], ds[1]) - dist;
 
