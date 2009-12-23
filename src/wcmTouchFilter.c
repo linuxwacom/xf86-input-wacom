@@ -44,7 +44,7 @@
 
 void xf86WcmFingerTapToClick(WacomCommonPtr common);
 
-extern void xf86WcmRotateCoordinates(LocalDevicePtr local, int x, int y);
+extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 extern void emitKeysym (DeviceIntPtr keydev, int keysym, int state);
 
 static void xf86WcmFingerScroll(WacomDevicePtr priv);
@@ -334,7 +334,7 @@ static void xf86WcmFingerScroll(WacomDevicePtr priv)
 
 	/* rotate the coordinates first */
 	for (i=0; i<6; i++)
-		xf86WcmRotateCoordinates(priv->local, filterd.x[i], filterd.y[i]);
+		wcmRotateCoordinates(priv->local, &filterd.x[i], &filterd.y[i]);
 
 	/* check vertical direction */
 	midPoint_old = (((double)filterd.x[4] + (double)filterd.x[5]) / 2.);

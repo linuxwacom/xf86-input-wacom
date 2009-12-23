@@ -27,6 +27,7 @@
 
 void xf86WcmInitialScreens(LocalDevicePtr local);
 void xf86WcmRotateTablet(LocalDevicePtr local, int value);
+void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
@@ -713,6 +714,47 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 		sendWheelStripEvents(local, ds, x, y, z, v3, v4, v5);
 }
 
+/* rotate x and y before post X inout events */
+void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomCommonPtr common = priv->common;
+	int tmp_coord;
+
+	/* rotation mixes x and y up a bit */
+	if (common->wcmRotate == ROTATE_CW)
+	{
+		tmp_coord = *x;
+		*x = *y;
+		if (!IsTouch(priv))
+			*y = common->wcmMaxY - tmp_coord;
+		else
+			*y = common->wcmMaxTouchY - tmp_coord;
+	}
+	else if (common->wcmRotate == ROTATE_CCW)
+	{
+		tmp_coord = *y;
+		*y = *x;
+		if (!IsTouch(priv))
+			*x = common->wcmMaxX - tmp_coord;
+		else
+			*y = common->wcmMaxTouchX - tmp_coord;
+	}
+	else if (common->wcmRotate == ROTATE_HALF)
+	{
+		if (!IsTouch(priv))
+		{
+			*x = common->wcmMaxX - *x;
+			*y = common->wcmMaxY - *y;
+		}
+		else
+		{
+			*x = common->wcmMaxTouchX - *x;
+			*y = common->wcmMaxTouchY - *y;
+		}
+	}
+}
+
 /*****************************************************************************
  * xf86WcmSendEvents --
  *   Send events according to the device state.
@@ -736,7 +778,6 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int rot = ds->rotation;
 	int throttle = ds->throttle;
 	int wheel = ds->abswheel;
-	int tmp_coord;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
@@ -775,38 +816,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle);
 
-	/* rotation mixes x and y up a bit */
-	if (common->wcmRotate == ROTATE_CW)
-	{
-		tmp_coord = x;
-		x = y;
-		if (!IsTouch(priv))
-			y = common->wcmMaxY - tmp_coord;
-		else
-			y = common->wcmMaxTouchY - tmp_coord;
-	}
-	else if (common->wcmRotate == ROTATE_CCW)
-	{
-		tmp_coord = y;
-		y = x;
-		if (!IsTouch(priv))
-			x = common->wcmMaxX - tmp_coord;
-		else
-			y = common->wcmMaxTouchX - tmp_coord;
-	}
-	else if (common->wcmRotate == ROTATE_HALF)
-	{
-		if (!IsTouch(priv))
-		{
-			x = common->wcmMaxX - x;
-			y = common->wcmMaxY - y;
-		}
-		else
-		{
-			x = common->wcmMaxTouchX - x;
-			y = common->wcmMaxTouchY - y;
-		}
-	}
+	wcmRotateCoordinates(local, &x, &y);
 
 	if (IsCursor(priv)) 
 	{
