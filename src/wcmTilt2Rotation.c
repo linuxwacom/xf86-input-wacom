@@ -22,7 +22,7 @@
 
 #include "xf86Wacom.h"
 
-void xf86WcmTilt2R(WacomDeviceStatePtr ds);
+void wcmTilt2R(WacomDeviceStatePtr ds);
 
 /* Constants to convert X and Y tilt to rotation */
 unsigned short tiltTable_00[65] = {
@@ -690,12 +690,12 @@ unsigned short *cTable[] = {
 };
 
 /*****************************************************************************
- *  xf86WcmTilt2R -
+ *  wcmTilt2R -
  *   Converts tilt X and Y to rotation, for Intuos4 mouse for now. 
  *   It can be used for other devices when necessary.
  ****************************************************************************/
 
-void xf86WcmTilt2R(WacomDeviceStatePtr ds)
+void wcmTilt2R(WacomDeviceStatePtr ds)
 {
 	short tilt_x = ds->tiltx;
 	short tilt_y = ds->tilty;

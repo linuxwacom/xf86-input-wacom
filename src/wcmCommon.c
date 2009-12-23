@@ -25,8 +25,8 @@
 #include "Xwacom.h"
 #include <xkbsrv.h>
 
-void xf86WcmInitialScreens(LocalDevicePtr local);
-void xf86WcmRotateTablet(LocalDevicePtr local, int value);
+void wcmInitialScreens(LocalDevicePtr local);
+void wcmRotateTablet(LocalDevicePtr local, int value);
 void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 
 extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
@@ -34,7 +34,7 @@ extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void xf86WcmVirtualTabletSize(LocalDevicePtr local);
 extern void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
-extern void xf86WcmTilt2R(WacomDeviceStatePtr ds);
+extern void wcmTilt2R(WacomDeviceStatePtr ds);
 extern void xf86WcmFingerTapToClick(WacomCommonPtr common);
 
 /*****************************************************************************
@@ -49,12 +49,12 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5);
 
 /*****************************************************************************
- * xf86WcmMappingFactor --
+ * wcmMappingFactor --
  *   calculate the proper tablet to screen mapping factor according to the 
  *   screen/desktop size and the tablet size 
  ****************************************************************************/
 
-void xf86WcmMappingFactor(LocalDevicePtr local)
+void wcmMappingFactor(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 
@@ -157,7 +157,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 			priv->currentScreen);
 	}
 
-	xf86WcmMappingFactor(local);
+	wcmMappingFactor(local);
 	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
 		return;
 
@@ -1018,12 +1018,12 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 }
 
 /*****************************************************************************
- * xf86WcmSuppress --
+ * wcmCheckSuppress --
  *  Determine whether device state has changed enough - return 0
  *  if not.
  ****************************************************************************/
 
-static int xf86WcmSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig, 
+static int wcmCheckSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig,
 	WacomDeviceState* dsNew)
 {
 	int suppress = common->wcmSuppress;
@@ -1136,7 +1136,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (strstr(common->wcmModel->name, "Intuos4"))
 	{
 		/* convert Intuos4 mouse tilt to rotation */
-		xf86WcmTilt2R(&ds);
+		wcmTilt2R(&ds);
 	}
 
 	fs = &pChannel->rawFilter;
@@ -1183,7 +1183,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 
 		/* Discard unwanted data */
-		suppress = xf86WcmSuppress(common, pLast, &ds);
+		suppress = wcmCheckSuppress(common, pLast, &ds);
 		if (!suppress)
 		{
 			resetSampleCounter(pChannel);
@@ -1361,7 +1361,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		 */
 		WacomToolAreaPtr outprox = NULL;
 		if (tool->current && tool->arealist->next && 
-			!WcmPointInArea(tool->current, ds->x, ds->y))
+			!wcmPointInArea(tool->current, ds->x, ds->y))
 		{
 			outprox = tool->current;
 			tool->current = NULL;
@@ -1378,7 +1378,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		{
 			WacomToolAreaPtr area = tool->arealist;
 			for(; area; area = area->next)
-				if (WcmPointInArea(area, ds->x, ds->y))
+				if (wcmPointInArea(area, ds->x, ds->y))
 					break;
 			tool->current = area;
 		}
@@ -1807,10 +1807,10 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmInitialScreens
+ * wcmInitialScreens
  ****************************************************************************/
 
-void xf86WcmInitialScreens(LocalDevicePtr local)
+void wcmInitialScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
@@ -1914,10 +1914,10 @@ static void rotateOneTool(WacomDevicePtr priv)
 }
 
 /*****************************************************************************
- * xf86WcmRotateTablet
+ * wcmRotateTablet
  ****************************************************************************/
 
-void xf86WcmRotateTablet(LocalDevicePtr local, int value)
+void wcmRotateTablet(LocalDevicePtr local, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -1996,9 +1996,9 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 	}
 }
 
-/* WcmPointInArea - check whether the point is within the area */
+/* wcmPointInArea - check whether the point is within the area */
 
-Bool WcmPointInArea(WacomToolAreaPtr area, int x, int y)
+Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y)
 {
 	if (area->topX <= x && x <= area->bottomX &&
 	    area->topY <= y && y <= area->bottomY)
@@ -2006,28 +2006,28 @@ Bool WcmPointInArea(WacomToolAreaPtr area, int x, int y)
 	return 0;
 }
 
-/* WcmAreasOverlap - check if two areas are overlapping */
+/* wcmAreasOverlap - check if two areas are overlapping */
 
-static Bool WcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
+static Bool wcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
 {
-	if (WcmPointInArea(area1, area2->topX, area2->topY) ||
-	    WcmPointInArea(area1, area2->topX, area2->bottomY) ||
-	    WcmPointInArea(area1, area2->bottomX, area2->topY) ||
-	    WcmPointInArea(area1, area2->bottomX, area2->bottomY))
+	if (wcmPointInArea(area1, area2->topX, area2->topY) ||
+	    wcmPointInArea(area1, area2->topX, area2->bottomY) ||
+	    wcmPointInArea(area1, area2->bottomX, area2->topY) ||
+	    wcmPointInArea(area1, area2->bottomX, area2->bottomY))
 		return 1;
-	if (WcmPointInArea(area2, area1->topX, area1->topY) ||
-	    WcmPointInArea(area2, area1->topX, area1->bottomY) ||
-	    WcmPointInArea(area2, area1->bottomX, area1->topY) ||
-	    WcmPointInArea(area2, area1->bottomX, area1->bottomY))
+	if (wcmPointInArea(area2, area1->topX, area1->topY) ||
+	    wcmPointInArea(area2, area1->topX, area1->bottomY) ||
+	    wcmPointInArea(area2, area1->bottomX, area1->topY) ||
+	    wcmPointInArea(area2, area1->bottomX, area1->bottomY))
 	        return 1;
 	return 0;
 }
 
-/* WcmAreaListOverlaps - check if the area overlaps any area in the list */
-Bool WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
+/* wcmAreaListOverlap - check if the area overlaps any area in the list */
+Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
 {
 	for (; list; list=list->next)
-		if (area != list && WcmAreasOverlap(list, area))
+		if (area != list && wcmAreasOverlap(list, area))
 			return 1;
 	return 0;
 }

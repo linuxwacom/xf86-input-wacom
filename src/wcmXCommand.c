@@ -25,8 +25,8 @@
 #include "wcmFilter.h"
 
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
-extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern void wcmRotateTablet(LocalDevicePtr local, int value);
+extern void wcmInitialScreens(LocalDevicePtr local);
 
 int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
 int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
@@ -135,7 +135,7 @@ void xf86WcmChangeScreen(LocalDevicePtr local, int value)
 
 	if (priv->screen_no != -1)
 		priv->currentScreen = priv->screen_no;
-	xf86WcmInitialScreens(local);
+	wcmInitialScreens(local);
 	xf86WcmInitialCoordinates(local, 0);
 	xf86WcmInitialCoordinates(local, 1);
 }
@@ -330,7 +330,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			area->bottomY = values[3];
 
 			/* validate the area */
-			if (WcmAreaListOverlap(area, priv->tool->arealist))
+			if (wcmAreaListOverlap(area, priv->tool->arealist))
 			{
 				*area = tmp_area;
 				return BadValue;
@@ -407,7 +407,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			return BadValue;
 
 		if (!checkonly && common->wcmRotate != value)
-			xf86WcmRotateTablet(local, value);
+			wcmRotateTablet(local, value);
 	} else if (property == prop_serials)
 	{
 		return BadValue; /* Read-only */

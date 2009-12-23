@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-extern Bool xf86WcmIsWacomDevice (char* fname);
+extern Bool wcmIsWacomDevice (char* fname);
 extern Bool wcmIsAValidType(const char* type, unsigned long* keys);
 extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
 extern int wcmNeedAutoHotplug(LocalDevicePtr local,

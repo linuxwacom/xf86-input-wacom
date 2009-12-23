@@ -168,14 +168,14 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceStat
 void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 
 /* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
-Bool WcmPointInArea(WacomToolAreaPtr area, int x, int y);
-Bool WcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
+Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
+Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* Change pad's mode according to it core event status */
 int xf86WcmSetPadCoreMode(LocalDevicePtr local);
 
 /* calculate the proper tablet to screen mapping factor */
-void xf86WcmMappingFactor(LocalDevicePtr local);
+void wcmMappingFactor(LocalDevicePtr local);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

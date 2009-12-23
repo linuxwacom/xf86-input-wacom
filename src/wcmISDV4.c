@@ -545,7 +545,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 }
 
 /*****************************************************************************
- * xf86WcmWrite --
+ * wcmWriteWait --
  *   send a request
  ****************************************************************************/
 

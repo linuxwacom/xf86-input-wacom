@@ -53,7 +53,7 @@
 
 void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
 void xf86WcmVirtualTabletSize(LocalDevicePtr local);
-Bool xf86WcmIsWacomDevice (char* fname);
+Bool wcmIsWacomDevice (char* fname);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
     extern void InitWcmDeviceProperties(LocalDevicePtr local);
@@ -62,8 +62,8 @@ Bool xf86WcmIsWacomDevice (char* fname);
 #endif
 
 extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-extern void xf86WcmRotateTablet(LocalDevicePtr local, int value);
-extern void xf86WcmInitialScreens(LocalDevicePtr local);
+extern void wcmRotateTablet(LocalDevicePtr local, int value);
+extern void wcmInitialScreens(LocalDevicePtr local);
 extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
 
 static int xf86WcmDevOpen(DeviceIntPtr pWcm);
@@ -109,15 +109,15 @@ static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 }
 
 /*****************************************************************************
- * xf86WcmDesktopSize --
+ * wcmDesktopSize --
  *   calculate the whole desktop size 
  ****************************************************************************/
-static void xf86WcmDesktopSize(LocalDevicePtr local)
+static void wcmDesktopSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
 
-	xf86WcmInitialScreens(local);
+	wcmInitialScreens(local);
 	minX = priv->screenTopX[0];
 	minY = priv->screenTopY[0];
 	maxX = priv->screenBottomX[0];
@@ -191,7 +191,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	}
 
 	/* need maxWidth and maxHeight for keepshape */
-	xf86WcmDesktopSize(local);
+	wcmDesktopSize(local);
 
 	/* Maintain aspect ratio to the whole desktop
 	 * May need to consider a specific screen in multimonitor settings
@@ -224,7 +224,7 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	inlist = priv->tool->arealist;
 
 	/* The first one in the list is always valid */
-	if (area != inlist && WcmAreaListOverlap(area, inlist))
+	if (area != inlist && wcmAreaListOverlap(area, inlist))
 	{
 		inlist = priv->tool->arealist;
 
@@ -348,7 +348,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
         Atom label;
 #endif
 
-	xf86WcmMappingFactor(local);
+	wcmMappingFactor(local);
 
 	/* x ax */
 	if ( !axes )
@@ -788,7 +788,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 	/* Rotation rotates the Max X and Y */
-	xf86WcmRotateTablet(local, common->wcmRotate);
+	wcmRotateTablet(local, common->wcmRotate);
 
 	/* pressure */
 	InitValuatorAxisStruct(local->dev, 2,
@@ -887,7 +887,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	return TRUE;
 }
 
-Bool xf86WcmIsWacomDevice (char* fname)
+Bool wcmIsWacomDevice (char* fname)
 {
 	int fd = -1;
 	struct input_id id;
@@ -930,7 +930,7 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
 			Bool is_wacom;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
-			is_wacom = xf86WcmIsWacomDevice(fname);
+			is_wacom = wcmIsWacomDevice(fname);
 			if (is_wacom) 
 			{
 				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
