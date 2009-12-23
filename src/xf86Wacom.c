@@ -150,30 +150,31 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 
 	DBG(10, priv, "\n");
 
-	/* Verify Box */
+	/* the following 4 blocks verify the box and
+	 * initialize the area */
 	if (priv->topX > bottomx)
 	{
-		area->topX = priv->topX = 0;
+		priv->topX = 0;
 	}
+	area->topX = priv->topX;
 
 	if (priv->topY > bottomy)
 	{
-		area->topY = priv->topY = 0;
+		priv->topY = 0;
 	}
+	area->topY = priv->topY;
 
-	/* set unconfigured bottom to max */
-	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
 	if (priv->bottomX < priv->topX || !priv->bottomX)
 	{
-		area->bottomX = priv->bottomX = bottomx;
+		priv->bottomX = bottomx;
 	}
+	area->bottomX = priv->bottomX;
 
-	/* set unconfigured bottom to max */
-	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
 	if (priv->bottomY < priv->topY || !priv->bottomY)
 	{
-		area->bottomY = priv->bottomY = bottomy;
+		priv->bottomY = bottomy;
 	}
+	area->bottomY = priv->bottomY;
 
 	if (priv->twinview != TV_NONE)
 		priv->numScreen = 2;
