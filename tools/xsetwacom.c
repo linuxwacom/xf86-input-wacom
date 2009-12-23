@@ -1439,7 +1439,7 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	return;
 
 error:
-	fprintf(stderr, "Usage: xsetwacom rotate <device name> [NONE | CW | CCW | HALF]\n");
+	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [NONE | CW | CCW | HALF]\n");
 	return;
 }
 
