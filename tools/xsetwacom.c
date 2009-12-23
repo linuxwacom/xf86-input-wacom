@@ -793,7 +793,7 @@ static param_t* find_parameter(char *name)
 	param_t *param = NULL;
 
 	for (param = parameters; param->name; param++)
-		if (strcmp(name, param->name) == 0)
+		if (strcasecmp(name, param->name) == 0)
 			break;
 	return param->name ? param : NULL;
 }
