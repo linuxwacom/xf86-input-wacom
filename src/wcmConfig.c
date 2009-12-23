@@ -360,6 +360,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;
+	priv->name = local->name;
 	common = priv->common;
 
 	common->wcmDevice = device;

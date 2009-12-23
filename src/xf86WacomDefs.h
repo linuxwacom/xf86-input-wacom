@@ -159,6 +159,7 @@ struct _PROPINFO
 
 struct _WacomDeviceRec
 {
+	char *name;		/* Do not move, same offset as common->wcmDevice */
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
 	LocalDevicePtr local;
@@ -370,6 +371,7 @@ struct _WacomDeviceClass
 
 struct _WacomCommonRec 
 {
+	/* Do not move wcmDevice, same offset as priv->name */
 	char* wcmDevice;             /* device file name */
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
