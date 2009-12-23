@@ -296,8 +296,7 @@ void xf86WcmVirtualTabletPadding(LocalDevicePtr local)
 		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
 			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv, "\"%s\" "
-		"x=%d y=%d \n", local->name, priv->leftPadding, priv->topPadding);
+	DBG(10, priv, "x=%d y=%d \n", priv->leftPadding, priv->topPadding);
 	return;
 }
 
@@ -336,8 +335,7 @@ void xf86WcmVirtualTabletSize(LocalDevicePtr local)
 		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
 			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
 	}
-	DBG(10, priv, "\"%s\" "
-		"x=%d y=%d \n", local->name, priv->sizeX, priv->sizeY);
+	DBG(10, priv, "x=%d y=%d \n", priv->sizeX, priv->sizeY);
 	return;
 }
 
@@ -976,7 +974,7 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 	int rc;
 	struct serial_struct ser;
 
-	DBG(1, priv, "opening %s\n", common->wcmDevice);
+	DBG(1, priv, "opening device file\n");
 
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0)
@@ -1066,8 +1064,8 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		if (fstat(local->fd, &st) == -1)
 		{
 			/* can not access major/minor */
-			DBG(1, priv, "%s: stat failed (%s). "
-				"cannot check status.\n", local->name, strerror(errno));
+			DBG(1, priv, "stat failed (%s). "
+				"cannot check status.\n", strerror(errno));
 
 			/* older systems don't support the required ioctl.
 			 * So, we have to let it pass */
@@ -1098,7 +1096,7 @@ static int xf86WcmReady(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 #endif
 	int n = xf86WaitForInput(local->fd, 0);
-	DBG(10, priv, "%s with %d numbers of data\n", local->name, n);
+	DBG(10, priv, "%d numbers of data\n", n);
 
 	if (n >= 0) return n ? 1 : 0;
 	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
@@ -1142,8 +1140,7 @@ void wcmReadPacket(LocalDevicePtr local)
 	int len, pos, cnt, remaining;
 	unsigned char * data;
 
-	DBG(10, common, "device=%s"
-		" fd=%d \n", common->wcmDevice, local->fd);
+	DBG(10, common, "fd=%d\n", local->fd);
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
@@ -1285,12 +1282,12 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
-			"type=%s(%s) flags=%d fd=%d what=%s\n",
+			"type=%s flags=%d fd=%d what=%s\n",
 			(void *)pWcm, (void *)priv,
 			IsStylus(priv) ? "stylus" :
 			IsCursor(priv) ? "cursor" :
 			IsPad(priv) ? "pad" : "eraser", 
-			local->name, priv->flags, local ? local->fd : -1,
+			priv->flags, local ? local->fd : -1,
 			(what == DEVICE_INIT) ? "INIT" :
 			(what == DEVICE_OFF) ? "OFF" :
 			(what == DEVICE_ON) ? "ON" :

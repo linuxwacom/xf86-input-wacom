@@ -227,7 +227,7 @@ static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry
 	int button, mask;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	DBG(6, priv, "buttons=%d for %s\n", buttons, local->name);
+	DBG(6, priv, "buttons=%d\n", buttons);
 
 	/* Tablet PC buttons only apply to penabled devices */
 	if (common->wcmTPCButton && (priv->flags & STYLUS_ID))
@@ -461,10 +461,10 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 		return;
 
 	DBG(4, priv, "TPCButton(%s) button=%d state=%d " 
-		"code=%08x, for %s coreEvent=%s \n", 
+		"code=%08x, coreEvent=%s \n", 
 		common->wcmTPCButton ? "on" : "off", 
 		button, mask, priv->button[button], 
-		local->name, (priv->button[button] & AC_CORE) ? "yes" : "no");
+		(priv->button[button] & AC_CORE) ? "yes" : "no");
 
 	if (!priv->keys[button][0])
 	{
@@ -577,7 +577,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
-	DBG(10, priv, "strip events for %s \n", local->name);
+	DBG(10, priv, "\n");
 
 	/* emulate events for relative wheel */
 	if ( ds->relwheel )
@@ -745,9 +745,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 	if (priv->serial && serial != priv->serial)
 	{
-		DBG(10, priv, "[%s] serial number"
+		DBG(10, priv, "serial number"
 			" is %u but your system configured %u", 
-			local->name, serial, (int)priv->serial);
+			serial, (int)priv->serial);
 		return;
 	}
 
@@ -820,10 +820,9 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	}
 	v5 = wheel;
 
-	DBG(6, priv, "[%s] %s prox=%d\tx=%d"
+	DBG(6, priv, "%s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
-		local->name,
 		is_absolute ? "abs" : "rel",
 		is_proximity,
 		x, y, z, v3, v4, v5, id, serial,
@@ -1802,10 +1801,10 @@ static void xf86WcmInitialTVScreens(LocalDevicePtr local)
 		priv->screenBottomY[1] = priv->tvResolution[1];
 	}
 
-	DBG(10, priv, "\"%s\":"
+	DBG(10, priv,
 		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
 		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
-		local->name, priv->screenTopX[0], priv->screenTopY[0],
+		priv->screenTopX[0], priv->screenTopY[0],
 		priv->screenBottomX[0], priv->screenBottomY[0],
 		priv->screenTopX[1], priv->screenTopY[1],
 		priv->screenBottomX[1], priv->screenBottomY[1]);
@@ -1820,8 +1819,7 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
 
-	DBG(2, priv, "\"%s\":"
-		"number of screen=%d \n", local->name, screenInfo.numScreens);
+	DBG(2, priv, "number of screen=%d \n", screenInfo.numScreens);
 	priv->tvoffsetX = 0;
 	priv->tvoffsetY = 0;
 	if (priv->twinview != TV_NONE)
@@ -1845,18 +1843,17 @@ void xf86WcmInitialScreens(LocalDevicePtr local)
 			priv->screenBottomX[i] = dixScreenOrigins[i].x;
 			priv->screenBottomY[i] = dixScreenOrigins[i].y;
 
-			DBG(10, priv, "from dix for \"%s\" "
+			DBG(10, priv, "from dix: "
 				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-				local->name, i, priv->screenTopX[i], i,
-				priv->screenTopY[i]);
+				i, priv->screenTopX[i], i, priv->screenTopY[i]);
 		}
 
 		priv->screenBottomX[i] += screenInfo.screens[i]->width;
 		priv->screenBottomY[i] += screenInfo.screens[i]->height;
 
-		DBG(10, priv, "\"%s\":"
+		DBG(10, priv,
 			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
-			local->name, i, priv->screenTopX[i], i, priv->screenTopY[i],
+			i, priv->screenTopX[i], i, priv->screenTopY[i],
 			i, priv->screenBottomX[i], i, priv->screenBottomY[i]);
 	}
 }
@@ -1871,7 +1868,7 @@ static void rotateOneTool(WacomDevicePtr priv)
 	WacomToolAreaPtr area = priv->toolarea;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
-	DBG(10, priv, "\"%s\"", priv->local->name);
+	DBG(10, priv, "\n");
 
 	if (!IsTouch(priv))
 	{
@@ -1948,7 +1945,7 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 	int oldRotation;
 	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
-	DBG(10, priv, "\"%s\":\n", local->name);
+	DBG(10, priv, "\n");
 
 	if (common->wcmRotate == value) /* initialization */
 	{

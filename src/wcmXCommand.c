@@ -71,8 +71,7 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
-	DBG(3, priv, "%s to mode=%d\n",
-		local->name, mode);
+	DBG(3, priv, "to mode=%d\n", mode);
 
 	/* Pad is always in relative mode when it's a core device.
 	 * Always in absolute mode when it is not a core device.
@@ -96,8 +95,7 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	}
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
-		DBG(10, priv,
-			"%s invalid mode=%d\n", local->name, mode);
+		DBG(10, priv, "invalid mode=%d\n", mode);
 		return BadMatch;
 	}
 
@@ -211,7 +209,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
     WacomCommonPtr common = priv->common;
     int values[WCM_MAX_MOUSE_BUTTONS];
 
-    DBG(10, priv, "%s\n", local->name);
+    DBG(10, priv, "\n");
 
     values[0] = priv->topX;
     values[1] = priv->topY;
@@ -299,7 +297,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
     WacomDevicePtr priv = (WacomDevicePtr) local->private;
     WacomCommonPtr common = priv->common;
 
-    DBG(10, priv, "%s\n", local->name);
+    DBG(10, priv, "\n");
 
     if (property == prop_tablet_area)
     {
