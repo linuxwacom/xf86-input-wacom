@@ -146,15 +146,9 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
 	double screenRatio, tabletRatio;
-	int bottomx = common->wcmMaxX, bottomy = common->wcmMaxY;
+	int bottomx = priv->maxX, bottomy = priv->maxY;
 
 	DBG(10, priv, "\n");
-
-	if (IsTouch(priv))
-	{
-		bottomx = common->wcmMaxTouchX;
-		bottomy = common->wcmMaxTouchY;
-	}
 
 	/* Verify Box */
 	if (priv->topX > bottomx)
@@ -348,15 +342,10 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution;
-	int bottomx = common->wcmMaxX, bottomy = common->wcmMaxY;
+	int bottomx = priv->maxX, bottomy = priv->maxY;
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
         Atom label;
 #endif
-	if (IsTouch(priv))
-	{
-		bottomx = common->wcmMaxTouchX;
-		bottomy = common->wcmMaxTouchY;
-	}
 
 	xf86WcmMappingFactor(local);
 
@@ -379,10 +368,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 #endif
 		}
 
-		if (!IsTouch(priv))
-			resolution = common->wcmResolX;
-		else
-			resolution = common->wcmTouchResolX;
+		resolution = priv->resolX;
 		if (common->wcmScaling)
 		{
 			/* In case xf86WcmDevConvert didn't get called */
@@ -416,10 +402,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 #endif
 		}
 
-		if (!IsTouch(priv))
-			resolution = common->wcmResolY;
-		else
-			resolution = common->wcmTouchResolY;
+		resolution = priv->resolY;
 		if (common->wcmScaling)
 		{
 			/* In case xf86WcmDevConvert didn't get called */
@@ -594,17 +577,22 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 	WacomCommonPtr common = priv->common;
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
-	int bottomx = 0, bottomy = 0;
 
+	/* assign max and resolution here since we don't get them during
+	 * the configuration stage */
 	if (IsTouch(priv))
 	{
-		bottomx = common->wcmMaxTouchX;
-		bottomy = common->wcmMaxTouchY;
+		priv->maxX = common->wcmMaxTouchX;
+		priv->maxY = common->wcmMaxTouchY;
+		priv->resolX = common->wcmTouchResolX;
+		priv->resolY = common->wcmTouchResolY;
 	}
 	else
 	{
-		bottomx = common->wcmMaxX;
-		bottomy = common->wcmMaxY;
+		priv->maxX = common->wcmMaxX;
+		priv->maxY = common->wcmMaxY;
+		priv->resolX = common->wcmResolX;
+		priv->resolY = common->wcmResolY;
 	}
 
 	for (; toollist; toollist=toollist->next)
@@ -613,9 +601,9 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 		for (; arealist; arealist=arealist->next)
 		{
 			if (!arealist->bottomX) 
-				arealist->bottomX = bottomx;
+				arealist->bottomX = priv->maxX;
 			if (!arealist->bottomY)
-				arealist->bottomY = bottomy;
+				arealist->bottomY = priv->maxY;
 		}
 	}
 

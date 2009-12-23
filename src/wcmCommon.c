@@ -1880,16 +1880,8 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	DBG(10, priv, "\n");
 
-	if (!IsTouch(priv))
-	{
-		oldMaxX = common->wcmMaxX;
-		oldMaxY = common->wcmMaxY;
-	}
-	else
-	{
-		oldMaxX = common->wcmMaxTouchX;
-		oldMaxY = common->wcmMaxTouchY;
-	}
+	oldMaxX = priv->maxX;
+	oldMaxY = priv->maxY;
 
 	tmpTopX = priv->topX;
 	tmpBottomX = priv->bottomX;
@@ -1898,16 +1890,8 @@ static void rotateOneTool(WacomDevicePtr priv)
 
 	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
 	{
-		if (!IsTouch(priv))
-		{
-		    common->wcmMaxX = oldMaxY;
-		    common->wcmMaxY = oldMaxX;
-		}
-		else
-		{
-		    common->wcmMaxTouchX = oldMaxY;
-		    common->wcmMaxTouchY = oldMaxX;
-		}
+		priv->maxX = oldMaxY;
+		priv->maxY = oldMaxX;
 	}
 
 	switch (common->wcmRotate) {
@@ -1969,29 +1953,13 @@ void xf86WcmRotateTablet(LocalDevicePtr local, int value)
 		/* rotate all devices at once! else they get misaligned */
 		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
 		{
-		    if (!IsTouch(priv))
-		    {
-			oldMaxX = common->wcmMaxX;
-			oldMaxY = common->wcmMaxY;
-		    }
-		    else
-		    {
-			oldMaxX = common->wcmMaxTouchX;
-			oldMaxY = common->wcmMaxTouchY;
-		    }
+		    oldMaxX = priv->maxX;
+		    oldMaxY = priv->maxY;
 
 		    if (oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW) 
 		    {
-			if (!IsTouch(priv))
-			{
-				common->wcmMaxX = oldMaxY;
-				common->wcmMaxY = oldMaxX;
-			}
-			else
-			{
-				common->wcmMaxTouchX = oldMaxY;
-				common->wcmMaxTouchY = oldMaxX;
-			}
+			priv->maxX = oldMaxY;
+			priv->maxY = oldMaxX;
 		    }
 
 		    tmpTopX = tmppriv->topX;

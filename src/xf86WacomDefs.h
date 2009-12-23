@@ -170,6 +170,10 @@ struct _WacomDeviceRec
 	int topY;		/* Y top */
 	int bottomX;		/* X bottom */
 	int bottomY;		/* Y bottom */
+	int resolX;             /* X resolution */
+	int resolY;             /* Y resolution */
+	int maxX;	        /* tool logical maxX */
+	int maxY;	        /* tool logical maxY */
 	int sizeX;		/* active X size */
 	int sizeY;		/* active Y size */
 	double factorX;		/* X factor */
