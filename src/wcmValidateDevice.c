@@ -324,7 +324,11 @@ static void wcmHotplug(LocalDevicePtr local, const char *type)
 
 	input_options = wcmOptionDupConvert(local, type);
 
-	NewInputDeviceRequest(input_options, &dev);
+	NewInputDeviceRequest(input_options,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
+				NULL,
+#endif
+				&dev);
 	wcmFreeInputOpts(input_options);
 }
 
