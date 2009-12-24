@@ -47,7 +47,8 @@ enum printformat {
 };
 
 enum prop_flags {
-	PROP_FLAG_BOOLEAN = 1
+	PROP_FLAG_BOOLEAN = 1,
+	PROP_FLAG_READONLY = 2
 };
 
 typedef struct _param
@@ -522,6 +523,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY0",
@@ -529,6 +531,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 1,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX0",
@@ -536,6 +539,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 2,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY0",
@@ -543,6 +547,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 3,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX1",
@@ -550,6 +555,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 4,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY1",
@@ -557,6 +563,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 5,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX1",
@@ -564,6 +571,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 6,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY1",
@@ -571,6 +579,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 7,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX2",
@@ -578,6 +587,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 8,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY2",
@@ -585,6 +595,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 9,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX2",
@@ -598,6 +609,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 11,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX3",
@@ -605,6 +617,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 12,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY3",
@@ -612,6 +625,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 13,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX3",
@@ -619,6 +633,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 14,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY3",
@@ -626,6 +641,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 15,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX4",
@@ -633,6 +649,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 16,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY4",
@@ -640,6 +657,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 17,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX4",
@@ -647,6 +665,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 18,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY4",
@@ -654,6 +673,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 19,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX5",
@@ -661,6 +681,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 20,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY5",
@@ -668,6 +689,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 21,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX5",
@@ -675,6 +697,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 22,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY5",
@@ -682,6 +705,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 23,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX6",
@@ -689,6 +713,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 24,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY6",
@@ -696,6 +721,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 25,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX6",
@@ -703,6 +729,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 26,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY6",
@@ -710,6 +737,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 27,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopX7",
@@ -717,6 +745,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 28,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "STopY7",
@@ -724,6 +753,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 29,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomX7",
@@ -731,6 +761,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 30,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY7",
@@ -738,6 +769,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_format = 32,
 		.prop_offset = 31,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "ToolID",
@@ -745,6 +777,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TOOL_TYPE,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "ToolSerial",
@@ -752,6 +785,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SERIALIDS,
 		.prop_format = 32,
 		.prop_offset = 3,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "TabletID",
@@ -759,6 +793,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SERIALIDS,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "GetTabletID",
@@ -766,6 +801,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SERIALIDS,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "NumScreen",
@@ -1543,6 +1579,10 @@ static void set(Display *dpy, int argc, char **argv)
 	if (!param)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
+		goto out;
+	} else if (param->prop_flags & PROP_FLAG_READONLY)
+	{
+		printf("'%s' is a read-only option.\n", argv[1]);
 		goto out;
 	} else if (param->set_func)
 	{
