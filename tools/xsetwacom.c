@@ -48,7 +48,8 @@ enum printformat {
 
 enum prop_flags {
 	PROP_FLAG_BOOLEAN = 1,
-	PROP_FLAG_READONLY = 2
+	PROP_FLAG_READONLY = 2,
+	PROP_FLAG_WRITEONLY = 4
 };
 
 typedef struct _param
@@ -506,8 +507,8 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_WRITEONLY,
 		.set_func = set_xydefault,
-		.get_func = not_implemented,
 	},
 	{
 		.name = "mmonitor",
@@ -1874,6 +1875,10 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	if (!param)
 	{
 		printf("Unknown parameter name '%s'.\n", argv[1]);
+		return;
+	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
+	{
+		printf("'%s' is a write-only option.\n", argv[1]);
 		return;
 	} else
 	{
