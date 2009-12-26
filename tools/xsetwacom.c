@@ -819,8 +819,8 @@ static param_t parameters[] =
 	{
 		.name = "all",
 		.desc = "Get value for all parameters.",
-		.set_func = not_implemented,
 		.get_func = get_all,
+		.prop_flags = PROP_FLAG_READONLY,
 	},
 	{ NULL }
 };
