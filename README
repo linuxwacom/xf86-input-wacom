@@ -1,62 +1,35 @@
-README
-April 23, 2009
+This package provides the X.Org X11 driver for Wacom and Wacom-like tablets.
+It obsoletes the linuxwacom driver and supports X server versions 1.7 and
+higher. Server versions lower than 1.7 may be supported by this driver, but
+users are encouraged to use the old linuxwacom driver instead.
 
-==============================================================================
-Most end users would probably only need to update the /etc/X11/xorg.conf file 
-and sometime probably the Wacom X driver as well to use the rich features that 
-Wacom tablets offer.  The steps could be as simple as:
+Provided that hotplugging is enabled in the X server,  the simplest
+configuration is to copy the wacom.fdi file into /etc/hal/fdi/policies and
+to restart HAL and then plug in the tablet. The driver will autoconfigure
+itself.
 
-    $ su
-    # cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak
-    # gedit /etc/X11/xorg.conf
+If hotplugging is not possible or desired, an InputDevice section in the
+xorg.conf with the Driver wacom will load the device. Details on the
+configuration can be found in xorg.conf(5) and wacom(4).
 
-then follow the step listed at http://linuxwacom.sourceforge.net/index.php/howto/x11
-or "man wacom" if you don't have network access to add sections for Wacom device.
-
-If by some reason your distribution doesn't have include Wacom driver or you want to 
-to use the newer release, you can download the package then
-
-    $ bunzip2 linuxwacom.tar.bz2
-    $ tar xvf linuxwacom.tar
-    $ cd linuxwacom/prebuilt
-    $ su
-    # yum remove linuxwacom
-    # ./uninstall
-    # ./install
-    # reboot
+Since this driver is an X11 driver only, a kernel driver is required to get
+hardware support. If the kernel driver is older than this driver, some
+features may not be available.
 
 ==============================================================================
 
-However, if you have a USB tablet which is newer than your running kernel, i.e., 
-the tablet is not supported by your running kernel, or you are a developer who is 
-willing to build the driver from the source, there are extra work waiting for you.
-
-==============================================================================
+BUILDING FROM GIT:
+    $ ./autogen.sh --prefix=/usr
+Adjust the prefix according to your local setup, in most cases, a prefix of
+/usr is correct.
 
 BUILDING FROM TARBALL:
 
-As you would expect, run configure and make.  Configure options are explained below.
-
     $ ./configure && make
+Adjust the prefix according to your local setup, in most cases, a prefix of
+/usr is correct.
 
 ==============================================================================
-
-CONFIGURE OPTIONS:
-
-This file contains hints for building the sources.  There are a number of build
- targets, some of which are not built automatically.  Here is the
-breakdown:
-
-      wacom.o: not built by default (--enable-wacom, --disable-wacom)
-      wacdump: built by default (--enable-wacdump, --disable-wacdump)
-       xidump: built by default (--enable-xidump, --disable-xidump)
-    xsetwacom: built by default (--enable-xsetwacom, --disable-xsetwacom)
-        hid.o: not built by default (--enable-hid, --disable-hid;  Only kernels 2.6.18 or older need it.)
-  wacom_drv.o: built by default (--enable-wacomdrv, --disable-wacomdrv)
-
-There are many options, and configure will attempt to guess the correct
-values for most of them.  By default, only wacomcpl, xsetwacom,  wacom_drv.o, 
-xidump, and wacdump program are built.
 
 Please surf the HOWTO page at http://linuxwacom.sf.net/index.php/howto/main 
 (or the miniHOWTO at http://linuxwacom.sourceforge.net/index.php/minihowto if 
