@@ -324,10 +324,6 @@ struct _WacomChannel
 
 	WacomDeviceState work;                         /* next state */
 
-	/* the following struct contains the current known state of the
-	 * device channel, as well as the previous MAX_SAMPLES states
-	 * for use in detecting hardware defects, jitter, trends, etc. */
-
 	/* the following union contains the current known state of the
 	 * device channel, as well as the previous MAX_SAMPLES states
 	 * for use in detecting hardware defects, jitter, trends, etc. */
