@@ -1062,6 +1062,10 @@ static char *convert_specialkey(const char *modifier)
 		{"lctrl", "Control_L"},
 		{"rctrl", "Control_R"},
 
+		{"meta", "Meta_L"},
+		{"lmeta", "Meta_L"},
+		{"rmeta", "Meta_R"},
+
 		{"alt", "Alt_L"},
 		{"lalt", "Alt_L"},
 		{"ralt", "Alt_R"},
@@ -1103,6 +1107,8 @@ static int is_modifier(const char* modifier)
 		"Alt_R",
 		"Shift_L",
 		"Shift_R",
+		"Meta_L",
+		"Meta_R",
 		NULL,
 	};
 
