@@ -99,7 +99,8 @@ sets the mode of the device.  The default value for stylus and
 eraser is Absolute; cursor is Relative; pad mode is decided 
 according to its core option due to its nature of not moving 
 system cursor: Relative if it is a core device; Absolute, otherwise;
-touch is always in absolute mode.
+touch defaults to Relative for tablets with touch pads and Absolute for
+touch screens.
 .TP 4
 .B Option \fI"TopX"\fP \fI"number"\fP
 X coordinate of the top corner of the active zone.  Default to 0. 
