@@ -35,10 +35,15 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 {
 	short tilt_x = ds->tiltx;
 	short tilt_y = ds->tilty;
+	double rotation = 0.0;
 
-	ds->rotation = ABS(round(((180 * atan2(tilt_x,tilt_y)) / M_PI) - 180));
+	/* other tilt-enabled devices need to apply round() after this call */
+	if (tilt_x || tilt_y)
+		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
+
 	/* Intuos4 mouse has an (180-5) offset */
-	ds->rotation = ((360 - ds->rotation + 180 - 5) % 360) * 5;
+	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
+		ds->rotation %= 1800;
 
 	if (ds->rotation >= 900) 
 		ds->rotation = 1800 - ds->rotation;
