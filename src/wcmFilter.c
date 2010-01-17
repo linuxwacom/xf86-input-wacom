@@ -21,6 +21,8 @@
 #include <config.h>
 #endif
 
+#include <math.h>
+#include "xf86Wacom.h"
 #include "wcmFilter.h"
 
 /*****************************************************************************
@@ -34,6 +36,7 @@ static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
 static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds);
+void wcmTilt2R(WacomDeviceStatePtr ds);
 
 /*****************************************************************************
  * wcmSetPressureCurve -- apply user-defined curve to pressure values
@@ -284,4 +287,31 @@ int wcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	return 0; /* lookin' good */
 }
+
+/*****************************************************************************
+ *  wcmTilt2R -
+ *   Converts tilt X and Y to rotation, for Intuos4 mouse for now.
+ *   It can be used for other devices when necessary.
+ ****************************************************************************/
+
+void wcmTilt2R(WacomDeviceStatePtr ds)
+{
+	short tilt_x = ds->tiltx;
+	short tilt_y = ds->tilty;
+	double rotation = 0.0;
+
+	/* other tilt-enabled devices need to apply round() after this call */
+	if (tilt_x || tilt_y)
+		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
+
+	/* Intuos4 mouse has an (180-5) offset */
+	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
+		ds->rotation %= 1800;
+
+	if (ds->rotation >= 900)
+		ds->rotation = 1800 - ds->rotation;
+	else
+		ds->rotation = -ds->rotation;
+}
+
 /* vim: set noexpandtab shiftwidth=8: */
