@@ -38,11 +38,11 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 int wcmIsDuplicate(char* device, LocalDevicePtr local);
 int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 
-/* xf86WcmCheckSource - Check if there is another source defined this device
+/* wcmCheckSource - Check if there is another source defined this device
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools
  * with the same type to individualize tools with serial number or areas */
-static Bool xf86WcmCheckSource(LocalDevicePtr local, dev_t min_maj)
+static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
 {
 	int match = 0;
 	char* device;
@@ -122,7 +122,7 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	if (st.st_rdev)
 	{
 		/* device matches with another added port */
-		if (xf86WcmCheckSource(local, st.st_rdev))
+		if (wcmCheckSource(local, st.st_rdev))
 		{
 			isInUse = 3;
 			goto ret;
@@ -441,7 +441,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 	 * Always in absolute mode when it is not a core device.
 	 */
 	if (IsPad(priv))
-		xf86WcmSetPadCoreMode(local);
+		wcmSetPadCoreMode(local);
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))

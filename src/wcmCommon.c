@@ -29,13 +29,13 @@ void wcmInitialScreens(LocalDevicePtr local);
 void wcmRotateTablet(LocalDevicePtr local, int value);
 void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 
-extern int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
-extern void xf86WcmChangeScreen(LocalDevicePtr local, int value);
-extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void xf86WcmVirtualTabletSize(LocalDevicePtr local);
-extern void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
+extern int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+extern void wcmChangeScreen(LocalDevicePtr local, int value);
+extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
+extern void wcmVirtualTabletSize(LocalDevicePtr local);
+extern void wcmVirtualTabletPadding(LocalDevicePtr local);
 extern void wcmTilt2R(WacomDeviceStatePtr ds);
-extern void xf86WcmFingerTapToClick(WacomCommonPtr common);
+extern void wcmFingerTapToClick(WacomCommonPtr common);
 
 /*****************************************************************************
  * Static functions
@@ -60,7 +60,7 @@ void wcmMappingFactor(LocalDevicePtr local)
 
 	DBG(10, priv, "\n"); /* just prints function name */
 
-	xf86WcmVirtualTabletSize(local);
+	wcmVirtualTabletSize(local);
 	
 	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
 	{
@@ -95,14 +95,14 @@ void wcmMappingFactor(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmSetScreen --
+ * wcmSetScreen --
  *   set to the proper screen according to the converted (x,y).
  *   this only supports for horizontal setup now.
  *   need to know screen's origin (x,y) to support 
  *   combined horizontal and vertical setups
  ****************************************************************************/
 
-static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
+static void wcmSetScreen(LocalDevicePtr local, int v0, int v1)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int screenToSet = -1, i, j, x, y, tabletSize = 0;
@@ -112,7 +112,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (priv->screen_no != -1 && priv->screen_no >= priv->numScreen)
 	{
-		xf86Msg(X_ERROR, "%s: xf86WcmSetScreen Screen%d is larger than number of available screens (%d)\n",
+		xf86Msg(X_ERROR, "%s: wcmSetScreen Screen%d is larger than number of available screens (%d)\n",
 			local->name, priv->screen_no, priv->numScreen);
 		priv->screen_no = -1;
 	}
@@ -201,7 +201,7 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 		return;
 	}
 
-	xf86WcmVirtualTabletPadding(local);
+	wcmVirtualTabletPadding(local);
 	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
 	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
 		
@@ -217,12 +217,12 @@ static void xf86WcmSetScreen(LocalDevicePtr local, int v0, int v1)
 }
 
 /*****************************************************************************
- * xf86WcmSendButtons --
+ * wcmSendButtons --
  *   Send button events by comparing the current button mask with the
  *   previous one.
  ****************************************************************************/
 
-static void xf86WcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry, 
+static void wcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry,
 		int rz, int v3, int v4, int v5)
 {
 	int button, mask;
@@ -409,7 +409,7 @@ static void toggleDisplay(LocalDevicePtr local)
 					int screen = tmppriv->screen_no;
 					if (++screen >= tmppriv->numScreen)
 						screen = -1;
-					xf86WcmChangeScreen(tmppriv->local, screen);
+					wcmChangeScreen(tmppriv->local, screen);
 				}
 			}
 		}
@@ -418,7 +418,7 @@ static void toggleDisplay(LocalDevicePtr local)
 			int screen = priv->screen_no;
 			if (++screen >= priv->numScreen)
 				screen = -1;
-			xf86WcmChangeScreen(local, screen);
+			wcmChangeScreen(local, screen);
 		}
 	}
 }
@@ -444,7 +444,7 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 
 /*****************************************************************************
  * sendAButton --
- *   Send one button event, called by xf86WcmSendButtons
+ *   Send one button event, called by wcmSendButtons
  ****************************************************************************/
 static void sendAButton(LocalDevicePtr local, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5)
@@ -504,7 +504,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				break;
 			case AC_MODETOGGLE:
 				if (mask)
-					xf86WcmDevSwitchModeCall(local,
+					wcmDevSwitchModeCall(local,
 							(is_absolute) ? Relative : Absolute); /* not a typo! */
 				break;
 			/* FIXME: this should be implemented as 4 values,
@@ -705,7 +705,7 @@ static void sendCommonEvents(LocalDevicePtr local, const WacomDeviceState* ds, i
 
 	/* send button events when state changed or first time in prox and button unpresses */
 	if (priv->oldButtons != buttons || (!priv->oldProximity && !buttons))
-		xf86WcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
+		wcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
 	/* emulate wheel/strip events when defined */
 	if ( ds->relwheel || ds->abswheel || 
@@ -742,11 +742,11 @@ void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y)
 }
 
 /*****************************************************************************
- * xf86WcmSendEvents --
+ * wcmSendEvents --
  *   Send events according to the device state.
  ****************************************************************************/
 
-void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
+void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
 #ifdef DEBUG
 	int is_button = !!(ds->buttons);
@@ -858,7 +858,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			 * screen and modify the axes before posting events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86WcmSetScreen(local, x, y);
+				wcmSetScreen(local, x, y);
 			}
 
 			/* unify acceleration in both directions 
@@ -869,14 +869,14 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
  			else
 			{
 				/* Padding virtual values */
-				xf86WcmVirtualTabletPadding(local);
+				wcmVirtualTabletPadding(local);
 				x += priv->leftPadding;
 				y += priv->topPadding;
 			}
 
 			if (common->wcmScaling)
 			{
-				/* In the case that xf86WcmDevConvert doesn't get called.
+				/* In the case that wcmDevConvert doesn't get called.
 				 * The +-0.4 is to increase the sensitivity in relative mode.
 				 * Must be sensitive to which way the tool is moved or one way
 				 * will get a severe penalty for small movements.
@@ -932,7 +932,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 			if (common->wcmScaling)
 			{
-				/* In the case that xf86WcmDevConvert doesn't called */
+				/* In the case that wcmDevConvert doesn't called */
 				x = priv->currentSX;
 				y = priv->currentSY;
 			}
@@ -940,7 +940,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
-				xf86WcmSendButtons(local,0,x,y,z,v3,v4,v5);
+				wcmSendButtons(local,0,x,y,z,v3,v4,v5);
 
 			if (priv->oldProximity && local->dev->proximity)
 				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
@@ -953,7 +953,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			x = 0;
 			y = 0;
 			if ( v3 || v4 || v5 )
-				xf86WcmSetScreen(local, x, y);
+				wcmSetScreen(local, x, y);
 
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
@@ -973,7 +973,7 @@ void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		else
 		{
 			if (priv->oldButtons)
-				xf86WcmSendButtons(local, buttons, 
+				wcmSendButtons(local, buttons,
 					x, y, z, v3, v4, v5);
 			if (priv->oldProximity && local->dev->proximity)
  				xf86PostProximityEvent(local->dev, 0, 0, naxes, 
@@ -1239,7 +1239,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 			/* process gesture */
 			if (channel)
 			{
-				xf86WcmFingerTapToClick(common);
+				wcmFingerTapToClick(common);
 				goto ret;
 			}
 		}
@@ -1395,7 +1395,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				out.device_type = DEVICE_ID(((WacomDevicePtr)(oDev->private))->flags);
 				DBG(2, common, "Soft prox-out for %s\n",
 					outprox->device->name);
-				xf86WcmSendEvents(oDev, &out);
+				wcmSendEvents(oDev, &out);
 			}
 			else
 				tool->current = outprox;
@@ -1466,7 +1466,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 						DBG(2, common,
 							"Send soft prox-out for %s first\n",
 							localDevices->name);
-						xf86WcmSendEvents(localDevices, &out);
+						wcmSendEvents(localDevices, &out);
 					}
 				}
 			}
@@ -1590,7 +1590,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 					return;	
 			}
 		}
-		xf86WcmSendEvents(pDev, &filtered);
+		wcmSendEvents(pDev, &filtered);
 		/* If out-prox, reset the current area pointer */
 		if (!filtered.proximity)
 			tool->current = NULL;
@@ -1606,10 +1606,10 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 }
 
 /*****************************************************************************
- * xf86WcmInitTablet -- common initialization for all tablets
+ * wcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version)
+int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -1702,10 +1702,10 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 }
 
 /*****************************************************************************
- * xf86WcmInitialTVScreens
+ * wcmInitialTVScreens
  ****************************************************************************/
 
-static void xf86WcmInitialTVScreens(LocalDevicePtr local)
+static void wcmInitialTVScreens(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
@@ -1820,7 +1820,7 @@ void wcmInitialScreens(LocalDevicePtr local)
 	priv->tvoffsetY = 0;
 	if (priv->twinview != TV_NONE)
 	{
-		xf86WcmInitialTVScreens(local);
+		wcmInitialTVScreens(local);
 		return;
 	}
 
@@ -1900,8 +1900,8 @@ static void rotateOneTool(WacomDevicePtr priv)
 		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
 		break;
 	}
-	xf86WcmInitialCoordinates(priv->local, 0);
-	xf86WcmInitialCoordinates(priv->local, 1);
+	wcmInitialCoordinates(priv->local, 0);
+	wcmInitialCoordinates(priv->local, 1);
 
 	if (tmpTopX != priv->topX)
 		xf86ReplaceIntOption(priv->local->options, "TopX", priv->topX);

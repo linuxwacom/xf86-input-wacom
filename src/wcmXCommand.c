@@ -24,25 +24,25 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
-extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
+extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void wcmRotateTablet(LocalDevicePtr local, int value);
 extern void wcmInitialScreens(LocalDevicePtr local);
 
-int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode);
-int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-void xf86WcmChangeScreen(LocalDevicePtr local, int value);
+int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+void wcmChangeScreen(LocalDevicePtr local, int value);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-	int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, 
+	int wcmSetProperty(DeviceIntPtr dev, Atom property,
 		XIPropertyValuePtr prop, BOOL checkonly);
 	void InitWcmDeviceProperties(LocalDevicePtr local);
 #endif
 
 /*****************************************************************************
- * xf86WcmSetPadCoreMode
+ * wcmSetPadCoreMode
  ****************************************************************************/
 
-int xf86WcmSetPadCoreMode(LocalDevicePtr local)
+int wcmSetPadCoreMode(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
@@ -63,10 +63,10 @@ int xf86WcmSetPadCoreMode(LocalDevicePtr local)
 }
 
 /*****************************************************************************
-* xf86WcmDevSwitchModeCall --
+* wcmDevSwitchModeCall --
 *****************************************************************************/
 
-int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
+int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
@@ -77,21 +77,21 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	 * Always in absolute mode when it is not a core device.
 	 */
 	if (IsPad(priv))
-		return xf86WcmSetPadCoreMode(local);
+		return wcmSetPadCoreMode(local);
 
 	if ((mode == Absolute) && !is_absolute)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
 		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
-		xf86WcmInitialCoordinates(local, 0);
-		xf86WcmInitialCoordinates(local, 1);
+		wcmInitialCoordinates(local, 0);
+		wcmInitialCoordinates(local, 1);
 	}
 	else if ((mode == Relative) && is_absolute)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
 		xf86ReplaceStrOption(local->options, "Mode", "Relative");
-		xf86WcmInitialCoordinates(local, 0);
-		xf86WcmInitialCoordinates(local, 1);
+		wcmInitialCoordinates(local, 0);
+		wcmInitialCoordinates(local, 1);
 	}
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
@@ -103,10 +103,10 @@ int xf86WcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 }
 
 /*****************************************************************************
-* xf86WcmDevSwitchMode --
+* wcmDevSwitchMode --
 *****************************************************************************/
 
-int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
+int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 {
 	LocalDevicePtr local = (LocalDevicePtr)dev->public.devicePrivate;
 #ifdef DEBUG
@@ -116,14 +116,14 @@ int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 		(void *)dev, mode);
 #endif
 	/* Share this call with sendAButton in wcmCommon.c */
-	return xf86WcmDevSwitchModeCall(local, mode);
+	return wcmDevSwitchModeCall(local, mode);
 }
 
 /*****************************************************************************
- * xf86WcmChangeScreen
+ * wcmChangeScreen
  ****************************************************************************/
 
-void xf86WcmChangeScreen(LocalDevicePtr local, int value)
+void wcmChangeScreen(LocalDevicePtr local, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
@@ -136,8 +136,8 @@ void xf86WcmChangeScreen(LocalDevicePtr local, int value)
 	if (priv->screen_no != -1)
 		priv->currentScreen = priv->screen_no;
 	wcmInitialScreens(local);
-	xf86WcmInitialCoordinates(local, 0);
-	xf86WcmInitialCoordinates(local, 1);
+	wcmInitialCoordinates(local, 0);
+	wcmInitialCoordinates(local, 1);
 }
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
@@ -299,7 +299,7 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 #endif
 }
 
-int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
+int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		BOOL checkonly)
 {
 	LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
@@ -353,8 +353,8 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			priv->topY = area->topY = values[1];
 			priv->bottomX = area->bottomX = values[2];
 			priv->bottomY = area->bottomY = values[3];
-			xf86WcmInitialCoordinates(local, 0);
-			xf86WcmInitialCoordinates(local, 1);
+			wcmInitialCoordinates(local, 0);
+			wcmInitialCoordinates(local, 1);
 		}
 	} else if (property == prop_pressurecurve)
 	{
@@ -485,7 +485,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if (!checkonly)
 		{
 			if (priv->screen_no != values[0])
-				xf86WcmChangeScreen(local, values[0]);
+				wcmChangeScreen(local, values[0]);
 			priv->screen_no = values[0];
 
 			if (priv->twinview != values[1])
@@ -501,7 +501,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 					DBG(10, priv, "TwinView sets to "
 							"TV_NONE: can't change screen_no. \n");
 				}
-				xf86WcmChangeScreen(local, screen);
+				wcmChangeScreen(local, screen);
 			}
 
 			priv->wcmMMonitor = values[2];
@@ -600,7 +600,7 @@ int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			priv->tvResolution[3] = values[3];
 
 			/* reset screen info */
-			xf86WcmChangeScreen(local, priv->screen_no);
+			wcmChangeScreen(local, priv->screen_no);
 		}
 #ifdef DEBUG
 	} else if (property == prop_debuglevels)

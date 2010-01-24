@@ -156,7 +156,7 @@ struct _WacomModule
 char *wcmEventAutoDevProbe (LocalDevicePtr local);
 
 /* common tablet initialization regime */
-int xf86WcmInitTablet(LocalDevicePtr local, const char* id, float version);
+int wcmInitTablet(LocalDevicePtr local, const char* id, float version);
 
 /* standard packet handler */
 void wcmReadPacket(LocalDevicePtr local);
@@ -165,14 +165,14 @@ void wcmReadPacket(LocalDevicePtr local);
 void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
-void xf86WcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
+void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 
 /* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
 Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* Change pad's mode according to it core event status */
-int xf86WcmSetPadCoreMode(LocalDevicePtr local);
+int wcmSetPadCoreMode(LocalDevicePtr local);
 
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(LocalDevicePtr local);

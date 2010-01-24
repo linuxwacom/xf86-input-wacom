@@ -36,13 +36,13 @@ extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
 extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
 
-static int xf86WcmAllocate(LocalDevicePtr local, char* name, int flag);
+static int wcmAllocate(LocalDevicePtr local, char* name, int flag);
 
 /*****************************************************************************
- * xf86WcmAllocate --
+ * wcmAllocate --
  ****************************************************************************/
 
-static int xf86WcmAllocate(LocalDevicePtr local, char* type_name, int flag)
+static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -175,7 +175,7 @@ error:
 	return 0;
 }
 
-static int xf86WcmAllocateByType(LocalDevicePtr local, const char *type)
+static int wcmAllocateByType(LocalDevicePtr local, const char *type)
 {
 	int rc = 0;
 
@@ -188,15 +188,15 @@ static int xf86WcmAllocateByType(LocalDevicePtr local, const char *type)
 	}
 
 	if (xf86NameCmp(type, "stylus") == 0)
-		rc = xf86WcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
+		rc = wcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 	else if (xf86NameCmp(type, "touch") == 0)
-		rc = xf86WcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
+		rc = wcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
 	else if (xf86NameCmp(type, "cursor") == 0)
-		rc = xf86WcmAllocate(local, XI_CURSOR, CURSOR_ID);
+		rc = wcmAllocate(local, XI_CURSOR, CURSOR_ID);
 	else if (xf86NameCmp(type, "eraser") == 0)
-		rc = xf86WcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
+		rc = wcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
 	else if (xf86NameCmp(type, "pad") == 0)
-		rc = xf86WcmAllocate(local, XI_PAD, PAD_ID);
+		rc = wcmAllocate(local, XI_PAD, PAD_ID);
 
 	return rc;
 }
@@ -221,9 +221,9 @@ static const char *default_options[] =
 	NULL
 };
 
-/* xf86WcmUninit - called when the device is no longer needed. */
+/* wcmUninit - called when the device is no longer needed. */
 
-static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
+static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomDevicePtr dev;
@@ -276,9 +276,9 @@ static void xf86WcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	xf86DeleteInput(local, 0);    
 }
 
-/* xf86WcmMatchDevice - locate matching device and merge common structure */
+/* wcmMatchDevice - locate matching device and merge common structure */
 
-static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
+static Bool wcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 {
 	WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
@@ -311,9 +311,9 @@ static Bool xf86WcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
-/* xf86WcmInit - called for each input devices with the driver set to
+/* wcmInit - called for each input devices with the driver set to
  * "wacom" */
-static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
+static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	LocalDevicePtr local = NULL;
 	WacomDevicePtr priv = NULL;
@@ -356,7 +356,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			goto SetupProc_fail;
 	}
 
-	if (!xf86WcmAllocateByType(local, type))
+	if (!wcmAllocateByType(local, type))
 		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;
@@ -376,7 +376,7 @@ static LocalDevicePtr xf86WcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		LocalDevicePtr localDevices = xf86FirstLocalDevice();
 		for (; localDevices != NULL; localDevices = localDevices->next)
 		{
-			if (xf86WcmMatchDevice(localDevices,local))
+			if (wcmMatchDevice(localDevices,local))
 			{
 				common = priv->common;
 				break;
@@ -421,29 +421,29 @@ InputDriverRec WACOM =
 	1,             /* driver version */
 	"wacom",       /* driver name */
 	NULL,          /* identify */
-	xf86WcmInit,   /* pre-init */
-	xf86WcmUninit, /* un-init */
+	wcmInit,   /* pre-init */
+	wcmUninit, /* un-init */
 	NULL,          /* module */
 	0              /* ref count */
 };
 
 
-/* xf86WcmUnplug - Uninitialize the device */
+/* wcmUnplug - Uninitialize the device */
 
-static void xf86WcmUnplug(pointer p)
+static void wcmUnplug(pointer p)
 {
 }
 
-/* xf86WcmPlug - called by the module loader */
+/* wcmPlug - called by the module loader */
 
-static pointer xf86WcmPlug(pointer module, pointer options, int* errmaj,
+static pointer wcmPlug(pointer module, pointer options, int* errmaj,
 		int* errmin)
 {
 	xf86AddInputDriver(&WACOM, module, 0);
 	return module;
 }
 
-static XF86ModuleVersionInfo xf86WcmVersionRec =
+static XF86ModuleVersionInfo wcmVersionRec =
 {
 	"wacom",
 	MODULEVENDORSTRING,
@@ -459,9 +459,9 @@ static XF86ModuleVersionInfo xf86WcmVersionRec =
 
 _X_EXPORT XF86ModuleData wacomModuleData =
 {
-	&xf86WcmVersionRec,
-	xf86WcmPlug,
-	xf86WcmUnplug
+	&wcmVersionRec,
+	wcmPlug,
+	wcmUnplug
 };
 
 /* vim: set noexpandtab shiftwidth=8: */

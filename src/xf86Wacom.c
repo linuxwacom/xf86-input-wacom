@@ -51,31 +51,31 @@
 #include <xkbsrv.h>
 #endif
 
-void xf86WcmVirtualTabletPadding(LocalDevicePtr local);
-void xf86WcmVirtualTabletSize(LocalDevicePtr local);
+void wcmVirtualTabletPadding(LocalDevicePtr local);
+void wcmVirtualTabletSize(LocalDevicePtr local);
 Bool wcmIsWacomDevice (char* fname);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
     extern void InitWcmDeviceProperties(LocalDevicePtr local);
-    extern int xf86WcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
+    extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
                 BOOL checkonly);
 #endif
 
-extern int xf86WcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern void wcmRotateTablet(LocalDevicePtr local, int value);
 extern void wcmInitialScreens(LocalDevicePtr local);
-extern void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes);
+extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
 
-static int xf86WcmDevOpen(DeviceIntPtr pWcm);
-static int xf86WcmReady(LocalDevicePtr local);
-static void xf86WcmDevReadInput(LocalDevicePtr local);
-static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
-static void xf86WcmDevClose(LocalDevicePtr local);
-static int xf86WcmDevProc(DeviceIntPtr pWcm, int what);
-static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
+static int wcmDevOpen(DeviceIntPtr pWcm);
+static int wcmReady(LocalDevicePtr local);
+static void wcmDevReadInput(LocalDevicePtr local);
+static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
+int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
+static void wcmDevClose(LocalDevicePtr local);
+static int wcmDevProc(DeviceIntPtr pWcm, int what);
+static Bool wcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
-static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
+static Bool wcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators);
 
 WacomModule gWacomModule =
@@ -83,28 +83,28 @@ WacomModule gWacomModule =
 	NULL,           /* input driver pointer */
 
 	/* device procedures */
-	xf86WcmDevOpen,
-	xf86WcmDevReadInput,
-	xf86WcmDevControlProc,
-	xf86WcmDevChangeControl,
-	xf86WcmDevClose,
-	xf86WcmDevProc,
-	xf86WcmDevSwitchMode,
-	xf86WcmDevConvert,
-	xf86WcmDevReverseConvert,
+	wcmDevOpen,
+	wcmDevReadInput,
+	wcmDevControlProc,
+	wcmDevChangeControl,
+	wcmDevClose,
+	wcmDevProc,
+	wcmDevSwitchMode,
+	wcmDevConvert,
+	wcmDevReverseConvert,
 };
 
-static void xf86WcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
+static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
-static void xf86WcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
+static void wcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
 {
 }
 #endif
 
-static void xf86WcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
+static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
 
@@ -140,7 +140,7 @@ static void wcmDesktopSize(LocalDevicePtr local)
 	priv->maxHeight = maxY - minY;
 } 
 
-static int xf86WcmInitArea(LocalDevicePtr local)
+static int wcmInitArea(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomToolAreaPtr area = priv->toolarea, inlist;
@@ -265,10 +265,10 @@ static int xf86WcmInitArea(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmVirtualTabletPadding(LocalDevicePtr local)
+ * wcmVirtualTabletPadding(LocalDevicePtr local)
  ****************************************************************************/
 
-void xf86WcmVirtualTabletPadding(LocalDevicePtr local)
+void wcmVirtualTabletPadding(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i;
@@ -296,10 +296,10 @@ void xf86WcmVirtualTabletPadding(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmVirtualTabletSize(LocalDevicePtr local)
+ * wcmVirtualTabletSize(LocalDevicePtr local)
  ****************************************************************************/
 
-void xf86WcmVirtualTabletSize(LocalDevicePtr local)
+void wcmVirtualTabletSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i, tabletSize;
@@ -335,10 +335,10 @@ void xf86WcmVirtualTabletSize(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmInitialCoordinates
+ * wcmInitialCoordinates
  ****************************************************************************/
 
-void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
+void wcmInitialCoordinates(LocalDevicePtr local, int axes)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -372,7 +372,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		resolution = priv->resolX;
 		if (common->wcmScaling)
 		{
-			/* In case xf86WcmDevConvert didn't get called */
+			/* In case wcmDevConvert didn't get called */
 			topx = 0;
 			bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
 			resolution = (int)((double)resolution * priv->factorX + 0.5);
@@ -406,7 +406,7 @@ void xf86WcmInitialCoordinates(LocalDevicePtr local, int axes)
 		resolution = priv->resolY;
 		if (common->wcmScaling)
 		{
-			/* In case xf86WcmDevConvert didn't get called */
+			/* In case wcmDevConvert didn't get called */
 			topy = 0;
 			bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
 			resolution = (int)((double)resolution * priv->factorY + 0.5);
@@ -568,11 +568,11 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
 #endif
 
 /*****************************************************************************
- * xf86WcmInitialToolSize --
+ * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
 
-static void xf86WcmInitialToolSize(LocalDevicePtr local)
+static void wcmInitialToolSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -612,11 +612,11 @@ static void xf86WcmInitialToolSize(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmRegisterX11Devices --
+ * wcmRegisterX11Devices --
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
 
-static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
+static int wcmRegisterX11Devices (LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -671,7 +671,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 	if (InitPtrFeedbackClassDeviceStruct(local->dev,
-		xf86WcmDevControlProc) == FALSE)
+		wcmDevControlProc) == FALSE)
 	{
 		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", local->name);
 		return FALSE;
@@ -747,13 +747,13 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			}
 		}
 
-		if(InitKbdFeedbackClassDeviceStruct(local->dev, xf86WcmBellCallback,
-				xf86WcmKbdCtrlCallback) == FALSE) {
+		if(InitKbdFeedbackClassDeviceStruct(local->dev, wcmBellCallback,
+				wcmKbdCtrlCallback) == FALSE) {
 			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", local->name);
 			return FALSE;
 		}
 #elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, xf86WcmKbdCtrlCallback)) {
+		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, wcmKbdCtrlCallback)) {
 #define SYMS_PER_KEY 2
 			KeySymsRec syms;
 			CARD8 modmap[MAP_LENGTH];
@@ -774,15 +774,15 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 			return FALSE;
 		}
 #endif
-		if(InitLedFeedbackClassDeviceStruct (local->dev, xf86WcmKbdLedCallback) == FALSE) {
+		if(InitLedFeedbackClassDeviceStruct (local->dev, wcmKbdLedCallback) == FALSE) {
 			xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", local->name);
 			return FALSE;
 		}
 	}
 
- 	xf86WcmInitialToolSize(local);
+	wcmInitialToolSize(local);
 
-	if (xf86WcmInitArea(local) == FALSE)
+	if (wcmInitArea(local) == FALSE)
 	{
 		return FALSE;
 	}
@@ -881,7 +881,7 @@ static int xf86WcmRegisterX11Devices (LocalDevicePtr local)
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 	InitWcmDeviceProperties(local);
-	XIRegisterPropertyHandler(local->dev, xf86WcmSetProperty, NULL, NULL);
+	XIRegisterPropertyHandler(local->dev, wcmSetProperty, NULL, NULL);
 #endif
 
 	return TRUE;
@@ -951,10 +951,10 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmOpen --
+ * wcmOpen --
  ****************************************************************************/
 
-static Bool xf86WcmOpen(LocalDevicePtr local)
+static Bool wcmOpen(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -993,7 +993,7 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 			common->wcmDevCls = &gWacomUSBDevice;
 		else
 		{
-			xf86Msg(X_ERROR, "%s: xf86WcmOpen found undetectable "
+			xf86Msg(X_ERROR, "%s: wcmOpen found undetectable "
 				" %s \n", local->name, common->wcmDevice);
 			return !Success;
 		}
@@ -1001,7 +1001,7 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 
 	/* Initialize the tablet */
 	if(common->wcmDevCls->Init(local, id, &version) != Success ||
-		xf86WcmInitTablet(local, id, version) != Success)
+		wcmInitTablet(local, id, version) != Success)
 	{
 		xf86CloseSerial(local->fd);
 		local->fd = -1;
@@ -1011,11 +1011,11 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmDevOpen --
+ * wcmDevOpen --
  *    Open the physical device and init information structs.
  ****************************************************************************/
 
-static int xf86WcmDevOpen(DeviceIntPtr pWcm)
+static int wcmDevOpen(DeviceIntPtr pWcm)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -1036,7 +1036,7 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		    !(common->wcmDevice = wcmEventAutoDevProbe (local)))
 			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
 
-		if ((xf86WcmOpen (local) != Success) || (local->fd < 0) ||
+		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
 			!common->wcmDevice)
 		{
 			DBG(1, priv, "Failed to open "
@@ -1073,13 +1073,13 @@ static int xf86WcmDevOpen(DeviceIntPtr pWcm)
 		common->fd_refs++;
 	}
 
-	if (!xf86WcmRegisterX11Devices (local))
+	if (!wcmRegisterX11Devices (local))
 		return FALSE;
 
 	return TRUE;
 }
 
-static int xf86WcmReady(LocalDevicePtr local)
+static int wcmReady(LocalDevicePtr local)
 {
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -1093,11 +1093,11 @@ static int xf86WcmReady(LocalDevicePtr local)
 }
 
 /*****************************************************************************
- * xf86WcmDevReadInput --
+ * wcmDevReadInput --
  *   Read the device on IO signal
  ****************************************************************************/
 
-static void xf86WcmDevReadInput(LocalDevicePtr local)
+static void wcmDevReadInput(LocalDevicePtr local)
 {
 	int loop=0;
 	#define MAX_READ_LOOPS 10
@@ -1109,7 +1109,7 @@ static void xf86WcmDevReadInput(LocalDevicePtr local)
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
 		/* verify that there is still data in pipe */
-		if (!xf86WcmReady(local)) break;
+		if (!wcmReady(local)) break;
 
 		/* dispatch */
 		common->wcmDevCls->Read(local);
@@ -1149,7 +1149,7 @@ void wcmReadPacket(LocalDevicePtr local)
 		for(; wDev; wDev = wDev->next)
 		{
 			if (wDev->local->fd >= 0)
-				xf86WcmDevProc(wDev->local->dev, DEVICE_OFF);
+				wcmDevProc(wDev->local->dev, DEVICE_OFF);
 		}
 		xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", local->name, strerror(errno));
 		return;
@@ -1214,7 +1214,7 @@ void wcmReadPacket(LocalDevicePtr local)
 	}
 }
 
-int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
+int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 {
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -1224,10 +1224,10 @@ int xf86WcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 }
 
 /*****************************************************************************
- * xf86WcmDevControlProc --
+ * wcmDevControlProc --
  ****************************************************************************/
 
-static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
+static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
 #ifdef DEBUG
 	LocalDevicePtr local = (LocalDevicePtr)device->public.devicePrivate;
@@ -1239,10 +1239,10 @@ static void xf86WcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 }
 
 /*****************************************************************************
- * xf86WcmDevClose --
+ * wcmDevClose --
  ****************************************************************************/
 
-static void xf86WcmDevClose(LocalDevicePtr local)
+static void wcmDevClose(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -1261,11 +1261,11 @@ static void xf86WcmDevClose(LocalDevicePtr local)
 }
  
 /*****************************************************************************
- * xf86WcmDevProc --
+ * wcmDevProc --
  *   Handle the initialization, etc. of a wacom
  ****************************************************************************/
 
-static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
+static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
@@ -1290,7 +1290,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_INIT:
 			priv->wcmDevOpenCount = 0;
 			priv->wcmInitKeyClassCount = 0;
-			if (!xf86WcmDevOpen(pWcm))
+			if (!wcmDevOpen(pWcm))
 			{
 				DBG(1, priv, "INIT FAILED\n");
 				return !Success;
@@ -1300,7 +1300,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			break; 
 
 		case DEVICE_ON:
-			if (!xf86WcmDevOpen(pWcm))
+			if (!wcmDevOpen(pWcm))
 			{
 				DBG(1, priv, "ON FAILED\n");
 				return !Success;
@@ -1315,7 +1315,7 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 			if (local->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(local);
-				xf86WcmDevClose(local);
+				wcmDevClose(local);
 			}
 			pWcm->public.on = FALSE;
 			priv->wcmDevOpenCount = 0;
@@ -1332,12 +1332,12 @@ static int xf86WcmDevProc(DeviceIntPtr pWcm, int what)
 }
 
 /*****************************************************************************
- * xf86WcmDevConvert --
+ * wcmDevConvert --
  *  Convert X & Y valuators so core events can be generated with 
  *  coordinates that are scaled and suitable for screen resolution.
  ****************************************************************************/
 
-static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
+static Bool wcmDevConvert(LocalDevicePtr local, int first, int num,
 		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
@@ -1383,13 +1383,13 @@ static Bool xf86WcmDevConvert(LocalDevicePtr local, int first, int num,
 }
 
 /*****************************************************************************
- * xf86WcmDevReverseConvert --
+ * wcmDevReverseConvert --
  *  Convert X and Y to valuators in relative mode where the position of 
  *  the core pointer must be translated into device cootdinates before 
  *  the extension and core events are generated in Xserver.
  ****************************************************************************/
 
-static Bool xf86WcmDevReverseConvert(LocalDevicePtr local, int x, int y,
+static Bool wcmDevReverseConvert(LocalDevicePtr local, int x, int y,
 		int* valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
