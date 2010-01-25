@@ -24,17 +24,19 @@ AUTOMAKE_OPTIONS = foreign
 DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg'
 
 SUBDIRS = fdi src man include tools
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xorg-wacom.pc
 
-EXTRA_DIST = ChangeLog GPL
+EXTRA_DIST = GPL
 
-MAINTAINERCLEANFILES=ChangeLog
+.PHONY: ChangeLog INSTALL
 
-.PHONY: ChangeLog
+INSTALL:
+	$(INSTALL_CMD)
 
 ChangeLog:
 	$(CHANGELOG_CMD)
 
-dist-hook: ChangeLog
+dist-hook: ChangeLog INSTALL
