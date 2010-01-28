@@ -1,6 +1,8 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +31,10 @@
  * Linux Input Support
  ****************************************************************************/
 
+#ifndef sun
 #include <asm/types.h>
 #include <linux/input.h>
+#endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 

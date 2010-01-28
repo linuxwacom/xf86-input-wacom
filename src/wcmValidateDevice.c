@@ -1,5 +1,7 @@
 /*
  * Copyright 2009 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,10 +26,9 @@
 #include "wcmFilter.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifndef sun
 #include <linux/serial.h>
-
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
+#endif
 
 Bool wcmIsAValidType(const char *type, unsigned long* keys);
 int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
@@ -147,7 +148,7 @@ ret:
 static struct
 {
 	const char* type;
-	__u16 tool;
+	uint16_t tool;
 } wcmType [] =
 {
 	{ "stylus", BTN_TOOL_PEN       },
@@ -185,7 +186,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 	int fd = -1, id = 0;
 	char* device, *stopstring;
 	char* str = strstr(local->name, "WACf");
+#ifndef sun
 	struct serial_struct tmp;
+#endif
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
 
@@ -201,7 +204,8 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 	for (i=0; i<NBITS(KEY_MAX); i++)
 		keys[i] = 0;
 
-	/* serial ISDV4 devices */
+#ifdef TIOCGSERIAL
+	/* serial ISDV4 devices: not supported on Solaris */
 	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
 	{
 		if (str) /* id in name */
@@ -250,8 +254,23 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 			keys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
 		}
 	}
-	else /* USB devices */
+	else
+#endif	/* TIOCGSERIAL */
+	/* USB devices */
 	{
+#ifdef sun
+		/* push usbwcm STREAMS module: required on Solaris */
+		ret = ioctl(fd, I_FIND, "usbwcm");
+		if (ret == 0)
+			ret = ioctl(fd, I_PUSH, "usbwcm");
+		if (ret < 0)
+		{
+			xf86Msg(X_ERROR, "%s: failed to push STREAMS module on %s in "
+				"wcmDeviceTypeKeys.\n", local->name, device);
+			return ret;
+		}
+#endif	/* sun */
+
 		/* test if the tool is defined in the kernel */
 		if (ioctl(fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 			 * NBITS(KEY_MAX))), keys) < 0)

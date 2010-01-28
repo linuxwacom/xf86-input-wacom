@@ -1,6 +1,8 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +25,15 @@
 /*****************************************************************************
  * General Defines
  ****************************************************************************/
+#ifdef sun	/* Solaris */
+#include <sys/stropts.h>
+#include <sys/usb/clients/usbinput/usbwcm/usbwcm.h>
+#include "../include/solaris-usbwcm.h"
+#else
 #include <asm/types.h>
 #include <linux/input.h>
+#endif
+
 #define MAX_USB_EVENTS 32
 #define WACOM_VENDOR_ID 0x056a  /* vendor ID on the kernel device */
 

@@ -26,6 +26,13 @@ Adjust the prefix according to your local setup, in most cases, a prefix of
 BUILDING FROM TARBALL:
 
     $ ./configure && make
+
+On Solaris (i386):
+    $ ./configure --with-hal-data-dir=/etc/hal && make
+
+On Solaris (amd64):
+    $ ./configure --enable-xserver64 --with-hal-data-dir=/etc/hal && make
+
 Adjust the prefix according to your local setup, in most cases, a prefix of
 /usr is correct.
 

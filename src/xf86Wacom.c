@@ -1,6 +1,8 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
  * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,7 +43,9 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifndef sun
 #include <linux/serial.h>
+#endif
 
 #include "xf86Wacom.h"
 
@@ -961,7 +965,9 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 	char id[BUFFER_SIZE];
 	float version;
 	int rc;
+#ifndef sun
 	struct serial_struct ser;
+#endif
 
 	DBG(1, priv, "opening device file\n");
 
@@ -973,6 +979,8 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 		return !Success;
 	}
 
+#ifdef TIOCGSERIAL
+	/* this ioctl is not supported on Solaris */
 	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
 
 	/* we initialized wcmDeviceClasses to USB
@@ -987,6 +995,7 @@ static Bool xf86WcmOpen(LocalDevicePtr local)
 		common->wcmTPCButtonDefault = 1;
 	}
 	else
+#endif	/* TIOCGSERIAL */
 	{
 		/* Detect USB device class */
 		if ((&gWacomUSBDevice)->Detect(local))

@@ -1,4 +1,6 @@
 #  Copyright 2005 Adam Jackson.
+#  Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+#  Use is subject to license terms.
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -54,18 +56,36 @@ AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
                                     [DEBUGGING=$enableval], [DEBUGGING=no])
 
 
+AC_ARG_ENABLE(xserver64, AC_HELP_STRING([--enable-xserver64],
+                                    [Build for 64bit Xserver [[default=usually]]]),
+                                    [XSERVER64=$enableval ], [XSERVER64=no])
+
 AC_ARG_WITH(xorg-module-dir,
             AC_HELP_STRING([--with-xorg-module-dir=DIR],
                            [Default xorg module directory [[default=$libdir/xorg/modules]]]),
             [moduledir="$withval"],
             [moduledir="$libdir/xorg/modules"])
 inputdir=${moduledir}/input
-AC_SUBST(inputdir)
+
+AC_ARG_WITH(hal-data-dir,
+            AC_HELP_STRING([--with-hal-data-dir=DIR],
+                           [Default HAL data directory [[default=$datadir/hal]]]),
+            [haldatadir="$withval"],
+            [haldatadir="$datadir/hal"])
+AC_SUBST(haldatadir)
 
 if test "x$DEBUGGING" = xyes; then
        AC_DEFINE(DEBUG, 1, [Enable debugging code])
 fi
 AM_CONDITIONAL(DEBUG, [test "x$DEBUGGING" = xyes])
+
+# Solaris: 64-bit build
+if test "x$XSERVER64" = xyes; then
+	XDRV_CFLAGS="-m64 -D__amd64__"
+	inputdir=${inputdir}/amd64
+fi
+AC_SUBST(XDRV_CFLAGS)
+AC_SUBST(inputdir)
 
 # Checks for extensions
 XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)

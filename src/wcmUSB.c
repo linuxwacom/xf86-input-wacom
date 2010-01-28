@@ -1,6 +1,8 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2010 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -375,6 +377,19 @@ static Bool usbDetect(LocalDevicePtr local)
 	DBG(1, priv, "\n");
 #endif
 
+#ifdef sun
+	/* On Solaris, usbwcm STREAMS module is required */
+	err = ioctl(local->fd, I_FIND, "usbwcm");
+	if (err == 0)
+		err = ioctl(local->fd, I_PUSH, "usbwcm");
+	if (err < 0)
+	{
+		xf86Msg(X_ERROR, "%s: usbDetect: failed to push STREAMS module\n",
+				local->name);
+		return err;
+	}
+#endif	/* sun */
+
 	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
 
 	if (err < 0)
@@ -513,7 +528,9 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 
 	/* fetch vendor, product, and model name */
 	ioctl(local->fd, EVIOCGID, &sID);
+#ifdef EVIOCGNAME	/* this ioctl is not supported on Solairs */
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
+#endif
 
 	/* retrieve tool type, device type and buttons from the kernel */
 	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
