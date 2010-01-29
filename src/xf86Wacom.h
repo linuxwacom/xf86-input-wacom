@@ -145,7 +145,7 @@ struct _WacomModule
  * for example: you pull out the USB tablet, the handle becomes invalid,
  * xf86WcmRead() returns -1 AND errno is left as EINTR from hell knows where.
  * Then you'll loop forever, and even Ctrl+Alt+Backspace doesn't help.
- * xf86WcmReadSerial, WriteSerial, CloseSerial & company already use SYSCALL()
+ * xf86ReadSerial, WriteSerial, CloseSerial & company already use SYSCALL()
  * internally; there's no need to duplicate it outside the call.
  */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
