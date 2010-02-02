@@ -143,7 +143,7 @@ struct _WacomModule
  * Don't overuse SYSCALL(): use it ONLY when you call low-level functions such
  * as ioctl(), read(), write() and such. Otherwise you can easily lock up X11,
  * for example: you pull out the USB tablet, the handle becomes invalid,
- * xf86WcmRead() returns -1 AND errno is left as EINTR from hell knows where.
+ * xf86ReadSerial() returns -1 AND errno is left as EINTR from hell knows where.
  * Then you'll loop forever, and even Ctrl+Alt+Backspace doesn't help.
  * xf86ReadSerial, WriteSerial, CloseSerial & company already use SYSCALL()
  * internally; there's no need to duplicate it outside the call.

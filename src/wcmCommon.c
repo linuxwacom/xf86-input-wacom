@@ -1641,7 +1641,7 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	/* Reset tablet to known state */
 	if (model->Reset && (model->Reset(local) != Success))
 	{
-		xf86Msg(X_ERROR, "Wacom xf86WcmWrite error : %s\n", strerror(errno));
+		xf86Msg(X_ERROR, "Wacom xf86WriteSerial error : %s\n", strerror(errno));
 		return !Success;
 	}
 
