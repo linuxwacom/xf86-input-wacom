@@ -1980,7 +1980,7 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	while ((c = getopt_long(argc, argv, "hvVd:sx", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "+hvVd:sx", options, &optidx)) != -1) {
 		switch(c)
 		{
 			case 0:
