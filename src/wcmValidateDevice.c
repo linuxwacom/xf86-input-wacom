@@ -252,7 +252,6 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 	}
 	else /* USB devices */
 	{
-		/* test if the tool is defined in the kernel */
 		if (ioctl(fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 			 * NBITS(KEY_MAX))), keys) < 0)
 		{
