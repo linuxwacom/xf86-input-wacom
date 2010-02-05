@@ -186,10 +186,9 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
  */
 int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 {
-	int ret = 1, i;
-	int fd = -1, id = 0;
-	char* device, *stopstring;
-	char* str = strstr(local->name, "WACf");
+	int ret = 1;
+	int fd = -1;
+	char* device;
 	struct serial_struct tmp;
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
@@ -202,13 +201,12 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 		return 0;
 	}
 
-	/* we have tried memset. it doesn't work */
-	for (i=0; i<NBITS(KEY_MAX); i++)
-		keys[i] = 0;
-
 	/* serial ISDV4 devices */
 	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
 	{
+		int id, i;
+		char *stopstring, *str = strstr(local->name, "WACf");
+
 		if (str) /* id in name */
 		{
 			str = str + 4;
@@ -235,6 +233,10 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 				fclose(file);
 			}
 		}
+
+		/* we have tried memset. it doesn't work */
+		for (i=0; i<NBITS(KEY_MAX); i++)
+			keys[i] = 0;
 
 		/* default to penabled */
 		keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
