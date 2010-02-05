@@ -178,7 +178,12 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
 	return ret;
 }
 
-/* Choose valid types according to device ID */
+/* Choose valid types according to device ID.
+   For USB devices, we simply copy the information the kernel gives us. For
+   serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
+   device ID. This matching only works for wacom devices (serial ID of
+   WACf), all others are simply assumed to be pen + erasor.
+ */
 int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 {
 	int ret = 1, i;
