@@ -475,15 +475,11 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 
 	if (xf86SetBoolOption(local->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
-	{
 		common->wcmFlags |= TILT_REQUEST_FLAG;
-	}
 
 	if (xf86SetBoolOption(local->options, "RawFilter",
 			(common->wcmFlags & RAW_FILTERING_FLAG)))
-	{
 		common->wcmFlags |= RAW_FILTERING_FLAG;
-	}
 
 	/* pressure curve takes control points x1,y1,x2,y2
 	 * values in range from 0..100.
@@ -501,9 +497,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 			xf86Msg(X_CONFIG, "%s: PressCurve not valid\n",
 				local->name);
 		else
-		{
 			wcmSetPressureCurve(priv,a,b,c,d);
-		}
 	}
 
 	if (IsCursor(priv))
