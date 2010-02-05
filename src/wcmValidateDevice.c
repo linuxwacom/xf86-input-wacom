@@ -205,20 +205,14 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
 	{
 		int id, i;
-		char *stopstring, *str = strstr(local->name, "WACf");
 
-		if (str) /* id in name */
+		/* check device name for ID first */
+		if (sscanf(local->name, "WACf%x", &id) <= 1)
 		{
-			str = str + 4;
-			if (str)
-				id = (int)strtol(str, &stopstring, 16);
-
-		}
-		else /* id in file sys/class/tty/%str/device/id */
-		{
+			/* id in file sys/class/tty/%str/device/id */
 			FILE *file;
 			char sysfs_id[256];
-			str = strstr(device, "ttyS");
+			char *str = strstr(device, "ttyS");
 			snprintf(sysfs_id, sizeof(sysfs_id),
 				"/sys/class/tty/%s/device/id", str);
 			file = fopen(sysfs_id, "r");
