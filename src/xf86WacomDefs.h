@@ -266,19 +266,6 @@ struct _WacomDeviceRec
 #define MAX_SAMPLES	20
 #define DEFAULT_SAMPLES 4
 
-#define PEN(ds)         ((((ds)->device_id) & 0x07ff) == 0x0022 || \
-                         (((ds)->device_id) & 0x07ff) == 0x0042 || \
-                         (((ds)->device_id) & 0x07ff) == 0x0052)
-#define STROKING_PEN(ds) ((((ds)->device_id) & 0x07ff) == 0x0032)
-#define AIRBRUSH(ds)    ((((ds)->device_id) & 0x07ff) == 0x0112)
-#define MOUSE_4D(ds)    ((((ds)->device_id) & 0x07ff) == 0x0094)
-#define MOUSE_2D(ds)    ((((ds)->device_id) & 0x07ff) == 0x0007)
-#define LENS_CURSOR(ds) ((((ds)->device_id) & 0x07ff) == 0x0096)
-#define INKING_PEN(ds)  ((((ds)->device_id) & 0x07ff) == 0x0012)
-#define STYLUS_TOOL(ds) (PEN(ds) || STROKING_PEN(ds) || INKING_PEN(ds) || \
-			AIRBRUSH(ds))
-#define CURSOR_TOOL(ds) (MOUSE_4D(ds) || LENS_CURSOR(ds) || MOUSE_2D(ds))
-
 struct _WacomDeviceState
 {
 	LocalDevicePtr local;
