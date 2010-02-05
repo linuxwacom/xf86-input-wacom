@@ -237,11 +237,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 
 		/* id < 0x008 are only penabled */
 		if (id > 0x007)
-		{
 			keys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
-			if (id > 0x0a)
-				keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
-		}
+		if (id > 0x0a)
+			keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
 
 		/* no pen 2FGT */
 		if (id == 0x010)
