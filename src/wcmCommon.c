@@ -25,6 +25,7 @@
 #include "Xwacom.h"
 #include <xkbsrv.h>
 
+void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
 void wcmInitialScreens(LocalDevicePtr local);
 void wcmRotateTablet(LocalDevicePtr local, int value);
 void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
@@ -303,7 +304,7 @@ static void wcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry,
 }
 
 /*****************************************************************************
- * emitKeysym --
+ * wcmEmitKeysym --
  *   Emit a keydown/keyup event
  ****************************************************************************/
 static int ODDKEYSYM [][2] = 
@@ -332,7 +333,7 @@ static int ODDKEYSYM [][2] =
 	{ 0, 0}
 };
 
-static void emitKeysym (DeviceIntPtr keydev, int keysym, int state)
+void wcmEmitKeysym (DeviceIntPtr keydev, int keysym, int state)
 {
 	int i, j, alt_keysym = 0;
 
@@ -499,7 +500,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				{
 					int key_sym = (action & AC_CODE);
 					int is_press = (action & AC_KEYBTNPRESS);
-					emitKeysym(local->dev, key_sym, is_press);
+					wcmEmitKeysym(local->dev, key_sym, is_press);
 				}
 				break;
 			case AC_MODETOGGLE:
@@ -558,7 +559,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 
 					if (countPresses(key_sym, &priv->keys[button][i],
 							ARRAY_SIZE(priv->keys[button]) - i))
-						emitKeysym(local->dev, key_sym, 0);
+						wcmEmitKeysym(local->dev, key_sym, 0);
 				}
 		}
 
@@ -684,8 +685,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
-		    emitKeysym(local->dev, (fakeButton & AC_CODE), 1);
-		    emitKeysym(local->dev, (fakeButton & AC_CODE), 0);
+		    wcmEmitKeysym(local->dev, (fakeButton & AC_CODE), 1);
+		    wcmEmitKeysym(local->dev, (fakeButton & AC_CODE), 0);
 	    break;
 
 	    default:

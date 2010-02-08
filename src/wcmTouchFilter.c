@@ -45,7 +45,7 @@
 void wcmFingerTapToClick(WacomCommonPtr common);
 
 extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
-extern void emitKeysym (DeviceIntPtr keydev, int keysym, int state);
+extern void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
 
 static void wcmFingerScroll(WacomDevicePtr priv);
 static void wcmFingerZoom(WacomDevicePtr priv);
@@ -401,19 +401,19 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		for (i=0; i<(int)(((double)abs(dist)/
 				(double)WACOM_MOTION_IN_POINT) + 0.5); i++)
 		{
-			emitKeysym (priv->local->dev, XK_Control_L, 1);
+			wcmEmitKeysym (priv->local->dev, XK_Control_L, 1);
 			/* zooming in */
 			if (dist > 0)
 			{
-				emitKeysym (priv->local->dev, XK_plus, 1);
-				emitKeysym (priv->local->dev, XK_plus, 0);
+				wcmEmitKeysym (priv->local->dev, XK_plus, 1);
+				wcmEmitKeysym (priv->local->dev, XK_plus, 0);
 			}
 			else /* zooming out */
 			{
-				emitKeysym (priv->local->dev, XK_minus, 1);
-				emitKeysym (priv->local->dev, XK_minus, 0);
+				wcmEmitKeysym (priv->local->dev, XK_minus, 1);
+				wcmEmitKeysym (priv->local->dev, XK_minus, 0);
 			}
-			emitKeysym (priv->local->dev, XK_Control_L, 0);
+			wcmEmitKeysym (priv->local->dev, XK_Control_L, 0);
 		}
 
 		/* reset initial states */
