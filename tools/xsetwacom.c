@@ -1657,7 +1657,7 @@ out:
 
 static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
-	XDeviceInfo *info, *d;
+	XDeviceInfo *info, *d = NULL;
 	int ndevices, i;
 	XValuatorInfoPtr v;
 
