@@ -604,6 +604,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SCREENAREA,
 		.prop_offset = 10;
 		.prop_format = 32,
+		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
 		.name = "SBottomY2",
