@@ -602,7 +602,7 @@ static param_t parameters[] =
 		.name = "SBottomX2",
 		.desc = "Screen 2 right coordinate in pixels. ",
 		.prop_name = WACOM_PROP_SCREENAREA,
-		.prop_offset = 10;
+		.prop_offset = 10,
 		.prop_format = 32,
 		.prop_flags = PROP_FLAG_READONLY
 	},
