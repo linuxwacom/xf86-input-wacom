@@ -525,10 +525,8 @@ Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	/* vendor is wacom */
 	if (sID.vendor == WACOM_VENDOR_ID)
 	{
-		common->tablet_id = sID.product;
-
 		for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
-			if (common->tablet_id == WacomModelDesc [i].model_id)
+			if (sID.product == WacomModelDesc [i].model_id)
 			{
 				common->wcmModel = WacomModelDesc [i].model;
 				common->wcmResolX = WacomModelDesc [i].xRes;

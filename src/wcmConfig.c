@@ -34,7 +34,8 @@ extern int wcmNeedAutoHotplug(LocalDevicePtr local,
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
-extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
+extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
+			     int* tablet_id);
 
 static int wcmAllocate(LocalDevicePtr local, char* name, int flag);
 
@@ -323,6 +324,7 @@ static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	static int	numberWacom = 0;
 	int		need_hotplug = 0;
 	unsigned long   keys[NBITS(KEY_MAX)];
+	int		tablet_id = 0;
 
 	gWacomModule.wcmDrv = drv;
 
@@ -338,7 +340,7 @@ static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	xf86CollectInputOptions(local, default_options, NULL);
 
 	/* initialize supported keys */
-	wcmDeviceTypeKeys(local, keys);
+	wcmDeviceTypeKeys(local, keys, &tablet_id);
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
 	type = xf86FindOptionValue(local->options, "Type");
@@ -364,6 +366,9 @@ static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	common = priv->common;
 
 	common->wcmDevice = device;
+
+	/* Hardware specific initialization relies on tablet_id */
+	common->tablet_id = tablet_id;
 
 	/* Auto-probe the device if required, otherwise just noop. */
 	if (numberWacom)

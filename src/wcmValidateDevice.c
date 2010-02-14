@@ -36,7 +36,8 @@ void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
 int wcmAutoProbeDevice(LocalDevicePtr local);
 int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
 int wcmIsDuplicate(char* device, LocalDevicePtr local);
-int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys);
+int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
+		      int* tablet_id);
 
 /* wcmCheckSource - Check if there is another source defined this device
  * before or not: don't add the tool by hal/udev if user has defined at least
@@ -184,7 +185,8 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
    device ID. This matching only works for wacom devices (serial ID of
    WACf), all others are simply assumed to be pen + erasor.
  */
-int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
+int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
+		      int* tablet_id)
 {
 	int ret = 1;
 	int fd = -1;
@@ -200,6 +202,8 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 			"wcmDeviceTypeKeys.\n", local->name, device);
 		return 0;
 	}
+
+	*tablet_id = 0;
 
 	/* serial ISDV4 devices */
 	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
@@ -248,9 +252,25 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 			keys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
 			keys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
 		}
+
+		/* 0x9a and 0x9f are only detected by communicating
+		 * with device.  This means tablet_id will be updated/refined
+		 * at later stage and true knowledge of capacitive
+		 * support will be delayed until that point.
+		 */
+		if (id >= 0x0 && id <= 0x7)
+			*tablet_id = 0x90;
+		else if (id >= 0x8 && id <= 0xa)
+			*tablet_id = 0x93;
+		else if (id >= 0xb && id <= 0xe)
+			*tablet_id = 0xe3;
+		else if (id == 0x10)
+			*tablet_id = 0xe2;
 	}
 	else /* USB devices */
 	{
+		struct input_id wacom_id;
+
 		if (ioctl(fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 			 * NBITS(KEY_MAX))), keys) < 0)
 		{
@@ -258,6 +278,15 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys)
 				"ioctl USB key bits.\n", local->name);
 			ret = 0;
 		}
+
+		if (ioctl(fd, EVIOCGID, &wacom_id) < 0)
+		{
+			xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+				"ioctl Device ID.\n", local->name);
+			ret = 0;
+		}
+		else
+			*tablet_id = wacom_id.product;
 	}
 	close(fd);
 	return ret;
