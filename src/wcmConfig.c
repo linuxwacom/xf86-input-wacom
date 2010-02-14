@@ -176,7 +176,8 @@ error:
 	return 0;
 }
 
-static int wcmAllocateByType(LocalDevicePtr local, const char *type)
+static int wcmAllocateByType(LocalDevicePtr local, const char *type,
+			     int tablet_id)
 {
 	int rc = 0;
 
@@ -191,7 +192,14 @@ static int wcmAllocateByType(LocalDevicePtr local, const char *type)
 	if (xf86NameCmp(type, "stylus") == 0)
 		rc = wcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
 	else if (xf86NameCmp(type, "touch") == 0)
-		rc = wcmAllocate(local, XI_TOUCH, ABSOLUTE_FLAG|TOUCH_ID);
+	{
+		int flags = TOUCH_ID;
+
+		if (tablet_id < 0xd0 || tablet_id > 0xd3)
+			flags |= ABSOLUTE_FLAG;
+
+		rc = wcmAllocate(local, XI_TOUCH, flags);
+	}
 	else if (xf86NameCmp(type, "cursor") == 0)
 		rc = wcmAllocate(local, XI_CURSOR, CURSOR_ID);
 	else if (xf86NameCmp(type, "eraser") == 0)
@@ -358,7 +366,7 @@ static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
 			goto SetupProc_fail;
 	}
 
-	if (!wcmAllocateByType(local, type))
+	if (!wcmAllocateByType(local, type, tablet_id))
 		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;

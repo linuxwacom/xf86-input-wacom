@@ -453,15 +453,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 
 		/* If Mode not specified or is invalid then rely on
 		 * Type specific defaults from initialization.
-		 *
-		 * If Mode default is hardware specific then handle here:
-		 *
-		 * touch Types are initilized to Absolute.
-		 * Bamboo P&T touch pads need to change default to Relative.
 		 */
-		if (IsTouch(priv) &&
-		    (common->tablet_id >= 0xd0) && (common->tablet_id <= 0xd3))
-			priv->flags &= ~ABSOLUTE_FLAG;
 	}
 
 	/* Pad is always in relative mode when it's a core device.
