@@ -37,8 +37,6 @@ extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
 extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
 			     int* tablet_id);
 
-static int wcmAllocate(LocalDevicePtr local, char* name, int flag);
-
 /*****************************************************************************
  * wcmAllocate --
  ****************************************************************************/
