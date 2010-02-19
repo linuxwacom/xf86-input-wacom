@@ -622,6 +622,10 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
+
+	/* if more than 3 buttons, offset by the four scroll buttons,
+	 * otherwise, alloc 7 buttons for scroll wheel. */
+	nbbuttons = (nbbuttons > 3) ? nbbuttons + 4 : 7;
 	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
 	                             * configured as an either mouse button or key */
 

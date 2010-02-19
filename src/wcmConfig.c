@@ -88,9 +88,10 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
 	priv->nPressCtrl [3] = 100;  /* pressure curve y1 */
 
-	/* Default button and expresskey values */
+	/* Default button and expresskey values, offset buttons 4 and higher
+	 * by the 4 scroll buttons. */
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
-		priv->button[i] = i + 1;
+		priv->button[i] = (i < 3) ? i + 1 : i + 5;
 
 	priv->nbuttons = WCM_MAX_BUTTONS;		/* Default number of buttons */
 	priv->relup = 5;			/* Default relative wheel up event */
