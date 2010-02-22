@@ -29,6 +29,8 @@
 #define WC_ISDV4_STOP "0"        /* ISDV4 stop command */
 #define WC_ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
 
+#define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
+
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);

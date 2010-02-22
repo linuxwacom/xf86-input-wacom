@@ -142,8 +142,6 @@ struct _WacomModule
  */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
-#define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
-
 /* device autoprobing */
 char *wcmEventAutoDevProbe (LocalDevicePtr local);
 
