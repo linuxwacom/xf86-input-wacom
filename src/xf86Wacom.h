@@ -25,13 +25,6 @@
 
 #include "Xwacom.h"
 
-/*****************************************************************************
- * Linux Input Support
- ****************************************************************************/
-
-#include <asm/types.h>
-#include <linux/input.h>
-
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 #define MAX_USB_EVENTS 32

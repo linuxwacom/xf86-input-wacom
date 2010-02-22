@@ -24,6 +24,8 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
+#include <asm/types.h>
+#include <linux/input.h>
 #include <sys/utsname.h>
 
 #ifndef BTN_TASK
