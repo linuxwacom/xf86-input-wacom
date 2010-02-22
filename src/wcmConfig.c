@@ -26,16 +26,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-extern Bool wcmIsAValidType(const char* type, unsigned long* keys);
-extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
-extern int wcmNeedAutoHotplug(LocalDevicePtr local,
-	const char **type, unsigned long* keys);
-extern int wcmAutoProbeDevice(LocalDevicePtr local);
-extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
-extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
-extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
-			     int* tablet_id);
-
 /*****************************************************************************
  * wcmAllocate --
  ****************************************************************************/

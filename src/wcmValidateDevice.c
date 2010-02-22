@@ -29,16 +29,6 @@
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 
-Bool wcmIsAValidType(const char *type, unsigned long* keys);
-int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
-		unsigned long* keys);
-void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
-int wcmAutoProbeDevice(LocalDevicePtr local);
-int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
-int wcmIsDuplicate(char* device, LocalDevicePtr local);
-int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
-		      int* tablet_id);
-
 /* wcmCheckSource - Check if there is another source defined this device
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools

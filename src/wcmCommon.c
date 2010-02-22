@@ -25,19 +25,6 @@
 #include "Xwacom.h"
 #include <xkbsrv.h>
 
-void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
-void wcmInitialScreens(LocalDevicePtr local);
-void wcmRotateTablet(LocalDevicePtr local, int value);
-void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
-
-extern int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
-extern void wcmChangeScreen(LocalDevicePtr local, int value);
-extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void wcmVirtualTabletSize(LocalDevicePtr local);
-extern void wcmVirtualTabletPadding(LocalDevicePtr local);
-extern void wcmTilt2R(WacomDeviceStatePtr ds);
-extern void wcmFingerTapToClick(WacomCommonPtr common);
-
 /*****************************************************************************
  * Static functions
  ****************************************************************************/

@@ -42,11 +42,6 @@
 /* Defines for Tap Add-a-Finger to Click */
 #define WACOM_TAP_TIME_IN_MS        150
 
-void wcmFingerTapToClick(WacomCommonPtr common);
-
-extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
-extern void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
-
 static void wcmFingerScroll(WacomDevicePtr priv);
 static void wcmFingerZoom(WacomDevicePtr priv);
 

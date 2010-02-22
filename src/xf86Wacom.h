@@ -177,5 +177,43 @@ int wcmSetPadCoreMode(LocalDevicePtr local);
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(LocalDevicePtr local);
 
+/* validation */
+extern Bool wcmIsAValidType(const char* type, unsigned long* keys);
+extern Bool wcmIsWacomDevice (char* fname);
+extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
+extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys, int* tablet_id);
+
+/* hotplug */
+extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type, unsigned long* keys);
+extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
+extern int wcmAutoProbeDevice(LocalDevicePtr local);
+
+/* setup */
+extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
+extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
+extern void wcmInitialScreens(LocalDevicePtr local);
+extern void wcmInitialScreens(LocalDevicePtr local);
+
+extern int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+
+/* run-time modifications */
+extern void wcmChangeScreen(LocalDevicePtr local, int value);
+extern void wcmTilt2R(WacomDeviceStatePtr ds);
+extern void wcmFingerTapToClick(WacomCommonPtr common);
+extern void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
+
+extern void wcmRotateTablet(LocalDevicePtr local, int value);
+extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
+extern void wcmVirtualTabletSize(LocalDevicePtr local);
+extern void wcmVirtualTabletPadding(LocalDevicePtr local);
+
+/* device properties */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
+extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
+extern void InitWcmDeviceProperties(LocalDevicePtr local);
+#endif
+
+
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

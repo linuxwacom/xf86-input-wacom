@@ -24,20 +24,6 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 
-extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void wcmRotateTablet(LocalDevicePtr local, int value);
-extern void wcmInitialScreens(LocalDevicePtr local);
-
-int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
-int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-void wcmChangeScreen(LocalDevicePtr local, int value);
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-	int wcmSetProperty(DeviceIntPtr dev, Atom property,
-		XIPropertyValuePtr prop, BOOL checkonly);
-	void InitWcmDeviceProperties(LocalDevicePtr local);
-#endif
-
 /*****************************************************************************
  * wcmSetPadCoreMode
  ****************************************************************************/

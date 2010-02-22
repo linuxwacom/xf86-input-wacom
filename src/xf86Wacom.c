@@ -51,21 +51,6 @@
 #include <xkbsrv.h>
 #endif
 
-void wcmVirtualTabletPadding(LocalDevicePtr local);
-void wcmVirtualTabletSize(LocalDevicePtr local);
-Bool wcmIsWacomDevice (char* fname);
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-    extern void InitWcmDeviceProperties(LocalDevicePtr local);
-    extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
-                BOOL checkonly);
-#endif
-
-extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-extern void wcmRotateTablet(LocalDevicePtr local, int value);
-extern void wcmInitialScreens(LocalDevicePtr local);
-extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
-
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static int wcmReady(LocalDevicePtr local);
 static void wcmDevReadInput(LocalDevicePtr local);
