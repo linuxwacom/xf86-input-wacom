@@ -46,6 +46,7 @@
 
 #include "xf86Wacom.h"
 #include <xf86_OSproc.h>
+#include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>

@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
+#include <exevents.h>
 
 /*****************************************************************************
  * wcmSetPadCoreMode
