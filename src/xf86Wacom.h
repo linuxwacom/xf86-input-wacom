@@ -40,7 +40,6 @@
 #include <xf86Xinput.h>
 #include <X11/keysym.h>
 #include <mipointer.h>
-#include <fcntl.h>
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 # include <X11/Xatom.h>
