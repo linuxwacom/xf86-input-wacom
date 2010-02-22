@@ -32,7 +32,6 @@
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50
 
-#include <misc.h>
 #define inline __inline__
 #include <xf86.h>
 #include <string.h>
