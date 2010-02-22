@@ -24,6 +24,7 @@
 #include "wcmFilter.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <linux/serial.h>
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))

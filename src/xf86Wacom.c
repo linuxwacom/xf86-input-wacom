@@ -41,6 +41,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <linux/serial.h>
 
 #include "xf86Wacom.h"
