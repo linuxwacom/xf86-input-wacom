@@ -44,6 +44,7 @@
 #include <linux/serial.h>
 
 #include "xf86Wacom.h"
+#include <xf86_OSproc.h>
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>

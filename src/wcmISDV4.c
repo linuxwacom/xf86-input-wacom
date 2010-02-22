@@ -22,6 +22,7 @@
 #endif
 
 #include "xf86Wacom.h"
+#include <xf86_OSproc.h>
 #include "wcmFilter.h"
 
 #define WC_ISDV4_QUERY "*"       /* ISDV4 query command */

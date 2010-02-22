@@ -39,7 +39,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <xf86_OSproc.h>
 #include <xf86Xinput.h>
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 #include <X11/keysym.h>
