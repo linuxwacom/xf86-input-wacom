@@ -64,10 +64,6 @@ static int wcmWriteWait(int fd, const char* request);
 		isdv4Parse,
 	};
 
-/*****************************************************************************
- * XFree86 V4 Functions
- ****************************************************************************/
-
 static int wcmWait(int t)
 {
 	int err = xf86WaitForInput(-1, ((t) * 1000));
