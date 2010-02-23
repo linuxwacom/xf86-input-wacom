@@ -118,9 +118,15 @@ disables the device's motion events.  Default to off.
 .B Option \fI"ButtonM"\fP \fI"AC"\fP
 reports an action AC when button M is pressed,  where M 
 is one of the device supported  button numbers,  it can be 1 
-to 32. The default action reported to Xinput is mouse button M click.    
+to 32. Wacom uses a driver-internal button mapping, where any physical
+button appears to the X server as the button specified by the ButtonM
+mapping. Hence, if two physical buttons have the same ButtonM mapping, the
+server will think they are the same physical button.
+The default action reported to the X server is mouse button M click. Because
+X uses buttons 4, 5, 6, and 7 as the four scrolling directions, physical
+buttons 4 and higher are mapped to 8 and higher by default.
 To ignore the button click, i.e., to not report any button click event 
-to Xinput,  use "0" or "button 0".  
+to the X server,  use "0" or "button 0".
 .TP 4
 .B Option \fI"TPCButton"\fP \fI"on"|"off"\fP
 enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus 
