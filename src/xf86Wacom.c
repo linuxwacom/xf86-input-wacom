@@ -326,7 +326,7 @@ void wcmVirtualTabletSize(LocalDevicePtr local)
  * wcmInitialCoordinates
  ****************************************************************************/
 
-void wcmInitialCoordinates(LocalDevicePtr local, int axes)
+void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -339,7 +339,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axes)
 	wcmMappingFactor(local);
 
 	/* x ax */
-	if ( !axes )
+	if (axis == 0)
 	{
 		if (priv->flags & ABSOLUTE_FLAG)
 		{
@@ -373,7 +373,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axes)
                         topx, bottomx,
 			resolution, 0, resolution);
 	}
-	else /* y ax */
+	else if (axis == 1) /* y ax */
 	{
 		if (priv->flags & ABSOLUTE_FLAG)
 		{
@@ -406,7 +406,9 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axes)
 #endif
                         topy, bottomy,
 			resolution, 0, resolution);
-	}
+	} else
+		xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", axis);
+
 	return;
 }
 
