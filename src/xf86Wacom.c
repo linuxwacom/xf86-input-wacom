@@ -332,9 +332,6 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution_x, resolution_y;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-        Atom label_x, label_y;
-#endif
 
 	wcmMappingFactor(local);
 
@@ -357,14 +354,6 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 				bottomy -= priv->tvoffsetY;
 			}
 		}
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		label_x = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
-		label_y = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
-	} else {
-		label_x = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
-		label_y = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
-#endif
 	}
 	resolution_x = priv->resolX;
 	resolution_y = priv->resolY;
@@ -386,7 +375,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 		case 0:
 			InitValuatorAxisStruct(local->dev, 0,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					label_x,
+					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
 #endif
 					topx, bottomx,
 					resolution_x, 0, resolution_x);
@@ -394,7 +383,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 		case 1:
 			InitValuatorAxisStruct(local->dev, 1,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					label_y,
+					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
 #endif
 					topy, bottomy,
 					resolution_y, 0, resolution_y);
