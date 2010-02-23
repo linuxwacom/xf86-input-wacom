@@ -330,84 +330,79 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int topx = 0, topy = 0, resolution;
+	int topx = 0, topy = 0, resolution_x, resolution_y;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-        Atom label;
+        Atom label_x, label_y;
 #endif
 
 	wcmMappingFactor(local);
 
-	/* x ax */
-	if (axis == 0)
+	if (priv->flags & ABSOLUTE_FLAG)
 	{
-		if (priv->flags & ABSOLUTE_FLAG)
+		topx = priv->topX;
+		topy = priv->topY;
+		bottomx = priv->sizeX + priv->topX;
+		bottomy = priv->sizeY + priv->topY;
+
+		if (priv->twinview != TV_NONE)
 		{
-			topx = priv->topX;
-			bottomx = priv->sizeX + priv->topX;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+			if (priv->currentScreen == 1)
+			{
 				topx += priv->tvoffsetX;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
-				bottomx -= priv->tvoffsetX;
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
-                } else {
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
-#endif
-		}
-
-		resolution = priv->resolX;
-		if (common->wcmScaling)
-		{
-			/* In case wcmDevConvert didn't get called */
-			topx = 0;
-			bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
-			resolution = (int)((double)resolution * priv->factorX + 0.5);
-		}
-
-		InitValuatorAxisStruct(local->dev, 0,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label,
-#endif
-                        topx, bottomx,
-			resolution, 0, resolution);
-	}
-	else if (axis == 1) /* y ax */
-	{
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			topy = priv->topY;
-			bottomy = priv->sizeY + priv->topY;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
 				topy += priv->tvoffsetY;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
+			} else if (priv->currentScreen == 0)
+			{
+				bottomx -= priv->tvoffsetX;
 				bottomy -= priv->tvoffsetY;
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
-                } else {
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
-#endif
+			}
 		}
 
-		resolution = priv->resolY;
-		if (common->wcmScaling)
-		{
-			/* In case wcmDevConvert didn't get called */
-			topy = 0;
-			bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
-			resolution = (int)((double)resolution * priv->factorY + 0.5);
-		}
-
-		InitValuatorAxisStruct(local->dev, 1,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label,
+		label_x = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+		label_y = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+	} else {
+		label_x = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
+		label_y = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
 #endif
-                        topy, bottomy,
-			resolution, 0, resolution);
-	} else
-		xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", axis);
+	}
+	resolution_x = priv->resolX;
+	resolution_y = priv->resolY;
+
+	if (common->wcmScaling)
+	{
+		/* In case wcmDevConvert didn't get called */
+		topx = 0;
+		bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
+		resolution_x = (int)((double)resolution_x * priv->factorX + 0.5);
+
+		topy = 0;
+		bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
+		resolution_y = (int)((double)resolution_y * priv->factorY + 0.5);
+	}
+
+	switch(axis)
+	{
+		case 0:
+			InitValuatorAxisStruct(local->dev, 0,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					label_x,
+#endif
+					topx, bottomx,
+					resolution_x, 0, resolution_x);
+			break;
+		case 1:
+			InitValuatorAxisStruct(local->dev, 1,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					label_y,
+#endif
+					topy, bottomy,
+					resolution_y, 0, resolution_y);
+			break;
+		default:
+			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", local->name, axis);
+			break;
+	}
 
 	return;
 }
