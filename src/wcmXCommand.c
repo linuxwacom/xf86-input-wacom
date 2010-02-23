@@ -81,7 +81,7 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
 		DBG(10, priv, "invalid mode=%d\n", mode);
-		return BadMatch;
+		return XI_BadMode;
 	}
 
 	return Success;
