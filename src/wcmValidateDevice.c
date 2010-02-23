@@ -447,11 +447,9 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 		 */
 	}
 
-	/* Pad is always in relative mode when it's a core device.
-	 * Always in absolute mode when it is not a core device.
-	 */
+	/* Pad is always in absolute mode. */
 	if (IsPad(priv))
-		wcmSetPadCoreMode(local);
+		priv->flags |= ABSOLUTE_FLAG;
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))

@@ -26,30 +26,6 @@
 #include <exevents.h>
 
 /*****************************************************************************
- * wcmSetPadCoreMode
- ****************************************************************************/
-
-int wcmSetPadCoreMode(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
-
-	/* Pad is always in relative mode when it's a core device.
-	 * Always in absolute mode when it is not a core device.
-	 */
-	DBG(10, priv, "%p"
-		" is always in %s mode when it %s core device\n",
-		(void *)local->dev, 
-		!is_core ? "absolute" : "relative", 
-		is_core ? "is" : "isn't");
-	if (is_core)
-		priv->flags &= ~ABSOLUTE_FLAG;
-	else
-		priv->flags |= ABSOLUTE_FLAG;
-	return Success;
-}
-
-/*****************************************************************************
 * wcmDevSwitchModeCall --
 *****************************************************************************/
 
@@ -60,11 +36,9 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 
 	DBG(3, priv, "to mode=%d\n", mode);
 
-	/* Pad is always in relative mode when it's a core device.
-	 * Always in absolute mode when it is not a core device.
-	 */
+	/* Pad is always in absolute mode.*/
 	if (IsPad(priv))
-		return wcmSetPadCoreMode(local);
+		return (mode == Absolute) ? Success : XI_BadMode;
 
 	if ((mode == Absolute) && !is_absolute)
 	{

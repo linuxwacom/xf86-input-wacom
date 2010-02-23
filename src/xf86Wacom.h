@@ -144,9 +144,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
-/* Change pad's mode according to it core event status */
-int wcmSetPadCoreMode(LocalDevicePtr local);
-
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(LocalDevicePtr local);
 

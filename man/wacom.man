@@ -93,10 +93,8 @@ to or greater than suppress (if tilt is supported);
         proximity has changed.
 .TP 4
 .B Option \fI"Mode"\fP \fI"Relative"|"Absolute"\fP
-sets the mode of the device.  The default value for stylus and 
-eraser is Absolute; cursor is Relative; pad mode is decided 
-according to its core option due to its nature of not moving 
-system cursor: Relative if it is a core device; Absolute, otherwise;
+sets the mode of the device.  The default value for stylus, pad and
+eraser is Absolute; cursor is Relative;
 touch defaults to Relative for tablets with touch pads and Absolute for
 touch screens.
 .TP 4
