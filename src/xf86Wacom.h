@@ -104,10 +104,6 @@ struct _WacomModule
 	void (*DevClose)(LocalDevicePtr local);
 	int (*DevProc)(DeviceIntPtr pWcm, int what);
 	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
-	Bool (*DevConvert)(LocalDevicePtr local, int first, int num,
-		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
-	Bool (*DevReverseConvert)(LocalDevicePtr local, int x, int y,
-		int* valuators);
 };
 
 	extern WacomModule gWacomModule;

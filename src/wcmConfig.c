@@ -61,8 +61,6 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	local->control_proc = gWacomModule.DevChangeControl;
 	local->close_proc = gWacomModule.DevClose;
 	local->switch_mode = gWacomModule.DevSwitchMode;
-	local->conversion_proc = gWacomModule.DevConvert;
-	local->reverse_conversion_proc = gWacomModule.DevReverseConvert;
 	local->fd = -1;
 	local->atom = 0;
 	local->dev = NULL;
