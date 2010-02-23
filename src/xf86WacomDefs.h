@@ -91,10 +91,6 @@ struct _WacomModel
 	void (*Initialize)(WacomCommonPtr common, const char* id, float version);
 	void (*GetResolution)(LocalDevicePtr local);
 	int (*GetRanges)(LocalDevicePtr local);
-	int (*Reset)(LocalDevicePtr local);
-	int (*EnableTilt)(LocalDevicePtr local);
-	int (*EnableSuppress)(LocalDevicePtr local);
-	int (*SetLinkSpeed)(LocalDevicePtr local);
 	int (*Start)(LocalDevicePtr local);
 	int (*Parse)(LocalDevicePtr local, const unsigned char* data);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,

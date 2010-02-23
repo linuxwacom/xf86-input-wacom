@@ -56,10 +56,6 @@ static int wcmWriteWait(int fd, const char* request);
 		isdv4InitISDV4,
 		NULL,                 /* resolution not queried */
 		isdv4GetRanges,       /* query ranges */
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
 	};
