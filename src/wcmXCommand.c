@@ -69,14 +69,12 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	if ((mode == Absolute) && !is_absolute)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
-		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}
 	else if ((mode == Relative) && is_absolute)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
-		xf86ReplaceStrOption(local->options, "Mode", "Relative");
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}
