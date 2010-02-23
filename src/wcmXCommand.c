@@ -194,17 +194,19 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	values[3] = priv->serial;
 	prop_serials = InitWcmAtom(local->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
 
-	values[0] = priv->striplup;
-	values[1] = priv->stripldn;
-	values[2] = priv->striprup;
-	values[3] = priv->striprdn;
-	prop_strip_buttons = InitWcmAtom(local->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
+	if (IsPad(priv)) {
+		values[0] = priv->striplup;
+		values[1] = priv->stripldn;
+		values[2] = priv->striprup;
+		values[3] = priv->striprdn;
+		prop_strip_buttons = InitWcmAtom(local->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
 
-	values[0] = priv->relup;
-	values[1] = priv->reldn;
-	values[2] = priv->wheelup;
-	values[3] = priv->wheeldn;
-	prop_wheel_buttons = InitWcmAtom(local->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
+		values[0] = priv->relup;
+		values[1] = priv->reldn;
+		values[2] = priv->wheelup;
+		values[3] = priv->wheeldn;
+		prop_wheel_buttons = InitWcmAtom(local->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
+	}
 
 	values[0] = priv->tvResolution[0];
 	values[1] = priv->tvResolution[1];
