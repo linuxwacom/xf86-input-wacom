@@ -74,11 +74,16 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
 	priv->common = common;       /* common info pointer */
 	priv->hardProx = 1;	     /* previous hardware proximity */
-	priv->old_device_id = IsStylus(priv) ? STYLUS_DEVICE_ID :
-		(IsEraser(priv) ? ERASER_DEVICE_ID : 
-		(IsCursor(priv) ? CURSOR_DEVICE_ID : 
-		(IsTouch(priv) ? TOUCH_DEVICE_ID :
-		PAD_DEVICE_ID)));
+	if (IsStylus(priv))
+		priv->old_device_id = STYLUS_DEVICE_ID;
+	else if (IsEraser(priv))
+		priv->old_device_id = ERASER_DEVICE_ID;
+	else if (IsCursor(priv))
+		priv->old_device_id = CURSOR_DEVICE_ID;
+	else if (IsTouch(priv))
+		priv->old_device_id = TOUCH_DEVICE_ID;
+	else
+		priv->old_device_id = PAD_DEVICE_ID;
 
 	priv->screen_no = -1;        /* associated screen */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
