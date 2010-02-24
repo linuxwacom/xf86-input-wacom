@@ -25,6 +25,7 @@
 #include "wcmFilter.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 /*****************************************************************************
  * wcmAllocate --
@@ -61,7 +62,6 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	local->control_proc = gWacomModule.DevChangeControl;
 	local->close_proc = gWacomModule.DevClose;
 	local->switch_mode = gWacomModule.DevSwitchMode;
-	local->fd = -1;
 	local->atom = 0;
 	local->dev = NULL;
 	local->private = priv;
@@ -338,16 +338,24 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 */
 	xf86CollectInputOptions(local, default_options, NULL);
 
-	/* initialize supported keys */
-	wcmDeviceTypeKeys(local, keys, &tablet_id);
-
 	device = xf86SetStrOption(local->options, "Device", NULL);
 	type = xf86FindOptionValue(local->options, "Type");
-	need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
 
 	/* leave the undefined for auto-dev (if enabled) to deal with */
-	if(device)
+	if (device)
 	{
+		SYSCALL(local->fd = open(device, O_RDONLY));
+		if (local->fd < 0)
+		{
+			xf86Msg(X_WARNING, "%s: failed to open %s.\n",
+				local->name, device);
+			goto SetupProc_fail;
+		}
+
+		/* initialize supported keys */
+		wcmDeviceTypeKeys(local, keys, &tablet_id);
+		need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
+
 		/* check if the type is valid for those don't need hotplug */
 		if(!need_hotplug && !wcmIsAValidType(type, keys))
 			goto SetupProc_fail;
@@ -405,7 +413,12 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		wcmHotplugOthers(local, keys);
 	}
 
-	/* return the LocalDevice */
+	if (local->fd != -1)
+	{
+		close(local->fd);
+		local->fd = -1;
+	}
+
 	return (local);
 
 SetupProc_fail:
@@ -413,6 +426,12 @@ SetupProc_fail:
 	xfree(priv);
 	if (local)
 	{
+		if (local->fd != -1)
+		{
+			close(local->fd);
+			local->fd = -1;
+		}
+
 		local->private = NULL;
 		xf86DeleteInput(local, 0);
 	}

@@ -84,21 +84,8 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	int isInUse = 0;
 	char* lsource = xf86CheckStrOption(local->options, "_source", "");
 
-	local->fd = -1;
-
 	/* always allow xorg.conf defined tools to be added */
 	if (!strlen(lsource)) goto ret;
-
-	/* open the port */
-        SYSCALL(local->fd = open(device, O_RDONLY, 0));
-	if (local->fd < 0)
-	{
-		/* can not open the device */
-		xf86Msg(X_ERROR, "%s: Unable to open Wacom device \"%s\".\n",
-			local->name, device);
-		isInUse = 1;
-		goto ret;
-	}
 
 	if (fstat(local->fd, &st) == -1)
 	{
@@ -127,11 +114,6 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 		isInUse = 4;
 	}
 ret:
-	if (local->fd >= 0)
-	{
-		close(local->fd);
-		local->fd = -1;
-	}
 	return isInUse;
 }
 
@@ -174,28 +156,12 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
 		      int* tablet_id)
 {
 	int ret = 1;
-	int fd = -1;
-	char* device;
-
-	device = xf86SetStrOption(local->options, "Device", NULL);
-
-	SYSCALL(fd = open(device, O_RDONLY));
-	if (fd < 0)
-	{
-		xf86Msg(X_WARNING, "%s: failed to open %s in "
-			"wcmDeviceTypeKeys.\n", local->name, device);
-		return 0;
-	}
-
-	local->fd = fd;
 
 	/* serial ISDV4 devices */
 	*tablet_id = isdv4ProbeKeys(local, keys);
 	if (!*tablet_id) /* USB devices */
 		*tablet_id = usbProbeKeys(local, keys);
 
-	close(fd);
-	local->fd = -1;
 	return ret;
 }
 
