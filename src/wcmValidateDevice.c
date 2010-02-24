@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <linux/serial.h>
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -170,19 +169,13 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
 	return ret;
 }
 
-/* Choose valid types according to device ID.
-   For USB devices, we simply copy the information the kernel gives us. For
-   serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
-   device ID. This matching only works for wacom devices (serial ID of
-   WACf), all others are simply assumed to be pen + erasor.
- */
+/* Choose valid types according to device ID. */
 int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
 		      int* tablet_id)
 {
 	int ret = 1;
 	int fd = -1;
 	char* device;
-	struct serial_struct tmp;
 
 	device = xf86SetStrOption(local->options, "Device", NULL);
 
@@ -194,92 +187,15 @@ int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
 		return 0;
 	}
 
-	*tablet_id = 0;
+	local->fd = fd;
 
 	/* serial ISDV4 devices */
-	if (ioctl(fd, TIOCGSERIAL, &tmp) == 0)
-	{
-		int id, i;
+	*tablet_id = isdv4ProbeKeys(local, keys);
+	if (!*tablet_id) /* USB devices */
+		*tablet_id = usbProbeKeys(local, keys);
 
-		/* check device name for ID first */
-		if (sscanf(local->name, "WACf%x", &id) <= 1)
-		{
-			/* id in file sys/class/tty/%str/device/id */
-			FILE *file;
-			char sysfs_id[256];
-			char *str = strstr(device, "ttyS");
-			snprintf(sysfs_id, sizeof(sysfs_id),
-				"/sys/class/tty/%s/device/id", str);
-			file = fopen(sysfs_id, "r");
-
-			/* return true since it falls to default */
-			if (file)
-			{
-				/* make sure we fall to default */
-				if (fscanf(file, "WACf%x\n", &id) <= 0)
-					id = 0;
-
-				fclose(file);
-			}
-		}
-
-		/* we have tried memset. it doesn't work */
-		for (i=0; i<NBITS(KEY_MAX); i++)
-			keys[i] = 0;
-
-		/* default to penabled */
-		keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
-		keys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
-
-		/* id < 0x008 are only penabled */
-		if (id > 0x007)
-			keys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
-		if (id > 0x0a)
-			keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
-
-		/* no pen 2FGT */
-		if (id == 0x010)
-		{
-			keys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
-			keys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
-		}
-
-		/* 0x9a and 0x9f are only detected by communicating
-		 * with device.  This means tablet_id will be updated/refined
-		 * at later stage and true knowledge of capacitive
-		 * support will be delayed until that point.
-		 */
-		if (id >= 0x0 && id <= 0x7)
-			*tablet_id = 0x90;
-		else if (id >= 0x8 && id <= 0xa)
-			*tablet_id = 0x93;
-		else if (id >= 0xb && id <= 0xe)
-			*tablet_id = 0xe3;
-		else if (id == 0x10)
-			*tablet_id = 0xe2;
-	}
-	else /* USB devices */
-	{
-		struct input_id wacom_id;
-
-		if (ioctl(fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
-			 * NBITS(KEY_MAX))), keys) < 0)
-		{
-			xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
-				"ioctl USB key bits.\n", local->name);
-			ret = 0;
-		}
-
-		if (ioctl(fd, EVIOCGID, &wacom_id) < 0)
-		{
-			xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
-				"ioctl Device ID.\n", local->name);
-			ret = 0;
-		}
-		else
-			*tablet_id = wacom_id.product;
-	}
 	close(fd);
+	local->fd = -1;
 	return ret;
 }
 

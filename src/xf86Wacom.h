@@ -184,6 +184,9 @@ extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 extern void InitWcmDeviceProperties(LocalDevicePtr local);
 #endif
 
+/* Device probing */
+int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys);
+int usbProbeKeys(LocalDevicePtr local, unsigned long *keys);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

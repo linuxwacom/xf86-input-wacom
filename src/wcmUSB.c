@@ -1047,4 +1047,33 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	/* dispatch event */
 	wcmEvent(common, channel, ds);
 }
+
+/**
+ * Query the device's fd for the key bits and the tablet ID. Returns the ID
+ * on success or 0 on failure.
+ * For USB devices, we simply copy the information the kernel gives us.
+ */
+int usbProbeKeys(LocalDevicePtr local, unsigned long *keys)
+{
+	struct input_id wacom_id;
+
+	if (ioctl(local->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
+						* NBITS(KEY_MAX))), keys) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+				"ioctl USB key bits.\n", local->name);
+		return 0;
+	}
+
+	if (ioctl(local->fd, EVIOCGID, &wacom_id) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+				"ioctl Device ID.\n", local->name);
+		return 0;
+	}
+
+	return wacom_id.product;
+}
+
+
 /* vim: set noexpandtab shiftwidth=8: */
