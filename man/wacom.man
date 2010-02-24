@@ -51,10 +51,6 @@ the tablet is plugged.  You have to specify it for each subsection with
 the same value if you want to have multiple devices with the same tablet.
 This option is mandatory.
 .TP 4
-.B Option \fI"USB"\fP \fI"on"\fP
-tells the driver to dialog with the tablet the USB way.  This option is
-mandatory for USB tablets.
-.TP 4
 .B Option \fI"ForceDevice"\fP \fI"ISDV4"\fP
 tells the driver to dialog with the tablet the serial Tablet PC way.  It 
 is a special Wacom IV protocol, called ISDV4 protocol.  This option is 
