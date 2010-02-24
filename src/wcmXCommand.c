@@ -182,11 +182,13 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	values[0] = common->wcmRotate;
 	prop_rotation = InitWcmAtom(local->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
-	values[0] = 0;
-	values[1] = 0;
-	values[2] = 100;
-	values[3] = 100;
-	prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
+	if (IsStylus(priv) || IsEraser(priv)) {
+		values[0] = 0;
+		values[1] = 0;
+		values[2] = 100;
+		values[3] = 100;
+		prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
+	}
 
 	values[0] = common->tablet_id;
 	values[1] = priv->old_serial;
