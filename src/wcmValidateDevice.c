@@ -598,20 +598,6 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
-	if (!IsTouch(priv))
-		common->wcmMaxX = xf86SetIntOption(local->options, "MaxX",
-					 common->wcmMaxX);
-	else
-		common->wcmMaxTouchX = xf86SetIntOption(local->options, "MaxX",
-					 common->wcmMaxTouchX);
-
-
-	if (!IsTouch(priv))
-		common->wcmMaxY = xf86SetIntOption(local->options, "MaxY",
-					 common->wcmMaxY);
-	else
-		common->wcmMaxTouchY = xf86SetIntOption(local->options, "MaxY",
-					 common->wcmMaxTouchY);
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 					   common->wcmMaxZ);
