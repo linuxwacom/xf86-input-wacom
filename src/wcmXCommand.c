@@ -183,10 +183,10 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	prop_rotation = InitWcmAtom(local->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
 	if (IsStylus(priv) || IsEraser(priv)) {
-		values[0] = 0;
-		values[1] = 0;
-		values[2] = 100;
-		values[3] = 100;
+		values[0] = priv->nPressCtrl[0];
+		values[1] = priv->nPressCtrl[1];
+		values[2] = priv->nPressCtrl[2];
+		values[3] = priv->nPressCtrl[3];
 		prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
 	}
 
