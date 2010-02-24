@@ -311,9 +311,9 @@ static Bool wcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	return 0;
 }
 
-/* wcmInit - called for each input devices with the driver set to
+/* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
-static LocalDevicePtr wcmInit(InputDriverPtr drv, IDevPtr dev, int flags)
+static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	LocalDevicePtr local = NULL;
 	WacomDevicePtr priv = NULL;
@@ -425,7 +425,7 @@ InputDriverRec WACOM =
 	1,             /* driver version */
 	"wacom",       /* driver name */
 	NULL,          /* identify */
-	wcmInit,   /* pre-init */
+	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
 	0              /* ref count */
