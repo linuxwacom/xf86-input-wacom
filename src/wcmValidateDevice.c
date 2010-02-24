@@ -615,12 +615,6 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 
 	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
 					   common->wcmMaxZ);
-	common->wcmUserResolX = xf86SetIntOption(local->options, "ResolutionX",
-						 common->wcmUserResolX);
-	common->wcmUserResolY = xf86SetIntOption(local->options, "ResolutionY",
-						 common->wcmUserResolY);
-	common->wcmUserResolZ = xf86SetIntOption(local->options, "ResolutionZ",
-						 common->wcmUserResolZ);
 	if (xf86SetBoolOption(local->options, "ButtonsOnly", 0))
 		priv->flags |= BUTTONS_ONLY_FLAG;
 

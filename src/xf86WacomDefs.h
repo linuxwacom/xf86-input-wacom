@@ -384,12 +384,6 @@ struct _WacomCommonRec
 	int wcmMaxtiltX;	     /* styli max tilt in X directory */ 
 	int wcmMaxtiltY;	     /* styli max tilt in Y directory */ 
 
-	/* These values are in user coordinates */
-	int wcmUserResolX;           /* user-defined X resolution */
-	int wcmUserResolY;           /* user-defined Y resolution */
-	int wcmUserResolZ;           /* user-defined Z resolution,
-	                              * value equal to 100% pressure */
-
 	int wcmMaxStripX;            /* Maximum fingerstrip X */
 	int wcmMaxStripY;            /* Maximum fingerstrip Y */
 
