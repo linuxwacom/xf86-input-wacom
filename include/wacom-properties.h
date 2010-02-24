@@ -69,7 +69,7 @@
 /* BOOL, 1 value */
 #define WACOM_PROP_HOVER "Wacom Hover Click"
 
-/* Atom, 1 value */
+/* Atom, 1 value, read-only */
 #define WACOM_PROP_TOOL_TYPE "Wacom Tool Type"
 
 /* Atom, X values where X is the number of physical buttons.
