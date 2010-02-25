@@ -295,7 +295,6 @@ static Bool wcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
-	char * type;
 
 	if ((pLocal != pMatch) &&
 		strstr(pMatch->drv->driverName, "wacom") &&
@@ -303,17 +302,6 @@ static Bool wcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
 	{
 		DBG(2, priv, "port share between"
 			" %s and %s\n", pLocal->name, pMatch->name);
-		type = xf86FindOptionValue(pMatch->options, "Type");
-		if ( type && (strstr(type, "eraser")) )
-			privMatch->common->wcmEraserID=pMatch->name;
-		else
-		{
-			type = xf86FindOptionValue(pLocal->options, "Type");
-			if ( type && (strstr(type, "eraser")) )
-			{
-				privMatch->common->wcmEraserID=pLocal->name;
-			}
-		}
 		xfree(common);
 		common = priv->common = privMatch->common;
 		priv->next = common->wcmDevices;

@@ -399,7 +399,6 @@ struct _WacomCommonRec
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
-	char * wcmEraserID;	     /* eraser associated with the stylus */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTPCButtonDefault;     /* Tablet PC button default */
