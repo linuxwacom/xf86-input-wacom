@@ -391,7 +391,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if(!need_hotplug && !wcmIsAValidType(type, keys))
 		goto SetupProc_fail;
 
-	/* check if the device has been added */
+	/* check if the same device file has been added already */
 	if (wcmIsDuplicate(device, local))
 		goto SetupProc_fail;
 

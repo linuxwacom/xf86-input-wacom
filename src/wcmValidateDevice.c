@@ -77,6 +77,9 @@ static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
  * Open the device and check it's major/minor, then compare this with every
  * other wacom device listed in the config. If they share the same
  * major/minor and the same source/type, fail.
+ * This is to detect duplicate devices if a device was added once through
+ * the xorg.conf and is then hotplugged through the server backend (HAL,
+ * udev). In this case, the hotplugged one fails.
  */
 int wcmIsDuplicate(char* device, LocalDevicePtr local)
 {
