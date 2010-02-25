@@ -383,7 +383,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 	 * Slightly raised curve might be 0,5,95,100
 	 */
 	s = xf86SetStrOption(local->options, "PressCurve", NULL);
-	if (s && !IsCursor(priv) && !IsTouch(priv))
+	if (s && IsStylus(priv) && IsEraser(priv))
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
