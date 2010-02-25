@@ -29,9 +29,10 @@
 
 /*****************************************************************************
  * wcmAllocate --
+ * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
+static int wcmAllocate(LocalDevicePtr local)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -55,7 +56,6 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	if (!area)
 		goto error;
 
-	local->type_name = type_name;
 	local->flags = 0;
 	local->device_control = gWacomModule.DevProc;
 	local->read_input = gWacomModule.DevReadInput;
@@ -71,20 +71,8 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 
 	priv->next = NULL;
 	priv->local = local;
-	priv->flags = flag;          /* various flags (device type, absolute, first touch...) */
 	priv->common = common;       /* common info pointer */
 	priv->hardProx = 1;	     /* previous hardware proximity */
-	if (IsStylus(priv))
-		priv->old_device_id = STYLUS_DEVICE_ID;
-	else if (IsEraser(priv))
-		priv->old_device_id = ERASER_DEVICE_ID;
-	else if (IsCursor(priv))
-		priv->old_device_id = CURSOR_DEVICE_ID;
-	else if (IsTouch(priv))
-		priv->old_device_id = TOUCH_DEVICE_ID;
-	else
-		priv->old_device_id = PAD_DEVICE_ID;
-
 	priv->screen_no = -1;        /* associated screen */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
@@ -117,7 +105,6 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	/* JEJ - throttle sampling code */
 	priv->throttleLimit = -1;
 
-	common->wcmDevice = "";                  /* device file name */
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = 4;      /* protocol level */
@@ -149,8 +136,8 @@ static int wcmAllocate(LocalDevicePtr local, char* type_name, int flag)
 	priv->tool = tool;
 	common->wcmTool = tool;
 	tool->next = NULL;          /* next tool in list */
-	tool->typeid = DEVICE_ID(flag); /* tool type (stylus/touch/eraser/cursor/pad) */
 	tool->arealist = area;      /* list of defined areas */
+	/* tool->typeid is set once we know the type - see wcmSetType */
 
 	/* tool area */
 	priv->toolarea = area;
@@ -167,38 +154,63 @@ error:
 	return 0;
 }
 
-static int wcmAllocateByType(LocalDevicePtr local, const char *type,
-			     int tablet_id)
+static int wcmSetType(LocalDevicePtr local, const char *type, int tablet_id)
 {
-	int rc = 0;
+	WacomDevicePtr priv = local->private;
 
 	if (!type)
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
 				"Must be one of stylus, touch, cursor, eraser, or pad\n",
 				local->name);
-		return rc;
+		return 0;
 	}
 
 	if (xf86NameCmp(type, "stylus") == 0)
-		rc = wcmAllocate(local, XI_STYLUS, ABSOLUTE_FLAG|STYLUS_ID);
-	else if (xf86NameCmp(type, "touch") == 0)
+	{
+		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
+		local->type_name = XI_STYLUS;
+	} else if (xf86NameCmp(type, "touch") == 0)
 	{
 		int flags = TOUCH_ID;
 
 		if (tablet_id < 0xd0 || tablet_id > 0xd3)
 			flags |= ABSOLUTE_FLAG;
 
-		rc = wcmAllocate(local, XI_TOUCH, flags);
+		priv->flags = flags;
+		local->type_name = XI_TOUCH;
+	} else if (xf86NameCmp(type, "cursor") == 0)
+	{
+		priv->flags = CURSOR_ID;
+		local->type_name = XI_CURSOR;
+	} else if (xf86NameCmp(type, "eraser") == 0)
+	{
+		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
+		local->type_name = XI_ERASER;
+	} else if (xf86NameCmp(type, "pad") == 0)
+	{
+		priv->flags = PAD_ID;
+		local->type_name = XI_PAD;
 	}
-	else if (xf86NameCmp(type, "cursor") == 0)
-		rc = wcmAllocate(local, XI_CURSOR, CURSOR_ID);
-	else if (xf86NameCmp(type, "eraser") == 0)
-		rc = wcmAllocate(local, XI_ERASER, ABSOLUTE_FLAG|ERASER_ID);
-	else if (xf86NameCmp(type, "pad") == 0)
-		rc = wcmAllocate(local, XI_PAD, PAD_ID);
 
-	return rc;
+	/* Set the device id of the "last seen" device on this tool */
+	if (IsStylus(priv))
+		priv->old_device_id = STYLUS_DEVICE_ID;
+	else if (IsEraser(priv))
+		priv->old_device_id = ERASER_DEVICE_ID;
+	else if (IsCursor(priv))
+		priv->old_device_id = CURSOR_DEVICE_ID;
+	else if (IsTouch(priv))
+		priv->old_device_id = TOUCH_DEVICE_ID;
+	else
+		priv->old_device_id = PAD_DEVICE_ID;
+
+	if (!priv->tool)
+		return 0;
+
+	priv->tool->typeid = DEVICE_ID(priv->flags); /* tool type (stylus/touch/eraser/cursor/pad) */
+
+	return 1;
 }
 
 /* 
@@ -320,7 +332,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	WacomCommonPtr common = NULL;
 	const char*	type;
 	char*		device;
-	static int	numberWacom = 0;
 	int		need_hotplug = 0;
 	unsigned long   keys[NBITS(KEY_MAX)];
 	int		tablet_id = 0;
@@ -341,31 +352,50 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	device = xf86SetStrOption(local->options, "Device", NULL);
 	type = xf86FindOptionValue(local->options, "Type");
 
-	/* leave the undefined for auto-dev (if enabled) to deal with */
-	if (device)
+	/*
+	   Init process:
+	   - allocate the generic struct used by all device types.
+	   - if no device is given, auto-probe for one (find a wacom device
+	     in /dev/input/event?
+	   - open the device file
+	   - probe the device
+	   - remove duplicate devices if needed
+	   - set the device type
+	   - hotplug dependent devices if needed
+	 */
+
+	if (!wcmAllocate(local))
+		goto SetupProc_fail;
+
+	if (!device)
 	{
-		SYSCALL(local->fd = open(device, O_RDONLY));
-		if (local->fd < 0)
-		{
-			xf86Msg(X_WARNING, "%s: failed to open %s.\n",
-				local->name, device);
-			goto SetupProc_fail;
-		}
-
-		/* initialize supported keys */
-		wcmDeviceTypeKeys(local, keys, &tablet_id);
-		need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
-
-		/* check if the type is valid for those don't need hotplug */
-		if(!need_hotplug && !wcmIsAValidType(type, keys))
+		if (!wcmAutoProbeDevice(local))
 			goto SetupProc_fail;
 
-		/* check if the device has been added */
-		if (wcmIsDuplicate(device, local))
-			goto SetupProc_fail;
+		device = xf86SetStrOption(local->options, "Device", NULL);
 	}
 
-	if (!wcmAllocateByType(local, type, tablet_id))
+	SYSCALL(local->fd = open(device, O_RDONLY));
+	if (local->fd < 0)
+	{
+		xf86Msg(X_WARNING, "%s: failed to open %s.\n",
+				local->name, device);
+		goto SetupProc_fail;
+	}
+
+	/* initialize supported keys */
+	wcmDeviceTypeKeys(local, keys, &tablet_id);
+	need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
+
+	/* check if the type is valid for those don't need hotplug */
+	if(!need_hotplug && !wcmIsAValidType(type, keys))
+		goto SetupProc_fail;
+
+	/* check if the device has been added */
+	if (wcmIsDuplicate(device, local))
+		goto SetupProc_fail;
+
+	if (!wcmSetType(local, type, tablet_id))
 		goto SetupProc_fail;
 
 	priv = (WacomDevicePtr) local->private;
@@ -376,11 +406,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Hardware specific initialization relies on tablet_id */
 	common->tablet_id = tablet_id;
-
-	/* Auto-probe the device if required, otherwise just noop. */
-	if (numberWacom)
-		if (!wcmAutoProbeDevice(local))
-			goto SetupProc_fail;
 
 	/* Lookup to see if there is another wacom device sharing the same port */
 	if (common->wcmDevice)
@@ -403,9 +428,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* mark the device configured */
 	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
-
-	/* keep a local count so we know if "auto-dev" is necessary or not */
-	numberWacom++;
 
 	if (need_hotplug)
 	{
