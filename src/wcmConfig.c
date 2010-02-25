@@ -288,25 +288,37 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	xf86DeleteInput(local, 0);    
 }
 
-/* wcmMatchDevice - locate matching device and merge common structure */
-
-static Bool wcmMatchDevice(LocalDevicePtr pMatch, LocalDevicePtr pLocal)
+/* wcmMatchDevice - locate matching device and merge common structure. If an
+ * already initialized device shares the same device file and driver, remove
+ * the new device's "common" struct and point to the one of the already
+ * existing one instead.
+ * Then add the new device to the now-shared common struct.
+ */
+static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 {
-	WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
+	LocalDevicePtr pMatch = xf86FirstLocalDevice();
 
-	if ((pLocal != pMatch) &&
-		strstr(pMatch->drv->driverName, "wacom") &&
-		!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
+	if (!common->wcmDevice)
+		return 0;
+
+	for (; pMatch != NULL; pMatch = pMatch->next)
 	{
-		DBG(2, priv, "port share between"
-			" %s and %s\n", pLocal->name, pMatch->name);
-		xfree(common);
-		common = priv->common = privMatch->common;
-		priv->next = common->wcmDevices;
-		common->wcmDevices = priv;
-		return 1;
+		WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
+
+		if ((pLocal != pMatch) &&
+				strstr(pMatch->drv->driverName, "wacom") &&
+				!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
+		{
+			DBG(2, priv, "port share between"
+					" %s and %s\n", pLocal->name, pMatch->name);
+			xfree(common);
+			common = priv->common = privMatch->common;
+			priv->next = common->wcmDevices;
+			common->wcmDevices = priv;
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -396,18 +408,8 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	common->tablet_id = tablet_id;
 
 	/* Lookup to see if there is another wacom device sharing the same port */
-	if (common->wcmDevice)
-	{
-		LocalDevicePtr localDevices = xf86FirstLocalDevice();
-		for (; localDevices != NULL; localDevices = localDevices->next)
-		{
-			if (wcmMatchDevice(localDevices,local))
-			{
-				common = priv->common;
-				break;
-			}
-		}
-	}
+	if (wcmMatchDevice(local))
+		common = priv->common;
 
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
