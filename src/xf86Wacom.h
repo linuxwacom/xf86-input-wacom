@@ -178,6 +178,8 @@ extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 extern void wcmVirtualTabletSize(LocalDevicePtr local);
 extern void wcmVirtualTabletPadding(LocalDevicePtr local);
 
+extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
+
 /* device properties */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);

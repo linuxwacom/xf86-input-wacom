@@ -328,8 +328,8 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		pcurve = (INT32*)prop->data;
 
-		if ((pcurve[0] > 100) || (pcurve[1] > 100) ||
-				(pcurve[2] > 100) || (pcurve[3] > 100))
+		if (!wcmCheckPressureCurveValues(pcurve[0], pcurve[1],
+						 pcurve[2], pcurve[3]))
 			return BadValue;
 
 		if (IsCursor(priv) || IsPad (priv) || IsTouch (priv))

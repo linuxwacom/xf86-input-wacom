@@ -387,8 +387,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
-			(a < 0) || (a > 100) || (b < 0) || (b > 100) ||
-			(c < 0) || (c > 100) || (d < 0) || (d > 100))
+				!wcmCheckPressureCurveValues(a, b, c, d))
 			xf86Msg(X_CONFIG, "%s: PressCurve not valid\n",
 				local->name);
 		else
