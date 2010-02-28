@@ -26,30 +26,6 @@
 #include <exevents.h>
 
 /*****************************************************************************
- * wcmSetPadCoreMode
- ****************************************************************************/
-
-int wcmSetPadCoreMode(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int is_core = local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER);
-
-	/* Pad is always in relative mode when it's a core device.
-	 * Always in absolute mode when it is not a core device.
-	 */
-	DBG(10, priv, "%p"
-		" is always in %s mode when it %s core device\n",
-		(void *)local->dev, 
-		!is_core ? "absolute" : "relative", 
-		is_core ? "is" : "isn't");
-	if (is_core)
-		priv->flags &= ~ABSOLUTE_FLAG;
-	else
-		priv->flags |= ABSOLUTE_FLAG;
-	return Success;
-}
-
-/*****************************************************************************
 * wcmDevSwitchModeCall --
 *****************************************************************************/
 
@@ -60,30 +36,26 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 
 	DBG(3, priv, "to mode=%d\n", mode);
 
-	/* Pad is always in relative mode when it's a core device.
-	 * Always in absolute mode when it is not a core device.
-	 */
+	/* Pad is always in absolute mode.*/
 	if (IsPad(priv))
-		return wcmSetPadCoreMode(local);
+		return (mode == Absolute) ? Success : XI_BadMode;
 
 	if ((mode == Absolute) && !is_absolute)
 	{
 		priv->flags |= ABSOLUTE_FLAG;
-		xf86ReplaceStrOption(local->options, "Mode", "Absolute");
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}
 	else if ((mode == Relative) && is_absolute)
 	{
 		priv->flags &= ~ABSOLUTE_FLAG; 
-		xf86ReplaceStrOption(local->options, "Mode", "Relative");
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
 		DBG(10, priv, "invalid mode=%d\n", mode);
-		return BadMatch;
+		return XI_BadMode;
 	}
 
 	return Success;
@@ -210,11 +182,13 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	values[0] = common->wcmRotate;
 	prop_rotation = InitWcmAtom(local->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
-	values[0] = 0;
-	values[1] = 0;
-	values[2] = 100;
-	values[3] = 100;
-	prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
+	if (IsStylus(priv) || IsEraser(priv)) {
+		values[0] = priv->nPressCtrl[0];
+		values[1] = priv->nPressCtrl[1];
+		values[2] = priv->nPressCtrl[2];
+		values[3] = priv->nPressCtrl[3];
+		prop_pressurecurve = InitWcmAtom(local->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
+	}
 
 	values[0] = common->tablet_id;
 	values[1] = priv->old_serial;
@@ -222,17 +196,19 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	values[3] = priv->serial;
 	prop_serials = InitWcmAtom(local->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
 
-	values[0] = priv->striplup;
-	values[1] = priv->stripldn;
-	values[2] = priv->striprup;
-	values[3] = priv->striprdn;
-	prop_strip_buttons = InitWcmAtom(local->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
+	if (IsPad(priv)) {
+		values[0] = priv->striplup;
+		values[1] = priv->stripldn;
+		values[2] = priv->striprup;
+		values[3] = priv->striprdn;
+		prop_strip_buttons = InitWcmAtom(local->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
 
-	values[0] = priv->relup;
-	values[1] = priv->reldn;
-	values[2] = priv->wheelup;
-	values[3] = priv->wheeldn;
-	prop_wheel_buttons = InitWcmAtom(local->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
+		values[0] = priv->relup;
+		values[1] = priv->reldn;
+		values[2] = priv->wheelup;
+		values[3] = priv->wheeldn;
+		prop_wheel_buttons = InitWcmAtom(local->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
+	}
 
 	values[0] = priv->tvResolution[0];
 	values[1] = priv->tvResolution[1];
@@ -352,8 +328,8 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		pcurve = (INT32*)prop->data;
 
-		if ((pcurve[0] > 100) || (pcurve[1] > 100) ||
-				(pcurve[2] > 100) || (pcurve[3] > 100))
+		if (!wcmCheckPressureCurveValues(pcurve[0], pcurve[1],
+						 pcurve[2], pcurve[3]))
 			return BadValue;
 
 		if (IsCursor(priv) || IsPad (priv) || IsTouch (priv))

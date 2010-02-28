@@ -64,10 +64,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,     /* assume the best */
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		NULL,                 /* input filtering not needed */
@@ -80,10 +76,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -96,10 +88,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -112,10 +100,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -128,10 +112,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -144,10 +124,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -160,10 +136,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -176,10 +148,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -192,10 +160,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -208,10 +172,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		NULL,                 /* input filtering */
@@ -224,10 +184,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		NULL,                 /* input filtering */
@@ -240,10 +196,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
@@ -256,10 +208,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
@@ -272,10 +220,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
@@ -288,10 +232,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
@@ -304,10 +244,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -320,10 +256,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
@@ -336,10 +268,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
@@ -352,10 +280,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		NULL,                 /* start not supported */
 		usbParse,
 		NULL,                 /* input filtering */
@@ -1123,4 +1047,33 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	/* dispatch event */
 	wcmEvent(common, channel, ds);
 }
+
+/**
+ * Query the device's fd for the key bits and the tablet ID. Returns the ID
+ * on success or 0 on failure.
+ * For USB devices, we simply copy the information the kernel gives us.
+ */
+int usbProbeKeys(LocalDevicePtr local, unsigned long *keys)
+{
+	struct input_id wacom_id;
+
+	if (ioctl(local->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
+						* NBITS(KEY_MAX))), keys) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+				"ioctl USB key bits.\n", local->name);
+		return 0;
+	}
+
+	if (ioctl(local->fd, EVIOCGID, &wacom_id) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+				"ioctl Device ID.\n", local->name);
+		return 0;
+	}
+
+	return wacom_id.product;
+}
+
+
 /* vim: set noexpandtab shiftwidth=8: */

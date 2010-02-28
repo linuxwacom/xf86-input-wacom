@@ -38,18 +38,29 @@ static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
 static void filterIntuosStylus(WacomCommonPtr common, WacomFilterStatePtr state, WacomDeviceStatePtr ds);
 void wcmTilt2R(WacomDeviceStatePtr ds);
 
+
+/*****************************************************************************
+ * wcmCheckPressureCurveValues -- check pressure curve values for sanity.
+ * Return TRUE if values are sane or FALSE otherwise.
+ ****************************************************************************/
+int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1)
+{
+	return !((x0 < 0) || (x0 > 100) || (y0 < 0) || (y0 > 100) ||
+		 (x1 < 0) || (x1 > 100) || (y1 < 0) || (y1 > 100));
+}
+
+
 /*****************************************************************************
  * wcmSetPressureCurve -- apply user-defined curve to pressure values
  ****************************************************************************/
-
 void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	int x1, int y1)
 {
 	int i;
 
 	/* sanity check values */
-	if ((x0 < 0) || (x0 > 100) || (y0 < 0) || (y0 > 100) ||
-		(x1 < 0) || (x1 > 100) || (y1 < 0) || (y1 > 100)) return;
+	if (!wcmCheckPressureCurveValues(x0, y0, x1, y1))
+		return;
 
 	/* if curve is not allocated, do it now. */
 	if (!pDev->pPressCurve)

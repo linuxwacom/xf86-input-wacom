@@ -61,10 +61,6 @@ static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
 static void wcmDevClose(LocalDevicePtr local);
 static int wcmDevProc(DeviceIntPtr pWcm, int what);
-static Bool wcmDevConvert(LocalDevicePtr local, int first, int num,
-		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
-static Bool wcmDevReverseConvert(LocalDevicePtr local, int x, int y,
-		int* valuators);
 
 WacomModule gWacomModule =
 {
@@ -78,8 +74,6 @@ WacomModule gWacomModule =
 	wcmDevClose,
 	wcmDevProc,
 	wcmDevSwitchMode,
-	wcmDevConvert,
-	wcmDevReverseConvert,
 };
 
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
@@ -326,87 +320,73 @@ void wcmVirtualTabletSize(LocalDevicePtr local)
  * wcmInitialCoordinates
  ****************************************************************************/
 
-void wcmInitialCoordinates(LocalDevicePtr local, int axes)
+void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	int topx = 0, topy = 0, resolution;
+	int topx = 0, topy = 0, resolution_x, resolution_y;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-        Atom label;
-#endif
 
 	wcmMappingFactor(local);
 
-	/* x ax */
-	if ( !axes )
+	if (priv->flags & ABSOLUTE_FLAG)
 	{
-		if (priv->flags & ABSOLUTE_FLAG)
+		topx = priv->topX;
+		topy = priv->topY;
+		bottomx = priv->sizeX + priv->topX;
+		bottomy = priv->sizeY + priv->topY;
+
+		if (priv->twinview != TV_NONE)
 		{
-			topx = priv->topX;
-			bottomx = priv->sizeX + priv->topX;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
+			if (priv->currentScreen == 1)
+			{
 				topx += priv->tvoffsetX;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
-				bottomx -= priv->tvoffsetX;
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
-                } else {
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
-#endif
-		}
-
-		resolution = priv->resolX;
-		if (common->wcmScaling)
-		{
-			/* In case wcmDevConvert didn't get called */
-			topx = 0;
-			bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
-			resolution = (int)((double)resolution * priv->factorX + 0.5);
-		}
-
-		InitValuatorAxisStruct(local->dev, 0,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label,
-#endif
-                        topx, bottomx,
-			resolution, 0, resolution);
-	}
-	else /* y ax */
-	{
-		if (priv->flags & ABSOLUTE_FLAG)
-		{
-			topy = priv->topY;
-			bottomy = priv->sizeY + priv->topY;
-			if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
 				topy += priv->tvoffsetY;
-			if (priv->currentScreen == 0 && priv->twinview != TV_NONE)
+			} else if (priv->currentScreen == 0)
+			{
+				bottomx -= priv->tvoffsetX;
 				bottomy -= priv->tvoffsetY;
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
-                } else {
-                        label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
-#endif
+			}
 		}
-
-		resolution = priv->resolY;
-		if (common->wcmScaling)
-		{
-			/* In case wcmDevConvert didn't get called */
-			topy = 0;
-			bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
-			resolution = (int)((double)resolution * priv->factorY + 0.5);
-		}
-
-		InitValuatorAxisStruct(local->dev, 1,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-                        label,
-#endif
-                        topy, bottomy,
-			resolution, 0, resolution);
 	}
+	resolution_x = priv->resolX;
+	resolution_y = priv->resolY;
+
+	if (common->wcmScaling)
+	{
+		/* In case wcmDevConvert didn't get called */
+		topx = 0;
+		bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
+		resolution_x = (int)((double)resolution_x * priv->factorX + 0.5);
+
+		topy = 0;
+		bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
+		resolution_y = (int)((double)resolution_y * priv->factorY + 0.5);
+	}
+
+	switch(axis)
+	{
+		case 0:
+			InitValuatorAxisStruct(local->dev, 0,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
+#endif
+					topx, bottomx,
+					resolution_x, 0, resolution_x);
+			break;
+		case 1:
+			InitValuatorAxisStruct(local->dev, 1,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
+#endif
+					topy, bottomy,
+					resolution_y, 0, resolution_y);
+			break;
+		default:
+			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", local->name, axis);
+			break;
+	}
+
 	return;
 }
 
@@ -1321,99 +1301,6 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 
 	DBG(2, priv, "END Success \n");
 	return Success;
-}
-
-/*****************************************************************************
- * wcmDevConvert --
- *  Convert X & Y valuators so core events can be generated with 
- *  coordinates that are scaled and suitable for screen resolution.
- ****************************************************************************/
-
-static Bool wcmDevConvert(LocalDevicePtr local, int first, int num,
-		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-    
-	DBG(6, priv, "v0=%d v1=%d on screen %d \n",
-		 v0, v1, priv->currentScreen);
-
-	if (first != 0 || num == 1) 
- 		return FALSE;
-
-	if (priv->flags & ABSOLUTE_FLAG)
-	{
-		v0 -= priv->topX;
-		v1 -= priv->topY;
-		if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
-		{
-			v0 -= priv->tvoffsetX;
-			v1 -= priv->tvoffsetY;
-		}
- 	}
-
-	*x = (double)v0 * priv->factorX + 0.5;
-	*y = (double)v1 * priv->factorY + 0.5;
-
-	if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
-	{
-		*x -= priv->screenTopX[priv->currentScreen];
-		*y -= priv->screenTopY[priv->currentScreen];
-	}
-
-	if (priv->screen_no != -1)
-	{
-		if (*x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-			*x = priv->screenBottomX[priv->currentScreen];
-		if (*x < 0) *x = 0;
-		if (*y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-			*y = priv->screenBottomY[priv->currentScreen];
-		if (*y < 0) *y = 0;
-	
-	}
-	DBG(6, priv, "v0=%d v1=%d to x=%d y=%d\n", v0, v1, *x, *y);
-	return TRUE;
-}
-
-/*****************************************************************************
- * wcmDevReverseConvert --
- *  Convert X and Y to valuators in relative mode where the position of 
- *  the core pointer must be translated into device cootdinates before 
- *  the extension and core events are generated in Xserver.
- ****************************************************************************/
-
-static Bool wcmDevReverseConvert(LocalDevicePtr local, int x, int y,
-		int* valuators)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int i = 0;
-
-	DBG(6, priv, "x=%d y=%d \n", x, y);
-	priv->currentSX = x;
-	priv->currentSY = y;
-
-	if (!(priv->flags & ABSOLUTE_FLAG))
-	{
-		if (!priv->devReverseCount)
-		{
-			valuators[0] = (((double)x / priv->factorX) + 0.5);
-			valuators[1] = (((double)y / priv->factorY) + 0.5);
-
-			/* reset valuators to report raw values */
-			for (i=2; i<priv->naxes; i++)
-				valuators[i] = 0;
-
-			priv->devReverseCount = 1;
-		}
-		else
-			priv->devReverseCount = 0;
-	}
-
-	DBG(6, priv, "Wacom converted x=%d y=%d"
-		" to v0=%d v1=%d v2=%d v3=%d v4=%d v5=%d\n", x, y,
-		valuators[0], valuators[1], valuators[2], 
-		valuators[3], valuators[4], valuators[5]);
-
-	return TRUE;
 }
 
 /* vim: set noexpandtab shiftwidth=8: */

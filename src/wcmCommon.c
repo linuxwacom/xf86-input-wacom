@@ -1627,27 +1627,6 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 			local->name, common->wcmThreshold);
 	}
 
-	/* Reset tablet to known state */
-	if (model->Reset && (model->Reset(local) != Success))
-	{
-		xf86Msg(X_ERROR, "Wacom xf86WriteSerial error : %s\n", strerror(errno));
-		return !Success;
-	}
-
-	/* Enable tilt mode, if requested and available */
-	if ((common->wcmFlags & TILT_REQUEST_FLAG) && model->EnableTilt)
-	{
-		if (model->EnableTilt(local) != Success)
-			return !Success;
-	}
-
-	/* Enable hardware suppress, if requested and available */
-	if (model->EnableSuppress)
-	{
-		if (model->EnableSuppress(local) != Success)
-			return !Success;
-	}
-
 	/* output tablet state as probed */
 	xf86Msg(X_PROBED, "%s: Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",

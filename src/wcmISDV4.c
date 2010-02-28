@@ -21,6 +21,7 @@
 #include <config.h>
 #endif
 
+#include <linux/serial.h>
 #include "xf86Wacom.h"
 #include <xf86_OSproc.h>
 #include "wcmFilter.h"
@@ -56,17 +57,9 @@ static int wcmWriteWait(int fd, const char* request);
 		isdv4InitISDV4,
 		NULL,                 /* resolution not queried */
 		isdv4GetRanges,       /* query ranges */
-		NULL,                 /* reset not supported */
-		NULL,                 /* tilt automatically enabled */
-		NULL,                 /* suppress implemented in software */
-		NULL,                 /* link speed unsupported */
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
 	};
-
-/*****************************************************************************
- * XFree86 V4 Functions
- ****************************************************************************/
 
 static int wcmWait(int t)
 {
@@ -600,4 +593,82 @@ static int wcmWaitForTablet(int fd, char* answer, int size)
 
 	return maxtry;
 }
+
+/**
+ * Query the device's fd for the key bits and the tablet ID. Returns the ID
+ * on success or 0 on failure.
+ * For serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
+ * device ID. This matching only works for wacom devices (serial ID of
+ * WACf), all others are simply assumed to be pen + erasor.
+ */
+int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys)
+{
+	int id, i;
+	int tablet_id = 0;
+	struct serial_struct tmp;
+	const char *device = xf86SetStrOption(local->options, "Device", NULL);
+
+	if (ioctl(local->fd, TIOCGSERIAL, &tmp) < 0)
+		return 0;
+
+	/* check device name for ID first */
+	if (sscanf(local->name, "WACf%x", &id) <= 1)
+	{
+		/* id in file sys/class/tty/%str/device/id */
+		FILE *file;
+		char sysfs_id[256];
+		char *str = strstr(device, "ttyS");
+		snprintf(sysfs_id, sizeof(sysfs_id),
+				"/sys/class/tty/%s/device/id", str);
+		file = fopen(sysfs_id, "r");
+
+		/* return true since it falls to default */
+		if (file)
+		{
+			/* make sure we fall to default */
+			if (fscanf(file, "WACf%x\n", &id) <= 0)
+				id = 0;
+
+			fclose(file);
+		}
+	}
+
+	/* we have tried memset. it doesn't work */
+	for (i=0; i<NBITS(KEY_MAX); i++)
+		keys[i] = 0;
+
+	/* default to penabled */
+	keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
+	keys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
+
+	/* id < 0x008 are only penabled */
+	if (id > 0x007)
+		keys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
+	if (id > 0x0a)
+		keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
+
+	/* no pen 2FGT */
+	if (id == 0x010)
+	{
+		keys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
+		keys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
+	}
+
+	/* 0x9a and 0x9f are only detected by communicating
+	 * with device.  This means tablet_id will be updated/refined
+	 * at later stage and true knowledge of capacitive
+	 * support will be delayed until that point.
+	 */
+	if (id >= 0x0 && id <= 0x7)
+		tablet_id = 0x90;
+	else if (id >= 0x8 && id <= 0xa)
+		tablet_id = 0x93;
+	else if (id >= 0xb && id <= 0xe)
+		tablet_id = 0xe3;
+	else if (id == 0x10)
+		tablet_id = 0xe2;
+
+	return tablet_id;
+}
+
 /* vim: set noexpandtab shiftwidth=8: */

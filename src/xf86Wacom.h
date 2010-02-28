@@ -104,10 +104,6 @@ struct _WacomModule
 	void (*DevClose)(LocalDevicePtr local);
 	int (*DevProc)(DeviceIntPtr pWcm, int what);
 	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
-	Bool (*DevConvert)(LocalDevicePtr local, int first, int num,
-		int v0, int v1, int v2, int v3, int v4, int v5, int* x, int* y);
-	Bool (*DevReverseConvert)(LocalDevicePtr local, int x, int y,
-		int* valuators);
 };
 
 	extern WacomModule gWacomModule;
@@ -148,9 +144,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
 Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
-/* Change pad's mode according to it core event status */
-int wcmSetPadCoreMode(LocalDevicePtr local);
-
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(LocalDevicePtr local);
 
@@ -185,12 +178,17 @@ extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 extern void wcmVirtualTabletSize(LocalDevicePtr local);
 extern void wcmVirtualTabletPadding(LocalDevicePtr local);
 
+extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
+
 /* device properties */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 extern void InitWcmDeviceProperties(LocalDevicePtr local);
 #endif
 
+/* Device probing */
+int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys);
+int usbProbeKeys(LocalDevicePtr local, unsigned long *keys);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
