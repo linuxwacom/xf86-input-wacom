@@ -37,7 +37,7 @@
 #endif
 
 static Bool usbDetect(LocalDevicePtr);
-Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
+static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
 
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
@@ -426,7 +426,7 @@ static struct
 	{ 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
 };
 
-Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
+static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
 	struct input_id sID;
