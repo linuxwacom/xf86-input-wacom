@@ -1128,8 +1128,6 @@ void wcmReadPacket(LocalDevicePtr local)
 	common->bufpos += len;
 	DBG(10, common, "buffer has %d bytes\n", common->bufpos);
 
-	pos = 0;
-
 	/* while there are whole packets present, check the packet length
 	 * for serial ISDv4 packet since it's different for pen and touch
 	 */
@@ -1151,35 +1149,31 @@ void wcmReadPacket(LocalDevicePtr local)
 		}
 	}
 
-	while ((common->bufpos - pos) >=  common->wcmPktLength)
+	len = common->bufpos;
+	pos = 0;
+
+	while (len > 0)
 	{
 		/* parse packet */
-		cnt = common->wcmModel->Parse(local, common->buffer + pos);
+		cnt = common->wcmModel->Parse(local, common->buffer + pos, len);
 		if (cnt <= 0)
 		{
-			DBG(1, common, "Misbehaving parser returned %d\n",cnt);
+			if (cnt < 0)
+				DBG(1, common, "Misbehaving parser returned %d\n",cnt);
 			break;
 		}
 		pos += cnt;
+		len -= cnt;
 	}
- 
-	if (pos)
-	{
-		/* if half a packet remains, move it down */
-		if (pos < common->bufpos)
-		{
-			DBG(7, common, "MOVE %d bytes\n", common->bufpos - pos);
-			memmove(common->buffer,common->buffer+pos,
-				common->bufpos-pos);
-			common->bufpos -= pos;
-		}
 
-		/* otherwise, reset the buffer for next time */
-		else
-		{
-			common->bufpos = 0;
-		}
+	/* if half a packet remains, move it down */
+	if (len)
+	{
+		DBG(7, common, "MOVE %d bytes\n", common->bufpos - pos);
+		memmove(common->buffer,common->buffer+pos, len);
 	}
+
+	common->bufpos = len;
 }
 
 int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)

@@ -83,7 +83,7 @@ struct _WacomModel
 	void (*GetResolution)(LocalDevicePtr local);
 	int (*GetRanges)(LocalDevicePtr local);
 	int (*Start)(LocalDevicePtr local);
-	int (*Parse)(LocalDevicePtr local, const unsigned char* data);
+	int (*Parse)(LocalDevicePtr local, const unsigned char* data, int len);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
 		WacomDeviceStatePtr ds);
 	int (*DetectConfig)(LocalDevicePtr local);

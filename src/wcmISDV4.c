@@ -38,7 +38,7 @@ static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
-static int isdv4Parse(LocalDevicePtr, const unsigned char* data);
+static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
 static int wcmSerialValidate(WacomCommonPtr common, const unsigned char* data);
 static int wcmWaitForTablet(int fd, char * data, int size);
 static int wcmWriteWait(int fd, const char* request);
@@ -387,7 +387,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	return Success;
 }
 
-static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
+static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
@@ -397,6 +397,9 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 	int n, cur_type, channel = 0;
 
 	DBG(10, common, "\n");
+
+	if (len < common->wcmPktLength)
+		return 0;
 
 	/* determine the type of message (touch or stylus) */
 	if (data[0] & 0x10) /* a touch data */
@@ -418,12 +421,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data)
 			out.device_type = TOUCH_ID;
 			wcmEvent(common, channel, &out);
 		}
-	}
-
-	if (common->buffer + common->bufpos - data < common->wcmPktLength)
-	{
-		/* we can't handle this yet */
-		return common->wcmPktLength;
 	}
 
 	/* Coordinate data bit check */
