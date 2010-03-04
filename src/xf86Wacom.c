@@ -1129,8 +1129,7 @@ void wcmReadPacket(LocalDevicePtr local)
 
 	/* account for new data */
 	common->bufpos += len;
-	DBG(10, common, "buffer has %d bytes\n",
-		common->bufpos);
+	DBG(10, common, "buffer has %d bytes\n", common->bufpos);
 
 	pos = 0;
 
