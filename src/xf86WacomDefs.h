@@ -40,15 +40,6 @@
 #define PROXOUT_GRAPHIRE_DISTANCE	42
 
 #define HEADER_BIT      0x80
-#define ZAXIS_SIGN_BIT  0x40
-#define ZAXIS_BIT       0x04
-#define ZAXIS_BITS      0x3F
-#define POINTER_BIT     0x20
-#define PROXIMITY_BIT   0x40
-#define BUTTON_FLAG     0x08
-#define BUTTONS_BITS    0x78
-#define TILT_SIGN_BIT   0x40
-#define TILT_BITS       0x3F
 
 #ifndef BTN_TOOL_DOUBLETAP
 #define BTN_TOOL_DOUBLETAP 0x14d
