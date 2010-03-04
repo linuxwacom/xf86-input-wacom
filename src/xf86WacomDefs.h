@@ -328,7 +328,6 @@ struct _WacomDeviceClass
 {
 	Bool (*Detect)(LocalDevicePtr local); /* detect device */
 	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
-	void (*Read)(LocalDevicePtr local);   /* reads device */
 };
 
 	extern WacomDeviceClass gWacomUSBDevice;

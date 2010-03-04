@@ -48,7 +48,6 @@ static int wcmWriteWait(int fd, const char* request);
 	{
 		isdv4Detect,
 		isdv4Init,
-		wcmReadPacket,
 	};
 
 	static WacomModel isdv4General =

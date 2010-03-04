@@ -55,7 +55,6 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 	{
 		usbDetect,
 		usbWcmInit,
-		wcmReadPacket,
 	};
 
 	static WacomModel usbUnknown =

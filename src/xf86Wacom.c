@@ -1074,9 +1074,6 @@ static void wcmDevReadInput(LocalDevicePtr local)
 	int loop=0;
 	#define MAX_READ_LOOPS 10
 
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
-
 	/* move data until we exhaust the device */
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
@@ -1084,7 +1081,7 @@ static void wcmDevReadInput(LocalDevicePtr local)
 		if (!wcmReady(local)) break;
 
 		/* dispatch */
-		common->wcmDevCls->Read(local);
+		wcmReadPacket(local);
 	}
 
 	/* report how well we're doing */
