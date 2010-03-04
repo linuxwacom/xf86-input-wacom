@@ -1096,7 +1096,6 @@ void wcmReadPacket(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
-	unsigned char * data;
 
 	DBG(10, common, "fd=%d\n", local->fd);
 
@@ -1127,27 +1126,6 @@ void wcmReadPacket(LocalDevicePtr local)
 	/* account for new data */
 	common->bufpos += len;
 	DBG(10, common, "buffer has %d bytes\n", common->bufpos);
-
-	/* while there are whole packets present, check the packet length
-	 * for serial ISDv4 packet since it's different for pen and touch
-	 */
-	if (common->wcmForceDevice == DEVICE_ISDV4 && common->wcmDevCls != &gWacomUSBDevice) 
-	{
-		data = common->buffer;
-		/* choose wcmPktLength if it is not an out-prox event */
-		if (data[0])
-			common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
-
-		if ( data[0] & 0x10 )
-		{
-			/* set touch PktLength */
-			common->wcmPktLength = WACOM_PKGLEN_TOUCH93;
-			if ((common->tablet_id == 0x9A) || (common->tablet_id == 0x9F))
-				common->wcmPktLength = WACOM_PKGLEN_TOUCH9A;
-			if ((common->tablet_id == 0xE2) || (common->tablet_id == 0xE3))
-				common->wcmPktLength = WACOM_PKGLEN_TOUCH2FG;
-		}
-	}
 
 	len = common->bufpos;
 	pos = 0;

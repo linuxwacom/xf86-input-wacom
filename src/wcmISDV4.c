@@ -398,6 +398,21 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 
 	DBG(10, common, "\n");
 
+	data = common->buffer;
+	/* choose wcmPktLength if it is not an out-prox event */
+	if (data[0])
+		common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
+
+	if ( data[0] & 0x10 )
+	{
+		/* set touch PktLength */
+		common->wcmPktLength = WACOM_PKGLEN_TOUCH93;
+		if ((common->tablet_id == 0x9A) || (common->tablet_id == 0x9F))
+			common->wcmPktLength = WACOM_PKGLEN_TOUCH9A;
+		if ((common->tablet_id == 0xE2) || (common->tablet_id == 0xE3))
+			common->wcmPktLength = WACOM_PKGLEN_TOUCH2FG;
+	}
+
 	if (len < common->wcmPktLength)
 		return 0;
 
