@@ -537,6 +537,17 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
+	int is_touch;
+
+	is_touch = IsTouch(priv);
+	/* Bamboo P&T have both Touch and Pad types on same
+	 * device.  Its normal for this to be called for pad
+	 * case and logic requires it to act same as Touch
+	 * case.
+	 */
+	if (IsPad(priv) &&
+	    common->tablet_id >= 0xd0 && common->tablet_id <= 0xd3)
+		is_touch = 1;
 
 	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
@@ -571,7 +582,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", local->name);
 		return !Success;
 	}
-	if (!IsTouch(priv))
+	if (!is_touch)
 		common->wcmMaxX = absinfo.maximum;
 	else
 		common->wcmMaxTouchX = absinfo.maximum;
@@ -588,7 +599,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", local->name);
 		return !Success;
 	}
-	if (!IsTouch(priv))
+	if (!is_touch)
 		common->wcmMaxY = absinfo.maximum;
 	else
 		common->wcmMaxTouchY = absinfo.maximum;
@@ -597,7 +608,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or touch physical X for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
-		if (IsTouch(priv))
+		if (is_touch)
 			common->wcmTouchResolX = absinfo.maximum;
 		else
 			common->wcmMaxStripX = absinfo.maximum;
@@ -607,13 +618,13 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	 * or touch physical Y for TabletPCs with touch */
 	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
-		if (IsTouch(priv))
+		if (is_touch)
 			common->wcmTouchResolY = absinfo.maximum;
 		else
 			common->wcmMaxStripY = absinfo.maximum;
 	}
 
-	if (IsTouch(priv) && common->wcmTouchResolX && common->wcmMaxTouchX)
+	if (is_touch && common->wcmTouchResolX && common->wcmMaxTouchX)
 	{
 		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
 			 / ((double)common->wcmMaxTouchX) + 0.5);
