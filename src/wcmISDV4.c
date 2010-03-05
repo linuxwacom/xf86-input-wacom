@@ -38,6 +38,7 @@ static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
+static int isdv4StopTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
 static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
 static int wcmWaitForTablet(int fd, char * data, int size);
@@ -174,18 +175,9 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
-	/* Send stop command to the tablet */
-	if (!wcmWriteWait(local->fd, ISDV4_STOP))
-	{
-		xf86Msg(X_WARNING, "%s: wcmWriteWait ISDV4_STOP error : %s\n",
-			 local->name, strerror(errno));
+	if (isdv4StopTablet(local) != Success)
 		return !Success;
-	}
 
-	/* Wait 250 mSecs */
-	if (wcmWait(250))
-		return !Success;
-		
 	/* Send query command to the tablet */
 	if (!wcmWriteWait(local->fd, query))
 	{
@@ -405,6 +397,23 @@ static int isdv4StartTablet(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: wcmWriteWait error: %s\n", local->name, strerror(errno));
 		return !Success;
 	}
+
+	return Success;
+}
+
+static int isdv4StopTablet(LocalDevicePtr local)
+{
+	/* Send stop command to the tablet */
+	if (!wcmWriteWait(local->fd, ISDV4_STOP))
+	{
+		xf86Msg(X_WARNING, "%s: wcmWriteWait ISDV4_STOP error : %s\n",
+			 local->name, strerror(errno));
+		return !Success;
+	}
+
+	/* Wait 250 mSecs */
+	if (wcmWait(250))
+		return !Success;
 
 	return Success;
 }
