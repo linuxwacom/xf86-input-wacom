@@ -41,8 +41,8 @@ static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4StopTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
 static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
-static int wcmWaitForTablet(int fd, char * data, int size);
-static int wcmWriteWait(int fd, const char* request);
+static int wcmWaitForTablet(LocalDevicePtr local, char * data, int size);
+static int wcmWriteWait(LocalDevicePtr local, const char* request);
 
 
 	WacomDeviceClass gWacomISDV4Device =
@@ -179,16 +179,11 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		return !Success;
 
 	/* Send query command to the tablet */
-	if (!wcmWriteWait(local->fd, query))
-	{
-		xf86Msg(X_WARNING, "%s: unable to wcmWriteWait request %s "
-			"ISDV4 query command after %d tries\n", local->name,
-			 query, MAXTRY);
+	if (!wcmWriteWait(local, query))
 		return !Success;
-	}
 
 	/* Read the control data */
-	if (!wcmWaitForTablet(local->fd, data, ISDV4_PKGLEN_TPCCTL))
+	if (!wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL))
 	{
 		/* Try 19200 if it is not a touch query */
 		if (common->wcmISDV4Speed != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
@@ -199,12 +194,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
  			return isdv4Query(local, query, data);
 		}
 		else
-		{
-			xf86Msg(X_WARNING, "%s: unable to read ISDV4 %s data "
-				"after %d tries at (%d)\n", local->name, query,
-				 MAXTRY, common->wcmISDV4Speed);
 			return !Success;
-		}
 	}
 
 	/* Control data bit check */
@@ -221,14 +211,9 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		else
 		{
 			/* Reread the control data since it may fail the first time */
-			wcmWaitForTablet(local->fd, data, ISDV4_PKGLEN_TPCCTL);
+			wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
 			if ( !(data[0] & 0x40) )
-			{
-				xf86Msg(X_WARNING, "%s: ISDV4 control data "
-					"(%x) error in %s query\n",
-					local->name, data[0], query);
 				return !Success;
-			}
 		}
 	}
 
@@ -392,11 +377,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 static int isdv4StartTablet(LocalDevicePtr local)
 {
 	/* Tell the tablet to start sending coordinates */
-	if (!wcmWriteWait(local->fd, ISDV4_SAMPLING))
-	{
-		xf86Msg(X_ERROR, "%s: wcmWriteWait error: %s\n", local->name, strerror(errno));
+	if (!wcmWriteWait(local, ISDV4_SAMPLING))
 		return !Success;
-	}
 
 	return Success;
 }
@@ -404,12 +386,8 @@ static int isdv4StartTablet(LocalDevicePtr local)
 static int isdv4StopTablet(LocalDevicePtr local)
 {
 	/* Send stop command to the tablet */
-	if (!wcmWriteWait(local->fd, ISDV4_STOP))
-	{
-		xf86Msg(X_WARNING, "%s: wcmWriteWait ISDV4_STOP error : %s\n",
-			 local->name, strerror(errno));
+	if (!wcmWriteWait(local, ISDV4_STOP))
 		return !Success;
-	}
 
 	/* Wait 250 mSecs */
 	if (wcmWait(250))
@@ -589,23 +567,28 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
  *   send a request
  ****************************************************************************/
 
-static int wcmWriteWait(int fd, const char* request)
+static int wcmWriteWait(LocalDevicePtr local, const char* request)
 {
 	int len, maxtry = MAXTRY;
 
 	/* send request string */
 	do
 	{
-		len = xf86WriteSerial(fd, request, strlen(request));
+		len = xf86WriteSerial(local->fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			xf86Msg(X_ERROR, "Wacom wcmWriteWait error : %s", strerror(errno));
+			xf86Msg(X_ERROR, "%s: wcmWriteWait error : %s",
+					local->name, strerror(errno));
 			return 0;
 		}
 
 		maxtry--;
 
 	} while ((len <= 0) && maxtry);
+
+	if (!maxtry)
+		xf86Msg(X_WARNING, "%s: Failed to issue command '%s' "
+				   "after %d tries.\n", local->name, request, MAXTRY);
 
 	return maxtry;
 }
@@ -615,25 +598,30 @@ static int wcmWriteWait(int fd, const char* request)
  *   wait for tablet data
  ****************************************************************************/
 
-static int wcmWaitForTablet(int fd, char* answer, int size)
+static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
 {
 	int len, maxtry = MAXTRY;
 
 	/* Read size bytes of the answer */
 	do
 	{
-		if ((len = xf86WaitForInput(fd, 1000000)) > 0)
+		if ((len = xf86WaitForInput(local->fd, 1000000)) > 0)
 		{
-			len = xf86ReadSerial(fd, answer, size);
+			len = xf86ReadSerial(local->fd, answer, size);
 			if ((len == -1) && (errno != EAGAIN))
 			{
-				xf86Msg(X_ERROR, "Wacom xf86ReadSerial error : %s\n",
-						strerror(errno));
+				xf86Msg(X_ERROR, "%s: xf86ReadSerial error : %s\n",
+						local->name, strerror(errno));
 				return 0;
 			}
 		}
 		maxtry--;
 	} while ((len <= 0) && maxtry);
+
+	if (!maxtry)
+		xf86Msg(X_WARNING, "%s: Waited too long for answer "
+				   "(failed after %d tries).\n",
+				   local->name, MAXTRY);
 
 	return maxtry;
 }
