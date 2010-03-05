@@ -169,17 +169,15 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 {
-	int err;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
 	/* Send stop command to the tablet */
-	err = xf86WriteSerial(local->fd, ISDV4_STOP, strlen(ISDV4_STOP));
-	if (err == -1)
+	if (!wcmWriteWait(local->fd, ISDV4_STOP))
 	{
-		xf86Msg(X_WARNING, "%s: xf86WriteSerial ISDV4_STOP error : %s\n",
+		xf86Msg(X_WARNING, "%s: wcmWriteWait ISDV4_STOP error : %s\n",
 			 local->name, strerror(errno));
 		return !Success;
 	}
@@ -191,7 +189,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	/* Send query command to the tablet */
 	if (!wcmWriteWait(local->fd, query))
 	{
-		xf86Msg(X_WARNING, "%s: unable to xf86WriteSerial request %s "
+		xf86Msg(X_WARNING, "%s: unable to wcmWriteWait request %s "
 			"ISDV4 query command after %d tries\n", local->name,
 			 query, MAXTRY);
 		return !Success;
@@ -401,14 +399,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 static int isdv4StartTablet(LocalDevicePtr local)
 {
-	int err;
-
 	/* Tell the tablet to start sending coordinates */
-	err = xf86WriteSerial(local->fd, ISDV4_SAMPLING, (strlen(ISDV4_SAMPLING)));
-
-	if (err == -1)
+	if (!wcmWriteWait(local->fd, ISDV4_SAMPLING))
 	{
-		xf86Msg(X_ERROR, "%s: xf86WriteSerial error : %s\n", local->name, strerror(errno));
+		xf86Msg(X_ERROR, "%s: wcmWriteWait error: %s\n", local->name, strerror(errno));
 		return !Success;
 	}
 
