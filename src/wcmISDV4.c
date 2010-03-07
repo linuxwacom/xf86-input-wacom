@@ -21,10 +21,10 @@
 #include <config.h>
 #endif
 
-#include <linux/serial.h>
 #include "xf86Wacom.h"
 #include <xf86_OSproc.h>
 #include "wcmFilter.h"
+#include <linux/serial.h>
 
 #define WC_ISDV4_QUERY "*"       /* ISDV4 query command */
 #define WC_ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
