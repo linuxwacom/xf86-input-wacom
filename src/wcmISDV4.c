@@ -398,7 +398,6 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 
 	DBG(10, common, "\n");
 
-	data = common->buffer;
 	/* choose wcmPktLength if it is not an out-prox event */
 	if (data[0])
 		common->wcmPktLength = WACOM_PKGLEN_TPCPEN;
