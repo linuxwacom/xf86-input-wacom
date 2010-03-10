@@ -71,6 +71,24 @@ static int wcmWait(int t)
 }
 
 /*****************************************************************************
+ * wcmSkipInvalidBytes - returns the number of bytes to skip if the first
+ * byte of data does not denote a valid header byte.
+ * The ISDV protocol requires that the first byte of a new packet has the
+ * HEADER_BIT set and subsequent packets do not.
+ ****************************************************************************/
+static int wcmSkipInvalidBytes(const unsigned char* data, int len)
+{
+	int n = 0;
+
+	while(n < len && !(data[n] & HEADER_BIT))
+		n++;
+
+	return n;
+}
+
+
+
+/*****************************************************************************
  * wcmSerialValidate -- validates serial packet; returns 0 on success,
  *   positive number of bytes to skip on error.
  ****************************************************************************/
@@ -397,6 +415,9 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	int n, cur_type, channel = 0;
 
 	DBG(10, common, "\n");
+
+	if ((n = wcmSkipInvalidBytes(data, len)) > 0)
+		return n;
 
 	/* choose wcmPktLength if it is not an out-prox event */
 	if (data[0])
