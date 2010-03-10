@@ -39,7 +39,7 @@ static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
 static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
-static int wcmSerialValidate(WacomCommonPtr common, const unsigned char* data);
+static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
 static int wcmWaitForTablet(int fd, char * data, int size);
 static int wcmWriteWait(int fd, const char* request);
 
@@ -93,27 +93,37 @@ static int wcmSkipInvalidBytes(const unsigned char* data, int len)
  *   positive number of bytes to skip on error.
  ****************************************************************************/
 
-static int wcmSerialValidate(WacomCommonPtr common, const unsigned char* data)
+static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data)
 {
-	int i, bad = 0;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
-	/* check magic */
-	for (i=0; i<common->wcmPktLength; ++i)
+	int n;
+
+	/* First byte must have header bit set, if not, skip until next
+	 * header byte */
+	if (!(data[0] & HEADER_BIT))
 	{
-		if ( ((i==0) && !(data[i] & HEADER_BIT)) || 
-				((i!=0) && (data[i] & HEADER_BIT)) )
-		{
-			bad = 1;
-			if (i!=0 && (data[i] & HEADER_BIT)) {
-				xf86Msg(X_WARNING, "wcmSerialValidate: "
-					"bad magic at %d v=%x l=%d\n", i,
-					data[i], common->wcmPktLength);
-				return i;
-			}
-		}
+		int n = wcmSkipInvalidBytes(data, common->wcmPktLength);
+		xf86Msg(X_WARNING,
+			"%s: missing header bit. skipping %d bytes.\n",
+			local->name, n);
+		return n;
 	}
-	if (bad) return common->wcmPktLength;
-	else return 0;
+
+	/* Remainder must _not_ have header bit set, if not, skip to first
+	 * header byte. wcmSkipInvalidBytes gives us the number of bytes
+	 * without the header bit set, so use the next one.
+	 */
+	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
+	n += 1; /* the header byte we already checked */
+	if (n != common->wcmPktLength) {
+		xf86Msg(X_WARNING, "%s: bad data at %d v=%x l=%d\n", local->name,
+			n, data[n], common->wcmPktLength);
+		return n;
+	}
+
+	return 0;
 }
 
 /*****************************************************************************
@@ -461,7 +471,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	/* Coordinate data bit check */
 	if (data[0] & 0x40) /* control data */
 		return common->wcmPktLength;
-	else if ((n = wcmSerialValidate(common,data)) > 0)
+	else if ((n = wcmSerialValidate(local,data)) > 0)
 		return n;
 
 	/* pick up where we left off, minus relative values */
