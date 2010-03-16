@@ -44,7 +44,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version);
 int usbWcmGetRanges(LocalDevicePtr local);
-static int usbParse(LocalDevicePtr local, const unsigned char* data);
+static int usbParse(LocalDevicePtr local, const unsigned char* data, int len);
 static int usbDetectConfig(LocalDevicePtr local);
 static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event);
@@ -668,10 +668,13 @@ static int usbDetectConfig(LocalDevicePtr local)
 	return TRUE;
 }
 
-static int usbParse(LocalDevicePtr local, const unsigned char* data)
+static int usbParse(LocalDevicePtr local, const unsigned char* data, int len)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+
+	if (len < sizeof(struct input_event))
+		return 0;
 
 	usbParseEvent(local, (const struct input_event*)data);
 	return common->wcmPktLength;

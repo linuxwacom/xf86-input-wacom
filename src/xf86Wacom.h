@@ -81,11 +81,11 @@
 #define XI_TOUCH  "TOUCH"       /* X device name for the touch */
 
 /* packet length for individual models */
-#define WACOM_PKGLEN_TOUCH93    5
-#define WACOM_PKGLEN_TOUCH9A    7
-#define WACOM_PKGLEN_TPCPEN     9
-#define WACOM_PKGLEN_TPCCTL     11
-#define WACOM_PKGLEN_TOUCH2FG   13
+#define ISDV4_PKGLEN_TOUCH93    5
+#define ISDV4_PKGLEN_TOUCH9A    7
+#define ISDV4_PKGLEN_TPCPEN     9
+#define ISDV4_PKGLEN_TPCCTL     11
+#define ISDV4_PKGLEN_TOUCH2FG   13
 
 /******************************************************************************
  * WacomModule - all globals are packed in a single structure to keep the
