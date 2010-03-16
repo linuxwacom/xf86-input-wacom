@@ -1967,7 +1967,7 @@ int main (int argc, char **argv)
 		{"help", 0, NULL, 0},
 		{"verbose", 0, NULL, 0},
 		{"version", 0, NULL, 0},
-		{"display", 1, (int*)display, 0},
+		{"display", 1, NULL, 'd'},
 		{"shell", 0, NULL, 0},
 		{"xconf", 0, NULL, 0},
 		{"list", 0, NULL, 0},
