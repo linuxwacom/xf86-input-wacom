@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2009 - 2010 by Ping Cheng, Wacom. <pingc@wacom.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
