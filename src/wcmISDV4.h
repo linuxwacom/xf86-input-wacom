@@ -20,6 +20,17 @@
 #ifndef WCMISDV4_H
 #define WCMISDV4_H
 
+/* packet length for individual models */
+#define ISDV4_PKGLEN_TOUCH93    5
+#define ISDV4_PKGLEN_TOUCH9A    7
+#define ISDV4_PKGLEN_TPCPEN     9
+#define ISDV4_PKGLEN_TPCCTL     11
+#define ISDV4_PKGLEN_TOUCH2FG   13
+
+#define HEADER_BIT      0x80
+#define CONTROL_BIT     0x40
+#define DATA_ID_MASK    0x3F
+
 /* ISDV4 protocol parsing structs. */
 
 /* Query reply data */

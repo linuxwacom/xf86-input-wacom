@@ -39,10 +39,6 @@
 #define PROXOUT_INTUOS_DISTANCE		10
 #define PROXOUT_GRAPHIRE_DISTANCE	42
 
-#define HEADER_BIT      0x80
-#define CONTROL_BIT     0x40
-#define DATA_ID_MASK    0x3F
-
 #ifndef BTN_TOOL_DOUBLETAP
 #define BTN_TOOL_DOUBLETAP 0x14d
 #endif
