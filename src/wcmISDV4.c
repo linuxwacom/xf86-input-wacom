@@ -577,7 +577,7 @@ static int wcmWriteWait(LocalDevicePtr local, const char* request)
 		len = xf86WriteSerial(local->fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			xf86Msg(X_ERROR, "%s: wcmWriteWait error : %s",
+			xf86Msg(X_ERROR, "%s: wcmWriteWait error : %s\n",
 					local->name, strerror(errno));
 			return 0;
 		}
