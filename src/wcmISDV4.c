@@ -398,6 +398,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			common->wcmMaxTouchY, common->wcmTouchResolX,
 			common->wcmTouchResolY);
 	}
+
+	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
+
 	return ret;
 }
 
