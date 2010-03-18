@@ -30,6 +30,7 @@
 #define HEADER_BIT      0x80
 #define CONTROL_BIT     0x40
 #define DATA_ID_MASK    0x3F
+#define TOUCH_CONTROL_BIT 0x10
 
 /* ISDV4 protocol parsing structs. */
 
@@ -44,7 +45,6 @@ typedef struct {
 	uint16_t version;
 } ISDV4QueryReply;
 
-
 /* Touch Query reply data */
 typedef struct {
 	uint8_t data_id;	/* always 01H */
@@ -55,6 +55,33 @@ typedef struct {
 	uint8_t capacity_resolution;
 	uint16_t version;
 } ISDV4TouchQueryReply;
+
+/* Touch Data format. Note that capacity and finger2 are only set for some
+ * devices (0 on all others) */
+typedef struct {
+	uint8_t status;		/* touch down/up */
+	uint16_t x;
+	uint16_t y;
+	uint16_t capacity;
+	struct {
+		uint8_t status;		/* touch down/up */
+		uint16_t x;
+		uint16_t y;
+	} finger2;
+} ISDV4TouchData;
+
+/* Coordinate data format */
+typedef struct {
+	uint8_t proximity;	/* in proximity? */
+	uint8_t tip;		/* tip/eraser pressed? */
+	uint8_t side;		/* side switch pressed? */
+	uint8_t eraser;		/* eraser pressed? */
+	uint16_t x;
+	uint16_t y;
+	uint16_t pressure;
+	uint8_t tilt_x;
+	uint8_t tilt_y;
+} ISDV4CoordinateData;
 
 #endif /* WCMISDV4_H */
 

@@ -50,6 +50,11 @@ static inline int isdv4ParseQuery(const char *buffer, const size_t len,
 static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
 					ISDV4TouchQueryReply *reply);
 
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t len,
+				      const size_t pktlen, ISDV4TouchData *touchdata);
+
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+					   ISDV4CoordinateData *coord);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -450,7 +455,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 		return 0;
 
 	/* determine the type of message (touch or stylus) */
-	if (data[0] & 0x10) /* a touch data */
+	if (data[0] & TOUCH_CONTROL_BIT) /* a touch data */
 	{
 		if ((last->device_id != TOUCH_DEVICE_ID && last->device_id &&
 				 last->proximity ) || !common->wcmTouch)
@@ -472,7 +477,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	}
 
 	/* Coordinate data bit check */
-	if (data[0] & 0x40) /* control data */
+	if (data[0] & CONTROL_BIT) /* control data */
 		return common->wcmPktLength;
 	else if ((n = wcmSerialValidate(local,data)) > 0)
 		return n;
@@ -483,20 +488,29 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 
 	if (common->wcmPktLength != ISDV4_PKGLEN_TPCPEN) /* a touch */
 	{
-		ds->x = (((int)data[1]) << 7) | ((int)data[2]);
-		ds->y = (((int)data[3]) << 7) | ((int)data[4]);
-		if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH9A)
+		ISDV4TouchData touchdata;
+		int rc;
+
+		rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
+		if (rc == -1)
 		{
-			ds->capacity = (((int)data[5]) << 7) | ((int)data[6]);
+			xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
+				local->name);
+			return 0;
 		}
-		ds->buttons = ds->proximity = data[0] & 0x01;
+
+
+		ds->x = touchdata.x;
+		ds->y = touchdata.y;
+		ds->capacity = touchdata.capacity;
+		ds->buttons = ds->proximity = touchdata.status;
 		ds->device_type = TOUCH_ID;
 		ds->device_id = TOUCH_DEVICE_ID;
 
 		if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
 		{
-			if ((data[0] & 0x02) || (!(data[0] & 0x02) &&
-					 lastTemp->proximity))
+			if (touchdata.finger2.status ||
+			    (!touchdata.finger2.status && lastTemp->proximity))
 			{
 				/* Got 2FGT. Send the first one if received */
 				if (ds->proximity || (!ds->proximity &&
@@ -512,11 +526,11 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 				channel = 1;
 				ds = &common->wcmChannel[channel].work;
 				RESET_RELATIVE(*ds);
-				ds->x = (((int)data[7]) << 7) | ((int)data[8]);
-				ds->y = (((int)data[9]) << 7) | ((int)data[10]);
+				ds->x = touchdata.finger2.x;
+				ds->y = touchdata.finger2.y;
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = data[0] & 0x02;
+				ds->proximity = touchdata.finger2.status;
 				/* time stamp for 2FGT gesture events */
 				if ((ds->proximity && !lastTemp->proximity) ||
 					    (!ds->proximity && lastTemp->proximity))
@@ -529,19 +543,28 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	}
 	else
 	{
-		ds->proximity = (data[0] & 0x20);
+		int rc;
+		ISDV4CoordinateData coord;
+
+		rc = isdv4ParseCoordinateData(data, ISDV4_PKGLEN_TPCPEN, &coord);
+
+		if (rc == -1)
+		{
+			xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", local->name);
+			return 0;
+		}
+
+		ds->proximity = coord.proximity;
 
 		/* x and y in "normal" orientetion (wide length is X) */
-		ds->x = (((int)data[6] & 0x60) >> 5) | ((int)data[2] << 2) |
-			((int)data[1] << 9);
-		ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
-			((int)data[3] << 9);
+		ds->x = coord.x;
+		ds->y = coord.y;
 
 		/* pressure */
-		ds->pressure = (((data[6] & 0x07) << 7) | data[5] );
+		ds->pressure = coord.pressure;
 
 		/* buttons */
-		ds->buttons = (data[0] & 0x07);
+		ds->buttons = coord.tip | (coord.side << 1) | (coord.eraser << 2);
 
 		/* check which device we have */
 		cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
@@ -781,4 +804,69 @@ static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
 
 	return ISDV4_PKGLEN_TPCCTL;
 }
+
+/* pktlen defines what touch type we parse */
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
+				      const size_t pktlen, ISDV4TouchData *touchdata)
+{
+	int header, touch;
+
+	if (!touchdata || buff_len < pktlen)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	touch = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || touch != 1)
+		return -1;
+
+	memset(touchdata, 0, sizeof(*touchdata));
+
+	touchdata->status = buffer[0] & 0x1;
+	/* FIXME: big endian */
+	touchdata->x = buffer[1] << 7 | buffer[2];
+	touchdata->y = buffer[3] << 7 | buffer[4];
+	if (pktlen == ISDV4_PKGLEN_TOUCH9A)
+		touchdata->capacity = buffer[5] << 7 | buffer[6];
+
+	if (pktlen == ISDV4_PKGLEN_TOUCH2FG)
+	{
+		touchdata->finger2.x = buffer[7] << 7 | buffer[8];
+		touchdata->finger2.y = buffer[9] << 7 | buffer[10];
+		touchdata->finger2.status = !!(buffer[0] & 0x2);
+		/* FIXME: is there a fg2 capacity? */
+	}
+
+	return pktlen;
+}
+
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+					   ISDV4CoordinateData *coord)
+{
+	int header, control;
+
+	if (!coord || len < ISDV4_PKGLEN_TPCPEN)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || control != 0)
+		return -1;
+
+	coord->proximity = (buffer[0] >> 5) & 0x1;
+	coord->tip = buffer[0] & 0x1;
+	coord->side = (buffer[0] >> 1) & 0x1;
+	coord->eraser = (buffer[0] >> 2) & 0x1;
+	/* FIXME: big endian */
+	coord->x = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
+	coord->y = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
+
+	coord->pressure = ((buffer[6] & 0x7) << 7) | buffer[5];
+	coord->tilt_x = buffer[7];
+	coord->tilt_y = buffer[8];
+
+	return ISDV4_PKGLEN_TPCPEN;
+}
+
 /* vim: set noexpandtab shiftwidth=8: */
