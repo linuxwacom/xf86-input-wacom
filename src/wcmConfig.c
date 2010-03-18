@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2009 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -154,7 +154,7 @@ error:
 	return 0;
 }
 
-static int wcmSetType(LocalDevicePtr local, const char *type, int tablet_id)
+static int wcmSetType(LocalDevicePtr local, const char *type)
 {
 	WacomDevicePtr priv = local->private;
 
@@ -174,7 +174,7 @@ static int wcmSetType(LocalDevicePtr local, const char *type, int tablet_id)
 	{
 		int flags = TOUCH_ID;
 
-		if (tablet_id < 0xd0 || tablet_id > 0xd3)
+		if (priv->common->tablet_id < 0xd0 || priv->common->tablet_id > 0xd3)
 			flags |= ABSOLUTE_FLAG;
 
 		priv->flags = flags;
@@ -333,8 +333,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	const char*	type;
 	char*		device;
 	int		need_hotplug = 0;
-	unsigned long   keys[NBITS(KEY_MAX)];
-	int		tablet_id = 0;
 
 	gWacomModule.wcmDrv = drv;
 
@@ -383,37 +381,32 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto SetupProc_fail;
 	}
 
-	/* initialize supported keys */
-	wcmDeviceTypeKeys(local, keys, &tablet_id);
-	need_hotplug = wcmNeedAutoHotplug(local, &type, keys);
+	priv = (WacomDevicePtr) local->private;
+	common = priv->common;
+	priv->name = local->name;
+	common->wcmDevice = device;
+
+	/* check if this is the first tool on the port */
+	if (!wcmMatchDevice(local))
+		/* initialize supported keys with the first tool on the port */
+		wcmDeviceTypeKeys(local);
+
+	need_hotplug = wcmNeedAutoHotplug(local, &type);
 
 	/* check if the type is valid for those don't need hotplug */
-	if(!need_hotplug && !wcmIsAValidType(type, keys))
+	if(!need_hotplug && !wcmIsAValidType(local, type))
 		goto SetupProc_fail;
 
 	/* check if the same device file has been added already */
 	if (wcmIsDuplicate(device, local))
 		goto SetupProc_fail;
 
-	if (!wcmSetType(local, type, tablet_id))
+	if (!wcmSetType(local, type))
 		goto SetupProc_fail;
-
-	priv = (WacomDevicePtr) local->private;
-	priv->name = local->name;
-	common = priv->common;
-
-	common->wcmDevice = device;
-
-	/* Hardware specific initialization relies on tablet_id */
-	common->tablet_id = tablet_id;
-
-	/* Lookup to see if there is another wacom device sharing the same port */
-	if (wcmMatchDevice(local))
-		common = priv->common;
 
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
-	if (!wcmParseOptions(local, keys))
+	if (!wcmParseOptions(local))
 		goto SetupProc_fail;
 
 	/* mark the device configured */
@@ -422,7 +415,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(local, keys);
+		wcmHotplugOthers(local);
 	}
 
 	if (local->fd != -1)
@@ -434,6 +427,9 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	return (local);
 
 SetupProc_fail:
+	/* restart the device list from the next one */
+	if (common && priv)
+		common->wcmDevices = priv->next;
 	xfree(common);
 	xfree(priv);
 	if (local)

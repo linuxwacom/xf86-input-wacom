@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2010 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -352,6 +352,7 @@ struct _WacomCommonRec
 	int tablet_id;		     /* USB tablet ID */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
+	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet max X value */

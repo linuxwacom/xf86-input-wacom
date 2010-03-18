@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2010 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -633,12 +633,14 @@ static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
  * device ID. This matching only works for wacom devices (serial ID of
  * WACf), all others are simply assumed to be pen + erasor.
  */
-int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys)
+int isdv4ProbeKeys(LocalDevicePtr local)
 {
 	int id, i;
 	int tablet_id = 0;
 	struct serial_struct tmp;
 	const char *device = xf86SetStrOption(local->options, "Device", NULL);
+	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr  common = priv->common;
 
 	if (ioctl(local->fd, TIOCGSERIAL, &tmp) < 0)
 		return 0;
@@ -667,23 +669,23 @@ int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys)
 
 	/* we have tried memset. it doesn't work */
 	for (i=0; i<NBITS(KEY_MAX); i++)
-		keys[i] = 0;
+		common->wcmKeys[i] = 0;
 
 	/* default to penabled */
-	keys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
-	keys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
+	common->wcmKeys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
+	common->wcmKeys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
 
 	/* id < 0x008 are only penabled */
 	if (id > 0x007)
-		keys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
+		common->wcmKeys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
 	if (id > 0x0a)
-		keys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
+		common->wcmKeys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
 
 	/* no pen 2FGT */
 	if (id == 0x010)
 	{
-		keys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
-		keys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
+		common->wcmKeys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
+		common->wcmKeys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
 	}
 
 	/* 0x9a and 0x9f are only detected by communicating

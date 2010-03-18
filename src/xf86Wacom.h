@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
+ * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -148,18 +148,18 @@ Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 void wcmMappingFactor(LocalDevicePtr local);
 
 /* validation */
-extern Bool wcmIsAValidType(const char* type, unsigned long* keys);
+extern Bool wcmIsAValidType(LocalDevicePtr local, const char* type);
 extern Bool wcmIsWacomDevice (char* fname);
 extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
-extern int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys, int* tablet_id);
+extern int wcmDeviceTypeKeys(LocalDevicePtr local);
 
 /* hotplug */
-extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type, unsigned long* keys);
-extern void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys);
+extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
+extern void wcmHotplugOthers(LocalDevicePtr local);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 
 /* setup */
-extern int wcmParseOptions(LocalDevicePtr local, unsigned long* keys);
+extern int wcmParseOptions(LocalDevicePtr local);
 extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void wcmInitialScreens(LocalDevicePtr local);
 extern void wcmInitialScreens(LocalDevicePtr local);
@@ -187,8 +187,8 @@ extern void InitWcmDeviceProperties(LocalDevicePtr local);
 #endif
 
 /* Device probing */
-int isdv4ProbeKeys(LocalDevicePtr local, unsigned long *keys);
-int usbProbeKeys(LocalDevicePtr local, unsigned long *keys);
+int isdv4ProbeKeys(LocalDevicePtr local);
+int usbProbeKeys(LocalDevicePtr local);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

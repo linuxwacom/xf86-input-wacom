@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2009 - 2010 by Ping Cheng, Wacom. <pingc@wacom.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -134,9 +134,11 @@ static struct
 };
 
 /* validate tool type for device/product */
-Bool wcmIsAValidType(const char* type, unsigned long* keys)
+Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
 {
 	int j, ret = FALSE;
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
 
 	if (!type)
 		return FALSE;
@@ -145,7 +147,7 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
 		if (!strcmp(wcmType[j].type, type))
-			if (ISBITSET (keys, wcmType[j].tool))
+			if (ISBITSET (common->wcmKeys, wcmType[j].tool))
 			{
 				ret = TRUE;
 				break;
@@ -155,15 +157,15 @@ Bool wcmIsAValidType(const char* type, unsigned long* keys)
 }
 
 /* Choose valid types according to device ID. */
-int wcmDeviceTypeKeys(LocalDevicePtr local, unsigned long* keys,
-		      int* tablet_id)
+int wcmDeviceTypeKeys(LocalDevicePtr local)
 {
 	int ret = 1;
+	WacomDevicePtr priv = local->private;
 
 	/* serial ISDV4 devices */
-	*tablet_id = isdv4ProbeKeys(local, keys);
-	if (!*tablet_id) /* USB devices */
-		*tablet_id = usbProbeKeys(local, keys);
+	priv->common->tablet_id = isdv4ProbeKeys(local);
+	if (!priv->common->tablet_id) /* USB devices */
+		priv->common->tablet_id = usbProbeKeys(local);
 
 	return ret;
 }
@@ -235,7 +237,7 @@ static void wcmHotplug(LocalDevicePtr local, const char *type)
 	wcmFreeInputOpts(input_options);
 }
 
-void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys)
+void wcmHotplugOthers(LocalDevicePtr local)
 {
 	int i, skip = 1;
 	char*		device;
@@ -246,7 +248,7 @@ void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys)
          * need to start at the second one */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(wcmType[i].type, keys))
+		if (wcmIsAValidType(local, wcmType[i].type))
 		{
 			if (skip)
 				skip = 0;
@@ -266,8 +268,7 @@ void wcmHotplugOthers(LocalDevicePtr local, unsigned long* keys)
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
  */
-int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
-		unsigned long* keys)
+int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 {
 	char *source = xf86CheckStrOption(local->options, "_source", "");
 	int i;
@@ -282,7 +283,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
 	 * for our device */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(wcmType[i].type, keys))
+		if (wcmIsAValidType(local, wcmType[i].type))
 		{
 			*type = strdup(wcmType[i].type);
 			break;
@@ -301,7 +302,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type,
 	return 1;
 }
 
-int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
+int wcmParseOptions(LocalDevicePtr local)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
@@ -493,7 +494,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 							 common->wcmTPCButtonDefault);
 
 	/* a single touch device */
-	if (ISBITSET (keys, BTN_TOOL_DOUBLETAP))
+	if (ISBITSET (common->wcmKeys, BTN_TOOL_DOUBLETAP))
 	{
 		/* TouchDefault was off for all devices
 		 * except when touch is supported */
@@ -501,7 +502,7 @@ int wcmParseOptions(LocalDevicePtr local, unsigned long* keys)
 	}
 
 	/* 2FG touch device */
-	if (ISBITSET (keys, BTN_TOOL_TRIPLETAP))
+	if (ISBITSET (common->wcmKeys, BTN_TOOL_TRIPLETAP))
 	{
 		/* GestureDefault was off for all devices
 		 * except when multi-touch is supported */

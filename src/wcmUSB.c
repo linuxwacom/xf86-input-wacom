@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2009 by Ping Cheng, Wacom Technology. <pingc@wacom.com>		
+ * Copyright 2002-2010 by Ping Cheng, Wacom Technology. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -429,7 +429,6 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 {
 	int i;
 	struct input_id sID;
-	unsigned long keys[NBITS(KEY_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
 
@@ -439,13 +438,6 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	/* fetch vendor, product, and model name */
 	ioctl(local->fd, EVIOCGID, &sID);
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
-
-	/* retrieve tool type, device type and buttons from the kernel */
-	if (ioctl(local->fd, EVIOCGBIT(EV_KEY,sizeof(keys)),keys) < 0)
-	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl key bits.\n", local->name);
-		return FALSE;
-	}
 
 	/* vendor is wacom */
 	if (sID.vendor == WACOM_VENDOR_ID)
@@ -482,18 +474,18 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	 * BTN_LEFT and BTN_RIGHT, which are always fixed. */
 	common->npadkeys = 0;
 	for (i = 0; i < sizeof (padkey_codes) / sizeof (padkey_codes [0]); i++)
-		if (ISBITSET (keys, padkey_codes [i]))
+		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
 			common->padkey_code [common->npadkeys++] = padkey_codes [i];
 
-	if (ISBITSET (keys, BTN_TASK))
+	if (ISBITSET (common->wcmKeys, BTN_TASK))
 		common->nbuttons = 10;
-	else if (ISBITSET (keys, BTN_BACK))
+	else if (ISBITSET (common->wcmKeys, BTN_BACK))
 		common->nbuttons = 9;
-	else if (ISBITSET (keys, BTN_FORWARD))
+	else if (ISBITSET (common->wcmKeys, BTN_FORWARD))
 		common->nbuttons = 8;
-	else if (ISBITSET (keys, BTN_EXTRA))
+	else if (ISBITSET (common->wcmKeys, BTN_EXTRA))
 		common->nbuttons = 7;
-	else if (ISBITSET (keys, BTN_SIDE))
+	else if (ISBITSET (common->wcmKeys, BTN_SIDE))
 		common->nbuttons = 6;
 	else
 		common->nbuttons = 5;
@@ -1066,12 +1058,14 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
  * on success or 0 on failure.
  * For USB devices, we simply copy the information the kernel gives us.
  */
-int usbProbeKeys(LocalDevicePtr local, unsigned long *keys)
+int usbProbeKeys(LocalDevicePtr local)
 {
 	struct input_id wacom_id;
+	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr  common = priv->common;
 
 	if (ioctl(local->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
-						* NBITS(KEY_MAX))), keys) < 0)
+						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
 		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
 				"ioctl USB key bits.\n", local->name);
