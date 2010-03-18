@@ -1089,12 +1089,19 @@ static void wcmDevReadInput(LocalDevicePtr local)
 		wcmReadPacket(local);
 	}
 
+#ifdef DEBUG
 	/* report how well we're doing */
-	if (loop >= MAX_READ_LOOPS)
-		DBG(1, priv, "Can't keep up!!!\n");
-	else if (loop > 0)
-		DBG(10, priv, "Read (%d)\n",loop);
-}					
+	if (loop > 0)
+	{
+		WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+		if (loop >= MAX_READ_LOOPS)
+			DBG(1, priv, "Can't keep up!!!\n");
+		else
+			DBG(10, priv, "Read (%d)\n",loop);
+	}
+#endif
+}
 
 void wcmReadPacket(LocalDevicePtr local)
 {
