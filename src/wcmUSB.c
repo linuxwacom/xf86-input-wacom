@@ -528,16 +528,14 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
-	int is_touch;
+	int is_touch = IsTouch(priv);
 
-	is_touch = IsTouch(priv);
-	/* Bamboo P&T have both Touch and Pad types on same
-	 * device.  Its normal for this to be called for pad
-	 * case and logic requires it to act same as Touch
-	 * case.
+	/* Devices such as Bamboo P&T may have Pad data reported in the same
+	 * packet as Touch.  It's normal for Pad to be called first but logic
+	 * requires it to act the same as Touch.
 	 */
-	if (IsPad(priv) &&
-	    common->tablet_id >= 0xd0 && common->tablet_id <= 0xd3)
+	if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP)
+	     && ISBITSET(common->wcmKeys, BTN_TOOL_FINGER))
 		is_touch = 1;
 
 	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
