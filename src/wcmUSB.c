@@ -981,12 +981,18 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 				if ((ds->proximity && !dslast.proximity) ||
 					    (!ds->proximity && dslast.proximity))
 					ds->sample = (int)GetTimeInMillis();
-				/* left button is always pressed for touch without capacity
+				/* left button is always pressed for
+				 * touchscreen without capacity
 				 * when the first finger touch event received.
-				 * For touch with capacity, left button event will be decided
-				 * in wcmCommon.c by capacity threshold
+				 * For touchscreen with capacity, left button
+				 * event will be decided
+				 * in wcmCommon.c by capacity threshold.
+				 * Touchpads should not have button
+				 * press.
 				 */
-				if (common->wcmCapacityDefault < 0)
+				if (common->wcmCapacityDefault < 0 &&
+				    (common->tablet_id < 0xd0 ||
+				     common->tablet_id > 0xd3))
 					MOD_BUTTONS (0, event->value);
 			}
 			else if (event->code == BTN_TOOL_TRIPLETAP)
