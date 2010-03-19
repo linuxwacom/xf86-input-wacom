@@ -25,6 +25,7 @@
 #include <xf86_OSproc.h>
 #include "wcmFilter.h"
 #include <linux/serial.h>
+#include "wcmISDV4.h"
 
 #define ISDV4_QUERY "*"       /* ISDV4 query command */
 #define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
@@ -44,6 +45,16 @@ static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
 static int wcmWaitForTablet(LocalDevicePtr local, char * data, int size);
 static int wcmWriteWait(LocalDevicePtr local, const char* request);
 
+static inline int isdv4ParseQuery(const char *buffer, const size_t len,
+				  ISDV4QueryReply *reply);
+static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
+					ISDV4TouchQueryReply *reply);
+
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t len,
+				      const size_t pktlen, ISDV4TouchData *touchdata);
+
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+					   ISDV4CoordinateData *coord);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -260,20 +271,28 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	ret = isdv4Query(local, ISDV4_QUERY, data);
 	if (ret == Success)
 	{
-		/* transducer data */
-		common->wcmMaxZ = ( data[5] | ((data[6] & 0x07) << 7) );
-		common->wcmMaxX = ( (data[1] << 9) | 
-			(data[2] << 2) | ( (data[6] & 0x60) >> 5) );      
-		common->wcmMaxY = ( (data[3] << 9) | (data[4] << 2 ) 
-			| ( (data[6] & 0x18) >> 3) );
-		if (data[7] && data[8])
+		ISDV4QueryReply reply;
+		int rc;
+
+		rc = isdv4ParseQuery(data, sizeof(data), &reply);
+		if (rc <= 0)
 		{
-			common->wcmMaxtiltX = data[7] + 1;
-			common->wcmMaxtiltY = data[8] + 1;
+			xf86Msg(X_ERROR, "Error while parsing ISDV4 query.\n");
+			return BadAlloc;
+		}
+
+		/* transducer data */
+		common->wcmMaxZ = reply.pressure_max;
+		common->wcmMaxX = reply.x_max;
+		common->wcmMaxY = reply.y_max;
+		if (reply.tilt_x_max && reply.tilt_y_max)
+		{
+			common->wcmMaxtiltX = reply.tilt_x_max;
+			common->wcmMaxtiltY = reply.tilt_y_max;
 			common->wcmFlags |= TILT_ENABLED_FLAG;
 		}
-			
-		common->wcmVersion = ( data[10] | (data[9] << 7) );
+
+		common->wcmVersion = reply.version;
 
 		/* default to no pen 2FGT if size is undefined */
 		if (!common->wcmMaxX || !common->wcmMaxY)
@@ -289,7 +308,17 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	common->wcmISDV4Speed = 38400;
 	if (isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
 	{
-		switch (data[2] & 0x07)
+		ISDV4TouchQueryReply reply;
+		int rc;
+
+		rc = isdv4ParseTouchQuery(data, sizeof(data), &reply);
+		if (rc <= 0)
+		{
+			xf86Msg(X_ERROR, "Error while parsing ISDV4 touch query.\n");
+			return BadAlloc;
+		}
+
+		switch (reply.sensor_id)
 		{
 			case 0x00: /* resistive touch & pen */
 				common->wcmPktLength = ISDV4_PKGLEN_TOUCH93;
@@ -319,7 +348,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				break;
 		}
 
-		switch(data[0] & 0x3f)
+		switch(reply.data_id)
 		{
 				/* single finger touch */
 			case 0x01:
@@ -348,21 +377,19 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		}
 
 		/* don't overwrite the default */
-		if (((data[2]& 0x78) | data[3] | data[4] | data[5] | data[6]))
+		if (reply.x_max | reply.y_max)
 		{
-			common->wcmMaxTouchX = ((data[3] << 9) |
-				 (data[4] << 2) | ((data[2] & 0x60) >> 5));
-			common->wcmMaxTouchY = ((data[5] << 9) |
-				 (data[6] << 2) | ((data[2] & 0x18) >> 3));
+			common->wcmMaxTouchX = reply.x_max;
+			common->wcmMaxTouchY = reply.y_max;
 		}
-		else if (data[1])
+		else if (reply.panel_resolution)
 			common->wcmMaxTouchX = common->wcmMaxTouchY =
-				 (int)(1 << data[1]);
+				(1 << reply.panel_resolution);
 
-		if (data[1])
+		if (reply.panel_resolution)
 			common->wcmTouchResolX = common->wcmTouchResolY = 10;
 
-		common->wcmVersion = ( data[10] | (data[9] << 7) );
+		common->wcmVersion = reply.version;
 		ret = Success;
 
 		DBG(2, priv, "touch speed=%d "
@@ -371,6 +398,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			common->wcmMaxTouchY, common->wcmTouchResolX,
 			common->wcmTouchResolY);
 	}
+
+	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
+
 	return ret;
 }
 
@@ -428,7 +458,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 		return 0;
 
 	/* determine the type of message (touch or stylus) */
-	if (data[0] & 0x10) /* a touch data */
+	if (data[0] & TOUCH_CONTROL_BIT) /* a touch data */
 	{
 		if ((last->device_id != TOUCH_DEVICE_ID && last->device_id &&
 				 last->proximity ) || !common->wcmTouch)
@@ -450,7 +480,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	}
 
 	/* Coordinate data bit check */
-	if (data[0] & 0x40) /* control data */
+	if (data[0] & CONTROL_BIT) /* control data */
 		return common->wcmPktLength;
 	else if ((n = wcmSerialValidate(local,data)) > 0)
 		return n;
@@ -461,20 +491,29 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 
 	if (common->wcmPktLength != ISDV4_PKGLEN_TPCPEN) /* a touch */
 	{
-		ds->x = (((int)data[1]) << 7) | ((int)data[2]);
-		ds->y = (((int)data[3]) << 7) | ((int)data[4]);
-		if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH9A)
+		ISDV4TouchData touchdata;
+		int rc;
+
+		rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
+		if (rc == -1)
 		{
-			ds->capacity = (((int)data[5]) << 7) | ((int)data[6]);
+			xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
+				local->name);
+			return 0;
 		}
-		ds->buttons = ds->proximity = data[0] & 0x01;
+
+
+		ds->x = touchdata.x;
+		ds->y = touchdata.y;
+		ds->capacity = touchdata.capacity;
+		ds->buttons = ds->proximity = touchdata.status;
 		ds->device_type = TOUCH_ID;
 		ds->device_id = TOUCH_DEVICE_ID;
 
 		if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
 		{
-			if ((data[0] & 0x02) || (!(data[0] & 0x02) &&
-					 lastTemp->proximity))
+			if (touchdata.finger2.status ||
+			    (!touchdata.finger2.status && lastTemp->proximity))
 			{
 				/* Got 2FGT. Send the first one if received */
 				if (ds->proximity || (!ds->proximity &&
@@ -490,11 +529,11 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 				channel = 1;
 				ds = &common->wcmChannel[channel].work;
 				RESET_RELATIVE(*ds);
-				ds->x = (((int)data[7]) << 7) | ((int)data[8]);
-				ds->y = (((int)data[9]) << 7) | ((int)data[10]);
+				ds->x = touchdata.finger2.x;
+				ds->y = touchdata.finger2.y;
 				ds->device_type = TOUCH_ID;
 				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = data[0] & 0x02;
+				ds->proximity = touchdata.finger2.status;
 				/* time stamp for 2FGT gesture events */
 				if ((ds->proximity && !lastTemp->proximity) ||
 					    (!ds->proximity && lastTemp->proximity))
@@ -507,19 +546,28 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	}
 	else
 	{
-		ds->proximity = (data[0] & 0x20);
+		int rc;
+		ISDV4CoordinateData coord;
+
+		rc = isdv4ParseCoordinateData(data, ISDV4_PKGLEN_TPCPEN, &coord);
+
+		if (rc == -1)
+		{
+			xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", local->name);
+			return 0;
+		}
+
+		ds->proximity = coord.proximity;
 
 		/* x and y in "normal" orientetion (wide length is X) */
-		ds->x = (((int)data[6] & 0x60) >> 5) | ((int)data[2] << 2) |
-			((int)data[1] << 9);
-		ds->y = (((int)data[6] & 0x18) >> 3) | ((int)data[4] << 2) |
-			((int)data[3] << 9);
+		ds->x = coord.x;
+		ds->y = coord.y;
 
 		/* pressure */
-		ds->pressure = (((data[6] & 0x07) << 7) | data[5] );
+		ds->pressure = coord.pressure;
 
 		/* buttons */
-		ds->buttons = (data[0] & 0x07);
+		ds->buttons = coord.tip | (coord.side << 1) | (coord.eraser << 2);
 
 		/* check which device we have */
 		cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
@@ -703,6 +751,127 @@ int isdv4ProbeKeys(LocalDevicePtr local)
 		tablet_id = 0xe2;
 
 	return tablet_id;
+}
+
+/* Convert buffer data of buffer sized len into a query reply.
+ * Returns the number of bytes read from buffer or 0 if the buffer was on
+ * insufficient length. Returns -1 on parsing or internal errors.
+ */
+static inline int isdv4ParseQuery(const char *buffer, const size_t len,
+				  ISDV4QueryReply *reply)
+{
+	int header, control;
+
+	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & CONTROL_BIT);
+
+	if (!header || !control)
+		return -1;
+
+	reply->data_id = buffer[0] & DATA_ID_MASK;
+
+	/* FIXME: big endian? */
+	reply->x_max = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
+	reply->y_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
+	reply->pressure_max = buffer[5] | (buffer[6] & 0x7);
+	reply->tilt_y_max = buffer[7];
+	reply->tilt_x_max = buffer[8];
+	reply->version = buffer[9] << 7 | buffer[10];
+
+	return ISDV4_PKGLEN_TPCCTL;
+}
+
+static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
+					ISDV4TouchQueryReply *reply)
+{
+	int header, control;
+
+	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & CONTROL_BIT);
+
+	if (!header || !control)
+		return -1;
+
+	reply->data_id = buffer[0] & DATA_ID_MASK;
+	reply->sensor_id = buffer[2] & 0x7;
+	reply->panel_resolution = buffer[1];
+	/* FIXME: big endian? */
+	reply->x_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[2] >> 5) & 0x3);
+	reply->y_max = (buffer[5] << 9) | (buffer[6] << 2) | ((buffer[2] >> 3) & 0x3);
+	reply->capacity_resolution = buffer[7];
+	reply->version = buffer[9] << 7 | buffer[10];
+
+	return ISDV4_PKGLEN_TPCCTL;
+}
+
+/* pktlen defines what touch type we parse */
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
+				      const size_t pktlen, ISDV4TouchData *touchdata)
+{
+	int header, touch;
+
+	if (!touchdata || buff_len < pktlen)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	touch = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || touch != 1)
+		return -1;
+
+	memset(touchdata, 0, sizeof(*touchdata));
+
+	touchdata->status = buffer[0] & 0x1;
+	/* FIXME: big endian */
+	touchdata->x = buffer[1] << 7 | buffer[2];
+	touchdata->y = buffer[3] << 7 | buffer[4];
+	if (pktlen == ISDV4_PKGLEN_TOUCH9A)
+		touchdata->capacity = buffer[5] << 7 | buffer[6];
+
+	if (pktlen == ISDV4_PKGLEN_TOUCH2FG)
+	{
+		touchdata->finger2.x = buffer[7] << 7 | buffer[8];
+		touchdata->finger2.y = buffer[9] << 7 | buffer[10];
+		touchdata->finger2.status = !!(buffer[0] & 0x2);
+		/* FIXME: is there a fg2 capacity? */
+	}
+
+	return pktlen;
+}
+
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+					   ISDV4CoordinateData *coord)
+{
+	int header, control;
+
+	if (!coord || len < ISDV4_PKGLEN_TPCPEN)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || control != 0)
+		return -1;
+
+	coord->proximity = (buffer[0] >> 5) & 0x1;
+	coord->tip = buffer[0] & 0x1;
+	coord->side = (buffer[0] >> 1) & 0x1;
+	coord->eraser = (buffer[0] >> 2) & 0x1;
+	/* FIXME: big endian */
+	coord->x = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
+	coord->y = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
+
+	coord->pressure = ((buffer[6] & 0x7) << 7) | buffer[5];
+	coord->tilt_x = buffer[7];
+	coord->tilt_y = buffer[8];
+
+	return ISDV4_PKGLEN_TPCPEN;
 }
 
 /* vim: set noexpandtab shiftwidth=8: */
