@@ -683,7 +683,7 @@ static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
  */
 int isdv4ProbeKeys(LocalDevicePtr local)
 {
-	int id, i;
+	int id;
 	int tablet_id = 0;
 	struct serial_struct tmp;
 	const char *device = xf86SetStrOption(local->options, "Device", NULL);
@@ -715,9 +715,7 @@ int isdv4ProbeKeys(LocalDevicePtr local)
 		}
 	}
 
-	/* we have tried memset. it doesn't work */
-	for (i=0; i<NBITS(KEY_MAX); i++)
-		common->wcmKeys[i] = 0;
+	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
 
 	/* default to penabled */
 	common->wcmKeys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
