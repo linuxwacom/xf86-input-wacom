@@ -1,5 +1,5 @@
 .ds q \N'34'
-.TH WACOM 4x "linuxwacom 0.8.3" "X Version 11"
+.TH WACOM __drivermansuffix__ __vendorversion__
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
