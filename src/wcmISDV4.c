@@ -277,7 +277,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		rc = isdv4ParseQuery(data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86Msg(X_ERROR, "Error while parsing ISDV4 query.\n");
+			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 query.\n",
+					local->name);
 			return BadAlloc;
 		}
 
@@ -314,7 +315,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		rc = isdv4ParseTouchQuery(data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86Msg(X_ERROR, "Error while parsing ISDV4 touch query.\n");
+			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 touch query.\n",
+					local->name);
 			return BadAlloc;
 		}
 
@@ -357,7 +359,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 					(common->tablet_id != 0x9F))
 
 				{
-				    xf86Msg(X_WARNING, "WACOM: %s tablet id(%x)"
+				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x01) \n",
 					    local->name, common->tablet_id);
 				    return ret;
@@ -368,7 +370,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				if ((common->tablet_id != 0xE2) &&
 						(common->tablet_id != 0xE3))
 				{
-				    xf86Msg(X_WARNING, "WACOM: %s tablet id(%x)"
+				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x03) \n",
 					    local->name, common->tablet_id);
 				    return ret;
