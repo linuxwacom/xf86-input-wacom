@@ -75,9 +75,6 @@ AC_SUBST([sdkdir])
 
 PKG_CHECK_MODULES(X11, x11 xi)
 
-# Checks for header files.
-AC_HEADER_STDC
-
 DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
 
