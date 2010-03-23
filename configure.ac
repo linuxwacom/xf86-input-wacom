@@ -85,6 +85,15 @@ AC_SUBST([sdkdir])
 
 PKG_CHECK_MODULES(X11, x11 xi)
 
+# X Server SDK location is required to install wacom header files
+# This location is also relayed in the xorg-wacom.pc file
+sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
+
+# Workaround overriding sdkdir to be able to create a tarball when user has no
+# write permission in sdkdir. See DISTCHECK_CONFIGURE_FLAGS in Makefile.am
+AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
+AC_SUBST([sdkdir])
+
 DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
 
