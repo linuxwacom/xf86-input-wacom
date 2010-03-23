@@ -44,11 +44,6 @@ AC_PROG_LIBTOOL
 AC_PROG_CC
 XORG_DEFAULT_OPTIONS
 
-AH_TOP([
-#ifndef WACOM_TOOLS
-#include "xorg-server.h"
-#endif])
-
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
                                     [Enable debugging (default: disabled)]),
                                     [DEBUGGING=$enableval], [DEBUGGING=no])
