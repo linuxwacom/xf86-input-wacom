@@ -65,7 +65,6 @@ AC_SUBST(inputdir)
 if test "x$DEBUGGING" = xyes; then
        AC_DEFINE(DEBUG, 1, [Enable debugging code])
 fi
-AM_CONDITIONAL(DEBUG, [test "x$DEBUGGING" = xyes])
 
 # Checks for extensions
 XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
