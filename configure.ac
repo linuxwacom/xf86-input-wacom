@@ -88,10 +88,11 @@ PKG_CHECK_MODULES(X11, x11 xi)
 DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
 
-AC_OUTPUT([Makefile
-           fdi/Makefile
-           src/Makefile
-           man/Makefile
-           include/Makefile
-           tools/Makefile
-           xorg-wacom.pc])
+AC_CONFIG_FILES([Makefile
+                 fdi/Makefile
+                 src/Makefile
+                 man/Makefile
+                 include/Makefile
+                 tools/Makefile
+                 xorg-wacom.pc])
+AC_OUTPUT
