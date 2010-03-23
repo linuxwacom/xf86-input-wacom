@@ -25,13 +25,12 @@
 # _ladir passes a dummy rpath to libtool so the thing will actually link
 # TODO: -nostdlib/-Bstatic/-lgcc platform magic, not installing the .a, etc.
 
-AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
-
 @DRIVER_NAME@_drv_la_LTLIBRARIES = @DRIVER_NAME@_drv.la
 @DRIVER_NAME@_drv_la_LDFLAGS = -module -avoid-version
 @DRIVER_NAME@_drv_ladir = @inputdir@
 
 AM_CPPFLAGS=-I$(top_srcdir)/include/
+AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
 
 @DRIVER_NAME@_drv_la_SOURCES = xf86Wacom.c xf86Wacom.h \
 	wcmCommon.c wcmConfig.c wcmISDV4.c wcmISDV4.h \

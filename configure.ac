@@ -20,29 +20,27 @@
 #
 # Process this file with autoconf to produce a configure script
 
+# Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-wacom],
-        0.10.5,
+        [0.10.5],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
-        xf86-input-wacom)
-
+        [xf86-input-wacom])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([Makefile.am])
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-
-AM_MAINTAINER_MODE
-
-# Require xorg-macros: XORG_DEFAULT_OPTIONS
-m4_ifndef([XORG_MACROS_VERSION],
-          [m4_fatal([must install xorg-macros 1.4 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION([1.4])
 AC_CONFIG_HEADERS([config.h])
 
-# Checks for programs.
-AC_DISABLE_STATIC
+# Initialize Automake
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_MAINTAINER_MODE
+
+# Initialize libtool
 AC_PROG_LIBTOOL
+AC_DISABLE_STATIC
+
+# Checks for programs.
 AC_PROG_CC
-XORG_DEFAULT_OPTIONS
+AC_PROG_INSTALL
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
@@ -54,11 +52,28 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
 
-AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
-                                    [Enable debugging (default: disabled)]),
-                                    [DEBUGGING=$enableval], [DEBUGGING=no])
+# Initialize X.Org macros
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.4 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION([1.4])
+XORG_DEFAULT_OPTIONS
 
+# Checks for pkg-config packages.
+PKG_CHECK_MODULES(XORG, xorg-server xproto)
+PKG_CHECK_MODULES(X11, x11 xi)
 
+# Define a configure option for code debugging
+AC_ARG_ENABLE(debug,
+              AS_HELP_STRING([--enable-debug],
+                             [Enable debugging (default: disabled)]),
+                             [DEBUGGING=$enableval], [DEBUGGING=no])
+
+# Define the C preprocessor macro DEBUG in config.h
+if test "x$DEBUGGING" = xyes; then
+       AC_DEFINE(DEBUG, 1, [Enable debugging code])
+fi
+
+# Define a configure option for an alternate input module directory
 AC_ARG_WITH(xorg-module-dir,
             AS_HELP_STRING([--with-xorg-module-dir=DIR],
                            [Default xorg module directory [[default=$libdir/xorg/modules]]]),
@@ -67,23 +82,8 @@ AC_ARG_WITH(xorg-module-dir,
 inputdir=${moduledir}/input
 AC_SUBST(inputdir)
 
-if test "x$DEBUGGING" = xyes; then
-       AC_DEFINE(DEBUG, 1, [Enable debugging code])
-fi
-
 # Checks for extensions
 XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
-
-# Checks for pkg-config packages. We need to be able to override sdkdir
-# to satisfy silly distcheck requirements.
-PKG_CHECK_MODULES(XORG, xorg-server xproto)
-
-AC_ARG_WITH([sdkdir], [],
-    [sdkdir="$withval"],
-    [sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`])
-AC_SUBST([sdkdir])
-
-PKG_CHECK_MODULES(X11, x11 xi)
 
 # X Server SDK location is required to install wacom header files
 # This location is also relayed in the xorg-wacom.pc file
