@@ -47,6 +47,13 @@ XORG_DEFAULT_OPTIONS
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
 
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
+
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
                                     [Enable debugging (default: disabled)]),
                                     [DEBUGGING=$enableval], [DEBUGGING=no])
