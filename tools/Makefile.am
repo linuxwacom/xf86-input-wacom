@@ -22,7 +22,7 @@ AM_CFLAGS = $(XORG_CFLAGS) $(X11_CFLAGS)
 bin_PROGRAMS = \
 	xsetwacom
 
-INCLUDES=-I$(top_srcdir)/include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/
 
 xsetwacom_LDFLAGS = $(X11_LIBS) -lm
 

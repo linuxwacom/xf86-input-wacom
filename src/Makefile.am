@@ -31,7 +31,7 @@ AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
 @DRIVER_NAME@_drv_la_LDFLAGS = -module -avoid-version
 @DRIVER_NAME@_drv_ladir = @inputdir@
 
-INCLUDES=-I$(top_srcdir)/include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/
 
 @DRIVER_NAME@_drv_la_SOURCES = xf86Wacom.c xf86Wacom.h \
 	wcmCommon.c wcmConfig.c wcmISDV4.c wcmISDV4.h \
