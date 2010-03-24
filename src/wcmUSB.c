@@ -32,10 +32,6 @@
 #define BTN_TASK 0x117
 #endif
 
-#ifndef BTN_TOOL_TRIPLETAP
-#define BTN_TOOL_TRIPLETAP 0x14e
-#endif
-
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
 

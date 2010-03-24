@@ -43,6 +43,10 @@
 #define BTN_TOOL_DOUBLETAP 0x14d
 #endif
 
+#ifndef BTN_TOOL_TRIPLETAP
+#define BTN_TOOL_TRIPLETAP 0x14e
+#endif
+
 /* defines to discriminate second side button and the eraser */
 #define ERASER_PROX     4
 #define OTHER_PROX      1
