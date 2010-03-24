@@ -565,7 +565,6 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
-	unsigned  *keyP = 0;
 	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	DBG(10, priv, "\n");
@@ -575,15 +574,9 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	{
 		value = ds->relwheel;
 		if ( ds->relwheel > 0 )
-		{
 			fakeButton = priv->relup;
-			keyP = priv->rupk;
-		}
 		else
-		{
 			fakeButton = priv->reldn;
-			keyP = priv->rdnk;
-		}
 	}
 
 	/* emulate events for absolute wheel when needed */
@@ -591,15 +584,9 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	{
 		value = priv->oldWheel - ds->abswheel;
 		if ( value > 0 )
-		{
 			fakeButton = priv->wheelup;
-			keyP = priv->wupk;
-		}
 		else
-		{
 			fakeButton = priv->wheeldn;
-			keyP = priv->wdnk;
-		}
 	}
 
 	/* emulate events for left strip */
@@ -618,15 +605,9 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 		value -= temp;
 		if ( value > 0 )
-		{
 			fakeButton = priv->striplup;
-			keyP = priv->slupk;
-		}
 		else if ( value < 0 )
-		{
 			fakeButton = priv->stripldn;
-			keyP = priv->sldnk;
-		}
 	}
 
 	/* emulate events for right strip */
@@ -645,15 +626,9 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 
 		value -= temp;
 		if ( value > 0 )
-		{
 			fakeButton = priv->striprup;
-			keyP = priv->srupk;
-		}
 		else if ( value < 0 )
-		{
 			fakeButton = priv->striprdn;
-			keyP = priv->srdnk;
-		}
 	}
 
 	if (!fakeButton) return;
