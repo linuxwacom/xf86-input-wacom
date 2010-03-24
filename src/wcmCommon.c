@@ -556,18 +556,14 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 }
 
 /*****************************************************************************
- * sendWheelStripEvents --
- *   Send events defined for relative/absolute wheels or strips
+ * getWheelButton --
+ *   Get the wheel button to be sent for the current device state.
  ****************************************************************************/
 
-static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* ds, 
-		int x, int y, int z, int v3, int v4, int v5)
+static int getWheelButton(LocalDevicePtr local, const WacomDeviceState* ds)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	int fakeButton = 0, i, value = 0, naxes = priv->naxes;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
-
-	DBG(10, priv, "\n");
+	int fakeButton = 0, value;
 
 	/* emulate events for relative wheel */
 	if ( ds->relwheel )
@@ -592,7 +588,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	/* emulate events for left strip */
 	if ( ds->stripx != priv->oldStripX )
 	{
-		int temp = 0, n;
+		int temp = 0, n, i;
 		for (i=1; i<14; i++)
 		{
 			n = 1 << (i-1);
@@ -613,7 +609,7 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	/* emulate events for right strip */
 	if ( ds->stripy != priv->oldStripY )
 	{
-		int temp = 0, n;
+		int temp = 0, n, i;
 		for (i=1; i<14; i++)
 		{
 			n = 1 << (i-1);
@@ -631,10 +627,29 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 			fakeButton = priv->striprdn;
 	}
 
-	if (!fakeButton) return;
-
 	DBG(10, priv, "send fakeButton %x with value = %d \n",
 		fakeButton, value);
+
+	return fakeButton;
+}
+/*****************************************************************************
+ * sendWheelStripEvents --
+ *   Send events defined for relative/absolute wheels or strips
+ ****************************************************************************/
+
+static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* ds,
+		int x, int y, int z, int v3, int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int fakeButton = 0, naxes = priv->naxes;
+	int is_absolute = priv->flags & ABSOLUTE_FLAG;
+
+	DBG(10, priv, "\n");
+
+	fakeButton = getWheelButton(local, ds);
+
+	if (!fakeButton)
+		return;
 
 	switch (fakeButton & AC_TYPE)
 	{
