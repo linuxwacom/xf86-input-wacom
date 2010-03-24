@@ -172,6 +172,7 @@ extern void wcmVirtualTabletSize(LocalDevicePtr local);
 extern void wcmVirtualTabletPadding(LocalDevicePtr local);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
+extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 
 /* device properties */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3

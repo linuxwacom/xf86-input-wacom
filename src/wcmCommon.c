@@ -29,7 +29,8 @@
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
- 
+
+static void wcmSoftOutEvent(LocalDevicePtr local);
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel, int suppress);
@@ -1379,12 +1380,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			if (tool->current)
 			{
 				/* Send soft prox-out for the old area */
-				LocalDevicePtr oDev = outprox->device;
-				WacomDeviceState out = { 0 };
-				out.device_type = DEVICE_ID(((WacomDevicePtr)(oDev->private))->flags);
-				DBG(2, common, "Soft prox-out for %s\n",
-					outprox->device->name);
-				wcmSendEvents(oDev, &out);
+				wcmSoftOutEvent(outprox->device);
 			}
 			else
 				tool->current = outprox;
@@ -1450,12 +1446,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 						IsTouch(temppriv) && temppriv->oldProximity)
 					{
 						/* Send soft prox-out for touch first */
-						WacomDeviceState out = { 0 };
-						out.device_type = DEVICE_ID(temppriv->flags);
-						DBG(2, common,
-							"Send soft prox-out for %s first\n",
-							localDevices->name);
-						wcmSendEvents(localDevices, &out);
+						wcmSoftOutEvent(localDevices);
 					}
 				}
 			}
@@ -1641,6 +1632,18 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 		return !Success;
 
 	return Success;
+}
+
+/* Send a soft prox-out event for the device */
+static void wcmSoftOutEvent(LocalDevicePtr local)
+{
+	WacomDeviceState out = { 0 };
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+
+	out.device_type = DEVICE_ID(priv->flags);
+	out.device_id = wcmGetPhyDeviceID(priv);
+	DBG(2, priv->common, ErrorF("Send a soft prox-out for %s \n", local->name));
+	wcmSendEvents(local, &out);
 }
 
 /*****************************************************************************

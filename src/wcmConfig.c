@@ -194,16 +194,7 @@ static int wcmSetType(LocalDevicePtr local, const char *type)
 	}
 
 	/* Set the device id of the "last seen" device on this tool */
-	if (IsStylus(priv))
-		priv->old_device_id = STYLUS_DEVICE_ID;
-	else if (IsEraser(priv))
-		priv->old_device_id = ERASER_DEVICE_ID;
-	else if (IsCursor(priv))
-		priv->old_device_id = CURSOR_DEVICE_ID;
-	else if (IsTouch(priv))
-		priv->old_device_id = TOUCH_DEVICE_ID;
-	else
-		priv->old_device_id = PAD_DEVICE_ID;
+	priv->old_device_id = wcmGetPhyDeviceID(priv);
 
 	if (!priv->tool)
 		return 0;
@@ -211,6 +202,20 @@ static int wcmSetType(LocalDevicePtr local, const char *type)
 	priv->tool->typeid = DEVICE_ID(priv->flags); /* tool type (stylus/touch/eraser/cursor/pad) */
 
 	return 1;
+}
+
+int wcmGetPhyDeviceID(WacomDevicePtr priv)
+{
+	if (IsStylus(priv))
+		return STYLUS_DEVICE_ID;
+	else if (IsEraser(priv))
+		return ERASER_DEVICE_ID;
+	else if (IsCursor(priv))
+		return CURSOR_DEVICE_ID;
+	else if (IsTouch(priv))
+		return TOUCH_DEVICE_ID;
+	else
+		return PAD_DEVICE_ID;
 }
 
 /* 
