@@ -792,7 +792,8 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, wheel, rot, throttle);
 
-	wcmRotateCoordinates(local, &x, &y);
+	if (ds->proximity)
+		wcmRotateCoordinates(local, &x, &y);
 
 	if (IsCursor(priv)) 
 	{
