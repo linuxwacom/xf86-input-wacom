@@ -333,9 +333,9 @@ int wcmParseOptions(LocalDevicePtr local)
 		 */
 	}
 
-	/* Pad is always in absolute mode. */
+	/* Pad is always in relative mode. */
 	if (IsPad(priv))
-		priv->flags |= ABSOLUTE_FLAG;
+		priv->flags &= ~ABSOLUTE_FLAG;
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))

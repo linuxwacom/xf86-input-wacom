@@ -36,9 +36,9 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 
 	DBG(3, priv, "to mode=%d\n", mode);
 
-	/* Pad is always in absolute mode.*/
+	/* Pad is always in relative mode.*/
 	if (IsPad(priv))
-		return (mode == Absolute) ? Success : XI_BadMode;
+		return (mode == Relative) ? Success : XI_BadMode;
 
 	if ((mode == Absolute) && !is_absolute)
 	{
