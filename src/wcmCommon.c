@@ -1643,7 +1643,7 @@ static void wcmSoftOutEvent(LocalDevicePtr local)
 
 	out.device_type = DEVICE_ID(priv->flags);
 	out.device_id = wcmGetPhyDeviceID(priv);
-	DBG(2, priv->common, ErrorF("Send a soft prox-out for %s \n", local->name));
+	DBG(2, priv->common, "send a soft prox-out\n");
 	wcmSendEvents(local, &out);
 }
 
