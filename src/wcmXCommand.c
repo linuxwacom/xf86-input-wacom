@@ -262,6 +262,132 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 #endif
 }
 
+/* Change the properties that hold the actual button actions */
+static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
+				  XIPropertyValuePtr prop, BOOL checkonly)
+{
+	LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int i, j;
+
+	DBG(10, priv, "\n");
+
+	/* check all properties used for button actions */
+	for (i = 0; i < ARRAY_SIZE(priv->btn_actions); i++)
+		if (priv->btn_actions[i] == property)
+			break;
+
+	if (i < ARRAY_SIZE(priv->btn_actions))
+	{
+		CARD32 *data;
+		int code;
+		int type;
+
+		if (prop->size >= 255 || prop->format != 32 ||
+				prop->type != XA_INTEGER)
+			return BadMatch;
+
+		data = (CARD32*)prop->data;
+
+		for (j = 0;j < prop->size; j++)
+		{
+			code = data[j] & AC_CODE;
+			type = data[j] & AC_TYPE;
+
+			switch(type)
+			{
+				case AC_KEY:
+					break;
+				case AC_BUTTON:
+					if (code > WCM_MAX_MOUSE_BUTTONS)
+						return BadValue;
+					break;
+				case AC_DISPLAYTOGGLE:
+				case AC_MODETOGGLE:
+				case AC_DBLCLICK:
+					break;
+				default:
+					return BadValue;
+			}
+
+			if (!checkonly)
+			{
+				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
+				for (j = 0; j < prop->size; j++)
+					priv->keys[i][j] = data[j];
+			}
+		}
+	}
+
+	return Success;
+}
+
+/* Change the property that refers to which properties the actual button
+ * actions are stored in */
+static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
+				       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	LocalDevicePtr local = (LocalDevicePtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+
+	Atom *values;
+	int i, j;
+	XIPropertyValuePtr val;
+
+	DBG(10, priv, "\n");
+
+	if (prop->size != WCM_MAX_MOUSE_BUTTONS || prop->format != 32 ||
+			prop->type != XA_ATOM)
+		return BadMatch;
+
+	/* How this works:
+	 * prop_btnactions has a list of atoms stored. Any atom references
+	 * another property on that device that contains the actual action.
+	 * If this property changes, all action-properties are queried for
+	 * their value and their value is stored in priv->key[button].
+	 *
+	 * If the button is pressed, the actions are executed.
+	 *
+	 * Any button action property needs to be monitored by this property
+	 * handler too.
+	 */
+
+	values = (Atom*)prop->data;
+
+	for (i = 0; i < prop->size; i++)
+	{
+		if (!values[i])
+			continue;
+
+		if (values[i] == property || !ValidAtom(values[i]))
+			return BadValue;
+
+		if (XIGetDeviceProperty(local->dev, values[i], &val) != Success)
+			return BadValue;
+	}
+
+	if (!checkonly)
+	{
+		/* any action property needs to be registered for this handler. */
+		for (i = 0; i < prop->size; i++)
+			priv->btn_actions[i] = values[i];
+
+		for (i = 0; i < prop->size; i++)
+		{
+			if (!values[i])
+				continue;
+
+			XIGetDeviceProperty(local->dev, values[i], &val);
+
+			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
+			for (j = 0; j < val->size; j++)
+				priv->keys[i][j] = ((unsigned int*)val->data)[j];
+		}
+
+	}
+	return Success;
+}
+
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		BOOL checkonly)
 {
@@ -584,111 +710,9 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		}
 #endif
 	} else if (property == prop_btnactions)
-	{
-		Atom *values;
-		int i, j;
-		XIPropertyValuePtr val;
-
-		if (prop->size != WCM_MAX_MOUSE_BUTTONS || prop->format != 32 ||
-				prop->type != XA_ATOM)
-			return BadMatch;
-
-		/* How this works:
-		 * prop_btnactions has a list of atoms stored. Any atom references
-		 * another property on that device that contains the actual action.
-		 * If this property changes, all action-properties are queried for
-		 * their value and their value is stored in priv->key[button].
-		 *
-		 * If the button is pressed, the actions are executed.
-		 *
-		 * Any button action property needs to be monitored by this property
-		 * handler too.
-		 */
-
-		values = (Atom*)prop->data;
-
-		for (i = 0; i < prop->size; i++)
-		{
-			if (!values[i])
-				continue;
-
-			if (values[i] == property || !ValidAtom(values[i]))
-				return BadValue;
-
-			if (XIGetDeviceProperty(local->dev, values[i], &val) != Success)
-				return BadValue;
-		}
-
-		if (!checkonly)
-		{
-			/* any action property needs to be registered for this handler. */
-			for (i = 0; i < prop->size; i++)
-				priv->btn_actions[i] = values[i];
-
-			for (i = 0; i < prop->size; i++)
-			{
-				if (!values[i])
-					continue;
-
-				XIGetDeviceProperty(local->dev, values[i], &val);
-
-				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-				for (j = 0; j < val->size; j++)
-					priv->keys[i][j] = ((unsigned int*)val->data)[j];
-			}
-
-		}
-	} else
-	{
-		int i, j;
-
-		/* check all properties used for button actions */
-		for (i = 0; i < ARRAY_SIZE(priv->btn_actions); i++)
-			if (priv->btn_actions[i] == property)
-				break;
-
-		if (i < ARRAY_SIZE(priv->btn_actions))
-		{
-			CARD32 *data;
-			int code;
-			int type;
-
-			if (prop->size >= 255 || prop->format != 32 ||
-					prop->type != XA_INTEGER)
-				return BadMatch;
-
-			data = (CARD32*)prop->data;
-
-			for (j = 0;j < prop->size; j++)
-			{
-				code = data[j] & AC_CODE;
-				type = data[j] & AC_TYPE;
-
-				switch(type)
-				{
-					case AC_KEY:
-						break;
-					case AC_BUTTON:
-						if (code > WCM_MAX_MOUSE_BUTTONS)
-							return BadValue;
-						break;
-					case AC_DISPLAYTOGGLE:
-					case AC_MODETOGGLE:
-					case AC_DBLCLICK:
-						break;
-					default:
-						return BadValue;
-				}
-
-				if (!checkonly)
-				{
-					memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-					for (j = 0; j < prop->size; j++)
-						priv->keys[i][j] = data[j];
-				}
-			}
-		}
-	}
+		wcmSetPropertyButtonActions(dev, property, prop, checkonly);
+	else
+		wcmSetActionProperties(dev, property, prop, checkonly);
 
 	return Success;
 }
