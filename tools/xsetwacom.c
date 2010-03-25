@@ -1349,39 +1349,12 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	XFlush(dpy);
 }
 
-/*
-   Supports three variations.
-   xsetwacom set device Button1 1
-	- maps button 1 to logical button 1
-   xsetwacom set device Button1 "Button 5"
-	- maps button 1 to the same logical button button 5 is mapped
-   xsetwacom set device Button1 "key a b c d"
-	- maps button 1 to key events a b c d
- */
-static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+
+static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int button)
 {
 	int nmap = 256;
 	unsigned char map[nmap];
-	int i, btn_no = 0;
-	int ref_button = -1; /* xsetwacom set <name> Button1 "Button 5" */
-
-	if (argc <= 0)
-		return;
-
-	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
-
-	for(i = 0; i < strlen(argv[0]); i++)
-	{
-		if (!isdigit(argv[0][i]))
-		{
-			ref_button = get_button_number_from_string(argv[0]);
-			if (ref_button != -1)
-				break;
-
-			special_map_buttons(dpy, dev, param, argc, argv);
-			return;
-		}
-	}
+	int btn_no = 0;
 
 	btn_no = get_button_number_from_string(param->name);
 	if (btn_no == -1)
@@ -1392,18 +1365,33 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
-	} else if (ref_button >= nmap)
-	{
-		fprintf(stderr, "Reference button number does not exist on device.\n");
-		return;
 	}
 
-	if (ref_button != -1)
-		map[btn_no - 1] = map[ref_button - 1];
-	else
-		map[btn_no - 1] = atoi(argv[0]);
+	map[btn_no - 1] = button;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+}
+/*
+   Supports three variations.
+   xsetwacom set device Button1 1
+	- maps button 1 to logical button 1
+   xsetwacom set device Button1 "key a b c d"
+	- maps button 1 to key events a b c d
+ */
+static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	int button;
+
+	if (argc <= 0)
+		return;
+
+	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
+
+	/* --set "device" Button1 3 */
+	if (sscanf(argv[0], "%d", &button) == 1)
+		map_button_simple(dpy, dev, param, button);
+	else
+		special_map_buttons(dpy, dev, param, argc, argv);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
