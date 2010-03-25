@@ -1127,6 +1127,7 @@ static int is_modifier(const char* modifier)
 }
 
 static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data);
+static int special_map_button(int argc, char **argv, unsigned long *ndata, unsigned long* data);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
@@ -1134,6 +1135,7 @@ struct keywords {
 	int (*func)(int, char **, unsigned long*, unsigned long *);
 } keywords[] = {
 	{"key", special_map_keystrokes},
+	{"button", special_map_button},
 	{ NULL, NULL }
 };
 
@@ -1148,6 +1150,50 @@ static inline int is_valid_keyword(const char *keyword)
 		kw++;
 	}
 	return 0;
+}
+
+static int special_map_button(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+{
+	int nitems = 0;
+	int i;
+
+	for (i = 0; i < argc; i++)
+	{
+		char *btn = argv[i];
+		int button;
+		int need_press = 0, need_release = 0;
+
+		if (strlen(btn) > 1)
+		{
+			if (is_valid_keyword(btn))
+				break;
+
+			if (sscanf(btn, "%d", &button) != 1)
+				return nitems;
+
+			switch (btn[0])
+			{
+				case '+': need_press = 1; break;
+				case '-': need_release= 1; break;
+				default:
+					  need_press = need_release = 1;
+					  break;
+			}
+		} else
+			need_press = need_release = 1;
+
+		TRACE("Button map %d [%s,%s]\n", abs(button),
+				need_press ?  "press" : "",
+				need_release ?  "release" : "");
+
+		if (need_press)
+			data[*ndata + nitems++] = AC_BUTTON | AC_KEYBTNPRESS | abs(button);
+		if (need_release)
+			data[*ndata + nitems++] = AC_BUTTON | abs(button);
+	}
+
+	*ndata += nitems;
+	return nitems;
 }
 
 /*
