@@ -909,9 +909,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 		}
-
-		/* not in proximity */
-		else
+		else /* not in proximity */
 		{
 			buttons = 0;
 
