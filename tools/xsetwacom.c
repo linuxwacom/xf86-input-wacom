@@ -1176,9 +1176,9 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 
 		ks = XStringToKeysym(key);
 		if (need_press)
-			data[nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
+			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
 		if (need_release)
-			data[nitems++] = AC_KEY | ks;
+			data[*ndata + nitems++] = AC_KEY | ks;
 	}
 
 	*ndata += nitems;
