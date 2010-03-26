@@ -925,7 +925,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
-				wcmSendButtons(local,0,x,y,z,v3,v4,v5);
+				wcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
 			if (priv->oldProximity && local->dev->proximity)
 				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
