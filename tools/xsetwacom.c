@@ -1207,8 +1207,9 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 		if (strlen(buff) + strlen(*argv) + 1 >= sizeof(buff))
 			break;
 
-		strcat(buff, (const char*)(*argv)++);
+		strcat(buff, *argv);
 		strcat(buff, " ");
+		argv++;
 	}
 
 	*nwords = 0;
