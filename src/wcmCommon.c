@@ -725,6 +725,37 @@ void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y)
 	}
 }
 
+static void wcmUpdateOldState(const LocalDevicePtr local,
+			      const WacomDeviceState *ds)
+{
+	const WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	int tx, ty;
+
+	priv->oldWheel = ds->abswheel;
+	priv->oldButtons = ds->buttons;
+
+	if (IsPad(priv))
+	{
+		tx = ds->stripx;
+		ty = ds->stripy;
+	} else
+	{
+		tx = ds->tiltx;
+		ty = ds->tilty;
+	}
+
+	priv->oldX = priv->currentX;
+	priv->oldY = priv->currentY;
+	priv->oldZ = ds->pressure;
+	priv->oldCapacity = ds->capacity;
+	priv->oldTiltX = tx;
+	priv->oldTiltY = ty;
+	priv->oldStripX = ds->stripx;
+	priv->oldStripY = ds->stripy;
+	priv->oldRot = ds->rotation;
+	priv->oldThrottle = ds->throttle;
+}
+
 /*****************************************************************************
  * wcmSendEvents --
  *   Send events according to the device state.
@@ -815,19 +846,10 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	/* update the old records */
 	if(!priv->oldProximity)
 	{
-		priv->oldWheel = wheel;
-		priv->oldX = priv->currentX;
-		priv->oldY = priv->currentY;
-		priv->oldZ = z;
-		priv->oldTiltX = tx;
-		priv->oldTiltY = ty;
-		priv->oldCapacity = ds->capacity;
-		priv->oldStripX = ds->stripx;
-		priv->oldStripY = ds->stripy;
-		priv->oldRot = rot;
-		priv->oldThrottle = throttle;
+		wcmUpdateOldState(local, ds);
 		priv->oldButtons = 0;
 	}
+
 	if (!is_absolute)
 	{
 		x -= priv->oldX;
@@ -968,20 +990,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	priv->old_device_id = id;
 	priv->old_serial = serial;
 	if (is_proximity)
-	{
-		priv->oldButtons = buttons;
-		priv->oldWheel = wheel;
-		priv->oldX = priv->currentX;
-		priv->oldY = priv->currentY;
-		priv->oldZ = z;
-		priv->oldCapacity = ds->capacity;
-		priv->oldTiltX = tx;
-		priv->oldTiltY = ty;
-		priv->oldStripX = ds->stripx;
-		priv->oldStripY = ds->stripy;
-		priv->oldRot = rot;
-		priv->oldThrottle = throttle;
-	}
+		wcmUpdateOldState(local, ds);
 	else
 	{
 		priv->oldButtons = 0;
