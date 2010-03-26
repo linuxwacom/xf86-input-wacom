@@ -1179,6 +1179,12 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
 		if (need_release)
 			data[*ndata + nitems++] = AC_KEY | ks;
+
+		TRACE("Key map %ld ('%s') [%s,%s]\n", ks,
+				XKeysymToString(ks),
+				need_press ?  "press" : "",
+				need_release ?  "release" : "");
+
 	}
 
 	*ndata += nitems;
