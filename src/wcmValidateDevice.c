@@ -139,6 +139,7 @@ Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
 	int j, ret = FALSE;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	char* dsource = xf86CheckStrOption(local->options, "_source", "");
 
 	if (!type)
 		return FALSE;
@@ -147,11 +148,21 @@ Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
 		if (!strcmp(wcmType[j].type, type))
+		{
 			if (ISBITSET (common->wcmKeys, wcmType[j].tool))
 			{
 				ret = TRUE;
 				break;
 			}
+			else if (!strlen(dsource)) /* an user defined type */
+			{
+				/* assume it is a valid type */
+				common->wcmKeys[LONG(wcmType[j].tool)]
+					|= BIT(wcmType[j].tool);
+				ret = TRUE;
+				break;
+			}
+		}
 	}
 	return ret;
 }
