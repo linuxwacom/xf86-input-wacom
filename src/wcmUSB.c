@@ -332,93 +332,94 @@ static unsigned short padkey_codes [] = {
 
 static struct
 {
+	const unsigned int vendor_id;
 	unsigned char model_id;
 	int yRes; /* tablet Y resolution in points/inch */
 	int xRes; /* tablet X resolution in points/inch */
 	WacomModelPtr model;
 } WacomModelDesc [] =
 {
-	{ 0x00, 1000, 1000, &usbPenPartner }, /* PenPartner */
-	{ 0x10, 2032, 2032, &usbGraphire   }, /* Graphire */
-	{ 0x11, 2032, 2032, &usbGraphire2  }, /* Graphire2 4x5 */
-	{ 0x12, 2032, 2032, &usbGraphire2  }, /* Graphire2 5x7 */
-	{ 0x13, 2032, 2032, &usbGraphire3  }, /* Graphire3 4x5 */
-	{ 0x14, 2032, 2032, &usbGraphire3  }, /* Graphire3 6x8 */
-	{ 0x15, 2032, 2032, &usbGraphire4  }, /* Graphire4 4x5 */
-	{ 0x16, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 */ 
-	{ 0x17, 2540, 2540, &usbBambooFun  }, /* BambooFun 4x5 */
-	{ 0x18, 2540, 2540, &usbBambooFun  }, /* BambooFun 6x8 */
-	{ 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/ 
-	{ 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
+	{ WACOM_VENDOR_ID, 0x00, 1000, 1000, &usbPenPartner }, /* PenPartner */
+	{ WACOM_VENDOR_ID, 0x10, 2032, 2032, &usbGraphire   }, /* Graphire */
+	{ WACOM_VENDOR_ID, 0x11, 2032, 2032, &usbGraphire2  }, /* Graphire2 4x5 */
+	{ WACOM_VENDOR_ID, 0x12, 2032, 2032, &usbGraphire2  }, /* Graphire2 5x7 */
+	{ WACOM_VENDOR_ID, 0x13, 2032, 2032, &usbGraphire3  }, /* Graphire3 4x5 */
+	{ WACOM_VENDOR_ID, 0x14, 2032, 2032, &usbGraphire3  }, /* Graphire3 6x8 */
+	{ WACOM_VENDOR_ID, 0x15, 2032, 2032, &usbGraphire4  }, /* Graphire4 4x5 */
+	{ WACOM_VENDOR_ID, 0x16, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 */
+	{ WACOM_VENDOR_ID, 0x17, 2540, 2540, &usbBambooFun  }, /* BambooFun 4x5 */
+	{ WACOM_VENDOR_ID, 0x18, 2540, 2540, &usbBambooFun  }, /* BambooFun 6x8 */
+	{ WACOM_VENDOR_ID, 0x19, 2032, 2032, &usbBamboo1    }, /* Bamboo1 Medium*/
+	{ WACOM_VENDOR_ID, 0x81, 2032, 2032, &usbGraphire4  }, /* Graphire4 6x8 BlueTooth */
 
-	{ 0xD1, 2540, 2540, &usbBamboo     }, /* CTL-460 */
-	{ 0xD4, 2540, 2540, &usbBamboo     }, /* CTH-461 */
-	{ 0xD3, 2540, 2540, &usbBamboo     }, /* CTL-660 */
-	{ 0xD2, 2540, 2540, &usbBamboo     }, /* CTL-461/S */
-	{ 0xD0, 2540, 2540, &usbBamboo     }, /* Bamboo Touch */
+	{ WACOM_VENDOR_ID, 0xD1, 2540, 2540, &usbBamboo     }, /* CTL-460 */
+	{ WACOM_VENDOR_ID, 0xD4, 2540, 2540, &usbBamboo     }, /* CTH-461 */
+	{ WACOM_VENDOR_ID, 0xD3, 2540, 2540, &usbBamboo     }, /* CTL-660 */
+	{ WACOM_VENDOR_ID, 0xD2, 2540, 2540, &usbBamboo     }, /* CTL-461/S */
+	{ WACOM_VENDOR_ID, 0xD0, 2540, 2540, &usbBamboo     }, /* Bamboo Touch */
 
-	{ 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
-	{ 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
-	{ 0x22, 2540, 2540, &usbIntuos     }, /* Intuos 9x12 */
-	{ 0x23, 2540, 2540, &usbIntuos     }, /* Intuos 12x12 */
-	{ 0x24, 2540, 2540, &usbIntuos     }, /* Intuos 12x18 */
+	{ WACOM_VENDOR_ID, 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
+	{ WACOM_VENDOR_ID, 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
+	{ WACOM_VENDOR_ID, 0x22, 2540, 2540, &usbIntuos     }, /* Intuos 9x12 */
+	{ WACOM_VENDOR_ID, 0x23, 2540, 2540, &usbIntuos     }, /* Intuos 12x12 */
+	{ WACOM_VENDOR_ID, 0x24, 2540, 2540, &usbIntuos     }, /* Intuos 12x18 */
 
-	{ 0x03,  508,  508, &usbCintiqPartner }, /* PTU600 */
+	{ WACOM_VENDOR_ID, 0x03,  508,  508, &usbCintiqPartner }, /* PTU600 */
 
-	{ 0x30,  508,  508, &usbCintiq     }, /* PL400 */
-	{ 0x31,  508,  508, &usbCintiq     }, /* PL500 */
-	{ 0x32,  508,  508, &usbCintiq     }, /* PL600 */
-	{ 0x33,  508,  508, &usbCintiq     }, /* PL600SX */
-	{ 0x34,  508,  508, &usbCintiq     }, /* PL550 */
-	{ 0x35,  508,  508, &usbCintiq     }, /* PL800 */
-	{ 0x37,  508,  508, &usbCintiq     }, /* PL700 */
-	{ 0x38,  508,  508, &usbCintiq     }, /* PL510 */
-	{ 0x39,  508,  508, &usbCintiq     }, /* PL710 */ 
-	{ 0xC0,  508,  508, &usbCintiq     }, /* DTF720 */
-	{ 0xC2,  508,  508, &usbCintiq     }, /* DTF720a */
-	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */ 
-	{ 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
+	{ WACOM_VENDOR_ID, 0x30,  508,  508, &usbCintiq     }, /* PL400 */
+	{ WACOM_VENDOR_ID, 0x31,  508,  508, &usbCintiq     }, /* PL500 */
+	{ WACOM_VENDOR_ID, 0x32,  508,  508, &usbCintiq     }, /* PL600 */
+	{ WACOM_VENDOR_ID, 0x33,  508,  508, &usbCintiq     }, /* PL600SX */
+	{ WACOM_VENDOR_ID, 0x34,  508,  508, &usbCintiq     }, /* PL550 */
+	{ WACOM_VENDOR_ID, 0x35,  508,  508, &usbCintiq     }, /* PL800 */
+	{ WACOM_VENDOR_ID, 0x37,  508,  508, &usbCintiq     }, /* PL700 */
+	{ WACOM_VENDOR_ID, 0x38,  508,  508, &usbCintiq     }, /* PL510 */
+	{ WACOM_VENDOR_ID, 0x39,  508,  508, &usbCintiq     }, /* PL710 */
+	{ WACOM_VENDOR_ID, 0xC0,  508,  508, &usbCintiq     }, /* DTF720 */
+	{ WACOM_VENDOR_ID, 0xC2,  508,  508, &usbCintiq     }, /* DTF720a */
+	{ WACOM_VENDOR_ID, 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */
+	{ WACOM_VENDOR_ID, 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
 
-	{ 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
-	{ 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */
-	{ 0x43, 2540, 2540, &usbIntuos2    }, /* Intuos2 9x12 */
-	{ 0x44, 2540, 2540, &usbIntuos2    }, /* Intuos2 12x12 */
-	{ 0x45, 2540, 2540, &usbIntuos2    }, /* Intuos2 12x18 */
-	{ 0x47, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8  */
+	{ WACOM_VENDOR_ID, 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
+	{ WACOM_VENDOR_ID, 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */
+	{ WACOM_VENDOR_ID, 0x43, 2540, 2540, &usbIntuos2    }, /* Intuos2 9x12 */
+	{ WACOM_VENDOR_ID, 0x44, 2540, 2540, &usbIntuos2    }, /* Intuos2 12x12 */
+	{ WACOM_VENDOR_ID, 0x45, 2540, 2540, &usbIntuos2    }, /* Intuos2 12x18 */
+	{ WACOM_VENDOR_ID, 0x47, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8  */
 
-	{ 0x60, 1016, 1016, &usbVolito     }, /* Volito */ 
+	{ WACOM_VENDOR_ID, 0x60, 1016, 1016, &usbVolito     }, /* Volito */
 
-	{ 0x61, 1016, 1016, &usbVolito2    }, /* PenStation */
-	{ 0x62, 1016, 1016, &usbVolito2    }, /* Volito2 4x5 */
-	{ 0x63, 1016, 1016, &usbVolito2    }, /* Volito2 2x3 */
-	{ 0x64, 1016, 1016, &usbVolito2    }, /* PenPartner2 */
+	{ WACOM_VENDOR_ID, 0x61, 1016, 1016, &usbVolito2    }, /* PenStation */
+	{ WACOM_VENDOR_ID, 0x62, 1016, 1016, &usbVolito2    }, /* Volito2 4x5 */
+	{ WACOM_VENDOR_ID, 0x63, 1016, 1016, &usbVolito2    }, /* Volito2 2x3 */
+	{ WACOM_VENDOR_ID, 0x64, 1016, 1016, &usbVolito2    }, /* PenPartner2 */
 
-	{ 0x65, 2540, 2540, &usbBamboo     }, /* Bamboo */
-	{ 0x69, 1012, 1012, &usbBamboo1    }, /* Bamboo1 */ 
+	{ WACOM_VENDOR_ID, 0x65, 2540, 2540, &usbBamboo     }, /* Bamboo */
+	{ WACOM_VENDOR_ID, 0x69, 1012, 1012, &usbBamboo1    }, /* Bamboo1 */
 
-	{ 0xB0, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x5 */
-	{ 0xB1, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x8 */
-	{ 0xB2, 5080, 5080, &usbIntuos3    }, /* Intuos3 9x12 */
-	{ 0xB3, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x12 */
-	{ 0xB4, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x19 */
-	{ 0xB5, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x11 */
-	{ 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
+	{ WACOM_VENDOR_ID, 0xB0, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x5 */
+	{ WACOM_VENDOR_ID, 0xB1, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x8 */
+	{ WACOM_VENDOR_ID, 0xB2, 5080, 5080, &usbIntuos3    }, /* Intuos3 9x12 */
+	{ WACOM_VENDOR_ID, 0xB3, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x12 */
+	{ WACOM_VENDOR_ID, 0xB4, 5080, 5080, &usbIntuos3    }, /* Intuos3 12x19 */
+	{ WACOM_VENDOR_ID, 0xB5, 5080, 5080, &usbIntuos3    }, /* Intuos3 6x11 */
+	{ WACOM_VENDOR_ID, 0xB7, 5080, 5080, &usbIntuos3    }, /* Intuos3 4x6 */
 
-	{ 0xB8, 5080, 5080, &usbIntuos4    }, /* Intuos4 4x6 */
-	{ 0xB9, 5080, 5080, &usbIntuos4    }, /* Intuos4 6x9 */
-	{ 0xBA, 5080, 5080, &usbIntuos4    }, /* Intuos4 8x13 */
-	{ 0xBB, 5080, 5080, &usbIntuos4    }, /* Intuos4 12x19*/
+	{ WACOM_VENDOR_ID, 0xB8, 5080, 5080, &usbIntuos4    }, /* Intuos4 4x6 */
+	{ WACOM_VENDOR_ID, 0xB9, 5080, 5080, &usbIntuos4    }, /* Intuos4 6x9 */
+	{ WACOM_VENDOR_ID, 0xBA, 5080, 5080, &usbIntuos4    }, /* Intuos4 8x13 */
+	{ WACOM_VENDOR_ID, 0xBB, 5080, 5080, &usbIntuos4    }, /* Intuos4 12x19*/
 
-	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
-	{ 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */ 
-	{ 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */ 
+	{ WACOM_VENDOR_ID, 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */
+	{ WACOM_VENDOR_ID, 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */
+	{ WACOM_VENDOR_ID, 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */
 
-	{ 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */ 
-	{ 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
-	{ 0x9A, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x9A */
-	{ 0x9F,   10,   10, &usbTabletPC   }, /* CapPlus  0x9F */
-	{ 0xE2,   10,   10, &usbTabletPC   }, /* TabletPC 0xE2 */
-	{ 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
+	{ WACOM_VENDOR_ID, 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */
+	{ WACOM_VENDOR_ID, 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
+	{ WACOM_VENDOR_ID, 0x9A, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x9A */
+	{ WACOM_VENDOR_ID, 0x9F,   10,   10, &usbTabletPC   }, /* CapPlus  0x9F */
+	{ WACOM_VENDOR_ID, 0xE2,   10,   10, &usbTabletPC   }, /* TabletPC 0xE2 */
+	{ WACOM_VENDOR_ID, 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
 };
 
 static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
@@ -435,17 +436,14 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	ioctl(local->fd, EVIOCGID, &sID);
 	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
 
-	/* vendor is wacom */
-	if (sID.vendor == WACOM_VENDOR_ID)
+	for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
 	{
-		for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
+		if (sID.vendor == WacomModelDesc[i].vendor_id &&
+		    sID.product == WacomModelDesc [i].model_id)
 		{
-			if (sID.product == WacomModelDesc [i].model_id)
-			{
-				common->wcmModel = WacomModelDesc [i].model;
-				common->wcmResolX = WacomModelDesc [i].xRes;
-				common->wcmResolY = WacomModelDesc [i].yRes;
-			}
+			common->wcmModel = WacomModelDesc [i].model;
+			common->wcmResolX = WacomModelDesc [i].xRes;
+			common->wcmResolY = WacomModelDesc [i].yRes;
 		}
 	}
 
