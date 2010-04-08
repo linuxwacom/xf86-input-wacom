@@ -26,7 +26,10 @@
 #include <asm/types.h>
 #include <linux/input.h>
 #define MAX_USB_EVENTS 32
-#define WACOM_VENDOR_ID 0x056a  /* vendor ID on the kernel device */
+
+/* vendor IDs on the kernel device */
+#define WACOM_VENDOR_ID 0x056a
+#define WALTOP_VENDOR_ID 0x172F
 
 #define DEFAULT_SUPPRESS 2      /* default suppress */
 #define MAX_SUPPRESS 100        /* max value of suppress */
