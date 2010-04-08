@@ -26,9 +26,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
-
 /* wcmCheckSource - Check if there is another source defined this device
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools
