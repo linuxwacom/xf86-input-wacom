@@ -56,6 +56,8 @@
 #define BITS_PER_LONG	(sizeof(long) * 8)
 #define NBITS(x)	((((x)-1)/BITS_PER_LONG)+1)
 #define ISBITSET(x,y)	((x)[LONG(y)] & BIT(y))
+#define SETBIT(x,y)	((x)[LONG(y)] |= BIT(y))
+#define CLEARBIT(x,y)	((x)[LONG(y)] &= ~BIT(y))
 #define OFF(x)		((x)%BITS_PER_LONG)
 #define LONG(x)		((x)/BITS_PER_LONG)
 

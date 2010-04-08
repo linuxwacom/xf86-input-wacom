@@ -727,20 +727,20 @@ int isdv4ProbeKeys(LocalDevicePtr local)
 	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
 
 	/* default to penabled */
-	common->wcmKeys[LONG(BTN_TOOL_PEN)] |= BIT(BTN_TOOL_PEN);
-	common->wcmKeys[LONG(BTN_TOOL_RUBBER)] |= BIT(BTN_TOOL_RUBBER);
+	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
+	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
 
 	/* id < 0x008 are only penabled */
 	if (id > 0x007)
-		common->wcmKeys[LONG(BTN_TOOL_DOUBLETAP)] |= BIT(BTN_TOOL_DOUBLETAP);
+		SETBIT(common->wcmKeys, BTN_TOOL_DOUBLETAP);
 	if (id > 0x0a)
-		common->wcmKeys[LONG(BTN_TOOL_TRIPLETAP)] |= BIT(BTN_TOOL_TRIPLETAP);
+		SETBIT(common->wcmKeys, BTN_TOOL_TRIPLETAP);
 
 	/* no pen 2FGT */
 	if (id == 0x010)
 	{
-		common->wcmKeys[LONG(BTN_TOOL_PEN)] &= ~BIT(BTN_TOOL_PEN);
-		common->wcmKeys[LONG(BTN_TOOL_RUBBER)] &= ~BIT(BTN_TOOL_RUBBER);
+		CLEARBIT(common->wcmKeys, BTN_TOOL_PEN);
+		CLEARBIT(common->wcmKeys, BTN_TOOL_RUBBER);
 	}
 
 	/* 0x9a and 0x9f are only detected by communicating

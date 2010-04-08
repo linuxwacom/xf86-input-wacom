@@ -154,8 +154,7 @@ Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
 			else if (!strlen(dsource)) /* an user defined type */
 			{
 				/* assume it is a valid type */
-				common->wcmKeys[LONG(wcmType[j].tool)]
-					|= BIT(wcmType[j].tool);
+				SETBIT(common->wcmKeys, wcmType[j].tool);
 				ret = TRUE;
 				break;
 			}
