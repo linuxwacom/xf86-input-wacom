@@ -333,7 +333,7 @@ static unsigned short padkey_codes [] = {
 static struct
 {
 	const unsigned int vendor_id;
-	unsigned char model_id;
+	const unsigned int model_id;
 	int yRes; /* tablet Y resolution in points/inch */
 	int xRes; /* tablet X resolution in points/inch */
 	WacomModelPtr model;
@@ -419,7 +419,39 @@ static struct
 	{ WACOM_VENDOR_ID, 0x9A, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x9A */
 	{ WACOM_VENDOR_ID, 0x9F,   10,   10, &usbTabletPC   }, /* CapPlus  0x9F */
 	{ WACOM_VENDOR_ID, 0xE2,   10,   10, &usbTabletPC   }, /* TabletPC 0xE2 */
-	{ WACOM_VENDOR_ID, 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
+	{ WACOM_VENDOR_ID, 0xE3, 2540, 2540, &usbTabletPC   }, /* TabletPC 0xE3 */
+
+	/* IDs from Waltop's driver, available http://www.waltop.com.tw/download.asp?lv=0&id=2.
+	   Accessed 8 Apr 2010, driver release date 2009/08/11, fork of linuxwacom 0.8.4.
+	   Some more info would be nice for the ID's below... */
+	{ WALTOP_VENDOR_ID, 0x24, 2032, 2032, &usbGraphire   },
+	{ WALTOP_VENDOR_ID, 0x25, 2032, 2032, &usbGraphire2  },
+	{ WALTOP_VENDOR_ID, 0x26, 2032, 2032, &usbGraphire2  },
+	{ WALTOP_VENDOR_ID, 0x27, 2032, 2032, &usbGraphire3  },
+	{ WALTOP_VENDOR_ID, 0x28, 2032, 2032, &usbGraphire3  },
+	{ WALTOP_VENDOR_ID, 0x30, 2032, 2032, &usbGraphire4  },
+	{ WALTOP_VENDOR_ID, 0x31, 2032, 2032, &usbGraphire4  },
+	{ WALTOP_VENDOR_ID, 0x32, 2540, 2540, &usbBambooFun  },
+	{ WALTOP_VENDOR_ID, 0x33, 2540, 2540, &usbBambooFun  },
+	{ WALTOP_VENDOR_ID, 0x34, 2032, 2032, &usbBamboo1    },
+	{ WALTOP_VENDOR_ID, 0x35, 2032, 2032, &usbGraphire4  },
+	{ WALTOP_VENDOR_ID, 0x36, 2032, 2032, &usbGraphire4  },
+	{ WALTOP_VENDOR_ID, 0x37, 2032, 2032, &usbGraphire4  },
+	{ WALTOP_VENDOR_ID, 0x38, 2540, 2540, &usbBambooFun  },
+	{ WALTOP_VENDOR_ID, 0x39, 2540, 2540, &usbBambooFun  },
+	{ WALTOP_VENDOR_ID, 0x51, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x52, 2540, 2540, &usbBamboo     },
+
+	{ WALTOP_VENDOR_ID, 0x53, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x54, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x55, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x56, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x57, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x58, 2540, 2540, &usbBamboo     },
+	{ WALTOP_VENDOR_ID, 0x500, 2540, 2540, &usbBamboo    },
+	{ WALTOP_VENDOR_ID, 0x501, 2540, 2540, &usbBamboo    },
+	{ WALTOP_VENDOR_ID, 0x502, 5080, 5080, &usbIntuos4   },
+	{ WALTOP_VENDOR_ID, 0x503, 5080, 5080, &usbIntuos4   }
 };
 
 static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
