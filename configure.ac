@@ -35,8 +35,8 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
 # Initialize libtool
-AC_PROG_LIBTOOL
 AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
 
 # Checks for programs.
 AC_PROG_CC
