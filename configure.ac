@@ -58,8 +58,9 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION([1.4])
 XORG_DEFAULT_OPTIONS
 
-# Checks for pkg-config packages.
+# Obtain compiler/linker options for the wacom driver
 PKG_CHECK_MODULES(XORG, xorg-server xproto)
+# Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
 
 # Define a configure option for code debugging
