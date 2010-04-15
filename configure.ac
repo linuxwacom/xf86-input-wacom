@@ -99,7 +99,7 @@ DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
 
 AC_CONFIG_FILES([Makefile
-                 fdi/Makefile
+                 conf/Makefile
                  src/Makefile
                  man/Makefile
                  include/Makefile

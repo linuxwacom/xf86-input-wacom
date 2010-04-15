@@ -21,7 +21,7 @@
 # Ensure headers are installed below $(prefix) for distcheck
 DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg'
 
-SUBDIRS = fdi src man include tools
+SUBDIRS = conf src man include tools
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 pkgconfigdir = $(libdir)/pkgconfig
