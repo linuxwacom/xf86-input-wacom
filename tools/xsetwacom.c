@@ -495,8 +495,8 @@ static param_t parameters[] =
 	},
 	{
 		.name = "ClickForce",
-		.desc = "Sets tip/eraser pressure threshold = ClickForce*MaxZ/100 "
-		"(default is 6)",
+		.desc = "Sets tip/eraser pressure threshold "
+		"(default is 409)",
 		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
 		.prop_format = 32,
 		.prop_offset = 0,

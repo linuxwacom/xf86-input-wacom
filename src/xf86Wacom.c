@@ -767,12 +767,12 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	/* Rotation rotates the Max X and Y */
 	wcmRotateTablet(local, common->wcmRotate);
 
-	/* pressure */
+	/* pressure normalized to FILTER_PRESSURE_RES */
 	InitValuatorAxisStruct(local->dev, 2,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
 #endif
-		0, common->wcmMaxZ, 1, 1, 1);
+		0, FILTER_PRESSURE_RES, 1, 1, 1);
 
 	if (IsCursor(priv))
 	{

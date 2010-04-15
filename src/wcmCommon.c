@@ -26,6 +26,10 @@
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 
+/* Tested result for setting the pressure threshold to a reasonable value */
+#define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
+#define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
+
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
@@ -1445,18 +1449,45 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		if (IsStylus(priv) || IsEraser(priv))
 		{
-			/* set button1 (left click) on/off */
-			if (filtered.pressure >= common->wcmThreshold)
-				filtered.buttons |= button;
+			/* Instead of reporting the raw pressure, we normalize
+			 * the pressure from 0 to FILTER_PRESSURE_RES. This is
+			 * mainly to deal with the case where heavily used
+			 * stylus may have a "pre-loaded" initial pressure. To
+			 * do so, we keep the in-prox pressure and subtract it
+			 * from the raw pressure to prevent a potential
+			 * left-click before the pen touches the tablet.
+			 */
+			double tmpP;
+
+			/* set the minimum pressure when in prox */
+			if (!priv->oldProximity)
+				priv->minPressure = filtered.pressure;
 			else
+				priv->minPressure = min(priv->minPressure, filtered.pressure);
+
+			/* normalize pressure to FILTER_PRESSURE_RES */
+			tmpP = (filtered.pressure - priv->minPressure)
+				 * FILTER_PRESSURE_RES;
+			tmpP /= (common->wcmMaxZ - priv->minPressure);
+			filtered.pressure = (int)tmpP;
+
+			/* set button1 (left click) on/off */
+			if (filtered.pressure < common->wcmThreshold)
 			{
-				/* threshold tolerance */
-				int tol = common->wcmMaxZ / 250;
-				if (strstr(common->wcmModel->name, "Intuos4"))
-					tol = common->wcmMaxZ / 125;
-				if (filtered.pressure < common->wcmThreshold - tol)
-					filtered.buttons &= ~button;
+				filtered.buttons &= ~button;
+				if (priv->oldButtons & button) /* left click was on */
+				{
+					/* don't set it off if it is within the tolerance
+					   and threshold is larger than the tolerance */
+					if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
+					    (filtered.pressure > common->wcmThreshold -
+							THRESHOLD_TOLERANCE))
+						filtered.buttons |= button;
+				}
 			}
+			else
+				filtered.buttons |= button;
+
 			/* transform pressure */
 			transPressureCurve(priv,&filtered);
 		}
@@ -1601,10 +1632,8 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	if (common->wcmThreshold <= 0)
 	{
 		/* Threshold for counting pressure as a button */
-		if (strstr(common->wcmModel->name, "Intuos4"))
-			common->wcmThreshold = common->wcmMaxZ * 3 / 25;
-		else
-			common->wcmThreshold = common->wcmMaxZ * 3 / 50;
+		common->wcmThreshold = DEFAULT_THRESHOLD;
+
 		xf86Msg(X_PROBED, "%s: using pressure threshold of %d for button 1\n",
 			local->name, common->wcmThreshold);
 	}
@@ -1645,21 +1674,13 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 {
 	if (pDev->pPressCurve)
 	{
-		int p = pState->pressure;
+		/* clip the pressure */
+		int p = max(0, pState->pressure);
 
-		/* clip */
-		p = (p < 0) ? 0 : (p > pDev->common->wcmMaxZ) ?
-			pDev->common->wcmMaxZ : p;
-
-		/* rescale pressure to FILTER_PRESSURE_RES */
-		p = (p * FILTER_PRESSURE_RES) / pDev->common->wcmMaxZ;
+		p = min(FILTER_PRESSURE_RES, p);
 
 		/* apply pressure curve function */
 		p = pDev->pPressCurve[p];
-
-		/* scale back to wcmMaxZ */
-		pState->pressure = (p * pDev->common->wcmMaxZ) /
-			FILTER_PRESSURE_RES;
 	}
 }
 

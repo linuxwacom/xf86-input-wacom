@@ -636,7 +636,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		value = *(CARD32*)prop->data;
 
-		if ((value < 1) || (value > common->wcmMaxZ))
+		if ((value < 1) || (value > FILTER_PRESSURE_RES))
 			return BadValue;
 
 		if (!checkonly)

@@ -242,6 +242,7 @@ struct _WacomDeviceRec
 	/* JEJ - filters */
 	int* pPressCurve;       /* pressure curve */
 	int nPressCtrl[4];      /* control points for curve */
+	int minPressure;	/* the minimum pressure a pen may hold */
 
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
