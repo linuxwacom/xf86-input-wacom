@@ -58,8 +58,12 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION([1.4])
 XORG_DEFAULT_OPTIONS
 
-# Obtain compiler/linker options for the wacom driver
-PKG_CHECK_MODULES(XORG, xorg-server xproto)
+# Store the list of server defined extensions in REQUIRED_MODULES
+XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
+
+# Obtain compiler/linker options from server and required extensions
+PKG_CHECK_MODULES(XORG, xorg-server xproto $REQUIRED_MODULES)
+
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
 
@@ -82,9 +86,6 @@ AC_ARG_WITH(xorg-module-dir,
             [moduledir="$libdir/xorg/modules"])
 inputdir=${moduledir}/input
 AC_SUBST(inputdir)
-
-# Checks for extensions
-XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
 
 # X Server SDK location is required to install wacom header files
 # This location is also relayed in the xorg-wacom.pc file
