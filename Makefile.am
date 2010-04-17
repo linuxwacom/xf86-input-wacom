@@ -19,7 +19,8 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # Ensure headers are installed below $(prefix) for distcheck
-DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg'
+DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg' \
+			    --with-xorg-conf-dir='$${datadir}/X11/xorg.conf.d'
 
 SUBDIRS = conf src man include tools
 MAINTAINERCLEANFILES = ChangeLog INSTALL
