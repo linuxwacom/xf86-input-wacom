@@ -326,8 +326,8 @@ struct _WacomDeviceClass
 	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
 };
 
-	extern WacomDeviceClass gWacomUSBDevice;
-	extern WacomDeviceClass gWacomISDV4Device;
+extern WacomDeviceClass gWacomUSBDevice;
+extern WacomDeviceClass gWacomISDV4Device;
 
 /******************************************************************************
  * WacomCommonRec
