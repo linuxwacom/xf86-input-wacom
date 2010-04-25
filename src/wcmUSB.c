@@ -985,8 +985,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 				 * press.
 				 */
 				if (common->wcmCapacityDefault < 0 &&
-				    (common->tablet_id < 0xd0 ||
-				     common->tablet_id > 0xd3))
+				     (TabletHasFeature(common, WCM_TPC)))
 					MOD_BUTTONS (0, event->value);
 			}
 			else if (event->code == BTN_TOOL_TRIPLETAP)

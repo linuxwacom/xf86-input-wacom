@@ -174,7 +174,7 @@ static int wcmSetType(LocalDevicePtr local, const char *type)
 	{
 		int flags = TOUCH_ID;
 
-		if (priv->common->tablet_id < 0xd0 || priv->common->tablet_id > 0xd3)
+		if (TabletHasFeature(priv->common, WCM_TPC))
 			flags |= ABSOLUTE_FLAG;
 
 		priv->flags = flags;
