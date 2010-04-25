@@ -110,6 +110,17 @@ struct _WacomModel
 #define ERASER_ID		0x00000008
 #define PAD_ID			0x00000010
 
+#define WCM_PEN			0x00000001
+#define WCM_TPC			0x00000002
+#define WCM_1FGT		0x00000004
+#define WCM_2FGT		0x00000008
+#define WCM_STRIP		0x00000010
+#define WCM_RING		0x00000020
+#define WCM_DUALINPUT		0x00000040
+#define WCM_ROTATION		0x00000080
+
+#define TabletHasFeature(common, feature) (((common)->tablet_id & (feature)) != 0)
+
 #define ABSOLUTE_FLAG		0x00000100
 #define KEEP_SHAPE_FLAG		0x00000200
 #define BAUD_19200_FLAG		0x00000400
@@ -355,6 +366,7 @@ struct _WacomCommonRec
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
 	int tablet_id;		     /* USB tablet ID */
+	int tablet_type;	     /* type (penabled/1FGT/2FGT, etc) of the tablet */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */

@@ -174,6 +174,78 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 	if (!priv->common->tablet_id) /* USB devices */
 		priv->common->tablet_id = usbProbeKeys(local);
 
+	switch (priv->common->tablet_id)
+	{
+		/* tablets with touch ring and rotation pen*/
+		case 0xB8:  /* I4 */
+		case 0xB9:  /* I4 */
+		case 0xBA:  /* I4 */
+		case 0xBB:  /* I4 */
+			priv->common->tablet_type = WCM_ROTATION;
+			/* fall through */
+
+		/* tablets with touch ring */
+		case 0x17:  /* BambooFun */
+		case 0x18:  /* BambooFun */
+			priv->common->tablet_type |= WCM_RING;
+			break;
+
+		/* tablets support dual input */
+		case 0x20:  /* I1 */
+		case 0x21:  /* I1 */
+		case 0x22:  /* I1 */
+		case 0x23:  /* I1 */
+		case 0x24:  /* I1 */
+		case 0x41:  /* I2 */
+		case 0x42:  /* I2 */
+		case 0x43:  /* I2 */
+		case 0x44:  /* I2 */
+		case 0x45:  /* I2 */
+		case 0x47:  /* I2 */
+			priv->common->tablet_type = WCM_DUALINPUT;
+			break;
+
+		/* tablets support menu strips */
+		case 0xB0:  /* I3 */
+		case 0xB1:  /* I3 */
+		case 0xB2:  /* I3 */
+		case 0xB3:  /* I3 */
+		case 0xB4:  /* I3 */
+		case 0xB5:  /* I3 */
+		case 0xB7:  /* I3 */
+		case 0x3F:  /* CintiqV5 */
+		case 0xC5:  /* CintiqV5 */
+		case 0xC6:  /* CintiqV5 */
+			priv->common->tablet_type = WCM_STRIP | WCM_ROTATION;
+			break;
+
+		case 0xE2: /* TPC with 2FGT */
+		case 0xE3: /* TPC with 2FGT */
+			priv->common->tablet_type = WCM_TPC;
+			/* fall through */
+		case 0xD0:  /* Bamboo with 2FGT */
+		case 0xD1:  /* Bamboo with 2FGT */
+		case 0xD2:  /* Bamboo with 2FGT */
+		case 0xD3:  /* Bamboo with 2FGT */
+			priv->common->tablet_type |= WCM_2FGT;
+			break;
+
+		case 0x93: /* TPC with 1FGT */
+		case 0x9A: /* TPC with 1FGT */
+			priv->common->tablet_type = WCM_1FGT;
+			/* fall through */
+		case 0x90: /* TPC */
+			priv->common->tablet_type |= WCM_TPC;
+			break;
+
+		case 0x9F:
+			priv->common->tablet_type = WCM_1FGT;
+			break;
+
+		default:
+			priv->common->tablet_type = WCM_PEN;
+	}
+
 	return ret;
 }
 
