@@ -1125,7 +1125,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		return; /* discard */
 	}
 
-	if (strstr(common->wcmModel->name, "Intuos4"))
+	if (TabletHasFeature(common, WCM_ROTATION) &&
+		TabletHasFeature(common, WCM_RING)) /* I4 */
 	{
 		/* convert Intuos4 mouse tilt to rotation */
 		wcmTilt2R(&ds);
@@ -1509,8 +1510,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 		else if (IsCursor(priv) && !priv->hardProx)
 		{
-			/* initial current max distance */
-			if (strstr(common->wcmModel->name, "Intuos"))
+			/* initial current max distance for Intuos series */
+			if ((TabletHasFeature(common, WCM_ROTATION)) ||
+				(TabletHasFeature(common, WCM_DUALINPUT)))
 				common->wcmMaxCursorDist = 256;
 			else
 				common->wcmMaxCursorDist = 0;

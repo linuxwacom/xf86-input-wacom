@@ -446,8 +446,7 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 
-		if (common->wcmModel &&
-			strstr(common->wcmModel->name, "TabletPC"))
+		if (common->wcmModel && TabletHasFeature(common, WCM_TPC))
 		{
 			/* For penabled Tablet PCs, Tablet PC Button
 			 * are on by default */
@@ -682,8 +681,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 	else if (serial) /* serial number should never be 0 for V5 devices */
 	{
 		/* dual input is supported */
-		if ( strstr(common->wcmModel->name, "Intuos1") ||
-				strstr(common->wcmModel->name, "Intuos2") )
+		if (TabletHasFeature(common, WCM_DUALINPUT))
 		{
 			/* find existing channel */
 			for (i=0; i<MAX_CHANNELS; ++i)

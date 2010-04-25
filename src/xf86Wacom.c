@@ -791,8 +791,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	else if (IsPad(priv))
 	{
 		/* strip-x and strip-y */
-		if (strstr(common->wcmModel->name, "Intuos3") || 
-			strstr(common->wcmModel->name, "CintiqV5")) 
+		if (TabletHasFeature(common, WCM_STRIP))
 		{
 			InitValuatorAxisStruct(local->dev, 3,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
@@ -821,19 +820,14 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 				-64, 63, 1, 1, 1);
 	}
 
-	if ((strstr(common->wcmModel->name, "Intuos3") || 
-		strstr(common->wcmModel->name, "CintiqV5") ||
-		strstr(common->wcmModel->name, "Intuos4")) 
-			&& IsStylus(priv))
+	if ((TabletHasFeature(common, WCM_ROTATION)) && IsStylus(priv))
 		/* Art Marker Pen rotation */
 		InitValuatorAxisStruct(local->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
 				-900, 899, 1, 1, 1);
-	else if ((strstr(common->wcmModel->name, "Bamboo") ||
-		strstr(common->wcmModel->name, "Intuos4"))
-			&& IsPad(priv))
+	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
 		/* Touch ring */
 		InitValuatorAxisStruct(local->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
