@@ -439,12 +439,14 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	if (sID.vendor == WACOM_VENDOR_ID)
 	{
 		for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
+		{
 			if (sID.product == WacomModelDesc [i].model_id)
 			{
 				common->wcmModel = WacomModelDesc [i].model;
 				common->wcmResolX = WacomModelDesc [i].xRes;
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
+		}
 
 		if (common->wcmModel && TabletHasFeature(common, WCM_TPC))
 		{
