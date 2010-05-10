@@ -333,9 +333,17 @@ int wcmParseOptions(LocalDevicePtr local)
 		 */
 	}
 
-	/* Pad is always in relative mode. */
+	/* Pad is always in relative mode.
+	 * The pad also defaults to wheel scrolling, unlike the pens
+	 * (interesting effects happen on ArtPen and others with build-in
+	 * wheels)
+	 */
 	if (IsPad(priv))
+	{
 		priv->flags &= ~ABSOLUTE_FLAG;
+		priv->wheelup = 4;
+		priv->wheeldn = 5;
+	}
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))

@@ -585,8 +585,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 		}
 	}
 
-	/* emulate events for absolute wheel when needed */
-	if ( ds->abswheel != priv->oldWheel )
+	/* emulate events for absolute wheel when it is a touch ring (on pad) */
+	if ( (ds->abswheel != priv->oldWheel) && IsPad(priv) )
 	{
 		value = priv->oldWheel - ds->abswheel;
 		if ( value > 0 )
