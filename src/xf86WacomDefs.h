@@ -445,6 +445,7 @@ struct _WacomCommonRec
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
 
+	void *private;		     /* backend-specific information */
 	int wcmLastToolSerial;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
