@@ -606,12 +606,7 @@ int wcmParseOptions(LocalDevicePtr local)
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
 		sprintf(b, "Button%d", i+1);
-		s = xf86SetStrOption(local->options, b, NULL);
-		if (s)
-		{
-			oldButton = priv->button[i];
-			priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
-		}
+		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
 	}
 
 	if (common->wcmForceDevice == DEVICE_ISDV4)
