@@ -31,6 +31,13 @@
 #ifndef BTN_TASK
 #define BTN_TASK 0x117
 #endif
+#define MAX_USB_EVENTS 32
+
+typedef struct {
+	int wcmLastToolSerial;
+	int wcmEventCnt;
+	struct input_event wcmEvents[MAX_USB_EVENTS];
+} wcmUSBData;
 
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
@@ -509,6 +516,15 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		common->nbuttons = 6;
 	else
 		common->nbuttons = 5;
+
+	common->private = calloc(1, sizeof(wcmUSBData));
+
+	if (!common->private)
+	{
+		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
+					local->name);
+		return !Success;
+	}
 
 	return Success;
 }
