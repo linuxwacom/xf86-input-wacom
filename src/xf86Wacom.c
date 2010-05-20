@@ -952,9 +952,6 @@ static Bool wcmOpen(LocalDevicePtr local)
 		/* only ISDV4 are supported on X server 1.7 and later */
 		common->wcmForceDevice=DEVICE_ISDV4;
 		common->wcmDevCls = &gWacomISDV4Device;
-
-		/* Tablet PC buttons on by default */
-		common->wcmTPCButtonDefault = 1;
 	}
 	else
 	{

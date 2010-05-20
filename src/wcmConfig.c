@@ -411,7 +411,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
-	if (!wcmParseOptions(local))
+	if (!wcmParseOptions(local, need_hotplug))
 		goto SetupProc_fail;
 
 	/* mark the device configured */

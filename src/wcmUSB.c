@@ -447,13 +447,6 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 				common->wcmResolY = WacomModelDesc [i].yRes;
 			}
 		}
-
-		if (common->wcmModel && TabletHasFeature(common, WCM_TPC))
-		{
-			/* For penabled Tablet PCs, Tablet PC Button
-			 * are on by default */
-			common->wcmTPCButtonDefault = 1;
-		}
 	}
 
 	if (!common->wcmModel)

@@ -150,7 +150,7 @@ extern void wcmHotplugOthers(LocalDevicePtr local);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 
 /* setup */
-extern int wcmParseOptions(LocalDevicePtr local);
+extern int wcmParseOptions(LocalDevicePtr local, int hotplugged);
 extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
 extern void wcmInitialScreens(LocalDevicePtr local);
 extern void wcmInitialScreens(LocalDevicePtr local);

@@ -381,7 +381,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 	return 1;
 }
 
-int wcmParseOptions(LocalDevicePtr local)
+int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
@@ -566,11 +566,18 @@ int wcmParseOptions(LocalDevicePtr local)
 	if (xf86SetBoolOption(local->options, "ButtonsOnly", 0))
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
-	/* Tablet PC button applied to the whole tablet. Not just one tool */
-	if ( priv->flags & STYLUS_ID )
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
-							 "TPCButton",
-							 common->wcmTPCButtonDefault);
+	/* TPCButton on for Tablet PC by default */
+	if (TabletHasFeature(common, WCM_TPC))
+		common->wcmTPCButtonDefault = 1;
+
+	oldButton = xf86SetBoolOption(local->options, "TPCButton",
+					common->wcmTPCButtonDefault);
+
+	if (hotplugged || IsStylus(priv))
+		common->wcmTPCButton = oldButton;
+	else if (oldButton != common->wcmTPCButton)
+		xf86Msg(X_WARNING, "%s: TPCButton option can only be set "
+			"by stylus.\n", local->name);
 
 	/* a single touch device */
 	if (ISBITSET (common->wcmKeys, BTN_TOOL_DOUBLETAP))
@@ -578,6 +585,24 @@ int wcmParseOptions(LocalDevicePtr local)
 		/* TouchDefault was off for all devices
 		 * except when touch is supported */
 		common->wcmTouchDefault = 1;
+
+		oldButton = xf86SetBoolOption(local->options, "Touch",
+					common->wcmTouchDefault);
+
+		if (hotplugged || IsTouch(priv))
+			common->wcmTouch = oldButton;
+		else if (oldButton != common->wcmTouch)
+			xf86Msg(X_WARNING, "%s: Touch option can only be set "
+				"by a touch tool.\n", local->name);
+
+		oldButton = xf86SetBoolOption(local->options, "Capacity",
+					common->wcmCapacityDefault);
+
+		if (hotplugged || IsTouch(priv))
+			common->wcmCapacity = oldButton;
+		else if (oldButton != common->wcmCapacity)
+			xf86Msg(X_WARNING, "%s: Touch Capacity option can only be"
+				"set by a touch tool.\n", local->name);
 	}
 
 	/* 2FG touch device */
@@ -586,18 +611,16 @@ int wcmParseOptions(LocalDevicePtr local)
 		/* GestureDefault was off for all devices
 		 * except when multi-touch is supported */
 		common->wcmGestureDefault = 1;
+
+		oldButton = xf86SetBoolOption(local->options, "Gesture",
+					common->wcmGestureDefault);
+
+		if (hotplugged || IsTouch(priv))
+			common->wcmGesture = oldButton;
+		else if (oldButton != common->wcmGesture)
+			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
+				"be set by a touch tool.\n", local->name);
 	}
-
-	/* check if touch was turned off in xorg.conf */
-	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
-		common->wcmTouchDefault);
-
-	/* Touch gesture applies to the whole tablet */
-	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
-			common->wcmGestureDefault);
-
-	/* Touch capacity applies to the whole tablet */
-	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */
 	if ( !priv->wcmMMonitor )

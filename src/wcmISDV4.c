@@ -172,13 +172,6 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 	/*set the model */
 	common->wcmModel = &isdv4General;
 
-	/* Tablet PC Button is on by default */
-	common->wcmTPCButtonDefault = 1;
-
-	/* check if TPCButton was turned off by user for stylus */
-	if (priv->flags & STYLUS_ID)
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
-			"TPCButton", common->wcmTPCButtonDefault);
 	return Success;
 }
 
