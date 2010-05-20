@@ -968,6 +968,32 @@ static XDevice* find_device(Display *display, char *name)
 	return dev;
 }
 
+/* Return True if the given device has the property, or False otherwise */
+static Bool test_property(Display *dpy, XDevice* dev, Atom prop)
+{
+	int nprops_return;
+	Atom *properties;
+	int found = False;
+
+	/* if no property is required, return success */
+	if (prop == None)
+		return True;
+
+	properties = XListDeviceProperties(dpy, dev, &nprops_return);
+
+	while(nprops_return--)
+	{
+		if (properties[nprops_return] == prop)
+		{
+			found = True;
+			break;
+		}
+	}
+
+	XFree(properties);
+	return found;
+}
+
 static void list_one_device(Display *dpy, XDeviceInfo *info)
 {
 	static int	wacom_prop = 0;
@@ -1651,7 +1677,7 @@ static void set(Display *dpy, int argc, char **argv)
 {
 	param_t *param;
 	XDevice *dev = NULL;
-	Atom prop, type;
+	Atom prop = None, type;
 	int format;
 	unsigned char* data = NULL;
 	unsigned long nitems, bytes_after;
@@ -1686,17 +1712,22 @@ static void set(Display *dpy, int argc, char **argv)
 	{
 		printf("'%s' is a read-only option.\n", argv[1]);
 		goto out;
-	} else if (param->set_func)
-	{
-		param->set_func(dpy, dev, param, argc - 2, &argv[2]);
-		goto out;
 	}
 
-	prop = XInternAtom(dpy, param->prop_name, True);
-	if (!prop)
+	if (param->prop_name)
 	{
-		fprintf(stderr, "Property for '%s' not available.\n",
-			param->name);
+		prop = XInternAtom(dpy, param->prop_name, True);
+		if (!prop || !test_property(dpy, dev, prop))
+		{
+			printf("Property '%s' does not exist on device.\n",
+				param->prop_name);
+			goto out;
+		}
+	}
+
+	if (param->set_func)
+	{
+		param->set_func(dpy, dev, param, argc - 2, &argv[2]);
 		goto out;
 	}
 
@@ -1994,22 +2025,25 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
-	Atom prop, type;
+	Atom prop = None, type;
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
 
+	if (param->prop_name)
+	{
+		prop = XInternAtom(dpy, param->prop_name, True);
+		if (!prop || !test_property(dpy, dev, prop))
+		{
+			printf("Property '%s' does not exist on device.\n",
+				param->prop_name);
+			return;
+		}
+	}
+
 	if (param->get_func)
 	{
 		param->get_func(dpy, dev, param, argc, argv);
-		return;
-	}
-
-	prop = XInternAtom(dpy, param->prop_name, True);
-	if (!prop)
-	{
-		fprintf(stderr, "Property for '%s' not available.\n",
-			param->name);
 		return;
 	}
 
