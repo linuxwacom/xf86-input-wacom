@@ -262,16 +262,16 @@ static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char *type)
 	memset(&dummy, 0, sizeof(dummy));
 	xf86CollectInputOptions(&dummy, NULL, original);
 
-	name = xcalloc(strlen(local->name) + strlen(type) + 2, 1);
+	name = calloc(strlen(local->name) + strlen(type) + 2, 1);
 	sprintf(name, "%s %s", local->name, type);
 
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
-	xfree(name);
+	free(name);
 
 	while(dummy.options)
 	{
-		new = xcalloc(1, sizeof(InputOption));
+		new = calloc(1, sizeof(InputOption));
 
 		new->key = xf86OptionName(dummy.options);
 		new->value = xf86OptionValue(dummy.options);
@@ -288,9 +288,9 @@ static void wcmFreeInputOpts(InputOption* opts)
 	while(opts)
 	{
 		tmp = opts->next;
-		xfree(opts->key);
-		xfree(opts->value);
-		xfree(opts);
+		free(opts->key);
+		free(opts->value);
+		free(opts);
 		opts = tmp;
 	}
 }
@@ -538,7 +538,7 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		{
 			WacomToolAreaPtr arealist;
 
-			xfree(tool);
+			free(tool);
 			priv->tool = tool = toollist;
 			arealist = toollist->arealist;
 
@@ -674,8 +674,8 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 
 	return 1;
 error:
-	xfree(area);
-	xfree(tool);
+	free(area);
+	free(tool);
 	return 0;
 }
 

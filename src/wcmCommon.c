@@ -376,13 +376,13 @@ void wcmEmitKeysym (DeviceIntPtr keydev, int keysym, int state)
 			xf86Msg (X_WARNING, "%s: Couldn't find key with code %08x on keyboard device %s\n",
 					keydev->name, keysym, keydev->name);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		xfree(ksr);
+		free(ksr);
 #endif
 		return;
 	}
 	xf86PostKeyboardEvent (keydev, i, state);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-	xfree(ksr);
+	free(ksr);
 #endif
 }
 

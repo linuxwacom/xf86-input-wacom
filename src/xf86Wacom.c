@@ -216,7 +216,7 @@ static int wcmInitArea(LocalDevicePtr local)
 			if (inlist->next == area)
 			{
 				inlist->next = area->next;
-				xfree(area);
+				free(area);
 				priv->toolarea = NULL;
  			break;
 			}
