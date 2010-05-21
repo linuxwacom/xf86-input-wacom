@@ -386,7 +386,7 @@ int wcmParseOptions(LocalDevicePtr local)
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
 	char            *s, b[12];
-	int		i;
+	int		i, oldButton;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
