@@ -878,7 +878,7 @@ static void usage(void)
 	printf(
 	"\nCommands:\n"
 	" --list [dev|param]           - display known devices, parameters \n"
-	" --list mod                   - display supported modifier and specific keys for keystokes [not implemented}\n"
+	" --list mod                   - display supported modifier and specific keys for keystokes [not implemented]\n"
 	" --set dev_name param [values...] - set device parameter by name\n"
 	" --get dev_name param [param...] - get current device parameter(s) value by name\n");
 }
