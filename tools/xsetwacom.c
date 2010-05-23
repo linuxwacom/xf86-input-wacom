@@ -52,6 +52,27 @@ enum prop_flags {
 	PROP_FLAG_WRITEONLY = 4
 };
 
+
+/**
+ * How this works:
+ * Each parameter supported by xsetwacom has a struct param_t in the global
+ * parameters[] array.
+ * For 'standard' parameters that just modify a property, the prop_* fields
+ * are set to the matching property, format and offset. The get() function
+ * then handles the retrieval  of the property, the set() function handles
+ * the modification of the property.
+ *
+ * For parameters that need more than just triggering a property, the
+ * set_func and get_func point to the matching function to modify that
+ * particular parameter. example are the ButtonX parameters that call
+ * XSetDeviceButtonMapping instead of triggering a property.
+ *
+ * device_name is filled in automatically and just used to pass around the
+ * device name (since the XDevice* doesn't store this info). printformat is
+ * a flag that changes the output required, so that the -c and -s
+ * commandline arguments work.
+ */
+
 typedef struct _param
 {
 	const char *name;	/* param name as specified by the user */
@@ -68,6 +89,7 @@ typedef struct _param
 	enum printformat printformat;
 } param_t;
 
+/* get_func/set_func calls for special parameters */
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -82,6 +104,7 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
+	/* default get_func/set_func for not-implemented functionality */
 	printf("Not implemented.\n");
 }
 
