@@ -300,6 +300,26 @@ static void wcmFreeInputOpts(InputOption* opts)
 	}
 }
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
+/**
+ * Duplicate the attributes of the given device. "product" gets the type
+ * appended, so a device of product "Wacom" will then have a product "Wacom
+ * eraser", "Wacom cursor", etc.
+ */
+static InputAttributes* wcmDuplicateAttributes(LocalDevicePtr local,
+					       const char *type)
+{
+	InputAttributes *attr;
+	attr = DuplicateInputAttributes(local->attrs);
+							/* add one space, one \0 */
+	attr->product = realloc(attr->product, strlen(attr->product) + strlen(type) + 2);
+	strcat(attr->product, " ");
+	strcat(attr->product, type);
+
+	return attr;
+}
+#endif
+
 /**
  * Hotplug one device of the given type.
  * Device has the same options as the "parent" device, type is one of
@@ -310,15 +330,26 @@ static void wcmHotplug(LocalDevicePtr local, const char *type)
 {
 	DeviceIntPtr dev; /* dummy */
 	InputOption *input_options;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
+	InputAttributes *attrs = NULL;
+#endif
 
 	input_options = wcmOptionDupConvert(local, type);
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
+	attrs = wcmDuplicateAttributes(local, type);
+#endif
+
 	NewInputDeviceRequest(input_options,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
-				NULL,
+				attrs,
 #endif
 				&dev);
 	wcmFreeInputOpts(input_options);
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
+	FreeInputAttributes(attrs);
+#endif
 }
 
 void wcmHotplugOthers(LocalDevicePtr local)
