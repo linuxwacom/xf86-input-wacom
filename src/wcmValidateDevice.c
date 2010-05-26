@@ -656,6 +656,26 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		else if (oldButton != common->wcmGesture)
 			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
 				"be set by a touch tool.\n", local->name);
+
+		if ((common->wcmDevCls == &gWacomUSBDevice) &&
+				TabletHasFeature(common, WCM_LCD) &&
+				TabletHasFeature(common, WCM_2FGT)) {
+			common->wcmGestureParameters.wcmZoomDistanceDefault = 30;
+			common->wcmGestureParameters.wcmScrollDistanceDefault = 30;
+			common->wcmGestureParameters.wcmTapTimeDefault = 250;
+		}
+
+		common->wcmGestureParameters.wcmZoomDistance =
+			xf86SetIntOption(local->options, "ZoomDistance",
+			common->wcmGestureParameters.wcmZoomDistanceDefault);
+
+		common->wcmGestureParameters.wcmScrollDistance =
+			xf86SetIntOption(local->options, "ScrollDistance",
+			common->wcmGestureParameters.wcmScrollDistanceDefault);
+
+		common->wcmGestureParameters.wcmTapTime =
+			xf86SetIntOption(local->options, "TapTime",
+			common->wcmGestureParameters.wcmTapTimeDefault);
 	}
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */

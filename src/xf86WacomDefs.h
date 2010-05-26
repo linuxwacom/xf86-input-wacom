@@ -362,6 +362,17 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define MAX_CHANNELS 2
 #define MAX_FINGERS  2
 
+typedef struct {
+	int wcmZoomDistance;	       /* minimum distance for a zoom touch gesture */
+	int wcmZoomDistanceDefault;    /* default minimum distance for a zoom touch gesture */
+	int wcmScrollDistance;	       /* minimum motion before sending a scroll gesture */
+	int wcmScrollDirection;	       /* store the vertical or horizontal bit in use */
+	int wcmScrollDistanceDefault;  /* default minimum motion before sending a scroll gesture */
+	int wcmGestureUsed;	       /* retain used gesture count within one in-prox event */
+	int wcmTapTime;	   	       /* minimum time between taps for a right click */
+	int wcmTapTimeDefault;         /* default minimum time between taps for a right click */
+} WacomGesturesParameters;
+
 struct _WacomCommonRec 
 {
 	/* Do not move wcmDevice, same offset as priv->name */
@@ -418,10 +429,12 @@ struct _WacomCommonRec
 	int wcmGesture;	     	     /* disable/enable touch gesture */
 	int wcmGestureDefault;       /* default touch gesture to disable when not supported */
 	int wcmGestureMode;	       /* data is in Gesture Mode? */
+	int wcmTouchpadMode;           /* in touchpad mode? */
 	WacomDeviceState wcmGestureState[MAX_FINGERS]; /* inital state when in gesture mode */
 	int wcmCapacity;	     /* disable/enable capacity */
 	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported/disabled */
 				     /* 3 when capacity is supported */
+	WacomGesturesParameters wcmGestureParameters;
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
 	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */

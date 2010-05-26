@@ -30,11 +30,13 @@
 #define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
 #define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
 
+/* Tested result for Bamboo touch jump */
+#define BAMBOO_TOUCH_JUMPED 30
+
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
 
-static void wcmSoftOutEvent(LocalDevicePtr local);
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel, int suppress);
@@ -1090,7 +1092,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomChannelPtr pChannel;
 	WacomFilterState* fs;
 	int i, suppress = 0;
-
+	WacomDevicePtr priv = common->wcmDevices;
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
 
@@ -1104,8 +1106,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	 * will need to change the values (ie. for error correction) */
 	ds = *pState;
 
-	/* timestamp the state for velocity and acceleration analysis */
-	ds.sample = (int)GetTimeInMillis();
 	DBG(10, common,
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
@@ -1120,6 +1120,22 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.discard_first, ds.proximity, ds.sample,
 		pChannel->nSamples);
 
+	/* touch device is needed for gesture later */
+	if ((ds.device_type == TOUCH_ID) && !IsTouch(priv) &&
+			TabletHasFeature(common, WCM_2FGT))
+	{
+
+		for (; priv != NULL && !IsTouch(priv); priv = priv->next);
+
+		if (priv == NULL || !IsTouch(priv))
+		{
+			priv = common->wcmDevices;
+			/* this error will likely cause the driver crash */
+			xf86Msg(X_ERROR, "%s: wcmEvent could not "
+				"find touch device.", priv->name);
+		}
+	}
+
 	/* Discard the first 2 USB packages due to events delay */
 	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
 		ds.device_type != PAD_ID && (ds.device_type != TOUCH_ID) )
@@ -1129,6 +1145,19 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 			pChannel->nSamples);
 		++pChannel->nSamples;
 		return; /* discard */
+	}
+
+	/* ignore Bamboo touch data if point is abnormal */
+	if ((ds.device_type == TOUCH_ID) && (common->tablet_id >= 0xd0
+	    && common->tablet_id <= 0xd3) && ds.proximity)
+	{
+		if (!(ds.x * ds.y) || (pLast->proximity &&
+			(abs(ds.x - pLast->x) > BAMBOO_TOUCH_JUMPED ||
+			abs(ds.y - pLast->y) > BAMBOO_TOUCH_JUMPED)))
+		{
+			/* ignore the data */
+			goto ret;
+		}
 	}
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
@@ -1203,49 +1232,17 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
-	/* process second finger data if exists
-	 * and both touch and geature are enabled */
-	if ((ds.device_type == TOUCH_ID) &&
-		common->wcmTouch && common->wcmGesture)
-	{
-		WacomChannelPtr pOtherChannel;
-		WacomDeviceState dsOther;
+	if ((ds.device_type == TOUCH_ID) && common->wcmTouch)
+		wcmGestureFilter(priv, channel);
 
-		/* exit gesture mode when both fingers are out */
-		if (channel)
-			pOtherChannel = common->wcmChannel;
-		else
-			pOtherChannel = common->wcmChannel + 1;
-		dsOther = pOtherChannel->valid.state;
+	/* don't move the cursor if in gesture mode */
+	if (common->wcmGestureMode)
+		goto ret;
 
-		/* This is the only place to reset gesture mode
-		 * once a gesture mode is entered */
-		if (!ds.proximity && !dsOther.proximity)
-		{
-			common->wcmGestureMode = 0;
-
-			/* send a touch out-prox event here
-			 * in case the FF was out before the SF */
-			channel = 0;
-		}
-		else
-		{
-			/* don't move the cursor if in gesture mode
-			 * wait for second finger data to process gestures */
-			if (!channel && common->wcmGestureMode)
-				goto ret;
-
-			/* process gesture */
-			if (channel)
-			{
-				wcmFingerTapToClick(common);
-				goto ret;
-			}
-		}
-	}
-
-	/* everything else falls here */
-	commonDispatchDevice(common,channel,pChannel, suppress);
+	/* For touch, only first finger moves the cursor */
+	if ((ds.device_type == TOUCH_ID && common->wcmTouch && !channel) ||
+	    (ds.device_type != TOUCH_ID))
+		commonDispatchDevice(common,channel,pChannel, suppress);
 ret:
 	resetSampleCounter(pChannel);
 }
@@ -1506,14 +1503,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			transPressureCurve(priv,&filtered);
 		}
 
-		/* touch capacity is supported */
-		if (IsTouch(priv) && (common->wcmCapacityDefault >= 0) && !priv->hardProx)
-		{
-			if (((double)(filtered.capacity * 5) / 
-					(double)common->wcmMaxZ) > 
-					(5 - common->wcmCapacity))
-				filtered.buttons |= button;
-		}
 		else if (IsCursor(priv) && !priv->hardProx)
 		{
 			/* initial current max distance for Intuos series */
@@ -1670,7 +1659,7 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 }
 
 /* Send a soft prox-out event for the device */
-static void wcmSoftOutEvent(LocalDevicePtr local)
+void wcmSoftOutEvent(LocalDevicePtr local)
 {
 	WacomDeviceState out = { 0 };
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
@@ -1679,6 +1668,9 @@ static void wcmSoftOutEvent(LocalDevicePtr local)
 	out.device_id = wcmGetPhyDeviceID(priv);
 	DBG(2, priv->common, "send a soft prox-out\n");
 	wcmSendEvents(local, &out);
+
+	if (out.device_type == TOUCH_ID)
+		priv->common->wcmTouchpadMode = 0;
 }
 
 /*****************************************************************************

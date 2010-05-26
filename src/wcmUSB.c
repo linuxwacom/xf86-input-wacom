@@ -697,9 +697,17 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 
 	if (common->wcmProtocolLevel == 4)
 	{
-		/* Protocol 4 doesn't support tool serial numbers */
+		/* Protocol 4 doesn't support tool serial numbers.
+		 * However, we pass finger index into serial
+		 * numbers for tablets with multi-touch capabilities
+		 * to track individual fingers in proper channels.
+		 * serial number 0xf0 is reserved for the pad and is
+		 * always the last supported channel (i.e. MAX_CHANNELS-1).
+		 */
 		if (serial == 0xf0)
-			channel = 1;
+			channel = MAX_CHANNELS-1;
+		else if (serial)
+			channel = serial-1;
 		else
 			channel = 0;
 	}

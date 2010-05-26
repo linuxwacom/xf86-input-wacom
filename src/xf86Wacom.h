@@ -161,8 +161,9 @@ extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 /* run-time modifications */
 extern void wcmChangeScreen(LocalDevicePtr local, int value);
 extern void wcmTilt2R(WacomDeviceStatePtr ds);
-extern void wcmFingerTapToClick(WacomCommonPtr common);
+extern void wcmGestureFilter(WacomDevicePtr priv, int channel);
 extern void wcmEmitKeysym(DeviceIntPtr keydev, int keysym, int state);
+extern void wcmSoftOutEvent(LocalDevicePtr local);
 
 extern void wcmRotateTablet(LocalDevicePtr local, int value);
 extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);

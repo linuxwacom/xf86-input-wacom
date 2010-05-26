@@ -66,6 +66,12 @@
 /* BOOL, 1 value */
 #define WACOM_PROP_TOUCH "Wacom Enable Touch"
 
+/* 8 bit, 1 values */
+#define WACOM_PROP_ENABLE_GESTURE "Wacom Enable Touch Gesture"
+
+/* 32 bit, 3 values, zoom, rotate, tap parameters */
+#define WACOM_PROP_GESTURE_PARAMETERS "Wacom Touch Gesture Parameters"
+
 /* BOOL, 1 value */
 #define WACOM_PROP_HOVER "Wacom Hover Click"
 

@@ -116,6 +116,8 @@ Atom prop_capacity;
 Atom prop_threshold;
 Atom prop_suppress;
 Atom prop_touch;
+Atom prop_gesture;
+Atom prop_gesture_param;
 Atom prop_hover;
 Atom prop_tooltype;
 Atom prop_btnactions;
@@ -247,6 +249,13 @@ void InitWcmDeviceProperties(LocalDevicePtr local)
 	values[0] = !common->wcmTPCButton;
 	prop_hover = InitWcmAtom(local->dev, WACOM_PROP_HOVER, 8, 1, values);
 
+	values[0] = common->wcmGesture;
+	prop_gesture = InitWcmAtom(local->dev, WACOM_PROP_ENABLE_GESTURE, 8, 1, values);
+
+	values[0] = common->wcmGestureParameters.wcmZoomDistance;
+	values[1] = common->wcmGestureParameters.wcmScrollDistance;
+	values[2] = common->wcmGestureParameters.wcmTapTime;
+	prop_gesture_param = InitWcmAtom(local->dev, WACOM_PROP_GESTURE_PARAMETERS, 32, 3, values);
 
 	values[0] = MakeAtom(local->type_name, strlen(local->type_name), TRUE);
 	prop_tooltype = InitWcmAtom(local->dev, WACOM_PROP_TOOL_TYPE, -32, 1, values);
@@ -653,6 +662,36 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly && common->wcmTouch != values[0])
 			common->wcmTouch = values[0];
+	} else if (property == prop_gesture)
+	{
+		CARD8 *values = (CARD8*)prop->data;
+
+		if (prop->size != 1 || prop->format != 8)
+			return BadValue;
+
+		if ((values[0] != 0) && (values[0] != 1))
+			return BadValue;
+
+		if (!checkonly && common->wcmGesture != values[0])
+			common->wcmGesture = values[0];
+	} else if (property == prop_gesture_param)
+	{
+		CARD32 *values;
+
+		if (prop->size != 3 || prop->format != 32)
+			return BadValue;
+
+		values = (CARD32*)prop->data;
+
+		if (!checkonly)
+		{
+			if (common->wcmGestureParameters.wcmZoomDistance != values[0])
+				common->wcmGestureParameters.wcmZoomDistance = values[0];
+			if (common->wcmGestureParameters.wcmScrollDistance != values[1])
+				common->wcmGestureParameters.wcmScrollDistance = values[1];
+			if (common->wcmGestureParameters.wcmTapTime != values[2])
+				common->wcmGestureParameters.wcmTapTime = values[2];
+		}
 	} else if (property == prop_hover)
 	{
 		CARD8 *values = (CARD8*)prop->data;

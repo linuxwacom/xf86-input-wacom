@@ -412,6 +412,39 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
+		.name = "Gesture",
+		.desc = "Turns on/off multi-touch gesture events "
+		"(default is enable/on). ",
+		.prop_name = WACOM_PROP_ENABLE_GESTURE,
+		.prop_format = 8,
+		.prop_offset = 0,
+		.prop_flags = PROP_FLAG_BOOLEAN
+	},
+	{
+		.name = "ZoomDistance",
+		.desc = "Minimum distance for a zoom gesture "
+		"(default is 50). ",
+		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
+		.prop_format = 32,
+		.prop_offset = 0,
+	},
+	{
+		.name = "ScrollDistance",
+		.desc = "Minimum motion before sending a scroll gesture "
+		"(default is 20). ",
+		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
+		.prop_format = 32,
+		.prop_offset = 0,
+	},
+	{
+		.name = "TapTime",
+		.desc = "Minimum time between taps for a right click "
+		"(default is 250). ",
+		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
+		.prop_format = 32,
+		.prop_offset = 0,
+	},
+	{
 		.name = "Capacity",
 		.desc = "Touch sensitivity level (default is 3, "
 		"-1 for none capacitive tools).",
