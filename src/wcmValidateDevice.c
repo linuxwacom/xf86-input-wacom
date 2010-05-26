@@ -206,6 +206,11 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 			break;
 
 		/* tablets support menu strips */
+		case 0x3F:  /* CintiqV5 */
+		case 0xC5:  /* CintiqV5 */
+		case 0xC6:  /* CintiqV5 */
+			priv->common->tablet_type |= WCM_LCD;
+			/* fall through */
 		case 0xB0:  /* I3 */
 		case 0xB1:  /* I3 */
 		case 0xB2:  /* I3 */
@@ -213,15 +218,13 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 		case 0xB4:  /* I3 */
 		case 0xB5:  /* I3 */
 		case 0xB7:  /* I3 */
-		case 0x3F:  /* CintiqV5 */
-		case 0xC5:  /* CintiqV5 */
-		case 0xC6:  /* CintiqV5 */
 			priv->common->tablet_type = WCM_STRIP | WCM_ROTATION;
 			break;
 
 		case 0xE2: /* TPC with 2FGT */
 		case 0xE3: /* TPC with 2FGT */
 			priv->common->tablet_type = WCM_TPC;
+			priv->common->tablet_type |= WCM_LCD;
 			/* fall through */
 		case 0xD0:  /* Bamboo with 2FGT */
 		case 0xD1:  /* Bamboo with 2FGT */
@@ -236,10 +239,12 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 			/* fall through */
 		case 0x90: /* TPC */
 			priv->common->tablet_type |= WCM_TPC;
+			priv->common->tablet_type |= WCM_LCD;
 			break;
 
 		case 0x9F:
 			priv->common->tablet_type = WCM_1FGT;
+			priv->common->tablet_type |= WCM_LCD;
 			break;
 
 		default:
