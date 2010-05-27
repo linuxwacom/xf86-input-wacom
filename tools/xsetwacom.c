@@ -830,12 +830,6 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
-		.name = "NumScreen",
-		.desc = "Returns number of screens configured for the desktop. ",
-		.set_func = not_implemented,
-		.get_func = not_implemented,
-	},
-	{
 		.name = "XScaling",
 		.desc = "Returns the status of XSCALING is set or not. ",
 		.set_func = not_implemented,
