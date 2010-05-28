@@ -38,9 +38,6 @@ AM_MAINTAINER_MODE
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
-# Checks for programs.
-AC_PROG_CC
-
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
 
