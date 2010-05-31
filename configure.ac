@@ -58,7 +58,7 @@ XORG_DEFAULT_OPTIONS
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, xorg-server xproto inputproto $REQUIRED_MODULES)
+PKG_CHECK_MODULES(XORG, xorg-server xproto xext kbproto inputproto $REQUIRED_MODULES)
 
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
