@@ -54,11 +54,11 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION([1.8])
 XORG_DEFAULT_OPTIONS
 
-# Store the list of server defined extensions in REQUIRED_MODULES
-XORG_DRIVER_CHECK_EXT(XINPUT, inputproto)
+# Store the list of server defined optional extensions in REQUIRED_MODULES
+XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, xorg-server xproto $REQUIRED_MODULES)
+PKG_CHECK_MODULES(XORG, xorg-server xproto inputproto $REQUIRED_MODULES)
 
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
