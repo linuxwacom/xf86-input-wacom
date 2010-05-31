@@ -822,7 +822,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldWheel = wheel;
 		priv->oldX = priv->currentX;
 		priv->oldY = priv->currentY;
-		priv->oldZ = z;
+		priv->oldZ = ds->pressure;
 		priv->oldTiltX = tx;
 		priv->oldTiltY = ty;
 		priv->oldCapacity = ds->capacity;
@@ -836,6 +836,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		x -= priv->oldX;
 		y -= priv->oldY;
+		z -= priv->oldZ;
 	}
 
 	if (type != PAD_ID)
@@ -908,8 +909,21 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 
 			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
+			{
 				xf86PostMotionEvent(local->dev, is_absolute,
 					0, naxes, x, y, z, v3, v4, v5);
+				/* For relative events, reset the axes as
+				 * we've already moved the device by the
+				 * relative amount. Otherwise, a button
+				 * event in sendCommonEvents will move the
+				 * axes again.
+				 */
+				if (!is_absolute)
+				{
+					x = y = z = 0;
+					v3 = v4 = v5 = 0;
+				}
+			}
 
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 		}
@@ -979,7 +993,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldWheel = wheel;
 		priv->oldX = priv->currentX;
 		priv->oldY = priv->currentY;
-		priv->oldZ = z;
+		priv->oldZ = ds->pressure;
 		priv->oldCapacity = ds->capacity;
 		priv->oldTiltX = tx;
 		priv->oldTiltY = ty;
