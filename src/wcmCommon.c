@@ -837,6 +837,17 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	{
 		x -= priv->oldX;
 		y -= priv->oldY;
+		z -= priv->oldZ;
+		if (IsCursor(priv))
+		{
+			v3 -= priv->oldRot;
+			v4 -= priv->oldThrottle;
+		} else
+		{
+			v3 -= priv->oldTiltX;
+			v4 -= priv->oldTiltY;
+		}
+		v5 -= priv->oldWheel;
 	}
 
 	if (type != PAD_ID)
