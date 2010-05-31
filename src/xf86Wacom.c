@@ -874,10 +874,15 @@ Bool wcmIsWacomDevice (char* fname)
 
 	SYSCALL(close(fd));
 
-	if (id.vendor == WACOM_VENDOR_ID)
-		return TRUE;
-	else
-		return FALSE;
+	switch(id.vendor)
+	{
+		case WACOM_VENDOR_ID:
+		case WALTOP_VENDOR_ID:
+			return TRUE;
+		default:
+			break;
+	}
+	return FALSE;
 }
 
 /*****************************************************************************
