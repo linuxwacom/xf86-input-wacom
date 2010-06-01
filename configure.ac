@@ -38,14 +38,14 @@ AM_MAINTAINER_MODE
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
-AC_CHECK_LIB([m], [rint])
-
 # Initialize X.Org macros
 m4_ifndef([XORG_MACROS_VERSION],
           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
 XORG_MACROS_VERSION([1.8])
 XORG_DEFAULT_OPTIONS
+
+# Checks for libraries.
+AC_CHECK_LIB([m], [rint])
 
 # Store the list of server defined optional extensions in REQUIRED_MODULES
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
@@ -56,6 +56,21 @@ PKG_CHECK_MODULES(XORG, xorg-server xproto xext kbproto inputproto $REQUIRED_MOD
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
 
+# X Server SDK location is required to install wacom header files
+# This location is also relayed in the xorg-wacom.pc file
+sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
+
+# Workaround overriding sdkdir to be able to create a tarball when user has no
+# write permission in sdkdir. See DISTCHECK_CONFIGURE_FLAGS in Makefile.am
+AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
+AC_SUBST([sdkdir])
+
+DRIVER_NAME=wacom
+AC_SUBST([DRIVER_NAME])
+
+# -----------------------------------------------------------------------------
+#			Configuration options
+# -----------------------------------------------------------------------------
 # Define a configure option for code debugging
 AC_ARG_ENABLE(debug,
               AS_HELP_STRING([--enable-debug],
@@ -76,27 +91,16 @@ AC_ARG_WITH(xorg-module-dir,
 inputdir=${moduledir}/input
 AC_SUBST(inputdir)
 
-# X Server SDK location is required to install wacom header files
-# This location is also relayed in the xorg-wacom.pc file
-sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
-
-# Workaround overriding sdkdir to be able to create a tarball when user has no
-# write permission in sdkdir. See DISTCHECK_CONFIGURE_FLAGS in Makefile.am
-AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
-AC_SUBST([sdkdir])
-
 # Define a configure option for an alternate X Server configuration directory
 sysconfigdir=`$PKG_CONFIG --variable=sysconfigdir xorg-server`
 AC_ARG_WITH([xorg-conf-dir],
-	    AC_HELP_STRING([--with-xorg-conf-dir=DIR],
+	    AS_HELP_STRING([--with-xorg-conf-dir=DIR],
 			   [Default xorg.conf.d directory [[default=from $PKG_CONFIG xorg-server]]]),
             [configdir="$withval"],
             [configdir="$sysconfigdir"])
 AC_SUBST(configdir)
 AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$sysconfigdir" != "x"])
-
-DRIVER_NAME=wacom
-AC_SUBST([DRIVER_NAME])
+# -----------------------------------------------------------------------------
 
 AC_CONFIG_FILES([Makefile
                  conf/Makefile
