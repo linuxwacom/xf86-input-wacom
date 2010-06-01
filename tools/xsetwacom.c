@@ -830,12 +830,6 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
-		.name = "XScaling",
-		.desc = "Returns the status of XSCALING is set or not. ",
-		.set_func = not_implemented,
-		.get_func = not_implemented,
-	},
-	{
 		.name = "all",
 		.desc = "Get value for all parameters.",
 		.get_func = get_all,
