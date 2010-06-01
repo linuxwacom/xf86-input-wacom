@@ -85,13 +85,15 @@ sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
 AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
 AC_SUBST([sdkdir])
 
+# Define a configure option for an alternate X Server configuration directory
+sysconfigdir=`$PKG_CONFIG --variable=sysconfigdir xorg-server`
 AC_ARG_WITH([xorg-conf-dir],
 	    AC_HELP_STRING([--with-xorg-conf-dir=DIR],
 			   [Default xorg.conf.d directory [[default=from $PKG_CONFIG xorg-server]]]),
 	    [XORG_CONF_DIR="$withval"],
-	    [XORG_CONF_DIR="`$PKG_CONFIG --variable=sysconfigdir xorg-server`"])
+	    [XORG_CONF_DIR="$sysconfigdir"])
 AC_SUBST(XORG_CONF_DIR)
-AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$XORG_CONF_DIR" != "x" && test "x$XORG_CONF_DIR" != "xno"])
+AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$sysconfigdir" != "x"])
 
 DRIVER_NAME=wacom
 AC_SUBST([DRIVER_NAME])
