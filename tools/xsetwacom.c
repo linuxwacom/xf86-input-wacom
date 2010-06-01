@@ -1195,6 +1195,7 @@ static int is_modifier(const char* modifier)
 static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data);
 static int special_map_button(int argc, char **argv, unsigned long *ndata, unsigned long* data);
 static int special_map_core(int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_modetoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
@@ -1204,6 +1205,7 @@ struct keywords {
 	{"key", special_map_keystrokes},
 	{"button", special_map_button},
 	{"core", special_map_core},
+	{"modetoggle", special_map_modetoggle},
 	{ NULL, NULL }
 };
 
@@ -1218,6 +1220,15 @@ static int special_map_core(int argc, char **argv, unsigned long *ndata, unsigne
 			"will be ignored.\n");
 		once_only = 0;
 	}
+	return 0;
+}
+
+static int special_map_modetoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+{
+	data[*ndata] = AC_MODETOGGLE;
+
+	*ndata += 1;
+
 	return 0;
 }
 
