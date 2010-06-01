@@ -1153,6 +1153,8 @@ static char *convert_specialkey(const char *modifier)
 		{"f31", "F31"}, {"f32", "F32"}, {"f33", "F33"},
 		{"f34", "F34"}, {"f35", "F35"},
 
+		{"esc", "Escape"}, {"Esc", "Escape"},
+
 		{ NULL, NULL }
 	};
 
