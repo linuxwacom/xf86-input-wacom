@@ -41,13 +41,6 @@ AC_PROG_LIBTOOL
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_INLINE
-AC_TYPE_SIZE_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
-
 # Initialize X.Org macros
 m4_ifndef([XORG_MACROS_VERSION],
           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
