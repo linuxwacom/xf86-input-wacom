@@ -41,6 +41,7 @@ AC_PROG_LIBTOOL
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_PROG_SED
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
