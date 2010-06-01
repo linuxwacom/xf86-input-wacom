@@ -102,11 +102,6 @@ static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, c
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
-static void not_implemented(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
-{
-	/* default get_func/set_func for not-implemented functionality */
-	printf("Not implemented.\n");
-}
 
 static param_t parameters[] =
 {
@@ -1099,8 +1094,7 @@ static void list_param(Display *dpy)
 
 	while(param->name)
 	{
-		printf("%-16s - %16s%s\n", param->name, param->desc,
-			(param->set_func == not_implemented) ? " [not implemented]" : "");
+		printf("%-16s - %16s\n", param->name, param->desc);
 		param++;
 	}
 }
