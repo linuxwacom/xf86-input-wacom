@@ -290,9 +290,6 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		dev = dev->next;
 	}
 
-	/* free pressure curve */
-	free(priv->pPressCurve);
-
 	free(priv);
 	local->private = NULL;
 

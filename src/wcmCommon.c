@@ -1679,16 +1679,13 @@ void wcmSoftOutEvent(LocalDevicePtr local)
 
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 {
-	if (pDev->pPressCurve)
-	{
-		/* clip the pressure */
-		int p = max(0, pState->pressure);
+	/* clip the pressure */
+	int p = max(0, pState->pressure);
 
-		p = min(FILTER_PRESSURE_RES, p);
+	p = min(FILTER_PRESSURE_RES, p);
 
-		/* apply pressure curve function */
-		p = pDev->pPressCurve[p];
-	}
+	/* apply pressure curve function */
+	p = pDev->pPressCurve[p];
 }
 
 /*****************************************************************************

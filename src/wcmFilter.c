@@ -62,19 +62,6 @@ void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	if (!wcmCheckPressureCurveValues(x0, y0, x1, y1))
 		return;
 
-	/* if curve is not allocated, do it now. */
-	if (!pDev->pPressCurve)
-	{
-		pDev->pPressCurve = (int*) malloc(sizeof(int) *
-			(FILTER_PRESSURE_RES + 1));
-		if (!pDev->pPressCurve)
-		{
-			xf86Msg(X_ERROR, "%s: wcmSetPressureCurve: failed to "
-				"allocate memory for curve\n", pDev->local->name);
-			return;
-		}
-	}
-
 	/* linear by default */
 	for (i=0; i<=FILTER_PRESSURE_RES; ++i)
 		pDev->pPressCurve[i] = i;
