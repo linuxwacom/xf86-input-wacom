@@ -1685,7 +1685,7 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 	p = min(FILTER_PRESSURE_RES, p);
 
 	/* apply pressure curve function */
-	p = pDev->pPressCurve[p];
+	pState->pressure = pDev->pPressCurve[p];
 }
 
 /*****************************************************************************
