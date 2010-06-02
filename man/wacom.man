@@ -226,4 +226,5 @@ Xorg(1x), xorg.conf(5x), xorgconfig(1x), Xserver(1x), X(7).
 Frederic Lepied <lepied@xfree86.org>,
 Ping Cheng <pingc@wacom.com>,
 John E. Joganic <jej@j-arkadia.com>,
-Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
+Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>,
+Peter Hutterer <peter.hutterer@who-t.net>
