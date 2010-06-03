@@ -317,7 +317,6 @@ void wcmVirtualTabletSize(LocalDevicePtr local)
 void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution_x, resolution_y;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
 
@@ -345,18 +344,6 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 	}
 	resolution_x = priv->resolX;
 	resolution_y = priv->resolY;
-
-	if (common->wcmScaling)
-	{
-		/* In case wcmDevConvert didn't get called */
-		topx = 0;
-		bottomx = (int)((double)priv->sizeX * priv->factorX + 0.5);
-		resolution_x = (int)((double)resolution_x * priv->factorX + 0.5);
-
-		topy = 0;
-		bottomy = (int)((double)priv->sizeY * priv->factorY + 0.5);
-		resolution_y = (int)((double)resolution_y * priv->factorY + 0.5);
-	}
 
 	switch(axis)
 	{

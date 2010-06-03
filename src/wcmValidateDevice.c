@@ -600,8 +600,6 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		}
 	}
 
-	common->wcmScaling = 0;
-
 	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
 			common->wcmThreshold);
 

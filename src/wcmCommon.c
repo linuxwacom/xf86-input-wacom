@@ -780,7 +780,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int tx = ds->tiltx;
 	int ty = ds->tilty;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
 	int v3, v4, v5;
 
@@ -891,45 +890,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				y += priv->topPadding;
 			}
 
-			if (common->wcmScaling)
-			{
-				/* In the case that wcmDevConvert doesn't get called.
-				 * The +-0.4 is to increase the sensitivity in relative mode.
-				 * Must be sensitive to which way the tool is moved or one way
-				 * will get a severe penalty for small movements.
-				 */
-				if(is_absolute(local)) {
-					x -= priv->topX;
-					y -= priv->topY;
-					if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
-					{
-						x -= priv->tvoffsetX;
-						y -= priv->tvoffsetY;
-					}
-				}
-				x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
-				y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
-
-				if (is_absolute(local) && (priv->twinview == TV_NONE))
-				{
-					x -= priv->screenTopX[priv->currentScreen];
-					y -= priv->screenTopY[priv->currentScreen];
-				}
-
-				if (priv->screen_no != -1)
-				{
-					if (x > priv->screenBottomX[priv->currentScreen] - priv->screenTopX[priv->currentScreen])
-						x = priv->screenBottomX[priv->currentScreen];
-					if (x < 0) x = 0;
-					if (y > priv->screenBottomY[priv->currentScreen] - priv->screenTopY[priv->currentScreen])
-						y = priv->screenBottomY[priv->currentScreen];
-					if (y < 0) y = 0;
-	
-				}
-				priv->currentSX = x;
-				priv->currentSY = y;
-			}
-
 			/* don't emit proximity events if device does not support proximity */
 			if ((local->dev->proximity && !priv->oldProximity))
 				xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
@@ -957,13 +917,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		else /* not in proximity */
 		{
 			buttons = 0;
-
-			if (common->wcmScaling)
-			{
-				/* In the case that wcmDevConvert doesn't called */
-				x = priv->currentSX;
-				y = priv->currentSY;
-			}
 
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
