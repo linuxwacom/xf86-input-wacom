@@ -1979,21 +1979,6 @@ void wcmRotateTablet(LocalDevicePtr local, int value)
 
 		    /* and rotate them to the new value */
 		    rotateOneTool(tmppriv);
-
-		    switch(value) {
-			case ROTATE_NONE:
-			    xf86ReplaceStrOption(local->options, "Rotate", "NONE");
-			break;
-			case ROTATE_CW:
-			    xf86ReplaceStrOption(local->options, "Rotate", "CW");
-			break;
-			case ROTATE_CCW:
-			    xf86ReplaceStrOption(local->options, "Rotate", "CCW");
-			break;
-			case ROTATE_HALF:
-			    xf86ReplaceStrOption(local->options, "Rotate", "HALF");
-			break;
-		    }
 		}
 	}
 }

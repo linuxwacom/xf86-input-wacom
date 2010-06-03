@@ -86,10 +86,7 @@ void wcmChangeScreen(LocalDevicePtr local, int value)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 
 	if (priv->screen_no != value)
-	{
 		priv->screen_no = value;
-		xf86ReplaceIntOption(local->options, "ScreenNo", value);
-	}
 
 	if (priv->screen_no != -1)
 		priv->currentScreen = priv->screen_no;
