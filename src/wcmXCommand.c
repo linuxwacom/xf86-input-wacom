@@ -40,17 +40,9 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 		return (mode == Relative) ? Success : XI_BadMode;
 
 	if ((mode == Absolute) && !is_absolute(local))
-	{
 		set_absolute(local, TRUE);
-		wcmInitialCoordinates(local, 0);
-		wcmInitialCoordinates(local, 1);
-	}
 	else if ((mode == Relative) && is_absolute(local))
-	{
 		set_absolute(local, FALSE);
-		wcmInitialCoordinates(local, 0);
-		wcmInitialCoordinates(local, 1);
-	}
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
 		DBG(10, priv, "invalid mode=%d\n", mode);
