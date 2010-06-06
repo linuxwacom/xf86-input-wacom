@@ -252,6 +252,9 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
+	WacomCommonPtr common = priv->common;
+	WacomToolPtr *prev_tool = &common->wcmTool;
+	WacomToolPtr tool = common->wcmTool;
 
 	DBG(1, priv, "\n");
 
@@ -290,11 +293,38 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		dev = dev->next;
 	}
 
+	if (priv->tool && priv->tool->arealist)
+	{
+		WacomToolAreaPtr area, next;
+		for (area = priv->tool->arealist; area; area = next)
+		{
+			next = area->next;
+			free(area);
+		}
+	}
+
+	while (tool)
+	{
+		if (tool == priv->tool)
+		{
+			*prev_tool = tool->next;
+			break;
+		}
+		prev_tool = &tool->next;
+		tool = tool->next;
+	}
+
+	free(priv->tool);
+
+	/* the last priv frees the common */
+	if (!common->wcmDevices)
+		free(common);
+
 	free(priv);
 	local->private = NULL;
 
 
-	xf86DeleteInput(local, 0);    
+	xf86DeleteInput(local, 0);
 }
 
 /* wcmMatchDevice - locate matching device and merge common structure. If an
