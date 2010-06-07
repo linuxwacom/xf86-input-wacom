@@ -146,7 +146,7 @@ extern int wcmDeviceTypeKeys(LocalDevicePtr local);
 
 /* hotplug */
 extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
-extern void wcmHotplugOthers(LocalDevicePtr local);
+extern void wcmHotplugOthers(LocalDevicePtr local, const char *basename);
 extern int wcmAutoProbeDevice(LocalDevicePtr local);
 
 /* setup */
