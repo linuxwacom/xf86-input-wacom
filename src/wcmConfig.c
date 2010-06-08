@@ -253,8 +253,6 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
 	WacomCommonPtr common = priv->common;
-	WacomToolPtr *prev_tool = &common->wcmTool;
-	WacomToolPtr tool = common->wcmTool;
 
 	DBG(1, priv, "\n");
 
@@ -283,7 +281,41 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		local->name = NULL;
 	}
 
-	prev = &priv->common->wcmDevices;
+	if (priv->toolarea)
+	{
+		WacomToolAreaPtr *prev_area = &priv->tool->arealist;
+		WacomToolAreaPtr area = *prev_area;
+		while (area)
+		{
+			if (area == priv->toolarea)
+			{
+				*prev_area = area->next;
+				break;
+			}
+			prev_area = &area->next;
+			area = area->next;
+		}
+		free(priv->toolarea);
+	}
+
+	if (priv->tool)
+	{
+		WacomToolPtr *prev_tool = &common->wcmTool;
+		WacomToolPtr tool = *prev_tool;
+		while (tool)
+		{
+			if (tool == priv->tool)
+			{
+				*prev_tool = tool->next;
+				break;
+			}
+			prev_tool = &tool->next;
+			tool = tool->next;
+		}
+		free(priv->tool);
+	}
+
+	prev = &common->wcmDevices;
 	dev = *prev;
 	while(dev)
 	{
@@ -295,37 +327,16 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		prev = &dev->next;
 		dev = dev->next;
 	}
-
-	if (priv->tool && priv->tool->arealist)
-	{
-		WacomToolAreaPtr area, next;
-		for (area = priv->tool->arealist; area; area = next)
-		{
-			next = area->next;
-			free(area);
-		}
-	}
-
-	while (tool)
-	{
-		if (tool == priv->tool)
-		{
-			*prev_tool = tool->next;
-			break;
-		}
-		prev_tool = &tool->next;
-		tool = tool->next;
-	}
-
-	free(priv->tool);
+	free(priv);
 
 	/* the last priv frees the common */
 	if (!common->wcmDevices)
+	{
+		free(common->private);
 		free(common);
+	}
 
-	free(priv);
 	local->private = NULL;
-
 	xf86DeleteInput(local, 0);
 }
 
