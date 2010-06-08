@@ -1199,7 +1199,6 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 		default:
 			xf86Msg(X_ERROR, "%s: wacom unsupported mode=%d\n", local->name, what);
 			return !Success;
-			break;
 	} /* end switch */
 
 	DBG(2, priv, "END Success \n");
