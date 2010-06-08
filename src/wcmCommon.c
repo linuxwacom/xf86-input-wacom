@@ -1669,8 +1669,6 @@ static void wcmInitialTVScreens(LocalDevicePtr local)
 	if (priv->twinview == TV_NONE)
 		return;
 
-	priv->numScreen = 2;
-
 	if ((priv->twinview == TV_LEFT_RIGHT) || (priv->twinview == TV_RIGHT_LEFT))
 	{
 		/* it does not need the offset if always map to a specific screen */

@@ -144,9 +144,6 @@ static int wcmInitArea(LocalDevicePtr local)
 	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
 
-	if (priv->twinview != TV_NONE)
-		priv->numScreen = 2;
-
 	if (priv->screen_no != -1 &&
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{

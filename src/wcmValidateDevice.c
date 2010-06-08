@@ -734,6 +734,11 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->twinview = TV_NONE;
 	}
 
+	if (s && priv->twinview != TV_NONE)
+		priv->numScreen = 2;
+	else
+		priv->numScreen = screenInfo.numScreens;
+
 	return 1;
 error:
 	free(area);
