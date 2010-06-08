@@ -1126,6 +1126,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	Status rc = !Success;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
 			"type=%s flags=%d fd=%d what=%s\n",
@@ -1145,20 +1146,14 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			priv->wcmDevOpenCount = 0;
 			priv->wcmInitKeyClassCount = 0;
 			if (!wcmDevOpen(pWcm))
-			{
-				DBG(1, priv, "INIT FAILED\n");
-				return !Success;
-			}
+				goto out;
 			priv->wcmInitKeyClassCount++;
 			priv->wcmDevOpenCount++;
 			break; 
 
 		case DEVICE_ON:
 			if (!wcmDevOpen(pWcm))
-			{
-				DBG(1, priv, "ON FAILED\n");
-				return !Success;
-			}
+				goto out;
 			priv->wcmDevOpenCount++;
 			xf86AddEnabledDevice(local);
 			pWcm->public.on = TRUE;
@@ -1178,11 +1173,15 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 		default:
 			xf86Msg(X_ERROR, "%s: invalid mode=%d. This is an X server bug.\n",
 				local->name, what);
-			return !Success;
+			goto out;
 	} /* end switch */
 
-	DBG(2, priv, "END Success \n");
-	return Success;
+	rc = Success;
+
+out:
+	if (rc != Success)
+		DBG(1, priv, "Failed during %d\n", what);
+	return rc;
 }
 
 /* vim: set noexpandtab shiftwidth=8: */
