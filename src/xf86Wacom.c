@@ -126,30 +126,22 @@ static int wcmInitArea(LocalDevicePtr local)
 
 	DBG(10, priv, "\n");
 
-	/* the following 4 blocks verify the box and
-	 * initialize the area */
+	/* verify the box and initialize the area */
 	if (priv->topX > bottomx)
-	{
 		priv->topX = 0;
-	}
-	area->topX = priv->topX;
 
 	if (priv->topY > bottomy)
-	{
 		priv->topY = 0;
-	}
-	area->topY = priv->topY;
 
 	if (priv->bottomX < priv->topX || !priv->bottomX)
-	{
 		priv->bottomX = bottomx;
-	}
-	area->bottomX = priv->bottomX;
 
 	if (priv->bottomY < priv->topY || !priv->bottomY)
-	{
 		priv->bottomY = bottomy;
-	}
+
+	area->topX = priv->topX;
+	area->topY = priv->topY;
+	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
 
 	if (priv->twinview != TV_NONE)
