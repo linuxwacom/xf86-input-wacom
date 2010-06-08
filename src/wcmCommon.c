@@ -1314,6 +1314,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			case TOUCH_DEVICE_ID:
 				ds->device_type = TOUCH_ID;
 				break;
+			case PAD_DEVICE_ID:
+				ds->device_type = PAD_ID;
+				break;
 			default:
 				ds->device_type = idtotype(ds->device_id);
 		}
