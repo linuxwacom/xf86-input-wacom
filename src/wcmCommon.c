@@ -108,128 +108,6 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * wcmSetScreen --
- *   set to the proper screen according to the converted (x,y).
- *   this only supports for horizontal setup now.
- *   need to know screen's origin (x,y) to support 
- *   combined horizontal and vertical setups
- ****************************************************************************/
-
-static void wcmSetScreen(InputInfoPtr pInfo, int v0, int v1)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int screenToSet = -1, i, j, x, y, tabletSize = 0;
-
-	DBG(6, priv, "v0=%d v1=%d "
-		"currentScreen=%d\n", v0, v1, priv->currentScreen);
-
-	if (priv->screen_no != -1 && priv->screen_no >= priv->numScreen)
-	{
-		xf86Msg(X_ERROR, "%s: wcmSetScreen Screen%d is larger than number of available screens (%d)\n",
-			pInfo->name, priv->screen_no, priv->numScreen);
-		priv->screen_no = -1;
-	}
-
-	if (!(pInfo->flags & (XI86_ALWAYS_CORE ))) return;
-
-	if (priv->twinview != TV_NONE && priv->screen_no == -1 && is_absolute(pInfo))
-	{
-		if (priv->twinview == TV_LEFT_RIGHT)
-		{
-			tabletSize = priv->bottomX - priv->tvoffsetX;
-			if (v0 > tabletSize && v0 <= priv->bottomX)
-				priv->currentScreen = 1;
-			if (v0 > priv->topX && v0 <= priv->topX + priv->tvoffsetX)
-				priv->currentScreen = 0;
-		}
-		if (priv->twinview == TV_ABOVE_BELOW)
-		{
-			tabletSize = priv->bottomY - priv->tvoffsetY;
-			if (v0 > tabletSize && v0 <= priv->bottomY)
-				priv->currentScreen = 1;
-			if (v0 > priv->topY && v0 <= priv->topY + priv->tvoffsetY)
-				priv->currentScreen = 0;
-		}
-		if (priv->twinview == TV_RIGHT_LEFT)
-		{
-			tabletSize = priv->bottomX - priv->tvoffsetX;
-			if (v0 > tabletSize && v0 <= priv->bottomX)
-				priv->currentScreen = 0;
-			if (v0 > priv->topX && v0 <= priv->topX + priv->tvoffsetX)
-				priv->currentScreen = 1;
-		}
-		if (priv->twinview == TV_BELOW_ABOVE)
-		{
-			tabletSize = priv->bottomY - priv->tvoffsetY;
-			if (v0 > tabletSize && v0 <= priv->bottomY)
-				priv->currentScreen = 0;
-			if (v0 > priv->topY && v0 <= priv->topY + priv->tvoffsetY)
-				priv->currentScreen = 1;
-		}
-		DBG(10, priv, "TwinView setup screenToSet=%d\n",
-			priv->currentScreen);
-	}
-
-	wcmMappingFactor(pInfo);
-	if (!is_absolute(pInfo) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
-		return;
-
-	v0 = v0 - priv->topX;
-	v1 = v1 - priv->topY;
-
-	if (priv->screen_no == -1)
-	{
-		for (i = 0; i < priv->numScreen; i++)
-		{
-			if (v0 * priv->factorX >= priv->screenTopX[i] && 
-				v0 * priv->factorX < priv->screenBottomX[i] - 0.5)
-			{
-				
-				for (j = 0; j < priv->numScreen; j++)
-				{
-					if (v1 * priv->factorY >= priv->screenTopY[j] && 
-						v1 * priv->factorY <= priv->screenBottomY[j] - 0.5)
-					{
-						if (j == i)
-						{
-							screenToSet = i;
-							break;
-						}
-					}
-				}
-					
-				if (screenToSet != -1)
-					break;
-			}
-		}
-	}
-	else
-		screenToSet = priv->screen_no;
-
-	if (screenToSet == -1)
-	{
-		DBG(3, priv, "Error: "
-			"Can not find valid screen (currentScreen=%d)\n",
-			priv->currentScreen);
-		return;
-	}
-
-	wcmVirtualTabletPadding(pInfo);
-	x = ((double)(v0 + priv->leftPadding) * priv->factorX) - priv->screenTopX[screenToSet] + 0.5;
-	y = ((double)(v1 + priv->topPadding) * priv->factorY) - priv->screenTopY[screenToSet] + 0.5;
-		
-	if (x >= screenInfo.screens[screenToSet]->width)
-		x = screenInfo.screens[screenToSet]->width - 1;
-	if (y >= screenInfo.screens[screenToSet]->height)
-		y = screenInfo.screens[screenToSet]->height - 1;
-
-	xf86XInputSetScreen(pInfo, screenToSet, x, y);
-	DBG(10, priv, "current=%d ToSet=%d\n",
-			priv->currentScreen, screenToSet);
-	priv->currentScreen = screenToSet;
-}
-
-/*****************************************************************************
  * wcmSendButtons --
  *   Send button events by comparing the current button mask with the
  *   previous one.
@@ -795,13 +673,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		/* coordinates are ready we can send events */
 		if (is_proximity)
 		{
-			/* for multiple monitor support, we need to set the proper 
-			 * screen and modify the axes before posting events */
-			if(!(priv->flags & BUTTONS_ONLY_FLAG))
-			{
-				wcmSetScreen(pInfo, x, y);
-			}
-
 			/* unify acceleration in both directions 
 			 * for relative mode to draw a circle 
 			 */
@@ -858,8 +729,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		{
 			x = 0;
 			y = 0;
-			if ( v3 || v4 || v5 )
-				wcmSetScreen(pInfo, x, y);
 		}
 
 		if (!priv->oldProximity && is_proximity)
