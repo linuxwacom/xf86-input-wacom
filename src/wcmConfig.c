@@ -323,8 +323,6 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	free(priv);
 	local->private = NULL;
 
-	free(local->name);
-	local->name = NULL;
 
 	xf86DeleteInput(local, 0);
 }
@@ -372,7 +370,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	const char*	type;
-	char*		device, *oldname;
+	char*		device;
 	int		need_hotplug = 0;
 
 	gWacomModule.wcmDrv = drv;
@@ -432,20 +430,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(local);
 
-	oldname = local->name;
-
-	if ((need_hotplug = wcmNeedAutoHotplug(local, &type)))
-	{
-		/* we need subdevices, change the name so all of them have a
-		   type.
-		   strlen + 2 for one space and one \0
-		 */
-		char *new_name = malloc(strlen(local->name) + strlen(type) + 2);
-		strcpy(new_name, local->name);
-		strcat(new_name, " ");
-		strcat(new_name, type);
-		local->name = priv->name = new_name;
-	}
+	need_hotplug = wcmNeedAutoHotplug(local, &type);
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(local, type))
@@ -469,7 +454,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(local, oldname);
+		wcmHotplugOthers(local);
 	}
 
 	if (local->fd != -1)

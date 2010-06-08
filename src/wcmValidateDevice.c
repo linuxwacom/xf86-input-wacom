@@ -257,7 +257,7 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
  * (and the name with "$name $type" and convert them to InputOption */
-static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char* basename, const char *type)
+static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char *type)
 {
 	pointer original = local->options;
 	InputOption *iopts = NULL, *new;
@@ -267,8 +267,8 @@ static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char* basena
 	memset(&dummy, 0, sizeof(dummy));
 	xf86CollectInputOptions(&dummy, NULL, original);
 
-	name = calloc(strlen(basename) + strlen(type) + 2, 1);
-	sprintf(name, "%s %s", basename, type);
+	name = calloc(strlen(local->name) + strlen(type) + 2, 1);
+	sprintf(name, "%s %s", local->name, type);
 
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
@@ -326,7 +326,7 @@ static InputAttributes* wcmDuplicateAttributes(LocalDevicePtr local,
  * erasor, stylus, pad, touch, cursor, etc.
  * Name of the new device is set automatically to "<device name> <type>".
  */
-static void wcmHotplug(LocalDevicePtr local, const char* basename, const char *type)
+static void wcmHotplug(LocalDevicePtr local, const char *type)
 {
 	DeviceIntPtr dev; /* dummy */
 	InputOption *input_options;
@@ -334,7 +334,7 @@ static void wcmHotplug(LocalDevicePtr local, const char* basename, const char *t
 	InputAttributes *attrs = NULL;
 #endif
 
-	input_options = wcmOptionDupConvert(local, basename, type);
+	input_options = wcmOptionDupConvert(local, type);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	attrs = wcmDuplicateAttributes(local, type);
@@ -352,7 +352,7 @@ static void wcmHotplug(LocalDevicePtr local, const char* basename, const char *t
 #endif
 }
 
-void wcmHotplugOthers(LocalDevicePtr local, const char *basename)
+void wcmHotplugOthers(LocalDevicePtr local)
 {
 	int i, skip = 1;
 	char*		device;
@@ -368,7 +368,7 @@ void wcmHotplugOthers(LocalDevicePtr local, const char *basename)
 			if (skip)
 				skip = 0;
 			else
-				wcmHotplug(local, basename, wcmType[i].type);
+				wcmHotplug(local, wcmType[i].type);
 		}
 	}
         xf86Msg(X_INFO, "%s: hotplugging completed.\n", local->name);
