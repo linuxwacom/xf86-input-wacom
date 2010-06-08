@@ -1116,7 +1116,10 @@ static void wcmDevClose(LocalDevicePtr local)
 
 /*****************************************************************************
  * wcmDevProc --
- *   Handle the initialization, etc. of a wacom
+ *   Handle the initialization, etc. of a wacom tablet. Called by the server
+ *   once with DEVICE_INIT when the device becomes available, then
+ *   DEVICE_ON/DEVICE_OFF possibly multiple times as the device is enabled
+ *   and disabled. DEVICE_CLOSE is called before removal of the device.
  ****************************************************************************/
 
 static int wcmDevProc(DeviceIntPtr pWcm, int what)
@@ -1138,9 +1141,6 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 
 	switch (what)
 	{
-		/* All devices must be opened here to initialize and
-		 * register even a 'pad' which doesn't "SendCoreEvents"
-		 */
 		case DEVICE_INIT:
 			priv->wcmDevOpenCount = 0;
 			priv->wcmInitKeyClassCount = 0;
