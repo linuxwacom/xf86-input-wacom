@@ -37,10 +37,7 @@
 
 #include <xf86Xinput.h>
 #include <mipointer.h>
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-# include <X11/Xatom.h>
-#endif
+#include <X11/Xatom.h>
 
 /******************************************************************************
  * Debugging support
@@ -174,10 +171,8 @@ extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 
 /* device properties */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 extern void InitWcmDeviceProperties(LocalDevicePtr local);
-#endif
 
 /* Device probing */
 int isdv4ProbeKeys(LocalDevicePtr local);

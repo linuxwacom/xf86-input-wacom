@@ -80,12 +80,6 @@ static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
-static void wcmBellCallback(int pct, DeviceIntPtr di, pointer ctrl, int x)
-{
-}
-#endif
-
 static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
@@ -519,22 +513,6 @@ static KeySym keymap[] = {
 	/* 0xf6 */  NoSymbol,		NoSymbol,	NoSymbol,	NoSymbol
 };
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
-static struct { KeySym keysym; CARD8 mask; } keymod[] = {
-	{ XK_Shift_L,	ShiftMask },
-	{ XK_Shift_R,	ShiftMask },
-	{ XK_Control_L,	ControlMask },
-	{ XK_Control_R,	ControlMask },
-	{ XK_Caps_Lock,	LockMask },
-	{ XK_Alt_L,	Mod1Mask }, /*AltMask*/
-	{ XK_Alt_R,	Mod1Mask }, /*AltMask*/
-	{ XK_Num_Lock,	Mod2Mask }, /*NumLockMask*/
-	{ XK_Scroll_Lock,	Mod5Mask }, /*ScrollLockMask*/
-	{ XK_Mode_switch,	Mod3Mask }, /*AltMask*/
-	{ NoSymbol,	0 }
-};
-#endif
-
 /*****************************************************************************
  * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
@@ -669,9 +647,6 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					  axis_labels,
 #endif
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
-					  GetMotionHistory,
-#endif
 					  GetMotionHistorySize(),
 					  (is_absolute(local) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
@@ -683,51 +658,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	/* only initial KeyClass and LedFeedbackClass once */
 	if (!priv->wcmInitKeyClassCount)
 	{
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 5
-		if (nbkeys)
-		{
-			KeySymsRec wacom_keysyms;
-			CARD8 modmap[MAP_LENGTH];
-			int i,j;
-
-			memset(modmap, 0, sizeof(modmap));
-			for(i=0; keymod[i].keysym != NoSymbol; i++)
-				for(j=8; j<256; j++)
-					if(keymap[(j-8)*2] == keymod[i].keysym)
-						modmap[j] = keymod[i].mask;
-
-			/* There seems to be a long-standing misunderstanding about
-			 * how a keymap should be defined. All tablet drivers from
-			 * stock X11 source tree are doing it wrong: they leave first
-			 * 8 keysyms as VoidSymbol's, and are passing 8 as minimum
-			 * key code. But if you look at SetKeySymsMap() from
-			 * programs/Xserver/dix/devices.c you will see that
-			 * Xserver does not require first 8 keysyms; it supposes
-			 * that the map begins at minKeyCode.
-			 *
-			 * It could be that this assumption is a leftover from
-			 * earlier XFree86 versions, but that's out of our scope.
-			 * This also means that no keys on extended input devices
-			 * with their own keycodes (e.g. tablets) were EVER used.
-			 */
-			wacom_keysyms.map = keymap;
-			/* minKeyCode = 8 because this is the min legal key code */
-			wacom_keysyms.minKeyCode = 8;
-			wacom_keysyms.maxKeyCode = 255;
-			wacom_keysyms.mapWidth = 2;
-			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, modmap) == FALSE)
-			{
-				xf86Msg(X_ERROR, "%s: unable to init key class device\n", local->name);
-				return FALSE;
-			}
-		}
-
-		if(InitKbdFeedbackClassDeviceStruct(local->dev, wcmBellCallback,
-				wcmKbdCtrlCallback) == FALSE) {
-			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", local->name);
-			return FALSE;
-		}
-#elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, wcmKbdCtrlCallback)) {
 #define SYMS_PER_KEY 2
 			KeySymsRec syms;
@@ -848,10 +779,8 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 		priv->hardProx = 0;
 	}
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 	InitWcmDeviceProperties(local);
 	XIRegisterPropertyHandler(local->dev, wcmSetProperty, NULL, NULL);
-#endif
 
 	return TRUE;
 }

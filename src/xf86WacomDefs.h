@@ -148,8 +148,6 @@ struct _WacomModel
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
 /* get/set/property */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-
 typedef struct _PROPINFO PROPINFO;
 
 struct _PROPINFO
@@ -161,7 +159,6 @@ struct _PROPINFO
 	int nSize;
 	int nDefault;
 };
-#endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
 
 struct _WacomDeviceRec
 {

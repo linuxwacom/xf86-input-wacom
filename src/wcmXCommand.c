@@ -98,8 +98,6 @@ void wcmChangeScreen(LocalDevicePtr local, int value)
 	wcmInitialCoordinates(local, 1);
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-
 Atom prop_rotation;
 Atom prop_tablet_area;
 Atom prop_screen_area;
@@ -754,5 +752,4 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 	return Success;
 }
-#endif /* GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3 */
 /* vim: set noexpandtab shiftwidth=8: */
