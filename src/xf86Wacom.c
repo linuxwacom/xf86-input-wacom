@@ -1176,7 +1176,8 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 
 		default:
-			xf86Msg(X_ERROR, "%s: wacom unsupported mode=%d\n", local->name, what);
+			xf86Msg(X_ERROR, "%s: invalid mode=%d. This is an X server bug.\n",
+				local->name, what);
 			return !Success;
 	} /* end switch */
 
