@@ -673,7 +673,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 					  GetMotionHistory,
 #endif
 					  GetMotionHistorySize(),
-					  (is_absolute(local) ?  Absolute : Relative)) == FALSE)
+					  (is_absolute(local) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
 		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", local->name);
 		return FALSE;
