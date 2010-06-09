@@ -885,6 +885,24 @@ skipEvent:
 	common->wcmEventCnt = 0;
 }
 
+static struct
+{
+	unsigned long device_type;
+	unsigned long tool_key;
+} wcmTypeToKey [] =
+{
+	{ STYLUS_ID, BTN_TOOL_PEN       },
+	{ STYLUS_ID, BTN_TOOL_PENCIL    },
+	{ STYLUS_ID, BTN_TOOL_BRUSH     },
+	{ STYLUS_ID, BTN_TOOL_AIRBRUSH  },
+	{ ERASER_ID, BTN_TOOL_RUBBER    },
+	{ CURSOR_ID, BTN_TOOL_MOUSE     },
+	{ CURSOR_ID, BTN_TOOL_LENS      },
+	{ TOUCH_ID,  BTN_TOOL_DOUBLETAP },
+	{ TOUCH_ID,  BTN_TOOL_TRIPLETAP },
+	{ PAD_ID,    BTN_TOOL_FINGER    }
+};
+
 static void usbParseChannel(LocalDevicePtr local, int channel)
 {
 	int i, shift, nkeys;
@@ -892,6 +910,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	struct input_event* event;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	WacomChannelPtr pChannel = common->wcmChannel + channel;
+	WacomDeviceState dslast = pChannel->valid.state;
 
 	DBG(6, common, "%d events received\n", common->wcmEventCnt);
 	#define MOD_BUTTONS(bit, value) do { \
@@ -1012,8 +1032,6 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 			}
 			else if (event->code == BTN_TOOL_DOUBLETAP)
 			{
-				WacomChannelPtr pChannel = common->wcmChannel + channel;
-				WacomDeviceState dslast = pChannel->valid.state;
 				DBG(6, common, 
 					"USB Touch detected %x (value=%d)\n",
 					event->code, event->value);
@@ -1039,8 +1057,6 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 			}
 			else if (event->code == BTN_TOOL_TRIPLETAP)
 			{
-				WacomChannelPtr pChannel = common->wcmChannel + channel;
-				WacomDeviceState dslast = pChannel->valid.state;
 				DBG(6, common, 
 					"USB Touch second finger detected %x (value=%d)\n",
 					event->code, event->value);
@@ -1081,6 +1097,24 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 			}
 		}
 	} /* next event */
+
+	/* device type unknown? Tool may be on the tablet when X starts. */
+	if (!ds->device_type && !dslast.proximity)
+	{
+		unsigned long keys[NBITS(KEY_MAX)] = { 0 };
+
+		/* Retrieve the type by asking a resend from the kernel */
+		ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
+
+		for (i=0; i<sizeof(wcmTypeToKey) / sizeof(wcmTypeToKey[0]); i++)
+		{
+			if (ISBITSET(keys, wcmTypeToKey[i].tool_key))
+			{
+				ds->device_type = wcmTypeToKey[i].device_type;
+				break;
+			}
+		}
+	}
 
 	/* don't send touch event when touch isn't enabled */
 	if ((ds->device_type == TOUCH_ID) && !common->wcmTouch)
