@@ -87,9 +87,10 @@ static int wcmAllocate(LocalDevicePtr local)
 	priv->nbuttons = WCM_MAX_BUTTONS;		/* Default number of buttons */
 	priv->relup = 5;			/* Default relative wheel up event */
 	priv->reldn = 4;			/* Default relative wheel down event */
-
-	priv->wheelup = IsPad (priv) ? 4 : 0;	/* Default absolute wheel up event */
-	priv->wheeldn = IsPad (priv) ? 5 : 0;	/* Default absolute wheel down event */
+	/* wheel events are set to 0, but the pad overwrites this default
+	 * later in wcmParseOptions, when we have IsPad() available */
+	priv->wheelup = 0;			/* Default absolute wheel up event */
+	priv->wheeldn = 0;			/* Default absolute wheel down event */
 	priv->striplup = 4;			/* Default left strip up event */
 	priv->stripldn = 5;			/* Default left strip down event */
 	priv->striprup = 4;			/* Default right strip up event */
