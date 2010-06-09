@@ -761,9 +761,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	int buttons = ds->buttons;
 	int tx = ds->tiltx;
 	int ty = ds->tilty;
-	int rot = ds->rotation;
-	int throttle = ds->throttle;
-	int wheel = ds->abswheel;
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
@@ -800,22 +797,22 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			(type == TOUCH_ID) ? "touch" : "pad",
 		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
-		tx, ty, wheel, rot, throttle);
+		tx, ty, ds->abswheel, ds->rotation, ds->throttle);
 
 	if (ds->proximity)
 		wcmRotateCoordinates(local, &x, &y);
 
 	if (IsCursor(priv)) 
 	{
-		v3 = rot;
-		v4 = throttle;
+		v3 = ds->rotation;
+		v4 = ds->throttle;
 	}
 	else  /* Intuos styli have tilt */
 	{
 		v3 = tx;
 		v4 = ty;
 	}
-	v5 = wheel;
+	v5 = ds->abswheel;
 
 	DBG(6, priv, "%s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
