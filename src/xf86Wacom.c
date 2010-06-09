@@ -1205,7 +1205,7 @@ static void wcmDevClose(LocalDevicePtr local)
 		}
 	}
 }
- 
+
 /*****************************************************************************
  * wcmDevProc --
  *   Handle the initialization, etc. of a wacom
