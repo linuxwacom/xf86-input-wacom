@@ -1,0 +1,93 @@
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH xsetwacom __appmansuffix__ __vendorversion__
+.SH NAME
+.LP
+xsetwacom \- commandline utility to query and modify __drivername__ driver settings.
+.SH "SYNOPSIS"
+.LP
+xsetwacom [options] command [device_name] [parameter] [value]
+
+.SH "DESCRIPTION"
+.LP
+This program queries or changes properties on the devices loaded by the
+__drivername__ driver. The modification of properties happens at runtime
+and is not persistent through X server restarts.
+.SH "GENERAL OPTIONS"
+.TP
+\fB-d, --display\fR display_name
+Connect to the X server specified in display_name; see X(__miscmansuffix__).
+.TP
+\fB-h, --help\fR
+Prints a short help.
+.TP
+\fB-v, --verbose\fR
+Enable verbose output, useful for debugging.
+.TP
+\fB-V, --version\fR
+Display version number and exit.
+
+.SH "COMMANDS"
+.LP
+Allowed commands are
+.B list,
+.B get,
+and
+.B set.
+The command may be specified with our without one or two preceding
+dashes, i.e.
+.B --list
+is equivalent to
+.B -list
+and
+.B list.
+
+.SS "LIST COMMANDS"
+.TP
+\fBlist\fR dev
+List known devices. Only input devices managed by the __drivername__
+driver are listed.
+.TP
+\fBlist\fR param
+List known parameters. List all parameters suitable for the
+.B get
+or the
+.B set
+command. Note that not all parameters are available on all device types.
+.TP
+\fBlist\fR mods
+.B Not implemented!
+List the available list of modifiers to be used when setting key or button
+actions.
+
+.SS "GET COMMANDS"
+.TP
+\fBget\fR device_name parameter
+Get the current settings for the parameter on the given device. Note that
+not all parameters are available on all device types. The special parameter
+name "all" may be provided to display all current settings on the device.
+.TP
+By default, options are printed on the commandline in the respective format. The output format may be altered with one of the following options:
+.TP
+\fB-s, --shell\fR
+Display the output in shell format, i.e. as shell commands to xsetwacom to
+reproduce the same parameter.
+.TP
+\fB-x, --xconf\fR
+Display the output in xorg.conf format, i.e. as option lines that may be
+added to the InputDevice section in the xorg.conf.
+
+.SS "SET COMMANDS"
+.TP
+\fBset\fR device_name parameter value
+Set the parameter value on the given device to the value provided. Note that
+not all parameters are writable, some are read-only and result in an error
+when trying to be modified.
+
+.SH "AUTHORS"
+Peter Hutterer <peter.hutterer@redhat.com>
+
+.SH "SEE ALSO"
+__xservername__(__appmansuffix__), wacom(__drivermansuffix__),
+xorg.conf(__filemansuffix__),
+X(__miscmansuffix__)
