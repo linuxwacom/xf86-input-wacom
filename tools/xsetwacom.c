@@ -1155,6 +1155,9 @@ static char *convert_specialkey(const char *modifier)
 
 		{"esc", "Escape"}, {"Esc", "Escape"},
 
+		{"up", "Up"}, {"down", "Down"},
+		{"left", "Left"}, {"right", "Right"},
+
 		{ NULL, NULL }
 	};
 
