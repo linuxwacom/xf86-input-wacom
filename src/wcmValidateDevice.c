@@ -434,9 +434,9 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	s = xf86SetStrOption(local->options, "Mode", NULL);
 
 	if (s && (xf86NameCmp(s, "absolute") == 0))
-		priv->flags |= ABSOLUTE_FLAG;
+		set_absolute(local, TRUE);
 	else if (s && (xf86NameCmp(s, "relative") == 0))
-		priv->flags &= ~ABSOLUTE_FLAG;
+		set_absolute(local, FALSE);
 	else
 	{
 		if (s)
@@ -450,7 +450,7 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 
 	/* Pad is always in relative mode. */
 	if (IsPad(priv))
-		priv->flags &= ~ABSOLUTE_FLAG;
+		set_absolute(local, FALSE);
 
 	/* Store original local Core flag so it can be changed later */
 	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))

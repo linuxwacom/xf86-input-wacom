@@ -32,7 +32,6 @@
 int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	DBG(3, priv, "to mode=%d\n", mode);
 
@@ -40,15 +39,15 @@ int wcmDevSwitchModeCall(LocalDevicePtr local, int mode)
 	if (IsPad(priv))
 		return (mode == Relative) ? Success : XI_BadMode;
 
-	if ((mode == Absolute) && !is_absolute)
+	if ((mode == Absolute) && !is_absolute(local))
 	{
-		priv->flags |= ABSOLUTE_FLAG;
+		set_absolute(local, TRUE);
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}
-	else if ((mode == Relative) && is_absolute)
+	else if ((mode == Relative) && is_absolute(local))
 	{
-		priv->flags &= ~ABSOLUTE_FLAG; 
+		set_absolute(local, FALSE);
 		wcmInitialCoordinates(local, 0);
 		wcmInitialCoordinates(local, 1);
 	}

@@ -258,7 +258,7 @@ void wcmVirtualTabletPadding(LocalDevicePtr local)
 	priv->leftPadding = 0;
 	priv->topPadding = 0;
 
-	if (!(priv->flags & ABSOLUTE_FLAG)) return;
+	if (!is_absolute(local)) return;
 
 	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
@@ -286,7 +286,7 @@ void wcmVirtualTabletSize(LocalDevicePtr local)
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	int i, tabletSize;
 
-	if (!(priv->flags & ABSOLUTE_FLAG))
+	if (!is_absolute(local))
 	{
 		priv->sizeX = priv->bottomX - priv->topX;
 		priv->sizeY = priv->bottomY - priv->topY;
@@ -329,7 +329,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 
 	wcmMappingFactor(local);
 
-	if (priv->flags & ABSOLUTE_FLAG)
+	if (is_absolute(local))
 	{
 		topx = priv->topX;
 		topy = priv->topY;
@@ -673,8 +673,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 					  GetMotionHistory,
 #endif
 					  GetMotionHistorySize(),
-					  ((priv->flags & ABSOLUTE_FLAG) ?
-					  Absolute : Relative)) == FALSE)
+					  (is_absolute(local) ?  Absolute : Relative)) == FALSE)
 	{
 		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", local->name);
 		return FALSE;

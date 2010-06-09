@@ -183,5 +183,9 @@ extern void InitWcmDeviceProperties(LocalDevicePtr local);
 int isdv4ProbeKeys(LocalDevicePtr local);
 int usbProbeKeys(LocalDevicePtr local);
 
+/* Utility functions */
+extern Bool is_absolute(LocalDevicePtr local);
+extern void set_absolute(LocalDevicePtr local, Bool absolute);
+
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

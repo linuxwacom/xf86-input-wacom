@@ -88,7 +88,7 @@ static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 {
 	int x = 0;
 	int y = 0;
-	int mode = priv->flags & ABSOLUTE_FLAG;
+	int mode = is_absolute(priv->local);
 
 	if (mode)
 	{
@@ -287,7 +287,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		    wcmFingerZoom(priv);
 	}
 ret:
-	if (!common->wcmGestureMode && !channel && !(priv->flags & ABSOLUTE_FLAG))
+	if (!common->wcmGestureMode && !channel && !is_absolute(priv->local))
 		wcmFirstFingerClick(common);
 }
 

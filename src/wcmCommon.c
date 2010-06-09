@@ -44,6 +44,26 @@ static void resetSampleCounter(const WacomChannelPtr pChannel);
 static void sendAButton(LocalDevicePtr local, int button, int mask);
 
 /*****************************************************************************
+ * Utility functions
+ ****************************************************************************/
+
+Bool is_absolute(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	return !!(priv->flags & ABSOLUTE_FLAG);
+}
+
+void set_absolute(LocalDevicePtr local, Bool absolute)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+	if (absolute)
+		priv->flags |= ABSOLUTE_FLAG;
+	else
+		priv->flags &= ~ABSOLUTE_FLAG;
+}
+
+/*****************************************************************************
  * wcmMappingFactor --
  *   calculate the proper tablet to screen mapping factor according to the 
  *   screen/desktop size and the tablet size 
@@ -57,7 +77,7 @@ void wcmMappingFactor(LocalDevicePtr local)
 
 	wcmVirtualTabletSize(local);
 	
-	if (!(priv->flags & ABSOLUTE_FLAG) || !priv->wcmMMonitor)
+	if (!is_absolute(local) || !priv->wcmMMonitor)
 	{
 		/* Get the current screen that the cursor is in */
 		if (miPointerGetScreen(local->dev))
@@ -114,7 +134,7 @@ static void wcmSetScreen(LocalDevicePtr local, int v0, int v1)
 
 	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
 
-	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
+	if (priv->twinview != TV_NONE && priv->screen_no == -1 && is_absolute(local))
 	{
 		if (priv->twinview == TV_LEFT_RIGHT)
 		{
@@ -153,7 +173,7 @@ static void wcmSetScreen(LocalDevicePtr local, int v0, int v1)
 	}
 
 	wcmMappingFactor(local);
-	if (!(priv->flags & ABSOLUTE_FLAG) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
+	if (!is_absolute(local) || screenInfo.numScreens == 1 || !priv->wcmMMonitor)
 		return;
 
 	v0 = v0 - priv->topX;
@@ -442,7 +462,6 @@ static void sendAButton(LocalDevicePtr local, int button, int mask)
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 	int i;
 
 	if (!priv->button[button])  /* ignore this button event */
@@ -457,7 +476,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask)
 	if (!priv->keys[button][0])
 	{
 		/* No button action configured, send button */
-		xf86PostButtonEvent(local->dev, is_absolute, priv->button[button], (mask != 0), 0, 0);
+		xf86PostButtonEvent(local->dev, is_absolute(local), priv->button[button], (mask != 0), 0, 0);
 		return;
 	}
 
@@ -476,7 +495,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask)
 					int btn_no = (action & AC_CODE);
 					int is_press = (action & AC_KEYBTNPRESS);
 					xf86PostButtonEvent(local->dev,
-							    is_absolute, btn_no,
+							    is_absolute(local), btn_no,
 							    is_press, 0, 0);
 				}
 				break;
@@ -490,15 +509,15 @@ static void sendAButton(LocalDevicePtr local, int button, int mask)
 			case AC_MODETOGGLE:
 				if (mask)
 					wcmDevSwitchModeCall(local,
-							(is_absolute) ? Relative : Absolute); /* not a typo! */
+							(is_absolute(local)) ? Relative : Absolute); /* not a typo! */
 				break;
 			/* FIXME: this should be implemented as 4 values,
 			 * there's no reason to have a DBLCLICK */
 			case AC_DBLCLICK:
-				xf86PostButtonEvent(local->dev, is_absolute, 1,1,0,0);
-				xf86PostButtonEvent(local->dev, is_absolute, 1,0,0,0);
-				xf86PostButtonEvent(local->dev, is_absolute, 1,1,0,0);
-				xf86PostButtonEvent(local->dev, is_absolute, 1,0,0,0);
+				xf86PostButtonEvent(local->dev, is_absolute(local), 1,1,0,0);
+				xf86PostButtonEvent(local->dev, is_absolute(local), 1,0,0,0);
+				xf86PostButtonEvent(local->dev, is_absolute(local), 1,1,0,0);
+				xf86PostButtonEvent(local->dev, is_absolute(local), 1,0,0,0);
 				break;
 			case AC_DISPLAYTOGGLE:
 				toggleDisplay(local);
@@ -524,7 +543,7 @@ static void sendAButton(LocalDevicePtr local, int button, int mask)
 					if (countPresses(btn_no, &priv->keys[button][i],
 							ARRAY_SIZE(priv->keys[button]) - i))
 						xf86PostButtonEvent(local->dev,
-								is_absolute, btn_no,
+								is_absolute(local), btn_no,
 								0, 0, 0);
 				}
 				break;
@@ -631,7 +650,6 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	int fakeButton = 0;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 
 	DBG(10, priv, "\n");
 
@@ -645,10 +663,10 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    case 0: /* no spec. action defined */
 	    case AC_BUTTON:
 		/* send both button on/off in the same event for pad */	
-		xf86PostButtonEvent(local->dev, is_absolute, fakeButton & AC_CODE,
+		xf86PostButtonEvent(local->dev, is_absolute(local), fakeButton & AC_CODE,
 			1,0,0);
 
-		xf86PostButtonEvent(local->dev, is_absolute, fakeButton & AC_CODE,
+		xf86PostButtonEvent(local->dev, is_absolute(local), fakeButton & AC_CODE,
 			0,0,0);
 	    break;
 
@@ -764,7 +782,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
 	int naxes = priv->naxes;
-	int is_absolute = priv->flags & ABSOLUTE_FLAG;
 	int v3, v4, v5;
 
 	if (priv->serial && serial != priv->serial)
@@ -817,7 +834,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 	DBG(6, priv, "%s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
-		is_absolute ? "abs" : "rel",
+		is_absolute(local) ? "abs" : "rel",
 		is_proximity,
 		x, y, z, v3, v4, v5, id, serial,
 		is_button ? "true" : "false", buttons);
@@ -832,7 +849,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 		priv->oldButtons = 0;
 	}
 
-	if (!is_absolute)
+	if (!is_absolute(local))
 	{
 		x -= priv->oldX;
 		y -= priv->oldY;
@@ -864,7 +881,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* unify acceleration in both directions 
 			 * for relative mode to draw a circle 
 			 */
-			if (!is_absolute)
+			if (!is_absolute(local))
 				x *= priv->factorY / priv->factorX;
  			else
 			{
@@ -881,7 +898,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				 * Must be sensitive to which way the tool is moved or one way
 				 * will get a severe penalty for small movements.
 				 */
- 				if(is_absolute) {
+				if(is_absolute(local)) {
 					x -= priv->topX;
 					y -= priv->topY;
 					if (priv->currentScreen == 1 && priv->twinview != TV_NONE)
@@ -893,7 +910,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				x = (int)((double)x * priv->factorX + (x>=0?0.4:-0.4));
 				y = (int)((double)y * priv->factorY + (y>=0?0.4:-0.4));
 
-				if ((priv->flags & ABSOLUTE_FLAG) && (priv->twinview == TV_NONE))
+				if (is_absolute(local) && (priv->twinview == TV_NONE))
 				{
 					x -= priv->screenTopX[priv->currentScreen];
 					y -= priv->screenTopY[priv->currentScreen];
@@ -920,7 +937,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86PostMotionEvent(local->dev, is_absolute,
+				xf86PostMotionEvent(local->dev, is_absolute(local),
 					0, naxes, x, y, z, v3, v4, v5);
 				/* For relative events, reset the axes as
 				 * we've already moved the device by the
@@ -928,7 +945,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 				 * event in sendCommonEvents will move the
 				 * axes again.
 				 */
-				if (!is_absolute)
+				if (!is_absolute(local))
 				{
 					x = y = z = 0;
 					v3 = v4 = v5 = 0;
@@ -977,7 +994,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			 */
 			if ( v3 || v4 || v5 )
 			{
-	 			xf86PostMotionEvent(local->dev, is_absolute,
+				xf86PostMotionEvent(local->dev, is_absolute(local),
 					0, naxes, x, y, z, v3, v4, v5);
 			}
 		}
@@ -1519,7 +1536,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 		/* User-requested transformations come last */
 
-		if ((!(priv->flags & ABSOLUTE_FLAG)) && (!IsPad(priv)))
+		if (!is_absolute(pDev) && !IsPad(priv))
 		{
 			/* To improve the accuracy of relative x/y,
 			 * don't send motion event when there is no movement.
