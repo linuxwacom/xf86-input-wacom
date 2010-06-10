@@ -2130,7 +2130,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 
 int main (int argc, char **argv)
 {
-	char c;
+	int c;
 	int optidx;
 	char *display = NULL;
 	Display *dpy;
