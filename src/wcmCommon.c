@@ -1297,9 +1297,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (!ds->device_type && ds->proximity)
 	{
-		/* Tool may be on the tablet when X starts. 
-		 * Figure out device type by device id
-		 */
+		/* something went wrong. Figure out device type by device id */
 		switch (ds->device_id)
 		{
 			case STYLUS_DEVICE_ID:
@@ -1313,6 +1311,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				break;
 			case TOUCH_DEVICE_ID:
 				ds->device_type = TOUCH_ID;
+				break;
+			case PAD_DEVICE_ID:
+				ds->device_type = PAD_ID;
 				break;
 			default:
 				ds->device_type = idtotype(ds->device_id);

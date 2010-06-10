@@ -123,7 +123,7 @@ struct _WacomModel
 #define WCM_ROTATION		0x00000080
 #define WCM_LCD 		0x00000100
 
-#define TabletHasFeature(common, feature) (((common)->tablet_id & (feature)) != 0)
+#define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
 #define ABSOLUTE_FLAG		0x00000100
 #define KEEP_SHAPE_FLAG		0x00000200
