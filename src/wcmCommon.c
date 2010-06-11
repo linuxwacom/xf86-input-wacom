@@ -648,7 +648,9 @@ static int getWheelButton(LocalDevicePtr local, const WacomDeviceState* ds)
 
 static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 {
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+#endif
 	int fakeButton = 0;
 
 	DBG(10, priv, "\n");
