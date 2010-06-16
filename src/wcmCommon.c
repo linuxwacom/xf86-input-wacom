@@ -942,7 +942,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (priv->oldButtons)
 				wcmSendButtons(local,buttons,x,y,z,v3,v4,v5);
 
-			if (priv->oldProximity && local->dev->proximity)
+			if (priv->oldProximity)
 				xf86PostProximityEvent(local->dev,0,0,naxes,x,y,z,v3,v4,v5);
 		} /* not in proximity */
 	}
@@ -955,9 +955,8 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if ( v3 || v4 || v5 )
 				wcmSetScreen(local, x, y);
 
-			/* don't emit proximity events if device does not support proximity */
-			if ((local->dev->proximity && !priv->oldProximity))
-			xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+			if (!priv->oldProximity)
+				xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
 
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 
@@ -975,7 +974,7 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (priv->oldButtons)
 				wcmSendButtons(local, buttons,
 					x, y, z, v3, v4, v5);
-			if (priv->oldProximity && local->dev->proximity)
+			if (priv->oldProximity)
  				xf86PostProximityEvent(local->dev, 0, 0, naxes, 
 				x, y, z, v3, v4, v5);
 		}
