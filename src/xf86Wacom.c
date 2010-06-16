@@ -907,8 +907,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
-			!common->device_path)
+		if ((wcmOpen (local) != Success) || !common->device_path)
 		{
 			DBG(1, priv, "Failed to open "
 				"device (fd=%d)\n", local->fd);
