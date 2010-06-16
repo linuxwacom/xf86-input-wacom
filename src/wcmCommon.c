@@ -1263,6 +1263,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomToolPtr tooldef = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
 	WacomDevicePtr priv = NULL;
+	WacomDeviceState filtered;
+	int button;
 
 	if (!ds->device_type && ds->proximity)
 	{
@@ -1383,202 +1385,199 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */
-	if (pDev)
-	{
-		WacomDeviceState filtered = pChannel->valid.state;
-
-		/* Device transformations come first */
-		/* button 1 Threshold test */
-		int button = 1;
-		priv = pDev->private;
-
-		if (common->wcmDevCls == &gWacomUSBDevice && IsTouch(priv) && !ds->proximity)
-		{
-			priv->hardProx = 0;
-		}		
-
-		if (common->wcmDevCls == &gWacomUSBDevice && (IsStylus(priv) || IsEraser(priv)))
-		{
-			priv->hardProx = 1;
-		}
-		
-		/* send a touch out for USB Tablet PCs */
-		if (common->wcmDevCls == &gWacomUSBDevice && !IsTouch(priv) 
-			&& common->wcmTouchDefault && !priv->oldProximity)
-		{ 
-			LocalDevicePtr localDevices = xf86FirstLocalDevice();
-			WacomCommonPtr tempcommon = NULL;
-			WacomDevicePtr temppriv = NULL;
-
-			/* Lookup to see if associated touch was enabled */
-			for (; localDevices != NULL; localDevices = localDevices->next)
-			{
-				if (strstr(localDevices->drv->driverName, "wacom"))
-				{
-					temppriv = (WacomDevicePtr) localDevices->private;
-					tempcommon = temppriv->common;
-
-					if ((tempcommon->tablet_id == common->tablet_id) && 
-						IsTouch(temppriv) && temppriv->oldProximity)
-					{
-						/* Send soft prox-out for touch first */
-						wcmSoftOutEvent(localDevices);
-					}
-				}
-			}
-		}
-
-		if (IsStylus(priv) || IsEraser(priv))
-		{
-			/* Instead of reporting the raw pressure, we normalize
-			 * the pressure from 0 to FILTER_PRESSURE_RES. This is
-			 * mainly to deal with the case where heavily used
-			 * stylus may have a "pre-loaded" initial pressure. To
-			 * do so, we keep the in-prox pressure and subtract it
-			 * from the raw pressure to prevent a potential
-			 * left-click before the pen touches the tablet.
-			 */
-			double tmpP;
-
-			/* set the minimum pressure when in prox */
-			if (!priv->oldProximity)
-				priv->minPressure = filtered.pressure;
-			else
-				priv->minPressure = min(priv->minPressure, filtered.pressure);
-
-			/* normalize pressure to FILTER_PRESSURE_RES */
-			tmpP = (filtered.pressure - priv->minPressure)
-				 * FILTER_PRESSURE_RES;
-			tmpP /= (common->wcmMaxZ - priv->minPressure);
-			filtered.pressure = (int)tmpP;
-
-			/* set button1 (left click) on/off */
-			if (filtered.pressure < common->wcmThreshold)
-			{
-				filtered.buttons &= ~button;
-				if (priv->oldButtons & button) /* left click was on */
-				{
-					/* don't set it off if it is within the tolerance
-					   and threshold is larger than the tolerance */
-					if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
-					    (filtered.pressure > common->wcmThreshold -
-							THRESHOLD_TOLERANCE))
-						filtered.buttons |= button;
-				}
-			}
-			else
-				filtered.buttons |= button;
-
-			/* transform pressure */
-			transPressureCurve(priv,&filtered);
-		}
-
-		else if (IsCursor(priv) && !priv->hardProx)
-		{
-			/* initial current max distance for Intuos series */
-			if ((TabletHasFeature(common, WCM_ROTATION)) ||
-				(TabletHasFeature(common, WCM_DUALINPUT)))
-				common->wcmMaxCursorDist = 256;
-			else
-				common->wcmMaxCursorDist = 0;
-		}
-
-		/* Store current hard prox for next use */
-		if (!IsTouch(priv))
-			priv->hardProx = ds->proximity;		
-
-		/* User-requested filtering comes next */
-
-		/* User-requested transformations come last */
-
-		if (!is_absolute(pDev) && !IsPad(priv))
-		{
-			/* To improve the accuracy of relative x/y,
-			 * don't send motion event when there is no movement.
-			 */
-			double deltx = filtered.x - priv->oldX;
-			double delty = filtered.y - priv->oldY;
-			deltx *= priv->factorX;
-			delty *= priv->factorY;
-	
-			if (ABS(deltx)<1 && ABS(delty)<1) 
-			{
-				/* don't move the cursor */
-				if (suppress == 1) 
-				{
-					/* send other events, such as button/wheel */
-					filtered.x = priv->oldX;
-					filtered.y = priv->oldY;
-				}
-				else /* no other events to send */
-				{
-					DBG(10, common, "Ignore non-movement relative data \n");
-					return;
-				}
-			}
-			else
-			{
-				int temp = deltx;
-				deltx = (double)temp/(priv->factorX);
-				temp = delty;
-				delty = (double)temp/(priv->factorY);
-				filtered.x = deltx + priv->oldX;
-				filtered.y = delty + priv->oldY;
-			}
-		}
-
-		/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
-		if (IsCursor(priv))
-		{
-			/* force out-prox when distance is outside wcmCursorProxoutDist. */
-			if (common->wcmProtocolLevel == 5)
-			{
-				if (common->wcmMaxCursorDist > filtered.distance)
-					common->wcmMaxCursorDist = filtered.distance;
-			}
-			else
-			{
-				if (common->wcmMaxCursorDist < filtered.distance)
-					common->wcmMaxCursorDist = filtered.distance;
-			}
-			DBG(10, common, "Distance over"
-				" the tablet: %d, ProxoutDist: %d current"
-				" min/max %d hard prox: %d\n",
-				filtered.distance, 
-				common->wcmCursorProxoutDist, 
-				common->wcmMaxCursorDist, 
-				ds->proximity);
-
-			if (priv->oldProximity)
-			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) 
-						> common->wcmCursorProxoutDist)
-					filtered.proximity = 0;
-			}
-			/* once it is out. Don't let it in until a hard in */
-			/* or it gets inside wcmCursorProxoutDist */
-			else
-			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) > 
-						common->wcmCursorProxoutDist && ds->proximity)
-					return;
-				if (!ds->proximity)
-					return;	
-			}
-		}
-		wcmSendEvents(pDev, &filtered);
-		/* If out-prox, reset the current area pointer */
-		if (!filtered.proximity)
-			tool->current = NULL;
-	}
-
-	/* otherwise, if no device matched... */
-	else
+	if (!pDev)
 	{
 		DBG(11, common, "no device matches with"
 				" id=%d, serial=%u\n",
 				ds->device_type, ds->serial_num);
+		return;
 	}
+
+	filtered = pChannel->valid.state;
+
+	/* Device transformations come first */
+	/* button 1 Threshold test */
+	button = 1;
+	priv = pDev->private;
+
+	if (common->wcmDevCls == &gWacomUSBDevice && IsTouch(priv) && !ds->proximity)
+	{
+		priv->hardProx = 0;
+	}
+
+	if (common->wcmDevCls == &gWacomUSBDevice && (IsStylus(priv) || IsEraser(priv)))
+	{
+		priv->hardProx = 1;
+	}
+
+	/* send a touch out for USB Tablet PCs */
+	if (common->wcmDevCls == &gWacomUSBDevice && !IsTouch(priv)
+			&& common->wcmTouchDefault && !priv->oldProximity)
+	{
+		LocalDevicePtr localDevices = xf86FirstLocalDevice();
+		WacomCommonPtr tempcommon = NULL;
+		WacomDevicePtr temppriv = NULL;
+
+		/* Lookup to see if associated touch was enabled */
+		for (; localDevices != NULL; localDevices = localDevices->next)
+		{
+			if (strstr(localDevices->drv->driverName, "wacom"))
+			{
+				temppriv = (WacomDevicePtr) localDevices->private;
+				tempcommon = temppriv->common;
+
+				if ((tempcommon->tablet_id == common->tablet_id) &&
+						IsTouch(temppriv) && temppriv->oldProximity)
+				{
+					/* Send soft prox-out for touch first */
+					wcmSoftOutEvent(localDevices);
+				}
+			}
+		}
+	}
+
+	if (IsStylus(priv) || IsEraser(priv))
+	{
+		/* Instead of reporting the raw pressure, we normalize
+		 * the pressure from 0 to FILTER_PRESSURE_RES. This is
+		 * mainly to deal with the case where heavily used
+		 * stylus may have a "pre-loaded" initial pressure. To
+		 * do so, we keep the in-prox pressure and subtract it
+		 * from the raw pressure to prevent a potential
+		 * left-click before the pen touches the tablet.
+		 */
+		double tmpP;
+
+		/* set the minimum pressure when in prox */
+		if (!priv->oldProximity)
+			priv->minPressure = filtered.pressure;
+		else
+			priv->minPressure = min(priv->minPressure, filtered.pressure);
+
+		/* normalize pressure to FILTER_PRESSURE_RES */
+		tmpP = (filtered.pressure - priv->minPressure)
+			* FILTER_PRESSURE_RES;
+		tmpP /= (common->wcmMaxZ - priv->minPressure);
+		filtered.pressure = (int)tmpP;
+
+		/* set button1 (left click) on/off */
+		if (filtered.pressure < common->wcmThreshold)
+		{
+			filtered.buttons &= ~button;
+			if (priv->oldButtons & button) /* left click was on */
+			{
+				/* don't set it off if it is within the tolerance
+				   and threshold is larger than the tolerance */
+				if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
+						(filtered.pressure > common->wcmThreshold -
+						 THRESHOLD_TOLERANCE))
+					filtered.buttons |= button;
+			}
+		}
+		else
+			filtered.buttons |= button;
+
+		/* transform pressure */
+		transPressureCurve(priv,&filtered);
+	}
+
+	else if (IsCursor(priv) && !priv->hardProx)
+	{
+		/* initial current max distance for Intuos series */
+		if ((TabletHasFeature(common, WCM_ROTATION)) ||
+				(TabletHasFeature(common, WCM_DUALINPUT)))
+			common->wcmMaxCursorDist = 256;
+		else
+			common->wcmMaxCursorDist = 0;
+	}
+
+	/* Store current hard prox for next use */
+	if (!IsTouch(priv))
+		priv->hardProx = ds->proximity;
+
+	/* User-requested filtering comes next */
+
+	/* User-requested transformations come last */
+
+	if (!is_absolute(pDev) && !IsPad(priv))
+	{
+		/* To improve the accuracy of relative x/y,
+		 * don't send motion event when there is no movement.
+		 */
+		double deltx = filtered.x - priv->oldX;
+		double delty = filtered.y - priv->oldY;
+		deltx *= priv->factorX;
+		delty *= priv->factorY;
+
+		if (ABS(deltx)<1 && ABS(delty)<1)
+		{
+			/* don't move the cursor */
+			if (suppress == 1)
+			{
+				/* send other events, such as button/wheel */
+				filtered.x = priv->oldX;
+				filtered.y = priv->oldY;
+			}
+			else /* no other events to send */
+			{
+				DBG(10, common, "Ignore non-movement relative data \n");
+				return;
+			}
+		}
+		else
+		{
+			int temp = deltx;
+			deltx = (double)temp/(priv->factorX);
+			temp = delty;
+			delty = (double)temp/(priv->factorY);
+			filtered.x = deltx + priv->oldX;
+			filtered.y = delty + priv->oldY;
+		}
+	}
+
+	/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
+	if (IsCursor(priv))
+	{
+		/* force out-prox when distance is outside wcmCursorProxoutDist. */
+		if (common->wcmProtocolLevel == 5)
+		{
+			if (common->wcmMaxCursorDist > filtered.distance)
+				common->wcmMaxCursorDist = filtered.distance;
+		}
+		else
+		{
+			if (common->wcmMaxCursorDist < filtered.distance)
+				common->wcmMaxCursorDist = filtered.distance;
+		}
+		DBG(10, common, "Distance over"
+				" the tablet: %d, ProxoutDist: %d current"
+				" min/max %d hard prox: %d\n",
+				filtered.distance,
+				common->wcmCursorProxoutDist,
+				common->wcmMaxCursorDist,
+				ds->proximity);
+
+		if (priv->oldProximity)
+		{
+			if (abs(filtered.distance - common->wcmMaxCursorDist)
+					> common->wcmCursorProxoutDist)
+				filtered.proximity = 0;
+		}
+		/* once it is out. Don't let it in until a hard in */
+		/* or it gets inside wcmCursorProxoutDist */
+		else
+		{
+			if (abs(filtered.distance - common->wcmMaxCursorDist) >
+					common->wcmCursorProxoutDist && ds->proximity)
+				return;
+			if (!ds->proximity)
+				return;
+		}
+	}
+	wcmSendEvents(pDev, &filtered);
+	/* If out-prox, reset the current area pointer */
+	if (!filtered.proximity)
+		tool->current = NULL;
 }
 
 /*****************************************************************************
