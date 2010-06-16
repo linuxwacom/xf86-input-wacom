@@ -907,11 +907,6 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		/* Autoprobe if necessary */
-		if ((common->wcmFlags & AUTODEV_FLAG) &&
-		    !(common->device_path = wcmEventAutoDevProbe (local)))
-			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
-
 		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
 			!common->device_path)
 		{
