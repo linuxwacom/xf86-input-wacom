@@ -954,10 +954,13 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			y = 0;
 			if ( v3 || v4 || v5 )
 				wcmSetScreen(local, x, y);
+		}
 
-			if (!priv->oldProximity)
-				xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+		if (!priv->oldProximity && is_proximity)
+			xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
 
+		if (v3 || v4 || v5 || buttons || ds->relwheel)
+		{
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
 
 			/* xf86PostMotionEvent is only needed to post the valuators
@@ -974,10 +977,9 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (priv->oldButtons)
 				wcmSendButtons(local, buttons,
 					x, y, z, v3, v4, v5);
-			if (priv->oldProximity)
- 				xf86PostProximityEvent(local->dev, 0, 0, naxes, 
-				x, y, z, v3, v4, v5);
 		}
+		if (priv->oldProximity && !is_proximity)
+			xf86PostProximityEvent(local->dev, 0, 0, naxes, x, y, z, v3, v4, v5);
 	}
 	priv->oldProximity = is_proximity;
 	priv->old_device_id = id;
