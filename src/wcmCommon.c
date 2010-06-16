@@ -960,7 +960,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			xf86PostProximityEvent(local->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
 
 			sendCommonEvents(local, ds, x, y, z, v3, v4, v5);
-			is_proximity = 1;
 
 			/* xf86PostMotionEvent is only needed to post the valuators
 			 * It should NOT move the cursor.
@@ -979,7 +978,6 @@ void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds)
 			if (priv->oldProximity && local->dev->proximity)
  				xf86PostProximityEvent(local->dev, 0, 0, naxes, 
 				x, y, z, v3, v4, v5);
-			is_proximity = 0;
 		}
 	}
 	priv->oldProximity = is_proximity;
