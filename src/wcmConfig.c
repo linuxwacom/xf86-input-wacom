@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <linux/serial.h>
 
 /*****************************************************************************
  * wcmAllocate --
@@ -371,6 +372,47 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 	return 0;
 }
 
+static Bool
+wcmInitModel(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	struct serial_struct ser;
+	int rc;
+	char id[BUFFER_SIZE];
+	float version;
+
+	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
+
+	/* we initialized wcmDeviceClasses to USB
+	 * Bluetooth is also considered as USB */
+	if (rc == 0) /* serial device */
+	{
+		/* only ISDV4 are supported on X server 1.7 and later */
+		common->wcmForceDevice = DEVICE_ISDV4;
+		common->wcmDevCls = &gWacomISDV4Device;
+	}
+	else
+	{
+		/* Detect USB device class */
+		if ((&gWacomUSBDevice)->Detect(local))
+			common->wcmDevCls = &gWacomUSBDevice;
+		else
+		{
+			xf86Msg(X_ERROR, "%s: wcmInitModel found undetectable "
+				" %s \n", local->name, common->device_path);
+			return FALSE;
+		}
+	}
+
+	/* Initialize the tablet */
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		wcmInitTablet(local, id, version) != Success)
+		return FALSE;
+
+	return TRUE;
+}
+
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
 static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
@@ -421,7 +463,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		device = xf86SetStrOption(local->options, "Device", NULL);
 	}
 
-	SYSCALL(local->fd = open(device, O_RDONLY));
+	SYSCALL(local->fd = open(device, O_RDWR));
 	if (local->fd < 0)
 	{
 		xf86Msg(X_WARNING, "%s: failed to open %s.\n",
@@ -464,6 +506,9 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	/* Process the common options. */
 	xf86ProcessCommonOptions(local, local->options);
 	if (!wcmParseOptions(local, need_hotplug))
+		goto SetupProc_fail;
+
+	if (!wcmInitModel(local))
 		goto SetupProc_fail;
 
 	/* mark the device configured */

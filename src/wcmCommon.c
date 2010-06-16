@@ -1636,10 +1636,6 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
 
-	/* start the tablet data */
-	if (model->Start && (model->Start(local) != Success))
-		return !Success;
-
 	return Success;
 }
 

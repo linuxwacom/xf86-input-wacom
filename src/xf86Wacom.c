@@ -42,7 +42,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <linux/serial.h>
 
 #include "xf86Wacom.h"
 #include <xf86_OSproc.h>
@@ -631,35 +630,31 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 
-	/* only initial KeyClass and LedFeedbackClass once */
-	if (!priv->wcmInitKeyClassCount)
-	{
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, wcmKbdCtrlCallback)) {
+	if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, wcmKbdCtrlCallback)) {
 #define SYMS_PER_KEY 2
-			KeySymsRec syms;
-			CARD8 modmap[MAP_LENGTH];
-			int num_keys = XkbMaxLegalKeyCode - XkbMinLegalKeyCode + 1;
+		KeySymsRec syms;
+		CARD8 modmap[MAP_LENGTH];
+		int num_keys = XkbMaxLegalKeyCode - XkbMinLegalKeyCode + 1;
 
-			syms.map = keymap;
-			syms.mapWidth = SYMS_PER_KEY;
-			syms.minKeyCode = XkbMinLegalKeyCode;
-			syms.maxKeyCode = XkbMaxLegalKeyCode;
+		syms.map = keymap;
+		syms.mapWidth = SYMS_PER_KEY;
+		syms.minKeyCode = XkbMinLegalKeyCode;
+		syms.maxKeyCode = XkbMaxLegalKeyCode;
 
-			memset(modmap, 0, sizeof(modmap));
-			modmap[XkbMinLegalKeyCode + 2] = ShiftMask;
-			XkbApplyMappingChange(local->dev, &syms, syms.minKeyCode, num_keys, NULL, // modmap,
-					serverClient);
-		} else
-		{
-			xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", local->name);
-			return FALSE;
-		}
+		memset(modmap, 0, sizeof(modmap));
+		modmap[XkbMinLegalKeyCode + 2] = ShiftMask;
+		XkbApplyMappingChange(local->dev, &syms, syms.minKeyCode, num_keys, NULL, // modmap,
+				serverClient);
+	} else
+	{
+		xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", local->name);
+		return FALSE;
+	}
 #endif
-		if(InitLedFeedbackClassDeviceStruct (local->dev, wcmKbdLedCallback) == FALSE) {
-			xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", local->name);
-			return FALSE;
-		}
+	if(InitLedFeedbackClassDeviceStruct (local->dev, wcmKbdLedCallback) == FALSE) {
+		xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", local->name);
+		return FALSE;
 	}
 
 	wcmInitialToolSize(local);
@@ -837,10 +832,6 @@ static Bool wcmOpen(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	char id[BUFFER_SIZE];
-	float version;
-	int rc;
-	struct serial_struct ser;
 
 	DBG(1, priv, "opening device file\n");
 
@@ -852,38 +843,14 @@ static Bool wcmOpen(LocalDevicePtr local)
 		return !Success;
 	}
 
-	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
-
-	/* we initialized wcmDeviceClasses to USB
-	 * Bluetooth is also considered as USB */
-	if (rc == 0) /* serial device */
-	{
-		/* only ISDV4 are supported on X server 1.7 and later */
-		common->wcmForceDevice=DEVICE_ISDV4;
-		common->wcmDevCls = &gWacomISDV4Device;
-	}
-	else
-	{
-		/* Detect USB device class */
-		if ((&gWacomUSBDevice)->Detect(local))
-			common->wcmDevCls = &gWacomUSBDevice;
-		else
-		{
-			xf86Msg(X_ERROR, "%s: wcmOpen found undetectable "
-				" %s \n", local->name, common->device_path);
-			return !Success;
-		}
-	}
-
-	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(local, id, &version) != Success ||
-		wcmInitTablet(local, id, version) != Success)
-	{
-		xf86CloseSerial(local->fd);
-		local->fd = -1;
-		return !Success;
-	}
 	return Success;
+}
+
+static int wcmDevInit(DeviceIntPtr pWcm)
+{
+	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
+
+	return wcmRegisterX11Devices (local);
 }
 
 /*****************************************************************************
@@ -896,13 +863,10 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	WacomModelPtr model = common->wcmModel;
 	struct stat st;
 
 	DBG(10, priv, "\n");
-
-	/* Device has been open and not autoprobed */
-	if (priv->wcmDevOpenCount)
-		return TRUE;
 
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
@@ -943,8 +907,9 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		common->fd_refs++;
 	}
 
-	if (!wcmRegisterX11Devices (local))
-		return FALSE;
+	/* start the tablet data */
+	if (model->Start && (model->Start(local) != Success))
+		return !Success;
 
 	return TRUE;
 }
@@ -1134,18 +1099,13 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 	switch (what)
 	{
 		case DEVICE_INIT:
-			priv->wcmDevOpenCount = 0;
-			priv->wcmInitKeyClassCount = 0;
-			if (!wcmDevOpen(pWcm))
+			if (!wcmDevInit(pWcm))
 				goto out;
-			priv->wcmInitKeyClassCount++;
-			priv->wcmDevOpenCount++;
-			break; 
+			break;
 
 		case DEVICE_ON:
 			if (!wcmDevOpen(pWcm))
 				goto out;
-			priv->wcmDevOpenCount++;
 			xf86AddEnabledDevice(local);
 			pWcm->public.on = TRUE;
 			break;
@@ -1158,7 +1118,6 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 				wcmDevClose(local);
 			}
 			pWcm->public.on = FALSE;
-			priv->wcmDevOpenCount = 0;
 			break;
 
 		default:
