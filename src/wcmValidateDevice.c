@@ -417,7 +417,7 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
 	char            *s, b[12];
-	int		i, oldButton, baud;
+	int		i, oldButton;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
@@ -689,21 +689,6 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
 	}
 
-	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
-
-	switch (baud)
-	{
-		case 38400:
-		case 19200:
-			common->wcmISDV4Speed = baud;
-			break;
-		default:
-			xf86Msg(X_ERROR, "%s: Illegal speed value "
-					"(must be 19200 or 38400).",
-					local->name);
-			break;
-	}
-
 	s = xf86SetStrOption(local->options, "Twinview", NULL);
 	if (s && xf86NameCmp(s, "none") == 0)
 		priv->twinview = TV_NONE;
@@ -729,6 +714,11 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->numScreen = 2;
 	else
 		priv->numScreen = screenInfo.numScreens;
+
+	/* Now parse class-specific options */
+	if (common->wcmDevCls->ParseOptions &&
+	    !common->wcmDevCls->ParseOptions(local))
+		goto error;
 
 	return 1;
 error:

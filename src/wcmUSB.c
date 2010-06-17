@@ -57,6 +57,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 	WacomDeviceClass gWacomUSBDevice =
 	{
 		usbDetect,
+		NULL, /* no USB-specific options */
 		usbWcmInit,
 	};
 

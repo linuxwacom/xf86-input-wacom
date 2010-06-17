@@ -35,6 +35,7 @@
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 static Bool isdv4Detect(LocalDevicePtr);
+static Bool isdv4ParseOptions(LocalDevicePtr local);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
@@ -59,6 +60,7 @@ static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const si
 	WacomDeviceClass gWacomISDV4Device =
 	{
 		isdv4Detect,
+		isdv4ParseOptions,
 		isdv4Init,
 	};
 
@@ -150,6 +152,33 @@ static Bool isdv4Detect(LocalDevicePtr local)
 	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
 	if (rc == -1)
 		return FALSE;
+
+	return TRUE;
+}
+
+/*****************************************************************************
+ * isdv4ParseOptions -- parse ISDV4-specific options
+ ****************************************************************************/
+static Bool isdv4ParseOptions(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int baud;
+
+	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
+
+	switch (baud)
+	{
+		case 38400:
+		case 19200:
+			common->wcmISDV4Speed = baud;
+			break;
+		default:
+			xf86Msg(X_ERROR, "%s: Illegal speed value "
+					"(must be 19200 or 38400).",
+					local->name);
+			return FALSE;
+	}
 
 	return TRUE;
 }

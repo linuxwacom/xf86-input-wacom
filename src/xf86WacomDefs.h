@@ -333,6 +333,7 @@ struct _WacomChannel
 struct _WacomDeviceClass
 {
 	Bool (*Detect)(LocalDevicePtr local); /* detect device */
+	Bool (*ParseOptions)(LocalDevicePtr local); /* parse class-specific options */
 	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
 };
 
