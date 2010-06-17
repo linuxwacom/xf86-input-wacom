@@ -417,7 +417,7 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr  common = priv->common;
 	char            *s, b[12];
-	int		i, oldButton;
+	int		i, oldButton, baud;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
 
@@ -689,23 +689,19 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
 	}
 
-	if (common->wcmForceDevice == DEVICE_ISDV4)
-        {
-		int val;
-		val = xf86SetIntOption(local->options, "BaudRate", 38400);
+	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
 
-		switch(val)
-		{
-			case 38400:
-			case 19200:
-				common->wcmISDV4Speed = val;
-				break;
-			default:
-				xf86Msg(X_ERROR, "%s: Illegal speed value "
+	switch (baud)
+	{
+		case 38400:
+		case 19200:
+			common->wcmISDV4Speed = baud;
+			break;
+		default:
+			xf86Msg(X_ERROR, "%s: Illegal speed value "
 					"(must be 19200 or 38400).",
 					local->name);
-				break;
-		}
+			break;
 	}
 
 	s = xf86SetStrOption(local->options, "Twinview", NULL);

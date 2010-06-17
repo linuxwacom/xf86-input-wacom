@@ -352,8 +352,6 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define USE_SYN_REPORTS_FLAG	8
 #define AUTODEV_FLAG		16
 
-#define DEVICE_ISDV4 		0x000C
-
 #define MAX_CHANNELS 2
 #define MAX_FINGERS  2
 
@@ -409,7 +407,6 @@ struct _WacomCommonRec
 	int wcmPktLength;            /* length of a packet */
 	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
 	float wcmVersion;            /* ROM version */
-	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
