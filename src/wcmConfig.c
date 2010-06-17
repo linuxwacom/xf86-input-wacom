@@ -110,8 +110,6 @@ static int wcmAllocate(LocalDevicePtr local)
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = 4;      /* protocol level */
 	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
-
-	common->wcmDevCls = &gWacomUSBDevice; /* device-specific functions */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
@@ -371,13 +369,19 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 	return 0;
 }
 
+/**
+ * Detect the device's device class. We only support two classes right now,
+ * USB and ISDV4. Let each class try to detect the type by checking what's
+ * behind the fd.
+ */
 static Bool
-wcmInitModel(LocalDevicePtr local)
+wcmDetectDeviceClass(const LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	char id[BUFFER_SIZE];
-	float version;
+
+	if (common->wcmDevCls)
+		return TRUE;
 
 	/* Bluetooth is also considered as USB */
 	if (gWacomISDV4Device.Detect(local))
@@ -385,11 +389,18 @@ wcmInitModel(LocalDevicePtr local)
 	else if (gWacomUSBDevice.Detect(local))
 		common->wcmDevCls = &gWacomUSBDevice;
 	else
-	{
-		xf86Msg(X_ERROR, "%s: wcmInitModel found undetectable "
-			" %s \n", local->name, common->device_path);
-		return FALSE;
-	}
+		xf86Msg(X_ERROR, "%s: cannot identify device class.\n", local->name);
+
+	return (common->wcmDevCls != NULL);
+}
+
+static Bool
+wcmInitModel(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	char id[BUFFER_SIZE];
+	float version;
 
 	/* Initialize the tablet */
 	if(common->wcmDevCls->Init(local, id, &version) != Success ||
@@ -487,6 +498,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto SetupProc_fail;
 
 	if (!wcmSetType(local, type))
+		goto SetupProc_fail;
+
+	/* Try to guess whether it's USB or ISDV4 */
+	if (!wcmDetectDeviceClass(local))
 		goto SetupProc_fail;
 
 	/* Process the common options. */
