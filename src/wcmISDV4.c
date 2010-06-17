@@ -146,7 +146,17 @@ static Bool isdv4Detect(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) local->private;
 	WacomCommonPtr common = priv->common;
-	return (common->wcmForceDevice == DEVICE_ISDV4) ? 1 : 0;
+	struct serial_struct ser;
+	int rc;
+
+	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
+	if (rc == -1)
+		return FALSE;
+
+	/* only ISDV4 are supported on X server 1.7 and later */
+	common->wcmForceDevice = DEVICE_ISDV4;
+
+	return TRUE;
 }
 
 /*****************************************************************************

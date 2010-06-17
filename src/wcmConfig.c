@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <linux/serial.h>
 
 /*****************************************************************************
  * wcmAllocate --
@@ -377,32 +376,19 @@ wcmInitModel(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
-	struct serial_struct ser;
-	int rc;
 	char id[BUFFER_SIZE];
 	float version;
 
-	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
-
-	/* we initialized wcmDeviceClasses to USB
-	 * Bluetooth is also considered as USB */
-	if (rc == 0) /* serial device */
-	{
-		/* only ISDV4 are supported on X server 1.7 and later */
-		common->wcmForceDevice = DEVICE_ISDV4;
+	/* Bluetooth is also considered as USB */
+	if (gWacomISDV4Device.Detect(local))
 		common->wcmDevCls = &gWacomISDV4Device;
-	}
+	else if (gWacomUSBDevice.Detect(local))
+		common->wcmDevCls = &gWacomUSBDevice;
 	else
 	{
-		/* Detect USB device class */
-		if ((&gWacomUSBDevice)->Detect(local))
-			common->wcmDevCls = &gWacomUSBDevice;
-		else
-		{
-			xf86Msg(X_ERROR, "%s: wcmInitModel found undetectable "
-				" %s \n", local->name, common->device_path);
-			return FALSE;
-		}
+		xf86Msg(X_ERROR, "%s: wcmInitModel found undetectable "
+			" %s \n", local->name, common->device_path);
+		return FALSE;
 	}
 
 	/* Initialize the tablet */
