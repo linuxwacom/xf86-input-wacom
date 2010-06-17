@@ -513,9 +513,8 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	else
 		common->nbuttons = 5;
 
-	common->private = calloc(1, sizeof(wcmUSBData));
-
-	if (!common->private)
+	if (!common->private &&
+	    !(common->private = calloc(1, sizeof(wcmUSBData))))
 	{
 		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
 					local->name);
