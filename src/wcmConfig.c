@@ -109,7 +109,6 @@ static int wcmAllocate(LocalDevicePtr local)
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = 4;      /* protocol level */
-	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmCapacity = -1;          /* Capacity is disabled */

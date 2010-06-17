@@ -34,6 +34,10 @@
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
+typedef struct {
+	int baudrate;
+} wcmISDV4Data;
+
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4ParseOptions(LocalDevicePtr local);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
@@ -163,6 +167,7 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	wcmISDV4Data *isdv4data;
 	int baud;
 
 	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
@@ -171,7 +176,6 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 	{
 		case 38400:
 		case 19200:
-			common->wcmISDV4Speed = baud;
 			break;
 		default:
 			xf86Msg(X_ERROR, "%s: Illegal speed value "
@@ -179,6 +183,16 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 					local->name);
 			return FALSE;
 	}
+
+	if (!common->private &&
+	    !(common->private = malloc(sizeof(wcmISDV4Data))))
+	{
+		xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
+				local->name);
+	}
+
+	isdv4data = common->private;
+	isdv4data->baudrate = baud;
 
 	return TRUE;
 }
@@ -191,11 +205,12 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	wcmISDV4Data *isdv4data = common->private;
 
 	DBG(1, priv, "initializing ISDV4 tablet\n");
 
 	/* Initial baudrate is 38400 */
-	if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 		return !Success;
 
 	if(id)
@@ -217,6 +232,7 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
+	wcmISDV4Data *isdv4data = common->private;
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
@@ -231,10 +247,10 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	if (!wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL))
 	{
 		/* Try 19200 if it is not a touch query */
-		if (common->wcmISDV4Speed != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
+		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
 		{
-			common->wcmISDV4Speed = 19200;
-			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			isdv4data->baudrate = 19200;
+			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 				return !Success;
  			return isdv4Query(local, query, data);
 		}
@@ -246,10 +262,10 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 	if ( !(data[0] & 0x40) )
 	{
 		/* Try 19200 if it is not a touch query */
-		if (common->wcmISDV4Speed != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
+		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
 		{
-			common->wcmISDV4Speed = 19200;
-			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			isdv4data->baudrate = 19200;
+			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 				return !Success;
  			return isdv4Query(local, query, data);
 		}
@@ -297,6 +313,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	char data[BUFFER_SIZE];
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common =	priv->common;
+	wcmISDV4Data *isdv4data = common->private;
 	int ret = Success;
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
@@ -335,12 +352,12 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 		DBG(2, priv, "Pen speed=%d "
 			"maxX=%d maxY=%d maxZ=%d resX=%d resY=%d \n",
-			common->wcmISDV4Speed, common->wcmMaxX, common->wcmMaxY,
+			isdv4data->baudrate, common->wcmMaxX, common->wcmMaxY,
 			common->wcmMaxZ, common->wcmResolX, common->wcmResolY);
 	}
 
 	/* Touch might be supported. Send a touch query command */
-	common->wcmISDV4Speed = 38400;
+	isdv4data->baudrate = 38400;
 	if (isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
 	{
 		ISDV4TouchQueryReply reply;
@@ -430,7 +447,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 		DBG(2, priv, "touch speed=%d "
 			"maxTouchX=%d maxTouchY=%d TouchresX=%d TouchresY=%d \n",
-			common->wcmISDV4Speed, common->wcmMaxTouchX,
+			isdv4data->baudrate, common->wcmMaxTouchX,
 			common->wcmMaxTouchY, common->wcmTouchResolX,
 			common->wcmTouchResolY);
 	}
