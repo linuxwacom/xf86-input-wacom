@@ -321,10 +321,6 @@ static Bool usbDetect(LocalDevicePtr local)
 	return 1;
 }
 
-/*****************************************************************************
- * wcmusbInit --
- ****************************************************************************/
-
 /* Key codes used to mark tablet buttons -- must be in sync
  * with the keycode array in wacom.c kernel driver.
  */
