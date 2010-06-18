@@ -506,7 +506,7 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	 * Slightly depressed curve might be 5,0,100,95
 	 * Slightly raised curve might be 0,5,95,100
 	 */
-	s = xf86SetStrOption(local->options, "PressCurve", NULL);
+	s = xf86SetStrOption(local->options, "PressCurve", "0,0,100,100");
 	if (s && (IsStylus(priv) || IsEraser(priv)))
 	{
 		int a,b,c,d;
