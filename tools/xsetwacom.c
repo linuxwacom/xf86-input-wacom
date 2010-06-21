@@ -1158,6 +1158,8 @@ static char *convert_specialkey(const char *modifier)
 		{"up", "Up"}, {"down", "Down"},
 		{"left", "Left"}, {"right", "Right"},
 
+		{"backspace", "BackSpace"}, {"Backspace", "BackSpace"},
+
 		{ NULL, NULL }
 	};
 
