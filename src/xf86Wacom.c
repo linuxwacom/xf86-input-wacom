@@ -848,7 +848,7 @@ static Bool wcmOpen(LocalDevicePtr local)
 	if (local->fd < 0)
 	{
 		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", local->name,
-			common->wcmDevice, strerror(errno));
+			common->device_path, strerror(errno));
 		return !Success;
 	}
 
@@ -870,7 +870,7 @@ static Bool wcmOpen(LocalDevicePtr local)
 		else
 		{
 			xf86Msg(X_ERROR, "%s: wcmOpen found undetectable "
-				" %s \n", local->name, common->wcmDevice);
+				" %s \n", local->name, common->device_path);
 			return !Success;
 		}
 	}
@@ -909,11 +909,11 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	{
 		/* Autoprobe if necessary */
 		if ((common->wcmFlags & AUTODEV_FLAG) &&
-		    !(common->wcmDevice = wcmEventAutoDevProbe (local)))
+		    !(common->device_path = wcmEventAutoDevProbe (local)))
 			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
 
 		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
-			!common->wcmDevice)
+			!common->device_path)
 		{
 			DBG(1, priv, "Failed to open "
 				"device (fd=%d)\n", local->fd);

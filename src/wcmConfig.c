@@ -353,7 +353,7 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 	WacomCommonPtr common = priv->common;
 	LocalDevicePtr pMatch = xf86FirstLocalDevice();
 
-	if (!common->wcmDevice)
+	if (!common->device_path)
 		return 0;
 
 	for (; pMatch != NULL; pMatch = pMatch->next)
@@ -362,7 +362,7 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 
 		if ((pLocal != pMatch) &&
 				strstr(pMatch->drv->driverName, "wacom") &&
-				!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
+				!strcmp(privMatch->common->device_path, common->device_path))
 		{
 			DBG(2, priv, "port share between"
 					" %s and %s\n", pLocal->name, pMatch->name);
@@ -437,7 +437,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv = (WacomDevicePtr) local->private;
 	common = priv->common;
 	priv->name = local->name;
-	common->wcmDevice = device;
+	common->device_path = device;
 
 	/* check if this is the first tool on the port */
 	if (!wcmMatchDevice(local))

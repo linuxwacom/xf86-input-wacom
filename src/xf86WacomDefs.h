@@ -372,8 +372,8 @@ typedef struct {
 
 struct _WacomCommonRec 
 {
-	/* Do not move wcmDevice, same offset as priv->name */
-	char* wcmDevice;             /* device file name */
+	/* Do not move device_path, same offset as priv->name */
+	char* device_path;           /* device file name */
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
