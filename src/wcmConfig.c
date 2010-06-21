@@ -449,13 +449,8 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if ((need_hotplug = wcmNeedAutoHotplug(local, &type)))
 	{
 		/* we need subdevices, change the name so all of them have a
-		   type.
-		   strlen + 2 for one space and one \0
-		 */
-		char *new_name = malloc(strlen(local->name) + strlen(type) + 2);
-		strcpy(new_name, local->name);
-		strcat(new_name, " ");
-		strcat(new_name, type);
+		   type. */
+		char *new_name = Xprintf("%s %s", local->name, type);
 		local->name = priv->name = new_name;
 	}
 

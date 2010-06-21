@@ -267,8 +267,7 @@ static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char* basena
 	memset(&dummy, 0, sizeof(dummy));
 	xf86CollectInputOptions(&dummy, NULL, original);
 
-	name = calloc(strlen(basename) + strlen(type) + 2, 1);
-	sprintf(name, "%s %s", basename, type);
+	name = Xprintf("%s %s", basename, type);
 
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
@@ -311,11 +310,7 @@ static InputAttributes* wcmDuplicateAttributes(LocalDevicePtr local,
 {
 	InputAttributes *attr;
 	attr = DuplicateInputAttributes(local->attrs);
-							/* add one space, one \0 */
-	attr->product = realloc(attr->product, strlen(attr->product) + strlen(type) + 2);
-	strcat(attr->product, " ");
-	strcat(attr->product, type);
-
+	attr->product = Xprintf("%s %s", attr->product, type);
 	return attr;
 }
 #endif
