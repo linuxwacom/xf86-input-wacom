@@ -35,6 +35,7 @@
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 typedef struct {
+	int initialized; /* QUERY can only be run once */
 	int baudrate;
 } wcmISDV4Data;
 
@@ -318,6 +319,9 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
+	if (isdv4data->initialized)
+		return ret;
+
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
 	if (ret == Success)
@@ -453,6 +457,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	}
 
 	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
+
+	isdv4data->initialized = 1;
 
 	return ret;
 }
