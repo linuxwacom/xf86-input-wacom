@@ -181,6 +181,9 @@ int usbProbeKeys(LocalDevicePtr local);
 /* Utility functions */
 extern Bool is_absolute(LocalDevicePtr local);
 extern void set_absolute(LocalDevicePtr local, Bool absolute);
+extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
+extern void wcmFreeCommon(WacomCommonPtr *common);
+extern WacomCommonPtr wcmNewCommon(void);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

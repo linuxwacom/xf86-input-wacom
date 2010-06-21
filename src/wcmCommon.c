@@ -1988,4 +1988,50 @@ Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
 }
 
 
+/* Common pointer refcounting utilities.
+ * Common is shared across all wacom devices off the same port. These
+ * functions implement basic refcounting to avoid double-frees and memleaks.
+ *
+ * Usage:
+ *  wcmNewCommon() to create a new struct.
+ *  wcmRefCommon() to get a new reference to an already exiting one.
+ *  wcmFreeCommon() to unref. After the last ref has been unlinked, the
+ *  struct is freed.
+ *
+ */
+
+WacomCommonPtr wcmNewCommon(void)
+{
+	WacomCommonPtr common;
+	common = calloc(1, sizeof(WacomCommonRec));
+	if (common)
+		common->refcnt = 1;
+
+	return common;
+}
+
+
+void wcmFreeCommon(WacomCommonPtr *ptr)
+{
+	WacomCommonPtr common = *ptr;
+
+	DBG(10, common, "common refcount dec to %d\n", common->refcnt - 1);
+	if (--common->refcnt == 0)
+	{
+		free(common->private);
+		free(common);
+	}
+	*ptr = NULL;
+}
+
+WacomCommonPtr wcmRefCommon(WacomCommonPtr common)
+{
+	if (!common)
+		common = wcmNewCommon();
+	else
+		common->refcnt++;
+	DBG(10, common, "common refcount inc to %d\n", common->refcnt);
+	return common;
+}
+
 /* vim: set noexpandtab shiftwidth=8: */

@@ -447,6 +447,9 @@ struct _WacomCommonRec
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
 
 	WacomToolPtr wcmTool; /* List of unique tools */
+
+	/* DO NOT TOUCH THIS. use wcmRefCommon() instead */
+	int refcnt;			/* number of devices sharing this struct */
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)

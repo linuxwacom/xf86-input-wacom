@@ -44,7 +44,7 @@ static int wcmAllocate(LocalDevicePtr local)
 	if (!priv)
 		goto error;
 
-	common = calloc(1, sizeof(WacomCommonRec));
+	common = wcmNewCommon();
 	if (!common)
 		goto error;
 
@@ -157,7 +157,7 @@ static int wcmAllocate(LocalDevicePtr local)
 error:
 	free(area);
 	free(tool);
-	free(common);
+	wcmFreeCommon(&common);
 	free(priv);
 	return 0;
 }
@@ -330,12 +330,7 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	}
 	free(priv);
 
-	/* the last priv frees the common */
-	if (!common->wcmDevices)
-	{
-		free(common->private);
-		free(common);
-	}
+	wcmFreeCommon(&common);
 
 	local->private = NULL;
 	xf86DeleteInput(local, 0);
@@ -366,8 +361,8 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 		{
 			DBG(2, priv, "port share between"
 					" %s and %s\n", pLocal->name, pMatch->name);
-			free(common);
-			common = priv->common = privMatch->common;
+			wcmFreeCommon(&priv->common);
+			common = priv->common = wcmRefCommon(privMatch->common);
 			priv->next = common->wcmDevices;
 			common->wcmDevices = priv;
 			return 1;
@@ -492,7 +487,7 @@ SetupProc_fail:
 	/* restart the device list from the next one */
 	if (common && priv)
 		common->wcmDevices = priv->next;
-	free(common);
+	wcmFreeCommon(&common);
 	free(priv);
 	if (local)
 	{
