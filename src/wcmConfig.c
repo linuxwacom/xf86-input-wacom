@@ -444,6 +444,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(local);
 
+	common = priv->common; /* wcmMatchDevice() may have changed it. */
 	oldname = local->name;
 
 	if ((need_hotplug = wcmNeedAutoHotplug(local, &type)))
