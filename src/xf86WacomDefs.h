@@ -483,3 +483,5 @@ struct _WacomToolArea
 };
 
 #endif /*__XF86_XF86WACOMDEFS_H */
+
+/* vim: set noexpandtab shiftwidth=8: */

@@ -184,3 +184,5 @@ extern void set_absolute(LocalDevicePtr local, Bool absolute);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
+
+/* vim: set noexpandtab shiftwidth=8: */
