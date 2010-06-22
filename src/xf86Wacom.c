@@ -915,8 +915,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
 			!common->wcmDevice)
 		{
-			DBG(1, priv, "Failed to open "
-				"device (fd=%d)\n", local->fd);
+			DBG(1, priv, "Failed to open device (fd=%d)\n", local->fd);
 			if (local->fd >= 0)
 			{
 				DBG(1, priv, "Closing device\n");
@@ -929,8 +928,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		if (fstat(local->fd, &st) == -1)
 		{
 			/* can not access major/minor */
-			DBG(1, priv, "stat failed (%s). "
-				"cannot check status.\n", strerror(errno));
+			DBG(1, priv, "stat failed (%s).\n", strerror(errno));
 
 			/* older systems don't support the required ioctl.
 			 * So, we have to let it pass */
@@ -1012,8 +1010,7 @@ void wcmReadPacket(LocalDevicePtr local)
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
-	DBG(1, common, "pos=%d"
-		" remaining=%d\n", common->bufpos, remaining);
+	DBG(1, common, "pos=%d remaining=%d\n", common->bufpos, remaining);
 
 	/* fill buffer with as much data as we can handle */
 	len = xf86ReadSerial(local->fd,
