@@ -821,6 +821,7 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
 	}
 	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
 		local->name, i + 1, wait);
+	xf86Msg(X_ERROR, "%s: unable to probe device\n", local->name);
 	return FALSE;
 }
 

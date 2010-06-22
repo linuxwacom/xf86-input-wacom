@@ -451,13 +451,8 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (!wcmAllocate(local))
 		goto SetupProc_fail;
 
-	if (!device)
-	{
-		if (!wcmAutoProbeDevice(local))
-			goto SetupProc_fail;
-
-		device = xf86SetStrOption(local->options, "Device", NULL);
-	}
+	if (!device && !(device = wcmEventAutoDevProbe(local)))
+		goto SetupProc_fail;
 
 	SYSCALL(local->fd = open(device, O_RDWR));
 	if (local->fd < 0)

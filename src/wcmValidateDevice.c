@@ -727,20 +727,4 @@ error:
 	return 0;
 }
 
-int wcmAutoProbeDevice(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common =  priv->common;
-
-	if ((!common->device_path || !strcmp (common->device_path, "auto-dev")))
-	{
-		if (! (common->device_path = wcmEventAutoDevProbe (local)))
-		{
-			xf86Msg(X_ERROR, "%s: unable to probe device\n",
-				local->name);
-			return 0;
-		}
-	}
-	return 1;
-}
 /* vim: set noexpandtab shiftwidth=8: */
