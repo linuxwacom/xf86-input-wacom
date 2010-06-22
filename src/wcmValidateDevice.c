@@ -168,11 +168,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 {
 	int ret = 1;
 	WacomDevicePtr priv = local->private;
+	WacomCommonPtr common = priv->common;
 
-	/* serial ISDV4 devices */
-	priv->common->tablet_id = isdv4ProbeKeys(local);
-	if (!priv->common->tablet_id) /* USB devices */
-		priv->common->tablet_id = usbProbeKeys(local);
+	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(local);
 
 	switch (priv->common->tablet_id)
 	{

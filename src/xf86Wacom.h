@@ -173,10 +173,6 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 extern void InitWcmDeviceProperties(LocalDevicePtr local);
 
-/* Device probing */
-int isdv4ProbeKeys(LocalDevicePtr local);
-int usbProbeKeys(LocalDevicePtr local);
-
 /* Utility functions */
 extern Bool is_absolute(LocalDevicePtr local);
 extern void set_absolute(LocalDevicePtr local, Bool absolute);

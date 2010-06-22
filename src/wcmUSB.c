@@ -41,6 +41,7 @@ typedef struct {
 
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
+static int usbProbeKeys(LocalDevicePtr local);
 static int usbStart(LocalDevicePtr local);
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
@@ -59,6 +60,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbDetect,
 		NULL, /* no USB-specific options */
 		usbWcmInit,
+		usbProbeKeys
 	};
 
 	static WacomModel usbUnknown =
@@ -1148,7 +1150,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
  * on success or 0 on failure.
  * For USB devices, we simply copy the information the kernel gives us.
  */
-int usbProbeKeys(LocalDevicePtr local)
+static int usbProbeKeys(LocalDevicePtr local)
 {
 	struct input_id wacom_id;
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;

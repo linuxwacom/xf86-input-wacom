@@ -42,6 +42,7 @@ typedef struct {
 static Bool isdv4Detect(LocalDevicePtr);
 static Bool isdv4ParseOptions(LocalDevicePtr local);
 static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
+static int isdv4ProbeKeys(LocalDevicePtr local);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(LocalDevicePtr);
 static int isdv4StartTablet(LocalDevicePtr);
@@ -67,6 +68,7 @@ static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const si
 		isdv4Detect,
 		isdv4ParseOptions,
 		isdv4Init,
+		isdv4ProbeKeys,
 	};
 
 	static WacomModel isdv4General =
@@ -740,7 +742,7 @@ static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
  * device ID. This matching only works for wacom devices (serial ID of
  * WACf), all others are simply assumed to be pen + erasor.
  */
-int isdv4ProbeKeys(LocalDevicePtr local)
+static int isdv4ProbeKeys(LocalDevicePtr local)
 {
 	int id;
 	int tablet_id = 0;

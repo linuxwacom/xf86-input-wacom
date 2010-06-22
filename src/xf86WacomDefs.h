@@ -335,6 +335,7 @@ struct _WacomDeviceClass
 	Bool (*Detect)(LocalDevicePtr local); /* detect device */
 	Bool (*ParseOptions)(LocalDevicePtr local); /* parse class-specific options */
 	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
+	int  (*ProbeKeys)(LocalDevicePtr local); /* set the bits for the keys supported */
 };
 
 extern WacomDeviceClass gWacomUSBDevice;
