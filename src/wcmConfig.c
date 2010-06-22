@@ -472,6 +472,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->common->device_path = device;
 	priv->name = local->name;
 
+	/* Try to guess whether it's USB or ISDV4 */
+	if (!wcmDetectDeviceClass(local))
+		goto SetupProc_fail;
+
 	/* check if this is the first tool on the port */
 	if (!wcmMatchDevice(local, &common))
 		/* initialize supported keys with the first tool on the port */
@@ -496,10 +500,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto SetupProc_fail;
 
 	if (!wcmSetType(local, type))
-		goto SetupProc_fail;
-
-	/* Try to guess whether it's USB or ISDV4 */
-	if (!wcmDetectDeviceClass(local))
 		goto SetupProc_fail;
 
 	/* Process the common options. */
