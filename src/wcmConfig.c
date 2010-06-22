@@ -338,12 +338,17 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
  * the new device's "common" struct and point to the one of the already
  * existing one instead.
  * Then add the new device to the now-shared common struct.
+ *
+ * Returns 1 on a found match or 0 otherwise.
+ * Common_return is set to the common struct in use by this device.
  */
-static Bool wcmMatchDevice(LocalDevicePtr pLocal)
+static Bool wcmMatchDevice(LocalDevicePtr pLocal, WacomCommonPtr *common_return)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
 	LocalDevicePtr pMatch = xf86FirstLocalDevice();
+
+	*common_return = common;
 
 	if (!common->device_path)
 		return 0;
@@ -359,9 +364,10 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 			DBG(2, priv, "port share between %s and %s\n",
 					pLocal->name, pMatch->name);
 			wcmFreeCommon(&priv->common);
-			common = priv->common = wcmRefCommon(privMatch->common);
-			priv->next = common->wcmDevices;
-			common->wcmDevices = priv;
+			priv->common = wcmRefCommon(privMatch->common);
+			priv->next = priv->common->wcmDevices;
+			priv->common->wcmDevices = priv;
+			*common_return = priv->common;
 			return 1;
 		}
 	}
@@ -467,11 +473,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->name = local->name;
 
 	/* check if this is the first tool on the port */
-	if (!wcmMatchDevice(local))
+	if (!wcmMatchDevice(local, &common))
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(local);
 
-	common = priv->common; /* wcmMatchDevice() may have changed it. */
 	oldname = local->name;
 
 	if ((need_hotplug = wcmNeedAutoHotplug(local, &type)))
