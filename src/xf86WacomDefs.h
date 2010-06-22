@@ -351,7 +351,6 @@ extern WacomDeviceClass gWacomISDV4Device;
  * end of record indicator or not 
 */
 #define USE_SYN_REPORTS_FLAG	8
-#define AUTODEV_FLAG		16
 
 #define MAX_CHANNELS 2
 #define MAX_FINGERS  2

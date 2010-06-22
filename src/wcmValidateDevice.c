@@ -734,7 +734,6 @@ int wcmAutoProbeDevice(LocalDevicePtr local)
 
 	if ((!common->device_path || !strcmp (common->device_path, "auto-dev")))
 	{
-		common->wcmFlags |= AUTODEV_FLAG;
 		if (! (common->device_path = wcmEventAutoDevProbe (local)))
 		{
 			xf86Msg(X_ERROR, "%s: unable to probe device\n",
