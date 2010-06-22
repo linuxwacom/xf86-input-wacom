@@ -463,9 +463,8 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	priv = (WacomDevicePtr) local->private;
-	common = priv->common;
+	priv->common->device_path = device;
 	priv->name = local->name;
-	common->device_path = device;
 
 	/* check if this is the first tool on the port */
 	if (!wcmMatchDevice(local))
