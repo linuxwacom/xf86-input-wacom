@@ -356,8 +356,8 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 				strstr(pMatch->drv->driverName, "wacom") &&
 				!strcmp(privMatch->common->device_path, common->device_path))
 		{
-			DBG(2, priv, "port share between"
-					" %s and %s\n", pLocal->name, pMatch->name);
+			DBG(2, priv, "port share between %s and %s\n",
+					pLocal->name, pMatch->name);
 			wcmFreeCommon(&priv->common);
 			common = priv->common = wcmRefCommon(privMatch->common);
 			priv->next = common->wcmDevices;
