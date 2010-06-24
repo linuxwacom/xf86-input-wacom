@@ -144,7 +144,6 @@ extern int wcmDeviceTypeKeys(LocalDevicePtr local);
 /* hotplug */
 extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
 extern void wcmHotplugOthers(LocalDevicePtr local, const char *basename);
-extern int wcmAutoProbeDevice(LocalDevicePtr local);
 
 /* setup */
 extern int wcmParseOptions(LocalDevicePtr local, int hotplugged);
@@ -174,13 +173,14 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 extern void InitWcmDeviceProperties(LocalDevicePtr local);
 
-/* Device probing */
-int isdv4ProbeKeys(LocalDevicePtr local);
-int usbProbeKeys(LocalDevicePtr local);
-
 /* Utility functions */
 extern Bool is_absolute(LocalDevicePtr local);
 extern void set_absolute(LocalDevicePtr local, Bool absolute);
+extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
+extern void wcmFreeCommon(WacomCommonPtr *common);
+extern WacomCommonPtr wcmNewCommon(void);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
+
+/* vim: set noexpandtab shiftwidth=8: */

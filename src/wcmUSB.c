@@ -41,7 +41,8 @@ typedef struct {
 
 static Bool usbDetect(LocalDevicePtr);
 static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
-
+static int usbProbeKeys(LocalDevicePtr local);
+static int usbStart(LocalDevicePtr local);
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
@@ -57,7 +58,9 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 	WacomDeviceClass gWacomUSBDevice =
 	{
 		usbDetect,
+		NULL, /* no USB-specific options */
 		usbWcmInit,
+		usbProbeKeys
 	};
 
 	static WacomModel usbUnknown =
@@ -66,7 +69,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,     /* assume the best */
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		NULL,                 /* input filtering not needed */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -78,7 +81,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -90,7 +93,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -102,7 +105,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -114,7 +117,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -126,7 +129,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -138,7 +141,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -150,7 +153,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -162,7 +165,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -174,7 +177,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		NULL,                 /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -186,7 +189,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		NULL,                 /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -198,7 +201,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -210,7 +213,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -222,7 +225,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -234,7 +237,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -246,7 +249,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -258,7 +261,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterCoord,   /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -270,7 +273,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol5,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		wcmFilterIntuos,  /* input filtering recommended */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -282,7 +285,7 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
 		usbInitProtocol4,
 		NULL,                 /* resolution not queried */
 		usbWcmGetRanges,
-		NULL,                 /* start not supported */
+		usbStart,
 		usbParse,
 		NULL,                 /* input filtering */
 		usbDetectConfig,      /* detect hardware buttons etc */
@@ -310,20 +313,30 @@ static Bool usbDetect(LocalDevicePtr local)
 		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", local->name);
 		return 0;
 	}
-#ifdef EVIOCGRAB
-	/* Try to grab the event device so that data don't leak to /dev/input/mice */
-	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
 
-	if (err < 0) 
-		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device, errno=%d\n",
-				local->name, errno);
-#endif
 	return 1;
 }
 
 /*****************************************************************************
- * wcmusbInit --
+ * usbStart --
  ****************************************************************************/
+static int
+usbStart(LocalDevicePtr local)
+{
+	int err;
+
+#ifdef EVIOCGRAB
+	/* Try to grab the event device so that data don't leak to /dev/input/mice */
+	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
+
+	/* this is called for all tools, so all but the first one fails with
+	 * EBUSY */
+	if (err < 0 && errno != EBUSY)
+		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device (%s)\n",
+				local->name, strerror(errno));
+#endif
+	return Success;
+}
 
 /* Key codes used to mark tablet buttons -- must be in sync
  * with the keycode array in wacom.c kernel driver.
@@ -517,9 +530,8 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 	else
 		common->nbuttons = 5;
 
-	common->private = calloc(1, sizeof(wcmUSBData));
-
-	if (!common->private)
+	if (!common->private &&
+	    !(common->private = calloc(1, sizeof(wcmUSBData))))
 	{
 		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
 					local->name);
@@ -1138,7 +1150,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
  * on success or 0 on failure.
  * For USB devices, we simply copy the information the kernel gives us.
  */
-int usbProbeKeys(LocalDevicePtr local)
+static int usbProbeKeys(LocalDevicePtr local)
 {
 	struct input_id wacom_id;
 	WacomDevicePtr  priv = (WacomDevicePtr)local->private;

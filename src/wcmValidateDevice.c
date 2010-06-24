@@ -168,11 +168,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 {
 	int ret = 1;
 	WacomDevicePtr priv = local->private;
+	WacomCommonPtr common = priv->common;
 
-	/* serial ISDV4 devices */
-	priv->common->tablet_id = isdv4ProbeKeys(local);
-	if (!priv->common->tablet_id) /* USB devices */
-		priv->common->tablet_id = usbProbeKeys(local);
+	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(local);
 
 	switch (priv->common->tablet_id)
 	{
@@ -689,25 +687,6 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
 	}
 
-	if (common->wcmForceDevice == DEVICE_ISDV4)
-        {
-		int val;
-		val = xf86SetIntOption(local->options, "BaudRate", 38400);
-
-		switch(val)
-		{
-			case 38400:
-			case 19200:
-				common->wcmISDV4Speed = val;
-				break;
-			default:
-				xf86Msg(X_ERROR, "%s: Illegal speed value "
-					"(must be 19200 or 38400).",
-					local->name);
-				break;
-		}
-	}
-
 	s = xf86SetStrOption(local->options, "Twinview", NULL);
 	if (s && xf86NameCmp(s, "none") == 0)
 		priv->twinview = TV_NONE;
@@ -734,6 +713,11 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	else
 		priv->numScreen = screenInfo.numScreens;
 
+	/* Now parse class-specific options */
+	if (common->wcmDevCls->ParseOptions &&
+	    !common->wcmDevCls->ParseOptions(local))
+		goto error;
+
 	return 1;
 error:
 	free(area);
@@ -741,21 +725,4 @@ error:
 	return 0;
 }
 
-int wcmAutoProbeDevice(LocalDevicePtr local)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
-	WacomCommonPtr common =  priv->common;
-
-	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")))
-	{
-		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = wcmEventAutoDevProbe (local)))
-		{
-			xf86Msg(X_ERROR, "%s: unable to probe device\n",
-				local->name);
-			return 0;
-		}
-	}
-	return 1;
-}
 /* vim: set noexpandtab shiftwidth=8: */

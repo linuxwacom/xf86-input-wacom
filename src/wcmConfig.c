@@ -44,7 +44,7 @@ static int wcmAllocate(LocalDevicePtr local)
 	if (!priv)
 		goto error;
 
-	common = calloc(1, sizeof(WacomCommonRec));
+	common = wcmNewCommon();
 	if (!common)
 		goto error;
 
@@ -109,9 +109,6 @@ static int wcmAllocate(LocalDevicePtr local)
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = 4;      /* protocol level */
-	common->wcmISDV4Speed = 38400;  /* serial ISDV4 link speed */
-
-	common->wcmDevCls = &gWacomUSBDevice; /* device-specific functions */
 	common->wcmTPCButton = 
 		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
@@ -157,7 +154,7 @@ static int wcmAllocate(LocalDevicePtr local)
 error:
 	free(area);
 	free(tool);
-	free(common);
+	wcmFreeCommon(&common);
 	free(priv);
 	return 0;
 }
@@ -330,12 +327,7 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	}
 	free(priv);
 
-	/* the last priv frees the common */
-	if (!common->wcmDevices)
-	{
-		free(common->private);
-		free(common);
-	}
+	wcmFreeCommon(&common);
 
 	local->private = NULL;
 	xf86DeleteInput(local, 0);
@@ -346,14 +338,19 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
  * the new device's "common" struct and point to the one of the already
  * existing one instead.
  * Then add the new device to the now-shared common struct.
+ *
+ * Returns 1 on a found match or 0 otherwise.
+ * Common_return is set to the common struct in use by this device.
  */
-static Bool wcmMatchDevice(LocalDevicePtr pLocal)
+static Bool wcmMatchDevice(LocalDevicePtr pLocal, WacomCommonPtr *common_return)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
 	LocalDevicePtr pMatch = xf86FirstLocalDevice();
 
-	if (!common->wcmDevice)
+	*common_return = common;
+
+	if (!common->device_path)
 		return 0;
 
 	for (; pMatch != NULL; pMatch = pMatch->next)
@@ -362,18 +359,60 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 
 		if ((pLocal != pMatch) &&
 				strstr(pMatch->drv->driverName, "wacom") &&
-				!strcmp(privMatch->common->wcmDevice, common->wcmDevice))
+				!strcmp(privMatch->common->device_path, common->device_path))
 		{
-			DBG(2, priv, "port share between"
-					" %s and %s\n", pLocal->name, pMatch->name);
-			free(common);
-			common = priv->common = privMatch->common;
-			priv->next = common->wcmDevices;
-			common->wcmDevices = priv;
+			DBG(2, priv, "port share between %s and %s\n",
+					pLocal->name, pMatch->name);
+			wcmFreeCommon(&priv->common);
+			priv->common = wcmRefCommon(privMatch->common);
+			priv->next = priv->common->wcmDevices;
+			priv->common->wcmDevices = priv;
+			*common_return = priv->common;
 			return 1;
 		}
 	}
 	return 0;
+}
+
+/**
+ * Detect the device's device class. We only support two classes right now,
+ * USB and ISDV4. Let each class try to detect the type by checking what's
+ * behind the fd.
+ */
+static Bool
+wcmDetectDeviceClass(const LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+
+	if (common->wcmDevCls)
+		return TRUE;
+
+	/* Bluetooth is also considered as USB */
+	if (gWacomISDV4Device.Detect(local))
+		common->wcmDevCls = &gWacomISDV4Device;
+	else if (gWacomUSBDevice.Detect(local))
+		common->wcmDevCls = &gWacomUSBDevice;
+	else
+		xf86Msg(X_ERROR, "%s: cannot identify device class.\n", local->name);
+
+	return (common->wcmDevCls != NULL);
+}
+
+static Bool
+wcmInitModel(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	char id[BUFFER_SIZE];
+	float version;
+
+	/* Initialize the tablet */
+	if(common->wcmDevCls->Init(local, id, &version) != Success ||
+		wcmInitTablet(local, id, version) != Success)
+		return FALSE;
+
+	return TRUE;
 }
 
 /* wcmPreInit - called for each input devices with the driver set to
@@ -418,15 +457,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (!wcmAllocate(local))
 		goto SetupProc_fail;
 
-	if (!device)
-	{
-		if (!wcmAutoProbeDevice(local))
-			goto SetupProc_fail;
+	if (!device && !(device = wcmEventAutoDevProbe(local)))
+		goto SetupProc_fail;
 
-		device = xf86SetStrOption(local->options, "Device", NULL);
-	}
-
-	SYSCALL(local->fd = open(device, O_RDONLY));
+	SYSCALL(local->fd = open(device, O_RDWR));
 	if (local->fd < 0)
 	{
 		xf86Msg(X_WARNING, "%s: failed to open %s.\n",
@@ -435,12 +469,15 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	}
 
 	priv = (WacomDevicePtr) local->private;
-	common = priv->common;
+	priv->common->device_path = device;
 	priv->name = local->name;
-	common->wcmDevice = device;
+
+	/* Try to guess whether it's USB or ISDV4 */
+	if (!wcmDetectDeviceClass(local))
+		goto SetupProc_fail;
 
 	/* check if this is the first tool on the port */
-	if (!wcmMatchDevice(local))
+	if (!wcmMatchDevice(local, &common))
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(local);
 
@@ -470,6 +507,9 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (!wcmParseOptions(local, need_hotplug))
 		goto SetupProc_fail;
 
+	if (!wcmInitModel(local))
+		goto SetupProc_fail;
+
 	/* mark the device configured */
 	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
 
@@ -491,7 +531,7 @@ SetupProc_fail:
 	/* restart the device list from the next one */
 	if (common && priv)
 		common->wcmDevices = priv->next;
-	free(common);
+	wcmFreeCommon(&common);
 	free(priv);
 	if (local)
 	{

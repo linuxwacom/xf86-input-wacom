@@ -1628,17 +1628,13 @@ int wcmInitTablet(LocalDevicePtr local, const char* id, float version)
 	}
 
 	/* output tablet state as probed */
-	xf86Msg(X_PROBED, "%s: Wacom %s tablet speed=%d maxX=%d maxY=%d maxZ=%d "
+	xf86Msg(X_PROBED, "%s: Wacom %s tablet maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			local->name,
-			model->name, common->wcmISDV4Speed, 
+			model->name,
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
-
-	/* start the tablet data */
-	if (model->Start && (model->Start(local) != Success))
-		return !Success;
 
 	return Success;
 }
@@ -1997,5 +1993,51 @@ Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
 	return 0;
 }
 
+
+/* Common pointer refcounting utilities.
+ * Common is shared across all wacom devices off the same port. These
+ * functions implement basic refcounting to avoid double-frees and memleaks.
+ *
+ * Usage:
+ *  wcmNewCommon() to create a new struct.
+ *  wcmRefCommon() to get a new reference to an already exiting one.
+ *  wcmFreeCommon() to unref. After the last ref has been unlinked, the
+ *  struct is freed.
+ *
+ */
+
+WacomCommonPtr wcmNewCommon(void)
+{
+	WacomCommonPtr common;
+	common = calloc(1, sizeof(WacomCommonRec));
+	if (common)
+		common->refcnt = 1;
+
+	return common;
+}
+
+
+void wcmFreeCommon(WacomCommonPtr *ptr)
+{
+	WacomCommonPtr common = *ptr;
+
+	DBG(10, common, "common refcount dec to %d\n", common->refcnt - 1);
+	if (--common->refcnt == 0)
+	{
+		free(common->private);
+		free(common);
+	}
+	*ptr = NULL;
+}
+
+WacomCommonPtr wcmRefCommon(WacomCommonPtr common)
+{
+	if (!common)
+		common = wcmNewCommon();
+	else
+		common->refcnt++;
+	DBG(10, common, "common refcount inc to %d\n", common->refcnt);
+	return common;
+}
 
 /* vim: set noexpandtab shiftwidth=8: */

@@ -243,8 +243,6 @@ struct _WacomDeviceRec
 	int tvoffsetY;		/* Y edge offset for TwinView setup */
 	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
-	int wcmDevOpenCount;    /* Device open count */
-	int wcmInitKeyClassCount;    /* Device InitKeyClassDeviceStruct count */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
@@ -335,7 +333,9 @@ struct _WacomChannel
 struct _WacomDeviceClass
 {
 	Bool (*Detect)(LocalDevicePtr local); /* detect device */
+	Bool (*ParseOptions)(LocalDevicePtr local); /* parse class-specific options */
 	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
+	int  (*ProbeKeys)(LocalDevicePtr local); /* set the bits for the keys supported */
 };
 
 extern WacomDeviceClass gWacomUSBDevice;
@@ -352,9 +352,6 @@ extern WacomDeviceClass gWacomISDV4Device;
  * end of record indicator or not 
 */
 #define USE_SYN_REPORTS_FLAG	8
-#define AUTODEV_FLAG		16
-
-#define DEVICE_ISDV4 		0x000C
 
 #define MAX_CHANNELS 2
 #define MAX_FINGERS  2
@@ -372,8 +369,8 @@ typedef struct {
 
 struct _WacomCommonRec 
 {
-	/* Do not move wcmDevice, same offset as priv->name */
-	char* wcmDevice;             /* device file name */
+	/* Do not move device_path, same offset as priv->name */
+	char* device_path;           /* device file name */
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
@@ -411,11 +408,9 @@ struct _WacomCommonRec
 	int wcmPktLength;            /* length of a packet */
 	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
 	float wcmVersion;            /* ROM version */
-	int wcmForceDevice;          /* force device type (used by ISD V4) */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
-	unsigned int wcmISDV4Speed;  /* serial ISDV4 link speed */
 
 	WacomDeviceClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
@@ -447,6 +442,9 @@ struct _WacomCommonRec
 	struct input_event wcmEvents[MAX_USB_EVENTS];  /* events for current change */
 
 	WacomToolPtr wcmTool; /* List of unique tools */
+
+	/* DO NOT TOUCH THIS. use wcmRefCommon() instead */
+	int refcnt;			/* number of devices sharing this struct */
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
@@ -483,3 +481,5 @@ struct _WacomToolArea
 };
 
 #endif /*__XF86_XF86WACOMDEFS_H */
+
+/* vim: set noexpandtab shiftwidth=8: */
