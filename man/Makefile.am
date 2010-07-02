@@ -38,6 +38,7 @@ CLEANFILES = $(driverman_DATA) $(xsetwacomman_DATA)
 
 SUFFIXES = .$(DRIVER_MAN_SUFFIX) $(APP_MAN_SUFFIX) .man
 
+# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
 .man.$(DRIVER_MAN_SUFFIX):
 	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 .man.$(APP_MAN_SUFFIX):
