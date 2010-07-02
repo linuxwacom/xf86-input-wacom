@@ -187,15 +187,18 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 			return FALSE;
 	}
 
-	if (!common->private &&
-	    !(common->private = malloc(sizeof(wcmISDV4Data))))
+	if (!common->private)
 	{
-		xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
+		if (!(common->private = calloc(1, sizeof(wcmISDV4Data))))
+		{
+			xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
 				local->name);
+			return FALSE;
+		}
+		isdv4data = common->private;
+		isdv4data->baudrate = baud;
+		isdv4data->initialized = 0;
 	}
-
-	isdv4data = common->private;
-	isdv4data->baudrate = baud;
 
 	return TRUE;
 }
