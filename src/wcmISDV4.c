@@ -35,7 +35,10 @@
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 typedef struct {
-	int initialized; /* QUERY can only be run once */
+	/* Counter for dependent devices. We can only send one QUERY command to
+	   the tablet and we must not send the SAMPLING command until the last
+	   device is enabled.  */
+	int initialized;
 	int baudrate;
 } wcmISDV4Data;
 
@@ -324,7 +327,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
-	if (isdv4data->initialized)
+	if (isdv4data->initialized++)
 		return ret;
 
 	/* Send query command to the tablet */
@@ -463,13 +466,18 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
 
-	isdv4data->initialized = 1;
-
 	return ret;
 }
 
 static int isdv4StartTablet(LocalDevicePtr local)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
+	wcmISDV4Data *isdv4data = common->private;
+
+	if (--isdv4data->initialized)
+		return Success;
+
 	/* Tell the tablet to start sending coordinates */
 	if (!wcmWriteWait(local, ISDV4_SAMPLING))
 		return !Success;
