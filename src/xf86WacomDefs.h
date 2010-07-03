@@ -250,7 +250,7 @@ struct _WacomDeviceRec
 	int throttleValue;      /* current throttle value */
 
 	/* JEJ - filters */
-	int pPressCurve[FILTER_PRESSURE_RES]; /* pressure curve */
+	int pPressCurve[FILTER_PRESSURE_RES + 1]; /* pressure curve */
 	int nPressCtrl[4];      /* control points for curve */
 	int minPressure;	/* the minimum pressure a pen may hold */
 
