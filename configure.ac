@@ -51,7 +51,7 @@ AC_CHECK_LIB([m], [rint])
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, xorg-server xproto xext kbproto inputproto $REQUIRED_MODULES)
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] xproto xext kbproto inputproto $REQUIRED_MODULES)
 
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi)
