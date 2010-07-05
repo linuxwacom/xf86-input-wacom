@@ -1205,9 +1205,6 @@ static int special_map_button(Display* dpy, int argc, char **argv, unsigned long
 			if (is_valid_keyword(btn))
 				break;
 
-			if (sscanf(btn, "%d", &button) != 1)
-				return nitems;
-
 			switch (btn[0])
 			{
 				case '+': need_press = 1; break;
@@ -1218,6 +1215,10 @@ static int special_map_button(Display* dpy, int argc, char **argv, unsigned long
 			}
 		} else
 			need_press = need_release = 1;
+
+		if (sscanf(btn, "%d", &button) != 1)
+			return nitems;
+
 
 		TRACE("Button map %d [%s,%s]\n", abs(button),
 				need_press ?  "press" : "",
