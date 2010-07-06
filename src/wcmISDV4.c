@@ -27,11 +27,6 @@
 #include <linux/serial.h>
 #include "wcmISDV4.h"
 
-#define ISDV4_QUERY "*"       /* ISDV4 query command */
-#define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
-#define ISDV4_STOP "0"        /* ISDV4 stop command */
-#define ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
-
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 typedef struct {

@@ -20,6 +20,11 @@
 #ifndef WCMISDV4_H
 #define WCMISDV4_H
 
+#define ISDV4_QUERY "*"       /* ISDV4 query command */
+#define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
+#define ISDV4_STOP "0"        /* ISDV4 stop command */
+#define ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
+
 /* packet length for individual models */
 #define ISDV4_PKGLEN_TOUCH93    5
 #define ISDV4_PKGLEN_TOUCH9A    7
