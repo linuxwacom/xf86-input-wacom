@@ -89,6 +89,123 @@ typedef struct {
 	uint8_t tilt_y;
 } ISDV4CoordinateData;
 
+static inline int isdv4ParseQuery(const char *buffer, const size_t len,
+		    ISDV4QueryReply *reply)
+{
+	int header, control;
+
+	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & CONTROL_BIT);
+
+	if (!header || !control)
+		return -1;
+
+	reply->data_id = buffer[0] & DATA_ID_MASK;
+
+	/* FIXME: big endian? */
+	reply->x_max = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
+	reply->y_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
+	reply->pressure_max = buffer[5] | (buffer[6] & 0x7);
+	reply->tilt_y_max = buffer[7];
+	reply->tilt_x_max = buffer[8];
+	reply->version = buffer[9] << 7 | buffer[10];
+
+	return ISDV4_PKGLEN_TPCCTL;
+}
+
+static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
+			 ISDV4TouchQueryReply *reply)
+{
+	int header, control;
+
+	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & CONTROL_BIT);
+
+	if (!header || !control)
+		return -1;
+
+	reply->data_id = buffer[0] & DATA_ID_MASK;
+	reply->sensor_id = buffer[2] & 0x7;
+	reply->panel_resolution = buffer[1];
+	/* FIXME: big endian? */
+	reply->x_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[2] >> 5) & 0x3);
+	reply->y_max = (buffer[5] << 9) | (buffer[6] << 2) | ((buffer[2] >> 3) & 0x3);
+	reply->capacity_resolution = buffer[7];
+	reply->version = buffer[9] << 7 | buffer[10];
+
+	return ISDV4_PKGLEN_TPCCTL;
+}
+
+/* pktlen defines what touch type we parse */
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
+		        const size_t pktlen, ISDV4TouchData *touchdata)
+{
+	int header, touch;
+
+	if (!touchdata || buff_len < pktlen)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	touch = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || touch != 1)
+		return -1;
+
+	memset(touchdata, 0, sizeof(*touchdata));
+
+	touchdata->status = buffer[0] & 0x1;
+	/* FIXME: big endian */
+	touchdata->x = buffer[1] << 7 | buffer[2];
+	touchdata->y = buffer[3] << 7 | buffer[4];
+	if (pktlen == ISDV4_PKGLEN_TOUCH9A)
+		touchdata->capacity = buffer[5] << 7 | buffer[6];
+
+	if (pktlen == ISDV4_PKGLEN_TOUCH2FG)
+	{
+		touchdata->finger2.x = buffer[7] << 7 | buffer[8];
+		touchdata->finger2.y = buffer[9] << 7 | buffer[10];
+		touchdata->finger2.status = !!(buffer[0] & 0x2);
+		/* FIXME: is there a fg2 capacity? */
+	}
+
+	return pktlen;
+}
+
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+			     ISDV4CoordinateData *coord)
+{
+	int header, control;
+
+	if (!coord || len < ISDV4_PKGLEN_TPCPEN)
+		return 0;
+
+	header = !!(buffer[0] & HEADER_BIT);
+	control = !!(buffer[0] & TOUCH_CONTROL_BIT);
+
+	if (header != 1 || control != 0)
+		return -1;
+
+	coord->proximity = (buffer[0] >> 5) & 0x1;
+	coord->tip = buffer[0] & 0x1;
+	coord->side = (buffer[0] >> 1) & 0x1;
+	coord->eraser = (buffer[0] >> 2) & 0x1;
+	/* FIXME: big endian */
+	coord->x = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
+	coord->y = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
+
+	coord->pressure = ((buffer[6] & 0x7) << 7) | buffer[5];
+	coord->tilt_x = buffer[7];
+	coord->tilt_y = buffer[8];
+
+	return ISDV4_PKGLEN_TPCPEN;
+}
+
 #endif /* WCMISDV4_H */
 
 /* vim: set noexpandtab shiftwidth=8: */
