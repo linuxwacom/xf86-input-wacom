@@ -38,6 +38,16 @@
 #define DATA_ID_MASK    0x3F
 #define TOUCH_CONTROL_BIT 0x10
 
+/* Only for touch devices: use serial ID as index to get packet length for device */
+int ISDV4PacketLengths[] = {
+	/* 0x00 => */ ISDV4_PKGLEN_TOUCH93,
+	/* 0x01 => */ ISDV4_PKGLEN_TOUCH9A,
+	/* 0x02 => */ ISDV4_PKGLEN_TOUCH93,
+	/* 0x03 => */ ISDV4_PKGLEN_TOUCH9A,
+	/* 0x04 => */ ISDV4_PKGLEN_TOUCH9A,
+	/* 0x05 => */ ISDV4_PKGLEN_TOUCH2FG
+};
+
 /* ISDV4 protocol parsing structs. */
 
 /* Query reply data */
