@@ -26,6 +26,8 @@
 #include "wcmFilter.h"
 #include <linux/serial.h>
 #include "isdv4.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
@@ -502,6 +504,12 @@ static int isdv4StartTablet(LocalDevicePtr local)
 
 static int isdv4StopTablet(LocalDevicePtr local)
 {
+#if DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+#endif
+	int fd_flags;
+
 	/* Send stop command to the tablet */
 	if (!wcmWriteWait(local, ISDV4_STOP))
 		return !Success;
@@ -509,6 +517,16 @@ static int isdv4StopTablet(LocalDevicePtr local)
 	/* Wait 250 mSecs */
 	if (wcmWait(250))
 		return !Success;
+
+	/* discard potential data on the line */
+	fd_flags = fcntl(local->fd, F_GETFL);
+	if (fcntl(local->fd, F_SETFL, fd_flags | O_NONBLOCK) == 0)
+	{
+		char buffer[10];
+		while (read(local->fd, buffer, sizeof(buffer)) > 0)
+			DBG(10, common, "discarding garbage data.\n");
+		fcntl(local->fd, F_SETFL, fd_flags);
+	}
 
 	return Success;
 }
