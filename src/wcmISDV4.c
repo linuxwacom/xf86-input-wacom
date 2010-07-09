@@ -68,6 +68,27 @@ static int wcmWriteWait(LocalDevicePtr local, const char* request);
 		isdv4Parse,
 	};
 
+static void memdump(LocalDevicePtr local, char *buffer, unsigned int len)
+{
+#ifdef DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int i;
+
+	DBG(10, common, "memdump of ISDV4 data (len %d)\n", len);
+	/* can't use DBG macro here, need to do it manually. */
+	for (i = 0 ; i < len && common->debugLevel >= 10; i++)
+	{
+		xf86Msg(X_NONE, "%#hhx ", buffer[i]);
+		if (i % 8 == 7)
+			xf86Msg(X_NONE, "\n");
+	}
+
+	xf86Msg(X_NONE, "\n");
+#endif
+}
+
+
 static int wcmWait(int t)
 {
 	int err = xf86WaitForInput(-1, ((t) * 1000));
@@ -330,6 +351,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				DBG(2, common, "reply or len invalid.\n");
 			else
 				DBG(2, common, "header data corrupt.\n");
+			memdump(local, data, sizeof(reply));
 			return BadAlloc;
 		}
 
@@ -372,6 +394,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				DBG(2, common, "reply or len invalid.\n");
 			else
 				DBG(2, common, "header data corrupt.\n");
+			memdump(local, data, sizeof(reply));
 			return BadAlloc;
 		}
 
