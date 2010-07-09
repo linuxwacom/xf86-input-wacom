@@ -326,6 +326,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 query.\n",
 					local->name);
+			if (rc == 0)
+				DBG(2, common, "reply or len invalid.\n");
+			else
+				DBG(2, common, "header data corrupt.\n");
 			return BadAlloc;
 		}
 
@@ -364,6 +368,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 touch query.\n",
 					local->name);
+			if (rc == 0)
+				DBG(2, common, "reply or len invalid.\n");
+			else
+				DBG(2, common, "header data corrupt.\n");
 			return BadAlloc;
 		}
 
