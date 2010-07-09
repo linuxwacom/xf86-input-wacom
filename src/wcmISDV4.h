@@ -99,7 +99,7 @@ typedef struct {
 	uint8_t tilt_y;
 } ISDV4CoordinateData;
 
-static inline int isdv4ParseQuery(const char *buffer, const size_t len,
+static inline int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
 		    ISDV4QueryReply *reply)
 {
 	int header, control;
@@ -126,7 +126,7 @@ static inline int isdv4ParseQuery(const char *buffer, const size_t len,
 	return ISDV4_PKGLEN_TPCCTL;
 }
 
-static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
+static inline int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
 			 ISDV4TouchQueryReply *reply)
 {
 	int header, control;

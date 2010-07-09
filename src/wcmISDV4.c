@@ -342,7 +342,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		ISDV4QueryReply reply;
 		int rc;
 
-		rc = isdv4ParseQuery(data, sizeof(data), &reply);
+		rc = isdv4ParseQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 query.\n",
@@ -385,7 +385,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		ISDV4TouchQueryReply reply;
 		int rc;
 
-		rc = isdv4ParseTouchQuery(data, sizeof(data), &reply);
+		rc = isdv4ParseTouchQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 touch query.\n",
