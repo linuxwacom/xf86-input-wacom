@@ -1635,8 +1635,12 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 		rotation = 3;
 	else if (strcasecmp(argv[0], "NONE") == 0)
 		rotation = 0;
-	else
-		goto error;
+	else if (strlen(argv[0]) == 1)
+	{
+		rotation = atoi(argv[0]);
+		if (rotation < 0 || rotation > 3)
+			goto error;
+	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 	if (!prop)
