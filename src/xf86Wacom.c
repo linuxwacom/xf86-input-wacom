@@ -1079,7 +1079,9 @@ static void wcmDevClose(LocalDevicePtr local)
 static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+#endif
 	Status rc = !Success;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
