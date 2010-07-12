@@ -460,17 +460,12 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (!device && !(device = wcmEventAutoDevProbe(local)))
 		goto SetupProc_fail;
 
-	SYSCALL(local->fd = open(device, O_RDWR));
-	if (local->fd < 0)
-	{
-		xf86Msg(X_WARNING, "%s: failed to open %s.\n",
-				local->name, device);
-		goto SetupProc_fail;
-	}
-
 	priv = (WacomDevicePtr) local->private;
 	priv->common->device_path = device;
 	priv->name = local->name;
+
+	if (wcmOpen(local) != Success)
+		goto SetupProc_fail;
 
 	/* Try to guess whether it's USB or ISDV4 */
 	if (!wcmDetectDeviceClass(local))
