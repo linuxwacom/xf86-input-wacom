@@ -25,7 +25,7 @@
 #include <xf86_OSproc.h>
 #include "wcmFilter.h"
 #include <linux/serial.h>
-#include "wcmISDV4.h"
+#include "isdv4.h"
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 

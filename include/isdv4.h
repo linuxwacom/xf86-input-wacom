@@ -17,8 +17,8 @@
  */
 
 
-#ifndef WCMISDV4_H
-#define WCMISDV4_H
+#ifndef ISDV4_H
+#define ISDV4_H
 
 #define ISDV4_QUERY "*"       /* ISDV4 query command */
 #define ISDV4_RESET "&"       /* ISDV4 touch panel reset command */
@@ -216,6 +216,6 @@ static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const si
 	return ISDV4_PKGLEN_TPCPEN;
 }
 
-#endif /* WCMISDV4_H */
+#endif /* ISDV4_H */
 
 /* vim: set noexpandtab shiftwidth=8: */
