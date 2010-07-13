@@ -313,9 +313,6 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	/* digitizer Y resolution in points/inch */
 	common->wcmResolY = 2540; 	
 
-	/* no touch */
-	common->tablet_id = 0x90;
-
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
