@@ -25,17 +25,17 @@
 #include <xf86_OSproc.h>
 #include "wcmFilter.h"
 #include <linux/serial.h>
-#include "wcmISDV4.h"
-
-#define ISDV4_QUERY "*"       /* ISDV4 query command */
-#define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
-#define ISDV4_STOP "0"        /* ISDV4 stop command */
-#define ISDV4_SAMPLING "1"    /* ISDV4 sampling command */
+#include "isdv4.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
 typedef struct {
-	int initialized; /* QUERY can only be run once */
+	/* Counter for dependent devices. We can only send one QUERY command to
+	   the tablet and we must not send the SAMPLING command until the last
+	   device is enabled.  */
+	int initialized;
 	int baudrate;
 } wcmISDV4Data;
 
@@ -51,17 +51,6 @@ static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
 static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
 static int wcmWaitForTablet(LocalDevicePtr local, char * data, int size);
 static int wcmWriteWait(LocalDevicePtr local, const char* request);
-
-static inline int isdv4ParseQuery(const char *buffer, const size_t len,
-				  ISDV4QueryReply *reply);
-static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
-					ISDV4TouchQueryReply *reply);
-
-static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t len,
-				      const size_t pktlen, ISDV4TouchData *touchdata);
-
-static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
-					   ISDV4CoordinateData *coord);
 
 	WacomDeviceClass gWacomISDV4Device =
 	{
@@ -80,6 +69,27 @@ static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const si
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
 	};
+
+static void memdump(LocalDevicePtr local, char *buffer, unsigned int len)
+{
+#ifdef DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+	int i;
+
+	DBG(10, common, "memdump of ISDV4 data (len %d)\n", len);
+	/* can't use DBG macro here, need to do it manually. */
+	for (i = 0 ; i < len && common->debugLevel >= 10; i++)
+	{
+		xf86Msg(X_NONE, "%#hhx ", buffer[i]);
+		if (i % 8 == 7)
+			xf86Msg(X_NONE, "\n");
+	}
+
+	xf86Msg(X_NONE, "\n");
+#endif
+}
+
 
 static int wcmWait(int t)
 {
@@ -187,15 +197,18 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 			return FALSE;
 	}
 
-	if (!common->private &&
-	    !(common->private = malloc(sizeof(wcmISDV4Data))))
+	if (!common->private)
 	{
-		xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
+		if (!(common->private = calloc(1, sizeof(wcmISDV4Data))))
+		{
+			xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
 				local->name);
+			return FALSE;
+		}
+		isdv4data = common->private;
+		isdv4data->baudrate = baud;
+		isdv4data->initialized = 0;
 	}
-
-	isdv4data = common->private;
-	isdv4data->baudrate = baud;
 
 	return TRUE;
 }
@@ -300,9 +313,6 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	/* digitizer Y resolution in points/inch */
 	common->wcmResolY = 2540; 	
 
-	/* no touch */
-	common->tablet_id = 0x90;
-
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
@@ -321,7 +331,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
-	if (isdv4data->initialized)
+	if (isdv4data->initialized++)
 		return ret;
 
 	/* Send query command to the tablet */
@@ -331,11 +341,16 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		ISDV4QueryReply reply;
 		int rc;
 
-		rc = isdv4ParseQuery(data, sizeof(data), &reply);
+		rc = isdv4ParseQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 query.\n",
 					local->name);
+			if (rc == 0)
+				DBG(2, common, "reply or len invalid.\n");
+			else
+				DBG(2, common, "header data corrupt.\n");
+			memdump(local, data, sizeof(reply));
 			return BadAlloc;
 		}
 
@@ -369,11 +384,16 @@ static int isdv4GetRanges(LocalDevicePtr local)
 		ISDV4TouchQueryReply reply;
 		int rc;
 
-		rc = isdv4ParseTouchQuery(data, sizeof(data), &reply);
+		rc = isdv4ParseTouchQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
 			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 touch query.\n",
 					local->name);
+			if (rc == 0)
+				DBG(2, common, "reply or len invalid.\n");
+			else
+				DBG(2, common, "header data corrupt.\n");
+			memdump(local, data, sizeof(reply));
 			return BadAlloc;
 		}
 
@@ -460,13 +480,18 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
 
-	isdv4data->initialized = 1;
-
 	return ret;
 }
 
 static int isdv4StartTablet(LocalDevicePtr local)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common =	priv->common;
+	wcmISDV4Data *isdv4data = common->private;
+
+	if (--isdv4data->initialized)
+		return Success;
+
 	/* Tell the tablet to start sending coordinates */
 	if (!wcmWriteWait(local, ISDV4_SAMPLING))
 		return !Success;
@@ -476,6 +501,12 @@ static int isdv4StartTablet(LocalDevicePtr local)
 
 static int isdv4StopTablet(LocalDevicePtr local)
 {
+#if DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomCommonPtr common = priv->common;
+#endif
+	int fd_flags;
+
 	/* Send stop command to the tablet */
 	if (!wcmWriteWait(local, ISDV4_STOP))
 		return !Success;
@@ -483,6 +514,16 @@ static int isdv4StopTablet(LocalDevicePtr local)
 	/* Wait 250 mSecs */
 	if (wcmWait(250))
 		return !Success;
+
+	/* discard potential data on the line */
+	fd_flags = fcntl(local->fd, F_GETFL);
+	if (fcntl(local->fd, F_SETFL, fd_flags | O_NONBLOCK) == 0)
+	{
+		char buffer[10];
+		while (read(local->fd, buffer, sizeof(buffer)) > 0)
+			DBG(10, common, "discarding garbage data.\n");
+		fcntl(local->fd, F_SETFL, fd_flags);
+	}
 
 	return Success;
 }
@@ -810,127 +851,6 @@ static int isdv4ProbeKeys(LocalDevicePtr local)
 		tablet_id = 0xe2;
 
 	return tablet_id;
-}
-
-/* Convert buffer data of buffer sized len into a query reply.
- * Returns the number of bytes read from buffer or 0 if the buffer was on
- * insufficient length. Returns -1 on parsing or internal errors.
- */
-static inline int isdv4ParseQuery(const char *buffer, const size_t len,
-				  ISDV4QueryReply *reply)
-{
-	int header, control;
-
-	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
-		return 0;
-
-	header = !!(buffer[0] & HEADER_BIT);
-	control = !!(buffer[0] & CONTROL_BIT);
-
-	if (!header || !control)
-		return -1;
-
-	reply->data_id = buffer[0] & DATA_ID_MASK;
-
-	/* FIXME: big endian? */
-	reply->x_max = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
-	reply->y_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
-	reply->pressure_max = buffer[5] | (buffer[6] & 0x7);
-	reply->tilt_y_max = buffer[7];
-	reply->tilt_x_max = buffer[8];
-	reply->version = buffer[9] << 7 | buffer[10];
-
-	return ISDV4_PKGLEN_TPCCTL;
-}
-
-static inline int isdv4ParseTouchQuery(const char *buffer, const size_t len,
-					ISDV4TouchQueryReply *reply)
-{
-	int header, control;
-
-	if (!reply || len < ISDV4_PKGLEN_TPCCTL)
-		return 0;
-
-	header = !!(buffer[0] & HEADER_BIT);
-	control = !!(buffer[0] & CONTROL_BIT);
-
-	if (!header || !control)
-		return -1;
-
-	reply->data_id = buffer[0] & DATA_ID_MASK;
-	reply->sensor_id = buffer[2] & 0x7;
-	reply->panel_resolution = buffer[1];
-	/* FIXME: big endian? */
-	reply->x_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[2] >> 5) & 0x3);
-	reply->y_max = (buffer[5] << 9) | (buffer[6] << 2) | ((buffer[2] >> 3) & 0x3);
-	reply->capacity_resolution = buffer[7];
-	reply->version = buffer[9] << 7 | buffer[10];
-
-	return ISDV4_PKGLEN_TPCCTL;
-}
-
-/* pktlen defines what touch type we parse */
-static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
-				      const size_t pktlen, ISDV4TouchData *touchdata)
-{
-	int header, touch;
-
-	if (!touchdata || buff_len < pktlen)
-		return 0;
-
-	header = !!(buffer[0] & HEADER_BIT);
-	touch = !!(buffer[0] & TOUCH_CONTROL_BIT);
-
-	if (header != 1 || touch != 1)
-		return -1;
-
-	memset(touchdata, 0, sizeof(*touchdata));
-
-	touchdata->status = buffer[0] & 0x1;
-	/* FIXME: big endian */
-	touchdata->x = buffer[1] << 7 | buffer[2];
-	touchdata->y = buffer[3] << 7 | buffer[4];
-	if (pktlen == ISDV4_PKGLEN_TOUCH9A)
-		touchdata->capacity = buffer[5] << 7 | buffer[6];
-
-	if (pktlen == ISDV4_PKGLEN_TOUCH2FG)
-	{
-		touchdata->finger2.x = buffer[7] << 7 | buffer[8];
-		touchdata->finger2.y = buffer[9] << 7 | buffer[10];
-		touchdata->finger2.status = !!(buffer[0] & 0x2);
-		/* FIXME: is there a fg2 capacity? */
-	}
-
-	return pktlen;
-}
-
-static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
-					   ISDV4CoordinateData *coord)
-{
-	int header, control;
-
-	if (!coord || len < ISDV4_PKGLEN_TPCPEN)
-		return 0;
-
-	header = !!(buffer[0] & HEADER_BIT);
-	control = !!(buffer[0] & TOUCH_CONTROL_BIT);
-
-	if (header != 1 || control != 0)
-		return -1;
-
-	coord->proximity = (buffer[0] >> 5) & 0x1;
-	coord->tip = buffer[0] & 0x1;
-	coord->side = (buffer[0] >> 1) & 0x1;
-	coord->eraser = (buffer[0] >> 2) & 0x1;
-	/* FIXME: big endian */
-	coord->x = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
-	coord->y = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
-
-	coord->pressure = ((buffer[6] & 0x7) << 7) | buffer[5];
-	coord->tilt_x = buffer[7];
-	coord->tilt_y = buffer[8];
-
-	return ISDV4_PKGLEN_TPCPEN;
 }
 
 /* vim: set noexpandtab shiftwidth=8: */

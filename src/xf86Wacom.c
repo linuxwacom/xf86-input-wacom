@@ -829,7 +829,7 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
  * wcmOpen --
  ****************************************************************************/
 
-static Bool wcmOpen(LocalDevicePtr local)
+Bool wcmOpen(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;

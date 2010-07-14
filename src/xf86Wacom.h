@@ -113,6 +113,9 @@ struct _WacomModule
  */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
+/* Open the device with the right serial parmeters */
+extern Bool wcmOpen(LocalDevicePtr local);
+
 /* device autoprobing */
 char *wcmEventAutoDevProbe (LocalDevicePtr local);
 
