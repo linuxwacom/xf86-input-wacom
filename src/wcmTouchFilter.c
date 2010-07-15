@@ -467,17 +467,23 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		return;
 	}
 
-	/* zooming? */
-	key = (dist > 0) ? XK_plus : XK_minus;
+	/* zooming?
+	FIXME: this hardcodes the positions of ctrl, + and - to the ones on
+	the us keyboard layout. Tough luck. The alternative is to run
+	through the XKB table and figure out where +/- are hiding. Good
+	luck.
+	Gesture support is not supposed to be in the driver...
+	 */
+	key = (dist > 0) ? 21 /*XK_plus*/ : 20 /*XK_minus*/;
 
 	count -= common->wcmGestureParameters.wcmGestureUsed;
 	common->wcmGestureParameters.wcmGestureUsed += count;
 	while (count--)
 	{
-		wcmEmitKeysym (priv->local->dev, XK_Control_L, 1);
-		wcmEmitKeysym (priv->local->dev, key, 1);
-		wcmEmitKeysym (priv->local->dev, key, 0);
-		wcmEmitKeysym (priv->local->dev, XK_Control_L, 0);
+		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
+		wcmEmitKeycode (priv->local->dev, key, 1);
+		wcmEmitKeycode (priv->local->dev, key, 0);
+		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
 	}
 }
 

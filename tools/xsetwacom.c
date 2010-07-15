@@ -34,6 +34,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput.h>
+#include <X11/XKBlib.h>
 
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
@@ -1227,16 +1228,16 @@ static int is_modifier(const char* modifier)
 	return 0;
 }
 
-static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data);
-static int special_map_button(int argc, char **argv, unsigned long *ndata, unsigned long* data);
-static int special_map_core(int argc, char **argv, unsigned long *ndata, unsigned long *data);
-static int special_map_modetoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data);
-static int special_map_displaytoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
+static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
+static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
 	const char *keyword;
-	int (*func)(int, char **, unsigned long*, unsigned long *);
+	int (*func)(Display*, int, char **, unsigned long*, unsigned long *);
 } keywords[] = {
 	{"key", special_map_keystrokes},
 	{"button", special_map_button},
@@ -1248,7 +1249,7 @@ struct keywords {
 
 /* the "core" keyword isn't supported anymore, we just have this here to
    tell people that. */
-static int special_map_core(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
 {
 	static int once_only = 1;
 	if (once_only)
@@ -1260,7 +1261,7 @@ static int special_map_core(int argc, char **argv, unsigned long *ndata, unsigne
 	return 0;
 }
 
-static int special_map_modetoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
 {
 	data[*ndata] = AC_MODETOGGLE;
 
@@ -1269,7 +1270,7 @@ static int special_map_modetoggle(int argc, char **argv, unsigned long *ndata, u
 	return 0;
 }
 
-static int special_map_displaytoggle(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
 {
 	data[*ndata] = AC_DISPLAYTOGGLE;
 
@@ -1291,7 +1292,7 @@ static inline int is_valid_keyword(const char *keyword)
 	return 0;
 }
 
-static int special_map_button(int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
 {
 	int nitems = 0;
 	int i;
@@ -1336,11 +1337,44 @@ static int special_map_button(int argc, char **argv, unsigned long *ndata, unsig
 	return nitems;
 }
 
+/* Return the first keycode to have the required keysym in the current group.
+   TODOs:
+   - parse other groups as well (do we need this?)
+   - for keysyms not on level 0, return the keycodes for the modifiers as
+     well
+*/
+static int keysym_to_keycode(Display *dpy, KeySym sym)
+{
+	static XkbDescPtr xkb = NULL;
+	XkbStateRec state;
+	int group;
+	int kc = 0;
+
+
+	if (!xkb)
+		xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
+	XkbGetState(dpy, XkbUseCoreKbd, &state);
+	group = state.group;
+
+	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
+	{
+		KeySym* ks;
+		int i;
+
+		ks = XkbKeySymsPtr(xkb, kc);
+		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, state.group); i++)
+			if (ks[i] == sym)
+				goto out;
+	}
+
+out:
+	return kc;
+}
 /*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
  */
-static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data)
+static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data)
 {
 	int i;
 	int nitems = 0;
@@ -1348,6 +1382,7 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 	for (i = 0; i < argc; i++)
 	{
 		KeySym ks;
+		KeyCode kc;
 		int need_press = 0, need_release = 0;
 		char *key = argv[i];
 
@@ -1388,12 +1423,14 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 			need_press = need_release = 1;
 
 		ks = XStringToKeysym(key);
-		if (need_press)
-			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
-		if (need_release)
-			data[*ndata + nitems++] = AC_KEY | ks;
+		kc = keysym_to_keycode(dpy, ks);
 
-		TRACE("Key map %ld ('%s') [%s,%s]\n", ks,
+		if (need_press)
+			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | kc;
+		if (need_release)
+			data[*ndata + nitems++] = AC_KEY | kc;
+
+		TRACE("Key map %ld (%d, '%s') [%s,%s]\n", ks, kc,
 				XKeysymToString(ks),
 				need_press ?  "press" : "",
 				need_release ?  "release" : "");
@@ -1511,7 +1548,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 			int parsed = 0;
 			if (strcasecmp(words[i], keywords[j].keyword) == 0)
 			{
-				parsed = keywords[j].func(nwords - i - 1,
+				parsed = keywords[j].func(dpy, nwords - i - 1,
 							  &words[i + 1],
 							  &nitems, data);
 				i += parsed;
