@@ -35,6 +35,9 @@
 #define MAX_SUPPRESS 100        /* max value of suppress */
 #define BUFFER_SIZE 256         /* size of reception buffer */
 #define MAXTRY 3                /* max number of try to receive magic number */
+#define MIN_ROTATION  -900      /* the minimum value of the marker pen rotation */
+#define MAX_ROTATION_RANGE 1800 /* the maximum range of the marker pen rotation */
+#define MAX_ABS_WHEEL 1023      /* the maximum value of absolute wheel */
 
 /* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 
