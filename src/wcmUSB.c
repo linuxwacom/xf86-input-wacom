@@ -975,8 +975,11 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 					ds->pressure = event->value;
 			} else if (event->code == ABS_DISTANCE)
 				ds->distance = event->value;
-			else if (event->code == ABS_WHEEL || 
-				    event->code == ABS_Z)
+			else if (event->code == ABS_WHEEL) {
+				double norm = event->value * MAX_ROTATION_RANGE /
+					(double)MAX_ABS_WHEEL;
+				ds->abswheel = (int)norm + MIN_ROTATION;
+			} else if (event->code == ABS_Z)
 				ds->abswheel = event->value;
 			else if (event->code == ABS_THROTTLE)
 				ds->throttle = event->value;

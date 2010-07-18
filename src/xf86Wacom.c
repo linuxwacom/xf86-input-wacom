@@ -720,29 +720,23 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 				-64, 63, 1, 1, 1);
 	}
 
-	if ((TabletHasFeature(common, WCM_ROTATION)) && IsStylus(priv))
-		/* Art Marker Pen rotation */
-		InitValuatorAxisStruct(local->dev, 5,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				0, /* XXX what is this axis?*/
-#endif
-				-900, 899, 1, 1, 1);
-	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
-		/* Touch ring */
-		InitValuatorAxisStruct(local->dev, 5,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				0, /* XXX what is this axis?*/
-#endif
-				0, 71, 1, 1, 1);
-	else
+	if (IsStylus(priv))
 	{
-		/* absolute wheel */
+		int maxRotation = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
+		/* Art Marker Pen rotation or Airbrush absolute Wheel */
 		InitValuatorAxisStruct(local->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
 #endif
-				0, 1023, 1, 1, 1);
+				MIN_ROTATION, maxRotation, 1, 1, 1);
 	}
+	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
+		/* Touch ring */
+		InitValuatorAxisStruct(local->dev, 5,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
+#endif
+				0, 71, 1, 1, 1);
 
 	if (IsTouch(priv))
 	{
