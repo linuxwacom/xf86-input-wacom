@@ -602,11 +602,8 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
 	/* TPCButton on for Tablet PC by default */
-	if (TabletHasFeature(common, WCM_TPC))
-		common->wcmTPCButtonDefault = 1;
-
 	oldButton = xf86SetBoolOption(local->options, "TPCButton",
-					common->wcmTPCButtonDefault);
+					TabletHasFeature(common, WCM_TPC));
 
 	if (hotplugged || IsStylus(priv))
 		common->wcmTPCButton = oldButton;

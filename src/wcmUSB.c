@@ -505,11 +505,6 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 		common->wcmResolX = common->wcmResolY = 1016;
 	}
 
-	/* check if TPCButton was turned off in xorg.conf for pen */
-	if (priv->flags & STYLUS_ID)
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
-			"TPCButton", common->wcmTPCButtonDefault);
-
 	/* Find out supported button codes - except mouse button codes
 	 * BTN_LEFT and BTN_RIGHT, which are always fixed. */
 	common->npadkeys = 0;

@@ -109,8 +109,7 @@ static int wcmAllocate(LocalDevicePtr local)
 	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = 4;      /* protocol level */
-	common->wcmTPCButton = 
-		common->wcmTPCButtonDefault; /* set Tablet PC button on/off */
+	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
 	common->wcmCapacity = -1;          /* Capacity is disabled */
 	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
 					   /* 3 when capacity is supported */

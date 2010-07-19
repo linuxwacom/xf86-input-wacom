@@ -419,7 +419,6 @@ struct _WacomCommonRec
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmTouch;	             /* disable/enable touch event */
-	int wcmTPCButtonDefault;     /* Tablet PC button default */
 	int wcmTouchDefault;	     /* default to disable when not supported */
 	int wcmGesture;	     	     /* disable/enable touch gesture */
 	int wcmGestureDefault;       /* default touch gesture to disable when not supported */
