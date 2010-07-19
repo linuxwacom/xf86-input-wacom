@@ -681,6 +681,13 @@ int wcmParseOptions(LocalDevicePtr local, int hotplugged)
 	if ( !priv->wcmMMonitor )
 		priv->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
 
+	/* Swap stylus buttons 2 and 3 for Tablet PCs */
+	if (TabletHasFeature(common, WCM_TPC) && IsStylus(priv))
+	{
+		priv->button[1] = 3;
+		priv->button[2] = 2;
+	}
+
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
 		sprintf(b, "Button%d", i+1);
