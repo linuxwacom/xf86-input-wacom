@@ -247,7 +247,7 @@ static void wcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry,
 	DBG(6, priv, "buttons=%d\n", buttons);
 
 	/* Tablet PC buttons only apply to penabled devices */
-	if (common->wcmTPCButton && (priv->flags & STYLUS_ID))
+	if (common->wcmTPCButton && IsStylus(priv))
 	{
 		if ( buttons & 1 )
 		{
