@@ -269,9 +269,9 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 {
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common =	priv->common;
-	wcmISDV4Data *isdv4data = common->private;
+#endif
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
@@ -284,37 +284,15 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 
 	/* Read the control data */
 	if (!wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL))
-	{
-		/* Try 19200 if it is not a touch query */
-		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
-		{
-			isdv4data->baudrate = 19200;
-			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
-				return !Success;
- 			return isdv4Query(local, query, data);
-		}
-		else
-			return !Success;
-	}
+		return !Success;
 
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		/* Try 19200 if it is not a touch query */
-		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
-		{
-			isdv4data->baudrate = 19200;
-			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
-				return !Success;
- 			return isdv4Query(local, query, data);
-		}
-		else
-		{
-			/* Reread the control data since it may fail the first time */
-			wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
-			if ( !(data[0] & 0x40) )
-				return !Success;
-		}
+		/* Reread the control data since it may fail the first time */
+		wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
+		if ( !(data[0] & 0x40) )
+			return !Success;
 	}
 
 	return Success;
@@ -359,6 +337,18 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
+	if (ret != Success && isdv4data->baudrate != 19200)
+	{
+		/* device may be 19200 */
+		if (xf86SetSerialSpeed(local->fd, 19200) < 0)
+			return !Success;
+		ret = isdv4Query(local, ISDV4_QUERY, data);
+
+		if (ret == Success)
+			isdv4data->baudrate = 19200;
+
+	}
+
 	if (ret == Success)
 	{
 		ISDV4QueryReply reply;
@@ -401,8 +391,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	}
 
 	/* Touch might be supported. Send a touch query command */
-	isdv4data->baudrate = 38400;
-	if (isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
+	if (isdv4data->baudrate == 38400 &&
+	    isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
 	{
 		ISDV4TouchQueryReply reply;
 		int rc;
