@@ -31,6 +31,29 @@
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
+/* ISDV4 init process
+   This process is the same for other backends (i.e. USB).
+
+   1. isdv4Detect - called to test if device may be serial
+   2. isdv4ProbeKeys - called to fake up keybits
+   3. isdv4ParseOptions - parse ISDV4-specific options
+   4. isdv4Init - init ISDV4-specific stuff and set the tablet model.
+
+   After isdv4Init has been called, common->model points to the ISDV4 model,
+   further calls are model-specific (not that it matters for ISDV4, we only
+   have one model).
+
+   5. isdv4InitISDV4 - do whatever device-specific init is necessary
+   6. isdv4GetRanges - Query axis ranges
+
+   --- end of PreInit ---
+
+   isdv4StartTablet is called in DEVICE_ON
+   isdv4Parse is called during ReadInput.
+
+ */
+
+
 typedef struct {
 	/* Counter for dependent devices. We can only send one QUERY command to
 	   the tablet and we must not send the SAMPLING command until the last
