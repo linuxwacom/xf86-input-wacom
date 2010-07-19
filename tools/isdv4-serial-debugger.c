@@ -42,7 +42,7 @@
 #include "isdv4.h"
 
 #define TRACE(...) \
-	do { if (verbose) fprintf(stderr, "... " __VA_ARGS__); } while(0)
+	do { if (verbose) printf("... " __VA_ARGS__); } while(0)
 
 static int verbose = 0;
 static int packetlength = ISDV4_PKGLEN_TPCPEN;
