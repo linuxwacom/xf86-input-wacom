@@ -207,7 +207,7 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 		case 0x3F:  /* CintiqV5 */
 		case 0xC5:  /* CintiqV5 */
 		case 0xC6:  /* CintiqV5 */
-			priv->common->tablet_type |= WCM_LCD;
+			priv->common->tablet_type = WCM_LCD;
 			/* fall through */
 		case 0xB0:  /* I3 */
 		case 0xB1:  /* I3 */
@@ -216,7 +216,7 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 		case 0xB4:  /* I3 */
 		case 0xB5:  /* I3 */
 		case 0xB7:  /* I3 */
-			priv->common->tablet_type = WCM_STRIP | WCM_ROTATION;
+			priv->common->tablet_type |= WCM_STRIP | WCM_ROTATION;
 			break;
 
 		case 0xE2: /* TPC with 2FGT */
