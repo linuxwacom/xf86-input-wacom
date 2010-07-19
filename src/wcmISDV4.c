@@ -206,7 +206,10 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 	wcmISDV4Data *isdv4data;
 	int baud;
 
-	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
+	/* Determine default baud rate */
+	baud = (common->tablet_id == 0x90)? 19200 : 38400;
+
+	baud = xf86SetIntOption(local->options, "BaudRate", baud);
 
 	switch (baud)
 	{
@@ -250,7 +253,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 	DBG(1, priv, "initializing ISDV4 tablet\n");
 
-	/* Initial baudrate is 38400 */
+	/* Set baudrate */
 	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 		return !Success;
 
@@ -337,23 +340,31 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	if (isdv4data->initialized++)
 		return ret;
 
-	/* Initial baudrate is 38400 */
+	/* Set baudrate to configured value */
 	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 		return !Success;
 
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
-	if (ret != Success && isdv4data->baudrate != 19200)
+	if (ret != Success)
 	{
-		/* device may be 19200 */
-		if (xf86SetSerialSpeed(local->fd, 19200) < 0)
+		int baud;
+
+		/* Try with the other baudrate */
+		baud = (isdv4data->baudrate == 38400)? 19200 : 38400;
+
+		xf86Msg(X_WARNING, "%s: Query failed with %d baud. Trying %d.\n",
+				   local->name, isdv4data->baudrate, baud);
+
+		if (xf86SetSerialSpeed(local->fd, baud) < 0)
 			return !Success;
+
 		ret = isdv4Query(local, ISDV4_QUERY, data);
 
 		if (ret == Success) {
-			isdv4data->baudrate = 19200;
+			isdv4data->baudrate = baud;
 			/* xf86OpenSerial() takes the baud rate from the options */
-			xf86ReplaceIntOption(local->options, "BaudRate", 19200);
+			xf86ReplaceIntOption(local->options, "BaudRate", baud);
 		}
 
 	}
