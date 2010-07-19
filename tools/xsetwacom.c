@@ -38,6 +38,8 @@
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
 
+#define ArrayLength(a) (sizeof(a) / (sizeof((a)[0])))
+
 static int verbose = False;
 
 enum printformat {
@@ -866,6 +868,57 @@ static param_t parameters[] =
 	{ NULL }
 };
 
+struct modifier {
+	char *name;
+	char *converted;
+};
+
+static struct modifier modifiers[] = {
+	{"ctrl", "Control_L"},
+	{"ctl", "Control_L"},
+	{"control", "Control_L"},
+	{"lctrl", "Control_L"},
+	{"rctrl", "Control_R"},
+
+	{"meta", "Meta_L"},
+	{"lmeta", "Meta_L"},
+	{"rmeta", "Meta_R"},
+
+	{"alt", "Alt_L"},
+	{"lalt", "Alt_L"},
+	{"ralt", "Alt_R"},
+
+	{"shift", "Shift_L"},
+	{"lshift", "Shift_L"},
+	{"rshift", "Shift_R"},
+
+	{ NULL, NULL }
+};
+
+static struct modifier specialkeys[] = {
+	{"f1", "F1"}, {"f2", "F2"}, {"f3", "F3"},
+	{"f4", "F4"}, {"f5", "F5"}, {"f6", "F6"},
+	{"f7", "F7"}, {"f8", "F8"}, {"f9", "F9"},
+	{"f10", "F10"}, {"f11", "F11"}, {"f12", "F12"},
+	{"f13", "F13"}, {"f14", "F14"}, {"f15", "F15"},
+	{"f16", "F16"}, {"f17", "F17"}, {"f18", "F18"},
+	{"f19", "F19"}, {"f20", "F20"}, {"f21", "F21"},
+	{"f22", "F22"}, {"f23", "F23"}, {"f24", "F24"},
+	{"f25", "F25"}, {"f26", "F26"}, {"f27", "F27"},
+	{"f28", "F28"}, {"f29", "F29"}, {"f30", "F30"},
+	{"f31", "F31"}, {"f32", "F32"}, {"f33", "F33"},
+	{"f34", "F34"}, {"f35", "F35"},
+
+	{"esc", "Escape"}, {"Esc", "Escape"},
+
+	{"up", "Up"}, {"down", "Down"},
+	{"left", "Left"}, {"right", "Right"},
+
+	{"backspace", "BackSpace"}, {"Backspace", "BackSpace"},
+
+	{ NULL, NULL }
+};
+
 static param_t* find_parameter(char *name)
 {
 	param_t *param = NULL;
@@ -917,7 +970,7 @@ static void usage(void)
 	printf(
 	"\nCommands:\n"
 	" --list [dev|param]           - display known devices, parameters \n"
-	" --list mod                   - display supported modifier and specific keys for keystokes [not implemented]\n"
+	" --list mod                   - display supported modifier and specific keys for keystrokes\n"
 	" --set dev_name param [values...] - set device parameter by name\n"
 	" --get dev_name param [param...] - get current device parameter(s) value by name\n");
 }
@@ -1099,6 +1152,20 @@ static void list_param(Display *dpy)
 	}
 }
 
+static void list_mod(Display *dpy)
+{
+	struct modifier *m = modifiers;
+
+	printf("%d modifiers are supported:\n", ArrayLength(modifiers) - 1);
+	while(m->name)
+		printf("	%s\n", m++->name);
+
+	printf("\n%d specialkeys are supported:\n", ArrayLength(specialkeys) - 1);
+	m = specialkeys;
+	while(m->name)
+		printf("	%s\n", m++->name);
+}
+
 static void list(Display *dpy, int argc, char **argv)
 {
 	TRACE("'list' requested.\n");
@@ -1108,65 +1175,28 @@ static void list(Display *dpy, int argc, char **argv)
 		list_devices(dpy);
 	else if (strcmp(argv[0], "param") == 0)
 		list_param(dpy);
+	else if (strcmp(argv[0], "mod") == 0)
+		list_mod(dpy);
 	else
 		printf("unknown argument to list.\n");
 }
-
 /*
  * Convert a list of random special keys to strings that can be passed into
  * XStringToKeysym
  */
 static char *convert_specialkey(const char *modifier)
 {
-	struct modifier {
-		char *name;
-		char *converted;
-	} modmap[] = {
-		{"ctrl", "Control_L"},
-		{"ctl", "Control_L"},
-		{"control", "Control_L"},
-		{"lctrl", "Control_L"},
-		{"rctrl", "Control_R"},
-
-		{"meta", "Meta_L"},
-		{"lmeta", "Meta_L"},
-		{"rmeta", "Meta_R"},
-
-		{"alt", "Alt_L"},
-		{"lalt", "Alt_L"},
-		{"ralt", "Alt_R"},
-
-		{"shift", "Shift_L"},
-		{"lshift", "Shift_L"},
-		{"rshift", "Shift_R"},
-
-		{"f1", "F1"}, {"f2", "F2"}, {"f3", "F3"},
-		{"f4", "F4"}, {"f5", "F5"}, {"f6", "F6"},
-		{"f7", "F7"}, {"f8", "F8"}, {"f9", "F9"},
-		{"f10", "F10"}, {"f11", "F11"}, {"f12", "F12"},
-		{"f13", "F13"}, {"f14", "F14"}, {"f15", "F15"},
-		{"f16", "F16"}, {"f17", "F17"}, {"f18", "F18"},
-		{"f19", "F19"}, {"f20", "F20"}, {"f21", "F21"},
-		{"f22", "F22"}, {"f23", "F23"}, {"f24", "F24"},
-		{"f25", "F25"}, {"f26", "F26"}, {"f27", "F27"},
-		{"f28", "F28"}, {"f29", "F29"}, {"f30", "F30"},
-		{"f31", "F31"}, {"f32", "F32"}, {"f33", "F33"},
-		{"f34", "F34"}, {"f35", "F35"},
-
-		{"esc", "Escape"}, {"Esc", "Escape"},
-
-		{"up", "Up"}, {"down", "Down"},
-		{"left", "Left"}, {"right", "Right"},
-
-		{"backspace", "BackSpace"}, {"Backspace", "BackSpace"},
-
-		{ NULL, NULL }
-	};
-
-	struct modifier *m = modmap;
+	struct modifier *m = modifiers;
 
 	while(m->name && strcasecmp(modifier, m->name))
 		m++;
+
+	if (!m->name)
+	{
+		m = specialkeys;
+		while(m->name && strcasecmp(modifier, m->name))
+			m++;
+	}
 
 	return m->converted ? m->converted : (char*)modifier;
 }
