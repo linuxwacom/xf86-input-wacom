@@ -344,8 +344,11 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			return !Success;
 		ret = isdv4Query(local, ISDV4_QUERY, data);
 
-		if (ret == Success)
+		if (ret == Success) {
 			isdv4data->baudrate = 19200;
+			/* xf86OpenSerial() takes the baud rate from the options */
+			xf86ReplaceIntOption(local->options, "BaudRate", 19200);
+		}
 
 	}
 
