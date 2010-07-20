@@ -857,14 +857,13 @@ static int isdv4ProbeKeys(LocalDevicePtr local)
 	 * at later stage and true knowledge of capacitive
 	 * support will be delayed until that point.
 	 */
-	if (id >= 0x0 && id <= 0x7)
-		tablet_id = 0x90;
-	else if (id >= 0x8 && id <= 0xa)
-		tablet_id = 0x93;
-	else if (id >= 0xb && id <= 0xe)
-		tablet_id = 0xe3;
-	else if (id == 0x10)
-		tablet_id = 0xe2;
+	switch(id)
+	{
+		case 0x0 ... 0x7: tablet_id = 0x90; break;
+		case 0x8 ... 0xa: tablet_id = 0x93; break;
+		case 0xb ... 0xe: tablet_id = 0xe3; break;
+		case 0x10:	  tablet_id = 0xe2; break;
+	}
 
 	return tablet_id;
 }
