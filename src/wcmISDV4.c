@@ -337,12 +337,15 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
-	if (isdv4data->initialized++)
-		return ret;
+	if (isdv4data->initialized)
+		goto out;
 
 	/* Set baudrate to configured value */
 	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
-		return !Success;
+	{
+		ret = !Success;
+		goto out;
+	}
 
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
@@ -357,7 +360,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				   local->name, isdv4data->baudrate, baud);
 
 		if (xf86SetSerialSpeed(local->fd, baud) < 0)
-			return !Success;
+		{
+			ret = !Success;
+			goto out;
+		}
 
 		ret = isdv4Query(local, ISDV4_QUERY, data);
 
@@ -384,7 +390,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			else
 				DBG(2, common, "header data corrupt.\n");
 			memdump(local, data, sizeof(reply));
-			return BadAlloc;
+			ret = BadAlloc;
+			goto out;
 		}
 
 		/* transducer data */
@@ -427,7 +434,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			else
 				DBG(2, common, "header data corrupt.\n");
 			memdump(local, data, sizeof(reply));
-			return BadAlloc;
+			ret = BadAlloc;
+			goto out;
 		}
 
 		switch (reply.sensor_id)
@@ -472,7 +480,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x01) \n",
 					    local->name, common->tablet_id);
-				    return ret;
+				    goto out;
 				}
 				break;
 				/* 2FGT */
@@ -483,7 +491,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x03) \n",
 					    local->name, common->tablet_id);
-				    return ret;
+				    goto out;
 				}
 				break;
 		}
@@ -512,6 +520,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	}
 
 	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
+
+out:
+	if (ret == Success)
+		isdv4data->initialized++;
 
 	return ret;
 }
