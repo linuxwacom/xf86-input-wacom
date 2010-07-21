@@ -212,6 +212,8 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 	{
 		case 38400:
 		case 19200:
+			/* xf86OpenSerial() takes the baud rate from the options */
+			xf86ReplaceIntOption(local->options, "BaudRate", baud);
 			break;
 		default:
 			xf86Msg(X_ERROR, "%s: Illegal speed value "
@@ -334,6 +336,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	if (isdv4data->initialized++)
 		return ret;
+
+	/* Initial baudrate is 38400 */
+	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
+		return !Success;
 
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
