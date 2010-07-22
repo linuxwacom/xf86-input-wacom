@@ -428,7 +428,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	WacomChannelPtr secondChannel = common->wcmChannel + 1;
 	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
 		secondChannel->valid.states[0] };
-	int count, key;
+	int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
 
@@ -467,22 +467,22 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		return;
 	}
 
-	/* zooming?
-	FIXME: this hardcodes the positions of ctrl, + and - to the ones on
-	the us keyboard layout. Tough luck. The alternative is to run
-	through the XKB table and figure out where +/- are hiding. Good
-	luck.
+	/* zooming? Send ctrl + scroll up/down event.
+	FIXME: this hardcodes the positions of ctrl and assumes that ctrl is
+	actually a modifier. Tough luck. The alternative is to run through
+	the XKB table and figure out where the key for the ctrl modifier is
+	hiding. Good luck.
 	Gesture support is not supposed to be in the driver...
 	 */
-	key = (dist > 0) ? 21 /*XK_plus*/ : 20 /*XK_minus*/;
+	button = (dist > 0) ? 4 : 5;
 
 	count -= common->wcmGestureParameters.wcmGestureUsed;
 	common->wcmGestureParameters.wcmGestureUsed += count;
 	while (count--)
 	{
 		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
-		wcmEmitKeycode (priv->local->dev, key, 1);
-		wcmEmitKeycode (priv->local->dev, key, 0);
+		wcmSendButtonClick (priv, button, 1);
+		wcmSendButtonClick (priv, button, 0);
 		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
 	}
 }
