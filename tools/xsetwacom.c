@@ -34,6 +34,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput.h>
+#include <X11/XKBlib.h>
 
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
@@ -1126,11 +1127,44 @@ static int is_modifier(const char* modifier)
 	return 0;
 }
 
+/* Return the first keycode to have the required keysym in the current group.
+   TODOs:
+   - parse other groups as well (do we need this?)
+   - for keysyms not on level 0, return the keycodes for the modifiers as
+     well
+*/
+static int keysym_to_keycode(Display *dpy, KeySym sym)
+{
+	static XkbDescPtr xkb = NULL;
+	XkbStateRec state;
+	int group;
+	int kc = 0;
+
+
+	if (!xkb)
+		xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
+	XkbGetState(dpy, XkbUseCoreKbd, &state);
+	group = state.group;
+
+	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
+	{
+		KeySym* ks;
+		int i;
+
+		ks = XkbKeySymsPtr(xkb, kc);
+		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, state.group); i++)
+			if (ks[i] == sym)
+				goto out;
+	}
+
+out:
+	return kc;
+}
 /*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
  */
-static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, unsigned long* data)
+static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data)
 {
 	int i;
 	int nitems = 0;
@@ -1138,6 +1172,7 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 	for (i = 0; i < argc; i++)
 	{
 		KeySym ks;
+		KeyCode kc;
 		int need_press = 0, need_release = 0;
 		char *key = argv[i];
 
@@ -1175,10 +1210,18 @@ static int special_map_keystrokes(int argc, char **argv, unsigned long *ndata, u
 			need_press = need_release = 1;
 
 		ks = XStringToKeysym(key);
+		kc = keysym_to_keycode(dpy, ks);
+
 		if (need_press)
-			data[nitems++] = AC_KEY | AC_KEYBTNPRESS | ks;
+			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | kc;
 		if (need_release)
-			data[nitems++] = AC_KEY | ks;
+			data[*ndata + nitems++] = AC_KEY | kc;
+
+		TRACE("Key map %ld (%d, '%s') [%s,%s]\n", ks, kc,
+				XKeysymToString(ks),
+				need_press ?  "press" : "",
+				need_release ?  "release" : "");
+
 	}
 
 	*ndata += nitems;
@@ -1248,7 +1291,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 
 	struct keywords {
 		const char *keyword;
-		int (*func)(int, char **, unsigned long*, unsigned long *);
+		int (*func)(Display*, int, char **, unsigned long*, unsigned long *);
 	} keywords[] = {
 		{"key", special_map_keystrokes},
 		{ NULL, NULL }
@@ -1296,7 +1339,8 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 		int j;
 		for (j = 0; keywords[j].keyword; j++)
 			if (strcasecmp(words[i], keywords[j].keyword) == 0)
-				i += keywords[j].func(nwords - i - 1,
+				i += keywords[j].func(dpy,
+						      nwords - i - 1,
 						      &words[i + 1],
 						      &nitems, data);
 	}

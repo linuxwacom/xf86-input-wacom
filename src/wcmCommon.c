@@ -291,94 +291,9 @@ static void wcmSendButtons(LocalDevicePtr local, int buttons, int rx, int ry,
 	}
 }
 
-/*****************************************************************************
- * wcmEmitKeysym --
- *   Emit a keydown/keyup event
- ****************************************************************************/
-static int ODDKEYSYM [][2] = 
+void wcmEmitKeycode (DeviceIntPtr keydev, int keycode, int state)
 {
-	{ XK_asciitilde, XK_grave },
-	{ XK_exclam, XK_1 },
-	{ XK_at, XK_2 },
-	{ XK_numbersign, XK_3 },
-	{ XK_dollar, XK_4 },
-	{ XK_percent, XK_5 },
-	{ XK_asciicircum, XK_6 },
-	{ XK_ampersand, XK_7 },
-	{ XK_asterisk, XK_8 },
-	{ XK_parenleft, XK_9 },
-	{ XK_parenright, XK_0 },
-	{ XK_underscore, XK_minus },
-	{ XK_plus, XK_equal },
-	{ XK_braceleft, XK_bracketleft },
-	{ XK_braceright, XK_bracketright },
-	{ XK_colon, XK_semicolon },
-	{ XK_quotedbl, XK_quoteright },
-	{ XK_less, XK_comma },
-	{ XK_greater, XK_period },
-	{ XK_question, XK_slash },
-	{ XK_bar, XK_backslash },
-	{ 0, 0}
-};
-
-void wcmEmitKeysym (DeviceIntPtr keydev, int keysym, int state)
-{
-	int i, j, alt_keysym = 0;
-
-	/* Now that we have the keycode look for key index */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-	KeySymsRec *ksr = XkbGetCoreMap(keydev);
-#else
-	KeySymsRec *ksr = &keydev->key->curKeySyms;
-#endif
-
-	for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
-		if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == keysym)
-			break;
-
-	if (i > ksr->maxKeyCode)
-	{
-		if (isupper(keysym))
-			alt_keysym = tolower(keysym);
-		else
-		{
-			j = 0;
-			while (ODDKEYSYM [j][0])
-			{
-				if (ODDKEYSYM [j][0] == keysym)
-				{
-					alt_keysym = ODDKEYSYM [j][1];
-					break;
-				}
-				j++;
-			}
-		}
-		if ( alt_keysym )
-		{
-			for (j = ksr->minKeyCode; j <= ksr->maxKeyCode; j++)
-				if (ksr->map [(j - ksr->minKeyCode) * ksr->mapWidth] == XK_Shift_L)
-					break;
-			if (state)
-				xf86PostKeyboardEvent (keydev, j, 1);
-			for (i = ksr->minKeyCode; i <= ksr->maxKeyCode; i++)
-				if (ksr->map [(i - ksr->minKeyCode) * ksr->mapWidth] == alt_keysym)
-					break;
-			xf86PostKeyboardEvent (keydev, i, state);
-			if (!state)
-				xf86PostKeyboardEvent (keydev, j, 0);
-		}
-		else
-			xf86Msg (X_WARNING, "%s: Couldn't find key with code %08x on keyboard device %s\n",
-					keydev->name, keysym, keydev->name);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		xfree(ksr);
-#endif
-		return;
-	}
-	xf86PostKeyboardEvent (keydev, i, state);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-	xfree(ksr);
-#endif
+	xf86PostKeyboardEvent (keydev, keycode, state);
 }
 
 static void toggleDisplay(LocalDevicePtr local)
@@ -486,9 +401,9 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				break;
 			case AC_KEY:
 				{
-					int key_sym = (action & AC_CODE);
+					int key_code = (action & AC_CODE);
 					int is_press = (action & AC_KEYBTNPRESS);
-					wcmEmitKeysym(local->dev, key_sym, is_press);
+					wcmEmitKeycode(local->dev, key_code, is_press);
 				}
 				break;
 			case AC_MODETOGGLE:
@@ -539,15 +454,15 @@ static void sendAButton(LocalDevicePtr local, int button, int mask,
 				break;
 			case AC_KEY:
 				{
-					int key_sym = (action & AC_CODE);
+					int key_code = (action & AC_CODE);
 
 					/* don't care about releases here */
 					if (!(action & AC_KEYBTNPRESS))
 						break;
 
-					if (countPresses(key_sym, &priv->keys[button][i],
+					if (countPresses(key_code, &priv->keys[button][i],
 							ARRAY_SIZE(priv->keys[button]) - i))
-						wcmEmitKeysym(local->dev, key_sym, 0);
+						wcmEmitKeycode(local->dev, key_code, 0);
 				}
 		}
 
@@ -673,8 +588,8 @@ static void sendWheelStripEvents(LocalDevicePtr local, const WacomDeviceState* d
 	    break;
 
 	    case AC_KEY:
-		    wcmEmitKeysym(local->dev, (fakeButton & AC_CODE), 1);
-		    wcmEmitKeysym(local->dev, (fakeButton & AC_CODE), 0);
+		    wcmEmitKeycode(local->dev, (fakeButton & AC_CODE), 1);
+		    wcmEmitKeycode(local->dev, (fakeButton & AC_CODE), 0);
 	    break;
 
 	    default:
