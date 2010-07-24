@@ -464,6 +464,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->common->device_path = device;
 	priv->name = local->name;
 
+	/* check if the same device file has been added already */
+	if (wcmIsDuplicate(device, local))
+		goto SetupProc_fail;
+
 	if (wcmOpen(local) != Success)
 		goto SetupProc_fail;
 
@@ -488,10 +492,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(local, type))
-		goto SetupProc_fail;
-
-	/* check if the same device file has been added already */
-	if (wcmIsDuplicate(device, local))
 		goto SetupProc_fail;
 
 	if (!wcmSetType(local, type))
