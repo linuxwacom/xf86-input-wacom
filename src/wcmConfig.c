@@ -159,6 +159,26 @@ error:
 	return 0;
 }
 
+/*****************************************************************************
+ * wcmFree --
+ * Free the memory allocated by wcmAllocate
+ ****************************************************************************/
+
+static void wcmFree(LocalDevicePtr local)
+{
+	WacomDevicePtr priv = local->private;
+
+	if (!priv)
+		return;
+
+	free(priv->toolarea);
+	free(priv->tool);
+	wcmFreeCommon(&priv->common);
+	free(priv);
+
+	local->private = NULL;
+}
+
 static int wcmSetType(LocalDevicePtr local, const char *type)
 {
 	WacomDevicePtr priv = local->private;
@@ -293,7 +313,6 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 			prev_area = &area->next;
 			area = area->next;
 		}
-		free(priv->toolarea);
 	}
 
 	if (priv->tool)
@@ -310,7 +329,6 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 			prev_tool = &tool->next;
 			tool = tool->next;
 		}
-		free(priv->tool);
 	}
 
 	prev = &common->wcmDevices;
@@ -325,11 +343,8 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		prev = &dev->next;
 		dev = dev->next;
 	}
-	free(priv);
 
-	wcmFreeCommon(&common);
-
-	local->private = NULL;
+	wcmFree(local);
 	xf86DeleteInput(local, 0);
 }
 
@@ -464,6 +479,10 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	priv->common->device_path = device;
 	priv->name = local->name;
 
+	/* check if the same device file has been added already */
+	if (wcmIsDuplicate(device, local))
+		goto SetupProc_fail;
+
 	if (wcmOpen(local) != Success)
 		goto SetupProc_fail;
 
@@ -488,10 +507,6 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(local, type))
-		goto SetupProc_fail;
-
-	/* check if the same device file has been added already */
-	if (wcmIsDuplicate(device, local))
 		goto SetupProc_fail;
 
 	if (!wcmSetType(local, type))
@@ -526,8 +541,7 @@ SetupProc_fail:
 	/* restart the device list from the next one */
 	if (common && priv)
 		common->wcmDevices = priv->next;
-	wcmFreeCommon(&common);
-	free(priv);
+
 	if (local)
 	{
 		if (local->fd != -1)
@@ -536,7 +550,7 @@ SetupProc_fail:
 			local->fd = -1;
 		}
 
-		local->private = NULL;
+		wcmFree(local);
 		xf86DeleteInput(local, 0);
 	}
 

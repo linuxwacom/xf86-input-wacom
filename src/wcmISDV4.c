@@ -31,11 +31,36 @@
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
+/* ISDV4 init process
+   This process is the same for other backends (i.e. USB).
+
+   1. isdv4Detect - called to test if device may be serial
+   2. isdv4ProbeKeys - called to fake up keybits
+   3. isdv4ParseOptions - parse ISDV4-specific options
+   4. isdv4Init - init ISDV4-specific stuff and set the tablet model.
+
+   After isdv4Init has been called, common->model points to the ISDV4 model,
+   further calls are model-specific (not that it matters for ISDV4, we only
+   have one model).
+
+   5. isdv4InitISDV4 - do whatever device-specific init is necessary
+   6. isdv4GetRanges - Query axis ranges
+
+   --- end of PreInit ---
+
+   isdv4StartTablet is called in DEVICE_ON
+   isdv4Parse is called during ReadInput.
+
+ */
+
+
 typedef struct {
 	/* Counter for dependent devices. We can only send one QUERY command to
 	   the tablet and we must not send the SAMPLING command until the last
 	   device is enabled.  */
-	int initialized;
+	int initialized_devices;
+	/* QUERY can only be run once */
+	int tablet_initialized;
 	int baudrate;
 } wcmISDV4Data;
 
@@ -183,12 +208,17 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 	wcmISDV4Data *isdv4data;
 	int baud;
 
-	baud = xf86SetIntOption(local->options, "BaudRate", 38400);
+	/* Determine default baud rate */
+	baud = (common->tablet_id == 0x90)? 19200 : 38400;
+
+	baud = xf86SetIntOption(local->options, "BaudRate", baud);
 
 	switch (baud)
 	{
 		case 38400:
 		case 19200:
+			/* xf86OpenSerial() takes the baud rate from the options */
+			xf86ReplaceIntOption(local->options, "BaudRate", baud);
 			break;
 		default:
 			xf86Msg(X_ERROR, "%s: Illegal speed value "
@@ -207,7 +237,8 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 		}
 		isdv4data = common->private;
 		isdv4data->baudrate = baud;
-		isdv4data->initialized = 0;
+		isdv4data->tablet_initialized = 0;
+		isdv4data->initialized_devices = 0;
 	}
 
 	return TRUE;
@@ -225,7 +256,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 	DBG(1, priv, "initializing ISDV4 tablet\n");
 
-	/* Initial baudrate is 38400 */
+	/* Set baudrate */
 	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
 		return !Success;
 
@@ -246,9 +277,9 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 {
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	WacomCommonPtr common =	priv->common;
-	wcmISDV4Data *isdv4data = common->private;
+#endif
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
@@ -261,37 +292,15 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 
 	/* Read the control data */
 	if (!wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL))
-	{
-		/* Try 19200 if it is not a touch query */
-		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
-		{
-			isdv4data->baudrate = 19200;
-			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
-				return !Success;
- 			return isdv4Query(local, query, data);
-		}
-		else
-			return !Success;
-	}
+		return !Success;
 
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
-		/* Try 19200 if it is not a touch query */
-		if (isdv4data->baudrate != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
-		{
-			isdv4data->baudrate = 19200;
-			if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
-				return !Success;
- 			return isdv4Query(local, query, data);
-		}
-		else
-		{
-			/* Reread the control data since it may fail the first time */
-			wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
-			if ( !(data[0] & 0x40) )
-				return !Success;
-		}
+		/* Reread the control data since it may fail the first time */
+		wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
+		if ( !(data[0] & 0x40) )
+			return !Success;
 	}
 
 	return Success;
@@ -331,11 +340,44 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
-	if (isdv4data->initialized++)
-		return ret;
+	if (isdv4data->tablet_initialized)
+		goto out;
+
+	/* Set baudrate to configured value */
+	if (xf86SetSerialSpeed(local->fd, isdv4data->baudrate) < 0)
+	{
+		ret = !Success;
+		goto out;
+	}
 
 	/* Send query command to the tablet */
 	ret = isdv4Query(local, ISDV4_QUERY, data);
+	if (ret != Success)
+	{
+		int baud;
+
+		/* Try with the other baudrate */
+		baud = (isdv4data->baudrate == 38400)? 19200 : 38400;
+
+		xf86Msg(X_WARNING, "%s: Query failed with %d baud. Trying %d.\n",
+				   local->name, isdv4data->baudrate, baud);
+
+		if (xf86SetSerialSpeed(local->fd, baud) < 0)
+		{
+			ret = !Success;
+			goto out;
+		}
+
+		ret = isdv4Query(local, ISDV4_QUERY, data);
+
+		if (ret == Success) {
+			isdv4data->baudrate = baud;
+			/* xf86OpenSerial() takes the baud rate from the options */
+			xf86ReplaceIntOption(local->options, "BaudRate", baud);
+		}
+
+	}
+
 	if (ret == Success)
 	{
 		ISDV4QueryReply reply;
@@ -351,7 +393,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			else
 				DBG(2, common, "header data corrupt.\n");
 			memdump(local, data, sizeof(reply));
-			return BadAlloc;
+			ret = BadAlloc;
+			goto out;
 		}
 
 		/* transducer data */
@@ -378,8 +421,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 	}
 
 	/* Touch might be supported. Send a touch query command */
-	isdv4data->baudrate = 38400;
-	if (isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
+	if (isdv4data->baudrate == 38400 &&
+	    isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
 	{
 		ISDV4TouchQueryReply reply;
 		int rc;
@@ -394,7 +437,8 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			else
 				DBG(2, common, "header data corrupt.\n");
 			memdump(local, data, sizeof(reply));
-			return BadAlloc;
+			ret = BadAlloc;
+			goto out;
 		}
 
 		switch (reply.sensor_id)
@@ -439,7 +483,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x01) \n",
 					    local->name, common->tablet_id);
-				    return ret;
+				    goto out;
 				}
 				break;
 				/* 2FGT */
@@ -450,7 +494,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
 					    " mismatch with data id (0x03) \n",
 					    local->name, common->tablet_id);
-				    return ret;
+				    goto out;
 				}
 				break;
 		}
@@ -480,6 +524,13 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
 
+out:
+	if (ret == Success)
+	{
+		isdv4data->tablet_initialized = 1;
+		isdv4data->initialized_devices++;
+	}
+
 	return ret;
 }
 
@@ -489,7 +540,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	WacomCommonPtr common =	priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 
-	if (--isdv4data->initialized)
+	if (--isdv4data->initialized_devices)
 		return Success;
 
 	/* Tell the tablet to start sending coordinates */
@@ -841,14 +892,13 @@ static int isdv4ProbeKeys(LocalDevicePtr local)
 	 * at later stage and true knowledge of capacitive
 	 * support will be delayed until that point.
 	 */
-	if (id >= 0x0 && id <= 0x7)
-		tablet_id = 0x90;
-	else if (id >= 0x8 && id <= 0xa)
-		tablet_id = 0x93;
-	else if (id >= 0xb && id <= 0xe)
-		tablet_id = 0xe3;
-	else if (id == 0x10)
-		tablet_id = 0xe2;
+	switch(id)
+	{
+		case 0x0 ... 0x7: tablet_id = 0x90; break;
+		case 0x8 ... 0xa: tablet_id = 0x93; break;
+		case 0xb ... 0xe: tablet_id = 0xe3; break;
+		case 0x10:	  tablet_id = 0xe2; break;
+	}
 
 	return tablet_id;
 }

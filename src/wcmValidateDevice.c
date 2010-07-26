@@ -87,7 +87,7 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	/* always allow xorg.conf defined tools to be added */
 	if (!strlen(lsource)) goto ret;
 
-	if (fstat(local->fd, &st) == -1)
+	if (stat(device, &st) == -1)
 	{
 		/* can not access major/minor to check device duplication */
 		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
