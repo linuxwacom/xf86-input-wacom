@@ -58,7 +58,9 @@ typedef struct {
 	/* Counter for dependent devices. We can only send one QUERY command to
 	   the tablet and we must not send the SAMPLING command until the last
 	   device is enabled.  */
-	int initialized;
+	int initialized_devices;
+	/* QUERY can only be run once */
+	int tablet_initialized;
 	int baudrate;
 } wcmISDV4Data;
 
@@ -235,7 +237,8 @@ static Bool isdv4ParseOptions(LocalDevicePtr local)
 		}
 		isdv4data = common->private;
 		isdv4data->baudrate = baud;
-		isdv4data->initialized = 0;
+		isdv4data->tablet_initialized = 0;
+		isdv4data->initialized_devices = 0;
 	}
 
 	return TRUE;
@@ -337,7 +340,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
-	if (isdv4data->initialized)
+	if (isdv4data->tablet_initialized)
 		goto out;
 
 	/* Set baudrate to configured value */
@@ -523,7 +526,10 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 out:
 	if (ret == Success)
-		isdv4data->initialized++;
+	{
+		isdv4data->tablet_initialized = 1;
+		isdv4data->initialized_devices++;
+	}
 
 	return ret;
 }
@@ -534,7 +540,7 @@ static int isdv4StartTablet(LocalDevicePtr local)
 	WacomCommonPtr common =	priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 
-	if (--isdv4data->initialized)
+	if (--isdv4data->initialized_devices)
 		return Success;
 
 	/* Tell the tablet to start sending coordinates */
