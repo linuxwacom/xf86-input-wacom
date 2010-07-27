@@ -53,7 +53,7 @@ static int usbDetectConfig(LocalDevicePtr local);
 static void usbParseEvent(LocalDevicePtr local,
 	const struct input_event* event);
 static void usbParseChannel(LocalDevicePtr local, int channel);
-static int usbChooseChannel(WacomCommonPtr common, int serial);
+static int usbChooseChannel(WacomCommonPtr common);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
@@ -713,10 +713,11 @@ static int usbParse(LocalDevicePtr local, const unsigned char* data, int len)
 	return common->wcmPktLength;
 }
 
-static int usbChooseChannel(WacomCommonPtr common, int serial)
+static int usbChooseChannel(WacomCommonPtr common)
 {
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
+	int serial = common->wcmLastToolSerial;
 
 	if (common->wcmProtocolLevel == 4)
 	{
@@ -872,7 +873,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		goto skipEvent;
 	}
 
-	channel = usbChooseChannel(common, common->wcmLastToolSerial);
+	channel = usbChooseChannel(common);
 
 	/* couldn't decide channel? invalid data */
 	if (channel == -1) goto skipEvent;
