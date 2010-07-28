@@ -397,29 +397,14 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	/* zooming? */
 	if (abs(dist) > WACOM_MOTION_IN_POINT)
 	{
-		for (i=0; i<(int)(((double)abs(dist)/
-				(double)WACOM_MOTION_IN_POINT) + 0.5); i++)
-		{
-			/* FIXME: this hardcodes the positions of ctrl, + and - to the ones on
-			   the us keyboard layout. Tough luck. The alternative is to run
-			   through the XKB table and figure out where +/- are hiding. Good
-			   luck. Gesture support is not supposed to be in the driver...
-			 */
-			int key = (dist > 0) ? 21 /*XK_plus*/ : 20 /*XK_minus*/;
-			wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
-			/* zooming in */
-			if (dist > 0)
-			{
-				wcmEmitKeycode (priv->local->dev, key, 1);
-				wcmEmitKeycode (priv->local->dev, key, 0);
-			}
-			else /* zooming out */
-			{
-				wcmEmitKeycode (priv->local->dev, key, 1);
-				wcmEmitKeycode (priv->local->dev, key, 0);
-			}
-			wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
-		}
+		/* FIXME: this hardcodes the positions of ctrl to the ones on
+		   the us keyboard layout. Tough luck. The alternative is to run
+		   through the XKB table and figure out where it's hiding. Good
+		   luck. Gesture support is not supposed to be in the driver...
+		 */
+		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
+		wcmSendVerticalScrollEvent(priv, dist, 4, 5);
+		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
 
 		/* reset initial states */
 		common->wcmGestureState[0] = ds[0];
