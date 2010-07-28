@@ -717,7 +717,8 @@ static int usbChooseChannel(WacomCommonPtr common)
 {
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
-	int serial = common->wcmLastToolSerial;
+	wcmUSBData* private = common->private;
+	int serial = private->wcmLastToolSerial;
 
 	if (common->wcmProtocolLevel == 4)
 	{
@@ -796,7 +797,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 			serial, (int)GetTimeInMillis());
 	}
 	else
-		common->wcmLastToolSerial = serial;
+		private->wcmLastToolSerial = serial;
 
 	return channel;
 }
@@ -807,6 +808,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	int channel;
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
 	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
 
 	DBG(10, common, "\n");
 	/* store events until we receive the MSC_SERIAL containing
@@ -814,16 +816,16 @@ static void usbParseEvent(LocalDevicePtr local,
 	 * correct channel. */
 
 	/* space left? bail if not. */
-	if (common->wcmEventCnt >=
-		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
+	if (private->wcmEventCnt >=
+		(sizeof(private->wcmEvents)/sizeof(*private->wcmEvents)))
 	{
 		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
-			local->name, common->wcmEventCnt);
+			local->name, private->wcmEventCnt);
 		goto skipEvent;
 	}
 
 	/* save it for later */
-	common->wcmEvents[common->wcmEventCnt++] = *event;
+	private->wcmEvents[private->wcmEventCnt++] = *event;
 
 	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
@@ -837,7 +839,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		}
 
 		/* save the serial number so we can look up the channel number later */
-		common->wcmLastToolSerial = event->value;
+		private->wcmLastToolSerial = event->value;
 
 		/* if SYN_REPORT is end of record indicator, we are done */
 		if (USE_SYN_REPORTS(common))
@@ -866,10 +868,11 @@ static void usbParseEvent(LocalDevicePtr local,
 	}
 
 	/* ignore events without information */
-	if ((common->wcmEventCnt <= 2) && common->wcmLastToolSerial)
+	if ((private->wcmEventCnt <= 2) && private->wcmLastToolSerial)
 	{
 		DBG(3, common, "%s: dropping empty event"
-			" for serial %d\n", local->name, common->wcmLastToolSerial);
+			" for serial %d\n", local->name,
+			private->wcmLastToolSerial);
 		goto skipEvent;
 	}
 
@@ -889,7 +892,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	usbParseChannel(local,channel);
 
 skipEvent:
-	common->wcmEventCnt = 0;
+	private->wcmEventCnt = 0;
 }
 
 static struct
@@ -919,29 +922,30 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	WacomCommonPtr common = priv->common;
 	WacomChannelPtr pChannel = common->wcmChannel + channel;
 	WacomDeviceState dslast = pChannel->valid.state;
+	wcmUSBData* private = common->private;
 
-	DBG(6, common, "%d events received\n", common->wcmEventCnt);
+	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 	#define MOD_BUTTONS(bit, value) do { \
 		shift = 1<<bit; \
 		ds->buttons = (((value) != 0) ? \
 		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
 		} while (0)
 
-	if (common->wcmEventCnt == 1 && !common->wcmEvents->type) {
+	if (private->wcmEventCnt == 1 && !private->wcmEvents->type) {
 		DBG(6, common, "no real events received\n");
 		return;
 	}
-	DBG(6, common, "%d events received\n", common->wcmEventCnt);
+	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
-	ds->serial_num = common->wcmLastToolSerial;
+	ds->serial_num = private->wcmLastToolSerial;
 
 	/* loop through all events in group */
-	for (i=0; i<common->wcmEventCnt; ++i)
+	for (i=0; i<private->wcmEventCnt; ++i)
 	{
-		event = common->wcmEvents + i;
+		event = private->wcmEvents + i;
 		DBG(11, common,
 			"event[%d]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value);
@@ -1140,8 +1144,8 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 	}
 
 	/*reset the serial number when the tool is going out */
-	if (!ds.proximity)
-		common->wcmLastToolSerial = 0;
+	if (!ds->proximity)
+		private->wcmLastToolSerial = 0;
 
 	/* dispatch event */
 	wcmEvent(common, channel, ds);
