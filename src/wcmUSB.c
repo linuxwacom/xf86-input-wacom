@@ -889,7 +889,6 @@ static void usbParseEvent(LocalDevicePtr local,
 	usbParseChannel(local,channel);
 
 skipEvent:
-	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
@@ -1139,6 +1138,10 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 			"DTF 720 doesn't support eraser ");
 		return;
 	}
+
+	/*reset the serial number when the tool is going out */
+	if (!ds.proximity)
+		common->wcmLastToolSerial = 0;
 
 	/* dispatch event */
 	wcmEvent(common, channel, ds);
