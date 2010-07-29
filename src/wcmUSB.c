@@ -471,7 +471,10 @@ static struct
 	{ WALTOP_VENDOR_ID, 0x500, 2540, 2540, &usbBamboo    },
 	{ WALTOP_VENDOR_ID, 0x501, 2540, 2540, &usbBamboo    },
 	{ WALTOP_VENDOR_ID, 0x502, 5080, 5080, &usbIntuos4   },
-	{ WALTOP_VENDOR_ID, 0x503, 5080, 5080, &usbIntuos4   }
+	{ WALTOP_VENDOR_ID, 0x503, 5080, 5080, &usbIntuos4   },
+
+	/* N-Trig devices */
+	{ NTRIG_VENDOR_ID,  0x01, 1122, 934, &usbTabletPC    }
 };
 
 static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
