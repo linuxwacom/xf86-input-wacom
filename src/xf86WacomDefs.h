@@ -135,7 +135,6 @@ struct _WacomModel
 #define BUTTONS_ONLY_FLAG	0x00000800
 #define TPCBUTTONS_FLAG		0x00001000
 #define TPCBUTTONONE_FLAG	0x00002000
-#define COREEVENT_FLAG		0x00004000
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
