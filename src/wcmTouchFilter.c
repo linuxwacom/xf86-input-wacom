@@ -88,7 +88,7 @@ static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 {
 	int x = 0;
 	int y = 0;
-	int mode = is_absolute(priv->local);
+	int mode = is_absolute(priv->pInfo);
 
 	if (mode)
 	{
@@ -97,7 +97,7 @@ static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 	}
 
 	/* send button event in state */
-	xf86PostButtonEvent(priv->local->dev, mode,button,
+	xf86PostButtonEvent(priv->pInfo->dev, mode,button,
 		state,0,priv->naxes,x,y,0,0,0,0);
 
 	/* We have changed the button state (from down to up) for the device
@@ -242,7 +242,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		/* first finger was out-prox when GestureMode was still on */
 		if (!dsLast[0].proximity && common->wcmGestureMode)
 			/* send first finger out prox */
-			wcmSoftOutEvent(priv->local);
+			wcmSoftOutEvent(priv->pInfo);
 
 		/* exit gesture mode when both fingers are out */
 		common->wcmGestureMode = 0;
@@ -287,7 +287,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		    wcmFingerZoom(priv);
 	}
 ret:
-	if (!common->wcmGestureMode && !channel && !is_absolute(priv->local))
+	if (!common->wcmGestureMode && !channel && !is_absolute(priv->pInfo))
 		wcmFirstFingerClick(common);
 }
 
@@ -373,7 +373,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 	/* scrolling has directions so rotation has to be considered first */
 	for (i=0; i<6; i++)
-		wcmRotateCoordinates(priv->local, &filterd.x[i], &filterd.y[i]);
+		wcmRotateCoordinates(priv->pInfo, &filterd.x[i], &filterd.y[i]);
 
 	/* check vertical direction */
 	if (common->wcmGestureParameters.wcmScrollDirection == WACOM_VERT_ALLOWED)
@@ -480,10 +480,10 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	common->wcmGestureParameters.wcmGestureUsed += count;
 	while (count--)
 	{
-		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
+		wcmEmitKeycode (priv->pInfo->dev, 37 /*XK_Control_L*/, 1);
 		wcmSendButtonClick (priv, button, 1);
 		wcmSendButtonClick (priv, button, 0);
-		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
+		wcmEmitKeycode (priv->pInfo->dev, 37 /*XK_Control_L*/, 0);
 	}
 }
 
