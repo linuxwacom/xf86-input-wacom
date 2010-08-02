@@ -411,7 +411,7 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto SetupProc_fail;
 
 	/* mark the device configured */
-	local->flags |= XI86_POINTER_CAPABLE | XI86_CONFIGURED;
+	local->flags |= XI86_CONFIGURED;
 
 	if (need_hotplug)
 	{

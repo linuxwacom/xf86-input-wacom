@@ -106,7 +106,7 @@ static void wcmSetScreen(LocalDevicePtr local, int v0, int v1)
 		priv->screen_no = -1;
 	}
 
-	if (!(local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))) return;
+	if (!(local->flags & (XI86_ALWAYS_CORE ))) return;
 
 	if (priv->twinview != TV_NONE && priv->screen_no == -1 && (priv->flags & ABSOLUTE_FLAG))
 	{

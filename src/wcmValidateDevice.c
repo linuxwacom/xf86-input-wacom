@@ -346,7 +346,7 @@ int wcmParseOptions(LocalDevicePtr local)
 	}
 
 	/* Store original local Core flag so it can be changed later */
-	if (local->flags & (XI86_ALWAYS_CORE | XI86_CORE_POINTER))
+	if (local->flags & (XI86_ALWAYS_CORE))
 		priv->flags |= COREEVENT_FLAG;
 
 	s = xf86SetStrOption(local->options, "Rotate", NULL);
