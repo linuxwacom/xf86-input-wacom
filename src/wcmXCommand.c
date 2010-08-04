@@ -455,6 +455,120 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	return Success;
 }
 
+static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
+			       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	int rc;
+
+	union multival {
+		CARD8 *v8;
+		CARD32 *v32;
+	} values;
+
+	if (prop->size != 4)
+		return BadValue;
+
+	/* see wcmSetPropertyButtonActions for how this works. The wheel is
+	 * slightly different in that it allows for 8 bit properties for
+	 * pure buttons too */
+
+	values.v8 = (CARD8*)prop->data;
+
+	switch (prop->format)
+	{
+		case 8:
+			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
+				return BadValue;
+
+			if (!checkonly)
+			{
+				priv->relup = values.v8[0];
+				priv->reldn = values.v8[1];
+				priv->wheelup = values.v8[2];
+				priv->wheeldn = values.v8[3];
+			}
+			break;
+		case 32:
+			rc = wcmCheckActionProp(dev, property, prop);
+			if (rc != Success)
+				return rc;
+
+			if (!checkonly)
+			{
+				wcmUpdateActionPropHandlers(prop, priv->wheel_actions);
+				wcmUpdateButtonKeyActions(dev, prop, priv->wheel_keys, 4);
+			}
+
+			break;
+		default:
+			return BadMatch;
+	}
+
+	return Success;
+}
+
+static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
+			       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	int rc;
+
+	union multival {
+		CARD8 *v8;
+		CARD32 *v32;
+	} values;
+
+	if (prop->size != 4)
+		return BadValue;
+
+	/* see wcmSetPropertyButtonActions for how this works. The wheel is
+	 * slightly different in that it allows for 8 bit properties for
+	 * pure buttons too */
+
+	values.v8 = (CARD8*)prop->data;
+
+	switch (prop->format)
+	{
+		case 8:
+			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
+				return BadValue;
+
+			if (!checkonly)
+			{
+				priv->striplup = values.v8[0];
+				priv->stripldn = values.v8[1];
+				priv->striprup = values.v8[2];
+				priv->striprdn = values.v8[3];
+			}
+			break;
+		case 32:
+			rc = wcmCheckActionProp(dev, property, prop);
+			if (rc != Success)
+				return rc;
+
+			if (!checkonly)
+			{
+				wcmUpdateActionPropHandlers(prop, priv->strip_actions);
+				wcmUpdateButtonKeyActions(dev, prop, priv->strip_keys, 4);
+			}
+
+			break;
+		default:
+			return BadMatch;
+	}
+
+	return Success;
+}
+
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		BOOL checkonly)
 {
@@ -568,53 +682,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		return BadValue; /* Read-only */
 	} else if (property == prop_strip_buttons)
-	{
-		CARD8 *values;
-
-		if (prop->size != 4 || prop->format != 8)
-			return BadValue;
-
-		values = (CARD8*)prop->data;
-
-		if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
-				values[1] > WCM_MAX_MOUSE_BUTTONS ||
-				values[2] > WCM_MAX_MOUSE_BUTTONS ||
-				values[3] > WCM_MAX_MOUSE_BUTTONS)
-			return BadValue;
-
-		if (!checkonly)
-		{
-			/* FIXME: needs to take AC_* into account */
-			priv->striplup = values[0];
-			priv->stripldn = values[1];
-			priv->striprup = values[2];
-			priv->striprdn = values[3];
-		}
-
-	} else if (property == prop_wheel_buttons)
-	{
-		CARD8 *values;
-
-		if (prop->size != 4 || prop->format != 8)
-			return BadValue;
-
-		values = (CARD8*)prop->data;
-
-		if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
-				values[1] > WCM_MAX_MOUSE_BUTTONS ||
-				values[2] > WCM_MAX_MOUSE_BUTTONS ||
-				values[3] > WCM_MAX_MOUSE_BUTTONS)
-			return BadValue;
-
-		if (!checkonly)
-		{
-			/* FIXME: needs to take AC_* into account */
-			priv->relup = values[0];
-			priv->reldn = values[1];
-			priv->wheelup = values[2];
-			priv->wheeldn = values[3];
-		}
-	} else if (property == prop_screen)
+		return wcmSetStripProperty(dev, property, prop, checkonly);
+	else if (property == prop_wheel_buttons)
+		return wcmSetWheelProperty(dev, property, prop, checkonly);
+	else if (property == prop_screen)
 	{
 		/* Long-term, this property should be removed, there's other ways to
 		 * get the screen resolution. For now, we leave it in for backwards
