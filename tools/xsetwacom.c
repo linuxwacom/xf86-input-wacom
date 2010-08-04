@@ -1488,14 +1488,10 @@ static int get_button_number_from_string(const char* string)
 	return atoi(&string[strlen("Button")]);
 }
 
-/* Handles complex button mappings through button actions. */
-static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
 {
-	Atom btnact_prop, prop;
 	unsigned long *data, *btnact_data;
-	int slen = strlen("Button");
-	int btn_no;
-	Atom type;
+	Atom type, prop;
 	int format;
 	unsigned long btnact_nitems, nitems, bytes_after;
 	int need_update = 0;
@@ -1503,35 +1499,23 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	int nwords = 0;
 	char **words = NULL;
 
-	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
-
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
-		return;
-
-	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
-	if (!btnact_prop)
-		return;
-
-	btn_no = get_button_number_from_string(param->name);
-	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
-
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				AnyPropertyType, &type, &format, &btnact_nitems,
 				&bytes_after, (unsigned char**)&btnact_data);
 
-	if (btn_no > btnact_nitems)
+	if (offset > btnact_nitems)
 		return;
 
 	/* some atom already assigned, modify that */
-	if (btnact_data[btn_no])
-		prop = btnact_data[btn_no];
+	if (btnact_data[offset])
+		prop = btnact_data[offset];
 	else
 	{
 		char buff[64];
-		sprintf(buff, "Wacom button action %d", (btn_no + 1));
+		sprintf(buff, "Wacom button action %d", (offset + 1));
 		prop = XInternAtom(dpy, buff, False);
 
-		btnact_data[btn_no] = prop;
+		btnact_data[offset] = prop;
 		need_update = 1;
 	}
 
@@ -1570,6 +1554,28 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 					(unsigned char*)btnact_data,
 					btnact_nitems);
 	XFlush(dpy);
+}
+
+/* Handles complex button mappings through button actions. */
+static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	Atom btnact_prop;
+	int slen = strlen("Button");
+	int btn_no;
+
+	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
+
+	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+		return;
+
+	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+	if (!btnact_prop)
+		return;
+
+	btn_no = get_button_number_from_string(param->name);
+	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
+
+	special_map_property(dpy, dev, btnact_prop, btn_no, argc, argv);
 }
 
 
