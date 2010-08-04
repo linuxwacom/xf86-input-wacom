@@ -317,6 +317,28 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 	return Success;
 }
 
+static int wcmCheckActionProp(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	XIPropertyValuePtr val;
+	Atom *values = (Atom*)prop->data;
+	int i;
+
+	for (i = 0; i < prop->size; i++)
+	{
+		if (!values[i])
+			continue;
+
+		if (values[i] == property || !ValidAtom(values[i]))
+			return BadValue;
+
+		if (XIGetDeviceProperty(pInfo->dev, values[i], &val) != Success)
+			return BadValue;
+	}
+
+	return Success;
+}
+
 /* Change the property that refers to which properties the actual button
  * actions are stored in */
 static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
@@ -324,15 +346,15 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	XIPropertyValuePtr val;
 
 	Atom *values;
 	int i, j;
-	XIPropertyValuePtr val;
+	int rc;
 
 	DBG(10, priv, "\n");
 
-	if (prop->size != WCM_MAX_MOUSE_BUTTONS || prop->format != 32 ||
-			prop->type != XA_ATOM)
+	if (prop->format != 32 || prop->type != XA_ATOM)
 		return BadMatch;
 
 	/* How this works:
@@ -347,20 +369,11 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	 * handler too.
 	 */
 
+	rc = wcmCheckActionProp(dev, property, prop);
+	if (rc != Success)
+		return rc;
+
 	values = (Atom*)prop->data;
-
-	for (i = 0; i < prop->size; i++)
-	{
-		if (!values[i])
-			continue;
-
-		if (values[i] == property || !ValidAtom(values[i]))
-			return BadValue;
-
-		if (XIGetDeviceProperty(pInfo->dev, values[i], &val) != Success)
-			return BadValue;
-	}
-
 	if (!checkonly)
 	{
 		/* any action property needs to be registered for this handler. */
@@ -735,8 +748,11 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		}
 #endif
 	} else if (property == prop_btnactions)
+	{
+		if (prop->size != WCM_MAX_MOUSE_BUTTONS)
+			return BadMatch;
 		wcmSetPropertyButtonActions(dev, property, prop, checkonly);
-	else
+	} else
 		wcmSetActionProperties(dev, property, prop, checkonly);
 
 	return Success;
