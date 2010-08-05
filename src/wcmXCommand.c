@@ -257,6 +257,23 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 #endif
 }
 
+/* Returns the offset of the property in the list given. If the property is
+ * not found, a negative error code is returned. */
+static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
+{
+	int i;
+
+	/* check all properties used for button actions */
+	for (i = 0; i < nprops; i++)
+		if (prop_list[i] == property)
+			break;
+
+	if (i >= nprops)
+		return -BadAtom;
+
+	return i;
+}
+
 /* Change the properties that hold the actual button actions */
 static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 				  XIPropertyValuePtr prop, BOOL checkonly)
@@ -271,13 +288,9 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 
 	DBG(10, priv, "\n");
 
-	/* check all properties used for button actions */
-	for (i = 0; i < ARRAY_SIZE(priv->btn_actions); i++)
-		if (priv->btn_actions[i] == property)
-			break;
-
-	if (i >= ARRAY_SIZE(priv->btn_actions))
-		return Success;
+	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
+	if (i < 0)
+		return Success; /* not found, ignore */
 
 	if (prop->size >= 255 || prop->format != 32 ||
 			prop->type != XA_INTEGER)
