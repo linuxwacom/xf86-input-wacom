@@ -373,14 +373,14 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 	return count;
 }
 
-static void sendAction(InputInfoPtr pInfo, int mask,
+static void sendAction(InputInfoPtr pInfo, int press,
 		unsigned int *keys, int nkeys, int naxes,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
 	int i;
 
 	/* Actions only trigger on press, not release */
-	for (i = 0; mask && i < nkeys; i++)
+	for (i = 0; press && i < nkeys; i++)
 	{
 		unsigned int action = keys[i];
 
@@ -407,7 +407,7 @@ static void sendAction(InputInfoPtr pInfo, int mask,
 				}
 				break;
 			case AC_MODETOGGLE:
-				if (mask)
+				if (press)
 					wcmDevSwitchModeCall(pInfo,
 							(is_absolute(pInfo)) ? Relative : Absolute); /* not a typo! */
 				break;
@@ -430,7 +430,7 @@ static void sendAction(InputInfoPtr pInfo, int mask,
 	}
 
 	/* Release all non-released keys for this button. */
-	for (i = 0; !mask && i < nkeys; i++)
+	for (i = 0; !press && i < nkeys; i++)
 	{
 		unsigned int action = keys[i];
 
@@ -497,7 +497,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 		return;
 	}
 
-	sendAction(pInfo, mask, priv->keys[button], ARRAY_SIZE(priv->keys[button]),
+	sendAction(pInfo, (mask != 0), priv->keys[button], ARRAY_SIZE(priv->keys[button]),
 			naxes, rx, ry, rz, v3, v4, v5);
 }
 
