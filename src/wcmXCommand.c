@@ -264,6 +264,10 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int i, j;
+	CARD32 *data;
+	int code;
+	int type;
+
 
 	DBG(10, priv, "\n");
 
@@ -272,45 +276,41 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 		if (priv->btn_actions[i] == property)
 			break;
 
-	if (i < ARRAY_SIZE(priv->btn_actions))
+	if (i >= ARRAY_SIZE(priv->btn_actions))
+		return Success;
+
+	if (prop->size >= 255 || prop->format != 32 ||
+			prop->type != XA_INTEGER)
+		return BadMatch;
+
+	data = (CARD32*)prop->data;
+
+	for (j = 0;j < prop->size; j++)
 	{
-		CARD32 *data;
-		int code;
-		int type;
+		code = data[j] & AC_CODE;
+		type = data[j] & AC_TYPE;
 
-		if (prop->size >= 255 || prop->format != 32 ||
-				prop->type != XA_INTEGER)
-			return BadMatch;
-
-		data = (CARD32*)prop->data;
-
-		for (j = 0;j < prop->size; j++)
+		switch(type)
 		{
-			code = data[j] & AC_CODE;
-			type = data[j] & AC_TYPE;
-
-			switch(type)
-			{
-				case AC_KEY:
-					break;
-				case AC_BUTTON:
-					if (code > WCM_MAX_MOUSE_BUTTONS)
-						return BadValue;
-					break;
-				case AC_DISPLAYTOGGLE:
-				case AC_MODETOGGLE:
-				case AC_DBLCLICK:
-					break;
-				default:
+			case AC_KEY:
+				break;
+			case AC_BUTTON:
+				if (code > WCM_MAX_MOUSE_BUTTONS)
 					return BadValue;
-			}
+				break;
+			case AC_DISPLAYTOGGLE:
+			case AC_MODETOGGLE:
+			case AC_DBLCLICK:
+				break;
+			default:
+				return BadValue;
+		}
 
-			if (!checkonly)
-			{
-				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-				for (j = 0; j < prop->size; j++)
-					priv->keys[i][j] = data[j];
-			}
+		if (!checkonly)
+		{
+			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
+			for (j = 0; j < prop->size; j++)
+				priv->keys[i][j] = data[j];
 		}
 	}
 
