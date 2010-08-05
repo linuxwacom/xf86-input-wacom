@@ -373,42 +373,16 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 	return count;
 }
 
-/*****************************************************************************
- * sendAButton --
- *   Send one button event, called by wcmSendButtons
- ****************************************************************************/
-static void sendAButton(InputInfoPtr pInfo, int button, int mask,
+static void sendAction(InputInfoPtr pInfo, int mask,
+		unsigned int *keys, int nkeys, int naxes,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-#ifdef DEBUG
-	WacomCommonPtr common = priv->common;
-#endif
 	int i;
 
-	int naxes = priv->naxes;
-
-	if (!priv->button[button])  /* ignore this button event */
-		return;
-
-	DBG(4, priv, "TPCButton(%s) button=%d state=%d " 
-		"code=%08x, coreEvent=%s \n", 
-		common->wcmTPCButton ? "on" : "off", 
-		button, mask, priv->button[button], 
-		(priv->button[button] & AC_CORE) ? "yes" : "no");
-
-	if (!priv->keys[button][0])
-	{
-		/* No button action configured, send button */
-		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0), 0, naxes,
-				    rx, ry, rz, v3, v4, v5);
-		return;
-	}
-
 	/* Actions only trigger on press, not release */
-	for (i = 0; mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	for (i = 0; mask && i < nkeys; i++)
 	{
-		unsigned int action = priv->keys[button][i];
+		unsigned int action = keys[i];
 
 		if (!action)
 			break;
@@ -456,9 +430,9 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	}
 
 	/* Release all non-released keys for this button. */
-	for (i = 0; !mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	for (i = 0; !mask && i < nkeys; i++)
 	{
-		unsigned int action = priv->keys[button][i];
+		unsigned int action = keys[i];
 
 		switch ((action & AC_TYPE))
 		{
@@ -470,8 +444,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 					if (!(action & AC_KEYBTNPRESS))
 						break;
 
-					if (countPresses(btn_no, &priv->keys[button][i],
-							ARRAY_SIZE(priv->keys[button]) - i))
+					if (countPresses(btn_no, &keys[i], nkeys - i))
 						xf86PostButtonEvent(pInfo->dev,
 								is_absolute(pInfo), btn_no,
 								0, 0, naxes,
@@ -486,13 +459,46 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 					if (!(action & AC_KEYBTNPRESS))
 						break;
 
-					if (countPresses(key_code, &priv->keys[button][i],
-							ARRAY_SIZE(priv->keys[button]) - i))
+					if (countPresses(key_code, &keys[i], nkeys - i))
 						wcmEmitKeycode(pInfo->dev, key_code, 0);
 				}
 		}
 
 	}
+}
+
+/*****************************************************************************
+ * sendAButton --
+ *   Send one button event, called by wcmSendButtons
+ ****************************************************************************/
+static void sendAButton(InputInfoPtr pInfo, int button, int mask,
+		int rx, int ry, int rz, int v3, int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+#ifdef DEBUG
+	WacomCommonPtr common = priv->common;
+#endif
+	int naxes = priv->naxes;
+
+	if (!priv->button[button])  /* ignore this button event */
+		return;
+
+	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
+		"code=%08x, coreEvent=%s \n",
+		common->wcmTPCButton ? "on" : "off",
+		button, mask, priv->button[button],
+		(priv->button[button] & AC_CORE) ? "yes" : "no");
+
+	if (!priv->keys[button][0])
+	{
+		/* No button action configured, send button */
+		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0), 0, naxes,
+				    rx, ry, rz, v3, v4, v5);
+		return;
+	}
+
+	sendAction(pInfo, mask, priv->keys[button], ARRAY_SIZE(priv->keys[button]),
+			naxes, rx, ry, rz, v3, v4, v5);
 }
 
 /*****************************************************************************
