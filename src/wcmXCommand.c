@@ -356,13 +356,13 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 
 	DBG(10, priv, "\n");
 
-	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
-	if (i < 0)
-		return Success; /* not found, ignore */
-
 	rc = wcmSanityCheckProperty(prop);
 	if (rc != Success)
 		return rc;
+
+	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
+	if (i < 0)
+		return Success; /* not found, ignore */
 
 	if (!checkonly)
 		wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
