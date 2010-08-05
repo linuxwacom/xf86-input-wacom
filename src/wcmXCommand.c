@@ -309,14 +309,48 @@ static int wcmSanityCheckProperty(XIPropertyValuePtr prop)
 	return Success;
 }
 
+/**
+ * Store the new value of the property in one of the driver's internal
+ * property handler lists. Properties stored there will be checked for value
+ * changes whenever updated.
+ */
+static void wcmUpdateActionPropHandlers(XIPropertyValuePtr prop, Atom *handlers)
+{
+	int i;
+	CARD32 *values = (CARD32*)prop->data;
+
+	/* any action property needs to be registered for this handler. */
+	for (i = 0; i < prop->size; i++)
+		handlers[i] = values[i];
+}
+
+static void wcmUpdateButtonKeyActions(DeviceIntPtr dev, XIPropertyValuePtr prop,
+					unsigned int keys[][256], int nkeys)
+{
+	Atom *values = (Atom*)prop->data;
+	XIPropertyValuePtr val;
+	int i, j;
+
+	for (i = 0; i < prop->size; i++)
+	{
+		if (!values[i])
+			continue;
+
+		XIGetDeviceProperty(dev, values[i], &val);
+
+		memset(keys[i], 0, sizeof(keys[i]));
+		for (j = 0; j < val->size; j++)
+			keys[i][j] = ((unsigned int*)val->data)[j];
+	}
+}
+
 /* Change the properties that hold the actual button actions */
 static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 				  XIPropertyValuePtr prop, BOOL checkonly)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int i, j;
-	CARD32 *data;
+	int i;
 	int rc;
 
 
@@ -331,15 +365,7 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 		return rc;
 
 	if (!checkonly)
-	{
-		data = (CARD32*)prop->data;
-		for (j = 0; j < prop->size; j++)
-		{
-			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-			for (j = 0; j < prop->size; j++)
-				priv->keys[i][j] = data[j];
-		}
-	}
+		wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
 
 	return Success;
 }
@@ -366,21 +392,6 @@ static int wcmCheckActionProp(DeviceIntPtr dev, Atom property, XIPropertyValuePt
 	return Success;
 }
 
-/**
- * Store the new value of the property in one of the driver's internal
- * property handler lists. Properties stored there will be checked for value
- * changes whenever updated.
- */
-static void wcmUpdateActionPropHandlers(XIPropertyValuePtr prop, Atom *handlers)
-{
-	int i;
-	CARD32 *values = (CARD32*)prop->data;
-
-	/* any action property needs to be registered for this handler. */
-	for (i = 0; i < prop->size; i++)
-		handlers[i] = values[i];
-}
-
 /* Change the property that refers to which properties the actual button
  * actions are stored in */
 static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
@@ -388,10 +399,6 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	XIPropertyValuePtr val;
-
-	Atom *values;
-	int i, j;
 	int rc;
 
 	DBG(10, priv, "\n");
@@ -415,22 +422,10 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	if (rc != Success)
 		return rc;
 
-	values = (Atom*)prop->data;
 	if (!checkonly)
 	{
 		wcmUpdateActionPropHandlers(prop, priv->btn_actions);
-
-		for (i = 0; i < prop->size; i++)
-		{
-			if (!values[i])
-				continue;
-
-			XIGetDeviceProperty(pInfo->dev, values[i], &val);
-
-			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-			for (j = 0; j < val->size; j++)
-				priv->keys[i][j] = ((unsigned int*)val->data)[j];
-		}
+		wcmUpdateButtonKeyActions(dev, prop, priv->keys, WCM_MAX_MOUSE_BUTTONS);
 
 	}
 	return Success;
