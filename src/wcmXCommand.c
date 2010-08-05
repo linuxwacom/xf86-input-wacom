@@ -274,34 +274,20 @@ static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
 	return i;
 }
 
-/* Change the properties that hold the actual button actions */
-static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
-				  XIPropertyValuePtr prop, BOOL checkonly)
+static int wcmSanityCheckProperty(XIPropertyValuePtr prop)
 {
-	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int i, j;
 	CARD32 *data;
-	int code;
-	int type;
+	int j;
 
-
-	DBG(10, priv, "\n");
-
-	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
-	if (i < 0)
-		return Success; /* not found, ignore */
-
-	if (prop->size >= 255 || prop->format != 32 ||
-			prop->type != XA_INTEGER)
+	if (prop->size >= 255 || prop->format != 32 || prop->type != XA_INTEGER)
 		return BadMatch;
 
 	data = (CARD32*)prop->data;
 
-	for (j = 0;j < prop->size; j++)
+	for (j = 0; j < prop->size; j++)
 	{
-		code = data[j] & AC_CODE;
-		type = data[j] & AC_TYPE;
+		int code = data[j] & AC_CODE;
+		int type = data[j] & AC_TYPE;
 
 		switch(type)
 		{
@@ -318,8 +304,36 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 			default:
 				return BadValue;
 		}
+	}
 
-		if (!checkonly)
+	return Success;
+}
+
+/* Change the properties that hold the actual button actions */
+static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
+				  XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	int i, j;
+	CARD32 *data;
+	int rc;
+
+
+	DBG(10, priv, "\n");
+
+	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
+	if (i < 0)
+		return Success; /* not found, ignore */
+
+	rc = wcmSanityCheckProperty(prop);
+	if (rc != Success)
+		return rc;
+
+	if (!checkonly)
+	{
+		data = (CARD32*)prop->data;
+		for (j = 0; j < prop->size; j++)
 		{
 			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
 			for (j = 0; j < prop->size; j++)
