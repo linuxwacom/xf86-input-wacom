@@ -366,6 +366,21 @@ static int wcmCheckActionProp(DeviceIntPtr dev, Atom property, XIPropertyValuePt
 	return Success;
 }
 
+/**
+ * Store the new value of the property in one of the driver's internal
+ * property handler lists. Properties stored there will be checked for value
+ * changes whenever updated.
+ */
+static void wcmUpdateActionPropHandlers(XIPropertyValuePtr prop, Atom *handlers)
+{
+	int i;
+	CARD32 *values = (CARD32*)prop->data;
+
+	/* any action property needs to be registered for this handler. */
+	for (i = 0; i < prop->size; i++)
+		handlers[i] = values[i];
+}
+
 /* Change the property that refers to which properties the actual button
  * actions are stored in */
 static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
@@ -403,9 +418,7 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	values = (Atom*)prop->data;
 	if (!checkonly)
 	{
-		/* any action property needs to be registered for this handler. */
-		for (i = 0; i < prop->size; i++)
-			priv->btn_actions[i] = values[i];
+		wcmUpdateActionPropHandlers(prop, priv->btn_actions);
 
 		for (i = 0; i < prop->size; i++)
 		{
