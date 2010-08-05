@@ -361,13 +361,37 @@ static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 		return rc;
 
 	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
-	if (i < 0)
-		return Success; /* not found, ignore */
+	if (i >= 0)
+	{
+		if (!checkonly)
+		{
+			XIGetDeviceProperty(dev, prop_btnactions, &prop);
+			wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
+		}
+	} else
+	{
+		i = wcmFindProp(property, priv->wheel_actions,
+					ARRAY_SIZE(priv->wheel_actions));
+		if (i >= 0) {
+			if (!checkonly)
+			{
+				XIGetDeviceProperty(dev, prop_wheel_buttons, &prop);
+				wcmUpdateButtonKeyActions(dev, prop,
+						priv->wheel_keys,
+						ARRAY_SIZE(priv->wheel_keys));
+			}
+		} else
+		{
+			i = wcmFindProp(property, priv->strip_actions, ARRAY_SIZE(priv->strip_actions));
+			if (i >= 0 && !checkonly)
+			{
+				XIGetDeviceProperty(dev, prop_strip_buttons, &prop);
+				wcmUpdateButtonKeyActions(dev, prop, priv->strip_keys, ARRAY_SIZE(priv->strip_keys));
+			}
+		}
+	}
 
-	if (!checkonly)
-		wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
-
-	return Success;
+	return abs(i);
 }
 
 static int wcmCheckActionProp(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop)
