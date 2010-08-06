@@ -449,7 +449,7 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	if (!checkonly)
 	{
 		wcmUpdateActionPropHandlers(prop, priv->btn_actions);
-		wcmUpdateButtonKeyActions(dev, prop, priv->keys, WCM_MAX_MOUSE_BUTTONS);
+		wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
 
 	}
 	return Success;
