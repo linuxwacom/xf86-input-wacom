@@ -214,6 +214,7 @@ struct _WacomDeviceRec
  	unsigned srdnk[256];    /* keystrokes assigned to right strip up event (default is button 4) */
 	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
+				/* FIXME: always 6, and the code relies on that... */
 
 	WacomCommonPtr common;  /* common info pointer */
 
