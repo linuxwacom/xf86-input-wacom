@@ -325,7 +325,7 @@ static void wcmUpdateActionPropHandlers(XIPropertyValuePtr prop, Atom *handlers)
 }
 
 static void wcmUpdateButtonKeyActions(DeviceIntPtr dev, XIPropertyValuePtr prop,
-					unsigned int keys[][256], int nkeys)
+					unsigned int (*keys)[256], int skeys)
 {
 	Atom *values = (Atom*)prop->data;
 	XIPropertyValuePtr val;
@@ -455,11 +455,27 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	return Success;
 }
 
-static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
-			       XIPropertyValuePtr prop, BOOL checkonly)
+struct wheel_strip_update_t {
+	/* for CARD8 values, points to fields in struct to be updated */
+	int *up1;
+	int *dn1;
+	int *up2;
+	int *dn2;
+
+	/* for CARD32 values, points to atom array of atoms to be
+	 * monitored.*/
+	Atom *handlers;
+	/* for CARD32 values, points to key array that keeps the actual
+	   actions.*/
+	int skeys;  /* size of first keys dimensions */
+	int skeys2; /* size of second keys dimensions */
+	unsigned int (*keys)[256];
+};
+
+static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
+				      XIPropertyValuePtr prop, BOOL checkonly,
+				      struct wheel_strip_update_t *wsup)
 {
-	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int rc;
 
 	union multival {
@@ -485,12 +501,11 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
 				return BadValue;
 
-			if (!checkonly)
-			{
-				priv->relup = values.v8[0];
-				priv->reldn = values.v8[1];
-				priv->wheelup = values.v8[2];
-				priv->wheeldn = values.v8[3];
+			if (!checkonly) {
+				*wsup->up1 = values.v8[0];
+				*wsup->dn1 = values.v8[1];
+				*wsup->up2 = values.v8[2];
+				*wsup->dn2 = values.v8[3];
 			}
 			break;
 		case 32:
@@ -500,8 +515,9 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 
 			if (!checkonly)
 			{
-				wcmUpdateActionPropHandlers(prop, priv->wheel_actions);
-				wcmUpdateButtonKeyActions(dev, prop, priv->wheel_keys, 4);
+				wcmUpdateActionPropHandlers(prop, wsup->handlers);
+				wcmUpdateButtonKeyActions(dev, prop, wsup->keys,
+						          wsup->skeys);
 			}
 
 			break;
@@ -512,61 +528,45 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 	return Success;
 }
 
+
+static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
+			       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+
+	struct wheel_strip_update_t wsup = {
+		.up1 = &priv->relup,
+		.dn1 = &priv->reldn,
+		.up2 = &priv->wheelup,
+		.dn2 = &priv->wheeldn,
+
+		.handlers = priv->wheel_actions,
+		.keys	  = priv->wheel_keys,
+		.skeys    = 4,
+	};
+
+	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
+}
+
 static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 			       XIPropertyValuePtr prop, BOOL checkonly)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int rc;
 
-	union multival {
-		CARD8 *v8;
-		CARD32 *v32;
-	} values;
+	struct wheel_strip_update_t wsup = {
+		.up1 = &priv->striplup,
+		.dn1 = &priv->stripldn,
+		.up2 = &priv->striprup,
+		.dn2 = &priv->striprdn,
 
-	if (prop->size != 4)
-		return BadValue;
+		.handlers = priv->strip_actions,
+		.keys	  = priv->strip_keys,
+		.skeys    = 4,
+	};
 
-	/* see wcmSetPropertyButtonActions for how this works. The wheel is
-	 * slightly different in that it allows for 8 bit properties for
-	 * pure buttons too */
-
-	values.v8 = (CARD8*)prop->data;
-
-	switch (prop->format)
-	{
-		case 8:
-			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
-				return BadValue;
-
-			if (!checkonly)
-			{
-				priv->striplup = values.v8[0];
-				priv->stripldn = values.v8[1];
-				priv->striprup = values.v8[2];
-				priv->striprdn = values.v8[3];
-			}
-			break;
-		case 32:
-			rc = wcmCheckActionProp(dev, property, prop);
-			if (rc != Success)
-				return rc;
-
-			if (!checkonly)
-			{
-				wcmUpdateActionPropHandlers(prop, priv->strip_actions);
-				wcmUpdateButtonKeyActions(dev, prop, priv->strip_keys, 4);
-			}
-
-			break;
-		default:
-			return BadMatch;
-	}
-
-	return Success;
+	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
 }
 
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
