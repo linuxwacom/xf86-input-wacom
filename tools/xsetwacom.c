@@ -917,6 +917,8 @@ static struct modifier specialkeys[] = {
 
 	{"backspace", "BackSpace"}, {"Backspace", "BackSpace"},
 
+	{"tab", "Tab"},
+
 	{ NULL, NULL }
 };
 
