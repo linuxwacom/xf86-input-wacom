@@ -468,7 +468,6 @@ struct wheel_strip_update_t {
 	/* for CARD32 values, points to key array that keeps the actual
 	   actions.*/
 	int skeys;  /* size of first keys dimensions */
-	int skeys2; /* size of second keys dimensions */
 	unsigned int (*keys)[256];
 };
 
