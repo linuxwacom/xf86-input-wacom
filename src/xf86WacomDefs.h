@@ -197,21 +197,20 @@ struct _WacomDeviceRec
 	int button[WCM_MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[WCM_MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
-	unsigned rupk[256];     /* keystrokes assigned to relative wheel up event (default is button 4) */
 	int reldn;
-	unsigned rdnk[256];     /* keystrokes assigned to relative wheel down event (default is button 5) */
 	int wheelup;
-	unsigned wupk[256];     /* keystrokes assigned to absolute wheel/throttle up event (default is button 4) */
 	int wheeldn;
-	unsigned wdnk[256];     /* keystrokes assigned to absolute wheel/throttle down event (default is button 5) */
+	/* keystrokes assigned to wheel events (default is the buttons above).
+	 * Order is relup, reldwn, wheelup, wheeldn. */
+	unsigned wheel_keys[4][256];
+
 	int striplup;
-	unsigned slupk[256];    /* keystrokes assigned to left strip up event (default is button 4) */
 	int stripldn;
-	unsigned sldnk[256];    /* keystrokes assigned to left strip up event (default is button 5) */
 	int striprup;
-	unsigned srupk[256];    /* keystrokes assigned to right strip up event (default is button 4) */
 	int striprdn;
- 	unsigned srdnk[256];    /* keystrokes assigned to right strip up event (default is button 4) */
+	/* keystrokes assigned to strip events (default is the buttons above).
+	 * Order is striplup, stripldn, striprup, striprdn. */
+	unsigned strip_keys[4][256];
 	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
 				/* FIXME: always 6, and the code relies on that... */
@@ -262,7 +261,11 @@ struct _WacomDeviceRec
 	WacomToolAreaPtr toolarea; /* The area defined for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
-	Atom btn_actions[WCM_MAX_BUTTONS]; /* property handlers to listen to */
+
+	/* property handlers to listen to for action properties */
+	Atom btn_actions[WCM_MAX_BUTTONS];
+	Atom wheel_actions[4];
+	Atom strip_actions[4];
 };
 
 /******************************************************************************

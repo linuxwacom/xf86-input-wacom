@@ -257,61 +257,160 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 #endif
 }
 
+/* Returns the offset of the property in the list given. If the property is
+ * not found, a negative error code is returned. */
+static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
+{
+	int i;
+
+	/* check all properties used for button actions */
+	for (i = 0; i < nprops; i++)
+		if (prop_list[i] == property)
+			break;
+
+	if (i >= nprops)
+		return -BadAtom;
+
+	return i;
+}
+
+static int wcmSanityCheckProperty(XIPropertyValuePtr prop)
+{
+	CARD32 *data;
+	int j;
+
+	if (prop->size >= 255 || prop->format != 32 || prop->type != XA_INTEGER)
+		return BadMatch;
+
+	data = (CARD32*)prop->data;
+
+	for (j = 0; j < prop->size; j++)
+	{
+		int code = data[j] & AC_CODE;
+		int type = data[j] & AC_TYPE;
+
+		switch(type)
+		{
+			case AC_KEY:
+				break;
+			case AC_BUTTON:
+				if (code > WCM_MAX_MOUSE_BUTTONS)
+					return BadValue;
+				break;
+			case AC_DISPLAYTOGGLE:
+			case AC_MODETOGGLE:
+			case AC_DBLCLICK:
+				break;
+			default:
+				return BadValue;
+		}
+	}
+
+	return Success;
+}
+
+/**
+ * Store the new value of the property in one of the driver's internal
+ * property handler lists. Properties stored there will be checked for value
+ * changes whenever updated.
+ */
+static void wcmUpdateActionPropHandlers(XIPropertyValuePtr prop, Atom *handlers)
+{
+	int i;
+	CARD32 *values = (CARD32*)prop->data;
+
+	/* any action property needs to be registered for this handler. */
+	for (i = 0; i < prop->size; i++)
+		handlers[i] = values[i];
+}
+
+static void wcmUpdateButtonKeyActions(DeviceIntPtr dev, XIPropertyValuePtr prop,
+					unsigned int (*keys)[256], int skeys)
+{
+	Atom *values = (Atom*)prop->data;
+	XIPropertyValuePtr val;
+	int i, j;
+
+	for (i = 0; i < prop->size; i++)
+	{
+		if (!values[i])
+			continue;
+
+		XIGetDeviceProperty(dev, values[i], &val);
+
+		memset(keys[i], 0, sizeof(keys[i]));
+		for (j = 0; j < val->size; j++)
+			keys[i][j] = ((unsigned int*)val->data)[j];
+	}
+}
+
 /* Change the properties that hold the actual button actions */
 static int wcmSetActionProperties(DeviceIntPtr dev, Atom property,
 				  XIPropertyValuePtr prop, BOOL checkonly)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int i, j;
+	int i;
+	int rc;
+
 
 	DBG(10, priv, "\n");
 
-	/* check all properties used for button actions */
-	for (i = 0; i < ARRAY_SIZE(priv->btn_actions); i++)
-		if (priv->btn_actions[i] == property)
-			break;
+	rc = wcmSanityCheckProperty(prop);
+	if (rc != Success)
+		return rc;
 
-	if (i < ARRAY_SIZE(priv->btn_actions))
+	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
+	if (i >= 0)
 	{
-		CARD32 *data;
-		int code;
-		int type;
-
-		if (prop->size >= 255 || prop->format != 32 ||
-				prop->type != XA_INTEGER)
-			return BadMatch;
-
-		data = (CARD32*)prop->data;
-
-		for (j = 0;j < prop->size; j++)
+		if (!checkonly)
 		{
-			code = data[j] & AC_CODE;
-			type = data[j] & AC_TYPE;
-
-			switch(type)
-			{
-				case AC_KEY:
-					break;
-				case AC_BUTTON:
-					if (code > WCM_MAX_MOUSE_BUTTONS)
-						return BadValue;
-					break;
-				case AC_DISPLAYTOGGLE:
-				case AC_MODETOGGLE:
-				case AC_DBLCLICK:
-					break;
-				default:
-					return BadValue;
-			}
-
+			XIGetDeviceProperty(dev, prop_btnactions, &prop);
+			wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
+		}
+	} else
+	{
+		i = wcmFindProp(property, priv->wheel_actions,
+					ARRAY_SIZE(priv->wheel_actions));
+		if (i >= 0) {
 			if (!checkonly)
 			{
-				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-				for (j = 0; j < prop->size; j++)
-					priv->keys[i][j] = data[j];
+				XIGetDeviceProperty(dev, prop_wheel_buttons, &prop);
+				wcmUpdateButtonKeyActions(dev, prop,
+						priv->wheel_keys,
+						ARRAY_SIZE(priv->wheel_keys));
+			}
+		} else
+		{
+			i = wcmFindProp(property, priv->strip_actions, ARRAY_SIZE(priv->strip_actions));
+			if (i >= 0 && !checkonly)
+			{
+				XIGetDeviceProperty(dev, prop_strip_buttons, &prop);
+				wcmUpdateButtonKeyActions(dev, prop, priv->strip_keys, ARRAY_SIZE(priv->strip_keys));
 			}
 		}
+	}
+
+	return abs(i);
+}
+
+static int wcmCheckActionProp(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	XIPropertyValuePtr val;
+	Atom *values = (Atom*)prop->data;
+	int i;
+
+	for (i = 0; i < prop->size; i++)
+	{
+		if (!values[i])
+			continue;
+
+		if (values[i] == property || !ValidAtom(values[i]))
+			return BadValue;
+
+		if (XIGetDeviceProperty(pInfo->dev, values[i], &val) != Success)
+			return BadValue;
 	}
 
 	return Success;
@@ -324,15 +423,11 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-
-	Atom *values;
-	int i, j;
-	XIPropertyValuePtr val;
+	int rc;
 
 	DBG(10, priv, "\n");
 
-	if (prop->size != WCM_MAX_MOUSE_BUTTONS || prop->format != 32 ||
-			prop->type != XA_ATOM)
+	if (prop->format != 32 || prop->type != XA_ATOM)
 		return BadMatch;
 
 	/* How this works:
@@ -347,40 +442,131 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 	 * handler too.
 	 */
 
-	values = (Atom*)prop->data;
-
-	for (i = 0; i < prop->size; i++)
-	{
-		if (!values[i])
-			continue;
-
-		if (values[i] == property || !ValidAtom(values[i]))
-			return BadValue;
-
-		if (XIGetDeviceProperty(pInfo->dev, values[i], &val) != Success)
-			return BadValue;
-	}
+	rc = wcmCheckActionProp(dev, property, prop);
+	if (rc != Success)
+		return rc;
 
 	if (!checkonly)
 	{
-		/* any action property needs to be registered for this handler. */
-		for (i = 0; i < prop->size; i++)
-			priv->btn_actions[i] = values[i];
-
-		for (i = 0; i < prop->size; i++)
-		{
-			if (!values[i])
-				continue;
-
-			XIGetDeviceProperty(pInfo->dev, values[i], &val);
-
-			memset(priv->keys[i], 0, sizeof(priv->keys[i]));
-			for (j = 0; j < val->size; j++)
-				priv->keys[i][j] = ((unsigned int*)val->data)[j];
-		}
+		wcmUpdateActionPropHandlers(prop, priv->btn_actions);
+		wcmUpdateButtonKeyActions(dev, prop, priv->keys, ARRAY_SIZE(priv->keys));
 
 	}
 	return Success;
+}
+
+struct wheel_strip_update_t {
+	/* for CARD8 values, points to fields in struct to be updated */
+	int *up1;
+	int *dn1;
+	int *up2;
+	int *dn2;
+
+	/* for CARD32 values, points to atom array of atoms to be
+	 * monitored.*/
+	Atom *handlers;
+	/* for CARD32 values, points to key array that keeps the actual
+	   actions.*/
+	int skeys;  /* size of first keys dimensions */
+	int skeys2; /* size of second keys dimensions */
+	unsigned int (*keys)[256];
+};
+
+static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
+				      XIPropertyValuePtr prop, BOOL checkonly,
+				      struct wheel_strip_update_t *wsup)
+{
+	int rc;
+
+	union multival {
+		CARD8 *v8;
+		CARD32 *v32;
+	} values;
+
+	if (prop->size != 4)
+		return BadValue;
+
+	/* see wcmSetPropertyButtonActions for how this works. The wheel is
+	 * slightly different in that it allows for 8 bit properties for
+	 * pure buttons too */
+
+	values.v8 = (CARD8*)prop->data;
+
+	switch (prop->format)
+	{
+		case 8:
+			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
+				return BadValue;
+
+			if (!checkonly) {
+				*wsup->up1 = values.v8[0];
+				*wsup->dn1 = values.v8[1];
+				*wsup->up2 = values.v8[2];
+				*wsup->dn2 = values.v8[3];
+			}
+			break;
+		case 32:
+			rc = wcmCheckActionProp(dev, property, prop);
+			if (rc != Success)
+				return rc;
+
+			if (!checkonly)
+			{
+				wcmUpdateActionPropHandlers(prop, wsup->handlers);
+				wcmUpdateButtonKeyActions(dev, prop, wsup->keys,
+						          wsup->skeys);
+			}
+
+			break;
+		default:
+			return BadMatch;
+	}
+
+	return Success;
+}
+
+
+static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
+			       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+
+	struct wheel_strip_update_t wsup = {
+		.up1 = &priv->relup,
+		.dn1 = &priv->reldn,
+		.up2 = &priv->wheelup,
+		.dn2 = &priv->wheeldn,
+
+		.handlers = priv->wheel_actions,
+		.keys	  = priv->wheel_keys,
+		.skeys    = 4,
+	};
+
+	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
+}
+
+static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
+			       XIPropertyValuePtr prop, BOOL checkonly)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+
+	struct wheel_strip_update_t wsup = {
+		.up1 = &priv->striplup,
+		.dn1 = &priv->stripldn,
+		.up2 = &priv->striprup,
+		.dn2 = &priv->striprdn,
+
+		.handlers = priv->strip_actions,
+		.keys	  = priv->strip_keys,
+		.skeys    = 4,
+	};
+
+	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
 }
 
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
@@ -496,53 +682,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		return BadValue; /* Read-only */
 	} else if (property == prop_strip_buttons)
-	{
-		CARD8 *values;
-
-		if (prop->size != 4 || prop->format != 8)
-			return BadValue;
-
-		values = (CARD8*)prop->data;
-
-		if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
-				values[1] > WCM_MAX_MOUSE_BUTTONS ||
-				values[2] > WCM_MAX_MOUSE_BUTTONS ||
-				values[3] > WCM_MAX_MOUSE_BUTTONS)
-			return BadValue;
-
-		if (!checkonly)
-		{
-			/* FIXME: needs to take AC_* into account */
-			priv->striplup = values[0];
-			priv->stripldn = values[1];
-			priv->striprup = values[2];
-			priv->striprdn = values[3];
-		}
-
-	} else if (property == prop_wheel_buttons)
-	{
-		CARD8 *values;
-
-		if (prop->size != 4 || prop->format != 8)
-			return BadValue;
-
-		values = (CARD8*)prop->data;
-
-		if (values[0] > WCM_MAX_MOUSE_BUTTONS ||
-				values[1] > WCM_MAX_MOUSE_BUTTONS ||
-				values[2] > WCM_MAX_MOUSE_BUTTONS ||
-				values[3] > WCM_MAX_MOUSE_BUTTONS)
-			return BadValue;
-
-		if (!checkonly)
-		{
-			/* FIXME: needs to take AC_* into account */
-			priv->relup = values[0];
-			priv->reldn = values[1];
-			priv->wheelup = values[2];
-			priv->wheeldn = values[3];
-		}
-	} else if (property == prop_screen)
+		return wcmSetStripProperty(dev, property, prop, checkonly);
+	else if (property == prop_wheel_buttons)
+		return wcmSetWheelProperty(dev, property, prop, checkonly);
+	else if (property == prop_screen)
 	{
 		/* Long-term, this property should be removed, there's other ways to
 		 * get the screen resolution. For now, we leave it in for backwards
@@ -735,8 +878,11 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		}
 #endif
 	} else if (property == prop_btnactions)
+	{
+		if (prop->size != WCM_MAX_MOUSE_BUTTONS)
+			return BadMatch;
 		wcmSetPropertyButtonActions(dev, property, prop, checkonly);
-	else
+	} else
 		wcmSetActionProperties(dev, property, prop, checkonly);
 
 	return Success;

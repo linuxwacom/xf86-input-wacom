@@ -373,42 +373,16 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 	return count;
 }
 
-/*****************************************************************************
- * sendAButton --
- *   Send one button event, called by wcmSendButtons
- ****************************************************************************/
-static void sendAButton(InputInfoPtr pInfo, int button, int mask,
+static void sendAction(InputInfoPtr pInfo, int press,
+		unsigned int *keys, int nkeys, int naxes,
 		int rx, int ry, int rz, int v3, int v4, int v5)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-#ifdef DEBUG
-	WacomCommonPtr common = priv->common;
-#endif
 	int i;
 
-	int naxes = priv->naxes;
-
-	if (!priv->button[button])  /* ignore this button event */
-		return;
-
-	DBG(4, priv, "TPCButton(%s) button=%d state=%d " 
-		"code=%08x, coreEvent=%s \n", 
-		common->wcmTPCButton ? "on" : "off", 
-		button, mask, priv->button[button], 
-		(priv->button[button] & AC_CORE) ? "yes" : "no");
-
-	if (!priv->keys[button][0])
-	{
-		/* No button action configured, send button */
-		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0), 0, naxes,
-				    rx, ry, rz, v3, v4, v5);
-		return;
-	}
-
 	/* Actions only trigger on press, not release */
-	for (i = 0; mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	for (i = 0; press && i < nkeys; i++)
 	{
-		unsigned int action = priv->keys[button][i];
+		unsigned int action = keys[i];
 
 		if (!action)
 			break;
@@ -433,7 +407,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 				}
 				break;
 			case AC_MODETOGGLE:
-				if (mask)
+				if (press)
 					wcmDevSwitchModeCall(pInfo,
 							(is_absolute(pInfo)) ? Relative : Absolute); /* not a typo! */
 				break;
@@ -456,9 +430,9 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	}
 
 	/* Release all non-released keys for this button. */
-	for (i = 0; !mask && i < ARRAY_SIZE(priv->keys[button]); i++)
+	for (i = 0; !press && i < nkeys; i++)
 	{
-		unsigned int action = priv->keys[button][i];
+		unsigned int action = keys[i];
 
 		switch ((action & AC_TYPE))
 		{
@@ -470,8 +444,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 					if (!(action & AC_KEYBTNPRESS))
 						break;
 
-					if (countPresses(btn_no, &priv->keys[button][i],
-							ARRAY_SIZE(priv->keys[button]) - i))
+					if (countPresses(btn_no, &keys[i], nkeys - i))
 						xf86PostButtonEvent(pInfo->dev,
 								is_absolute(pInfo), btn_no,
 								0, 0, naxes,
@@ -486,8 +459,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 					if (!(action & AC_KEYBTNPRESS))
 						break;
 
-					if (countPresses(key_code, &priv->keys[button][i],
-							ARRAY_SIZE(priv->keys[button]) - i))
+					if (countPresses(key_code, &keys[i], nkeys - i))
 						wcmEmitKeycode(pInfo->dev, key_code, 0);
 				}
 		}
@@ -496,11 +468,46 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 }
 
 /*****************************************************************************
+ * sendAButton --
+ *   Send one button event, called by wcmSendButtons
+ ****************************************************************************/
+static void sendAButton(InputInfoPtr pInfo, int button, int mask,
+		int rx, int ry, int rz, int v3, int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+#ifdef DEBUG
+	WacomCommonPtr common = priv->common;
+#endif
+	int naxes = priv->naxes;
+
+	if (!priv->button[button])  /* ignore this button event */
+		return;
+
+	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
+		"code=%08x, coreEvent=%s \n",
+		common->wcmTPCButton ? "on" : "off",
+		button, mask, priv->button[button],
+		(priv->button[button] & AC_CORE) ? "yes" : "no");
+
+	if (!priv->keys[button][0])
+	{
+		/* No button action configured, send button */
+		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0), 0, naxes,
+				    rx, ry, rz, v3, v4, v5);
+		return;
+	}
+
+	sendAction(pInfo, (mask != 0), priv->keys[button], ARRAY_SIZE(priv->keys[button]),
+			naxes, rx, ry, rz, v3, v4, v5);
+}
+
+/*****************************************************************************
  * getWheelButton --
  *   Get the wheel button to be sent for the current device state.
  ****************************************************************************/
 
-static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds)
+static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
+			  unsigned int **fakeKey)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int fakeButton = 0, value;
@@ -509,20 +516,16 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	if ( ds->relwheel )
 	{
 		value = ds->relwheel;
-		if ( ds->relwheel > 0 )
-			fakeButton = priv->relup;
-		else
-			fakeButton = priv->reldn;
+		fakeButton = (value > 0) ? priv->relup : priv->reldn;
+		*fakeKey = (value > 0) ? priv->wheel_keys[0] : priv->wheel_keys[1];
 	}
 
 	/* emulate events for absolute wheel when it is a touch ring (on pad) */
 	if ( (ds->abswheel != priv->oldWheel) && IsPad(priv) )
 	{
 		value = priv->oldWheel - ds->abswheel;
-		if ( value > 0 )
-			fakeButton = priv->wheelup;
-		else
-			fakeButton = priv->wheeldn;
+		fakeButton = (value > 0) ? priv->wheelup : priv->wheeldn;
+		*fakeKey = (value > 0) ? priv->wheel_keys[2] : priv->wheel_keys[3];
 	}
 
 	/* emulate events for left strip */
@@ -540,10 +543,9 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		}
 
 		value -= temp;
-		if ( value > 0 )
-			fakeButton = priv->striplup;
-		else if ( value < 0 )
-			fakeButton = priv->stripldn;
+
+		fakeButton = (value > 0) ? priv->striplup : priv->stripldn;
+		*fakeKey = (value > 0) ? priv->strip_keys[0] : priv->strip_keys[1];
 	}
 
 	/* emulate events for right strip */
@@ -561,10 +563,8 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		}
 
 		value -= temp;
-		if ( value > 0 )
-			fakeButton = priv->striprup;
-		else if ( value < 0 )
-			fakeButton = priv->striprdn;
+		fakeButton = (value > 0) ? priv->striprup : priv->striprdn;
+		*fakeKey = (value > 0) ? priv->strip_keys[2] : priv->strip_keys[2];
 	}
 
 	DBG(10, priv, "send fakeButton %x with value = %d \n",
@@ -582,34 +582,30 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int fakeButton = 0, naxes = priv->naxes;
+	unsigned int *fakeKey;
 
 	DBG(10, priv, "\n");
 
-	fakeButton = getWheelButton(pInfo, ds);
+	fakeButton = getWheelButton(pInfo, ds, &fakeKey);
 
-	if (!fakeButton)
+	if (!fakeButton && !(*fakeKey))
 		return;
 
-	switch (fakeButton & AC_TYPE)
+	if (!(*fakeKey))
 	{
-	    case 0: /* no spec. action defined */
-	    case AC_BUTTON:
 		/* send both button on/off in the same event for pad */	
 		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
 			1,0,naxes,x,y,z,v3,v4,v5);
 
 		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
 			0,0,naxes,x,y,z,v3,v4,v5);
-	    break;
-
-	    case AC_KEY:
-		    wcmEmitKeycode(pInfo->dev, (fakeButton & AC_CODE), 1);
-		    wcmEmitKeycode(pInfo->dev, (fakeButton & AC_CODE), 0);
-	    break;
-
-	    default:
-		xf86Msg(X_WARNING, "%s: unsupported event %x \n", pInfo->name, fakeButton);
+		return;
 	}
+
+	sendAction(pInfo, 1, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
+			naxes, x, y, z, v3, v4, v5);
+	sendAction(pInfo, 0, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
+			naxes, x, y, z, v3, v4, v5);
 }
 
 /*****************************************************************************

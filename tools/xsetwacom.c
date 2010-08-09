@@ -94,6 +94,7 @@ typedef struct _param
 
 /* get_func/set_func calls for special parameters */
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -474,6 +475,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "RelWDn",
@@ -481,6 +483,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "AbsWUp",
@@ -488,6 +491,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "AbsWDn",
@@ -495,6 +499,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "StripLUp",
@@ -502,6 +507,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "StripLDn",
@@ -509,6 +515,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "StripRUp",
@@ -516,6 +523,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "StripRDn",
@@ -523,6 +531,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
+		.set_func = map_wheels,
 	},
 	{
 		.name = "TVResolution0",
@@ -1490,14 +1499,67 @@ static int get_button_number_from_string(const char* string)
 	return atoi(&string[strlen("Button")]);
 }
 
-/* Handles complex button mappings through button actions. */
-static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static const char *wheel_act_prop[] = {
+	"Wacom Rel Wheel Up Action",
+	"Wacom Rel Wheel Down Action",
+	"Wacom Abs Wheel Up Action",
+	"Wacom Abs Wheel Down Action",
+};
+
+/**
+ * Convert the given property from an 8 bit integer property into an action
+ * atom property. In the default case, this means that a property with
+ * values "4 5 4 5" ends up to have the values
+ * "Wacom RHU Action" "Wacom RHW Action" "Wacom AWU Action" "Wacom AWD
+ * Action"
+ * with each of the properties having :
+ * AC_BUTTON | AC_KEYBTNPRESS | 4 (or 5)
+ * AC_BUTTON | 4 (or 5)
+ *
+ * return 0 on success or 1 on failure.
+ */
+static int convert_wheel_prop(Display *dpy, XDevice *dev, Atom btnact_prop)
 {
-	Atom btnact_prop, prop;
-	unsigned long *data, *btnact_data;
-	int slen = strlen("Button");
-	int btn_no;
+	int i;
 	Atom type;
+	int format;
+	unsigned long btnact_nitems, bytes_after;
+	unsigned char *btnact_data; /* current values (button mappings) */
+	unsigned long *btnact_new_data; /* new values (action atoms) */
+
+	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+				AnyPropertyType, &type, &format, &btnact_nitems,
+				&bytes_after, (unsigned char**)&btnact_data);
+
+	btnact_new_data = calloc(btnact_nitems, sizeof(Atom));
+	if (!btnact_new_data)
+		return 1;
+
+	for (i = 0; i < btnact_nitems; i++) {
+		unsigned long action_data[2];
+		Atom prop = XInternAtom(dpy, wheel_act_prop[i], False);
+
+		action_data[0] = AC_BUTTON | AC_KEYBTNPRESS | btnact_data[i];
+		action_data[1] = AC_BUTTON | btnact_data[i];
+
+		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
+				      PropModeReplace,
+				      (unsigned char*)action_data, 2);
+
+		btnact_new_data[i] = prop;
+	}
+
+	XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+				PropModeReplace,
+				(unsigned char*)btnact_new_data, btnact_nitems);
+	return 0;
+}
+
+
+static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
+{
+	unsigned long *data, *btnact_data;
+	Atom type, prop;
 	int format;
 	unsigned long btnact_nitems, nitems, bytes_after;
 	int need_update = 0;
@@ -1505,35 +1567,37 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	int nwords = 0;
 	char **words = NULL;
 
-	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
-
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
-		return;
-
-	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
-	if (!btnact_prop)
-		return;
-
-	btn_no = get_button_number_from_string(param->name);
-	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
-
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				AnyPropertyType, &type, &format, &btnact_nitems,
 				&bytes_after, (unsigned char**)&btnact_data);
 
-	if (btn_no > btnact_nitems)
+	if (offset > btnact_nitems)
 		return;
 
+	/* Prop is currently 8 bit integer, i.e. plain button
+	 * mappings. Convert to 32 bit Atom actions first.
+	 */
+	if (format == 8 && type == XA_INTEGER)
+	{
+		if (convert_wheel_prop(dpy, dev, btnact_prop))
+			return;
+
+		XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+				   AnyPropertyType, &type, &format,
+				   &btnact_nitems, &bytes_after,
+				   (unsigned char**)&btnact_data);
+	}
+
 	/* some atom already assigned, modify that */
-	if (btnact_data[btn_no])
-		prop = btnact_data[btn_no];
+	if (btnact_data[offset])
+		prop = btnact_data[offset];
 	else
 	{
 		char buff[64];
-		sprintf(buff, "Wacom button action %d", (btn_no + 1));
+		sprintf(buff, "Wacom button action %d", (offset + 1));
 		prop = XInternAtom(dpy, buff, False);
 
-		btnact_data[btn_no] = prop;
+		btnact_data[offset] = prop;
 		need_update = 1;
 	}
 
@@ -1572,6 +1636,56 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 					(unsigned char*)btnact_data,
 					btnact_nitems);
 	XFlush(dpy);
+}
+
+
+static void special_map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	Atom wheel_prop;
+
+	wheel_prop = XInternAtom(dpy, param->prop_name, True);
+	if (!wheel_prop)
+		return;
+
+	TRACE("Wheel property %s (%ld)\n", param->prop_name, wheel_prop);
+
+	special_map_property(dpy, dev, wheel_prop, param->prop_offset, argc, argv);
+}
+
+static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	if (argc <= 0)
+		return;
+
+	TRACE("Mapping wheel %s for device %ld.\n", param->name, dev->device_id);
+
+	/* FIXME:
+	   if value is simple number, change back to 8 bit integer
+	 */
+
+	special_map_wheels(dpy, dev, param, argc, argv);
+}
+
+/* Handles complex button mappings through button actions. */
+static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+{
+	Atom btnact_prop;
+	int slen = strlen("Button");
+	int btn_no;
+
+	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
+
+	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
+		return;
+
+	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+	if (!btnact_prop)
+		return;
+
+	btn_no = get_button_number_from_string(param->name);
+	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
+
+	special_map_property(dpy, dev, btnact_prop, btn_no, argc, argv);
 }
 
 
