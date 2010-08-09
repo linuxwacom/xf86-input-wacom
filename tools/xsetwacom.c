@@ -1437,11 +1437,10 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 					PropModeReplace,
 					(unsigned char*)data, nitems);
 
-	if (need_update)
-		XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
-					PropModeReplace,
-					(unsigned char*)btnact_data,
-					btnact_nitems);
+	XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+				PropModeReplace,
+				(unsigned char*)btnact_data,
+				btnact_nitems);
 	XFlush(dpy);
 }
 
