@@ -83,6 +83,18 @@ Set the parameter value on the given device to the value provided. Note that
 not all parameters are writable, some are read-only and result in an error
 when trying to be modified.
 
+.SH "PARAMETERS"
+.TP
+\fBMapToOutput\fR output
+Map the tablet's input area to the given output (e.g. "VGA1"). The output
+must specify one of those available through the XRandR extension. A list of
+outputs may be obtained with the xrandr tool. The output mapping
+configuration is a once-off setting and does not track output
+reconfigurations; the command needs to be re-run whenever the output
+configuration changes. When used with tablet rotation, the tablet must be
+rotated before it is mapped to the new screen.
+This parameter is write-only and cannot be queried.
+
 .SH "AUTHORS"
 Peter Hutterer <peter.hutterer@redhat.com>
 

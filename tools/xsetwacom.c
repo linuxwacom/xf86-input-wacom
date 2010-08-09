@@ -34,6 +34,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput.h>
+#include <X11/extensions/Xrandr.h>
 #include <X11/XKBlib.h>
 
 #define TRACE(...) \
@@ -106,6 +107,7 @@ static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, c
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 
 static param_t parameters[] =
 {
@@ -868,6 +870,12 @@ static param_t parameters[] =
 		.prop_format = 32,
 		.prop_offset = 0,
 		.prop_flags = PROP_FLAG_READONLY
+	},
+	{
+		.name = "MapToOutput",
+		.desc = "Map the device to the given output. ",
+		.set_func = set_output,
+		.prop_flags = PROP_FLAG_WRITEONLY
 	},
 	{
 		.name = "all",
@@ -2212,6 +2220,116 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+}
+
+static void _set_matrix_prop(Display *dpy, XDevice *dev, const float matrix[9])
+{
+	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
+	Atom type;
+	int format;
+	unsigned long nitems, bytes_after;
+	float *data;
+
+	if (!matrix_prop)
+	{
+		fprintf(stderr, "Server does not support transformation");
+		return;
+	}
+
+	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
+				AnyPropertyType, &type, &format, &nitems,
+				&bytes_after, (unsigned char**)&data);
+
+	if (format != 32 || type != XInternAtom(dpy, "FLOAT", True))
+		return;
+
+	XChangeDeviceProperty(dpy, dev, matrix_prop, type, format,
+			      PropModeReplace, (unsigned char*)matrix, 9);
+	XFree(data);
+	XFlush(dpy);
+}
+
+static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	int min, maj;
+	int i, found = 0;
+	char *output_name;
+	XRRScreenResources *res;
+	XRROutputInfo *output_info;
+	XRRCrtcInfo *crtc_info;
+
+	output_name = argv[0];
+
+	if (!XRRQueryExtension(dpy, &maj, &min)) /* using min/maj as dummy */
+	{
+		fprintf(stderr, "Server does not support RandR");
+		return;
+	}
+
+	if (!XRRQueryVersion(dpy, &maj, &min) ||
+	    (maj * 1000 + min) < 1002)
+	{
+		fprintf(stderr, "Server does not support RandR 1.2");
+		return;
+	}
+
+
+	res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
+
+	for (i = 0; i < res->noutput && !found; i++)
+	{
+		output_info = XRRGetOutputInfo(dpy, res, res->outputs[i]);
+
+		TRACE("Found output '%s' (%s)\n", output_info->name,
+		      output_info->connection == RR_Connected ? "connected" : "disconnnected");
+
+		if (!output_info->crtc || output_info->connection != RR_Connected)
+			continue;
+
+		crtc_info = XRRGetCrtcInfo (dpy, res, output_info->crtc);
+		TRACE("CRTC (%dx%d) %dx%d\n", crtc_info->x, crtc_info->y,
+			crtc_info->width, crtc_info->height);
+
+		if (strcmp(output_info->name, output_name) == 0)
+		{
+			found = 1;
+			break;
+		}
+	}
+
+	/* crtc holds our screen info, need to compare to actual screen size */
+	if (found)
+	{
+		int width = DisplayWidth(dpy, DefaultScreen(dpy));
+		int height = DisplayHeight(dpy, DefaultScreen(dpy));
+
+		/* offset */
+		float x = 1.0 * crtc_info->x/width;
+		float y = 1.0 * crtc_info->y/height;
+
+		/* mapping */
+		float w = 1.0 * crtc_info->width/width;
+		float h = 1.0 * crtc_info->height/height;
+
+		float matrix[9] = { 1, 0, 0,
+				    0, 1, 0,
+				    0, 0, 1};
+		matrix[2] = x;
+		matrix[5] = y;
+		matrix[0] = w;
+		matrix[4] = h;
+
+		TRACE("Transformation matrix:\n");
+		TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
+		TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
+		TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
+
+		_set_matrix_prop(dpy, dev, matrix);
+	} else
+		printf("Unable to find output '%s'. "
+			"Output may not be connected.\n", output_name);
+
+	XRRFreeScreenResources(res);
 }
 
 static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)

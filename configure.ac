@@ -54,7 +54,7 @@ PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] xproto xext kbproto inputproto $R
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 
 # Obtain compiler/linker options for the xsetwacom tool
-PKG_CHECK_MODULES(X11, x11 xi)
+PKG_CHECK_MODULES(X11, x11 xi xrandr)
 
 # X Server SDK location is required to install wacom header files
 # This location is also relayed in the xorg-wacom.pc file
