@@ -910,6 +910,14 @@ static struct modifier modifiers[] = {
 	{"lshift", "Shift_L"},
 	{"rshift", "Shift_R"},
 
+	{"super", "Super_L"},
+	{"lsuper", "Super_L"},
+	{"rsuper", "Super_R"},
+
+	{"hyper", "Hyper_L"},
+	{"lhyper", "Hyper_L"},
+	{"rhyper", "Hyper_R"},
+
 	{ NULL, NULL }
 };
 
