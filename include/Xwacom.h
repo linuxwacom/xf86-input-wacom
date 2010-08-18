@@ -42,7 +42,7 @@
  * 256 actions on press, where a zero terminates the actions.
  *
  * e.g.
- * AC_KEY | AC_KEYBTNPRESS | XK_H is a key press for 'H'.
+ * AC_KEY | AC_KEYBTNPRESS | <keycode> is a key press for key <keycode>.
  * AC_BUTTON | AC_KEYBTNPRESS | 1 is a button press for 1
  * AC_BUTTON | 1 is a button release for 1
  *
