@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Red Hat, Inc.
+ * Copyright 2009 - 2010 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1889,6 +1889,14 @@ static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, c
 		twinview = TV_LEFT_RIGHT;
 	else if (strcasecmp(argv[0], "vertical") == 0)
 		twinview = TV_ABOVE_BELOW;
+	else if (strcasecmp(argv[0], "belowof") == 0)
+		twinview = TV_ABOVE_BELOW;
+	else if (strcasecmp(argv[0], "aboveof") == 0)
+		twinview = TV_BELOW_ABOVE;
+	else if (strcasecmp(argv[0], "rightof") == 0)
+		twinview = TV_LEFT_RIGHT;
+	else if (strcasecmp(argv[0], "leftof") == 0)
+		twinview = TV_RIGHT_LEFT;
 	else
 		goto error;
 
@@ -1918,7 +1926,9 @@ static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	return;
 
 error:
-	fprintf(stderr, "Usage: xsetwacom <device name> TwinView [none | horizontal | vertical]\n");
+	fprintf(stderr, "Usage: xsetwacom <device name> TwinView [<value>]\n");
+	fprintf(stderr, "Values: none, horizontal, vertical, belowof,"
+			"aboveof, leftof, rightof\n");
 	return;
 }
 
@@ -2159,6 +2169,8 @@ static void get_twinview(Display *dpy, XDevice *dev, param_t *param, int argc, c
 		case TV_NONE: twinview = "none"; break;
 		case TV_ABOVE_BELOW: twinview = "vertical"; break;
 		case TV_LEFT_RIGHT: twinview = "horizontal"; break;
+		case TV_RIGHT_LEFT: twinview = "leftof"; break;
+		case TV_BELOW_ABOVE: twinview = "aboveof"; break;
 		default:
 				    break;
 	}
