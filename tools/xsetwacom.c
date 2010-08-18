@@ -1918,7 +1918,7 @@ static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	return;
 
 error:
-	fprintf(stderr, "Usage: xsetwacom rotate <device name> [NONE | CW | CCW | HALF]\n");
+	fprintf(stderr, "Usage: xsetwacom <device name> TwinView [none | horizontal | vertical]\n");
 	return;
 }
 
