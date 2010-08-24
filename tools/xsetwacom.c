@@ -1077,6 +1077,14 @@ static char *convert_specialkey(const char *modifier)
 		{"lshift", "Shift_L"},
 		{"rshift", "Shift_R"},
 
+		{"super", "Super_L"},
+		{"lsuper", "Super_L"},
+		{"rsuper", "Super_R"},
+
+		{"hyper", "Hyper_L"},
+		{"lhyper", "Hyper_L"},
+		{"rhyper", "Hyper_R"},
+
 		{"f1", "F1"}, {"f2", "F2"}, {"f3", "F3"},
 		{"f4", "F4"}, {"f5", "F5"}, {"f6", "F6"},
 		{"f7", "F7"}, {"f8", "F8"}, {"f9", "F9"},
