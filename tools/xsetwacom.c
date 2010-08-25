@@ -60,6 +60,7 @@ typedef struct _param
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
 	const int prop_offset;	/* offset (index) into the property values */
+	const int prop_extra;   /* extra number of items after first one */
 	const unsigned int prop_flags;
 	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
 	void (*get_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function for getting, if appropriate */
@@ -477,13 +478,15 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TWINVIEW_RES,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_extra = 1,
 	},
 	{
 		.name = "TVResolution1",
 		.desc = "Sets MetaModes option for TwinView Screen 1. ",
 		.prop_name = WACOM_PROP_TWINVIEW_RES,
 		.prop_format = 32,
-		.prop_offset = 1,
+		.prop_offset = 2,
+		.prop_extra = 1,
 	},
 	{
 		.name = "RawFilter",
@@ -1970,6 +1973,8 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
+	int i;
+	char str[100] = {0};
 
 	if (param->get_func)
 	{
@@ -1998,23 +2003,31 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	switch(param->prop_format)
 	{
 		case 8:
+			for (i = 0; i < 1 + param->prop_extra; i++)
 			{
-				char str[10] = {0};
-				int val = data[param->prop_offset];
+				int val = data[param->prop_offset + i];
 
 				if (param->prop_flags & PROP_FLAG_BOOLEAN)
-					sprintf(str, "%s", val ?  "on" : "off");
+					sprintf(&str[strlen(str)], "%s", val ?  "on" : "off");
 				else
-					sprintf(str, "%d", val);
-				print_value(param, "%s", str);
+					sprintf(&str[strlen(str)], "%d", val);
+
+				if (i < param->prop_extra)
+					strcat(str, " ");
 			}
+			print_value(param, "%s", str);
 			break;
 		case 32:
+			for (i = 0; i < 1 + param->prop_extra; i++)
 			{
 				long *ldata = (long*)data;
-				print_value(param, "%ld", ldata[param->prop_offset]);
-				break;
+				sprintf(&str[strlen(str)], "%ld", ldata[param->prop_offset + i]);
+
+				if (i < param->prop_extra)
+					strcat(str, " ");
 			}
+			print_value(param, "%s", str);
+			break;
 	}
 }
 
