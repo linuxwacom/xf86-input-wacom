@@ -846,13 +846,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		height = screenInfo.screens[0]->height;
 
 		/* non-TwinView settings can not set TwinView RESOLUTION */
-		if ((priv->twinview == TV_NONE) || (values[0] < 0) ||
-				(values[1] < 0) || (values[2] < 0) || (values[3] < 0))
-			return BadValue;
-
 		switch(priv->twinview)
 		{
-			case TV_NONE: break;
+			case TV_NONE:
+				return BadValue;
 			case TV_ABOVE_BELOW:
 			case TV_BELOW_ABOVE:
 				      if ((values[1] + values[3]) != height)
