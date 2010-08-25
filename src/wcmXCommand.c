@@ -835,18 +835,43 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	} else if (property == prop_tv_resolutions)
 	{
 		CARD32 *values;
+		int width, height;
 
 		if (prop->size != 4 || prop->format != 32)
 			return BadValue;
 
 		values = (CARD32*)prop->data;
 
+		width = screenInfo.screens[0]->width;
+		height = screenInfo.screens[0]->height;
+
 		/* non-TwinView settings can not set TwinView RESOLUTION */
 		if ((priv->twinview == TV_NONE) || (values[0] < 0) ||
-				(values[1] < 0) || (values[2] < 0) || (values[3] < 0) ||
-				((values[0] + values[2]) != screenInfo.screens[0]->width) ||
-				((values[1] + values[3]) != screenInfo.screens[0]->height))
+				(values[1] < 0) || (values[2] < 0) || (values[3] < 0))
 			return BadValue;
+
+		switch(priv->twinview)
+		{
+			case TV_NONE: break;
+			case TV_ABOVE_BELOW:
+			case TV_BELOW_ABOVE:
+				      if ((values[1] + values[3]) != height)
+					      return BadValue;
+				      if (values[0] != width && values[2] != width)
+					      return BadValue;
+				      if (values[0] > width || values[2] > width)
+					      return BadValue;
+				      break;
+			case TV_LEFT_RIGHT:
+			case TV_RIGHT_LEFT:
+				      if ((values[0] + values[2]) != width)
+					      return BadValue;
+				      if (values[1] != height && values[3] != height)
+					      return BadValue;
+				      if (values[1] > height || values[3] > height)
+					      return BadValue;
+				      break;
+		}
 
 		if (!checkonly)
 		{
