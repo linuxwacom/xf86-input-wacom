@@ -1880,6 +1880,7 @@ static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
+	unsigned long *tvdata;
 
 	if (argc != 1)
 		goto error;
@@ -1924,6 +1925,45 @@ static void set_twinview(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	data[param->prop_offset] = twinview;
 	XChangeDeviceProperty(dpy, dev, prop, type, format,
 				PropModeReplace, data, nitems);
+
+	/* set the TVResolution to some sane defaults */
+	prop = XInternAtom(dpy, WACOM_PROP_TWINVIEW_RES, True);
+	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+				&type, &format, &nitems, &bytes_after, &data);
+	if (nitems != 4 || format != 32)
+	{
+		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
+			WACOM_PROP_TWINVIEW_RES);
+		return;
+	}
+
+	tvdata = (unsigned long*)data;
+	switch(twinview) {
+		case TV_NONE:
+			tvdata[0] = 0;
+			tvdata[1] = 0;
+			tvdata[2] = 0;
+			tvdata[3] = 0;
+			break;
+		case TV_LEFT_RIGHT:
+		case TV_RIGHT_LEFT:
+			tvdata[0] = DisplayWidth(dpy, 0)/2;
+			tvdata[1] = DisplayHeight(dpy, 0);
+			tvdata[2] = tvdata[0];
+			tvdata[3] = tvdata[1];
+			break;
+		case TV_ABOVE_BELOW:
+		case TV_BELOW_ABOVE:
+			tvdata[0] = DisplayWidth(dpy, 0);
+			tvdata[1] = DisplayHeight(dpy, 0)/2;
+			tvdata[2] = tvdata[0];
+			tvdata[3] = tvdata[1];
+			break;
+	}
+
+	XChangeDeviceProperty(dpy, dev, prop, type, format,
+				PropModeReplace, data, nitems);
+
 	XFlush(dpy);
 
 	return;
