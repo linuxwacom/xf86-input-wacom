@@ -146,7 +146,7 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	if (priv->screen_no != -1 &&
 		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
 	{
-		if (priv->twinview == TV_NONE || priv->screen_no != 1)
+		if (priv->screen_no != 1)
 		{
 			xf86Msg(X_ERROR, "%s: invalid screen number %d, resetting to default (-1) \n",
 					pInfo->name, priv->screen_no);
@@ -242,12 +242,12 @@ void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 
 	if (!is_absolute(pInfo)) return;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
-		priv->leftPadding = priv->bottomX - priv->topX -priv->tvoffsetX;
- 		priv->topPadding = priv->bottomY - priv->topY - priv->tvoffsetY;
+		priv->leftPadding = priv->bottomX - priv->topX;
+		priv->topPadding = priv->bottomY - priv->topY;
 
 		priv->leftPadding = (int)(((double)priv->screenTopX[i] * priv->leftPadding )
 			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
@@ -275,10 +275,10 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 		return;
 	}
 
-	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
-	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
+	priv->sizeX = priv->bottomX - priv->topX;
+	priv->sizeY = priv->bottomY - priv->topY;
 
-	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
 	{
 		i = priv->currentScreen;
 
@@ -316,19 +316,6 @@ void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
 		topy = priv->topY;
 		bottomx = priv->sizeX + priv->topX;
 		bottomy = priv->sizeY + priv->topY;
-
-		if (priv->twinview != TV_NONE)
-		{
-			if (priv->currentScreen == 1)
-			{
-				topx += priv->tvoffsetX;
-				topy += priv->tvoffsetY;
-			} else if (priv->currentScreen == 0)
-			{
-				bottomx -= priv->tvoffsetX;
-				bottomy -= priv->tvoffsetY;
-			}
-		}
 	}
 	resolution_x = priv->resolX;
 	resolution_y = priv->resolY;

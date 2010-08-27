@@ -1434,109 +1434,6 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 }
 
 /*****************************************************************************
- * wcmInitialTVScreens
- ****************************************************************************/
-
-static void wcmInitialTVScreens(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
-	if (priv->twinview == TV_NONE)
-		return;
-
-	if ((priv->twinview == TV_LEFT_RIGHT) || (priv->twinview == TV_RIGHT_LEFT))
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-		{
-			priv->tvoffsetX = 60;
-			priv->tvoffsetY = 0;
-		}
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
-			priv->tvResolution[1] = screenInfo.screens[0]->height;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-	else if ((priv->twinview == TV_ABOVE_BELOW) || (priv->twinview == TV_BELOW_ABOVE))
-	{
-		/* it does not need the offset if always map to a specific screen */
-		if (priv->screen_no == -1)
-		{
-			priv->tvoffsetX = 0;
-			priv->tvoffsetY = 60;
-		}
-
-		/* default resolution */
-		if(!priv->tvResolution[0])
-		{
-			priv->tvResolution[0] = screenInfo.screens[0]->width;
-			priv->tvResolution[1] = screenInfo.screens[0]->height/2;
-			priv->tvResolution[2] = priv->tvResolution[0];
-			priv->tvResolution[3] = priv->tvResolution[1];
-		}
-	}
-
-	/* initial screen info */
-	if (priv->twinview == TV_ABOVE_BELOW)
-	{
-		priv->screenTopX[0] = 0;
-		priv->screenTopY[0] = 0;
-		priv->screenBottomX[0] = priv->tvResolution[0];
-		priv->screenBottomY[0] = priv->tvResolution[1];
-		priv->screenTopX[1] = 0;
-		priv->screenTopY[1] = priv->tvResolution[1];
-		priv->screenBottomX[1] = priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[1] + priv->tvResolution[3];
-	}
-	if (priv->twinview == TV_LEFT_RIGHT)
-	{
-		priv->screenTopX[0] = 0;
-		priv->screenTopY[0] = 0;
-		priv->screenBottomX[0] = priv->tvResolution[0];
-		priv->screenBottomY[0] = priv->tvResolution[1];
-		priv->screenTopX[1] = priv->tvResolution[0];
-		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[0] + priv->tvResolution[2];
-		priv->screenBottomY[1] = priv->tvResolution[3];
-	}
-	if (priv->twinview == TV_BELOW_ABOVE)
-	{
-		priv->screenTopX[0] = 0;
-		priv->screenTopY[0] = priv->tvResolution[1];
-		priv->screenBottomX[0] = priv->tvResolution[2];
-		priv->screenBottomY[0] = priv->tvResolution[1] + priv->tvResolution[3];
-		priv->screenTopX[1] = 0;
-		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[0];
-		priv->screenBottomY[1] = priv->tvResolution[1];
-	}
-	if (priv->twinview == TV_RIGHT_LEFT)
-	{
-		priv->screenTopX[0] = priv->tvResolution[0];
-		priv->screenTopY[0] = 0;
-		priv->screenBottomX[0] = priv->tvResolution[0] + priv->tvResolution[2];
-		priv->screenBottomY[0] = priv->tvResolution[3];
-		priv->screenTopX[1] = 0;
-		priv->screenTopY[1] = 0;
-		priv->screenBottomX[1] = priv->tvResolution[0];
-		priv->screenBottomY[1] = priv->tvResolution[1];
-	}
-
-	DBG(10, priv,
-		"topX0=%d topY0=%d bottomX0=%d bottomY0=%d "
-		"topX1=%d topY1=%d bottomX1=%d bottomY1=%d \n",
-		priv->screenTopX[0], priv->screenTopY[0],
-		priv->screenBottomX[0], priv->screenBottomY[0],
-		priv->screenTopX[1], priv->screenTopY[1],
-		priv->screenBottomX[1], priv->screenBottomY[1]);
-}
-
-/*****************************************************************************
  * wcmInitialScreens
  ****************************************************************************/
 
@@ -1546,13 +1443,6 @@ void wcmInitialScreens(InputInfoPtr pInfo)
 	int i;
 
 	DBG(2, priv, "number of screen=%d \n", screenInfo.numScreens);
-	priv->tvoffsetX = 0;
-	priv->tvoffsetY = 0;
-	if (priv->twinview != TV_NONE)
-	{
-		wcmInitialTVScreens(pInfo);
-		return;
-	}
 
 	/* initial screen info */
 	priv->numScreen = screenInfo.numScreens;

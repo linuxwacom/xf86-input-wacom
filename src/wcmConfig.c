@@ -93,7 +93,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->naxes = 6;			/* Default number of axes */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
 	priv->currentScreen = -1;                /* current screen in display */
-	priv->twinview = TV_NONE;		/* not using twinview gfx */
 	priv->wcmMMonitor = 1;			/* enabled (=1) to support multi-monitor desktop. */
 						/* disabled (=0) when user doesn't want to move the */
 						/* cursor from one screen to another screen */

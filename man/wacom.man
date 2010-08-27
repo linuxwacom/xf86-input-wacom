@@ -138,24 +138,6 @@ A Rspeed greater than 1.0 will speed up the cursor's relative movement.  A Rspee
 less than 1.0 but greater than 0 will slow down the cursor's relative movement. 
 A Rspeed too close to 0 is not recommanded.
 .TP 4
-.B Option \fI"Twinview"\fP \fI"horizontal"|"vertical"|"leftof"|"aboveof"|"xinerama"|"none"\fP
-sets the orientation of TwinView to map the tablet to one screen and to be able 
-to move the screen cursor from one screen to the other when tool reaches the 
-edge of the tablet.  The cursor can be constrained in a specific screen if 
-"ScreenNo" option is added.  If you  want to map the tablet to the whole desktop,   
-you should NOT add this option.  The default is "none". Note: due to historic 
-reason, "horizontal"  represents the  "RightOf" and "vertical" represents the 
-"BelowOf" in acutal TwinView setup.
-.TP 4
-.B Option \fI"TVResolution"\fP \fI"res0,res1"\fP
-specifies different resolutions for the two screens in TwinView setup.  For example, 
-if the resolution of screen 0 (res0) is 1024x768 and screen 1 (res1) is 1280x1024, 
-the option will be set to:
-            Option "TVResolution" "1024x768,1280x1024" 
-
-This option is used only when TwinView option is not none.  It is unnecessary to add 
-this option if your screens are displaying in the same resolutions.
-.TP 4
 .B Option \fI"ScreenNo"\fP \fI"n"\fP
 In a multi-monitor environment, specifies the screen number in which the cursor can move.
 .TP 4

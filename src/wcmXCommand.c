@@ -197,15 +197,9 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
 	}
 
-	values[0] = priv->tvResolution[0];
-	values[1] = priv->tvResolution[1];
-	values[2] = priv->tvResolution[2];
-	values[3] = priv->tvResolution[3];
-	prop_tv_resolutions = InitWcmAtom(pInfo->dev, WACOM_PROP_TWINVIEW_RES, 32, 4, values);
-
 
 	values[0] = priv->screen_no;
-	values[1] = priv->twinview;
+	values[1] = 0;
 	values[2] = priv->wcmMMonitor;
 	prop_display = InitWcmAtom(pInfo->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
 
@@ -701,9 +695,6 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if (values[0] < -1 || values[0] >= priv->numScreen)
 			return BadValue;
 
-		if (values[1] < TV_NONE || values[1] > TV_MAX)
-			return BadValue;
-
 		if ((values[2] != 0) && (values[2] != 1))
 			return BadValue;
 
@@ -712,23 +703,6 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			if (priv->screen_no != values[0])
 				wcmChangeScreen(pInfo, values[0]);
 			priv->screen_no = values[0];
-
-			if (priv->twinview != values[1])
-			{
-				int screen = priv->screen_no;
-				priv->twinview = values[1];
-
-				/* Can not restrict the cursor to a particular screen */
-				if (!values[1] && (screenInfo.numScreens == 1))
-				{
-					screen = -1;
-					priv->currentScreen = 0;
-					DBG(10, priv, "TwinView sets to "
-							"TV_NONE: can't change screen_no. \n");
-				}
-				wcmChangeScreen(pInfo, screen);
-			}
-
 			priv->wcmMMonitor = values[2];
 		}
 	} else if (property == prop_cursorprox)
@@ -831,57 +805,6 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly && common->wcmTPCButton != !values[0])
 			common->wcmTPCButton = !values[0];
-	} else if (property == prop_tv_resolutions)
-	{
-		CARD32 *values;
-		int width, height;
-
-		if (prop->size != 4 || prop->format != 32)
-			return BadValue;
-
-		values = (CARD32*)prop->data;
-
-		width = screenInfo.screens[0]->width;
-		height = screenInfo.screens[0]->height;
-
-		/* non-TwinView settings can not set TwinView RESOLUTION */
-		switch(priv->twinview)
-		{
-			case TV_NONE:
-				if (values[0] || values[1] ||
-				    values[2] || values[3])
-					return BadValue;
-				break;
-			case TV_ABOVE_BELOW:
-			case TV_BELOW_ABOVE:
-				      if ((values[1] + values[3]) != height)
-					      return BadValue;
-				      if (values[0] != width && values[2] != width)
-					      return BadValue;
-				      if (values[0] > width || values[2] > width)
-					      return BadValue;
-				      break;
-			case TV_LEFT_RIGHT:
-			case TV_RIGHT_LEFT:
-				      if ((values[0] + values[2]) != width)
-					      return BadValue;
-				      if (values[1] != height && values[3] != height)
-					      return BadValue;
-				      if (values[1] > height || values[3] > height)
-					      return BadValue;
-				      break;
-		}
-
-		if (!checkonly)
-		{
-			priv->tvResolution[0] = values[0];
-			priv->tvResolution[1] = values[1];
-			priv->tvResolution[2] = values[2];
-			priv->tvResolution[3] = values[3];
-
-			/* reset screen info */
-			wcmChangeScreen(pInfo, priv->screen_no);
-		}
 #ifdef DEBUG
 	} else if (property == prop_debuglevels)
 	{

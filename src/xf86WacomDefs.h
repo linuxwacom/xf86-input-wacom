@@ -242,10 +242,6 @@ struct _WacomDeviceRec
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
-	int twinview;	        /* using twinview mode of gfx card */
-	int tvoffsetX;		/* X edge offset for TwinView setup */
-	int tvoffsetY;		/* Y edge offset for TwinView setup */
-	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
 
 	/* JEJ - throttle */

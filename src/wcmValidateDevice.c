@@ -515,28 +515,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 				pInfo->name, common->wcmCursorProxoutDist);
 	}
 
-	/* Configure Monitors' resoluiton in TwinView setup.
-	 * The value is in the form of "1024x768,1280x1024"
-	 * for a desktop of monitor 1 at 1024x768 and
-	 * monitor 2 at 1280x1024
-	 */
-	s = xf86SetStrOption(pInfo->options, "TVResolution", NULL);
-	if (s)
-	{
-		int a,b,c,d;
-		if ((sscanf(s,"%dx%d,%dx%d",&a,&b,&c,&d) != 4) ||
-			(a <= 0) || (b <= 0) || (c <= 0) || (d <= 0))
-			xf86Msg(X_CONFIG, "%s: TVResolution not valid\n",
-				pInfo->name);
-		else
-		{
-			priv->tvResolution[0] = a;
-			priv->tvResolution[1] = b;
-			priv->tvResolution[2] = c;
-			priv->tvResolution[3] = d;
-		}
-	}
-
 	priv->screen_no = xf86SetIntOption(pInfo->options, "ScreenNo", -1);
 
 	if (xf86SetBoolOption(pInfo->options, "KeepShape", 0))
@@ -687,31 +665,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
 	}
 
-	s = xf86SetStrOption(pInfo->options, "Twinview", NULL);
-	if (s && xf86NameCmp(s, "none") == 0)
-		priv->twinview = TV_NONE;
-	else if ((s && xf86NameCmp(s, "horizontal") == 0) ||
-			(s && xf86NameCmp(s, "rightof") == 0))
-		priv->twinview = TV_LEFT_RIGHT;
-	else if ((s && xf86NameCmp(s, "vertical") == 0) ||
-			(s && xf86NameCmp(s, "belowof") == 0))
-		priv->twinview = TV_ABOVE_BELOW;
-	else if (s && xf86NameCmp(s, "leftof") == 0)
-		priv->twinview = TV_RIGHT_LEFT;
-	else if (s && xf86NameCmp(s, "aboveof") == 0)
-		priv->twinview = TV_BELOW_ABOVE;
-	else if (s)
-	{
-		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical (belowof), "
-			"horizontal (rightof), aboveof, or leftof). Using none.\n",
-			pInfo->name);
-		priv->twinview = TV_NONE;
-	}
-
-	if (s && priv->twinview != TV_NONE)
-		priv->numScreen = 2;
-	else
-		priv->numScreen = screenInfo.numScreens;
+	priv->numScreen = screenInfo.numScreens;
 
 	/* Now parse class-specific options */
 	if (common->wcmDevCls->ParseOptions &&
