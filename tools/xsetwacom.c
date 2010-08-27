@@ -537,20 +537,12 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "TVResolution0",
-		.desc = "Sets MetaModes option for TwinView Screen 0. ",
+		.name = "TVResolution",
+		.desc = "Sets MetaModes option for TwinView. ",
 		.prop_name = WACOM_PROP_TWINVIEW_RES,
 		.prop_format = 32,
 		.prop_offset = 0,
-		.prop_extra = 1,
-	},
-	{
-		.name = "TVResolution1",
-		.desc = "Sets MetaModes option for TwinView Screen 1. ",
-		.prop_name = WACOM_PROP_TWINVIEW_RES,
-		.prop_format = 32,
-		.prop_offset = 2,
-		.prop_extra = 1,
+		.prop_extra = 3,
 	},
 	{
 		.name = "RawFilter",
