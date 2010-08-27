@@ -549,7 +549,7 @@ static param_t parameters[] =
 		.desc = "Sets MetaModes option for TwinView Screen 1. ",
 		.prop_name = WACOM_PROP_TWINVIEW_RES,
 		.prop_format = 32,
-		.prop_offset = 1,
+		.prop_offset = 2,
 		.prop_extra = 1,
 	},
 	{
