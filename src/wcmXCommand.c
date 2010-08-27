@@ -429,6 +429,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		return BadValue; /* Read-only */
 	} else if (property == prop_display)
 	{
+		int nscreens = priv->numScreen;
 		INT8 *values;
 
 		if (prop->size != 3 || prop->format != 8)
@@ -436,7 +437,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		values = (INT8*)prop->data;
 
-		if (values[0] < -1 || values[0] >= priv->numScreen)
+		if (values[1] != TV_NONE)
+			nscreens = 2;
+
+		if (values[0] < -1 || values[0] >= nscreens)
 			return BadValue;
 
 		if (values[1] < TV_NONE || values[1] > TV_MAX)
@@ -455,6 +459,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			{
 				int screen = priv->screen_no;
 				priv->twinview = values[1];
+				priv->numScreen = (priv->twinview) == TV_NONE ? screenInfo.numScreens : 2;
 
 				/* Can not restrict the cursor to a particular screen */
 				if (!values[1] && (screenInfo.numScreens == 1))
