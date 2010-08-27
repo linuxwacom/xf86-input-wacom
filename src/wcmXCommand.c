@@ -89,7 +89,6 @@ void wcmChangeScreen(InputInfoPtr pInfo, int value)
 
 Atom prop_rotation;
 Atom prop_tablet_area;
-Atom prop_screen_area;
 Atom prop_pressurecurve;
 Atom prop_serials;
 Atom prop_strip_buttons;
