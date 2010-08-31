@@ -827,64 +827,21 @@ static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
 	return maxtry;
 }
 
-/**
- * Query the device's fd for the key bits and the tablet ID. Returns the ID
- * on success or 0 on failure.
- * For serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
- * device ID. This matching only works for wacom devices (serial ID of
- * WACf), all others are simply assumed to be pen + erasor.
- */
-static int isdv4ProbeKeys(InputInfoPtr pInfo)
+static int set_keybits_wacom(int id, unsigned long *keys)
 {
-	int id;
 	int tablet_id = 0;
-	struct serial_struct tmp;
-	const char *device = xf86SetStrOption(pInfo->options, "Device", NULL);
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
-	WacomCommonPtr  common = priv->common;
-
-	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
-		return 0;
-
-	/* check device name for ID first */
-	if (sscanf(pInfo->name, "WACf%x", &id) <= 1)
-	{
-		/* id in file sys/class/tty/%str/device/id */
-		FILE *file;
-		char sysfs_id[256];
-		char *str = strstr(device, "ttyS");
-		snprintf(sysfs_id, sizeof(sysfs_id),
-				"/sys/class/tty/%s/device/id", str);
-		file = fopen(sysfs_id, "r");
-
-		/* return true since it falls to default */
-		if (file)
-		{
-			/* make sure we fall to default */
-			if (fscanf(file, "WACf%x\n", &id) <= 0)
-				id = 0;
-
-			fclose(file);
-		}
-	}
-
-	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
-
-	/* default to penabled */
-	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
-	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
 
 	/* id < 0x008 are only penabled */
 	if (id > 0x007)
-		SETBIT(common->wcmKeys, BTN_TOOL_DOUBLETAP);
+		SETBIT(keys, BTN_TOOL_DOUBLETAP);
 	if (id > 0x0a)
-		SETBIT(common->wcmKeys, BTN_TOOL_TRIPLETAP);
+		SETBIT(keys, BTN_TOOL_TRIPLETAP);
 
 	/* no pen 2FGT */
 	if (id == 0x010)
 	{
-		CLEARBIT(common->wcmKeys, BTN_TOOL_PEN);
-		CLEARBIT(common->wcmKeys, BTN_TOOL_RUBBER);
+		CLEARBIT(keys, BTN_TOOL_PEN);
+		CLEARBIT(keys, BTN_TOOL_RUBBER);
 	}
 
 	/* 0x9a and 0x9f are only detected by communicating
@@ -899,6 +856,80 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 		case 0xb ... 0xe: tablet_id = 0xe3; break;
 		case 0x10:	  tablet_id = 0xe2; break;
 	}
+
+	return tablet_id;
+}
+
+typedef struct {
+	const char *pattern; /* sscanf matching pattern to extract ID */
+	/* set the bits in the given keys array based on the id. return the
+	 * tablet_id or the closest guess anyway */
+	int (*set_bits)(int id, unsigned long* keys);
+} ISDV4ModelDesc;
+
+static ISDV4ModelDesc isdv4_models[] = {
+	{ "WACf%x", set_keybits_wacom },
+	{ NULL, 0 }
+};
+
+/**
+ * Query the device's fd for the key bits and the tablet ID. Returns the ID
+ * on success or 0 on failure.
+ * For serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
+ * device ID. This matching only works for known devices (see the
+ * isdv4_model list), all others are simply assumed to be pen + erasor.
+ */
+static int isdv4ProbeKeys(InputInfoPtr pInfo)
+{
+	int id;
+	int tablet_id = 0x90;
+	struct serial_struct tmp;
+	const char *device = xf86SetStrOption(pInfo->options, "Device", NULL);
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr  common = priv->common;
+	ISDV4ModelDesc *model = isdv4_models;
+
+	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
+		return 0;
+
+	/* check device name for ID first */
+	while (model->pattern && sscanf(pInfo->name, model->pattern, &id) < 1)
+		model++;
+
+	if (!model->pattern)
+	{
+		/* id in file sys/class/tty/%str/device/id */
+		FILE *file;
+		char sysfs_id[256];
+		char *str = strstr(device, "ttyS");
+		snprintf(sysfs_id, sizeof(sysfs_id),
+				"/sys/class/tty/%s/device/id", str);
+		file = fopen(sysfs_id, "r");
+
+		/* return true since it falls to default */
+		if (file)
+		{
+			model = isdv4_models;
+
+			while(model->pattern && fscanf(file, model->pattern, &id) <= 0)
+				model++;
+
+			/* make sure we fall to default */
+			if (!model->pattern)
+				id = 0;
+
+			fclose(file);
+		}
+	}
+
+	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
+
+	/* default to penabled */
+	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
+	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
+
+	if (model->set_bits)
+		tablet_id = model->set_bits(id, common->wcmKeys);
 
 	return tablet_id;
 }
