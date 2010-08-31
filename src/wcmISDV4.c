@@ -860,6 +860,19 @@ static int set_keybits_wacom(int id, unsigned long *keys)
 	return tablet_id;
 }
 
+static int set_keybits_fujitsu(int id, unsigned long *keys)
+{
+	int tablet_id = 0x90; /* default to penabled */
+
+	if (id == 0x2e7) {
+		SETBIT(keys, BTN_TOOL_DOUBLETAP);
+		SETBIT(keys, BTN_TOOL_TRIPLETAP);
+		tablet_id = 0xe3;
+	}
+
+	return tablet_id;
+}
+
 typedef struct {
 	const char *pattern; /* sscanf matching pattern to extract ID */
 	/* set the bits in the given keys array based on the id. return the
@@ -869,6 +882,7 @@ typedef struct {
 
 static ISDV4ModelDesc isdv4_models[] = {
 	{ "WACf%x", set_keybits_wacom },
+	{ "FUJ%x", set_keybits_fujitsu },
 	{ NULL, 0 }
 };
 
