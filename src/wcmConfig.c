@@ -65,7 +65,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	pInfo->atom = 0;
 	pInfo->dev = NULL;
 	pInfo->private = priv;
-	pInfo->private_flags = 0;
 
 	priv->next = NULL;
 	priv->pInfo = pInfo;
