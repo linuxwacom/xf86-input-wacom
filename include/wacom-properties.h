@@ -54,7 +54,7 @@
 /* 8 bit 3 values, screen number, twinview on/off, multimonitor */
 #define WACOM_PROP_DISPLAY_OPTS "Wacom Display Options"
 
-/* 32 bit, 4 values, top x, top y, bottom x, bottom y */
+/* DEPRECATED. DO NOT USE */
 #define WACOM_PROP_SCREENAREA "Wacom Screen Area"
 
 /* 32 bit, 1 value */

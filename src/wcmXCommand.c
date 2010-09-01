@@ -95,7 +95,6 @@ Atom prop_strip_buttons;
 Atom prop_wheel_buttons;
 Atom prop_display;
 Atom prop_tv_resolutions;
-Atom prop_screen;
 Atom prop_cursorprox;
 Atom prop_capacity;
 Atom prop_threshold;
@@ -202,12 +201,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[1] = 0;
 	values[2] = priv->wcmMMonitor;
 	prop_display = InitWcmAtom(pInfo->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
-
-	values[0] = priv->screenTopX[priv->currentScreen];
-	values[1] = priv->screenTopY[priv->currentScreen];
-	values[2] = priv->screenBottomX[priv->currentScreen];
-	values[3] = priv->screenBottomY[priv->currentScreen];
-	prop_screen = InitWcmAtom(pInfo->dev, WACOM_PROP_SCREENAREA, 32, 4, values);
 
 	values[0] = common->wcmCursorProxoutDist;
 	prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
@@ -677,13 +670,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		return wcmSetStripProperty(dev, property, prop, checkonly);
 	else if (property == prop_wheel_buttons)
 		return wcmSetWheelProperty(dev, property, prop, checkonly);
-	else if (property == prop_screen)
-	{
-		/* Long-term, this property should be removed, there's other ways to
-		 * get the screen resolution. For now, we leave it in for backwards
-		 * compat */
-		return BadValue; /* Read-only */
-	} else if (property == prop_display)
+	else if (property == prop_display)
 	{
 		INT8 *values;
 
