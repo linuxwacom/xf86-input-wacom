@@ -62,7 +62,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	pInfo->control_proc = gWacomModule.DevChangeControl;
 	pInfo->close_proc = gWacomModule.DevClose;
 	pInfo->switch_mode = gWacomModule.DevSwitchMode;
-	pInfo->atom = 0;
 	pInfo->dev = NULL;
 	pInfo->private = priv;
 
