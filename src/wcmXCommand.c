@@ -848,7 +848,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		switch(priv->twinview)
 		{
 			case TV_NONE:
-				return BadValue;
+				if (values[0] || values[1] ||
+				    values[2] || values[3])
+					return BadValue;
+				break;
 			case TV_ABOVE_BELOW:
 			case TV_BELOW_ABOVE:
 				      if ((values[1] + values[3]) != height)
