@@ -814,9 +814,10 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	wcmUSBData* private = common->private;
 
 	DBG(10, common, "\n");
+
 	/* store events until we receive the MSC_SERIAL containing
-	 * the serial number; without it we cannot determine the
-	 * correct channel. */
+	 * the serial number or a SYN_REPORT.
+	 */
 
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >=
@@ -871,7 +872,7 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	}
 
 	/* ignore events without information */
-	if ((private->wcmEventCnt <= 2) && private->wcmLastToolSerial)
+	if ((private->wcmEventCnt < 2) && private->wcmLastToolSerial)
 	{
 		DBG(3, common, "%s: dropping empty event"
 			" for serial %d\n", pInfo->name,
