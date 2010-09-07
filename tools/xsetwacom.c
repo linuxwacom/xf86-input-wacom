@@ -2261,7 +2261,7 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 	if (btn_no == -1)
 		return;
 
-	TRACE("Getting button map curve for device %ld.\n", dev->device_id);
+	TRACE("Getting button map for device %ld.\n", dev->device_id);
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
