@@ -30,9 +30,6 @@
 #define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
 #define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
 
-/* Tested result for Bamboo touch jump */
-#define BAMBOO_TOUCH_JUMPED 30
-
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
@@ -1041,19 +1038,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 			pChannel->nSamples);
 		++pChannel->nSamples;
 		return; /* discard */
-	}
-
-	/* ignore Bamboo touch data if point is abnormal */
-	if ((ds.device_type == TOUCH_ID) && (common->tablet_id >= 0xd0
-	    && common->tablet_id <= 0xd3) && ds.proximity)
-	{
-		if (!(ds.x * ds.y) || (pLast->proximity &&
-			(abs(ds.x - pLast->x) > BAMBOO_TOUCH_JUMPED ||
-			abs(ds.y - pLast->y) > BAMBOO_TOUCH_JUMPED)))
-		{
-			/* ignore the data */
-			goto ret;
-		}
 	}
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
