@@ -898,6 +898,62 @@ skipEvent:
 	private->wcmEventCnt = 0;
 }
 
+static void usbParseAbsEvent(WacomCommonPtr common,
+			     struct input_event *event, WacomDeviceState *ds)
+{
+	switch(event->code)
+	{
+		case ABS_X:
+			ds->x = event->value;
+			break;
+		case ABS_Y:
+			ds->y = event->value;
+			break;
+		case ABS_RX:
+			ds->stripx = event->value;
+			break;
+		case ABS_RY:
+			ds->stripy = event->value;
+			break;
+		case ABS_RZ:
+			ds->rotation = event->value;
+			break;
+		case ABS_TILT_X:
+			ds->tiltx = event->value - common->wcmMaxtiltX/2;
+			break;
+		case ABS_TILT_Y:
+			ds->tilty = event->value - common->wcmMaxtiltY/2;
+			break;
+		case ABS_PRESSURE:
+			if (ds->device_type == TOUCH_ID)
+				ds->capacity = event->value;
+			else
+				ds->pressure = event->value;
+			break;
+		case ABS_DISTANCE:
+			ds->distance = event->value;
+			break;
+		case ABS_WHEEL:
+			{
+				double norm = event->value *
+					MAX_ROTATION_RANGE /
+					(double)MAX_ABS_WHEEL;
+				ds->abswheel = (int)norm + MIN_ROTATION;
+				break;
+			}
+		case ABS_Z:
+			ds->abswheel = event->value;
+			break;
+		case ABS_THROTTLE:
+			ds->throttle = event->value;
+			break;
+		case ABS_MISC:
+			if (event->value)
+				ds->device_id = event->value;
+			break;
+	}
+}
+
 static struct
 {
 	unsigned long device_type;
@@ -916,9 +972,169 @@ static struct
 	{ PAD_ID,    BTN_TOOL_FINGER    }
 };
 
+static void usbParseKeyEvent(WacomCommonPtr common,
+			     struct input_event *event, WacomDeviceState *ds,
+			     WacomDeviceState *dslast)
+{
+	int shift, nkeys;
+	#define MOD_BUTTONS(bit, value) do { \
+		shift = 1<<bit; \
+		ds->buttons = (((value) != 0) ? \
+		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
+		} while (0)
+
+	/* BTN_TOOL_* are sent to indicate when a specific tool is going
+	 * in our out of proximity.  When going out of proximity, ds
+	 * is initialized to zeros elsewere.  When going in proximity,
+	 * here we initialize tool specific values.
+	 *
+	 * This requires tools that map to same channel of an input
+	 * device and that share events (ABS_X of PEN and ERASER for
+	 * example) not to be in proximity at the same time.  Tools
+	 * that map to different channels can be in proximity at same
+	 * time with no confusion.
+	 *
+	 * TODO: Input devices that do not use Wacom's single device
+	 * channel multiplexing scheme will report BTN_TOUCH for same
+	 * meaning we use BTN_TOOL_* and also report tablet button presses
+	 * with no BTN_TOOL_FINGER.  As long as these devices do not
+	 * have operlapping button reports (see BTN_STYLUS2 and
+	 * BTN_RIGHT as example) then a simple solution may be to treat
+	 * BTN_TOUCH as BTN_TOOL_DOUBLETAP for touchpads and
+	 * BTN_TOOL_PEN for tablets.  Since touchpads can
+	 * send BTN_TOOL_DOUBLETAP for different reason then below case
+	 * statement would need to account for that.
+	 *
+	 * Remaining part of case state (after BTN_TOOL_*) handle normal
+	 * button presses.
+	 */
+	switch (event->code)
+	{
+		case BTN_TOOL_PEN:
+		case BTN_TOOL_PENCIL:
+		case BTN_TOOL_BRUSH:
+		case BTN_TOOL_AIRBRUSH:
+			ds->device_type = STYLUS_ID;
+			/* V5 tools use ABS_MISC to report device_id */
+			if (common->wcmProtocolLevel == 4)
+				ds->device_id = STYLUS_DEVICE_ID;
+			ds->proximity = (event->value != 0);
+			DBG(6, common,
+			    "USB stylus detected %x\n",
+			    event->code);
+			break;
+
+		case BTN_TOOL_RUBBER:
+			ds->device_type = ERASER_ID;
+			/* V5 tools use ABS_MISC to report device_id */
+			if (common->wcmProtocolLevel == 4)
+				ds->device_id = ERASER_DEVICE_ID;
+			ds->proximity = (event->value != 0);
+			if (ds->proximity)
+				ds->proximity = ERASER_PROX;
+			DBG(6, common,
+			    "USB eraser detected %x (value=%d)\n",
+			    event->code, event->value);
+			break;
+
+		case BTN_TOOL_MOUSE:
+		case BTN_TOOL_LENS:
+			DBG(6, common,
+			    "USB mouse detected %x (value=%d)\n",
+			    event->code, event->value);
+			ds->device_type = CURSOR_ID;
+			/* V5 tools use ABS_MISC to report device_id */
+			if (common->wcmProtocolLevel == 4)
+				ds->device_id = CURSOR_DEVICE_ID;
+			ds->proximity = (event->value != 0);
+			break;
+
+		case BTN_TOOL_FINGER:
+			DBG(6, common,
+			    "USB Pad detected %x (value=%d)\n",
+			    event->code, event->value);
+			ds->device_type = PAD_ID;
+			ds->device_id = PAD_DEVICE_ID;
+			ds->proximity = (event->value != 0);
+			break;
+
+		case BTN_TOOL_DOUBLETAP:
+			DBG(6, common,
+			    "USB Touch detected %x (value=%d)\n",
+			    event->code, event->value);
+			ds->device_type = TOUCH_ID;
+			ds->device_id = TOUCH_DEVICE_ID;
+			ds->proximity = event->value;
+			/* time stamp for 2FGT gesture events */
+			if ((ds->proximity && !dslast->proximity) ||
+			    (!ds->proximity && dslast->proximity))
+				ds->sample = (int)GetTimeInMillis();
+			/* left button is always pressed for
+			 * touchscreen without capacity
+			 * when the first finger touch event received.
+			 * For touchscreen with capacity, left button
+			 * event will be decided
+			 * in wcmCommon.c by capacity threshold.
+			 * Touchpads should not have button
+			 * press.
+			 */
+			if (common->wcmCapacityDefault < 0 &&
+			    (TabletHasFeature(common, WCM_TPC)))
+				MOD_BUTTONS(0, event->value);
+			break;
+
+		case BTN_TOOL_TRIPLETAP:
+			DBG(6, common,
+			    "USB Touch second finger detected %x (value=%d)\n",
+			    event->code, event->value);
+			ds->device_type = TOUCH_ID;
+			ds->device_id = TOUCH_DEVICE_ID;
+			ds->proximity = event->value;
+			/* time stamp for 2GT gesture events */
+			if ((ds->proximity && !dslast->proximity) ||
+			    (!ds->proximity && dslast->proximity))
+				ds->sample = (int)GetTimeInMillis();
+			/* Second finger events will be considered in
+			 * combination with the first finger data */
+			break;
+
+		case BTN_LEFT:
+			MOD_BUTTONS(0, event->value);
+			break;
+
+		case BTN_STYLUS:
+		case BTN_MIDDLE:
+			MOD_BUTTONS(1, event->value);
+			break;
+
+		case BTN_STYLUS2:
+		case BTN_RIGHT:
+			MOD_BUTTONS(2, event->value);
+			break;
+
+		case BTN_SIDE:
+			MOD_BUTTONS (3, event->value);
+			break;
+
+		case BTN_EXTRA:
+			MOD_BUTTONS (4, event->value);
+			break;
+
+		default:
+			for (nkeys = 0; nkeys < common->npadkeys; nkeys++)
+			{
+				if (event->code == common->padkey_code[nkeys])
+				{
+					MOD_BUTTONS(nkeys, event->value);
+					break;
+				}
+			}
+	}
+}
+
 static void usbParseChannel(InputInfoPtr pInfo, int channel)
 {
-	int i, shift, nkeys;
+	int i;
 	WacomDeviceState* ds;
 	struct input_event* event;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -928,11 +1144,6 @@ static void usbParseChannel(InputInfoPtr pInfo, int channel)
 	wcmUSBData* private = common->private;
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
-	#define MOD_BUTTONS(bit, value) do { \
-		shift = 1<<bit; \
-		ds->buttons = (((value) != 0) ? \
-		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
-		} while (0)
 
 	if (private->wcmEventCnt == 1 && !private->wcmEvents->type) {
 		DBG(6, common, "no real events received\n");
@@ -956,37 +1167,7 @@ static void usbParseChannel(InputInfoPtr pInfo, int channel)
 		/* absolute events */
 		if (event->type == EV_ABS)
 		{
-			if (event->code == ABS_X)
-				ds->x = event->value;
-			else if (event->code == ABS_Y)
-				ds->y = event->value;
-			else if (event->code == ABS_RX)
-				ds->stripx = event->value; 
-			else if (event->code == ABS_RY)
-				ds->stripy = event->value;
-			else if (event->code == ABS_RZ) 
-				ds->rotation = event->value;
-			else if (event->code == ABS_TILT_X)
-				ds->tiltx = event->value - common->wcmMaxtiltX/2;
-			else if (event->code ==  ABS_TILT_Y)
-				ds->tilty = event->value - common->wcmMaxtiltY/2;
-			else if (event->code == ABS_PRESSURE) {
-				if (ds->device_type == TOUCH_ID)
-					ds->capacity = event->value;
-				else
-					ds->pressure = event->value;
-			} else if (event->code == ABS_DISTANCE)
-				ds->distance = event->value;
-			else if (event->code == ABS_WHEEL) {
-				double norm = event->value * MAX_ROTATION_RANGE /
-					(double)MAX_ABS_WHEEL;
-				ds->abswheel = (int)norm + MIN_ROTATION;
-			} else if (event->code == ABS_Z)
-				ds->abswheel = event->value;
-			else if (event->code == ABS_THROTTLE)
-				ds->throttle = event->value;
-			else if (event->code == ABS_MISC && event->value)
-				ds->device_id = event->value;
+			usbParseAbsEvent(common, event, ds);
 		}
 		else if (event->type == EV_REL)
 		{
@@ -998,121 +1179,7 @@ static void usbParseChannel(InputInfoPtr pInfo, int channel)
 		}
 
 		else if (event->type == EV_KEY)
-		{
-			if ((event->code == BTN_TOOL_PEN) ||
-				(event->code == BTN_TOOL_PENCIL) ||
-				(event->code == BTN_TOOL_BRUSH) ||
-				(event->code == BTN_TOOL_AIRBRUSH))
-			{
-				ds->device_type = STYLUS_ID;
-				/* V5 tools use ABS_MISC to report device_id */
-				if (common->wcmProtocolLevel == 4)
-					ds->device_id = STYLUS_DEVICE_ID;
-				ds->proximity = (event->value != 0);
-				DBG(6, common,
-					"USB stylus detected %x\n",
-					event->code);
-			}
-			else if (event->code == BTN_TOOL_RUBBER)
-			{
-				ds->device_type = ERASER_ID;
-				/* V5 tools use ABS_MISC to report device_id */
-				if (common->wcmProtocolLevel == 4)
-					ds->device_id = ERASER_DEVICE_ID;
-				ds->proximity = (event->value != 0);
-				if (ds->proximity)
-					ds->proximity = ERASER_PROX;
-				DBG(6, common, 
-					"USB eraser detected %x (value=%d)\n",
-					event->code, event->value);
-			}
-			else if ((event->code == BTN_TOOL_MOUSE) ||
-				(event->code == BTN_TOOL_LENS))
-			{
-				DBG(6, common, 
-					"USB mouse detected %x (value=%d)\n",
-					event->code, event->value);
-				ds->device_type = CURSOR_ID;
-				/* V5 tools use ABS_MISC to report device_id */
-				if (common->wcmProtocolLevel == 4)
-					ds->device_id = CURSOR_DEVICE_ID;
-				ds->proximity = (event->value != 0);
-			}
-			else if (event->code == BTN_TOOL_FINGER)
-			{
-				DBG(6, common, 
-					"USB Pad detected %x (value=%d)\n",
-					event->code, event->value);
-				ds->device_type = PAD_ID;
-				ds->device_id = PAD_DEVICE_ID;
-				ds->proximity = (event->value != 0);
-			}
-			else if (event->code == BTN_TOOL_DOUBLETAP)
-			{
-				DBG(6, common, 
-					"USB Touch detected %x (value=%d)\n",
-					event->code, event->value);
-				ds->device_type = TOUCH_ID;
-				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = event->value;
-				/* time stamp for 2FGT gesture events */
-				if ((ds->proximity && !dslast.proximity) ||
-					    (!ds->proximity && dslast.proximity))
-					ds->sample = (int)GetTimeInMillis();
-				/* left button is always pressed for
-				 * touchscreen without capacity
-				 * when the first finger touch event received.
-				 * For touchscreen with capacity, left button
-				 * event will be decided
-				 * in wcmCommon.c by capacity threshold.
-				 * Touchpads should not have button
-				 * press.
-				 */
-				if (common->wcmCapacityDefault < 0 &&
-				     (TabletHasFeature(common, WCM_TPC)))
-					MOD_BUTTONS (0, event->value);
-			}
-			else if (event->code == BTN_TOOL_TRIPLETAP)
-			{
-				DBG(6, common, 
-					"USB Touch second finger detected %x (value=%d)\n",
-					event->code, event->value);
-				ds->device_type = TOUCH_ID;
-				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = event->value;
-				/* time stamp for 2GT gesture events */
-				if ((ds->proximity && !dslast.proximity) ||
-					    (!ds->proximity && dslast.proximity))
-					ds->sample = (int)GetTimeInMillis();
-				/* Second finger events will be considered in
-				 * combination with the first finger data */
-			}
-			else if ((event->code == BTN_STYLUS) ||
-				(event->code == BTN_MIDDLE))
-			{
-				MOD_BUTTONS (1, event->value);
-			}
-			else if ((event->code == BTN_STYLUS2) ||
-				(event->code == BTN_RIGHT))
-			{
-				MOD_BUTTONS (2, event->value);
-			}
-			else if (event->code == BTN_LEFT)
-				MOD_BUTTONS (0, event->value);
-			else if (event->code == BTN_SIDE)
-				MOD_BUTTONS (3, event->value);
-			else if (event->code == BTN_EXTRA)
-				MOD_BUTTONS (4, event->value);
-			else
-			{
-				for (nkeys = 0; nkeys < common->npadkeys; nkeys++)
-					if (event->code == common->padkey_code [nkeys])
-					{
-						MOD_BUTTONS (nkeys, event->value);
-						break;
-					}
-			}
-		}
+			usbParseKeyEvent(common, event, ds, &dslast);
 	} /* next event */
 
 	/* device type unknown? Tool may be on the tablet when X starts. */
