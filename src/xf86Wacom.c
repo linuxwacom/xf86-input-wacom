@@ -216,7 +216,7 @@ static int wcmInitArea(InputInfoPtr pInfo)
 				tmp->next = priv->next;
 		}
 		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
-			pInfo->conf_idev->identifier);
+			pInfo->name);
 		return FALSE;
 	}
 	xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
