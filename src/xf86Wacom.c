@@ -626,6 +626,7 @@ Bool wcmIsWacomDevice (char* fname)
 	{
 		case WACOM_VENDOR_ID:
 		case WALTOP_VENDOR_ID:
+		case HANWANG_VENDOR_ID:
 			return TRUE;
 		default:
 			break;
