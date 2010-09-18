@@ -1951,4 +1951,4 @@ WacomCommonPtr wcmRefCommon(WacomCommonPtr common)
 	return common;
 }
 
-/* vim: set noexpandtab shiftwidth=8: */
+/* vim: set noexpandtab tabstop=8 shiftwidth=8: */

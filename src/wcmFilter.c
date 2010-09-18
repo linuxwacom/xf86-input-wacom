@@ -312,4 +312,4 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 		ds->rotation = -ds->rotation;
 }
 
-/* vim: set noexpandtab shiftwidth=8: */
+/* vim: set noexpandtab tabstop=8 shiftwidth=8: */

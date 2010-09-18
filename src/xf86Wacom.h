@@ -186,4 +186,4 @@ extern WacomCommonPtr wcmNewCommon(void);
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
 
-/* vim: set noexpandtab shiftwidth=8: */
+/* vim: set noexpandtab tabstop=8 shiftwidth=8: */

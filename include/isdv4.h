@@ -218,4 +218,4 @@ static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const si
 
 #endif /* ISDV4_H */
 
-/* vim: set noexpandtab shiftwidth=8: */
+/* vim: set noexpandtab tabstop=8 shiftwidth=8: */
