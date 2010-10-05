@@ -55,7 +55,7 @@ or the
 .B set
 command. Note that not all parameters are available on all device types.
 .TP
-\fBlist\fR mods
+\fBlist\fR mod
 .B Not implemented!
 List the available list of modifiers to be used when setting key or button
 actions.
