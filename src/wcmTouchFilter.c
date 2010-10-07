@@ -296,7 +296,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 {
 	int button = (dist > 0) ? buttonUp : buttonDn;
 	WacomCommonPtr common = priv->common;
-	int count = (int)(((double)abs(dist)/
+	int count = (int)((1.0 * abs(dist)/
 		common->wcmGestureParameters.wcmScrollDistance) + 0.5);
 	WacomChannelPtr firstChannel = common->wcmChannel;
 	WacomChannelPtr secondChannel = common->wcmChannel + 1;
@@ -455,7 +455,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		return;
 
 	dist = touchDistance(ds[0], ds[1]) - dist;
-	count = (int)(((double)abs(dist)/common->wcmGestureParameters.wcmZoomDistance) + 0.5);
+	count = (int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance) + 0.5);
 
 	/* user might have changed from left to right or vice versa */
 	if (count < common->wcmGestureParameters.wcmGestureUsed)
