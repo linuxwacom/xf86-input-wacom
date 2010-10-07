@@ -1533,14 +1533,6 @@ static void rotateOneTool(WacomDevicePtr priv)
 	wcmInitialCoordinates(priv->pInfo, 0);
 	wcmInitialCoordinates(priv->pInfo, 1);
 
-	if (tmpTopX != priv->topX)
-		xf86ReplaceIntOption(priv->pInfo->options, "TopX", priv->topX);
-	if (tmpTopY != priv->topY)
-		xf86ReplaceIntOption(priv->pInfo->options, "TopY", priv->topY);
-	if (tmpBottomX != priv->bottomX)
-		xf86ReplaceIntOption(priv->pInfo->options, "BottomX", priv->bottomX);
-	if (tmpBottomY != priv->bottomY)
-		xf86ReplaceIntOption(priv->pInfo->options, "BottomY", priv->bottomY);
 }
 
 /*****************************************************************************
