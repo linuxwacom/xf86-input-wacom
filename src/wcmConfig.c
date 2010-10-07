@@ -559,7 +559,6 @@ InputDriverRec WACOM =
 	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
-	0              /* ref count */
 };
 
 
