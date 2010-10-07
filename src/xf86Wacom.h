@@ -165,7 +165,7 @@ extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 extern void wcmSoftOutEvent(InputInfoPtr pInfo);
 
 extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
-extern void wcmRotateCoordinates(InputInfoPtr pInfo, int* x, int* y);
+extern void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y);
 extern void wcmVirtualTabletSize(InputInfoPtr pInfo);
 extern void wcmVirtualTabletPadding(InputInfoPtr pInfo);
 

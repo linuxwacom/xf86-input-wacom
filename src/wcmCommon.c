@@ -505,30 +505,50 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds, int
 }
 
 /* rotate x and y before post X inout events */
-void wcmRotateCoordinates(InputInfoPtr pInfo, int* x, int* y)
+void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
+	DeviceIntPtr dev = pInfo->dev;
+	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
 
-	/* rotation mixes x and y up a bit */
-	if (common->wcmRotate == ROTATE_CW)
+	/* scale into on topX/topY area */
+	axis_x = &dev->valuator->axes[0];
+	axis_y = &dev->valuator->axes[1];
+
+	*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
+			priv->bottomX, priv->topX);
+
+	*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
+			priv->bottomY, priv->topY);
+
+	/* coordinates are now in the axis rage we advertise for the device */
+
+	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
 	{
 		tmp_coord = *x;
-		*x = *y;
-		*y = priv->maxY - tmp_coord;
+
+		*x = xf86ScaleAxis(*y,
+				   axis_x->max_value, axis_x->min_value,
+				   axis_y->max_value, axis_y->min_value);
+		*y = xf86ScaleAxis(tmp_coord,
+				   axis_y->max_value, axis_y->min_value,
+				   axis_x->max_value, axis_x->min_value);
 	}
-	else if (common->wcmRotate == ROTATE_CCW)
-	{
-		tmp_coord = *y;
-		*y = *x;
-		*x = priv->maxX - tmp_coord;
-	}
+
+	if (common->wcmRotate == ROTATE_CCW)
+		*y = axis_y->max_value - (*y - axis_y->min_value);
+	else if (common->wcmRotate == ROTATE_CW)
+		*x = axis_x->max_value - (*x - axis_x->min_value);
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		*x = priv->maxX - *x;
-		*y = priv->maxY - *y;
+		*x = axis_x->max_value - (*x - axis_x->min_value);
+		*y = axis_y->max_value - (*y - axis_y->min_value);
 	}
+
+
+	DBG(10, priv, "rotate/scaled to %d/%d\n", *x, *y);
 }
 
 static void wcmUpdateOldState(const InputInfoPtr pInfo,
@@ -619,7 +639,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		tx, ty, ds->abswheel, ds->rotation, ds->throttle);
 
 	if (ds->proximity)
-		wcmRotateCoordinates(pInfo, &x, &y);
+		wcmRotateAndScaleCoordinates(pInfo, &x, &y);
 
 	if (IsCursor(priv)) 
 	{
@@ -1485,55 +1505,6 @@ void wcmInitialScreens(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * rotateOneTool
- ****************************************************************************/
-
-static void rotateOneTool(WacomDevicePtr priv)
-{
-	WacomCommonPtr common = priv->common;
-	WacomToolAreaPtr area = priv->toolarea;
-	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
-
-	DBG(10, priv, "\n");
-
-	oldMaxX = priv->maxX;
-	oldMaxY = priv->maxY;
-
-	tmpTopX = priv->topX;
-	tmpBottomX = priv->bottomX;
-	tmpTopY = priv->topY;
-	tmpBottomY = priv->bottomY;
-
-	if (common->wcmRotate == ROTATE_CW || common->wcmRotate == ROTATE_CCW)
-	{
-		priv->maxX = oldMaxY;
-		priv->maxY = oldMaxX;
-	}
-
-	switch (common->wcmRotate) {
-	      case ROTATE_CW:
-		area->topX = priv->topX = tmpTopY;
-		area->bottomX = priv->bottomX = tmpBottomY;
-		area->topY = priv->topY = oldMaxX - tmpBottomX;
-		area->bottomY = priv->bottomY =oldMaxX - tmpTopX;
-		break;
-	      case ROTATE_CCW:
-		area->topX = priv->topX = oldMaxY - tmpBottomY;
-		area->bottomX = priv->bottomX = oldMaxY - tmpTopY;
-		area->topY = priv->topY = tmpTopX;
-		area->bottomY = priv->bottomY = tmpBottomX;
-		break;
-	      case ROTATE_HALF:
-		area->topX = priv->topX = oldMaxX - tmpBottomX;
-		area->bottomX = priv->bottomX = oldMaxX - tmpTopX;
-		area->topY = priv->topY= oldMaxY - tmpBottomY;
-		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
-		break;
-	}
-
-}
-
-/*****************************************************************************
  * wcmRotateTablet
  ****************************************************************************/
 
@@ -1541,64 +1512,9 @@ void wcmRotateTablet(InputInfoPtr pInfo, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	WacomDevicePtr tmppriv;
-	int oldRotation;
-	int tmpTopX, tmpTopY, tmpBottomX, tmpBottomY, oldMaxX, oldMaxY;
 
 	DBG(10, priv, "\n");
-
-	if (common->wcmRotate == value) /* initialization */
-	{
-		rotateOneTool(priv);
-	}
-	else
-	{
-		oldRotation = common->wcmRotate;
-		common->wcmRotate = value;
-
-		/* rotate all devices at once! else they get misaligned */
-		for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
-		{
-		    oldMaxX = tmppriv->maxX;
-		    oldMaxY = tmppriv->maxY;
-
-		    if (oldRotation == ROTATE_CW || oldRotation == ROTATE_CCW)
-		    {
-			tmppriv->maxX = oldMaxY;
-			tmppriv->maxY = oldMaxX;
-		    }
-
-		    tmpTopX = tmppriv->topX;
-		    tmpBottomX = tmppriv->bottomX;
-		    tmpTopY = tmppriv->topY;
-		    tmpBottomY = tmppriv->bottomY;
-
-		    /* recover to the unrotated xy-rectangles */
-		    switch (oldRotation) {
-		      case ROTATE_CW:
-			tmppriv->topX = oldMaxY - tmpBottomY;
-			tmppriv->bottomX = oldMaxY - tmpTopY;
-			tmppriv->topY = tmpTopX;
-			tmppriv->bottomY = tmpBottomX;
-			break;
-		      case ROTATE_CCW:
-			tmppriv->topX = tmpTopY;
-			tmppriv->bottomX = tmpBottomY;
-			tmppriv->topY = oldMaxX - tmpBottomX;
-			tmppriv->bottomY = oldMaxX - tmpTopX;
-			break;
-		      case ROTATE_HALF:
-			tmppriv->topX = oldMaxX - tmpBottomX;
-			tmppriv->bottomX = oldMaxX - tmpTopX;
-			tmppriv->topY = oldMaxY - tmpBottomY;
-			tmppriv->bottomY = oldMaxY - tmpTopY;
-			break;
-		    }
-
-		    /* and rotate them to the new value */
-		    rotateOneTool(tmppriv);
-		}
-	}
+	common->wcmRotate = value;
 }
 
 /* wcmPointInArea - check whether the point is within the area */

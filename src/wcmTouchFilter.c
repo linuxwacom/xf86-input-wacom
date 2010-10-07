@@ -373,7 +373,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 	/* scrolling has directions so rotation has to be considered first */
 	for (i=0; i<6; i++)
-		wcmRotateCoordinates(priv->pInfo, &filterd.x[i], &filterd.y[i]);
+		wcmRotateAndScaleCoordinates(priv->pInfo, &filterd.x[i], &filterd.y[i]);
 
 	/* check vertical direction */
 	if (common->wcmGestureParameters.wcmScrollDirection == WACOM_VERT_ALLOWED)
