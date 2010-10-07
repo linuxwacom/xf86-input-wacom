@@ -507,6 +507,9 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		return FALSE;
 	}
 
+	wcmInitialCoordinates(priv->pInfo, 0);
+	wcmInitialCoordinates(priv->pInfo, 1);
+
 	/* Rotation rotates the Max X and Y */
 	wcmRotateTablet(pInfo, common->wcmRotate);
 

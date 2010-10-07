@@ -1530,8 +1530,6 @@ static void rotateOneTool(WacomDevicePtr priv)
 		area->bottomY = priv->bottomY = oldMaxY - tmpTopY;
 		break;
 	}
-	wcmInitialCoordinates(priv->pInfo, 0);
-	wcmInitialCoordinates(priv->pInfo, 1);
 
 }
 
