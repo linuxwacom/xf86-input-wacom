@@ -608,8 +608,6 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			priv->topY = area->topY = values[1];
 			priv->bottomX = area->bottomX = values[2];
 			priv->bottomY = area->bottomY = values[3];
-			wcmInitialCoordinates(pInfo, 0);
-			wcmInitialCoordinates(pInfo, 1);
 		}
 	} else if (property == prop_pressurecurve)
 	{
