@@ -391,12 +391,13 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * wcmRegisterX11Devices --
- *    Register the X11 input devices with X11 core.
+ * wcmDevInit --
+ *    Set up the device's buttons, axes and keys
  ****************************************************************************/
 
-static int wcmRegisterX11Devices (InputInfoPtr pInfo)
+static int wcmDevInit(DeviceIntPtr pWcm)
 {
+	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
@@ -682,13 +683,6 @@ Bool wcmOpen(InputInfoPtr pInfo)
 	}
 
 	return Success;
-}
-
-static int wcmDevInit(DeviceIntPtr pWcm)
-{
-	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
-
-	return wcmRegisterX11Devices (pInfo);
 }
 
 /*****************************************************************************
