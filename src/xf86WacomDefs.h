@@ -166,7 +166,7 @@ struct _PROPINFO
 
 struct _WacomDeviceRec
 {
-	char *name;		/* Do not move, same offset as common->wcmDevice */
+	char *name;		/* Do not move, same offset as common->wcmDevice. Used by DBG macro */
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
 	InputInfoPtr pInfo;
@@ -373,7 +373,7 @@ typedef struct {
 
 struct _WacomCommonRec 
 {
-	/* Do not move device_path, same offset as priv->name */
+	/* Do not move device_path, same offset as priv->name. Used by DBG macro */
 	char* device_path;           /* device file name */
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
