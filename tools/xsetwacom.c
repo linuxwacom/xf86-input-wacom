@@ -847,7 +847,9 @@ static void list_one_device(Display *dpy, XDeviceInfo *info)
 			if (nitems)
 			{
 				type_name = XGetAtomName(dpy, *(Atom*)data);
-				printf("%-16s %-10s\n", info->name, type_name);
+				printf("%-32s	id: %ld	type: %-10s\n",
+						info->name, info->id,
+						type_name);
 			}
 
 			XFree(data);
