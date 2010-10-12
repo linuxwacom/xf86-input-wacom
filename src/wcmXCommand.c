@@ -202,8 +202,10 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[2] = priv->wcmMMonitor;
 	prop_display = InitWcmAtom(pInfo->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
 
-	values[0] = common->wcmCursorProxoutDist;
-	prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
+	if (IsCursor(priv)) {
+		values[0] = common->wcmCursorProxoutDist;
+		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
+	}
 
 	values[0] = common->wcmCapacity;
 	prop_capacity = InitWcmAtom(pInfo->dev, WACOM_PROP_CAPACITY, 32, 1, values);
