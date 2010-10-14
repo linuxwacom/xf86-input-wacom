@@ -1339,7 +1339,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	if (IsCursor(priv))
 	{
 		/* force out-prox when distance is outside wcmCursorProxoutDist. */
-		if (common->wcmProtocolLevel == 5)
+		if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
 		{
 			if (common->wcmMaxCursorDist > filtered.distance)
 				common->wcmMaxCursorDist = filtered.distance;

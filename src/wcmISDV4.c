@@ -313,7 +313,7 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
 static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
 	/* set parameters */
-	common->wcmProtocolLevel = 4;
+	common->wcmProtocolLevel = WCM_PROTOCOL_4;
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
 

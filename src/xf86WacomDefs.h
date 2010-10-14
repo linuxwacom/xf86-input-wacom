@@ -371,6 +371,12 @@ typedef struct {
 	int wcmTapTimeDefault;         /* default minimum time between taps for a right click */
 } WacomGesturesParameters;
 
+enum WacomProtocol {
+	WCM_PROTOCOL_GENERIC,
+	WCM_PROTOCOL_4,
+	WCM_PROTOCOL_5
+};
+
 struct _WacomCommonRec 
 {
 	/* Do not move device_path, same offset as priv->name. Used by DBG macro */
@@ -410,7 +416,7 @@ struct _WacomCommonRec
 
 	WacomDevicePtr wcmDevices;   /* list of devices sharing same port */
 	int wcmPktLength;            /* length of a packet */
-	int wcmProtocolLevel;        /* 4 for Wacom IV, 5 for Wacom V */
+	int wcmProtocolLevel;        /* Wacom Protocol used */
 	float wcmVersion;            /* ROM version */
 	int wcmRotate;               /* rotate screen (for TabletPC) */
 	int wcmThreshold;            /* Threshold for button pressure */

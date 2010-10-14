@@ -542,7 +542,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version)
 {
-	common->wcmProtocolLevel = 5;
+	common->wcmProtocolLevel = WCM_PROTOCOL_5;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
 			= PROXOUT_INTUOS_DISTANCE;
@@ -558,7 +558,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version)
 {
-	common->wcmProtocolLevel = 4;
+	common->wcmProtocolLevel = WCM_PROTOCOL_4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmCursorProxoutDistDefault 
 			= PROXOUT_GRAPHIRE_DISTANCE;
@@ -716,6 +716,9 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	return common->wcmPktLength;
 }
 
+/* Up to MAX_CHANNEL tools can be tracked concurrently by driver.
+ * Chose a channel to use to track current batch of events.
+ */
 static int usbChooseChannel(WacomCommonPtr common)
 {
 	/* figure out the channel to use based on serial number */
@@ -723,14 +726,30 @@ static int usbChooseChannel(WacomCommonPtr common)
 	wcmUSBData* private = common->private;
 	int serial = private->wcmLastToolSerial;
 
-	if (common->wcmProtocolLevel == 4)
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 	{
-		/* Protocol 4 doesn't support tool serial numbers.
-		 * However, we pass finger index into serial
-		 * numbers for tablets with multi-touch capabilities
-		 * to track individual fingers in proper channels.
-		 * serial number 0xf0 is reserved for the pad and is
-		 * always the last supported channel (i.e. MAX_CHANNELS-1).
+		/* Protocol 4 devices support only 2 devices being
+		 * in proximity at the same time.  This includes
+		 * the FINGER tool (PAD device) as well as 1 other tool
+		 * (stylus, mouse, finger touch, etc).
+		 * There is a special case of Tablet PC that also
+		 * suport a 3rd tool (2nd finger touch) to also be
+		 * in proximity at same time but this should eventually
+		 * go away when its switched to MT events to fix loss of
+		 * events.
+		 *
+		 * Protocol 4 send fixed serial numbers along with events.
+		 * Events associated with BTN_TOOL_FINGER (PAD device)
+		 * will send serial number of 0xf0 always.
+		 * Events associated with BTN_TOOL_TRIPLETAP (2nd finger
+		 * touch) send a serial number of 0x02 always.
+		 * Events associated with all other BTN_TOOL_*'s will
+		 * either send a serial # of 0x01 or we can act as if
+		 * they did send that value.
+		 *
+		 * Since its a fixed mapping, directly convert this to
+		 * channels 0 to 2 with last channel always used for
+		 * pad devices.
 		 */
 		if (serial == 0xf0)
 			channel = MAX_CHANNELS-1;
@@ -741,7 +760,18 @@ static int usbChooseChannel(WacomCommonPtr common)
 	}
 	else if (serial) /* serial number should never be 0 for V5 devices */
 	{
-		/* dual input is supported */
+		/* Protocol 5 devices can support tracking 2 or 3
+		 * tools at once.  One is the FINGER tool (PAD device)
+		 * as well as a stylus and/or mouse.
+		 *
+		 * Events associated with BTN_TOOL_FINGER (PAD device)
+		 * will send serial number of -1 (0xffffffff) always.
+		 * Events associated with all other BTN_TOOL_*'s will
+		 * send a dynamic serial #.
+		 *
+		 * Logic here is related to dynamically mapping
+		 * serial numbers to a fixed channel #.
+		 */
 		if (TabletHasFeature(common, WCM_DUALINPUT))
 		{
 			/* find existing channel */
@@ -1017,7 +1047,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 		case BTN_TOOL_AIRBRUSH:
 			ds->device_type = STYLUS_ID;
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == 4)
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = STYLUS_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			DBG(6, common,
@@ -1028,7 +1058,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 		case BTN_TOOL_RUBBER:
 			ds->device_type = ERASER_ID;
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == 4)
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = ERASER_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			if (ds->proximity)
@@ -1045,7 +1075,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			    event->code, event->value);
 			ds->device_type = CURSOR_ID;
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == 4)
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = CURSOR_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			break;
