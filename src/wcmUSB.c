@@ -684,6 +684,19 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
 		common->wcmMaxDist = absinfo.maximum;
 
+
+	if ((common->tablet_id >= 0xd0) && (common->tablet_id <= 0xd3))
+	{
+		/* BTN_TOOL_DOUBLETAP means this is a touchpad and
+		 * !BTN_TOOL_TRIPLETAP detects this is MT-version
+		 * of touchpad; which uses generic protocol.
+		 */
+		if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP) &&
+		    !ISBITSET(common->wcmKeys, BTN_TOOL_TRIPLETAP))
+			common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
+	}
+
+
 	return Success;
 }
 
@@ -726,7 +739,21 @@ static int usbChooseChannel(WacomCommonPtr common)
 	wcmUSBData* private = common->private;
 	int serial = private->wcmLastToolSerial;
 
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+	{
+		/* Generic Protocol devices do not use any form of
+		 * serial #'s to multiplex events over a single input
+		 * and so can always map to channel 0.  This means
+		 * only 1 tool can ever been in proximity at one time
+		 * (MT events are special case handled elsewhere).
+		 * It also means all buttons must be associated with
+		 * a single tool and can not send tablet buttons
+		 * as part of a FINGER tool.
+		 */
+		channel = 0;
+		serial = 1;
+	}
+	else if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 	{
 		/* Protocol 4 devices support only 2 devices being
 		 * in proximity at the same time.  This includes
@@ -1025,17 +1052,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 	 * that map to different channels can be in proximity at same
 	 * time with no confusion.
 	 *
-	 * TODO: Input devices that do not use Wacom's single device
-	 * channel multiplexing scheme will report BTN_TOUCH for same
-	 * meaning we use BTN_TOOL_* and also report tablet button presses
-	 * with no BTN_TOOL_FINGER.  As long as these devices do not
-	 * have operlapping button reports (see BTN_STYLUS2 and
-	 * BTN_RIGHT as example) then a simple solution may be to treat
-	 * BTN_TOUCH as BTN_TOOL_DOUBLETAP for touchpads and
-	 * BTN_TOOL_PEN for tablets.  Since touchpads can
-	 * send BTN_TOOL_DOUBLETAP for different reason then below case
-	 * statement would need to account for that.
-	 *
 	 * Remaining part of case state (after BTN_TOOL_*) handle normal
 	 * button presses.
 	 */
@@ -1081,6 +1097,10 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_TOOL_FINGER:
+			/* If a real finger report, ignore. */
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+				break;
+
 			DBG(6, common,
 			    "USB Pad detected %x (value=%d)\n",
 			    event->code, event->value);
@@ -1089,7 +1109,25 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			ds->proximity = (event->value != 0);
 			break;
 
+               case BTN_TOUCH:
+			/* Treat BTN_TOUCH same as BTN_TOOL_DOUBLETAP
+			 * for touchpads.
+			 * TODO: Tablets that do not use wacom style
+			 * multiplexing over a single input device
+			 * also can report BTN_TOUCH same as
+			 * BTN_TOOL_PEN would be used.  We should
+			 * allow for that case as well.
+			 */
+			if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
+				break;
+
+			/* fall through */
 		case BTN_TOOL_DOUBLETAP:
+			/* If a real double tap report, ignore. */
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC &&
+			    event->code == BTN_TOOL_DOUBLETAP)
+				break;
+
 			DBG(6, common,
 			    "USB Touch detected %x (value=%d)\n",
 			    event->code, event->value);
@@ -1115,6 +1153,10 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_TOOL_TRIPLETAP:
+			/* If a real triple tap report, ignore. */
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+				break;
+
 			DBG(6, common,
 			    "USB Touch second finger detected %x (value=%d)\n",
 			    event->code, event->value);
