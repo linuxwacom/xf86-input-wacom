@@ -950,9 +950,11 @@ skipEvent:
 	private->wcmEventCnt = 0;
 }
 
-static void usbParseAbsEvent(WacomCommonPtr common,
-			     struct input_event *event, WacomDeviceState *ds)
+static int usbParseAbsEvent(WacomCommonPtr common,
+			    struct input_event *event, WacomDeviceState *ds)
 {
+	int change = 1;
+
 	switch(event->code)
 	{
 		case ABS_X:
@@ -1003,7 +1005,10 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			if (event->value)
 				ds->device_id = event->value;
 			break;
+		default:
+			change = 0;
 	}
+	return change;
 }
 
 static struct
@@ -1024,11 +1029,12 @@ static struct
 	{ PAD_ID,    BTN_TOOL_FINGER    }
 };
 
-static void usbParseKeyEvent(WacomCommonPtr common,
-			     struct input_event *event, WacomDeviceState *ds,
-			     WacomDeviceState *dslast)
+static int usbParseKeyEvent(WacomCommonPtr common,
+			    struct input_event *event, WacomDeviceState *ds,
+			    WacomDeviceState *dslast)
 {
 	int shift, nkeys;
+	int change = 1;
 	#define MOD_BUTTONS(bit, value) do { \
 		shift = 1<<bit; \
 		ds->buttons = (((value) != 0) ? \
@@ -1196,7 +1202,10 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 					break;
 				}
 			}
+			if (nkeys >= common->npadkeys)
+				change = 0;
 	}
+	return change;
 }
 
 static void usbDispatchEvents(InputInfoPtr pInfo)
@@ -1207,6 +1216,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int channel;
+	int channel_change = 0;
 	WacomChannelPtr pChannel;
 	WacomDeviceState dslast;
 	wcmUSBData* private = common->private;
@@ -1292,19 +1302,25 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		/* absolute events */
 		if (event->type == EV_ABS)
 		{
-			usbParseAbsEvent(common, event, ds);
+			channel_change |= usbParseAbsEvent(common, event, ds);
 		}
 		else if (event->type == EV_REL)
 		{
 			if (event->code == REL_WHEEL)
+			{
 				ds->relwheel = -event->value;
+				channel_change |= 1;
+			}
 			else
 				xf86Msg(X_ERROR, "%s: rel event recv'd (%d)!\n",
 					pInfo->name, event->code);
 		}
 
 		else if (event->type == EV_KEY)
-			usbParseKeyEvent(common, event, ds, &dslast);
+		{
+			channel_change |= usbParseKeyEvent(common, event, ds,
+							   &dslast);
+		}
 	} /* next event */
 
 	/* device type unknown? Tool may be on the tablet when X starts. */
@@ -1343,7 +1359,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		private->wcmLastToolSerial = 0;
 
 	/* dispatch event */
-	wcmEvent(common, channel, ds);
+	if (channel_change)
+		wcmEvent(common, channel, ds);
 }
 
 /**
