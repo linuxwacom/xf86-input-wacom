@@ -52,7 +52,7 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
 static int usbDetectConfig(InputInfoPtr pInfo);
 static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event);
-static void usbParseChannel(InputInfoPtr pInfo, int channel);
+static void usbDispatchEvents(InputInfoPtr pInfo);
 static int usbChooseChannel(WacomCommonPtr common);
 
 	WacomDeviceClass gWacomUSBDevice =
@@ -865,7 +865,6 @@ static int usbChooseChannel(WacomCommonPtr common)
 static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event)
 {
-	int channel;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
@@ -937,20 +936,8 @@ static void usbParseEvent(InputInfoPtr pInfo,
 		goto skipEvent;
 	}
 
-	channel = usbChooseChannel(common);
-
-	/* couldn't decide channel? invalid data */
-	if (channel == -1) goto skipEvent;
-
-	if (!common->wcmChannel[channel].work.proximity)
-	{
-		memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
-		/* in case the in-prox event was missing */
-		common->wcmChannel[channel].work.proximity = 1;
-	}
-
-	/* dispatch event */
-	usbParseChannel(pInfo,channel);
+	/* dispatch all queued events */
+	usbDispatchEvents(pInfo);
 
 skipEvent:
 	private->wcmEventCnt = 0;
@@ -1205,15 +1192,16 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 	}
 }
 
-static void usbParseChannel(InputInfoPtr pInfo, int channel)
+static void usbDispatchEvents(InputInfoPtr pInfo)
 {
 	int i;
 	WacomDeviceState* ds;
 	struct input_event* event;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr pChannel = common->wcmChannel + channel;
-	WacomDeviceState dslast = pChannel->valid.state;
+	int channel;
+	WacomChannelPtr pChannel;
+	WacomDeviceState dslast;
 	wcmUSBData* private = common->private;
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
@@ -1222,7 +1210,25 @@ static void usbParseChannel(InputInfoPtr pInfo, int channel)
 		DBG(6, common, "no real events received\n");
 		return;
 	}
-	DBG(6, common, "%d events received\n", private->wcmEventCnt);
+
+	channel = usbChooseChannel(common);
+
+	/* couldn't decide channel? invalid data */
+	if (channel == -1) {
+		private->wcmEventCnt = 0;
+		return;
+	}
+
+	pChannel = common->wcmChannel + channel;
+	dslast = pChannel->valid.state;
+
+	if (!common->wcmChannel[channel].work.proximity)
+	{
+		memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
+
+		/* in case the in-prox event was missing */
+		common->wcmChannel[channel].work.proximity = 1;
+	}
 
 	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
