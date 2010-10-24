@@ -35,6 +35,7 @@
 
 typedef struct {
 	int wcmLastToolSerial;
+	int wcmBTNChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
 } wcmUSBData;
@@ -752,6 +753,12 @@ static int usbChooseChannel(WacomCommonPtr common)
 		 */
 		channel = 0;
 		serial = 1;
+
+		/* Generic devices need to map stylus buttons to "channel"
+		 * and all other button presses to PAD.  Hardcode PAD
+		 * channel here.
+		 */
+		private->wcmBTNChannel = MAX_CHANNELS-1;
 	}
 	else if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 	{
@@ -784,6 +791,8 @@ static int usbChooseChannel(WacomCommonPtr common)
 			channel = serial-1;
 		else
 			channel = 0;
+		/* All events go to same channel for Protocol 4 */
+		private->wcmBTNChannel = channel;
 	}
 	else if (serial) /* serial number should never be 0 for V5 devices */
 	{
@@ -834,6 +843,8 @@ static int usbChooseChannel(WacomCommonPtr common)
 					!common->wcmChannel[0].work.proximity ) /* new transducer */
 				channel = 0;
 		}
+		/* All events go to same channel for Protocol 5 */
+		private->wcmBTNChannel = channel;
 	}
 
 	/* fresh out of channels */
@@ -1029,17 +1040,18 @@ static struct
 	{ PAD_ID,    BTN_TOOL_FINGER    }
 };
 
+#define MOD_BUTTONS(bit, value) do { \
+	shift = 1<<bit; \
+	ds->buttons = (((value) != 0) ? \
+		       (ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
+        } while (0)
+
 static int usbParseKeyEvent(WacomCommonPtr common,
 			    struct input_event *event, WacomDeviceState *ds,
 			    WacomDeviceState *dslast)
 {
-	int shift, nkeys;
+	int shift;
 	int change = 1;
-	#define MOD_BUTTONS(bit, value) do { \
-		shift = 1<<bit; \
-		ds->buttons = (((value) != 0) ? \
-		(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
-		} while (0)
 
 	/* BTN_TOOL_* are sent to indicate when a specific tool is going
 	 * in our out of proximity.  When going out of proximity, ds
@@ -1051,9 +1063,6 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 	 * example) not to be in proximity at the same time.  Tools
 	 * that map to different channels can be in proximity at same
 	 * time with no confusion.
-	 *
-	 * Remaining part of case state (after BTN_TOOL_*) handle normal
-	 * button presses.
 	 */
 	switch (event->code)
 	{
@@ -1171,26 +1180,64 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			 * combination with the first finger data */
 			break;
 
-		case BTN_LEFT:
-			MOD_BUTTONS(0, event->value);
-			break;
+		default:
+			change = 0;
+	}
 
+	if (change)
+		return change;
+
+	/* Rest back to non-default value for next switch statement */
+	change = 1;
+
+	/* From this point on, all BTN_* will be real button presses.
+	 * Stylus buttons always go with *ds.  Handle remaining
+	 * cases upon return.
+	 */
+	switch (event->code)
+	{
 		case BTN_STYLUS:
-		case BTN_MIDDLE:
 			MOD_BUTTONS(1, event->value);
 			break;
 
 		case BTN_STYLUS2:
+			MOD_BUTTONS(2, event->value);
+			break;
+
+		default:
+			change = 0;
+	}
+
+	return change;
+}
+
+/* Handle all button presses except for stylus buttons */
+static int usbParseBTNEvent(WacomCommonPtr common,
+			    struct input_event *event, WacomDeviceState *ds)
+{
+	int shift, nkeys;
+	int change = 1;
+
+	switch (event->code)
+	{
+		case BTN_LEFT:
+			MOD_BUTTONS(0, event->value);
+			break;
+
+		case BTN_MIDDLE:
+			MOD_BUTTONS(1, event->value);
+			break;
+
 		case BTN_RIGHT:
 			MOD_BUTTONS(2, event->value);
 			break;
 
 		case BTN_SIDE:
-			MOD_BUTTONS (3, event->value);
+			MOD_BUTTONS(3, event->value);
 			break;
 
 		case BTN_EXTRA:
-			MOD_BUTTONS (4, event->value);
+			MOD_BUTTONS(4, event->value);
 			break;
 
 		default:
@@ -1211,12 +1258,12 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 static void usbDispatchEvents(InputInfoPtr pInfo)
 {
 	int i;
-	WacomDeviceState* ds;
+	WacomDeviceState *ds, *btn_ds;
 	struct input_event* event;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int channel;
-	int channel_change = 0;
+	int channel_change = 0, btn_channel_change = 0;
 	WacomChannelPtr pChannel;
 	WacomDeviceState dslast;
 	wcmUSBData* private = common->private;
@@ -1290,6 +1337,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	ds = &common->wcmChannel[channel].work;
 	ds->relwheel = 0;
 	ds->serial_num = private->wcmLastToolSerial;
+	/* For protocol 4 and 5 devices, ds == btn_ds. */
+	btn_ds = &common->wcmChannel[private->wcmBTNChannel].work;
 
 	/* loop through all events in group */
 	for (i=0; i<private->wcmEventCnt; ++i)
@@ -1315,11 +1364,14 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 				xf86Msg(X_ERROR, "%s: rel event recv'd (%d)!\n",
 					pInfo->name, event->code);
 		}
-
 		else if (event->type == EV_KEY)
 		{
-			channel_change |= usbParseKeyEvent(common, event, ds,
-							   &dslast);
+			if (usbParseKeyEvent(common, event, ds, &dslast))
+				channel_change |= 1;
+			else
+				btn_channel_change |=
+					usbParseBTNEvent(common, event,
+							 btn_ds);
 		}
 	} /* next event */
 
@@ -1358,9 +1410,23 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (!ds->proximity)
 		private->wcmLastToolSerial = 0;
 
-	/* dispatch event */
-	if (channel_change)
+	/* dispatch events */
+	if (channel_change ||
+	    (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC &&
+	     btn_channel_change))
 		wcmEvent(common, channel, ds);
+
+       /* dispatch pad events on generic tablets */
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC &&
+	    btn_channel_change)
+	{
+		/* Force to in proximity for this special case */
+		btn_ds->proximity = 1;
+		btn_ds->device_type = PAD_ID;
+		btn_ds->device_id = PAD_DEVICE_ID;
+		btn_ds->serial_num = 0xf0;
+		wcmEvent(common, private->wcmBTNChannel, btn_ds);
+	}
 }
 
 /**
