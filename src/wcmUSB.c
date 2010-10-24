@@ -1224,11 +1224,55 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	pChannel = common->wcmChannel + channel;
 	dslast = pChannel->valid.state;
 
+	/* Because of linux input filtering, the kernel driver can not
+	 * always force total set of event data when new tool comes into
+	 * proximity.  This includes simple case of flipping stylus
+	 * from pen to eraser tool. Therefore, when new tool is in-prox
+	 * we must initialize all shared event values to same as previous
+	 * tool to account for filtered events.
+	 *
+	 * For Generic and Protocol 4 devices that have fixed channel
+	 * mappings, this is no problem.  Protocol 5 devices are difficult
+	 * because they dynamically assign channel #'s and even simple
+	 * case above can switch from channel 1 to channel 0.
+	 *
+	 * To simplify things, we take advantage of fact wacom kernel
+	 * drivers force all values to zero when going out of proximity so
+	 * we take a short cut and memset() to align when going in-prox
+	 * instead of a memcpy().
+	 *
+	 * TODO: Some non-wacom tablets send X/Y data right before coming
+	 * in proximity. The following discards that data.
+	 * Adding "&& dslast.proximimty" to check would probably help
+	 * this case.
+	 * Some non-wacom tablets may also never reset their values
+	 * to zero when out-of-prox.  The memset() can loss this data.
+	 * Adding a !WCM_PROTOCOL_GENERIC check would probably help this case.
+	 */
 	if (!common->wcmChannel[channel].work.proximity)
 	{
 		memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
 
 		/* in case the in-prox event was missing */
+		/* TODO: There are not valid times when in-prox
+		 * events are not sent by a driver except:
+		 *
+		 * 1) Starting X while tool is already in prox.
+		 * 2) Non-wacom tablet sends only BTN_TOUCH without
+		 * BTN_TOOL_PEN since it only support 1 tool.
+		 *
+		 * Case 1) should be handled in same location as
+		 * below check of (ds->device_type == 0) since its
+		 * same reason.  It is better to query for real
+		 * value instead of assuming in-prox.
+		 * Case 2) should be handled in case statement that
+		 * processes BTN_TOUCH for WCM_PROTOCOL_GENERIC devices.
+		 *
+		 * So we should not be forcing to in-prox here because
+		 * it could cause cursor jump from (X,Y)=(0,0) if events
+		 * are sent while out-of-prox; which can happen only
+		 * with WCM_PROTOCOL_GENERIC devices. Hint: see TODO above.
+		 */
 		common->wcmChannel[channel].work.proximity = 1;
 	}
 
