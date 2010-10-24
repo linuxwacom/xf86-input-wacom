@@ -936,6 +936,13 @@ static void usbParseEvent(InputInfoPtr pInfo,
 		goto skipEvent;
 	}
 
+	/* ignore sync windows that contain no data */
+	if (private->wcmEventCnt == 1 &&
+	    private->wcmEvents->type == EV_SYN) {
+		DBG(6, common, "no real events received\n");
+		goto skipEvent;
+	}
+
 	/* dispatch all queued events */
 	usbDispatchEvents(pInfo);
 
@@ -1205,11 +1212,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	wcmUSBData* private = common->private;
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
-
-	if (private->wcmEventCnt == 1 && !private->wcmEvents->type) {
-		DBG(6, common, "no real events received\n");
-		return;
-	}
 
 	channel = usbChooseChannel(common);
 
