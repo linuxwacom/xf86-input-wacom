@@ -357,7 +357,7 @@ extern WacomDeviceClass gWacomISDV4Device;
 */
 #define USE_SYN_REPORTS_FLAG	8
 
-#define MAX_CHANNELS 2
+#define MAX_CHANNELS 3
 #define MAX_FINGERS  2
 
 typedef struct {
