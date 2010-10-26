@@ -1163,6 +1163,30 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 out:
 	return kc;
 }
+static int special_map_keystrokes(Display*, int argc, char **argv, unsigned long *ndata, unsigned long* data);
+
+/* Valid keywords for the --set ButtonX options */
+struct keywords {
+	const char *keyword;
+	int (*func)(Display*, int, char **, unsigned long*, unsigned long *);
+} keywords[] = {
+	{"key", special_map_keystrokes},
+	{ NULL, NULL }
+};
+
+static inline int is_valid_keyword(const char *keyword)
+{
+	struct keywords *kw = keywords;
+
+	while(kw->keyword)
+	{
+		if (strcmp(keyword, kw->keyword) == 0)
+			return 1;
+		kw++;
+	}
+	return 0;
+}
+
 /*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
@@ -1181,6 +1205,9 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 
 		if (strlen(key) > 1)
 		{
+			if (is_valid_keyword(key))
+				break;
+
 			switch(key[0])
 			{
 				case '+':
@@ -1293,14 +1320,6 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	int nwords = 0;
 	char **words = NULL;
 
-	struct keywords {
-		const char *keyword;
-		int (*func)(Display*, int, char **, unsigned long*, unsigned long *);
-	} keywords[] = {
-		{"key", special_map_keystrokes},
-		{ NULL, NULL }
-	};
-
 	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
 
 	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
@@ -1340,13 +1359,22 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	words = strjoinsplit(argc, argv, &nwords);
 	for (i = 0; i < nwords; i++)
 	{
-		int j;
-		for (j = 0; keywords[j].keyword; j++)
+		int j = 0;
+		while (keywords[j].keyword && i < nwords)
+		{
+			int parsed = 0;
 			if (strcasecmp(words[i], keywords[j].keyword) == 0)
-				i += keywords[j].func(dpy,
-						      nwords - i - 1,
-						      &words[i + 1],
-						      &nitems, data);
+			{
+				parsed = keywords[j].func(dpy, nwords - i - 1,
+							  &words[i + 1],
+							  &nitems, data);
+				i += parsed;
+			}
+			if (parsed)
+				j = parsed = 0; /* restart with first keyword */
+			else
+				j++;
+		}
 	}
 
 	XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
