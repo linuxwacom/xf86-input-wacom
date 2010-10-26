@@ -1440,6 +1440,8 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
 		return;
 	}
 
+	TRACE("Mapping button %d to %d.\n", btn_no, button);
+
 	map[btn_no - 1] = button;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
