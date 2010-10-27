@@ -640,18 +640,18 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			for (i = 0; i < prop->size; i++)
 				priv->btn_actions[i] = values[i];
 
-			for (i = 0; i < prop->size; i++)
+			for (i = 0; i < ARRAY_SIZE(priv->keys); i++)
 			{
-				if (!values[i])
+				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
+
+				if (i >= prop->size || !values[i])
 					continue;
 
 				XIGetDeviceProperty(local->dev, values[i], &val);
 
-				memset(priv->keys[i], 0, sizeof(priv->keys[i]));
 				for (j = 0; j < val->size; j++)
 					priv->keys[i][j] = ((unsigned int*)val->data)[j];
 			}
-
 		}
 	} else
 	{
