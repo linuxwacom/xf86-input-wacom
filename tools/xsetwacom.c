@@ -1878,6 +1878,7 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 		int detail;
 		int is_press = -1;
 		char str[10] = {0};
+		char press_str = ' ';
 
 		current_type = action & AC_TYPE;
 		detail = action & AC_CODE;
@@ -1889,6 +1890,7 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 				if (last_type != current_type)
 					strcat(buff, "key ");
 				is_press = !!(action & AC_KEYBTNPRESS);
+				detail = XKeycodeToKeysym(dpy, detail, 0);
 				break;
 			case AC_BUTTON:
 				if (last_type != current_type)
@@ -1906,8 +1908,12 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 				continue;
 		}
 
-		sprintf(str, "%s%d ",
-			(is_press == -1) ? "" : ((is_press) ?  "+" : "-"), detail);
+		press_str = (is_press == -1) ? ' ' : ((is_press) ?  '+' : '-');
+		if (current_type == AC_KEY)
+			sprintf(str, "%c%s ", press_str,
+				XKeysymToString(detail));
+		else
+			sprintf(str, "%c%d ", press_str, detail);
 		strcat(buff, str);
 		last_type = current_type;
 		last_press = is_press;
