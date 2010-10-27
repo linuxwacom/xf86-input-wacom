@@ -56,7 +56,7 @@
 #define AC_BUTTON           0x00080000	/* Emit button events */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
 #define AC_KEYBTNPRESS      0x00100000  /* bit set for key/button presses */
-#define AC_CORE             0x10000000	/* Always emit a core event */
+#define AC_CORE             0x10000000	/* DEPRECATED: has no effect */
 #define AC_EVENT            0xf00f0000	/* Mask to isolate event flag */
 
 #endif /* __XORG_XWACOM_H */
