@@ -1393,8 +1393,9 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 	if (btn_no > btnact_nitems)
 		return;
 
-	/* some atom already assigned, modify that */
-	if (btnact_data[btn_no])
+	if (argc == 0) /* unset property */
+		btnact_data[btn_no] = 0;
+	else if (btnact_data[btn_no]) /* some atom already assigned, modify that */
 		prop = btnact_data[btn_no];
 	else
 	{
@@ -1431,9 +1432,10 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 		}
 	}
 
-	XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
-				PropModeReplace,
-				(unsigned char*)data, nitems);
+	if (argc > 0) /* unset property */
+		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
+					PropModeReplace,
+					(unsigned char*)data, nitems);
 
 	if (need_update)
 		XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
@@ -1464,6 +1466,9 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
 	map[btn_no - 1] = button;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+
+	/* If there's a property set, unset it */
+	special_map_buttons(dpy, dev, param, 0, NULL);
 }
 /*
    Supports three variations.
