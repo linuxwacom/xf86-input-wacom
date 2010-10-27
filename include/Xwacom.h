@@ -51,7 +51,7 @@
 #define AC_CODE             0x0000ffff	/* Mask to isolate button number or key code */
 #define AC_KEY              0x00010000	/* Emit key events */
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
-#define AC_DBLCLICK         0x00030000	/* Emit a button1 double-click event */
+#define AC_DBLCLICK         0x00030000	/* DEPRECATED: use two button events instead */
 #define AC_DISPLAYTOGGLE    0x00040000 /* Toggle among screens */
 #define AC_BUTTON           0x00080000	/* Emit button events */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */

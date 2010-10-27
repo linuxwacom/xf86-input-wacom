@@ -287,7 +287,6 @@ static int wcmSanityCheckProperty(XIPropertyValuePtr prop)
 				break;
 			case AC_DISPLAYTOGGLE:
 			case AC_MODETOGGLE:
-			case AC_DBLCLICK:
 				break;
 			default:
 				return BadValue;

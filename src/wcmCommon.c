@@ -286,18 +286,6 @@ static void sendAction(InputInfoPtr pInfo, int press,
 					wcmDevSwitchModeCall(pInfo,
 							(is_absolute(pInfo)) ? Relative : Absolute); /* not a typo! */
 				break;
-			/* FIXME: this should be implemented as 4 values,
-			 * there's no reason to have a DBLCLICK */
-			case AC_DBLCLICK:
-				xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo),
-						    1,1,0,naxes, rx,ry,rz,v3,v4,v5);
-				xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo),
-						    1,0,0,naxes,rx,ry,rz,v3,v4,v5);
-				xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo),
-						    1,1,0,naxes, rx,ry,rz,v3,v4,v5);
-				xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo),
-						    1,0,0,naxes,rx,ry,rz,v3,v4,v5);
-				break;
 			case AC_DISPLAYTOGGLE:
 				toggleDisplay(pInfo);
 				break;
