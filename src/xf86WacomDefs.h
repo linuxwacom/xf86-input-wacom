@@ -352,10 +352,6 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 #define RAW_FILTERING_FLAG      4
-/* set if the /dev/input driver should wait for SYN_REPORT events as the
- * end of record indicator or not 
-*/
-#define USE_SYN_REPORTS_FLAG	8
 
 #define MAX_CHANNELS 3
 #define MAX_FINGERS  2
@@ -455,7 +451,6 @@ struct _WacomCommonRec
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
 #define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
-#define USE_SYN_REPORTS(comm) ((comm)->wcmFlags & USE_SYN_REPORTS_FLAG)
 
 /******************************************************************************
  * WacomTool

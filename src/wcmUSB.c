@@ -397,8 +397,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		return !Success;
 	}
 
-        common->wcmFlags |= USE_SYN_REPORTS_FLAG;
-
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
 		xf86Msg(X_ERROR, "%s: unable to ioctl abs bits.\n", pInfo->name);
@@ -717,24 +715,10 @@ static void usbParseEvent(InputInfoPtr pInfo,
 		/* save the serial number so we can look up the channel number later */
 		private->wcmLastToolSerial = event->value;
 
-		/* if SYN_REPORT is end of record indicator, we are done */
-		if (USE_SYN_REPORTS(common))
-			return;
+		return;
 
-		/* fall through to deliver the X event */
 	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
-		/* if we got a SYN_REPORT but weren't expecting one, change over to
-		   using SYN_REPORT as the end of record indicator */
-		if (! USE_SYN_REPORTS(common))
-		{
-			xf86Msg(X_ERROR, "%s: Got unexpected SYN_REPORT, changing mode\n",
-				pInfo->name);
-
-			/* we can expect SYN_REPORT's from now on */
-			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
-		}
-
 		/* end of record. fall through to deliver the X event */
 	}
 	else
