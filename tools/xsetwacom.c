@@ -1172,6 +1172,7 @@ out:
 }
 static int special_map_keystrokes(Display*, int argc, char **argv, unsigned long *ndata, unsigned long* data);
 static int special_map_button(Display*, int argc, char **argv, unsigned long *ndata, unsigned long* data);
+static int special_map_core(Display*, int argc, char **argv, unsigned long *ndata, unsigned long *data);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
@@ -1180,8 +1181,23 @@ struct keywords {
 } keywords[] = {
 	{"key", special_map_keystrokes},
 	{"button", special_map_button},
+	{"core", special_map_core},
 	{ NULL, NULL }
 };
+
+/* the "core" keyword isn't supported anymore, we just have this here to
+   tell people that. */
+static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+{
+	static int once_only = 1;
+	if (once_only)
+	{
+		printf ("Note: The \"core\" keyword is not supported anymore and "
+			"will be ignored.\n");
+		once_only = 0;
+	}
+	return 0;
+}
 
 static inline int is_valid_keyword(const char *keyword)
 {
