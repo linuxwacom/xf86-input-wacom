@@ -53,6 +53,8 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
 static int usbDetectConfig(InputInfoPtr pInfo);
 static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event);
+static void usbParseSynEvent(InputInfoPtr pInfo,
+			     const struct input_event *event);
 static void usbDispatchEvents(InputInfoPtr pInfo);
 static int usbChooseChannel(WacomCommonPtr common);
 
@@ -695,11 +697,29 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	{
 		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
 			pInfo->name, private->wcmEventCnt);
-		goto skipEvent;
+		private->wcmEventCnt = 0;
+		return;
 	}
 
 	/* save it for later */
 	private->wcmEvents[private->wcmEventCnt++] = *event;
+
+	if (event->type == EV_MSC || event->type == EV_SYN)
+		usbParseSynEvent(pInfo, event);
+}
+
+/**
+ * EV_SYN marks the end of a set of events containing axes and button info.
+ * Check for valid data and hand over to dispatch to extract the actual
+ * values and process them. At this point, all events up to the EV_SYN are
+ * queued up in wcmEvents.
+ */
+static void usbParseSynEvent(InputInfoPtr pInfo,
+			     const struct input_event *event)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
 
 	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
