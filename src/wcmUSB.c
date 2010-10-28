@@ -291,6 +291,15 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	WacomCommonPtr common = priv->common;
 
 	DBG(1, priv, "initializing USB tablet\n");
+
+	if (!common->private &&
+	    !(common->private = calloc(1, sizeof(wcmUSBData))))
+	{
+		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
+					pInfo->name);
+		return !Success;
+	}
+
 	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
@@ -333,14 +342,6 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		common->nbuttons = 6;
 	else
 		common->nbuttons = 5;
-
-	if (!common->private &&
-	    !(common->private = calloc(1, sizeof(wcmUSBData))))
-	{
-		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
-					pInfo->name);
-		return !Success;
-	}
 
 	return Success;
 }
