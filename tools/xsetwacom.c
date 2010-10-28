@@ -1173,6 +1173,7 @@ out:
 static int special_map_keystrokes(Display*, int argc, char **argv, unsigned long *ndata, unsigned long* data);
 static int special_map_button(Display*, int argc, char **argv, unsigned long *ndata, unsigned long* data);
 static int special_map_core(Display*, int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_modetoggle(Display*, int argc, char **argv, unsigned long *ndata, unsigned long *data);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
@@ -1182,6 +1183,7 @@ struct keywords {
 	{"key", special_map_keystrokes},
 	{"button", special_map_button},
 	{"core", special_map_core},
+	{"modetoggle", special_map_modetoggle},
 	{ NULL, NULL }
 };
 
@@ -1196,6 +1198,15 @@ static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *
 			"will be ignored.\n");
 		once_only = 0;
 	}
+	return 0;
+}
+
+static int special_map_modetoggle(Display* dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+{
+	data[*ndata] = AC_MODETOGGLE;
+
+	*ndata += 1;
+
 	return 0;
 }
 
