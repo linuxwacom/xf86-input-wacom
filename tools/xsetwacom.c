@@ -1323,8 +1323,9 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 				   (unsigned char**)&btnact_data);
 	}
 
-	/* some atom already assigned, modify that */
-	if (btnact_data[offset])
+	if (argc == 0) /* unset property */
+		btnact_data[offset] = 0;
+	else if (btnact_data[offset]) /* some atom already assigned, modify that */
 		prop = btnact_data[offset];
 	else
 	{
@@ -1361,9 +1362,10 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		}
 	}
 
-	XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
-				PropModeReplace,
-				(unsigned char*)data, nitems);
+	if (argc > 0) /* unset property */
+		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
+					PropModeReplace,
+					(unsigned char*)data, nitems);
 
 	XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
 				PropModeReplace,
@@ -1440,12 +1442,17 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
 		return;
 	}
 
+	TRACE("Mapping button %d to %d.\n", btn_no, button);
+
 	map[btn_no - 1] = button;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
+
+	/* If there's a property set, unset it */
+	special_map_buttons(dpy, dev, param, 0, NULL);
 }
 /*
-   Supports three variations.
+   Supports two variations, simple mapping and special mapping:
    xsetwacom set device Button1 1
 	- maps button 1 to logical button 1
    xsetwacom set device Button1 "key a b c d"
@@ -1828,6 +1835,104 @@ static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
 	print_value(param, "%s", buff);
 }
 
+static int get_special_button_map(Display *dpy, XDevice *dev,
+				  param_t *param, int btn_no)
+{
+	Atom btnact_prop, action_prop;
+	unsigned long *btnact_data;
+	Atom type;
+	int format;
+	unsigned long btnact_nitems, bytes_after;
+	int i;
+	char buff[1024] = {0};
+
+	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+
+	if (!btnact_prop)
+		return 0;
+
+	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+			   AnyPropertyType, &type, &format, &btnact_nitems,
+			   &bytes_after, (unsigned char**)&btnact_data);
+
+	/* button numbers start at 1, property is zero-indexed */
+	if (btn_no >= btnact_nitems)
+		return 0;
+
+	/* FIXME: doesn't cover wheels/strips at the moment, they can be 8
+	 * bits (plain buttons) or 32 bits (complex actions) */
+
+	action_prop = btnact_data[btn_no - 1];
+	if (!action_prop)
+		return 0;
+
+	XFree(btnact_data);
+
+	XGetDeviceProperty(dpy, dev, action_prop, 0, 100, False,
+			   AnyPropertyType, &type, &format, &btnact_nitems,
+			   &bytes_after, (unsigned char**)&btnact_data);
+
+	if (format != 32 && type != XA_ATOM)
+		return 0;
+
+	for (i = 0; i < btnact_nitems; i++)
+	{
+		static int last_type, last_press;
+		unsigned long action = btnact_data[i];
+		int current_type;
+		int detail;
+		int is_press = -1;
+		char str[10] = {0};
+		char press_str = ' ';
+
+		current_type = action & AC_TYPE;
+		detail = action & AC_CODE;
+
+
+		switch (current_type)
+		{
+			case AC_KEY:
+				if (last_type != current_type)
+					strcat(buff, "key ");
+				is_press = !!(action & AC_KEYBTNPRESS);
+				detail = XKeycodeToKeysym(dpy, detail, 0);
+				break;
+			case AC_BUTTON:
+				if (last_type != current_type)
+					strcat(buff, "button ");
+				is_press = !!(action & AC_KEYBTNPRESS);
+				break;
+			case AC_MODETOGGLE:
+				strcat(buff, "modetoggle ");
+				break;
+			case AC_DISPLAYTOGGLE:
+				strcat(buff, "displaytoggle ");
+				break;
+			default:
+				TRACE("unknown type %d\n", current_type);
+				continue;
+		}
+
+		press_str = (is_press == -1) ? ' ' : ((is_press) ?  '+' : '-');
+		if (current_type == AC_KEY)
+			sprintf(str, "%c%s ", press_str,
+				XKeysymToString(detail));
+		else
+			sprintf(str, "%c%d ", press_str, detail);
+		strcat(buff, str);
+		last_type = current_type;
+		last_press = is_press;
+	}
+
+	TRACE("%s\n", buff);
+
+	XFree(btnact_data);
+
+	print_value(param, "%s", buff);
+
+	return 1;
+}
+
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 			char **argv)
 {
@@ -1840,6 +1945,10 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 		return;
 
 	TRACE("Getting button map for device %ld.\n", dev->device_id);
+
+	/* if there's a special map, print it and return */
+	if (get_special_button_map(dpy, dev, param, btn_no))
+		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
