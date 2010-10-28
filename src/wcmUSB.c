@@ -64,233 +64,38 @@ static int usbChooseChannel(WacomCommonPtr common);
 		usbProbeKeys
 	};
 
-	static WacomModel usbUnknown =
-	{
-		"Unknown USB",
-		usbInitProtocol5,     /* assume the best */
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering not needed */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
+#define DEFINE_MODEL(mname, identifier, protocol, filter) \
+static struct _WacomModel mname =		\
+{						\
+	.name = identifier,			\
+	.Initialize = usbInitProtocol##protocol,\
+	.GetResolution = NULL,			\
+	.GetRanges = usbWcmGetRanges,		\
+	.Start = usbStart,			\
+	.Parse = usbParse,			\
+	.FilterRaw = filter,			\
+	.DetectConfig = usbDetectConfig,	\
+};
 
-	static WacomModel usbPenPartner =
-	{
-		"USB PenPartner",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire =
-	{
-		"USB Graphire",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire2 =
-	{
-		"USB Graphire2",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire3 =
-	{
-		"USB Graphire3",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire4 =
-	{
-		"USB Graphire4",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBamboo =
-	{
-		"USB Bamboo",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBamboo1 =
-	{
-		"USB Bamboo1",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBambooFun =
-	{
-		"USB BambooFun",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiq =
-	{
-		"USB PL/Cintiq",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiqPartner =
-	{
-		"USB CintiqPartner",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos =
-	{
-		"USB Intuos1",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos2 =
-	{
-		"USB Intuos2",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos3 =
-	{
-		"USB Intuos3",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos4 =
-	{
-		"USB Intuos4",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbVolito =
-	{
-		"USB Volito",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbVolito2 =
-	{
-		"USB Volito2",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiqV5 =
-	{
-		"USB CintiqV5",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbTabletPC =
-	{
-		"USB TabletPC",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
+DEFINE_MODEL(usbUnknown,	"Unknown USB",		5, NULL);
+DEFINE_MODEL(usbPenPartner,	"USB PenPartner",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire,	"USB Graphire",		4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire2,	"USB Graphire2",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire3,	"USB Graphire3",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire4,	"USB Graphire4",	4, wcmFilterCoord);
+DEFINE_MODEL(usbBamboo,		"USB Bamboo",		4, wcmFilterCoord);
+DEFINE_MODEL(usbBamboo1,	"USB Bamboo1",		4, wcmFilterCoord);
+DEFINE_MODEL(usbBambooFun,	"USB BambooFun",	4, wcmFilterCoord);
+DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq",	4, NULL);
+DEFINE_MODEL(usbCintiqPartner,	"USB CintiqPartner",	4, NULL);
+DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbVolito,		"USB Volito",		4, wcmFilterCoord);
+DEFINE_MODEL(usbVolito2,	"USB Volito2",		4, wcmFilterCoord);
+DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4, NULL);
 
 /*****************************************************************************
  * usbDetect --
