@@ -693,8 +693,7 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	 */
 
 	/* space left? bail if not. */
-	if (private->wcmEventCnt >=
-		(sizeof(private->wcmEvents)/sizeof(*private->wcmEvents)))
+	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
 		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
 			pInfo->name, private->wcmEventCnt);
