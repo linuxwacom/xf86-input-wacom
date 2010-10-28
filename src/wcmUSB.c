@@ -719,7 +719,7 @@ static void usbParseEvent(InputInfoPtr pInfo,
 
 	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
-		/* end of record. fall through to deliver the X event */
+		/* end of record. fall through to dispatch */
 	}
 	else
 	{
