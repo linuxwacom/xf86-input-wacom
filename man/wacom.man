@@ -170,17 +170,18 @@ of the active zone the same as the screen while maximizing the area
 described by TopX, TopY, BottomX, BottomY.
 .TP 4
 .B Option \fI"DebugLevel"\fP \fI"number"\fP
-sets the level of debugging info reported.  There are 12 levels, specified by 
-the integers between 1 and 12.  Once it is defined, all the debug messages 
-with a level less than or equal to the "number" will be logged into 
-/etc/X11/Xorg.0.log.
+sets the level of debugging info for tool-specific messages.  There are 12
+levels, specified by the integers between 1 and 12.  All debug messages with
+a level less than or equal to the "number" will be logged into the Xorg log
+file. This option is only available if the driver was built with debugging
+support.
 .TP 4
 .B Option \fI"CommonDBG"\fP \fI"number"\fP
-sets the level of debugging info for all devices defined for the  
-same tablet. There are 12 levels in use, specified by the 
-integers between 1 and 12. Once it is defined, all the debug 
-messages with a level less than or equal to the "number" will 
-be logged into /etc/X11/Xorg.0.log.
+sets the level of debugging info for common (i.e. not tool-specific) code
+paths on the tablet. There are 12 levels, specified by the integers between
+1 and 12. All debug messages with a level less than or equal to the
+"number" will be logged into the Xorg log file. This option is only
+available if the driver was built with debugging support.
 .TP 4
 .B Option \fI"CursorProx"\fP \fI"number"\fP
 sets the max distance from tablet to stop reporting movement for cursor in relative mode. 
