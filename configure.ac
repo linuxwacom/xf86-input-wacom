@@ -75,7 +75,7 @@ AC_SUBST([DRIVER_NAME])
 AC_ARG_ENABLE(debug,
               AS_HELP_STRING([--enable-debug],
                              [Enable debugging (default: disabled)]),
-                             [DEBUGGING=$enableval], [DEBUGGING=no])
+                             [DEBUGGING=$enableval], [DEBUGGING=yes])
 
 # Define the C preprocessor macro DEBUG in config.h
 if test "x$DEBUGGING" = xyes; then
