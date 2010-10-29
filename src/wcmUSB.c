@@ -53,6 +53,8 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
 static int usbDetectConfig(InputInfoPtr pInfo);
 static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event);
+static void usbParseSynEvent(InputInfoPtr pInfo,
+			     const struct input_event *event);
 static void usbDispatchEvents(InputInfoPtr pInfo);
 static int usbChooseChannel(WacomCommonPtr common);
 
@@ -64,233 +66,38 @@ static int usbChooseChannel(WacomCommonPtr common);
 		usbProbeKeys
 	};
 
-	static WacomModel usbUnknown =
-	{
-		"Unknown USB",
-		usbInitProtocol5,     /* assume the best */
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering not needed */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
+#define DEFINE_MODEL(mname, identifier, protocol, filter) \
+static struct _WacomModel mname =		\
+{						\
+	.name = identifier,			\
+	.Initialize = usbInitProtocol##protocol,\
+	.GetResolution = NULL,			\
+	.GetRanges = usbWcmGetRanges,		\
+	.Start = usbStart,			\
+	.Parse = usbParse,			\
+	.FilterRaw = filter,			\
+	.DetectConfig = usbDetectConfig,	\
+};
 
-	static WacomModel usbPenPartner =
-	{
-		"USB PenPartner",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire =
-	{
-		"USB Graphire",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire2 =
-	{
-		"USB Graphire2",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire3 =
-	{
-		"USB Graphire3",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbGraphire4 =
-	{
-		"USB Graphire4",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBamboo =
-	{
-		"USB Bamboo",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBamboo1 =
-	{
-		"USB Bamboo1",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbBambooFun =
-	{
-		"USB BambooFun",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiq =
-	{
-		"USB PL/Cintiq",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiqPartner =
-	{
-		"USB CintiqPartner",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos =
-	{
-		"USB Intuos1",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos2 =
-	{
-		"USB Intuos2",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos3 =
-	{
-		"USB Intuos3",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbIntuos4 =
-	{
-		"USB Intuos4",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbVolito =
-	{
-		"USB Volito",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbVolito2 =
-	{
-		"USB Volito2",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterCoord,   /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbCintiqV5 =
-	{
-		"USB CintiqV5",
-		usbInitProtocol5,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		wcmFilterIntuos,  /* input filtering recommended */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
-
-	static WacomModel usbTabletPC =
-	{
-		"USB TabletPC",
-		usbInitProtocol4,
-		NULL,                 /* resolution not queried */
-		usbWcmGetRanges,
-		usbStart,
-		usbParse,
-		NULL,                 /* input filtering */
-		usbDetectConfig,      /* detect hardware buttons etc */
-	};
+DEFINE_MODEL(usbUnknown,	"Unknown USB",		5, NULL);
+DEFINE_MODEL(usbPenPartner,	"USB PenPartner",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire,	"USB Graphire",		4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire2,	"USB Graphire2",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire3,	"USB Graphire3",	4, wcmFilterCoord);
+DEFINE_MODEL(usbGraphire4,	"USB Graphire4",	4, wcmFilterCoord);
+DEFINE_MODEL(usbBamboo,		"USB Bamboo",		4, wcmFilterCoord);
+DEFINE_MODEL(usbBamboo1,	"USB Bamboo1",		4, wcmFilterCoord);
+DEFINE_MODEL(usbBambooFun,	"USB BambooFun",	4, wcmFilterCoord);
+DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq",	4, NULL);
+DEFINE_MODEL(usbCintiqPartner,	"USB CintiqPartner",	4, NULL);
+DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbVolito,		"USB Volito",		4, wcmFilterCoord);
+DEFINE_MODEL(usbVolito2,	"USB Volito2",		4, wcmFilterCoord);
+DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5, wcmFilterIntuos);
+DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4, NULL);
 
 /*****************************************************************************
  * usbDetect --
@@ -486,6 +293,15 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	WacomCommonPtr common = priv->common;
 
 	DBG(1, priv, "initializing USB tablet\n");
+
+	if (!common->private &&
+	    !(common->private = calloc(1, sizeof(wcmUSBData))))
+	{
+		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
+					pInfo->name);
+		return !Success;
+	}
+
 	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
@@ -528,14 +344,6 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		common->nbuttons = 6;
 	else
 		common->nbuttons = 5;
-
-	if (!common->private &&
-	    !(common->private = calloc(1, sizeof(wcmUSBData))))
-	{
-		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
-					pInfo->name);
-		return !Success;
-	}
 
 	return Success;
 }
@@ -590,8 +398,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		xf86Msg(X_ERROR, "%s: unable to ioctl event bits.\n", pInfo->name);
 		return !Success;
 	}
-
-        common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
@@ -887,16 +693,33 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	 */
 
 	/* space left? bail if not. */
-	if (private->wcmEventCnt >=
-		(sizeof(private->wcmEvents)/sizeof(*private->wcmEvents)))
+	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
 		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
 			pInfo->name, private->wcmEventCnt);
-		goto skipEvent;
+		private->wcmEventCnt = 0;
+		return;
 	}
 
 	/* save it for later */
 	private->wcmEvents[private->wcmEventCnt++] = *event;
+
+	if (event->type == EV_MSC || event->type == EV_SYN)
+		usbParseSynEvent(pInfo, event);
+}
+
+/**
+ * EV_SYN marks the end of a set of events containing axes and button info.
+ * Check for valid data and hand over to dispatch to extract the actual
+ * values and process them. At this point, all events up to the EV_SYN are
+ * queued up in wcmEvents.
+ */
+static void usbParseSynEvent(InputInfoPtr pInfo,
+			     const struct input_event *event)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
 
 	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
 	{
@@ -912,25 +735,11 @@ static void usbParseEvent(InputInfoPtr pInfo,
 		/* save the serial number so we can look up the channel number later */
 		private->wcmLastToolSerial = event->value;
 
-		/* if SYN_REPORT is end of record indicator, we are done */
-		if (USE_SYN_REPORTS(common))
-			return;
+		return;
 
-		/* fall through to deliver the X event */
 	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
 	{
-		/* if we got a SYN_REPORT but weren't expecting one, change over to
-		   using SYN_REPORT as the end of record indicator */
-		if (! USE_SYN_REPORTS(common))
-		{
-			xf86Msg(X_ERROR, "%s: Got unexpected SYN_REPORT, changing mode\n",
-				pInfo->name);
-
-			/* we can expect SYN_REPORT's from now on */
-			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
-		}
-
-		/* end of record. fall through to deliver the X event */
+		/* end of record. fall through to dispatch */
 	}
 	else
 	{
