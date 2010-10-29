@@ -800,7 +800,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			return BadMatch;
 
 		values = (CARD8*)prop->data;
-		if (values[0] > 10 || values[1] > 10)
+		if (values[0] > 12 || values[1] > 12)
 			return BadValue;
 
 		if (!checkonly)
