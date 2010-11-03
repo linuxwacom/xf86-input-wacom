@@ -259,27 +259,36 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 {
 	pointer original = pInfo->options;
 	InputOption *iopts = NULL, *new;
-	InputInfoRec dummy;
 	char *name;
+	pointer options;
 
-	memset(&dummy, 0, sizeof(dummy));
-	xf86CollectInputOptions(&dummy, NULL, original);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+	options = xf86OptionListDuplicate(original);
+#else
+	{
+		InputInfoRec dummy;
+
+		memset(&dummy, 0, sizeof(dummy));
+		xf86CollectInputOptions(&dummy, NULL, original);
+		options = dummy.options;
+	}
+#endif
 
 	name = Xprintf("%s %s", basename, type);
 
-	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
-	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
+	options = xf86ReplaceStrOption(options, "Type", type);
+	options = xf86ReplaceStrOption(options, "Name", name);
 	free(name);
 
-	while(dummy.options)
+	while(options)
 	{
 		new = calloc(1, sizeof(InputOption));
 
-		new->key = xf86OptionName(dummy.options);
-		new->value = xf86OptionValue(dummy.options);
+		new->key = xf86OptionName(options);
+		new->value = xf86OptionValue(options);
 		new->next = iopts;
 		iopts = new;
-		dummy.options = xf86NextOption(dummy.options);
+		options = xf86NextOption(options);
 	}
 	return iopts;
 }

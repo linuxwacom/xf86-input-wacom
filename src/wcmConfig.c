@@ -245,7 +245,7 @@ int wcmGetPhyDeviceID(WacomDevicePtr priv)
  * starts making sense again.
  */
 
-static const char *default_options[] =
+static char *default_options[] =
 {
 	"StopBits",    "1",
 	"DataBits",    "8",
@@ -425,19 +425,15 @@ wcmInitModel(InputInfoPtr pInfo)
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
+static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
+
 static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	InputInfoPtr pInfo = NULL;
-	WacomDevicePtr priv = NULL;
-	WacomCommonPtr common = NULL;
-	const char*	type;
-	char*		device, *oldname;
-	int		need_hotplug = 0;
-
-	gWacomModule.wcmDrv = drv;
 
 	if (!(pInfo = xf86AllocateInput(drv, 0)))
-		goto SetupProc_fail;
+		return NULL;
 
 	pInfo->conf_idev = dev;
 	pInfo->name = dev->identifier;
@@ -445,7 +441,29 @@ static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	/* Force default port options to exist because the init
 	 * phase is based on those values.
 	 */
-	xf86CollectInputOptions(pInfo, default_options, NULL);
+	xf86CollectInputOptions(pInfo, (const char**)default_options, NULL);
+
+	if (NewWcmPreInit(drv, pInfo, flags) == Success) {
+		pInfo->flags |= XI86_CONFIGURED;
+		return pInfo;
+	} else {
+		xf86DeleteInput(pInfo, 0);
+		return NULL;
+	}
+}
+
+static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
+#else
+static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
+#endif
+{
+	WacomDevicePtr priv = NULL;
+	WacomCommonPtr common = NULL;
+	const char*	type;
+	char*		device, *oldname;
+	int		need_hotplug = 0;
+
+	gWacomModule.wcmDrv = drv;
 
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86FindOptionValue(pInfo->options, "Type");
@@ -513,9 +531,6 @@ static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (!wcmInitModel(pInfo))
 		goto SetupProc_fail;
 
-	/* mark the device configured */
-	pInfo->flags |= XI86_CONFIGURED;
-
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
@@ -528,7 +543,7 @@ static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 		pInfo->fd = -1;
 	}
 
-	return (pInfo);
+	return Success;
 
 SetupProc_fail:
 	/* restart the device list from the next one */
@@ -544,10 +559,9 @@ SetupProc_fail:
 		}
 
 		wcmFree(pInfo);
-		xf86DeleteInput(pInfo, 0);
 	}
 
-	return NULL;
+	return BadMatch;
 }
 
 InputDriverRec WACOM =
@@ -558,6 +572,9 @@ InputDriverRec WACOM =
 	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+	default_options
+#endif
 };
 
 

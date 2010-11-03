@@ -328,7 +328,11 @@ void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
 					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
 #endif
 					topx, bottomx,
-					resolution_x, 0, resolution_x);
+					resolution_x, 0, resolution_x
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+					, Absolute
+#endif
+					);
 			break;
 		case 1:
 			InitValuatorAxisStruct(pInfo->dev, 1,
@@ -336,7 +340,11 @@ void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
 					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
 #endif
 					topy, bottomy,
-					resolution_y, 0, resolution_y);
+					resolution_y, 0, resolution_y
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+					, Absolute
+#endif
+					);
 			break;
 		default:
 			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", pInfo->name, axis);
@@ -518,7 +526,11 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
 #endif
-		0, FILTER_PRESSURE_RES, 1, 1, 1);
+		0, FILTER_PRESSURE_RES, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+		, Absolute
+#endif
+		);
 
 	if (IsCursor(priv))
 	{
@@ -527,12 +539,20 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ),
 #endif
-		-900, 899, 1, 1, 1);
+		-900, 899, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+		, Absolute
+#endif
+		);
 		InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE),
 #endif
-		-1023, 1023, 1, 1, 1);
+		-1023, 1023, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+		, Absolute
+#endif
+		);
 	}
 	else if (IsPad(priv))
 	{
@@ -543,12 +563,20 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
-				0, common->wcmMaxStripX, 1, 1, 1);
+				0, common->wcmMaxStripX, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 			InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
-				0, common->wcmMaxStripY, 1, 1, 1);
+				0, common->wcmMaxStripY, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 		}
 	}
 	else
@@ -558,12 +586,20 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
 #endif
-				-64, 63, 1, 1, 1);
+				-64, 63, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 		InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y),
 #endif
-				-64, 63, 1, 1, 1);
+				-64, 63, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 	}
 
 	if (IsStylus(priv))
@@ -574,7 +610,11 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
 #endif
-				MIN_ROTATION, maxRotation, 1, 1, 1);
+				MIN_ROTATION, maxRotation, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 	}
 	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
 		/* Touch ring */
@@ -582,7 +622,11 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
 #endif
-				0, 71, 1, 1, 1);
+				0, 71, 1, 1, 1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Absolute
+#endif
+				);
 
 	if (IsTouch(priv))
 	{
