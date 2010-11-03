@@ -445,16 +445,16 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int fakeButton = 0, naxes = priv->naxes;
-	unsigned int *fakeKey;
+	unsigned int *fakeKey = NULL;
 
 	DBG(10, priv, "\n");
 
 	fakeButton = getWheelButton(pInfo, ds, &fakeKey);
 
-	if (!fakeButton && !(*fakeKey))
+	if (!fakeButton && (!fakeKey || !(*fakeKey)))
 		return;
 
-	if (!(*fakeKey))
+	if (!fakeKey || !(*fakeKey))
 	{
 		/* send both button on/off in the same event for pad */	
 		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
