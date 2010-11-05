@@ -1221,13 +1221,11 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	/* dispatch events */
 	if (channel_change ||
-	    (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC &&
-	     btn_channel_change))
+	    (private->wcmBTNChannel == channel && btn_channel_change))
 		wcmEvent(common, channel, ds);
 
-       /* dispatch pad events on generic tablets */
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC &&
-	    btn_channel_change)
+       /* dispatch butten events when re-routed */
+	if (private->wcmBTNChannel != channel && btn_channel_change)
 	{
 		/* Force to in proximity for this special case */
 		btn_ds->proximity = 1;
