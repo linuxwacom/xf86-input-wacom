@@ -185,6 +185,9 @@ static struct
 	{ WACOM_VENDOR_ID, 0xD3, 2540, 2540, &usbBamboo     }, /* CTL-660 */
 	{ WACOM_VENDOR_ID, 0xD2, 2540, 2540, &usbBamboo     }, /* CTL-461/S */
 	{ WACOM_VENDOR_ID, 0xD0, 2540, 2540, &usbBamboo     }, /* Bamboo Touch */
+	{ WACOM_VENDOR_ID, 0xD8, 2540, 2540, &usbBamboo     }, /* CTH-661/S1 */
+	{ WACOM_VENDOR_ID, 0xDA, 2540, 2540, &usbBamboo     }, /* CTH-461/L */
+	{ WACOM_VENDOR_ID, 0xDB, 2540, 2540, &usbBamboo     }, /* CTH-661 */
 
 	{ WACOM_VENDOR_ID, 0x20, 2540, 2540, &usbIntuos     }, /* Intuos 4x5 */
 	{ WACOM_VENDOR_ID, 0x21, 2540, 2540, &usbIntuos     }, /* Intuos 6x8 */
