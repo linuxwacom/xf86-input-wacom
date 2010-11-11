@@ -159,11 +159,13 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 
 	DBG(10, priv, "\n");
 
-	values[0] = priv->topX;
-	values[1] = priv->topY;
-	values[2] = priv->bottomX;
-	values[3] = priv->bottomY;
-	prop_tablet_area = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_AREA, 32, 4, values);
+	if (!IsPad(priv)) {
+		values[0] = priv->topX;
+		values[1] = priv->topY;
+		values[2] = priv->bottomX;
+		values[3] = priv->bottomY;
+		prop_tablet_area = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_AREA, 32, 4, values);
+	}
 
 	values[0] = common->wcmRotate;
 	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, 8, 1, values);
