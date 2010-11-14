@@ -925,12 +925,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (!pLast->proximity)
 			wcmResetSampleCounter(pChannel);
 
-		if (common->wcmModel->FilterRaw(common,pChannel,&ds))
-		{
-			DBG(10, common, "Raw filtering discarded data.\n");
-			wcmResetSampleCounter(pChannel);
-			return; /* discard */
-		}
+		common->wcmModel->FilterRaw(common,pChannel,&ds);
 	}
 
 	/* Discard unwanted data */
