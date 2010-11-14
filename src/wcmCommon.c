@@ -956,7 +956,9 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 			fs->tiltx[0] = ds.tiltx;
 			fs->tilty[0] = ds.tilty;
 		}
-		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw && ds.device_type != PAD_ID)
+		/* Optionally filter values while in proximity */
+		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw &&
+		    ds.proximity && ds.device_type != PAD_ID)
 		{
 			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 			{
