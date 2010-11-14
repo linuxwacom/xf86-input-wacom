@@ -839,14 +839,10 @@ static int wcmCheckSuppress(WacomCommonPtr common, const WacomDeviceState* dsOri
 /* reset raw data counters for filters */
 static void resetSampleCounter(const WacomChannelPtr pChannel)
 {
-	/* if out of proximity, reset hardware filter */
-	if (!pChannel->valid.state.proximity)
-	{
-		pChannel->nSamples = 0;
-		pChannel->rawFilter.npoints = 0;
-		pChannel->rawFilter.statex = 0;
-		pChannel->rawFilter.statey = 0;
-	}
+	pChannel->nSamples = 0;
+	pChannel->rawFilter.npoints = 0;
+	pChannel->rawFilter.statex = 0;
+	pChannel->rawFilter.statey = 0;
 }
 
 /*****************************************************************************
@@ -960,6 +956,9 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw &&
 		    ds.proximity && ds.device_type != PAD_ID)
 		{
+			if (!pLast->proximity)
+				resetSampleCounter(pChannel);
+
 			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 			{
 				DBG(10, common,
@@ -973,7 +972,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		suppress = wcmCheckSuppress(common, pLast, &ds);
 		if (!suppress)
 		{
-			resetSampleCounter(pChannel);
 			return;
 		}
 	}
