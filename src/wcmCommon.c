@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 #include "Xwacom.h"
+#include "wcmFilter.h"
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 
@@ -37,7 +38,6 @@
 static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel, int suppress);
-static void resetSampleCounter(const WacomChannelPtr pChannel);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 		int rx, int ry, int rz, int v3, int v4, int v5);
 
@@ -843,13 +843,6 @@ static int wcmCheckSuppress(WacomCommonPtr common,
 	return returnV;
 }
 
-/* reset raw data counters for filters */
-static void resetSampleCounter(const WacomChannelPtr pChannel)
-{
-	pChannel->nSamples = 0;
-	pChannel->rawFilter.npoints = 0;
-}
-
 /*****************************************************************************
  * wcmEvent -
  *   Handles suppression, transformation, filtering, and event dispatch.
@@ -861,8 +854,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
-	WacomFilterState* fs;
-	int i, suppress = 0;
+	int suppress = 0;
 	WacomDevicePtr priv = common->wcmDevices;
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
@@ -925,60 +917,27 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		wcmTilt2R(&ds);
 	}
 
-	fs = &pChannel->rawFilter;
-	if (!fs->npoints && ds.proximity)
+	/* Optionally filter values only while in proximity */
+	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw &&
+	    ds.proximity && ds.device_type != PAD_ID)
 	{
-		DBG(11, common, "initialize Channel data.\n");
-		/* store channel device state for later use */
-		for (i=common->wcmRawSample - 1; i>=0; i--)
-		{
-			fs->x[i]= ds.x;
-			fs->y[i]= ds.y;
-			fs->tiltx[i] = ds.tiltx;
-			fs->tilty[i] = ds.tilty;
-		}
-		++fs->npoints;
-	} else  {
-		/* Filter raw data, fix hardware defects, perform error correction */
-		for (i=common->wcmRawSample - 1; i>0; i--)
-		{
-			fs->x[i]= fs->x[i-1];
-			fs->y[i]= fs->y[i-1];
-		}
-		fs->x[0] = ds.x;
-		fs->y[0] = ds.y;
-		if (HANDLE_TILT(common) && (ds.device_type == STYLUS_ID || ds.device_type == ERASER_ID))
-		{
-			for (i=common->wcmRawSample - 1; i>0; i--)
-			{
-				fs->tiltx[i]= fs->tiltx[i-1];
-				fs->tilty[i]= fs->tilty[i-1];
-			}
-			fs->tiltx[0] = ds.tiltx;
-			fs->tilty[0] = ds.tilty;
-		}
-		/* Optionally filter values while in proximity */
-		if (RAW_FILTERING(common) && common->wcmModel->FilterRaw &&
-		    ds.proximity && ds.device_type != PAD_ID)
-		{
-			if (!pLast->proximity)
-				resetSampleCounter(pChannel);
+		/* Start filter fresh when entering proximity */
+		if (!pLast->proximity)
+			wcmResetSampleCounter(pChannel);
 
-			if (common->wcmModel->FilterRaw(common,pChannel,&ds))
-			{
-				DBG(10, common,
-					"Raw filtering discarded data.\n");
-				resetSampleCounter(pChannel);
-				return; /* discard */
-			}
-		}
-
-		/* Discard unwanted data */
-		suppress = wcmCheckSuppress(common, pLast, &ds);
-		if (!suppress)
+		if (common->wcmModel->FilterRaw(common,pChannel,&ds))
 		{
-			return;
+			DBG(10, common, "Raw filtering discarded data.\n");
+			wcmResetSampleCounter(pChannel);
+			return; /* discard */
 		}
+	}
+
+	/* Discard unwanted data */
+	suppress = wcmCheckSuppress(common, pLast, &ds);
+	if (!suppress)
+	{
+		return;
 	}
 
 	/* JEJ - Do not move this code without discussing it with me.
@@ -1006,7 +965,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	    (ds.device_type != TOUCH_ID))
 		commonDispatchDevice(common,channel,pChannel, suppress);
 ret:
-	resetSampleCounter(pChannel);
+	wcmResetSampleCounter(pChannel);
 }
 
 static int idtotype(int id)

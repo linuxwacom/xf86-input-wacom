@@ -30,6 +30,7 @@ int wcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
 int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds);
+void wcmResetSampleCounter(const WacomChannelPtr pChannel);
 
 /****************************************************************************/
 #endif /* __XF86_WCMFILTER_H */
