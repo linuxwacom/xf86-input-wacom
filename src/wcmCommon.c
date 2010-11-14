@@ -793,15 +793,22 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
  *  if not.
  ****************************************************************************/
 
-static int wcmCheckSuppress(WacomCommonPtr common, const WacomDeviceState* dsOrig,
-	WacomDeviceState* dsNew)
+static int wcmCheckSuppress(WacomCommonPtr common,
+			    const WacomDeviceState* dsOrig,
+			    WacomDeviceState* dsNew)
 {
 	int suppress = common->wcmSuppress;
 	/* NOTE: Suppression value of zero disables suppression. */
 	int returnV = 0;
 
-	if (dsOrig->buttons != dsNew->buttons) returnV = 1;
+	/* Ignore all other changes that occur after initial out-of-prox. */
+	if (!dsNew->proximity && !dsOrig->proximity)
+		return 0;
+
+	/* Never ignore proximity changes. */
 	if (dsOrig->proximity != dsNew->proximity) returnV = 1;
+
+	if (dsOrig->buttons != dsNew->buttons) returnV = 1;
 	if (dsOrig->stripx != dsNew->stripx) returnV = 1;
 	if (dsOrig->stripy != dsNew->stripy) returnV = 1;
 	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) returnV = 1;
