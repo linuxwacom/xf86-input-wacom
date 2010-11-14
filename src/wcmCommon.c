@@ -841,8 +841,6 @@ static void resetSampleCounter(const WacomChannelPtr pChannel)
 {
 	pChannel->nSamples = 0;
 	pChannel->rawFilter.npoints = 0;
-	pChannel->rawFilter.statex = 0;
-	pChannel->rawFilter.statey = 0;
 }
 
 /*****************************************************************************
