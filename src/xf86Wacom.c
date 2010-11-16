@@ -508,18 +508,21 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		return FALSE;
 	}
 
-	wcmInitialToolSize(pInfo);
-
-	if (wcmInitArea(pInfo) == FALSE)
+	if (!IsPad(priv))
 	{
-		return FALSE;
+		wcmInitialToolSize(pInfo);
+
+		if (wcmInitArea(pInfo) == FALSE)
+		{
+			return FALSE;
+		}
+
+		wcmInitialCoordinates(priv->pInfo, 0);
+		wcmInitialCoordinates(priv->pInfo, 1);
+
+		/* Rotation rotates the Max X and Y */
+		wcmRotateTablet(pInfo, common->wcmRotate);
 	}
-
-	wcmInitialCoordinates(priv->pInfo, 0);
-	wcmInitialCoordinates(priv->pInfo, 1);
-
-	/* Rotation rotates the Max X and Y */
-	wcmRotateTablet(pInfo, common->wcmRotate);
 
 	/* pressure normalized to FILTER_PRESSURE_RES */
 	InitValuatorAxisStruct(pInfo->dev, 2,
