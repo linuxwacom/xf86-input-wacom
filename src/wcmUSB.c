@@ -207,6 +207,8 @@ static struct
 	{ WACOM_VENDOR_ID, 0xC2,  508,  508, &usbCintiq     }, /* DTF720a */
 	{ WACOM_VENDOR_ID, 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */
 	{ WACOM_VENDOR_ID, 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
+	{ WACOM_VENDOR_ID, 0xCE, 2540, 2540, &usbCintiq     }, /* DTU2231 */
+	{ WACOM_VENDOR_ID, 0xF0, 2540, 2540, &usbCintiq     }, /* DTU1631 */
 
 	{ WACOM_VENDOR_ID, 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
 	{ WACOM_VENDOR_ID, 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */
@@ -237,10 +239,13 @@ static struct
 	{ WACOM_VENDOR_ID, 0xB9, 5080, 5080, &usbIntuos4    }, /* Intuos4 6x9 */
 	{ WACOM_VENDOR_ID, 0xBA, 5080, 5080, &usbIntuos4    }, /* Intuos4 8x13 */
 	{ WACOM_VENDOR_ID, 0xBB, 5080, 5080, &usbIntuos4    }, /* Intuos4 12x19*/
+	{ WACOM_VENDOR_ID, 0xBC, 5080, 5080, &usbIntuos4    }, /* Intuos4 WL USB Endpoint */
+	{ WACOM_VENDOR_ID, 0xBD, 5080, 5080, &usbIntuos4    }, /* Intuos4 WL Bluetooth Endpoint */
 
 	{ WACOM_VENDOR_ID, 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */
 	{ WACOM_VENDOR_ID, 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */
 	{ WACOM_VENDOR_ID, 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */
+	{ WACOM_VENDOR_ID, 0xCC, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX2 */
 
 	{ WACOM_VENDOR_ID, 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */
 	{ WACOM_VENDOR_ID, 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
