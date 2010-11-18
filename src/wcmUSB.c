@@ -395,7 +395,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	 * requires it to act the same as Touch.
 	 */
 	if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP)
-	     && ISBITSET(common->wcmKeys, BTN_TOOL_FINGER))
+	     && ISBITSET(common->wcmKeys, BTN_FORWARD))
 		is_touch = 1;
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
@@ -560,7 +560,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 		 * (MT events are special case handled elsewhere).
 		 * It also means all buttons must be associated with
 		 * a single tool and can not send tablet buttons
-		 * as part of a FINGER tool.
+		 * as part of a pad tool.
 		 */
 		channel = 0;
 		serial = 1;
@@ -575,7 +575,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 	{
 		/* Protocol 4 devices support only 2 devices being
 		 * in proximity at the same time.  This includes
-		 * the FINGER tool (PAD device) as well as 1 other tool
+		 * the PAD device as well as 1 other tool
 		 * (stylus, mouse, finger touch, etc).
 		 * There is a special case of Tablet PC that also
 		 * suport a 3rd tool (2nd finger touch) to also be
@@ -584,7 +584,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 		 * events.
 		 *
 		 * Protocol 4 send fixed serial numbers along with events.
-		 * Events associated with BTN_TOOL_FINGER (PAD device)
+		 * Events associated with PAD device
 		 * will send serial number of 0xf0 always.
 		 * Events associated with BTN_TOOL_TRIPLETAP (2nd finger
 		 * touch) send a serial number of 0x02 always.
@@ -608,10 +608,10 @@ static int usbChooseChannel(WacomCommonPtr common)
 	else if (serial) /* serial number should never be 0 for V5 devices */
 	{
 		/* Protocol 5 devices can support tracking 2 or 3
-		 * tools at once.  One is the FINGER tool (PAD device)
+		 * tools at once.  One is the PAD device
 		 * as well as a stylus and/or mouse.
 		 *
-		 * Events associated with BTN_TOOL_FINGER (PAD device)
+		 * Events associated with PAD device
 		 * will send serial number of -1 (0xffffffff) always.
 		 * Events associated with all other BTN_TOOL_*'s will
 		 * send a dynamic serial #.
@@ -920,11 +920,8 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			ds->proximity = (event->value != 0);
 			break;
 
-		case BTN_TOOL_FINGER:
-			/* If a real finger report, ignore. */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
-				break;
-
+		case BTN_0:
+		case BTN_FORWARD:
 			DBG(6, common,
 			    "USB Pad detected %x (value=%d)\n",
 			    event->code, event->value);
