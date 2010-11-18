@@ -247,6 +247,12 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			priv->common->tablet_type = WCM_PEN;
 	}
 
+	if (ISBITSET (common->wcmKeys, BTN_0) ||
+			ISBITSET (common->wcmKeys, BTN_FORWARD))
+	{
+		priv->common->tablet_type |= WCM_PAD;
+	}
+
 	return ret;
 }
 

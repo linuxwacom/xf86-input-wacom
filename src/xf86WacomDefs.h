@@ -127,6 +127,7 @@ struct _WacomModel
 #define WCM_DUALINPUT		0x00000040
 #define WCM_ROTATION		0x00000080
 #define WCM_LCD 		0x00000100
+#define WCM_PAD			0x00000200
 
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
