@@ -851,7 +851,8 @@ static struct
 	{ CURSOR_ID, BTN_TOOL_LENS      },
 	{ TOUCH_ID,  BTN_TOOL_DOUBLETAP },
 	{ TOUCH_ID,  BTN_TOOL_TRIPLETAP },
-	{ PAD_ID,    BTN_TOOL_FINGER    }
+	{ PAD_ID,    BTN_FORWARD        },
+	{ PAD_ID,    BTN_0              }
 };
 
 #define MOD_BUTTONS(bit, value) do { \

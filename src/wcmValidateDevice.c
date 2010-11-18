@@ -120,20 +120,20 @@ ret:
 static struct
 {
 	const char* type;
-	__u16 tool;
+	__u16 tool[3]; /* tool array is terminated by 0 */
 } wcmType [] =
 {
-	{ "stylus", BTN_TOOL_PEN       },
-	{ "eraser", BTN_TOOL_RUBBER    },
-	{ "cursor", BTN_TOOL_MOUSE     },
-	{ "touch",  BTN_TOOL_DOUBLETAP },
-	{ "pad",    BTN_TOOL_FINGER    }
+	{ "stylus", { BTN_TOOL_PEN,       0        } },
+	{ "eraser", { BTN_TOOL_RUBBER,    0        } },
+	{ "cursor", { BTN_TOOL_MOUSE,     0        } },
+	{ "touch",  { BTN_TOOL_DOUBLETAP, 0        } },
+	{ "pad",    { BTN_FORWARD,        BTN_0, 0 } }
 };
 
 /* validate tool type for device/product */
 Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 {
-	int j, ret = FALSE;
+	int j, k, ret = FALSE;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	char* dsource = xf86CheckStrOption(pInfo->options, "_source", "");
@@ -144,19 +144,17 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
-		if (!strcmp(wcmType[j].type, type))
+		for (k = 0; wcmType[j].type[k] && !ret; k++)
 		{
-			if (ISBITSET (common->wcmKeys, wcmType[j].tool))
+			if (ISBITSET (common->wcmKeys, wcmType[j].tool[k]))
 			{
 				ret = TRUE;
-				break;
 			}
 			else if (!strlen(dsource)) /* an user defined type */
 			{
 				/* assume it is a valid type */
-				SETBIT(common->wcmKeys, wcmType[j].tool);
+				SETBIT(common->wcmKeys, wcmType[j].tool[k]);
 				ret = TRUE;
-				break;
 			}
 		}
 	}
