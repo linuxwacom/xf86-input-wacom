@@ -1253,14 +1253,14 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to "
 				"ioctl USB key bits.\n", pInfo->name);
 		return 0;
 	}
 
 	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
+		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to "
 				"ioctl Device ID.\n", pInfo->name);
 		return 0;
 	}
