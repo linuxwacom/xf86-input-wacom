@@ -534,7 +534,7 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
-		.name = "ClickForce",
+		.name = "Threshold",
 		.desc = "Sets tip/eraser pressure threshold "
 		"(default is 27)",
 		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
