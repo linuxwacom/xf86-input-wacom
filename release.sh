@@ -7,7 +7,7 @@ set -e
 
 announce_list="linuxwacom-announce@lists.sourceforge.net"
 module=xf86-input-wacom
-user=
+user=${USER}@
 host=shell.sourceforge.net
 srv_path=/home/frs/project/l/li/linuxwacom/$module
 webpath=sourceforge.net/projects/linuxwacom/files/$module
@@ -190,6 +190,9 @@ if ! git tag -l $tag_current >/dev/null; then
     echo "error: you must tag your release first!"
     exit 1
 fi
+
+echo "creating shell on sourceforge for $USER"
+ssh -t ${user/%@},linuxwacom@shell.sourceforge.net create
 
 echo "checking for an existing release"
 if ssh $user$host ls $srv_path/$module/$targz >/dev/null 2>&1 ||
