@@ -144,17 +144,20 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
 	{
-		for (k = 0; wcmType[j].type[k] && !ret; k++)
+		if (!strcmp(wcmType[j].type, type))
 		{
-			if (ISBITSET (common->wcmKeys, wcmType[j].tool[k]))
+			for (k = 0; wcmType[j].tool[k] && !ret; k++)
 			{
-				ret = TRUE;
-			}
-			else if (!strlen(dsource)) /* an user defined type */
-			{
-				/* assume it is a valid type */
-				SETBIT(common->wcmKeys, wcmType[j].tool[k]);
-				ret = TRUE;
+				if (ISBITSET (common->wcmKeys, wcmType[j].tool[k]))
+				{
+					ret = TRUE;
+				}
+				else if (!strlen(dsource)) /* an user defined type */
+				{
+					/* assume it is a valid type */
+					SETBIT(common->wcmKeys, wcmType[j].tool[k]);
+					ret = TRUE;
+				}
 			}
 		}
 	}
