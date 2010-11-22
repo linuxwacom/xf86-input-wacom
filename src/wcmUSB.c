@@ -28,9 +28,6 @@
 #include <linux/input.h>
 #include <sys/utsname.h>
 
-#ifndef BTN_TASK
-#define BTN_TASK 0x117
-#endif
 #define MAX_USB_EVENTS 32
 
 typedef struct {
@@ -147,7 +144,7 @@ usbStart(InputInfoPtr pInfo)
 }
 
 /* Key codes used to mark tablet buttons -- must be in sync
- * with the keycode array in wacom.c kernel driver.
+ * with the keycode array in wacom kernel drivers.
  */
 static unsigned short padkey_codes [] = {
 	BTN_0, BTN_1, BTN_2, BTN_3, BTN_4,
@@ -157,6 +154,11 @@ static unsigned short padkey_codes [] = {
 	BTN_BASE4, BTN_BASE5, BTN_BASE6,
 	BTN_TL, BTN_TR, BTN_TL2, BTN_TR2, BTN_SELECT
 };
+
+/* Fixed mapped stylus and mouse buttons */
+
+#define WCM_USB_MAX_MOUSE_BUTTONS 5
+#define WCM_USB_MAX_STYLUS_BUTTONS 3
 
 static struct
 {
@@ -340,18 +342,15 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
 			common->padkey_code [common->npadkeys++] = padkey_codes [i];
 
-	if (ISBITSET (common->wcmKeys, BTN_TASK))
-		common->nbuttons = 10;
-	else if (ISBITSET (common->wcmKeys, BTN_BACK))
-		common->nbuttons = 9;
-	else if (ISBITSET (common->wcmKeys, BTN_FORWARD))
-		common->nbuttons = 8;
-	else if (ISBITSET (common->wcmKeys, BTN_EXTRA))
-		common->nbuttons = 7;
-	else if (ISBITSET (common->wcmKeys, BTN_SIDE))
-		common->nbuttons = 6;
+	/* nbuttons tracks maximum buttons on all tools (stylus/mouse).
+	 *
+	 * Mouse support left, middle, right, side, and extra side button.
+	 * Stylus support tip and 2 stlyus buttons.
+	 */
+	if (ISBITSET (common->wcmKeys, BTN_TOOL_MOUSE))
+		common->nbuttons = WCM_USB_MAX_MOUSE_BUTTONS;
 	else
-		common->nbuttons = 5;
+		common->nbuttons = WCM_USB_MAX_STYLUS_BUTTONS;
 
 	return Success;
 }
