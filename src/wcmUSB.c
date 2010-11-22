@@ -1067,10 +1067,12 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_SIDE:
+		case BTN_BACK:
 			MOD_BUTTONS(3, event->value);
 			break;
 
 		case BTN_EXTRA:
+		case BTN_FORWARD:
 			MOD_BUTTONS(4, event->value);
 			break;
 
