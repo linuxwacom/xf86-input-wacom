@@ -505,11 +505,14 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	axis_x = &dev->valuator->axes[0];
 	axis_y = &dev->valuator->axes[1];
 
-	*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
-			priv->bottomX, priv->topX);
+	/* Don't try to scale relative axes */
+	if (axis_x->max_value > axis_x->min_value)
+		*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
+				   priv->bottomX, priv->topX);
 
-	*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
-			priv->bottomY, priv->topY);
+	if (axis_y->max_value > axis_y->min_value)
+		*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
+				   priv->bottomY, priv->topY);
 
 	/* coordinates are now in the axis rage we advertise for the device */
 
