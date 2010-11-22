@@ -229,6 +229,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xD1:  /* Bamboo with 2FGT */
 		case 0xD2:  /* Bamboo with 2FGT */
 		case 0xD3:  /* Bamboo with 2FGT */
+		case 0xD8:  /* Bamboo with 2FGT */
+		case 0xDA:  /* Bamboo with 2FGT */
+		case 0xDB:  /* Bamboo with 2FGT */
 			priv->common->tablet_type |= WCM_2FGT;
 			break;
 
