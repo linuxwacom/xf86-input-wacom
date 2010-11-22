@@ -942,8 +942,11 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			ds->proximity = (event->value != 0);
 			break;
 
-		case BTN_0:
-		case BTN_FORWARD:
+		case BTN_TOOL_FINGER:
+			/* If a real finger report, ignore. */
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+				break;
+
 			DBG(6, common,
 			    "USB Pad detected %x (value=%d)\n",
 			    event->code, event->value);
