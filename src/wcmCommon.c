@@ -953,14 +953,12 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	/* don't move the cursor if in gesture mode */
 	if (common->wcmGestureMode)
-		goto ret;
+		return;
 
 	/* For touch, only first finger moves the cursor */
 	if ((ds.device_type == TOUCH_ID && common->wcmTouch && !channel) ||
 	    (ds.device_type != TOUCH_ID))
 		commonDispatchDevice(common,channel,pChannel, suppress);
-ret:
-	wcmResetSampleCounter(pChannel);
 }
 
 static int idtotype(int id)
