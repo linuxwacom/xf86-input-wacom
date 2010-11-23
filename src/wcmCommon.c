@@ -744,14 +744,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	}
 	else
 	{
-		if (v3 || v4 || v5 || buttons || ds->relwheel)
-		{
-			x = 0;
-			y = 0;
-		}
+		int valuators[3] = { v3, v4, v5 };
 
 		if (!priv->oldProximity && is_proximity)
-			xf86PostProximityEvent(pInfo->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+			xf86PostProximityEventP(pInfo->dev, 1, 3, 3, valuators);
 
 		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
@@ -760,11 +756,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			/* xf86PostMotionEvent is only needed to post the valuators
 			 * It should NOT move the cursor.
 			 */
-			if ( v3 || v4 || v5 )
-			{
-				xf86PostMotionEvent(pInfo->dev, is_absolute(pInfo),
-					0, naxes, x, y, z, v3, v4, v5);
-			}
+			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo), 3, 3, valuators);
 		}
 		else
 		{
@@ -773,7 +765,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 					x, y, z, v3, v4, v5);
 		}
 		if (priv->oldProximity && !is_proximity)
-			xf86PostProximityEvent(pInfo->dev, 0, 0, naxes, x, y, z, v3, v4, v5);
+			xf86PostProximityEventP(pInfo->dev, 0, 0, 3, valuators);
 	}
 	priv->oldProximity = is_proximity;
 	priv->old_device_id = id;
