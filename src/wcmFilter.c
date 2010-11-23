@@ -261,6 +261,8 @@ static void storeRawSample(WacomCommonPtr common, WacomChannelPtr pChannel,
 			fs->tiltx[0] = ds->tiltx;
 			fs->tilty[0] = ds->tilty;
 		}
+		if (fs->npoints < common->wcmRawSample)
+			++fs->npoints;
 	}
 }
 /*****************************************************************************
