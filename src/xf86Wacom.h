@@ -174,6 +174,7 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 
 /* device properties */
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
+extern int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 
 /* Utility functions */

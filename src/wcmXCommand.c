@@ -557,6 +557,27 @@ static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
 }
 
+/**
+ * Only allow deletion of a property if it is not being used by any of the
+ * button actions.
+ */
+int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	int i;
+
+	i = wcmFindProp(property, priv->btn_actions, ARRAY_SIZE(priv->btn_actions));
+	if (i < 0)
+		i = wcmFindProp(property, priv->wheel_actions,
+				ARRAY_SIZE(priv->wheel_actions));
+	if (i < 0)
+		i = wcmFindProp(property, priv->strip_actions,
+				ARRAY_SIZE(priv->strip_actions));
+
+	return (i >= 0) ? BadAccess : Success;
+}
+
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		BOOL checkonly)
 {
