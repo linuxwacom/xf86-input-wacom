@@ -520,18 +520,34 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 		/* Rotation rotates the Max X and Y */
 		wcmRotateTablet(pInfo, common->wcmRotate);
-	}
 
-	/* pressure normalized to FILTER_PRESSURE_RES */
-	InitValuatorAxisStruct(pInfo->dev, 2,
+		/* pressure normalized to FILTER_PRESSURE_RES */
+		InitValuatorAxisStruct(pInfo->dev, 2,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
+				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
 #endif
-		0, FILTER_PRESSURE_RES, 1, 1, 1
+				0, FILTER_PRESSURE_RES, 1, 1, 1
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-		, Absolute
+				, Absolute
 #endif
-		);
+				);
+
+	} else {
+		/* The pad doesn't have a pressure axis, so initialise third
+		 * axis as unknown relative axis on the pad. This way, we
+		 * can leave the strip/abswheel axes on later axes and don't
+		 * run the danger of clients misinterpreting the axis info
+		 */
+		InitValuatorAxisStruct(pInfo->dev, 2,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+				None,
+#endif
+				-1, -1, 0, -1, -1
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+				, Relative
+#endif
+				);
+	}
 
 	if (IsCursor(priv))
 	{
