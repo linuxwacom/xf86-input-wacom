@@ -1061,6 +1061,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
+	/* pad does not need area check. Skip the unnecessary steps */
+	if (tool && (tool->typeid == PAD_ID) && tool->arealist)
+	{
+		wcmSendEvents(tool->arealist->device, ds);
+		return;
+	}
+
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldef;
