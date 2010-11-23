@@ -35,7 +35,6 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
-static void filterIntuosStylus(WacomCommonPtr common, WacomChannelPtr pChannel, WacomDeviceStatePtr ds);
 void wcmTilt2R(WacomDeviceStatePtr ds);
 
 
@@ -265,18 +264,18 @@ static void storeRawSample(WacomCommonPtr common, WacomChannelPtr pChannel,
 			++fs->npoints;
 	}
 }
+
 /*****************************************************************************
- * filterIntuosStylus --
- *   Correct some hardware defects we've been seeing in Intuos pads,
- *   but also cuts down quite a bit on jitter.
+ * wcmFilterCoord -- provide noise correction to all transducers
  ****************************************************************************/
 
-static void filterIntuosStylus(WacomCommonPtr common,
-			       WacomChannelPtr pChannel,
-			       WacomDeviceStatePtr ds)
+int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
+	WacomDeviceStatePtr ds)
 {
 	int x=0, y=0, tx=0, ty=0, i;
 	WacomFilterState *state;
+
+	DBG(10, common, "common->wcmRawSample = %d \n", common->wcmRawSample);
 
 	storeRawSample(common, pChannel, ds);
 
@@ -286,74 +285,31 @@ static void filterIntuosStylus(WacomCommonPtr common,
 	{
 		x += state->x[i];
 		y += state->y[i];
-		tx += state->tiltx[i];
-		ty += state->tilty[i];
+		if (HANDLE_TILT(common) && (ds->device_type == STYLUS_ID ||
+					    ds->device_type == ERASER_ID))
+		{
+			tx += state->tiltx[i];
+			ty += state->tilty[i];
+		}
 	}
 	ds->x = x / common->wcmRawSample;
 	ds->y = y / common->wcmRawSample;
 
-	ds->tiltx = tx / common->wcmRawSample;
-	if (ds->tiltx > common->wcmMaxtiltX/2-1)
-   		ds->tiltx = common->wcmMaxtiltX/2-1;	
-	else if (ds->tiltx < -common->wcmMaxtiltX/2)
-		ds->tiltx = -common->wcmMaxtiltX/2;
-
-	ds->tilty = ty / common->wcmRawSample;
-	if (ds->tilty > common->wcmMaxtiltY/2-1)
-   		ds->tilty = common->wcmMaxtiltY/2-1;	
-	else if (ds->tilty < -common->wcmMaxtiltY/2)
-		ds->tilty = -common->wcmMaxtiltY/2;
-}
-
-/*****************************************************************************
- * wcmFilterCoord -- provide noise correction to all transducers
- ****************************************************************************/
-
-int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
-	WacomDeviceStatePtr ds)
-{
-	/* Only noise correction should happen here. If there's a problem that
-	 * cannot be fixed, return 1 such that the data is discarded. */
-
-	WacomDeviceState *pLast;
-	int *x, *y, i; 
-
-	DBG(10, common, "common->wcmRawSample = %d \n", common->wcmRawSample);
-
-	storeRawSample(common, pChannel, ds);
-
-	x = pChannel->rawFilter.x;
-	y = pChannel->rawFilter.y;
-
-	pLast = &pChannel->valid.state;
-	ds->x = 0;
-	ds->y = 0;
-
-	for ( i=0; i<common->wcmRawSample; i++ )
+	if (HANDLE_TILT(common) && (ds->device_type == STYLUS_ID ||
+				    ds->device_type == ERASER_ID))
 	{
-		ds->x += x[i];
-		ds->y += y[i];
+		ds->tiltx = tx / common->wcmRawSample;
+		if (ds->tiltx > common->wcmMaxtiltX/2-1)
+			ds->tiltx = common->wcmMaxtiltX/2-1;
+		else if (ds->tiltx < -common->wcmMaxtiltX/2)
+			ds->tiltx = -common->wcmMaxtiltX/2;
+
+		ds->tilty = ty / common->wcmRawSample;
+		if (ds->tilty > common->wcmMaxtiltY/2-1)
+			ds->tilty = common->wcmMaxtiltY/2-1;
+		else if (ds->tilty < -common->wcmMaxtiltY/2)
+			ds->tilty = -common->wcmMaxtiltY/2;
 	}
-	ds->x /= common->wcmRawSample;
-	ds->y /= common->wcmRawSample;
-
-	return 0; /* lookin' good */
-}
-
-/*****************************************************************************
- * wcmFilterIntuos -- provide error correction to Intuos and Intuos2
- ****************************************************************************/
-
-int wcmFilterIntuos(WacomCommonPtr common, WacomChannelPtr pChannel,
-	WacomDeviceStatePtr ds)
-{
-	/* Only error correction should happen here. If there's a problem that
-	 * cannot be fixed, return 1 such that the data is discarded. */
-
-	if (ds->device_type != CURSOR_ID)
-		filterIntuosStylus(common, pChannel, ds);
-	else
-		wcmFilterCoord(common, pChannel, ds);
 
 	return 0; /* lookin' good */
 }

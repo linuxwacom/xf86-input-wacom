@@ -63,7 +63,7 @@ static int usbChooseChannel(WacomCommonPtr common);
 		usbProbeKeys
 	};
 
-#define DEFINE_MODEL(mname, identifier, protocol, filter) \
+#define DEFINE_MODEL(mname, identifier, protocol) \
 static struct _WacomModel mname =		\
 {						\
 	.name = identifier,			\
@@ -72,29 +72,29 @@ static struct _WacomModel mname =		\
 	.GetRanges = usbWcmGetRanges,		\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\
-	.FilterRaw = filter,			\
+	.FilterRaw = wcmFilterCoord,		\
 	.DetectConfig = usbDetectConfig,	\
 };
 
-DEFINE_MODEL(usbUnknown,	"Unknown USB",		5, NULL);
-DEFINE_MODEL(usbPenPartner,	"USB PenPartner",	4, wcmFilterCoord);
-DEFINE_MODEL(usbGraphire,	"USB Graphire",		4, wcmFilterCoord);
-DEFINE_MODEL(usbGraphire2,	"USB Graphire2",	4, wcmFilterCoord);
-DEFINE_MODEL(usbGraphire3,	"USB Graphire3",	4, wcmFilterCoord);
-DEFINE_MODEL(usbGraphire4,	"USB Graphire4",	4, wcmFilterCoord);
-DEFINE_MODEL(usbBamboo,		"USB Bamboo",		4, wcmFilterCoord);
-DEFINE_MODEL(usbBamboo1,	"USB Bamboo1",		4, wcmFilterCoord);
-DEFINE_MODEL(usbBambooFun,	"USB BambooFun",	4, wcmFilterCoord);
-DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq",	4, NULL);
-DEFINE_MODEL(usbCintiqPartner,	"USB CintiqPartner",	4, NULL);
-DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5, wcmFilterIntuos);
-DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5, wcmFilterIntuos);
-DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5, wcmFilterIntuos);
-DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5, wcmFilterIntuos);
-DEFINE_MODEL(usbVolito,		"USB Volito",		4, wcmFilterCoord);
-DEFINE_MODEL(usbVolito2,	"USB Volito2",		4, wcmFilterCoord);
-DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5, wcmFilterIntuos);
-DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4, NULL);
+DEFINE_MODEL(usbUnknown,	"Unknown USB",		5)
+DEFINE_MODEL(usbPenPartner,	"USB PenPartner",	4);
+DEFINE_MODEL(usbGraphire,	"USB Graphire",		4);
+DEFINE_MODEL(usbGraphire2,	"USB Graphire2",	4);
+DEFINE_MODEL(usbGraphire3,	"USB Graphire3",	4);
+DEFINE_MODEL(usbGraphire4,	"USB Graphire4",	4);
+DEFINE_MODEL(usbBamboo,		"USB Bamboo",		4);
+DEFINE_MODEL(usbBamboo1,	"USB Bamboo1",		4);
+DEFINE_MODEL(usbBambooFun,	"USB BambooFun",	4);
+DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq",	4);
+DEFINE_MODEL(usbCintiqPartner,	"USB CintiqPartner",	4);
+DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5);
+DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5);
+DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5);
+DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5);
+DEFINE_MODEL(usbVolito,		"USB Volito",		4);
+DEFINE_MODEL(usbVolito2,	"USB Volito2",		4);
+DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5);
+DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4);
 
 /*****************************************************************************
  * usbDetect --
