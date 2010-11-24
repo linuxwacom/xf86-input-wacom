@@ -91,7 +91,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->striprdn = 5;			/* Default right strip down event */
 	priv->naxes = 6;			/* Default number of axes */
 	priv->numScreen = screenInfo.numScreens; /* configured screens count */
-	priv->currentScreen = -1;                /* current screen in display */
 
 	/* JEJ - throttle sampling code */
 	priv->throttleLimit = -1;

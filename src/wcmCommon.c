@@ -75,21 +75,6 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 
 	wcmVirtualTabletSize(pInfo);
 
-	if (!is_absolute(pInfo))
-	{
-		/* Get the current screen that the cursor is in */
-		if (miPointerGetScreen(pInfo->dev))
-			priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
-	}
-	else
-	{
-		/* Get the current screen that the cursor is in */
-		if (miPointerGetScreen(pInfo->dev))
-			priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
-	}
-	if (priv->currentScreen == -1) /* tool on the tablet */
-		priv->currentScreen = 0;
-
 	DBG(10, priv,
 		"Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
 		" to maxWidth =%d maxHeight =%d\n",
