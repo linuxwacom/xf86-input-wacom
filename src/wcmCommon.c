@@ -83,14 +83,9 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 	}
 	else
 	{
-		if (priv->screen_no != -1)
-			priv->currentScreen = priv->screen_no;
-		else if (priv->currentScreen == -1)
-		{
-			/* Get the current screen that the cursor is in */
-			if (miPointerGetScreen(pInfo->dev))
-				priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
-		}
+		/* Get the current screen that the cursor is in */
+		if (miPointerGetScreen(pInfo->dev))
+			priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
 	}
 	if (priv->currentScreen == -1) /* tool on the tablet */
 		priv->currentScreen = 0;

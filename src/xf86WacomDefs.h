@@ -187,7 +187,6 @@ struct _WacomDeviceRec
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number */
-	int screen_no;		/* associated screen */
 	int screenTopX[32];	/* left cordinate of the associated screen */
 	int screenTopY[32];	/* top cordinate of the associated screen */
 	int screenBottomX[32];	/* right cordinate of the associated screen */

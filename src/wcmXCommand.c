@@ -69,31 +69,12 @@ int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	return wcmDevSwitchModeCall(pInfo, mode);
 }
 
-/*****************************************************************************
- * wcmChangeScreen
- ****************************************************************************/
-
-void wcmChangeScreen(InputInfoPtr pInfo, int value)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
-	if (priv->screen_no != value)
-		priv->screen_no = value;
-
-	if (priv->screen_no != -1)
-		priv->currentScreen = priv->screen_no;
-	wcmInitialScreens(pInfo);
-	wcmInitialCoordinates(pInfo, 0);
-	wcmInitialCoordinates(pInfo, 1);
-}
-
 Atom prop_rotation;
 Atom prop_tablet_area;
 Atom prop_pressurecurve;
 Atom prop_serials;
 Atom prop_strip_buttons;
 Atom prop_wheel_buttons;
-Atom prop_display;
 Atom prop_tv_resolutions;
 Atom prop_cursorprox;
 Atom prop_capacity;
@@ -197,12 +178,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[3] = priv->wheeldn;
 		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
 	}
-
-
-	values[0] = priv->screen_no;
-	values[1] = 0;
-	values[2] = 0;
-	prop_display = InitWcmAtom(pInfo->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
 
 	if (IsCursor(priv)) {
 		values[0] = common->wcmCursorProxoutDist;
@@ -692,25 +667,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		return wcmSetStripProperty(dev, property, prop, checkonly);
 	else if (property == prop_wheel_buttons)
 		return wcmSetWheelProperty(dev, property, prop, checkonly);
-	else if (property == prop_display)
-	{
-		INT8 *values;
-
-		if (prop->size != 3 || prop->format != 8)
-			return BadValue;
-
-		values = (INT8*)prop->data;
-
-		if (values[0] < -1 || values[0] >= priv->numScreen)
-			return BadValue;
-
-		if (!checkonly)
-		{
-			if (priv->screen_no != values[0])
-				wcmChangeScreen(pInfo, values[0]);
-			priv->screen_no = values[0];
-		}
-	} else if (property == prop_cursorprox)
+	else if (property == prop_cursorprox)
 	{
 		CARD32 value;
 

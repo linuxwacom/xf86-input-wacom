@@ -138,9 +138,6 @@ A Rspeed greater than 1.0 will speed up the cursor's relative movement.  A Rspee
 less than 1.0 but greater than 0 will slow down the cursor's relative movement. 
 A Rspeed too close to 0 is not recommanded.
 .TP 4
-.B Option \fI"ScreenNo"\fP \fI"n"\fP
-In a multi-monitor environment, specifies the screen number in which the cursor can move.
-.TP 4
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
 rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 
 If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be 

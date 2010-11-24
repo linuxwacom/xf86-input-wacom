@@ -51,7 +51,7 @@
 /* 32 bit, 4 values */
 #define WACOM_PROP_TWINVIEW_RES "Wacom TwinView Resolution"
 
-/* 8 bit 3 values, screen number, twinview on/off, multimonitor */
+/* DEPRECATED. DO NOT USE */
 #define WACOM_PROP_DISPLAY_OPTS "Wacom Display Options"
 
 /* DEPRECATED. DO NOT USE */

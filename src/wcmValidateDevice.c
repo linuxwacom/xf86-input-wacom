@@ -558,8 +558,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 				pInfo->name, common->wcmCursorProxoutDist);
 	}
 
-	priv->screen_no = xf86SetIntOption(pInfo->options, "ScreenNo", -1);
-
 	if (xf86SetBoolOption(pInfo->options, "KeepShape", 0))
 		priv->flags |= KEEP_SHAPE_FLAG;
 
