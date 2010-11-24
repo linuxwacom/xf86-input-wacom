@@ -90,27 +90,13 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 static void wcmDesktopSize(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
+	int minX = 0, minY = 0, maxX = 0, maxY = 0;
 
 	wcmInitialScreens(pInfo);
 	minX = priv->screenTopX[0];
 	minY = priv->screenTopY[0];
 	maxX = priv->screenBottomX[0];
 	maxY = priv->screenBottomY[0];
-	if (priv->numScreen != 1)
-	{
-		for (i = 1; i < priv->numScreen; i++)
-		{
-			if (priv->screenTopX[i] < minX)
-				minX = priv->screenTopX[i];
-			if (priv->screenTopY[i] < minY)
-				minY = priv->screenTopY[i];
-			if (priv->screenBottomX[i] > maxX)
-				maxX = priv->screenBottomX[i];
-			if (priv->screenBottomY[i] > maxY)
-				maxY = priv->screenBottomY[i];
-		}
-	}
 	priv->maxWidth = maxX - minX;
 	priv->maxHeight = maxY - minY;
 } 

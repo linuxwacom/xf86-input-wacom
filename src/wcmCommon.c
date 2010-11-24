@@ -1360,7 +1360,6 @@ void wcmInitialScreens(InputInfoPtr pInfo)
 	DBG(2, priv, "number of screen=%d \n", screenInfo.numScreens);
 
 	/* initial screen info */
-	priv->numScreen = screenInfo.numScreens;
 	priv->screenTopX[0] = 0;
 	priv->screenTopY[0] = 0;
 	priv->screenBottomX[0] = 0;

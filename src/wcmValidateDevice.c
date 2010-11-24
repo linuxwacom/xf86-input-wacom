@@ -702,8 +702,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
 	}
 
-	priv->numScreen = screenInfo.numScreens;
-
 	/* Now parse class-specific options */
 	if (common->wcmDevCls->ParseOptions &&
 	    !common->wcmDevCls->ParseOptions(pInfo))

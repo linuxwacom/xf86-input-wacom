@@ -240,7 +240,6 @@ struct _WacomDeviceRec
 	int old_device_id;	/* last in prox device id */
 	int old_serial;		/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
-	int numScreen;          /* number of configured screens */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
