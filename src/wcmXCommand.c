@@ -201,7 +201,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 
 	values[0] = priv->screen_no;
 	values[1] = 0;
-	values[2] = priv->wcmMMonitor;
+	values[2] = 0;
 	prop_display = InitWcmAtom(pInfo->dev, WACOM_PROP_DISPLAY_OPTS, 8, 3, values);
 
 	if (IsCursor(priv)) {
@@ -704,15 +704,11 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if (values[0] < -1 || values[0] >= priv->numScreen)
 			return BadValue;
 
-		if ((values[2] != 0) && (values[2] != 1))
-			return BadValue;
-
 		if (!checkonly)
 		{
 			if (priv->screen_no != values[0])
 				wcmChangeScreen(pInfo, values[0]);
 			priv->screen_no = values[0];
-			priv->wcmMMonitor = values[2];
 		}
 	} else if (property == prop_cursorprox)
 	{

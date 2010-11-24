@@ -691,10 +691,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 			common->wcmGestureParameters.wcmTapTimeDefault);
 	}
 
-	/* Mouse cursor stays in one monitor in a multimonitor setup */
-	if ( !priv->wcmMMonitor )
-		priv->wcmMMonitor = xf86SetBoolOption(pInfo->options, "MMonitor", 1);
-
 	/* Swap stylus buttons 2 and 3 for Tablet PCs */
 	if (TabletHasFeature(common, WCM_TPC) && IsStylus(priv))
 	{

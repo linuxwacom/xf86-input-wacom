@@ -242,7 +242,7 @@ void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 
 	if (!is_absolute(pInfo)) return;
 
-	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
+	if ((priv->screen_no != -1))
 	{
 		i = priv->currentScreen;
 
@@ -278,7 +278,7 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 	priv->sizeX = priv->bottomX - priv->topX;
 	priv->sizeY = priv->bottomY - priv->topY;
 
-	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
+	if (priv->screen_no != -1)
 	{
 		i = priv->currentScreen;
 

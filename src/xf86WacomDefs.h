@@ -243,7 +243,6 @@ struct _WacomDeviceRec
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
-	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */

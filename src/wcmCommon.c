@@ -74,8 +74,8 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 	DBG(10, priv, "\n"); /* just prints function name */
 
 	wcmVirtualTabletSize(pInfo);
-	
-	if (!is_absolute(pInfo) || !priv->wcmMMonitor)
+
+	if (!is_absolute(pInfo))
 	{
 		/* Get the current screen that the cursor is in */
 		if (miPointerGetScreen(pInfo->dev))
