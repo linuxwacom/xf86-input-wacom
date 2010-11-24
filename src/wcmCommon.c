@@ -198,37 +198,6 @@ void wcmEmitKeycode (DeviceIntPtr keydev, int keycode, int state)
 	xf86PostKeyboardEvent (keydev, keycode, state);
 }
 
-static void toggleDisplay(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	WacomCommonPtr common = priv->common;
-
-	if (priv->numScreen > 1)
-	{
-		if (IsPad(priv)) /* toggle display for all tools except pad */
-		{
-			WacomDevicePtr tmppriv;
-			for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
-			{
-				if (!IsPad(tmppriv))
-				{
-					int screen = tmppriv->screen_no;
-					if (++screen >= tmppriv->numScreen)
-						screen = -1;
-					wcmChangeScreen(tmppriv->pInfo, screen);
-				}
-			}
-		}
-		else /* toggle display only for the selected tool */
-		{
-			int screen = priv->screen_no;
-			if (++screen >= priv->numScreen)
-				screen = -1;
-			wcmChangeScreen(pInfo, screen);
-		}
-	}
-}
-
 /*****************************************************************************
  * countPresses
  *   Count the number of key/button presses not released for the given key
@@ -285,9 +254,6 @@ static void sendAction(InputInfoPtr pInfo, int press,
 				if (press)
 					wcmDevSwitchModeCall(pInfo,
 							(is_absolute(pInfo)) ? Relative : Absolute); /* not a typo! */
-				break;
-			case AC_DISPLAYTOGGLE:
-				toggleDisplay(pInfo);
 				break;
 		}
 	}
