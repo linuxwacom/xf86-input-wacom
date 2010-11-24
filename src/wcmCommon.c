@@ -1349,56 +1349,6 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 }
 
 /*****************************************************************************
- * wcmInitialScreens
- ****************************************************************************/
-
-void wcmInitialScreens(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int i;
-
-	DBG(2, priv, "number of screen=%d \n", screenInfo.numScreens);
-
-	/* initial screen info */
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = 0;
-	priv->screenBottomY[0] = 0;
-	for (i=0; i<screenInfo.numScreens; i++)
-	{
-		if (screenInfo.numScreens > 1)
-		{
-/* dixScreenOrigins was removed from xserver without bumping the ABI.
- * 1.8.99.901 is the first release after the break. thanks. */
-#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 8, 99, 901, 0)
-			priv->screenTopX[i] = dixScreenOrigins[i].x;
-			priv->screenTopY[i] = dixScreenOrigins[i].y;
-			priv->screenBottomX[i] = dixScreenOrigins[i].x;
-			priv->screenBottomY[i] = dixScreenOrigins[i].y;
-#else
-			priv->screenTopX[i] = screenInfo.screens[i]->x;
-			priv->screenTopY[i] = screenInfo.screens[i]->y;
-			priv->screenBottomX[i] = screenInfo.screens[i]->x;
-			priv->screenBottomY[i] = screenInfo.screens[i]->y;
-
-#endif
-
-			DBG(10, priv, "from dix: "
-				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-				i, priv->screenTopX[i], i, priv->screenTopY[i]);
-		}
-
-		priv->screenBottomX[i] += screenInfo.screens[i]->width;
-		priv->screenBottomY[i] += screenInfo.screens[i]->height;
-
-		DBG(10, priv,
-			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
-			i, priv->screenTopX[i], i, priv->screenTopY[i],
-			i, priv->screenBottomX[i], i, priv->screenBottomY[i]);
-	}
-}
-
-/*****************************************************************************
  * wcmRotateTablet
  ****************************************************************************/
 

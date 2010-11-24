@@ -187,10 +187,6 @@ struct _WacomDeviceRec
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number */
-	int screenTopX[32];	/* left cordinate of the associated screen */
-	int screenTopY[32];	/* top cordinate of the associated screen */
-	int screenBottomX[32];	/* right cordinate of the associated screen */
-	int screenBottomY[32];	/* bottom cordinate of the associated screen */
 	int maxWidth;		/* max active screen width */
 	int maxHeight;		/* max active screen height */
 	int leftPadding;	/* left padding for virtual tablet */

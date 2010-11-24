@@ -83,24 +83,6 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
 
-/*****************************************************************************
- * wcmDesktopSize --
- *   calculate the whole desktop size 
- ****************************************************************************/
-static void wcmDesktopSize(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int minX = 0, minY = 0, maxX = 0, maxY = 0;
-
-	wcmInitialScreens(pInfo);
-	minX = priv->screenTopX[0];
-	minY = priv->screenTopY[0];
-	maxX = priv->screenBottomX[0];
-	maxY = priv->screenBottomY[0];
-	priv->maxWidth = maxX - minX;
-	priv->maxHeight = maxY - minY;
-} 
-
 static int wcmInitArea(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -128,9 +110,6 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	area->topY = priv->topY;
 	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
-
-	/* need maxWidth and maxHeight for keepshape */
-	wcmDesktopSize(pInfo);
 
 	/* Maintain aspect ratio to the whole desktop
 	 * May need to consider a specific screen in multimonitor settings
