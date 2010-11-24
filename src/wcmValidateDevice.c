@@ -175,11 +175,16 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 	switch (priv->common->tablet_id)
 	{
-		/* tablets with touch ring and rotation pen*/
+		case 0xCC:  /* CintiqV5 */
+			priv->common->tablet_type = WCM_LCD;
+			/* fall through */
+
 		case 0xB8:  /* I4 */
 		case 0xB9:  /* I4 */
 		case 0xBA:  /* I4 */
 		case 0xBB:  /* I4 */
+		case 0xBC:  /* I4 */
+		case 0xBD:  /* I4 */
 			priv->common->tablet_type = WCM_ROTATION;
 			/* fall through */
 
@@ -202,6 +207,25 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x45:  /* I2 */
 		case 0x47:  /* I2 */
 			priv->common->tablet_type = WCM_DUALINPUT;
+			break;
+
+		/* P4 display tablets */
+		case 0x30:  /* PL400 */
+		case 0x31:  /* PL500 */
+		case 0x32:  /* PL600 */
+		case 0x33:  /* PL600SX */
+		case 0x34:  /* PL550 */
+		case 0x35:  /* PL800 */
+		case 0x37:  /* PL700 */
+		case 0x38:  /* PL510 */
+		case 0x39:  /* PL710 */
+		case 0xC0:  /* DTF720 */
+		case 0xC2:  /* DTF720a */
+		case 0xC4:  /* DTF521 */
+		case 0xC7:  /* DTU1931 */
+		case 0xCE:  /* DTU2231 */
+		case 0xF0:  /* DTU1631 */
+			priv->common->tablet_type |= WCM_LCD;
 			break;
 
 		/* tablets support menu strips */
