@@ -301,62 +301,6 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * wcmInitialCoordinates
- ****************************************************************************/
-
-void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int topx = 0, topy = 0, resolution_x, resolution_y;
-	int bottomx = priv->maxX, bottomy = priv->maxY;
-
-	wcmMappingFactor(pInfo);
-
-	if (is_absolute(pInfo))
-	{
-		topx = priv->topX;
-		topy = priv->topY;
-		bottomx = priv->sizeX + priv->topX;
-		bottomy = priv->sizeY + priv->topY;
-	}
-	resolution_x = priv->resolX;
-	resolution_y = priv->resolY;
-
-	switch(axis)
-	{
-		case 0:
-			InitValuatorAxisStruct(pInfo->dev, 0,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
-#endif
-					topx, bottomx,
-					resolution_x, 0, resolution_x
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-					, Absolute
-#endif
-					);
-			break;
-		case 1:
-			InitValuatorAxisStruct(pInfo->dev, 1,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
-#endif
-					topy, bottomy,
-					resolution_y, 0, resolution_y
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-					, Absolute
-#endif
-					);
-			break;
-		default:
-			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", pInfo->name, axis);
-			break;
-	}
-
-	return;
-}
-
-/*****************************************************************************
  * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
@@ -411,18 +355,67 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	int min, max, min_res, max_res, res;
 	int mode;
 
-
-	/* first two valuators are initialised elsewhere */
+	/* first valuator: x */
 	if (!IsPad(priv))
 	{
-		wcmInitialToolSize(pInfo);
-
-		if (wcmInitArea(pInfo) == FALSE)
-			return FALSE;
-
-		wcmInitialCoordinates(priv->pInfo, 0);
-		wcmInitialCoordinates(priv->pInfo, 1);
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+		min = max = -1;
+		if (is_absolute(pInfo))
+		{
+			min = priv->topX;
+			max = priv->sizeX + priv->topX;
+		}
+		min_res = 0;
+		max_res = priv->resolX;
+		res = priv->resolX;
+		mode = Absolute;
+	} else {
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
+		min = max = -1;
+		min_res = max_res = res = 1;
+		mode = Relative;
 	}
+
+	InitValuatorAxisStruct(pInfo->dev, 0,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	/* second valuator: y */
+	if (!IsPad(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+		min = max = -1;
+		if (is_absolute(pInfo))
+		{
+			min = priv->topY;
+			max = priv->sizeY + priv->topY;
+		}
+		min_res = 0;
+		max_res = priv->resolY;
+		res = priv->resolY;
+		mode = Absolute;
+	} else {
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
+		min = max = -1;
+		min_res = max_res = res = 1;
+		mode = Relative;
+	}
+
+	InitValuatorAxisStruct(pInfo->dev, 1,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
 
 
 	/* third valuator: pressure */
@@ -672,6 +665,16 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
 		xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", pInfo->name);
 		return FALSE;
+	}
+
+	if (!IsPad(priv))
+	{
+		wcmInitialToolSize(pInfo);
+
+		if (wcmInitArea(pInfo) == FALSE)
+			return FALSE;
+
+		wcmMappingFactor(pInfo);
 	}
 
 	if (!wcmInitAxes(pWcm))
