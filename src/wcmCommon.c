@@ -618,10 +618,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 	DBG(7, priv, "[%s] o_prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
-		(type == STYLUS_ID) ? "stylus" :
-			(type == CURSOR_ID) ? "cursor" : 
-			(type == ERASER_ID) ? "eraser" :
-			(type == TOUCH_ID) ? "touch" : "pad",
+		pInfo->type_name,
 		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", buttons,
 		tx, ty, ds->abswheel, ds->rotation, ds->throttle);

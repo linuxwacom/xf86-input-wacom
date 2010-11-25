@@ -442,9 +442,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	DBG(10, priv,
 		"(%s) %d buttons, %d keys, %d axes\n",
-		IsStylus(priv) ? "stylus" :
-		IsCursor(priv) ? "cursor" :
-		IsPad(priv) ? "pad" : "eraser",
+		pInfo->type_name,
 		nbbuttons, nbkeys, nbaxes);
 
 	for(loop=1; loop<=nbbuttons; loop++)
@@ -968,9 +966,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
 			"type=%s flags=%d fd=%d what=%s\n",
 			(void *)pWcm, (void *)priv,
-			IsStylus(priv) ? "stylus" :
-			IsCursor(priv) ? "cursor" :
-			IsPad(priv) ? "pad" : "eraser", 
+			pInfo->type_name,
 			priv->flags, pInfo ? pInfo->fd : -1,
 			(what == DEVICE_INIT) ? "INIT" :
 			(what == DEVICE_OFF) ? "OFF" :
