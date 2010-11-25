@@ -39,7 +39,7 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel, int suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
-		int rx, int ry, int rz, int v3, int v4, int v5);
+			int first_val, int num_vals, int *valuators);
 
 /*****************************************************************************
  * Utility functions
@@ -113,8 +113,8 @@ void wcmMappingFactor(InputInfoPtr pInfo)
  *   previous one.
  ****************************************************************************/
 
-static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
-		int rz, int v3, int v4, int v5)
+static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
+			   int first_val, int num_vals, int *valuators)
 {
 	int button, mask;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
@@ -132,7 +132,7 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
 
 				if (buttons == 1) {
 					/* Button 1 pressed */
-					sendAButton(pInfo, 0, 1, rx, ry, rz, v3, v4, v5);
+					sendAButton(pInfo, 0, 1, first_val, num_vals, valuators);
 				} else {
 					/* send all pressed buttons down */
 					for (button=2; button<=WCM_MAX_BUTTONS; button++)
@@ -141,8 +141,9 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
 						if ( buttons & mask )
 						{
 							/* set to the configured button */
-							sendAButton(pInfo, button-1, 1, rx, ry,
-									rz, v3, v4, v5);
+							sendAButton(pInfo, button-1, 1,
+								    first_val, num_vals,
+								    valuators);
 						}
 					}
 				}
@@ -156,7 +157,7 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
 					{
 						/* set to the configured buttons */
 						sendAButton(pInfo, button-1, mask & buttons,
-							rx, ry, rz, v3, v4, v5);
+							    first_val, num_vals, valuators);
 					}
 				}
 			}
@@ -172,8 +173,9 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
 				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
 				{
 					/* set to the configured button */
-					sendAButton(pInfo, button-1, 0, rx, ry,
-						rz, v3, v4, v5);
+					sendAButton(pInfo, button-1, 0,
+						    first_val, num_vals,
+						    valuators);
 				}
 			}
 		}
@@ -186,8 +188,8 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons, int rx, int ry,
 			if ((mask & priv->oldButtons) != (mask & buttons))
 			{
 				/* set to the configured button */
-				sendAButton(pInfo, button-1, mask & buttons, rx, ry,
-					rz, v3, v4, v5);
+				sendAButton(pInfo, button-1, mask & buttons,
+					    first_val, num_vals, valuators);
 			}
 		}
 	}
@@ -249,8 +251,8 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 }
 
 static void sendAction(InputInfoPtr pInfo, int press,
-		unsigned int *keys, int nkeys, int naxes,
-		int rx, int ry, int rz, int v3, int v4, int v5)
+		       unsigned int *keys, int nkeys,
+		       int first_val, int num_val, int *valuators)
 {
 	int i;
 
@@ -268,10 +270,10 @@ static void sendAction(InputInfoPtr pInfo, int press,
 				{
 					int btn_no = (action & AC_CODE);
 					int is_press = (action & AC_KEYBTNPRESS);
-					xf86PostButtonEvent(pInfo->dev,
+					xf86PostButtonEventP(pInfo->dev,
 							    is_absolute(pInfo), btn_no,
-							    is_press, 0, naxes,
-							    rx, ry, rz, v3, v4, v5);
+							    is_press, first_val, num_val,
+							    valuators);
 				}
 				break;
 			case AC_KEY:
@@ -310,8 +312,7 @@ static void sendAction(InputInfoPtr pInfo, int press,
 					if (countPresses(btn_no, &keys[i], nkeys - i))
 						xf86PostButtonEvent(pInfo->dev,
 								is_absolute(pInfo), btn_no,
-								0, 0, naxes,
-								rx, ry, rz, v3, v4, v5);
+								0, first_val, num_val, valuators);
 				}
 				break;
 			case AC_KEY:
@@ -335,14 +336,12 @@ static void sendAction(InputInfoPtr pInfo, int press,
  *   Send one button event, called by wcmSendButtons
  ****************************************************************************/
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
-		int rx, int ry, int rz, int v3, int v4, int v5)
+			int first_val, int num_val, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
-	int naxes = priv->naxes;
-
 	if (!priv->button[button])  /* ignore this button event */
 		return;
 
@@ -355,13 +354,14 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	if (!priv->keys[button][0])
 	{
 		/* No button action configured, send button */
-		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0), 0, naxes,
-				    rx, ry, rz, v3, v4, v5);
+		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0),
+				     first_val, num_val, valuators);
 		return;
 	}
 
-	sendAction(pInfo, (mask != 0), priv->keys[button], ARRAY_SIZE(priv->keys[button]),
-			naxes, rx, ry, rz, v3, v4, v5);
+	sendAction(pInfo, (mask != 0), priv->keys[button],
+		   ARRAY_SIZE(priv->keys[button]),
+		   first_val, num_val, valuators);
 }
 
 /*****************************************************************************
@@ -441,10 +441,10 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
  ****************************************************************************/
 
 static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
-		int x, int y, int z, int v3, int v4, int v5)
+				 int first_val, int num_vals, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int fakeButton = 0, naxes = priv->naxes;
+	int fakeButton = 0;
 	unsigned int *fakeKey = NULL;
 
 	DBG(10, priv, "\n");
@@ -456,19 +456,19 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 
 	if (!fakeKey || !(*fakeKey))
 	{
-		/* send both button on/off in the same event for pad */	
-		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
-			1,0,naxes,x,y,z,v3,v4,v5);
+		/* send both button on/off in the same event for pad */
+		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
+				     1, first_val, num_vals, valuators);
 
-		xf86PostButtonEvent(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
-			0,0,naxes,x,y,z,v3,v4,v5);
+		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
+				     0, first_val, num_vals, valuators);
 		return;
 	}
 
 	sendAction(pInfo, 1, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
-			naxes, x, y, z, v3, v4, v5);
+		   first_val, num_vals, valuators);
 	sendAction(pInfo, 0, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
-			naxes, x, y, z, v3, v4, v5);
+		   first_val, num_vals, valuators);
 }
 
 /*****************************************************************************
@@ -476,20 +476,21 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
  *   Send events common between pad and stylus/cursor/eraser.
  ****************************************************************************/
 
-static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds, int x, int y, int z, int v3, int v4, int v5)
+static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
+			     int first_val, int num_vals, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int buttons = ds->buttons;
 
 	/* send button events when state changed or first time in prox and button unpresses */
 	if (priv->oldButtons != buttons || (!priv->oldProximity && !buttons))
-		wcmSendButtons(pInfo,buttons,x,y,z,v3,v4,v5);
+		wcmSendButtons(pInfo,buttons, first_val, num_vals, valuators);
 
 	/* emulate wheel/strip events when defined */
 	if ( ds->relwheel || ds->abswheel || 
 		( (ds->stripx - priv->oldStripX) && ds->stripx && priv->oldStripX) || 
 			((ds->stripy - priv->oldStripY) && ds->stripy && priv->oldStripY) )
-		sendWheelStripEvents(pInfo, ds, x, y, z, v3, v4, v5);
+		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
 }
 
 /* rotate x and y before post X inout events */
@@ -672,6 +673,8 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 	if (type != PAD_ID)
 	{
+		int valuators[naxes];
+
 		if (!is_absolute(pInfo))
 		{
 			x -= priv->oldX;
@@ -689,6 +692,13 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			v5 -= priv->oldWheel;
 		}
 
+		valuators[0] = x;
+		valuators[1] = y;
+		valuators[2] = z;
+		valuators[3] = v3;
+		valuators[4] = v4;
+		valuators[5] = v5;
+
 		/* coordinates are ready we can send events */
 		if (is_proximity)
 		{
@@ -705,15 +715,18 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 				y += priv->topPadding;
 			}
 
+			valuators[0] = x;
+			valuators[1] = y;
+
 			/* don't emit proximity events if device does not support proximity */
 			if ((pInfo->dev->proximity && !priv->oldProximity))
-				xf86PostProximityEvent(pInfo->dev, 1, 0, naxes, x, y, z, v3, v4, v5);
+				xf86PostProximityEventP(pInfo->dev, 1, 0, naxes, valuators);
 
 			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86PostMotionEvent(pInfo->dev, is_absolute(pInfo),
-					0, naxes, x, y, z, v3, v4, v5);
+				xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
+						     0, naxes, valuators);
 				/* For relative events, reset the axes as
 				 * we've already moved the device by the
 				 * relative amount. Otherwise, a button
@@ -721,13 +734,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 				 * axes again.
 				 */
 				if (!is_absolute(pInfo))
-				{
-					x = y = z = 0;
-					v3 = v4 = v5 = 0;
-				}
+					memset(valuators, 0, sizeof(valuators));
 			}
 
-			sendCommonEvents(pInfo, ds, x, y, z, v3, v4, v5);
+			sendCommonEvents(pInfo, ds, 0, naxes, valuators);
 		}
 		else /* not in proximity */
 		{
@@ -736,10 +746,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			/* reports button up when the device has been
 			 * down and becomes out of proximity */
 			if (priv->oldButtons)
-				wcmSendButtons(pInfo,buttons,x,y,z,v3,v4,v5);
+				wcmSendButtons(pInfo, buttons, 0, naxes, valuators);
 
 			if (priv->oldProximity)
-				xf86PostProximityEvent(pInfo->dev,0,0,naxes,x,y,z,v3,v4,v5);
+				xf86PostProximityEventP(pInfo->dev,0, 0, naxes, valuators);
 		} /* not in proximity */
 	}
 	else
@@ -751,7 +761,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
-			sendCommonEvents(pInfo, ds, x, y, z, v3, v4, v5);
+			sendCommonEvents(pInfo, ds, 3, 3, valuators);
 
 			/* xf86PostMotionEvent is only needed to post the valuators
 			 * It should NOT move the cursor.
@@ -761,8 +771,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		else
 		{
 			if (priv->oldButtons)
-				wcmSendButtons(pInfo, buttons,
-					x, y, z, v3, v4, v5);
+				wcmSendButtons(pInfo, buttons, 3, 3, valuators);
 		}
 		if (priv->oldProximity && !is_proximity)
 			xf86PostProximityEventP(pInfo->dev, 0, 0, 3, valuators);
