@@ -670,25 +670,25 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		priv->oldButtons = 0;
 	}
 
-	if (!is_absolute(pInfo))
-	{
-		x -= priv->oldX;
-		y -= priv->oldY;
-		z -= priv->oldZ;
-		if (IsCursor(priv))
-		{
-			v3 -= priv->oldRot;
-			v4 -= priv->oldThrottle;
-		} else
-		{
-			v3 -= priv->oldTiltX;
-			v4 -= priv->oldTiltY;
-		}
-		v5 -= priv->oldWheel;
-	}
-
 	if (type != PAD_ID)
 	{
+		if (!is_absolute(pInfo))
+		{
+			x -= priv->oldX;
+			y -= priv->oldY;
+			z -= priv->oldZ;
+			if (IsCursor(priv))
+			{
+				v3 -= priv->oldRot;
+				v4 -= priv->oldThrottle;
+			} else
+			{
+				v3 -= priv->oldTiltX;
+				v4 -= priv->oldTiltY;
+			}
+			v5 -= priv->oldWheel;
+		}
+
 		/* coordinates are ready we can send events */
 		if (is_proximity)
 		{
@@ -756,7 +756,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			/* xf86PostMotionEvent is only needed to post the valuators
 			 * It should NOT move the cursor.
 			 */
-			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo), 3, 3, valuators);
+			xf86PostMotionEventP(pInfo->dev, TRUE, 3, 3, valuators);
 		}
 		else
 		{
