@@ -592,7 +592,37 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 	priv->oldThrottle = ds->throttle;
 }
 
+static void
+wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
+		 int v3,int v4, int v5)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	int valuators[3] = { v3, v4, v5 };
+
+	if (!priv->oldProximity && ds->proximity)
+		xf86PostProximityEventP(pInfo->dev, 1, 3, 3, VCOPY(valuators, 3));
+
+	if (v3 || v4 || v5 || ds->buttons || ds->relwheel)
+	{
+		sendCommonEvents(pInfo, ds, 3, 3, valuators);
+
+		/* xf86PostMotionEvent is only needed to post the valuators
+		 * It should NOT move the cursor.
+		 */
+		xf86PostMotionEventP(pInfo->dev, TRUE, 3, 3, VCOPY(valuators, 3));
+	}
+	else
+	{
+		if (priv->oldButtons)
+			wcmSendButtons(pInfo, ds->buttons, 3, 3, valuators);
+	}
+
+	if (priv->oldProximity && !ds->proximity)
+		xf86PostProximityEventP(pInfo->dev, 0, 0, 3, VCOPY(valuators, 3));
+}
+
 #define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804)
+
 
 /*****************************************************************************
  * wcmSendEvents --
@@ -771,30 +801,8 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		} /* not in proximity */
 	}
 	else
-	{
-		int valuators[3] = { v3, v4, v5 };
+		wcmSendPadEvents(pInfo, ds, v3, v4, v5);
 
-		if (!priv->oldProximity && is_proximity)
-			xf86PostProximityEventP(pInfo->dev, 1, 3, 3, VCOPY(valuators, 3));
-
-		if (v3 || v4 || v5 || buttons || ds->relwheel)
-		{
-			sendCommonEvents(pInfo, ds, 3, 3, valuators);
-
-			/* xf86PostMotionEvent is only needed to post the valuators
-			 * It should NOT move the cursor.
-			 */
-			xf86PostMotionEventP(pInfo->dev, TRUE, 3, 3, VCOPY(valuators, 3));
-		}
-		else
-		{
-			if (priv->oldButtons)
-				wcmSendButtons(pInfo, buttons, 3, 3, valuators);
-		}
-
-		if (priv->oldProximity && !is_proximity)
-			xf86PostProximityEventP(pInfo->dev, 0, 0, 3, VCOPY(valuators, 3));
-	}
 	priv->oldProximity = is_proximity;
 	priv->old_device_id = id;
 	priv->old_serial = serial;
