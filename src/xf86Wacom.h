@@ -51,8 +51,8 @@
 #define DBG(lvl, priv, ...) \
 	do { \
 		if ((lvl) <= priv->debugLevel) { \
-			xf86Msg(X_INFO, "%s (%s): ", \
-				((WacomDeviceRec*)priv)->name, __func__); \
+			xf86Msg(X_INFO, "%s (%d:%s): ", \
+				((WacomDeviceRec*)priv)->name, lvl, __func__); \
 			xf86Msg(X_NONE, __VA_ARGS__); \
 		} \
 	} while (0)
