@@ -422,9 +422,6 @@ wcmInitAxes(DeviceIntPtr pWcm)
 
 		wcmInitialCoordinates(priv->pInfo, 0);
 		wcmInitialCoordinates(priv->pInfo, 1);
-
-		/* Rotation rotates the Max X and Y */
-		wcmRotateTablet(pInfo, common->wcmRotate);
 	}
 
 
@@ -578,6 +575,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
@@ -678,6 +676,8 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	if (!wcmInitAxes(pWcm))
 		return FALSE;
+
+	wcmRotateTablet(pInfo, common->wcmRotate);
 
 	if (IsTouch(priv))
 	{
