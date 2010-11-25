@@ -31,6 +31,23 @@
 #define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
 #define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
 
+/* X servers pre 1.9 didn't copy data passed into xf86Post*Event.
+ * Data passed in would be modified, requiring the driver to copy the
+ * data beforehand.
+ */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 11
+static int *VCOPY(const int *valuators, int nvals)
+{
+	static int v[MAX_VALUATORS];
+	memcpy(v, valuators, nvals * sizeof(int));
+	return v;
+}
+#else /* ABI >= 11 */
+#define VCOPY(vals, nval) (vals)
+#endif
+
+
+
 /*****************************************************************************
  * Static functions
  ****************************************************************************/
@@ -273,7 +290,7 @@ static void sendAction(InputInfoPtr pInfo, int press,
 					xf86PostButtonEventP(pInfo->dev,
 							    is_absolute(pInfo), btn_no,
 							    is_press, first_val, num_val,
-							    valuators);
+							    VCOPY(valuators, num_val));
 				}
 				break;
 			case AC_KEY:
@@ -312,7 +329,8 @@ static void sendAction(InputInfoPtr pInfo, int press,
 					if (countPresses(btn_no, &keys[i], nkeys - i))
 						xf86PostButtonEvent(pInfo->dev,
 								is_absolute(pInfo), btn_no,
-								0, first_val, num_val, valuators);
+								0, first_val, num_val,
+								VCOPY(valuators, num_val));
 				}
 				break;
 			case AC_KEY:
@@ -355,7 +373,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	{
 		/* No button action configured, send button */
 		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0),
-				     first_val, num_val, valuators);
+				     first_val, num_val, VCOPY(valuators, num_val));
 		return;
 	}
 
@@ -458,10 +476,10 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		/* send both button on/off in the same event for pad */
 		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
-				     1, first_val, num_vals, valuators);
+				     1, first_val, num_vals, VCOPY(valuators, num_vals));
 
 		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
-				     0, first_val, num_vals, valuators);
+				     0, first_val, num_vals, VCOPY(valuators, num_vals));
 		return;
 	}
 
@@ -720,13 +738,13 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 			/* don't emit proximity events if device does not support proximity */
 			if ((pInfo->dev->proximity && !priv->oldProximity))
-				xf86PostProximityEventP(pInfo->dev, 1, 0, naxes, valuators);
+				xf86PostProximityEventP(pInfo->dev, 1, 0, naxes, VCOPY(valuators, naxes));
 
 			/* Move the cursor to where it should be before sending button events */
 			if(!(priv->flags & BUTTONS_ONLY_FLAG))
 			{
-				xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
-						     0, naxes, valuators);
+				xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo), 0, naxes,
+						     VCOPY(valuators, naxes));
 				/* For relative events, reset the axes as
 				 * we've already moved the device by the
 				 * relative amount. Otherwise, a button
@@ -749,7 +767,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 				wcmSendButtons(pInfo, buttons, 0, naxes, valuators);
 
 			if (priv->oldProximity)
-				xf86PostProximityEventP(pInfo->dev,0, 0, naxes, valuators);
+				xf86PostProximityEventP(pInfo->dev,0, 0, naxes, VCOPY(valuators, naxes));
 		} /* not in proximity */
 	}
 	else
@@ -757,7 +775,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		int valuators[3] = { v3, v4, v5 };
 
 		if (!priv->oldProximity && is_proximity)
-			xf86PostProximityEventP(pInfo->dev, 1, 3, 3, valuators);
+			xf86PostProximityEventP(pInfo->dev, 1, 3, 3, VCOPY(valuators, 3));
 
 		if (v3 || v4 || v5 || buttons || ds->relwheel)
 		{
@@ -766,15 +784,16 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			/* xf86PostMotionEvent is only needed to post the valuators
 			 * It should NOT move the cursor.
 			 */
-			xf86PostMotionEventP(pInfo->dev, TRUE, 3, 3, valuators);
+			xf86PostMotionEventP(pInfo->dev, TRUE, 3, 3, VCOPY(valuators, 3));
 		}
 		else
 		{
 			if (priv->oldButtons)
 				wcmSendButtons(pInfo, buttons, 3, 3, valuators);
 		}
+
 		if (priv->oldProximity && !is_proximity)
-			xf86PostProximityEventP(pInfo->dev, 0, 0, 3, valuators);
+			xf86PostProximityEventP(pInfo->dev, 0, 0, 3, VCOPY(valuators, 3));
 	}
 	priv->oldProximity = is_proximity;
 	priv->old_device_id = id;
