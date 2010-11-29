@@ -499,15 +499,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			 / ((double)common->wcmMaxTouchX) + 0.5);
 		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
 			 / ((double)common->wcmMaxTouchY) + 0.5);
-
-		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
-		{
-			xf86Msg(X_ERROR, "%s: touch resolution value(s) was wrong TouchResolX"
-				" = %d MaxTouchY = %d.\n", pInfo->name, common->wcmTouchResolX,
-				common->wcmTouchResolY);
-			return !Success;
-		}
-
 	}
 
 	/* max z cannot be configured */
