@@ -123,11 +123,11 @@ static struct
 	__u16 tool[3]; /* tool array is terminated by 0 */
 } wcmType [] =
 {
-	{ "stylus", { BTN_TOOL_PEN,       0        } },
-	{ "eraser", { BTN_TOOL_RUBBER,    0        } },
-	{ "cursor", { BTN_TOOL_MOUSE,     0        } },
-	{ "touch",  { BTN_TOOL_DOUBLETAP, 0        } },
-	{ "pad",    { BTN_FORWARD,        BTN_0, 0 } }
+	{ "stylus", { BTN_TOOL_PEN,       0                  } },
+	{ "eraser", { BTN_TOOL_RUBBER,    0                  } },
+	{ "cursor", { BTN_TOOL_MOUSE,     0                  } },
+	{ "touch",  { BTN_TOOL_DOUBLETAP, BTN_TOOL_FINGER, 0 } },
+	{ "pad",    { BTN_FORWARD,        BTN_0,           0 } }
 };
 
 /* validate tool type for device/product */
@@ -151,6 +151,14 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 				if (ISBITSET (common->wcmKeys, wcmType[j].tool[k]))
 				{
 					ret = TRUE;
+
+					/* non GENERIC devices use BTN_TOOL_FINGER for pad */
+					if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
+					{
+						if (!strcmp(type, "touch") &&
+							wcmType[j].tool[k] == BTN_TOOL_FINGER)
+						    ret = FALSE;
+					}
 				}
 				else if (!strlen(dsource)) /* an user defined type */
 				{

@@ -928,30 +928,22 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			ds->proximity = (event->value != 0);
 			break;
 
-		case BTN_TOOL_FINGER:
-			/* If a real finger report, ignore. */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
-				break;
-
-			DBG(6, common,
-			    "USB Pad detected %x (value=%d)\n",
-			    event->code, event->value);
-			ds->device_type = PAD_ID;
-			ds->device_id = PAD_DEVICE_ID;
-			ds->proximity = (event->value != 0);
+               case BTN_TOUCH:
+			/* actual events are processed by BTN_TOOL_* events */
 			break;
 
-               case BTN_TOUCH:
-			/* Treat BTN_TOUCH same as BTN_TOOL_DOUBLETAP
-			 * for touchpads.
-			 * TODO: Tablets that do not use wacom style
-			 * multiplexing over a single input device
-			 * also can report BTN_TOUCH same as
-			 * BTN_TOOL_PEN would be used.  We should
-			 * allow for that case as well.
-			 */
+		case BTN_TOOL_FINGER:
+			/* A pad tool */
 			if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
+			{
+				DBG(6, common,
+				    "USB Pad detected %x (value=%d)\n",
+				event->code, event->value);
+				ds->device_type = PAD_ID;
+				ds->device_id = PAD_DEVICE_ID;
+				ds->proximity = (event->value != 0);
 				break;
+			}
 
 			/* fall through */
 		case BTN_TOOL_DOUBLETAP:
