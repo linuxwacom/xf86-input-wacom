@@ -424,7 +424,7 @@ static param_t parameters[] =
 		"(default is 20). ",
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
 		.prop_format = 32,
-		.prop_offset = 0,
+		.prop_offset = 1,
 	},
 	{
 		.name = "TapTime",
@@ -432,7 +432,7 @@ static param_t parameters[] =
 		"(default is 250). ",
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
 		.prop_format = 32,
-		.prop_offset = 0,
+		.prop_offset = 2,
 	},
 	{
 		.name = "Capacity",
