@@ -835,13 +835,8 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			ds->distance = event->value;
 			break;
 		case ABS_WHEEL:
-			{
-				double norm = event->value *
-					MAX_ROTATION_RANGE /
-					(double)MAX_ABS_WHEEL;
-				ds->abswheel = (int)norm + MIN_ROTATION;
-				break;
-			}
+			ds->abswheel = event->value;
+			break;
 		case ABS_Z:
 			ds->abswheel = event->value;
 			break;

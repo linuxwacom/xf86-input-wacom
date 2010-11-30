@@ -570,6 +570,8 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 	priv->oldThrottle = ds->throttle;
 }
 
+#define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804)
+
 /*****************************************************************************
  * wcmSendEvents --
  *   Send events according to the device state.
@@ -626,7 +628,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	if (ds->proximity)
 		wcmRotateAndScaleCoordinates(pInfo, &x, &y);
 
-	if (IsCursor(priv)) 
+	if (IsCursor(priv))
 	{
 		v3 = ds->rotation;
 		v4 = ds->throttle;
@@ -636,7 +638,16 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		v3 = tx;
 		v4 = ty;
 	}
+
 	v5 = ds->abswheel;
+	if (IsStylus(priv) && !IsArtPen(ds))
+	{
+		/* Normalize abswheel airbrush data to Art Pen rotation range.
+		 * We do not normalize Art Pen. They are already at the range.
+		 */
+		v5 = ds->abswheel * MAX_ROTATION_RANGE/
+				(double)MAX_ABS_WHEEL + MIN_ROTATION;
+	}
 
 	DBG(6, priv, "%s prox=%d\tx=%d"
 		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
