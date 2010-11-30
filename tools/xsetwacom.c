@@ -2080,7 +2080,7 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 
 	while(p->name)
 	{
-		if (p != param)
+		if (p != param && !(p->prop_flags & PROP_FLAG_WRITEONLY))
 		{
 			p->device_name = param->device_name;
 			p->printformat = param->printformat;
