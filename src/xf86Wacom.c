@@ -863,6 +863,13 @@ void wcmReadPacket(InputInfoPtr pInfo)
 		WacomDevicePtr wDev = common->wcmDevices;
 		for(; wDev; wDev = wDev->next)
 		{
+			/* Race condition: if the device is unplugged during
+			 * PreInit for the stylus, wDev->pInfo->dev is still
+			 * NULL and we need to skip that device.
+			 */
+			if (!wDev->pInfo->dev)
+				continue;
+
 			if (wDev->pInfo->fd >= 0)
 				wcmDevProc(wDev->pInfo->dev, DEVICE_OFF);
 		}
