@@ -2078,6 +2078,9 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 {
 	param_t *p = parameters;
 
+	if (param->printformat == FORMAT_DEFAULT)
+		param->printformat = FORMAT_XORG_CONF;
+
 	while(p->name)
 	{
 		if (p != param && !(p->prop_flags & PROP_FLAG_WRITEONLY))
