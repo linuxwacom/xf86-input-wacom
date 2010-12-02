@@ -1882,7 +1882,7 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 		int current_type;
 		int detail;
 		int is_press = -1;
-		char str[10] = {0};
+		char str[32] = {0};
 		char press_str = ' ';
 
 		current_type = action & AC_TYPE;
