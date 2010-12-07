@@ -972,7 +972,7 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			 * press.
 			 */
 			if (common->wcmCapacityDefault < 0 &&
-			    (TabletHasFeature(common, WCM_TPC)))
+			    (TabletHasFeature(common, WCM_LCD)))
 				MOD_BUTTONS(0, event->value);
 			break;
 
