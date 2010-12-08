@@ -550,15 +550,10 @@ SetupProc_fail:
 	if (common && priv)
 		common->wcmDevices = priv->next;
 
-	if (pInfo)
+	if (pInfo && pInfo->fd != -1)
 	{
-		if (pInfo->fd != -1)
-		{
-			close(pInfo->fd);
-			pInfo->fd = -1;
-		}
-
-		wcmFree(pInfo);
+		close(pInfo->fd);
+		pInfo->fd = -1;
 	}
 
 	return BadMatch;
