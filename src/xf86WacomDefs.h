@@ -118,16 +118,25 @@ struct _WacomModel
 #define ERASER_ID		0x00000008
 #define PAD_ID			0x00000010
 
-#define WCM_PEN			0x00000001
-#define WCM_TPC			0x00000002
-#define WCM_1FGT		0x00000004
-#define WCM_2FGT		0x00000008
-#define WCM_STRIP		0x00000010
-#define WCM_RING		0x00000020
-#define WCM_DUALINPUT		0x00000040
-#define WCM_ROTATION		0x00000080
-#define WCM_LCD 		0x00000100
-#define WCM_PAD			0x00000200
+/* Each tablet may have one or more of the following
+ * features */
+#define WCM_PEN			0x00000001 /* Tablet supports pens */
+#define WCM_TPC			0x00000002 /* TabletPC (special button
+					      handling, always an LCD) */
+#define WCM_1FGT		0x00000004 /* One finger touch */
+#define WCM_2FGT		0x00000008 /* Two finger touch */
+#define WCM_STRIP		0x00000010 /* Tablet has menu strip (e.g.
+					      Intuos3) */
+#define WCM_RING		0x00000020 /* Tablet has touch ring (e.g.
+					      Intuos4) */
+#define WCM_DUALINPUT		0x00000040 /* Supports two tools on the
+					      tablet simultaneously (Intuos
+					      1 and 2) */
+#define WCM_ROTATION		0x00000080 /* Needs to convert mouse tool
+					      tilt to rotation */
+#define WCM_LCD			0x00000100 /* Cintiqs and other display
+					      tablets */
+#define WCM_PAD			0x00000200 /* Has a pad tool */
 
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
