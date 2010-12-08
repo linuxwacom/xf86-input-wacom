@@ -444,17 +444,11 @@ SetupProc_fail:
 	/* restart the device list from the next one */
 	if (common && priv)
 		common->wcmDevices = priv->next;
-	free(common);
-	free(priv);
-	if (pInfo)
-	{
-		if (pInfo->fd != -1)
-		{
-			close(pInfo->fd);
-			pInfo->fd = -1;
-		}
 
-		pInfo->private = NULL;
+	if (pInfo && pInfo->fd != -1)
+	{
+		close(pInfo->fd);
+		pInfo->fd = -1;
 	}
 
 	return BadMatch;
