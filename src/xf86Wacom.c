@@ -224,7 +224,7 @@ static int wcmInitArea(InputInfoPtr pInfo)
 			"resol X=%d resol Y=%d\n",
 			pInfo->name, priv->topX,
 			priv->topY, priv->bottomX, priv->bottomY,
-			common->wcmResolX, common->wcmResolY);
+			priv->resolX, priv->resolY);
 	return TRUE;
 }
 

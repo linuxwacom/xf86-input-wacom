@@ -1372,13 +1372,21 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 	}
 
 	/* output tablet state as probed */
-	xf86Msg(X_PROBED, "%s: Wacom %s tablet maxX=%d maxY=%d maxZ=%d "
+	if (TabletHasFeature(common, WCM_PEN))
+		xf86Msg(X_PROBED, "%s: Wacom %s tablet maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			pInfo->name,
 			model->name,
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
+	else
+		xf86Msg(X_PROBED, "%s: Wacom %s tablet maxX=%d maxY=%d "
+			"resX=%d resY=%d \n",
+			pInfo->name,
+			model->name,
+			common->wcmMaxTouchX, common->wcmMaxTouchY,
+			common->wcmTouchResolX, common->wcmTouchResolY);
 
 	return Success;
 }
