@@ -857,23 +857,10 @@ void wcmReadPacket(InputInfoPtr pInfo)
 
 	if (len <= 0)
 	{
-		/* In case of error, we assume the device has been
-		 * disconnected. So we close it and iterate over all
-		 * wcmDevices to actually close associated devices. */
-		WacomDevicePtr wDev = common->wcmDevices;
-		for(; wDev; wDev = wDev->next)
-		{
-			/* Race condition: if the device is unplugged during
-			 * PreInit for the stylus, wDev->pInfo->dev is still
-			 * NULL and we need to skip that device.
-			 */
-			if (!wDev->pInfo->dev)
-				continue;
-
-			if (wDev->pInfo->fd >= 0)
-				wcmDevProc(wDev->pInfo->dev, DEVICE_OFF);
-		}
-		xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
+		/* for all other errors, hope that the hotplugging code will
+		 * remove the device */
+		if (errno != EAGAIN && errno != EINTR)
+			xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
 		return;
 	}
 
