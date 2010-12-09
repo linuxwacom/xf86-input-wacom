@@ -121,8 +121,8 @@ struct _WacomModel
 /* Each tablet may have one or more of the following
  * features */
 #define WCM_PEN			0x00000001 /* Tablet supports pens */
-#define WCM_TPC			0x00000002 /* TabletPC (special button
-					      handling, always an LCD) */
+#define WCM_PAD			0x00000002 /* Has a pad tool */
+
 #define WCM_1FGT		0x00000004 /* One finger touch */
 #define WCM_2FGT		0x00000008 /* Two finger touch */
 #define WCM_STRIP		0x00000010 /* Tablet has menu strip (e.g.
@@ -136,8 +136,9 @@ struct _WacomModel
 					      tilt to rotation */
 #define WCM_LCD			0x00000100 /* Cintiqs and other display
 					      tablets */
-#define WCM_PAD			0x00000200 /* Has a pad tool */
-
+#define WCM_TPC			(0x00000200 | WCM_LCD) /* TabletPC (special
+							  button handling,
+							  always an LCD) */
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
 #define ABSOLUTE_FLAG		0x00000100
