@@ -512,7 +512,9 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	{
 		/* we need subdevices, change the name so all of them have a
 		   type. */
-		char *new_name = Xprintf("%s %s", pInfo->name, type);
+		char *new_name;
+		if (asprintf(&new_name, "%s %s", pInfo->name, type) == -1)
+			new_name = strdup(pInfo->name);
 		pInfo->name = priv->name = new_name;
 	}
 

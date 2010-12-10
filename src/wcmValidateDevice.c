@@ -303,6 +303,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	InputOption *iopts = NULL, *new;
 	char *name;
 	pointer options;
+	int rc;
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	options = xf86OptionListDuplicate(original);
@@ -316,7 +317,9 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	}
 #endif
 
-	name = Xprintf("%s %s", basename, type);
+	rc = asprintf(&name, "%s %s", basename, type);
+	if (rc == -1) /* if asprintf fails, strdup will probably too... */
+		name = strdup("unknown");
 
 	options = xf86ReplaceStrOption(options, "Type", type);
 	options = xf86ReplaceStrOption(options, "Name", name);
@@ -357,9 +360,12 @@ static void wcmFreeInputOpts(InputOption* opts)
 static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
 					       const char *type)
 {
+	int rc;
 	InputAttributes *attr;
 	attr = DuplicateInputAttributes(pInfo->attrs);
-	attr->product = Xprintf("%s %s", attr->product, type);
+	rc = asprintf(&attr->product, "%s %s", attr->product, type);
+	if (rc == -1)
+		attr->product = NULL;
 	return attr;
 }
 #endif
