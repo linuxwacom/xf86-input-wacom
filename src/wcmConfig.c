@@ -436,6 +436,7 @@ static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	 * phase is based on those values.
 	 */
 	xf86CollectInputOptions(pInfo, (const char**)default_options, NULL);
+	xf86ProcessCommonOptions(pInfo, pInfo->options);
 
 	if (NewWcmPreInit(drv, pInfo, flags) == Success) {
 		pInfo->flags |= XI86_CONFIGURED;
@@ -519,8 +520,6 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (!wcmSetType(pInfo, type))
 		goto SetupProc_fail;
 
-	/* Process the common options. */
-	xf86ProcessCommonOptions(pInfo, pInfo->options);
 	if (!wcmParseOptions(pInfo, need_hotplug))
 		goto SetupProc_fail;
 
