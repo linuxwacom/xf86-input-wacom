@@ -802,10 +802,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		priv->oldButtons = 0;
 	}
 
-	if (type != PAD_ID)
-		wcmSendNonPadEvents(pInfo, ds, x, y, z, v3, v5, v5);
-	else
+	if (type == PAD_ID)
 		wcmSendPadEvents(pInfo, ds, v3, v4, v5);
+	else
+		wcmSendNonPadEvents(pInfo, ds, x, y, z, v3, v5, v5);
 
 	priv->oldProximity = ds->proximity;
 	priv->old_device_id = id;
