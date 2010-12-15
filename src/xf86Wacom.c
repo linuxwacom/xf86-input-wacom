@@ -356,25 +356,17 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	int mode;
 
 	/* first valuator: x */
-	if (!IsPad(priv))
+	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+	min = max = -1;
+	if (is_absolute(pInfo))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
-		min = max = -1;
-		if (is_absolute(pInfo))
-		{
-			min = priv->topX;
-			max = priv->sizeX + priv->topX;
-		}
-		min_res = 0;
-		max_res = priv->resolX;
-		res = priv->resolX;
-		mode = Absolute;
-	} else {
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
-		min = max = -1;
-		min_res = max_res = res = 1;
-		mode = Relative;
+		min = priv->topX;
+		max = priv->sizeX + priv->topX;
 	}
+	min_res = 0;
+	max_res = priv->resolX;
+	res = priv->resolX;
+	mode = Absolute;
 
 	InitValuatorAxisStruct(pInfo->dev, 0,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
@@ -387,25 +379,17 @@ wcmInitAxes(DeviceIntPtr pWcm)
 			       );
 
 	/* second valuator: y */
-	if (!IsPad(priv))
+	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+	min = max = -1;
+	if (is_absolute(pInfo))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
-		min = max = -1;
-		if (is_absolute(pInfo))
-		{
-			min = priv->topY;
-			max = priv->sizeY + priv->topY;
-		}
-		min_res = 0;
-		max_res = priv->resolY;
-		res = priv->resolY;
-		mode = Absolute;
-	} else {
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
-		min = max = -1;
-		min_res = max_res = res = 1;
-		mode = Relative;
+		min = priv->topY;
+		max = priv->sizeY + priv->topY;
 	}
+	min_res = 0;
+	max_res = priv->resolY;
+	res = priv->resolY;
+	mode = Absolute;
 
 	InitValuatorAxisStruct(pInfo->dev, 1,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
@@ -420,26 +404,23 @@ wcmInitAxes(DeviceIntPtr pWcm)
 
 	/* third valuator: pressure */
 
+	mode = Absolute;
+	min_res = max_res = res = 1;
+	min = 0;
+
 	if (!IsPad(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
-		min = 0;
 		/* pressure normalized to FILTER_PRESSURE_RES */
 		max = FILTER_PRESSURE_RES;
-		min_res = max_res = res = 1;
-		mode = Absolute;
-
 	} else {
 		/* The pad doesn't have a pressure axis, so initialise third
-		 * axis as unknown relative axis on the pad. This way, we
+		 * axis as unknown absolute axis on the pad. This way, we
 		 * can leave the strip/abswheel axes on later axes and don't
 		 * run the danger of clients misinterpreting the axis info
 		 */
 		label = None;
-		min = max = -1;
-		min_res = 0;
-		max_res = res = -1;
-		mode = Relative;
+		max = 1;
 	}
 
 
