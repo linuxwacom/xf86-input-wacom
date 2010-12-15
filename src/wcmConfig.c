@@ -206,7 +206,7 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 		pInfo->type_name = XI_ERASER;
 	} else if (xf86NameCmp(type, "pad") == 0)
 	{
-		priv->flags = PAD_ID;
+		priv->flags = ABSOLUTE_FLAG|PAD_ID;
 		pInfo->type_name = XI_PAD;
 	}
 
