@@ -297,7 +297,10 @@ static struct
 	{ WALTOP_VENDOR_ID, 0x503, 200000, 200000, &usbIntuos4   },
 
 	/* N-Trig devices */
-	{ NTRIG_VENDOR_ID,  0x01, 44173, 36772, &usbTabletPC    }
+	{ NTRIG_VENDOR_ID,  0x01, 44173, 36772, &usbTabletPC    },
+
+	/* Add in Lenovo W700 Palmrest digitizer */
+	{ LENOVO_VENDOR_ID, 0x6004, 2540, 2540, &usbTabletPC   } /* Pen-only */
 };
 
 static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
