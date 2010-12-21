@@ -74,26 +74,6 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 	DBG(10, priv, "\n"); /* just prints function name */
 
 	wcmVirtualTabletSize(pInfo);
-	
-	if (!is_absolute(pInfo) || !priv->wcmMMonitor)
-	{
-		/* Get the current screen that the cursor is in */
-		if (miPointerGetScreen(pInfo->dev))
-			priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
-	}
-	else
-	{
-		if (priv->screen_no != -1)
-			priv->currentScreen = priv->screen_no;
-		else if (priv->currentScreen == -1)
-		{
-			/* Get the current screen that the cursor is in */
-			if (miPointerGetScreen(pInfo->dev))
-				priv->currentScreen = miPointerGetScreen(pInfo->dev)->myNum;
-		}
-	}
-	if (priv->currentScreen == -1) /* tool on the tablet */
-		priv->currentScreen = 0;
 
 	DBG(10, priv,
 		"Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
@@ -198,37 +178,6 @@ void wcmEmitKeycode (DeviceIntPtr keydev, int keycode, int state)
 	xf86PostKeyboardEvent (keydev, keycode, state);
 }
 
-static void toggleDisplay(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	WacomCommonPtr common = priv->common;
-
-	if (priv->numScreen > 1)
-	{
-		if (IsPad(priv)) /* toggle display for all tools except pad */
-		{
-			WacomDevicePtr tmppriv;
-			for (tmppriv = common->wcmDevices; tmppriv; tmppriv = tmppriv->next)
-			{
-				if (!IsPad(tmppriv))
-				{
-					int screen = tmppriv->screen_no;
-					if (++screen >= tmppriv->numScreen)
-						screen = -1;
-					wcmChangeScreen(tmppriv->pInfo, screen);
-				}
-			}
-		}
-		else /* toggle display only for the selected tool */
-		{
-			int screen = priv->screen_no;
-			if (++screen >= priv->numScreen)
-				screen = -1;
-			wcmChangeScreen(pInfo, screen);
-		}
-	}
-}
-
 /*****************************************************************************
  * countPresses
  *   Count the number of key/button presses not released for the given key
@@ -285,9 +234,6 @@ static void sendAction(InputInfoPtr pInfo, int press,
 				if (press)
 					wcmDevSwitchModeCall(pInfo,
 							(is_absolute(pInfo)) ? Relative : Absolute); /* not a typo! */
-				break;
-			case AC_DISPLAYTOGGLE:
-				toggleDisplay(pInfo);
 				break;
 		}
 	}
@@ -1422,57 +1368,6 @@ static void transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState)
 
 	/* apply pressure curve function */
 	pState->pressure = pDev->pPressCurve[p];
-}
-
-/*****************************************************************************
- * wcmInitialScreens
- ****************************************************************************/
-
-void wcmInitialScreens(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int i;
-
-	DBG(2, priv, "number of screen=%d \n", screenInfo.numScreens);
-
-	/* initial screen info */
-	priv->numScreen = screenInfo.numScreens;
-	priv->screenTopX[0] = 0;
-	priv->screenTopY[0] = 0;
-	priv->screenBottomX[0] = 0;
-	priv->screenBottomY[0] = 0;
-	for (i=0; i<screenInfo.numScreens; i++)
-	{
-		if (screenInfo.numScreens > 1)
-		{
-/* dixScreenOrigins was removed from xserver without bumping the ABI.
- * 1.8.99.901 is the first release after the break. thanks. */
-#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 8, 99, 901, 0)
-			priv->screenTopX[i] = dixScreenOrigins[i].x;
-			priv->screenTopY[i] = dixScreenOrigins[i].y;
-			priv->screenBottomX[i] = dixScreenOrigins[i].x;
-			priv->screenBottomY[i] = dixScreenOrigins[i].y;
-#else
-			priv->screenTopX[i] = screenInfo.screens[i]->x;
-			priv->screenTopY[i] = screenInfo.screens[i]->y;
-			priv->screenBottomX[i] = screenInfo.screens[i]->x;
-			priv->screenBottomY[i] = screenInfo.screens[i]->y;
-
-#endif
-
-			DBG(10, priv, "from dix: "
-				"ScreenOrigins[%d].x=%d ScreenOrigins[%d].y=%d \n",
-				i, priv->screenTopX[i], i, priv->screenTopY[i]);
-		}
-
-		priv->screenBottomX[i] += screenInfo.screens[i]->width;
-		priv->screenBottomY[i] += screenInfo.screens[i]->height;
-
-		DBG(10, priv,
-			"topX[%d]=%d topY[%d]=%d bottomX[%d]=%d bottomY[%d]=%d \n",
-			i, priv->screenTopX[i], i, priv->screenTopY[i],
-			i, priv->screenBottomX[i], i, priv->screenBottomY[i]);
-	}
 }
 
 /*****************************************************************************

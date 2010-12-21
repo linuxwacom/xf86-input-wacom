@@ -67,7 +67,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->pInfo = pInfo;
 	priv->common = common;       /* common info pointer */
 	priv->hardProx = 1;	     /* previous hardware proximity */
-	priv->screen_no = -1;        /* associated screen */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
@@ -90,11 +89,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->striprup = 4;			/* Default right strip up event */
 	priv->striprdn = 5;			/* Default right strip down event */
 	priv->naxes = 6;			/* Default number of axes */
-	priv->numScreen = screenInfo.numScreens; /* configured screens count */
-	priv->currentScreen = -1;                /* current screen in display */
-	priv->wcmMMonitor = 1;			/* enabled (=1) to support multi-monitor desktop. */
-						/* disabled (=0) when user doesn't want to move the */
-						/* cursor from one screen to another screen */
 
 	/* JEJ - throttle sampling code */
 	priv->throttleLimit = -1;

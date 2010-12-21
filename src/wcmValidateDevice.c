@@ -572,8 +572,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 				pInfo->name, common->wcmCursorProxoutDist);
 	}
 
-	priv->screen_no = xf86SetIntOption(pInfo->options, "ScreenNo", -1);
-
 	if (xf86SetBoolOption(pInfo->options, "KeepShape", 0))
 		priv->flags |= KEEP_SHAPE_FLAG;
 
@@ -705,10 +703,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 			common->wcmGestureParameters.wcmTapTimeDefault);
 	}
 
-	/* Mouse cursor stays in one monitor in a multimonitor setup */
-	if ( !priv->wcmMMonitor )
-		priv->wcmMMonitor = xf86SetBoolOption(pInfo->options, "MMonitor", 1);
-
 	/* Swap stylus buttons 2 and 3 for Tablet PCs */
 	if (TabletHasFeature(common, WCM_TPC) && IsStylus(priv))
 	{
@@ -721,8 +715,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		sprintf(b, "Button%d", i+1);
 		priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
 	}
-
-	priv->numScreen = screenInfo.numScreens;
 
 	/* Now parse class-specific options */
 	if (common->wcmDevCls->ParseOptions &&

@@ -83,38 +83,6 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
 
-/*****************************************************************************
- * wcmDesktopSize --
- *   calculate the whole desktop size 
- ****************************************************************************/
-static void wcmDesktopSize(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
-
-	wcmInitialScreens(pInfo);
-	minX = priv->screenTopX[0];
-	minY = priv->screenTopY[0];
-	maxX = priv->screenBottomX[0];
-	maxY = priv->screenBottomY[0];
-	if (priv->numScreen != 1)
-	{
-		for (i = 1; i < priv->numScreen; i++)
-		{
-			if (priv->screenTopX[i] < minX)
-				minX = priv->screenTopX[i];
-			if (priv->screenTopY[i] < minY)
-				minY = priv->screenTopY[i];
-			if (priv->screenBottomX[i] > maxX)
-				maxX = priv->screenBottomX[i];
-			if (priv->screenBottomY[i] > maxY)
-				maxY = priv->screenBottomY[i];
-		}
-	}
-	priv->maxWidth = maxX - minX;
-	priv->maxHeight = maxY - minY;
-} 
-
 static int wcmInitArea(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -142,20 +110,6 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	area->topY = priv->topY;
 	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
-
-	if (priv->screen_no != -1 &&
-		(priv->screen_no >= priv->numScreen || priv->screen_no < 0))
-	{
-		if (priv->screen_no != 1)
-		{
-			xf86Msg(X_ERROR, "%s: invalid screen number %d, resetting to default (-1) \n",
-					pInfo->name, priv->screen_no);
-			priv->screen_no = -1;
-		}
-	}
-
-	/* need maxWidth and maxHeight for keepshape */
-	wcmDesktopSize(pInfo);
 
 	/* Maintain aspect ratio to the whole desktop
 	 * May need to consider a specific screen in multimonitor settings
@@ -235,26 +189,12 @@ static int wcmInitArea(InputInfoPtr pInfo)
 void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int i;
 
 	priv->leftPadding = 0;
 	priv->topPadding = 0;
 
 	if (!is_absolute(pInfo)) return;
 
-	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
-	{
-		i = priv->currentScreen;
-
-		priv->leftPadding = priv->bottomX - priv->topX;
-		priv->topPadding = priv->bottomY - priv->topY;
-
-		priv->leftPadding = (int)(((double)priv->screenTopX[i] * priv->leftPadding )
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-
-		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-	}
 	DBG(10, priv, "x=%d y=%d \n", priv->leftPadding, priv->topPadding);
 	return;
 }
@@ -266,7 +206,6 @@ void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 void wcmVirtualTabletSize(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int i, tabletSize;
 
 	if (!is_absolute(pInfo))
 	{
@@ -278,22 +217,6 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 	priv->sizeX = priv->bottomX - priv->topX;
 	priv->sizeY = priv->bottomY - priv->topY;
 
-	if ((priv->screen_no != -1) || (!priv->wcmMMonitor))
-	{
-		i = priv->currentScreen;
-
-		tabletSize = priv->sizeX;
-		priv->sizeX += (int)(((double)priv->screenTopX[i] * tabletSize)
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-		priv->sizeX += (int)((double)((priv->maxWidth - priv->screenBottomX[i])
-			* tabletSize) / ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-
-		tabletSize = priv->sizeY;
-		priv->sizeY += (int)((double)(priv->screenTopY[i] * tabletSize)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
-			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-	}
 	DBG(10, priv, "x=%d y=%d \n", priv->sizeX, priv->sizeY);
 	return;
 }

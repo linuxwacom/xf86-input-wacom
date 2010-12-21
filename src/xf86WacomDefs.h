@@ -226,11 +226,6 @@ struct _WacomDeviceRec
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number */
-	int screen_no;		/* associated screen */
-	int screenTopX[32];	/* left cordinate of the associated screen */
-	int screenTopY[32];	/* top cordinate of the associated screen */
-	int screenBottomX[32];	/* right cordinate of the associated screen */
-	int screenBottomY[32];	/* bottom cordinate of the associated screen */
 	int maxWidth;		/* max active screen width */
 	int maxHeight;		/* max active screen height */
 	int leftPadding;	/* left padding for virtual tablet */
@@ -280,9 +275,6 @@ struct _WacomDeviceRec
 	int old_device_id;	/* last in prox device id */
 	int old_serial;		/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
-	int numScreen;          /* number of configured screens */
-	int currentScreen;      /* current screen in display */
-	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
 
 	/* JEJ - throttle */
 	int throttleStart;      /* time in ticks for last wheel movement */
