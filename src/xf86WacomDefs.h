@@ -61,7 +61,7 @@
 #define OTHER_PROX      1
 
 /* to access kernel defined bits */
-#define BIT(x)		(1<<((x) & (BITS_PER_LONG - 1)))
+#define BIT(x)		(1UL<<((x) & (BITS_PER_LONG - 1)))
 #define BITS_PER_LONG	(sizeof(long) * 8)
 #define NBITS(x)	((((x)-1)/BITS_PER_LONG)+1)
 #define ISBITSET(x,y)	((x)[LONG(y)] & BIT(y))
