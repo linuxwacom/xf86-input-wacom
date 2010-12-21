@@ -518,17 +518,9 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ISBITSET(common->wcmKeys, ABS_MT_SLOT))
 		private->wcmUseMT = 1;
 
-	if ((common->tablet_id >= 0xd0) && (common->tablet_id <= 0xd3))
-	{
-		/* BTN_TOOL_DOUBLETAP means this is a touchpad and
-		 * !BTN_TOOL_TRIPLETAP detects this is MT-version
-		 * of touchpad; which uses generic protocol.
-		 */
-		if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP) &&
-		    !ISBITSET(common->wcmKeys, BTN_TOOL_TRIPLETAP))
-			common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
-	}
-
+	/* A generic protocol device does not report ABS_MISC event */
+	if (!ISBITSET(abs, ABS_MISC))
+		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
 	return Success;
 }
