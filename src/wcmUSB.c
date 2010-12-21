@@ -33,6 +33,8 @@
 typedef struct {
 	int wcmLastToolSerial;
 	int wcmBTNChannel;
+	Bool wcmUseMT;
+	int wcmMTChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
 } wcmUSBData;
@@ -413,6 +415,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
+	wcmUSBData* private = common->private;
 	int is_touch = IsTouch(priv);
 
 	/* Devices such as Bamboo P&T may have Pad data reported in the same
@@ -512,6 +515,8 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
 		common->wcmMaxDist = absinfo.maximum;
 
+	if (ISBITSET(common->wcmKeys, ABS_MT_SLOT))
+		private->wcmUseMT = 1;
 
 	if ((common->tablet_id >= 0xd0) && (common->tablet_id <= 0xd3))
 	{
@@ -791,6 +796,55 @@ skipEvent:
 	private->wcmEventCnt = 0;
 }
 
+static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
+{
+	wcmUSBData* private = common->private;
+
+	/* For devices that report multitouch, the following list is a set of
+	 * duplicate data from one slot and needs to be filtered out.
+	 */
+	if (private->wcmUseMT)
+	{
+		if (event->type == EV_KEY)
+		{
+			switch(event->code)
+			{
+				case BTN_TOUCH:
+				case BTN_TOOL_FINGER:
+					return 1;
+			}
+		}
+		else if (event->type == EV_ABS)
+		{
+			switch(event->code)
+			{
+				case ABS_X:
+				case ABS_Y:
+				case ABS_PRESSURE:
+					return 1;
+			}
+		}
+	}
+
+	/* For generic devices, filter out doubletap/tripletap that
+	 * can be confused with older protocol.
+	 */
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+	{
+		if (event->type == EV_KEY)
+		{
+			switch(event->code)
+			{
+				case BTN_TOOL_DOUBLETAP:
+				case BTN_TOOL_TRIPLETAP:
+					return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 static int usbParseAbsEvent(WacomCommonPtr common,
 			    struct input_event *event, WacomDeviceState *ds)
 {
@@ -841,6 +895,55 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			if (event->value)
 				ds->device_id = event->value;
 			break;
+		default:
+			change = 0;
+	}
+	return change;
+}
+
+static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
+{
+	int change = 1;
+	wcmUSBData* private = common->private;
+	WacomDeviceState *ds;
+
+	ds = &common->wcmChannel[private->wcmMTChannel].work;
+
+	switch(event->code)
+	{
+		case ABS_MT_SLOT:
+			if (event->value >= 0 && event->value < MAX_FINGERS)
+			{
+				WacomDeviceState *dsnew;
+
+				private->wcmMTChannel = event->value;
+				dsnew = &common->
+					wcmChannel[private->wcmMTChannel].work;
+
+				dsnew->device_type = TOUCH_ID;
+				dsnew->device_id = TOUCH_DEVICE_ID;
+				dsnew->serial_num = event->value+1;
+			}
+			break;
+
+		case ABS_MT_TRACKING_ID:
+			ds->proximity = (event->value != -1);
+
+			ds->sample = (int)GetTimeInMillis();
+			break;
+
+		case ABS_MT_POSITION_X:
+			ds->x = event->value;
+			break;
+
+		case ABS_MT_POSITION_Y:
+			ds->y = event->value;
+			break;
+
+		case ABS_MT_PRESSURE:
+			ds->capacity = event->value;
+			break;
+
 		default:
 			change = 0;
 	}
@@ -950,11 +1053,6 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 
 			/* fall through */
 		case BTN_TOOL_DOUBLETAP:
-			/* If a real double tap report, ignore. */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC &&
-			    event->code == BTN_TOOL_DOUBLETAP)
-				break;
-
 			DBG(6, common,
 			    "USB Touch detected %x (value=%d)\n",
 			    event->code, event->value);
@@ -980,10 +1078,6 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_TOOL_TRIPLETAP:
-			/* If a real triple tap report, ignore. */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
-				break;
-
 			DBG(6, common,
 			    "USB Touch second finger detected %x (value=%d)\n",
 			    event->code, event->value);
@@ -1083,7 +1177,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int channel;
-	int channel_change = 0, btn_channel_change = 0;
+	int channel_change = 0, btn_channel_change = 0, mt_channel_change = 0;
 	WacomChannelPtr pChannel;
 	WacomDeviceState dslast;
 	wcmUSBData* private = common->private;
@@ -1168,10 +1262,22 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			"event[%d]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value);
 
+		/* Check for events to be ignored and skip them up front. */
+		if (usbFilterEvent(common, event))
+			continue;
+
 		/* absolute events */
 		if (event->type == EV_ABS)
 		{
-			channel_change |= usbParseAbsEvent(common, event, ds);
+			if (usbParseAbsEvent(common, event, ds))
+				channel_change |= 1;
+			else if (usbParseAbsMTEvent(common, event))
+			{
+				if (private->wcmMTChannel == 0)
+					channel_change |= 1;
+				else if (private->wcmMTChannel == 1)
+					mt_channel_change |= 1;
+			}
 		}
 		else if (event->type == EV_REL)
 		{
@@ -1234,6 +1340,15 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (channel_change ||
 	    (private->wcmBTNChannel == channel && btn_channel_change))
 		wcmEvent(common, channel, ds);
+
+	/* dispatch for second finger.  first finger is handled above. */
+	if (mt_channel_change)
+	{
+		WacomDeviceState *mt_ds;
+
+		mt_ds = &common->wcmChannel[1].work;
+		wcmEvent(common, 1, mt_ds);
+	}
 
        /* dispatch butten events when re-routed */
 	if (private->wcmBTNChannel != channel && btn_channel_change)

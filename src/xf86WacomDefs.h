@@ -48,12 +48,40 @@
 #define PROXOUT_INTUOS_DISTANCE		10
 #define PROXOUT_GRAPHIRE_DISTANCE	42
 
+/* 2.6.28 */
+
 #ifndef BTN_TOOL_DOUBLETAP
 #define BTN_TOOL_DOUBLETAP 0x14d
 #endif
 
 #ifndef BTN_TOOL_TRIPLETAP
 #define BTN_TOOL_TRIPLETAP 0x14e
+#endif
+
+/* 2.6.30 */
+
+#ifndef ABS_MT_POSITION_X
+#define ABS_MT_POSITION_X 0x35
+#endif
+
+#ifndef ABS_MT_POSITION_Y
+#define ABS_MT_POSITION_Y 0x36
+#endif
+
+#ifndef ABS_MT_TRACKING_ID
+#define ABS_MT_TRACKING_ID 0x39
+#endif
+
+/* 2.6.33 */
+
+#ifndef ABS_MT_PRESSURE
+#define ABS_MT_PRESSURE 0x3a
+#endif
+
+/* 2.6.36 */
+
+#ifndef ABS_MT_SLOT
+#define ABS_MT_SLOT 0x2f
 #endif
 
 /* defines to discriminate second side button and the eraser */
