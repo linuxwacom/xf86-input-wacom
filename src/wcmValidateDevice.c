@@ -640,8 +640,9 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		xf86Msg(X_WARNING, "%s: TPCButton option can only be set "
 			"by stylus.\n", pInfo->name);
 
-	/* a single touch device */
-	if (ISBITSET (common->wcmKeys, BTN_TOOL_DOUBLETAP))
+	/* a single or double touch device */
+	if (TabletHasFeature(common, WCM_1FGT) ||
+	    TabletHasFeature(common, WCM_2FGT))
 	{
 		/* TouchDefault was off for all devices
 		 * except when touch is supported */
@@ -667,7 +668,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	}
 
 	/* 2FG touch device */
-	if (ISBITSET (common->wcmKeys, BTN_TOOL_TRIPLETAP))
+	if (TabletHasFeature(common, WCM_2FGT))
 	{
 		/* GestureDefault was off for all devices
 		 * except when multi-touch is supported */
