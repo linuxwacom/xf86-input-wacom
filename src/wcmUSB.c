@@ -1364,6 +1364,7 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 	struct input_id wacom_id;
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
+	unsigned long abs[NBITS(ABS_MAX)] = {0};
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
@@ -1379,6 +1380,20 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 				"ioctl Device ID.\n", pInfo->name);
 		return 0;
 	}
+
+        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to ioctl "
+			"abs bits.\n", pInfo->name);
+		return 0;
+	}
+
+	/* The wcmKeys stored above have different meaning for generic
+	 * protocol.  Detect that and change default protocol 4 to
+	 * generic.
+	 */
+	if (!ISBITSET(abs, ABS_MISC))
+		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
 	return wacom_id.product;
 }

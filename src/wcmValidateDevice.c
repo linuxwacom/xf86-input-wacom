@@ -256,28 +256,16 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xE3: /* TPC with 2FGT */
 			priv->common->tablet_type = WCM_TPC;
 			priv->common->tablet_type |= WCM_LCD;
-			/* fall through */
-		case 0xD0:  /* Bamboo with 2FGT */
-		case 0xD1:  /* Bamboo with 2FGT */
-		case 0xD2:  /* Bamboo with 2FGT */
-		case 0xD3:  /* Bamboo with 2FGT */
-		case 0xD8:  /* Bamboo with 2FGT */
-		case 0xDA:  /* Bamboo with 2FGT */
-		case 0xDB:  /* Bamboo with 2FGT */
-			priv->common->tablet_type |= WCM_2FGT;
 			break;
 
 		case 0x93: /* TPC with 1FGT */
 		case 0x9A: /* TPC with 1FGT */
-			priv->common->tablet_type = WCM_1FGT;
-			/* fall through */
 		case 0x90: /* TPC */
 			priv->common->tablet_type |= WCM_TPC;
 			priv->common->tablet_type |= WCM_LCD;
 			break;
 
 		case 0x9F:
-			priv->common->tablet_type = WCM_1FGT;
 			priv->common->tablet_type |= WCM_LCD;
 			break;
 
@@ -289,6 +277,27 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			ISBITSET (common->wcmKeys, BTN_FORWARD))
 	{
 		priv->common->tablet_type |= WCM_PAD;
+	}
+
+	/* This handles both protocol 4 and 5 meanings of wcmKeys */
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+	{
+		/* TRIPLETAP means 2 finger touch */
+		/* DOUBLETAP without TRIPLETAP means 1 finger touch */
+		if (ISBITSET(common->wcmKeys, BTN_TOOL_TRIPLETAP))
+			priv->common->tablet_type |= WCM_2FGT;
+		else if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP))
+			priv->common->tablet_type |= WCM_1FGT;
+	}
+
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+	{
+		/* DOUBLETAP means 2 finger touch */
+		/* FINGER without DOUBLETAP means 1 finger touch */
+		if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP))
+			priv->common->tablet_type |= WCM_2FGT;
+		else if (ISBITSET(common->wcmKeys, BTN_TOOL_FINGER))
+			priv->common->tablet_type |= WCM_1FGT;
 	}
 
 	return ret;
