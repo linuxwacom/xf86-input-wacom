@@ -794,6 +794,10 @@ static int is_modifier(const char* modifier)
 		"Shift_R",
 		"Meta_L",
 		"Meta_R",
+		"Super_L",
+		"Super_R",
+		"Hyper_L",
+		"Hyper_R",
 		NULL,
 	};
 
