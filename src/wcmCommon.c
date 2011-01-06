@@ -405,7 +405,23 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if ( (ds->abswheel != priv->oldWheel) && IsPad(priv) &&
 	    (priv->oldProximity == ds->proximity))
 	{
+		int wrap_delta;
 		value = priv->oldWheel - ds->abswheel;
+
+		/* Wraparound detection. If the distance oldvalue..value is
+		 * larger than the oldvalue..value considering the
+		 * wraparound, assume wraparound and readjust */
+		if (value < 0)
+			wrap_delta = ((MAX_PAD_RING + 1) + priv->oldWheel) - ds->abswheel;
+		else
+			wrap_delta = priv->oldWheel - ((MAX_PAD_RING + 1) + ds->abswheel);
+
+		DBG(12, priv, "wrap detection for %d (old %d): %d (wrap %d)\n",
+		    ds->abswheel, priv->oldWheel, value, wrap_delta);
+
+		if (abs(wrap_delta) < abs(value))
+			value = wrap_delta;
+
 		fakeButton = (value > 0) ? priv->wheelup : priv->wheeldn;
 		*fakeKey = (value > 0) ? priv->wheel_keys[2] : priv->wheel_keys[3];
 	}
