@@ -505,7 +505,7 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		wcmSendButtons(pInfo,buttons, first_val, num_vals, valuators);
 
 	/* emulate wheel/strip events when defined */
-	if ( ds->relwheel || ds->abswheel || 
+	if ( ds->relwheel || (ds->abswheel != priv->oldWheel) ||
 		( (ds->stripx - priv->oldStripX) && ds->stripx && priv->oldStripX) || 
 			((ds->stripy - priv->oldStripY) && ds->stripy && priv->oldStripY) )
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
@@ -605,7 +605,8 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	for (i = 0; i < num_vals; i++)
 		if (valuators[i])
 			break;
-	if (i < num_vals || ds->buttons || ds->relwheel)
+	if (i < num_vals || ds->buttons || ds->relwheel ||
+	    (ds->abswheel != priv->oldWheel))
 	{
 		sendCommonEvents(pInfo, ds, first_val, num_vals, valuators);
 
