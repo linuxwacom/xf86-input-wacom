@@ -820,7 +820,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	else
 	{
 		priv->oldButtons = 0;
-		priv->oldWheel = 0;
+		priv->oldWheel = MAX_PAD_RING + 1;
 		priv->oldX = 0;
 		priv->oldY = 0;
 		priv->oldZ = 0;
