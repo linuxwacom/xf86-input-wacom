@@ -402,7 +402,8 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	}
 
 	/* emulate events for absolute wheel when it is a touch ring (on pad) */
-	if ( (ds->abswheel != priv->oldWheel) && IsPad(priv) )
+	if ( (ds->abswheel != priv->oldWheel) && IsPad(priv) &&
+	    (priv->oldProximity == ds->proximity))
 	{
 		value = priv->oldWheel - ds->abswheel;
 		fakeButton = (value > 0) ? priv->wheelup : priv->wheeldn;
