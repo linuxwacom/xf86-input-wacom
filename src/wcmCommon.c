@@ -429,18 +429,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	/* emulate events for left strip */
 	if ( ds->stripx != priv->oldStripX )
 	{
-		int temp = 0, n, i;
-		for (i=1; i<14; i++)
-		{
-			n = 1 << (i-1);
-			if ( ds->stripx & n )
-				temp = i;
-			if ( priv->oldStripX & n )
-				value = i;
-			if ( temp & value) break;
-		}
-
-		value -= temp;
+		value = ds->stripx - priv->oldStripX;
 
 		fakeButton = (value > 0) ? priv->striplup : priv->stripldn;
 		*fakeKey = (value > 0) ? priv->strip_keys[0] : priv->strip_keys[1];
@@ -449,18 +438,8 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	/* emulate events for right strip */
 	if ( ds->stripy != priv->oldStripY )
 	{
-		int temp = 0, n, i;
-		for (i=1; i<14; i++)
-		{
-			n = 1 << (i-1);
-			if ( ds->stripy & n )
-				temp = i;
-			if ( priv->oldStripY & n )
-				value = i;
-			if ( temp & value) break;
-		}
+		value = ds->stripy - priv->oldStripY;
 
-		value -= temp;
 		fakeButton = (value > 0) ? priv->striprup : priv->striprdn;
 		*fakeKey = (value > 0) ? priv->strip_keys[2] : priv->strip_keys[2];
 	}
