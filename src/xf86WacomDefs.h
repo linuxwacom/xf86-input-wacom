@@ -42,6 +42,9 @@
 #define MAX_ROTATION_RANGE 1800 /* the maximum range of the marker pen rotation */
 #define MAX_ABS_WHEEL 1023      /* the maximum value of absolute wheel */
 
+#define MIN_PAD_RING 0		/* I4 absolute scroll ring min value */
+#define MAX_PAD_RING 71		/* I4 absolute scroll ring max value */
+
 /* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 
  */

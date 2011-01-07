@@ -51,6 +51,8 @@
 #include <xserver-properties.h>
 #include <X11/extensions/XKB.h>
 #include <xkbsrv.h>
+#else
+#define XIGetKnownProperty(prop) 0
 #endif
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
@@ -222,62 +224,6 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * wcmInitialCoordinates
- ****************************************************************************/
-
-void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	int topx = 0, topy = 0, resolution_x, resolution_y;
-	int bottomx = priv->maxX, bottomy = priv->maxY;
-
-	wcmMappingFactor(pInfo);
-
-	if (is_absolute(pInfo))
-	{
-		topx = priv->topX;
-		topy = priv->topY;
-		bottomx = priv->sizeX + priv->topX;
-		bottomy = priv->sizeY + priv->topY;
-	}
-	resolution_x = priv->resolX;
-	resolution_y = priv->resolY;
-
-	switch(axis)
-	{
-		case 0:
-			InitValuatorAxisStruct(pInfo->dev, 0,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
-#endif
-					topx, bottomx,
-					resolution_x, 0, resolution_x
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-					, Absolute
-#endif
-					);
-			break;
-		case 1:
-			InitValuatorAxisStruct(pInfo->dev, 1,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
-#endif
-					topy, bottomy,
-					resolution_y, 0, resolution_y
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-					, Absolute
-#endif
-					);
-			break;
-		default:
-			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", pInfo->name, axis);
-			break;
-	}
-
-	return;
-}
-
-/*****************************************************************************
  * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
@@ -319,6 +265,202 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 	}
 
 	return;
+}
+
+static int
+wcmInitAxes(DeviceIntPtr pWcm)
+{
+	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+
+	Atom label;
+	int min, max, min_res, max_res, res;
+	int mode;
+
+	/* first valuator: x */
+	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+	min = max = -1;
+	if (is_absolute(pInfo))
+	{
+		min = priv->topX;
+		max = priv->sizeX + priv->topX;
+	}
+	min_res = 0;
+	max_res = priv->resolX;
+	res = priv->resolX;
+	mode = Absolute;
+
+	InitValuatorAxisStruct(pInfo->dev, 0,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	/* second valuator: y */
+	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+	min = max = -1;
+	if (is_absolute(pInfo))
+	{
+		min = priv->topY;
+		max = priv->sizeY + priv->topY;
+	}
+	min_res = 0;
+	max_res = priv->resolY;
+	res = priv->resolY;
+	mode = Absolute;
+
+	InitValuatorAxisStruct(pInfo->dev, 1,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+
+	/* third valuator: pressure */
+
+	mode = Absolute;
+	min_res = max_res = res = 1;
+	min = 0;
+
+	if (!IsPad(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
+		/* pressure normalized to FILTER_PRESSURE_RES */
+		max = FILTER_PRESSURE_RES;
+	} else {
+		/* The pad doesn't have a pressure axis, so initialise third
+		 * axis as unknown absolute axis on the pad. This way, we
+		 * can leave the strip/abswheel axes on later axes and don't
+		 * run the danger of clients misinterpreting the axis info
+		 */
+		label = None;
+		max = 1;
+	}
+
+
+	InitValuatorAxisStruct(pInfo->dev, 2,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
+
+	if (IsCursor(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
+		min = -900;
+		max = -899;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+	} else if (IsPad(priv))
+	{
+		label = None; /* XXX: what is this axis? */
+		min = 0;
+		max = 1; /* dummy value if !HasFeature(WCM_STRIP) */
+		min_res = max_res = res = 1;
+		mode = Absolute;
+		if (TabletHasFeature(common, WCM_STRIP))
+			max = common->wcmMaxStripX;
+	} else
+	{
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
+			min = -64;
+			max = 63;
+			min_res = max_res = res = 1;
+			mode = Absolute;
+	}
+
+	InitValuatorAxisStruct(pInfo->dev, 3,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
+
+	if (IsCursor(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
+		min = -1023;
+		max = 1023;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+	} else if (IsPad(priv))
+	{
+		label = None; /* XXX: what is this axis? */
+		min = 0;
+		max = 1; /* dummy value if !HasFeature(WCM_STRIP) */
+		min_res = max_res = res = 1;
+		mode = Absolute;
+		if (TabletHasFeature(common, WCM_STRIP))
+			max = common->wcmMaxStripY;
+	} else
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
+		min = -64;
+		max = 63;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+	}
+
+	InitValuatorAxisStruct(pInfo->dev, 4,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
+
+	if (IsStylus(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
+		max = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
+		min = MIN_ROTATION;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+	} else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
+	{
+		/* Touch ring */
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
+		min = MIN_PAD_RING;
+		max = MAX_PAD_RING;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+	}
+
+	InitValuatorAxisStruct(pInfo->dev, 5,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+			       label,
+#endif
+			       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+			       , mode
+#endif
+			       );
+
+	return TRUE;
 }
 
 /*****************************************************************************
@@ -434,123 +576,15 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		wcmInitialToolSize(pInfo);
 
 		if (wcmInitArea(pInfo) == FALSE)
-		{
 			return FALSE;
-		}
 
-		wcmInitialCoordinates(priv->pInfo, 0);
-		wcmInitialCoordinates(priv->pInfo, 1);
-
-		/* Rotation rotates the Max X and Y */
-		wcmRotateTablet(pInfo, common->wcmRotate);
+		wcmMappingFactor(pInfo);
 	}
 
-	/* pressure normalized to FILTER_PRESSURE_RES */
-	InitValuatorAxisStruct(pInfo->dev, 2,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
-#endif
-		0, FILTER_PRESSURE_RES, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-		, Absolute
-#endif
-		);
+	if (!wcmInitAxes(pWcm))
+		return FALSE;
 
-	if (IsCursor(priv))
-	{
-		/* z-rot and throttle */
-		InitValuatorAxisStruct(pInfo->dev, 3,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ),
-#endif
-		-900, 899, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-		, Absolute
-#endif
-		);
-		InitValuatorAxisStruct(pInfo->dev, 4,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE),
-#endif
-		-1023, 1023, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-		, Absolute
-#endif
-		);
-	}
-	else if (IsPad(priv))
-	{
-		/* strip-x and strip-y */
-		if (TabletHasFeature(common, WCM_STRIP))
-		{
-			InitValuatorAxisStruct(pInfo->dev, 3,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				0, /* XXX what is this axis?*/
-#endif
-				0, common->wcmMaxStripX, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
-			InitValuatorAxisStruct(pInfo->dev, 4,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				0, /* XXX what is this axis?*/
-#endif
-				0, common->wcmMaxStripY, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
-		}
-	}
-	else
-	{
-		/* tilt-x and tilt-y */
-		InitValuatorAxisStruct(pInfo->dev, 3,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
-#endif
-				-64, 63, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
-		InitValuatorAxisStruct(pInfo->dev, 4,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y),
-#endif
-				-64, 63, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
-	}
-
-	if (IsStylus(priv))
-	{
-		int maxRotation = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
-		/* Art Marker Pen rotation or Airbrush absolute Wheel */
-		InitValuatorAxisStruct(pInfo->dev, 5,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
-#endif
-				MIN_ROTATION, maxRotation, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
-	}
-	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
-		/* Touch ring */
-		InitValuatorAxisStruct(pInfo->dev, 5,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
-#endif
-				0, 71, 1, 1, 1
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-				, Absolute
-#endif
-				);
+	wcmRotateTablet(pInfo, common->wcmRotate);
 
 	if (IsTouch(priv))
 	{
