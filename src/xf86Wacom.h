@@ -66,15 +66,6 @@
 
 #define ABS(x) ((x) > 0 ? (x) : -(x))
 
-/*****************************************************************************
- * General Defines
- ****************************************************************************/
-#define XI_STYLUS "STYLUS"      /* X device type name for the stylus */
-#define XI_CURSOR "CURSOR"      /* X device type name for the cursor */
-#define XI_ERASER "ERASER"      /* X device type name for the eraser */
-#define XI_PAD    "PAD"         /* X device type name for the Pad */
-#define XI_TOUCH  "TOUCH"       /* X device type name for the touch */
-
 /******************************************************************************
  * WacomModule - all globals are packed in a single structure to keep the
  *               global namespaces as clean as possible.

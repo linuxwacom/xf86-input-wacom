@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <wacom-properties.h>
 
 /*****************************************************************************
  * wcmAllocate --
@@ -180,7 +181,7 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 	if (xf86NameCmp(type, "stylus") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
-		pInfo->type_name = XI_STYLUS;
+		pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS;
 	} else if (xf86NameCmp(type, "touch") == 0)
 	{
 		int flags = TOUCH_ID;
@@ -189,19 +190,19 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 			flags |= ABSOLUTE_FLAG;
 
 		priv->flags = flags;
-		pInfo->type_name = XI_TOUCH;
+		pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH;
 	} else if (xf86NameCmp(type, "cursor") == 0)
 	{
 		priv->flags = CURSOR_ID;
-		pInfo->type_name = XI_CURSOR;
+		pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR;
 	} else if (xf86NameCmp(type, "eraser") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
-		pInfo->type_name = XI_ERASER;
+		pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER;
 	} else if (xf86NameCmp(type, "pad") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|PAD_ID;
-		pInfo->type_name = XI_PAD;
+		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
 	}
 
 	/* Set the device id of the "last seen" device on this tool */

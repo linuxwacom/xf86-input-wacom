@@ -96,4 +96,15 @@
  */
 #define WACOM_PROP_DEBUGLEVELS "Wacom Debug Levels"
 
+
+/* The following are tool types used by the driver in WACOM_PROP_TOOL_TYPE
+ * or in the 'type' field for XI1 clients. Clients may check for one of
+ * these types to identify tool types.
+ */
+#define WACOM_PROP_XI_TYPE_STYLUS "STYLUS"
+#define WACOM_PROP_XI_TYPE_CURSOR "CURSOR"
+#define WACOM_PROP_XI_TYPE_ERASER "ERASER"
+#define WACOM_PROP_XI_TYPE_PAD    "PAD"
+#define WACOM_PROP_XI_TYPE_TOUCH  "TOUCH"
+
 #endif
