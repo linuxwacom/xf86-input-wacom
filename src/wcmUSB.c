@@ -582,7 +582,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 		 * and all other button presses to PAD.  Hardcode PAD
 		 * channel here.
 		 */
-		private->wcmBTNChannel = MAX_CHANNELS-1;
+		private->wcmBTNChannel = PAD_CHANNEL;
 	}
 	else if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 	{
@@ -610,7 +610,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 		 * pad devices.
 		 */
 		if (serial == 0xf0)
-			channel = MAX_CHANNELS-1;
+			channel = PAD_CHANNEL;
 		else if (serial)
 			channel = serial-1;
 		else

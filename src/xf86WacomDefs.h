@@ -387,6 +387,7 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define RAW_FILTERING_FLAG      4
 
 #define MAX_CHANNELS 3
+#define PAD_CHANNEL (MAX_CHANNELS-1)
 #define MAX_FINGERS  2
 
 typedef struct {
