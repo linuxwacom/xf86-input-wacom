@@ -186,6 +186,8 @@ struct _WacomModel
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 #define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
 
+#define IsUSBDevice(common) ((common)->wcmDevCls == &gWacomUSBDevice)
+
 #define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
 #define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
 #define WCM_MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer

@@ -698,7 +698,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 				"be set by a touch tool.\n", pInfo->name);
 
 		/* FIXME: wtf is this here?? */
-		if ((common->wcmDevCls == &gWacomUSBDevice) &&
+		if (IsUSBDevice(common) &&
 				TabletHasFeature(common, WCM_LCD) &&
 				TabletHasFeature(common, WCM_2FGT)) {
 			common->wcmGestureParameters.wcmZoomDistanceDefault = 30;

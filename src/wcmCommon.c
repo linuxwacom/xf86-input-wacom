@@ -890,7 +890,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	/* Discard the first 2 USB packages due to events delay */
-	if ( (pChannel->nSamples < 2) && (common->wcmDevCls == &gWacomUSBDevice) && 
+	if ( (pChannel->nSamples < 2) && IsUSBDevice(common) &&
 		ds.device_type != PAD_ID && (ds.device_type != TOUCH_ID) )
 	{
 		DBG(11, common,
@@ -1142,18 +1142,18 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	button = 1;
 	priv = pDev->private;
 
-	if (common->wcmDevCls == &gWacomUSBDevice && IsTouch(priv) && !ds->proximity)
+	if (IsUSBDevice(common) && IsTouch(priv) && !ds->proximity)
 	{
 		priv->hardProx = 0;
 	}
 
-	if (common->wcmDevCls == &gWacomUSBDevice && (IsStylus(priv) || IsEraser(priv)))
+	if (IsUSBDevice(common) && (IsStylus(priv) || IsEraser(priv)))
 	{
 		priv->hardProx = 1;
 	}
 
 	/* send a touch out for USB Tablet PCs */
-	if (common->wcmDevCls == &gWacomUSBDevice && !IsTouch(priv)
+	if (IsUSBDevice(common) && !IsTouch(priv)
 			&& common->wcmTouchDefault && !priv->oldProximity)
 	{
 		InputInfoPtr device = xf86FirstLocalDevice();
