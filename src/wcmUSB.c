@@ -516,7 +516,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
 		common->wcmMaxDist = absinfo.maximum;
 
-	if (ISBITSET(common->wcmKeys, ABS_MT_SLOT))
+	if (ISBITSET(abs, ABS_MT_SLOT))
 		private->wcmUseMT = 1;
 
 	/* A generic protocol device does not report ABS_MISC event */
