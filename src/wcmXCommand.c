@@ -197,8 +197,10 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = common->wcmTouch;
 	prop_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_TOUCH, 8, 1, values);
 
-	values[0] = common->wcmTPCButton;
-	prop_hover = InitWcmAtom(pInfo->dev, WACOM_PROP_HOVER, 8, 1, values);
+	if (IsStylus(priv)) {
+		values[0] = common->wcmTPCButton;
+		prop_hover = InitWcmAtom(pInfo->dev, WACOM_PROP_HOVER, 8, 1, values);
+	}
 
 	values[0] = common->wcmGesture;
 	prop_gesture = InitWcmAtom(pInfo->dev, WACOM_PROP_ENABLE_GESTURE, 8, 1, values);
@@ -764,6 +766,9 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if ((values[0] != 0) && (values[0] != 1))
 			return BadValue;
+
+		if (!IsStylus(priv))
+			return BadMatch;
 
 		if (!checkonly && common->wcmTPCButton != !values[0])
 			common->wcmTPCButton = values[0];
