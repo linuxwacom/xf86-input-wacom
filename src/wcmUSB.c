@@ -35,6 +35,7 @@ typedef struct {
 	int wcmBTNChannel;
 	Bool wcmUseMT;
 	int wcmMTChannel;
+	int wcmPrevChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
 } wcmUSBData;
@@ -912,6 +913,12 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 				dsnew = &common->
 					wcmChannel[private->wcmMTChannel].work;
 
+				/* Set tool specific data here. Since
+				 * MT slots have fixed mapping to channel,
+				 * the channel will always have previous
+				 * tools values.  Since MT event filtering
+				 * is also per slot, this works as expected.
+				 */
 				dsnew->device_type = TOUCH_ID;
 				dsnew->device_id = TOUCH_DEVICE_ID;
 				dsnew->serial_num = event->value+1;
@@ -975,15 +982,9 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 	int change = 1;
 
 	/* BTN_TOOL_* are sent to indicate when a specific tool is going
-	 * in our out of proximity.  When going out of proximity, ds
-	 * is initialized to zeros elsewere.  When going in proximity,
-	 * here we initialize tool specific values.
-	 *
-	 * This requires tools that map to same channel of an input
-	 * device and that share events (ABS_X of PEN and ERASER for
-	 * example) not to be in proximity at the same time.  Tools
-	 * that map to different channels can be in proximity at same
-	 * time with no confusion.
+	 * in our out of proximity.  When going in proximity, here we
+	 * initialize tool specific values.  Making sure shared values
+	 * are correct values during tool change is done elsewhere.
 	 */
 	switch (event->code)
 	{
@@ -1170,7 +1171,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	WacomCommonPtr common = priv->common;
 	int channel;
 	int channel_change = 0, btn_channel_change = 0, mt_channel_change = 0;
-	WacomChannelPtr pChannel;
 	WacomDeviceState dslast;
 	wcmUSBData* private = common->private;
 
@@ -1184,65 +1184,53 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		return;
 	}
 
-	pChannel = common->wcmChannel + channel;
-	dslast = pChannel->valid.state;
-
-	/* Because of linux input filtering, the kernel driver can not
-	 * always force total set of event data when new tool comes into
-	 * proximity.  This includes simple case of flipping stylus
-	 * from pen to eraser tool. Therefore, when new tool is in-prox
-	 * we must initialize all shared event values to same as previous
-	 * tool to account for filtered events.
-	 *
-	 * For Generic and Protocol 4 devices that have fixed channel
-	 * mappings, this is no problem.  Protocol 5 devices are difficult
-	 * because they dynamically assign channel #'s and even simple
-	 * case above can switch from channel 1 to channel 0.
-	 *
-	 * To simplify things, we take advantage of fact wacom kernel
-	 * drivers force all values to zero when going out of proximity so
-	 * we take a short cut and memset() to align when going in-prox
-	 * instead of a memcpy().
-	 *
-	 * TODO: Some non-wacom tablets send X/Y data right before coming
-	 * in proximity. The following discards that data.
-	 * Adding "&& dslast.proximimty" to check would probably help
-	 * this case.
-	 * Some non-wacom tablets may also never reset their values
-	 * to zero when out-of-prox.  The memset() can loss this data.
-	 * Adding a !WCM_PROTOCOL_GENERIC check would probably help this case.
+	/* Protocol 5 devices have some complications related to DUALINPUT
+	 * support and can not use below logic to recover from input
+	 * event filtering.  Instead, just live with occasional dropped
+	 * event.  Since tools are dynamically assigned a channel #, the
+	 * structure must be initialized to known starting values
+	 * when first entering proximity to discard invalid data.
 	 */
-	if (!common->wcmChannel[channel].work.proximity)
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
 	{
-		memset(&common->wcmChannel[channel],0,sizeof(WacomChannel));
-
-		/* in case the in-prox event was missing */
-		/* TODO: There are not valid times when in-prox
-		 * events are not sent by a driver except:
+		if (!common->wcmChannel[channel].work.proximity)
+			memset(&common->wcmChannel[channel],0,
+			       sizeof(WacomChannel));
+	}
+	else
+	{
+		/* Because of linux input filtering, each switch to a new
+		 * tool is required to have its initial values match values
+		 * of previous tool.
 		 *
-		 * 1) Starting X while tool is already in prox.
-		 * 2) Non-wacom tablet sends only BTN_TOUCH without
-		 * BTN_TOOL_PEN since it only support 1 tool.
+		 * For normal case, all tools are in channel 0 and so
+		 * no issue.  Protocol 4 2FGT devices split between
+		 * two channels though and so need to copy data between
+		 * channels to prevent loss of events; which could
+		 * lead to cursor jumps.
 		 *
-		 * Case 1) should be handled in same location as
-		 * below check of (ds->device_type == 0) since its
-		 * same reason.  It is better to query for real
-		 * value instead of assuming in-prox.
-		 * Case 2) should be handled in case statement that
-		 * processes BTN_TOUCH for WCM_PROTOCOL_GENERIC devices.
-		 *
-		 * So we should not be forcing to in-prox here because
-		 * it could cause cursor jump from (X,Y)=(0,0) if events
-		 * are sent while out-of-prox; which can happen only
-		 * with WCM_PROTOCOL_GENERIC devices. Hint: see TODO above.
+		 * PAD device is special.  It shares no events
+		 * with other channels and is always in proximity.
+		 * So it requires no copying of data from other
+		 * channels.
 		 */
-		common->wcmChannel[channel].work.proximity = 1;
+		if (private->wcmPrevChannel != channel &&
+		    channel != PAD_CHANNEL &&
+		    private->wcmPrevChannel != PAD_CHANNEL)
+		{
+			common->wcmChannel[channel].work =
+				common->wcmChannel[private->wcmPrevChannel].work;
+			private->wcmPrevChannel = channel;
+		}
 	}
 
-	/* all USB data operates from previous context except relative values*/
 	ds = &common->wcmChannel[channel].work;
+	dslast = common->wcmChannel[channel].valid.state;
+
+	/* all USB data operates from previous context except relative values*/
 	ds->relwheel = 0;
 	ds->serial_num = private->wcmLastToolSerial;
+
 	/* For protocol 4 and 5 devices, ds == btn_ds. */
 	btn_ds = &common->wcmChannel[private->wcmBTNChannel].work;
 
@@ -1306,6 +1294,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			if (ISBITSET(keys, wcmTypeToKey[i].tool_key))
 			{
 				ds->device_type = wcmTypeToKey[i].device_type;
+				ds->proximity = 1;
 				break;
 			}
 		}
