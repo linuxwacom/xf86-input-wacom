@@ -481,9 +481,10 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
 	char            *s, b[12];
-	int		i, oldButton;
+	int		i;
 	WacomToolPtr    tool = NULL;
 	WacomToolAreaPtr area = NULL;
+	int		tpc_button_is_on;
 
 	/* Optional configuration */
 	priv->debugLevel = xf86SetIntOption(pInfo->options,
@@ -640,12 +641,12 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
 	/* TPCButton on for Tablet PC by default */
-	oldButton = xf86SetBoolOption(pInfo->options, "TPCButton",
+	tpc_button_is_on = xf86SetBoolOption(pInfo->options, "TPCButton",
 					TabletHasFeature(common, WCM_TPC));
 
 	if (hotplugged || IsStylus(priv))
-		common->wcmTPCButton = oldButton;
-	else if (oldButton != common->wcmTPCButton)
+		common->wcmTPCButton = tpc_button_is_on;
+	else if (tpc_button_is_on != common->wcmTPCButton)
 		xf86Msg(X_WARNING, "%s: TPCButton option can only be set "
 			"by stylus.\n", pInfo->name);
 
@@ -653,25 +654,27 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	if (TabletHasFeature(common, WCM_1FGT) ||
 	    TabletHasFeature(common, WCM_2FGT))
 	{
+		int touch_is_on, capacity_is_on;
+
 		/* TouchDefault was off for all devices
 		 * except when touch is supported */
 		common->wcmTouchDefault = 1;
 
-		oldButton = xf86SetBoolOption(pInfo->options, "Touch",
-					common->wcmTouchDefault);
+		touch_is_on = xf86SetBoolOption(pInfo->options, "Touch",
+						common->wcmTouchDefault);
 
 		if (hotplugged || IsTouch(priv))
-			common->wcmTouch = oldButton;
-		else if (oldButton != common->wcmTouch)
+			common->wcmTouch = touch_is_on;
+		else if (touch_is_on != common->wcmTouch)
 			xf86Msg(X_WARNING, "%s: Touch option can only be set "
 				"by a touch tool.\n", pInfo->name);
 
-		oldButton = xf86SetBoolOption(pInfo->options, "Capacity",
-					common->wcmCapacityDefault);
+		capacity_is_on = xf86SetBoolOption(pInfo->options, "Capacity",
+						   common->wcmCapacityDefault);
 
 		if (hotplugged || IsTouch(priv))
-			common->wcmCapacity = oldButton;
-		else if (oldButton != common->wcmCapacity)
+			common->wcmCapacity = capacity_is_on;
+		else if (capacity_is_on != common->wcmCapacity)
 			xf86Msg(X_WARNING, "%s: Touch Capacity option can only be"
 				"set by a touch tool.\n", pInfo->name);
 	}
@@ -679,16 +682,18 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	/* 2FG touch device */
 	if (TabletHasFeature(common, WCM_2FGT))
 	{
+		int gesture_is_on;
+
 		/* GestureDefault was off for all devices
 		 * except when multi-touch is supported */
 		common->wcmGestureDefault = 1;
 
-		oldButton = xf86SetBoolOption(pInfo->options, "Gesture",
-					common->wcmGestureDefault);
+		gesture_is_on = xf86SetBoolOption(pInfo->options, "Gesture",
+					    common->wcmGestureDefault);
 
 		if (hotplugged || IsTouch(priv))
-			common->wcmGesture = oldButton;
-		else if (oldButton != common->wcmGesture)
+			common->wcmGesture = gesture_is_on;
+		else if (gesture_is_on != common->wcmGesture)
 			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
 				"be set by a touch tool.\n", pInfo->name);
 
