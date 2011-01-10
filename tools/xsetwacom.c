@@ -1966,19 +1966,26 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 	XFlush(dpy);
 }
 
-static void _set_matrix_prop(Display *dpy, XDevice *dev, const float matrix[9])
+static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
 	Atom type;
 	int format;
 	unsigned long nitems, bytes_after;
 	float *data;
+	long matrix[9] = {0};
+	int i;
 
 	if (!matrix_prop)
 	{
 		fprintf(stderr, "Server does not support transformation");
 		return;
 	}
+
+	/* XI1 expects 32 bit properties (including float) as long,
+	 * regardless of architecture */
+	for (i = 0; i < sizeof(matrix)/sizeof(matrix[0]); i++)
+		*(float*)(matrix + i) = fmatrix[i];
 
 	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
 				AnyPropertyType, &type, &format, &nitems,
