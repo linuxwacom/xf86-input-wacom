@@ -770,7 +770,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if (!IsStylus(priv))
 			return BadMatch;
 
-		if (!checkonly && common->wcmTPCButton != !values[0])
+		if (!checkonly)
 			common->wcmTPCButton = values[0];
 #ifdef DEBUG
 	} else if (property == prop_debuglevels)
