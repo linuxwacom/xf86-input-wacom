@@ -118,9 +118,12 @@ To ignore the button click, i.e., to not report any button click event
 to the X server,  use "0" or "button 0".
 .TP 4
 .B Option \fI"TPCButton"\fP \fI"on"|"off"\fP
-enables the stylus buttons as  Tablet PC buttons,  i.e., reports stylus 
-button event only when its tip is pressed.  Default to "on" for Tablet PCs; 
-"off" for all other models.
+enables the stylus buttons as Tablet PC buttons. If enabled, the stylus
+reports button events only when its tip is pressed. If any button is down,
+pressing the tip reports a button event for the button. Otherwise if no
+button is down, the tip reports as usual.
+Default to "on" for Tablet PCs; "off" for all other models. Only available
+on the stylus tool.
 .TP 4
 .B Option \fI"Touch"\fP \fI"on"|"off"\fP
 enables the touch event for Tablet PC that supports touch feature,  i.e., 

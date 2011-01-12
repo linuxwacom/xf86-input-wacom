@@ -113,83 +113,48 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
 			   int first_val, int num_vals, int *valuators)
 {
-	int button, mask;
+	int button, mask, first_button;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	DBG(6, priv, "buttons=%d\n", buttons);
 
+	 /* button behaviour (TPC button on):
+		if only tip is pressed/released, send button 1 events
+		if button N is pressed and tip is pressed/released, send
+		button N events.
+		if tip is already down and button N is pressed/released,
+		send button 1 release, then button N events.
+	 */
+
+	first_button = 0; /* zero-indexed because of mask */
+
 	/* Tablet PC buttons only apply to penabled devices */
 	if (common->wcmTPCButton && IsStylus(priv))
 	{
-		if ( buttons & 1 )
-		{
-			if ( !(priv->flags & TPCBUTTONS_FLAG) )
-			{
-				priv->flags |= TPCBUTTONS_FLAG;
+		first_button = (buttons <= 1) ? 0 : 1;
 
-				if (buttons == 1) {
-					/* Button 1 pressed */
-					sendAButton(pInfo, 0, 1, first_val, num_vals, valuators);
-				} else {
-					/* send all pressed buttons down */
-					for (button=2; button<=WCM_MAX_BUTTONS; button++)
-					{
-						mask = 1 << (button-1);
-						if ( buttons & mask )
-						{
-							/* set to the configured button */
-							sendAButton(pInfo, button-1, 1,
-								    first_val, num_vals,
-								    valuators);
-						}
-					}
-				}
-			}
-			else
-			{
-				for (button=2; button<=WCM_MAX_BUTTONS; button++)
-				{
-					mask = 1 << (button-1);
-					if ((mask & priv->oldButtons) != (mask & buttons))
-					{
-						/* set to the configured buttons */
-						sendAButton(pInfo, button-1, mask & buttons,
-							    first_val, num_vals, valuators);
-					}
-				}
-			}
-		}
-		else if ( priv->flags & TPCBUTTONS_FLAG )
+		/* tip released? release all buttons */
+		if ((buttons & 1) == 0)
+			buttons = 0;
+		/* tip pressed? send all other button presses */
+		else if ((buttons & 1) != (priv->oldButtons & 1))
+			priv->oldButtons = 0;
+		/* other button changed while tip is still down? release tip */
+		else if ((buttons & 1) && (buttons != priv->oldButtons))
 		{
-			priv->flags &= ~TPCBUTTONS_FLAG;
-
-			/* send all pressed buttons up */
-			for (button=1; button<=WCM_MAX_BUTTONS; button++)
-			{
-				mask = 1 << (button-1);
-				if ((mask & priv->oldButtons) != (mask & buttons) || (mask & buttons) )
-				{
-					/* set to the configured button */
-					sendAButton(pInfo, button-1, 0,
-						    first_val, num_vals,
-						    valuators);
-				}
-			}
+			buttons &= ~1;
+			first_button = 0;
 		}
 	}
-	else  /* normal buttons */
+
+	for (button = first_button; button < WCM_MAX_BUTTONS; button++)
 	{
-		for (button=1; button<=WCM_MAX_BUTTONS; button++)
-		{
-			mask = 1 << (button-1);
-			if ((mask & priv->oldButtons) != (mask & buttons))
-			{
-				/* set to the configured button */
-				sendAButton(pInfo, button-1, mask & buttons,
-					    first_val, num_vals, valuators);
-			}
-		}
+		mask = 1 << button;
+		if ((mask & priv->oldButtons) != (mask & buttons))
+			sendAButton(pInfo, button, (mask & buttons),
+					first_val, num_vals, valuators);
 	}
+
 }
 
 void wcmEmitKeycode (DeviceIntPtr keydev, int keycode, int state)
