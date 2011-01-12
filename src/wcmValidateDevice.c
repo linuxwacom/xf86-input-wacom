@@ -268,10 +268,10 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x9F:
 			priv->common->tablet_type |= WCM_LCD;
 			break;
-
-		default:
-			priv->common->tablet_type = WCM_PEN;
 	}
+
+	if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
+		priv->common->tablet_type |= WCM_PEN;
 
 	if (ISBITSET (common->wcmKeys, BTN_0) ||
 			ISBITSET (common->wcmKeys, BTN_FORWARD))
