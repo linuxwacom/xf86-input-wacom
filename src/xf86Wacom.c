@@ -209,13 +209,6 @@ void wcmVirtualTabletSize(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
-	if (!is_absolute(pInfo))
-	{
-		priv->sizeX = priv->bottomX - priv->topX;
-		priv->sizeY = priv->bottomY - priv->topY;
-		return;
-	}
-
 	priv->sizeX = priv->bottomX - priv->topX;
 	priv->sizeY = priv->bottomY - priv->topY;
 
