@@ -906,28 +906,14 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 	{
 		case ABS_MT_SLOT:
 			if (event->value >= 0 && event->value < MAX_FINGERS)
-			{
-				WacomDeviceState *dsnew;
-
 				private->wcmMTChannel = event->value;
-				dsnew = &common->
-					wcmChannel[private->wcmMTChannel].work;
-
-				/* Set tool specific data here. Since
-				 * MT slots have fixed mapping to channel,
-				 * the channel will always have previous
-				 * tools values.  Since MT event filtering
-				 * is also per slot, this works as expected.
-				 */
-				dsnew->device_type = TOUCH_ID;
-				dsnew->device_id = TOUCH_DEVICE_ID;
-				dsnew->serial_num = event->value+1;
-			}
 			break;
 
 		case ABS_MT_TRACKING_ID:
 			ds->proximity = (event->value != -1);
-
+			ds->device_type = TOUCH_ID;
+			ds->device_id = TOUCH_DEVICE_ID;
+			ds->serial_num = private->wcmMTChannel+1;
 			ds->sample = (int)GetTimeInMillis();
 			break;
 
