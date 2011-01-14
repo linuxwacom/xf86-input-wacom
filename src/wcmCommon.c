@@ -271,25 +271,31 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
+	int mapped_button;
+
 	if (!priv->button[button])  /* ignore this button event */
 		return;
 
-	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
-		"code=%08x, coreEvent=%s \n",
-		common->wcmTPCButton ? "on" : "off",
-		button, mask, priv->button[button],
-		(priv->button[button] & AC_CORE) ? "yes" : "no");
+	mapped_button = priv->button[button];
 
-	if (!priv->keys[button][0])
+	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
+		"mapped_button=%d, coreEvent=%s \n",
+		common->wcmTPCButton ? "on" : "off",
+		button, mask, mapped_button,
+		(mapped_button & AC_CORE) ? "yes" : "no");
+
+	if (!priv->keys[mapped_button][0])
 	{
 		/* No button action configured, send button */
-		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), priv->button[button], (mask != 0),
-				     first_val, num_val, VCOPY(valuators, num_val));
+		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo),
+				     mapped_button, (mask != 0),
+				     first_val, num_val,
+				     VCOPY(valuators, num_val));
 		return;
 	}
 
-	sendAction(pInfo, (mask != 0), priv->keys[button],
-		   ARRAY_SIZE(priv->keys[button]),
+	sendAction(pInfo, (mask != 0), priv->keys[mapped_button],
+		   ARRAY_SIZE(priv->keys[mapped_button]),
 		   first_val, num_val, valuators);
 }
 

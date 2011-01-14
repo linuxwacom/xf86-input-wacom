@@ -304,9 +304,10 @@ static void wcmUpdateButtonKeyActions(DeviceIntPtr dev, XIPropertyValuePtr prop,
 
 		XIGetDeviceProperty(dev, values[i], &val);
 
-		memset(keys[i], 0, sizeof(keys[i]));
+		/* keys is one based array to align with X buttons */
+		memset(keys[i+1], 0, sizeof(keys[i]));
 		for (j = 0; j < val->size; j++)
-			keys[i][j] = ((unsigned int*)val->data)[j];
+			keys[i+1][j] = ((unsigned int*)val->data)[j];
 	}
 }
 

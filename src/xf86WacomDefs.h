@@ -233,8 +233,10 @@ struct _WacomDeviceRec
 	int maxHeight;		/* max active screen height */
 	int leftPadding;	/* left padding for virtual tablet */
 	int topPadding;		/* top padding for virtual tablet */
-	int button[WCM_MAX_BUTTONS];/* buttons assignments */
-	unsigned keys[WCM_MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
+	/*  map zero based internal buttons to one based X buttons */
+	int button[WCM_MAX_BUTTONS];
+	/* map one based X buttons to keystrokes */
+	unsigned keys[WCM_MAX_BUTTONS+1][256];
 	int relup;
 	int reldn;
 	int wheelup;
