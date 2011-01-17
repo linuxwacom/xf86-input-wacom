@@ -284,33 +284,65 @@ void wcmVirtualTabletPadding(LocalDevicePtr local)
 void wcmVirtualTabletSize(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i, tabletSize;
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
 		priv->sizeX = priv->bottomX - priv->topX;
 		priv->sizeY = priv->bottomY - priv->topY;
+		DBG(10, priv, "relative device, using size of %d/%d\n", priv->sizeX, priv->sizeY);
+
 		return;
 	}
+	/* given a three monitor setup
+	 *	        offset
+	 *  __________ /__________  __________
+	 * |          ||          ||          |
+	 * |          ||          ||          |
+	 * |    A     ||    B     ||    C     |
+	 * |__________||__________||__________|
+	 *
+	 * this function calculates the virtual size of the tablet by
+	 * mapping the actual size into an axis range that is all three
+	 * monitors in device coordinates taken together.
+	 * in the simplest case, with 3 identical monitors, sizeX would be
+	 * (3 * actual size).
+	 *
+	 * coments describe for example of screen_no = 1 (Screen B)
+	 */
 
+	/* This is the actual tablet size in device coords */
 	priv->sizeX = priv->bottomX - priv->topX - priv->tvoffsetX;
 	priv->sizeY = priv->bottomY - priv->topY - priv->tvoffsetY;
 
 	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
-		i = priv->currentScreen;
+		double width, height; /* screen width, height */
+		double offset; /* screen x or y offset from origin */
+		double remainder; /* screen remainer on right-most screens */
+		double tabletSize;
+		int screen = priv->currentScreen;
 
+		width = priv->screenBottomX[screen] - priv->screenTopX[screen];
+		offset = priv->screenTopX[screen];
 		tabletSize = priv->sizeX;
-		priv->sizeX += (int)(((double)priv->screenTopX[i] * tabletSize)
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
-		priv->sizeX += (int)((double)((priv->maxWidth - priv->screenBottomX[i])
-			* tabletSize) / ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
+		/* width left over right of the screen */
+		remainder = priv->maxWidth - priv->screenBottomX[screen];
+
+		/* add screen A size in device coordinates */
+		priv->sizeX += (int)((offset * tabletSize) / width + 0.5);
+
+		/* add screen C size in device coordinates */
+		priv->sizeX += (int)((remainder * tabletSize) / width + 0.5);
 
 		tabletSize = priv->sizeY;
-		priv->sizeY += (int)((double)(priv->screenTopY[i] * tabletSize)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
-		priv->sizeY += (int)((double)((priv->maxHeight - priv->screenBottomY[i])
-			* tabletSize) / ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
+
+		offset = priv->screenTopY[screen];
+		height = priv->screenBottomY[screen] - priv->screenTopY[screen];
+		/* height left over bottom of the screen */
+		remainder = priv->maxHeight - priv->screenBottomY[screen];
+
+		priv->sizeY += (int)(offset * tabletSize / height + 0.5);
+		priv->sizeY += (int)((remainder * tabletSize) / height + 0.5);
 	}
 	DBG(10, priv, "x=%d y=%d \n", priv->sizeX, priv->sizeY);
 	return;

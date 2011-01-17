@@ -151,26 +151,28 @@ struct _WacomDeviceRec
 	int debugLevel;
 
 	unsigned int flags;	/* various flags (type, abs, touch...) */
-	int topX;		/* X top */
-	int topY;		/* Y top */
-	int bottomX;		/* X bottom */
-	int bottomY;		/* Y bottom */
+	int topX;		/* X top in device coords*/
+	int topY;		/* Y top in device coords*/
+	int bottomX;		/* X bottom in device coords*/
+	int bottomY;		/* Y bottom in device coords*/
 	int resolX;             /* X resolution */
 	int resolY;             /* Y resolution */
 	int maxX;	        /* tool logical maxX */
 	int maxY;	        /* tool logical maxY */
-	int sizeX;		/* active X size */
-	int sizeY;		/* active Y size */
+	int sizeX;		/* active X size in device coords */
+	int sizeY;		/* active Y size in device coords */
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number */
 	int screen_no;		/* associated screen */
-	int screenTopX[32];	/* left cordinate of the associated screen */
-	int screenTopY[32];	/* top cordinate of the associated screen */
-	int screenBottomX[32];	/* right cordinate of the associated screen */
-	int screenBottomY[32];	/* bottom cordinate of the associated screen */
-	int maxWidth;		/* max active screen width */
-	int maxHeight;		/* max active screen height */
+        /* The next 4 are set from the TVResolution coordinates if TwinView
+         * is active */
+	int screenTopX[32];	/* left cordinate of the associated screen in screen coords */
+	int screenTopY[32];	/* top cordinate of the associated screen in screen coords */
+	int screenBottomX[32];	/* right cordinate of the associated screen in screen coords */
+	int screenBottomY[32];	/* bottom cordinate of the associated screen in screen coords */
+	int maxWidth;		/* max active screen width in screen coords */
+	int maxHeight;		/* max active screen height in screen coords */
 	int leftPadding;	/* left padding for virtual tablet */
 	int topPadding;		/* top padding for virtual tablet */
 	int button[WCM_MAX_BUTTONS];/* buttons assignments */
@@ -221,8 +223,8 @@ struct _WacomDeviceRec
 	int numScreen;          /* number of configured screens */
 	int currentScreen;      /* current screen in display */
 	int twinview;	        /* using twinview mode of gfx card */
-	int tvoffsetX;		/* X edge offset for TwinView setup */
-	int tvoffsetY;		/* Y edge offset for TwinView setup */
+	int tvoffsetX;		/* X edge offset for TwinView setup in device coords  */
+	int tvoffsetY;		/* Y edge offset for TwinView setup in device coords */
 	int tvResolution[4];	/* twinview screens' resultion */
 	int wcmMMonitor;        /* disable/enable moving across screens in multi-monitor desktop */
 	int wcmDevOpenCount;    /* Device open count */
