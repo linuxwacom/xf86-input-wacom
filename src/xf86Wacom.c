@@ -361,6 +361,11 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 
 	wcmMappingFactor(local);
 
+	/* wcmMappingFactor calls wcmVirtualTabletSize. so once we're here,
+	 * sizeX contains the total width in device coordinates accounting
+	 * for multiple screens (not the _actual width of the tablet, see
+	 * wcmVirtualTabletSize)
+	 */
 	if (priv->flags & ABSOLUTE_FLAG)
 	{
 		topx = priv->topX;

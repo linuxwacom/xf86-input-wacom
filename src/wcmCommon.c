@@ -1620,7 +1620,8 @@ static void wcmInitialTVScreens(LocalDevicePtr local)
 			priv->tvoffsetY = 0;
 		}
 
-		/* default resolution */
+		/* default resolution. this should never be hit since we
+		 * always set the tvresolution from wacomcpl */
 		if(!priv->tvResolution[0])
 		{
 			priv->tvResolution[0] = screenInfo.screens[0]->width/2;
@@ -1638,7 +1639,8 @@ static void wcmInitialTVScreens(LocalDevicePtr local)
 			priv->tvoffsetY = 60;
 		}
 
-		/* default resolution */
+		/* default resolution. this should never be hit since we
+		 * always set the tvresolution from wacomcpl */
 		if(!priv->tvResolution[0])
 		{
 			priv->tvResolution[0] = screenInfo.screens[0]->width;
