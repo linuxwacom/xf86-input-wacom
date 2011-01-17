@@ -273,12 +273,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 
 	/* first valuator: x */
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
-	min = max = -1;
-	if (is_absolute(pInfo))
-	{
-		min = priv->topX;
-		max = priv->sizeX + priv->topX;
-	}
+	min = priv->topX;
+	max = priv->sizeX + priv->topX;
 	min_res = 0;
 	max_res = priv->resolX;
 	res = priv->resolX;
@@ -296,12 +292,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 
 	/* second valuator: y */
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
-	min = max = -1;
-	if (is_absolute(pInfo))
-	{
-		min = priv->topY;
-		max = priv->sizeY + priv->topY;
-	}
+	min = priv->topY;
+	max = priv->sizeY + priv->topY;
 	min_res = 0;
 	max_res = priv->resolY;
 	res = priv->resolY;
