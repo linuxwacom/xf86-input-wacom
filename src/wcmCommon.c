@@ -98,6 +98,11 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 		priv->bottomX, priv->bottomY, priv->sizeX, priv->sizeY, 
 		priv->maxWidth, priv->maxHeight);
 
+	/* maxWidth and maxHeight are size of screen.  So factorX and
+	 * factorY are screen units per tool units and is used
+	 * later to scale tool movement on tablet to cursor movement
+	 * on the scree.
+	 */
 	priv->factorX = (double)priv->maxWidth / (double)priv->sizeX;
 	priv->factorY = (double)priv->maxHeight / (double)priv->sizeY;
 	DBG(2, priv, "X factor = %.3g, Y factor = %.3g\n",
