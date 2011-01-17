@@ -253,7 +253,10 @@ static int wcmInitArea(LocalDevicePtr local)
 void wcmVirtualTabletPadding(LocalDevicePtr local)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)local->private;
-	int i;
+
+	/* in multi-screen settings, add the left/top offset given the
+	 * current multimonitor setup.
+	 */
 
 	priv->leftPadding = 0;
 	priv->topPadding = 0;
@@ -262,16 +265,25 @@ void wcmVirtualTabletPadding(LocalDevicePtr local)
 
 	if ((priv->screen_no != -1) || (priv->twinview != TV_NONE) || (!priv->wcmMMonitor))
 	{
-		i = priv->currentScreen;
+		double width, height;	/* tablet width in device coords */
+		double sw, sh;		/* screen width/height in screen coords */
+		double offset;		/* screen x/y offset in screen coords */
+		int screen;		/* screen number */
 
-		priv->leftPadding = priv->bottomX - priv->topX -priv->tvoffsetX;
- 		priv->topPadding = priv->bottomY - priv->topY - priv->tvoffsetY;
+		screen = priv->currentScreen;
 
-		priv->leftPadding = (int)(((double)priv->screenTopX[i] * priv->leftPadding )
-			/ ((double)(priv->screenBottomX[i] - priv->screenTopX[i])) + 0.5);
+		width  = priv->bottomX - priv->topX -priv->tvoffsetX;
+		height = priv->bottomY - priv->topY - priv->tvoffsetY;
+		sw = priv->screenBottomX[screen] - priv->screenTopX[screen];
+		sh = priv->screenBottomY[screen] - priv->screenTopY[screen];
 
-		priv->topPadding = (int)((double)(priv->screenTopY[i] * priv->topPadding)
-			/ ((double)(priv->screenBottomY[i] - priv->screenTopY[i])) + 0.5);
+		offset = priv->screenTopX[screen];
+
+		priv->leftPadding = (int)(offset * width / sw  + 0.5);
+
+		offset = priv->screenTopY[screen];
+
+		priv->topPadding = (int)(offset * height / sh + 0.5);
 	}
 	DBG(10, priv, "x=%d y=%d \n", priv->leftPadding, priv->topPadding);
 	return;
