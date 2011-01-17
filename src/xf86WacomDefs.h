@@ -216,23 +216,23 @@ struct _WacomDeviceRec
 	int debugLevel;
 
 	unsigned int flags;	/* various flags (type, abs, touch...) */
-	int topX;		/* X top */
-	int topY;		/* Y top */
-	int bottomX;		/* X bottom */
-	int bottomY;		/* Y bottom */
+	int topX;		/* X top in device coordinates */
+	int topY;		/* Y top in device coordinates */
+	int bottomX;		/* X bottom in device coordinates */
+	int bottomY;		/* Y bottom in device coordinates */
 	int resolX;             /* X resolution */
 	int resolY;             /* Y resolution */
-	int maxX;	        /* tool logical maxX */
-	int maxY;	        /* tool logical maxY */
-	int sizeX;		/* active X size */
-	int sizeY;		/* active Y size */
+	int maxX;	        /* tool logical maxX in device coordinates*/
+	int maxY;	        /* tool logical maxY in device coordinates*/
+	int sizeX;		/* active X size in device coordinates*/
+	int sizeY;		/* active Y size in device coordinates*/
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number */
-	int maxWidth;		/* max active screen width */
-	int maxHeight;		/* max active screen height */
-	int leftPadding;	/* left padding for virtual tablet */
-	int topPadding;		/* top padding for virtual tablet */
+	int maxWidth;		/* max active screen width in screen coords */
+	int maxHeight;		/* max active screen height in screen coords */
+	int leftPadding;	/* left padding for virtual tablet in device coordinates*/
+	int topPadding;		/* top padding for virtual tablet in device coordinates*/
 	/*  map zero based internal buttons to one based X buttons */
 	int button[WCM_MAX_BUTTONS];
 	/* map one based X buttons to keystrokes */
@@ -258,11 +258,11 @@ struct _WacomDeviceRec
 
 	WacomCommonPtr common;  /* common info pointer */
 
-	/* state fields */
+	/* state fields in device coordinates */
 	int currentX;           /* current X position */
 	int currentY;           /* current Y position */
-	int currentSX;          /* current screen X position */
-	int currentSY;          /* current screen Y position */
+	int currentSX;          /* current screen X position in screen coords */
+	int currentSY;          /* current screen Y position in screen coords */
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
