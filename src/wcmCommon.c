@@ -98,13 +98,13 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 		priv->bottomX, priv->bottomY, priv->sizeX, priv->sizeY, 
 		priv->maxWidth, priv->maxHeight);
 
-	/* maxWidth and maxHeight are size of screen.  So factorX and
-	 * factorY are screen units per tool units and is used
-	 * later to scale tool movement on tablet to cursor movement
-	 * on the scree.
+	/* bottomX/bottomY are scaled values of maxX/maxY such that it
+	 * will scale tablet to screen ratio when passed to xf86AxisScale().
+	 * Use this to compute similar factor for scaling in relative
+	 * mode.  If screen:tablet are 1:1 ratio then no scaling.
 	 */
-	priv->factorX = (double)priv->maxWidth / (double)priv->sizeX;
-	priv->factorY = (double)priv->maxHeight / (double)priv->sizeY;
+	priv->factorX = (double)priv->sizeX / (double)priv->bottomX;
+	priv->factorY = (double)priv->sizeY / (double)priv->bottomY;
 	DBG(2, priv, "X factor = %.3g, Y factor = %.3g\n",
 		priv->factorX, priv->factorY);
 }
