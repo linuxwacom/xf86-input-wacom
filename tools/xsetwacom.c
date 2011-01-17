@@ -1296,7 +1296,7 @@ static int convert_wheel_prop(Display *dpy, XDevice *dev, Atom btnact_prop)
 static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
 {
 	unsigned long *data, *btnact_data;
-	Atom type, prop;
+	Atom type, prop = 0;
 	int format;
 	unsigned long btnact_nitems, nitems, bytes_after;
 	int need_update = 0;
@@ -1326,8 +1326,11 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	}
 
 	if (argc == 0) /* unset property */
+	{
+		prop = btnact_data[offset];
 		btnact_data[offset] = 0;
-	else if (btnact_data[offset]) /* some atom already assigned, modify that */
+	} else if (btnact_data[offset])
+		/* some atom already assigned, modify that */
 		prop = btnact_data[offset];
 	else
 	{
@@ -1373,6 +1376,10 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 				PropModeReplace,
 				(unsigned char*)btnact_data,
 				btnact_nitems);
+
+	if (argc == 0 && prop)
+		XDeleteDeviceProperty(dpy, dev, prop);
+
 	XFlush(dpy);
 }
 
