@@ -303,19 +303,25 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly)
 		{
+			area->topX = values[0];
+			area->topY = values[1];
+			area->bottomX = values[2];
+			area->bottomY = values[3];
+
 			if ((values[0] == -1) && (values[1] == -1) &&
 					(values[2] == -1) && (values[3] == -1))
 			{
-				values[0] = 0;
-				values[1] = 0;
-				values[2] = priv->maxX;
-				values[3] = priv->maxY;
-			}
+				area->topX = 0;
+				area->topY = 0;
+				area->bottomX = priv->maxX;
+				area->bottomY = priv->maxY;
+			} else /* offset for multimonitor */
+				wcmAdjustArea(local, area);
 
-			priv->topX = area->topX = values[0];
-			priv->topY = area->topY = values[1];
-			priv->bottomX = area->bottomX = values[2];
-			priv->bottomY = area->bottomY = values[3];
+			priv->topX = area->topX;
+			priv->topY = area->topY;
+			priv->bottomX = area->bottomX;
+			priv->bottomY = area->bottomY;
 			wcmInitialCoordinates(local, 0);
 			wcmInitialCoordinates(local, 1);
 		}

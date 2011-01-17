@@ -289,6 +289,27 @@ void wcmVirtualTabletPadding(LocalDevicePtr local)
 	return;
 }
 
+void
+wcmAdjustArea(const LocalDevicePtr local, WacomToolArea *area)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+
+	/* If we're bound to a specific screen, substract the screen's
+	 * offset from the area coordinates we have here.
+	 */
+	if (priv->screen_no != -1)
+	{
+		wcmVirtualTabletPadding(local);
+		DBG(10, priv, "padding is %d/%d\n", priv->leftPadding, priv->topPadding);
+		area->topX -= priv->leftPadding;
+		area->bottomX -= priv->leftPadding;
+		area->topY -= priv->topPadding;
+		area->bottomY -= priv->topPadding;
+		DBG(10, priv, "updated area is %d/%d → %d/%d\n",
+		    area->topX, area->topY, area->bottomX, area->bottomY);
+	}
+}
+
 /*****************************************************************************
  * wcmVirtualTabletSize(LocalDevicePtr local)
  ****************************************************************************/

@@ -170,6 +170,7 @@ extern void wcmRotateTablet(LocalDevicePtr local, int value);
 extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
 extern void wcmVirtualTabletSize(LocalDevicePtr local);
 extern void wcmVirtualTabletPadding(LocalDevicePtr local);
+extern void wcmAdjustArea(LocalDevicePtr local, WacomToolAreaPtr area);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 
