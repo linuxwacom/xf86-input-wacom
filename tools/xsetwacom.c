@@ -40,7 +40,7 @@
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
 
-#define ArrayLength(a) (sizeof(a) / (sizeof((a)[0])))
+#define ArrayLength(a) ((unsigned int)(sizeof(a) / (sizeof((a)[0]))))
 
 static int verbose = False;
 
