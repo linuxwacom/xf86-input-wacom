@@ -202,21 +202,6 @@ void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
- * wcmVirtualTabletSize(InputInfoPtr pInfo)
- ****************************************************************************/
-
-void wcmVirtualTabletSize(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
-	priv->sizeX = priv->bottomX - priv->topX;
-	priv->sizeY = priv->bottomY - priv->topY;
-
-	DBG(10, priv, "x=%d y=%d \n", priv->sizeX, priv->sizeY);
-	return;
-}
-
-/*****************************************************************************
  * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
@@ -274,7 +259,7 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	/* first valuator: x */
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
 	min = priv->topX;
-	max = priv->sizeX + priv->topX;
+	max = priv->bottomX;
 	min_res = 0;
 	max_res = priv->resolX;
 	res = priv->resolX;
@@ -293,7 +278,7 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	/* second valuator: y */
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
 	min = priv->topY;
-	max = priv->sizeY + priv->topY;
+	max = priv->bottomY;
 	min_res = 0;
 	max_res = priv->resolY;
 	res = priv->resolY;

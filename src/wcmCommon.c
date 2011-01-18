@@ -87,15 +87,14 @@ void set_absolute(InputInfoPtr pInfo, Bool absolute)
 void wcmMappingFactor(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	double size_x, size_y;
 
 	DBG(10, priv, "\n"); /* just prints function name */
 
-	wcmVirtualTabletSize(pInfo);
-
 	DBG(10, priv,
-		"Active tablet area x=%d y=%d (virtual tablet area x=%d y=%d) map"
+		"Active tablet area x=%d y=%d map"
 		" to maxWidth =%d maxHeight =%d\n",
-		priv->bottomX, priv->bottomY, priv->sizeX, priv->sizeY, 
+		priv->bottomX, priv->bottomY,
 		priv->maxWidth, priv->maxHeight);
 
 	/* bottomX/bottomY are scaled values of maxX/maxY such that it
@@ -103,8 +102,12 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 	 * Use this to compute similar factor for scaling in relative
 	 * mode.  If screen:tablet are 1:1 ratio then no scaling.
 	 */
-	priv->factorX = (double)priv->sizeX / (double)priv->bottomX;
-	priv->factorY = (double)priv->sizeY / (double)priv->bottomY;
+
+	size_x = priv->bottomX - priv->topX;
+	size_y = priv->bottomY - priv->topY;
+
+	priv->factorX = size_x / priv->bottomX;
+	priv->factorY = size_y / priv->bottomY;
 	DBG(2, priv, "X factor = %.3g, Y factor = %.3g\n",
 		priv->factorX, priv->factorY);
 }
