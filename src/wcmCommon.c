@@ -1151,7 +1151,7 @@ setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
 }
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
-	const WacomChannelPtr pChannel, int suppress)
+				 const WacomChannelPtr pChannel, Bool suppress)
 {
 	InputInfoPtr pDev = NULL;
 	WacomToolPtr tool = NULL;
