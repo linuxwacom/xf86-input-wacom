@@ -222,8 +222,8 @@ struct _WacomDeviceRec
 	int bottomY;		/* Y bottom in device coordinates */
 	int resolX;             /* X resolution */
 	int resolY;             /* Y resolution */
-	int maxX;	        /* tool logical maxX in device coordinates*/
-	int maxY;	        /* tool logical maxY in device coordinates*/
+	int maxX;	        /* tool physical maxX in device coordinates*/
+	int maxY;	        /* tool physical maxY in device coordinates*/
 	int sizeX;		/* active X size in device coordinates*/
 	int sizeY;		/* active Y size in device coordinates*/
 	double factorX;		/* X factor */
