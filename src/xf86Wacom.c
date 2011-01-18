@@ -574,7 +574,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	if (IsTouch(priv))
 	{
 		/* hard prox out */
-		priv->hardProx = 0;
+		priv->oldHwProx = 0;
 	}
 
 	InitWcmDeviceProperties(pInfo);

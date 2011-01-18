@@ -67,7 +67,7 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->next = NULL;
 	priv->pInfo = pInfo;
 	priv->common = common;       /* common info pointer */
-	priv->hardProx = 1;	     /* previous hardware proximity */
+	priv->oldHwProx = 1;	     /* previous hardware proximity */
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */

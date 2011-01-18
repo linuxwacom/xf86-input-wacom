@@ -1139,9 +1139,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	if (IsUSBDevice(common))
 	{
 		if (IsTouch(priv) && !ds->proximity)
-			priv->hardProx = 0;
+			priv->oldHwProx = 0;
 		else if (IsStylus(priv) || IsEraser(priv))
-			priv->hardProx = 1;
+			priv->oldHwProx = 1;
 	}
 
 	/* send a touch out for USB Tablet PCs */
@@ -1215,7 +1215,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		transPressureCurve(priv,&filtered);
 	}
 
-	else if (IsCursor(priv) && !priv->hardProx)
+	else if (IsCursor(priv) && !priv->oldHwProx)
 	{
 		/* initial current max distance for Intuos series */
 		if ((TabletHasFeature(common, WCM_ROTATION)) ||
@@ -1227,7 +1227,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* Store current hard prox for next use */
 	if (!IsTouch(priv))
-		priv->hardProx = ds->proximity;
+		priv->oldHwProx = ds->proximity;
 
 	/* User-requested filtering comes next */
 
