@@ -966,6 +966,49 @@ static int idtotype(int id)
 	return type;
 }
 
+/**
+ * Identify the device type (STYLUS_ID, etc.) based on the device_id or the
+ * current tool serial number.
+ */
+static int findDeviceType(const WacomCommonPtr common,
+			  const WacomDeviceState *ds)
+{
+	WacomToolPtr tool = NULL;
+	int device_type = 0;
+
+	switch (ds->device_id)
+	{
+		case STYLUS_DEVICE_ID:
+			device_type = STYLUS_ID;
+			break;
+		case ERASER_DEVICE_ID:
+			device_type = ERASER_ID;
+			break;
+		case CURSOR_DEVICE_ID:
+			device_type = CURSOR_ID;
+			break;
+		case TOUCH_DEVICE_ID:
+			device_type = TOUCH_ID;
+			break;
+		case PAD_DEVICE_ID:
+			device_type = PAD_ID;
+			break;
+		default:
+			device_type = idtotype(ds->device_id);
+	}
+
+	if (ds->serial_num)
+	{
+		for (tool = common->wcmTool; tool; tool = tool->next)
+			if (ds->serial_num == tool->serial)
+			{
+				device_type = tool->typeid;
+				break;
+			}
+	}
+	return device_type;
+}
+
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel, int suppress)
 {
@@ -977,37 +1020,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState filtered;
 	int button;
 
+	/* if something went wrong, figure out device type by device id */
 	if (!ds->device_type && ds->proximity)
-	{
-		/* something went wrong. Figure out device type by device id */
-		switch (ds->device_id)
-		{
-			case STYLUS_DEVICE_ID:
-				ds->device_type = STYLUS_ID;
-				break;
-			case ERASER_DEVICE_ID:
-				ds->device_type = ERASER_ID;
-				break;
-			case CURSOR_DEVICE_ID:
-				ds->device_type = CURSOR_ID;
-				break;
-			case TOUCH_DEVICE_ID:
-				ds->device_type = TOUCH_ID;
-				break;
-			case PAD_DEVICE_ID:
-				ds->device_type = PAD_ID;
-				break;
-			default:
-				ds->device_type = idtotype(ds->device_id);
-		}
-		if (ds->serial_num)
-			for (tool = common->wcmTool; tool; tool = tool->next)
-				if (ds->serial_num == tool->serial)
-				{
-					ds->device_type = tool->typeid;
-					break;
-				}
-	}
+		ds->device_type = findDeviceType(common, ds);
 
 	DBG(10, common, "device type = %d\n", ds->device_type);
 	/* Find the device the current events are meant for */
