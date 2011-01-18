@@ -1280,15 +1280,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				return;
 			}
 		}
-		else
-		{
-			int temp = deltx;
-			deltx = (double)temp/(priv->factorX);
-			temp = delty;
-			delty = (double)temp/(priv->factorY);
-			filtered.x = deltx + priv->oldX;
-			filtered.y = delty + priv->oldY;
-		}
 	}
 
 	/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
