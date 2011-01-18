@@ -1107,25 +1107,25 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* Find the device the current events are meant for */
 	tool = findTool(common, ds);
+	/* if a device matched criteria, handle filtering per device
+	 * settings, and send event to XInput */
+	if (!tool || !tool->current || !tool->current->device)
+	{
+		DBG(11, common, "no device matches with"
+				" id=%d, serial=%u\n",
+				ds->device_type, ds->serial_num);
+		return;
+	}
+
 	pDev = tool->current->device;
 	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pDev->name);
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-	if (pDev && !miPointerGetScreen(pDev->dev))
+	if (!miPointerGetScreen(pDev->dev))
 	{
 		xf86Msg(X_ERROR, "wcmEvent: Wacom driver can not get Current Screen ID\n");
 		xf86Msg(X_ERROR, "Please remove Wacom tool from the tablet and bring it back again.\n");
-		return;
-	}
-
-	/* if a device matched criteria, handle filtering per device
-	 * settings, and send event to XInput */
-	if (!pDev)
-	{
-		DBG(11, common, "no device matches with"
-				" id=%d, serial=%u\n",
-				ds->device_type, ds->serial_num);
 		return;
 	}
 
