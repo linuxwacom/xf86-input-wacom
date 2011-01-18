@@ -1136,14 +1136,12 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	button = 1;
 	priv = pDev->private;
 
-	if (IsUSBDevice(common) && IsTouch(priv) && !ds->proximity)
+	if (IsUSBDevice(common))
 	{
-		priv->hardProx = 0;
-	}
-
-	if (IsUSBDevice(common) && (IsStylus(priv) || IsEraser(priv)))
-	{
-		priv->hardProx = 1;
+		if (IsTouch(priv) && !ds->proximity)
+			priv->hardProx = 0;
+		else if (IsStylus(priv) || IsEraser(priv))
+			priv->hardProx = 1;
 	}
 
 	/* send a touch out for USB Tablet PCs */
