@@ -1088,6 +1088,32 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 	return tool;
 }
 
+/* Instead of reporting the raw pressure, we normalize
+ * the pressure from 0 to FILTER_PRESSURE_RES. This is
+ * mainly to deal with the case where heavily used
+ * stylus may have a "pre-loaded" initial pressure. To
+ * do so, we keep the in-prox pressure and subtract it
+ * from the raw pressure to prevent a potential
+ * left-click before the pen touches the tablet.
+ */
+static int
+normalizePressure(WacomDevicePtr priv, const WacomDeviceState *ds)
+{
+	WacomCommonPtr common = priv->common;
+	double pressure;
+
+	/* set the minimum pressure when in prox */
+	if (!priv->oldProximity)
+		priv->minPressure = ds->pressure;
+	else
+		priv->minPressure = min(priv->minPressure, ds->pressure);
+
+	/* normalize pressure to FILTER_PRESSURE_RES */
+	pressure = (ds->pressure - priv->minPressure) * FILTER_PRESSURE_RES;
+	pressure /= (common->wcmMaxZ - priv->minPressure);
+
+	return (int)pressure;
+}
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel, int suppress)
@@ -1172,27 +1198,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (IsStylus(priv) || IsEraser(priv))
 	{
-		/* Instead of reporting the raw pressure, we normalize
-		 * the pressure from 0 to FILTER_PRESSURE_RES. This is
-		 * mainly to deal with the case where heavily used
-		 * stylus may have a "pre-loaded" initial pressure. To
-		 * do so, we keep the in-prox pressure and subtract it
-		 * from the raw pressure to prevent a potential
-		 * left-click before the pen touches the tablet.
-		 */
-		double tmpP;
-
-		/* set the minimum pressure when in prox */
-		if (!priv->oldProximity)
-			priv->minPressure = filtered.pressure;
-		else
-			priv->minPressure = min(priv->minPressure, filtered.pressure);
-
-		/* normalize pressure to FILTER_PRESSURE_RES */
-		tmpP = (filtered.pressure - priv->minPressure)
-			* FILTER_PRESSURE_RES;
-		tmpP /= (common->wcmMaxZ - priv->minPressure);
-		filtered.pressure = (int)tmpP;
+		filtered.pressure = normalizePressure(priv, &filtered);
 
 		/* set button1 (left click) on/off */
 		if (filtered.pressure < common->wcmThreshold)
