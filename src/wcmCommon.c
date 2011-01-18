@@ -1115,6 +1115,41 @@ normalizePressure(WacomDevicePtr priv, const WacomDeviceState *ds)
 	return (int)pressure;
 }
 
+/*
+ * Based on the current pressure, return the button state with Button1
+ * either set or unset, depending on whether the pressure threshold
+ * conditions have been met.
+ *
+ * Returns the state of all buttons, but buttons other than button 1 are
+ * unmodified.
+ */
+static int
+setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
+{
+	WacomCommonPtr common = priv->common;
+	int button = 1;
+	int buttons = ds->buttons;
+
+	/* button 1 Threshold test */
+	/* set button1 (left click) on/off */
+	if (ds->pressure < common->wcmThreshold)
+	{
+		buttons &= ~button;
+		if (priv->oldButtons & button) /* left click was on */
+		{
+			/* don't set it off if it is within the tolerance
+			   and threshold is larger than the tolerance */
+			if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
+			    (ds->pressure > common->wcmThreshold - THRESHOLD_TOLERANCE))
+				buttons |= button;
+		}
+	}
+	else
+		buttons |= button;
+
+	return buttons;
+}
+
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	const WacomChannelPtr pChannel, int suppress)
 {
@@ -1195,27 +1230,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (IsStylus(priv) || IsEraser(priv))
 	{
-		int button = 1;
-
 		filtered.pressure = normalizePressure(priv, &filtered);
-
-		/* button 1 Threshold test */
-		/* set button1 (left click) on/off */
-		if (filtered.pressure < common->wcmThreshold)
-		{
-			filtered.buttons &= ~button;
-			if (priv->oldButtons & button) /* left click was on */
-			{
-				/* don't set it off if it is within the tolerance
-				   and threshold is larger than the tolerance */
-				if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
-						(filtered.pressure > common->wcmThreshold -
-						 THRESHOLD_TOLERANCE))
-					filtered.buttons |= button;
-			}
-		}
-		else
-			filtered.buttons |= button;
+		filtered.buttons = setPressureButton(priv, &filtered);
 
 		/* transform pressure */
 		transPressureCurve(priv,&filtered);
