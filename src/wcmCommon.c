@@ -1009,23 +1009,13 @@ static int findDeviceType(const WacomCommonPtr common,
 	return device_type;
 }
 
-static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
-	const WacomChannelPtr pChannel, int suppress)
+/* Find the device the current events are meant for */
+static WacomToolPtr findTool(const WacomCommonPtr common,
+			     const WacomDeviceState *ds)
 {
-	InputInfoPtr pDev = NULL;
-	WacomToolPtr tool = NULL;
 	WacomToolPtr tooldef = NULL;
-	WacomDeviceState* ds = &pChannel->valid.states[0];
-	WacomDevicePtr priv = NULL;
-	WacomDeviceState filtered;
-	int button;
+	WacomToolPtr tool = NULL;
 
-	/* if something went wrong, figure out device type by device id */
-	if (!ds->device_type && ds->proximity)
-		ds->device_type = findDeviceType(common, ds);
-
-	DBG(10, common, "device type = %d\n", ds->device_type);
-	/* Find the device the current events are meant for */
 	/* 1: Find the tool (the one with correct serial or in second
 	 * hand, the one with serial set to 0 if no match with the
 	 * specified serial exists) that is used for this event */
@@ -1042,10 +1032,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* pad does not need area check. Skip the unnecessary steps */
 	if (tool && (tool->typeid == PAD_ID) && tool->arealist)
-	{
-		wcmSendEvents(tool->arealist->device, ds);
-		return;
-	}
+		return tool;
 
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
@@ -1058,10 +1045,10 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		 * might want to use another area. So move the
 		 * current-pointer away for a moment while we have a
 		 * look if there's a better area defined.
-		 * Skip this if only one area is defined 
+		 * Skip this if only one area is defined
 		 */
 		WacomToolAreaPtr outprox = NULL;
-		if (tool->current && tool->arealist->next && 
+		if (tool->current && tool->arealist->next &&
 			!wcmPointInArea(tool->current, ds->x, ds->y))
 		{
 			outprox = tool->current;
@@ -1096,16 +1083,32 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			else
 				tool->current = outprox;
 		}
-
-		/* If there was one already in use or we found one */
-		if(tool->current)
-		{
-			pDev = tool->current->device;
-			DBG(11, common, "tool id=%d for %s\n",
-				       ds->device_type, pDev->name);
-		}
 	}
-	/* X: InputDevice selection done! */
+
+	return tool;
+}
+
+
+static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
+	const WacomChannelPtr pChannel, int suppress)
+{
+	InputInfoPtr pDev = NULL;
+	WacomToolPtr tool = NULL;
+	WacomDeviceState* ds = &pChannel->valid.states[0];
+	WacomDevicePtr priv = NULL;
+	WacomDeviceState filtered;
+	int button;
+
+	/* if something went wrong, figure out device type by device id */
+	if (!ds->device_type && ds->proximity)
+		ds->device_type = findDeviceType(common, ds);
+
+	DBG(10, common, "device type = %d\n", ds->device_type);
+
+	/* Find the device the current events are meant for */
+	tool = findTool(common, ds);
+	pDev = tool->current->device;
+	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pDev->name);
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
