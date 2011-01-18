@@ -1123,7 +1123,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* ds = &pChannel->valid.states[0];
 	WacomDevicePtr priv = NULL;
 	WacomDeviceState filtered;
-	int button;
 
 	/* if something went wrong, figure out device type by device id */
 	if (!ds->device_type && ds->proximity)
@@ -1158,8 +1157,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	filtered = pChannel->valid.state;
 
 	/* Device transformations come first */
-	/* button 1 Threshold test */
-	button = 1;
 	priv = pDev->private;
 
 	if (IsUSBDevice(common))
@@ -1198,8 +1195,11 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (IsStylus(priv) || IsEraser(priv))
 	{
+		int button = 1;
+
 		filtered.pressure = normalizePressure(priv, &filtered);
 
+		/* button 1 Threshold test */
 		/* set button1 (left click) on/off */
 		if (filtered.pressure < common->wcmThreshold)
 		{
