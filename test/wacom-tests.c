@@ -41,9 +41,49 @@ test_common_ref(void)
 }
 
 
+static void
+test_normalize_pressure(void)
+{
+    WacomDeviceRec priv = {0};
+    WacomCommonRec common = {0};
+    WacomDeviceState ds = {0};
+    int pressure, prev_pressure = -1;
+    int i;
+
+    priv.common = &common;
+    common.wcmMaxZ = 255;
+
+    for (i = 0; i < common.wcmMaxZ; i++)
+    {
+        ds.pressure = i;
+
+        /* we expect min pressure to be set if we come into proximity */
+        priv.minPressure = 0;
+        priv.oldProximity = 0;
+        pressure = normalizePressure(&priv, &ds);
+        g_assert(priv.minPressure == ds.pressure);
+
+        g_assert(pressure >= 0);
+        g_assert(pressure < FILTER_PRESSURE_RES);
+
+        priv.minPressure = 0;
+        priv.oldProximity = 1;
+        pressure = normalizePressure(&priv, &ds);
+        g_assert(priv.minPressure == 0);
+
+        g_assert(pressure >= 0);
+        g_assert(pressure < FILTER_PRESSURE_RES);
+
+        /* we count up, so assume normalised pressure goes up too */
+        g_assert(prev_pressure < pressure);
+        prev_pressure = pressure;
+    }
+}
+
 int main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/common/refcounting", test_common_ref);
+    g_test_add_func("/common/normalize_pressure", test_normalize_pressure);
     return g_test_run();
 }
