@@ -195,6 +195,8 @@ static struct
 	{ WACOM_VENDOR_ID, 0xD3, 100000, 100000, &usbBamboo     }, /* CTL-660 */
 	{ WACOM_VENDOR_ID, 0xD2, 100000, 100000, &usbBamboo     }, /* CTL-461/S */
 	{ WACOM_VENDOR_ID, 0xD0, 100000, 100000, &usbBamboo     }, /* Bamboo Touch */
+	{ WACOM_VENDOR_ID, 0xD6, 100000, 100000, &usbBamboo     }, /* CTH-460/K */
+	{ WACOM_VENDOR_ID, 0xD7, 100000, 100000, &usbBamboo     }, /* CTH-461/S */
 	{ WACOM_VENDOR_ID, 0xD8, 100000, 100000, &usbBamboo     }, /* CTH-661/S1 */
 	{ WACOM_VENDOR_ID, 0xDA, 100000, 100000, &usbBamboo     }, /* CTH-461/L */
 	{ WACOM_VENDOR_ID, 0xDB, 100000, 100000, &usbBamboo     }, /* CTH-661 */
