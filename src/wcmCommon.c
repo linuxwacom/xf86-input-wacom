@@ -1415,43 +1415,6 @@ void wcmRotateTablet(InputInfoPtr pInfo, int value)
 	common->wcmRotate = value;
 }
 
-/* wcmPointInArea - check whether the point is within the area */
-
-Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y)
-{
-	if (area->topX <= x && x <= area->bottomX &&
-	    area->topY <= y && y <= area->bottomY)
-		return 1;
-	return 0;
-}
-
-/* wcmAreasOverlap - check if two areas are overlapping */
-
-static Bool wcmAreasOverlap(WacomToolAreaPtr area1, WacomToolAreaPtr area2)
-{
-	if (wcmPointInArea(area1, area2->topX, area2->topY) ||
-	    wcmPointInArea(area1, area2->topX, area2->bottomY) ||
-	    wcmPointInArea(area1, area2->bottomX, area2->topY) ||
-	    wcmPointInArea(area1, area2->bottomX, area2->bottomY))
-		return 1;
-	if (wcmPointInArea(area2, area1->topX, area1->topY) ||
-	    wcmPointInArea(area2, area1->topX, area1->bottomY) ||
-	    wcmPointInArea(area2, area1->bottomX, area1->topY) ||
-	    wcmPointInArea(area2, area1->bottomX, area1->bottomY))
-	        return 1;
-	return 0;
-}
-
-/* wcmAreaListOverlap - check if the area overlaps any area in the list */
-Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list)
-{
-	for (; list; list=list->next)
-		if (area != list && wcmAreasOverlap(list, area))
-			return 1;
-	return 0;
-}
-
-
 /* Common pointer refcounting utilities.
  * Common is shared across all wacom devices off the same port. These
  * functions implement basic refcounting to avoid double-frees and memleaks.
