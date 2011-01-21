@@ -90,7 +90,6 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
-	double screenRatio, tabletRatio;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
 
 	DBG(10, priv, "\n");
@@ -112,43 +111,6 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	area->topY = priv->topY;
 	area->bottomX = priv->bottomX;
 	area->bottomY = priv->bottomY;
-
-	/* Maintain aspect ratio to the whole desktop
-	 * May need to consider a specific screen in multimonitor settings
-	 */
-	if ((priv->flags & KEEP_SHAPE_FLAG) &&
-			(priv->maxHeight == 0)) /* safeguard in case screen ratio is unknown */
-	{
-		xf86Msg(X_WARNING,
-			"%s: disabling option \"KeepShape\" as screen shape is not accessible\n",
-			pInfo->name);
-		priv->flags &= ~KEEP_SHAPE_FLAG;
-	}
-
-	if (priv->flags & KEEP_SHAPE_FLAG)
-	{
-
-		screenRatio = ((double)priv->maxWidth / (double)priv->maxHeight);
-		tabletRatio = ((double)(bottomx - priv->topX) /
-				(double)(bottomy - priv->topY));
-
-		DBG(2, priv, "screenRatio = %.3g, "
-			"tabletRatio = %.3g\n", screenRatio, tabletRatio);
-
-		if (screenRatio > tabletRatio)
-		{
-			area->bottomX = priv->bottomX = bottomx;
-			area->bottomY = priv->bottomY = (bottomy - priv->topY) *
-				tabletRatio / screenRatio + priv->topY;
-		}
-		else
-		{
-			area->bottomX = priv->bottomX = (bottomx - priv->topX) *
-				screenRatio / tabletRatio + priv->topX;
-			area->bottomY = priv->bottomY = bottomy;
-		}
-	}
-	/* end keep shape */ 
 
 	inlist = priv->tool->arealist;
 

@@ -151,13 +151,6 @@ slightly depressed curve (firmer) might be "5,0,100,95";
 slightly raised curve (softer) might be "0,5,95,100".
 The pressure curve is only applicable to devices of type stylus or eraser,
 other devices do not honor this setting.
-
-.TP 4
-.B Option \fI"KeepShape"\fP \fI"on"|"off"\fP
-When this option is enabled, the active zone  begins according to TopX
-and TopY.  The bottom corner is adjusted to keep the ratio width/height
-of the active zone the same as the screen while maximizing the area
-described by TopX, TopY, BottomX, BottomY.
 .TP 4
 .B Option \fI"DebugLevel"\fP \fI"number"\fP
 sets the level of debugging info for tool-specific messages.  There are 12

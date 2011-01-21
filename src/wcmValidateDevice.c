@@ -582,16 +582,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 				pInfo->name, common->wcmCursorProxoutDist);
 	}
 
-	if (xf86SetBoolOption(pInfo->options, "KeepShape", 0))
-	{
-		/* FIXME: re-implenent KeepShape as client-configured
-		 * setting */
-		xf86Msg(X_ERROR, "Option KeepShape is currently not supported.\n");
-#if 0
-		priv->flags |= KEEP_SHAPE_FLAG;
-#endif
-	}
-
 	priv->topX = xf86SetIntOption(pInfo->options, "TopX", 0);
 	priv->topY = xf86SetIntOption(pInfo->options, "TopY", 0);
 	priv->bottomX = xf86SetIntOption(pInfo->options, "BottomX", 0);

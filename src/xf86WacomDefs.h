@@ -174,7 +174,6 @@ struct _WacomModel
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
 #define ABSOLUTE_FLAG		0x00000100
-#define KEEP_SHAPE_FLAG		0x00000200
 #define BAUD_19200_FLAG		0x00000400
 #define BUTTONS_ONLY_FLAG	0x00000800
 
