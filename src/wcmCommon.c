@@ -1036,59 +1036,12 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 	}
 
 	/* pad does not need area check. Skip the unnecessary steps */
-	if (tool && (tool->typeid == PAD_ID) && tool->arealist)
+	if (tool && (tool->typeid == PAD_ID))
 		return tool;
 
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldef;
-
-	/* 2: Find the associated area, and its InputDevice */
-	if (tool)
-	{
-		/* if the current area is not in-prox anymore, we
-		 * might want to use another area. So move the
-		 * current-pointer away for a moment while we have a
-		 * look if there's a better area defined.
-		 * Skip this if only one area is defined
-		 */
-		WacomToolAreaPtr outprox = NULL;
-		if (tool->current && tool->arealist->next &&
-			!wcmPointInArea(tool->current, ds->x, ds->y))
-		{
-			outprox = tool->current;
-			tool->current = NULL;
-		}
-
-		/* If only one area is defined for the tool, always
-		 * use this area even if we're not inside it
-		 */
-		if (!tool->current && !tool->arealist->next)
-			tool->current = tool->arealist;
-
-		/* If no current area in-prox, find a matching area */
-		if(!tool->current)
-		{
-			WacomToolAreaPtr area = tool->arealist;
-			for(; area; area = area->next)
-				if (wcmPointInArea(area, ds->x, ds->y))
-					break;
-			tool->current = area;
-		}
-
-		/* If a better area was found, send a soft prox-out
-		 * for the current in-prox area, else use the old one. */
-		if (outprox)
-		{
-			if (tool->current)
-			{
-				/* Send soft prox-out for the old area */
-				wcmSoftOutEvent(outprox->device);
-			}
-			else
-				tool->current = outprox;
-		}
-	}
 
 	return tool;
 }
@@ -1213,7 +1166,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	tool = findTool(common, ds);
 	/* if a device matched criteria, handle filtering per device
 	 * settings, and send event to XInput */
-	if (!tool || !tool->current || !tool->current->device)
+	if (!tool || !tool->device)
 	{
 		DBG(11, common, "no device matches with"
 				" id=%d, serial=%u\n",
@@ -1221,7 +1174,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	pInfo = tool->current->device;
+	pInfo = tool->device;
 	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pInfo->name);
 
 	/* Tool on the tablet when driver starts. This sometime causes
@@ -1364,9 +1317,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 	wcmSendEvents(pInfo, &filtered);
-	/* If out-prox, reset the current area pointer */
-	if (!filtered.proximity)
-		tool->current = NULL;
 }
 
 /*****************************************************************************

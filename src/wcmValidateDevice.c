@@ -483,7 +483,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	char            *s, b[12];
 	int		i;
 	WacomToolPtr    tool = NULL;
-	WacomToolAreaPtr area = NULL;
 	int		tpc_button_is_on;
 
 	/* Optional configuration */
@@ -589,11 +588,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	priv->serial = xf86SetIntOption(pInfo->options, "Serial", 0);
 
 	tool = priv->tool;
-	area = priv->toolarea;
-	area->topX = priv->topX;
-	area->topY = priv->topY;
-	area->bottomX = priv->bottomX;
-	area->bottomY = priv->bottomY;
 	tool->serial = priv->serial;
 
 	/* The first device doesn't need to add any tools/areas as it
@@ -609,18 +603,10 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 
 		if(toollist) /* Already have a tool with the same type/serial */
 		{
-			WacomToolAreaPtr arealist;
-
-			free(tool);
-			priv->tool = tool = toollist;
-			arealist = toollist->arealist;
-
-			/* Add the area to the end of the list */
-			while(arealist->next)
-				arealist = arealist->next;
-			arealist->next = area;
-		}
-		else /* No match on existing tool/serial, add tool to the end of the list */
+			xf86Msg(X_ERROR, "%s: already have a tool with type/serial %d/%d.",
+					pInfo->name, tool->typeid, tool->serial);
+			goto error;
+		} else /* No match on existing tool/serial, add tool to the end of the list */
 		{
 			toollist = common->wcmTool;
 			while(toollist->next)
@@ -735,7 +721,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 
 	return 1;
 error:
-	free(area);
 	free(tool);
 	return 0;
 }

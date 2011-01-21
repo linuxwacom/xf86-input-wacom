@@ -85,76 +85,6 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
 
-static int wcmInitArea(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	WacomToolAreaPtr area = priv->toolarea, inlist;
-	WacomCommonPtr common = priv->common;
-	int bottomx = priv->maxX, bottomy = priv->maxY;
-
-	DBG(10, priv, "\n");
-
-	/* verify the box and initialize the area */
-	if (priv->topX > bottomx)
-		priv->topX = 0;
-
-	if (priv->topY > bottomy)
-		priv->topY = 0;
-
-	if (priv->bottomX < priv->topX || !priv->bottomX)
-		priv->bottomX = bottomx;
-
-	if (priv->bottomY < priv->topY || !priv->bottomY)
-		priv->bottomY = bottomy;
-
-	area->topX = priv->topX;
-	area->topY = priv->topY;
-	area->bottomX = priv->bottomX;
-	area->bottomY = priv->bottomY;
-
-	inlist = priv->tool->arealist;
-
-	/* The first one in the list is always valid */
-	if (area != inlist && wcmAreaListOverlap(area, inlist))
-	{
-		inlist = priv->tool->arealist;
-
-		/* remove this overlapped area from the list */
-		for (; inlist; inlist=inlist->next)
-		{
-			if (inlist->next == area)
-			{
-				inlist->next = area->next;
-				free(area);
-				priv->toolarea = NULL;
- 			break;
-			}
-		}
-
-		/* Remove this device from the common struct */
-		if (common->wcmDevices == priv)
-			common->wcmDevices = priv->next;
-		else
-		{
-			WacomDevicePtr tmp = common->wcmDevices;
-			while(tmp->next && tmp->next != priv)
-				tmp = tmp->next;
-			if(tmp)
-				tmp->next = priv->next;
-		}
-		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
-			pInfo->name);
-		return FALSE;
-	}
-	xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
-			"bottom X=%d bottom Y=%d "
-			"resol X=%d resol Y=%d\n",
-			pInfo->name, priv->topX,
-			priv->topY, priv->bottomX, priv->bottomY,
-			priv->resolX, priv->resolY);
-	return TRUE;
-}
-
 /*****************************************************************************
  * wcmVirtualTabletPadding(InputInfoPtr pInfo)
  ****************************************************************************/
@@ -181,8 +111,6 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	WacomToolPtr toollist = common->wcmTool;
-	WacomToolAreaPtr arealist;
 
 	/* assign max and resolution here since we don't get them during
 	 * the configuration stage */
@@ -201,17 +129,8 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 		priv->resolY = common->wcmResolY;
 	}
 
-	for (; toollist; toollist=toollist->next)
-	{
-		arealist = toollist->arealist;
-		for (; arealist; arealist=arealist->next)
-		{
-			if (!arealist->bottomX) 
-				arealist->bottomX = priv->maxX;
-			if (!arealist->bottomY)
-				arealist->bottomY = priv->maxY;
-		}
-	}
+	priv->bottomX = priv->maxX;
+	priv->bottomY = priv->maxY;
 
 	return;
 }
@@ -515,10 +434,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	if (!IsPad(priv))
 	{
 		wcmInitialToolSize(pInfo);
-
-		if (wcmInitArea(pInfo) == FALSE)
-			return FALSE;
-
 		wcmMappingFactor(pInfo);
 	}
 

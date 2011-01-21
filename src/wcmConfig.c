@@ -38,7 +38,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
 	WacomToolPtr     tool   = NULL;
-	WacomToolAreaPtr area   = NULL;
 	int i;
 
 	priv = calloc(1, sizeof(WacomDeviceRec));
@@ -51,10 +50,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 
 	tool = calloc(1, sizeof(WacomTool));
 	if(!tool)
-		goto error;
-
-	area = calloc(1, sizeof(WacomToolArea));
-	if (!area)
 		goto error;
 
 	pInfo->device_control = gWacomModule.DevProc;
@@ -128,18 +123,12 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->tool = tool;
 	common->wcmTool = tool;
 	tool->next = NULL;          /* next tool in list */
-	tool->arealist = area;      /* list of defined areas */
+	tool->device = pInfo;
 	/* tool->typeid is set once we know the type - see wcmSetType */
-
-	/* tool area */
-	priv->toolarea = area;
-	area->next = NULL;    /* next area in list */
-	area->device = pInfo; /* associated WacomDevice */
 
 	return 1;
 
 error:
-	free(area);
 	free(tool);
 	wcmFreeCommon(&common);
 	free(priv);
@@ -158,7 +147,6 @@ static void wcmFree(InputInfoPtr pInfo)
 	if (!priv)
 		return;
 
-	free(priv->toolarea);
 	free(priv->tool);
 	wcmFreeCommon(&priv->common);
 	free(priv);
@@ -284,22 +272,6 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 		free(pInfo->name);
 		pInfo->name = NULL;
-	}
-
-	if (priv->toolarea)
-	{
-		WacomToolAreaPtr *prev_area = &priv->tool->arealist;
-		WacomToolAreaPtr area = *prev_area;
-		while (area)
-		{
-			if (area == priv->toolarea)
-			{
-				*prev_area = area->next;
-				break;
-			}
-			prev_area = &area->next;
-			area = area->next;
-		}
 	}
 
 	if (priv->tool)

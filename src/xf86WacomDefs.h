@@ -289,7 +289,6 @@ struct _WacomDeviceRec
 	int minPressure;	/* the minimum pressure a pen may hold */
 
 	WacomToolPtr tool;         /* The common tool-structure for this device */
-	WacomToolAreaPtr toolarea; /* The area defined for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
 
@@ -494,23 +493,7 @@ struct _WacomTool
 	int typeid; /* Tool type */
 	int serial; /* Serial id, 0 == no serial id */
 
-	WacomToolAreaPtr current;  /* Current area in-prox */
-	WacomToolAreaPtr arealist; /* List of defined areas */
-};
-
-/******************************************************************************
- * WacomToolArea
- *****************************************************************************/
-struct _WacomToolArea
-{
-	WacomToolAreaPtr next;
-
-	int topX;    /* Top X/Y */
-	int topY;
-	int bottomX; /* Bottom X/Y */
-	int bottomY;
-
-	InputInfoPtr device; /* The InputDevice connected to this area */
+	InputInfoPtr device; /* The InputDevice connected to this tool */
 };
 
 #endif /*__XF86_XF86WACOMDEFS_H */

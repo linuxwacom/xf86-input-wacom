@@ -569,32 +569,9 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	if (property == prop_tablet_area)
 	{
 		INT32 *values = (INT32*)prop->data;
-		WacomToolAreaPtr area = priv->toolarea;
 
 		if (prop->size != 4 || prop->format != 32)
 			return BadValue;
-
-		/* value validation is unnecessary since we let utility programs, such as
-		 * xsetwacom and userland control panel take care of the validation role.
-		 * when all four values are set to -1, it is an area reset (xydefault) */
-		if ((values[0] != -1) || (values[1] != -1) ||
-				(values[2] != -1) || (values[3] != -1))
-		{
-			WacomToolArea tmp_area = *area;
-
-			area->topX = values[0];
-			area->topY = values[1];
-			area->bottomX = values[2];
-			area->bottomY = values[3];
-
-			/* validate the area */
-			if (wcmAreaListOverlap(area, priv->tool->arealist))
-			{
-				*area = tmp_area;
-				return BadValue;
-			}
-			*area = tmp_area;
-		}
 
 		if (!checkonly)
 		{
@@ -607,10 +584,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 				values[3] = priv->maxY;
 			}
 
-			priv->topX = area->topX = values[0];
-			priv->topY = area->topY = values[1];
-			priv->bottomX = area->bottomX = values[2];
-			priv->bottomY = area->bottomY = values[3];
+			priv->topX = values[0];
+			priv->topY = values[1];
+			priv->bottomX = values[2];
+			priv->bottomY = values[3];
 		}
 	} else if (property == prop_pressurecurve)
 	{
