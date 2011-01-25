@@ -27,6 +27,7 @@
 #include <asm/types.h>
 #include <linux/input.h>
 #include <sys/utsname.h>
+#include <linux/version.h>
 
 #define MAX_USB_EVENTS 32
 
@@ -463,7 +464,13 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (!is_touch)
 		common->wcmMaxX = absinfo.maximum;
 	else
+	{
 		common->wcmMaxTouchX = absinfo.maximum;
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
+		common->wcmTouchResolX = absinfo.resolution * 1000;
+#endif
+	}
 
 	/* max y */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
@@ -480,34 +487,36 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (!is_touch)
 		common->wcmMaxY = absinfo.maximum;
 	else
+	{
 		common->wcmMaxTouchY = absinfo.maximum;
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
+		common->wcmTouchResolY = absinfo.resolution * 1000;
+#endif
+	}
+
 	/* max finger strip X for tablets with Expresskeys
-	 * or touch physical X for TabletPCs with touch */
+	 * or physical X for touch devices in hundredths of a mm */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
 		if (is_touch)
-			common->wcmTouchResolX = absinfo.maximum;
+			common->wcmTouchResolX =
+				(int)(((double)common->wcmMaxTouchX * 10.0
+				 / (double)absinfo.maximum) + 0.5);
 		else
 			common->wcmMaxStripX = absinfo.maximum;
 	}
 
 	/* max finger strip Y for tablets with Expresskeys
-	 * or touch physical Y for TabletPCs with touch */
+	 * or physical Y for touch devices in hundredths of a mm */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
 		if (is_touch)
-			common->wcmTouchResolY = absinfo.maximum;
+			common->wcmTouchResolY =
+				 (int)(((double)common->wcmMaxTouchY * 10.0
+				 / (double)absinfo.maximum) + 0.5);
 		else
 			common->wcmMaxStripY = absinfo.maximum;
-	}
-
-	if (is_touch && common->wcmTouchResolX && common->wcmMaxTouchX)
-	{
-		common->wcmTouchResolX = (int)(((double)common->wcmTouchResolX)
-			 / ((double)common->wcmMaxTouchX) + 0.5);
-		common->wcmTouchResolY = (int)(((double)common->wcmTouchResolY)
-			 / ((double)common->wcmMaxTouchY) + 0.5);
 	}
 
 	/* max z cannot be configured */
