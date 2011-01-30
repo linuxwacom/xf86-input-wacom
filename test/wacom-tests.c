@@ -42,6 +42,39 @@ test_common_ref(void)
 
 
 static void
+test_rebase_pressure(void)
+{
+    WacomDeviceRec priv = {0};
+    WacomDeviceRec base = {0};
+    WacomDeviceState ds = {0};
+    int pressure;
+
+    priv.minPressure = 4;
+    ds.pressure = 10;
+
+    /* Pressure in out-of-proximity means get new preloaded pressure */
+    priv.oldProximity = 0;
+
+    /* make sure we don't touch priv, not really needed, the compiler should
+     * honor the consts but... */
+    base = priv;
+
+    pressure = rebasePressure(&priv, &ds);
+    g_assert(pressure == ds.pressure);
+
+    g_assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+
+    /* Pressure in-proximity means rebase to new minimum */
+    priv.oldProximity = 1;
+
+    base = priv;
+
+    pressure = rebasePressure(&priv, &ds);
+    g_assert(pressure == priv.minPressure);
+    g_assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+}
+
+static void
 test_normalize_pressure(void)
 {
     WacomDeviceRec priv = {0};
@@ -51,25 +84,22 @@ test_normalize_pressure(void)
     int i;
 
     priv.common = &common;
+    priv.minPressure = 0;
+
     common.wcmMaxZ = 255;
 
     for (i = 0; i < common.wcmMaxZ; i++)
     {
         ds.pressure = i;
 
-        /* we expect min pressure to be set if we come into proximity */
-        priv.minPressure = 0;
         priv.oldProximity = 0;
         pressure = normalizePressure(&priv, &ds);
-        g_assert(priv.minPressure == ds.pressure);
 
         g_assert(pressure >= 0);
         g_assert(pressure < FILTER_PRESSURE_RES);
 
-        priv.minPressure = 0;
         priv.oldProximity = 1;
         pressure = normalizePressure(&priv, &ds);
-        g_assert(priv.minPressure == 0);
 
         g_assert(pressure >= 0);
         g_assert(pressure < FILTER_PRESSURE_RES);
@@ -84,6 +114,7 @@ int main(int argc, char** argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/common/refcounting", test_common_ref);
+    g_test_add_func("/common/rebase_pressure", test_rebase_pressure);
     g_test_add_func("/common/normalize_pressure", test_normalize_pressure);
     return g_test_run();
 }

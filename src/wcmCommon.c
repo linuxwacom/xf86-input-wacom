@@ -1091,25 +1091,56 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 	return tool;
 }
 
-/* Instead of reporting the raw pressure, we normalize
+
+/**
+ * Return the minimum pressure based on the current minimum pressure and the
+ * hardware state. This is mainly to deal with the case where heavily used
+ * stylus may have a "pre-loaded" initial pressure. In that case, the tool
+ * comes into proximity with a pressure > 0 to begin with and thus offsets
+ * the pressure values. This preloaded pressure must be known for pressure
+ * normalisation to work.
+ *
+ * @param priv The wacom device
+ * @param ds Current device state
+ *
+ * @return The minimum pressure value for this tool.
+ *
+ * @see normalizePressure
+ */
+static int
+rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
+{
+	int min_pressure;
+
+	/* set the minimum pressure when in prox */
+	if (!priv->oldProximity)
+		min_pressure = ds->pressure;
+	else
+		min_pressure = min(priv->minPressure, ds->pressure);
+
+	return min_pressure;
+}
+
+/**
+ * Instead of reporting the raw pressure, we normalize
  * the pressure from 0 to FILTER_PRESSURE_RES. This is
  * mainly to deal with the case where heavily used
  * stylus may have a "pre-loaded" initial pressure. To
  * do so, we keep the in-prox pressure and subtract it
  * from the raw pressure to prevent a potential
  * left-click before the pen touches the tablet.
+ *
+ * @param priv The wacom device
+ * @param ds Current device state
+ *
+ * @rebaes
+ * @see rebasePressure
  */
 static int
-normalizePressure(WacomDevicePtr priv, const WacomDeviceState *ds)
+normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
 	WacomCommonPtr common = priv->common;
 	double pressure;
-
-	/* set the minimum pressure when in prox */
-	if (!priv->oldProximity)
-		priv->minPressure = ds->pressure;
-	else
-		priv->minPressure = min(priv->minPressure, ds->pressure);
 
 	/* normalize pressure to FILTER_PRESSURE_RES */
 	pressure = (ds->pressure - priv->minPressure) * FILTER_PRESSURE_RES;
@@ -1233,6 +1264,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (IsStylus(priv) || IsEraser(priv))
 	{
+		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
 		filtered.buttons = setPressureButton(priv, &filtered);
 
