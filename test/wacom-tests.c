@@ -82,36 +82,36 @@ test_normalize_pressure(void)
     WacomCommonRec common = {0};
     WacomDeviceState ds = {0};
     int pressure, prev_pressure = -1;
-    int i;
+    int i, j;
 
     priv.common = &common;
     priv.pInfo = &pInfo;
     pInfo.name = "Wacom test device";
-    common.wcmMaxZ = 255;
 
     priv.minPressure = 0;
 
-    for (i = 0; i < common.wcmMaxZ; i++)
+    /* Some random loop to check various maxZ pressure values. Starting at
+     * 1, because if wcmMaxZ is 0 we have other problems. */
+    for (j = 1; j <= 256; j += 17)
     {
-        ds.pressure = i;
+        common.wcmMaxZ = j;
+        prev_pressure = -1;
 
-        priv.oldProximity = 0;
-        pressure = normalizePressure(&priv, &ds);
+        for (i = 0; i <= common.wcmMaxZ; i++)
+        {
+            ds.pressure = i;
 
-        g_assert(pressure >= 0);
-        g_assert(pressure < FILTER_PRESSURE_RES);
+            pressure = normalizePressure(&priv, &ds);
+            g_assert(pressure >= 0);
+            g_assert(pressure <= FILTER_PRESSURE_RES);
 
-        priv.oldProximity = 1;
-        pressure = normalizePressure(&priv, &ds);
+            /* we count up, so assume normalised pressure goes up too */
+            g_assert(prev_pressure < pressure);
+            prev_pressure = pressure;
+        }
 
-        g_assert(pressure >= 0);
-        g_assert(pressure < FILTER_PRESSURE_RES);
-
-        /* we count up, so assume normalised pressure goes up too */
-        g_assert(prev_pressure < pressure);
-        prev_pressure = pressure;
+        g_assert(pressure == FILTER_PRESSURE_RES);
     }
-
 
     /* If minPressure is higher than ds->pressure, normalizePressure takes
      * minPressure and ignores actual pressure. This would be a bug in the
