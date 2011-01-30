@@ -1141,9 +1141,17 @@ normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
 	WacomCommonPtr common = priv->common;
 	double pressure;
+	int p = ds->pressure;
+
+	if (p < priv->minPressure)
+	{
+		xf86Msg(X_ERROR, "%s: Pressure %d lower than expected minimum %d. This is a bug.\n",
+			priv->pInfo->name, ds->pressure, priv->minPressure);
+		p = priv->minPressure;
+	}
 
 	/* normalize pressure to FILTER_PRESSURE_RES */
-	pressure = (ds->pressure - priv->minPressure) * FILTER_PRESSURE_RES;
+	pressure = (p - priv->minPressure) * FILTER_PRESSURE_RES;
 	pressure /= (common->wcmMaxZ - priv->minPressure);
 
 	return (int)pressure;

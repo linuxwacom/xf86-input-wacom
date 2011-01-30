@@ -77,6 +77,7 @@ test_rebase_pressure(void)
 static void
 test_normalize_pressure(void)
 {
+    InputInfoRec pInfo = {0};
     WacomDeviceRec priv = {0};
     WacomCommonRec common = {0};
     WacomDeviceState ds = {0};
@@ -84,9 +85,11 @@ test_normalize_pressure(void)
     int i;
 
     priv.common = &common;
-    priv.minPressure = 0;
-
+    priv.pInfo = &pInfo;
+    pInfo.name = "Wacom test device";
     common.wcmMaxZ = 255;
+
+    priv.minPressure = 0;
 
     for (i = 0; i < common.wcmMaxZ; i++)
     {
@@ -107,6 +110,27 @@ test_normalize_pressure(void)
         /* we count up, so assume normalised pressure goes up too */
         g_assert(prev_pressure < pressure);
         prev_pressure = pressure;
+    }
+
+
+    /* If minPressure is higher than ds->pressure, normalizePressure takes
+     * minPressure and ignores actual pressure. This would be a bug in the
+     * driver code, but we might as well test for it. */
+    priv.minPressure = 10;
+    ds.pressure = 0;
+
+    prev_pressure = normalizePressure(&priv, &ds);
+    for (i = 0; i < priv.minPressure; i++)
+    {
+        ds.pressure = i;
+
+        pressure = normalizePressure(&priv, &ds);
+
+        g_assert(pressure >= 0);
+        g_assert(pressure < FILTER_PRESSURE_RES);
+
+        /* we count up, so assume normalised pressure goes up too */
+        g_assert(prev_pressure == pressure);
     }
 }
 
