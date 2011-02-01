@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2011 by Ping Cheng, Wacom. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -868,6 +868,11 @@ static int set_keybits_fujitsu(int id, unsigned long *keys)
 		SETBIT(keys, BTN_TOOL_DOUBLETAP);
 		SETBIT(keys, BTN_TOOL_TRIPLETAP);
 		tablet_id = 0xe3;
+	}
+
+	if (id == 0x2e9) {
+		SETBIT(keys, BTN_TOOL_FINGER);
+		tablet_id = 0x93;
 	}
 
 	return tablet_id;
