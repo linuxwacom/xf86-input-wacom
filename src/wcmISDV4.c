@@ -31,6 +31,10 @@
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
+/* resolution in points/m */
+#define ISDV4_PEN_RESOLUTION    100000
+#define ISDV4_TOUCH_RESOLUTION  10000
+
 /* ISDV4 init process
    This process is the same for other backends (i.e. USB).
 
@@ -52,7 +56,6 @@
    isdv4Parse is called during ReadInput.
 
  */
-
 
 typedef struct {
 	/* Counter for dependent devices. We can only send one QUERY command to
@@ -317,10 +320,10 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
 
-	/* digitizer X resolution in points/inch */
-	common->wcmResolX = 2540; 	
-	/* digitizer Y resolution in points/inch */
-	common->wcmResolY = 2540; 	
+	/* digitizer X resolution in points/m */
+	common->wcmResolX = ISDV4_PEN_RESOLUTION;
+	/* digitizer Y resolution in points/m */
+	common->wcmResolY = ISDV4_PEN_RESOLUTION;
 
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
@@ -510,7 +513,7 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 				(1 << reply.panel_resolution);
 
 		if (reply.panel_resolution)
-			common->wcmTouchResolX = common->wcmTouchResolY = 10;
+			common->wcmTouchResolX = common->wcmTouchResolY = ISDV4_TOUCH_RESOLUTION;
 
 		common->wcmVersion = reply.version;
 		ret = Success;
