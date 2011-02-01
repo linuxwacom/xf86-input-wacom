@@ -312,8 +312,8 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
 
 static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
-	/* set parameters */
-	common->wcmProtocolLevel = WCM_PROTOCOL_4;
+	/* Change to generic protocol to match USB MT format */
+	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
 
@@ -833,9 +833,9 @@ static int set_keybits_wacom(int id, unsigned long *keys)
 
 	/* id < 0x008 are only penabled */
 	if (id > 0x007)
-		SETBIT(keys, BTN_TOOL_DOUBLETAP);
+		SETBIT(keys, BTN_TOOL_FINGER);
 	if (id > 0x0a)
-		SETBIT(keys, BTN_TOOL_TRIPLETAP);
+		SETBIT(keys, BTN_TOOL_DOUBLETAP);
 
 	/* no pen 2FGT */
 	if (id == 0x010)
@@ -866,7 +866,6 @@ static int set_keybits_fujitsu(int id, unsigned long *keys)
 
 	if (id == 0x2e7) {
 		SETBIT(keys, BTN_TOOL_DOUBLETAP);
-		SETBIT(keys, BTN_TOOL_TRIPLETAP);
 		tablet_id = 0xe3;
 	}
 
