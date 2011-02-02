@@ -599,14 +599,16 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
 					     first_val, num_vals,
 					     VCOPY(valuators, num_vals));
-			/* For relative events, reset the axes as
-			 * we've already moved the device by the
-			 * relative amount. Otherwise, a button
+			/* For relative events, do not repost
+			 * the valuators.  Otherwise, a button
 			 * event in sendCommonEvents will move the
 			 * axes again.
 			 */
 			if (!is_absolute(pInfo))
-				memset(valuators, 0, num_vals);
+			{
+				first_val = 0;
+				num_vals = 0;
+			}
 		}
 
 		sendCommonEvents(pInfo, ds, first_val, num_vals, valuators);
