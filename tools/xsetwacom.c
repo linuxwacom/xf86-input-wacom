@@ -118,194 +118,8 @@ static param_t parameters[] =
 		.prop_extra = 3
 	},
 	{
-		.name = "Button1",
-		.desc = "X11 event to which button 1 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button2",
-		.desc = "X11 event to which button 2 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button3",
-		.desc = "X11 event to which button 3 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button4",
-		.desc = "X11 event to which button 4 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button5",
-		.desc = "X11 event to which button 5 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button6",
-		.desc = "X11 event to which button 6 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button7",
-		.desc = "X11 event to which button 7 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button8",
-		.desc = "X11 event to which button 8 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button9",
-		.desc = "X11 event to which button 9 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button10",
-		.desc = "X11 event to which button 10 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button11",
-		.desc = "X11 event to which button 11 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button12",
-		.desc = "X11 event to which button 12 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button13",
-		.desc = "X11 event to which button 13 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button14",
-		.desc = "X11 event to which button 14 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button15",
-		.desc = "X11 event to which button 15 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button16",
-		.desc = "X11 event to which button 16 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button17",
-		.desc = "X11 event to which button 17 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button18",
-		.desc = "X11 event to which button 18 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button19",
-		.desc = "X11 event to which button 19 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button20",
-		.desc = "X11 event to which button 20 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button21",
-		.desc = "X11 event to which button 21 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button22",
-		.desc = "X11 event to which button 22 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button23",
-		.desc = "X11 event to which button 23 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button24",
-		.desc = "X11 event to which button 24 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button25",
-		.desc = "X11 event to which button 25 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button26",
-		.desc = "X11 event to which button 26 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button27",
-		.desc = "X11 event to which button 27 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button28",
-		.desc = "X11 event to which button 28 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button29",
-		.desc = "X11 event to which button 29 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button30",
-		.desc = "X11 event to which button 30 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button31",
-		.desc = "X11 event to which button 31 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button32",
-		.desc = "X11 event to which button 32 should be mapped. ",
+		.name = "Button",
+		.desc = "X11 event to which the given button should be mapped. ",
 		.set_func = map_button,
 		.get_func = get_button,
 	},
@@ -1187,14 +1001,6 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 	return words;
 }
 
-static int get_button_number_from_string(const char* string)
-{
-	int slen = strlen("Button");
-	if (slen >= strlen(string) || strncasecmp(string, "Button", slen))
-		return -1;
-	return atoi(&string[strlen("Button")]);
-}
-
 static const char *wheel_act_prop[] = {
 	"Wacom Rel Wheel Up Action",
 	"Wacom Rel Wheel Down Action",
@@ -1371,53 +1177,44 @@ static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 }
 
 /* Handles complex button mappings through button actions. */
-static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
+				int button, int argc, char **argv)
 {
 	Atom btnact_prop;
-	int slen = strlen("Button");
-	int btn_no;
 
 	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
-
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
-		return;
 
 	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
 	if (!btnact_prop)
 		return;
 
-	btn_no = get_button_number_from_string(param->name);
-	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
+	button--; /* property is zero-indexed, button numbers are 1-indexed */
 
-	special_map_property(dpy, dev, btnact_prop, btn_no, argc, argv);
+	special_map_property(dpy, dev, btnact_prop, button, argc, argv);
 }
 
 
-static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int button)
+static void map_button_simple(Display *dpy, XDevice *dev, param_t* param,
+			      int button, int mapping)
 {
 	int nmap = 256;
 	unsigned char map[nmap];
-	int btn_no = 0;
-
-	btn_no = get_button_number_from_string(param->name);
-	if (btn_no == -1)
-		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
-	if (btn_no > nmap)
+	if (button > nmap)
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
 	}
 
-	TRACE("Mapping button %d to %d.\n", btn_no, button);
+	TRACE("Mapping button %d to %d.\n", button, mapping);
 
-	map[btn_no - 1] = button;
+	map[button - 1] = mapping;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
 
 	/* If there's a property set, unset it */
-	special_map_buttons(dpy, dev, param, 0, NULL);
+	special_map_buttons(dpy, dev, param, button, 0, NULL);
 }
 /*
    Supports two variations, simple mapping and special mapping:
@@ -1428,18 +1225,20 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
  */
 static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
-	int button;
+	int button, /* button to be mapped */
+	    mapping;
 
-	if (argc <= 0)
+	if (argc <= 1 || (sscanf(argv[0], "%d", &button) != 1))
 		return;
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
+
 	/* --set "device" Button1 3 */
-	if (sscanf(argv[0], "%d", &button) == 1)
-		map_button_simple(dpy, dev, param, button);
+	if (sscanf(argv[1], "%d", &mapping) == 1)
+		map_button_simple(dpy, dev, param, button, mapping);
 	else
-		special_map_buttons(dpy, dev, param, argc, argv);
+		special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1871,27 +1670,26 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 {
 	int nmap = 256;
 	unsigned char map[nmap];
-	int btn_no = 0;
+	int button = 0;
 
-	btn_no = get_button_number_from_string(param->name);
-	if (btn_no == -1)
+	if (argc < 1 || (sscanf(argv[0], "%d", &button) != 1))
 		return;
 
 	TRACE("Getting button map for device %ld.\n", dev->device_id);
 
 	/* if there's a special map, print it and return */
-	if (get_special_button_map(dpy, dev, param, btn_no))
+	if (get_special_button_map(dpy, dev, param, button))
 		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
-	if (btn_no > nmap)
+	if (button > nmap)
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
 	}
 
-	print_value(param, "%d", map[btn_no - 1]);
+	print_value(param, "%d", map[button - 1]);
 
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);

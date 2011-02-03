@@ -92,6 +92,15 @@ device's native orientation, regardless of the actual rotation currently
 applied. Input outside of these coordinates will be clipped
 to the edges of the area defined.
 .TP
+\fBButton\fR button-number [mapping]
+Get or set the specified button. The mapping may be a button number to map
+the physical button to. e.g. a mapping of button 1 to 3 means
+a button 1 press will be interpreted as right click. Alternatively, a
+mapping in the form of "key +a +shift b -shift -a" converts the button into a series
+of keystrokes, in this example "press a, press shift, press and release b,
+release shift, release a". Such key mappings need to be reapplied whenever
+the keyboard layout changes.
+.TP
 \fBMapToOutput\fR output
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of
