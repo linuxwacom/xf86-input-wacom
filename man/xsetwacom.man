@@ -44,7 +44,7 @@ and
 
 .SS "LIST COMMANDS"
 .TP
-\fBlist\fR dev
+\fBlist\fR devices
 List known devices. Only input devices managed by the __drivername__
 driver are listed.
 .TP
