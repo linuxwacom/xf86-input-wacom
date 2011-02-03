@@ -717,7 +717,7 @@ static void usage(void)
 	printf(
 	"\nCommands:\n"
 	" --list [devices|param]       - display known devices, parameters \n"
-	" --list mod                   - display supported modifier and specific keys for keystrokes\n"
+	" --list modifiers             - display supported modifier and specific keys for keystrokes\n"
 	" --set \"device name\" param [values...] - set device parameter by name\n"
 	" --get \"device name\" param [param...] - get current device parameter(s) value by name\n");
 }
@@ -925,7 +925,8 @@ static void list(Display *dpy, int argc, char **argv)
 		list_devices(dpy);
 	else if (strcmp(argv[0], "param") == 0)
 		list_param(dpy);
-	else if (strcmp(argv[0], "mod") == 0)
+	else if (strcmp(argv[0], "mod") == 0 ||
+		 strcmp(argv[0], "modifiers") == 0)
 		list_mod(dpy);
 	else
 		printf("unknown argument to list.\n");
