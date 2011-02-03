@@ -48,7 +48,7 @@ and
 List known devices. Only input devices managed by the __drivername__
 driver are listed.
 .TP
-\fBlist\fR param
+\fBlist\fR parameters
 List known parameters. List all parameters suitable for the
 .B get
 or the
