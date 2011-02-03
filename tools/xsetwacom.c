@@ -712,7 +712,7 @@ static void usage(void)
 	" -V, --version              - version info\n"
 	" -d, --display \"display\"  - override default display\n"
 	" -s, --shell                - generate shell commands for 'get'\n"
-	" -x, --xconf                - generate X.conf lines for 'get'\n");
+	" -x, --xconf                - generate xorg.conf lines for 'get'\n");
 
 	printf(
 	"\nCommands:\n"
