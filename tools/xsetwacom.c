@@ -342,14 +342,6 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "Screen_No",
-		.desc = "Sets/gets screen number the tablet is mapped to, "
-		"default is -1. ",
-		.prop_name = WACOM_PROP_DISPLAY_OPTS,
-		.prop_format = 8,
-		.prop_offset = 0,
-	},
-	{
 		.name = "PressCurve",
 		.desc = "Bezier curve for pressure (default is 0 0 100 100). ",
 		.prop_name = WACOM_PROP_PRESSURECURVE,
