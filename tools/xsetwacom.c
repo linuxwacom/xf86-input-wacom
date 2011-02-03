@@ -328,7 +328,7 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "xyDefault",
+		.name = "ResetArea",
 		.desc = "Resets the bounding coordinates to default in tablet units. ",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
