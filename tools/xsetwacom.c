@@ -156,7 +156,7 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "PressCurve",
+		.name = "PressureCurve",
 		.desc = "Bezier curve for pressure (default is 0 0 100 100). ",
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
@@ -170,7 +170,7 @@ static param_t parameters[] =
 		.get_func = get_mode,
 	},
 	{
-		.name = "TPCButton",
+		.name = "TabletPCButton",
 		.desc = "Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
@@ -229,7 +229,7 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "CursorProx",
+		.name = "CursorProximity",
 		.desc = "Sets cursor distance for proximity-out "
 		"in distance from the tablet.  "
 		"(default is 10 for Intuos series, "
@@ -247,7 +247,7 @@ static param_t parameters[] =
 		.get_func = get_rotate,
 	},
 	{
-		.name = "RelWUp",
+		.name = "RelWheelUp",
 		.desc = "X11 event to which relative wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -255,7 +255,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "RelWDn",
+		.name = "RelWheelDown",
 		.desc = "X11 event to which relative wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -263,7 +263,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "AbsWUp",
+		.name = "AbsWheelUp",
 		.desc = "X11 event to which absolute wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -271,7 +271,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "AbsWDn",
+		.name = "AbsWheelDown",
 		.desc = "X11 event to which absolute wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -279,7 +279,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripLUp",
+		.name = "StripLeftUp",
 		.desc = "X11 event to which left strip up should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -287,7 +287,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripLDn",
+		.name = "StripLeftDown",
 		.desc = "X11 event to which left strip down should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -295,7 +295,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripRUp",
+		.name = "StripRightUp",
 		.desc = "X11 event to which right strip up should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -303,7 +303,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripRDn",
+		.name = "StripRightDown",
 		.desc = "X11 event to which right strip down should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
