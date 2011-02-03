@@ -124,16 +124,17 @@ static param_t parameters[] =
 		.get_func = get_button,
 	},
 	{
-		.name = "DebugLevel",
-		.desc = "Level of debugging trace for individual devices, "
+		.name = "ToolDebugLevel",
+		.desc = "Level of debugging trace for individual tools, "
 		"default is 0 (off). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 0,
 	},
 	{
-		.name = "CommonDBG",
-		.desc = "Level of debugging statements applied to all devices "
+		.name = "TabletDebugLevel",
+		.desc = "Level of debugging statements applied to shared "
+		"code paths between all tools "
 		"associated with the same tablet. default is 0 (off). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
