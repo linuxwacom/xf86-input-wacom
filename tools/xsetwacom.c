@@ -241,7 +241,7 @@ static param_t parameters[] =
 	{
 		.name = "Rotate",
 		.desc = "Sets the rotation of the tablet. "
-		"Values = NONE, CW, CCW, HALF (default is NONE).",
+		"Values = none, cw, ccw, half (default is none).",
 		.prop_name = WACOM_PROP_ROTATION,
 		.set_func = set_rotate,
 		.get_func = get_rotate,
@@ -1319,13 +1319,13 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	TRACE("Rotate '%s' for device %ld.\n", argv[0], dev->device_id);
 
-	if (strcasecmp(argv[0], "CW") == 0)
+	if (strcasecmp(argv[0], "cw") == 0)
 		rotation = 1;
-	else if (strcasecmp(argv[0], "CCW") == 0)
+	else if (strcasecmp(argv[0], "cww") == 0)
 		rotation = 2;
-	else if (strcasecmp(argv[0], "HALF") == 0)
+	else if (strcasecmp(argv[0], "half") == 0)
 		rotation = 3;
-	else if (strcasecmp(argv[0], "NONE") == 0)
+	else if (strcasecmp(argv[0], "none") == 0)
 		rotation = 0;
 	else if (strlen(argv[0]) == 1)
 	{
@@ -1360,7 +1360,7 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	return;
 
 error:
-	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [NONE | CW | CCW | HALF]\n");
+	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [none | cw | ccw | half]\n");
 	return;
 }
 
@@ -1550,16 +1550,16 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	switch(*data)
 	{
 		case 0:
-			rotation = "NONE";
+			rotation = "none";
 			break;
 		case 1:
-			rotation = "CW";
+			rotation = "cw";
 			break;
 		case 2:
-			rotation = "CCW";
+			rotation = "ccw";
 			break;
 		case 3:
-			rotation = "HALF";
+			rotation = "half";
 			break;
 	}
 
