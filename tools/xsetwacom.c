@@ -111,32 +111,12 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 static param_t parameters[] =
 {
 	{
-		.name = "TopX",
-		.desc = "Bounding rect left coordinate in tablet units. ",
+		.name = "Area",
+		.desc = "Valid tablet area in device coordinates.",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
-	},
-	{
-		.name = "TopY",
-		.desc = "Bounding rect top coordinate in tablet units . ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 1,
-	},
-	{
-		.name = "BottomX",
-		.desc = "Bounding rect right coordinate in tablet units. ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 2,
-	},
-	{
-		.name = "BottomY",
-		.desc = "Bounding rect bottom coordinate in tablet units. ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 3,
+		.prop_extra = 3
 	},
 	{
 		.name = "Button1",

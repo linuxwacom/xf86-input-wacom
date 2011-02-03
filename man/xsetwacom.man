@@ -85,6 +85,13 @@ when trying to be modified.
 
 .SH "PARAMETERS"
 .TP
+\fBArea\fR x1 y1 x2 y2
+Specify the tablet input area in device coordinates in the form top left
+x/y and bottom right x/y. Top left and bottom right are defined in the
+device's native orientation, regardless of the actual rotation currently
+applied. Input outside of these coordinates will be clipped
+to the edges of the area defined.
+.TP
 \fBMapToOutput\fR output
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of
