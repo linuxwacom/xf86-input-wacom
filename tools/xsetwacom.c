@@ -719,8 +719,8 @@ static void usage(void)
 	" --list devices             - display detected devices\n"
 	" --list parameters          - display supported parameters\n"
 	" --list modifiers           - display supported modifier and specific keys for keystrokes\n"
-	" --set \"device name\" param [values...] - set device parameter by name\n"
-	" --get \"device name\" param [param...] - get current device parameter(s) value by name\n");
+	" --set \"device name\" parameter [values...] - set device parameter by name\n"
+	" --get \"device name\" parameter [param...]  - get current device parameter(s) value by name\n");
 }
 
 
