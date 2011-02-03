@@ -99,7 +99,6 @@ static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
-static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -347,7 +346,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
 		.prop_offset = 0,
-		.get_func = get_presscurve,
+		.prop_extra = 3,
 	},
 	{
 		.name = "Mode",
@@ -1783,41 +1782,6 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	print_value(param, "%s", rotation);
 
 	return;
-}
-
-static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
-				char **argv)
-{
-	Atom prop, type;
-	int format, i;
-	unsigned char* data;
-	unsigned long nitems, bytes_after;
-	char buff[256] = {0};
-	long *ldata;
-
-	prop = XInternAtom(dpy, param->prop_name, True);
-	if (!prop)
-	{
-		fprintf(stderr, "Property for '%s' not available.\n",
-			param->name);
-		return;
-	}
-
-	TRACE("Getting pressure curve for device %ld.\n", dev->device_id);
-
-	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
-				&type, &format, &nitems, &bytes_after, &data);
-
-	if (param->prop_format != 32)
-		return;
-
-	ldata = (long*)data;
-	if (nitems)
-		sprintf(buff, "%ld", ldata[param->prop_offset]);
-	for (i = 1; i < nitems; i++)
-		sprintf(&buff[strlen(buff)], " %ld", ldata[param->prop_offset + i]);
-
-	print_value(param, "%s", buff);
 }
 
 static int get_special_button_map(Display *dpy, XDevice *dev,
