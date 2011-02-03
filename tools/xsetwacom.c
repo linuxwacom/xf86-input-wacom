@@ -716,8 +716,9 @@ static void usage(void)
 
 	printf(
 	"\nCommands:\n"
-	" --list [devices|parameters]  - display known devices, parameters \n"
-	" --list modifiers             - display supported modifier and specific keys for keystrokes\n"
+	" --list devices             - display detected devices\n"
+	" --list parameters          - display supported parameters\n"
+	" --list modifiers           - display supported modifier and specific keys for keystrokes\n"
 	" --set \"device name\" param [values...] - set device parameter by name\n"
 	" --get \"device name\" param [param...] - get current device parameter(s) value by name\n");
 }
