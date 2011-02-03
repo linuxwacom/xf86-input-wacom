@@ -546,14 +546,6 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
-		.name = "GetTabletID",
-		.desc = "Returns the tablet ID of the associated device. ",
-		.prop_name = WACOM_PROP_SERIALIDS,
-		.prop_format = 32,
-		.prop_offset = 0,
-		.prop_flags = PROP_FLAG_READONLY
-	},
-	{
 		.name = "MapToOutput",
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,
