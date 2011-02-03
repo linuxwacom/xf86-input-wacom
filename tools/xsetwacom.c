@@ -522,14 +522,6 @@ static param_t parameters[] =
 		.set_func = set_xydefault,
 	},
 	{
-		.name = "mmonitor",
-		.desc = "Turns on/off across monitor movement in "
-		"multi-monitor desktop, default is on ",
-		.prop_name = WACOM_PROP_DISPLAY_OPTS,
-		.prop_format = 8,
-		.prop_offset = 2,
-	},
-	{
 		.name = "ToolID",
 		.desc = "Returns the ID of the associated device. ",
 		.prop_name = WACOM_PROP_TOOL_TYPE,
