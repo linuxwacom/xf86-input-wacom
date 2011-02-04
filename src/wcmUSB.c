@@ -1025,7 +1025,22 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
                case BTN_TOUCH:
-			/* actual events are processed by BTN_TOOL_* events */
+			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+			{
+				/* 1FG USB touchscreen */
+				if (!TabletHasFeature(common, WCM_PEN) &&
+					TabletHasFeature(common, WCM_1FGT) &&
+					TabletHasFeature(common, WCM_LCD))
+				{
+					DBG(6, common,
+					    "USB 1FG Touch detected %x (value=%d)\n",
+					    event->code, event->value);
+					ds->device_type = TOUCH_ID;
+					ds->device_id = TOUCH_DEVICE_ID;
+					ds->proximity = event->value;
+					MOD_BUTTONS(0, event->value);
+				}
+			}
 			break;
 
 		case BTN_TOOL_FINGER:
