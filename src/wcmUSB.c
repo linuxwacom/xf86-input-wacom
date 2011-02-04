@@ -1340,6 +1340,24 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	}
 }
 
+/* Quirks to unify the tool types for GENERIC protocol tablet PCs */
+static void usbGenericTouchscreenQuirks(unsigned long *keys, unsigned long *abs)
+{
+	/* USB Tablet PC single finger touch devices do not emit
+	 * BTN_TOOL_FINGER since it is a touchscreen device.
+	 */
+	if (ISBITSET(keys, BTN_TOUCH) &&
+			!ISBITSET(keys, BTN_TOOL_FINGER) &&
+			!ISBITSET(keys, BTN_TOOL_PEN))
+		SETBIT(keys, BTN_TOOL_FINGER); /* 1FGT */
+
+	/* Serial Tablet PC two finger touch devices do not emit
+	 * BTN_TOOL_DOUBLETAP since they are not touchpads.
+	 */
+	if (ISBITSET(abs, ABS_MT_SLOT) && !ISBITSET(keys, BTN_TOOL_DOUBLETAP))
+		SETBIT(keys, BTN_TOOL_DOUBLETAP); /* 2FGT */
+}
+
 /**
  * Query the device's fd for the key bits and the tablet ID. Returns the ID
  * on success or 0 on failure.
@@ -1379,7 +1397,10 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 	 * generic.
 	 */
 	if (!ISBITSET(abs, ABS_MISC))
+	{
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
+		usbGenericTouchscreenQuirks(common->wcmKeys, abs);
+	}
 
 	return wacom_id.product;
 }
