@@ -2255,9 +2255,9 @@ int main (int argc, char **argv)
 			case 0:
 				switch(optidx)
 				{
-					case 0: usage(); break;
+					case 0: usage(); return 0;
 					case 1: verbose = True; break;
-					case 2: version(); break;
+					case 2: version(); return 0;
 					case 3: /* display */
 						break;
 					case 4:
