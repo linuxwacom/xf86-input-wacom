@@ -133,7 +133,7 @@ Tablet PCs with touch feature; "off" for all other models.
 .B Option \fI"Capacity"\fP \fI"number"\fP
 sets touch sensitivity level for capacitive touch device, where number 
 can be an integer from -1 to 5.  Default is 3 for capacitive tools and 
--1 for none capacitive tools.
+-1 for non-capacitive tools.
 .TP 4
 .B Option \fI"Speed"\fP \fI"Rspeed"\fP
 sets the cursor's relative movement speed to Rspeed.  The default value is 1.0.  

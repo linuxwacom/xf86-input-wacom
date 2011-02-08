@@ -437,7 +437,7 @@ static param_t parameters[] =
 	{
 		.name = "Capacity",
 		.desc = "Touch sensitivity level (default is 3, "
-		"-1 for none capacitive tools).",
+		"-1 for non-capacitive tools).",
 		.prop_name = WACOM_PROP_CAPACITY,
 		.prop_format = 32,
 		.prop_offset = 0,
