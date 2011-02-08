@@ -1197,7 +1197,7 @@ setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				 const WacomChannelPtr pChannel, Bool suppress)
 {
-	InputInfoPtr pDev = NULL;
+	InputInfoPtr pInfo = NULL;
 	WacomToolPtr tool = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
 	WacomDevicePtr priv = NULL;
@@ -1221,12 +1221,12 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	pDev = tool->current->device;
-	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pDev->name);
+	pInfo = tool->current->device;
+	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pInfo->name);
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-	if (!miPointerGetScreen(pDev->dev))
+	if (!miPointerGetScreen(pInfo->dev))
 	{
 		xf86Msg(X_ERROR, "wcmEvent: Wacom driver can not get Current Screen ID\n");
 		xf86Msg(X_ERROR, "Please remove Wacom tool from the tablet and bring it back again.\n");
@@ -1236,7 +1236,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	filtered = pChannel->valid.state;
 
 	/* Device transformations come first */
-	priv = pDev->private;
+	priv = pInfo->private;
 
 	if (IsUSBDevice(common))
 	{
@@ -1298,7 +1298,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* User-requested transformations come last */
 
-	if (!is_absolute(pDev) && !IsPad(priv))
+	if (!is_absolute(pInfo) && !IsPad(priv))
 	{
 		/* To improve the accuracy of relative x/y,
 		 * don't send motion event when there is no movement.
@@ -1364,7 +1364,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				return;
 		}
 	}
-	wcmSendEvents(pDev, &filtered);
+	wcmSendEvents(pInfo, &filtered);
 	/* If out-prox, reset the current area pointer */
 	if (!filtered.proximity)
 		tool->current = NULL;
