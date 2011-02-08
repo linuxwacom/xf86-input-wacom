@@ -52,7 +52,7 @@ static int *VCOPY(const int *valuators, int nvals)
  * Static functions
  ****************************************************************************/
 
-static int transPressureCurve(WacomDevicePtr pDev, WacomDeviceStatePtr pState);
+static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
 	const WacomChannelPtr pChannel, int suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
@@ -1237,9 +1237,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	{
 		filtered.pressure = normalizePressure(priv, &filtered);
 		filtered.buttons = setPressureButton(priv, &filtered);
-
-		/* transform pressure */
-		filtered.pressure = transPressureCurve(priv,&filtered);
+		filtered.pressure = applyPressureCurve(priv,&filtered);
 	}
 
 	else if (IsCursor(priv) && !priv->oldHwProx)
@@ -1402,7 +1400,12 @@ void wcmSoftOutEvent(InputInfoPtr pInfo)
 ** Transformations
 *****************************************************************************/
 
-static int transPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState)
+/**
+ * Apply the current pressure curve to the current pressure.
+ *
+ * @return The modified pressure value.
+ */
+static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState)
 {
 	/* clip the pressure */
 	int p = max(0, pState->pressure);
