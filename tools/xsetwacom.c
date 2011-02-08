@@ -94,6 +94,7 @@ typedef struct _param
 	enum printformat printformat;
 } param_t;
 
+
 /* get_func/set_func calls for special parameters */
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv);
@@ -107,6 +108,9 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 
+/* NOTE: When removing or changing a parameter name, add to
+ * deprecated_parameters.
+ */
 static param_t parameters[] =
 {
 	{
@@ -374,6 +378,61 @@ static param_t parameters[] =
 	},
 	{ NULL }
 };
+
+/**
+ * Deprecated parameters and their respective replacements.
+ */
+struct deprecated
+{
+	const char *name;
+	const char *replacement;
+} deprecated_parameters[] =
+{
+	{"Button",	"Button"}, /* this covers Button1-32 */
+	{"TopX",	"Area"},
+	{"TopY",	"Area"},
+	{"BottomX",	"Area"},
+	{"BottomY",	"Area"},
+	{"GetTabletID", "TabletID"},
+	{"DebugLevel",	"ToolDebugLevel"},
+	{"CommonDBG",	"TabletDebugLevel"},
+	{"GetTabletID",	"TabletID"},
+	{"PressCurve",	"PressureCurve"},
+	{"TPCButton",	"TabletPCButton"},
+	{"CursorProx",	"CursorProximity"},
+	{"xyDefault",	"ResetArea"},
+	{"ClickForce",	"Threshold"},
+	{NULL,		NULL}
+};
+
+/**
+ * Check if name is deprecated and print out a warning if it is.
+ *
+ * @return True if deprecated, False otherwise.
+ */
+static Bool
+is_deprecated_parameter(const char *name)
+{
+	struct deprecated *d;
+	Bool is_deprecated = False;
+
+	/* all others */
+	for (d = deprecated_parameters; d->name; d++)
+	{
+		if (strncmp(name, d->name, strlen(d->name)) == 0)
+		{
+			is_deprecated = True;
+			break;
+		}
+	}
+
+	if (is_deprecated)
+		printf("Paramater '%s' is no longer in use. "
+			"It was replaced with '%s'.\n", name, d->replacement);
+
+	return is_deprecated;
+
+}
 
 struct modifier {
 	char *name;
@@ -1411,6 +1470,8 @@ static void set(Display *dpy, int argc, char **argv)
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
+		if (is_deprecated_parameter(argv[1]))
+			goto out;
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
 	} else if (param->prop_flags & PROP_FLAG_READONLY)
@@ -1855,6 +1916,8 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
+		if (is_deprecated_parameter(argv[1]))
+			return;
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		return;
 	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
