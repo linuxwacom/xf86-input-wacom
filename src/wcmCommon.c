@@ -1226,10 +1226,9 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-	if (!miPointerGetScreen(pInfo->dev))
+	if (!pInfo || !pInfo->dev || !pInfo->dev->enabled)
 	{
-		xf86Msg(X_ERROR, "wcmEvent: Wacom driver can not get Current Screen ID\n");
-		xf86Msg(X_ERROR, "Please remove Wacom tool from the tablet and bring it back again.\n");
+		xf86Msg(X_ERROR, "wcmEvent: tool not initialized yet. Skipping event. \n");
 		return;
 	}
 
