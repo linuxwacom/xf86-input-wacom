@@ -193,6 +193,7 @@ xsetwacom, which comes with linuxwacom package.
 .TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
 sets the pressure threshold used to generate a button 1 events of stylus.
+The threshold applies to the normalised pressure range of [0..2048].
 The default is 27.
 .RE
 .SH "SEE ALSO"
