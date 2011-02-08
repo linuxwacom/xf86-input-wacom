@@ -85,6 +85,22 @@ when trying to be modified.
 
 .SH "PARAMETERS"
 .TP
+\fBArea\fR x1 y1 x2 y2
+Specify the tablet input area in device coordinates in the form top left
+x/y and bottom right x/y. Top left and bottom right are defined in the
+device's native orientation, regardless of the actual rotation currently
+applied. Input outside of these coordinates will be clipped
+to the edges of the area defined.
+.TP
+\fBButton\fR button-number [mapping]
+Get or set the specified button. The mapping may be a button number to map
+the physical button to. e.g. a mapping of button 1 to 3 means
+a button 1 press will be interpreted as right click. Alternatively, a
+mapping in the form of "key +a +shift b -shift -a" converts the button into a series
+of keystrokes, in this example "press a, press shift, press and release b,
+release shift, release a". Such key mappings need to be reapplied whenever
+the keyboard layout changes.
+.TP
 \fBMapToOutput\fR output
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of
@@ -94,6 +110,21 @@ reconfigurations; the command needs to be re-run whenever the output
 configuration changes. When used with tablet rotation, the tablet must be
 rotated before it is mapped to the new screen.
 This parameter is write-only and cannot be queried.
+.TP
+\fBTabletDebugLevel\fR level
+Set the debug level for this tablet to the given level. This only affects
+code paths that are shared between several tools on the same physical
+tablet. A higher level means more fine-grained debug messages, a level of 0
+turns debugging off for this tool. Requires the driver to be built with
+debugging enabled. See also ToolDebugLevel.
+.TP
+\fBToolDebugLevel\fR level
+Set the debug level for this tool to the given level. This only affects code
+paths that are specific to a given tool. A higher level means
+more fine-grained debug messages, a level of 0 turns debugging off for this
+tool. Requires the driver to be built with debugging enabled. See also
+TabletDebugLevel.
+
 
 .SH "AUTHORS"
 Peter Hutterer <peter.hutterer@redhat.com>

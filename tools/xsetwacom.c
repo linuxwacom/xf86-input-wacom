@@ -94,12 +94,12 @@ typedef struct _param
 	enum printformat printformat;
 } param_t;
 
+
 /* get_func/set_func calls for special parameters */
 static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
-static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -108,239 +108,37 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 
+/* NOTE: When removing or changing a parameter name, add to
+ * deprecated_parameters.
+ */
 static param_t parameters[] =
 {
 	{
-		.name = "TopX",
-		.desc = "Bounding rect left coordinate in tablet units. ",
+		.name = "Area",
+		.desc = "Valid tablet area in device coordinates.",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.prop_extra = 3
 	},
 	{
-		.name = "TopY",
-		.desc = "Bounding rect top coordinate in tablet units . ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 1,
-	},
-	{
-		.name = "BottomX",
-		.desc = "Bounding rect right coordinate in tablet units. ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 2,
-	},
-	{
-		.name = "BottomY",
-		.desc = "Bounding rect bottom coordinate in tablet units. ",
-		.prop_name = WACOM_PROP_TABLET_AREA,
-		.prop_format = 32,
-		.prop_offset = 3,
-	},
-	{
-		.name = "Button1",
-		.desc = "X11 event to which button 1 should be mapped. ",
+		.name = "Button",
+		.desc = "X11 event to which the given button should be mapped. ",
 		.set_func = map_button,
 		.get_func = get_button,
 	},
 	{
-		.name = "Button2",
-		.desc = "X11 event to which button 2 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button3",
-		.desc = "X11 event to which button 3 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button4",
-		.desc = "X11 event to which button 4 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button5",
-		.desc = "X11 event to which button 5 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button6",
-		.desc = "X11 event to which button 6 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button7",
-		.desc = "X11 event to which button 7 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button8",
-		.desc = "X11 event to which button 8 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button9",
-		.desc = "X11 event to which button 9 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button10",
-		.desc = "X11 event to which button 10 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button11",
-		.desc = "X11 event to which button 11 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button12",
-		.desc = "X11 event to which button 12 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button13",
-		.desc = "X11 event to which button 13 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button14",
-		.desc = "X11 event to which button 14 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button15",
-		.desc = "X11 event to which button 15 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button16",
-		.desc = "X11 event to which button 16 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button17",
-		.desc = "X11 event to which button 17 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button18",
-		.desc = "X11 event to which button 18 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button19",
-		.desc = "X11 event to which button 19 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button20",
-		.desc = "X11 event to which button 20 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button21",
-		.desc = "X11 event to which button 21 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button22",
-		.desc = "X11 event to which button 22 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button23",
-		.desc = "X11 event to which button 23 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button24",
-		.desc = "X11 event to which button 24 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button25",
-		.desc = "X11 event to which button 25 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button26",
-		.desc = "X11 event to which button 26 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button27",
-		.desc = "X11 event to which button 27 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button28",
-		.desc = "X11 event to which button 28 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button29",
-		.desc = "X11 event to which button 29 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button30",
-		.desc = "X11 event to which button 30 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button31",
-		.desc = "X11 event to which button 31 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "Button32",
-		.desc = "X11 event to which button 32 should be mapped. ",
-		.set_func = map_button,
-		.get_func = get_button,
-	},
-	{
-		.name = "DebugLevel",
-		.desc = "Level of debugging trace for individual devices, "
+		.name = "ToolDebugLevel",
+		.desc = "Level of debugging trace for individual tools, "
 		"default is 0 (off). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 0,
 	},
 	{
-		.name = "CommonDBG",
-		.desc = "Level of debugging statements applied to all devices "
+		.name = "TabletDebugLevel",
+		.desc = "Level of debugging statements applied to shared "
+		"code paths between all tools "
 		"associated with the same tablet. default is 0 (off). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
@@ -362,20 +160,12 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "Screen_No",
-		.desc = "Sets/gets screen number the tablet is mapped to, "
-		"default is -1. ",
-		.prop_name = WACOM_PROP_DISPLAY_OPTS,
-		.prop_format = 8,
-		.prop_offset = 0,
-	},
-	{
-		.name = "PressCurve",
+		.name = "PressureCurve",
 		.desc = "Bezier curve for pressure (default is 0 0 100 100). ",
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
 		.prop_offset = 0,
-		.get_func = get_presscurve,
+		.prop_extra = 3,
 	},
 	{
 		.name = "Mode",
@@ -384,7 +174,7 @@ static param_t parameters[] =
 		.get_func = get_mode,
 	},
 	{
-		.name = "TPCButton",
+		.name = "TabletPCButton",
 		.desc = "Turns on/off Tablet PC buttons. "
 		"default is off for regular tablets, "
 		"on for Tablet PC. ",
@@ -443,7 +233,7 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "CursorProx",
+		.name = "CursorProximity",
 		.desc = "Sets cursor distance for proximity-out "
 		"in distance from the tablet.  "
 		"(default is 10 for Intuos series, "
@@ -455,13 +245,13 @@ static param_t parameters[] =
 	{
 		.name = "Rotate",
 		.desc = "Sets the rotation of the tablet. "
-		"Values = NONE, CW, CCW, HALF (default is NONE).",
+		"Values = none, cw, ccw, half (default is none).",
 		.prop_name = WACOM_PROP_ROTATION,
 		.set_func = set_rotate,
 		.get_func = get_rotate,
 	},
 	{
-		.name = "RelWUp",
+		.name = "RelWheelUp",
 		.desc = "X11 event to which relative wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -469,7 +259,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "RelWDn",
+		.name = "RelWheelDown",
 		.desc = "X11 event to which relative wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -477,7 +267,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "AbsWUp",
+		.name = "AbsWheelUp",
 		.desc = "X11 event to which absolute wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -485,7 +275,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "AbsWDn",
+		.name = "AbsWheelDown",
 		.desc = "X11 event to which absolute wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
@@ -493,7 +283,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripLUp",
+		.name = "StripLeftUp",
 		.desc = "X11 event to which left strip up should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -501,7 +291,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripLDn",
+		.name = "StripLeftDown",
 		.desc = "X11 event to which left strip down should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -509,7 +299,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripRUp",
+		.name = "StripRightUp",
 		.desc = "X11 event to which right strip up should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -517,7 +307,7 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "StripRDn",
+		.name = "StripRightDown",
 		.desc = "X11 event to which right strip down should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
@@ -542,21 +332,13 @@ static param_t parameters[] =
 		.prop_offset = 0,
 	},
 	{
-		.name = "xyDefault",
+		.name = "ResetArea",
 		.desc = "Resets the bounding coordinates to default in tablet units. ",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
 		.prop_flags = PROP_FLAG_WRITEONLY,
 		.set_func = set_xydefault,
-	},
-	{
-		.name = "mmonitor",
-		.desc = "Turns on/off across monitor movement in "
-		"multi-monitor desktop, default is on ",
-		.prop_name = WACOM_PROP_DISPLAY_OPTS,
-		.prop_format = 8,
-		.prop_offset = 2,
 	},
 	{
 		.name = "ToolID",
@@ -583,14 +365,6 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
-		.name = "GetTabletID",
-		.desc = "Returns the tablet ID of the associated device. ",
-		.prop_name = WACOM_PROP_SERIALIDS,
-		.prop_format = 32,
-		.prop_offset = 0,
-		.prop_flags = PROP_FLAG_READONLY
-	},
-	{
 		.name = "MapToOutput",
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,
@@ -604,6 +378,61 @@ static param_t parameters[] =
 	},
 	{ NULL }
 };
+
+/**
+ * Deprecated parameters and their respective replacements.
+ */
+struct deprecated
+{
+	const char *name;
+	const char *replacement;
+} deprecated_parameters[] =
+{
+	{"Button",	"Button"}, /* this covers Button1-32 */
+	{"TopX",	"Area"},
+	{"TopY",	"Area"},
+	{"BottomX",	"Area"},
+	{"BottomY",	"Area"},
+	{"GetTabletID", "TabletID"},
+	{"DebugLevel",	"ToolDebugLevel"},
+	{"CommonDBG",	"TabletDebugLevel"},
+	{"GetTabletID",	"TabletID"},
+	{"PressCurve",	"PressureCurve"},
+	{"TPCButton",	"TabletPCButton"},
+	{"CursorProx",	"CursorProximity"},
+	{"xyDefault",	"ResetArea"},
+	{"ClickForce",	"Threshold"},
+	{NULL,		NULL}
+};
+
+/**
+ * Check if name is deprecated and print out a warning if it is.
+ *
+ * @return True if deprecated, False otherwise.
+ */
+static Bool
+is_deprecated_parameter(const char *name)
+{
+	struct deprecated *d;
+	Bool is_deprecated = False;
+
+	/* all others */
+	for (d = deprecated_parameters; d->name; d++)
+	{
+		if (strncmp(name, d->name, strlen(d->name)) == 0)
+		{
+			is_deprecated = True;
+			break;
+		}
+	}
+
+	if (is_deprecated)
+		printf("Paramater '%s' is no longer in use. "
+			"It was replaced with '%s'.\n", name, d->replacement);
+
+	return is_deprecated;
+
+}
 
 struct modifier {
 	char *name;
@@ -1232,14 +1061,6 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 	return words;
 }
 
-static int get_button_number_from_string(const char* string)
-{
-	int slen = strlen("Button");
-	if (slen >= strlen(string) || strncasecmp(string, "Button", slen))
-		return -1;
-	return atoi(&string[strlen("Button")]);
-}
-
 static const char *wheel_act_prop[] = {
 	"Wacom Rel Wheel Up Action",
 	"Wacom Rel Wheel Down Action",
@@ -1416,53 +1237,44 @@ static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 }
 
 /* Handles complex button mappings through button actions. */
-static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
+				int button, int argc, char **argv)
 {
 	Atom btnact_prop;
-	int slen = strlen("Button");
-	int btn_no;
 
 	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
-
-	if (slen >= strlen(param->name) || strncmp(param->name, "Button", slen))
-		return;
 
 	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
 	if (!btnact_prop)
 		return;
 
-	btn_no = get_button_number_from_string(param->name);
-	btn_no--; /* property is zero-indexed, button numbers are 1-indexed */
+	button--; /* property is zero-indexed, button numbers are 1-indexed */
 
-	special_map_property(dpy, dev, btnact_prop, btn_no, argc, argv);
+	special_map_property(dpy, dev, btnact_prop, button, argc, argv);
 }
 
 
-static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int button)
+static void map_button_simple(Display *dpy, XDevice *dev, param_t* param,
+			      int button, int mapping)
 {
 	int nmap = 256;
 	unsigned char map[nmap];
-	int btn_no = 0;
-
-	btn_no = get_button_number_from_string(param->name);
-	if (btn_no == -1)
-		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
-	if (btn_no > nmap)
+	if (button > nmap)
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
 	}
 
-	TRACE("Mapping button %d to %d.\n", btn_no, button);
+	TRACE("Mapping button %d to %d.\n", button, mapping);
 
-	map[btn_no - 1] = button;
+	map[button - 1] = mapping;
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
 
 	/* If there's a property set, unset it */
-	special_map_buttons(dpy, dev, param, 0, NULL);
+	special_map_buttons(dpy, dev, param, button, 0, NULL);
 }
 /*
    Supports two variations, simple mapping and special mapping:
@@ -1473,18 +1285,20 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
  */
 static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
-	int button;
+	int button, /* button to be mapped */
+	    mapping;
 
-	if (argc <= 0)
+	if (argc <= 1 || (sscanf(argv[0], "%d", &button) != 1))
 		return;
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
+
 	/* --set "device" Button1 3 */
-	if (sscanf(argv[0], "%d", &button) == 1)
-		map_button_simple(dpy, dev, param, button);
+	if (sscanf(argv[1], "%d", &mapping) == 1)
+		map_button_simple(dpy, dev, param, button, mapping);
 	else
-		special_map_buttons(dpy, dev, param, argc, argv);
+		special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1564,13 +1378,13 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	TRACE("Rotate '%s' for device %ld.\n", argv[0], dev->device_id);
 
-	if (strcasecmp(argv[0], "CW") == 0)
+	if (strcasecmp(argv[0], "cw") == 0)
 		rotation = 1;
-	else if (strcasecmp(argv[0], "CCW") == 0)
+	else if (strcasecmp(argv[0], "cww") == 0)
 		rotation = 2;
-	else if (strcasecmp(argv[0], "HALF") == 0)
+	else if (strcasecmp(argv[0], "half") == 0)
 		rotation = 3;
-	else if (strcasecmp(argv[0], "NONE") == 0)
+	else if (strcasecmp(argv[0], "none") == 0)
 		rotation = 0;
 	else if (strlen(argv[0]) == 1)
 	{
@@ -1605,7 +1419,7 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	return;
 
 error:
-	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [NONE | CW | CCW | HALF]\n");
+	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [none | cw | ccw | half]\n");
 	return;
 }
 
@@ -1656,6 +1470,8 @@ static void set(Display *dpy, int argc, char **argv)
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
+		if (is_deprecated_parameter(argv[1]))
+			goto out;
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
 	} else if (param->prop_flags & PROP_FLAG_READONLY)
@@ -1795,57 +1611,22 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	switch(*data)
 	{
 		case 0:
-			rotation = "NONE";
+			rotation = "none";
 			break;
 		case 1:
-			rotation = "CW";
+			rotation = "cw";
 			break;
 		case 2:
-			rotation = "CCW";
+			rotation = "ccw";
 			break;
 		case 3:
-			rotation = "HALF";
+			rotation = "half";
 			break;
 	}
 
 	print_value(param, "%s", rotation);
 
 	return;
-}
-
-static void get_presscurve(Display *dpy, XDevice *dev, param_t *param, int argc,
-				char **argv)
-{
-	Atom prop, type;
-	int format, i;
-	unsigned char* data;
-	unsigned long nitems, bytes_after;
-	char buff[256] = {0};
-	long *ldata;
-
-	prop = XInternAtom(dpy, param->prop_name, True);
-	if (!prop)
-	{
-		fprintf(stderr, "Property for '%s' not available.\n",
-			param->name);
-		return;
-	}
-
-	TRACE("Getting pressure curve for device %ld.\n", dev->device_id);
-
-	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
-				&type, &format, &nitems, &bytes_after, &data);
-
-	if (param->prop_format != 32)
-		return;
-
-	ldata = (long*)data;
-	if (nitems)
-		sprintf(buff, "%ld", ldata[param->prop_offset]);
-	for (i = 1; i < nitems; i++)
-		sprintf(&buff[strlen(buff)], " %ld", ldata[param->prop_offset + i]);
-
-	print_value(param, "%s", buff);
 }
 
 static int get_special_button_map(Display *dpy, XDevice *dev,
@@ -1951,27 +1732,26 @@ static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
 {
 	int nmap = 256;
 	unsigned char map[nmap];
-	int btn_no = 0;
+	int button = 0;
 
-	btn_no = get_button_number_from_string(param->name);
-	if (btn_no == -1)
+	if (argc < 1 || (sscanf(argv[0], "%d", &button) != 1))
 		return;
 
 	TRACE("Getting button map for device %ld.\n", dev->device_id);
 
 	/* if there's a special map, print it and return */
-	if (get_special_button_map(dpy, dev, param, btn_no))
+	if (get_special_button_map(dpy, dev, param, button))
 		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
 
-	if (btn_no > nmap)
+	if (button > nmap)
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
 	}
 
-	print_value(param, "%d", map[btn_no - 1]);
+	print_value(param, "%d", map[button - 1]);
 
 	XSetDeviceButtonMapping(dpy, dev, map, nmap);
 	XFlush(dpy);
@@ -2136,6 +1916,8 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
+		if (is_deprecated_parameter(argv[1]))
+			return;
 		printf("Unknown parameter name '%s'.\n", argv[1]);
 		return;
 	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
