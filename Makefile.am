@@ -22,7 +22,7 @@
 DISTCHECK_CONFIGURE_FLAGS = --with-sdkdir='$${includedir}/xorg' \
 			    --with-xorg-conf-dir='$${datadir}/X11/xorg.conf.d'
 
-SUBDIRS = conf src man include tools
+SUBDIRS = conf src man include tools test
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 pkgconfigdir = $(libdir)/pkgconfig

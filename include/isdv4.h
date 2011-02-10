@@ -99,7 +99,7 @@ typedef struct {
 	uint8_t tilt_y;
 } ISDV4CoordinateData;
 
-static inline int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
+static int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
 		    ISDV4QueryReply *reply)
 {
 	int header, control;
@@ -126,7 +126,7 @@ static inline int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
 	return ISDV4_PKGLEN_TPCCTL;
 }
 
-static inline int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
+static int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
 			 ISDV4TouchQueryReply *reply)
 {
 	int header, control;
@@ -153,7 +153,7 @@ static inline int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t
 }
 
 /* pktlen defines what touch type we parse */
-static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
+static int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
 		        const size_t pktlen, ISDV4TouchData *touchdata)
 {
 	int header, touch;
@@ -187,7 +187,7 @@ static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t 
 	return pktlen;
 }
 
-static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+static int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
 			     ISDV4CoordinateData *coord)
 {
 	int header, control;
