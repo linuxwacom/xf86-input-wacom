@@ -785,27 +785,11 @@ static char *convert_specialkey(const char *modifier)
 
 static int is_modifier(const char* modifier)
 {
-	const char *modifiers[] = {
-		"Control_L",
-		"Control_R",
-		"Alt_L",
-		"Alt_R",
-		"Shift_L",
-		"Shift_R",
-		"Meta_L",
-		"Meta_R",
-		"Super_L",
-		"Super_R",
-		"Hyper_L",
-		"Hyper_R",
-		NULL,
-	};
+	struct modifier *m = modifiers;
 
-	const char **m = modifiers;
-
-	while(*m)
+	while(m->name)
 	{
-		if (strcmp(modifier, *m) == 0)
+		if (strcmp(modifier, m->converted) == 0)
 			return 1;
 		m++;
 	}
