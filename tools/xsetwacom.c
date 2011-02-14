@@ -2160,11 +2160,35 @@ static void test_is_modifier(void)
 	}
 }
 
+static void test_convert_specialkey(void)
+{
+	char i;
+	char *converted;
+	char buff[5];
+	struct modifier *m;
+
+	/* make sure at least the default keys (ascii 33 - 126) aren't
+	 * specialkeys */
+	for (i = '!'; i <= '~'; i++)
+	{
+		sprintf(buff, "%c", i);
+		converted = convert_specialkey(buff);
+		g_assert(strcmp(converted, buff) == 0);
+	}
+
+	for (m = specialkeys; m->name; m++)
+	{
+		converted = convert_specialkey(m->name);
+		g_assert(strcmp(converted, m->converted) == 0);
+	}
+}
+
 
 int main(int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
+	g_test_add_func("/xsetwacom/convert_specialkey", test_convert_specialkey);
 	return g_test_run();
 }
 
