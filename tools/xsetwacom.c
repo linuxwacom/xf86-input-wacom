@@ -762,25 +762,29 @@ static void list(Display *dpy, int argc, char **argv)
 	else
 		printf("unknown argument to list.\n");
 }
-/*
+
+/**
  * Convert a list of random special keys to strings that can be passed into
  * XStringToKeysym
+ * @param special A special key, e.g. a modifier or one of the keys in
+ * specialkeys.
+ * @return The X Keysym representing specialkey.
  */
-static char *convert_specialkey(const char *modifier)
+static char *convert_specialkey(const char *specialkey)
 {
 	struct modifier *m = modifiers;
 
-	while(m->name && strcasecmp(modifier, m->name))
+	while(m->name && strcasecmp(specialkey, m->name))
 		m++;
 
 	if (!m->name)
 	{
 		m = specialkeys;
-		while(m->name && strcasecmp(modifier, m->name))
+		while(m->name && strcasecmp(specialkey, m->name))
 			m++;
 	}
 
-	return m->converted ? m->converted : (char*)modifier;
+	return m->converted ? m->converted : (char*)specialkey;
 }
 
 /**
