@@ -790,11 +790,11 @@ static int is_modifier(const char* modifier)
 	while(m->name)
 	{
 		if (strcmp(modifier, m->converted) == 0)
-			return 1;
+			break;
 		m++;
 	}
 
-	return 0;
+	return (m->name != NULL);
 }
 
 static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
