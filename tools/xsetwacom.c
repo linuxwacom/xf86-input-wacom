@@ -783,13 +783,18 @@ static char *convert_specialkey(const char *modifier)
 	return m->converted ? m->converted : (char*)modifier;
 }
 
-static int is_modifier(const char* modifier)
+/**
+ * @param keysym An X Keysym
+ * @return nonzero if the given keysym is a modifier (as per the modifiers
+ * list) or zero otherwise.
+ */
+static int is_modifier(const char* keysym)
 {
 	struct modifier *m = modifiers;
 
 	while(m->name)
 	{
-		if (strcmp(modifier, m->converted) == 0)
+		if (strcmp(keysym, m->converted) == 0)
 			break;
 		m++;
 	}
