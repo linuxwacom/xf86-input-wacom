@@ -2183,10 +2183,22 @@ static void test_convert_specialkey(void)
 	}
 }
 
+static void test_parameter_number(void)
+{
+	/* If either of those two fails, a parameter was added or removed.
+	 * This test simply exists so that we remember to properly
+	 * deprecated them.
+	 * Numbers include trailing NULL entry.
+	 */
+	g_assert(ArrayLength(parameters) == 34);
+	g_assert(ArrayLength(deprecated_parameters) == 15);
+}
+
 
 int main(int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
+	g_test_add_func("/xsetwacom/parameter_number", test_parameter_number);
 	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
 	g_test_add_func("/xsetwacom/convert_specialkey", test_convert_specialkey);
 	return g_test_run();
