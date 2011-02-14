@@ -2007,6 +2007,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 }
 
 
+#ifndef BUILD_TEST
 int main (int argc, char **argv)
 {
 	int c;
@@ -2121,6 +2122,51 @@ int main (int argc, char **argv)
 	XCloseDisplay(dpy);
 	return 0;
 }
+#endif
+
+#ifdef BUILD_TEST
+#include <glib.h>
+/**
+ * Below are unit-tests to ensure xsetwacom continues to work as expected.
+ */
+
+static void test_is_modifier(void)
+{
+	char i;
+	char buff[5];
 
 
+	g_assert(is_modifier("Control_L"));
+	g_assert(is_modifier("Control_R"));
+	g_assert(is_modifier("Alt_L"));
+	g_assert(is_modifier("Alt_R"));
+	g_assert(is_modifier("Shift_L"));
+	g_assert(is_modifier("Shift_R"));
+	g_assert(is_modifier("Meta_L"));
+	g_assert(is_modifier("Meta_R"));
+	g_assert(is_modifier("Super_L"));
+	g_assert(is_modifier("Super_R"));
+	g_assert(is_modifier("Hyper_L"));
+	g_assert(is_modifier("Hyper_R"));
+
+	g_assert(!is_modifier(""));
+
+	/* make sure at least the default keys (ascii 33 - 126) aren't
+	 * modifiers */
+	for (i = '!'; i <= '~'; i++)
+	{
+		sprintf(buff, "%c", i);
+		g_assert(!is_modifier(buff));
+	}
+}
+
+
+int main(int argc, char** argv)
+{
+	g_test_init(&argc, &argv, NULL);
+	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
+	return g_test_run();
+}
+
+#endif
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
