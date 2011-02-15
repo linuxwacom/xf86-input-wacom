@@ -147,3 +147,19 @@ xf86PostProximityEventP(DeviceIntPtr	device,
                               int	*valuators);
 
 extern Bool InitFocusClassDeviceStruct(DeviceIntPtr dev);
+
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
+extern void
+xf86ProcessCommonOptions(InputInfoPtr pInfo, pointer list);
+
+extern void
+xf86CollectInputOptions(InputInfoPtr pInfo,
+                        const char **defaultOpts,
+                        pointer extraOpts);
+
+extern InputInfoPtr
+xf86AllocateInput(InputDriverPtr drv, int flags);
+
+
+#endif

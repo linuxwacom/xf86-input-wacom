@@ -392,3 +392,24 @@ InitFocusClassDeviceStruct(DeviceIntPtr dev)
 {
     return FALSE;
 }
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
+void
+xf86ProcessCommonOptions(InputInfoPtr pInfo, pointer list)
+{
+}
+
+void
+xf86CollectInputOptions(InputInfoPtr pInfo,
+                        const char **defaultOpts,
+                        pointer extraOpts)
+{
+}
+
+InputInfoPtr xf86AllocateInput(InputDriverPtr drv, int flags)
+{
+    return NULL;
+}
+
+
+#endif
