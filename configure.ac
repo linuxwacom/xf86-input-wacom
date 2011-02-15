@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-wacom],
-        [0.10.10],
+        [0.10.11],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-input-wacom])
 AC_CONFIG_MACRO_DIR([m4])
