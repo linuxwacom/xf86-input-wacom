@@ -66,12 +66,6 @@
 #define DBG(lvl, priv, ...)
 #endif
 
-/*****************************************************************************
- * General Macros
- ****************************************************************************/
-
-#define ABS(x) ((x) > 0 ? (x) : -(x))
-
 /******************************************************************************
  * WacomModule - all globals are packed in a single structure to keep the
  *               global namespaces as clean as possible.

@@ -782,23 +782,23 @@ static int wcmCheckSuppress(WacomCommonPtr common,
 	if (dsOrig->buttons != dsNew->buttons) returnV = 1;
 	if (dsOrig->stripx != dsNew->stripx) returnV = 1;
 	if (dsOrig->stripy != dsNew->stripy) returnV = 1;
-	if (ABS(dsOrig->tiltx - dsNew->tiltx) > suppress) returnV = 1;
-	if (ABS(dsOrig->tilty - dsNew->tilty) > suppress) returnV = 1;
-	if (ABS(dsOrig->pressure - dsNew->pressure) > suppress) returnV = 1;
-	if (ABS(dsOrig->capacity - dsNew->capacity) > suppress) returnV = 1;
-	if (ABS(dsOrig->throttle - dsNew->throttle) > suppress) returnV = 1;
-	if (ABS(dsOrig->rotation - dsNew->rotation) > suppress &&
-		(1800 - ABS(dsOrig->rotation - dsNew->rotation)) >  suppress) returnV = 1;
+	if (abs(dsOrig->tiltx - dsNew->tiltx) > suppress) returnV = 1;
+	if (abs(dsOrig->tilty - dsNew->tilty) > suppress) returnV = 1;
+	if (abs(dsOrig->pressure - dsNew->pressure) > suppress) returnV = 1;
+	if (abs(dsOrig->capacity - dsNew->capacity) > suppress) returnV = 1;
+	if (abs(dsOrig->throttle - dsNew->throttle) > suppress) returnV = 1;
+	if (abs(dsOrig->rotation - dsNew->rotation) > suppress &&
+		(1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) returnV = 1;
 
 	/* look for change in absolute wheel position 
 	 * or any relative wheel movement
 	 */
-	if ((ABS(dsOrig->abswheel - dsNew->abswheel) > suppress) 
+	if ((abs(dsOrig->abswheel - dsNew->abswheel) > suppress) 
 		|| (dsNew->relwheel != 0)) returnV = 1;
 
 	/* cursor moves or not? */
-	if ((ABS(dsOrig->x - dsNew->x) > suppress) || 
-			(ABS(dsOrig->y - dsNew->y) > suppress)) 
+	if ((abs(dsOrig->x - dsNew->x) > suppress) || 
+			(abs(dsOrig->y - dsNew->y) > suppress)) 
 	{
 		if (!returnV) /* need to check if cursor moves or not */
 			returnV = 2;
@@ -1307,7 +1307,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		deltx *= priv->factorX;
 		delty *= priv->factorY;
 
-		if (ABS(deltx)<1 && ABS(delty)<1)
+		if (abs(deltx)<1 && abs(delty)<1)
 		{
 			/* don't move the cursor */
 			if (suppress == 1)
