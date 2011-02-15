@@ -71,7 +71,10 @@ xf86PostButtonEventP(DeviceIntPtr	device,
                      int		is_down,
                      int		first_valuator,
                      int		num_valuators,
-                     const int		*valuators);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+                     const
+#endif
+                           int		*valuators);
 extern Bool
 InitPtrFeedbackClassDeviceStruct(DeviceIntPtr dev, PtrCtrlProcPtr controlProc);
 
@@ -112,7 +115,10 @@ xf86PostMotionEventP(DeviceIntPtr	device,
                     int			is_absolute,
                     int			first_valuator,
                     int			num_valuators,
-                    const int		*valuators);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+                    const
+#endif
+                          int		*valuators);
 
 extern Bool
 InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
@@ -135,6 +141,9 @@ xf86PostProximityEventP(DeviceIntPtr	device,
                         int		is_in,
                         int		first_valuator,
                         int		num_valuators,
-                        const int	*valuators);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+                        const
+#endif
+                              int	*valuators);
 
 extern Bool InitFocusClassDeviceStruct(DeviceIntPtr dev);
