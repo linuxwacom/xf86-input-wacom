@@ -152,7 +152,7 @@ xf86PostButtonEvent(DeviceIntPtr	device,
 }
 
 _X_EXPORT int
-Xasprintf(char ** ret, const char * _X_RESTRICT_KYWD format, ...)
+Xasprintf(char ** ret, const char * format, ...)
 {
     return 0;
 }

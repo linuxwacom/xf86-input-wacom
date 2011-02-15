@@ -45,7 +45,7 @@ xf86PostButtonEvent(DeviceIntPtr	device,
                     int			first_valuator,
                     int			num_valuators,
                     ...);
-extern int Xasprintf(char ** ret, const char * _X_RESTRICT_KYWD format, ...);
+extern int Xasprintf(char ** ret, const char *format, ...);
 extern int
 XISetDevicePropertyDeletable(DeviceIntPtr dev, Atom property, Bool deletable);
 
