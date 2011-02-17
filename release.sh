@@ -192,7 +192,11 @@ if ! git tag -l $tag_current >/dev/null; then
 fi
 
 echo "creating shell on sourceforge for $USER"
+echo "Simply log out once you get to the prompt"
 ssh -t ${user/%@},linuxwacom@shell.sourceforge.net create
+
+echo "Sleeping for 30 seconds, because this sometimes helps against sourceforge's random authentication denials"
+sleep 30
 
 echo "checking for an existing release"
 if ssh $user$host ls $srv_path/$module/$targz >/dev/null 2>&1 ||
@@ -208,6 +212,9 @@ fi
 echo "generating announce mail template, remember to sign it"
 gen_announce_mail >$announce
 echo "    at: $announce"
+
+echo "Sleeping for 30 seconds, because this sometimes helps against sourceforge's random authentication denials"
+sleep 30
 
 echo "installing release into server"
 scp $tarball_dir/$targz $tarball_dir/$tarbz2 $user$host:$srv_path
