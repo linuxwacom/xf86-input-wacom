@@ -762,55 +762,48 @@ static void list(Display *dpy, int argc, char **argv)
 	else
 		printf("unknown argument to list.\n");
 }
-/*
+
+/**
  * Convert a list of random special keys to strings that can be passed into
  * XStringToKeysym
+ * @param special A special key, e.g. a modifier or one of the keys in
+ * specialkeys.
+ * @return The X Keysym representing specialkey.
  */
-static char *convert_specialkey(const char *modifier)
+static char *convert_specialkey(const char *specialkey)
 {
 	struct modifier *m = modifiers;
 
-	while(m->name && strcasecmp(modifier, m->name))
+	while(m->name && strcasecmp(specialkey, m->name))
 		m++;
 
 	if (!m->name)
 	{
 		m = specialkeys;
-		while(m->name && strcasecmp(modifier, m->name))
+		while(m->name && strcasecmp(specialkey, m->name))
 			m++;
 	}
 
-	return m->converted ? m->converted : (char*)modifier;
+	return m->converted ? m->converted : (char*)specialkey;
 }
 
-static int is_modifier(const char* modifier)
+/**
+ * @param keysym An X Keysym
+ * @return nonzero if the given keysym is a modifier (as per the modifiers
+ * list) or zero otherwise.
+ */
+static int is_modifier(const char* keysym)
 {
-	const char *modifiers[] = {
-		"Control_L",
-		"Control_R",
-		"Alt_L",
-		"Alt_R",
-		"Shift_L",
-		"Shift_R",
-		"Meta_L",
-		"Meta_R",
-		"Super_L",
-		"Super_R",
-		"Hyper_L",
-		"Hyper_R",
-		NULL,
-	};
+	struct modifier *m = modifiers;
 
-	const char **m = modifiers;
-
-	while(*m)
+	while(m->name)
 	{
-		if (strcmp(modifier, *m) == 0)
-			return 1;
+		if (strcmp(keysym, m->converted) == 0)
+			break;
 		m++;
 	}
 
-	return 0;
+	return (m->name != NULL);
 }
 
 static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
@@ -2007,6 +2000,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 }
 
 
+#ifndef BUILD_TEST
 int main (int argc, char **argv)
 {
 	int c;
@@ -2121,6 +2115,87 @@ int main (int argc, char **argv)
 	XCloseDisplay(dpy);
 	return 0;
 }
+#endif
+
+#ifdef BUILD_TEST
+#include <glib.h>
+/**
+ * Below are unit-tests to ensure xsetwacom continues to work as expected.
+ */
+
+static void test_is_modifier(void)
+{
+	char i;
+	char buff[5];
 
 
+	g_assert(is_modifier("Control_L"));
+	g_assert(is_modifier("Control_R"));
+	g_assert(is_modifier("Alt_L"));
+	g_assert(is_modifier("Alt_R"));
+	g_assert(is_modifier("Shift_L"));
+	g_assert(is_modifier("Shift_R"));
+	g_assert(is_modifier("Meta_L"));
+	g_assert(is_modifier("Meta_R"));
+	g_assert(is_modifier("Super_L"));
+	g_assert(is_modifier("Super_R"));
+	g_assert(is_modifier("Hyper_L"));
+	g_assert(is_modifier("Hyper_R"));
+
+	g_assert(!is_modifier(""));
+
+	/* make sure at least the default keys (ascii 33 - 126) aren't
+	 * modifiers */
+	for (i = '!'; i <= '~'; i++)
+	{
+		sprintf(buff, "%c", i);
+		g_assert(!is_modifier(buff));
+	}
+}
+
+static void test_convert_specialkey(void)
+{
+	char i;
+	char *converted;
+	char buff[5];
+	struct modifier *m;
+
+	/* make sure at least the default keys (ascii 33 - 126) aren't
+	 * specialkeys */
+	for (i = '!'; i <= '~'; i++)
+	{
+		sprintf(buff, "%c", i);
+		converted = convert_specialkey(buff);
+		g_assert(strcmp(converted, buff) == 0);
+	}
+
+	for (m = specialkeys; m->name; m++)
+	{
+		converted = convert_specialkey(m->name);
+		g_assert(strcmp(converted, m->converted) == 0);
+	}
+}
+
+static void test_parameter_number(void)
+{
+	/* If either of those two fails, a parameter was added or removed.
+	 * This test simply exists so that we remember to properly
+	 * deprecated them.
+	 * Numbers include trailing NULL entry.
+	 */
+	g_assert(ArrayLength(parameters) == 34);
+	g_assert(ArrayLength(deprecated_parameters) == 15);
+}
+
+
+int main(int argc, char** argv)
+{
+	g_test_init(&argc, &argv, NULL);
+	g_test_add_func("/xsetwacom/parameter_number", test_parameter_number);
+	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
+	g_test_add_func("/xsetwacom/convert_specialkey", test_convert_specialkey);
+	return g_test_run();
+}
+
+#endif
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
