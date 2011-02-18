@@ -156,6 +156,7 @@ AM_CONDITIONAL(UNITTESTS, [test "x$UNITTESTS" = xyes])
 
 AC_CONFIG_FILES([Makefile
                  conf/Makefile
+                 doc/Makefile
                  src/Makefile
                  man/Makefile
                  include/Makefile
