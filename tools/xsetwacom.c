@@ -427,7 +427,7 @@ is_deprecated_parameter(const char *name)
 	}
 
 	if (is_deprecated)
-		printf("Paramater '%s' is no longer in use. "
+		printf("Parameter '%s' is no longer in use. "
 			"It was replaced with '%s'.\n", name, d->replacement);
 
 	return is_deprecated;
