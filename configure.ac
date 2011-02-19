@@ -157,6 +157,7 @@ AM_CONDITIONAL(UNITTESTS, [test "x$UNITTESTS" = xyes])
 AC_CONFIG_FILES([Makefile
                  conf/Makefile
                  doc/Makefile
+                 doc/doxygen.conf
                  src/Makefile
                  man/Makefile
                  include/Makefile
