@@ -1316,10 +1316,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		}
 	}
 
-	/* don't send touch event when touch isn't enabled */
-	if ((ds->device_type == TOUCH_ID) && !common->wcmTouch)
-		return;
-
 	/* DTF720 and DTF720a don't support eraser */
 	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
 		(ds->device_type == ERASER_ID)) 
@@ -1333,18 +1329,23 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (!ds->proximity)
 		private->wcmLastToolSerial = 0;
 
-	/* dispatch events */
-	if (channel_change ||
-	    (private->wcmBTNChannel == channel && btn_channel_change))
-		wcmEvent(common, channel, ds);
-
-	/* dispatch for second finger.  first finger is handled above. */
-	if (mt_channel_change)
+	/* don't send touch event when touch isn't enabled */
+	if (ds->device_type != TOUCH_ID || common->wcmTouch)
 	{
-		WacomDeviceState *mt_ds;
+		/* dispatch events */
+		if (channel_change ||
+		    (private->wcmBTNChannel == channel && btn_channel_change))
+			wcmEvent(common, channel, ds);
 
-		mt_ds = &common->wcmChannel[1].work;
-		wcmEvent(common, 1, mt_ds);
+		/* dispatch for second finger.
+		 * first finger is handled above. */
+		if (mt_channel_change)
+		{
+			WacomDeviceState *mt_ds;
+
+			mt_ds = &common->wcmChannel[1].work;
+			wcmEvent(common, 1, mt_ds);
+		}
 	}
 
        /* dispatch butten events when re-routed */
