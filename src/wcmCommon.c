@@ -1430,9 +1430,6 @@ void wcmSoftOutEvent(InputInfoPtr pInfo)
 	out.device_id = wcmGetPhyDeviceID(priv);
 	DBG(2, priv->common, "send a soft prox-out\n");
 	wcmSendEvents(pInfo, &out);
-
-	if (out.device_type == TOUCH_ID)
-		priv->common->wcmTouchpadMode = 0;
 }
 
 /*****************************************************************************
