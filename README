@@ -3,14 +3,8 @@ It obsoletes the linuxwacom driver and supports X server versions 1.7 and
 higher. Server versions lower than 1.7 may be supported by this driver, but
 users are encouraged to use the old linuxwacom driver instead.
 
-Provided that hotplugging is enabled in the X server,  the simplest
-configuration is to copy the wacom.fdi file into /etc/hal/fdi/policies and
-to restart HAL and then plug in the tablet. The driver will autoconfigure
-itself.
-
-If hotplugging is not possible or desired, an InputDevice section in the
-xorg.conf with the Driver wacom will load the device. Details on the
-configuration can be found in xorg.conf(5) and wacom(4).
+Information about building this driver, configuration and general use is
+available on http://linuxwacom.sourceforge.net
 
 Since this driver is an X11 driver only, a kernel driver is required to get
 hardware support. If the kernel driver is older than this driver, some
@@ -20,23 +14,34 @@ features may not be available.
 
 BUILDING FROM GIT:
     $ ./autogen.sh --prefix=/usr
+    $ make
+
 Adjust the prefix according to your local setup, in most cases, a prefix of
 /usr is correct.
 
 BUILDING FROM TARBALL:
 
-    $ ./configure && make
+    $ ./configure --prefix=/usr
+    $ make
+
 Adjust the prefix according to your local setup, in most cases, a prefix of
 /usr is correct.
 
 ==============================================================================
 
-Please surf the HOWTO page at http://linuxwacom.sf.net/index.php/howto/main 
-(or the miniHOWTO at http://linuxwacom.sourceforge.net/index.php/minihowto if 
-you run a Fedora system) to find the proper options if the default building 
-environment doesn't work for you.
+Please surf the HOWTO pages at
+http://sourceforge.net/apps/mediawiki/linuxwacom/index.php?title=Category:HOWTO
+to find the proper options if the default building environment doesn't work
+for you.
 
 ==============================================================================
 
-WEBSITE: http://linuxwacom.sf.net
+Developers, please surf the DeveloperPages at
+http://sourceforge.net/apps/mediawiki/linuxwacom/index.php?title=Category:DeveloperPages
+to find more information on how to contribute to this driver.
+
+==============================================================================
+
+
+WEBSITE: http://linuxwacom.sourceforge.net
 
