@@ -116,6 +116,15 @@ static int wcmInitArea(InputInfoPtr pInfo)
 	/* Maintain aspect ratio to the whole desktop
 	 * May need to consider a specific screen in multimonitor settings
 	 */
+	if ((priv->flags & KEEP_SHAPE_FLAG) &&
+			(priv->maxHeight == 0)) /* safeguard in case screen ratio is unknown */
+	{
+		xf86Msg(X_WARNING,
+			"%s: disabling option \"KeepShape\" as screen shape is not accessible\n",
+			pInfo->name);
+		priv->flags &= ~KEEP_SHAPE_FLAG;
+	}
+
 	if (priv->flags & KEEP_SHAPE_FLAG)
 	{
 
