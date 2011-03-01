@@ -134,12 +134,73 @@ test_normalize_pressure(void)
 	}
 }
 
+/**
+ * After a call to wcmInitialToolSize, the min/max and resolution must be
+ * set up correctly.
+ *
+ * wcmInitialToolSize takes the data from the common rec, so test that the
+ * priv has all the values of the common.
+ */
+static void
+test_initial_size(void)
+{
+	InputInfoRec info = {0};
+	WacomDeviceRec priv = {0};
+	WacomCommonRec common = {0};
+
+	int minx, maxx, miny, maxy, xres, yres;
+
+	info.private = &priv;
+	priv.common = &common;
+
+	/* FIXME: we currently assume min of 0 in the driver. we cannot cope
+	 * with non-zero devices */
+	minx = miny = 0;
+
+	common.wcmMaxX = maxx;
+	common.wcmMaxY = maxy;
+	common.wcmResolX = xres;
+	common.wcmResolY = yres;
+
+	wcmInitialToolSize(&info);
+
+	g_assert(priv.topX == minx);
+	g_assert(priv.topY == minx);
+	g_assert(priv.bottomX == maxx);
+	g_assert(priv.bottomY == maxy);
+	g_assert(priv.resolX == xres);
+	g_assert(priv.resolY == yres);
+
+	/* Same thing for a touch-enabled device */
+	memset(&common, 0, sizeof(common));
+
+	priv.flags = TOUCH_ID;
+	g_assert(IsTouch(&priv));
+
+	common.wcmMaxTouchX = maxx;
+	common.wcmMaxTouchY = maxy;
+	common.wcmTouchResolX = xres;
+	common.wcmTouchResolY = yres;
+
+	wcmInitialToolSize(&info);
+
+	g_assert(priv.topX == minx);
+	g_assert(priv.topY == minx);
+	g_assert(priv.bottomX == maxx);
+	g_assert(priv.bottomY == maxy);
+	g_assert(priv.resolX == xres);
+	g_assert(priv.resolY == yres);
+
+}
+
+
 int main(int argc, char** argv)
 {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/common/refcounting", test_common_ref);
 	g_test_add_func("/common/rebase_pressure", test_rebase_pressure);
 	g_test_add_func("/common/normalize_pressure", test_normalize_pressure);
+	g_test_add_func("/xfree86/initial_size", test_initial_size);
 	return g_test_run();
 }
 
