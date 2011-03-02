@@ -36,9 +36,9 @@
  * data beforehand.
  */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 11
+static int v[MAX_VALUATORS];
 static int *VCOPY(const int *valuators, int nvals)
 {
-	static int v[MAX_VALUATORS];
 	memcpy(v, valuators, nvals * sizeof(int));
 	return v;
 }
