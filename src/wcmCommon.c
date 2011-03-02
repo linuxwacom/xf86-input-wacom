@@ -870,17 +870,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
-	/* Discard the first 2 USB packages due to events delay */
-	if ( (pChannel->nSamples < 2) && IsUSBDevice(common) &&
-		ds.device_type != PAD_ID && (ds.device_type != TOUCH_ID) )
-	{
-		DBG(11, common,
-			"discarded %dth USB data.\n",
-			pChannel->nSamples);
-		++pChannel->nSamples;
-		return; /* discard */
-	}
-
 	if (TabletHasFeature(common, WCM_ROTATION) &&
 		TabletHasFeature(common, WCM_RING)) /* I4 */
 	{
