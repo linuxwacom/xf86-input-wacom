@@ -6,6 +6,11 @@
 #include "fake-symbols.h"
 #include <xf86Wacom.h>
 
+/**
+ * NOTE: this file may not contain tests that require static variables. The
+ * current compiler undef static magic makes them local variables and thus
+ * change the behaviour.
+ */
 
 /**
  * Test refcounting of the common struct.
