@@ -36,7 +36,9 @@ xf86ScaleAxis(int	Cx,
               int	from_min );
 
 extern void DeleteInputDeviceRequest(DeviceIntPtr pDev);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
 extern void FreeInputAttributes(InputAttributes *attrs);
+#endif
 extern void
 xf86PostButtonEvent(DeviceIntPtr	device,
                     int			is_absolute,
@@ -85,14 +87,19 @@ XIChangeDeviceProperty (DeviceIntPtr dev, Atom property, Atom type,
 extern CARD32 GetTimeInMillis (void);
 
 extern int
-NewInputDeviceRequest (InputOption *options, InputAttributes *attrs,
+NewInputDeviceRequest (InputOption *options,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
+                       InputAttributes *attrs,
+#endif
                        DeviceIntPtr *pdev);
 
 extern Bool
 InitLedFeedbackClassDeviceStruct (DeviceIntPtr dev, LedCtrlProcPtr controlProc);
 
 extern ScreenPtr miPointerGetScreen(DeviceIntPtr pDev);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
 extern InputAttributes* DuplicateInputAttributes(InputAttributes *attrs);
+#endif
 extern int ValidAtom(Atom atom);
 extern Bool
 InitKeyboardDeviceStruct(DeviceIntPtr dev, XkbRMLVOSet *rmlvo,

@@ -132,12 +132,13 @@ DeleteInputDeviceRequest(DeviceIntPtr pDev)
 }
 
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
 _X_EXPORT void
 FreeInputAttributes(InputAttributes *attrs)
 {
     return;
 }
-
+#endif
 
 _X_EXPORT void
 xf86PostButtonEvent(DeviceIntPtr	device,
@@ -249,7 +250,10 @@ GetTimeInMillis (void)
 
 
 _X_EXPORT int
-NewInputDeviceRequest (InputOption *options, InputAttributes *attrs,
+NewInputDeviceRequest (InputOption *options,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
+                       InputAttributes *attrs,
+#endif
                        DeviceIntPtr *pdev)
 {
     return 0;
@@ -269,11 +273,13 @@ miPointerGetScreen(DeviceIntPtr pDev)
     return NULL;
 }
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
 _X_EXPORT InputAttributes*
 DuplicateInputAttributes(InputAttributes *attrs)
 {
     return NULL;
 }
+#endif
 
 _X_EXPORT int
 ValidAtom(Atom atom)
