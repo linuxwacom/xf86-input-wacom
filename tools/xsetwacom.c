@@ -1377,7 +1377,7 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	if (strcasecmp(argv[0], "cw") == 0)
 		rotation = 1;
-	else if (strcasecmp(argv[0], "cww") == 0)
+	else if (strcasecmp(argv[0], "ccw") == 0)
 		rotation = 2;
 	else if (strcasecmp(argv[0], "half") == 0)
 		rotation = 3;
