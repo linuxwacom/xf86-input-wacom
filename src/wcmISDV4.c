@@ -315,8 +315,6 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
 
 static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
 {
-	/* Change to generic protocol to match USB MT format */
-	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
 
@@ -951,6 +949,9 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 
 	if (model->set_bits)
 		tablet_id = model->set_bits(id, common->wcmKeys);
+
+	/* Change to generic protocol to match USB MT format */
+	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
 	return tablet_id;
 }
