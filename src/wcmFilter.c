@@ -332,7 +332,7 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 
 	/* Intuos4 mouse has an (180-5) offset */
 	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
-		ds->rotation %= 1800;
+	ds->rotation %= 1800;
 
 	if (ds->rotation >= 900)
 		ds->rotation = 1800 - ds->rotation;
