@@ -249,6 +249,8 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	DBG(1, priv, "\n");
 
+	/* Server 1.10 will UnInit all devices for us */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
 	if (priv->isParent)
 	{
 		/* HAL removal sees the parent device removed first. */
@@ -273,6 +275,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		free(pInfo->name);
 		pInfo->name = NULL;
 	}
+#endif
 
 	if (priv->tool)
 	{
