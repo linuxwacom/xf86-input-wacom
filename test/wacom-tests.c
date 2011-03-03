@@ -228,6 +228,92 @@ test_suppress(void)
 
 	rc = wcmCheckSuppress(&common, &old, &new);
 	g_assert(rc == SUPPRESS_ALL);
+
+	/* proximity, buttons and strip send for any change */
+
+#define test_any_suppress(field) \
+	old.field = 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	g_assert(rc == SUPPRESS_NONE); \
+	new.field = old.field;
+
+	test_any_suppress(proximity);
+	test_any_suppress(buttons);
+	test_any_suppress(stripx);
+	test_any_suppress(stripy);
+
+#undef test_any_suppress
+
+	/* pressure, capacity, throttle, rotation, abswheel only when
+	 * difference is above suppress */
+
+	/* test negative and positive transition */
+#define test_above_suppress(field) \
+	old.field = common.wcmSuppress; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	g_assert(rc == SUPPRESS_ALL); \
+	old.field = common.wcmSuppress + 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	g_assert(rc == SUPPRESS_NONE); \
+	old.field = -common.wcmSuppress; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	g_assert(rc == SUPPRESS_ALL); \
+	old.field = -common.wcmSuppress - 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	g_assert(rc == SUPPRESS_NONE); \
+	new.field = old.field;
+
+	test_above_suppress(pressure);
+	test_above_suppress(capacity);
+	test_above_suppress(throttle);
+	test_above_suppress(rotation);
+	test_above_suppress(abswheel);
+
+#undef test_above_suppress
+
+	/* any movement on relwheel counts */
+	new.relwheel = 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_NONE);
+	new.relwheel = 0;
+
+	/* x axis movement */
+
+	/* not enough movement */
+	new.x = common.wcmSuppress;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_ALL);
+	g_assert(old.x == new.x);
+	g_assert(old.y == new.y);
+
+	/* only x axis above thresh */
+	new.x = common.wcmSuppress + 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_NON_MOTION);
+
+	/* x and other field above thres */
+	new.pressure = ~old.pressure;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_NONE);
+
+	new.pressure = old.pressure;
+	new.x = old.x;
+
+	/* y axis movement */
+	new.y = common.wcmSuppress;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_ALL);
+	g_assert(old.x == new.x);
+	g_assert(old.y == new.y);
+
+	new.y = common.wcmSuppress + 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_NON_MOTION);
+
+	new.pressure = ~old.pressure;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_NONE);
+	new.pressure = old.pressure;
 }
 
 int main(int argc, char** argv)
