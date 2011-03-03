@@ -1011,11 +1011,19 @@ static int findDeviceType(const WacomCommonPtr common,
 	return device_type;
 }
 
-/* Find the device the current events are meant for */
+/**
+ * Find the device the current events are meant for. If multiple tools are
+ * configured on this tablet, the one that matches the serial number for the
+ * current device state is returned. If none match, the tool that has a
+ * serial of 0 is returned.
+ *
+ * @param ds The current device state as read from the fd
+ * @return The tool that should be used to emit the current events.
+ */
 static WacomToolPtr findTool(const WacomCommonPtr common,
 			     const WacomDeviceState *ds)
 {
-	WacomToolPtr tooldef = NULL;
+	WacomToolPtr tooldefault = NULL;
 	WacomToolPtr tool = NULL;
 
 	/* 1: Find the tool (the one with correct serial or in second
@@ -1028,7 +1036,7 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 			if (tool->serial == ds->serial_num)
 				break;
 			else if (!tool->serial)
-				tooldef = tool;
+				tooldefault = tool;
 		}
 	}
 
@@ -1038,7 +1046,7 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
-		tool = tooldef;
+		tool = tooldefault;
 
 	return tool;
 }
