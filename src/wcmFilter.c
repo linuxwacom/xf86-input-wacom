@@ -35,7 +35,6 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
-void wcmTilt2R(WacomDeviceStatePtr ds);
 
 
 /*****************************************************************************
