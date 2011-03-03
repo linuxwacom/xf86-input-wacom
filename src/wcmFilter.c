@@ -348,15 +348,16 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 		 * rotation  and vice versa */
 		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
 
-	/* Intuos4 mouse has an (180-5) offset */
-	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
-	ds->rotation %= 1800;
+	/* Intuos4 mouse has an (180-5) offset,
+	 * normalize into the rotation range. */
+	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * (MAX_ROTATION_RANGE / 360.0));
+	ds->rotation %= MAX_ROTATION_RANGE;
 
 	/* ds->rotation now normalised into 0 - MAX, but we want MIN - MAX
 	 * with 180 degrees (ignoring offset) being at 0 (for whatever
 	 * reason we need this) */
-	if (ds->rotation >= 900)
-		ds->rotation = 1800 - ds->rotation;
+	if (ds->rotation >= (MIN_ROTATION + MAX_ROTATION_RANGE))
+		ds->rotation = MAX_ROTATION_RANGE - ds->rotation; /* wrap around */
 	else
 		ds->rotation = -ds->rotation;
 
