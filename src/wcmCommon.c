@@ -62,12 +62,20 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
  * Utility functions
  ****************************************************************************/
 
+/**
+ * @return TRUE if the device is set to abolute mode, or FALSE otherwise
+ */
 Bool is_absolute(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	return !!(priv->flags & ABSOLUTE_FLAG);
 }
 
+/**
+ * Set the device to absolute or relative mode
+ *
+ * @param absolute TRUE to set the device to absolute mode.
+ */
 void set_absolute(InputInfoPtr pInfo, Bool absolute)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
