@@ -222,8 +222,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	if (IsCursor(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
-		min = -900;
-		max = 899;
+		min = MIN_ROTATION;
+		max = MIN_ROTATION + MAX_ROTATION_RANGE - 1;
 		min_res = max_res = res = 1;
 		mode = Absolute;
 	} else if (IsPad(priv))
