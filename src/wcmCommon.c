@@ -53,8 +53,10 @@ static int *VCOPY(const int *valuators, int nvals)
  ****************************************************************************/
 
 static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState);
-static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel, 
-	const WacomChannelPtr pChannel, int suppress);
+static void commonDispatchDevice(WacomCommonPtr common,
+				 unsigned int channel,
+				 const WacomChannelPtr pChannel,
+				 enum WacomSuppressMode suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 			int first_val, int num_vals, int *valuators);
 
@@ -766,50 +768,69 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	}
 }
 
-/*****************************************************************************
- * wcmCheckSuppress --
- *  Determine whether device state has changed enough - return 0
- *  if not.
- ****************************************************************************/
-
-static int wcmCheckSuppress(WacomCommonPtr common,
-			    const WacomDeviceState* dsOrig,
-			    WacomDeviceState* dsNew)
+/**
+ * Determine whether device state has changed enough to warrant further
+ * processing. The driver's "suppress" setting decides how much
+ * movement/state change must occur before we process events to avoid
+ * overloading the server with minimal changes (and getting fuzzy events).
+ * wcmCheckSuppress ensures that events meet this standard.
+ *
+ * @param dsOrig Previous device state
+ * @param dsNew Current device state
+ *
+ * @retval SUPPRESS_ALL Ignore this event completely.
+ * @retval SUPPRESS_NONE Process event normally.
+ * @retval SUPPRESS_NON_MOTION Suppress all data but motion data.
+ */
+static enum WacomSuppressMode
+wcmCheckSuppress(WacomCommonPtr common,
+		 const WacomDeviceState* dsOrig,
+		 WacomDeviceState* dsNew)
 {
 	int suppress = common->wcmSuppress;
-	/* NOTE: Suppression value of zero disables suppression. */
-	int returnV = 0;
+	enum WacomSuppressMode returnV = SUPPRESS_NONE;
 
 	/* Ignore all other changes that occur after initial out-of-prox. */
 	if (!dsNew->proximity && !dsOrig->proximity)
-		return 0;
+		return SUPPRESS_ALL;
 
 	/* Never ignore proximity changes. */
-	if (dsOrig->proximity != dsNew->proximity) returnV = 1;
+	if (dsOrig->proximity != dsNew->proximity) goto out;
 
-	if (dsOrig->buttons != dsNew->buttons) returnV = 1;
-	if (dsOrig->stripx != dsNew->stripx) returnV = 1;
-	if (dsOrig->stripy != dsNew->stripy) returnV = 1;
-	if (abs(dsOrig->tiltx - dsNew->tiltx) > suppress) returnV = 1;
-	if (abs(dsOrig->tilty - dsNew->tilty) > suppress) returnV = 1;
-	if (abs(dsOrig->pressure - dsNew->pressure) > suppress) returnV = 1;
-	if (abs(dsOrig->capacity - dsNew->capacity) > suppress) returnV = 1;
-	if (abs(dsOrig->throttle - dsNew->throttle) > suppress) returnV = 1;
+	if (dsOrig->buttons != dsNew->buttons) goto out;
+	if (dsOrig->stripx != dsNew->stripx) goto out;
+	if (dsOrig->stripy != dsNew->stripy) goto out;
+
+	/* FIXME: we should have different suppress values for different
+	 * axes. The resolution for x/y is vastly higher than for capacity
+	 * for example. */
+	if (abs(dsOrig->tiltx - dsNew->tiltx) > suppress) goto out;
+	if (abs(dsOrig->tilty - dsNew->tilty) > suppress) goto out;
+	if (abs(dsOrig->pressure - dsNew->pressure) > suppress) goto out;
+	if (abs(dsOrig->capacity - dsNew->capacity) > suppress) goto out;
+	if (abs(dsOrig->throttle - dsNew->throttle) > suppress) goto out;
 	if (abs(dsOrig->rotation - dsNew->rotation) > suppress &&
-		(1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) returnV = 1;
+	    (1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) goto out;
 
 	/* look for change in absolute wheel position 
 	 * or any relative wheel movement
 	 */
 	if ((abs(dsOrig->abswheel - dsNew->abswheel) > suppress) 
-		|| (dsNew->relwheel != 0)) returnV = 1;
+		|| (dsNew->relwheel != 0))
+		goto out;
 
-	/* cursor moves or not? */
+	returnV = SUPPRESS_ALL;
+
+out:
+	/* Special handling for cursor: if nothing else changed but the
+	 * pointer x/y, suppress all but cursor movement. This return value
+	 * is used in commonDispatchDevice to short-cut event processing.
+	 */
 	if ((abs(dsOrig->x - dsNew->x) > suppress) || 
 			(abs(dsOrig->y - dsNew->y) > suppress)) 
 	{
-		if (!returnV) /* need to check if cursor moves or not */
-			returnV = 2;
+		if (returnV == SUPPRESS_ALL)
+			returnV = SUPPRESS_NON_MOTION;
 	}
 	else /* don't move cursor */
 	{
@@ -833,7 +854,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
-	int suppress = 0;
+	enum WacomSuppressMode suppress;
 	WacomDevicePtr priv = common->wcmDevices;
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
@@ -895,12 +916,10 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		common->wcmModel->FilterRaw(common,pChannel,&ds);
 	}
 
-	/* Discard unwanted data */
+	/* skip event if we don't have enough movement */
 	suppress = wcmCheckSuppress(common, pLast, &ds);
-	if (!suppress)
-	{
+	if (suppress == SUPPRESS_ALL)
 		return;
-	}
 
 	/* JEJ - Do not move this code without discussing it with me.
 	 * The device state is invariant of any filtering performed below.
@@ -1148,7 +1167,8 @@ setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
 }
 
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
-				 const WacomChannelPtr pChannel, Bool suppress)
+				 const WacomChannelPtr pChannel,
+				 enum WacomSuppressMode suppress)
 {
 	InputInfoPtr pInfo = NULL;
 	WacomToolPtr tool = NULL;
@@ -1260,20 +1280,19 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		deltx *= priv->factorX;
 		delty *= priv->factorY;
 
+		/* less than one device coordinate movement? */
 		if (abs(deltx)<1 && abs(delty)<1)
 		{
-			/* don't move the cursor */
-			if (suppress == 1)
-			{
-				/* send other events, such as button/wheel */
-				filtered.x = priv->oldX;
-				filtered.y = priv->oldY;
-			}
-			else /* no other events to send */
+			/* We have no other data in this event, skip */
+			if (suppress == SUPPRESS_NON_MOTION)
 			{
 				DBG(10, common, "Ignore non-movement relative data \n");
 				return;
 			}
+
+			/* send other events, such as button/wheel */
+			filtered.x = priv->oldX;
+			filtered.y = priv->oldY;
 		}
 	}
 

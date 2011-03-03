@@ -175,6 +175,12 @@ extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
 extern void wcmFreeCommon(WacomCommonPtr *common);
 extern WacomCommonPtr wcmNewCommon(void);
 
+enum WacomSuppressMode {
+	SUPPRESS_NONE = 8,	/* Process event normally */
+	SUPPRESS_ALL,		/* Supress and discard the whole event */
+	SUPPRESS_NON_MOTION	/* Supress all events but x/y motion */
+};
+
 /****************************************************************************/
 #endif /* __XF86WACOM_H */
 

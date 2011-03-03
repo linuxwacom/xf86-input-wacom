@@ -216,6 +216,19 @@ test_initial_size(void)
 
 }
 
+static void
+test_suppress(void)
+{
+	enum WacomSuppressMode rc;
+	WacomCommonRec common = {0};
+	WacomDeviceState old = {0},
+			 new = {0};
+
+	common.wcmSuppress = 2;
+
+	rc = wcmCheckSuppress(&common, &old, &new);
+	g_assert(rc == SUPPRESS_ALL);
+}
 
 int main(int argc, char** argv)
 {
@@ -223,6 +236,7 @@ int main(int argc, char** argv)
 	g_test_add_func("/common/refcounting", test_common_ref);
 	g_test_add_func("/common/rebase_pressure", test_rebase_pressure);
 	g_test_add_func("/common/normalize_pressure", test_normalize_pressure);
+	g_test_add_func("/common/test_suppress", test_suppress);
 	g_test_add_func("/xfree86/initial_size", test_initial_size);
 	return g_test_run();
 }
