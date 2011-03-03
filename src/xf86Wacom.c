@@ -223,7 +223,7 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
 		min = -900;
-		max = -899;
+		max = 899;
 		min_res = max_res = res = 1;
 		mode = Absolute;
 	} else if (IsPad(priv))
