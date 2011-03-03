@@ -872,9 +872,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (priv == NULL || !IsTouch(priv))
 		{
 			priv = common->wcmDevices;
-			/* this error will likely cause the driver crash */
-			xf86Msg(X_ERROR, "%s: wcmEvent could not "
-				"find touch device.\n", priv->name);
+			xf86Msg(X_ERROR, "could not find touch device "
+				"for device on %s.\n", common->device_path);
 		}
 	}
 
