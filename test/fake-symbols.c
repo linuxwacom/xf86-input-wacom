@@ -132,7 +132,7 @@ DeleteInputDeviceRequest(DeviceIntPtr pDev)
 }
 
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 _X_EXPORT void
 FreeInputAttributes(InputAttributes *attrs)
 {
@@ -251,7 +251,7 @@ GetTimeInMillis (void)
 
 _X_EXPORT int
 NewInputDeviceRequest (InputOption *options,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
                        InputAttributes *attrs,
 #endif
                        DeviceIntPtr *pdev)
@@ -273,7 +273,7 @@ miPointerGetScreen(DeviceIntPtr pDev)
     return NULL;
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION >= 11)
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 _X_EXPORT InputAttributes*
 DuplicateInputAttributes(InputAttributes *attrs)
 {
