@@ -380,35 +380,78 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
 #endif
 
 /**
- * Hotplug one device of the given type.
+ * This struct contains the necessary info for hotplugging a device later.
+ * Memory must be freed after use.
+ */
+typedef struct {
+	InputOption *input_options;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
+	InputAttributes *attrs;
+#endif
+} WacomHotplugInfo;
+
+/**
+ * Actually hotplug the device. This function is called by the server when
+ * the WorkProcs are processed.
+ *
+ * @param client The server client. unused
+ * @param closure A pointer to a struct WcmHotplugInfo containing the
+ * necessary information to create a new device.
+ * @return TRUE to remove this function from the server's work queue.
+ */
+static Bool
+wcmHotplugDevice(ClientPtr client, pointer closure )
+{
+	WacomHotplugInfo *hotplug_info = closure;
+	DeviceIntPtr dev; /* dummy */
+
+	NewInputDeviceRequest(hotplug_info->input_options,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
+			      hotplug_info->attrs,
+#endif
+			      &dev);
+	wcmFreeInputOpts(hotplug_info->input_options);
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
+	FreeInputAttributes(hotplug_info->attrs);
+#endif
+	free(hotplug_info);
+
+	return TRUE;
+}
+
+/**
+ * Queue the hotplug for one tool/device of the given type.
  * Device has the same options as the "parent" device, type is one of
  * erasor, stylus, pad, touch, cursor, etc.
  * Name of the new device is set automatically to "<device name> <type>".
+ *
+ * Note that we don't actually hotplug the device here. We store the
+ * information needed to hotplug the device later and then queue the
+ * hotplug. The server will come back and call the @wcmHotplugDevice
+ * later.
+ *
+ * @param pInfo The parent device
+ * @param basename The base name for the device (type will be appended)
+ * @param type Type name for this tool
  */
-static void wcmHotplug(InputInfoPtr pInfo, const char* basename, const char *type)
+static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type)
 {
-	DeviceIntPtr dev; /* dummy */
-	InputOption *input_options;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
-	InputAttributes *attrs = NULL;
-#endif
+	WacomHotplugInfo *hotplug_info;
 
-	input_options = wcmOptionDupConvert(pInfo, basename, type);
+	hotplug_info = calloc(1, sizeof(WacomHotplugInfo));
 
+	if (!hotplug_info)
+	{
+		xf86Msg(X_ERROR, "%s: OOM, cannot hotplug dependent devices\n", pInfo->name);
+		return;
+	}
+
+	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
-	attrs = wcmDuplicateAttributes(pInfo, type);
+	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
 #endif
-
-	NewInputDeviceRequest(input_options,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
-				attrs,
-#endif
-				&dev);
-	wcmFreeInputOpts(input_options);
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
-	FreeInputAttributes(attrs);
-#endif
+	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 
 void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
@@ -427,7 +470,7 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
 			if (skip)
 				skip = 0;
 			else
-				wcmHotplug(pInfo, basename, wcmType[i].type);
+				wcmQueueHotplug(pInfo, basename, wcmType[i].type);
 		}
 	}
         xf86Msg(X_INFO, "%s: hotplugging completed.\n", pInfo->name);
