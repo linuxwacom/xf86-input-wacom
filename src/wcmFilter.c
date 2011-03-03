@@ -313,12 +313,29 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	return 0; /* lookin' good */
 }
 
-/*****************************************************************************
- *  wcmTilt2R -
- *   Converts tilt X and Y to rotation, for Intuos4 mouse for now.
- *   It can be used for other devices when necessary.
- ****************************************************************************/
+/***
+ * Convert tilt X and Y to rotation
+ *
+ * This function is currently called for the Intuos4 mouse (cursor) tool
+ * only, but it may be used for other devices in the future.
+ *
+ * Method used: rotation angle is calculated through the atan of the tiltx/y
+ * coordinates, then converted to degrees and normalized into the rotation
+ * range (MIN_ROTATION/MAX_ROTATION).
 
+ * IMPORTANT: calculation inverts direction, the formula to get the target
+ * rotation value in degrees is: 360 - offset - input-angle.
+ *
+ * Example table of return values for an offset of 0, assuming a left-handed
+ * coordinate system:
+ * input  0 degrees:	MIN
+ *       90 degrees:	MAX - RANGE/4
+ *      180 degrees:	RANGE/2
+ *      270 degrees:	MIN + RANGE/4
+ *
+ * @param ds The current device state, will be modified to set to the
+ * calculated rotation value.
+ */
 void wcmTilt2R(WacomDeviceStatePtr ds)
 {
 	short tilt_x = ds->tiltx;
@@ -327,16 +344,23 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 
 	/* other tilt-enabled devices need to apply round() after this call */
 	if (tilt_x || tilt_y)
+		/* rotate in the inverse direction, changing CW to CCW
+		 * rotation  and vice versa */
 		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
 
 	/* Intuos4 mouse has an (180-5) offset */
 	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
 	ds->rotation %= 1800;
 
+	/* ds->rotation now normalised into 0 - MAX, but we want MIN - MAX
+	 * with 180 degrees (ignoring offset) being at 0 (for whatever
+	 * reason we need this) */
 	if (ds->rotation >= 900)
 		ds->rotation = 1800 - ds->rotation;
 	else
 		ds->rotation = -ds->rotation;
+
+	/* FIXME: shouldn't we reset tilt? */
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
