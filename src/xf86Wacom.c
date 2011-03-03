@@ -755,6 +755,23 @@ static void wcmDevClose(InputInfoPtr pInfo)
 	}
 }
 
+static void wcmEnableDisableTool(DeviceIntPtr dev, Bool enable)
+{
+	InputInfoPtr	pInfo	= dev->public.devicePrivate;
+	WacomDevicePtr	priv	= pInfo->private;
+	WacomToolPtr	tool	= priv->tool;
+
+	tool->enabled = enable;
+}
+
+static void wcmEnableTool(DeviceIntPtr dev)
+{
+	wcmEnableDisableTool(dev, TRUE);
+}
+static void wcmDisableTool(DeviceIntPtr dev)
+{
+	wcmEnableDisableTool(dev, FALSE);
+}
 /*****************************************************************************
  * wcmDevProc --
  *   Handle the initialization, etc. of a wacom tablet. Called by the server
@@ -791,12 +808,14 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_ON:
 			if (!wcmDevOpen(pWcm))
 				goto out;
+			wcmEnableTool(pWcm);
 			xf86AddEnabledDevice(pInfo);
 			pWcm->public.on = TRUE;
 			break;
 
 		case DEVICE_OFF:
 		case DEVICE_CLOSE:
+			wcmDisableTool(pWcm);
 			if (pInfo->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(pInfo);

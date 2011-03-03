@@ -1163,16 +1163,15 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	pInfo = tool->device;
-	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pInfo->name);
-
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
-	if (!pInfo || !pInfo->dev || !pInfo->dev->enabled)
-	{
+	if (!tool->enabled) {
 		xf86Msg(X_ERROR, "wcmEvent: tool not initialized yet. Skipping event. \n");
 		return;
 	}
+
+	pInfo = tool->device;
+	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pInfo->name);
 
 	filtered = pChannel->valid.state;
 
