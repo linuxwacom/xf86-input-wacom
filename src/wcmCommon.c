@@ -1040,10 +1040,6 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 		}
 	}
 
-	/* pad does not need area check. Skip the unnecessary steps */
-	if (tool && (tool->typeid == PAD_ID))
-		return tool;
-
 	/* Use default tool (serial == 0) if no specific was found */
 	if (!tool)
 		tool = tooldefault;
