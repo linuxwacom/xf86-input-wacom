@@ -200,7 +200,7 @@ static struct
 	{ WACOM_VENDOR_ID, 0xD7, 100000, 100000, &usbBamboo     }, /* CTH-461/S */
 	{ WACOM_VENDOR_ID, 0xD8, 100000, 100000, &usbBamboo     }, /* CTH-661/S1 */
 	{ WACOM_VENDOR_ID, 0xDA, 100000, 100000, &usbBamboo     }, /* CTH-461/L */
-	{ WACOM_VENDOR_ID, 0xDB, 100000, 100000, &usbBamboo     }, /* CTH-661 */
+	{ WACOM_VENDOR_ID, 0xDB, 100000, 100000, &usbBamboo     }, /* CTH-661/L */
 
 	{ WACOM_VENDOR_ID, 0x20, 100000, 100000, &usbIntuos     }, /* Intuos 4x5 */
 	{ WACOM_VENDOR_ID, 0x21, 100000, 100000, &usbIntuos     }, /* Intuos 6x8 */
