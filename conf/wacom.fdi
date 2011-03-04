@@ -8,7 +8,7 @@
       </match>
     </match>
     <match key="info.capabilities" contains="serial">
-      <match key="@info.parent:pnp.id" contains_outof="WACf;FUJ02e5;FUJ02e7">
+      <match key="@info.parent:pnp.id" contains_outof="WACf;FUJ02e5;FUJ02e7;FUJ02e9">
 	<append key="info.capabilities" type="strlist">input</append>
 	<merge key="input.x11_driver" type="string">wacom</merge>
 	<merge key="input.device" type="copy_property">serial.device</merge>
