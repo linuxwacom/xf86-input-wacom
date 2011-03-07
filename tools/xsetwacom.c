@@ -1172,6 +1172,8 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	for (i = 0; i < nwords; i++)
 	{
 		int j = 0;
+		int keyword_found = 0;
+
 		while (keywords[j].keyword && i < nwords)
 		{
 			int parsed = 0;
@@ -1181,12 +1183,16 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 							  &words[i + 1],
 							  &nitems, data);
 				i += parsed;
+				keyword_found = 1;
 			}
 			if (parsed)
 				j = parsed = 0; /* restart with first keyword */
 			else
 				j++;
 		}
+
+		if (!keyword_found)
+			fprintf(stderr, "Cannot parse keyword '%s'\n", words[i]);
 	}
 
 	if (argc > 0) /* unset property */
