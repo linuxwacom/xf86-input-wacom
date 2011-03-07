@@ -1283,9 +1283,9 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param,
 }
 /*
    Supports two variations, simple mapping and special mapping:
-   xsetwacom set device Button1 1
+   xsetwacom set device Button 1 1
 	- maps button 1 to logical button 1
-   xsetwacom set device Button1 "key a b c d"
+   xsetwacom set device Button 1 "key a b c d"
 	- maps button 1 to key events a b c d
  */
 static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
