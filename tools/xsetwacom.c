@@ -1197,7 +1197,8 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 			fprintf(stderr, "Cannot parse keyword '%s'\n", words[i]);
 	}
 
-	if (unset_prop)
+	/* if we don't have any data, don't update the property */
+	if (unset_prop || nitems > 0)
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
@@ -1293,14 +1294,14 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	int button, /* button to be mapped */
 	    mapping;
 
-	if (argc <= 1 || (sscanf(argv[0], "%d", &button) != 1))
+	if (argc < 1 || (sscanf(argv[0], "%d", &button) != 1))
 		return;
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
 
 	/* --set "device" Button1 3 */
-	if (sscanf(argv[1], "%d", &mapping) == 1)
+	if (argc > 1 && sscanf(argv[1], "%d", &mapping) == 1)
 		map_button_simple(dpy, dev, param, button, mapping);
 	else
 		special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
