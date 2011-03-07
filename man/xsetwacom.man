@@ -66,7 +66,8 @@ Get the current settings for the parameter on the given device. Note that
 not all parameters are available on all device types. The special parameter
 name "all" may be provided to display all current settings on the device.
 .TP
-By default, options are printed on the commandline in the respective format. The output format may be altered with one of the following options:
+By default, options are printed on the commandline in the respective format.
+The output format may be altered with one of the following options:
 .TP
 \fB-s, --shell\fR
 Display the output in shell format, i.e. as shell commands to xsetwacom to
@@ -84,16 +85,20 @@ not all parameters are writable, some are read-only and result in an error
 when trying to be modified.
 
 .SH "PARAMETERS"
+.LP
+Not all parameters are available on all tools.  Use the get command with the
+parameter or "all" parameter for specific input tool applicable parameters
+and current settings.
 .TP
 \fBArea\fR x1 y1 x2 y2
-Specify the tablet input area in device coordinates in the form top left
+Set the tablet input area in device coordinates in the form top left
 x/y and bottom right x/y. Top left and bottom right are defined in the
 device's native orientation, regardless of the actual rotation currently
-applied. Input outside of these coordinates will be clipped
-to the edges of the area defined.
+applied. Input outside of these coordinates will be clipped to the edges
+of the area defined.  Default:  0 0 x2 y2; with x2 and y2 tablet specific.
 .TP
 \fBButton\fR button-number [mapping]
-Get or set the specified button. The mapping may be a button number to map
+Set the specified button. The mapping may be a button number to map
 the physical button to. e.g. a mapping of button 1 to 3 means
 a button 1 press will be interpreted as right click. Alternatively, a
 mapping in the form of "key +a +shift b -shift -a" converts the button into a series
@@ -105,25 +110,64 @@ the keyboard layout changes.
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of
 outputs may be obtained with the xrandr tool. The output mapping
-configuration is a once-off setting and does not track output
+configuration is a onetime setting and does not track output
 reconfigurations; the command needs to be re-run whenever the output
 configuration changes. When used with tablet rotation, the tablet must be
 rotated before it is mapped to the new screen.
 This parameter is write-only and cannot be queried.
+.TP
+\fBMode\fR Absolute|Relative
+Set the device mode as either Relative or Absolute. Relative means pointer
+tracking for the device will function like a mouse, whereas Absolute means
+the pointer corresponds to the device's actual position on the tablet or
+tablet PC screen.  Default:  Absolute for stylus, eraser and tablet PC touch;
+Relative for cursor and tablet touch.
+.TP
+\fBPressureCurve\fR x1 y1 x2 y2
+A Bezier curve of third order, composed of two anchor points (0,0 and 100,100)
+and two user modifiable control points that define the curve's shape.  Raise
+the curve (x1<y1 x2<y2) to "soften" the feel and lower the curve (x1>y1 x2>y2)
+for a "firmer" feel.  Sigmoid shaped curves are permitted (x1>y1 x2<y2 or
+x1<y1 x2>y2).  Default:  0 0 100 100, a linear curve; range of 0 to 100 for
+all four values.
+.TP
+\fBRotate\fR none|half|cw|ccw
+Set the tablet to the given rotation:
+  none: the tablet is not rotated and uses its natural rotation
+  half: the tablet is rotated by 180 degrees (upside-down)
+  cw: the tablet is rotated 90 degrees clockwise
+  ccw: the tablet is rotated 90 degrees counter-clockwise
+
+Rotation is tool-specific, rotation of one does not affect other input tools.
+When the tablet is physically rotated, rotate all tools to the corresponding
+orientation.  Default:  none
 .TP
 \fBTabletDebugLevel\fR level
 Set the debug level for this tablet to the given level. This only affects
 code paths that are shared between several tools on the same physical
 tablet. A higher level means more fine-grained debug messages, a level of 0
 turns debugging off for this tool. Requires the driver to be built with
-debugging enabled. See also ToolDebugLevel.
+debugging enabled. See also ToolDebugLevel.  Default:  0, range of 0 to 12.
+.TP
+\fBTabletPCButton\fR on|off
+If on, the stylus must be in contact with the screen for a stylus side button
+to work.  If off, stylus buttons will work once the stylus is in proximity
+of the tablet (regardless of whether it is touching the screen).  Default:
+on for Tablet PCs; off for all other models.
+.TP
+\fBThreshold\fR level
+Set the minimum pressure necessary to generate a Button event for the stylus
+tip, eraser, or touch.  The pressure levels of all tablets are normalized to
+2048 levels irregardless of the actual hardware supported levels.  This
+parameter is independent of the PressureCurve parameter.  Default:  27,
+range of 0 to 2047.
 .TP
 \fBToolDebugLevel\fR level
-Set the debug level for this tool to the given level. This only affects code
-paths that are specific to a given tool. A higher level means
-more fine-grained debug messages, a level of 0 turns debugging off for this
+Set the debug level for this tool to the given level. This only affects
+code paths that are specific to a given tool. A higher level means more
+fine-grained debug messages, a level of 0 turns debugging off for this
 tool. Requires the driver to be built with debugging enabled. See also
-TabletDebugLevel.
+TabletDebugLevel.  Default:  0, range of 0 to 12.
 
 
 .SH "AUTHORS"
