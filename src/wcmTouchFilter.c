@@ -54,28 +54,34 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 		WacomDeviceState ds1)
 {
 	Bool ret = FALSE;
+	Bool rotated = common->wcmRotate == ROTATE_CW ||
+			common->wcmRotate == ROTATE_CCW;
+	int horizon_rotated = (rotated) ?
+			WACOM_HORIZ_ALLOWED : WACOM_VERT_ALLOWED;
+	int vertical_rotated = (rotated) ?
+			WACOM_VERT_ALLOWED : WACOM_HORIZ_ALLOWED;
 
 	if (!common->wcmGestureParameters.wcmScrollDirection)
 	{
 		if ((abs(ds0.x - ds1.x) < WACOM_INLINE_DISTANCE) &&
 			(abs(ds0.y - ds1.y) > WACOM_INLINE_DISTANCE))
 		{
-			common->wcmGestureParameters.wcmScrollDirection = WACOM_VERT_ALLOWED;
+			common->wcmGestureParameters.wcmScrollDirection = horizon_rotated;
 			ret = TRUE;
 		}
 		if ((abs(ds0.y - ds1.y) < WACOM_INLINE_DISTANCE) &&
 			(abs(ds0.x - ds1.x) > WACOM_INLINE_DISTANCE))
 		{
-			common->wcmGestureParameters.wcmScrollDirection = WACOM_HORIZ_ALLOWED;
+			common->wcmGestureParameters.wcmScrollDirection = vertical_rotated;
 			ret = TRUE;
 		}
 	}
-	else if (common->wcmGestureParameters.wcmScrollDirection == WACOM_HORIZ_ALLOWED)
+	else if (common->wcmGestureParameters.wcmScrollDirection == vertical_rotated)
 	{
 		if (abs(ds0.y - ds1.y) < WACOM_INLINE_DISTANCE)
 			ret = TRUE;
 	}
-	else if (common->wcmGestureParameters.wcmScrollDirection == WACOM_VERT_ALLOWED)
+	else if (common->wcmGestureParameters.wcmScrollDirection == horizon_rotated)
 	{
 		if (abs(ds0.x - ds1.x) < WACOM_INLINE_DISTANCE)
 			ret = TRUE;
