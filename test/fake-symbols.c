@@ -267,12 +267,6 @@ InitLedFeedbackClassDeviceStruct (DeviceIntPtr dev, LedCtrlProcPtr controlProc)
 }
 
 
-_X_EXPORT ScreenPtr
-miPointerGetScreen(DeviceIntPtr pDev)
-{
-    return NULL;
-}
-
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 _X_EXPORT InputAttributes*
 DuplicateInputAttributes(InputAttributes *attrs)

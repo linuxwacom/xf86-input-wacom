@@ -96,7 +96,6 @@ NewInputDeviceRequest (InputOption *options,
 extern Bool
 InitLedFeedbackClassDeviceStruct (DeviceIntPtr dev, LedCtrlProcPtr controlProc);
 
-extern ScreenPtr miPointerGetScreen(DeviceIntPtr pDev);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 extern InputAttributes* DuplicateInputAttributes(InputAttributes *attrs);
 #endif
