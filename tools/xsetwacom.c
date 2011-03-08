@@ -115,7 +115,7 @@ static param_t parameters[] =
 {
 	{
 		.name = "Area",
-		.desc = "Valid tablet area in device coordinates.",
+		.desc = "Valid tablet area in device coordinates. ",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
@@ -129,8 +129,8 @@ static param_t parameters[] =
 	},
 	{
 		.name = "ToolDebugLevel",
-		.desc = "Level of debugging trace for individual tools, "
-		"default is 0 (off). ",
+		.desc = "Level of debugging trace for individual tools "
+		"(default is 0 [off]). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 0,
@@ -139,29 +139,29 @@ static param_t parameters[] =
 		.name = "TabletDebugLevel",
 		.desc = "Level of debugging statements applied to shared "
 		"code paths between all tools "
-		"associated with the same tablet. default is 0 (off). ",
+		"associated with the same tablet (default is 0 [off]). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 1,
 	},
 	{
 		.name = "Suppress",
-		.desc = "Number of points trimmed, default is 2. ",
+		.desc = "Number of points trimmed (default is 2). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
 		.prop_offset = 1,
 	},
 	{
 		.name = "RawSample",
-		.desc = "Number of raw data used to filter the points, "
-		"default is 4. ",
+		.desc = "Number of raw data used to filter the points "
+		"(default is 4). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
 		.prop_offset = 0,
 	},
 	{
 		.name = "PressureCurve",
-		.desc = "Bezier curve for pressure (default is 0 0 100 100). ",
+		.desc = "Bezier curve for pressure (default is 0 0 100 100 [linear]). ",
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
 		.prop_offset = 0,
@@ -169,15 +169,15 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Mode",
-		.desc = "Switches cursor movement mode (default is absolute/on). ",
+		.desc = "Switches cursor movement mode (default is absolute). ",
 		.set_func = set_mode,
 		.get_func = get_mode,
 	},
 	{
 		.name = "TabletPCButton",
-		.desc = "Turns on/off Tablet PC buttons. "
-		"default is off for regular tablets, "
-		"on for Tablet PC. ",
+		.desc = "Turns on/off Tablet PC buttons "
+		"(default is off for regular tablets, "
+		"on for Tablet PC). ",
 		.prop_name = WACOM_PROP_HOVER,
 		.prop_format = 8,
 		.prop_offset = 0,
@@ -185,7 +185,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Touch",
-		.desc = "Turns on/off Touch events (default is enable/on). ",
+		.desc = "Turns on/off Touch events (default is on). ",
 		.prop_name = WACOM_PROP_TOUCH,
 		.prop_format = 8,
 		.prop_offset = 0,
@@ -194,7 +194,7 @@ static param_t parameters[] =
 	{
 		.name = "Gesture",
 		.desc = "Turns on/off multi-touch gesture events "
-		"(default is enable/on). ",
+		"(default is on). ",
 		.prop_name = WACOM_PROP_ENABLE_GESTURE,
 		.prop_format = 8,
 		.prop_offset = 0,
@@ -226,8 +226,8 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Capacity",
-		.desc = "Touch sensitivity level (default is 3, "
-		"-1 for non-capacitive tools).",
+		.desc = "Touch sensitivity level (default is 3 for capacitive tools, "
+		"-1 for others). ",
 		.prop_name = WACOM_PROP_CAPACITY,
 		.prop_format = 32,
 		.prop_offset = 0,
@@ -235,9 +235,9 @@ static param_t parameters[] =
 	{
 		.name = "CursorProximity",
 		.desc = "Sets cursor distance for proximity-out "
-		"in distance from the tablet.  "
+		"in distance from the tablet "
 		"(default is 10 for Intuos series, "
-		"42 for Graphire series).",
+		"42 for Graphire series). ",
 		.prop_name = WACOM_PROP_PROXIMITY_THRESHOLD,
 		.prop_format = 32,
 		.prop_offset = 0,
@@ -245,7 +245,7 @@ static param_t parameters[] =
 	{
 		.name = "Rotate",
 		.desc = "Sets the rotation of the tablet. "
-		"Values = none, cw, ccw, half (default is none).",
+		"Values = none, cw, ccw, half (default is none). ",
 		.prop_name = WACOM_PROP_ROTATION,
 		.set_func = set_rotate,
 		.get_func = get_rotate,
@@ -316,8 +316,8 @@ static param_t parameters[] =
 	},
 	{
 		.name = "RawFilter",
-		.desc = "Enables and disables filtering of raw data, "
-		"default is true/on.",
+		.desc = "Enables and disables filtering of raw data "
+		"(default is on). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 8,
 		.prop_offset = 0,
@@ -326,7 +326,7 @@ static param_t parameters[] =
 	{
 		.name = "Threshold",
 		.desc = "Sets tip/eraser pressure threshold "
-		"(default is 27)",
+		"(default is 27). ",
 		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
 		.prop_format = 32,
 		.prop_offset = 0,
@@ -372,7 +372,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "all",
-		.desc = "Get value for all parameters.",
+		.desc = "Get value for all parameters. ",
 		.get_func = get_all,
 		.prop_flags = PROP_FLAG_READONLY,
 	},
