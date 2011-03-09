@@ -906,14 +906,13 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	/* Optionally filter values only while in proximity */
-	if (common->wcmModel->FilterRaw &&
-	    ds.proximity && ds.device_type != PAD_ID)
+	if (ds.proximity && ds.device_type != PAD_ID)
 	{
 		/* Start filter fresh when entering proximity */
 		if (!pLast->proximity)
 			wcmResetSampleCounter(pChannel);
 
-		common->wcmModel->FilterRaw(common,pChannel,&ds);
+		wcmFilterCoord(common,pChannel,&ds);
 	}
 
 	/* skip event if we don't have enough movement */

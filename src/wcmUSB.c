@@ -22,7 +22,6 @@
 #endif
 
 #include "xf86Wacom.h"
-#include "wcmFilter.h"
 
 #include <asm/types.h>
 #include <linux/input.h>
@@ -76,7 +75,6 @@ static struct _WacomModel mname =		\
 	.GetRanges = usbWcmGetRanges,		\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\
-	.FilterRaw = wcmFilterCoord,		\
 	.DetectConfig = usbDetectConfig,	\
 };
 

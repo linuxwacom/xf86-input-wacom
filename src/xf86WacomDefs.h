@@ -128,8 +128,6 @@ struct _WacomModel
 	int (*GetRanges)(InputInfoPtr pInfo);
 	int (*Start)(InputInfoPtr pInfo);
 	int (*Parse)(InputInfoPtr pInfo, const unsigned char* data, int len);
-	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
-		WacomDeviceStatePtr ds);
 	int (*DetectConfig)(InputInfoPtr pInfo);
 };
 
