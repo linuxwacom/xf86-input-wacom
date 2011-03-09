@@ -149,7 +149,7 @@ static param_t parameters[] =
 		.desc = "Number of points trimmed (default is 2). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
-		.prop_offset = 1,
+		.prop_offset = 0,
 	},
 	{
 		.name = "RawSample",
@@ -157,7 +157,7 @@ static param_t parameters[] =
 		"(default is 4). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
-		.prop_offset = 0,
+		.prop_offset = 1,
 	},
 	{
 		.name = "PressureCurve",

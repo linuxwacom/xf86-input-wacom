@@ -537,6 +537,9 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		}
 	}
 
+	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
+			common->wcmRawSample);
+
 	common->wcmSuppress = xf86SetIntOption(pInfo->options, "Suppress",
 			common->wcmSuppress);
 	if (common->wcmSuppress != 0) /* 0 disables suppression */
