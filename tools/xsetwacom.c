@@ -315,15 +315,6 @@ static param_t parameters[] =
 		.set_func = map_wheels,
 	},
 	{
-		.name = "RawFilter",
-		.desc = "Enables and disables filtering of raw data "
-		"(default is on). ",
-		.prop_name = WACOM_PROP_SAMPLE,
-		.prop_format = 8,
-		.prop_offset = 0,
-		.prop_flags = PROP_FLAG_BOOLEAN
-	},
-	{
 		.name = "Threshold",
 		.desc = "Sets tip/eraser pressure threshold "
 		"(default is 27). ",
@@ -402,6 +393,7 @@ struct deprecated
 	{"CursorProx",	"CursorProximity"},
 	{"xyDefault",	"ResetArea"},
 	{"ClickForce",	"Threshold"},
+	{"RawFilter",   NULL},
 	{NULL,		NULL}
 };
 
@@ -427,8 +419,13 @@ is_deprecated_parameter(const char *name)
 	}
 
 	if (is_deprecated)
-		printf("Parameter '%s' is no longer in use. "
-			"It was replaced with '%s'.\n", name, d->replacement);
+	{
+		printf("Parameter '%s' is no longer in use. ", name);
+		if (d->replacement != NULL)
+			printf("It was replaced with '%s'.\n", d->replacement);
+		else
+			printf("Its use has been deprecated.\n");
+	}
 
 	return is_deprecated;
 
@@ -2191,8 +2188,8 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	g_assert(ArrayLength(parameters) == 34);
-	g_assert(ArrayLength(deprecated_parameters) == 15);
+	g_assert(ArrayLength(parameters) == 33);
+	g_assert(ArrayLength(deprecated_parameters) == 16);
 }
 
 
