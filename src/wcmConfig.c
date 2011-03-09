@@ -89,7 +89,7 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	/* JEJ - throttle sampling code */
 	priv->throttleLimit = -1;
 
-	common->wcmFlags = RAW_FILTERING_FLAG;   /* various flags */
+	common->wcmFlags = 0;               /* various flags */
 	common->wcmDevices = priv;
 	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */
 	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */

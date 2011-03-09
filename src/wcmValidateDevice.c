@@ -551,10 +551,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
 		common->wcmFlags |= TILT_REQUEST_FLAG;
 
-	if (xf86SetBoolOption(pInfo->options, "RawFilter",
-			(common->wcmFlags & RAW_FILTERING_FLAG)))
-		common->wcmFlags |= RAW_FILTERING_FLAG;
-
 	/* pressure curve takes control points x1,y1,x2,y2
 	 * values in range from 0..100.
 	 * Linear curve is 0,0,100,100

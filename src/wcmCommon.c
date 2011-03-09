@@ -906,7 +906,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	/* Optionally filter values only while in proximity */
-	if (RAW_FILTERING(common) && common->wcmModel->FilterRaw &&
+	if (common->wcmModel->FilterRaw &&
 	    ds.proximity && ds.device_type != PAD_ID)
 	{
 		/* Start filter fresh when entering proximity */

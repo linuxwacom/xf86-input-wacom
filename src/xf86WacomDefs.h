@@ -382,7 +382,6 @@ extern WacomDeviceClass gWacomISDV4Device;
 
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
-#define RAW_FILTERING_FLAG      4
 
 #define MAX_CHANNELS 3
 #define PAD_CHANNEL (MAX_CHANNELS-1)
@@ -481,7 +480,6 @@ struct _WacomCommonRec
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)
-#define RAW_FILTERING(comm) ((comm)->wcmFlags & RAW_FILTERING_FLAG)
 
 /******************************************************************************
  * WacomTool
