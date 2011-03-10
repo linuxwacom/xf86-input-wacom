@@ -1194,7 +1194,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 			fprintf(stderr, "Cannot parse keyword '%s'\n", words[i]);
 	}
 
-	if (unset_prop)
+	if (unset_prop || nitems > 0)
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
