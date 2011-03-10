@@ -350,20 +350,25 @@ void wcmTilt2R(WacomDeviceStatePtr ds, double offset)
 	if (tilt_x || tilt_y)
 		/* rotate in the inverse direction, changing CW to CCW
 		 * rotation  and vice versa */
-		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
+		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI);
 
-	/* rotation is now in 0 - 360 deg value range.
-	   normalize into the rotation range and apply the custom offset. */
-	ds->rotation = round((360 - rotation + offset) * (MAX_ROTATION_RANGE / 360.0));
+	/* rotation is now in 0 - 360 deg value range, apply the offset. Use
+	 * 360 to avoid getting into negative range, the normalization code
+	 * below expects 0...360 */
+	rotation = 360 + rotation - offset;
+
+	/* normalize into the rotation range (0...MAX), then offset by MIN_ROTATION
+	   we used 360 as base offset above, so %= MAX_ROTATION_RANGE brings us back.
+	   Note: we can't use xf86ScaleAxis here because of rounding issues.
+	 */
+	ds->rotation = round(rotation * (MAX_ROTATION_RANGE / 360.0));
 	ds->rotation %= MAX_ROTATION_RANGE;
 
-	/* ds->rotation now normalised into 0 - MAX, but we want MIN - MAX
-	 * with 180 degrees (ignoring offset) being at 0 (for whatever
-	 * reason we need this) */
-	if (ds->rotation >= (MIN_ROTATION + MAX_ROTATION_RANGE))
-		ds->rotation = MAX_ROTATION_RANGE - ds->rotation; /* wrap around */
-	else
-		ds->rotation = -ds->rotation;
+	/* now scale back from 0...MAX to MIN..(MIN+MAX) */
+	ds->rotation = xf86ScaleAxis(ds->rotation,
+				     MIN_ROTATION + MAX_ROTATION_RANGE,
+				     MIN_ROTATION,
+				     MAX_ROTATION_RANGE, 0);
 
 	/* FIXME: shouldn't we reset tilt? */
 }
