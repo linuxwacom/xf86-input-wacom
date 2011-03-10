@@ -314,13 +314,15 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 }
 
 /***
- * Convert tilt X and Y to rotation
+ * Convert a point (X/Y) in a left-handed coordinate system to a normalized
+ * rotation angle.
  *
  * This function is currently called for the Intuos4 mouse (cursor) tool
- * only, but it may be used for other devices in the future.
+ * only (to convert tilt to rotation), but it may be used for other devices
+ * in the future.
  *
- * Method used: rotation angle is calculated through the atan of the tiltx/y
- * coordinates, then converted to degrees and normalized into the rotation
+ * Method used: rotation angle is calculated through the atan of x/y
+ * then converted to degrees and normalized into the rotation
  * range (MIN_ROTATION/MAX_ROTATION).
 
  * IMPORTANT: calculation inverts direction, the formula to get the target
@@ -333,44 +335,42 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
  *      180 degrees:	RANGE/2
  *      270 degrees:	MIN + RANGE/4
  *
- * @param ds The current device state, will be modified to set to the
- * calculated rotation value.
+ * @param x X coordinate in left-handed coordiante system.
+ * @param y Y coordiante in left-handed coordinate system.
  * @param offset Custom rotation offset in degrees. Offset is
  * applied in counterclockwise direction.
  *
  * @return The mapped rotation angle based on the device's tilt state.
  */
-void wcmTilt2R(WacomDeviceStatePtr ds, double offset)
+int wcmTilt2R(int x, int y, double offset)
 {
-	short tilt_x = ds->tiltx;
-	short tilt_y = ds->tilty;
-	double rotation = 0.0;
+	double angle = 0.0;
+	int rotation;
 
-	/* other tilt-enabled devices need to apply round() after this call */
-	if (tilt_x || tilt_y)
+	if (x || y)
 		/* rotate in the inverse direction, changing CW to CCW
 		 * rotation  and vice versa */
-		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI);
+		angle = ((180.0 * atan2(-x, y)) / M_PI);
 
 	/* rotation is now in 0 - 360 deg value range, apply the offset. Use
 	 * 360 to avoid getting into negative range, the normalization code
 	 * below expects 0...360 */
-	rotation = 360 + rotation - offset;
+	angle = 360 + angle - offset;
 
 	/* normalize into the rotation range (0...MAX), then offset by MIN_ROTATION
 	   we used 360 as base offset above, so %= MAX_ROTATION_RANGE brings us back.
 	   Note: we can't use xf86ScaleAxis here because of rounding issues.
 	 */
-	ds->rotation = round(rotation * (MAX_ROTATION_RANGE / 360.0));
-	ds->rotation %= MAX_ROTATION_RANGE;
+	rotation = round(angle * (MAX_ROTATION_RANGE / 360.0));
+	rotation %= MAX_ROTATION_RANGE;
 
 	/* now scale back from 0...MAX to MIN..(MIN+MAX) */
-	ds->rotation = xf86ScaleAxis(ds->rotation,
-				     MIN_ROTATION + MAX_ROTATION_RANGE,
-				     MIN_ROTATION,
-				     MAX_ROTATION_RANGE, 0);
+	rotation = xf86ScaleAxis(rotation,
+				 MIN_ROTATION + MAX_ROTATION_RANGE,
+				 MIN_ROTATION,
+				 MAX_ROTATION_RANGE, 0);
 
-	/* FIXME: shouldn't we reset tilt? */
+	return rotation;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

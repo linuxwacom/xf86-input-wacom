@@ -150,7 +150,7 @@ extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 
 /* run-time modifications */
 extern void wcmChangeScreen(InputInfoPtr pInfo, int value);
-extern void wcmTilt2R(WacomDeviceStatePtr ds, double offset);
+extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmGestureFilter(WacomDevicePtr priv, int channel);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 extern void wcmSoftOutEvent(InputInfoPtr pInfo);

@@ -416,15 +416,15 @@ test_tilt_to_rotation(void)
 		{ -69, 997, 45}, { -52, 998, 40}, { -34, 999, 35}, { -17, 999, 30},
 	};
 	int i;
-	WacomDeviceState ds = {0};
 
 	for (i = 0; i < ARRAY_SIZE(rotation_table); i++)
 	{
-		ds.rotation = 0;
-		ds.tiltx = rotation_table[i][0];
-		ds.tilty = rotation_table[i][1];
-		wcmTilt2R(&ds, INTUOS4_CURSOR_ROTATION_OFFSET);
-		g_assert(ds.rotation == rotation_table[i][2]);
+		int rotation;
+		int x, y;
+		x = rotation_table[i][0];
+		y = rotation_table[i][1];
+		rotation = wcmTilt2R(x, y, INTUOS4_CURSOR_ROTATION_OFFSET);
+		g_assert(rotation == rotation_table[i][2]);
 	}
 }
 
