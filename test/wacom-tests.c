@@ -423,7 +423,7 @@ test_tilt_to_rotation(void)
 		ds.rotation = 0;
 		ds.tiltx = rotation_table[i][0];
 		ds.tilty = rotation_table[i][1];
-		wcmTilt2R(&ds);
+		wcmTilt2R(&ds, INTUOS4_CURSOR_ROTATION_OFFSET);
 		g_assert(ds.rotation == rotation_table[i][2]);
 	}
 }

@@ -45,6 +45,9 @@
 #define MIN_PAD_RING 0		/* I4 absolute scroll ring min value */
 #define MAX_PAD_RING 71		/* I4 absolute scroll ring max value */
 
+/* I4 cursor tool has a rotation offset of 175 degrees */
+#define INTUOS4_CURSOR_ROTATION_OFFSET 175
+
 /* Default max distance to the tablet at which a proximity-out event is generated for
  * cursor device (e.g. mouse). 
  */

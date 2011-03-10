@@ -335,8 +335,12 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
  *
  * @param ds The current device state, will be modified to set to the
  * calculated rotation value.
+ * @param offset Custom rotation offset in degrees. Offset is
+ * applied in counterclockwise direction.
+ *
+ * @return The mapped rotation angle based on the device's tilt state.
  */
-void wcmTilt2R(WacomDeviceStatePtr ds)
+void wcmTilt2R(WacomDeviceStatePtr ds, double offset)
 {
 	short tilt_x = ds->tiltx;
 	short tilt_y = ds->tilty;
@@ -348,9 +352,9 @@ void wcmTilt2R(WacomDeviceStatePtr ds)
 		 * rotation  and vice versa */
 		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
 
-	/* Intuos4 mouse has an (180-5) offset,
-	 * normalize into the rotation range. */
-	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * (MAX_ROTATION_RANGE / 360.0));
+	/* rotation is now in 0 - 360 deg value range.
+	   normalize into the rotation range and apply the custom offset. */
+	ds->rotation = round((360 - rotation + offset) * (MAX_ROTATION_RANGE / 360.0));
 	ds->rotation %= MAX_ROTATION_RANGE;
 
 	/* ds->rotation now normalised into 0 - MAX, but we want MIN - MAX
