@@ -1118,7 +1118,6 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	Atom type, prop = 0;
 	int format;
 	unsigned long btnact_nitems, nitems, bytes_after;
-	int need_update = 0;
 	int i;
 	int nwords = 0;
 	char **words = NULL;
@@ -1160,7 +1159,6 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		prop = XInternAtom(dpy, buff, False);
 
 		btnact_data[offset] = prop;
-		need_update = 1;
 	}
 
 	data = calloc(sizeof(long), 256);
