@@ -35,7 +35,6 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 static int filterOnLine(double x0, double y0, double x1, double y1,
 		double a, double b);
 static void filterLine(int* pCurve, int nMax, int x0, int y0, int x1, int y1);
-void wcmTilt2R(WacomDeviceStatePtr ds);
 
 
 /*****************************************************************************
@@ -314,30 +313,64 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	return 0; /* lookin' good */
 }
 
-/*****************************************************************************
- *  wcmTilt2R -
- *   Converts tilt X and Y to rotation, for Intuos4 mouse for now.
- *   It can be used for other devices when necessary.
- ****************************************************************************/
+/***
+ * Convert a point (X/Y) in a left-handed coordinate system to a normalized
+ * rotation angle.
+ *
+ * This function is currently called for the Intuos4 mouse (cursor) tool
+ * only (to convert tilt to rotation), but it may be used for other devices
+ * in the future.
+ *
+ * Method used: rotation angle is calculated through the atan of x/y
+ * then converted to degrees and normalized into the rotation
+ * range (MIN_ROTATION/MAX_ROTATION).
 
-void wcmTilt2R(WacomDeviceStatePtr ds)
+ * IMPORTANT: calculation inverts direction, the formula to get the target
+ * rotation value in degrees is: 360 - offset - input-angle.
+ *
+ * Example table of return values for an offset of 0, assuming a left-handed
+ * coordinate system:
+ * input  0 degrees:	MIN
+ *       90 degrees:	MAX - RANGE/4
+ *      180 degrees:	RANGE/2
+ *      270 degrees:	MIN + RANGE/4
+ *
+ * @param x X coordinate in left-handed coordiante system.
+ * @param y Y coordiante in left-handed coordinate system.
+ * @param offset Custom rotation offset in degrees. Offset is
+ * applied in counterclockwise direction.
+ *
+ * @return The mapped rotation angle based on the device's tilt state.
+ */
+int wcmTilt2R(int x, int y, double offset)
 {
-	short tilt_x = ds->tiltx;
-	short tilt_y = ds->tilty;
-	double rotation = 0.0;
+	double angle = 0.0;
+	int rotation;
 
-	/* other tilt-enabled devices need to apply round() after this call */
-	if (tilt_x || tilt_y)
-		rotation = ((180.0 * atan2(-tilt_x,tilt_y)) / M_PI) + 180.0;
+	if (x || y)
+		/* rotate in the inverse direction, changing CW to CCW
+		 * rotation  and vice versa */
+		angle = ((180.0 * atan2(-x, y)) / M_PI);
 
-	/* Intuos4 mouse has an (180-5) offset */
-	ds->rotation = round((360.0 - rotation + 180.0 - 5.0) * 5.0);
-	ds->rotation %= 1800;
+	/* rotation is now in 0 - 360 deg value range, apply the offset. Use
+	 * 360 to avoid getting into negative range, the normalization code
+	 * below expects 0...360 */
+	angle = 360 + angle - offset;
 
-	if (ds->rotation >= 900)
-		ds->rotation = 1800 - ds->rotation;
-	else
-		ds->rotation = -ds->rotation;
+	/* normalize into the rotation range (0...MAX), then offset by MIN_ROTATION
+	   we used 360 as base offset above, so %= MAX_ROTATION_RANGE brings us back.
+	   Note: we can't use xf86ScaleAxis here because of rounding issues.
+	 */
+	rotation = round(angle * (MAX_ROTATION_RANGE / 360.0));
+	rotation %= MAX_ROTATION_RANGE;
+
+	/* now scale back from 0...MAX to MIN..(MIN+MAX) */
+	rotation = xf86ScaleAxis(rotation,
+				 MIN_ROTATION + MAX_ROTATION_RANGE,
+				 MIN_ROTATION,
+				 MAX_ROTATION_RANGE, 0);
+
+	return rotation;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
