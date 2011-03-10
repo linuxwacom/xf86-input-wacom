@@ -121,7 +121,24 @@ xf86ScaleAxis(int	Cx,
               int	from_max,
               int	from_min )
 {
-    return 0;
+    int X;
+    int64_t to_width = to_max - to_min;
+    int64_t from_width = from_max - from_min;
+
+    if (from_width) {
+	X = (int)(((to_width * (Cx - from_min)) / from_width) + to_min);
+    }
+    else {
+	X = 0;
+        /*ErrorF ("Divide by Zero in xf86ScaleAxis\n");*/
+    }
+
+    if (X > to_max)
+	X = to_max;
+    if (X < to_min)
+	X = to_min;
+
+    return X;
 }
 
 
