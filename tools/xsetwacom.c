@@ -1429,7 +1429,7 @@ error:
 /**
  * Performs intelligent string->int conversion. In addition to converting strings
  * of digits into their corresponding integer values, it converts special string
- * constants such as "off" (0) and "on" (1).
+ * constants such as "off" or "false" (0) and "on" or "true" (1).
  *
  * The caller is expected to allocate and free memory for return_value.
  *
@@ -1442,9 +1442,9 @@ static Bool convert_value_from_user(param_t *param, char *value, int *return_val
 {
 	if (param->prop_flags & PROP_FLAG_BOOLEAN)
 	{
-		if (strcmp(value, "off") == 0)
+		if (strcasecmp(value, "off") == 0 || strcasecmp(value, "false") == 0)
 			*return_value = 0;
-		else if (strcmp(value, "on") == 0)
+		else if (strcasecmp(value, "on") == 0 || strcasecmp(value, "true") == 0)
 			*return_value = 1;
 		else
 			return False;
