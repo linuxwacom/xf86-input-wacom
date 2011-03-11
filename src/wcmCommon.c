@@ -902,9 +902,10 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		TabletHasFeature(common, WCM_RING)) /* I4 */
 	{
 		/* convert Intuos4 mouse tilt to rotation */
-		/* FIXME: shouldn't we reset tilt? */
 		ds.rotation = wcmTilt2R(ds.tiltx, ds.tilty,
 					INTUOS4_CURSOR_ROTATION_OFFSET);
+		ds.tiltx = 0;
+		ds.tilty = 0;
 	}
 
 	/* Optionally filter values only while in proximity */
