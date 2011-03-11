@@ -539,10 +539,10 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 
 	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
 			common->wcmRawSample);
-	if (common->wcmRawSample < 1 || common->wcmRawSample > XWACOM_MAX_SAMPLES)
+	if (common->wcmRawSample < 1 || common->wcmRawSample > MAX_SAMPLES)
 	{
 		xf86Msg(X_ERROR, "%s: RawSample setting '%d' out of range [1..%d]. Using default.\n",
-			pInfo->name, common->wcmRawSample, XWACOM_MAX_SAMPLES);
+			pInfo->name, common->wcmRawSample, MAX_SAMPLES);
 		common->wcmRawSample = DEFAULT_SAMPLES;
 	}
 

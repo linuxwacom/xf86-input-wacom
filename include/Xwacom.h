@@ -43,8 +43,6 @@
 #define ROTATE_CCW 		2
 #define ROTATE_HALF 		3
 
-#define XWACOM_MAX_SAMPLES	20
-
 /* The following flags are used for button action property values to mark
  * the type of event that should be emitted when that button is pressed;
  * combined together they form an Action Code (AC). Each button has up to

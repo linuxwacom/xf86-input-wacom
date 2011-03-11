@@ -620,7 +620,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if ((values[0] < 0) || (values[0] > 100))
 			return BadValue;
 
-		if ((values[1] < 1) || (values[1] > XWACOM_MAX_SAMPLES))
+		if ((values[1] < 1) || (values[1] > MAX_SAMPLES))
 			return BadValue;
 
 		if (!checkonly)
