@@ -24,6 +24,8 @@
 #include <wacom-properties.h>
 #include "Xwacom.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -1448,7 +1450,15 @@ static Bool convert_value_from_user(param_t *param, char *value, int *return_val
 			return False;
 	}
 	else
-		*return_value = atoi(value);
+	{
+		char *end;
+		long conversion = strtol(value, &end, 10);
+		if (end == value || *end != '\0' || errno == ERANGE ||
+		    conversion < INT_MIN || conversion > INT_MAX)
+			return False;
+
+		*return_value = (int)conversion;
+	}
 
 	return True;
 }
