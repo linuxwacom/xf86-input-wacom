@@ -1438,10 +1438,15 @@ error:
  */
 static Bool convert_value_from_user(param_t *param, char *value, int *return_value)
 {
-	if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "off") == 0)
+	if (param->prop_flags & PROP_FLAG_BOOLEAN)
+	{
+		if (strcmp(value, "off") == 0)
 			*return_value = 0;
-	else if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "on") == 0)
+		else if (strcmp(value, "on") == 0)
 			*return_value = 1;
+		else
+			return False;
+	}
 	else
 		*return_value = atoi(value);
 
