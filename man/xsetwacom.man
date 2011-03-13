@@ -131,6 +131,10 @@ for a "firmer" feel.  Sigmoid shaped curves are permitted (x1>y1 x2<y2 or
 x1<y1 x2>y2).  Default:  0 0 100 100, a linear curve; range of 0 to 100 for
 all four values.
 .TP
+\fBRawSample\fR level
+Set the sample window size (a sliding average sampling window) for incoming
+input tool raw data points.  Default:  4, range of 1 to 100.
+.TP
 \fBRotate\fR none|half|cw|ccw
 Set the tablet to the given rotation:
   none: the tablet is not rotated and uses its natural rotation
@@ -141,6 +145,18 @@ Set the tablet to the given rotation:
 Rotation is tool-specific, rotation of one does not affect other input tools.
 When the tablet is physically rotated, rotate all tools to the corresponding
 orientation.  Default:  none
+.TP
+\fBSuppress\fR level
+Set the delta (difference) cutoff level for further processing of incoming
+input tool coordinate values.  For example a X or Y coordinate event will be
+sent only if the change between the current X or Y coordinate and the
+previous one is greater than the Suppress value.  The same applies to
+pressure level (Z coordinate) and Tilt rotation values.  With a current
+absolute wheel (AbsWheel) or Tilt value the delta between it and the
+previous value must be equal to or greater than the Suppress value in order
+to be sent on.  Suppress is a tablet wide parameter.  A specified delta
+level for one input tool is applied to all input tool coordinates.  To
+disable suppression use a level of 0.  Default:  2, range of 0 to 20.
 .TP
 \fBTabletDebugLevel\fR level
 Set the debug level for this tablet to the given level. This only affects
