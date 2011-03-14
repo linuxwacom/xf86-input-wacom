@@ -2224,6 +2224,41 @@ static void test_parameter_number(void)
 	g_assert(ArrayLength(deprecated_parameters) == 16);
 }
 
+static void test_convert_value_from_user(void)
+{
+	param_t test_nonbool =
+	{
+		.name = "Test",
+		.desc = "NOT A REAL PARAMETER",
+		.prop_flags = 0,
+	};
+
+	param_t test_bool =
+	{
+		.name = "Test",
+		.desc = "NOT A REAL PARAMETER",
+		.prop_flags = PROP_FLAG_BOOLEAN,
+	};
+
+	int val;
+
+	g_assert(convert_value_from_user(&test_nonbool, "1", &val) == True);
+	g_assert(convert_value_from_user(&test_nonbool, "-8", &val) == True);
+	g_assert(convert_value_from_user(&test_nonbool, "+314", &val) == True);
+	g_assert(convert_value_from_user(&test_nonbool, "36893488147419103232", &val) == False); //2^65 > MAX_INT
+	g_assert(convert_value_from_user(&test_nonbool, "123abc", &val) == False);
+	g_assert(convert_value_from_user(&test_nonbool, "123 abc", &val) == False);
+
+	g_assert(convert_value_from_user(&test_bool, "true", &val) == True);
+	g_assert(convert_value_from_user(&test_bool, "On", &val) == True);
+	g_assert(convert_value_from_user(&test_bool, "oFf", &val) == True);
+	g_assert(convert_value_from_user(&test_bool, "FALSE", &val) == True);
+	g_assert(convert_value_from_user(&test_bool, "0", &val) == False);
+	g_assert(convert_value_from_user(&test_bool, "1", &val) == False);
+	g_assert(convert_value_from_user(&test_bool, " on", &val) == False);
+	g_assert(convert_value_from_user(&test_bool, "off ", &val) == False);
+}
+
 
 int main(int argc, char** argv)
 {
@@ -2231,6 +2266,7 @@ int main(int argc, char** argv)
 	g_test_add_func("/xsetwacom/parameter_number", test_parameter_number);
 	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
 	g_test_add_func("/xsetwacom/convert_specialkey", test_convert_specialkey);
+	g_test_add_func("/xsetwacom/convert_value_from_user", test_convert_value_from_user);
 	return g_test_run();
 }
 
