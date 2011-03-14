@@ -1423,18 +1423,29 @@ error:
 	return;
 }
 
-static int convert_value_from_user(param_t *param, char *value)
+
+/**
+ * Performs intelligent string->int conversion. In addition to converting strings
+ * of digits into their corresponding integer values, it converts special string
+ * constants such as "off" (0) and "on" (1).
+ *
+ * The caller is expected to allocate and free memory for return_value.
+ *
+ * @param      param        the property paramaters
+ * @param      value        the string to be converted
+ * @param[out] return_value the integer representation of the 'value' parameter
+ * @return TRUE if the conversion succeeded, FALSE otherwise
+ */
+static Bool convert_value_from_user(param_t *param, char *value, int *return_value)
 {
-	int val;
-
 	if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "off") == 0)
-			val = 0;
+			*return_value = 0;
 	else if ((param->prop_flags & PROP_FLAG_BOOLEAN) && strcmp(value, "on") == 0)
-			val = 1;
+			*return_value = 1;
 	else
-		val = atoi(value);
+		*return_value = atoi(value);
 
-	return val;
+	return True;
 }
 
 static void set(Display *dpy, int argc, char **argv)
@@ -1445,7 +1456,6 @@ static void set(Display *dpy, int argc, char **argv)
 	int format;
 	unsigned char* data = NULL;
 	unsigned long nitems, bytes_after;
-	double val;
 	long *n;
 	char *b;
 	int i;
@@ -1510,7 +1520,16 @@ static void set(Display *dpy, int argc, char **argv)
 
 	for (i = 0; i < nvals; i++)
 	{
-		val = convert_value_from_user(param, values[i]);
+		Bool success;
+		int val;
+
+		success = convert_value_from_user(param, values[i], &val);
+		if (!success)
+		{
+			fprintf(stderr, "'%s' is not a valid value for the '%s' property.\n",
+				values[i], param->name);
+			goto out;
+		}
 
 		switch(param->prop_format)
 		{
