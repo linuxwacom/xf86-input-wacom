@@ -168,8 +168,8 @@ debugging enabled. See also ToolDebugLevel.  Default:  0, range of 0 to 12.
 \fBTabletPCButton\fR on|off
 If on, the stylus must be in contact with the screen for a stylus side button
 to work.  If off, stylus buttons will work once the stylus is in proximity
-of the tablet (regardless of whether it is touching the screen).  Default:
-on for Tablet PCs; off for all other models.
+of the tablet (regardless of whether it is touching the screen).  Default:  on
+for Tablet PCs; off for all other models.
 .TP
 \fBThreshold\fR level
 Set the minimum pressure necessary to generate a Button event for the stylus
