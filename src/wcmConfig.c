@@ -249,6 +249,8 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	DBG(1, priv, "\n");
 
+	/* Server 1.10 will UnInit all devices for us */
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
 	if (priv->isParent)
 	{
 		/* HAL removal sees the parent device removed first. */
@@ -273,6 +275,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		free(pInfo->name);
 		pInfo->name = NULL;
 	}
+#endif
 
 	if (priv->tool)
 	{
@@ -337,6 +340,11 @@ static Bool wcmMatchDevice(InputInfoPtr pLocal, WacomCommonPtr *common_return)
 		{
 			DBG(2, priv, "port share between %s and %s\n",
 					pLocal->name, pMatch->name);
+			/* FIXME: we loose the common->wcmTool here but it
+			 * gets re-added during wcmParseOptions. This is
+			 * currently required by the code, adding the tool
+			 * again here means we trigger the duplicate tool
+			 * detection */
 			wcmFreeCommon(&priv->common);
 			priv->common = wcmRefCommon(privMatch->common);
 			priv->next = priv->common->wcmDevices;

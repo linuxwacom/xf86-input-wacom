@@ -491,6 +491,7 @@ struct _WacomTool
 
 	int typeid; /* Tool type */
 	int serial; /* Serial id, 0 == no serial id */
+	Bool enabled;
 
 	InputInfoPtr device; /* The InputDevice connected to this tool */
 };
