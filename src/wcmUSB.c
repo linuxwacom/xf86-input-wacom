@@ -410,6 +410,47 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
+/* Initialize fixed PAD channel's state to in proximity.
+ *
+ * Conceptionally, the PAD device is always in proximity and it's safe
+ * to initialize this one time up front; even for devices that have no PAD/
+ * pad buttons.
+ *
+ * Some, but not all, Wacom protocol 4/5 devices are always in proximity.
+ * Because of evdev filtering, there will never be a BTN_TOOL_FINGER
+ * sent to initialize state.
+ * Generic protocol devices never send anything to help initialize PAD
+ * device as well.
+ * This helps those 2 cases and does not hurt the cases were kernel
+ * driver sends out-of-proximity event for PAD.
+ */
+static void usbWcmInitPadState(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
+	WacomDeviceState *ds;
+	int channel;
+
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
+		private->wcmLastToolSerial = -1;
+	else
+		private->wcmLastToolSerial = 0xf0;
+
+	channel = usbChooseChannel(common);
+
+	channel = private->wcmBTNChannel;
+
+	DBG(6, common, "Initializing PAD channel %d\n", channel);
+
+	ds = &common->wcmChannel[channel].work;
+
+	ds->proximity = 1;
+	ds->device_type = PAD_ID;
+	ds->device_id = PAD_DEVICE_ID;
+	ds->serial_num = channel;
+}
+
 int usbWcmGetRanges(InputInfoPtr pInfo)
 {
 	struct input_absinfo absinfo;
@@ -535,6 +576,8 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	/* A generic protocol device does not report ABS_MISC event */
 	if (!ISBITSET(abs, ABS_MISC))
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
+
+	usbWcmInitPadState(pInfo);
 
 	return Success;
 }
@@ -1348,14 +1391,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
        /* dispatch butten events when re-routed */
 	if (private->wcmBTNChannel != channel && btn_channel_change)
-	{
-		/* Force to in proximity for this special case */
-		btn_ds->proximity = 1;
-		btn_ds->device_type = PAD_ID;
-		btn_ds->device_id = PAD_DEVICE_ID;
-		btn_ds->serial_num = 0xf0;
 		wcmEvent(common, private->wcmBTNChannel, btn_ds);
-	}
 }
 
 /* Quirks to unify the tool types for GENERIC protocol tablet PCs */
