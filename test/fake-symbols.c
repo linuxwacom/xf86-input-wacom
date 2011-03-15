@@ -428,5 +428,14 @@ InputInfoPtr xf86AllocateInput(InputDriverPtr drv, int flags)
     return NULL;
 }
 
-
 #endif
+
+ClientPtr serverClient;
+
+Bool QueueWorkProc (
+    Bool (*function)(ClientPtr /* pClient */, pointer /* closure */),
+    ClientPtr client, pointer closure)
+{
+    return FALSE;
+}
+

@@ -168,4 +168,9 @@ extern InputInfoPtr
 xf86AllocateInput(InputDriverPtr drv, int flags);
 
 
+extern ClientPtr serverClient;
+
+extern Bool QueueWorkProc (
+    Bool (*function)(ClientPtr /* pClient */, pointer /* closure */),
+    ClientPtr client, pointer closure);
 #endif
