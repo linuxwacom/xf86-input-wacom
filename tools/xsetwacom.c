@@ -491,6 +491,8 @@ static struct modifier specialkeys[] = {
 
 	{"tab", "Tab"},
 
+	{"PgUp", "Prior"}, {"PgDn", "Next"},
+
 	{ NULL, NULL }
 };
 
