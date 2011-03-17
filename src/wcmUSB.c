@@ -382,6 +382,8 @@ static struct
 	{ 0xC2,  508,  508, &usbCintiq     }, /* DTF720a */
 	{ 0xC4,  508,  508, &usbCintiq     }, /* DTF521 */ 
 	{ 0xC7, 2540, 2540, &usbCintiq     }, /* DTU1931 */
+	{ 0xCE, 2540, 2540, &usbCintiq     }, /* DTU2231 */
+	{ 0xF0, 2540, 2540, &usbCintiq     }, /* DTU1631 */
 
 	{ 0x41, 2540, 2540, &usbIntuos2    }, /* Intuos2 4x5 */
 	{ 0x42, 2540, 2540, &usbIntuos2    }, /* Intuos2 6x8 */
@@ -412,10 +414,13 @@ static struct
 	{ 0xB9, 5080, 5080, &usbIntuos4    }, /* Intuos4 6x9 */
 	{ 0xBA, 5080, 5080, &usbIntuos4    }, /* Intuos4 8x13 */
 	{ 0xBB, 5080, 5080, &usbIntuos4    }, /* Intuos4 12x19*/
+	{ 0xBC, 5080, 5080, &usbIntuos4    }, /* Intuos4 WL USB Endpoint */
+	{ 0xBD, 5080, 5080, &usbIntuos4    }, /* Intuos4 WL Bluetooth Endpoint */
 
 	{ 0x3F, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX */ 
 	{ 0xC5, 5080, 5080, &usbCintiqV5   }, /* Cintiq 20WSX */ 
 	{ 0xC6, 5080, 5080, &usbCintiqV5   }, /* Cintiq 12WX */ 
+	{ 0xCC, 5080, 5080, &usbCintiqV5   }, /* Cintiq 21UX2 */
 
 	{ 0x90, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x90 */ 
 	{ 0x93, 2540, 2540, &usbTabletPC   }, /* TabletPC 0x93 */
