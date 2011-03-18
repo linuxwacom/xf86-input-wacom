@@ -728,14 +728,6 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
 				"be set by a touch tool.\n", pInfo->name);
 
-		/* FIXME: wtf is this here?? */
-		if (IsUSBDevice(common) &&
-				TabletHasFeature(common, WCM_LCD) &&
-				TabletHasFeature(common, WCM_2FGT)) {
-			common->wcmGestureParameters.wcmZoomDistanceDefault = 30;
-			common->wcmGestureParameters.wcmScrollDistanceDefault = 30;
-		}
-
 		common->wcmGestureParameters.wcmZoomDistance =
 			xf86SetIntOption(pInfo->options, "ZoomDistance",
 			common->wcmGestureParameters.wcmZoomDistanceDefault);
