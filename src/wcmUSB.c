@@ -950,6 +950,12 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 	return change;
 }
 
+#define MOD_BUTTONS(bit, value) do { \
+	int shift = 1 << (bit); \
+	ds->buttons = ((value) ? \
+			(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
+	} while (0)
+
 static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 {
 	int change = 1;
@@ -971,6 +977,13 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->serial_num = private->wcmMTChannel+1;
 			ds->sample = (int)GetTimeInMillis();
+
+			/* Send left click down/up for touchscreen
+			 * when the first finger touches/leaves the tablet.
+			 */
+			if (TabletHasFeature(common, WCM_LCD) &&
+					!private->wcmMTChannel)
+				MOD_BUTTONS(0, event->value != -1);
 			break;
 
 		case ABS_MT_POSITION_X:
@@ -1010,17 +1023,10 @@ static struct
 	{ PAD_ID,    BTN_0              }
 };
 
-#define MOD_BUTTONS(bit, value) do { \
-	shift = 1<<bit; \
-	ds->buttons = (((value) != 0) ? \
-		       (ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
-        } while (0)
-
 static int usbParseKeyEvent(WacomCommonPtr common,
 			    struct input_event *event, WacomDeviceState *ds,
 			    WacomDeviceState *dslast)
 {
-	int shift;
 	int change = 1;
 
 	/* BTN_TOOL_* are sent to indicate when a specific tool is going
@@ -1177,7 +1183,7 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 static int usbParseBTNEvent(WacomCommonPtr common,
 			    struct input_event *event, WacomDeviceState *ds)
 {
-	int shift, nkeys;
+	int nkeys;
 	int change = 1;
 
 	switch (event->code)
