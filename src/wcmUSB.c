@@ -894,54 +894,56 @@ static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
 	return 0;
 }
 
-static int idtotype(int id)
+#define ERASER_BIT      0x008
+#define PUCK_BITS	0xf00
+#define PUCK_EXCEPTION  0x806
+/**
+ * Decide the tool type by its id for protocol 5 devices
+ *
+ * @param id The tool id received from the kernel.
+ * @return The tool type associated with the tool id.
+ */
+static int usbIdToType(int id)
 {
-	int type = CURSOR_ID;
+	int type = STYLUS_ID;
 
-	/* tools with id, such as Intuos series and Cintiq 21UX */
-	switch (id)
-	{
-		case 0x812: /* Inking pen */
-		case 0x801: /* Intuos3 Inking pen */
-		case 0x012:
-		case 0x822: /* Pen */
-		case 0x842:
-		case 0x852:
-		case 0x823: /* Intuos3 Grip Pen */
-		case 0x813: /* Intuos3 Classic Pen */
-		case 0x885: /* Intuos3 Marker Pen */
-		case 0x022:
-		case 0x832: /* Stroke pen */
-		case 0x032:
-		case 0xd12: /* Airbrush */
-		case 0x912:
-		case 0x112:
-		case 0x913: /* Intuos3 Airbrush */
-			type = STYLUS_ID;
-			break;
-		case 0x82a: /* Eraser */
-		case 0x85a:
-		case 0x91a:
-		case 0xd1a:
-		case 0x0fa:
-		case 0x82b: /* Intuos3 Grip Pen Eraser */
-		case 0x81b: /* Intuos3 Classic Pen Eraser */
-		case 0x91b: /* Intuos3 Airbrush Eraser */
-			type = ERASER_ID;
-			break;
-	}
+	/* The existing tool ids have the following patten: all pucks, except
+	 * one, have the third byte set to zero; all erasers have the fourth
+	 * bit set. The rest are styli.
+	 */
+	if (id & ERASER_BIT)
+		type = ERASER_ID;
+	else if (!(id & PUCK_BITS) || (id == PUCK_EXCEPTION))
+		type = CURSOR_ID;
+
 	return type;
 }
 
 /**
- * Identify the device type (STYLUS_ID, etc.) based on the device_id or the
- * current tool serial number.
+ * Find the tool type (STYLUS_ID, etc.) based on or the current tool
+ * serial number if the device_id is unknown (0) or the device_id .
+ *
+ * @param ds The current device state received from the kernel.
+ * @return The tool type associated with the tool id or the current
+ * tool serial number.
  */
-static int findDeviceType(const WacomCommonPtr common,
+static int usbFindDeviceType(const WacomCommonPtr common,
 			  const WacomDeviceState *ds)
 {
 	WacomToolPtr tool = NULL;
 	int device_type = 0;
+
+	if (!ds->device_id && ds->serial_num)
+	{
+		for (tool = common->wcmTool; tool; tool = tool->next)
+			if (ds->serial_num == tool->serial)
+			{
+				device_type = tool->typeid;
+				break;
+			}
+	}
+
+	if (device_type || !ds->device_id) return device_type;
 
 	switch (ds->device_id)
 	{
@@ -961,18 +963,9 @@ static int findDeviceType(const WacomCommonPtr common,
 			device_type = PAD_ID;
 			break;
 		default:
-			device_type = idtotype(ds->device_id);
+			device_type = usbIdToType(ds->device_id);
 	}
 
-	if (ds->serial_num)
-	{
-		for (tool = common->wcmTool; tool; tool = tool->next)
-			if (ds->serial_num == tool->serial)
-			{
-				device_type = tool->typeid;
-				break;
-			}
-	}
 	return device_type;
 }
 
@@ -1027,7 +1020,7 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			if (event->value)
 			{
 				ds->device_id = event->value;
-				ds->device_type = findDeviceType(common, ds);
+				ds->device_type = usbFindDeviceType(common, ds);
 			}
 			break;
 		default:
