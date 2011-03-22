@@ -376,7 +376,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		value = ds->stripy - priv->oldStripY;
 
 		fakeButton = (value > 0) ? priv->striprup : priv->striprdn;
-		*fakeKey = (value > 0) ? priv->strip_keys[2] : priv->strip_keys[2];
+		*fakeKey = (value > 0) ? priv->strip_keys[2] : priv->strip_keys[3];
 	}
 
 	DBG(10, priv, "send fakeButton %x with value = %d \n",
