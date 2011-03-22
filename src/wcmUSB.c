@@ -941,8 +941,13 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			ds->throttle = event->value;
 			break;
 		case ABS_MISC:
+			ds->proximity = (event->value != 0);
 			if (event->value)
+			{
 				ds->device_id = event->value;
+				if (ds->device_id == PAD_DEVICE_ID)
+					ds->device_type = PAD_ID;
+			}
 			break;
 		default:
 			change = 0;
