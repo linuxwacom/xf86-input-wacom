@@ -28,8 +28,7 @@ AM_LDFLAGS = $(X11_LIBS)
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
 xsetwacom_test_SOURCES=xsetwacom.c
-xsetwacom_test_LDADD=$(GLIB_LIBS)
-xsetwacom_test_CFLAGS=-DBUILD_TEST $(GLIB_CFLAGS) $(X11_CFLAGS)
+xsetwacom_test_CFLAGS=-DBUILD_TEST $(X11_CFLAGS)
 
 TESTS=$(check_PROGRAMS)
 endif

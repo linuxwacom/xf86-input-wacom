@@ -20,7 +20,6 @@
 #include <config.h>
 #endif
 
-#include <glib.h>
 #include "fake-symbols.h"
 #include <xf86Wacom.h>
 
@@ -40,27 +39,27 @@ test_common_ref(void)
 	WacomCommonPtr second;
 
 	common = wcmNewCommon();
-	g_assert(common);
-	g_assert(common->refcnt == 1);
+	assert(common);
+	assert(common->refcnt == 1);
 
 	second = wcmRefCommon(common);
 
-	g_assert(second == common);
-	g_assert(second->refcnt == 2);
+	assert(second == common);
+	assert(second->refcnt == 2);
 
 	wcmFreeCommon(&second);
-	g_assert(common);
-	g_assert(!second);
-	g_assert(common->refcnt == 1);
+	assert(common);
+	assert(!second);
+	assert(common->refcnt == 1);
 
 	second = wcmRefCommon(NULL);
-	g_assert(common != second);
-	g_assert(second->refcnt == 1);
-	g_assert(common->refcnt == 1);
+	assert(common != second);
+	assert(second->refcnt == 1);
+	assert(common->refcnt == 1);
 
 	wcmFreeCommon(&second);
 	wcmFreeCommon(&common);
-	g_assert(!second && !common);
+	assert(!second && !common);
 }
 
 
@@ -83,9 +82,9 @@ test_rebase_pressure(void)
 	base = priv;
 
 	pressure = rebasePressure(&priv, &ds);
-	g_assert(pressure == ds.pressure);
+	assert(pressure == ds.pressure);
 
-	g_assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
 
 	/* Pressure in-proximity means rebase to new minimum */
 	priv.oldProximity = 1;
@@ -93,8 +92,8 @@ test_rebase_pressure(void)
 	base = priv;
 
 	pressure = rebasePressure(&priv, &ds);
-	g_assert(pressure == priv.minPressure);
-	g_assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+	assert(pressure == priv.minPressure);
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
 }
 
 static void
@@ -125,15 +124,15 @@ test_normalize_pressure(void)
 			ds.pressure = i;
 
 			pressure = normalizePressure(&priv, &ds);
-			g_assert(pressure >= 0);
-			g_assert(pressure <= FILTER_PRESSURE_RES);
+			assert(pressure >= 0);
+			assert(pressure <= FILTER_PRESSURE_RES);
 
 			/* we count up, so assume normalised pressure goes up too */
-			g_assert(prev_pressure < pressure);
+			assert(prev_pressure < pressure);
 			prev_pressure = pressure;
 		}
 
-		g_assert(pressure == FILTER_PRESSURE_RES);
+		assert(pressure == FILTER_PRESSURE_RES);
 	}
 
 	/* If minPressure is higher than ds->pressure, normalizePressure takes
@@ -149,11 +148,11 @@ test_normalize_pressure(void)
 
 		pressure = normalizePressure(&priv, &ds);
 
-		g_assert(pressure >= 0);
-		g_assert(pressure < FILTER_PRESSURE_RES);
+		assert(pressure >= 0);
+		assert(pressure < FILTER_PRESSURE_RES);
 
 		/* we count up, so assume normalised pressure goes up too */
-		g_assert(prev_pressure == pressure);
+		assert(prev_pressure == pressure);
 	}
 }
 
@@ -187,18 +186,18 @@ test_initial_size(void)
 
 	wcmInitialToolSize(&info);
 
-	g_assert(priv.topX == minx);
-	g_assert(priv.topY == minx);
-	g_assert(priv.bottomX == maxx);
-	g_assert(priv.bottomY == maxy);
-	g_assert(priv.resolX == xres);
-	g_assert(priv.resolY == yres);
+	assert(priv.topX == minx);
+	assert(priv.topY == minx);
+	assert(priv.bottomX == maxx);
+	assert(priv.bottomY == maxy);
+	assert(priv.resolX == xres);
+	assert(priv.resolY == yres);
 
 	/* Same thing for a touch-enabled device */
 	memset(&common, 0, sizeof(common));
 
 	priv.flags = TOUCH_ID;
-	g_assert(IsTouch(&priv));
+	assert(IsTouch(&priv));
 
 	common.wcmMaxTouchX = maxx;
 	common.wcmMaxTouchY = maxy;
@@ -207,12 +206,12 @@ test_initial_size(void)
 
 	wcmInitialToolSize(&info);
 
-	g_assert(priv.topX == minx);
-	g_assert(priv.topY == minx);
-	g_assert(priv.bottomX == maxx);
-	g_assert(priv.bottomY == maxy);
-	g_assert(priv.resolX == xres);
-	g_assert(priv.resolY == yres);
+	assert(priv.topX == minx);
+	assert(priv.topY == minx);
+	assert(priv.bottomX == maxx);
+	assert(priv.bottomY == maxy);
+	assert(priv.resolX == xres);
+	assert(priv.resolY == yres);
 
 }
 
@@ -227,14 +226,14 @@ test_suppress(void)
 	common.wcmSuppress = 2;
 
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_ALL);
+	assert(rc == SUPPRESS_ALL);
 
 	/* proximity, buttons and strip send for any change */
 
 #define test_any_suppress(field) \
 	old.field = 1; \
 	rc = wcmCheckSuppress(&common, &old, &new); \
-	g_assert(rc == SUPPRESS_NONE); \
+	assert(rc == SUPPRESS_NONE); \
 	new.field = old.field;
 
 	test_any_suppress(proximity);
@@ -251,16 +250,16 @@ test_suppress(void)
 #define test_above_suppress(field) \
 	old.field = common.wcmSuppress; \
 	rc = wcmCheckSuppress(&common, &old, &new); \
-	g_assert(rc == SUPPRESS_ALL); \
+	assert(rc == SUPPRESS_ALL); \
 	old.field = common.wcmSuppress + 1; \
 	rc = wcmCheckSuppress(&common, &old, &new); \
-	g_assert(rc == SUPPRESS_NONE); \
+	assert(rc == SUPPRESS_NONE); \
 	old.field = -common.wcmSuppress; \
 	rc = wcmCheckSuppress(&common, &old, &new); \
-	g_assert(rc == SUPPRESS_ALL); \
+	assert(rc == SUPPRESS_ALL); \
 	old.field = -common.wcmSuppress - 1; \
 	rc = wcmCheckSuppress(&common, &old, &new); \
-	g_assert(rc == SUPPRESS_NONE); \
+	assert(rc == SUPPRESS_NONE); \
 	new.field = old.field;
 
 	test_above_suppress(pressure);
@@ -274,7 +273,7 @@ test_suppress(void)
 	/* any movement on relwheel counts */
 	new.relwheel = 1;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_NONE);
+	assert(rc == SUPPRESS_NONE);
 	new.relwheel = 0;
 
 	/* x axis movement */
@@ -282,19 +281,19 @@ test_suppress(void)
 	/* not enough movement */
 	new.x = common.wcmSuppress;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_ALL);
-	g_assert(old.x == new.x);
-	g_assert(old.y == new.y);
+	assert(rc == SUPPRESS_ALL);
+	assert(old.x == new.x);
+	assert(old.y == new.y);
 
 	/* only x axis above thresh */
 	new.x = common.wcmSuppress + 1;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_NON_MOTION);
+	assert(rc == SUPPRESS_NON_MOTION);
 
 	/* x and other field above thres */
 	new.pressure = ~old.pressure;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_NONE);
+	assert(rc == SUPPRESS_NONE);
 
 	new.pressure = old.pressure;
 	new.x = old.x;
@@ -302,17 +301,17 @@ test_suppress(void)
 	/* y axis movement */
 	new.y = common.wcmSuppress;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_ALL);
-	g_assert(old.x == new.x);
-	g_assert(old.y == new.y);
+	assert(rc == SUPPRESS_ALL);
+	assert(old.x == new.x);
+	assert(old.y == new.y);
 
 	new.y = common.wcmSuppress + 1;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_NON_MOTION);
+	assert(rc == SUPPRESS_NON_MOTION);
 
 	new.pressure = ~old.pressure;
 	rc = wcmCheckSuppress(&common, &old, &new);
-	g_assert(rc == SUPPRESS_NONE);
+	assert(rc == SUPPRESS_NONE);
 	new.pressure = old.pressure;
 }
 
@@ -424,21 +423,20 @@ test_tilt_to_rotation(void)
 		x = rotation_table[i][0];
 		y = rotation_table[i][1];
 		rotation = wcmTilt2R(x, y, INTUOS4_CURSOR_ROTATION_OFFSET);
-		g_assert(rotation == rotation_table[i][2]);
+		assert(rotation == rotation_table[i][2]);
 	}
 }
 
 
 int main(int argc, char** argv)
 {
-	g_test_init(&argc, &argv, NULL);
-	g_test_add_func("/common/refcounting", test_common_ref);
-	g_test_add_func("/common/rebase_pressure", test_rebase_pressure);
-	g_test_add_func("/common/normalize_pressure", test_normalize_pressure);
-	g_test_add_func("/common/test_suppress", test_suppress);
-	g_test_add_func("/xfree86/initial_size", test_initial_size);
-	g_test_add_func("/filter/tilt_to_rotation", test_tilt_to_rotation);
-	return g_test_run();
+	test_common_ref();
+	test_rebase_pressure();
+	test_normalize_pressure();
+	test_suppress();
+	test_initial_size();
+	test_tilt_to_rotation();
+	return 0;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

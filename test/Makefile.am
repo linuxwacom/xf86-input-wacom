@@ -9,8 +9,8 @@ libwacom_test_la_CFLAGS = -DDISABLE_STATIC -I$(top_srcdir)/src $(XORG_CFLAGS) $(
 TESTS=$(check_PROGRAMS)
 
 INCLUDES = -I$(top_srcdir)/src
-AM_CFLAGS = $(GLIB_CFLAGS) $(XORG_CFLAGS) $(CWARNFLAGS)
-TEST_LDADD=$(GLIB_LIBS) libwacom-test.la
+AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
+TEST_LDADD= libwacom-test.la
 COMMON_SOURCES=fake-symbols.c fake-symbols.h
 
 wacom_tests_LDADD=$(TEST_LDADD)

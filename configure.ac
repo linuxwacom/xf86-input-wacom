@@ -100,7 +100,6 @@ AC_ARG_WITH([xorg-conf-dir],
 AC_SUBST(configdir)
 AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$sysconfigdir" != "x"])
 
-# enalbe unit-tests if glib-devel is available
 AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
                           [Enable unit-tests (default: auto)]),
                           [UNITTESTS=$enableval],
@@ -108,9 +107,6 @@ AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
 
 # If unittests aren't explicitly disabled, check for required support
 if test "x$UNITTESTS" != xno ; then
-       PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],
-                         [HAVE_GLIB=yes], [HAVE_GLIB=no])
-
        # Check if linker supports -wrap, passed via compiler flags
        # When cross-compiling, reports no, since unit tests run from
        # "make check", so would be running on build machine,  not target
@@ -131,22 +127,17 @@ if test "x$UNITTESTS" != xno ; then
 fi
 
 if test "x$UNITTESTS" = xauto; then
-       if test "x$HAVE_GLIB" = xyes && test "x$linker_can_wrap" = xyes; then
+       if test "x$linker_can_wrap" = xyes; then
            UNITTESTS=yes
        else
            UNITTESTS=no
        fi
 fi
 if test "x$UNITTESTS" = xyes; then
-       if test "x$HAVE_GLIB" = xno; then
-           AC_MSG_ERROR([glib required to build unit tests])
-       fi
        if test "x$linker_can_wrap" = xno; then
            AC_MSG_ERROR([ld -wrap support required to build unit tests])
        fi
        AC_DEFINE(UNITTESTS, 1, [Enable unit tests])
-       AC_SUBST([GLIB_LIBS])
-       AC_SUBST([GLIB_CFLAGS])
 fi
 AM_CONDITIONAL(UNITTESTS, [test "x$UNITTESTS" = xyes])
 

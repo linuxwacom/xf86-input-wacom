@@ -2157,7 +2157,7 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef BUILD_TEST
-#include <glib.h>
+#include <assert.h>
 /**
  * Below are unit-tests to ensure xsetwacom continues to work as expected.
  */
@@ -2168,27 +2168,27 @@ static void test_is_modifier(void)
 	char buff[5];
 
 
-	g_assert(is_modifier("Control_L"));
-	g_assert(is_modifier("Control_R"));
-	g_assert(is_modifier("Alt_L"));
-	g_assert(is_modifier("Alt_R"));
-	g_assert(is_modifier("Shift_L"));
-	g_assert(is_modifier("Shift_R"));
-	g_assert(is_modifier("Meta_L"));
-	g_assert(is_modifier("Meta_R"));
-	g_assert(is_modifier("Super_L"));
-	g_assert(is_modifier("Super_R"));
-	g_assert(is_modifier("Hyper_L"));
-	g_assert(is_modifier("Hyper_R"));
+	assert(is_modifier("Control_L"));
+	assert(is_modifier("Control_R"));
+	assert(is_modifier("Alt_L"));
+	assert(is_modifier("Alt_R"));
+	assert(is_modifier("Shift_L"));
+	assert(is_modifier("Shift_R"));
+	assert(is_modifier("Meta_L"));
+	assert(is_modifier("Meta_R"));
+	assert(is_modifier("Super_L"));
+	assert(is_modifier("Super_R"));
+	assert(is_modifier("Hyper_L"));
+	assert(is_modifier("Hyper_R"));
 
-	g_assert(!is_modifier(""));
+	assert(!is_modifier(""));
 
 	/* make sure at least the default keys (ascii 33 - 126) aren't
 	 * modifiers */
 	for (i = '!'; i <= '~'; i++)
 	{
 		sprintf(buff, "%c", i);
-		g_assert(!is_modifier(buff));
+		assert(!is_modifier(buff));
 	}
 }
 
@@ -2205,13 +2205,13 @@ static void test_convert_specialkey(void)
 	{
 		sprintf(buff, "%c", i);
 		converted = convert_specialkey(buff);
-		g_assert(strcmp(converted, buff) == 0);
+		assert(strcmp(converted, buff) == 0);
 	}
 
 	for (m = specialkeys; m->name; m++)
 	{
 		converted = convert_specialkey(m->name);
-		g_assert(strcmp(converted, m->converted) == 0);
+		assert(strcmp(converted, m->converted) == 0);
 	}
 }
 
@@ -2222,8 +2222,8 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	g_assert(ArrayLength(parameters) == 33);
-	g_assert(ArrayLength(deprecated_parameters) == 16);
+	assert(ArrayLength(parameters) == 33);
+	assert(ArrayLength(deprecated_parameters) == 16);
 }
 
 static void test_convert_value_from_user(void)
@@ -2244,32 +2244,31 @@ static void test_convert_value_from_user(void)
 
 	int val;
 
-	g_assert(convert_value_from_user(&test_nonbool, "1", &val) == True);
-	g_assert(convert_value_from_user(&test_nonbool, "-8", &val) == True);
-	g_assert(convert_value_from_user(&test_nonbool, "+314", &val) == True);
-	g_assert(convert_value_from_user(&test_nonbool, "36893488147419103232", &val) == False); //2^65 > MAX_INT
-	g_assert(convert_value_from_user(&test_nonbool, "123abc", &val) == False);
-	g_assert(convert_value_from_user(&test_nonbool, "123 abc", &val) == False);
+	assert(convert_value_from_user(&test_nonbool, "1", &val) == True);
+	assert(convert_value_from_user(&test_nonbool, "-8", &val) == True);
+	assert(convert_value_from_user(&test_nonbool, "+314", &val) == True);
+	assert(convert_value_from_user(&test_nonbool, "36893488147419103232", &val) == False); //2^65 > MAX_INT
+	assert(convert_value_from_user(&test_nonbool, "123abc", &val) == False);
+	assert(convert_value_from_user(&test_nonbool, "123 abc", &val) == False);
 
-	g_assert(convert_value_from_user(&test_bool, "true", &val) == True);
-	g_assert(convert_value_from_user(&test_bool, "On", &val) == True);
-	g_assert(convert_value_from_user(&test_bool, "oFf", &val) == True);
-	g_assert(convert_value_from_user(&test_bool, "FALSE", &val) == True);
-	g_assert(convert_value_from_user(&test_bool, "0", &val) == False);
-	g_assert(convert_value_from_user(&test_bool, "1", &val) == False);
-	g_assert(convert_value_from_user(&test_bool, " on", &val) == False);
-	g_assert(convert_value_from_user(&test_bool, "off ", &val) == False);
+	assert(convert_value_from_user(&test_bool, "true", &val) == True);
+	assert(convert_value_from_user(&test_bool, "On", &val) == True);
+	assert(convert_value_from_user(&test_bool, "oFf", &val) == True);
+	assert(convert_value_from_user(&test_bool, "FALSE", &val) == True);
+	assert(convert_value_from_user(&test_bool, "0", &val) == False);
+	assert(convert_value_from_user(&test_bool, "1", &val) == False);
+	assert(convert_value_from_user(&test_bool, " on", &val) == False);
+	assert(convert_value_from_user(&test_bool, "off ", &val) == False);
 }
 
 
 int main(int argc, char** argv)
 {
-	g_test_init(&argc, &argv, NULL);
-	g_test_add_func("/xsetwacom/parameter_number", test_parameter_number);
-	g_test_add_func("/xsetwacom/is_modifier", test_is_modifier);
-	g_test_add_func("/xsetwacom/convert_specialkey", test_convert_specialkey);
-	g_test_add_func("/xsetwacom/convert_value_from_user", test_convert_value_from_user);
-	return g_test_run();
+	test_parameter_number();
+	test_is_modifier();
+	test_convert_specialkey();
+	test_convert_value_from_user();
+	return 0;
 }
 
 #endif
