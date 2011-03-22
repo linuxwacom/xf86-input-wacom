@@ -1029,11 +1029,35 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 	return change;
 }
 
-#define MOD_BUTTONS(bit, value) do { \
-	int shift = 1 << (bit); \
-	ds->buttons = ((value) ? \
-			(ds->buttons | (shift)) : (ds->buttons & ~(shift))); \
-	} while (0)
+/**
+ * Flip the mask bit in buttons corresponding to btn to the specified state.
+ *
+ * @param buttons The current button mask
+ * @param btn Zero-indexed button number to change
+ * @param state Zero to unset, non-zero to set the mask for the button
+ *
+ * @return The new button mask
+ */
+static int mod_buttons(int buttons, int btn, int state)
+{
+	int mask;
+
+	if (btn >= sizeof(int))
+	{
+		xf86Msg(X_ERROR, "%s: Invalid button number %d. Insufficient "
+				"storage\n", __func__, btn);
+		return buttons;
+	}
+
+	mask = 1 << btn;
+
+	if (state)
+		buttons |= mask;
+	else
+		buttons &= ~mask;
+
+	return buttons;
+}
 
 static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 {
@@ -1062,7 +1086,8 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			 */
 			if (TabletHasFeature(common, WCM_LCD) &&
 					!private->wcmMTChannel)
-				MOD_BUTTONS(0, event->value != -1);
+				ds->buttons = mod_buttons(ds->buttons, 0,
+							  (event->value != -1));
 			break;
 
 		case ABS_MT_POSITION_X:
@@ -1168,7 +1193,7 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 					ds->device_type = TOUCH_ID;
 					ds->device_id = TOUCH_DEVICE_ID;
 					ds->proximity = event->value;
-					MOD_BUTTONS(0, event->value);
+					ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 				}
 			}
 			break;
@@ -1209,7 +1234,7 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			 */
 			if (common->wcmCapacityDefault < 0 &&
 			    (TabletHasFeature(common, WCM_LCD)))
-				MOD_BUTTONS(0, event->value);
+				ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 			break;
 
 		case BTN_TOOL_TRIPLETAP:
@@ -1244,11 +1269,11 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 	switch (event->code)
 	{
 		case BTN_STYLUS:
-			MOD_BUTTONS(1, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 1, event->value);
 			break;
 
 		case BTN_STYLUS2:
-			MOD_BUTTONS(2, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 2, event->value);
 			break;
 
 		default:
@@ -1268,25 +1293,25 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 	switch (event->code)
 	{
 		case BTN_LEFT:
-			MOD_BUTTONS(0, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 			break;
 
 		case BTN_MIDDLE:
-			MOD_BUTTONS(1, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 1, event->value);
 			break;
 
 		case BTN_RIGHT:
-			MOD_BUTTONS(2, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 2, event->value);
 			break;
 
 		case BTN_SIDE:
 		case BTN_BACK:
-			MOD_BUTTONS(3, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 3, event->value);
 			break;
 
 		case BTN_EXTRA:
 		case BTN_FORWARD:
-			MOD_BUTTONS(4, event->value);
+			ds->buttons = mod_buttons(ds->buttons, 4, event->value);
 			break;
 
 		default:
@@ -1294,7 +1319,7 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 			{
 				if (event->code == common->padkey_code[nkeys])
 				{
-					MOD_BUTTONS(nkeys, event->value);
+					ds->buttons = mod_buttons(ds->buttons, nkeys, event->value);
 					break;
 				}
 			}
