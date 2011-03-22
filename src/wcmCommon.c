@@ -949,88 +949,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		commonDispatchDevice(common,channel,pChannel, suppress);
 }
 
-static int idtotype(int id)
-{
-	int type = CURSOR_ID;
-
-	/* tools with id, such as Intuos series and Cintiq 21UX */
-	switch (id)
-	{
-		case 0x812: /* Inking pen */
-		case 0x801: /* Intuos3 Inking pen */
-		case 0x012: 
-		case 0x822: /* Pen */
-		case 0x842:
-		case 0x852:
-		case 0x823: /* Intuos3 Grip Pen */
-		case 0x813: /* Intuos3 Classic Pen */
-		case 0x885: /* Intuos3 Marker Pen */
-		case 0x022: 
-		case 0x832: /* Stroke pen */
-		case 0x032: 
-		case 0xd12: /* Airbrush */
-		case 0x912:
-		case 0x112: 
-		case 0x913: /* Intuos3 Airbrush */
-			type = STYLUS_ID;
-			break;
-		case 0x82a: /* Eraser */
-		case 0x85a:
-		case 0x91a:
-		case 0xd1a:
-		case 0x0fa: 
-		case 0x82b: /* Intuos3 Grip Pen Eraser */
-		case 0x81b: /* Intuos3 Classic Pen Eraser */
-		case 0x91b: /* Intuos3 Airbrush Eraser */
-			type = ERASER_ID;
-			break;
-	}
-	return type;
-}
-
-/**
- * Identify the device type (STYLUS_ID, etc.) based on the device_id or the
- * current tool serial number.
- */
-static int findDeviceType(const WacomCommonPtr common,
-			  const WacomDeviceState *ds)
-{
-	WacomToolPtr tool = NULL;
-	int device_type = 0;
-
-	switch (ds->device_id)
-	{
-		case STYLUS_DEVICE_ID:
-			device_type = STYLUS_ID;
-			break;
-		case ERASER_DEVICE_ID:
-			device_type = ERASER_ID;
-			break;
-		case CURSOR_DEVICE_ID:
-			device_type = CURSOR_ID;
-			break;
-		case TOUCH_DEVICE_ID:
-			device_type = TOUCH_ID;
-			break;
-		case PAD_DEVICE_ID:
-			device_type = PAD_ID;
-			break;
-		default:
-			device_type = idtotype(ds->device_id);
-	}
-
-	if (ds->serial_num)
-	{
-		for (tool = common->wcmTool; tool; tool = tool->next)
-			if (ds->serial_num == tool->serial)
-			{
-				device_type = tool->typeid;
-				break;
-			}
-	}
-	return device_type;
-}
-
 /**
  * Find the device the current events are meant for. If multiple tools are
  * configured on this tablet, the one that matches the serial number for the
@@ -1180,9 +1098,16 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomDevicePtr priv = NULL;
 	WacomDeviceState filtered;
 
-	/* if something went wrong, figure out device type by device id */
-	if (!ds->device_type && ds->proximity)
-		ds->device_type = findDeviceType(common, ds);
+	/* device_type should have been retrieved and set in the respective
+	 * models, wcmISDV4.c or wcmUSB.c. Once it comes here, something
+	 * must have been wrong. Ignore the events.
+	 */
+	if (!ds->device_type)
+	{
+		DBG(11, common, "no device type matches with"
+				" serial=%u\n", ds->serial_num);
+		return;
+	}
 
 	DBG(10, common, "device type = %d\n", ds->device_type);
 
