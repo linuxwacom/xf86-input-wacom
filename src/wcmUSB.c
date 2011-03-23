@@ -33,6 +33,8 @@
 typedef struct {
 	int wcmLastToolSerial;
 	int wcmBTNChannel;
+	int wcmDeviceType;
+	Bool wcmPenTouch;
 	Bool wcmUseMT;
 	int wcmMTChannel;
 	int wcmPrevChannel;
@@ -571,7 +573,13 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		common->wcmMaxDist = absinfo.maximum;
 
 	if (ISBITSET(abs, ABS_MT_SLOT))
+	{
 		private->wcmUseMT = 1;
+
+		/* pen and MT on the same logical port */
+		if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
+			private->wcmPenTouch = TRUE;
+	}
 
 	/* A generic protocol device does not report ABS_MISC event */
 	if (!ISBITSET(abs, ABS_MISC))
@@ -865,12 +873,29 @@ static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
 		}
 		else if (event->type == EV_ABS)
 		{
-			switch(event->code)
+			if (private->wcmDeviceType == TOUCH_ID)
 			{
-				case ABS_X:
-				case ABS_Y:
-				case ABS_PRESSURE:
-					return 1;
+				/* filter ST for MT */
+				switch(event->code)
+				{
+					case ABS_X:
+					case ABS_Y:
+					case ABS_PRESSURE:
+						return 1;
+				}
+			}
+			else
+			{
+				/* filter MT for pen */
+				switch(event->code)
+				{
+					case ABS_MT_SLOT:
+					case ABS_MT_TRACKING_ID:
+					case ABS_MT_POSITION_X:
+					case ABS_MT_POSITION_Y:
+					case ABS_MT_PRESSURE:
+						return 1;
+				}
 			}
 		}
 	}
@@ -1329,6 +1354,64 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 	return change;
 }
 
+/***
+ * Retrieve the tool type from an USB data packet by looking at the event
+ * codes. Refer to linux/input.h for event codes that define tool types.
+ *
+ * @param event_ptr A pointer to the USB data packet that contains the
+ * events to be processed.
+ * @param nevents Number of events in the packet.
+ *
+ * @return The tool type. 0 if no pen/touch/eraser event code in the event.
+ */
+static int usbInitToolType(const struct input_event *event_ptr, int nevents)
+{
+	int i, device_type = 0;
+	struct input_event* event = (struct input_event *)event_ptr;
+
+	for (i = 0; (i < nevents) && !device_type; ++i)
+	{
+		switch (event->code)
+		{
+			case BTN_TOOL_PEN:
+			case BTN_TOOL_PENCIL:
+			case BTN_TOOL_BRUSH:
+			case BTN_TOOL_AIRBRUSH:
+				device_type = STYLUS_ID;
+				break;
+
+			case BTN_TOOL_FINGER:
+			case ABS_MT_SLOT:
+			case ABS_MT_TRACKING_ID:
+				device_type = TOUCH_ID;
+				break;
+
+			case BTN_TOOL_RUBBER:
+				device_type = ERASER_ID;
+				break;
+		}
+
+		event++;
+	}
+
+	return device_type;
+}
+
+/**
+ * Check if the tool is a stylus/eraser and in-prox or not.
+ *
+ * @param device_type The tool type stored in wcmChannel
+ * @param proximity The tool's proximity state
+
+ * @return True if stylus/eraser is in-prox; False otherwise.
+ */
+static Bool usbIsPenInProx(int device_type, int proximity)
+{
+	Bool is_pen = (device_type == STYLUS_ID) ||
+			(device_type == ERASER_ID);
+	return (is_pen && proximity);
+}
+
 static void usbDispatchEvents(InputInfoPtr pInfo)
 {
 	int i;
@@ -1338,10 +1421,30 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	WacomCommonPtr common = priv->common;
 	int channel;
 	int channel_change = 0, btn_channel_change = 0, mt_channel_change = 0;
-	WacomDeviceState dslast;
+	WacomDeviceState dslast = common->wcmChannel[0].valid.state;
 	wcmUSBData* private = common->private;
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
+
+	if (private->wcmPenTouch)
+	{
+		private->wcmDeviceType = usbInitToolType(private->wcmEvents,
+						private->wcmEventCnt);
+
+		/* We get both pen and touch data from the kernel when they
+		 * both are in/down. So, if we were (hence the need of dslast)
+		 * processing pen events, we should ignore touch events.
+		 *
+		 * MT events will be posted to the userland when XInput 2.1
+		 * is ready.
+		 */
+		if ((private->wcmDeviceType == TOUCH_ID) &&
+				usbIsPenInProx(dslast.device_type, dslast.proximity))
+		{
+			private->wcmEventCnt = 0;
+			return;
+		}
+	}
 
 	channel = usbChooseChannel(common);
 
