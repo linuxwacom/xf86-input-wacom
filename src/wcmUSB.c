@@ -945,8 +945,8 @@ static int usbIdToType(int id)
 }
 
 /**
- * Find the tool type (STYLUS_ID, etc.) based on or the current tool
- * serial number if the device_id is unknown (0) or the device_id .
+ * Find the tool type (STYLUS_ID, etc.) based on the device_id or the
+ *  current tool serial number if the device_id is unknown (0).
  *
  * @param ds The current device state received from the kernel.
  * @return The tool type associated with the tool id or the current
