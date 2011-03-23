@@ -414,34 +414,21 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 
 /* Initialize fixed PAD channel's state to in proximity.
  *
- * Conceptionally, the PAD device is always in proximity and it's safe
- * to initialize this one time up front; even for devices that have no PAD/
- * pad buttons.
- *
  * Some, but not all, Wacom protocol 4/5 devices are always in proximity.
  * Because of evdev filtering, there will never be a BTN_TOOL_FINGER
  * sent to initialize state.
  * Generic protocol devices never send anything to help initialize PAD
  * device as well.
- * This helps those 2 cases and does not hurt the cases were kernel
- * driver sends out-of-proximity event for PAD.
+ * This helps those 2 cases and does not hurt the cases where kernel
+ * driver sends out-of-proximity event for PAD since PAD is always on
+ * its own channel, PAD_CHANNEL.
  */
 static void usbWcmInitPadState(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	wcmUSBData* private = common->private;
 	WacomDeviceState *ds;
-	int channel;
-
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
-		private->wcmLastToolSerial = -1;
-	else
-		private->wcmLastToolSerial = 0xf0;
-
-	channel = usbChooseChannel(common);
-
-	channel = private->wcmBTNChannel;
+	int channel = PAD_CHANNEL;
 
 	DBG(6, common, "Initializing PAD channel %d\n", channel);
 
