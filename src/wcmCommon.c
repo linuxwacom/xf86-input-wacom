@@ -872,7 +872,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	DBG(10, common,
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
-		"t=%d df=%d px=%d st=%d cs=%d \n",
+		"t=%d px=%d st=%d cs=%d \n",
 		channel,
 		ds.device_id,
 		ds.device_type,
@@ -880,7 +880,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.x, ds.y, ds.buttons,
 		ds.pressure, ds.rotation, ds.tiltx,
 		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
-		ds.discard_first, ds.proximity, ds.sample,
+		ds.proximity, ds.sample,
 		pChannel->nSamples);
 
 	/* touch device is needed for gesture later */

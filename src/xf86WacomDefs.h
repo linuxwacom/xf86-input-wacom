@@ -328,7 +328,6 @@ struct _WacomDeviceState
 	int relwheel;
 	int distance;
 	int throttle;
-	int discard_first;
 	int proximity;
 	int sample;	/* wraps every 24 days */
 };
