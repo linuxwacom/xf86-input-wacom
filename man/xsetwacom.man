@@ -171,6 +171,11 @@ to work.  If off, stylus buttons will work once the stylus is in proximity
 of the tablet (regardless of whether it is touching the screen).  Default:  on
 for Tablet PCs; off for all other models.
 .TP
+\fBCursorProximity\fR distance
+sets the max distance from tablet to stop reporting movement for cursor in
+relative mode. Default for Intuos series is 10, for Graphire series (including
+Volitos) is 42. Only available for the cursor/puck device.
+.TP
 \fBThreshold\fR level
 Set the minimum pressure necessary to generate a Button event for the stylus
 tip, eraser, or touch.  The pressure levels of all tablets are normalized to
