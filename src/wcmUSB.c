@@ -458,14 +458,14 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		return !Success;
 	}
 
-        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
+	if (!ISBITSET(ev,EV_ABS))
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl abs bits.\n", pInfo->name);
+		xf86Msg(X_ERROR, "%s: no abs bits.\n", pInfo->name);
 		return !Success;
 	}
 
 	/* absolute values */
-	if (!ISBITSET(ev,EV_ABS))
+        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
 		xf86Msg(X_ERROR, "%s: unable to ioctl max values.\n", pInfo->name);
 		return !Success;
