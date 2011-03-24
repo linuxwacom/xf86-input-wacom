@@ -893,7 +893,11 @@ static ISDV4ModelDesc isdv4_models[] = {
 
 /**
  * Query the device's fd for the key bits and the tablet ID. Returns the ID
- * on success or 0 on failure.
+ * on success. If the model vendor is unknown, we assume a penabled device
+ * (0x90). If the model vendor is known but the model itself is unknown, the
+ * return value depends on the model-specific matching code (0 for Wacom,
+ * 0x90 for Fujitsu).
+ *
  * For serial devices, we set the BTN_TOOL_DOUBLETAP etc. bits based on the
  * device ID. This matching only works for known devices (see the
  * isdv4_model list), all others are simply assumed to be pen + erasor.
