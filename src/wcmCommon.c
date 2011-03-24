@@ -326,7 +326,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 			  unsigned int **fakeKey)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int fakeButton = 0, value;
+	int fakeButton = 0, value = 0;
 
 	/* emulate events for relative wheel */
 	if ( ds->relwheel )
