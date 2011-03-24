@@ -480,7 +480,8 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", pInfo->name);
+		xf86Msg(X_ERROR, "%s: xmax value is %d, expected > 0.\n",
+			pInfo->name, absinfo.maximum);
 		return !Success;
 	}
 	if (!is_touch)
@@ -503,7 +504,8 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", pInfo->name);
+		xf86Msg(X_ERROR, "%s: ymax value is %d, expected > 0.\n",
+			pInfo->name, absinfo.maximum);
 		return !Success;
 	}
 	if (!is_touch)
