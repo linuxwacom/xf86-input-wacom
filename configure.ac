@@ -55,6 +55,9 @@ PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] xproto xext kbproto inputproto ra
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi xrandr)
 
+# Obtain compiler/linker options for libudev used by ISDV4 code
+PKG_CHECK_MODULES(UDEV, libudev)
+
 # X Server SDK location is required to install wacom header files
 # This location is also relayed in the xorg-wacom.pc file
 sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`

@@ -28,6 +28,7 @@
 #include "isdv4.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <libudev.h>
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
@@ -892,6 +893,66 @@ static ISDV4ModelDesc isdv4_models[] = {
 };
 
 /**
+ * Query the model number from the sysfs /sys/.../device/id file and return
+ * the matching model and the ID for the model we found.
+ *
+ * @param pInfo Used for debugging purposes only.
+ * @param fd File descriptor to the serial device.
+ * @param[out] id On success, returns the numeric ID for this device
+ * according to the model-specific matching pattern.
+ *
+ * @return The model description for the matching device or NULL if no
+ * matching one could be found.
+ */
+static ISDV4ModelDesc*
+model_from_sysfs(const InputInfoPtr pInfo, int fd, int *id)
+{
+	WacomDevicePtr priv = pInfo->private;
+	ISDV4ModelDesc* model = NULL;
+	struct udev *udev = NULL;
+	struct udev_device *device = NULL;
+	struct stat st;
+	char *sysfs_path = NULL;
+	FILE *file = NULL;
+
+	fstat(fd, &st);
+
+	udev = udev_new();
+	device = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
+
+	if (!device)
+		goto out;
+
+	if (asprintf(&sysfs_path, "%s/device/id",
+		     udev_device_get_syspath(device)) == -1)
+		goto out;
+
+	DBG(8, priv, "sysfs path: %s\n", sysfs_path);
+
+	file = fopen(sysfs_path, "r");
+	if (!file)
+		goto out;
+
+	model = isdv4_models;
+
+	while(model->pattern && fscanf(file, model->pattern, id) <= 0)
+		model++;
+
+	if (!model->pattern)
+		model = NULL;
+
+	DBG(8, priv, "sysfs check found %s:%d\n",
+	    (model) ? model->pattern : "<unknown>", *id);
+
+out:
+	udev_device_unref(device);
+	udev_unref(udev);
+	fclose(file);
+	free(sysfs_path);
+	return model;
+}
+
+/**
  * Query the device's fd for the key bits and the tablet ID. Returns the ID
  * on success. If the model vendor is unknown, we assume a penabled device
  * (0x90). If the model vendor is known but the model itself is unknown, the
@@ -904,10 +965,9 @@ static ISDV4ModelDesc isdv4_models[] = {
  */
 static int isdv4ProbeKeys(InputInfoPtr pInfo)
 {
-	int id;
+	int id = 0;
 	int tablet_id = 0x90;
 	struct serial_struct tmp;
-	const char *device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
 	ISDV4ModelDesc *model = isdv4_models;
@@ -919,31 +979,9 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 	while (model->pattern && sscanf(pInfo->name, model->pattern, &id) < 1)
 		model++;
 
+	/* grab id from sysfs/.../device/id */
 	if (!model->pattern)
-	{
-		/* id in file sys/class/tty/%str/device/id */
-		FILE *file;
-		char sysfs_id[256];
-		char *str = strstr(device, "ttyS");
-		snprintf(sysfs_id, sizeof(sysfs_id),
-				"/sys/class/tty/%s/device/id", str);
-		file = fopen(sysfs_id, "r");
-
-		/* return true since it falls to default */
-		if (file)
-		{
-			model = isdv4_models;
-
-			while(model->pattern && fscanf(file, model->pattern, &id) <= 0)
-				model++;
-
-			/* make sure we fall to default */
-			if (!model->pattern)
-				id = 0;
-
-			fclose(file);
-		}
-	}
+		model = model_from_sysfs(pInfo, pInfo->fd, &id);
 
 	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
 
@@ -951,7 +989,7 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
 	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
 
-	if (model->set_bits)
+	if (model && model->set_bits)
 		tablet_id = model->set_bits(id, common->wcmKeys);
 
 	/* Change to generic protocol to match USB MT format */
