@@ -389,8 +389,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 {
 	common->wcmProtocolLevel = WCM_PROTOCOL_5;
 	common->wcmPktLength = sizeof(struct input_event);
-	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_INTUOS_DISTANCE;
+	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
 
 	/* tilt enabled */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
@@ -401,8 +400,7 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 {
 	common->wcmProtocolLevel = WCM_PROTOCOL_4;
 	common->wcmPktLength = sizeof(struct input_event);
-	common->wcmCursorProxoutDistDefault 
-			= PROXOUT_GRAPHIRE_DISTANCE;
+	common->wcmCursorProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE;
 
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
