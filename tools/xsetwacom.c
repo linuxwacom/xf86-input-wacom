@@ -1193,7 +1193,10 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		}
 
 		if (!keyword_found)
+		{
 			fprintf(stderr, "Cannot parse keyword '%s'\n", words[i]);
+			return;
+		}
 	}
 
 	if (unset_prop || nitems > 0)
