@@ -1125,7 +1125,6 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	int i;
 	int nwords = 0;
 	char **words = NULL;
-	int unset_prop = 0;
 
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				AnyPropertyType, &type, &format, &btnact_nitems,
@@ -1152,7 +1151,6 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	{
 		prop = btnact_data[offset];
 		btnact_data[offset] = 0;
-		unset_prop = 1;
 	} else if (btnact_data[offset])
 		/* some atom already assigned, modify that */
 		prop = btnact_data[offset];
@@ -1199,7 +1197,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		}
 	}
 
-	if (unset_prop || nitems > 0)
+	if (nitems > 0)
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
