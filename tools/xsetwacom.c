@@ -1115,59 +1115,30 @@ static int convert_wheel_prop(Display *dpy, XDevice *dev, Atom btnact_prop)
 	return 0;
 }
 
-
-static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
+/**
+ * This function parses the given strings to produce a list of actions that
+ * the driver can carry out. We first combine the strings and then split
+ * on spaces to produce a wordlist. Begining with the first word, we let each
+ * registered keyword parser try to parse the string; if one succeeds in
+ * parsing a portion, we jump ahead to the first word it could not parse
+ * and repeat the process. Each parser builds up the list of actions with
+ * those commands it can interpret.
+ *
+ * @param dpy   X11 display to query
+ * @param argc  Length of argv
+ * @param argv  String data to be parsed
+ * @param data  Parsed action data
+ * @return 'true' if the whole string was parsed sucessfully, else 'false'
+ */
+static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* data, unsigned long *nitems)
 {
-	unsigned long *data, *btnact_data;
-	Atom type, prop = 0;
-	int format;
-	unsigned long btnact_nitems, nitems, bytes_after;
-	int i;
-	int nwords = 0;
+	int  i;
+	int  nwords = 0;
 	char **words = NULL;
-
-	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
-				AnyPropertyType, &type, &format, &btnact_nitems,
-				&bytes_after, (unsigned char**)&btnact_data);
-
-	if (offset > btnact_nitems)
-		return;
-
-	/* Prop is currently 8 bit integer, i.e. plain button
-	 * mappings. Convert to 32 bit Atom actions first.
-	 */
-	if (format == 8 && type == XA_INTEGER)
-	{
-		if (convert_wheel_prop(dpy, dev, btnact_prop))
-			return;
-
-		XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
-				   AnyPropertyType, &type, &format,
-				   &btnact_nitems, &bytes_after,
-				   (unsigned char**)&btnact_data);
-	}
-
-	if (argc == 0) /* unset property */
-	{
-		prop = btnact_data[offset];
-		btnact_data[offset] = 0;
-	} else if (btnact_data[offset])
-		/* some atom already assigned, modify that */
-		prop = btnact_data[offset];
-	else
-	{
-		char buff[64];
-		sprintf(buff, "Wacom button action %d", (offset + 1));
-		prop = XInternAtom(dpy, buff, False);
-
-		btnact_data[offset] = prop;
-	}
-
-	data = calloc(sizeof(long), 256);
-	nitems = 0;
 
 	/* translate cmdline commands */
 	words = strjoinsplit(argc, argv, &nwords);
+
 	for (i = 0; i < nwords; i++)
 	{
 		int j = 0;
@@ -1180,7 +1151,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 			{
 				parsed = keywords[j].func(dpy, nwords - i - 1,
 							  &words[i + 1],
-							  &nitems, data);
+							  nitems, data);
 				i += parsed;
 				keyword_found = 1;
 			}
@@ -1193,22 +1164,100 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		if (!keyword_found)
 		{
 			fprintf(stderr, "Cannot parse keyword '%s' at position %d\n", words[i], i+1);
-			return;
+			return False;
 		}
 	}
 
+	free(words);
+
+	return True;
+}
+
+/**
+ * Maps sub-properties (e.g. the 3rd button in WACOM_PROP_BUTTON_ACTIONS)
+ * to actions. This function leverages the several available parsing
+ * functions to convert plain-text descriptions into a list of actions
+ * the driver can understand.
+ *
+ * Once we have a list of actions, we can store it in the appropriate
+ * child property. If none exists, we must first create one and update
+ * the parent list. If we want no action to occur, we can delete the
+ * child property and have the parent point to '0' instead.
+ *
+ * @param  dpy         X display we want to query
+ * @param  dev         X device we want to modify
+ * @param  btnact_prop Parent property
+ * @param  offset      Offset into the parent's list of child properties
+ * @param  argc        Number of command line arguments we've been passed
+ * @param  argv        Command line arguments we need to parse
+ */
+static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
+{
+	unsigned long *data, *btnact_data;
+	Atom type, prop = 0;
+	int format;
+	unsigned long btnact_nitems, bytes_after;
+	unsigned long nitems = 0;
+
+	data = calloc(sizeof(long), 256);
+	if (!parse_actions(dpy, argc, argv, data, &nitems))
+		return;
+
+	/* obtain the button actions Atom */
+	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+				AnyPropertyType, &type, &format, &btnact_nitems,
+				&bytes_after, (unsigned char**)&btnact_data);
+
+	if (offset > btnact_nitems)
+		return;
+
+	if (format == 8 && type == XA_INTEGER)
+	{
+		/* Prop is currently 8 bit integer, i.e. plain button
+		 * mappings. Convert to 32 bit Atom actions first.
+		 */
+		if (convert_wheel_prop(dpy, dev, btnact_prop))
+			return;
+
+		XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
+				   AnyPropertyType, &type, &format,
+				   &btnact_nitems, &bytes_after,
+				   (unsigned char**)&btnact_data);
+	}
+
+	/* set or unset the property */
+	prop = btnact_data[offset];
 	if (nitems > 0)
+	{ /* Setting a new or existing property */
+		if (!prop)
+		{
+			char buff[64];
+			sprintf(buff, "Wacom button action %d", (offset + 1));
+			prop = XInternAtom(dpy, buff, False);
+			btnact_data[offset] = prop;
+
+			XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+						PropModeReplace,
+						(unsigned char*)btnact_data,
+						btnact_nitems);
+		}
+
+
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
+	}
+	else if (prop)
+	{ /* Unsetting a property that exists */
+		btnact_data[offset] = 0;
 
-	XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
-				PropModeReplace,
-				(unsigned char*)btnact_data,
-				btnact_nitems);
+		XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+					PropModeReplace,
+					(unsigned char*)btnact_data,
+					btnact_nitems);
 
-	if (argc == 0 && prop)
 		XDeleteDeviceProperty(dpy, dev, prop);
+	}
 
 	XFlush(dpy);
 }
