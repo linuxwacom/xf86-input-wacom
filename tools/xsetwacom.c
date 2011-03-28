@@ -126,6 +126,7 @@ static param_t parameters[] =
 	{
 		.name = "Button",
 		.desc = "X11 event to which the given button should be mapped. ",
+		.prop_name = WACOM_PROP_BUTTON_ACTIONS,
 		.set_func = map_button,
 		.get_func = get_button,
 	},
@@ -1298,7 +1299,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
 
 	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
 
-	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
 	if (!btnact_prop)
 		return;
 
@@ -1726,7 +1727,7 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 	int i;
 	char buff[1024] = {0};
 
-	btnact_prop = XInternAtom(dpy, "Wacom Button Actions", True);
+	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
 
 	if (!btnact_prop)
 		return 0;
