@@ -411,13 +411,14 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 
 		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo), fakeButton & AC_CODE,
 				     0, first_val, num_vals, VCOPY(valuators, num_vals));
-		return;
 	}
-
-	sendAction(pInfo, 1, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
-		   first_val, num_vals, valuators);
-	sendAction(pInfo, 0, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
-		   first_val, num_vals, valuators);
+	else
+	{
+		sendAction(pInfo, 1, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
+			   first_val, num_vals, valuators);
+		sendAction(pInfo, 0, fakeKey, ARRAY_SIZE(priv->wheel_keys[0]),
+			   first_val, num_vals, valuators);
+	}
 }
 
 /*****************************************************************************
