@@ -1236,17 +1236,17 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 			sprintf(buff, "Wacom button action %d", (offset + 1));
 			prop = XInternAtom(dpy, buff, False);
 			btnact_data[offset] = prop;
-
-			XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
-						PropModeReplace,
-						(unsigned char*)btnact_data,
-						btnact_nitems);
 		}
 
 
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
+
+		XChangeDeviceProperty(dpy, dev, btnact_prop, XA_ATOM, 32,
+						PropModeReplace,
+						(unsigned char*)btnact_data,
+						btnact_nitems);
 	}
 	else if (prop)
 	{ /* Unsetting a property that exists */
