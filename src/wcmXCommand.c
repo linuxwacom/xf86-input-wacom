@@ -171,7 +171,10 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[2] = priv->striprup;
 		values[3] = priv->striprdn;
 		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
+	}
 
+	if (IsPad(priv) || IsCursor(priv))
+	{
 		values[0] = priv->relup;
 		values[1] = priv->reldn;
 		values[2] = priv->wheelup;
