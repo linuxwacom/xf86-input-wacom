@@ -81,7 +81,7 @@ xf86OptionValue(pointer opt)
 _X_EXPORT int
 xf86NameCmp(const char *s1, const char *s2)
 {
-    return 0;
+    return strcasecmp(s1, s2);
 }
 
 _X_EXPORT char *

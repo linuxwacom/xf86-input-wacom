@@ -443,6 +443,85 @@ test_mod_buttons(void)
 	assert(mod_buttons(0, sizeof(int), 1) == 0);
 }
 
+static void test_set_type(void)
+{
+	InputInfoRec info = {0};
+	WacomDeviceRec priv = {0};
+	WacomTool tool = {0};
+	WacomCommonRec common = {0};
+	int rc;
+
+#define reset(_info, _priv, _tool, _common) \
+	memset(&(_info), 0, sizeof(_info)); \
+	memset(&(_priv), 0, sizeof(_priv)); \
+	memset(&(_tool), 0, sizeof(_tool)); \
+	(_info).private = &(_priv); \
+	(_priv).tool = &(_tool); \
+	(_priv).common = &(_common);
+
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, NULL);
+	assert(rc == 0);
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "stylus");
+	assert(rc == 1);
+	assert(is_absolute(&info));
+	assert(IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "touch");
+	assert(rc == 1);
+	/* only some touch screens are absolute */
+	assert(!is_absolute(&info));
+	assert(!IsStylus(&priv));
+	assert(IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "eraser");
+	assert(rc == 1);
+	assert(is_absolute(&info));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "cursor");
+	assert(rc == 1);
+	assert(!is_absolute(&info));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "pad");
+	assert(rc == 1);
+	assert(is_absolute(&info));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetType(&info, "foobar");
+	assert(rc == 0);
+
+#undef reset
+}
+
 int main(int argc, char** argv)
 {
 	test_common_ref();
@@ -452,6 +531,7 @@ int main(int argc, char** argv)
 	test_initial_size();
 	test_tilt_to_rotation();
 	test_mod_buttons();
+	test_set_type();
 	return 0;
 }
 

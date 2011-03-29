@@ -159,12 +159,7 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 	WacomDevicePtr priv = pInfo->private;
 
 	if (!type)
-	{
-		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-				"Must be one of stylus, touch, cursor, eraser, or pad\n",
-				pInfo->name);
-		return 0;
-	}
+		goto invalid;
 
 	if (xf86NameCmp(type, "stylus") == 0)
 	{
@@ -191,7 +186,8 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 	{
 		priv->flags = ABSOLUTE_FLAG|PAD_ID;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
-	}
+	} else
+		goto invalid;
 
 	/* Set the device id of the "last seen" device on this tool */
 	priv->old_device_id = wcmGetPhyDeviceID(priv);
@@ -202,6 +198,12 @@ static int wcmSetType(InputInfoPtr pInfo, const char *type)
 	priv->tool->typeid = DEVICE_ID(priv->flags); /* tool type (stylus/touch/eraser/cursor/pad) */
 
 	return 1;
+
+invalid:
+	xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
+			 "Must be one of stylus, touch, cursor, eraser, or pad\n",
+			 pInfo->name);
+	return 0;
 }
 
 int wcmGetPhyDeviceID(WacomDevicePtr priv)
