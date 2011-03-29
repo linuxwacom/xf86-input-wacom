@@ -1281,10 +1281,14 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	XFlush(dpy);
 }
 
-
-static void special_map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
 	Atom wheel_prop;
+
+	if (argc <= 0)
+		return;
+
+	TRACE("Mapping wheel %s for device %ld.\n", param->name, dev->device_id);
 
 	wheel_prop = XInternAtom(dpy, param->prop_name, True);
 	if (!wheel_prop)
@@ -1293,33 +1297,6 @@ static void special_map_wheels(Display *dpy, XDevice *dev, param_t* param, int a
 	TRACE("Wheel property %s (%ld)\n", param->prop_name, wheel_prop);
 
 	special_map_property(dpy, dev, wheel_prop, param->prop_offset, argc, argv);
-}
-
-static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
-{
-	if (argc <= 0)
-		return;
-
-	TRACE("Mapping wheel %s for device %ld.\n", param->name, dev->device_id);
-
-	special_map_wheels(dpy, dev, param, argc, argv);
-}
-
-/* Handles complex button mappings through button actions. */
-static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
-				int button, int argc, char **argv)
-{
-	Atom btnact_prop;
-
-	TRACE("Special %s map for device %ld.\n", param->name, dev->device_id);
-
-	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
-	if (!btnact_prop)
-		return;
-
-	button--; /* property is zero-indexed, button numbers are 1-indexed */
-
-	special_map_property(dpy, dev, btnact_prop, button, argc, argv);
 }
 
 /*
@@ -1331,6 +1308,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
  */
 static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
+	Atom btnact_prop;
 	int button, /* button to be mapped */
 	    mapping;
 
@@ -1339,7 +1317,13 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
-	special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
+	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
+	if (!btnact_prop)
+		return;
+
+	button--; /* property is zero-indexed, button numbers are 1-indexed */
+
+	special_map_property(dpy, dev, btnact_prop, button, argc - 1, &argv[1]);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
