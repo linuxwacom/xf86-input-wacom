@@ -660,7 +660,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		value = *(CARD32*)prop->data;
 
-		if (value > 255)
+		if (value > common->wcmMaxDist)
 			return BadValue;
 
 		if (!checkonly)

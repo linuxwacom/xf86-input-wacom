@@ -442,12 +442,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	wcmRotateTablet(pInfo, common->wcmRotate);
 
-	if (IsTouch(priv))
-	{
-		/* hard prox out */
-		priv->oldHwProx = 0;
-	}
-
 	InitWcmDeviceProperties(pInfo);
 	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, NULL, wcmDeleteProperty);
 

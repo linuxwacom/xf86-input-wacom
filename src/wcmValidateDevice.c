@@ -624,7 +624,8 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	if (IsCursor(priv))
 	{
 		common->wcmCursorProxoutDist = xf86SetIntOption(pInfo->options, "CursorProx", 0);
-		if (common->wcmCursorProxoutDist < 0 || common->wcmCursorProxoutDist > 255)
+		if (common->wcmCursorProxoutDist < 0 ||
+				common->wcmCursorProxoutDist > common->wcmMaxDist)
 			xf86Msg(X_CONFIG, "%s: CursorProx invalid %d \n",
 				pInfo->name, common->wcmCursorProxoutDist);
 	}

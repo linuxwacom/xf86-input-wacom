@@ -1138,14 +1138,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	/* Device transformations come first */
 	priv = pInfo->private;
 
-	if (IsUSBDevice(common))
-	{
-		if (IsTouch(priv) && !ds->proximity)
-			priv->oldHwProx = 0;
-		else if (IsStylus(priv) || IsEraser(priv))
-			priv->oldHwProx = 1;
-	}
-
 	/* send a touch out for USB Tablet PCs */
 	if (IsUSBDevice(common) && !IsTouch(priv)
 			&& common->wcmTouchDefault && !priv->oldProximity)
@@ -1180,19 +1172,19 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		filtered.pressure = applyPressureCurve(priv,&filtered);
 	}
 
-	else if (IsCursor(priv) && !priv->oldHwProx)
+	else if (IsCursor(priv) && !priv->oldCursorHwProx)
 	{
 		/* initial current max distance for Intuos series */
 		if ((TabletHasFeature(common, WCM_ROTATION)) ||
 				(TabletHasFeature(common, WCM_DUALINPUT)))
-			common->wcmMaxCursorDist = 256;
+			common->wcmMaxCursorDist = common->wcmMaxDist;
 		else
 			common->wcmMaxCursorDist = 0;
 	}
 
-	/* Store current hard prox for next use */
-	if (!IsTouch(priv))
-		priv->oldHwProx = ds->proximity;
+	/* Store cursor hardware prox for next use */
+	if (IsCursor(priv))
+		priv->oldCursorHwProx = ds->proximity;
 
 	/* User-requested filtering comes next */
 
@@ -1227,14 +1219,17 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
 	if (IsCursor(priv))
 	{
-		/* force out-prox when distance is outside wcmCursorProxoutDist. */
 		if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
 		{
+			/* protocol 5 distance starts from the MaxDist
+			 * when getting in the prox.
+			 */
 			if (common->wcmMaxCursorDist > filtered.distance)
 				common->wcmMaxCursorDist = filtered.distance;
 		}
 		else
 		{
+			/* protocol 4 distance is 0 when getting in the prox */
 			if (common->wcmMaxCursorDist < filtered.distance)
 				common->wcmMaxCursorDist = filtered.distance;
 		}

@@ -394,10 +394,6 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 
 	/* tilt enabled */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
-
-	/* reinitialize max here since 0 is for Graphire series */
-	common->wcmMaxCursorDist = 256;
-
 }
 
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
