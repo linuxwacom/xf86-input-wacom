@@ -333,7 +333,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		value = ds->relwheel;
 		fakeButton = (value > 0) ? priv->relup : priv->reldn;
-		*fakeKey = (value > 0) ? priv->wheel_keys[0] : priv->wheel_keys[1];
+		*fakeKey = (value > 0) ? priv->wheel_keys[0+1] : priv->wheel_keys[1+1];
 	}
 
 	/* emulate events for absolute wheel when it is a touch ring (on pad) */
@@ -358,7 +358,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 			value = wrap_delta;
 
 		fakeButton = (value > 0) ? priv->wheelup : priv->wheeldn;
-		*fakeKey = (value > 0) ? priv->wheel_keys[2] : priv->wheel_keys[3];
+		*fakeKey = (value > 0) ? priv->wheel_keys[2+1] : priv->wheel_keys[3+1];
 	}
 
 	/* emulate events for left strip */
@@ -367,7 +367,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		value = ds->stripx - priv->oldStripX;
 
 		fakeButton = (value > 0) ? priv->striplup : priv->stripldn;
-		*fakeKey = (value > 0) ? priv->strip_keys[0] : priv->strip_keys[1];
+		*fakeKey = (value > 0) ? priv->strip_keys[0+1] : priv->strip_keys[1+1];
 	}
 
 	/* emulate events for right strip */
@@ -376,7 +376,7 @@ static int getWheelButton(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		value = ds->stripy - priv->oldStripY;
 
 		fakeButton = (value > 0) ? priv->striprup : priv->striprdn;
-		*fakeKey = (value > 0) ? priv->strip_keys[2] : priv->strip_keys[3];
+		*fakeKey = (value > 0) ? priv->strip_keys[2+1] : priv->strip_keys[3+1];
 	}
 
 	DBG(10, priv, "send fakeButton %x with value = %d \n",
