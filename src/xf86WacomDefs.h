@@ -138,6 +138,7 @@ struct _WacomModel
  * WacomDeviceRec
  *****************************************************************************/
 
+/* these device IDs are reported through ABS_MISC for Protocol 4 devices */
 #define DEVICE_ID(flags) ((flags) & 0xff)
 #define STYLUS_DEVICE_ID	0x02
 #define TOUCH_DEVICE_ID		0x03
