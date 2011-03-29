@@ -1133,12 +1133,29 @@ static int convert_wheel_prop(Display *dpy, XDevice *dev, Atom btnact_prop)
  */
 static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* data, unsigned long *nitems)
 {
-	int  i;
+	int  i = 0;
 	int  nwords = 0;
 	char **words = NULL;
 
 	/* translate cmdline commands */
 	words = strjoinsplit(argc, argv, &nwords);
+
+	if (nwords==1 && sscanf(words[0], "%d", &i) == 1)
+	{ /* Mangle "simple" button maps into proper actions */
+		char **new_words = realloc(words, 2);
+		if (new_words == NULL)
+		{
+			fprintf(stderr, "Unable to reallocate memory.\n");
+			return False;
+		}
+
+		sprintf(new_words[0], "+%d", i);
+		new_words[1] = new_words[0];
+		new_words[0] = "button";
+
+		words  = new_words;
+		nwords = 2;
+	}
 
 	for (i = 0; i < nwords; i++)
 	{
@@ -1284,10 +1301,6 @@ static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 		return;
 
 	TRACE("Mapping wheel %s for device %ld.\n", param->name, dev->device_id);
-
-	/* FIXME:
-	   if value is simple number, change back to 8 bit integer
-	 */
 
 	special_map_wheels(dpy, dev, param, argc, argv);
 }
