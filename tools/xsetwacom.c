@@ -1322,29 +1322,6 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param,
 	special_map_property(dpy, dev, btnact_prop, button, argc, argv);
 }
 
-
-static void map_button_simple(Display *dpy, XDevice *dev, param_t* param,
-			      int button, int mapping)
-{
-	int nmap = 256;
-	unsigned char map[nmap];
-
-	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
-	if (button > nmap)
-	{
-		fprintf(stderr, "Button number does not exist on device.\n");
-		return;
-	}
-
-	TRACE("Mapping button %d to %d.\n", button, mapping);
-
-	map[button - 1] = mapping;
-	XSetDeviceButtonMapping(dpy, dev, map, nmap);
-	XFlush(dpy);
-
-	/* If there's a property set, unset it */
-	special_map_buttons(dpy, dev, param, button, 0, NULL);
-}
 /*
    Supports two variations, simple mapping and special mapping:
    xsetwacom set device Button 1 1
@@ -1362,12 +1339,7 @@ static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
-
-	/* --set "device" Button1 3 */
-	if (argc > 1 && sscanf(argv[1], "%d", &mapping) == 1)
-		map_button_simple(dpy, dev, param, button, mapping);
-	else
-		special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
+	special_map_buttons(dpy, dev, param, button, argc - 1, &argv[1]);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
