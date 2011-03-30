@@ -98,8 +98,7 @@ typedef struct _param
 
 
 /* get_func/set_func calls for special parameters */
-static void map_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
-static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv);
+static void map_actions(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -127,7 +126,7 @@ static param_t parameters[] =
 		.name = "Button",
 		.desc = "X11 event to which the given button should be mapped. ",
 		.prop_name = WACOM_PROP_BUTTON_ACTIONS,
-		.set_func = map_button,
+		.set_func = map_actions,
 		.get_func = get_button,
 	},
 	{
@@ -259,7 +258,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "RelWheelDown",
@@ -267,7 +266,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "AbsWheelUp",
@@ -275,7 +274,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "AbsWheelDown",
@@ -283,7 +282,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "StripLeftUp",
@@ -291,7 +290,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "StripLeftDown",
@@ -299,7 +298,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "StripRightUp",
@@ -307,7 +306,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "StripRightDown",
@@ -315,7 +314,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
-		.set_func = map_wheels,
+		.set_func = map_actions,
 	},
 	{
 		.name = "Threshold",
@@ -1281,49 +1280,56 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	XFlush(dpy);
 }
 
-static void map_wheels(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
-{
-	Atom wheel_prop;
-
-	if (argc <= 0)
-		return;
-
-	TRACE("Mapping wheel %s for device %ld.\n", param->name, dev->device_id);
-
-	wheel_prop = XInternAtom(dpy, param->prop_name, True);
-	if (!wheel_prop)
-		return;
-
-	TRACE("Wheel property %s (%ld)\n", param->prop_name, wheel_prop);
-
-	special_map_property(dpy, dev, wheel_prop, param->prop_offset, argc, argv);
-}
-
-/*
-   Supports two variations, simple mapping and special mapping:
-   xsetwacom set device Button 1 1
-	- maps button 1 to logical button 1
-   xsetwacom set device Button 1 "key a b c d"
-	- maps button 1 to key events a b c d
+/**
+ * Maps "actions" to certain properties. Actions allow for complex tasks to
+ * be performed when the driver recieves certain events. For example you
+ * could have an action of "key +alt f2" to open the run-application dialog
+ * in Gnome, or "button 4 4 4 4 4" to have applications scroll by 5 lines
+ * instead of 1.
+ *
+ * Buttons, wheels, and strips all support actions. Note that button actions
+ * require the button to modify as the first argument to this function.
+ *
+ * @param dpy   X11 display to query
+ * @param dev   Device to modify
+ * @param param Info about parameter to modify
+ * @param argc  Dize of argv
+ * @param argv  Arguments to parse
  */
-static void map_button(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
+static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
-	Atom btnact_prop;
-	int button, /* button to be mapped */
-	    mapping;
-
-	if (argc < 1 || (sscanf(argv[0], "%d", &button) != 1))
-		return;
+	Atom action_prop;
+	int offset = param->prop_offset;
 
 	TRACE("Mapping %s for device %ld.\n", param->name, dev->device_id);
 
-	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
-	if (!btnact_prop)
+	action_prop = XInternAtom(dpy, param->prop_name, True);
+	if (!action_prop)
+	{
+		fprintf(stderr, "Unable to locate property '%s'\n", param->prop_name);
 		return;
+	}
 
-	button--; /* property is zero-indexed, button numbers are 1-indexed */
+	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
+	{
+		if (argc == 0)
+		{
+			fprintf(stderr, "Too few arguments provided.\n");
+			return;
+		}
 
-	special_map_property(dpy, dev, btnact_prop, button, argc - 1, &argv[1]);
+		if (sscanf(argv[0], "%d", &offset) != 1)
+		{
+			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
+			return;
+		}
+
+		offset--;        /* Property is 0-indexed, X buttons are 1-indexed */
+		argc--;          /* Trim off the target button argument */
+		argv = &argv[1]; /* ... ditto ... */
+	}
+
+	special_map_property(dpy, dev, action_prop, offset, argc, argv);
 }
 
 static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
