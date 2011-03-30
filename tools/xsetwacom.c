@@ -1559,7 +1559,7 @@ static void set(Display *dpy, int argc, char **argv)
 	char **values;
 	int nvals;
 
-	if (argc < 3)
+	if (argc < 2)
 	{
 		usage();
 		return;
