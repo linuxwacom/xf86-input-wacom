@@ -1238,7 +1238,8 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 			btnact_data[offset] = prop;
 		}
 
-
+		/* FIXME: the property containing the key sequence must be
+		 * set before updating the button action properties */
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
 					PropModeReplace,
 					(unsigned char*)data, nitems);
