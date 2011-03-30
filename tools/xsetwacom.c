@@ -101,7 +101,7 @@ typedef struct _param
 static void map_actions(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_mode(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
-static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
+static void get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void get_rotate(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
 static void set_xydefault(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv);
@@ -127,7 +127,7 @@ static param_t parameters[] =
 		.desc = "X11 event to which the given button should be mapped. ",
 		.prop_name = WACOM_PROP_BUTTON_ACTIONS,
 		.set_func = map_actions,
-		.get_func = get_button,
+		.get_func = get_map,
 	},
 	{
 		.name = "ToolDebugLevel",
@@ -259,6 +259,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 0,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "RelWheelDown",
@@ -267,6 +268,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 1,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "AbsWheelUp",
@@ -275,6 +277,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 2,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "AbsWheelDown",
@@ -283,6 +286,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 3,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "StripLeftUp",
@@ -291,6 +295,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 0,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "StripLeftDown",
@@ -299,6 +304,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 1,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "StripRightUp",
@@ -307,6 +313,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 2,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "StripRightDown",
@@ -315,6 +322,7 @@ static param_t parameters[] =
 		.prop_format = 8,
 		.prop_offset = 3,
 		.set_func = map_actions,
+		.get_func = get_map,
 	},
 	{
 		.name = "Threshold",
@@ -1692,50 +1700,57 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	return;
 }
 
-static int get_special_button_map(Display *dpy, XDevice *dev,
-				  param_t *param, int btn_no)
+/**
+ * Try to print the value of the action mapped to the given parameter's
+ * property. If the property contains data in the wrong format/type then
+ * nothing will be printed.
+ *
+ * @param dpy    X11 display to connect to
+ * @param dev    Device to query
+ * @param param  Info about parameter to query
+ * @param offset Offset into property specified in param
+ * @return       0 on failure, 1 otherwise
+ */
+static int get_actions(Display *dpy, XDevice *dev,
+				  param_t *param, int offset)
 {
-	Atom btnact_prop, action_prop;
-	unsigned long *btnact_data;
-	Atom type;
+	Atom prop, type;
 	int format;
-	unsigned long btnact_nitems, bytes_after;
+	unsigned long nitems, bytes_after, *data;
 	int i;
 	char buff[1024] = {0};
 
-	btnact_prop = XInternAtom(dpy, WACOM_PROP_BUTTON_ACTIONS, True);
+	prop = XInternAtom(dpy, param->prop_name, True);
 
-	if (!btnact_prop)
+	if (!prop)
 		return 0;
 
-	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
-			   AnyPropertyType, &type, &format, &btnact_nitems,
-			   &bytes_after, (unsigned char**)&btnact_data);
+	XGetDeviceProperty(dpy, dev, prop, 0, 100, False,
+			   AnyPropertyType, &type, &format, &nitems,
+			   &bytes_after, (unsigned char**)&data);
 
-	/* button numbers start at 1, property is zero-indexed */
-	if (btn_no >= btnact_nitems)
+	if (offset >= nitems)
+	{
+		XFree(data);
 		return 0;
+	}
 
-	/* FIXME: doesn't cover wheels/strips at the moment, they can be 8
-	 * bits (plain buttons) or 32 bits (complex actions) */
+	prop = data[offset];
+	XFree(data);
 
-	action_prop = btnact_data[btn_no - 1];
-	if (!action_prop)
+	if (format != 32 || type != XA_ATOM || !prop)
+	{
 		return 0;
+	}
 
-	XFree(btnact_data);
+	XGetDeviceProperty(dpy, dev, prop, 0, 100, False,
+		   AnyPropertyType, &type, &format, &nitems,
+		   &bytes_after, (unsigned char**)&data);
 
-	XGetDeviceProperty(dpy, dev, action_prop, 0, 100, False,
-			   AnyPropertyType, &type, &format, &btnact_nitems,
-			   &bytes_after, (unsigned char**)&btnact_data);
-
-	if (format != 32 && type != XA_ATOM)
-		return 0;
-
-	for (i = 0; i < btnact_nitems; i++)
+	for (i = 0; i < nitems; i++)
 	{
 		static int last_type, last_press;
-		unsigned long action = btnact_data[i];
+		unsigned long action = data[i];
 		int current_type;
 		int detail;
 		int is_press = -1;
@@ -1783,41 +1798,118 @@ static int get_special_button_map(Display *dpy, XDevice *dev,
 
 	TRACE("%s\n", buff);
 
-	XFree(btnact_data);
+	XFree(data);
 
 	print_value(param, "%s", buff);
 
 	return 1;
 }
 
-static void get_button(Display *dpy, XDevice *dev, param_t *param, int argc,
-			char **argv)
+/**
+ * Try to print the value of the raw button mapped to the given parameter's
+ * property. If the property contains data in the wrong format/type then
+ * nothing will be printed.
+ *
+ * @param dpy    X11 display to connect to
+ * @param dev    Device to query
+ * @param param  Info about parameter to query
+ * @param offset Offset into the property specified in param
+ * @return       0 on failure, 1 otherwise
+ */
+static int get_button(Display *dpy, XDevice *dev, param_t *param, int offset)
 {
-	int nmap = 256;
-	unsigned char map[nmap];
-	int button = 0;
+	Atom prop, type;
+	int format;
+	unsigned long nitems, bytes_after;
+	unsigned char *data;
 
-	if (argc < 1 || (sscanf(argv[0], "%d", &button) != 1))
-		return;
+	prop = XInternAtom(dpy, param->prop_name, True);
+
+	if (!prop)
+		return 0;
+
+	XGetDeviceProperty(dpy, dev, prop, 0, 100, False,
+			   AnyPropertyType, &type, &format, &nitems,
+			   &bytes_after, (unsigned char**)&data);
+
+	if (offset >= nitems)
+	{
+		XFree(data);
+		return 0;
+	}
+
+	prop = data[offset];
+	XFree(data);
+
+	if (format != 8 || type != XA_INTEGER || !prop)
+	{
+		return 0;
+	}
+
+	print_value(param, "%d", prop);
+
+	return 1;
+}
+
+/**
+ * Print the current button/wheel/strip mapping, be it a raw button or
+ * an action. Button map requests require the button number as the first
+ * argument in argv.
+ *
+ * @param dpy   X11 display to connect to
+ * @param dev   Device to query
+ * @param param Info about parameter to query
+ * @param argc  Length of argv
+ * @param argv  Command-line arguments
+ */
+static void get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char** argv)
+{
+	int offset = param->prop_offset;
 
 	TRACE("Getting button map for device %ld.\n", dev->device_id);
 
-	/* if there's a special map, print it and return */
-	if (get_special_button_map(dpy, dev, param, button))
-		return;
-
-	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
-
-	if (button > nmap)
+	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		fprintf(stderr, "Button number does not exist on device.\n");
-		return;
+		if (argc == 0)
+		{
+			fprintf(stderr, "Too few arguments provided.\n");
+			return;
+		}
+
+		if (sscanf(argv[0], "%d", &offset) != 1)
+		{
+			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
+			return;
+		}
+
+		offset--;        /* Property is 0-indexed, X buttons are 1-indexed */
+		argc--;          /* Trim off the target button argument */
+		argv = &argv[1]; /*... ditto ...                        */
 	}
 
-	print_value(param, "%d", map[button - 1]);
 
-	XSetDeviceButtonMapping(dpy, dev, map, nmap);
-	XFlush(dpy);
+	if (get_actions(dpy, dev, param, offset))
+		return;
+	else if (get_button(dpy, dev, param, offset))
+		return;
+	else
+	{
+		int nmap = 256;
+		unsigned char map[nmap];
+
+		nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
+
+		if (offset >= nmap)
+		{
+			fprintf(stderr, "Button number does not exist on device.\n");
+			return;
+		}
+
+		print_value(param, "%d", map[offset]);
+
+		XSetDeviceButtonMapping(dpy, dev, map, nmap);
+		XFlush(dpy);
+	}
 }
 
 static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
