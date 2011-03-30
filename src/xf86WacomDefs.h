@@ -441,8 +441,8 @@ struct _WacomCommonRec
 	int wcmMaxStripY;            /* Maximum fingerstrip Y */
 
 	int nbuttons;                /* total number of buttons */
-	int npadkeys;                /* number of pad keys in the above array */
 	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
+	int npadkeys;                /* number of pad keys in the above array */
 
 	WacomDevicePtr wcmDevices;   /* list of devices sharing same port */
 	int wcmPktLength;            /* length of a packet */
