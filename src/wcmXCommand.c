@@ -165,23 +165,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[3] = priv->serial;
 	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
 
-	if (IsPad(priv)) {
-		values[0] = priv->striplup;
-		values[1] = priv->stripldn;
-		values[2] = priv->striprup;
-		values[3] = priv->striprdn;
-		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, 8, 4, values);
-	}
-
-	if (IsPad(priv) || IsCursor(priv))
-	{
-		values[0] = priv->relup;
-		values[1] = priv->reldn;
-		values[2] = priv->wheelup;
-		values[3] = priv->wheeldn;
-		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, 8, 4, values);
-	}
-
 	if (IsCursor(priv)) {
 		values[0] = common->wcmCursorProxoutDist;
 		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
@@ -219,6 +202,17 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	/* default to no actions */
 	memset(values, 0, sizeof(values));
 	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, -32, WCM_MAX_MOUSE_BUTTONS, values);
+
+	if (IsPad(priv)) {
+		memset(values, 0, sizeof(values));
+		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, -32, 4, values);
+	}
+
+	if (IsPad(priv) || IsCursor(priv))
+	{
+		memset(values, 0, sizeof(values));
+		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, -32, 4, values);
+	}
 
 #ifdef DEBUG
 	values[0] = priv->debugLevel;
