@@ -1351,14 +1351,14 @@ static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, ch
 		return;
 	}
 
+	if (argc < param->arg_count)
+	{
+		fprintf(stderr, "Too few arguments provided.\n");
+		return;
+	}
+
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		if (argc == 0)
-		{
-			fprintf(stderr, "Too few arguments provided.\n");
-			return;
-		}
-
 		if (sscanf(argv[0], "%d", &offset) != 1)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
@@ -1381,9 +1381,10 @@ static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, 
 	unsigned long nitems, bytes_after;
 	long *ldata;
 
-	if (argc != 0)
+	if (argc != param->arg_count)
 	{
-		fprintf(stderr, "Incorrect number of arguments supplied.\n");
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
 		return;
 	}
 
@@ -1420,9 +1421,11 @@ out:
 static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
 	int mode = Absolute;
-	if (argc < 1)
+
+	if (argc != param->arg_count)
 	{
-		usage();
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
 		return;
 	}
 
@@ -1451,8 +1454,12 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
 
-	if (argc != 1)
-		goto error;
+	if (argc != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
+		return;
+	}
 
 	TRACE("Rotate '%s' for device %ld.\n", argv[0], dev->device_id);
 
@@ -1494,10 +1501,6 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 				PropModeReplace, data, nitems);
 	XFlush(dpy);
 
-	return;
-
-error:
-	fprintf(stderr, "Usage: xsetwacom <device name> Rotate [none | cw | ccw | half]\n");
 	return;
 }
 
@@ -1611,6 +1614,13 @@ static void set(Display *dpy, int argc, char **argv)
 	}
 
 	values = strjoinsplit(argc - 2, &argv[2], &nvals);
+
+	if (nvals != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
+		goto out;
+	}
 
 	for (i = 0; i < nvals; i++)
 	{
@@ -1919,14 +1929,15 @@ static void get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char**
 
 	TRACE("Getting button map for device %ld.\n", dev->device_id);
 
+	if (argc != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+		        param->arg_count);
+		return;
+	}
+
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		if (argc == 0)
-		{
-			fprintf(stderr, "Too few arguments provided.\n");
-			return;
-		}
-
 		if (sscanf(argv[0], "%d", &offset) != 1)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
@@ -2010,9 +2021,10 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
 
-	if (argc != 1)
+	if (argc != param->arg_count)
 	{
-		fprintf(stderr, "Incorrect number of arguments supplied.\n");
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
 		return;
 	}
 
