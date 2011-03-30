@@ -332,7 +332,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	ioctl(pInfo->fd, EVIOCGID, &sID);
 	ioctl(pInfo->fd, EVIOCGNAME(sizeof(id)), id);
 
-	for (i = 0; i < sizeof (WacomModelDesc) / sizeof (WacomModelDesc [0]); i++)
+	for (i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
 	{
 		if (sID.vendor == WacomModelDesc[i].vendor_id &&
 		    sID.product == WacomModelDesc [i].model_id)
@@ -351,7 +351,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 
 	/* Find out supported button codes. */
 	common->npadkeys = 0;
-	for (i = 0; i < sizeof (padkey_codes) / sizeof (padkey_codes [0]); i++)
+	for (i = 0; i < ARRAY_SIZE(padkey_codes); i++)
 		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
 			common->padkey_code [common->npadkeys++] = padkey_codes [i];
 
@@ -360,7 +360,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		/* If mouse buttons detected but no mouse tool
 		 * then they must be associated with pad buttons.
 		 */
-		for (i = sizeof(mouse_codes)/sizeof(mouse_codes[0]); i > 0; i--)
+		for (i = ARRAY_SIZE(mouse_codes); i > 0; i--)
 			if (ISBITSET(common->wcmKeys, mouse_codes[i]))
 				break;
 
@@ -1545,7 +1545,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		/* Retrieve the type by asking a resend from the kernel */
 		ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
 
-		for (i=0; i<sizeof(wcmTypeToKey) / sizeof(wcmTypeToKey[0]); i++)
+		for (i=0; i < ARRAY_SIZE(wcmTypeToKey); i++)
 		{
 			if (ISBITSET(keys, wcmTypeToKey[i].tool_key))
 			{
