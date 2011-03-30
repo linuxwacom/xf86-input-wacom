@@ -1418,19 +1418,19 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	TRACE("Rotate '%s' for device %ld.\n", argv[0], dev->device_id);
 
-	if (strcasecmp(argv[0], "cw") == 0)
+	if (strcasecmp(argv[0], "cw") == 0 || strcasecmp(argv[0], "1") == 0)
 		rotation = 1;
-	else if (strcasecmp(argv[0], "ccw") == 0)
+	else if (strcasecmp(argv[0], "ccw") == 0 || strcasecmp(argv[0], "2") == 0)
 		rotation = 2;
-	else if (strcasecmp(argv[0], "half") == 0)
+	else if (strcasecmp(argv[0], "half") == 0 || strcasecmp(argv[0], "3") == 0)
 		rotation = 3;
-	else if (strcasecmp(argv[0], "none") == 0)
+	else if (strcasecmp(argv[0], "none") == 0 || strcasecmp(argv[0], "0") == 0)
 		rotation = 0;
-	else if (strlen(argv[0]) == 1)
+	else
 	{
-		rotation = atoi(argv[0]);
-		if (rotation < 0 || rotation > 3)
-			goto error;
+		fprintf(stderr, "'%s' is not a valid value for the '%s' property.\n",
+		        argv[0], param->name);
+		return;
 	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
