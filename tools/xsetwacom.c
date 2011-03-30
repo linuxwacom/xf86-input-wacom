@@ -1235,7 +1235,10 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 				&bytes_after, (unsigned char**)&btnact_data);
 
 	if (offset > btnact_nitems)
+	{
+		fprintf(stderr, "Invalid offset into %s property.\n", XGetAtomName(dpy, btnact_prop));
 		return;
+	}
 
 	if (format == 8 && type == XA_INTEGER)
 	{
@@ -1243,7 +1246,10 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		 * mappings. Convert to 32 bit Atom actions first.
 		 */
 		if (convert_wheel_prop(dpy, dev, btnact_prop))
+		{
+			fprintf(stderr, "Error creating wheel action.\n");
 			return;
+		}
 
 		XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
 				   AnyPropertyType, &type, &format,
@@ -1348,6 +1354,12 @@ static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, 
 	unsigned char* data = NULL;
 	unsigned long nitems, bytes_after;
 	long *ldata;
+
+	if (argc != 0)
+	{
+		fprintf(stderr, "Incorrect number of arguments supplied.\n");
+		return;
+	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 	if (!prop)
@@ -1637,7 +1649,10 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	}
 
 	if (!ndevices) /* device id 0 is reserved and can't be our device */
+	{
+		fprintf(stderr, "Unable to locate device.\n");
 		return;
+	}
 
 	TRACE("Getting mode for device %ld.\n", dev->device_id);
 
@@ -1662,6 +1677,12 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
+
+	if (argc != 0)
+	{
+		fprintf(stderr, "Incorrect number of arguments supplied.\n");
+		return;
+	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 	if (!prop)
@@ -1942,7 +1963,11 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 				&bytes_after, (unsigned char**)&data);
 
 	if (format != 32 || type != XInternAtom(dpy, "FLOAT", True))
+	{
+		fprintf(stderr, "Property for '%s' has unexpected type - this is a bug.\n",
+			"Coordinate Transformation Matrix");
 		return;
+	}
 
 	XChangeDeviceProperty(dpy, dev, matrix_prop, type, format,
 			      PropModeReplace, (unsigned char*)matrix, 9);
@@ -1958,6 +1983,12 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
+
+	if (argc != 1)
+	{
+		fprintf(stderr, "Incorrect number of arguments supplied.\n");
+		return;
+	}
 
 	output_name = argv[0];
 
