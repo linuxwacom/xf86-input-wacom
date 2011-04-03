@@ -1412,11 +1412,12 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
+	if (private->wcmUseMT)
+		private->wcmDeviceType = usbInitToolType(private->wcmEvents,
+							 private->wcmEventCnt);
+
 	if (private->wcmPenTouch)
 	{
-		private->wcmDeviceType = usbInitToolType(private->wcmEvents,
-						private->wcmEventCnt);
-
 		/* We get both pen and touch data from the kernel when they
 		 * both are in/down. So, if we were (hence the need of dslast)
 		 * processing pen events, we should ignore touch events.
