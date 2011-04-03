@@ -1165,7 +1165,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		}
 	}
 
-	if (IsStylus(priv) || IsEraser(priv))
+	if (IsPen(priv))
 	{
 		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
