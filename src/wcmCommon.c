@@ -1139,30 +1139,23 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	/* send a touch out for USB Tablet PCs */
-	if (IsUSBDevice(common) && !IsTouch(priv)
-			&& common->wcmTouchDefault && !priv->oldProximity)
+	if (TabletHasFeature(common, WCM_PENTOUCH))
 	{
-		InputInfoPtr device = xf86FirstLocalDevice();
-		WacomCommonPtr tempcommon = NULL;
-		WacomDevicePtr temppriv = NULL;
-
-		/* Lookup to see if associated touch was enabled */
-		for (; device != NULL; device = device->next)
+		if (IsPen(priv))
 		{
-			if (strstr(device->drv->driverName, "wacom"))
+			/* send touch out when pen coming in-prox for devices
+			 * that provideboth pen and touch events so system
+			 * cursor won't jump between tools.
+			 */
+			if (common->wcmTouchDevice->oldProximity)
 			{
-				temppriv = (WacomDevicePtr) device->private;
-				tempcommon = temppriv->common;
-
-				if ((tempcommon->tablet_id == common->tablet_id) &&
-						IsTouch(temppriv) && temppriv->oldProximity)
-				{
-					/* Send soft prox-out for touch first */
-					wcmSoftOutEvent(device);
-				}
+				wcmSoftOutEvent(common->wcmTouchDevice->pInfo);
+				return;
 			}
 		}
+		else if (IsTouch(priv) && common->wcmPenInProx)
+			/* Ignore touch events when pen is in prox */
+			return;
 	}
 
 	if (IsPen(priv))
@@ -1171,6 +1164,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		filtered.pressure = normalizePressure(priv, &filtered);
 		filtered.buttons = setPressureButton(priv, &filtered);
 		filtered.pressure = applyPressureCurve(priv,&filtered);
+		common->wcmPenInProx = filtered.proximity;
 	}
 
 	else if (IsCursor(priv) && !priv->oldCursorHwProx)

@@ -173,6 +173,7 @@ struct _WacomModel
 #define WCM_TPC			(0x00000200 | WCM_LCD) /* TabletPC (special
 							  button handling,
 							  always an LCD) */
+#define WCM_PENTOUCH		0x00000400 /* Tablet supports pen and touch */
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
 
 #define ABSOLUTE_FLAG		0x00000100
@@ -420,6 +421,9 @@ struct _WacomCommonRec
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */
+	WacomDevicePtr wcmTouchDevice; /* The pointer for pen to access the
+					  touch tool of the same device id */
+	Bool wcmPenInProx;      /* Keep pen in-prox state for touch tool */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet max X value */

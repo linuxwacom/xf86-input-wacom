@@ -397,6 +397,51 @@ wcmInitModel(InputInfoPtr pInfo)
 	return TRUE;
 }
 
+/**
+ * Link the touch tool to the pen of the same device
+ * so we can arbitrate the events when posting them.
+ */
+static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+	InputInfoPtr device = xf86FirstLocalDevice();
+	WacomCommonPtr tmpcommon = NULL;
+	WacomDevicePtr tmppriv = NULL;
+	Bool touch_device_assigned = FALSE;
+
+	/* Lookup to find the associated pen and touch */
+	for (; device != NULL; device = device->next)
+	{
+		if (!strcmp(device->drv->driverName, "wacom"))
+		{
+			tmppriv = (WacomDevicePtr) device->private;
+			tmpcommon = tmppriv->common;
+			touch_device_assigned = (common->wcmTouchDevice ||
+						tmpcommon->wcmTouchDevice);
+
+			/* skip the same tool or already linked devices */
+			if ((tmppriv == priv) || touch_device_assigned)
+				continue;
+
+			if (tmpcommon->tablet_id == common->tablet_id)
+			{
+				if (IsTouch(tmppriv) && IsPen(priv))
+					common->wcmTouchDevice = tmppriv;
+				else if (IsTouch(priv) && IsPen(tmppriv))
+					tmpcommon->wcmTouchDevice = priv;
+
+				if (common->wcmTouchDevice ||
+						tmpcommon->wcmTouchDevice)
+				{
+					common->tablet_type |= WCM_PENTOUCH;
+					tmpcommon->tablet_type |= WCM_PENTOUCH;
+				}
+			}
+		}
+	}
+}
+
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
@@ -517,6 +562,12 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		close(pInfo->fd);
 		pInfo->fd = -1;
 	}
+
+	/* only link them once per port. We need to try for both pen and touch
+	 * since we do not know which tool (touch or pen) will be added first.
+	 */
+	if (IsTouch(priv) || (IsPen(priv) && !common->wcmTouchDevice))
+		wcmLinkTouchAndPen(pInfo);
 
 	return Success;
 

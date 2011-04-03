@@ -766,6 +766,48 @@ static void wcmDisableTool(DeviceIntPtr dev)
 {
 	wcmEnableDisableTool(dev, FALSE);
 }
+
+/**
+ * Unlink the touch tool from the pen of the same device
+ */
+static void wcmUnlinkTouchAndPen(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+	InputInfoPtr device = xf86FirstLocalDevice();
+	WacomCommonPtr tmpcommon = NULL;
+	WacomDevicePtr tmppriv = NULL;
+	Bool touch_device = FALSE;
+
+	if (!TabletHasFeature(common, WCM_PENTOUCH))
+		return;
+
+	/* Lookup to find the associated pen and touch */
+	for (; device != NULL; device = device->next)
+	{
+		if (!strcmp(device->drv->driverName, "wacom"))
+		{
+			tmppriv = (WacomDevicePtr) device->private;
+			tmpcommon = tmppriv->common;
+			touch_device = (common->wcmTouchDevice ||
+						tmpcommon->wcmTouchDevice);
+
+			/* skip the same tool or unlinked devices */
+			if ((tmppriv == priv) || !touch_device)
+				continue;
+
+			if (tmpcommon->tablet_id == common->tablet_id)
+			{
+				common->wcmTouchDevice = NULL;
+				tmpcommon->wcmTouchDevice = NULL;
+				common->tablet_type &= ~WCM_PENTOUCH;
+				tmpcommon->tablet_type &= ~WCM_PENTOUCH;
+				return;
+			}
+		}
+	}
+}
+
 /*****************************************************************************
  * wcmDevProc --
  *   Handle the initialization, etc. of a wacom tablet. Called by the server
@@ -810,6 +852,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_OFF:
 		case DEVICE_CLOSE:
 			wcmDisableTool(pWcm);
+			wcmUnlinkTouchAndPen(pInfo);
 			if (pInfo->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(pInfo);
