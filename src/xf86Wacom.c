@@ -129,8 +129,10 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 		priv->resolY = common->wcmResolY;
 	}
 
-	priv->bottomX = priv->maxX;
-	priv->bottomY = priv->maxY;
+	if (!priv->bottomX)
+		priv->bottomX = priv->maxX;
+	if (!priv->bottomY)
+		priv->bottomY = priv->maxY;
 
 	return;
 }
