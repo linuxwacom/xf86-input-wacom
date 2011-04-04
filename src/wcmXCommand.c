@@ -540,6 +540,33 @@ static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 }
 
 /**
+ * Update the rotation property for all tools on the same physical tablet as
+ * pInfo.
+ */
+static void wcmUpdateRotationProperty(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomDevicePtr other;
+	char rotation = common->wcmRotate;
+
+	for (other = common->wcmDevices; other; other = other->next)
+	{
+		InputInfoPtr pInfo;
+		DeviceIntPtr dev;
+
+		if (other == priv)
+			continue;
+
+		pInfo = other->pInfo;
+		dev = pInfo->dev;
+
+		XIChangeDeviceProperty(dev, prop_rotation, XA_INTEGER, 8,
+				       PropModeReplace, 1, &rotation,
+				       TRUE);
+	}
+}
+
+/**
  * Only allow deletion of a property if it is not being used by any of the
  * button actions.
  */
@@ -643,7 +670,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			return BadValue;
 
 		if (!checkonly && common->wcmRotate != value)
+		{
 			wcmRotateTablet(pInfo, value);
+			wcmUpdateRotationProperty(priv);
+		}
 	} else if (property == prop_serials)
 	{
 		return BadValue; /* Read-only */
