@@ -55,7 +55,8 @@ enum printformat {
 enum prop_flags {
 	PROP_FLAG_BOOLEAN = 1,
 	PROP_FLAG_READONLY = 2,
-	PROP_FLAG_WRITEONLY = 4
+	PROP_FLAG_WRITEONLY = 4,
+	PROP_FLAG_INVERTED = 8, /* only valid with PROP_FLAG_BOOLEAN */
 };
 
 
@@ -183,7 +184,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_HOVER,
 		.prop_format = 8,
 		.prop_offset = 0,
-		.prop_flags = PROP_FLAG_BOOLEAN
+		.prop_flags = PROP_FLAG_BOOLEAN | PROP_FLAG_INVERTED
 	},
 	{
 		.name = "Touch",
@@ -1485,6 +1486,9 @@ static Bool convert_value_from_user(const param_t *param, const char *value, int
 			*return_value = 1;
 		else
 			return False;
+
+		if (param->prop_flags & PROP_FLAG_INVERTED)
+			*return_value = !(*return_value);
 	}
 	else
 	{
@@ -2390,6 +2394,13 @@ static void test_convert_value_from_user(void)
 		.prop_flags = PROP_FLAG_BOOLEAN,
 	};
 
+	param_t test_bool_inverted =
+	{
+		.name = "Test",
+		.desc = "NOT A REAL PARAMETER",
+		.prop_flags = PROP_FLAG_BOOLEAN | PROP_FLAG_INVERTED,
+	};
+
 	const char *bool_true[] = { "true", "TRUE", "True", "On", "on", "ON", NULL };
 	const char *bool_false[] = { "false", "FALSE", "False", "Off", "off", "OFF", NULL };
 	const char *bool_garbage[] = { "0", "1", " on", "on ", " off", " off", NULL};
@@ -2406,6 +2417,10 @@ static void test_convert_value_from_user(void)
 	_test_conversion(&test_bool, bool_true, True, True);
 	_test_conversion(&test_bool, bool_false, True, False);
 	_test_conversion(&test_bool, bool_garbage, False, False);
+
+	_test_conversion(&test_bool_inverted, bool_true, True, False);
+	_test_conversion(&test_bool_inverted, bool_false, True, True);
+	_test_conversion(&test_bool_inverted, bool_garbage, False, False);
 }
 
 
