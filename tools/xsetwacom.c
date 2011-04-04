@@ -2345,6 +2345,35 @@ static void test_parameter_number(void)
 	assert(ArrayLength(deprecated_parameters) == 16);
 }
 
+/**
+ * For the given parameter, test all words against conversion success and
+ * expected value.
+ *
+ * @param param The parameter of type PROP_FLAG_BOOLEAN.
+ * @param words NULL-terminated word list to parse
+ * @param success True if conversion success for the words is expected or
+ * False overwise
+ * @param expected Expected converted value. If success is False, this value
+ * is omitted.
+ */
+static void _test_conversion(const param_t *param, const char **words,
+			     Bool success, Bool expected)
+{
+
+	assert(param->prop_flags & PROP_FLAG_BOOLEAN);
+
+	while(*words)
+	{
+		int val;
+		int rc;
+		rc = convert_value_from_user(param, *words, &val);
+		assert(rc == success);
+		if (success)
+			assert(val == expected);
+		words++;
+	}
+}
+
 static void test_convert_value_from_user(void)
 {
 	param_t test_nonbool =
@@ -2361,6 +2390,10 @@ static void test_convert_value_from_user(void)
 		.prop_flags = PROP_FLAG_BOOLEAN,
 	};
 
+	const char *bool_true[] = { "true", "TRUE", "True", "On", "on", "ON", NULL };
+	const char *bool_false[] = { "false", "FALSE", "False", "Off", "off", "OFF", NULL };
+	const char *bool_garbage[] = { "0", "1", " on", "on ", " off", " off", NULL};
+
 	int val;
 
 	assert(convert_value_from_user(&test_nonbool, "1", &val) == True);
@@ -2370,14 +2403,9 @@ static void test_convert_value_from_user(void)
 	assert(convert_value_from_user(&test_nonbool, "123abc", &val) == False);
 	assert(convert_value_from_user(&test_nonbool, "123 abc", &val) == False);
 
-	assert(convert_value_from_user(&test_bool, "true", &val) == True);
-	assert(convert_value_from_user(&test_bool, "On", &val) == True);
-	assert(convert_value_from_user(&test_bool, "oFf", &val) == True);
-	assert(convert_value_from_user(&test_bool, "FALSE", &val) == True);
-	assert(convert_value_from_user(&test_bool, "0", &val) == False);
-	assert(convert_value_from_user(&test_bool, "1", &val) == False);
-	assert(convert_value_from_user(&test_bool, " on", &val) == False);
-	assert(convert_value_from_user(&test_bool, "off ", &val) == False);
+	_test_conversion(&test_bool, bool_true, True, True);
+	_test_conversion(&test_bool, bool_false, True, False);
+	_test_conversion(&test_bool, bool_garbage, False, False);
 }
 
 
