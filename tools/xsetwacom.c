@@ -1475,7 +1475,7 @@ error:
  * @param[out] return_value the integer representation of the 'value' parameter
  * @return TRUE if the conversion succeeded, FALSE otherwise
  */
-static Bool convert_value_from_user(param_t *param, char *value, int *return_value)
+static Bool convert_value_from_user(const param_t *param, const char *value, int *return_value)
 {
 	if (param->prop_flags & PROP_FLAG_BOOLEAN)
 	{
