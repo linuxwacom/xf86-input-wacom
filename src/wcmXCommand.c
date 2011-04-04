@@ -201,7 +201,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	prop_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_TOUCH, 8, 1, values);
 
 	if (IsStylus(priv)) {
-		values[0] = common->wcmTPCButton;
+		values[0] = !common->wcmTPCButton;
 		prop_hover = InitWcmAtom(pInfo->dev, WACOM_PROP_HOVER, 8, 1, values);
 	}
 
@@ -753,7 +753,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			return BadMatch;
 
 		if (!checkonly)
-			common->wcmTPCButton = values[0];
+			common->wcmTPCButton = !values[0];
 #ifdef DEBUG
 	} else if (property == prop_debuglevels)
 	{

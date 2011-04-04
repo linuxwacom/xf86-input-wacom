@@ -78,7 +78,8 @@
 /* 32 bit, 3 values, zoom, rotate, tap parameters */
 #define WACOM_PROP_GESTURE_PARAMETERS "Wacom Touch Gesture Parameters"
 
-/* BOOL, 1 value */
+/* BOOL, 1 value,
+   TRUE == hover click is enabled, FALSE == hover click disabled */
 #define WACOM_PROP_HOVER "Wacom Hover Click"
 
 /* Atom, 1 value, read-only */
