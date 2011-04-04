@@ -573,18 +573,23 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary)
 
 	if (s)
 	{
+		int rotation;
+
 		if (xf86NameCmp(s, "CW") == 0)
-			common->wcmRotate=ROTATE_CW;
+			rotation = ROTATE_CW;
 		else if (xf86NameCmp(s, "CCW") ==0)
-			common->wcmRotate=ROTATE_CCW;
+			rotation = ROTATE_CCW;
 		else if (xf86NameCmp(s, "HALF") ==0)
-			common->wcmRotate=ROTATE_HALF;
+			rotation = ROTATE_HALF;
 		else if (xf86NameCmp(s, "NONE") !=0)
 		{
 			xf86Msg(X_ERROR, "%s: invalid Rotate option '%s'.\n",
 				pInfo->name, s);
 			goto error;
 		}
+
+		common->wcmRotate = rotation;
+
 	}
 
 	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
