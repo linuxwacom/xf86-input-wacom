@@ -1347,9 +1347,16 @@ void wcmRotateTablet(InputInfoPtr pInfo, int value)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	WacomToolPtr tool;
 
 	DBG(10, priv, "\n");
 	common->wcmRotate = value;
+
+	/* Only try updating properties once we're enabled, no point
+	 * otherwise. */
+	tool = priv->tool;
+	if (tool->enabled)
+		wcmUpdateRotationProperty(priv);
 }
 
 /* Common pointer refcounting utilities.

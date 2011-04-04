@@ -167,6 +167,7 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 extern int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
+extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
 
 /* Utility functions */
 extern Bool is_absolute(InputInfoPtr pInfo);

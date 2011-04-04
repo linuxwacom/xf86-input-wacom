@@ -597,7 +597,7 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 			xf86Msg(X_INFO, "%s: ignoring rotation of dependent"
 					" device\n", pInfo->name);
 		else
-			common->wcmRotate = rotation;
+			wcmRotateTablet(pInfo, rotation);
 	}
 
 	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
