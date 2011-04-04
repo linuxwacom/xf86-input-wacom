@@ -138,7 +138,9 @@ can be an integer from -1 to 5.  Default is 3 for capacitive tools and
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
 rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 
 If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be 
-applied before rotation. The default is "NONE".
+applied before rotation. Rotation must be applied to the parent device
+(usually the stylus), rotation settings on hotplugged devices will be
+ignored. The default is "NONE".
 .TP 4
 .B Option \fI"PressCurve"\fP \fI"x1,y1,x2,y2"\fP
 sets pressure curve by control points x1, y1, x2, and y2.  Their values are in range 

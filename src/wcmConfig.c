@@ -442,6 +442,21 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 	}
 }
 
+/**
+ * Check if this device was hotplugged by the driver by checking the _source
+ * option.
+ *
+ * Must be called before wcmNeedAutoHotplug()
+ *
+ * @return True if the source for this device is the wacom driver itself or
+ * false otherwise.
+ */
+static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
+{
+	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
+	return !strcmp(source, "_driver/wacom");
+}
+
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
@@ -481,7 +496,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WacomCommonPtr common = NULL;
 	const char*	type;
 	char*		device, *oldname;
-	int		need_hotplug = 0;
+	int		need_hotplug = 0, is_dependent = 0;
 
 	gWacomModule.wcmDrv = drv;
 
@@ -528,7 +543,9 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	oldname = pInfo->name;
 
-	if ((need_hotplug = wcmNeedAutoHotplug(pInfo, &type)))
+	if (wcmIsHotpluggedDevice(pInfo))
+		is_dependent = 1;
+	else if ((need_hotplug = wcmNeedAutoHotplug(pInfo, &type)))
 	{
 		/* we need subdevices, change the name so all of them have a
 		   type. */
@@ -545,7 +562,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (!wcmSetType(pInfo, type))
 		goto SetupProc_fail;
 
-	if (!wcmParseOptions(pInfo, need_hotplug))
+	if (!wcmParseOptions(pInfo, need_hotplug, is_dependent))
 		goto SetupProc_fail;
 
 	if (!wcmInitModel(pInfo))

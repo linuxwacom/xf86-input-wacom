@@ -513,6 +513,7 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", pInfo->name, *type);
 	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", pInfo->name);
 
+	/* Note: wcmIsHotpluggedDevice() relies on this */
 	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
 	pInfo->options = xf86ReplaceStrOption(pInfo->options, "_source", "_driver/wacom");
 
@@ -521,12 +522,16 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 
 /**
  * Parse the options for this device.
+ * Note that parameters is_primary and is_dependent are mutually exclusive,
+ * though both may be false in the case of an xorg.conf device.
  *
- * @param is_primary True if the device is the primary/parent device for
+ * @param is_primary True if the device is the parent device for
  * hotplugging, False if the device is a depent or xorg.conf device.
+ * @param is_hotplugged True if the device is a dependent device, FALSE
+ * otherwise.
  * @retvalue True on success or False otherwise.
  */
-Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary)
+Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
@@ -588,8 +593,11 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary)
 			goto error;
 		}
 
-		common->wcmRotate = rotation;
-
+		if (is_dependent && rotation != common->wcmRotate)
+			xf86Msg(X_INFO, "%s: ignoring rotation of dependent"
+					" device\n", pInfo->name);
+		else
+			common->wcmRotate = rotation;
 	}
 
 	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
