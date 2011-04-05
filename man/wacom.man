@@ -17,8 +17,7 @@ is an X input driver for Wacom devices.
 .PP
 The
 .B wacom
-driver functions as a pointer input device, and may be used as the
-X server's core pointer.
+driver functions as a pointer input device.
 .SH SUPPORTED HARDWARE
 This driver supports the Wacom IV and Wacom V protocols. Serial tablets only 
 need this driver.  USB tablet support is available on some Linux platforms. 
