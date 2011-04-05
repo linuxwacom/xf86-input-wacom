@@ -519,7 +519,14 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	return 1;
 }
 
-int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
+/**
+ * Parse the options for this device.
+ *
+ * @param is_primary True if the device is the primary/parent device for
+ * hotplugging, False if the device is a depent or xorg.conf device.
+ * @retvalue True on success or False otherwise.
+ */
+Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
@@ -676,7 +683,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	tpc_button_is_on = xf86SetBoolOption(pInfo->options, "TPCButton",
 					TabletHasFeature(common, WCM_TPC));
 
-	if (hotplugged || IsStylus(priv))
+	if (is_primary || IsStylus(priv))
 		common->wcmTPCButton = tpc_button_is_on;
 	else if (tpc_button_is_on != common->wcmTPCButton)
 		xf86Msg(X_WARNING, "%s: TPCButton option can only be set "
@@ -695,7 +702,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		touch_is_on = xf86SetBoolOption(pInfo->options, "Touch",
 						common->wcmTouchDefault);
 
-		if (hotplugged || IsTouch(priv))
+		if (is_primary || IsTouch(priv))
 			common->wcmTouch = touch_is_on;
 		else if (touch_is_on != common->wcmTouch)
 			xf86Msg(X_WARNING, "%s: Touch option can only be set "
@@ -704,7 +711,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		capacity_is_on = xf86SetBoolOption(pInfo->options, "Capacity",
 						   common->wcmCapacityDefault);
 
-		if (hotplugged || IsTouch(priv))
+		if (is_primary || IsTouch(priv))
 			common->wcmCapacity = capacity_is_on;
 		else if (capacity_is_on != common->wcmCapacity)
 			xf86Msg(X_WARNING, "%s: Touch Capacity option can only be"
@@ -723,7 +730,7 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 		gesture_is_on = xf86SetBoolOption(pInfo->options, "Gesture",
 					    common->wcmGestureDefault);
 
-		if (hotplugged || IsTouch(priv))
+		if (is_primary || IsTouch(priv))
 			common->wcmGesture = gesture_is_on;
 		else if (gesture_is_on != common->wcmGesture)
 			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
@@ -760,10 +767,10 @@ int wcmParseOptions(InputInfoPtr pInfo, int hotplugged)
 	    !common->wcmDevCls->ParseOptions(pInfo))
 		goto error;
 
-	return 1;
+	return TRUE;
 error:
 	free(tool);
-	return 0;
+	return FALSE;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

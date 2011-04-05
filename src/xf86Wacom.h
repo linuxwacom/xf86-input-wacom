@@ -140,7 +140,7 @@ extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type);
 extern void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename);
 
 /* setup */
-extern int wcmParseOptions(InputInfoPtr pInfo, int hotplugged);
+extern Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary);
 extern void wcmInitialCoordinates(InputInfoPtr pInfo, int axes);
 extern void wcmInitialScreens(InputInfoPtr pInfo);
 extern void wcmInitialScreens(InputInfoPtr pInfo);
