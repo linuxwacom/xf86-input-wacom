@@ -28,8 +28,7 @@ Please refer to xorg.conf(5x) or xorg.conf.d(5x) for general configuration
 details and for options that can be used with all input drivers.  This
 section only covers configuration details specific to this driver.
 .PP
-Multiple instances of the Wacom devices can cohabit. It can be useful
-to define multiple devices with different active zones. Each device
+Multiple instances of the Wacom devices can cohabit. Each device
 supports the following entries:
 .RS 8
 .TP 4
