@@ -25,7 +25,7 @@ need this driver.  USB tablet support is available on some Linux platforms.
 USB tablets needs wacom kernel driver being loaded before this driver starts.  
 Please check linuxwacom.sf.net for latest updates of Wacom X and kernel drivers.
 .SH CONFIGURATION DETAILS
-Please refer to xorg.conf(5x) for general configuration
+Please refer to xorg.conf(5x) or xorg.conf.d(5x) for general configuration
 details and for options that can be used with all input drivers.  This
 section only covers configuration details specific to this driver.
 .PP
@@ -186,7 +186,7 @@ The threshold applies to the normalised pressure range of [0..2048].
 The default is 27.
 .RE
 .SH "SEE ALSO"
-Xorg(1x), xorg.conf(5x), xorgconfig(1x), Xserver(1x), X(7).
+Xorg(1x), xorg.conf(5x), xorg.conf.d(5x), xorgconfig(1x), Xserver(1x), X(7).
 .SH AUTHORS
 Frederic Lepied <lepied@xfree86.org>,
 Ping Cheng <pingc@wacom.com>,
