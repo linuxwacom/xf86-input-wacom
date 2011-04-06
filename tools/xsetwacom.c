@@ -2227,7 +2227,7 @@ int main (int argc, char **argv)
 				break;
 			case 'V':
 				version();
-				break;
+				return 0;
 			case 'h':
 			default:
 				usage();
