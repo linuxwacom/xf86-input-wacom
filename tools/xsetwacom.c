@@ -1225,7 +1225,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	unsigned long btnact_nitems, bytes_after;
 	unsigned long nitems = 0;
 
-	data = calloc(sizeof(long), 256);
+	data = calloc(256, sizeof(long));
 	if (!parse_actions(dpy, argc, argv, data, &nitems))
 		return;
 
