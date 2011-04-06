@@ -98,13 +98,20 @@ applied. Input outside of these coordinates will be clipped to the edges
 of the area defined.  Default:  0 0 x2 y2; with x2 and y2 tablet specific.
 .TP
 \fBButton\fR button-number [mapping]
-Set the specified button. The mapping may be a button number to map
-the physical button to. e.g. a mapping of button 1 to 3 means
-a button 1 press will be interpreted as right click. Alternatively, a
-mapping in the form of "key +a +shift b -shift -a" converts the button into a series
-of keystrokes, in this example "press a, press shift, press and release b,
-release shift, release a". Such key mappings need to be reapplied whenever
-the keyboard layout changes.
+Set a mapping for the specified button-number. Mappings take the form of
+either a single numeric button or an 'action' to be performed. If no mapping
+is provided, the default mapping is restored.
+
+Numeric button mappings indicate what X11 button number the given button-number
+should correspond to. For example, a mapping of "3" means a press of the given
+button-number will produce as a press of X11 button 3 (i.e. right click).
+
+Action mappings allow button presses to perform many events. They take the form
+of a string of keywords and arguments. For example, "key +a +shift b -shift -a"
+converts the button into a series of keystrokes, in this example "press a, press
+shift, press and release b, release shift, release a". In addition to the "key"
+keyword, "button" and "modetoggle" are also recognized. Multiple keywords may
+be present in one action if desired: for example "key +ctrl button 5 key -ctrl".
 .TP
 \fBMapToOutput\fR output
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
