@@ -142,9 +142,9 @@ Set the tablet to the given rotation:
   cw: the tablet is rotated 90 degrees clockwise
   ccw: the tablet is rotated 90 degrees counter-clockwise
 
-Rotation is tool-specific, rotation of one does not affect other input tools.
-When the tablet is physically rotated, rotate all tools to the corresponding
-orientation.  Default:  none
+Rotation is a tablet-wide option: rotation of one tool affects all other tools
+associated with the same tablet. When the tablet is physically rotated, rotate
+any tool to the corresponding orientation.  Default:  none
 .TP
 \fBSuppress\fR level
 Set the delta (difference) cutoff level for further processing of incoming
