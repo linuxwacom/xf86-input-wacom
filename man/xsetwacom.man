@@ -133,7 +133,7 @@ all four values.
 .TP
 \fBRawSample\fR level
 Set the sample window size (a sliding average sampling window) for incoming
-input tool raw data points.  Default:  4, range of 1 to 100.
+input tool raw data points.  Default:  4, range of 1 to 20.
 .TP
 \fBRotate\fR none|half|cw|ccw
 Set the tablet to the given rotation:
@@ -156,7 +156,7 @@ absolute wheel (AbsWheel) or Tilt value the delta between it and the
 previous value must be equal to or greater than the Suppress value in order
 to be sent on.  Suppress is a tablet wide parameter.  A specified delta
 level for one input tool is applied to all input tool coordinates.  To
-disable suppression use a level of 0.  Default:  2, range of 0 to 20.
+disable suppression use a level of 0.  Default:  2, range of 0 to 100.
 .TP
 \fBTabletDebugLevel\fR level
 Set the debug level for this tablet to the given level. This only affects
