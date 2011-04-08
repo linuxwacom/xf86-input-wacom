@@ -1490,11 +1490,11 @@ static void map_button_simple(Display *dpy, XDevice *dev, param_t* param, int bu
 	int btn_no = 0;
 
 	btn_no = get_button_number_from_string(param->name);
-	if (btn_no == -1)
+	if (btn_no <= 0)
 		return;
 
 	nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
-	if (btn_no >= nmap)
+	if (btn_no > nmap)
 	{
 		fprintf(stderr, "Button number does not exist on device.\n");
 		return;
