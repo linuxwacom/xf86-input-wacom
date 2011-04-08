@@ -575,7 +575,7 @@ static void usage(void)
 	" -h, --help                 - usage\n"
 	" -v, --verbose              - verbose output\n"
 	" -V, --version              - version info\n"
-	" -d, --display \"display\"  - override default display\n"
+	" -d, --display \"display\"    - override default display\n"
 	" -s, --shell                - generate shell commands for 'get'\n"
 	" -x, --xconf                - generate xorg.conf lines for 'get'\n");
 
