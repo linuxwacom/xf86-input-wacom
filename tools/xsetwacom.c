@@ -87,7 +87,7 @@ typedef struct _param
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
 	const int prop_offset;	/* offset (index) into the property values */
-	const int prop_extra;   /* extra number of items after first one */
+	const int arg_count;   /* extra number of items after first one */
 	const unsigned int prop_flags;
 	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
 	void (*get_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function for getting, if appropriate */
@@ -121,12 +121,13 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
-		.prop_extra = 3
+		.arg_count = 4,
 	},
 	{
 		.name = "Button",
 		.desc = "X11 event to which the given button should be mapped. ",
 		.prop_name = WACOM_PROP_BUTTON_ACTIONS,
+		.arg_count = 1,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -137,6 +138,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "TabletDebugLevel",
@@ -146,6 +148,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.arg_count = 1,
 	},
 	{
 		.name = "Suppress",
@@ -153,6 +156,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "RawSample",
@@ -161,6 +165,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
 		.prop_offset = 1,
+		.arg_count = 1,
 	},
 	{
 		.name = "PressureCurve",
@@ -168,11 +173,12 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
 		.prop_offset = 0,
-		.prop_extra = 3,
+		.arg_count = 4,
 	},
 	{
 		.name = "Mode",
 		.desc = "Switches cursor movement mode (default is absolute). ",
+		.arg_count = 1,
 		.set_func = set_mode,
 		.get_func = get_mode,
 	},
@@ -184,6 +190,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_HOVER,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_BOOLEAN | PROP_FLAG_INVERTED
 	},
 	{
@@ -192,6 +199,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TOUCH,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
@@ -201,6 +209,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_ENABLE_GESTURE,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
@@ -210,6 +219,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "ScrollDistance",
@@ -218,6 +228,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
 		.prop_format = 32,
 		.prop_offset = 1,
+		.arg_count = 1,
 	},
 	{
 		.name = "TapTime",
@@ -226,6 +237,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
 		.prop_format = 32,
 		.prop_offset = 2,
+		.arg_count = 1,
 	},
 	{
 		.name = "Capacity",
@@ -234,6 +246,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_CAPACITY,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "CursorProximity",
@@ -244,6 +257,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_PROXIMITY_THRESHOLD,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "Rotate",
@@ -252,6 +266,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_ROTATION,
 		.set_func = set_rotate,
 		.get_func = get_rotate,
+		.arg_count = 1,
 	},
 	{
 		.name = "RelWheelUp",
@@ -259,6 +274,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -268,6 +284,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -277,6 +294,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -286,6 +304,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -295,6 +314,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 0,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -304,6 +324,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -313,6 +334,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 2,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -322,6 +344,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 3,
+		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
 	},
@@ -332,6 +355,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 	},
 	{
 		.name = "ResetArea",
@@ -339,6 +363,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 0,
 		.prop_flags = PROP_FLAG_WRITEONLY,
 		.set_func = set_xydefault,
 	},
@@ -370,6 +395,7 @@ static param_t parameters[] =
 		.name = "MapToOutput",
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_WRITEONLY
 	},
 	{
@@ -2164,7 +2190,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	switch(param->prop_format)
 	{
 		case 8:
-			for (i = 0; i < 1 + param->prop_extra; i++)
+			for (i = 0; i < param->arg_count; i++)
 			{
 				int val = data[param->prop_offset + i];
 
@@ -2173,18 +2199,18 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 				else
 					sprintf(&str[strlen(str)], "%d", val);
 
-				if (i < param->prop_extra)
+				if (i < param->arg_count - 1)
 					strcat(str, " ");
 			}
 			print_value(param, "%s", str);
 			break;
 		case 32:
-			for (i = 0; i < 1 + param->prop_extra; i++)
+			for (i = 0; i < param->arg_count; i++)
 			{
 				long *ldata = (long*)data;
 				sprintf(&str[strlen(str)], "%ld", ldata[param->prop_offset + i]);
 
-				if (i < param->prop_extra)
+				if (i < param->arg_count - 1)
 					strcat(str, " ");
 			}
 			print_value(param, "%s", str);
