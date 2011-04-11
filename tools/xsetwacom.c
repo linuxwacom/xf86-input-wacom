@@ -961,14 +961,12 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 {
 	static XkbDescPtr xkb = NULL;
 	XkbStateRec state;
-	int group;
 	int kc = 0;
 
 
 	if (!xkb)
 		xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
 	XkbGetState(dpy, XkbUseCoreKbd, &state);
-	group = state.group;
 
 	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
 	{
@@ -1744,7 +1742,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 
 	for (i = 0; i < nitems; i++)
 	{
-		static int last_type, last_press;
+		static int last_type;
 		unsigned long action = data[i];
 		int current_type;
 		int detail;
@@ -1788,7 +1786,6 @@ static int get_actions(Display *dpy, XDevice *dev,
 			sprintf(str, "%c%d ", press_str, detail);
 		strcat(buff, str);
 		last_type = current_type;
-		last_press = is_press;
 	}
 
 	TRACE("%s\n", buff);
