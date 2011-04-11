@@ -138,6 +138,10 @@ static int set_baud_rate(int fd, int baud)
 	}
 
 	rc = tcgetattr(fd, &t);
+
+	if (rc)
+		return rc;
+
 	cfsetispeed(&t, baud);
 	cfsetospeed(&t, baud);
 
