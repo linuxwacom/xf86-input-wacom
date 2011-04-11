@@ -432,7 +432,7 @@ static void
 test_mod_buttons(void)
 {
 	int i;
-	for (i = 0; i < sizeof(int); i++)
+	for (i = 0; i < sizeof(int) * 8; i++)
 	{
 		int buttons = mod_buttons(0, i, 1);
 		assert(buttons == (1 << i));
@@ -440,7 +440,7 @@ test_mod_buttons(void)
 		assert(buttons == 0);
 	}
 
-	assert(mod_buttons(0, sizeof(int), 1) == 0);
+	assert(mod_buttons(0, sizeof(int) * 8, 1) == 0);
 }
 
 static void test_set_type(void)

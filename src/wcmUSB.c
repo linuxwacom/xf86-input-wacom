@@ -1054,7 +1054,7 @@ static int mod_buttons(int buttons, int btn, int state)
 {
 	int mask;
 
-	if (btn >= sizeof(int))
+	if (btn >= sizeof(int) * 8)
 	{
 		xf86Msg(X_ERROR, "%s: Invalid button number %d. Insufficient "
 				"storage\n", __func__, btn);
