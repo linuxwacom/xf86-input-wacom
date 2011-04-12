@@ -104,6 +104,20 @@
 #define OFF(x)		((x)%BITS_PER_LONG)
 #define LONG(x)		((x)/BITS_PER_LONG)
 
+/**
+ * Test if the mask is set in the given bitfield.
+ * @return TRUE if set or FALSE otherwise.
+ */
+#define MaskIsSet(bitfield, mask) !!(((bitfield) & (mask)) == (mask))
+/**
+ * Set the given mask for the given bitfield.
+ */
+#define MaskSet(bitfield, mask) ((bitfield) |= (mask))
+/**
+ * Clear the given mask from the given bitfield
+ */
+#define MaskClear(bitfield, mask) ((bitfield) &= ~(mask))
+
 /******************************************************************************
  * Forward Declarations
  *****************************************************************************/

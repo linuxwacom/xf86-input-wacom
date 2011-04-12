@@ -522,6 +522,26 @@ static void test_set_type(void)
 #undef reset
 }
 
+static int test_flag_set(void)
+{
+	int i;
+	unsigned int flags = 0;
+
+	for (i = 0; i < sizeof(flags); i++)
+	{
+		int mask = 1 << i;
+		flags = 0;
+
+		assert(!MaskIsSet(flags, mask));
+		MaskSet(flags, mask);
+		assert(flags != 0);
+		assert(MaskIsSet(flags, mask));
+		MaskClear(flags, mask);
+		assert(!MaskIsSet(flags, mask));
+		assert(flags == 0);
+	}
+}
+
 int main(int argc, char** argv)
 {
 	test_common_ref();
@@ -532,6 +552,7 @@ int main(int argc, char** argv)
 	test_tilt_to_rotation();
 	test_mod_buttons();
 	test_set_type();
+	test_flag_set();
 	return 0;
 }
 
