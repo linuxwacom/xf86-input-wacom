@@ -6,7 +6,7 @@
 xsetwacom \- commandline utility to query and modify __drivername__ driver settings.
 .SH "SYNOPSIS"
 .LP
-xsetwacom [options] command [device_name] [parameter] [value]
+xsetwacom [options] [command [arguments]]
 
 .SH "DESCRIPTION"
 .LP
@@ -79,7 +79,7 @@ added to the InputDevice section in the xorg.conf.
 
 .SS "SET COMMANDS"
 .TP
-\fBset\fR device_name parameter value
+\fBset\fR device_name parameter [value]
 Set the parameter value on the given device to the value provided. Note that
 not all parameters are writable, some are read-only and result in an error
 when trying to be modified.
