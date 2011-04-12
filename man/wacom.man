@@ -1,7 +1,7 @@
 .ds q \N'34'
 .TH WACOM __drivermansuffix__ __vendorversion__
 .SH NAME
-wacom \- Wacom input driver
+__drivername__ \- Wacom input driver
 .SH SYNOPSIS
 .nf
 .B "Section \*qInputDevice\*q"
