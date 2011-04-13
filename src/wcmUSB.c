@@ -266,8 +266,8 @@ static struct
 	{ WACOM_VENDOR_ID, 0x90, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x90 */
 	{ WACOM_VENDOR_ID, 0x93, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x93 */
 	{ WACOM_VENDOR_ID, 0x9A, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x9A */
-	{ WACOM_VENDOR_ID, 0x9F,    394,    394, &usbTabletPC   }, /* CapPlus  0x9F */
-	{ WACOM_VENDOR_ID, 0xE2,    394,    394, &usbTabletPC   }, /* TabletPC 0xE2 */
+	{ WACOM_VENDOR_ID, 0x9F, 100000, 100000, &usbTabletPC   }, /* CapPlus  0x9F */
+	{ WACOM_VENDOR_ID, 0xE2, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE2 */
 	{ WACOM_VENDOR_ID, 0xE3, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE3 */
 	{ WACOM_VENDOR_ID, 0xE6, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE6 */
 
