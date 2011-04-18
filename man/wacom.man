@@ -206,6 +206,13 @@ option is only available on wacom V devices (Intuos series and Cintiq 21U).
 To see which serial number belongs to a device, you need to run the utility program, 
 xsetwacom, which comes with linuxwacom package.
 .TP 4
+.B Option \fI"ToolSerials"\fP \fI"number[,type[,label]][;...]"\fP
+sets the list of serial numbered devices that need to be hotplugged for a physical
+device. The 'type' option may be any of "pen", "airbrush", "artpen", or "cursor".
+This option is only available on wacom V devices (Intuos series and Cintiq 21U).
+To see which serial number belongs to a device, you need to run the utility program,
+xsetwacom, that comes with this driver.
+.TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
 sets the pressure threshold used to generate a button 1 events of stylus.
 The threshold applies to the normalised pressure range of [0..2048].
