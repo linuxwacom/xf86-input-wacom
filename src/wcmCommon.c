@@ -1419,6 +1419,18 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 	if (--common->refcnt == 0)
 	{
 		free(common->private);
+		while (common->serials)
+		{
+			WacomToolPtr next;
+
+			DBG(10, common, "Free common serial: %d %s\n",
+					common->serials->serial,
+					common->serials->name);
+
+			next = common->serials->next;
+			free(common->serials);
+			common->serials = next;
+		}
 		free(common);
 	}
 	*ptr = NULL;

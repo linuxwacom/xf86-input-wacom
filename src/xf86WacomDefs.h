@@ -211,6 +211,7 @@ struct _WacomModel
 					 * For backword compability support, 
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
+
 /* get/set/property */
 typedef struct _PROPINFO PROPINFO;
 
@@ -496,6 +497,7 @@ struct _WacomCommonRec
 	void *private;		     /* backend-specific information */
 
 	WacomToolPtr wcmTool; /* List of unique tools */
+	WacomToolPtr serials; /* Serial numbers provided at startup*/
 
 	/* DO NOT TOUCH THIS. use wcmRefCommon() instead */
 	int refcnt;			/* number of devices sharing this struct */
@@ -513,6 +515,7 @@ struct _WacomTool
 	int typeid; /* Tool type */
 	int serial; /* Serial id, 0 == no serial id */
 	Bool enabled;
+	char *name;
 
 	InputInfoPtr device; /* The InputDevice connected to this tool */
 };

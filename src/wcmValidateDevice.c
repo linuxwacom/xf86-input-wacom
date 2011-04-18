@@ -306,9 +306,12 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
  * (and the name with "$name $type" and convert them to InputOption */
-static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type)
+static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
 {
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
 	pointer original = pInfo->options;
+	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL, *new;
 	char *name;
 	pointer options;
@@ -325,13 +328,28 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 		options = dummy.options;
 	}
 #endif
+	if (iserial > -1)
+	{
+		while (ser->serial && ser->serial != iserial)
+			ser = ser->next;
 
-	rc = asprintf(&name, "%s %s", basename, type);
+		if (strlen(ser->name) > 0)
+			rc = asprintf(&name, "%s %s %s", basename, ser->name, type);
+		else
+			rc = asprintf(&name, "%s %d %s", basename, ser->serial, type);
+	}
+	else
+		rc = asprintf(&name, "%s %s", basename, type);
+
 	if (rc == -1) /* if asprintf fails, strdup will probably too... */
 		name = strdup("unknown");
 
 	options = xf86ReplaceStrOption(options, "Type", type);
 	options = xf86ReplaceStrOption(options, "Name", name);
+
+	if (iserial > -1)
+		options = xf86ReplaceIntOption(options, "Serial", ser->serial);
+
 	free(name);
 
 	while(options)
@@ -435,7 +453,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * @param basename The base name for the device (type will be appended)
  * @param type Type name for this tool
  */
-static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type)
+static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
 {
 	WacomHotplugInfo *hotplug_info;
 
@@ -447,11 +465,37 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 		return;
 	}
 
-	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type);
+	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, iserial);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
 #endif
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
+}
+
+void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
+{
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr  common = priv->common;
+	WacomToolPtr    ser = common->serials;
+
+	while (ser)
+	{
+		xf86Msg(X_INFO, "%s: hotplugging serial %d.\n", pInfo->name, ser->serial);
+
+		if (wcmIsAValidType(pInfo, "stylus") &&
+		    (ser->typeid & STYLUS_ID))
+			wcmQueueHotplug(pInfo, basename, "stylus", ser->serial);
+
+		if (wcmIsAValidType(pInfo, "eraser") &&
+		    (ser->typeid & ERASER_ID))
+			wcmQueueHotplug(pInfo, basename, "eraser", ser->serial);
+
+		if (wcmIsAValidType(pInfo, "cursor") &&
+		    (ser->typeid & CURSOR_ID))
+			wcmQueueHotplug(pInfo, basename, "cursor", ser->serial);
+
+		ser = ser->next;
+	}
 }
 
 void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
@@ -470,9 +514,12 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
 			if (skip)
 				skip = 0;
 			else
-				wcmQueueHotplug(pInfo, basename, wcmType[i].type);
+				wcmQueueHotplug(pInfo, basename, wcmType[i].type, -1);
 		}
 	}
+
+	wcmHotplugSerials(pInfo, basename);
+
         xf86Msg(X_INFO, "%s: hotplugging completed.\n", pInfo->name);
 }
 
@@ -518,6 +565,88 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	pInfo->options = xf86ReplaceStrOption(pInfo->options, "_source", "_driver/wacom");
 
 	return 1;
+}
+
+int wcmParseSerials (InputInfoPtr pInfo)
+{
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr  common = priv->common;
+	char            *s;
+
+	if (common->serials)
+	{
+		return 0; /*Parse has been already done*/
+	}
+
+	s = xf86SetStrOption(pInfo->options, "ToolSerials", NULL);
+	if (s) /*Dont parse again, if the commons have values already*/
+	{
+		char* tok = strtok(s, ";");
+		while (tok != NULL)
+		{
+			int serial, nmatch;
+			char type[strlen(tok) + 1];
+			char name[strlen(tok) + 1];
+			WacomToolPtr ser = calloc(1, sizeof(WacomTool));
+
+			if (ser == NULL)
+				return 1;
+
+			nmatch = sscanf(tok,"%d,%[a-z],%[A-Za-z ]",&serial, type, name);
+
+			if (nmatch < 1)
+			{
+				xf86Msg(X_ERROR, "%s: %s is invalid serial string.\n",
+					pInfo->name, tok);
+				return 1;
+			}
+
+			if (nmatch >= 1)
+			{
+				xf86Msg(X_CONFIG, "%s: Tool serial %d found.\n",
+					pInfo->name, serial);
+
+				ser->serial = serial;
+
+				ser->typeid = STYLUS_ID | ERASER_ID; /*Default to both tools*/
+			}
+
+			if (nmatch >= 2)
+			{
+				xf86Msg(X_CONFIG, "%s: Tool %d has type %s.\n",
+					pInfo->name, serial, type);
+				if ((strcmp(type, "pen") == 0) || (strcmp(type, "airbrush") == 0))
+					ser->typeid = STYLUS_ID | ERASER_ID;
+				else if (strcmp(type, "artpen") == 0)
+					ser->typeid = STYLUS_ID;
+				else if (strcmp(type, "cursor") == 0)
+					ser->typeid = CURSOR_ID;
+				else    xf86Msg(X_CONFIG, "%s: Invalid type %s, defaulting to pen.\n",
+					pInfo->name, type);
+			}
+
+			if (nmatch == 3)
+			{
+				xf86Msg(X_CONFIG, "%s: Tool %d is named %s.\n",
+					pInfo->name, serial, name);
+				ser->name = strdup(name);
+			}
+			else ser->name = ""; /*no name yet*/
+
+			if (common->serials == NULL)
+				common->serials = ser;
+			else
+			{
+				WacomToolPtr tool = common->serials;
+				while (tool->next)
+					tool = tool->next;
+				tool->next = ser;
+			}
+
+			tok = strtok(NULL,";");
+		}
+	}
+	return 0;
 }
 
 /**
@@ -640,6 +769,10 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 		else
 			wcmSetPressureCurve(priv,a,b,c,d);
 	}
+
+	/*Serials of tools we want hotpluged*/
+	if (wcmParseSerials (pInfo) != 0)
+		goto error;
 
 	if (IsCursor(priv))
 	{
