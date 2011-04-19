@@ -485,14 +485,23 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			pInfo->name, absinfo.maximum);
 		return !Success;
 	}
+
 	if (!is_touch)
+	{
 		common->wcmMaxX = absinfo.maximum;
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
+		if (absinfo.resolution > 0)
+			common->wcmResolX = absinfo.resolution * 1000;
+#endif
+	}
 	else
 	{
 		common->wcmMaxTouchX = absinfo.maximum;
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		common->wcmTouchResolX = absinfo.resolution * 1000;
+		if (absinfo.resolution > 0)
+			common->wcmTouchResolX = absinfo.resolution * 1000;
 #endif
 	}
 
@@ -509,14 +518,23 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			pInfo->name, absinfo.maximum);
 		return !Success;
 	}
+
 	if (!is_touch)
+	{
 		common->wcmMaxY = absinfo.maximum;
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
+		if (absinfo.resolution > 0)
+			common->wcmResolY = absinfo.resolution * 1000;
+#endif
+	}
 	else
 	{
 		common->wcmMaxTouchY = absinfo.maximum;
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		common->wcmTouchResolY = absinfo.resolution * 1000;
+		if (absinfo.resolution > 0)
+			common->wcmTouchResolY = absinfo.resolution * 1000;
 #endif
 	}
 

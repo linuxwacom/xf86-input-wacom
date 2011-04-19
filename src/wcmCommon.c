@@ -1378,6 +1378,35 @@ WacomCommonPtr wcmNewCommon(void)
 	if (common)
 		common->refcnt = 1;
 
+	common->wcmFlags = 0;               /* various flags */
+	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */
+	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
+	common->wcmCapacity = -1;          /* Capacity is disabled */
+	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
+					   /* 3 when capacity is supported */
+	common->wcmGestureParameters.wcmZoomDistance = 50;
+	common->wcmGestureParameters.wcmZoomDistanceDefault = 50;
+	common->wcmGestureParameters.wcmScrollDirection = 0;
+	common->wcmGestureParameters.wcmScrollDistance = 20;
+	common->wcmGestureParameters.wcmScrollDistanceDefault = 20;
+	common->wcmGestureParameters.wcmTapTime = 250;
+	common->wcmGestureParameters.wcmTapTimeDefault = 250;
+	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
+	common->wcmMaxX = 0;               /* max digitizer logical X value */
+	common->wcmMaxY = 0;               /* max digitizer logical Y value */
+	common->wcmMaxTouchX = 1024;       /* max touch X value */
+	common->wcmMaxTouchY = 1024;       /* max touch Y value */
+	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
+	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
+	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
+	common->wcmMaxtiltY = 128;	   /* Max tilt in Y directory */
+	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
+			/* default to Intuos */
+	common->wcmSuppress = DEFAULT_SUPPRESS;
+			/* transmit position if increment is superior */
+	common->wcmRawSample = DEFAULT_SAMPLES;
+			/* number of raw data to be used to for filtering */
+
 	return common;
 }
 
