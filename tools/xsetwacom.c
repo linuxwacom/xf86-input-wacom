@@ -2116,10 +2116,13 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 
 	if (param->get_func)
 	{
+		TRACE("custom get func for param\n");
 		param->get_func(dpy, dev, param, argc, argv);
 		return;
 	}
 
+
+	TRACE("Getting property %ld, offset %d\n", prop, param->prop_offset);
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
 
