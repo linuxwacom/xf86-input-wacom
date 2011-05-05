@@ -629,7 +629,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
 	wcmUSBData* private = common->private;
-	int serial = private->wcmLastToolSerial;
+	unsigned int serial = private->wcmLastToolSerial;
 
 	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
 	{

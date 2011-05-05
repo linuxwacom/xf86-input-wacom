@@ -297,7 +297,7 @@ struct _WacomDeviceRec
 	int oldProximity;       /* previous proximity */
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
 	int old_device_id;	/* last in prox device id */
-	int old_serial;		/* last in prox tool serial number */
+	unsigned int old_serial;/* last in prox tool serial number */
 	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
 
 	/* JEJ - throttle */
@@ -516,7 +516,7 @@ struct _WacomTool
 	WacomToolPtr next; /* Next tool in list */
 
 	int typeid; /* Tool type */
-	int serial; /* Serial id, 0 == no serial id */
+	unsigned int serial; /* Serial id, 0 == no serial id */
 	Bool enabled;
 	char *name;
 

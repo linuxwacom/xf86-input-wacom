@@ -653,7 +653,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 #endif
 	int type = ds->device_type;
 	int id = ds->device_id;
-	int serial = (int)ds->serial_num;
+	unsigned int serial = ds->serial_num;
 	int x = ds->x;
 	int y = ds->y;
 	int z = ds->pressure;

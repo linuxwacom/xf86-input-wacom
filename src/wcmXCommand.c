@@ -892,7 +892,7 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 }
 
 void
-wcmUpdateSerial(InputInfoPtr pInfo, int serial)
+wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial)
 {
 	WacomDevicePtr priv = pInfo->private;
 
