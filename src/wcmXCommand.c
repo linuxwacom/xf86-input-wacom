@@ -877,7 +877,8 @@ void
 wcmUpdateSerial(InputInfoPtr pInfo, int serial)
 {
 	WacomDevicePtr priv = pInfo->private;
-	if (!serial || priv->cur_serial == serial)
+
+	if (priv->cur_serial == serial)
 		return;
 
 	priv->cur_serial = serial;

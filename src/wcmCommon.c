@@ -750,8 +750,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
 
 	priv->oldProximity = ds->proximity;
-	priv->old_device_id = id;
-	priv->old_serial = serial;
 	if (ds->proximity)
 		wcmUpdateOldState(pInfo, ds);
 	else
@@ -769,6 +767,9 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		priv->oldRot = 0;
 		priv->oldThrottle = 0;
 		priv->devReverseCount = 0;
+		priv->old_serial = serial;
+		priv->old_device_id = id;
+		wcmUpdateSerial(pInfo, 0);
 	}
 }
 
