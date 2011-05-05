@@ -137,7 +137,6 @@ extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
 
 /* hotplug */
 extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type);
-extern void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename);
 extern void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename);
 
 /* setup */

@@ -472,7 +472,7 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 
-void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
+static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
