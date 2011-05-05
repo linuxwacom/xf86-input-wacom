@@ -305,7 +305,12 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
- * (and the name with "$name $type" and convert them to InputOption */
+ * (and the name with "$name $type" and convert them to InputOption
+ *
+ * @param basename Kernel device name for this device
+ * @param type Tool type (cursor, eraser, etc.)
+ * @param iserial Serial number this device should be bound to (-1 for "any")
+ */
 static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
 {
 	WacomDevicePtr priv = pInfo->private;
@@ -452,6 +457,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * @param pInfo The parent device
  * @param basename The base name for the device (type will be appended)
  * @param type Type name for this tool
+ * @param iserial Serial number this device should be bound to (-1 for "any")
  */
 static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
 {
@@ -472,6 +478,11 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 
+/**
+ * Hotplug all serial numbers configured on this device.
+ *
+ * @param basename The kernel device name
+ */
 static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
