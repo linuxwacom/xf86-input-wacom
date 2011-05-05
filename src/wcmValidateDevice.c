@@ -309,9 +309,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
  *
  * @param basename Kernel device name for this device
  * @param type Tool type (cursor, eraser, etc.)
- * @param iserial Serial number this device should be bound to (-1 for "any")
+ * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
+static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type, int serial)
 {
 	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
@@ -333,9 +333,9 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 		options = dummy.options;
 	}
 #endif
-	if (iserial > -1)
+	if (serial > -1)
 	{
-		while (ser->serial && ser->serial != iserial)
+		while (ser->serial && ser->serial != serial)
 			ser = ser->next;
 
 		if (strlen(ser->name) > 0)
@@ -352,7 +352,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	options = xf86ReplaceStrOption(options, "Type", type);
 	options = xf86ReplaceStrOption(options, "Name", name);
 
-	if (iserial > -1)
+	if (serial > -1)
 		options = xf86ReplaceIntOption(options, "Serial", ser->serial);
 
 	free(name);
@@ -457,9 +457,9 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * @param pInfo The parent device
  * @param basename The base name for the device (type will be appended)
  * @param type Type name for this tool
- * @param iserial Serial number this device should be bound to (-1 for "any")
+ * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type, int iserial)
+static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type, int serial)
 {
 	WacomHotplugInfo *hotplug_info;
 
@@ -471,7 +471,7 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 		return;
 	}
 
-	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, iserial);
+	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, serial);
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
 #endif
