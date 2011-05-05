@@ -373,6 +373,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_TOOL_TYPE,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
@@ -381,6 +382,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SERIALIDS,
 		.prop_format = 32,
 		.prop_offset = 3,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
@@ -389,6 +391,7 @@ static param_t parameters[] =
 		.prop_name = WACOM_PROP_SERIALIDS,
 		.prop_format = 32,
 		.prop_offset = 0,
+		.arg_count = 1,
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
