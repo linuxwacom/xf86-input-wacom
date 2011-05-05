@@ -178,6 +178,12 @@ to work.  If off, stylus buttons will work once the stylus is in proximity
 of the tablet (regardless of whether it is touching the screen).  Default:  on
 for Tablet PCs; off for all other models.
 .TP
+\fBToolSerialPrevious\fR
+Get the serial number of the tool that was last in proximity last. This
+serial number is updated whenever the tool goes out of proximity. If the
+current tool went out of proximity once, this serial number is the one of
+the current tool. This is a read-only parameter.
+.TP
 \fBCursorProximity\fR distance
 sets the max distance from tablet to stop reporting movement for cursor in
 relative mode. Default for Intuos series is 10, for Graphire series (including
