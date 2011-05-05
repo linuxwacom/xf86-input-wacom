@@ -804,4 +804,32 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 	return Success;
 }
+
+int wcmGetProperty (DeviceIntPtr dev, Atom property)
+{
+	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	WacomCommonPtr common = priv->common;
+
+	DBG(10, priv, "\n");
+
+	if (property == prop_serials)
+	{
+		uint32_t values[4];
+
+		values[0] = common->tablet_id;
+		values[1] = priv->old_serial;
+		values[2] = priv->old_device_id;
+		values[3] = priv->serial;
+
+		DBG(10, priv, "Update to serial: %d\n", priv->old_serial);
+
+		return XIChangeDeviceProperty(dev, property, XA_INTEGER, 32,
+					      PropModeReplace, 4,
+					      values, FALSE);
+	}
+
+	return Success;
+}
+
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

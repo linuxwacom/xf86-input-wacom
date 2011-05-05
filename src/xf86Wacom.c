@@ -442,7 +442,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		return FALSE;
 
 	InitWcmDeviceProperties(pInfo);
-	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, NULL, wcmDeleteProperty);
+	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, wcmGetProperty, wcmDeleteProperty);
 
 	return TRUE;
 }
