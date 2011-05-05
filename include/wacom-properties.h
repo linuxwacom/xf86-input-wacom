@@ -37,6 +37,9 @@
    read-only */
 #define WACOM_PROP_SERIALIDS "Wacom Serial IDs"
 
+/* CARD32, 1 value */
+#define WACOM_PROP_SERIAL_BIND "Wacom Serial ID binding"
+
 /* 8 bit, 4 values, left up, left down, right up, right down
    OR
    Atom, 4 values , left up, left down, right up, right down

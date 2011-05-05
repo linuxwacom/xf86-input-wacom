@@ -395,6 +395,14 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
+		.name = "BindToSerial",
+		.desc = "Binds this device to the serial number.",
+		.prop_name = WACOM_PROP_SERIAL_BIND,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.arg_count = 1,
+	},
+	{
 		.name = "TabletID",
 		.desc = "Returns the tablet ID of the associated device. ",
 		.prop_name = WACOM_PROP_SERIALIDS,
@@ -2360,7 +2368,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ArrayLength(parameters) == 34);
+	assert(ArrayLength(parameters) == 35);
 	assert(ArrayLength(deprecated_parameters) == 16);
 }
 

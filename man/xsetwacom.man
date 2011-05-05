@@ -113,6 +113,12 @@ shift, press and release b, release shift, release a". In addition to the "key"
 keyword, "button" and "modetoggle" are also recognized. Multiple keywords may
 be present in one action if desired: for example "key +ctrl button 5 key -ctrl".
 .TP
+\fBBindToSerial\fR [serial|0]
+Bind the device to the tool with the specified serial number. Once bound,
+the device will ignore events from other tools. A serial of 0 means the
+device is unbound and will react to any tool of the matching type.
+Default: 0
+.TP
 \fBMapToOutput\fR output
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of

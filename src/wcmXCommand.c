@@ -26,6 +26,8 @@
 #include <exevents.h>
 #include <xf86_OSproc.h>
 
+static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
+
 /*****************************************************************************
 * wcmDevSwitchModeCall --
 *****************************************************************************/
@@ -74,6 +76,7 @@ Atom prop_rotation;
 Atom prop_tablet_area;
 Atom prop_pressurecurve;
 Atom prop_serials;
+Atom prop_serial_binding;
 Atom prop_strip_buttons;
 Atom prop_wheel_buttons;
 Atom prop_tv_resolutions;
@@ -165,6 +168,9 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[2] = priv->old_device_id;
 	values[3] = priv->cur_serial;
 	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
+
+	values[0] = priv->serial;
+	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, 32, 1, values);
 
 	if (IsCursor(priv)) {
 		values[0] = common->wcmCursorProxoutDist;
@@ -678,6 +684,18 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 				return Success;
 
 		return BadValue; /* Read-only */
+	} else if (property == prop_serial_binding)
+	{
+		unsigned int serial;
+
+		if (prop->size != 1 || prop->format != 32)
+			return BadValue;
+
+		if (!checkonly)
+		{
+			serial = *(CARD32*)prop->data;
+			wcmBindToSerial(pInfo, serial);
+		}
 	} else if (property == prop_strip_buttons)
 		return wcmSetStripProperty(dev, property, prop, checkonly);
 	else if (property == prop_wheel_buttons)
@@ -887,6 +905,15 @@ wcmUpdateSerial(InputInfoPtr pInfo, int serial)
 	 * event delivery outside of signal handler. */
 	priv->serial_timer = TimerSet(priv->serial_timer, 0 /* reltime */,
 				      1, serialTimerFunc, pInfo);
+}
+
+static void
+wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial)
+{
+	WacomDevicePtr priv = pInfo->private;
+
+	priv->serial = serial;
+
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
