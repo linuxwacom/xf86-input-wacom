@@ -33,7 +33,8 @@
 /* 32 bit, 4 values */
 #define WACOM_PROP_PRESSURECURVE "Wacom Pressurecurve"
 
-/* 32 bit, 4 values, tablet id, old serial, old device id, serial */
+/* CARD32, 4 values, tablet id, old serial, old hw device id, current serial
+   read-only */
 #define WACOM_PROP_SERIALIDS "Wacom Serial IDs"
 
 /* 8 bit, 4 values, left up, left down, right up, right down
