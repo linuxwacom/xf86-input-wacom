@@ -98,6 +98,9 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	tool->device = pInfo;
 	/* tool->typeid is set once we know the type - see wcmSetType */
 
+	/* timers */
+	priv->serial_timer = TimerSet(NULL, 0, 0, NULL, NULL);
+
 	return 1;
 
 error:
@@ -119,6 +122,7 @@ static void wcmFree(InputInfoPtr pInfo)
 	if (!priv)
 		return;
 
+	TimerFree(priv->serial_timer);
 	free(priv->tool);
 	wcmFreeCommon(&priv->common);
 	free(priv);

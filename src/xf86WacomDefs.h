@@ -244,7 +244,8 @@ struct _WacomDeviceRec
 	int maxY;	        /* tool physical maxY in device coordinates*/
 	double factorX;		/* X factor */
 	double factorY;		/* Y factor */
-	unsigned int serial;	/* device serial number */
+	unsigned int serial;	/* device serial number this device takes (if 0, any serial is ok) */
+	unsigned int cur_serial; /* current serial in prox */
 	int maxWidth;		/* max active screen width in screen coords */
 	int maxHeight;		/* max active screen height in screen coords */
 	int leftPadding;	/* left padding for virtual tablet in device coordinates*/
@@ -317,6 +318,8 @@ struct _WacomDeviceRec
 	Atom btn_actions[WCM_MAX_BUTTONS];
 	Atom wheel_actions[4];
 	Atom strip_actions[4];
+
+	OsTimerPtr serial_timer; /* timer used for serial number property update */
 };
 
 /******************************************************************************

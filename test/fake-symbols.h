@@ -173,4 +173,14 @@ extern ClientPtr serverClient;
 extern Bool QueueWorkProc (
     Bool (*function)(ClientPtr /* pClient */, pointer /* closure */),
     ClientPtr client, pointer closure);
+
 #endif
+
+extern OsTimerPtr
+TimerSet(OsTimerPtr timer, int flags, CARD32 millis,
+         OsTimerCallback func, pointer arg);
+
+extern void TimerFree(OsTimerPtr timer);
+
+extern int xf86BlockSIGIO (void);
+extern void xf86UnblockSIGIO (int wasset);

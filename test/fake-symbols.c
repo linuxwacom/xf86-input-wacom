@@ -439,3 +439,25 @@ Bool QueueWorkProc (
     return FALSE;
 }
 
+
+OsTimerPtr
+TimerSet(OsTimerPtr timer, int flags, CARD32 millis,
+         OsTimerCallback func, pointer arg)
+{
+    return NULL;
+}
+
+void TimerFree(OsTimerPtr timer)
+{
+}
+
+int
+xf86BlockSIGIO (void)
+{
+    return 0;
+}
+
+void
+xf86UnblockSIGIO (int wasset)
+{
+}

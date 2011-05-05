@@ -663,6 +663,17 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	int v3, v4, v5;
 	int valuators[priv->naxes];
 
+	if (priv->serial && serial != priv->serial)
+	{
+		DBG(10, priv, "serial number"
+				" is %u but your system configured %u",
+				serial, (int)priv->serial);
+		return;
+	}
+
+	if (priv->cur_serial != serial)
+		wcmUpdateSerial(pInfo, serial);
+
 	/* don't move the cursor when going out-prox */
 	if (!ds->proximity)
 	{

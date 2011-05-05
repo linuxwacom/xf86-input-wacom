@@ -24,6 +24,7 @@
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #include <exevents.h>
+#include <xf86_OSproc.h>
 
 /*****************************************************************************
 * wcmDevSwitchModeCall --
@@ -162,7 +163,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = common->tablet_id;
 	values[1] = priv->old_serial;
 	values[2] = priv->old_device_id;
-	values[3] = priv->serial;
+	values[3] = priv->cur_serial;
 	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
 
 	if (IsCursor(priv)) {
@@ -668,6 +669,14 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 	} else if (property == prop_serials)
 	{
+		/* This property is read-only but we need to
+		 * set it at runtime. If we get here from wcmUpdateSerial,
+		 * we know the serial has ben set internally already, so we
+		 * can reply with success. */
+		if (prop->size == 4 && prop->format == 32)
+			if (((CARD32*)prop->data)[3] == priv->cur_serial)
+				return Success;
+
 		return BadValue; /* Read-only */
 	} else if (property == prop_strip_buttons)
 		return wcmSetStripProperty(dev, property, prop, checkonly);
@@ -820,7 +829,7 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		values[0] = common->tablet_id;
 		values[1] = priv->old_serial;
 		values[2] = priv->old_device_id;
-		values[3] = priv->serial;
+		values[3] = priv->cur_serial;
 
 		DBG(10, priv, "Update to serial: %d\n", priv->old_serial);
 
@@ -830,6 +839,53 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 	}
 
 	return Success;
+}
+
+static CARD32
+serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
+{
+	InputInfoPtr pInfo = arg;
+	WacomDevicePtr priv = pInfo->private;
+	XIPropertyValuePtr prop;
+	CARD32 prop_value[4];
+	int sigstate;
+	int rc;
+
+	sigstate = xf86BlockSIGIO();
+
+	rc = XIGetDeviceProperty(pInfo->dev, prop_serials, &prop);
+	if (rc != Success || prop->format != 32 || prop->size != 4)
+	{
+		xf86Msg(X_ERROR, "%s: Failed to update serial number.\n",
+			pInfo->name);
+		return 0;
+	}
+
+	memcpy(prop_value, prop->data, sizeof(prop_value));
+	prop_value[3] = priv->cur_serial;
+
+	XIChangeDeviceProperty(pInfo->dev, prop_serials, XA_INTEGER,
+			       prop->format, PropModeReplace,
+			       prop->size, prop_value, TRUE);
+
+	xf86UnblockSIGIO(sigstate);
+
+	return 0;
+}
+
+void
+wcmUpdateSerial(InputInfoPtr pInfo, int serial)
+{
+	WacomDevicePtr priv = pInfo->private;
+	if (!serial || priv->cur_serial == serial)
+		return;
+
+	priv->cur_serial = serial;
+
+	/* This function is called during SIGIO. Schedule timer for property
+	 * event delivery outside of signal handler. */
+	priv->serial_timer = TimerSet(priv->serial_timer, 0 /* reltime */,
+				      1, serialTimerFunc, pInfo);
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
