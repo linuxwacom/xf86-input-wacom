@@ -479,9 +479,9 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 				   axis_x->max_value, axis_x->min_value);
 	}
 
-	if (common->wcmRotate == ROTATE_CCW)
+	if (common->wcmRotate == ROTATE_CW)
 		*y = axis_y->max_value - (*y - axis_y->min_value);
-	else if (common->wcmRotate == ROTATE_CW)
+	else if (common->wcmRotate == ROTATE_CCW)
 		*x = axis_x->max_value - (*x - axis_x->min_value);
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
