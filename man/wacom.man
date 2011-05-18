@@ -51,6 +51,12 @@ Dependent devices may be assigned tool-specific options through additional
 sections. We recommend that a
 .B MatchDriver "wacom"
 line is used in these sections in addition to the user-specific pattern.
+.PP
+Match directives are applied by the X server before the driver is selected.
+The type name of the parent device is appended by the driver. It is not
+possible to use a
+.B MatchProduct
+directive to match against this appended type name.
 .SH CONFIGURATION DETAILS
 Please refer to xorg.conf(5x) or xorg.conf.d(5x) for general configuration
 details and for options that can be used with all input drivers.  This
