@@ -40,19 +40,19 @@ static int wcmAllocate(LocalDevicePtr local)
 	WacomToolAreaPtr area   = NULL;
 	int i;
 
-	priv = xcalloc(1, sizeof(WacomDeviceRec));
+	priv = calloc(1, sizeof(WacomDeviceRec));
 	if (!priv)
 		goto error;
 
-	common = xcalloc(1, sizeof(WacomCommonRec));
+	common = calloc(1, sizeof(WacomCommonRec));
 	if (!common)
 		goto error;
 
-	tool = xcalloc(1, sizeof(WacomTool));
+	tool = calloc(1, sizeof(WacomTool));
 	if(!tool)
 		goto error;
 
-	area = xcalloc(1, sizeof(WacomToolArea));
+	area = calloc(1, sizeof(WacomToolArea));
 	if (!area)
 		goto error;
 
@@ -148,10 +148,10 @@ static int wcmAllocate(LocalDevicePtr local)
 	return 1;
 
 error:
-	xfree(area);
-	xfree(tool);
-	xfree(common);
-	xfree(priv);
+	free(area);
+	free(tool);
+	free(common);
+	free(priv);
 	return 0;
 }
 
@@ -280,9 +280,9 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	}
 
 	/* free pressure curve */
-	xfree(priv->pPressCurve);
+	free(priv->pPressCurve);
 
-	xfree(priv);
+	free(priv);
 	local->private = NULL;
 
 
@@ -314,7 +314,7 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 		{
 			DBG(2, priv, "port share between"
 					" %s and %s\n", pLocal->name, pMatch->name);
-			xfree(common);
+			free(common);
 			common = priv->common = privMatch->common;
 			priv->next = common->wcmDevices;
 			common->wcmDevices = priv;
@@ -431,8 +431,8 @@ SetupProc_fail:
 	/* restart the device list from the next one */
 	if (common && priv)
 		common->wcmDevices = priv->next;
-	xfree(common);
-	xfree(priv);
+	free(common);
+	free(priv);
 	if (local)
 	{
 		if (local->fd != -1)
