@@ -471,7 +471,6 @@ InputDriverRec WACOM =
 	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
-	0              /* ref count */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	default_options
 #endif
