@@ -34,16 +34,16 @@
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
-static Bool isdv4Detect(LocalDevicePtr);
-static Bool isdv4Init(LocalDevicePtr, char* id, float *version);
+static Bool isdv4Detect(InputInfoPtr);
+static Bool isdv4Init(InputInfoPtr, char* id, float *version);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
-static int isdv4GetRanges(LocalDevicePtr);
-static int isdv4StartTablet(LocalDevicePtr);
-static int isdv4StopTablet(LocalDevicePtr);
-static int isdv4Parse(LocalDevicePtr, const unsigned char* data, int len);
-static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data);
-static int wcmWaitForTablet(LocalDevicePtr local, char * data, int size);
-static int wcmWriteWait(LocalDevicePtr local, const char* request);
+static int isdv4GetRanges(InputInfoPtr);
+static int isdv4StartTablet(InputInfoPtr);
+static int isdv4StopTablet(InputInfoPtr);
+static int isdv4Parse(InputInfoPtr, const unsigned char* data, int len);
+static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data);
+static int wcmWaitForTablet(InputInfoPtr pInfo, char * data, int size);
+static int wcmWriteWait(InputInfoPtr pInfo, const char* request);
 
 static inline int isdv4ParseQuery(const char *buffer, const size_t len,
 				  ISDV4QueryReply *reply);
@@ -105,9 +105,9 @@ static int wcmSkipInvalidBytes(const unsigned char* data, int len)
  *   positive number of bytes to skip on error.
  ****************************************************************************/
 
-static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data)
+static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	int n;
@@ -119,7 +119,7 @@ static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data)
 		int n = wcmSkipInvalidBytes(data, common->wcmPktLength);
 		xf86Msg(X_WARNING,
 			"%s: missing header bit. skipping %d bytes.\n",
-			local->name, n);
+			pInfo->name, n);
 		return n;
 	}
 
@@ -130,7 +130,7 @@ static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data)
 	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
 	n += 1; /* the header byte we already checked */
 	if (n != common->wcmPktLength) {
-		xf86Msg(X_WARNING, "%s: bad data at %d v=%x l=%d\n", local->name,
+		xf86Msg(X_WARNING, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
 			n, data[n], common->wcmPktLength);
 		return n;
 	}
@@ -142,9 +142,9 @@ static int wcmSerialValidate(LocalDevicePtr local, const unsigned char* data)
  * isdv4Detect -- Test if the attached device is ISDV4.
  ****************************************************************************/
 
-static Bool isdv4Detect(LocalDevicePtr local)
+static Bool isdv4Detect(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	return (common->wcmForceDevice == DEVICE_ISDV4) ? 1 : 0;
 }
@@ -153,15 +153,15 @@ static Bool isdv4Detect(LocalDevicePtr local)
  * isdv4Init --
  ****************************************************************************/
 
-static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
+static Bool isdv4Init(InputInfoPtr pInfo, char* id, float *version)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(1, priv, "initializing ISDV4 tablet\n");
 
 	/* Initial baudrate is 38400 */
-	if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+	if (xf86SetSerialSpeed(pInfo->fd, common->wcmISDV4Speed) < 0)
 		return !Success;
 
 	if(id)
@@ -177,7 +177,7 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
 
 	/* check if TPCButton was turned off by user for stylus */
 	if (priv->flags & STYLUS_ID)
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
+		common->wcmTPCButton = xf86SetBoolOption(pInfo->options,
 			"TPCButton", common->wcmTPCButtonDefault);
 	return Success;
 }
@@ -186,30 +186,30 @@ static Bool isdv4Init(LocalDevicePtr local, char* id, float *version)
  * isdv4Query -- Query the device
  ****************************************************************************/
 
-static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
+static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
 
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
-	if (isdv4StopTablet(local) != Success)
+	if (isdv4StopTablet(pInfo) != Success)
 		return !Success;
 
 	/* Send query command to the tablet */
-	if (!wcmWriteWait(local, query))
+	if (!wcmWriteWait(pInfo, query))
 		return !Success;
 
 	/* Read the control data */
-	if (!wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL))
+	if (!wcmWaitForTablet(pInfo, data, ISDV4_PKGLEN_TPCCTL))
 	{
 		/* Try 19200 if it is not a touch query */
 		if (common->wcmISDV4Speed != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
 		{
 			common->wcmISDV4Speed = 19200;
-			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			if (xf86SetSerialSpeed(pInfo->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
- 			return isdv4Query(local, query, data);
+ 			return isdv4Query(pInfo, query, data);
 		}
 		else
 			return !Success;
@@ -222,14 +222,14 @@ static int isdv4Query(LocalDevicePtr local, const char* query, char* data)
 		if (common->wcmISDV4Speed != 19200 && strcmp(query, ISDV4_TOUCH_QUERY))
 		{
 			common->wcmISDV4Speed = 19200;
-			if (xf86SetSerialSpeed(local->fd, common->wcmISDV4Speed) < 0)
+			if (xf86SetSerialSpeed(pInfo->fd, common->wcmISDV4Speed) < 0)
 				return !Success;
- 			return isdv4Query(local, query, data);
+ 			return isdv4Query(pInfo, query, data);
 		}
 		else
 		{
 			/* Reread the control data since it may fail the first time */
-			wcmWaitForTablet(local, data, ISDV4_PKGLEN_TPCCTL);
+			wcmWaitForTablet(pInfo, data, ISDV4_PKGLEN_TPCCTL);
 			if ( !(data[0] & 0x40) )
 				return !Success;
 		}
@@ -265,17 +265,17 @@ static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
  * isdv4GetRanges -- get ranges of the device
  ****************************************************************************/
 
-static int isdv4GetRanges(LocalDevicePtr local)
+static int isdv4GetRanges(InputInfoPtr pInfo)
 {
 	char data[BUFFER_SIZE];
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
 	int ret = Success;
 
 	DBG(2, priv, "getting ISDV4 Ranges\n");
 
 	/* Send query command to the tablet */
-	ret = isdv4Query(local, ISDV4_QUERY, data);
+	ret = isdv4Query(pInfo, ISDV4_QUERY, data);
 	if (ret == Success)
 	{
 		ISDV4QueryReply reply;
@@ -313,7 +313,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 
 	/* Touch might be supported. Send a touch query command */
 	common->wcmISDV4Speed = 38400;
-	if (isdv4Query(local, ISDV4_TOUCH_QUERY, data) == Success)
+	if (isdv4Query(pInfo, ISDV4_TOUCH_QUERY, data) == Success)
 	{
 		ISDV4TouchQueryReply reply;
 		int rc;
@@ -366,7 +366,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				{
 				    xf86Msg(X_WARNING, "WACOM: %s tablet id(%x)"
 					    " mismatch with data id (0x01) \n",
-					    local->name, common->tablet_id);
+					    pInfo->name, common->tablet_id);
 				    return ret;
 				}
 				break;
@@ -377,7 +377,7 @@ static int isdv4GetRanges(LocalDevicePtr local)
 				{
 				    xf86Msg(X_WARNING, "WACOM: %s tablet id(%x)"
 					    " mismatch with data id (0x03) \n",
-					    local->name, common->tablet_id);
+					    pInfo->name, common->tablet_id);
 				    return ret;
 				}
 				break;
@@ -406,24 +406,24 @@ static int isdv4GetRanges(LocalDevicePtr local)
 			common->wcmTouchResolY);
 	}
 
-	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", local->name, common->tablet_id);
+	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", pInfo->name, common->tablet_id);
 
 	return ret;
 }
 
-static int isdv4StartTablet(LocalDevicePtr local)
+static int isdv4StartTablet(InputInfoPtr pInfo)
 {
 	/* Tell the tablet to start sending coordinates */
-	if (!wcmWriteWait(local, ISDV4_SAMPLING))
+	if (!wcmWriteWait(pInfo, ISDV4_SAMPLING))
 		return !Success;
 
 	return Success;
 }
 
-static int isdv4StopTablet(LocalDevicePtr local)
+static int isdv4StopTablet(InputInfoPtr pInfo)
 {
 	/* Send stop command to the tablet */
-	if (!wcmWriteWait(local, ISDV4_STOP))
+	if (!wcmWriteWait(pInfo, ISDV4_STOP))
 		return !Success;
 
 	/* Wait 250 mSecs */
@@ -433,9 +433,9 @@ static int isdv4StopTablet(LocalDevicePtr local)
 	return Success;
 }
 
-static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
+static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* lastTemp = &common->wcmChannel[1].valid.state;
@@ -489,7 +489,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 	/* Coordinate data bit check */
 	if (data[0] & CONTROL_BIT) /* control data */
 		return common->wcmPktLength;
-	else if ((n = wcmSerialValidate(local,data)) > 0)
+	else if ((n = wcmSerialValidate(pInfo,data)) > 0)
 		return n;
 
 	/* pick up where we left off, minus relative values */
@@ -505,7 +505,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 		if (rc == -1)
 		{
 			xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
-				local->name);
+				pInfo->name);
 			return 0;
 		}
 
@@ -560,7 +560,7 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
 
 		if (rc == -1)
 		{
-			xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", local->name);
+			xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
 			return 0;
 		}
 
@@ -622,18 +622,18 @@ static int isdv4Parse(LocalDevicePtr local, const unsigned char* data, int len)
  *   send a request
  ****************************************************************************/
 
-static int wcmWriteWait(LocalDevicePtr local, const char* request)
+static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
 {
 	int len, maxtry = MAXTRY;
 
 	/* send request string */
 	do
 	{
-		len = xf86WriteSerial(local->fd, request, strlen(request));
+		len = xf86WriteSerial(pInfo->fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
 			xf86Msg(X_ERROR, "%s: wcmWriteWait error : %s\n",
-					local->name, strerror(errno));
+					pInfo->name, strerror(errno));
 			return 0;
 		}
 
@@ -643,7 +643,7 @@ static int wcmWriteWait(LocalDevicePtr local, const char* request)
 
 	if (!maxtry)
 		xf86Msg(X_WARNING, "%s: Failed to issue command '%s' "
-				   "after %d tries.\n", local->name, request, MAXTRY);
+				   "after %d tries.\n", pInfo->name, request, MAXTRY);
 
 	return maxtry;
 }
@@ -653,20 +653,20 @@ static int wcmWriteWait(LocalDevicePtr local, const char* request)
  *   wait for tablet data
  ****************************************************************************/
 
-static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
+static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
 {
 	int len, maxtry = MAXTRY;
 
 	/* Read size bytes of the answer */
 	do
 	{
-		if ((len = xf86WaitForInput(local->fd, 1000000)) > 0)
+		if ((len = xf86WaitForInput(pInfo->fd, 1000000)) > 0)
 		{
-			len = xf86ReadSerial(local->fd, answer, size);
+			len = xf86ReadSerial(pInfo->fd, answer, size);
 			if ((len == -1) && (errno != EAGAIN))
 			{
 				xf86Msg(X_ERROR, "%s: xf86ReadSerial error : %s\n",
-						local->name, strerror(errno));
+						pInfo->name, strerror(errno));
 				return 0;
 			}
 		}
@@ -676,7 +676,7 @@ static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
 	if (!maxtry)
 		xf86Msg(X_WARNING, "%s: Waited too long for answer "
 				   "(failed after %d tries).\n",
-				   local->name, MAXTRY);
+				   pInfo->name, MAXTRY);
 
 	return maxtry;
 }
@@ -688,20 +688,20 @@ static int wcmWaitForTablet(LocalDevicePtr local, char* answer, int size)
  * device ID. This matching only works for wacom devices (serial ID of
  * WACf), all others are simply assumed to be pen + erasor.
  */
-int isdv4ProbeKeys(LocalDevicePtr local)
+int isdv4ProbeKeys(InputInfoPtr pInfo)
 {
 	int id, i;
 	int tablet_id = 0;
 	struct serial_struct tmp;
-	const char *device = xf86SetStrOption(local->options, "Device", NULL);
-	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	const char *device = xf86SetStrOption(pInfo->options, "Device", NULL);
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
 
-	if (ioctl(local->fd, TIOCGSERIAL, &tmp) < 0)
+	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
 		return 0;
 
 	/* check device name for ID first */
-	if (sscanf(local->name, "WACf%x", &id) <= 1)
+	if (sscanf(pInfo->name, "WACf%x", &id) <= 1)
 	{
 		/* id in file sys/class/tty/%str/device/id */
 		FILE *file;

@@ -36,19 +36,19 @@
 #define BTN_TOOL_TRIPLETAP 0x14e
 #endif
 
-static Bool usbDetect(LocalDevicePtr);
-static Bool usbWcmInit(LocalDevicePtr pDev, char* id, float *version);
+static Bool usbDetect(InputInfoPtr);
+static Bool usbWcmInit(InputInfoPtr pDev, char* id, float *version);
 
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	float version);
 static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	float version);
-int usbWcmGetRanges(LocalDevicePtr local);
-static int usbParse(LocalDevicePtr local, const unsigned char* data, int len);
-static int usbDetectConfig(LocalDevicePtr local);
-static void usbParseEvent(LocalDevicePtr local,
+int usbWcmGetRanges(InputInfoPtr pInfo);
+static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
+static int usbDetectConfig(InputInfoPtr pInfo);
+static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event);
-static void usbParseChannel(LocalDevicePtr local, int channel);
+static void usbParseChannel(InputInfoPtr pInfo, int channel);
 static int usbChooseChannel(WacomCommonPtr common, int serial);
 
 	WacomDeviceClass gWacomUSBDevice =
@@ -290,30 +290,30 @@ static int usbChooseChannel(WacomCommonPtr common, int serial);
  *   Test if the attached device is USB.
  ****************************************************************************/
 
-static Bool usbDetect(LocalDevicePtr local)
+static Bool usbDetect(InputInfoPtr pInfo)
 {
 	int version;
 	int err;
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	DBG(1, priv, "\n");
 #endif
 
-	SYSCALL(err = ioctl(local->fd, EVIOCGVERSION, &version));
+	SYSCALL(err = ioctl(pInfo->fd, EVIOCGVERSION, &version));
 
 	if (err < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", local->name);
+		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", pInfo->name);
 		return 0;
 	}
 #ifdef EVIOCGRAB
 	/* Try to grab the event device so that data don't leak to /dev/input/mice */
-	SYSCALL(err = ioctl(local->fd, EVIOCGRAB, (pointer)1));
+	SYSCALL(err = ioctl(pInfo->fd, EVIOCGRAB, (pointer)1));
 
 	if (err < 0) 
 		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device, errno=%d\n",
-				local->name, errno);
+				pInfo->name, errno);
 #endif
 	return 1;
 }
@@ -430,19 +430,19 @@ static struct
 	{ 0xE3, 2540, 2540, &usbTabletPC   }  /* TabletPC 0xE3 */
 };
 
-static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
+static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 {
 	int i;
 	struct input_id sID;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(1, priv, "initializing USB tablet\n");
 	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
-	ioctl(local->fd, EVIOCGID, &sID);
-	ioctl(local->fd, EVIOCGNAME(sizeof(id)), id);
+	ioctl(pInfo->fd, EVIOCGID, &sID);
+	ioctl(pInfo->fd, EVIOCGNAME(sizeof(id)), id);
 
 	/* vendor is wacom */
 	if (sID.vendor == WACOM_VENDOR_ID)
@@ -472,7 +472,7 @@ static Bool usbWcmInit(LocalDevicePtr local, char* id, float *version)
 
 	/* check if TPCButton was turned off in xorg.conf for pen */
 	if (priv->flags & STYLUS_ID)
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
+		common->wcmTPCButton = xf86SetBoolOption(pInfo->options,
 			"TPCButton", common->wcmTPCButtonDefault);
 
 	/* Find out supported button codes - except mouse button codes
@@ -526,12 +526,12 @@ static void usbInitProtocol4(WacomCommonPtr common, const char* id,
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 }
 
-int usbWcmGetRanges(LocalDevicePtr local)
+int usbWcmGetRanges(InputInfoPtr pInfo)
 {
 	struct input_absinfo absinfo;
 	unsigned long ev[NBITS(EV_MAX)] = {0};
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
 	int is_touch = IsTouch(priv);
 
@@ -543,37 +543,37 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	     && ISBITSET(common->wcmKeys, BTN_TOOL_FINGER))
 		is_touch = 1;
 
-	if (ioctl(local->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
+	if (ioctl(pInfo->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl event bits.\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl event bits.\n", pInfo->name);
 		return !Success;
 	}
 
         common->wcmFlags |= USE_SYN_REPORTS_FLAG;
 
-        if (ioctl(local->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
+        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS,sizeof(abs)),abs) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl abs bits.\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl abs bits.\n", pInfo->name);
 		return !Success;
 	}
 
 	/* absolute values */
 	if (!ISBITSET(ev,EV_ABS))
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl max values.\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl max values.\n", pInfo->name);
 		return !Success;
 	}
 
 	/* max x */
-	if (ioctl(local->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", pInfo->name);
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", local->name);
+		xf86Msg(X_ERROR, "%s: xmax value is wrong.\n", pInfo->name);
 		return !Success;
 	}
 	if (!is_touch)
@@ -582,15 +582,15 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		common->wcmMaxTouchX = absinfo.maximum;
 
 	/* max y */
-	if (ioctl(local->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl ymax value.\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl ymax value.\n", pInfo->name);
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", local->name);
+		xf86Msg(X_ERROR, "%s: ymax value is wrong.\n", pInfo->name);
 		return !Success;
 	}
 	if (!is_touch)
@@ -600,7 +600,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 	/* max finger strip X for tablets with Expresskeys
 	 * or touch physical X for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_RX), &absinfo) == 0)
 	{
 		if (is_touch)
 			common->wcmTouchResolX = absinfo.maximum;
@@ -610,7 +610,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 
 	/* max finger strip Y for tablets with Expresskeys
 	 * or touch physical Y for TabletPCs with touch */
-	if (ioctl(local->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_RY), &absinfo) == 0)
 	{
 		if (is_touch)
 			common->wcmTouchResolY = absinfo.maximum;
@@ -628,7 +628,7 @@ int usbWcmGetRanges(LocalDevicePtr local)
 		if (!common->wcmTouchResolX || !common->wcmTouchResolY)
 		{
 			xf86Msg(X_ERROR, "%s: touch resolution value(s) was wrong TouchResolX"
-				" = %d MaxTouchY = %d.\n", local->name, common->wcmTouchResolX,
+				" = %d MaxTouchY = %d.\n", pInfo->name, common->wcmTouchResolX,
 				common->wcmTouchResolY);
 			return !Success;
 		}
@@ -636,19 +636,19 @@ int usbWcmGetRanges(LocalDevicePtr local)
 	}
 
 	/* max z cannot be configured */
-	if (ioctl(local->fd, EVIOCGABS(ABS_PRESSURE), &absinfo) == 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_PRESSURE), &absinfo) == 0)
 		common->wcmMaxZ = absinfo.maximum;
 
 	/* max distance */
-	if (ioctl(local->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
+	if (ioctl(pInfo->fd, EVIOCGABS(ABS_DISTANCE), &absinfo) == 0)
 		common->wcmMaxDist = absinfo.maximum;
 
 	return Success;
 }
 
-static int usbDetectConfig(LocalDevicePtr local)
+static int usbDetectConfig(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(10, common, "\n");
@@ -663,15 +663,15 @@ static int usbDetectConfig(LocalDevicePtr local)
 	return TRUE;
 }
 
-static int usbParse(LocalDevicePtr local, const unsigned char* data, int len)
+static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	if (len < sizeof(struct input_event))
 		return 0;
 
-	usbParseEvent(local, (const struct input_event*)data);
+	usbParseEvent(pInfo, (const struct input_event*)data);
 	return common->wcmPktLength;
 }
 
@@ -755,11 +755,11 @@ static int usbChooseChannel(WacomCommonPtr common, int serial)
 	return channel;
 }
 
-static void usbParseEvent(LocalDevicePtr local,
+static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event)
 {
 	int channel;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(10, common, "\n");
@@ -772,7 +772,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		(sizeof(common->wcmEvents)/sizeof(*common->wcmEvents)))
 	{
 		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
-			local->name, common->wcmEventCnt);
+			pInfo->name, common->wcmEventCnt);
 		goto skipEvent;
 	}
 
@@ -786,7 +786,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		if (event->value == 0)
 		{
 			xf86Msg(X_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
-				local->name);
+				pInfo->name);
 			goto skipEvent;
 		}
 
@@ -805,7 +805,7 @@ static void usbParseEvent(LocalDevicePtr local,
 		if (! USE_SYN_REPORTS(common))
 		{
 			xf86Msg(X_ERROR, "%s: Got unexpected SYN_REPORT, changing mode\n",
-				local->name);
+				pInfo->name);
 
 			/* we can expect SYN_REPORT's from now on */
 			common->wcmFlags |= USE_SYN_REPORTS_FLAG;
@@ -823,7 +823,7 @@ static void usbParseEvent(LocalDevicePtr local,
 	if ((common->wcmEventCnt <= 2) && common->wcmLastToolSerial)
 	{
 		DBG(3, common, "%s: dropping empty event"
-			" for serial %d\n", local->name, common->wcmLastToolSerial);
+			" for serial %d\n", pInfo->name, common->wcmLastToolSerial);
 		goto skipEvent;
 	}
 
@@ -840,19 +840,19 @@ static void usbParseEvent(LocalDevicePtr local,
 	}
 
 	/* dispatch event */
-	usbParseChannel(local,channel);
+	usbParseChannel(pInfo,channel);
 
 skipEvent:
 	common->wcmLastToolSerial = 0;
 	common->wcmEventCnt = 0;
 }
 
-static void usbParseChannel(LocalDevicePtr local, int channel)
+static void usbParseChannel(InputInfoPtr pInfo, int channel)
 {
 	int i, shift, nkeys;
 	WacomDeviceState* ds;
 	struct input_event* event;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(6, common, "%d events received\n", common->wcmEventCnt);
@@ -919,7 +919,7 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
 				ds->relwheel = -event->value;
 			else
 				xf86Msg(X_ERROR, "%s: rel event recv'd (%d)!\n",
-					local->name, event->code);
+					pInfo->name, event->code);
 		}
 
 		else if (event->type == EV_KEY)
@@ -1067,24 +1067,24 @@ static void usbParseChannel(LocalDevicePtr local, int channel)
  * on success or 0 on failure.
  * For USB devices, we simply copy the information the kernel gives us.
  */
-int usbProbeKeys(LocalDevicePtr local)
+int usbProbeKeys(InputInfoPtr pInfo)
 {
 	struct input_id wacom_id;
-	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
 
-	if (ioctl(local->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
+	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
 		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
-				"ioctl USB key bits.\n", local->name);
+				"ioctl USB key bits.\n", pInfo->name);
 		return 0;
 	}
 
-	if (ioctl(local->fd, EVIOCGID, &wacom_id) < 0)
+	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
 	{
 		xf86Msg(X_ERROR, "%s: wcmDeviceTypeKeys unable to "
-				"ioctl Device ID.\n", local->name);
+				"ioctl Device ID.\n", pInfo->name);
 		return 0;
 	}
 

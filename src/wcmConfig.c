@@ -32,7 +32,7 @@
  * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-static int wcmAllocate(LocalDevicePtr local)
+static int wcmAllocate(InputInfoPtr pInfo)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -56,21 +56,21 @@ static int wcmAllocate(LocalDevicePtr local)
 	if (!area)
 		goto error;
 
-	local->flags = 0;
-	local->device_control = gWacomModule.DevProc;
-	local->read_input = gWacomModule.DevReadInput;
-	local->control_proc = gWacomModule.DevChangeControl;
-	local->close_proc = gWacomModule.DevClose;
-	local->switch_mode = gWacomModule.DevSwitchMode;
-	local->atom = 0;
-	local->dev = NULL;
-	local->private = priv;
-	local->private_flags = 0;
-	local->old_x = -1;
-	local->old_y = -1;
+	pInfo->flags = 0;
+	pInfo->device_control = gWacomModule.DevProc;
+	pInfo->read_input = gWacomModule.DevReadInput;
+	pInfo->control_proc = gWacomModule.DevChangeControl;
+	pInfo->close_proc = gWacomModule.DevClose;
+	pInfo->switch_mode = gWacomModule.DevSwitchMode;
+	pInfo->atom = 0;
+	pInfo->dev = NULL;
+	pInfo->private = priv;
+	pInfo->private_flags = 0;
+	pInfo->old_x = -1;
+	pInfo->old_y = -1;
 
 	priv->next = NULL;
-	priv->local = local;
+	priv->pInfo = pInfo;
 	priv->common = common;       /* common info pointer */
 	priv->hardProx = 1;	     /* previous hardware proximity */
 	priv->screen_no = -1;        /* associated screen */
@@ -143,7 +143,7 @@ static int wcmAllocate(LocalDevicePtr local)
 	/* tool area */
 	priv->toolarea = area;
 	area->next = NULL;    /* next area in list */
-	area->device = local; /* associated WacomDevice */
+	area->device = pInfo; /* associated WacomDevice */
 
 	return 1;
 
@@ -155,22 +155,22 @@ error:
 	return 0;
 }
 
-static int wcmSetType(LocalDevicePtr local, const char *type)
+static int wcmSetType(InputInfoPtr pInfo, const char *type)
 {
-	WacomDevicePtr priv = local->private;
+	WacomDevicePtr priv = pInfo->private;
 
 	if (!type)
 	{
 		xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
 				"Must be one of stylus, touch, cursor, eraser, or pad\n",
-				local->name);
+				pInfo->name);
 		return 0;
 	}
 
 	if (xf86NameCmp(type, "stylus") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
-		local->type_name = XI_STYLUS;
+		pInfo->type_name = XI_STYLUS;
 	} else if (xf86NameCmp(type, "touch") == 0)
 	{
 		int flags = TOUCH_ID;
@@ -179,19 +179,19 @@ static int wcmSetType(LocalDevicePtr local, const char *type)
 			flags |= ABSOLUTE_FLAG;
 
 		priv->flags = flags;
-		local->type_name = XI_TOUCH;
+		pInfo->type_name = XI_TOUCH;
 	} else if (xf86NameCmp(type, "cursor") == 0)
 	{
 		priv->flags = CURSOR_ID;
-		local->type_name = XI_CURSOR;
+		pInfo->type_name = XI_CURSOR;
 	} else if (xf86NameCmp(type, "eraser") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
-		local->type_name = XI_ERASER;
+		pInfo->type_name = XI_ERASER;
 	} else if (xf86NameCmp(type, "pad") == 0)
 	{
 		priv->flags = PAD_ID;
-		local->type_name = XI_PAD;
+		pInfo->type_name = XI_PAD;
 	}
 
 	/* Set the device id of the "last seen" device on this tool */
@@ -236,9 +236,9 @@ static const char *default_options[] =
 
 /* wcmUninit - called when the device is no longer needed. */
 
-static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
+static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
 
@@ -251,7 +251,7 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 		dev = priv->common->wcmDevices;
 
 		xf86Msg(X_INFO, "%s: removing automatically added devices.\n",
-			local->name);
+			pInfo->name);
 
 		while(dev)
 		{
@@ -259,8 +259,8 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 			if (!dev->isParent)
 			{
 				xf86Msg(X_INFO, "%s: removing dependent device '%s'\n",
-					local->name, dev->local->name);
-				DeleteInputDeviceRequest(dev->local->dev);
+					pInfo->name, dev->pInfo->name);
+				DeleteInputDeviceRequest(dev->pInfo->dev);
 			}
 			dev = next;
 		}
@@ -283,10 +283,10 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
 	free(priv->pPressCurve);
 
 	free(priv);
-	local->private = NULL;
+	pInfo->private = NULL;
 
 
-	xf86DeleteInput(local, 0);    
+	xf86DeleteInput(pInfo, 0);    
 }
 
 /* wcmMatchDevice - locate matching device and merge common structure. If an
@@ -295,11 +295,11 @@ static void wcmUninit(InputDriverPtr drv, LocalDevicePtr local, int flags)
  * existing one instead.
  * Then add the new device to the now-shared common struct.
  */
-static Bool wcmMatchDevice(LocalDevicePtr pLocal)
+static Bool wcmMatchDevice(InputInfoPtr pLocal)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
 	WacomCommonPtr common = priv->common;
-	LocalDevicePtr pMatch = xf86FirstLocalDevice();
+	InputInfoPtr pMatch = xf86FirstLocalDevice();
 
 	if (!common->wcmDevice)
 		return 0;
@@ -326,9 +326,9 @@ static Bool wcmMatchDevice(LocalDevicePtr pLocal)
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
-static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
+static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
-	LocalDevicePtr local = NULL;
+	InputInfoPtr pInfo = NULL;
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	const char*	type;
@@ -337,19 +337,19 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 	gWacomModule.wcmDrv = drv;
 
-	if (!(local = xf86AllocateInput(drv, 0)))
+	if (!(pInfo = xf86AllocateInput(drv, 0)))
 		goto SetupProc_fail;
 
-	local->conf_idev = dev;
-	local->name = dev->identifier;
+	pInfo->conf_idev = dev;
+	pInfo->name = dev->identifier;
 
 	/* Force default port options to exist because the init
 	 * phase is based on those values.
 	 */
-	xf86CollectInputOptions(local, default_options, NULL);
+	xf86CollectInputOptions(pInfo, default_options, NULL);
 
-	device = xf86SetStrOption(local->options, "Device", NULL);
-	type = xf86FindOptionValue(local->options, "Type");
+	device = xf86SetStrOption(pInfo->options, "Device", NULL);
+	type = xf86FindOptionValue(pInfo->options, "Type");
 
 	/*
 	   Init process:
@@ -363,69 +363,69 @@ static LocalDevicePtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	   - hotplug dependent devices if needed
 	 */
 
-	if (!wcmAllocate(local))
+	if (!wcmAllocate(pInfo))
 		goto SetupProc_fail;
 
 	if (!device)
 	{
-		if (!wcmAutoProbeDevice(local))
+		if (!wcmAutoProbeDevice(pInfo))
 			goto SetupProc_fail;
 
-		device = xf86SetStrOption(local->options, "Device", NULL);
+		device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	}
 
-	SYSCALL(local->fd = open(device, O_RDONLY));
-	if (local->fd < 0)
+	SYSCALL(pInfo->fd = open(device, O_RDONLY));
+	if (pInfo->fd < 0)
 	{
 		xf86Msg(X_WARNING, "%s: failed to open %s.\n",
-				local->name, device);
+				pInfo->name, device);
 		goto SetupProc_fail;
 	}
 
-	priv = (WacomDevicePtr) local->private;
+	priv = (WacomDevicePtr) pInfo->private;
 	common = priv->common;
-	priv->name = local->name;
+	priv->name = pInfo->name;
 	common->wcmDevice = device;
 
 	/* check if this is the first tool on the port */
-	if (!wcmMatchDevice(local))
+	if (!wcmMatchDevice(pInfo))
 		/* initialize supported keys with the first tool on the port */
-		wcmDeviceTypeKeys(local);
+		wcmDeviceTypeKeys(pInfo);
 
-	need_hotplug = wcmNeedAutoHotplug(local, &type);
+	need_hotplug = wcmNeedAutoHotplug(pInfo, &type);
 
 	/* check if the type is valid for those don't need hotplug */
-	if(!need_hotplug && !wcmIsAValidType(local, type))
+	if(!need_hotplug && !wcmIsAValidType(pInfo, type))
 		goto SetupProc_fail;
 
 	/* check if the same device file has been added already */
-	if (wcmIsDuplicate(device, local))
+	if (wcmIsDuplicate(device, pInfo))
 		goto SetupProc_fail;
 
-	if (!wcmSetType(local, type))
+	if (!wcmSetType(pInfo, type))
 		goto SetupProc_fail;
 
 	/* Process the common options. */
-	xf86ProcessCommonOptions(local, local->options);
-	if (!wcmParseOptions(local))
+	xf86ProcessCommonOptions(pInfo, pInfo->options);
+	if (!wcmParseOptions(pInfo))
 		goto SetupProc_fail;
 
 	/* mark the device configured */
-	local->flags |= XI86_CONFIGURED;
+	pInfo->flags |= XI86_CONFIGURED;
 
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(local);
+		wcmHotplugOthers(pInfo);
 	}
 
-	if (local->fd != -1)
+	if (pInfo->fd != -1)
 	{
-		close(local->fd);
-		local->fd = -1;
+		close(pInfo->fd);
+		pInfo->fd = -1;
 	}
 
-	return (local);
+	return (pInfo);
 
 SetupProc_fail:
 	/* restart the device list from the next one */
@@ -433,16 +433,16 @@ SetupProc_fail:
 		common->wcmDevices = priv->next;
 	free(common);
 	free(priv);
-	if (local)
+	if (pInfo)
 	{
-		if (local->fd != -1)
+		if (pInfo->fd != -1)
 		{
-			close(local->fd);
-			local->fd = -1;
+			close(pInfo->fd);
+			pInfo->fd = -1;
 		}
 
-		local->private = NULL;
-		xf86DeleteInput(local, 0);
+		pInfo->private = NULL;
+		xf86DeleteInput(pInfo, 0);
 	}
 
 	return NULL;

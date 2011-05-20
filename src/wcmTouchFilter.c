@@ -105,7 +105,7 @@ static void wcmSwitchLeftClick(WacomDevicePtr priv)
 	if (common->wcmGestureMode)
 	{
 		/* send button one up */
-		xf86PostButtonEvent(priv->local->dev,
+		xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					1,0,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
@@ -162,12 +162,12 @@ void wcmFingerTapToClick(WacomCommonPtr common)
 					}
 
 					/* right button down */
-					xf86PostButtonEvent(priv->local->dev,
+					xf86PostButtonEvent(priv->pInfo->dev,
 							priv->flags & ABSOLUTE_FLAG,
 							3,1,0,priv->naxes, priv->oldX,
 							priv->oldY,0,0,0,0);
 					/* right button up */
-					xf86PostButtonEvent(priv->local->dev,
+					xf86PostButtonEvent(priv->pInfo->dev,
 							priv->flags & ABSOLUTE_FLAG,
 							3,0,0,priv->naxes, priv->oldX,
 							priv->oldY,0,0,0,0);
@@ -237,12 +237,12 @@ static void wcmSendVerticalScrollEvent(WacomDevicePtr priv,
 		if (dist > 0)
 		{
 			/* button down */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					up,1,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
 			/* button up */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					up,0,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
@@ -250,12 +250,12 @@ static void wcmSendVerticalScrollEvent(WacomDevicePtr priv,
 		else
 		{
 			/* button down */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					dn,1,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
 			/* button up */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					dn,0,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
@@ -274,12 +274,12 @@ static void wcmSendHorizontalScrollEvent(WacomDevicePtr priv,
 		if (dist > 0)
 		{
 			/* button down */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					left,1,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
 			/* button up */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					left,0,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
@@ -287,12 +287,12 @@ static void wcmSendHorizontalScrollEvent(WacomDevicePtr priv,
 		else
 		{
 			/* button down */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					right,1,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
 			/* button up */
-			xf86PostButtonEvent(priv->local->dev,
+			xf86PostButtonEvent(priv->pInfo->dev,
 					priv->flags & ABSOLUTE_FLAG,
 					right,0,0,priv->naxes, priv->oldX,
 					priv->oldY,0,0,0,0);
@@ -333,7 +333,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 	/* rotate the coordinates first */
 	for (i=0; i<6; i++)
-		wcmRotateCoordinates(priv->local, &filterd.x[i], &filterd.y[i]);
+		wcmRotateCoordinates(priv->pInfo, &filterd.x[i], &filterd.y[i]);
 
 	/* check vertical direction */
 	midPoint_old = (((double)filterd.x[4] + (double)filterd.x[5]) / 2.);
@@ -402,9 +402,9 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		   through the XKB table and figure out where it's hiding. Good
 		   luck. Gesture support is not supposed to be in the driver...
 		 */
-		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 1);
+		wcmEmitKeycode (priv->pInfo->dev, 37 /*XK_Control_L*/, 1);
 		wcmSendVerticalScrollEvent(priv, dist, 4, 5);
-		wcmEmitKeycode (priv->local->dev, 37 /*XK_Control_L*/, 0);
+		wcmEmitKeycode (priv->pInfo->dev, 37 /*XK_Control_L*/, 0);
 
 		/* reset initial states */
 		common->wcmGestureState[0] = ds[0];

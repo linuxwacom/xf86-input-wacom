@@ -55,11 +55,11 @@
 #endif
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
-static int wcmReady(LocalDevicePtr local);
-static void wcmDevReadInput(LocalDevicePtr local);
+static int wcmReady(InputInfoPtr pInfo);
+static void wcmDevReadInput(InputInfoPtr pInfo);
 static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control);
-static void wcmDevClose(LocalDevicePtr local);
+int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
+static void wcmDevClose(InputInfoPtr pInfo);
 static int wcmDevProc(DeviceIntPtr pWcm, int what);
 
 WacomModule gWacomModule =
@@ -94,12 +94,12 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
  * wcmDesktopSize --
  *   calculate the whole desktop size 
  ****************************************************************************/
-static void wcmDesktopSize(LocalDevicePtr local)
+static void wcmDesktopSize(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int i = 0, minX = 0, minY = 0, maxX = 0, maxY = 0;
 
-	wcmInitialScreens(local);
+	wcmInitialScreens(pInfo);
 	minX = priv->screenTopX[0];
 	minY = priv->screenTopY[0];
 	maxX = priv->screenBottomX[0];
@@ -122,9 +122,9 @@ static void wcmDesktopSize(LocalDevicePtr local)
 	priv->maxHeight = maxY - minY;
 } 
 
-static int wcmInitArea(LocalDevicePtr local)
+static int wcmInitArea(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomToolAreaPtr area = priv->toolarea, inlist;
 	WacomCommonPtr common = priv->common;
 	double screenRatio, tabletRatio;
@@ -167,13 +167,13 @@ static int wcmInitArea(LocalDevicePtr local)
 		if (priv->twinview == TV_NONE || priv->screen_no != 1)
 		{
 			xf86Msg(X_ERROR, "%s: invalid screen number %d, resetting to default (-1) \n",
-					local->name, priv->screen_no);
+					pInfo->name, priv->screen_no);
 			priv->screen_no = -1;
 		}
 	}
 
 	/* need maxWidth and maxHeight for keepshape */
-	wcmDesktopSize(local);
+	wcmDesktopSize(pInfo);
 
 	/* Maintain aspect ratio to the whole desktop
 	 * May need to consider a specific screen in multimonitor settings
@@ -234,25 +234,25 @@ static int wcmInitArea(LocalDevicePtr local)
 				tmp->next = priv->next;
 		}
 		xf86Msg(X_ERROR, "%s: Top/Bottom area overlaps with another devices.\n",
-			local->conf_idev->identifier);
+			pInfo->conf_idev->identifier);
 		return FALSE;
 	}
 	xf86Msg(X_PROBED, "%s: top X=%d top Y=%d "
 			"bottom X=%d bottom Y=%d "
 			"resol X=%d resol Y=%d\n",
-			local->name, priv->topX,
+			pInfo->name, priv->topX,
 			priv->topY, priv->bottomX, priv->bottomY,
 			common->wcmResolX, common->wcmResolY);
 	return TRUE;
 }
 
 /*****************************************************************************
- * wcmVirtualTabletPadding(LocalDevicePtr local)
+ * wcmVirtualTabletPadding(InputInfoPtr pInfo)
  ****************************************************************************/
 
-void wcmVirtualTabletPadding(LocalDevicePtr local)
+void wcmVirtualTabletPadding(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	/* in multi-screen settings, add the left/top offset given the
 	 * current multimonitor setup.
@@ -290,16 +290,16 @@ void wcmVirtualTabletPadding(LocalDevicePtr local)
 }
 
 void
-wcmAdjustArea(const LocalDevicePtr local, WacomToolArea *area)
+wcmAdjustArea(const InputInfoPtr pInfo, WacomToolArea *area)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	/* If we're bound to a specific screen, substract the screen's
 	 * offset from the area coordinates we have here.
 	 */
 	if (priv->screen_no != -1)
 	{
-		wcmVirtualTabletPadding(local);
+		wcmVirtualTabletPadding(pInfo);
 		DBG(10, priv, "padding is %d/%d\n", priv->leftPadding, priv->topPadding);
 		area->topX -= priv->leftPadding;
 		area->bottomX -= priv->leftPadding;
@@ -311,12 +311,12 @@ wcmAdjustArea(const LocalDevicePtr local, WacomToolArea *area)
 }
 
 /*****************************************************************************
- * wcmVirtualTabletSize(LocalDevicePtr local)
+ * wcmVirtualTabletSize(InputInfoPtr pInfo)
  ****************************************************************************/
 
-void wcmVirtualTabletSize(LocalDevicePtr local)
+void wcmVirtualTabletSize(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	if (!(priv->flags & ABSOLUTE_FLAG))
 	{
@@ -385,14 +385,14 @@ void wcmVirtualTabletSize(LocalDevicePtr local)
  * wcmInitialCoordinates
  ****************************************************************************/
 
-void wcmInitialCoordinates(LocalDevicePtr local, int axis)
+void wcmInitialCoordinates(InputInfoPtr pInfo, int axis)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int topx = 0, topy = 0, resolution_x, resolution_y;
 	int bottomx = priv->maxX, bottomy = priv->maxY;
 
-	wcmMappingFactor(local);
+	wcmMappingFactor(pInfo);
 
 	/* wcmMappingFactor calls wcmVirtualTabletSize. so once we're here,
 	 * sizeX contains the total width in device coordinates accounting
@@ -437,7 +437,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 	switch(axis)
 	{
 		case 0:
-			InitValuatorAxisStruct(local->dev, 0,
+			InitValuatorAxisStruct(pInfo->dev, 0,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X),
 #endif
@@ -445,7 +445,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 					resolution_x, 0, resolution_x);
 			break;
 		case 1:
-			InitValuatorAxisStruct(local->dev, 1,
+			InitValuatorAxisStruct(pInfo->dev, 1,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y),
 #endif
@@ -453,7 +453,7 @@ void wcmInitialCoordinates(LocalDevicePtr local, int axis)
 					resolution_y, 0, resolution_y);
 			break;
 		default:
-			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", local->name, axis);
+			xf86Msg(X_ERROR, "%s: Cannot initialize axis %d.\n", pInfo->name, axis);
 			break;
 	}
 
@@ -610,9 +610,9 @@ static struct { KeySym keysym; CARD8 mask; } keymod[] = {
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
 
-static void wcmInitialToolSize(LocalDevicePtr local)
+static void wcmInitialToolSize(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomToolPtr toollist = common->wcmTool;
 	WacomToolAreaPtr arealist;
@@ -654,9 +654,9 @@ static void wcmInitialToolSize(LocalDevicePtr local)
  *    Register the X11 input devices with X11 core.
  ****************************************************************************/
 
-static int wcmRegisterX11Devices (LocalDevicePtr local)
+static int wcmRegisterX11Devices (InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
@@ -668,7 +668,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
-		priv->common->wcmModel->DetectConfig (local);
+		priv->common->wcmModel->DetectConfig (pInfo);
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
@@ -701,32 +701,32 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 		butmap[loop] = loop;
 
 	/* FIXME: button labels would be nice */
-	if (InitButtonClassDeviceStruct(local->dev, nbbuttons,
+	if (InitButtonClassDeviceStruct(pInfo->dev, nbbuttons,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					btn_labels,
 #endif
 					butmap) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", pInfo->name);
 		return FALSE;
 	}
 
-	if (InitFocusClassDeviceStruct(local->dev) == FALSE)
+	if (InitFocusClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init Focus class device\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to init Focus class device\n", pInfo->name);
 		return FALSE;
 	}
 
-	if (InitPtrFeedbackClassDeviceStruct(local->dev,
+	if (InitPtrFeedbackClassDeviceStruct(pInfo->dev,
 		wcmDevControlProc) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", pInfo->name);
 		return FALSE;
 	}
 
-	if (InitProximityClassDeviceStruct(local->dev) == FALSE)
+	if (InitProximityClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-			xf86Msg(X_ERROR, "%s: unable to init proximity class device\n", local->name);
+			xf86Msg(X_ERROR, "%s: unable to init proximity class device\n", pInfo->name);
 			return FALSE;
 	}
 
@@ -735,7 +735,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 
 	/* axis_labels is just zeros, we set up each valuator with the
 	 * correct property later */
-	if (InitValuatorClassDeviceStruct(local->dev, nbaxes,
+	if (InitValuatorClassDeviceStruct(pInfo->dev, nbaxes,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					  axis_labels,
 #endif
@@ -747,7 +747,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 					  Absolute : Relative) | 
 					  OutOfProximity ) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", local->name);
+		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", pInfo->name);
 		return FALSE;
 	}
 
@@ -787,20 +787,20 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 			wacom_keysyms.minKeyCode = 8;
 			wacom_keysyms.maxKeyCode = 255;
 			wacom_keysyms.mapWidth = 2;
-			if (InitKeyClassDeviceStruct(local->dev, &wacom_keysyms, modmap) == FALSE)
+			if (InitKeyClassDeviceStruct(pInfo->dev, &wacom_keysyms, modmap) == FALSE)
 			{
-				xf86Msg(X_ERROR, "%s: unable to init key class device\n", local->name);
+				xf86Msg(X_ERROR, "%s: unable to init key class device\n", pInfo->name);
 				return FALSE;
 			}
 		}
 
-		if(InitKbdFeedbackClassDeviceStruct(local->dev, wcmBellCallback,
+		if(InitKbdFeedbackClassDeviceStruct(pInfo->dev, wcmBellCallback,
 				wcmKbdCtrlCallback) == FALSE) {
-			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", local->name);
+			xf86Msg(X_ERROR, "%s: unable to init kbd feedback device struct\n", pInfo->name);
 			return FALSE;
 		}
 #elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		if (InitKeyboardDeviceStruct(local->dev, NULL, NULL, wcmKbdCtrlCallback)) {
+		if (InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
 #define SYMS_PER_KEY 2
 			KeySymsRec syms;
 			CARD8 modmap[MAP_LENGTH];
@@ -813,32 +813,32 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 
 			memset(modmap, 0, sizeof(modmap));
 			modmap[XkbMinLegalKeyCode + 2] = ShiftMask;
-			XkbApplyMappingChange(local->dev, &syms, syms.minKeyCode, num_keys, NULL, // modmap,
+			XkbApplyMappingChange(pInfo->dev, &syms, syms.minKeyCode, num_keys, NULL, // modmap,
 					serverClient);
 		} else
 		{
-			xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", local->name);
+			xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", pInfo->name);
 			return FALSE;
 		}
 #endif
-		if(InitLedFeedbackClassDeviceStruct (local->dev, wcmKbdLedCallback) == FALSE) {
-			xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", local->name);
+		if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
+			xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", pInfo->name);
 			return FALSE;
 		}
 	}
 
-	wcmInitialToolSize(local);
+	wcmInitialToolSize(pInfo);
 
-	if (wcmInitArea(local) == FALSE)
+	if (wcmInitArea(pInfo) == FALSE)
 	{
 		return FALSE;
 	}
 
 	/* Rotation rotates the Max X and Y */
-	wcmRotateTablet(local, common->wcmRotate);
+	wcmRotateTablet(pInfo, common->wcmRotate);
 
 	/* pressure */
-	InitValuatorAxisStruct(local->dev, 2,
+	InitValuatorAxisStruct(pInfo->dev, 2,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE),
 #endif
@@ -847,12 +847,12 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	if (IsCursor(priv))
 	{
 		/* z-rot and throttle */
-		InitValuatorAxisStruct(local->dev, 3,
+		InitValuatorAxisStruct(pInfo->dev, 3,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ),
 #endif
 		-900, 899, 1, 1, 1);
-		InitValuatorAxisStruct(local->dev, 4,
+		InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 		XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE),
 #endif
@@ -864,12 +864,12 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 		if (strstr(common->wcmModel->name, "Intuos3") || 
 			strstr(common->wcmModel->name, "CintiqV5")) 
 		{
-			InitValuatorAxisStruct(local->dev, 3,
+			InitValuatorAxisStruct(pInfo->dev, 3,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
 				0, common->wcmMaxStripX, 1, 1, 1);
-			InitValuatorAxisStruct(local->dev, 4,
+			InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
@@ -879,12 +879,12 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	else
 	{
 		/* tilt-x and tilt-y */
-		InitValuatorAxisStruct(local->dev, 3,
+		InitValuatorAxisStruct(pInfo->dev, 3,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
 #endif
 				-64, 63, 1, 1, 1);
-		InitValuatorAxisStruct(local->dev, 4,
+		InitValuatorAxisStruct(pInfo->dev, 4,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y),
 #endif
@@ -896,7 +896,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 		strstr(common->wcmModel->name, "Intuos4")) 
 			&& IsStylus(priv))
 		/* Art Marker Pen rotation */
-		InitValuatorAxisStruct(local->dev, 5,
+		InitValuatorAxisStruct(pInfo->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
@@ -905,7 +905,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 		strstr(common->wcmModel->name, "Intuos4"))
 			&& IsPad(priv))
 		/* Touch ring */
-		InitValuatorAxisStruct(local->dev, 5,
+		InitValuatorAxisStruct(pInfo->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				0, /* XXX what is this axis?*/
 #endif
@@ -913,7 +913,7 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	else
 	{
 		/* absolute wheel */
-		InitValuatorAxisStruct(local->dev, 5,
+		InitValuatorAxisStruct(pInfo->dev, 5,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 				XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL),
 #endif
@@ -927,8 +927,8 @@ static int wcmRegisterX11Devices (LocalDevicePtr local)
 	}
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-	InitWcmDeviceProperties(local);
-	XIRegisterPropertyHandler(local->dev, wcmSetProperty, NULL, NULL);
+	InitWcmDeviceProperties(pInfo);
+	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, NULL, NULL);
 #endif
 
 	return TRUE;
@@ -962,7 +962,7 @@ Bool wcmIsWacomDevice (char* fname)
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-char *wcmEventAutoDevProbe (LocalDevicePtr local)
+char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 {
 	/* We are trying to find the right eventX device */
 	int i, wait = 0;
@@ -981,19 +981,19 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
 			if (is_wacom) 
 			{
 				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
-					local->name, fname, wait);
-				xf86ReplaceStrOption(local->options, "Device", fname);
+					pInfo->name, fname, wait);
+				xf86ReplaceStrOption(pInfo->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
-				return xf86FindOptionValue(local->options, "Device");
+				return xf86FindOptionValue(pInfo->options, "Device");
 			}
 		}
 		wait += 100;
-		xf86Msg(X_ERROR, "%s: waiting 100 msec (total %dms) for device to become ready\n", local->name, wait);
+		xf86Msg(X_ERROR, "%s: waiting 100 msec (total %dms) for device to become ready\n", pInfo->name, wait);
 		usleep(100*1000);
 	}
 	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
-		local->name, i + 1, wait);
+		pInfo->name, i + 1, wait);
 	return FALSE;
 }
 
@@ -1001,9 +1001,9 @@ char *wcmEventAutoDevProbe (LocalDevicePtr local)
  * wcmOpen --
  ****************************************************************************/
 
-static Bool wcmOpen(LocalDevicePtr local)
+static Bool wcmOpen(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	char id[BUFFER_SIZE];
 	float version;
@@ -1012,15 +1012,15 @@ static Bool wcmOpen(LocalDevicePtr local)
 
 	DBG(1, priv, "opening device file\n");
 
-	local->fd = xf86OpenSerial(local->options);
-	if (local->fd < 0)
+	pInfo->fd = xf86OpenSerial(pInfo->options);
+	if (pInfo->fd < 0)
 	{
-		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", local->name,
+		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", pInfo->name,
 			common->wcmDevice, strerror(errno));
 		return !Success;
 	}
 
-	rc = ioctl(local->fd, TIOCGSERIAL, &ser);
+	rc = ioctl(pInfo->fd, TIOCGSERIAL, &ser);
 
 	/* we initialized wcmDeviceClasses to USB
 	 * Bluetooth is also considered as USB */
@@ -1036,22 +1036,22 @@ static Bool wcmOpen(LocalDevicePtr local)
 	else
 	{
 		/* Detect USB device class */
-		if ((&gWacomUSBDevice)->Detect(local))
+		if ((&gWacomUSBDevice)->Detect(pInfo))
 			common->wcmDevCls = &gWacomUSBDevice;
 		else
 		{
 			xf86Msg(X_ERROR, "%s: wcmOpen found undetectable "
-				" %s \n", local->name, common->wcmDevice);
+				" %s \n", pInfo->name, common->wcmDevice);
 			return !Success;
 		}
 	}
 
 	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(local, id, &version) != Success ||
-		wcmInitTablet(local, id, version) != Success)
+	if(common->wcmDevCls->Init(pInfo, id, &version) != Success ||
+		wcmInitTablet(pInfo, id, version) != Success)
 	{
-		xf86CloseSerial(local->fd);
-		local->fd = -1;
+		xf86CloseSerial(pInfo->fd);
+		pInfo->fd = -1;
 		return !Success;
 	}
 	return Success;
@@ -1064,8 +1064,8 @@ static Bool wcmOpen(LocalDevicePtr local)
 
 static int wcmDevOpen(DeviceIntPtr pWcm)
 {
-	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	struct stat st;
 
@@ -1080,24 +1080,24 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	{
 		/* Autoprobe if necessary */
 		if ((common->wcmFlags & AUTODEV_FLAG) &&
-		    !(common->wcmDevice = wcmEventAutoDevProbe (local)))
-			xf86Msg(X_ERROR, "%s: Cannot probe device\n", local->name);
+		    !(common->wcmDevice = wcmEventAutoDevProbe (pInfo)))
+			xf86Msg(X_ERROR, "%s: Cannot probe device\n", pInfo->name);
 
-		if ((wcmOpen (local) != Success) || (local->fd < 0) ||
+		if ((wcmOpen (pInfo) != Success) || (pInfo->fd < 0) ||
 			!common->wcmDevice)
 		{
 			DBG(1, priv, "Failed to open "
-				"device (fd=%d)\n", local->fd);
-			if (local->fd >= 0)
+				"device (fd=%d)\n", pInfo->fd);
+			if (pInfo->fd >= 0)
 			{
 				DBG(1, priv, "Closing device\n");
-				xf86CloseSerial(local->fd);
+				xf86CloseSerial(pInfo->fd);
 			}
-			local->fd = -1;
+			pInfo->fd = -1;
 			return FALSE;
 		}
 
-		if (fstat(local->fd, &st) == -1)
+		if (fstat(pInfo->fd, &st) == -1)
 		{
 			/* can not access major/minor */
 			DBG(1, priv, "stat failed (%s). "
@@ -1109,33 +1109,33 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		}
 		else
 			common->min_maj = st.st_rdev;
-		common->fd = local->fd;
+		common->fd = pInfo->fd;
 		common->fd_refs = 1;
 	}
 
 	/* Grab the common descriptor, if it's available */
-	if (local->fd < 0)
+	if (pInfo->fd < 0)
 	{
-		local->fd = common->fd;
+		pInfo->fd = common->fd;
 		common->fd_refs++;
 	}
 
-	if (!wcmRegisterX11Devices (local))
+	if (!wcmRegisterX11Devices (pInfo))
 		return FALSE;
 
 	return TRUE;
 }
 
-static int wcmReady(LocalDevicePtr local)
+static int wcmReady(InputInfoPtr pInfo)
 {
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 #endif
-	int n = xf86WaitForInput(local->fd, 0);
+	int n = xf86WaitForInput(pInfo->fd, 0);
 	DBG(10, priv, "%d numbers of data\n", n);
 
 	if (n >= 0) return n ? 1 : 0;
-	xf86Msg(X_ERROR, "%s: select error: %s\n", local->name, strerror(errno));
+	xf86Msg(X_ERROR, "%s: select error: %s\n", pInfo->name, strerror(errno));
 	return 0;
 }
 
@@ -1144,7 +1144,7 @@ static int wcmReady(LocalDevicePtr local)
  *   Read the device on IO signal
  ****************************************************************************/
 
-static void wcmDevReadInput(LocalDevicePtr local)
+static void wcmDevReadInput(InputInfoPtr pInfo)
 {
 	int loop=0;
 	#define MAX_READ_LOOPS 10
@@ -1153,17 +1153,17 @@ static void wcmDevReadInput(LocalDevicePtr local)
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
 		/* verify that there is still data in pipe */
-		if (!wcmReady(local)) break;
+		if (!wcmReady(pInfo)) break;
 
 		/* dispatch */
-		wcmReadPacket(local);
+		wcmReadPacket(pInfo);
 	}
 
 #ifdef DEBUG
 	/* report how well we're doing */
 	if (loop > 0)
 	{
-		WacomDevicePtr priv = (WacomDevicePtr)local->private;
+		WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 		if (loop >= MAX_READ_LOOPS)
 			DBG(1, priv, "Can't keep up!!!\n");
@@ -1173,13 +1173,13 @@ static void wcmDevReadInput(LocalDevicePtr local)
 #endif
 }
 
-void wcmReadPacket(LocalDevicePtr local)
+void wcmReadPacket(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
 
-	DBG(10, common, "fd=%d\n", local->fd);
+	DBG(10, common, "fd=%d\n", pInfo->fd);
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
@@ -1187,7 +1187,7 @@ void wcmReadPacket(LocalDevicePtr local)
 		" remaining=%d\n", common->bufpos, remaining);
 
 	/* fill buffer with as much data as we can handle */
-	len = xf86ReadSerial(local->fd,
+	len = xf86ReadSerial(pInfo->fd,
 		common->buffer + common->bufpos, remaining);
 
 	if (len <= 0)
@@ -1198,10 +1198,10 @@ void wcmReadPacket(LocalDevicePtr local)
 		WacomDevicePtr wDev = common->wcmDevices;
 		for(; wDev; wDev = wDev->next)
 		{
-			if (wDev->local->fd >= 0)
-				wcmDevProc(wDev->local->dev, DEVICE_OFF);
+			if (wDev->pInfo->fd >= 0)
+				wcmDevProc(wDev->pInfo->dev, DEVICE_OFF);
 		}
-		xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", local->name, strerror(errno));
+		xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
 		return;
 	}
 
@@ -1215,7 +1215,7 @@ void wcmReadPacket(LocalDevicePtr local)
 	while (len > 0)
 	{
 		/* parse packet */
-		cnt = common->wcmModel->Parse(local, common->buffer + pos, len);
+		cnt = common->wcmModel->Parse(pInfo, common->buffer + pos, len);
 		if (cnt <= 0)
 		{
 			if (cnt < 0)
@@ -1236,10 +1236,10 @@ void wcmReadPacket(LocalDevicePtr local)
 	common->bufpos = len;
 }
 
-int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
+int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
 {
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	DBG(3, priv, "\n");
 #endif
 	return Success;
@@ -1252,8 +1252,8 @@ int wcmDevChangeControl(LocalDevicePtr local, xDeviceCtl * control)
 static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
 #ifdef DEBUG
-	LocalDevicePtr local = (LocalDevicePtr)device->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	InputInfoPtr pInfo = (InputInfoPtr)device->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	DBG(4, priv, "called\n");
 #endif
@@ -1264,16 +1264,16 @@ static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
  * wcmDevClose --
  ****************************************************************************/
 
-static void wcmDevClose(LocalDevicePtr local)
+static void wcmDevClose(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
 
-	if (local->fd >= 0)
+	if (pInfo->fd >= 0)
 	{
-		local->fd = -1;
+		pInfo->fd = -1;
 		if (!--common->fd_refs)
 		{
 			DBG(1, common, "Closing device; uninitializing.\n");
@@ -1289,8 +1289,8 @@ static void wcmDevClose(LocalDevicePtr local)
 
 static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
-	LocalDevicePtr local = (LocalDevicePtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
 			"type=%s flags=%d fd=%d what=%s\n",
@@ -1298,7 +1298,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			IsStylus(priv) ? "stylus" :
 			IsCursor(priv) ? "cursor" :
 			IsPad(priv) ? "pad" : "eraser", 
-			priv->flags, local ? local->fd : -1,
+			priv->flags, pInfo ? pInfo->fd : -1,
 			(what == DEVICE_INIT) ? "INIT" :
 			(what == DEVICE_OFF) ? "OFF" :
 			(what == DEVICE_ON) ? "ON" :
@@ -1328,23 +1328,23 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 				return !Success;
 			}
 			priv->wcmDevOpenCount++;
-			xf86AddEnabledDevice(local);
+			xf86AddEnabledDevice(pInfo);
 			pWcm->public.on = TRUE;
 			break;
 
 		case DEVICE_OFF:
 		case DEVICE_CLOSE:
-			if (local->fd >= 0)
+			if (pInfo->fd >= 0)
 			{
-				xf86RemoveEnabledDevice(local);
-				wcmDevClose(local);
+				xf86RemoveEnabledDevice(pInfo);
+				wcmDevClose(pInfo);
 			}
 			pWcm->public.on = FALSE;
 			priv->wcmDevOpenCount = 0;
 			break;
 
 		default:
-			xf86Msg(X_ERROR, "%s: wacom unsupported mode=%d\n", local->name, what);
+			xf86Msg(X_ERROR, "%s: wacom unsupported mode=%d\n", pInfo->name, what);
 			return !Success;
 			break;
 	} /* end switch */

@@ -91,10 +91,10 @@ struct _WacomModule
 	InputDriverPtr wcmDrv;
 
 	int (*DevOpen)(DeviceIntPtr pWcm);
-	void (*DevReadInput)(LocalDevicePtr local);
+	void (*DevReadInput)(InputInfoPtr pInfo);
 	void (*DevControlProc)(DeviceIntPtr device, PtrCtrl* ctrl);
-	int (*DevChangeControl)(LocalDevicePtr local, xDeviceCtl* control);
-	void (*DevClose)(LocalDevicePtr local);
+	int (*DevChangeControl)(InputInfoPtr pInfo, xDeviceCtl* control);
+	void (*DevClose)(InputInfoPtr pInfo);
 	int (*DevProc)(DeviceIntPtr pWcm, int what);
 	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
 };
@@ -119,70 +119,70 @@ struct _WacomModule
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
 /* device autoprobing */
-char *wcmEventAutoDevProbe (LocalDevicePtr local);
+char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 
 /* common tablet initialization regime */
-int wcmInitTablet(LocalDevicePtr local, const char* id, float version);
+int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version);
 
 /* standard packet handler */
-void wcmReadPacket(LocalDevicePtr local);
+void wcmReadPacket(InputInfoPtr pInfo);
 
 /* handles suppression, filtering, and dispatch. */
 void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
-void wcmSendEvents(LocalDevicePtr local, const WacomDeviceState* ds);
+void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds);
 
 /* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
 Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
 Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* calculate the proper tablet to screen mapping factor */
-void wcmMappingFactor(LocalDevicePtr local);
+void wcmMappingFactor(InputInfoPtr pInfo);
 
 /* validation */
-extern Bool wcmIsAValidType(LocalDevicePtr local, const char* type);
+extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);
 extern Bool wcmIsWacomDevice (char* fname);
-extern int wcmIsDuplicate(char* device, LocalDevicePtr local);
-extern int wcmDeviceTypeKeys(LocalDevicePtr local);
+extern int wcmIsDuplicate(char* device, InputInfoPtr pInfo);
+extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
 
 /* hotplug */
-extern int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type);
-extern void wcmHotplugOthers(LocalDevicePtr local);
-extern int wcmAutoProbeDevice(LocalDevicePtr local);
+extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type);
+extern void wcmHotplugOthers(InputInfoPtr pInfo);
+extern int wcmAutoProbeDevice(InputInfoPtr pInfo);
 
 /* setup */
-extern int wcmParseOptions(LocalDevicePtr local);
-extern void wcmInitialCoordinates(LocalDevicePtr local, int axes);
-extern void wcmInitialScreens(LocalDevicePtr local);
-extern void wcmInitialScreens(LocalDevicePtr local);
+extern int wcmParseOptions(InputInfoPtr pInfo);
+extern void wcmInitialCoordinates(InputInfoPtr pInfo, int axes);
+extern void wcmInitialScreens(InputInfoPtr pInfo);
+extern void wcmInitialScreens(InputInfoPtr pInfo);
 
-extern int wcmDevSwitchModeCall(LocalDevicePtr local, int mode);
+extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 
 /* run-time modifications */
-extern void wcmChangeScreen(LocalDevicePtr local, int value);
+extern void wcmChangeScreen(InputInfoPtr pInfo, int value);
 extern void wcmTilt2R(WacomDeviceStatePtr ds);
 extern void wcmFingerTapToClick(WacomCommonPtr common);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 
-extern void wcmRotateTablet(LocalDevicePtr local, int value);
-extern void wcmRotateCoordinates(LocalDevicePtr local, int* x, int* y);
-extern void wcmVirtualTabletSize(LocalDevicePtr local);
-extern void wcmVirtualTabletPadding(LocalDevicePtr local);
-extern void wcmAdjustArea(LocalDevicePtr local, WacomToolAreaPtr area);
+extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
+extern void wcmRotateCoordinates(InputInfoPtr pInfo, int* x, int* y);
+extern void wcmVirtualTabletSize(InputInfoPtr pInfo);
+extern void wcmVirtualTabletPadding(InputInfoPtr pInfo);
+extern void wcmAdjustArea(InputInfoPtr pInfo, WacomToolAreaPtr area);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 
 /* device properties */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
 extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
-extern void InitWcmDeviceProperties(LocalDevicePtr local);
+extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 #endif
 
 /* Device probing */
-int isdv4ProbeKeys(LocalDevicePtr local);
-int usbProbeKeys(LocalDevicePtr local);
+int isdv4ProbeKeys(InputInfoPtr pInfo);
+int usbProbeKeys(InputInfoPtr pInfo);
 
 /****************************************************************************/
 #endif /* __XF86WACOM_H */

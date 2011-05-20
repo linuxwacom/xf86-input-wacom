@@ -33,12 +33,12 @@
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools
  * with the same type to individualize tools with serial number or areas */
-static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
+static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 {
 	int match = 0;
 	char* device;
-	char* fsource = xf86CheckStrOption(local->options, "_source", "");
-	LocalDevicePtr pDevices = xf86FirstLocalDevice();
+	char* fsource = xf86CheckStrOption(pInfo->options, "_source", "");
+	InputInfoPtr pDevices = xf86FirstLocalDevice();
 	WacomCommonPtr pCommon = NULL;
 	char* psource;
 
@@ -50,7 +50,7 @@ static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
 		if (!device || !strstr(pDevices->drv->driverName, "wacom"))
 			continue;
 
-		if (local != pDevices)
+		if (pInfo != pDevices)
 		{
 			psource = xf86CheckStrOption(pDevices->options, "_source", "");
 			pCommon = ((WacomDevicePtr)pDevices->private)->common;
@@ -69,7 +69,7 @@ static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
 	}
 	if (match)
 		xf86Msg(X_WARNING, "%s: device file already in use by %s. "
-			"Ignoring.\n", local->name, pDevices->name);
+			"Ignoring.\n", pInfo->name, pDevices->name);
 	return match;
 }
 
@@ -81,20 +81,20 @@ static Bool wcmCheckSource(LocalDevicePtr local, dev_t min_maj)
  * the xorg.conf and is then hotplugged through the server backend (HAL,
  * udev). In this case, the hotplugged one fails.
  */
-int wcmIsDuplicate(char* device, LocalDevicePtr local)
+int wcmIsDuplicate(char* device, InputInfoPtr pInfo)
 {
 	struct stat st;
 	int isInUse = 0;
-	char* lsource = xf86CheckStrOption(local->options, "_source", "");
+	char* lsource = xf86CheckStrOption(pInfo->options, "_source", "");
 
 	/* always allow xorg.conf defined tools to be added */
 	if (!strlen(lsource)) goto ret;
 
-	if (fstat(local->fd, &st) == -1)
+	if (fstat(pInfo->fd, &st) == -1)
 	{
 		/* can not access major/minor to check device duplication */
 		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
-				local->name, strerror(errno));
+				pInfo->name, strerror(errno));
 
 		/* older systems don't support the required ioctl.  let it pass */
 		goto ret;
@@ -103,7 +103,7 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	if (st.st_rdev)
 	{
 		/* device matches with another added port */
-		if (wcmCheckSource(local, st.st_rdev))
+		if (wcmCheckSource(pInfo, st.st_rdev))
 		{
 			isInUse = 3;
 			goto ret;
@@ -113,7 +113,7 @@ int wcmIsDuplicate(char* device, LocalDevicePtr local)
 	{
 		/* major/minor can never be 0, right? */
 		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
-			"Something was wrong.\n", local->name);
+			"Something was wrong.\n", pInfo->name);
 		isInUse = 4;
 	}
 ret:
@@ -134,10 +134,10 @@ static struct
 };
 
 /* validate tool type for device/product */
-Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
+Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 {
 	int j, ret = FALSE;
-	WacomDevicePtr priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	if (!type)
@@ -157,15 +157,15 @@ Bool wcmIsAValidType(LocalDevicePtr local, const char* type)
 }
 
 /* Choose valid types according to device ID. */
-int wcmDeviceTypeKeys(LocalDevicePtr local)
+int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 {
 	int ret = 1;
-	WacomDevicePtr priv = local->private;
+	WacomDevicePtr priv = pInfo->private;
 
 	/* serial ISDV4 devices */
-	priv->common->tablet_id = isdv4ProbeKeys(local);
+	priv->common->tablet_id = isdv4ProbeKeys(pInfo);
 	if (!priv->common->tablet_id) /* USB devices */
-		priv->common->tablet_id = usbProbeKeys(local);
+		priv->common->tablet_id = usbProbeKeys(pInfo);
 
 	return ret;
 }
@@ -173,9 +173,9 @@ int wcmDeviceTypeKeys(LocalDevicePtr local)
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
  * (and the name with "$name $type" and convert them to InputOption */
-static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char *type)
+static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char *type)
 {
-	pointer original = local->options;
+	pointer original = pInfo->options;
 	InputOption *iopts = NULL, *new;
 	InputInfoRec dummy;
 	char *name;
@@ -183,8 +183,8 @@ static InputOption *wcmOptionDupConvert(LocalDevicePtr local, const char *type)
 	memset(&dummy, 0, sizeof(dummy));
 	xf86CollectInputOptions(&dummy, NULL, original);
 
-	name = calloc(strlen(local->name) + strlen(type) + 2, 1);
-	sprintf(name, "%s %s", local->name, type);
+	name = calloc(strlen(pInfo->name) + strlen(type) + 2, 1);
+	sprintf(name, "%s %s", pInfo->name, type);
 
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Type", type);
 	dummy.options = xf86ReplaceStrOption(dummy.options, "Name", name);
@@ -222,12 +222,12 @@ static void wcmFreeInputOpts(InputOption* opts)
  * erasor, stylus, pad, touch, cursor, etc.
  * Name of the new device is set automatically to "<device name> <type>".
  */
-static void wcmHotplug(LocalDevicePtr local, const char *type)
+static void wcmHotplug(InputInfoPtr pInfo, const char *type)
 {
 	DeviceIntPtr dev; /* dummy */
 	InputOption *input_options;
 
-	input_options = wcmOptionDupConvert(local, type);
+	input_options = wcmOptionDupConvert(pInfo, type);
 
 	NewInputDeviceRequest(input_options,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
@@ -237,26 +237,26 @@ static void wcmHotplug(LocalDevicePtr local, const char *type)
 	wcmFreeInputOpts(input_options);
 }
 
-void wcmHotplugOthers(LocalDevicePtr local)
+void wcmHotplugOthers(InputInfoPtr pInfo)
 {
 	int i, skip = 1;
 	char*		device;
 
-        xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", local->name);
-	device = xf86SetStrOption(local->options, "Device", NULL);
+        xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", pInfo->name);
+	device = xf86SetStrOption(pInfo->options, "Device", NULL);
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(local, wcmType[i].type))
+		if (wcmIsAValidType(pInfo, wcmType[i].type))
 		{
 			if (skip)
 				skip = 0;
 			else
-				wcmHotplug(local, wcmType[i].type);
+				wcmHotplug(pInfo, wcmType[i].type);
 		}
 	}
-        xf86Msg(X_INFO, "%s: hotplugging completed.\n", local->name);
+        xf86Msg(X_INFO, "%s: hotplugging completed.\n", pInfo->name);
 }
 
 /**
@@ -268,9 +268,9 @@ void wcmHotplugOthers(LocalDevicePtr local)
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
  */
-int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
+int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 {
-	char *source = xf86CheckStrOption(local->options, "_source", "");
+	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
 	int i;
 
 	if (*type) /* type specified, don't hotplug */
@@ -283,7 +283,7 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 	 * for our device */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(local, wcmType[i].type))
+		if (wcmIsAValidType(pInfo, wcmType[i].type))
 		{
 			*type = strdup(wcmType[i].type);
 			break;
@@ -293,18 +293,18 @@ int wcmNeedAutoHotplug(LocalDevicePtr local, const char **type)
 	if (!*type)
 		return 0;
 
-	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", local->name, *type);
-	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", local->name);
+	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", pInfo->name, *type);
+	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", pInfo->name);
 
-	local->options = xf86AddNewOption(local->options, "Type", *type);
-	local->options = xf86ReplaceStrOption(local->options, "_source", "_driver/wacom");
+	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
+	pInfo->options = xf86ReplaceStrOption(pInfo->options, "_source", "_driver/wacom");
 
 	return 1;
 }
 
-int wcmParseOptions(LocalDevicePtr local)
+int wcmParseOptions(InputInfoPtr pInfo)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)local->private;
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
 	char            *s, b[12];
 	int		i, oldButton;
@@ -312,11 +312,11 @@ int wcmParseOptions(LocalDevicePtr local)
 	WacomToolAreaPtr area = NULL;
 
 	/* Optional configuration */
-	priv->debugLevel = xf86SetIntOption(local->options,
+	priv->debugLevel = xf86SetIntOption(pInfo->options,
 					    "DebugLevel", priv->debugLevel);
-	common->debugLevel = xf86SetIntOption(local->options,
+	common->debugLevel = xf86SetIntOption(pInfo->options,
 					      "CommonDBG", common->debugLevel);
-	s = xf86SetStrOption(local->options, "Mode", NULL);
+	s = xf86SetStrOption(pInfo->options, "Mode", NULL);
 
 	if (s && (xf86NameCmp(s, "absolute") == 0))
 		priv->flags |= ABSOLUTE_FLAG;
@@ -326,7 +326,7 @@ int wcmParseOptions(LocalDevicePtr local)
 	{
 		if (s)
 			xf86Msg(X_ERROR, "%s: invalid Mode (should be absolute"
-				" or relative). Using default.\n", local->name);
+				" or relative). Using default.\n", pInfo->name);
 
 		/* If Mode not specified or is invalid then rely on
 		 * Type specific defaults from initialization.
@@ -346,10 +346,10 @@ int wcmParseOptions(LocalDevicePtr local)
 	}
 
 	/* Store original local Core flag so it can be changed later */
-	if (local->flags & (XI86_ALWAYS_CORE))
+	if (pInfo->flags & (XI86_ALWAYS_CORE))
 		priv->flags |= COREEVENT_FLAG;
 
-	s = xf86SetStrOption(local->options, "Rotate", NULL);
+	s = xf86SetStrOption(pInfo->options, "Rotate", NULL);
 
 	if (s)
 	{
@@ -362,12 +362,12 @@ int wcmParseOptions(LocalDevicePtr local)
 		else if (xf86NameCmp(s, "NONE") !=0)
 		{
 			xf86Msg(X_ERROR, "%s: invalid Rotate option '%s'.\n",
-				local->name, s);
+				pInfo->name, s);
 			goto error;
 		}
 	}
 
-	common->wcmSuppress = xf86SetIntOption(local->options, "Suppress",
+	common->wcmSuppress = xf86SetIntOption(pInfo->options, "Suppress",
 			common->wcmSuppress);
 	if (common->wcmSuppress != 0) /* 0 disables suppression */
 	{
@@ -377,11 +377,11 @@ int wcmParseOptions(LocalDevicePtr local)
 			common->wcmSuppress = DEFAULT_SUPPRESS;
 	}
 
-	if (xf86SetBoolOption(local->options, "Tilt",
+	if (xf86SetBoolOption(pInfo->options, "Tilt",
 			(common->wcmFlags & TILT_REQUEST_FLAG)))
 		common->wcmFlags |= TILT_REQUEST_FLAG;
 
-	if (xf86SetBoolOption(local->options, "RawFilter",
+	if (xf86SetBoolOption(pInfo->options, "RawFilter",
 			(common->wcmFlags & RAW_FILTERING_FLAG)))
 		common->wcmFlags |= RAW_FILTERING_FLAG;
 
@@ -391,24 +391,24 @@ int wcmParseOptions(LocalDevicePtr local)
 	 * Slightly depressed curve might be 5,0,100,95
 	 * Slightly raised curve might be 0,5,95,100
 	 */
-	s = xf86SetStrOption(local->options, "PressCurve", NULL);
+	s = xf86SetStrOption(pInfo->options, "PressCurve", NULL);
 	if (s && (IsStylus(priv) || IsEraser(priv)))
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
 				!wcmCheckPressureCurveValues(a, b, c, d))
 			xf86Msg(X_CONFIG, "%s: PressCurve not valid\n",
-				local->name);
+				pInfo->name);
 		else
 			wcmSetPressureCurve(priv,a,b,c,d);
 	}
 
 	if (IsCursor(priv))
 	{
-		common->wcmCursorProxoutDist = xf86SetIntOption(local->options, "CursorProx", 0);
+		common->wcmCursorProxoutDist = xf86SetIntOption(pInfo->options, "CursorProx", 0);
 		if (common->wcmCursorProxoutDist < 0 || common->wcmCursorProxoutDist > 255)
 			xf86Msg(X_CONFIG, "%s: CursorProx invalid %d \n",
-				local->name, common->wcmCursorProxoutDist);
+				pInfo->name, common->wcmCursorProxoutDist);
 	}
 
 	/* Configure Monitors' resoluiton in TwinView setup.
@@ -416,14 +416,14 @@ int wcmParseOptions(LocalDevicePtr local)
 	 * for a desktop of monitor 1 at 1024x768 and
 	 * monitor 2 at 1280x1024
 	 */
-	s = xf86SetStrOption(local->options, "TVResolution", NULL);
+	s = xf86SetStrOption(pInfo->options, "TVResolution", NULL);
 	if (s)
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%dx%d,%dx%d",&a,&b,&c,&d) != 4) ||
 			(a <= 0) || (b <= 0) || (c <= 0) || (d <= 0))
 			xf86Msg(X_CONFIG, "%s: TVResolution not valid\n",
-				local->name);
+				pInfo->name);
 		else
 		{
 			priv->tvResolution[0] = a;
@@ -433,16 +433,16 @@ int wcmParseOptions(LocalDevicePtr local)
 		}
 	}
 
-	priv->screen_no = xf86SetIntOption(local->options, "ScreenNo", -1);
+	priv->screen_no = xf86SetIntOption(pInfo->options, "ScreenNo", -1);
 
-	if (xf86SetBoolOption(local->options, "KeepShape", 0))
+	if (xf86SetBoolOption(pInfo->options, "KeepShape", 0))
 		priv->flags |= KEEP_SHAPE_FLAG;
 
-	priv->topX = xf86SetIntOption(local->options, "TopX", 0);
-	priv->topY = xf86SetIntOption(local->options, "TopY", 0);
-	priv->bottomX = xf86SetIntOption(local->options, "BottomX", 0);
-	priv->bottomY = xf86SetIntOption(local->options, "BottomY", 0);
-	priv->serial = xf86SetIntOption(local->options, "Serial", 0);
+	priv->topX = xf86SetIntOption(pInfo->options, "TopX", 0);
+	priv->topY = xf86SetIntOption(pInfo->options, "TopY", 0);
+	priv->bottomX = xf86SetIntOption(pInfo->options, "BottomX", 0);
+	priv->bottomY = xf86SetIntOption(pInfo->options, "BottomY", 0);
+	priv->serial = xf86SetIntOption(pInfo->options, "Serial", 0);
 
 	tool = priv->tool;
 	area = priv->toolarea;
@@ -487,17 +487,17 @@ int wcmParseOptions(LocalDevicePtr local)
 
 	common->wcmScaling = 0;
 
-	common->wcmThreshold = xf86SetIntOption(local->options, "Threshold",
+	common->wcmThreshold = xf86SetIntOption(pInfo->options, "Threshold",
 			common->wcmThreshold);
 
-	common->wcmMaxZ = xf86SetIntOption(local->options, "MaxZ",
+	common->wcmMaxZ = xf86SetIntOption(pInfo->options, "MaxZ",
 					   common->wcmMaxZ);
-	if (xf86SetBoolOption(local->options, "ButtonsOnly", 0))
+	if (xf86SetBoolOption(pInfo->options, "ButtonsOnly", 0))
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
 	/* Tablet PC button applied to the whole tablet. Not just one tool */
 	if ( priv->flags & STYLUS_ID )
-		common->wcmTPCButton = xf86SetBoolOption(local->options,
+		common->wcmTPCButton = xf86SetBoolOption(pInfo->options,
 							 "TPCButton",
 							 common->wcmTPCButtonDefault);
 
@@ -518,35 +518,35 @@ int wcmParseOptions(LocalDevicePtr local)
 	}
 
 	/* check if touch was turned off in xorg.conf */
-	common->wcmTouch = xf86SetBoolOption(local->options, "Touch",
+	common->wcmTouch = xf86SetBoolOption(pInfo->options, "Touch",
 		common->wcmTouchDefault);
 
 	/* Touch gesture applies to the whole tablet */
-	common->wcmGesture = xf86SetBoolOption(local->options, "Gesture",
+	common->wcmGesture = xf86SetBoolOption(pInfo->options, "Gesture",
 			common->wcmGestureDefault);
 
 	/* Touch capacity applies to the whole tablet */
-	common->wcmCapacity = xf86SetBoolOption(local->options, "Capacity", common->wcmCapacityDefault);
+	common->wcmCapacity = xf86SetBoolOption(pInfo->options, "Capacity", common->wcmCapacityDefault);
 
 	/* Mouse cursor stays in one monitor in a multimonitor setup */
 	if ( !priv->wcmMMonitor )
-		priv->wcmMMonitor = xf86SetBoolOption(local->options, "MMonitor", 1);
+		priv->wcmMMonitor = xf86SetBoolOption(pInfo->options, "MMonitor", 1);
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
 		sprintf(b, "Button%d", i+1);
-		s = xf86SetStrOption(local->options, b, NULL);
+		s = xf86SetStrOption(pInfo->options, b, NULL);
 		if (s)
 		{
 			oldButton = priv->button[i];
-			priv->button[i] = xf86SetIntOption(local->options, b, priv->button[i]);
+			priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
 		}
 	}
 
 	if (common->wcmForceDevice == DEVICE_ISDV4)
         {
 		int val;
-		val = xf86SetIntOption(local->options, "BaudRate", 38400);
+		val = xf86SetIntOption(pInfo->options, "BaudRate", 38400);
 
 		switch(val)
 		{
@@ -557,12 +557,12 @@ int wcmParseOptions(LocalDevicePtr local)
 			default:
 				xf86Msg(X_ERROR, "%s: Illegal speed value "
 					"(must be 19200 or 38400).",
-					local->name);
+					pInfo->name);
 				break;
 		}
 	}
 
-	s = xf86SetStrOption(local->options, "Twinview", NULL);
+	s = xf86SetStrOption(pInfo->options, "Twinview", NULL);
 	if (s && xf86NameCmp(s, "none") == 0)
 		priv->twinview = TV_NONE;
 	else if ((s && xf86NameCmp(s, "horizontal") == 0) ||
@@ -579,7 +579,7 @@ int wcmParseOptions(LocalDevicePtr local)
 	{
 		xf86Msg(X_ERROR, "%s: invalid Twinview (should be none, vertical (belowof), "
 			"horizontal (rightof), aboveof, or leftof). Using none.\n",
-			local->name);
+			pInfo->name);
 		priv->twinview = TV_NONE;
 	}
 
@@ -590,18 +590,18 @@ error:
 	return 0;
 }
 
-int wcmAutoProbeDevice(LocalDevicePtr local)
+int wcmAutoProbeDevice(InputInfoPtr pInfo)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) local->private;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common =  priv->common;
 
 	if ((!common->wcmDevice || !strcmp (common->wcmDevice, "auto-dev")))
 	{
 		common->wcmFlags |= AUTODEV_FLAG;
-		if (! (common->wcmDevice = wcmEventAutoDevProbe (local)))
+		if (! (common->wcmDevice = wcmEventAutoDevProbe (pInfo)))
 		{
 			xf86Msg(X_ERROR, "%s: unable to probe device\n",
-				local->name);
+				pInfo->name);
 			return 0;
 		}
 	}

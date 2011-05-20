@@ -78,13 +78,13 @@ struct _WacomModel
 	const char* name;
 
 	void (*Initialize)(WacomCommonPtr common, const char* id, float version);
-	void (*GetResolution)(LocalDevicePtr local);
-	int (*GetRanges)(LocalDevicePtr local);
-	int (*Start)(LocalDevicePtr local);
-	int (*Parse)(LocalDevicePtr local, const unsigned char* data, int len);
+	void (*GetResolution)(InputInfoPtr pInfo);
+	int (*GetRanges)(InputInfoPtr pInfo);
+	int (*Start)(InputInfoPtr pInfo);
+	int (*Parse)(InputInfoPtr pInfo, const unsigned char* data, int len);
 	int (*FilterRaw)(WacomCommonPtr common, WacomChannelPtr pChannel,
 		WacomDeviceStatePtr ds);
-	int (*DetectConfig)(LocalDevicePtr local);
+	int (*DetectConfig)(InputInfoPtr pInfo);
 };
 
 /******************************************************************************
@@ -147,7 +147,7 @@ struct _WacomDeviceRec
 	char *name;		/* Do not move, same offset as common->wcmDevice */
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
-	LocalDevicePtr local;
+	InputInfoPtr pInfo;
 	int debugLevel;
 
 	unsigned int flags;	/* various flags (type, abs, touch...) */
@@ -255,7 +255,7 @@ struct _WacomDeviceRec
 
 struct _WacomDeviceState
 {
-	LocalDevicePtr local;
+	InputInfoPtr pInfo;
 	int device_id;		/* tool id reported from the physical device */
 	int device_type;
 	unsigned int serial_num;
@@ -317,8 +317,8 @@ struct _WacomChannel
 
 struct _WacomDeviceClass
 {
-	Bool (*Detect)(LocalDevicePtr local); /* detect device */
-	Bool (*Init)(LocalDevicePtr local, char* id, float *version);   /* initialize device */
+	Bool (*Detect)(InputInfoPtr pInfo); /* detect device */
+	Bool (*Init)(InputInfoPtr pInfo, char* id, float *version);   /* initialize device */
 };
 
 	extern WacomDeviceClass gWacomUSBDevice;
@@ -448,7 +448,7 @@ struct _WacomToolArea
 	int bottomX; /* Bottom X/Y */
 	int bottomY;
 
-	LocalDevicePtr device; /* The InputDevice connected to this area */
+	InputInfoPtr device; /* The InputDevice connected to this area */
 };
 
 #endif /*__XF86_XF86WACOMDEFS_H */
