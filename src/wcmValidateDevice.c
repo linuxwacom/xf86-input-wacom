@@ -254,6 +254,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 		case 0xE2: /* TPC with 2FGT */
 		case 0xE3: /* TPC with 2FGT */
+		case 0xE6: /* TPC with 2FGT */
 			priv->common->tablet_type = WCM_TPC;
 			priv->common->tablet_type |= WCM_LCD;
 			break;
