@@ -221,3 +221,5 @@ scp $tarball_dir/$targz $tarball_dir/$tarbz2 $user$host:$srv_path
 
 echo "pushing tag upstream"
 git push $remote $tag_current
+
+echo "All done. Please bump configure.ac to x.y.99 now"
