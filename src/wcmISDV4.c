@@ -881,14 +881,15 @@ static int set_keybits_fujitsu(int id, unsigned long *keys)
 
 typedef struct {
 	const char *pattern; /* sscanf matching pattern to extract ID */
+	const int vendor_id;
 	/* set the bits in the given keys array based on the id. return the
 	 * tablet_id or the closest guess anyway */
 	int (*set_bits)(int id, unsigned long* keys);
 } ISDV4ModelDesc;
 
 static ISDV4ModelDesc isdv4_models[] = {
-	{ "WACf%x", set_keybits_wacom },
-	{ "FUJ%x", set_keybits_fujitsu },
+	{ "WACf%x", WACOM_VENDOR_ID, set_keybits_wacom },
+	{ "FUJ%x", 0 /* FIXME: */, set_keybits_fujitsu },
 	{ NULL, 0 }
 };
 
@@ -989,11 +990,17 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
 	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
 
-	if (model && model->set_bits)
-		tablet_id = model->set_bits(id, common->wcmKeys);
+	if (model)
+	{
+		common->vendor_id = model->vendor_id;
+		if (model->set_bits)
+			tablet_id = model->set_bits(id, common->wcmKeys);
+	}
 
 	/* Change to generic protocol to match USB MT format */
 	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
+
+	common->tablet_id = tablet_id;
 
 	return tablet_id;
 }

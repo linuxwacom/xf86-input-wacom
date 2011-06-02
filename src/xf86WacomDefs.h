@@ -434,6 +434,7 @@ struct _WacomCommonRec
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
+	int vendor_id;		     /* Vendor ID */
 	int tablet_id;		     /* USB tablet ID */
 	int tablet_type;	     /* bitmask of tablet features (WCM_LCD, WCM_PEN, etc) */
 	int fd;                      /* file descriptor to tablet */

@@ -1675,6 +1675,9 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 		usbGenericTouchscreenQuirks(common->wcmKeys, abs);
 	}
 
+	common->vendor_id = wacom_id.vendor;
+	common->tablet_id = wacom_id.product;
+
 	return wacom_id.product;
 }
 

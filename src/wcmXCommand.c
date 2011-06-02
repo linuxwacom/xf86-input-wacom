@@ -29,6 +29,9 @@
 #ifndef XI_PROP_DEVICE_NODE
 #define XI_PROP_DEVICE_NODE "Device Node"
 #endif
+#ifndef XI_PROP_PRODUCT_ID
+#define XI_PROP_PRODUCT_ID "Device Product ID"
+#endif
 
 static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
 
@@ -95,6 +98,7 @@ Atom prop_gesture_param;
 Atom prop_hover;
 Atom prop_tooltype;
 Atom prop_btnactions;
+Atom prop_product_id;
 #ifdef DEBUG
 Atom prop_debuglevels;
 #endif
@@ -231,6 +235,10 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		memset(values, 0, sizeof(values));
 		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, -32, 4, values);
 	}
+
+	values[0] = common->vendor_id;
+	values[1] = common->tablet_id;
+	prop_product_id = InitWcmAtom(pInfo->dev, XI_PROP_PRODUCT_ID, 32, 2, values);
 
 #ifdef DEBUG
 	values[0] = priv->debugLevel;
@@ -608,7 +616,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 	DBG(10, priv, "\n");
 
-	if (property == prop_devnode)
+	if (property == prop_devnode || property == prop_product_id)
 		return BadValue; /* Read-only */
 	else if (property == prop_tablet_area)
 	{
