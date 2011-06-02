@@ -227,7 +227,7 @@ struct _PROPINFO
 
 struct _WacomDeviceRec
 {
-	char *name;		/* Do not move, same offset as common->wcmDevice. Used by DBG macro */
+	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
 	InputInfoPtr pInfo;
