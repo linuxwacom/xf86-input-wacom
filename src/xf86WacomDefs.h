@@ -435,7 +435,7 @@ struct _WacomCommonRec
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;
 	int tablet_id;		     /* USB tablet ID */
-	int tablet_type;	     /* type (penabled/1FGT/2FGT, etc) of the tablet */
+	int tablet_type;	     /* bitmask of tablet features (WCM_LCD, WCM_PEN, etc) */
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */
