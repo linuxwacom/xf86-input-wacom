@@ -26,9 +26,6 @@
 #include <exevents.h>
 #include <xf86_OSproc.h>
 
-#ifndef XI_PROP_DEVICE_NODE
-#define XI_PROP_DEVICE_NODE "Device Node"
-#endif
 #ifndef XI_PROP_PRODUCT_ID
 #define XI_PROP_PRODUCT_ID "Device Product ID"
 #endif
@@ -79,7 +76,6 @@ int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	return wcmDevSwitchModeCall(pInfo, mode);
 }
 
-Atom prop_devnode;
 Atom prop_rotation;
 Atom prop_tablet_area;
 Atom prop_pressurecurve;
@@ -152,12 +148,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	int values[WCM_MAX_MOUSE_BUTTONS];
 
 	DBG(10, priv, "\n");
-
-	prop_devnode = MakeAtom(XI_PROP_DEVNODE, strlen(XI_PROP_DEVNODE), TRUE);
-	XIChangeDeviceProperty(pInfo->dev, prop_devnode, XA_STRING, 8,
-				PropModeReplace, strlen(common->device_path),
-				common->device_path, FALSE);
-	XISetDevicePropertyDeletable(pInfo->dev, prop_devnode, FALSE);
 
 	if (!IsPad(priv)) {
 		values[0] = priv->topX;
@@ -616,7 +606,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 	DBG(10, priv, "\n");
 
-	if (property == prop_devnode || property == prop_product_id)
+	if (property == prop_product_id)
 		return BadValue; /* Read-only */
 	else if (property == prop_tablet_area)
 	{
