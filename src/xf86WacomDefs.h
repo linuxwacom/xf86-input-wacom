@@ -173,8 +173,8 @@ struct _WacomDeviceRec
 	int screenBottomY[32];	/* bottom cordinate of the associated screen in screen coords */
 	int maxWidth;		/* max active screen width in screen coords */
 	int maxHeight;		/* max active screen height in screen coords */
-	int leftPadding;	/* left padding for virtual tablet */
-	int topPadding;		/* top padding for virtual tablet */
+	int leftPadding;	/* left padding for virtual tablet in device coords */
+	int topPadding;		/* top padding for virtual in device coords tablet */
 	int button[WCM_MAX_BUTTONS];/* buttons assignments */
 	unsigned keys[WCM_MAX_BUTTONS][256]; /* keystrokes assigned to buttons */
 	int relup;
