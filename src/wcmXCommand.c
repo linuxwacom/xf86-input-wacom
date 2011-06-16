@@ -262,6 +262,40 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 #endif
 }
 
+struct workproc_data {
+	DeviceIntPtr dev;
+	Atom property;
+	Atom type;
+	short format;
+	INT32 values[4];
+};
+
+/**
+ * WorkProc called after resetting the tablet area.
+ */
+static Bool reset_area_property(ClientPtr client, pointer closure)
+{
+	struct workproc_data *data = closure;
+	InputInfoPtr pInfo = xf86FirstLocalDevice();
+	DeviceIntPtr dev = pInfo->dev;
+
+	for (; dev; dev = dev->next)
+		if (dev == data->dev)
+			break;
+
+	/* device was removed between property update and calling the work proc  */
+	if (!dev)
+		goto out;
+
+	XIChangeDeviceProperty(dev, data->property, data->type, data->format,
+			       PropModeReplace, 4, data->values, TRUE);
+
+out:
+	free(data);
+	return TRUE;
+}
+
+
 int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		BOOL checkonly)
 {
@@ -278,6 +312,13 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (prop->size != 4 || prop->format != 32)
 			return BadValue;
+
+		/* if set with -1/-1, we're re-updating ourselves with the
+		 * actual values (after setting them). Avoid loops by claiming success
+		 * if we're not actually updating anything */
+		if (priv->topX == values[0] && priv->topY == values[1] &&
+		    priv->bottomX == values[2] && priv->bottomY == values[3])
+			return Success;
 
 		/* value validation is unnecessary since we let utility programs, such as
 		 * xsetwacom and userland control panel take care of the validation role.
@@ -311,10 +352,31 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			if ((values[0] == -1) && (values[1] == -1) &&
 					(values[2] == -1) && (values[3] == -1))
 			{
+				struct workproc_data *data;
 				area->topX = 0;
 				area->topY = 0;
 				area->bottomX = priv->maxX;
 				area->bottomY = priv->maxY;
+
+				/* When updating with -1/-1, we need to
+				 * reupdate the property with the actual
+				 * values, otherwise it'll store -1/-1.  We
+				 * can't do that directly though, we need to
+				 * schedule a work proc.
+				 */
+				data = calloc(1, sizeof(struct workproc_data));
+				if (data)
+				{
+					data->dev = dev;
+					data->property = property;
+					data->format = prop->format;
+					data->type = prop->type;
+					data->values[0] = area->topX;
+					data->values[1] = area->topY;
+					data->values[2] = area->bottomX;
+					data->values[3] = area->bottomY;
+					QueueWorkProc(reset_area_property, serverClient, data);
+				}
 			} else /* offset for multimonitor */
 				wcmAdjustArea(pInfo, area);
 
