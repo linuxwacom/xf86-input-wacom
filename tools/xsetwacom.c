@@ -1963,7 +1963,7 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	XFlush(dpy);
 }
 
-static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int min, maj;
 	int i, found = 0;
@@ -1971,13 +1971,6 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
-
-	if (argc != param->arg_count)
-	{
-		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
-			param->arg_count);
-		return;
-	}
 
 	output_name = argv[0];
 
@@ -2052,6 +2045,19 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 
 	XRRFreeScreenResources(res);
 }
+
+static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	if (argc != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
+		return;
+	}
+
+	set_output_xrandr(dpy, dev, param, argc, argv);
+}
+
 
 static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
