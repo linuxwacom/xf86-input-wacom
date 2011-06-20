@@ -126,7 +126,8 @@ outputs may be obtained with the xrandr tool. The output mapping
 configuration is a onetime setting and does not track output
 reconfigurations; the command needs to be re-run whenever the output
 configuration changes. When used with tablet rotation, the tablet must be
-rotated before it is mapped to the new screen.
+rotated before it is mapped to the new screen. When running the NVIDIA
+binary driver, the output names are "HEAD-0" and "HEAD-1".
 This parameter is write-only and cannot be queried.
 .TP
 \fBMode\fR Absolute|Relative
