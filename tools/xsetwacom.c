@@ -1963,6 +1963,41 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	XFlush(dpy);
 }
 
+/**
+ * Set the matrix for the given device for the screen defined by offset and
+ * dimensions.
+ */
+static void _set_matrix(Display *dpy, XDevice *dev,
+			int offset_x, int offset_y,
+			int screen_width, int screen_height)
+{
+	int width = DisplayWidth(dpy, DefaultScreen(dpy));
+	int height = DisplayHeight(dpy, DefaultScreen(dpy));
+
+	/* offset */
+	float x = 1.0 * offset_x/width;
+	float y = 1.0 * offset_y/height;
+
+	/* mapping */
+	float w = 1.0 * screen_width/width;
+	float h = 1.0 * screen_height/height;
+
+	float matrix[9] = { 1, 0, 0,
+			    0, 1, 0,
+			    0, 0, 1};
+	matrix[2] = x;
+	matrix[5] = y;
+	matrix[0] = w;
+	matrix[4] = h;
+
+	TRACE("Transformation matrix:\n");
+	TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
+	TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
+	TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
+
+	_set_matrix_prop(dpy, dev, matrix);
+}
+
 static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int min, maj;
@@ -2014,31 +2049,8 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int ar
 	/* crtc holds our screen info, need to compare to actual screen size */
 	if (found)
 	{
-		int width = DisplayWidth(dpy, DefaultScreen(dpy));
-		int height = DisplayHeight(dpy, DefaultScreen(dpy));
-
-		/* offset */
-		float x = 1.0 * crtc_info->x/width;
-		float y = 1.0 * crtc_info->y/height;
-
-		/* mapping */
-		float w = 1.0 * crtc_info->width/width;
-		float h = 1.0 * crtc_info->height/height;
-
-		float matrix[9] = { 1, 0, 0,
-				    0, 1, 0,
-				    0, 0, 1};
-		matrix[2] = x;
-		matrix[5] = y;
-		matrix[0] = w;
-		matrix[4] = h;
-
-		TRACE("Transformation matrix:\n");
-		TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
-		TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
-		TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
-
-		_set_matrix_prop(dpy, dev, matrix);
+		_set_matrix(dpy, dev, crtc_info->x, crtc_info->y,
+			    crtc_info->width, crtc_info->height);
 	} else
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
