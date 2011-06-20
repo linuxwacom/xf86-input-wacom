@@ -1937,7 +1937,7 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 
 	if (!matrix_prop)
 	{
-		fprintf(stderr, "Server does not support transformation");
+		fprintf(stderr, "Server does not support transformation\n");
 		return;
 	}
 
