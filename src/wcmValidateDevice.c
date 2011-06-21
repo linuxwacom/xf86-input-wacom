@@ -719,7 +719,7 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 
 	if (s)
 	{
-		int rotation;
+		int rotation = ROTATE_NONE;
 
 		if (xf86NameCmp(s, "CW") == 0)
 			rotation = ROTATE_CW;
