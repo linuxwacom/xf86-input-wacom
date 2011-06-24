@@ -184,7 +184,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 	switch (priv->common->tablet_id)
 	{
 		case 0xCC:  /* CintiqV5 */
-			priv->common->tablet_type = WCM_LCD;
+			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 
 		case 0xB8:  /* I4 */
@@ -193,13 +193,13 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xBB:  /* I4 */
 		case 0xBC:  /* I4 */
 		case 0xBD:  /* I4 */
-			priv->common->tablet_type = WCM_ROTATION;
+			TabletSetFeature(priv->common, WCM_ROTATION);
 			/* fall through */
 
 		/* tablets with touch ring */
 		case 0x17:  /* BambooFun */
 		case 0x18:  /* BambooFun */
-			priv->common->tablet_type |= WCM_RING;
+			TabletSetFeature(priv->common, WCM_RING);
 			break;
 
 		/* tablets support dual input */
@@ -214,7 +214,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x44:  /* I2 */
 		case 0x45:  /* I2 */
 		case 0x47:  /* I2 */
-			priv->common->tablet_type = WCM_DUALINPUT;
+			TabletSetFeature(priv->common, WCM_DUALINPUT);
 			break;
 
 		/* P4 display tablets */
@@ -233,14 +233,14 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xC7:  /* DTU1931 */
 		case 0xCE:  /* DTU2231 */
 		case 0xF0:  /* DTU1631 */
-			priv->common->tablet_type |= WCM_LCD;
+			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 
 		/* tablets support menu strips */
 		case 0x3F:  /* CintiqV5 */
 		case 0xC5:  /* CintiqV5 */
 		case 0xC6:  /* CintiqV5 */
-			priv->common->tablet_type = WCM_LCD;
+			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 		case 0xB0:  /* I3 */
 		case 0xB1:  /* I3 */
@@ -249,35 +249,35 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xB4:  /* I3 */
 		case 0xB5:  /* I3 */
 		case 0xB7:  /* I3 */
-			priv->common->tablet_type |= WCM_STRIP | WCM_ROTATION;
+			TabletSetFeature(priv->common, WCM_STRIP | WCM_ROTATION);
 			break;
 
 		case 0xE2: /* TPC with 2FGT */
 		case 0xE3: /* TPC with 2FGT */
 		case 0xE6: /* TPC with 2FGT */
-			priv->common->tablet_type = WCM_TPC;
-			priv->common->tablet_type |= WCM_LCD;
+			TabletSetFeature(priv->common, WCM_TPC);
+			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 
 		case 0x93: /* TPC with 1FGT */
 		case 0x9A: /* TPC with 1FGT */
 		case 0x90: /* TPC */
-			priv->common->tablet_type |= WCM_TPC;
-			priv->common->tablet_type |= WCM_LCD;
+			TabletSetFeature(priv->common, WCM_TPC);
+			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 
 		case 0x9F:
-			priv->common->tablet_type |= WCM_LCD;
+			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}
 
 	if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
-		priv->common->tablet_type |= WCM_PEN;
+		TabletSetFeature(priv->common, WCM_PEN);
 
 	if (ISBITSET (common->wcmKeys, BTN_0) ||
 			ISBITSET (common->wcmKeys, BTN_FORWARD))
 	{
-		priv->common->tablet_type |= WCM_PAD;
+		TabletSetFeature(priv->common, WCM_PAD);
 	}
 
 	/* This handles both protocol 4 and 5 meanings of wcmKeys */
@@ -286,9 +286,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		/* TRIPLETAP means 2 finger touch */
 		/* DOUBLETAP without TRIPLETAP means 1 finger touch */
 		if (ISBITSET(common->wcmKeys, BTN_TOOL_TRIPLETAP))
-			priv->common->tablet_type |= WCM_2FGT;
+			TabletSetFeature(priv->common, WCM_2FGT);
 		else if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP))
-			priv->common->tablet_type |= WCM_1FGT;
+			TabletSetFeature(priv->common, WCM_1FGT);
 	}
 
 	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
@@ -296,9 +296,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		/* DOUBLETAP means 2 finger touch */
 		/* FINGER without DOUBLETAP means 1 finger touch */
 		if (ISBITSET(common->wcmKeys, BTN_TOOL_DOUBLETAP))
-			priv->common->tablet_type |= WCM_2FGT;
+			TabletSetFeature(priv->common, WCM_2FGT);
 		else if (ISBITSET(common->wcmKeys, BTN_TOOL_FINGER))
-			priv->common->tablet_type |= WCM_1FGT;
+			TabletSetFeature(priv->common, WCM_1FGT);
 	}
 
 	return ret;

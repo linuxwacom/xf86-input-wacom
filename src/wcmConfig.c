@@ -412,8 +412,8 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 				if (common->wcmTouchDevice ||
 						tmpcommon->wcmTouchDevice)
 				{
-					common->tablet_type |= WCM_PENTOUCH;
-					tmpcommon->tablet_type |= WCM_PENTOUCH;
+					TabletSetFeature(common, WCM_PENTOUCH);
+					TabletSetFeature(tmpcommon, WCM_PENTOUCH);
 				}
 			}
 		}

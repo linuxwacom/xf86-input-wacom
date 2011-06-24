@@ -189,6 +189,7 @@ struct _WacomModel
 							  always an LCD) */
 #define WCM_PENTOUCH		0x00000400 /* Tablet supports pen and touch */
 #define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
+#define TabletSetFeature(common, feature) ((common)->tablet_type |= (feature))
 
 #define ABSOLUTE_FLAG		0x00000100
 #define BAUD_19200_FLAG		0x00000400
