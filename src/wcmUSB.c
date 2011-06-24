@@ -1613,8 +1613,19 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		wcmEvent(common, private->wcmBTNChannel, btn_ds);
 }
 
-/* Quirks to unify the tool types for GENERIC protocol tablet PCs */
-static void usbGenericTouchscreenQuirks(unsigned long *keys, unsigned long *abs)
+/* Quirks to unify the tool and tablet types for GENERIC protocol tablet PCs
+ *
+ * @param[in,out] keys Contains keys queried from hardware. If a
+ *   touchscreen is detected, keys are modified to add BTN_TOOL_FINGER so
+ *   that a TOUCH device is created later.
+ * @param[in] abs Used to detect multi-touch touchscreens.  When detected,
+ *   updates keys to add possibly missing BTN_TOOL_DOUBLETAP.
+ * @param[in,out] common Used only for tablet features.  Adds TCM_TPC for
+ *   touchscreens so correct defaults, such as absolute mode, are used.
+ */
+static void usbGenericTouchscreenQuirks(unsigned long *keys,
+					unsigned long *abs,
+					WacomCommonPtr common)
 {
 	/* USB Tablet PC single finger touch devices do not emit
 	 * BTN_TOOL_FINGER since it is a touchscreen device.
@@ -1622,7 +1633,10 @@ static void usbGenericTouchscreenQuirks(unsigned long *keys, unsigned long *abs)
 	if (ISBITSET(keys, BTN_TOUCH) &&
 			!ISBITSET(keys, BTN_TOOL_FINGER) &&
 			!ISBITSET(keys, BTN_TOOL_PEN))
+	{
 		SETBIT(keys, BTN_TOOL_FINGER); /* 1FGT */
+		TabletSetFeature(common, WCM_TPC);
+	}
 
 	/* Serial Tablet PC two finger touch devices do not emit
 	 * BTN_TOOL_DOUBLETAP since they are not touchpads.
@@ -1672,7 +1686,7 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 	if (!ISBITSET(abs, ABS_MISC))
 	{
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
-		usbGenericTouchscreenQuirks(common->wcmKeys, abs);
+		usbGenericTouchscreenQuirks(common->wcmKeys, abs, common);
 	}
 
 	common->vendor_id = wacom_id.vendor;
