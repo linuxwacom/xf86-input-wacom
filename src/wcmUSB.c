@@ -1371,7 +1371,7 @@ static int usbParseBTNEvent(WacomCommonPtr common,
  */
 static int usbInitToolType(const struct input_event *event_ptr, int nevents)
 {
-	int i, device_type = 0;
+	int i, device_type = TOUCH_ID;
 	struct input_event* event = (struct input_event *)event_ptr;
 
 	for (i = 0; (i < nevents) && !device_type; ++i)
