@@ -769,7 +769,7 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 	 * Slightly raised curve might be 0,5,95,100
 	 */
 	s = xf86SetStrOption(pInfo->options, "PressCurve", "0,0,100,100");
-	if (s && (IsStylus(priv) || IsEraser(priv)))
+	if (s && (IsPen(priv) || IsTouch(priv)))
 	{
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||

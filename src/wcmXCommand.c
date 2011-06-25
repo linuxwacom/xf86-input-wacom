@@ -169,7 +169,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = common->wcmRotate;
 	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
-	if (IsStylus(priv) || IsEraser(priv)) {
+	if (IsPen(priv) || IsTouch(priv)) {
 		values[0] = priv->nPressCtrl[0];
 		values[1] = priv->nPressCtrl[1];
 		values[2] = priv->nPressCtrl[2];
@@ -650,7 +650,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 						 pcurve[2], pcurve[3]))
 			return BadValue;
 
-		if (IsCursor(priv) || IsPad (priv) || IsTouch (priv))
+		if (IsCursor(priv) || IsPad (priv))
 			return BadValue;
 
 		if (!checkonly)

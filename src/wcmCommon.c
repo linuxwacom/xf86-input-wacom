@@ -1167,13 +1167,15 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			return;
 	}
 
-	if (IsPen(priv))
+	if (IsPen(priv) || IsTouch(priv))
 	{
 		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
-		filtered.buttons = setPressureButton(priv, &filtered);
+		if (IsPen(priv))
+			filtered.buttons = setPressureButton(priv, &filtered);
 		filtered.pressure = applyPressureCurve(priv,&filtered);
-		common->wcmPenInProx = filtered.proximity;
+		if (IsPen(priv))
+			common->wcmPenInProx = filtered.proximity;
 	}
 
 	else if (IsCursor(priv) && !priv->oldCursorHwProx)
