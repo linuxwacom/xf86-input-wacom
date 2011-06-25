@@ -849,7 +849,7 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 	if (TabletHasFeature(common, WCM_1FGT) ||
 	    TabletHasFeature(common, WCM_2FGT))
 	{
-		int touch_is_on, capacity_is_on;
+		int touch_is_on;
 
 		/* TouchDefault was off for all devices
 		 * except when touch is supported */
@@ -863,15 +863,6 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 		else if (touch_is_on != common->wcmTouch)
 			xf86Msg(X_WARNING, "%s: Touch option can only be set "
 				"by a touch tool.\n", pInfo->name);
-
-		capacity_is_on = xf86SetBoolOption(pInfo->options, "Capacity",
-						   common->wcmCapacityDefault);
-
-		if (is_primary || IsTouch(priv))
-			common->wcmCapacity = capacity_is_on;
-		else if (capacity_is_on != common->wcmCapacity)
-			xf86Msg(X_WARNING, "%s: Touch Capacity option can only be"
-				"set by a touch tool.\n", pInfo->name);
 	}
 
 	/* 2FG touch device */

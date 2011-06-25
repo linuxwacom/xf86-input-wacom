@@ -1028,10 +1028,7 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			ds->tilty = event->value - common->wcmMaxtiltY/2;
 			break;
 		case ABS_PRESSURE:
-			if (ds->device_type == TOUCH_ID)
-				ds->capacity = event->value;
-			else
-				ds->pressure = event->value;
+			ds->pressure = event->value;
 			break;
 		case ABS_DISTANCE:
 			ds->distance = event->value;
@@ -1129,7 +1126,7 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			break;
 
 		case ABS_MT_PRESSURE:
-			ds->capacity = event->value;
+			ds->pressure = event->value;
 			break;
 
 		default:
@@ -1253,17 +1250,8 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			if ((ds->proximity && !dslast->proximity) ||
 			    (!ds->proximity && dslast->proximity))
 				ds->sample = (int)GetTimeInMillis();
-			/* left button is always pressed for
-			 * touchscreen without capacity
-			 * when the first finger touch event received.
-			 * For touchscreen with capacity, left button
-			 * event will be decided
-			 * in wcmCommon.c by capacity threshold.
-			 * Touchpads should not have button
-			 * press.
-			 */
-			if (common->wcmCapacityDefault < 0 &&
-			    (TabletHasFeature(common, WCM_LCD)))
+			/* left button is always pressed for touchscreen */
+			if (TabletHasFeature(common, WCM_LCD))
 				ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 			break;
 

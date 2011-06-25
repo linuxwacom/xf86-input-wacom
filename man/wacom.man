@@ -162,11 +162,6 @@ enables the touch event for Tablet PC that supports touch feature,  i.e.,
 system cursor moves when user touches the tablet.  Default to "on" for 
 Tablet PCs with touch feature; "off" for all other models.
 .TP 4
-.B Option \fI"Capacity"\fP \fI"number"\fP
-sets touch sensitivity level for capacitive touch device, where number 
-can be an integer from -1 to 5.  Default is 3 for capacitive tools and 
--1 for non-capacitive tools.
-.TP 4
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
 rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 
 If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be 
