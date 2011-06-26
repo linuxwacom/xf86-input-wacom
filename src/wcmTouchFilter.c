@@ -194,6 +194,32 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 	}
 }
 
+/* Monitors for 1 finger touch and forces left button press or 1 finger
+ * release and will remove left button press.
+ *
+ * This function relies on wcmGestureMode will only be zero if
+ * WACOM_GESTURE_LAG_TIME has passed and still ony 1 finger on screen.
+ */
+static void wcmSingleFingerPress(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomChannelPtr firstChannel = common->wcmChannel;
+	WacomChannelPtr secondChannel = common->wcmChannel + 1;
+	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
+				   secondChannel->valid.states[0] };
+
+	DBG(10, priv, "\n");
+
+	/* This gesture is only valid on touchscreens. */
+	if (!TabletHasFeature(priv->common, WCM_LCD))
+		return;
+
+	if (ds[0].proximity && !ds[1].proximity)
+		firstChannel->valid.states[0].buttons |= 1;
+	if (!ds[0].proximity && !ds[1].proximity)
+		firstChannel->valid.states[0].buttons &= ~1;
+}
+
 /* parsing gesture mode according to 2FGT data */
 void wcmGestureFilter(WacomDevicePtr priv, int channel)
 {
@@ -340,6 +366,7 @@ ret:
 		 */
 		if (common->wcmGesture)
 			wcmSingleFingerTap(priv);
+		wcmSingleFingerPress(priv);
 	}
 }
 
