@@ -242,6 +242,8 @@ static struct
 
 	{ WACOM_VENDOR_ID, 0x65, 100000, 100000, &usbBamboo     }, /* Bamboo */
 	{ WACOM_VENDOR_ID, 0x69,  39842,  39842, &usbBamboo1    }, /* Bamboo1 */
+	{ WACOM_VENDOR_ID, 0x6A, 100000, 100000, &usbBamboo1    }, /* Bamboo1 4x6 */
+	{ WACOM_VENDOR_ID, 0x6B, 100000, 100000, &usbBamboo1    }, /* Bamboo1 5x8 */
 
 	{ WACOM_VENDOR_ID, 0xB0, 200000, 200000, &usbIntuos3    }, /* Intuos3 4x5 */
 	{ WACOM_VENDOR_ID, 0xB1, 200000, 200000, &usbIntuos3    }, /* Intuos3 6x8 */
@@ -265,6 +267,7 @@ static struct
 
 	{ WACOM_VENDOR_ID, 0x90, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x90 */
 	{ WACOM_VENDOR_ID, 0x93, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x93 */
+	{ WACOM_VENDOR_ID, 0x97, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x97 */
 	{ WACOM_VENDOR_ID, 0x9A, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x9A */
 	{ WACOM_VENDOR_ID, 0x9F, 100000, 100000, &usbTabletPC   }, /* CapPlus  0x9F */
 	{ WACOM_VENDOR_ID, 0xE2, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE2 */
