@@ -37,6 +37,7 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/Xrandr.h>
+#include <X11/extensions/Xinerama.h>
 #include <X11/XKBlib.h>
 
 #define TRACE(...) \
@@ -57,6 +58,7 @@ enum prop_flags {
 	PROP_FLAG_READONLY = 2,
 	PROP_FLAG_WRITEONLY = 4,
 	PROP_FLAG_INVERTED = 8, /* only valid with PROP_FLAG_BOOLEAN */
+	PROP_FLAG_OUTPUT = 16,
 };
 
 
@@ -416,7 +418,7 @@ static param_t parameters[] =
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,
 		.arg_count = 1,
-		.prop_flags = PROP_FLAG_WRITEONLY
+		.prop_flags = PROP_FLAG_WRITEONLY | PROP_FLAG_OUTPUT,
 	},
 	{
 		.name = "all",
@@ -1483,7 +1485,16 @@ static Bool convert_value_from_user(const param_t *param, const char *value, int
 		if (param->prop_flags & PROP_FLAG_INVERTED)
 			*return_value = !(*return_value);
 	}
-	else
+	else if (param->prop_flags & PROP_FLAG_OUTPUT)
+	{
+		const char *prefix = "HEAD-";
+		/* We currently support HEAD-X, where X is 0-9 */
+		if (strlen(value) != strlen(prefix) + 1 ||
+		    strncasecmp(value, prefix, strlen(prefix)) != 0)
+			return False;
+
+		*return_value = value[strlen(prefix)] - '0';
+	} else
 	{
 		char *end;
 		long conversion = strtol(value, &end, 10);
@@ -1937,7 +1948,7 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 
 	if (!matrix_prop)
 	{
-		fprintf(stderr, "Server does not support transformation");
+		fprintf(stderr, "Server does not support transformation\n");
 		return;
 	}
 
@@ -1963,37 +1974,50 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	XFlush(dpy);
 }
 
-static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+/**
+ * Set the matrix for the given device for the screen defined by offset and
+ * dimensions.
+ */
+static void _set_matrix(Display *dpy, XDevice *dev,
+			int offset_x, int offset_y,
+			int screen_width, int screen_height)
 {
-	int min, maj;
+	int width = DisplayWidth(dpy, DefaultScreen(dpy));
+	int height = DisplayHeight(dpy, DefaultScreen(dpy));
+
+	/* offset */
+	float x = 1.0 * offset_x/width;
+	float y = 1.0 * offset_y/height;
+
+	/* mapping */
+	float w = 1.0 * screen_width/width;
+	float h = 1.0 * screen_height/height;
+
+	float matrix[9] = { 1, 0, 0,
+			    0, 1, 0,
+			    0, 0, 1};
+	matrix[2] = x;
+	matrix[5] = y;
+	matrix[0] = w;
+	matrix[4] = h;
+
+	TRACE("Transformation matrix:\n");
+	TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
+	TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
+	TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
+
+	_set_matrix_prop(dpy, dev, matrix);
+}
+
+static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
 	int i, found = 0;
 	char *output_name;
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
 
-	if (argc != param->arg_count)
-	{
-		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
-			param->arg_count);
-		return;
-	}
-
 	output_name = argv[0];
-
-	if (!XRRQueryExtension(dpy, &maj, &min)) /* using min/maj as dummy */
-	{
-		fprintf(stderr, "Server does not support RandR");
-		return;
-	}
-
-	if (!XRRQueryVersion(dpy, &maj, &min) ||
-	    (maj * 1000 + min) < 1002)
-	{
-		fprintf(stderr, "Server does not support RandR 1.2");
-		return;
-	}
-
 
 	res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
 
@@ -2021,37 +2045,88 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	/* crtc holds our screen info, need to compare to actual screen size */
 	if (found)
 	{
-		int width = DisplayWidth(dpy, DefaultScreen(dpy));
-		int height = DisplayHeight(dpy, DefaultScreen(dpy));
-
-		/* offset */
-		float x = 1.0 * crtc_info->x/width;
-		float y = 1.0 * crtc_info->y/height;
-
-		/* mapping */
-		float w = 1.0 * crtc_info->width/width;
-		float h = 1.0 * crtc_info->height/height;
-
-		float matrix[9] = { 1, 0, 0,
-				    0, 1, 0,
-				    0, 0, 1};
-		matrix[2] = x;
-		matrix[5] = y;
-		matrix[0] = w;
-		matrix[4] = h;
-
-		TRACE("Transformation matrix:\n");
-		TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
-		TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
-		TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
-
-		_set_matrix_prop(dpy, dev, matrix);
+		TRACE("Setting CRTC %s\n", output_name);
+		_set_matrix(dpy, dev, crtc_info->x, crtc_info->y,
+			    crtc_info->width, crtc_info->height);
 	} else
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
 
 	XRRFreeScreenResources(res);
 }
+
+/**
+ * Adjust the transformation matrix based on the Xinerama settings. For
+ * TwinView This would better be done with libXNVCtrl but until they learn
+ * to package it properly, rely on Xinerama. Besides, libXNVCtrl isn't
+ * available on RHEL, so we'd have to do it through Xinerama there anyway.
+ */
+static void set_output_xinerama(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	int event, error;
+	XineramaScreenInfo *screens;
+	int nscreens;
+	int head;
+
+	if (!XineramaQueryExtension(dpy, &event, &error))
+	{
+		fprintf(stderr, "Unable to set screen mapping. Xinerama extension not found\n");
+		return;
+	}
+
+	if (!convert_value_from_user(param, argv[0], &head))
+	{
+		fprintf(stderr, "Please specify the output name as HEAD-X,"
+				"where X is the screen number\n");
+		return;
+	}
+
+	screens = XineramaQueryScreens(dpy, &nscreens);
+
+	if (nscreens == 0)
+	{
+		fprintf(stderr, "Xinerama failed to query screens.\n");
+		goto out;
+	} else if (nscreens <= head)
+	{
+		fprintf(stderr, "Found %d screens, but you requested %s.\n",
+				nscreens, argv[0]);
+		goto out;
+	}
+
+	TRACE("Setting xinerama head %d\n", head);
+
+	_set_matrix(dpy, dev,
+		    screens[head].x_org, screens[head].y_org,
+		    screens[head].width, screens[head].height);
+
+out:
+	XFree(screens);
+}
+
+static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+{
+	int opcode, event, error;
+	int maj, min;
+
+	if (argc != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+			param->arg_count);
+		return;
+	}
+
+	/* Check for RandR 1.2. Server bug causes the NVIDIA driver to
+	 * report with RandR 1.3 support but it doesn't expose RandR CRTCs.
+	 * Force Xinerama if NV-CONTROL is present */
+	if (XQueryExtension(dpy, "NV-CONTROL", &opcode, &event, &error) ||
+	    !XQueryExtension(dpy, "RANDR", &opcode, &event, &error) ||
+	    !XRRQueryVersion(dpy, &maj, &min) || (maj * 1000 + min) < 1002)
+		set_output_xinerama(dpy, dev, param, argc, argv);
+	else
+		set_output_xrandr(dpy, dev, param, argc, argv);
+}
+
 
 static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
