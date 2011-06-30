@@ -512,10 +512,9 @@ static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
 void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
 {
 	int i, skip = 1;
-	char*		device;
 
-        xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", pInfo->name);
-	device = xf86SetStrOption(pInfo->options, "Device", NULL);
+	xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", pInfo->name);
+
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
