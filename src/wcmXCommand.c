@@ -89,7 +89,6 @@ Atom prop_strip_buttons;
 Atom prop_wheel_buttons;
 Atom prop_tv_resolutions;
 Atom prop_cursorprox;
-Atom prop_capacity;
 Atom prop_threshold;
 Atom prop_suppress;
 Atom prop_touch;
@@ -170,7 +169,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = common->wcmRotate;
 	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, 8, 1, values);
 
-	if (IsStylus(priv) || IsEraser(priv)) {
+	if (IsPen(priv) || IsTouch(priv)) {
 		values[0] = priv->nPressCtrl[0];
 		values[1] = priv->nPressCtrl[1];
 		values[2] = priv->nPressCtrl[2];
@@ -191,9 +190,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[0] = common->wcmCursorProxoutDist;
 		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
 	}
-
-	values[0] = common->wcmCapacity;
-	prop_capacity = InitWcmAtom(pInfo->dev, WACOM_PROP_CAPACITY, 32, 1, values);
 
 	values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
 	prop_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURE_THRESHOLD, 32, 1, values);
@@ -654,7 +650,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 						 pcurve[2], pcurve[3]))
 			return BadValue;
 
-		if (IsCursor(priv) || IsPad (priv) || IsTouch (priv))
+		if (IsCursor(priv) || IsPad (priv))
 			return BadValue;
 
 		if (!checkonly)
@@ -738,21 +734,6 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly)
 			common->wcmCursorProxoutDist = value;
-	} else if (property == prop_capacity)
-	{
-		INT32 value;
-
-		if (prop->size != 1 || prop->format != 32)
-			return BadValue;
-
-		value = *(INT32*)prop->data;
-
-		if ((value < -1) || (value > 5))
-			return BadValue;
-
-		if (!checkonly)
-			common->wcmCapacity = value;
-
 	} else if (property == prop_threshold)
 	{
 		CARD32 value;

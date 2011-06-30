@@ -64,7 +64,7 @@
 /* 32 bit, 1 value */
 #define WACOM_PROP_PROXIMITY_THRESHOLD "Wacom Proximity Threshold"
 
-/* 32 bit, 1 value */
+/* DEPRECATED. DO NOT USE */
 #define WACOM_PROP_CAPACITY "Wacom Capacity"
 
 /* 32 bit, 1 value */

@@ -660,7 +660,6 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 
 		ds->x = touchdata.x;
 		ds->y = touchdata.y;
-		ds->capacity = touchdata.capacity;
 		ds->buttons = ds->proximity = touchdata.status;
 		ds->device_type = TOUCH_ID;
 		ds->device_id = TOUCH_DEVICE_ID;

@@ -242,15 +242,6 @@ static param_t parameters[] =
 		.arg_count = 1,
 	},
 	{
-		.name = "Capacity",
-		.desc = "Touch sensitivity level (default is 3 for capacitive tools, "
-		"-1 for others). ",
-		.prop_name = WACOM_PROP_CAPACITY,
-		.prop_format = 32,
-		.prop_offset = 0,
-		.arg_count = 1,
-	},
-	{
 		.name = "CursorProximity",
 		.desc = "Sets cursor distance for proximity-out "
 		"in distance from the tablet "
@@ -453,6 +444,7 @@ struct deprecated
 	{"xyDefault",	"ResetArea"},
 	{"ClickForce",	"Threshold"},
 	{"RawFilter",   NULL},
+	{"Capacity",	NULL},
 	{NULL,		NULL}
 };
 

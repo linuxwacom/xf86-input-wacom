@@ -515,7 +515,6 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 	priv->oldX = priv->currentX;
 	priv->oldY = priv->currentY;
 	priv->oldZ = ds->pressure;
-	priv->oldCapacity = ds->capacity;
 	priv->oldTiltX = tx;
 	priv->oldTiltY = ty;
 	priv->oldStripX = ds->stripx;
@@ -759,7 +758,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		priv->oldX = 0;
 		priv->oldY = 0;
 		priv->oldZ = 0;
-		priv->oldCapacity = ds->capacity;
 		priv->oldTiltX = 0;
 		priv->oldTiltY = 0;
 		priv->oldStripX = 0;
@@ -807,12 +805,11 @@ wcmCheckSuppress(WacomCommonPtr common,
 	if (dsOrig->stripy != dsNew->stripy) goto out;
 
 	/* FIXME: we should have different suppress values for different
-	 * axes. The resolution for x/y is vastly higher than for capacity
-	 * for example. */
+	 * axes with vastly different ranges.
+	 */
 	if (abs(dsOrig->tiltx - dsNew->tiltx) > suppress) goto out;
 	if (abs(dsOrig->tilty - dsNew->tilty) > suppress) goto out;
 	if (abs(dsOrig->pressure - dsNew->pressure) > suppress) goto out;
-	if (abs(dsOrig->capacity - dsNew->capacity) > suppress) goto out;
 	if (abs(dsOrig->throttle - dsNew->throttle) > suppress) goto out;
 	if (abs(dsOrig->rotation - dsNew->rotation) > suppress &&
 	    (1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) goto out;
@@ -1170,13 +1167,15 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			return;
 	}
 
-	if (IsPen(priv))
+	if (IsPen(priv) || IsTouch(priv))
 	{
 		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
-		filtered.buttons = setPressureButton(priv, &filtered);
+		if (IsPen(priv))
+			filtered.buttons = setPressureButton(priv, &filtered);
 		filtered.pressure = applyPressureCurve(priv,&filtered);
-		common->wcmPenInProx = filtered.proximity;
+		if (IsPen(priv))
+			common->wcmPenInProx = filtered.proximity;
 	}
 
 	else if (IsCursor(priv) && !priv->oldCursorHwProx)
@@ -1394,9 +1393,6 @@ WacomCommonPtr wcmNewCommon(void)
 	common->wcmFlags = 0;               /* various flags */
 	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */
 	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
-	common->wcmCapacity = -1;          /* Capacity is disabled */
-	common->wcmCapacityDefault = -1;    /* default to -1 when capacity isn't supported */
-					   /* 3 when capacity is supported */
 	common->wcmGestureParameters.wcmZoomDistance = 50;
 	common->wcmGestureParameters.wcmZoomDistanceDefault = 50;
 	common->wcmGestureParameters.wcmScrollDirection = 0;

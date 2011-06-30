@@ -286,7 +286,6 @@ struct _WacomDeviceRec
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
-	int oldCapacity;        /* previous capacity */
 	int oldTiltX;           /* previous tilt in x direction */
 	int oldTiltY;           /* previous tilt in y direction */    
 	int oldWheel;           /* previous wheel value */    
@@ -340,7 +339,6 @@ struct _WacomDeviceState
 	int y;
 	int buttons;
 	int pressure;
-	int capacity;
 	int tiltx;
 	int tilty;
 	int stripx;
@@ -457,7 +455,6 @@ struct _WacomCommonRec
 	int wcmTouchResolY;	     /* touch Y resolution in points/m */
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100% pressure */
-	int wcmMaxCapacity;	     /* max capacity value */
 	int wcmMaxDist;              /* tablet max distance value */
 	int wcmMaxtiltX;	     /* styli max tilt in X directory */ 
 	int wcmMaxtiltY;	     /* styli max tilt in Y directory */ 
@@ -486,9 +483,6 @@ struct _WacomCommonRec
 	int wcmGestureDefault;       /* default touch gesture to disable when not supported */
 	int wcmGestureMode;	       /* data is in Gesture Mode? */
 	WacomDeviceState wcmGestureState[MAX_FINGERS]; /* inital state when in gesture mode */
-	int wcmCapacity;	     /* disable/enable capacity */
-	int wcmCapacityDefault;      /* default to -1 when capacity isn't supported/disabled */
-				     /* 3 when capacity is supported */
 	WacomGesturesParameters wcmGestureParameters;
 	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
 	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
