@@ -1480,6 +1480,7 @@ static void special_map_buttons(Display *dpy, XDevice *dev, param_t* param, int 
 				(unsigned char*)btnact_data,
 				btnact_nitems);
 	XFlush(dpy);
+	free(data);
 }
 
 
