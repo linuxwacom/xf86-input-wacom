@@ -1209,7 +1209,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 
 	data = calloc(256, sizeof(long));
 	if (!parse_actions(dpy, argc, argv, data, &nitems))
-		return;
+		goto out;
 
 	/* obtain the button actions Atom */
 	XGetDeviceProperty(dpy, dev, btnact_prop, 0, 100, False,
@@ -1219,14 +1219,14 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	if (offset > btnact_nitems)
 	{
 		fprintf(stderr, "Invalid offset into %s property.\n", XGetAtomName(dpy, btnact_prop));
-		return;
+		goto out;
 	}
 
 	if (format != 32 || type != XA_ATOM)
 	{
 		fprintf(stderr, "Property '%s' in an unexpected format. This is a bug.\n",
 		        XGetAtomName(dpy, btnact_prop));
-		return;
+		goto out;
 	}
 
 	/* set or unset the property */
@@ -1265,6 +1265,8 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	}
 
 	XFlush(dpy);
+out:
+	free(data);
 }
 
 /**
