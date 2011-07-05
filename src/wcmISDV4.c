@@ -794,10 +794,10 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	ds = &common->wcmChannel[channel].work;
 	RESET_RELATIVE(*ds);
 
-	if (common->wcmPktLength != ISDV4_PKGLEN_TPCPEN) /* a touch */
-		channel = isdv4ParseTouchPacket(pInfo, data, len, ds);
-	else
+	if (common->wcmPktLength == ISDV4_PKGLEN_TPCPEN)
 		channel = isdv4ParsePenPacket(pInfo, data, len, ds);
+	else /* a touch */
+		channel = isdv4ParseTouchPacket(pInfo, data, len, ds);
 
 	if (channel < 0)
 		return 0;
