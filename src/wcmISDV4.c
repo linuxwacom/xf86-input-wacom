@@ -580,15 +580,165 @@ static int isdv4StopTablet(InputInfoPtr pInfo)
 
 	return Success;
 }
+/**
+ * Parse one touch packet.
+ *
+ * @param pInfo The device to parse the packet for
+ * @param data Data read from the device
+ * @param len Data length in bytes
+ * @param[out] ds The device state, modified in place.
+ *
+ * @return The channel number of -1 on error.
+ */
+
+static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
+				 int len, WacomDeviceState *ds)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	WacomDeviceState* lastTemp = &common->wcmChannel[1].valid.state;
+	ISDV4TouchData touchdata;
+	int rc;
+	int channel = 0;
+
+	rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
+	if (rc == -1)
+	{
+		xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
+				pInfo->name);
+		return -1;
+	}
+
+	ds->x = touchdata.x;
+	ds->y = touchdata.y;
+	ds->buttons = ds->proximity = touchdata.status;
+	ds->device_type = TOUCH_ID;
+	ds->device_id = TOUCH_DEVICE_ID;
+
+	if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
+	{
+		if (touchdata.finger2.status ||
+		    (!touchdata.finger2.status && lastTemp->proximity))
+		{
+			/* Got 2FGT. Send the first one if received */
+			if (ds->proximity || (!ds->proximity && last->proximity))
+			{
+				/* time stamp for 2FGT gesture events */
+				if ((ds->proximity && !last->proximity) ||
+				    (!ds->proximity && last->proximity))
+					ds->sample = (int)GetTimeInMillis();
+				wcmEvent(common, channel, ds);
+			}
+
+			channel = 1;
+			ds = &common->wcmChannel[channel].work;
+			RESET_RELATIVE(*ds);
+			ds->x = touchdata.finger2.x;
+			ds->y = touchdata.finger2.y;
+			ds->device_type = TOUCH_ID;
+			ds->device_id = TOUCH_DEVICE_ID;
+			ds->proximity = touchdata.finger2.status;
+			/* time stamp for 2FGT gesture events */
+			if ((ds->proximity && !lastTemp->proximity) ||
+			    (!ds->proximity && lastTemp->proximity))
+				ds->sample = (int)GetTimeInMillis();
+		}
+	}
+
+	DBG(8, priv, "MultiTouch %s proximity \n", ds->proximity ? "in" : "out of");
+
+	return channel;
+}
+
+/**
+ * Parse one pen packet.
+ *
+ * @param pInfo The device to parse the packet for
+ * @param data Data read from the device
+ * @param len Data length in bytes
+ * @param[out] ds The device state, modified in place.
+ *
+ * @return The channel number.
+ */
+static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
+			       int len, WacomDeviceState *ds)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
+	int rc;
+	ISDV4CoordinateData coord;
+	int channel = 0;
+	int cur_type;
+
+	rc = isdv4ParseCoordinateData(data, ISDV4_PKGLEN_TPCPEN, &coord);
+
+	if (rc == -1)
+	{
+		xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
+		return -1;
+	}
+
+	ds->proximity = coord.proximity;
+
+	/* x and y in "normal" orientetion (wide length is X) */
+	ds->x = coord.x;
+	ds->y = coord.y;
+
+	/* pressure */
+	ds->pressure = coord.pressure;
+
+	/* buttons */
+	ds->buttons = coord.tip | (coord.side << 1) | (coord.eraser << 2);
+
+	/* check which device we have */
+	cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
+
+	/* first time into prox */
+	if (!last->proximity && ds->proximity)
+		ds->device_type = cur_type;
+	/* check on previous proximity */
+	else if (ds->buttons && ds->proximity)
+	{
+		/* we might have been fooled by tip and second
+		 * sideswitch when it came into prox */
+		if ((ds->device_type != cur_type) &&
+				(ds->device_type == ERASER_ID))
+		{
+			/* send a prox-out for old device */
+			WacomDeviceState out = { 0 };
+			wcmEvent(common, 0, &out);
+			ds->device_type = cur_type;
+		}
+	}
+
+	ds->device_id = (ds->device_type == ERASER_ID) ?  ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
+
+	/* don't send button 3 event for eraser
+	 * button 1 event will be sent by testing presure level
+	 */
+	if (ds->device_type == ERASER_ID && ds->buttons & 4)
+	{
+		ds->buttons = 0;
+		ds->device_id = ERASER_DEVICE_ID;
+	}
+
+	DBG(8, priv, "%s\n",
+			ds->device_type == ERASER_ID ? "ERASER " :
+			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE");
+
+	return channel;
+}
+
 
 static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
-	WacomDeviceState* lastTemp = &common->wcmChannel[1].valid.state;
 	WacomDeviceState* ds;
-	int n, cur_type, channel = 0;
+	int n, channel = 0;
 
 	DBG(10, common, "\n");
 
@@ -645,121 +795,13 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	RESET_RELATIVE(*ds);
 
 	if (common->wcmPktLength != ISDV4_PKGLEN_TPCPEN) /* a touch */
-	{
-		ISDV4TouchData touchdata;
-		int rc;
-
-		rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
-		if (rc == -1)
-		{
-			xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
-				pInfo->name);
-			return 0;
-		}
-
-
-		ds->x = touchdata.x;
-		ds->y = touchdata.y;
-		ds->buttons = ds->proximity = touchdata.status;
-		ds->device_type = TOUCH_ID;
-		ds->device_id = TOUCH_DEVICE_ID;
-
-		if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
-		{
-			if (touchdata.finger2.status ||
-			    (!touchdata.finger2.status && lastTemp->proximity))
-			{
-				/* Got 2FGT. Send the first one if received */
-				if (ds->proximity || (!ds->proximity &&
-						 last->proximity))
-				{
-					/* time stamp for 2FGT gesture events */
-					if ((ds->proximity && !last->proximity) ||
-						    (!ds->proximity && last->proximity))
-						ds->sample = (int)GetTimeInMillis();
-					wcmEvent(common, channel, ds);
-				}
-
-				channel = 1;
-				ds = &common->wcmChannel[channel].work;
-				RESET_RELATIVE(*ds);
-				ds->x = touchdata.finger2.x;
-				ds->y = touchdata.finger2.y;
-				ds->device_type = TOUCH_ID;
-				ds->device_id = TOUCH_DEVICE_ID;
-				ds->proximity = touchdata.finger2.status;
-				/* time stamp for 2FGT gesture events */
-				if ((ds->proximity && !lastTemp->proximity) ||
-					    (!ds->proximity && lastTemp->proximity))
-					ds->sample = (int)GetTimeInMillis();
-			}
-		}
-
-		DBG(8, priv, "MultiTouch "
-			"%s proximity \n", ds->proximity ? "in" : "out of");
-	}
+		channel = isdv4ParseTouchPacket(pInfo, data, len, ds);
 	else
-	{
-		int rc;
-		ISDV4CoordinateData coord;
+		channel = isdv4ParsePenPacket(pInfo, data, len, ds);
 
-		rc = isdv4ParseCoordinateData(data, ISDV4_PKGLEN_TPCPEN, &coord);
+	if (channel < 0)
+		return 0;
 
-		if (rc == -1)
-		{
-			xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
-			return 0;
-		}
-
-		ds->proximity = coord.proximity;
-
-		/* x and y in "normal" orientetion (wide length is X) */
-		ds->x = coord.x;
-		ds->y = coord.y;
-
-		/* pressure */
-		ds->pressure = coord.pressure;
-
-		/* buttons */
-		ds->buttons = coord.tip | (coord.side << 1) | (coord.eraser << 2);
-
-		/* check which device we have */
-		cur_type = (ds->buttons & 4) ? ERASER_ID : STYLUS_ID;
-
-		/* first time into prox */
-		if (!last->proximity && ds->proximity) 
-			ds->device_type = cur_type;
-		/* check on previous proximity */
-		else if (ds->buttons && ds->proximity)
-		{
-			/* we might have been fooled by tip and second
-			 * sideswitch when it came into prox */
-			if ((ds->device_type != cur_type) &&
-				(ds->device_type == ERASER_ID))
-			{
-				/* send a prox-out for old device */
-				WacomDeviceState out = { 0 };
-				wcmEvent(common, 0, &out);
-				ds->device_type = cur_type;
-			}
-		}
-
-		ds->device_id = (ds->device_type == ERASER_ID) ? 
-			ERASER_DEVICE_ID : STYLUS_DEVICE_ID;
-
-		/* don't send button 3 event for eraser 
-		 * button 1 event will be sent by testing presure level
-		 */
-		if (ds->device_type == ERASER_ID && ds->buttons&4)
-		{
-			ds->buttons = 0;
-			ds->device_id = ERASER_DEVICE_ID;
-		}
-
-		DBG(8, priv, "%s\n",
-			ds->device_type == ERASER_ID ? "ERASER " :
-			ds->device_type == STYLUS_ID ? "STYLUS" : "NONE");
-	}
 	wcmEvent(common, channel, ds);
 	return common->wcmPktLength;
 }
