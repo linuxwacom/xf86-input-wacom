@@ -209,7 +209,7 @@ struct _WacomModel
 #define WCM_MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer
                                          * (which are treated as mouse buttons,
                                          * not as keys like tablet menu buttons). 
-					 * For backword compability support, 
+					 * For backward compability support,
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
 
