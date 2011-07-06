@@ -377,8 +377,11 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 					data->values[3] = area->bottomY;
 					QueueWorkProc(reset_area_property, serverClient, data);
 				}
-			} else /* offset for multimonitor */
+			}
+#if 0
+			else /* offset for multimonitor */
 				wcmAdjustArea(pInfo, area);
+#endif
 
 			priv->topX = area->topX;
 			priv->topY = area->topY;
