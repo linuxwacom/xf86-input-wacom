@@ -222,6 +222,8 @@ The default is 27.
 .RE
 .SH "SEE ALSO"
 Xorg(1x), xorg.conf(5x), xorg.conf.d(5x), xorgconfig(1x), Xserver(1x), X(7).
+.PP
+More information is available at http://linuxwacom.sourceforge.net
 .SH AUTHORS
 Frederic Lepied <lepied@xfree86.org>,
 Ping Cheng <pingc@wacom.com>,

@@ -218,3 +218,5 @@ Peter Hutterer <peter.hutterer@redhat.com>
 __xservername__(__appmansuffix__), __drivername__(__drivermansuffix__),
 xorg.conf(__filemansuffix__),
 X(__miscmansuffix__)
+.PP
+More information is available at http://linuxwacom.sourceforge.net
