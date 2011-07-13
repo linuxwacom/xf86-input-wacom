@@ -226,8 +226,8 @@ xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)
 .PP
 More information is available at http://linuxwacom.sourceforge.net
 .SH AUTHORS
-Frederic Lepied <lepied@xfree86.org>,
+Peter Hutterer <peter.hutterer@who-t.net>,
 Ping Cheng <pingc@wacom.com>,
+Frederic Lepied <lepied@xfree86.org>,
 John E. Joganic <jej@j-arkadia.com>,
-Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>,
-Peter Hutterer <peter.hutterer@who-t.net>
+Magnus Vigerlöf <Magnus.Vigerlof@ipbo.se>
