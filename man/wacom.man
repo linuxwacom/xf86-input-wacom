@@ -221,7 +221,8 @@ The threshold applies to the normalised pressure range of [0..2048].
 The default is 27.
 .RE
 .SH "SEE ALSO"
-Xorg(1x), xorg.conf(5x), xorg.conf.d(5x), xorgconfig(1x), Xserver(1x), X(7).
+__xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
+xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)
 .PP
 More information is available at http://linuxwacom.sourceforge.net
 .SH AUTHORS
