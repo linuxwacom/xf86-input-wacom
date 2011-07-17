@@ -2437,8 +2437,8 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ArrayLength(parameters) == 35);
-	assert(ArrayLength(deprecated_parameters) == 16);
+	assert(ArrayLength(parameters) == 34);
+	assert(ArrayLength(deprecated_parameters) == 17);
 }
 
 /**

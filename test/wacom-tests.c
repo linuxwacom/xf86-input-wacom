@@ -263,7 +263,6 @@ test_suppress(void)
 	new.field = old.field;
 
 	test_above_suppress(pressure);
-	test_above_suppress(capacity);
 	test_above_suppress(throttle);
 	test_above_suppress(rotation);
 	test_above_suppress(abswheel);
