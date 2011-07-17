@@ -118,7 +118,7 @@ static int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
 	/* FIXME: big endian? */
 	reply->x_max = (buffer[1] << 9) | (buffer[2] << 2) | ((buffer[6] >> 5) & 0x3);
 	reply->y_max = (buffer[3] << 9) | (buffer[4] << 2) | ((buffer[6] >> 3) & 0x3);
-	reply->pressure_max = buffer[5] | (buffer[6] & 0x7);
+	reply->pressure_max = (buffer[6] & 0x7) << 7 | buffer[5];
 	reply->tilt_y_max = buffer[7];
 	reply->tilt_x_max = buffer[8];
 	reply->version = buffer[9] << 7 | buffer[10];
