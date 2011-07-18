@@ -225,6 +225,9 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WacomDevicePtr *prev;
 	WacomCommonPtr common = priv->common;
 
+	if (!priv)
+		goto out;
+
 	DBG(1, priv, "\n");
 
 	/* Server 1.10 will UnInit all devices for us */
@@ -284,6 +287,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		dev = dev->next;
 	}
 
+out:
 	wcmFree(pInfo);
 	xf86DeleteInput(pInfo, 0);
 }
