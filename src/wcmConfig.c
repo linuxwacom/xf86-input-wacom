@@ -452,7 +452,6 @@ SetupProc_fail:
 		}
 
 		pInfo->private = NULL;
-		xf86DeleteInput(pInfo, 0);
 	}
 
 	return BadMatch;
