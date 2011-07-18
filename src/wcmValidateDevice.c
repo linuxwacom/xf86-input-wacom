@@ -139,7 +139,10 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	char* dsource = xf86CheckStrOption(pInfo->options, "_source", "");
 
 	if (!type)
+	{
+		xf86Msg(X_ERROR, "%s: No type specified\n", pInfo->name);
 		return FALSE;
+	}
 
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
