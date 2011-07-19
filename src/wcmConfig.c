@@ -57,6 +57,7 @@ static int wcmAllocate(InputInfoPtr pInfo)
 		goto error;
 
 	pInfo->flags = 0;
+	pInfo->fd = -1;
 	pInfo->device_control = gWacomModule.DevProc;
 	pInfo->read_input = gWacomModule.DevReadInput;
 	pInfo->control_proc = gWacomModule.DevChangeControl;
