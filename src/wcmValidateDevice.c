@@ -172,6 +172,11 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 			}
 		}
 	}
+
+	if (!ret)
+		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n",
+			pInfo->name, type);
+
 	return ret;
 }
 
