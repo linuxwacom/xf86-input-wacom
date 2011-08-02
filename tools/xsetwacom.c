@@ -2103,9 +2103,17 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	int opcode, event, error;
 	int maj, min;
 
-	if (argc != param->arg_count)
+	if (argc == 0)
 	{
-		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
+		float matrix[9] = { 1, 0, 0,
+				    0, 1, 0,
+				    0, 0, 1};
+		_set_matrix_prop(dpy, dev, matrix);
+		return;
+	}
+	else if (argc != param->arg_count)
+	{
+		fprintf(stderr, "'%s' requires exactly 0 or %d value(s).\n", param->name,
 			param->arg_count);
 		return;
 	}

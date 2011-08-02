@@ -119,10 +119,11 @@ the device will ignore events from other tools. A serial of 0 means the
 device is unbound and will react to any tool of the matching type.
 Default: 0
 .TP
-\fBMapToOutput\fR output
+\fBMapToOutput\fR [output]
 Map the tablet's input area to the given output (e.g. "VGA1"). The output
 must specify one of those available through the XRandR extension. A list of
-outputs may be obtained with the xrandr tool. The output mapping
+outputs may be obtained with the xrandr tool. If no output is provided,
+the tablet is mapped to the entire desktop. The output mapping
 configuration is a onetime setting and does not track output
 reconfigurations; the command needs to be re-run whenever the output
 configuration changes. When used with tablet rotation, the tablet must be
