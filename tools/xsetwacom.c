@@ -2230,7 +2230,10 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 				int val = data[param->prop_offset + i];
 
 				if (param->prop_flags & PROP_FLAG_BOOLEAN)
-					sprintf(&str[strlen(str)], "%s", val ?  "on" : "off");
+					if (param->prop_flags & PROP_FLAG_INVERTED)
+						sprintf(&str[strlen(str)], "%s", val ?  "off" : "on");
+					else
+						sprintf(&str[strlen(str)], "%s", val ?  "on" : "off");
 				else
 					sprintf(&str[strlen(str)], "%d", val);
 
