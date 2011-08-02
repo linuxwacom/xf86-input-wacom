@@ -1282,7 +1282,7 @@ out:
  * @param dpy   X11 display to query
  * @param dev   Device to modify
  * @param param Info about parameter to modify
- * @param argc  Dize of argv
+ * @param argc  Size of argv
  * @param argv  Arguments to parse
  */
 static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
