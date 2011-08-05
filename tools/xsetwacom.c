@@ -2005,6 +2005,7 @@ static void _set_matrix(Display *dpy, XDevice *dev,
 static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int i, found = 0;
+	int x, y, width, height;
 	char *output_name;
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
@@ -2013,7 +2014,6 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int ar
 	output_name = argv[0];
 
 	res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
-
 	for (i = 0; i < res->noutput && !found; i++)
 	{
 		output_info = XRRGetOutputInfo(dpy, res, res->outputs[i]);
@@ -2025,8 +2025,13 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int ar
 			continue;
 
 		crtc_info = XRRGetCrtcInfo (dpy, res, output_info->crtc);
-		TRACE("CRTC (%dx%d) %dx%d\n", crtc_info->x, crtc_info->y,
-			crtc_info->width, crtc_info->height);
+		x = crtc_info->x;
+		y = crtc_info->y;
+		width = crtc_info->width;
+		height = crtc_info->height;
+		XRRFreeCrtcInfo(crtc_info);
+
+		TRACE("CRTC (%dx%d) %dx%d\n", x, y, width, height);
 
 		if (strcmp(output_info->name, output_name) == 0)
 		{
@@ -2034,18 +2039,17 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int ar
 			break;
 		}
 	}
+	XRRFreeScreenResources(res);
 
 	/* crtc holds our screen info, need to compare to actual screen size */
 	if (found)
 	{
 		TRACE("Setting CRTC %s\n", output_name);
-		_set_matrix(dpy, dev, crtc_info->x, crtc_info->y,
-			    crtc_info->width, crtc_info->height);
+		_set_matrix(dpy, dev, x, y, width, height);
 	} else
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
 
-	XRRFreeScreenResources(res);
 }
 
 /**
