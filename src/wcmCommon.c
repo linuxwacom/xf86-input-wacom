@@ -1128,7 +1128,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
 	if (!tool->enabled) {
-		xf86Msg(X_ERROR, "wcmEvent: tool not initialized yet. Skipping event. \n");
+		xf86Msg(X_ERROR, "tool not initialized yet. Skipping event. \n");
 		return;
 	}
 
