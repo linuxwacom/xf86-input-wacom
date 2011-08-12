@@ -223,6 +223,32 @@ xsetwacom, that comes with this driver.
 sets the pressure threshold used to generate a button 1 events of stylus.
 The threshold applies to the normalised pressure range of [0..2048].
 The default is 27.
+.TP 4
+.B Option \fI"Gesture"\fP \fI"bool"\fP
+Enable or disable gesture support on the device. Default: off unless the
+tablet supports multi-touch.
+.TP 4
+.B Option \fI"ZoomDistance"\fP \fI"number"\fP
+If
+.B Option \fI"Gesture"\fP
+is enabled, this option specifies the minimum movement distance before a
+zoom gesture is recognized.
+.TP 4
+.B Option \fI"ScrollDistance"\fP \fI"number"\fP
+If
+.B Option \fI"Gesture"\fP
+is enabled, this option specifies the minimum movement distance before a
+scroll gesture is recognized.
+.TP 4
+.B Option \fI"TapTime"\fP \fI"number"\fP
+If
+.B Option \fI"Gesture"\fP
+is enabled, this option determines the maximum time of a touch event to be
+recognized as tap. A press and release event shorter than
+.B TapTime
+generates button press and release events. Presses longer than
+.B TapTime
+do not generate button events, only motion events.
 .RE
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
