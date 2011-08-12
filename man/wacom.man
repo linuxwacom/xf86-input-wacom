@@ -201,6 +201,10 @@ sets the max distance from tablet to stop reporting movement for cursor in relat
 Default for Intuos series is 10, for Graphire series (including Volitos) is
 42. Only available for the cursor/puck device.
 .TP 4
+.B Option \fI"RawSample"\fP \fI"number"\fP
+Set  the  sample  window  size (a sliding average sampling window) for
+incoming input tool raw data points.  Default:  4, range of 1 to 20.
+.TP 4
 .B Option \fI"Serial"\fP \fI"number"\fP
 sets the serial number associated with the physical device. This allows
 to have multiple devices of the same type (i.e. multiple pens). This
