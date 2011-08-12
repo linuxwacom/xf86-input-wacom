@@ -46,13 +46,13 @@
   */
 #define WACOM_PROP_STRIPBUTTONS "Wacom Strip Buttons"
 
-/* 8 bit, 4 values, up, down, wheel up, wheel down
+/* 8 bit, 4 values, rel wheel up, rel wheel down, abs wheel up, abs wheel down
    OR
-   Atom, 4 values , up, down, wheel up, wheel down
+   Atom, 4 values , rel wheel up, rel wheel down, abs wheel up, abs wheel down
  */
 #define WACOM_PROP_WHEELBUTTONS "Wacom Wheel Buttons"
 
-/* 32 bit, 4 values */
+/* DEPRECATED, DO NOT USE */
 #define WACOM_PROP_TWINVIEW_RES "Wacom TwinView Resolution"
 
 /* DEPRECATED. DO NOT USE */
