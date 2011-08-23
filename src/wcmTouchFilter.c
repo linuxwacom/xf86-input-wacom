@@ -290,18 +290,21 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		    wcmFingerScroll(priv);
 
 	/* process complex two finger gestures */
-	else if ((2*common->wcmGestureParameters.wcmTapTime <
-	    (GetTimeInMillis() - ds[0].sample)) &&
-	    (2*common->wcmGestureParameters.wcmTapTime <
-	    (GetTimeInMillis() - ds[1].sample))
-	    && ds[0].proximity && ds[1].proximity)
-	{
-		/* scroll should be considered first since it requires
-		 * a finger distance check */
-		wcmFingerScroll(priv);
+	else {
+		CARD32 ms = GetTimeInMillis();
+		int taptime = 2 * common->wcmGestureParameters.wcmTapTime;
 
-		if (!(common->wcmGestureMode & GESTURE_SCROLL_MODE))
-		    wcmFingerZoom(priv);
+		if (ds[0].proximity && ds[1].proximity &&
+		    (taptime < (ms - ds[0].sample)) &&
+		    (taptime < (ms - ds[1].sample)))
+		{
+			/* scroll should be considered first since it requires
+			 * a finger distance check */
+			wcmFingerScroll(priv);
+
+			if (!(common->wcmGestureMode & GESTURE_SCROLL_MODE))
+				wcmFingerZoom(priv);
+		}
 	}
 ret:
 	if (!common->wcmGestureMode && !channel && !is_absolute(priv->pInfo))
