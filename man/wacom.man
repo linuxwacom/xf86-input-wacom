@@ -167,8 +167,9 @@ Tablet PCs with touch feature; "off" for all other models.
 rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 
 If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be 
 applied before rotation. Rotation must be applied to the parent device
-(usually the stylus), rotation settings on hotplugged devices will be
-ignored. The default is "NONE".
+(usually the stylus), rotation settings on in-driver hotplugged devices (see
+.B DRIVER-INTERNAL DEVICE HOTPLUGGING
+) will be ignored. The default is "NONE".
 .TP 4
 .B Option \fI"PressCurve"\fP \fI"x1,y1,x2,y2"\fP
 sets pressure curve by control points x1, y1, x2, and y2.  Their values are in range 
