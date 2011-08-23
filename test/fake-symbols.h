@@ -1,6 +1,12 @@
 #include <xorg-server.h>
 #include <xf86Xinput.h>
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
+#define OPTTYPE XF86OptionPtr
+#else
+#define OPTTYPE pointer
+#endif
+
 extern int xf86ReadSerial (int fd, void *buf, int count);
 extern int xf86WriteSerial (int fd, const void *buf, int count);
 extern int xf86CloseSerial (int fd);
@@ -8,22 +14,22 @@ extern int xf86WaitForInput (int fd, int timeout);
 extern int xf86OpenSerial (pointer options);
 extern int xf86SetSerialSpeed (int fd, int speed);
 
-extern pointer xf86ReplaceIntOption(pointer optlist, const char *name, const int val);
-extern pointer xf86AddNewOption(pointer head, const char *name, const char *val);
-extern char* xf86OptionName(pointer opt);
-extern char* xf86FindOptionValue(pointer options, const char *name);
+extern OPTTYPE xf86ReplaceIntOption(OPTTYPE optlist, const char *name, const int val);
+extern OPTTYPE xf86AddNewOption(OPTTYPE head, const char *name, const char *val);
+extern char* xf86OptionName(OPTTYPE opt);
+extern char* xf86FindOptionValue(OPTTYPE options, const char *name);
 extern int xf86NameCmp(const char *s1, const char *s2);
-extern char* xf86CheckStrOption(pointer optlist, const char *name, char *deflt);
+extern char* xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt);
 
 
-extern char * xf86SetStrOption(pointer optlist, const char *name, char *deflt);
-extern int xf86SetBoolOption(pointer optlist, const char *name, int deflt);
-extern pointer xf86AddNewOption(pointer head, const char *name, const char *val);
-extern char* xf86FindOptionValue(pointer options, const char *name);
-extern char* xf86OptionName(pointer opt);
-extern char *xf86OptionValue(pointer opt);
+extern char * xf86SetStrOption(OPTTYPE optlist, const char *name, char *deflt);
+extern int xf86SetBoolOption(OPTTYPE optlist, const char *name, int deflt);
+extern OPTTYPE xf86AddNewOption(OPTTYPE head, const char *name, const char *val);
+extern char* xf86FindOptionValue(OPTTYPE options, const char *name);
+extern char* xf86OptionName(OPTTYPE opt);
+extern char *xf86OptionValue(OPTTYPE opt);
 extern int xf86NameCmp(const char *s1, const char *s2);
-extern char * xf86CheckStrOption(pointer optlist, const char *name, char *deflt);
+extern char * xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt);
 extern void xf86AddEnabledDevice(InputInfoPtr pInfo);
 extern void xf86RemoveEnabledDevice(InputInfoPtr pInfo);
 extern Atom XIGetKnownProperty(char *name);
@@ -53,7 +59,7 @@ XISetDevicePropertyDeletable(DeviceIntPtr dev, Atom property, Bool deletable);
 
 extern InputInfoPtr xf86FirstLocalDevice(void);
 extern void xf86DeleteInput(InputInfoPtr pInp, int flags);
-extern pointer xf86OptionListDuplicate(pointer options);
+extern OPTTYPE xf86OptionListDuplicate(OPTTYPE options);
 extern Bool
 InitButtonClassDeviceStruct(DeviceIntPtr dev, int numButtons, Atom* labels,
                             CARD8 *map);
@@ -65,7 +71,7 @@ xf86PostKeyboardEvent(DeviceIntPtr      device,
                       unsigned int      key_code,
                       int               is_down);
 extern int
-xf86SetIntOption(pointer optlist, const char *name, int deflt);
+xf86SetIntOption(OPTTYPE optlist, const char *name, int deflt);
 extern void
 xf86PostButtonEventP(DeviceIntPtr	device,
                      int		is_absolute,
@@ -130,10 +136,10 @@ extern Bool
 InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
                               int numMotionEvents, int mode);
 
-extern pointer
-xf86ReplaceStrOption(pointer optlist, const char *name, const char* val);
+extern OPTTYPE
+xf86ReplaceStrOption(OPTTYPE optlist, const char *name, const char* val);
 
-extern pointer xf86NextOption(pointer list);
+extern OPTTYPE xf86NextOption(OPTTYPE list);
 
 extern int
 XIGetDeviceProperty (DeviceIntPtr dev, Atom property, XIPropertyValuePtr *value);

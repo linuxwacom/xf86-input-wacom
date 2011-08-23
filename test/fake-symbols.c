@@ -37,43 +37,43 @@ xf86SetSerialSpeed (int fd, int speed)
     return 0;
 }
 
-_X_EXPORT pointer
-xf86ReplaceIntOption(pointer optlist, const char *name, const int val)
+_X_EXPORT OPTTYPE
+xf86ReplaceIntOption(OPTTYPE optlist, const char *name, const int val)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86SetStrOption(pointer optlist, const char *name, char *deflt)
+xf86SetStrOption(OPTTYPE optlist, const char *name, char *deflt)
 {
     return NULL;
 }
 
 _X_EXPORT int
-xf86SetBoolOption(pointer optlist, const char *name, int deflt)
+xf86SetBoolOption(OPTTYPE optlist, const char *name, int deflt)
 {
     return 0;
 }
 
-_X_EXPORT pointer
-xf86AddNewOption(pointer head, const char *name, const char *val)
+_X_EXPORT OPTTYPE
+xf86AddNewOption(OPTTYPE head, const char *name, const char *val)
 {
     return NULL;
 }
 _X_EXPORT char *
-xf86FindOptionValue(pointer options, const char *name)
-{
-    return NULL;
-}
-
-_X_EXPORT char *
-xf86OptionName(pointer opt)
+xf86FindOptionValue(OPTTYPE options, const char *name)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86OptionValue(pointer opt)
+xf86OptionName(OPTTYPE opt)
+{
+    return NULL;
+}
+
+_X_EXPORT char *
+xf86OptionValue(OPTTYPE opt)
 {
     return NULL;
 }
@@ -85,7 +85,7 @@ xf86NameCmp(const char *s1, const char *s2)
 }
 
 _X_EXPORT char *
-xf86CheckStrOption(pointer optlist, const char *name, char *deflt)
+xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt)
 {
     return NULL;
 }
@@ -196,8 +196,8 @@ xf86DeleteInput(InputInfoPtr pInp, int flags)
     return;
 }
 
-_X_EXPORT pointer
-xf86OptionListDuplicate(pointer options)
+_X_EXPORT OPTTYPE
+xf86OptionListDuplicate(OPTTYPE options)
 {
     return NULL;
 }
@@ -225,7 +225,7 @@ xf86PostKeyboardEvent(DeviceIntPtr      device,
 }
 
 _X_EXPORT int
-xf86SetIntOption(pointer optlist, const char *name, int deflt)
+xf86SetIntOption(OPTTYPE optlist, const char *name, int deflt)
 {
     return 0;
 }
@@ -355,15 +355,15 @@ InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
 }
 
 
-_X_EXPORT pointer
-xf86ReplaceStrOption(pointer optlist, const char *name, const char* val)
+_X_EXPORT OPTTYPE
+xf86ReplaceStrOption(OPTTYPE optlist, const char *name, const char* val)
 {
     return NULL;
 }
 
 
-_X_EXPORT pointer
-xf86NextOption(pointer list)
+_X_EXPORT OPTTYPE
+xf86NextOption(OPTTYPE list)
 {
     return NULL;
 }
