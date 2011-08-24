@@ -213,25 +213,45 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	if (!common->wcmGesture)
 		goto ret;
 
-	/* second finger in prox. wait for gesture event if first finger
-	 * was in in prox */
-	if (ds[1].proximity && !common->wcmGestureMode && dsLast[0].proximity)
-	{
-		common->wcmGestureMode = GESTURE_LAG_MODE;
-	}
-
-	/* first finger recently came in prox. But not the first time
-	 * wait for the second one for a certain time */
-	else if (dsLast[0].proximity &&
-	    ((GetTimeInMillis() - ds[0].sample) < WACOM_GESTURE_LAG_TIME))
+	/* When 2 fingers are in proximity, it must always be in one of
+	 * the valid 2 fingers modes: LAG, SCROLL, or ZOOM.
+	 * LAG mode is used while deciding between SCROLL and ZOOM and
+	 * prevents cursor movement.  Force to LAG mode if ever in NONE
+	 * mode to stop cursor movement.
+	 */
+	if (dsLast[0].proximity && ds[1].proximity)
 	{
 		if (!common->wcmGestureMode)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
 	}
+	/* When only 1 finger is in proximity, it can be in either LAG mode
+	 * or NONE mode.
+	 * 1 finger LAG mode is a very short time period mainly to debounce
+	 * initial touch.
+	 * NONE mode means cursor is allowed to move around.
+	 * TODO: This has to use dsLast[0] because of later logic that
+	 * wants mode to be NONE still when 1st entering proximity.
+	 * That could use some re-arranging/cleanup.
+	 *
+	 */
+	else if (dsLast[0].proximity)
+	{
+		CARD32 ms = GetTimeInMillis();
 
-	/* we've waited enough time */
-	else if (common->wcmGestureMode == GESTURE_LAG_MODE)
-		common->wcmGestureMode = 0;
+		if ((ms - ds[0].sample) < WACOM_GESTURE_LAG_TIME)
+		{
+			/* Must have recently come into proximity.  Change
+			 * into LAG mode.
+			 */
+			if (!common->wcmGestureMode)
+				common->wcmGestureMode = GESTURE_LAG_MODE;
+		}
+		else
+		{
+			/* Been in LAG mode long enough. Force to NONE mode. */
+			common->wcmGestureMode = 0;
+		}
+	}
 
 	if  (ds[1].proximity && !dsLast[1].proximity)
 	{
