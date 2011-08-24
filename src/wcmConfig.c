@@ -575,7 +575,7 @@ SetupProc_fail:
 	if (common && priv)
 		common->wcmDevices = priv->next;
 
-	if (pInfo && pInfo->fd != -1)
+	if (pInfo->fd != -1)
 	{
 		close(pInfo->fd);
 		pInfo->fd = -1;
