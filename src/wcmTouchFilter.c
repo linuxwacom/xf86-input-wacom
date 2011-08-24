@@ -171,6 +171,10 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 
 	DBG(10, priv, "\n");
 
+	/* This gesture is only valid on touchpads. */
+	if (TabletHasFeature(priv->common, WCM_LCD))
+		return;
+
 	if (!ds[0].proximity && dsLast[0].proximity && !ds[1].proximity)
 	{
 		/* Single Tap must have lasted less than wcmTapTime
@@ -329,9 +333,14 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		}
 	}
 ret:
-	if (common->wcmGestureMode == GESTURE_NONE_MODE &&
-	    !channel && !is_absolute(priv->pInfo))
-		wcmSingleFingerTap(priv);
+	if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
+	{
+		/* Since this is in ret block, can not rely on generic
+		 * wcmGesture enable check from above.
+		 */
+		if (common->wcmGesture)
+			wcmSingleFingerTap(priv);
+	}
 }
 
 static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
