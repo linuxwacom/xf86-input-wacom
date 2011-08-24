@@ -292,7 +292,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	/* process complex two finger gestures */
 	else {
 		CARD32 ms = GetTimeInMillis();
-		int taptime = 2 * common->wcmGestureParameters.wcmTapTime;
+		int taptime = common->wcmGestureParameters.wcmTapTime;
 
 		if (ds[0].proximity && ds[1].proximity &&
 		    (taptime < (ms - ds[0].sample)) &&
