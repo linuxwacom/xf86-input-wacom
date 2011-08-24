@@ -665,7 +665,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		values = (CARD32*)prop->data;
 
-		if ((values[0] < 0) || (values[0] > 100))
+		if (values[0] > 100)
 			return BadValue;
 
 		if ((values[1] < 1) || (values[1] > MAX_SAMPLES))
