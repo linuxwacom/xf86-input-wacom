@@ -29,6 +29,7 @@
 #define WACOM_VERT_ALLOWED            2
 #define WACOM_GESTURE_LAG_TIME       10
 
+#define GESTURE_NONE_MODE             0
 #define GESTURE_TAP_MODE              1
 #define GESTURE_SCROLL_MODE           2
 #define GESTURE_ZOOM_MODE             4
@@ -221,7 +222,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	 */
 	if (ds[0].proximity && ds[1].proximity)
 	{
-		if (!common->wcmGestureMode)
+		if (common->wcmGestureMode == GESTURE_NONE_MODE)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
 	}
 	/* When only 1 finger is in proximity, it can be in either LAG mode
@@ -243,13 +244,13 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 			/* Must have recently come into proximity.  Change
 			 * into LAG mode.
 			 */
-			if (!common->wcmGestureMode)
+			if (common->wcmGestureMode == GESTURE_NONE_MODE)
 				common->wcmGestureMode = GESTURE_LAG_MODE;
 		}
 		else
 		{
 			/* Been in LAG mode long enough. Force to NONE mode. */
-			common->wcmGestureMode = 0;
+			common->wcmGestureMode = GESTURE_NONE_MODE;
 		}
 	}
 
@@ -271,19 +272,20 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		common->wcmGestureParameters.wcmGestureUsed  = 0;
 
 		/* initialize the cursor position */
-		if (!common->wcmGestureMode && !channel)
+		if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
 			goto ret;
 	}
 
 	if (!ds[0].proximity && !ds[1].proximity)
 	{
 		/* first finger was out-prox when GestureMode was still on */
-		if (!dsLast[0].proximity && common->wcmGestureMode)
+		if (!dsLast[0].proximity &&
+		    common->wcmGestureMode != GESTURE_NONE_MODE)
 			/* send first finger out prox */
 			wcmSoftOutEvent(priv->pInfo);
 
 		/* exit gesture mode when both fingers are out */
-		common->wcmGestureMode = 0;
+		common->wcmGestureMode = GESTURE_NONE_MODE;
 		common->wcmGestureParameters.wcmScrollDirection = 0;
 
 		goto ret;
@@ -327,7 +329,8 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		}
 	}
 ret:
-	if (!common->wcmGestureMode && !channel && !is_absolute(priv->pInfo))
+	if (common->wcmGestureMode == GESTURE_NONE_MODE &&
+	    !channel && !is_absolute(priv->pInfo))
 		wcmSingleFingerTap(priv);
 }
 
