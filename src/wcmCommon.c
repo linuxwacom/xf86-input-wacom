@@ -1393,11 +1393,12 @@ WacomCommonPtr wcmNewCommon(void)
 	common->wcmFlags = 0;               /* various flags */
 	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */
 	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
-	common->wcmGestureParameters.wcmZoomDistance = 50;
-	common->wcmGestureParameters.wcmZoomDistanceDefault = 50;
+	common->wcmGestureParameters.wcmZoomDistance = -1;
+	common->wcmGestureParameters.wcmZoomDistanceDefault = -1;
 	common->wcmGestureParameters.wcmScrollDirection = 0;
-	common->wcmGestureParameters.wcmScrollDistance = 20;
-	common->wcmGestureParameters.wcmScrollDistanceDefault = 20;
+	common->wcmGestureParameters.wcmScrollDistance = -1;
+	common->wcmGestureParameters.wcmScrollDistanceDefault = -1;
+	common->wcmGestureParameters.wcmInlineDistance = -1;
 	common->wcmGestureParameters.wcmTapTime = 250;
 	common->wcmGestureParameters.wcmTapTimeDefault = 250;
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
