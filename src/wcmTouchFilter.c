@@ -219,7 +219,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	 * prevents cursor movement.  Force to LAG mode if ever in NONE
 	 * mode to stop cursor movement.
 	 */
-	if (dsLast[0].proximity && ds[1].proximity)
+	if (ds[0].proximity && ds[1].proximity)
 	{
 		if (!common->wcmGestureMode)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
