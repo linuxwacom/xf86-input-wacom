@@ -1929,6 +1929,35 @@ static void get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char**
 	}
 }
 
+/**
+ * Determine if we need to use fall back to Xinerama, or if the RandR
+ * extension will work OK. We depend on RandR 1.3 or better in order
+ * to work.
+ *
+ * A server bug causes the NVIDIA driver to report RandR 1.3 support
+ * despite not exposing RandR CRTCs. We need to fall back to Xinerama
+ * for this case as well.
+ *
+ * @param Display  X11 display to connect to
+ * @return         True if the Xinerama should be used instead of RandR
+ */
+static Bool need_xinerama(Display *dpy)
+{
+	int opcode, event, error;
+	int maj, min;
+
+	if (!XQueryExtension(dpy, "RANDR", &opcode, &event, &error) ||
+	    !XRRQueryVersion(dpy, &maj, &min) || (maj * 1000 + min) < 1002 ||
+	    XQueryExtension(dpy, "NV-CONTROL", &opcode, &event, &error))
+	{
+		TRACE("RandR extension not found, too old, or NV-CONTROL "
+			"extension is also present.\n");
+		return True;
+	}
+
+	return False;
+}
+
 static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
@@ -2002,16 +2031,22 @@ static void _set_matrix(Display *dpy, XDevice *dev,
 	_set_matrix_prop(dpy, dev, matrix);
 }
 
-static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+/**
+ * Adjust the transformation matrix based on RandR settings. This function
+ * will attempt to map the given device to the output with the given RandR
+ * output name.
+ *
+ * @param dpy          X11 display to connect to
+ * @param dev          Device to query
+ * @param output_name  Name of the RandR output to map to
+ */
+static void set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 {
 	int i, found = 0;
 	int x, y, width, height;
-	char *output_name;
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
-
-	output_name = argv[0];
 
 	res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
 	for (i = 0; i < res->noutput && !found; i++)
@@ -2053,28 +2088,28 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, param_t *param, int ar
 }
 
 /**
- * Adjust the transformation matrix based on the Xinerama settings. For
- * TwinView This would better be done with libXNVCtrl but until they learn
- * to package it properly, rely on Xinerama. Besides, libXNVCtrl isn't
- * available on RHEL, so we'd have to do it through Xinerama there anyway.
+ * Adjust the transformation matrix based on the Xinerama settings. This
+ * function will attempt to map the given device to the specified Xinerama
+ * head number.
+ *
+ * For TwinView This would better be done with libXNVCtrl but until they
+ * learn to package it properly, we need to rely on Xinerama. Besides,
+ * libXNVCtrl isn't available on RHEL, so we'd have to do it through
+ * Xinerama there anyway.
+ *
+ * @param dpy   X11 display to connect to
+ * @param dev   Device to query
+ * @param head  Index of Xinerama head to map to
  */
-static void set_output_xinerama(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
+static void set_output_xinerama(Display *dpy, XDevice *dev, int head)
 {
 	int event, error;
 	XineramaScreenInfo *screens;
 	int nscreens;
-	int head;
 
 	if (!XineramaQueryExtension(dpy, &event, &error))
 	{
 		fprintf(stderr, "Unable to set screen mapping. Xinerama extension not found\n");
-		return;
-	}
-
-	if (!convert_value_from_user(param, argv[0], &head))
-	{
-		fprintf(stderr, "Please specify the output name as HEAD-X,"
-				"where X is the screen number\n");
 		return;
 	}
 
@@ -2086,8 +2121,8 @@ static void set_output_xinerama(Display *dpy, XDevice *dev, param_t *param, int 
 		goto out;
 	} else if (nscreens <= head)
 	{
-		fprintf(stderr, "Found %d screens, but you requested %s.\n",
-				nscreens, argv[0]);
+		fprintf(stderr, "Found %d screens, but you requested number %d.\n",
+				nscreens, head);
 		goto out;
 	}
 
@@ -2103,8 +2138,7 @@ out:
 
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
-	int opcode, event, error;
-	int maj, min;
+	int head_no;
 
 	if (argc == 0)
 	{
@@ -2121,15 +2155,12 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 		return;
 	}
 
-	/* Check for RandR 1.2. Server bug causes the NVIDIA driver to
-	 * report with RandR 1.3 support but it doesn't expose RandR CRTCs.
-	 * Force Xinerama if NV-CONTROL is present */
-	if (XQueryExtension(dpy, "NV-CONTROL", &opcode, &event, &error) ||
-	    !XQueryExtension(dpy, "RANDR", &opcode, &event, &error) ||
-	    !XRRQueryVersion(dpy, &maj, &min) || (maj * 1000 + min) < 1002)
-		set_output_xinerama(dpy, dev, param, argc, argv);
+	if (!need_xinerama(dpy))
+		set_output_xrandr(dpy, dev, argv[0]);
+	else if  (convert_value_from_user(param, argv[0], &head_no))
+		set_output_xinerama(dpy, dev, head_no);
 	else
-		set_output_xrandr(dpy, dev, param, argc, argv);
+		fprintf(stderr, "Unable to find an output '%s'.\n", argv[0]);
 }
 
 
