@@ -612,7 +612,7 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 
 	ds->x = touchdata.x;
 	ds->y = touchdata.y;
-	ds->buttons = ds->proximity = touchdata.status;
+	ds->proximity = touchdata.status;
 	ds->device_type = TOUCH_ID;
 	ds->device_id = TOUCH_DEVICE_ID;
 

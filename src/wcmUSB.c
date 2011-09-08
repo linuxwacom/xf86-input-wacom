@@ -1110,14 +1110,6 @@ static int usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->serial_num = private->wcmMTChannel+1;
 			ds->sample = (int)GetTimeInMillis();
-
-			/* Send left click down/up for touchscreen
-			 * when the first finger touches/leaves the tablet.
-			 */
-			if (TabletHasFeature(common, WCM_LCD) &&
-					!private->wcmMTChannel)
-				ds->buttons = mod_buttons(ds->buttons, 0,
-							  (event->value != -1));
 			break;
 
 		case ABS_MT_POSITION_X:
@@ -1223,7 +1215,6 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 					ds->device_type = TOUCH_ID;
 					ds->device_id = TOUCH_DEVICE_ID;
 					ds->proximity = event->value;
-					ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 				}
 			}
 			break;
@@ -1253,9 +1244,6 @@ static int usbParseKeyEvent(WacomCommonPtr common,
 			if ((ds->proximity && !dslast->proximity) ||
 			    (!ds->proximity && dslast->proximity))
 				ds->sample = (int)GetTimeInMillis();
-			/* left button is always pressed for touchscreen */
-			if (TabletHasFeature(common, WCM_LCD))
-				ds->buttons = mod_buttons(ds->buttons, 0, event->value);
 			break;
 
 		case BTN_TOOL_TRIPLETAP:

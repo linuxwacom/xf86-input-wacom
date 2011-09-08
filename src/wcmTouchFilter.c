@@ -28,6 +28,7 @@
 #define WACOM_VERT_ALLOWED            2
 #define WACOM_GESTURE_LAG_TIME       10
 
+#define GESTURE_NONE_MODE             0
 #define GESTURE_TAP_MODE              1
 #define GESTURE_SCROLL_MODE           2
 #define GESTURE_ZOOM_MODE             4
@@ -184,6 +185,10 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 
 	DBG(10, priv, "\n");
 
+	/* This gesture is only valid on touchpads. */
+	if (TabletHasFeature(priv->common, WCM_LCD))
+		return;
+
 	if (!ds[0].proximity && dsLast[0].proximity && !ds[1].proximity)
 	{
 		/* Single Tap must have lasted less than wcmTapTime
@@ -201,6 +206,32 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 			wcmSendButtonClick(priv, 1, 0);
 		}
 	}
+}
+
+/* Monitors for 1 finger touch and forces left button press or 1 finger
+ * release and will remove left button press.
+ *
+ * This function relies on wcmGestureMode will only be zero if
+ * WACOM_GESTURE_LAG_TIME has passed and still ony 1 finger on screen.
+ */
+static void wcmSingleFingerPress(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomChannelPtr firstChannel = common->wcmChannel;
+	WacomChannelPtr secondChannel = common->wcmChannel + 1;
+	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
+				   secondChannel->valid.states[0] };
+
+	DBG(10, priv, "\n");
+
+	/* This gesture is only valid on touchscreens. */
+	if (!TabletHasFeature(priv->common, WCM_LCD))
+		return;
+
+	if (ds[0].proximity && !ds[1].proximity)
+		firstChannel->valid.states[0].buttons |= 1;
+	if (!ds[0].proximity && !ds[1].proximity)
+		firstChannel->valid.states[0].buttons &= ~1;
 }
 
 /* parsing gesture mode according to 2FGT data */
@@ -227,25 +258,45 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	if (!common->wcmGesture)
 		goto ret;
 
-	/* second finger in prox. wait for gesture event if first finger
-	 * was in in prox */
-	if (ds[1].proximity && !common->wcmGestureMode && dsLast[0].proximity)
+	/* When 2 fingers are in proximity, it must always be in one of
+	 * the valid 2 fingers modes: LAG, SCROLL, or ZOOM.
+	 * LAG mode is used while deciding between SCROLL and ZOOM and
+	 * prevents cursor movement.  Force to LAG mode if ever in NONE
+	 * mode to stop cursor movement.
+	 */
+	if (ds[0].proximity && ds[1].proximity)
 	{
-		common->wcmGestureMode = GESTURE_LAG_MODE;
-	}
-
-	/* first finger recently came in prox. But not the first time
-	 * wait for the second one for a certain time */
-	else if (dsLast[0].proximity &&
-	    ((GetTimeInMillis() - ds[0].sample) < WACOM_GESTURE_LAG_TIME))
-	{
-		if (!common->wcmGestureMode)
+		if (common->wcmGestureMode == GESTURE_NONE_MODE)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
 	}
+	/* When only 1 finger is in proximity, it can be in either LAG mode
+	 * or NONE mode.
+	 * 1 finger LAG mode is a very short time period mainly to debounce
+	 * initial touch.
+	 * NONE mode means cursor is allowed to move around.
+	 * TODO: This has to use dsLast[0] because of later logic that
+	 * wants mode to be NONE still when 1st entering proximity.
+	 * That could use some re-arranging/cleanup.
+	 *
+	 */
+	else if (dsLast[0].proximity)
+	{
+		CARD32 ms = GetTimeInMillis();
 
-	/* we've waited enough time */
-	else if (common->wcmGestureMode == GESTURE_LAG_MODE)
-		common->wcmGestureMode = 0;
+		if ((ms - ds[0].sample) < WACOM_GESTURE_LAG_TIME)
+		{
+			/* Must have recently come into proximity.  Change
+			 * into LAG mode.
+			 */
+			if (common->wcmGestureMode == GESTURE_NONE_MODE)
+				common->wcmGestureMode = GESTURE_LAG_MODE;
+		}
+		else
+		{
+			/* Been in LAG mode long enough. Force to NONE mode. */
+			common->wcmGestureMode = GESTURE_NONE_MODE;
+		}
+	}
 
 	if  (ds[1].proximity && !dsLast[1].proximity)
 	{
@@ -265,19 +316,20 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		common->wcmGestureParameters.wcmGestureUsed  = 0;
 
 		/* initialize the cursor position */
-		if (!common->wcmGestureMode && !channel)
+		if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
 			goto ret;
 	}
 
 	if (!ds[0].proximity && !ds[1].proximity)
 	{
 		/* first finger was out-prox when GestureMode was still on */
-		if (!dsLast[0].proximity && common->wcmGestureMode)
+		if (!dsLast[0].proximity &&
+		    common->wcmGestureMode != GESTURE_NONE_MODE)
 			/* send first finger out prox */
 			wcmSoftOutEvent(priv->pInfo);
 
 		/* exit gesture mode when both fingers are out */
-		common->wcmGestureMode = 0;
+		common->wcmGestureMode = GESTURE_NONE_MODE;
 		common->wcmGestureParameters.wcmScrollDirection = 0;
 
 		goto ret;
@@ -306,7 +358,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 	/* process complex two finger gestures */
 	else {
 		CARD32 ms = GetTimeInMillis();
-		int taptime = 2 * common->wcmGestureParameters.wcmTapTime;
+		int taptime = common->wcmGestureParameters.wcmTapTime;
 
 		if (ds[0].proximity && ds[1].proximity &&
 		    (taptime < (ms - ds[0].sample)) &&
@@ -321,8 +373,15 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		}
 	}
 ret:
-	if (!common->wcmGestureMode && !channel && !is_absolute(priv->pInfo))
-		wcmSingleFingerTap(priv);
+	if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
+	{
+		/* Since this is in ret block, can not rely on generic
+		 * wcmGesture enable check from above.
+		 */
+		if (common->wcmGesture)
+			wcmSingleFingerTap(priv);
+		wcmSingleFingerPress(priv);
+	}
 }
 
 static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
