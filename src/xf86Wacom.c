@@ -436,7 +436,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	{
 		wcmInitialToolSize(pInfo);
 		wcmMappingFactor(pInfo);
-		wcmInitGestureSizes(pInfo);
 	}
 
 	if (!wcmInitAxes(pWcm))

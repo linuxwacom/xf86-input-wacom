@@ -128,8 +128,6 @@ Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
 
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(InputInfoPtr pInfo);
-/* calculate gesture sizes based on tablet sizes */
-void wcmInitGestureSizes(InputInfoPtr pInfo);
 
 /* validation */
 extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);

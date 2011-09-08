@@ -24,6 +24,7 @@
 #include <math.h>
 
 /* Defines for 2FC Gesture */
+#define WACOM_INLINE_DISTANCE        40
 #define WACOM_HORIZ_ALLOWED           1
 #define WACOM_VERT_ALLOWED            2
 #define WACOM_GESTURE_LAG_TIME       10
@@ -41,20 +42,6 @@
 
 static void wcmFingerScroll(WacomDevicePtr priv);
 static void wcmFingerZoom(WacomDevicePtr priv);
-
-void wcmInitGestureSizes(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	WacomCommonPtr common = priv->common;
-	WacomGesturesParameters *gp = &common->wcmGestureParameters;
-
-	if (gp->wcmZoomDistance == -1)
-		gp->wcmZoomDistance = priv->maxX * (1600.0 / 14720);
-	if (gp->wcmScrollDistance == -1)
-		gp->wcmScrollDistance = priv->maxX * (640.0 / 14720);
-	if (gp->wcmInlineDistance == -1)
-		gp->wcmInlineDistance = priv->maxX * (1280.0 / 14720);
-}
 
 static double touchDistance(WacomDeviceState ds0, WacomDeviceState ds1)
 {
@@ -74,18 +61,17 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 			WACOM_HORIZ_ALLOWED : WACOM_VERT_ALLOWED;
 	int vertical_rotated = (rotated) ?
 			WACOM_VERT_ALLOWED : WACOM_HORIZ_ALLOWED;
-	int inline_distance = common->wcmGestureParameters.wcmInlineDistance;
 
 	if (!common->wcmGestureParameters.wcmScrollDirection)
 	{
-		if ((abs(ds0.x - ds1.x) < inline_distance) &&
-			(abs(ds0.y - ds1.y) > inline_distance))
+		if ((abs(ds0.x - ds1.x) < WACOM_INLINE_DISTANCE) &&
+			(abs(ds0.y - ds1.y) > WACOM_INLINE_DISTANCE))
 		{
 			common->wcmGestureParameters.wcmScrollDirection = horizon_rotated;
 			ret = TRUE;
 		}
-		if ((abs(ds0.y - ds1.y) < inline_distance) &&
-			(abs(ds0.x - ds1.x) > inline_distance))
+		if ((abs(ds0.y - ds1.y) < WACOM_INLINE_DISTANCE) &&
+			(abs(ds0.x - ds1.x) > WACOM_INLINE_DISTANCE))
 		{
 			common->wcmGestureParameters.wcmScrollDirection = vertical_rotated;
 			ret = TRUE;
@@ -93,12 +79,12 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 	}
 	else if (common->wcmGestureParameters.wcmScrollDirection == vertical_rotated)
 	{
-		if (abs(ds0.y - ds1.y) < inline_distance)
+		if (abs(ds0.y - ds1.y) < WACOM_INLINE_DISTANCE)
 			ret = TRUE;
 	}
 	else if (common->wcmGestureParameters.wcmScrollDirection == horizon_rotated)
 	{
-		if (abs(ds0.x - ds1.x) < inline_distance)
+		if (abs(ds0.x - ds1.x) < WACOM_INLINE_DISTANCE)
 			ret = TRUE;
 	}
 	return ret;
@@ -427,7 +413,6 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	int midPoint_old = 0;
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
-	int inline_distance = common->wcmGestureParameters.wcmInlineDistance;
 
 	DBG(10, priv, "\n");
 
@@ -435,7 +420,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	{
 		if (abs(touchDistance(ds[0], ds[1]) -
 			touchDistance(common->wcmGestureState[0],
-			common->wcmGestureState[1])) < inline_distance)
+			common->wcmGestureState[1])) < WACOM_INLINE_DISTANCE)
 		{
 			/* two fingers stay close to each other all the time and
 			 * move in vertical or horizontal direction together
@@ -525,7 +510,6 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
-	int inline_distance = common->wcmGestureParameters.wcmInlineDistance;
 
 	DBG(10, priv, "\n");
 
@@ -535,13 +519,13 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		if (abs(touchDistance(ds[0], ds[1]) -
 			touchDistance(common->wcmGestureState[0],
 				      common->wcmGestureState[1])) >
-			(3 * inline_distance))
+			(3 * WACOM_INLINE_DISTANCE))
 		{
 			/* left button might be down, send it up first */
 			wcmSendButtonClick(priv, 1, 0);
 
 			/* fingers moved apart more than 3 times
-			 * wcmInlineDistance, zoom mode is entered */
+			 * WACOM_INLINE_DISTANCE, zoom mode is entered */
 			common->wcmGestureMode = GESTURE_ZOOM_MODE;
 		}
 	}
