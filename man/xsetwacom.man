@@ -123,9 +123,11 @@ Default: 0
 Map the tablet's input area to the given output (e.g. "VGA1"), or the entire
 desktop if no output is provided. Output names may either be the name of
 a head available through the XRandR extension, or an X11 geometry string of
-the from WIDTHxHEIGHT+X+Y. Users of the NVIDIA binary driver should use the
-output names "HEAD-0" and "HEAD-1" until the driver supports XRandr 1.2 or
-later.
+the form WIDTHxHEIGHT+X+Y. To switch to the next available output, the "next"
+keyword is also supported. This will cycle between the individual monitors
+connected to the system, and then the entire desktop. Users of the NVIDIA
+binary driver should use the output names "HEAD-0" and "HEAD-1" until the
+driver supports XRandR 1.2 or later.
 
 The output mapping configuration is a onetime setting and does not track output
 reconfigurations; the command needs to be re-run whenever the output

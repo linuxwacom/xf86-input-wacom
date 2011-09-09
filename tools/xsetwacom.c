@@ -1958,6 +1958,83 @@ static Bool need_xinerama(Display *dpy)
 	return False;
 }
 
+/**
+ * Uses the area of the desktop and the server's transformation
+ * matrix to calculate the dimensions and location of the area
+ * the given device is mapped to. If the matrix describes a
+ * non-rectangular transform (e.g. rotation or shear), this
+ * function returns False.
+ *
+ * @param dpy          X11 display to connect to
+ * @param dev          Device to query
+ * @param width[out]   Width of the mapped area
+ * @param height[out]  Height of the mapped area
+ * @param x_org[out]   Offset from the desktop origin to the mapped area's left edge
+ * @param y_org[out]   Offset from the desktop origin to the mapped area's top edge
+ * @return             True if the function could determine the mapped area
+ */
+Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height, int *x_org, int *y_org)
+{
+	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
+	Atom type;
+	int format;
+	unsigned long nitems, bytes_after;
+	float *data;
+	Bool matrix_is_valid = True;
+	int i;
+
+	int display_width = DisplayWidth(dpy, DefaultScreen(dpy));
+	int display_height = DisplayHeight(dpy, DefaultScreen(dpy));
+	TRACE("Desktop width: %d, height: %d\n", display_width, display_height);
+
+	if (!matrix_prop)
+	{
+		fprintf(stderr, "Server does not support transformation\n");
+		return False;
+	}
+
+	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
+	                   AnyPropertyType, &type, &format, &nitems,
+	                   &bytes_after, (unsigned char**)&data);
+
+	if (format != 32 || type != XInternAtom(dpy, "FLOAT", True))
+	{
+		fprintf(stderr,"Property for '%s' has unexpected type - this is a bug.\n",
+			"Coordinate Transformation Matrix");
+		XFree(data);
+		return False;
+	}
+
+	TRACE("Current transformation matrix:\n");
+	TRACE("	[ %f %f %f ]\n", data[0], data[1], data[2]);
+	TRACE("	[ %f %f %f ]\n", data[3], data[4], data[5]);
+	TRACE("	[ %f %f %f ]\n", data[6], data[7], data[8]);
+
+	for (i = 0; i < nitems && matrix_is_valid; i++)
+	{
+		switch (i) {
+			case 0: *width  = rint(display_width  * data[i]); break;
+			case 2: *x_org  = rint(display_width  * data[i]); break;
+			case 4: *height = rint(display_height * data[i]); break;
+			case 5: *y_org  = rint(display_height * data[i]); break;
+			case 8:
+				if (data[i] != 1)
+					matrix_is_valid = False;
+				break;
+			default:
+				if (data[i] != 0)
+					matrix_is_valid = False;
+				break;
+		}
+	}
+	XFree(data);
+
+	if (!matrix_is_valid)
+		fprintf(stderr, "Non-rectangular transformation matrix detected.\n");
+
+	return matrix_is_valid;
+}
+
 static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
@@ -2147,6 +2224,78 @@ out:
 	XFree(screens);
 }
 
+/**
+ * Adjust the transformation matrix based on the desktop size.
+ * This function will attempt to map the given device to the entire
+ * desktop.
+ *
+ * @param dpy  X11 display to connect to
+ * @param dev  Device to query
+ */
+static void set_output_desktop(Display *dpy, XDevice *dev)
+{
+	int display_width = DisplayWidth(dpy, DefaultScreen(dpy));
+	int display_height = DisplayHeight(dpy, DefaultScreen(dpy));
+
+	set_output_area(dpy, dev, 0, 0, display_width, display_height);
+}
+
+/**
+ * Adjust the transformation matrix based on its current value. This
+ * function will attempt to map the given device to the next output
+ * exposed in the list of Xinerama heads. If not mapped to a Xinerama
+ * head, it maps to the first head. If mapped to the last Xinerama
+ * head, it maps to the entire desktop.
+ *
+ * @param dpy  X11 display to connect to
+ * @param dev  Device to query
+ */
+static void set_output_next(Display *dpy, XDevice *dev)
+{
+	XineramaScreenInfo *screens;
+	int event, error, nscreens, head;
+	int width, height, x_org, y_org;
+	Bool success = False;
+
+	if (!get_mapped_area(dpy, dev, &width, &height, &x_org, &y_org))
+		return;
+
+	if (!XineramaQueryExtension(dpy, &event, &error))
+	{
+		fprintf(stderr, "Unable to get screen mapping. Xinerama extension not found\n");
+		return;
+	}
+
+	screens = XineramaQueryScreens(dpy, &nscreens);
+
+	if (nscreens == 0)
+	{
+		fprintf(stderr, "Xinerama failed to query screens.\n");
+		goto out;
+	}
+
+	TRACE("Remapping to next available output.\n");
+	for (head = 0; head < nscreens && !success; head++)
+	{
+		if (screens[head].width == width && screens[head].height == height &&
+		    screens[head].x_org == x_org && screens[head].y_org  == y_org)
+		{
+			success = True;
+
+			if (head + 1 < nscreens)
+				set_output_xinerama(dpy, dev, head+1);
+			else
+				set_output_desktop(dpy, dev);
+		}
+	}
+
+	if (!success)
+		set_output_xinerama(dpy, dev, 0);
+
+out:
+	XFree(screens);
+}
+
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int head_no;
@@ -2171,6 +2320,8 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 
 	if (MaskIsSet(flags, XValue|YValue|WidthValue|HeightValue))
 		set_output_area(dpy, dev, x, y, width, height);
+	else if (strcasecmp(argv[0], "next") == 0)
+		set_output_next(dpy, dev);
 	else if (!need_xinerama(dpy))
 		set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
