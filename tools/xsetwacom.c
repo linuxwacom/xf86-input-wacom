@@ -2303,17 +2303,9 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	unsigned int width, height;
 	int flags = XParseGeometry(argv[0], &x, &y, &width, &height);
 
-	if (argc == 0)
+	if (argc != param->arg_count)
 	{
-		float matrix[9] = { 1, 0, 0,
-				    0, 1, 0,
-				    0, 0, 1};
-		_set_matrix_prop(dpy, dev, matrix);
-		return;
-	}
-	else if (argc != param->arg_count)
-	{
-		fprintf(stderr, "'%s' requires exactly 0 or %d value(s).\n", param->name,
+		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
 		return;
 	}
@@ -2322,6 +2314,8 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 		set_output_area(dpy, dev, x, y, width, height);
 	else if (strcasecmp(argv[0], "next") == 0)
 		set_output_next(dpy, dev);
+	else if (strcasecmp(argv[0], "desktop") == 0)
+		set_output_desktop(dpy, dev);
 	else if (!need_xinerama(dpy))
 		set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
