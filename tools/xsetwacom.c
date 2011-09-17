@@ -22,6 +22,7 @@
 #endif
 
 #include <wacom-properties.h>
+#include <wacom-util.h>
 #include "Xwacom.h"
 
 #include <errno.h>
@@ -42,8 +43,6 @@
 
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
-
-#define ArrayLength(a) ((unsigned int)(sizeof(a) / (sizeof((a)[0]))))
 
 static int verbose = False;
 
@@ -785,11 +784,11 @@ static void list_mod(Display *dpy)
 {
 	struct modifier *m = modifiers;
 
-	printf("%d modifiers are supported:\n", ArrayLength(modifiers) - 1);
+	printf("%d modifiers are supported:\n", ARRAY_SIZE(modifiers) - 1);
 	while(m->name)
 		printf("	%s\n", m++->name);
 
-	printf("\n%d specialkeys are supported:\n", ArrayLength(specialkeys) - 1);
+	printf("\n%d specialkeys are supported:\n", ARRAY_SIZE(specialkeys) - 1);
 	m = specialkeys;
 	while(m->name)
 		printf("	%s\n", m++->name);
@@ -1948,7 +1947,7 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 
 	/* XI1 expects 32 bit properties (including float) as long,
 	 * regardless of architecture */
-	for (i = 0; i < sizeof(matrix)/sizeof(matrix[0]); i++)
+	for (i = 0; i < ARRAY_SIZE(matrix); i++)
 		*(float*)(matrix + i) = fmatrix[i];
 
 	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
@@ -2448,8 +2447,8 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ArrayLength(parameters) == 34);
-	assert(ArrayLength(deprecated_parameters) == 17);
+	assert(ARRAY_SIZE(parameters) == 34);
+	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 
 /**

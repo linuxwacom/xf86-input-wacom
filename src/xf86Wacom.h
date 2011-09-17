@@ -23,9 +23,8 @@
 #include <xorg-server.h>
 #include <xorgVersion.h>
 
+#include <wacom-util.h>
 #include "Xwacom.h"
-
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 /* max number of input events to read in one read call */
 #define MAX_EVENTS 50

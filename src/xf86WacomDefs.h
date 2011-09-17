@@ -94,30 +94,6 @@
 #define ERASER_PROX     4
 #define OTHER_PROX      1
 
-/* to access kernel defined bits */
-#define BIT(x)		(1UL<<((x) & (BITS_PER_LONG - 1)))
-#define BITS_PER_LONG	(sizeof(long) * 8)
-#define NBITS(x)	((((x)-1)/BITS_PER_LONG)+1)
-#define ISBITSET(x,y)	((x)[LONG(y)] & BIT(y))
-#define SETBIT(x,y)	((x)[LONG(y)] |= BIT(y))
-#define CLEARBIT(x,y)	((x)[LONG(y)] &= ~BIT(y))
-#define OFF(x)		((x)%BITS_PER_LONG)
-#define LONG(x)		((x)/BITS_PER_LONG)
-
-/**
- * Test if the mask is set in the given bitfield.
- * @return TRUE if set or FALSE otherwise.
- */
-#define MaskIsSet(bitfield, mask) !!(((bitfield) & (mask)) == (mask))
-/**
- * Set the given mask for the given bitfield.
- */
-#define MaskSet(bitfield, mask) ((bitfield) |= (mask))
-/**
- * Clear the given mask from the given bitfield
- */
-#define MaskClear(bitfield, mask) ((bitfield) &= ~(mask))
-
 /******************************************************************************
  * Forward Declarations
  *****************************************************************************/
