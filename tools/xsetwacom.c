@@ -1997,12 +1997,20 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 }
 
 /**
- * Set the matrix for the given device for the screen defined by offset and
- * dimensions.
+ * Adjust the transformation matrix based on a user-defined area.
+ * This function will attempt to map the given pointer to an arbitrary
+ * rectangular portion of the desktop.
+ *
+ * @param dpy            X11 display to connect to
+ * @param dev            Device to query
+ * @param offset_x       Offset of output area's left edge from desktop origin
+ * @param offset_y       Offset of output area's top edge from desktop origin
+ * @param output_width   Width of output area
+ * @param output_height  Height of output area
  */
-static void _set_matrix(Display *dpy, XDevice *dev,
+static void set_output_area(Display *dpy, XDevice *dev,
 			int offset_x, int offset_y,
-			int screen_width, int screen_height)
+			int output_width, int output_height)
 {
 	int width = DisplayWidth(dpy, DefaultScreen(dpy));
 	int height = DisplayHeight(dpy, DefaultScreen(dpy));
@@ -2012,8 +2020,8 @@ static void _set_matrix(Display *dpy, XDevice *dev,
 	float y = 1.0 * offset_y/height;
 
 	/* mapping */
-	float w = 1.0 * screen_width/width;
-	float h = 1.0 * screen_height/height;
+	float w = 1.0 * output_width/width;
+	float h = 1.0 * output_height/height;
 
 	float matrix[9] = { 1, 0, 0,
 			    0, 1, 0,
@@ -2022,6 +2030,9 @@ static void _set_matrix(Display *dpy, XDevice *dev,
 	matrix[5] = y;
 	matrix[0] = w;
 	matrix[4] = h;
+
+	TRACE("Remapping to output area %dx%d @ %d,%d.\n", output_width,
+		      output_height, offset_x, offset_y);
 
 	TRACE("Transformation matrix:\n");
 	TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
@@ -2080,7 +2091,7 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 	if (found)
 	{
 		TRACE("Setting CRTC %s\n", output_name);
-		_set_matrix(dpy, dev, x, y, width, height);
+		set_output_area(dpy, dev, x, y, width, height);
 	} else
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
@@ -2128,7 +2139,7 @@ static void set_output_xinerama(Display *dpy, XDevice *dev, int head)
 
 	TRACE("Setting xinerama head %d\n", head);
 
-	_set_matrix(dpy, dev,
+	set_output_area(dpy, dev,
 		    screens[head].x_org, screens[head].y_org,
 		    screens[head].width, screens[head].height);
 
@@ -2139,6 +2150,9 @@ out:
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int head_no;
+	int x, y;
+	unsigned int width, height;
+	int flags = XParseGeometry(argv[0], &x, &y, &width, &height);
 
 	if (argc == 0)
 	{
@@ -2155,7 +2169,9 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 		return;
 	}
 
-	if (!need_xinerama(dpy))
+	if (MaskIsSet(flags, XValue|YValue|WidthValue|HeightValue))
+		set_output_area(dpy, dev, x, y, width, height);
+	else if (!need_xinerama(dpy))
 		set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
 		set_output_xinerama(dpy, dev, head_no);
