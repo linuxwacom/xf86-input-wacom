@@ -688,10 +688,6 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 	int		tpc_button_is_on;
 
 	/* Optional configuration */
-	priv->debugLevel = xf86SetIntOption(pInfo->options,
-					    "DebugLevel", priv->debugLevel);
-	common->debugLevel = xf86SetIntOption(pInfo->options,
-					      "CommonDBG", common->debugLevel);
 	s = xf86SetStrOption(pInfo->options, "Mode", NULL);
 
 	if (s && (xf86NameCmp(s, "absolute") == 0))

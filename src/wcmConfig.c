@@ -506,6 +506,8 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	priv = (WacomDevicePtr) pInfo->private;
 	priv->common->device_path = device;
 	priv->name = pInfo->name;
+	priv->debugLevel = xf86SetIntOption(pInfo->options,
+					    "DebugLevel", priv->debugLevel);
 
 	/* check if the same device file has been added already */
 	if (wcmIsDuplicate(device, pInfo))
@@ -523,6 +525,8 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(pInfo);
 
+	common->debugLevel = xf86SetIntOption(pInfo->options,
+					      "CommonDBG", common->debugLevel);
 	oldname = pInfo->name;
 
 	if (wcmIsHotpluggedDevice(pInfo))
