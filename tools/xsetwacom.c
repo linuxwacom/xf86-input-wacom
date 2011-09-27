@@ -2035,7 +2035,17 @@ Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height, int *x
 	return matrix_is_valid;
 }
 
-static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
+/**
+ * Modifies the server's transformation matrix property for the given
+ * device. It takes as input a 9-element array of floats interpreted
+ * as the row-major 3x3 matrix to be set.
+ *
+ * @param dpy      X11 display to connect to
+ * @param dev      Device to query
+ * @param fmatrix  A row-major 3x3 transformation matrix
+ * @return         True if the transformation matrix was successfully modified
+ */
+static Bool _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
 	Atom type;
@@ -2048,7 +2058,7 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	if (!matrix_prop)
 	{
 		fprintf(stderr, "Server does not support transformation\n");
-		return;
+		return False;
 	}
 
 	/* XI1 expects 32 bit properties (including float) as long,
@@ -2071,6 +2081,8 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 			      PropModeReplace, (unsigned char*)matrix, 9);
 	XFree(data);
 	XFlush(dpy);
+
+	return True;
 }
 
 /**
@@ -2084,8 +2096,9 @@ static void _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
  * @param offset_y       Offset of output area's top edge from desktop origin
  * @param output_width   Width of output area
  * @param output_height  Height of output area
+ * @return               True if the transformation matrix was successfully modified
  */
-static void set_output_area(Display *dpy, XDevice *dev,
+static Bool set_output_area(Display *dpy, XDevice *dev,
 			int offset_x, int offset_y,
 			int output_width, int output_height)
 {
@@ -2116,8 +2129,9 @@ static void set_output_area(Display *dpy, XDevice *dev,
 	TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
 	TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
 
-	_set_matrix_prop(dpy, dev, matrix);
+	return _set_matrix_prop(dpy, dev, matrix);
 }
+
 
 /**
  * Adjust the transformation matrix based on RandR settings. This function
@@ -2127,8 +2141,9 @@ static void set_output_area(Display *dpy, XDevice *dev,
  * @param dpy          X11 display to connect to
  * @param dev          Device to query
  * @param output_name  Name of the RandR output to map to
+ * @return             True if the transformation matrix was successfully modified
  */
-static void set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
+static Bool set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 {
 	int i, found = 0;
 	int x, y, width, height;
@@ -2168,11 +2183,14 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 	if (found)
 	{
 		TRACE("Setting CRTC %s\n", output_name);
-		set_output_area(dpy, dev, x, y, width, height);
+		return set_output_area(dpy, dev, x, y, width, height);
 	} else
+	{
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
 
+		return False;
+	}
 }
 
 /**
@@ -2188,17 +2206,19 @@ static void set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
  * @param dpy   X11 display to connect to
  * @param dev   Device to query
  * @param head  Index of Xinerama head to map to
+ * @return      True if the transformation matrix was successfully modified
  */
-static void set_output_xinerama(Display *dpy, XDevice *dev, int head)
+static Bool set_output_xinerama(Display *dpy, XDevice *dev, int head)
 {
 	int event, error;
 	XineramaScreenInfo *screens;
 	int nscreens;
+	Bool success = False;
 
 	if (!XineramaQueryExtension(dpy, &event, &error))
 	{
 		fprintf(stderr, "Unable to set screen mapping. Xinerama extension not found\n");
-		return;
+		return success;
 	}
 
 	screens = XineramaQueryScreens(dpy, &nscreens);
@@ -2216,12 +2236,13 @@ static void set_output_xinerama(Display *dpy, XDevice *dev, int head)
 
 	TRACE("Setting xinerama head %d\n", head);
 
-	set_output_area(dpy, dev,
+	success = set_output_area(dpy, dev,
 		    screens[head].x_org, screens[head].y_org,
 		    screens[head].width, screens[head].height);
 
 out:
 	XFree(screens);
+	return success;
 }
 
 /**
@@ -2231,13 +2252,14 @@ out:
  *
  * @param dpy  X11 display to connect to
  * @param dev  Device to query
+ * @return     True if the transformation matrix was successfully modified
  */
-static void set_output_desktop(Display *dpy, XDevice *dev)
+static Bool set_output_desktop(Display *dpy, XDevice *dev)
 {
 	int display_width = DisplayWidth(dpy, DefaultScreen(dpy));
 	int display_height = DisplayHeight(dpy, DefaultScreen(dpy));
 
-	set_output_area(dpy, dev, 0, 0, display_width, display_height);
+	return set_output_area(dpy, dev, 0, 0, display_width, display_height);
 }
 
 /**
@@ -2249,8 +2271,9 @@ static void set_output_desktop(Display *dpy, XDevice *dev)
  *
  * @param dpy  X11 display to connect to
  * @param dev  Device to query
+ * @return     True if the transformation matrix was successfully modified
  */
-static void set_output_next(Display *dpy, XDevice *dev)
+static Bool set_output_next(Display *dpy, XDevice *dev)
 {
 	XineramaScreenInfo *screens;
 	int event, error, nscreens, head;
@@ -2258,12 +2281,12 @@ static void set_output_next(Display *dpy, XDevice *dev)
 	Bool success = False;
 
 	if (!get_mapped_area(dpy, dev, &width, &height, &x_org, &y_org))
-		return;
+		return success;
 
 	if (!XineramaQueryExtension(dpy, &event, &error))
 	{
 		fprintf(stderr, "Unable to get screen mapping. Xinerama extension not found\n");
-		return;
+		return success;
 	}
 
 	screens = XineramaQueryScreens(dpy, &nscreens);
@@ -2280,20 +2303,22 @@ static void set_output_next(Display *dpy, XDevice *dev)
 		if (screens[head].width == width && screens[head].height == height &&
 		    screens[head].x_org == x_org && screens[head].y_org  == y_org)
 		{
-			success = True;
-
 			if (head + 1 < nscreens)
-				set_output_xinerama(dpy, dev, head+1);
+				success = set_output_xinerama(dpy, dev, head+1);
 			else
-				set_output_desktop(dpy, dev);
+				success = set_output_desktop(dpy, dev);
+
+			if (!success)
+				goto out;
 		}
 	}
 
 	if (!success)
-		set_output_xinerama(dpy, dev, 0);
+		success = set_output_xinerama(dpy, dev, 0);
 
 out:
 	XFree(screens);
+	return success;
 }
 
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
@@ -2302,6 +2327,7 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	int x, y;
 	unsigned int width, height;
 	int flags = XParseGeometry(argv[0], &x, &y, &width, &height);
+	Bool success = False;
 
 	if (argc != param->arg_count)
 	{
@@ -2311,15 +2337,15 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	}
 
 	if (MaskIsSet(flags, XValue|YValue|WidthValue|HeightValue))
-		set_output_area(dpy, dev, x, y, width, height);
+		success = set_output_area(dpy, dev, x, y, width, height);
 	else if (strcasecmp(argv[0], "next") == 0)
-		set_output_next(dpy, dev);
+		success = set_output_next(dpy, dev);
 	else if (strcasecmp(argv[0], "desktop") == 0)
-		set_output_desktop(dpy, dev);
+		success = set_output_desktop(dpy, dev);
 	else if (!need_xinerama(dpy))
-		set_output_xrandr(dpy, dev, argv[0]);
+		success = set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
-		set_output_xinerama(dpy, dev, head_no);
+		success = set_output_xinerama(dpy, dev, head_no);
 	else
 		fprintf(stderr, "Unable to find an output '%s'.\n", argv[0]);
 }
