@@ -2074,7 +2074,7 @@ static Bool _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	{
 		fprintf(stderr, "Property for '%s' has unexpected type - this is a bug.\n",
 			"Coordinate Transformation Matrix");
-		return;
+		return False;
 	}
 
 	XChangeDeviceProperty(dpy, dev, matrix_prop, type, format,
