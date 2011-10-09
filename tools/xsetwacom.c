@@ -784,11 +784,11 @@ static void list_mod(Display *dpy)
 {
 	struct modifier *m = modifiers;
 
-	printf("%d modifiers are supported:\n", ARRAY_SIZE(modifiers) - 1);
+	printf("%zd modifiers are supported:\n", ARRAY_SIZE(modifiers) - 1);
 	while(m->name)
 		printf("	%s\n", m++->name);
 
-	printf("\n%d specialkeys are supported:\n", ARRAY_SIZE(specialkeys) - 1);
+	printf("\n%zd specialkeys are supported:\n", ARRAY_SIZE(specialkeys) - 1);
 	m = specialkeys;
 	while(m->name)
 		printf("	%s\n", m++->name);
