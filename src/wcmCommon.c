@@ -1158,6 +1158,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			 */
 			if (common->wcmTouchDevice->oldProximity)
 			{
+				common->wcmGestureMode = 0;
 				wcmSoftOutEvent(common->wcmTouchDevice->pInfo);
 				return;
 			}
