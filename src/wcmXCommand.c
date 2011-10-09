@@ -102,8 +102,23 @@ Atom prop_product_id;
 Atom prop_debuglevels;
 #endif
 
-/* Special case: format -32 means type is XA_ATOM */
-static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, int *values)
+/**
+ * Registers a property for the input device. This function registers
+ * the property name atom, as well as creates the property itself.
+ * At creation, the property values are initialized from the 'values'
+ * array. The device property is marked as non-deletable.
+ * Initialization values are always to be provided by means of an
+ * array of 32 bit integers, regardless of 'format'
+ *
+ * @param dev Pointer to device structure
+ * @param name Name of device property
+ * @param type Type of the property
+ * @param format Format of the property (8/16/32)
+ * @param nvalues Number of values in the property
+ * @param values Pointer to 32 bit integer array of initial property values
+ * @return Atom handle of property name
+ */
+static Atom InitWcmAtom(DeviceIntPtr dev, char *name, Atom type, int format, int nvalues, int *values)
 {
 	int i;
 	Atom atom;
@@ -111,13 +126,6 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, int format, int nvalues, i
 	uint16_t val_16[WCM_MAX_MOUSE_BUTTONS];
 	uint32_t val_32[WCM_MAX_MOUSE_BUTTONS];
 	pointer converted = val_32;
-	Atom type = XA_INTEGER;
-
-	if (format == -32)
-	{
-		type = XA_ATOM;
-		format = 32;
-	}
 
 	for (i = 0; i < nvalues; i++)
 	{
@@ -163,83 +171,83 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		values[1] = priv->topY;
 		values[2] = priv->bottomX;
 		values[3] = priv->bottomY;
-		prop_tablet_area = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_AREA, 32, 4, values);
+		prop_tablet_area = InitWcmAtom(pInfo->dev, WACOM_PROP_TABLET_AREA, XA_INTEGER, 32, 4, values);
 	}
 
 	values[0] = common->wcmRotate;
-	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, 8, 1, values);
+	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, XA_INTEGER, 8, 1, values);
 
 	if (IsPen(priv) || IsTouch(priv)) {
 		values[0] = priv->nPressCtrl[0];
 		values[1] = priv->nPressCtrl[1];
 		values[2] = priv->nPressCtrl[2];
 		values[3] = priv->nPressCtrl[3];
-		prop_pressurecurve = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURECURVE, 32, 4, values);
+		prop_pressurecurve = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURECURVE, XA_INTEGER, 32, 4, values);
 	}
 
 	values[0] = common->tablet_id;
 	values[1] = priv->old_serial;
 	values[2] = priv->old_device_id;
 	values[3] = priv->cur_serial;
-	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, 32, 4, values);
+	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, XA_INTEGER, 32, 4, values);
 
 	values[0] = priv->serial;
-	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, 32, 1, values);
+	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, XA_INTEGER, 32, 1, values);
 
 	if (IsCursor(priv)) {
 		values[0] = common->wcmCursorProxoutDist;
-		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, 32, 1, values);
+		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, XA_INTEGER, 32, 1, values);
 	}
 
 	values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
-	prop_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURE_THRESHOLD, 32, 1, values);
+	prop_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURE_THRESHOLD, XA_INTEGER, 32, 1, values);
 
 	values[0] = common->wcmSuppress;
 	values[1] = common->wcmRawSample;
-	prop_suppress = InitWcmAtom(pInfo->dev, WACOM_PROP_SAMPLE, 32, 2, values);
+	prop_suppress = InitWcmAtom(pInfo->dev, WACOM_PROP_SAMPLE, XA_INTEGER, 32, 2, values);
 
 	values[0] = common->wcmTouch;
-	prop_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_TOUCH, 8, 1, values);
+	prop_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_TOUCH, XA_INTEGER, 8, 1, values);
 
 	if (IsStylus(priv)) {
 		values[0] = !common->wcmTPCButton;
-		prop_hover = InitWcmAtom(pInfo->dev, WACOM_PROP_HOVER, 8, 1, values);
+		prop_hover = InitWcmAtom(pInfo->dev, WACOM_PROP_HOVER, XA_INTEGER, 8, 1, values);
 	}
 
 	values[0] = common->wcmGesture;
-	prop_gesture = InitWcmAtom(pInfo->dev, WACOM_PROP_ENABLE_GESTURE, 8, 1, values);
+	prop_gesture = InitWcmAtom(pInfo->dev, WACOM_PROP_ENABLE_GESTURE, XA_INTEGER, 8, 1, values);
 
 	values[0] = common->wcmGestureParameters.wcmZoomDistance;
 	values[1] = common->wcmGestureParameters.wcmScrollDistance;
 	values[2] = common->wcmGestureParameters.wcmTapTime;
-	prop_gesture_param = InitWcmAtom(pInfo->dev, WACOM_PROP_GESTURE_PARAMETERS, 32, 3, values);
+	prop_gesture_param = InitWcmAtom(pInfo->dev, WACOM_PROP_GESTURE_PARAMETERS, XA_INTEGER, 32, 3, values);
 
 	values[0] = MakeAtom(pInfo->type_name, strlen(pInfo->type_name), TRUE);
-	prop_tooltype = InitWcmAtom(pInfo->dev, WACOM_PROP_TOOL_TYPE, -32, 1, values);
+	prop_tooltype = InitWcmAtom(pInfo->dev, WACOM_PROP_TOOL_TYPE, XA_ATOM, 32, 1, values);
 
 	/* default to no actions */
 	memset(values, 0, sizeof(values));
-	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, -32, WCM_MAX_MOUSE_BUTTONS, values);
+	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, WCM_MAX_MOUSE_BUTTONS, values);
 
 	if (IsPad(priv)) {
 		memset(values, 0, sizeof(values));
-		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, -32, 4, values);
+		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, XA_ATOM, 32, 4, values);
 	}
 
 	if (IsPad(priv) || IsCursor(priv))
 	{
 		memset(values, 0, sizeof(values));
-		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, -32, 4, values);
+		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32, 4, values);
 	}
 
 	values[0] = common->vendor_id;
 	values[1] = common->tablet_id;
-	prop_product_id = InitWcmAtom(pInfo->dev, XI_PROP_PRODUCT_ID, 32, 2, values);
+	prop_product_id = InitWcmAtom(pInfo->dev, XI_PROP_PRODUCT_ID, XA_INTEGER, 32, 2, values);
 
 #ifdef DEBUG
 	values[0] = priv->debugLevel;
 	values[1] = common->debugLevel;
-	prop_debuglevels = InitWcmAtom(pInfo->dev, WACOM_PROP_DEBUGLEVELS, 8, 2, values);
+	prop_debuglevels = InitWcmAtom(pInfo->dev, WACOM_PROP_DEBUGLEVELS, XA_INTEGER, 8, 2, values);
 #endif
 }
 
