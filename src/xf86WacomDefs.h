@@ -269,6 +269,7 @@ struct _WacomDeviceRec
 	int oldTiltX;           /* previous tilt in x direction */
 	int oldTiltY;           /* previous tilt in y direction */    
 	int oldWheel;           /* previous wheel value */    
+	int oldWheel2;          /* previous wheel2 value */
 	int oldRot;             /* previous rotation value */
 	int oldStripX;          /* previous left strip value */
 	int oldStripY;          /* previous right strip value */
@@ -325,6 +326,7 @@ struct _WacomDeviceState
 	int stripy;
 	int rotation;
 	int abswheel;
+	int abswheel2;
 	int relwheel;
 	int distance;
 	int throttle;

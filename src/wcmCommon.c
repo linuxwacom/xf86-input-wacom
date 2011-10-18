@@ -551,6 +551,7 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 	int tx, ty;
 
 	priv->oldWheel = ds->abswheel;
+	priv->oldWheel2 = ds->abswheel2;
 	priv->oldButtons = ds->buttons;
 
 	if (IsPad(priv))
@@ -739,11 +740,11 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	}
 
 	DBG(7, priv, "[%s] o_prox=%s x=%d y=%d z=%d "
-		"b=%s b=%d tx=%d ty=%d wl=%d rot=%d th=%d\n",
+		"b=%s b=%d tx=%d ty=%d wl=%d wl2=%d rot=%d th=%d\n",
 		pInfo->type_name,
 		priv->oldProximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", ds->buttons,
-		tx, ty, ds->abswheel, ds->rotation, ds->throttle);
+		tx, ty, ds->abswheel, ds->abswheel2, ds->rotation, ds->throttle);
 
 	if (ds->proximity)
 		wcmRotateAndScaleCoordinates(pInfo, &x, &y);
@@ -806,6 +807,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	{
 		priv->oldButtons = 0;
 		priv->oldWheel = MAX_PAD_RING + 1;
+		priv->oldWheel2 = MAX_PAD_RING + 1;
 		priv->oldX = 0;
 		priv->oldY = 0;
 		priv->oldZ = 0;
@@ -868,9 +870,9 @@ wcmCheckSuppress(WacomCommonPtr common,
 	/* look for change in absolute wheel position 
 	 * or any relative wheel movement
 	 */
-	if ((abs(dsOrig->abswheel - dsNew->abswheel) > suppress) 
-		|| (dsNew->relwheel != 0))
-		goto out;
+	if (abs(dsOrig->abswheel  - dsNew->abswheel)  > suppress) goto out;
+	if (abs(dsOrig->abswheel2 - dsNew->abswheel2) > suppress) goto out;
+	if (dsNew->relwheel != 0) goto out;
 
 	returnV = SUPPRESS_ALL;
 
@@ -924,7 +926,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	DBG(10, common,
 		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
-		"p=%d rz=%d tx=%d ty=%d aw=%d rw=%d "
+		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
 		"t=%d px=%d st=%d cs=%d \n",
 		channel,
 		ds.device_id,
@@ -932,7 +934,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.serial_num,
 		ds.x, ds.y, ds.buttons,
 		ds.pressure, ds.rotation, ds.tiltx,
-		ds.tilty, ds.abswheel, ds.relwheel, ds.throttle,
+		ds.tilty, ds.abswheel, ds.abswheel2, ds.relwheel, ds.throttle,
 		ds.proximity, ds.sample,
 		pChannel->nSamples);
 
