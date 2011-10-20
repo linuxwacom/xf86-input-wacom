@@ -1168,17 +1168,17 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			return;
 	}
 
-	if (IsPen(priv) || IsTouch(priv))
+	if (IsPen(priv))
+		common->wcmPenInProx = filtered.proximity;
+
+	if ((IsPen(priv) || IsTouch(priv)) && common->wcmMaxZ)
 	{
 		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
 		if (IsPen(priv))
 			filtered.buttons = setPressureButton(priv, &filtered);
 		filtered.pressure = applyPressureCurve(priv,&filtered);
-		if (IsPen(priv))
-			common->wcmPenInProx = filtered.proximity;
 	}
-
 	else if (IsCursor(priv) && !priv->oldCursorHwProx)
 	{
 		/* initial current max distance for Intuos series */
