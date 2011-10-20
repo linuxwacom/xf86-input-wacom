@@ -191,10 +191,6 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 	switch (priv->common->tablet_id)
 	{
-		case 0xCC:  /* CintiqV5 */
-			TabletSetFeature(priv->common, WCM_LCD);
-			/* fall through */
-
 		case 0xB8:  /* I4 */
 		case 0xB9:  /* I4 */
 		case 0xBA:  /* I4 */
@@ -248,6 +244,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x3F:  /* CintiqV5 */
 		case 0xC5:  /* CintiqV5 */
 		case 0xC6:  /* CintiqV5 */
+		case 0xCC:  /* CinitqV5 */
 			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 		case 0xB0:  /* I3 */
