@@ -640,7 +640,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 	} /* not in proximity */
 }
 
-#define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804)
+#define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804 || ds->device_id == 0x100804)
 
 /*****************************************************************************
  * wcmSendEvents --
