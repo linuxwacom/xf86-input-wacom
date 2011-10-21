@@ -308,6 +308,34 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 	return ret;
 }
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 14
+static InputOption*
+input_option_new(InputOption *list, char *key, char *value)
+{
+	InputOption *new;
+
+	new = calloc(1, sizeof(InputOption));
+	new->key = key;
+	new->value = value;
+	new->next = list;
+	return new;
+}
+
+static void
+input_option_free_list(InputOption **opts)
+{
+	InputOption *tmp = *opts;
+	while(*opts)
+	{
+		tmp = (*opts)->next;
+		free((*opts)->key);
+		free((*opts)->value);
+		free((*opts));
+		*opts = tmp;
+	}
+}
+#endif
+
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
  * (and the name with "$name $type" and convert them to InputOption
@@ -322,7 +350,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	WacomCommonPtr common = priv->common;
 	pointer original = pInfo->options;
 	WacomToolPtr ser = common->serials;
-	InputOption *iopts = NULL, *new;
+	InputOption *iopts = NULL;
 	char *name;
 	pointer options;
 	int rc;
@@ -364,29 +392,14 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 
 	while(options)
 	{
-		new = calloc(1, sizeof(InputOption));
-
-		new->key = xf86OptionName(options);
-		new->value = xf86OptionValue(options);
-		new->next = iopts;
-		iopts = new;
+		iopts = input_option_new(iopts,
+					 xf86OptionName(options),
+					 xf86OptionValue(options));
 		options = xf86NextOption(options);
 	}
 	return iopts;
 }
 
-static void wcmFreeInputOpts(InputOption* opts)
-{
-	InputOption *tmp = opts;
-	while(opts)
-	{
-		tmp = opts->next;
-		free(opts->key);
-		free(opts->value);
-		free(opts);
-		opts = tmp;
-	}
-}
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 /**
@@ -438,7 +451,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 			      hotplug_info->attrs,
 #endif
 			      &dev);
-	wcmFreeInputOpts(hotplug_info->input_options);
+	input_option_free_list(&hotplug_info->input_options);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	FreeInputAttributes(hotplug_info->attrs);
