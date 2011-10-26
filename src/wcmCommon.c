@@ -256,7 +256,7 @@ static void sendAction(InputInfoPtr pInfo, int press,
 						break;
 
 					if (countPresses(btn_no, &keys[i], nkeys - i))
-						xf86PostButtonEvent(pInfo->dev,
+						xf86PostButtonEventP(pInfo->dev,
 								is_absolute(pInfo), btn_no,
 								0, first_val, num_val,
 								VCOPY(valuators, num_val));
