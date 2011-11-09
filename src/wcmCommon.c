@@ -59,8 +59,6 @@ static void commonDispatchDevice(WacomCommonPtr common,
 				 enum WacomSuppressMode suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 			int first_val, int num_vals, int *valuators);
-static WacomToolPtr findTool(const WacomCommonPtr common,
-			     const WacomDeviceState *ds);
 
 /*****************************************************************************
  * Utility functions
@@ -905,16 +903,11 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (TabletHasFeature(common, WCM_ROTATION) &&
 		TabletHasFeature(common, WCM_RING)) /* I4 */
 	{
-		WacomToolPtr tool = findTool(common, &ds);
-		WacomDevicePtr toolpriv = tool->device->private;
-		if (tool && tool->device && IsCursor(toolpriv))
-		{
-			/* convert Intuos4 mouse tilt to rotation */
-			ds.rotation = wcmTilt2R(ds.tiltx, ds.tilty,
-						INTUOS4_CURSOR_ROTATION_OFFSET);
-			ds.tiltx = 0;
-			ds.tilty = 0;
-		}
+		/* convert Intuos4 mouse tilt to rotation */
+		ds.rotation = wcmTilt2R(ds.tiltx, ds.tilty,
+					INTUOS4_CURSOR_ROTATION_OFFSET);
+		ds.tiltx = 0;
+		ds.tilty = 0;
 	}
 
 	/* Optionally filter values only while in proximity */
