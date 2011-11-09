@@ -23,6 +23,7 @@
 /*****************************************************************************
  * General Defines
  ****************************************************************************/
+#include "include/wacom-util.h"
 #include <asm/types.h>
 #include <linux/input.h>
 #define MAX_USB_EVENTS 32
@@ -164,8 +165,8 @@ struct _WacomModel
 							  button handling,
 							  always an LCD) */
 #define WCM_PENTOUCH		0x00000400 /* Tablet supports pen and touch */
-#define TabletHasFeature(common, feature) (((common)->tablet_type & (feature)) != 0)
-#define TabletSetFeature(common, feature) ((common)->tablet_type |= (feature))
+#define TabletHasFeature(common, feature) MaskIsSet((common)->tablet_type, (feature))
+#define TabletSetFeature(common, feature) MaskSet((common)->tablet_type, (feature))
 
 #define ABSOLUTE_FLAG		0x00000100
 #define BAUD_19200_FLAG		0x00000400
