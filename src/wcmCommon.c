@@ -901,7 +901,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	}
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
-		TabletHasFeature(common, WCM_RING)) /* I4 */
+		TabletHasFeature(common, WCM_RING) &&
+		ds.device_type == CURSOR_ID) /* I4 mouse */
 	{
 		/* convert Intuos4 mouse tilt to rotation */
 		ds.rotation = wcmTilt2R(ds.tiltx, ds.tilty,
