@@ -23,7 +23,7 @@
 /*****************************************************************************
  * General Defines
  ****************************************************************************/
-#include "include/wacom-util.h"
+#include <wacom-util.h>
 #include <asm/types.h>
 #include <linux/input.h>
 #define MAX_USB_EVENTS 32
