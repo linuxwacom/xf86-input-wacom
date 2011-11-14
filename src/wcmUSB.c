@@ -1346,11 +1346,11 @@ static int usbParseBTNEvent(WacomCommonPtr common,
  * events to be processed.
  * @param nevents Number of events in the packet.
  *
- * @return The tool type. 0 if no pen/touch/eraser event code in the event.
+ * @return The tool type. TOUCH_ID if no pen/touch/eraser event code in the event.
  */
 static int usbInitToolType(const struct input_event *event_ptr, int nevents)
 {
-	int i, device_type = TOUCH_ID;
+	int i, device_type = 0;
 	struct input_event* event = (struct input_event *)event_ptr;
 
 	for (i = 0; (i < nevents) && !device_type; ++i)
@@ -1376,6 +1376,11 @@ static int usbInitToolType(const struct input_event *event_ptr, int nevents)
 		}
 
 		event++;
+	}
+
+	if (!device_type)
+	{
+		device_type = TOUCH_ID;
 	}
 
 	return device_type;
