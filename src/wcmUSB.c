@@ -1345,10 +1345,12 @@ static int usbParseBTNEvent(WacomCommonPtr common,
  * @param event_ptr A pointer to the USB data packet that contains the
  * events to be processed.
  * @param nevents Number of events in the packet.
+ * @param last_device_type The device type for the last event
  *
- * @return The tool type. TOUCH_ID if no pen/touch/eraser event code in the event.
+ * @return The tool type. last_device_type if no pen/touch/eraser event code
+ *         in the event, or TOUCH_ID if last_device_type is not a tool.
  */
-static int usbInitToolType(const struct input_event *event_ptr, int nevents)
+static int usbInitToolType(const struct input_event *event_ptr, int nevents, int last_device_type)
 {
 	int i, device_type = 0;
 	struct input_event* event = (struct input_event *)event_ptr;
@@ -1380,7 +1382,10 @@ static int usbInitToolType(const struct input_event *event_ptr, int nevents)
 
 	if (!device_type)
 	{
-		device_type = TOUCH_ID;
+		if (last_device_type)
+			device_type = last_device_type;
+		else
+			device_type = TOUCH_ID;
 	}
 
 	return device_type;
@@ -1417,7 +1422,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	if (private->wcmUseMT)
 		private->wcmDeviceType = usbInitToolType(private->wcmEvents,
-							 private->wcmEventCnt);
+							 private->wcmEventCnt,
+							 dslast.device_type);
 
 	if (private->wcmPenTouch)
 	{
