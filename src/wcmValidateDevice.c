@@ -678,7 +678,9 @@ int wcmParseSerials (InputInfoPtr pInfo)
 }
 
 /**
- * Parse the options for this device.
+ * Parse the pre-init options for this device. Most useful for options
+ * needed to properly init a device (baud rate for example).
+ *
  * Note that parameters is_primary and is_dependent are mutually exclusive,
  * though both may be false in the case of an xorg.conf device.
  *
@@ -688,7 +690,8 @@ int wcmParseSerials (InputInfoPtr pInfo)
  * otherwise.
  * @retvalue True on success or False otherwise.
  */
-Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
+Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
+			    Bool is_dependent)
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
@@ -844,8 +847,6 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 	common->wcmThreshold = xf86SetIntOption(pInfo->options, "Threshold",
 			common->wcmThreshold);
 
-	common->wcmMaxZ = xf86SetIntOption(pInfo->options, "MaxZ",
-					   common->wcmMaxZ);
 	if (xf86SetBoolOption(pInfo->options, "ButtonsOnly", 0))
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
@@ -897,14 +898,6 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
 				"be set by a touch tool.\n", pInfo->name);
 
-		common->wcmGestureParameters.wcmZoomDistance =
-			xf86SetIntOption(pInfo->options, "ZoomDistance",
-			common->wcmGestureParameters.wcmZoomDistanceDefault);
-
-		common->wcmGestureParameters.wcmScrollDistance =
-			xf86SetIntOption(pInfo->options, "ScrollDistance",
-			common->wcmGestureParameters.wcmScrollDistanceDefault);
-
 		common->wcmGestureParameters.wcmTapTime =
 			xf86SetIntOption(pInfo->options, "TapTime",
 			common->wcmGestureParameters.wcmTapTimeDefault);
@@ -932,6 +925,45 @@ Bool wcmParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent)
 error:
 	free(tool);
 	return FALSE;
+}
+
+/**
+ * Parse post-init options for this device. Useful for overriding HW
+ * specific options computed during init phase (HW distances for example).
+ *
+ * Note that parameters is_primary and is_dependent are mutually exclusive,
+ * though both may be false in the case of an xorg.conf device.
+ *
+ * @param is_primary True if the device is the parent device for
+ * hotplugging, False if the device is a depent or xorg.conf device.
+ * @param is_hotplugged True if the device is a dependent device, FALSE
+ * otherwise.
+ * @retvalue True on success or False otherwise.
+ */
+Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
+			     Bool is_dependent)
+{
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr  common = priv->common;
+
+	common->wcmMaxZ = xf86SetIntOption(pInfo->options, "MaxZ",
+					   common->wcmMaxZ);
+
+	/* 2FG touch device */
+	if (TabletHasFeature(common, WCM_2FGT))
+	{
+
+		common->wcmGestureParameters.wcmZoomDistance =
+			xf86SetIntOption(pInfo->options, "ZoomDistance",
+			common->wcmGestureParameters.wcmZoomDistanceDefault);
+
+		common->wcmGestureParameters.wcmScrollDistance =
+			xf86SetIntOption(pInfo->options, "ScrollDistance",
+			common->wcmGestureParameters.wcmScrollDistanceDefault);
+	}
+
+
+	return TRUE;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

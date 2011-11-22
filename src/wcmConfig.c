@@ -548,10 +548,13 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (!wcmSetType(pInfo, type))
 		goto SetupProc_fail;
 
-	if (!wcmParseOptions(pInfo, need_hotplug, is_dependent))
+	if (!wcmPreInitParseOptions(pInfo, need_hotplug, is_dependent))
 		goto SetupProc_fail;
 
 	if (!wcmInitModel(pInfo))
+		goto SetupProc_fail;
+
+	if (!wcmPostInitParseOptions(pInfo, need_hotplug, is_dependent))
 		goto SetupProc_fail;
 
 	if (need_hotplug)
