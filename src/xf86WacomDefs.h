@@ -388,10 +388,9 @@ extern WacomDeviceClass gWacomISDV4Device;
 
 typedef struct {
 	int wcmZoomDistance;	       /* minimum distance for a zoom touch gesture */
-	int wcmZoomDistanceDefault;    /* default minimum distance for a zoom touch gesture */
 	int wcmScrollDistance;	       /* minimum motion before sending a scroll gesture */
 	int wcmScrollDirection;	       /* store the vertical or horizontal bit in use */
-	int wcmScrollDistanceDefault;  /* default minimum motion before sending a scroll gesture */
+	int wcmMaxScrollFingerSpread; /* maximum distance between fingers for scroll gesture */
 	int wcmGestureUsed;	       /* retain used gesture count within one in-prox event */
 	int wcmTapTime;	   	       /* minimum time between taps for a right click */
 	int wcmTapTimeDefault;         /* default minimum time between taps for a right click */

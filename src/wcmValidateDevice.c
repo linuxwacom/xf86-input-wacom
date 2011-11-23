@@ -927,6 +927,12 @@ error:
 	return FALSE;
 }
 
+/* The values were based on trail and error. */
+#define WCM_BAMBOO3_MAXX 4096.0
+#define WCM_BAMBOO3_ZOOM_DISTANCE 180.0
+#define WCM_BAMBOO3_SCROLL_DISTANCE 80.0
+#define WCM_BAMBOO3_SCROLL_SPREAD_DISTANCE 350.0
+
 /**
  * Parse post-init options for this device. Useful for overriding HW
  * specific options computed during init phase (HW distances for example).
@@ -950,16 +956,24 @@ Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 					   common->wcmMaxZ);
 
 	/* 2FG touch device */
-	if (TabletHasFeature(common, WCM_2FGT))
+	if (TabletHasFeature(common, WCM_2FGT) && IsTouch(priv))
 	{
+		int zoom_distance = common->wcmMaxTouchX *
+			(WCM_BAMBOO3_ZOOM_DISTANCE / WCM_BAMBOO3_MAXX);
+		int scroll_distance = common->wcmMaxTouchX *
+			(WCM_BAMBOO3_SCROLL_DISTANCE / WCM_BAMBOO3_MAXX);
 
 		common->wcmGestureParameters.wcmZoomDistance =
 			xf86SetIntOption(pInfo->options, "ZoomDistance",
-			common->wcmGestureParameters.wcmZoomDistanceDefault);
+					 zoom_distance);
 
 		common->wcmGestureParameters.wcmScrollDistance =
 			xf86SetIntOption(pInfo->options, "ScrollDistance",
-			common->wcmGestureParameters.wcmScrollDistanceDefault);
+					 scroll_distance);
+
+		common->wcmGestureParameters.wcmMaxScrollFingerSpread =
+			common->wcmMaxTouchX *
+			(WCM_BAMBOO3_SCROLL_SPREAD_DISTANCE / WCM_BAMBOO3_MAXX);
 	}
 
 
