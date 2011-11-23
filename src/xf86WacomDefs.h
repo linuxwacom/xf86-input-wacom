@@ -393,7 +393,6 @@ typedef struct {
 	int wcmMaxScrollFingerSpread; /* maximum distance between fingers for scroll gesture */
 	int wcmGestureUsed;	       /* retain used gesture count within one in-prox event */
 	int wcmTapTime;	   	       /* minimum time between taps for a right click */
-	int wcmTapTimeDefault;         /* default minimum time between taps for a right click */
 } WacomGesturesParameters;
 
 enum WacomProtocol {

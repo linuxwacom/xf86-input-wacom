@@ -1397,7 +1397,6 @@ WacomCommonPtr wcmNewCommon(void)
 	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
 	common->wcmGestureParameters.wcmScrollDirection = 0;
 	common->wcmGestureParameters.wcmTapTime = 250;
-	common->wcmGestureParameters.wcmTapTimeDefault = 250;
 	common->wcmRotate = ROTATE_NONE;   /* default tablet rotation to off */
 	common->wcmMaxX = 0;               /* max digitizer logical X value */
 	common->wcmMaxY = 0;               /* max digitizer logical Y value */

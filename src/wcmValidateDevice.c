@@ -900,7 +900,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 		common->wcmGestureParameters.wcmTapTime =
 			xf86SetIntOption(pInfo->options, "TapTime",
-			common->wcmGestureParameters.wcmTapTimeDefault);
+			common->wcmGestureParameters.wcmTapTime);
 	}
 
 	/* Swap stylus buttons 2 and 3 for Tablet PCs */
