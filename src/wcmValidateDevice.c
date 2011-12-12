@@ -191,6 +191,10 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 	switch (priv->common->tablet_id)
 	{
+		case 0xF4:  /* Cintiq 24HD */
+			TabletSetFeature(priv->common, WCM_DUALRING);
+			/* fall through */
+
 		case 0xB8:  /* I4 */
 		case 0xB9:  /* I4 */
 		case 0xBA:  /* I4 */
