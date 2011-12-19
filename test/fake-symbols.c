@@ -44,7 +44,7 @@ xf86ReplaceIntOption(OPTTYPE optlist, const char *name, const int val)
 }
 
 _X_EXPORT char *
-xf86SetStrOption(OPTTYPE optlist, const char *name, char *deflt)
+xf86SetStrOption(OPTTYPE optlist, const char *name, CONST char *deflt)
 {
     return NULL;
 }
@@ -60,7 +60,7 @@ xf86AddNewOption(OPTTYPE head, const char *name, const char *val)
 {
     return NULL;
 }
-_X_EXPORT char *
+_X_EXPORT CONST char *
 xf86FindOptionValue(OPTTYPE options, const char *name)
 {
     return NULL;

@@ -3,8 +3,10 @@
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 #define OPTTYPE XF86OptionPtr
+#define CONST const
 #else
 #define OPTTYPE pointer
+#define CONST
 #endif
 
 extern int xf86ReadSerial (int fd, void *buf, int count);
@@ -17,12 +19,12 @@ extern int xf86SetSerialSpeed (int fd, int speed);
 extern OPTTYPE xf86ReplaceIntOption(OPTTYPE optlist, const char *name, const int val);
 extern OPTTYPE xf86AddNewOption(OPTTYPE head, const char *name, const char *val);
 extern char* xf86OptionName(OPTTYPE opt);
-extern char* xf86FindOptionValue(OPTTYPE options, const char *name);
+extern CONST char* xf86FindOptionValue(OPTTYPE options, const char *name);
 extern int xf86NameCmp(const char *s1, const char *s2);
 extern char* xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt);
 
 
-extern char * xf86SetStrOption(OPTTYPE optlist, const char *name, char *deflt);
+extern char * xf86SetStrOption(OPTTYPE optlist, const char *name, CONST char *deflt);
 extern int xf86SetBoolOption(OPTTYPE optlist, const char *name, int deflt);
 extern OPTTYPE xf86AddNewOption(OPTTYPE head, const char *name, const char *val);
 extern char* xf86OptionName(OPTTYPE opt);
