@@ -189,6 +189,8 @@ struct _WacomModel
 					 * For backward compability support,
 					 * tablet buttons besides the strips are
 					 * treated as buttons */
+#define AXIS_INVERT  0x01               /* Flag describing an axis which increases "downward" */
+#define AXIS_BITWISE 0x02               /* Flag describing an axis which changes bitwise */
 
 /* get/set/property */
 typedef struct _PROPINFO PROPINFO;

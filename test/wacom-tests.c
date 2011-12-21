@@ -29,6 +29,88 @@
  * change the behaviour.
  */
 
+static void
+test_get_scroll_delta(void)
+{
+	int test_table[][5] = {
+		{ 100,  25, 0, 0,  75}, { 25,  100, 0, 0, -75},
+		{-100, -25, 0, 0, -75}, {-25, -100, 0, 0,  75},
+		{ 100, -25, 0, 0, 125}, {-25,  100, 0, 0,-125},
+		{ 100, 100, 0, 0,   0}, {-25,  -25, 0, 0,   0},
+
+		{23, 0, 50, 0,  23}, {0, 23, 50, 0, -23},
+		{24, 0, 50, 0,  24}, {0, 24, 50, 0, -24},
+		{25, 0, 50, 0,  25}, {0, 25, 50, 0, -25},
+		{26, 0, 50, 0, -25}, {0, 26, 50, 0,  25},
+		{27, 0, 50, 0, -24}, {0, 27, 50, 0,  24},
+		{28, 0, 50, 0, -23}, {0, 28, 50, 0,  23},
+
+		{1024, 0, 0, AXIS_BITWISE, 11}, {0, 1024, 0, AXIS_BITWISE, -11},
+
+		{  0, 4, 256, AXIS_BITWISE, -3}, {4,   0, 256, AXIS_BITWISE,  3},
+		{  1, 4, 256, AXIS_BITWISE, -2}, {4,   1, 256, AXIS_BITWISE,  2},
+		{  2, 4, 256, AXIS_BITWISE, -1}, {4,   2, 256, AXIS_BITWISE,  1},
+		{  4, 4, 256, AXIS_BITWISE,  0}, {4,   4, 256, AXIS_BITWISE,  0},
+		{  8, 4, 256, AXIS_BITWISE,  1}, {4,   8, 256, AXIS_BITWISE, -1},
+		{ 16, 4, 256, AXIS_BITWISE,  2}, {4,  16, 256, AXIS_BITWISE, -2},
+		{ 32, 4, 256, AXIS_BITWISE,  3}, {4,  32, 256, AXIS_BITWISE, -3},
+		{ 64, 4, 256, AXIS_BITWISE,  4}, {4,  64, 256, AXIS_BITWISE, -4},
+		{128, 4, 256, AXIS_BITWISE,  5}, {4, 128, 256, AXIS_BITWISE, -5},
+		{256, 4, 256, AXIS_BITWISE, -4}, {4, 256, 256, AXIS_BITWISE,  4}
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(test_table); i++)
+	{
+		int delta;
+		int current, old, wrap, flags;
+		current = test_table[i][0];
+		old     = test_table[i][1];
+		wrap    = test_table[i][2];
+		flags   = test_table[i][3];
+
+		delta = getScrollDelta(current, old, wrap, flags);
+		assert(delta == test_table[i][4]);
+
+		flags |= AXIS_INVERT;
+		delta = getScrollDelta(current, old, wrap, flags);
+		assert(delta == -1 * test_table[i][4]);
+	}
+}
+
+static void
+test_get_wheel_button(void)
+{
+	int delta;
+	int button_up, button_dn, action_up, action_dn;
+
+	button_up = 100;
+	button_dn = 200;
+	action_up = 300;
+	action_dn = 400;
+
+	for (delta = -32; delta <= 32; delta++)
+	{
+		int *action;
+		int result = getWheelButton(delta, button_up, button_dn, &action_up, &action_dn, &action);
+		if (delta < 0)
+		{
+			assert(result == button_dn);
+			assert(action == &action_dn);
+		}
+		else if (delta == 0)
+		{
+			assert(result == 0);
+			assert(action == NULL);
+		}
+		else
+		{
+			assert(result == button_up);
+			assert(action == &action_up);
+		}
+	}
+}
+
 /**
  * Test refcounting of the common struct.
  */
@@ -552,6 +634,8 @@ int main(int argc, char** argv)
 	test_mod_buttons();
 	test_set_type();
 	test_flag_set();
+	test_get_scroll_delta();
+	test_get_wheel_button();
 	return 0;
 }
 
