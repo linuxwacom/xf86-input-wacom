@@ -642,6 +642,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 			valuators[4] -= priv->oldTiltY;
 		}
 		valuators[5] -= priv->oldWheel;
+		valuators[6] -= priv->oldWheel2;
 	}
 
 	/* coordinates are ready we can send events */
@@ -721,7 +722,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	int tx = ds->tiltx;
 	int ty = ds->tilty;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int v3, v4, v5;
+	int v3, v4, v5, v6;
 	int valuators[priv->naxes];
 
 	if (priv->serial && serial != priv->serial)
@@ -771,6 +772,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	}
 
 	v5 = ds->abswheel;
+	v6 = ds->abswheel2;
 	if (IsStylus(priv) && !IsArtPen(ds))
 	{
 		/* Normalize abswheel airbrush data to Art Pen rotation range.
@@ -781,11 +783,11 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	}
 
 	DBG(6, priv, "%s prox=%d\tx=%d"
-		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tid=%d"
+		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tv6=%d\tid=%d"
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
 		is_absolute(pInfo) ? "abs" : "rel",
 		ds->proximity,
-		x, y, z, v3, v4, v5, id, serial,
+		x, y, z, v3, v4, v5, v6, id, serial,
 		is_button ? "true" : "false", ds->buttons);
 
 	priv->currentX = x;
@@ -804,9 +806,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	valuators[3] = v3;
 	valuators[4] = v4;
 	valuators[5] = v5;
+	valuators[6] = v6;
 
 	if (type == PAD_ID)
-		wcmSendPadEvents(pInfo, ds, 3, 3, &valuators[3]); /* pad doesn't post x/y/z */
+		wcmSendPadEvents(pInfo, ds, 3, priv->naxes - 3, &valuators[3]); /* pad doesn't post x/y/z */
 	else
 		wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
 

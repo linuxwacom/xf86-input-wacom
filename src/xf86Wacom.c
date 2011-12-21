@@ -322,6 +322,27 @@ wcmInitAxes(DeviceIntPtr pWcm)
 #endif
 			       );
 
+	/* seventh valuator: abswheel2 */
+	if ((TabletHasFeature(common, WCM_DUALRING)) && IsPad(priv))
+	{
+		/* Second touch ring */
+		label = None;
+		min = MIN_PAD_RING;
+		max = MAX_PAD_RING;
+		min_res = max_res = res = 1;
+		mode = Absolute;
+
+		InitValuatorAxisStruct(pInfo->dev, 6,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+		                       label,
+#endif
+		                       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+		                       , mode
+#endif
+		                       );
+	}
+
 	return TRUE;
 }
 
@@ -348,6 +369,9 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
+
+	if (IsPad(priv) && TabletHasFeature(priv->common, WCM_DUALRING))
+		nbaxes = priv->naxes = nbaxes + 1; /* ABS wheel 2 */
 
 	/* if more than 3 buttons, offset by the four scroll buttons,
 	 * otherwise, alloc 7 buttons for scroll wheel. */
@@ -404,8 +428,8 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 			return FALSE;
 	}
 
-	if (!nbaxes || nbaxes > 6)
-		nbaxes = priv->naxes = 6;
+	if (!nbaxes || nbaxes > 7)
+		nbaxes = priv->naxes = 7;
 
 	/* axis_labels is just zeros, we set up each valuator with the
 	 * correct property later */
