@@ -237,7 +237,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	if (IsPad(priv) || IsCursor(priv))
 	{
 		memset(values, 0, sizeof(values));
-		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32, 4, values);
+		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32, 6, values);
 	}
 
 	values[0] = common->vendor_id;
@@ -456,6 +456,8 @@ struct wheel_strip_update_t {
 	int *dn1;
 	int *up2;
 	int *dn2;
+	int *up3;
+	int *dn3;
 
 	/* for CARD32 values, points to atom array of atoms to be
 	 * monitored.*/
@@ -477,7 +479,8 @@ static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
 		CARD32 *v32;
 	} values;
 
-	if (prop->size != 4)
+	if ((property == prop_strip_buttons && prop->size != 4) ||
+	    (property == prop_wheel_buttons && prop->size != 6))
 		return BadValue;
 
 	/* see wcmSetPropertyButtonActions for how this works. The wheel is
@@ -492,7 +495,9 @@ static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
 			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
 			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
 			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS)
+			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[4] > WCM_MAX_MOUSE_BUTTONS ||
+			    values.v8[5] > WCM_MAX_MOUSE_BUTTONS)
 				return BadValue;
 
 			if (!checkonly) {
@@ -500,6 +505,8 @@ static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
 				*wsup->dn1 = values.v8[1];
 				*wsup->up2 = values.v8[2];
 				*wsup->dn2 = values.v8[3];
+				*wsup->up3 = values.v8[4];
+				*wsup->dn3 = values.v8[5];
 			}
 			break;
 		case 32:
@@ -534,10 +541,12 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 		.dn1 = &priv->reldn,
 		.up2 = &priv->wheelup,
 		.dn2 = &priv->wheeldn,
+		.up3 = &priv->wheel2up,
+		.dn3 = &priv->wheel2dn,
 
 		.handlers = priv->wheel_actions,
 		.keys	  = priv->wheel_keys,
-		.skeys    = 4,
+		.skeys    = 6,
 	};
 
 	return wcmSetWheelOrStripProperty(dev, property, prop, checkonly, &wsup);
@@ -554,6 +563,8 @@ static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 		.dn1 = &priv->stripldn,
 		.up2 = &priv->striprup,
 		.dn2 = &priv->striprdn,
+		.up3 = NULL,
+		.dn3 = NULL,
 
 		.handlers = priv->strip_actions,
 		.keys	  = priv->strip_keys,

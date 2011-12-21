@@ -301,6 +301,26 @@ static param_t parameters[] =
 		.get_func = get_map,
 	},
 	{
+		.name = "AbsWheel2Up",
+		.desc = "X11 event to which absolute wheel up should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 4,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "AbsWheel2Down",
+		.desc = "X11 event to which absolute wheel down should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 5,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
 		.name = "StripLeftUp",
 		.desc = "X11 event to which left strip up should be mapped. ",
 		.prop_name = WACOM_PROP_STRIPBUTTONS,
@@ -2669,7 +2689,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 34);
+	assert(ARRAY_SIZE(parameters) == 36);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 

@@ -80,6 +80,8 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	 * later in wcmParseOptions, when we have IsPad() available */
 	priv->wheelup = 0;			/* Default absolute wheel up event */
 	priv->wheeldn = 0;			/* Default absolute wheel down event */
+	priv->wheel2up = 0;                     /* Default absolute wheel2 up event */
+	priv->wheel2dn = 0;                     /* Default absolute wheel2 down event */
 	priv->striplup = 4;			/* Default left strip up event */
 	priv->stripldn = 5;			/* Default left strip down event */
 	priv->striprup = 4;			/* Default right strip up event */

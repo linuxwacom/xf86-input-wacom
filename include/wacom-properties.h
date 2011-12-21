@@ -46,9 +46,9 @@
   */
 #define WACOM_PROP_STRIPBUTTONS "Wacom Strip Buttons"
 
-/* 8 bit, 4 values, rel wheel up, rel wheel down, abs wheel up, abs wheel down
+/* 8 bit, 6 values, rel wheel up, rel wheel down, abs wheel up, abs wheel down, abs wheel 2 up, abs wheel 2 down
    OR
-   Atom, 4 values , rel wheel up, rel wheel down, abs wheel up, abs wheel down
+   Atom, 6 values , rel wheel up, rel wheel down, abs wheel up, abs wheel down, abs wheel 2 up, abs wheel 2 down
  */
 #define WACOM_PROP_WHEELBUTTONS "Wacom Wheel Buttons"
 

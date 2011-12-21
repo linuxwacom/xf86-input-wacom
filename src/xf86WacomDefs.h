@@ -239,10 +239,12 @@ struct _WacomDeviceRec
 	int reldn;
 	int wheelup;
 	int wheeldn;
+	int wheel2up;
+	int wheel2dn;
 	/* keystrokes assigned to wheel events (default is the buttons above).
-	 * Order is relup, reldwn, wheelup, wheeldn. Like 'keys', this array
-	 * is one-indexed */
-	unsigned wheel_keys[4+1][256];
+	 * Order is relup, reldwn, wheelup, wheeldn, wheel2up, wheel2dn.
+	 * Like 'keys', this array is one-indexed */
+	unsigned wheel_keys[6+1][256];
 
 	int striplup;
 	int stripldn;

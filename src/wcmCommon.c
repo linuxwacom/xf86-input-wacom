@@ -470,6 +470,16 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		                            priv->wheel_keys[2+1], priv->wheel_keys[3+1], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
+
+	/* emulate events for right touch ring */
+	delta = getScrollDelta(ds->abswheel2, priv->oldWheel2, MAX_PAD_RING, AXIS_INVERT);
+	if (delta && IsPad(priv) && priv->oldProximity == ds->proximity)
+	{
+		DBG(10, priv, "Right touch wheel scroll delta = %d\n", delta);
+		fakeButton = getWheelButton(delta, priv->wheel2up, priv->wheel2dn,
+		                            priv->wheel_keys[4+1], priv->wheel_keys[5+1], &fakeKey);
+		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
+	}
 }
 
 /*****************************************************************************
@@ -488,7 +498,7 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		wcmSendButtons(pInfo,buttons, first_val, num_vals, valuators);
 
 	/* emulate wheel/strip events when defined */
-	if ( ds->relwheel || (ds->abswheel != priv->oldWheel) ||
+	if ( ds->relwheel || (ds->abswheel != priv->oldWheel) || (ds->abswheel2 != priv->oldWheel2) ||
 		( (ds->stripx - priv->oldStripX) && ds->stripx && priv->oldStripX) || 
 			((ds->stripy - priv->oldStripY) && ds->stripy && priv->oldStripY) )
 		sendWheelStripEvents(pInfo, ds, first_val, num_vals, valuators);
@@ -589,7 +599,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		if (valuators[i])
 			break;
 	if (i < num_vals || ds->buttons || ds->relwheel ||
-	    (ds->abswheel != priv->oldWheel))
+	    (ds->abswheel != priv->oldWheel) || (ds->abswheel2 != priv->oldWheel2))
 	{
 		sendCommonEvents(pInfo, ds, first_val, num_vals, valuators);
 
