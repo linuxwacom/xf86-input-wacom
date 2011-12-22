@@ -294,10 +294,9 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	mapped_button = priv->button[button];
 
 	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
-		"mapped_button=%d, coreEvent=%s \n",
+		"mapped_button=%d\n",
 		common->wcmTPCButton ? "on" : "off",
-		button, mask, mapped_button,
-		(mapped_button & AC_CORE) ? "yes" : "no");
+		button, mask, mapped_button);
 
 	if (!priv->keys[mapped_button][0])
 	{
