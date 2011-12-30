@@ -1017,10 +1017,7 @@ static int usbParseAbsEvent(WacomCommonPtr common,
 			ds->y = event->value;
 			break;
 		case ABS_RX:
-			if (common->vendor_id == WACOM_VENDOR_ID && common->tablet_id != 0x3F)
-				ds->stripx = event->value;
-			else
-				ds->stripy = event->value;
+			ds->stripx = event->value;
 			break;
 		case ABS_RY:
 			ds->stripy = event->value;
