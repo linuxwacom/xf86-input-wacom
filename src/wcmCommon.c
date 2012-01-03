@@ -810,8 +810,11 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 	if (type == PAD_ID)
 		wcmSendPadEvents(pInfo, ds, 3, priv->naxes - 3, &valuators[3]); /* pad doesn't post x/y/z */
-	else
-		wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
+	else {
+		/* don't move the cursor if in gesture mode */
+		if (!priv->common->wcmGestureMode)
+			wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
+	}
 
 	priv->oldProximity = ds->proximity;
 	if (ds->proximity)
@@ -1007,10 +1010,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	if ((ds.device_type == TOUCH_ID) && common->wcmTouch)
 		wcmGestureFilter(priv, channel);
-
-	/* don't move the cursor if in gesture mode */
-	if (common->wcmGestureMode)
-		return;
 
 	/* For touch, only first finger moves the cursor */
 	if ((ds.device_type == TOUCH_ID && common->wcmTouch && !channel) ||

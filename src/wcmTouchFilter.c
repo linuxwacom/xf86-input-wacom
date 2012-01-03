@@ -93,19 +93,11 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 /* send a button event */
 static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 {
-	int x = 0;
-	int y = 0;
 	int mode = is_absolute(priv->pInfo);
 
-	if (mode)
-	{
-		x = priv->oldX;
-		y = priv->oldY;
-	}
-
 	/* send button event in state */
-	xf86PostButtonEvent(priv->pInfo->dev, mode,button,
-		state,0,priv->naxes,x,y,0,0,0,0);
+	xf86PostButtonEventP(priv->pInfo->dev, mode,button,
+		state,0,0,0);
 
 	/* We have changed the button state (from down to up) for the device
 	 * so we need to update the record */
