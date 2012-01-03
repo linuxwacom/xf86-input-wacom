@@ -321,7 +321,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		goto ret;
 	}
 
-	if (!(common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE)))
+	if (!(common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE)) && channel)
 		wcmFingerTapToClick(priv);
 
 	/* Change mode happens only when both fingers are out */
