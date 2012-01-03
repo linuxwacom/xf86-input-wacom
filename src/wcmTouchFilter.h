@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 - 2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2011 by Alexey Osipov. <simba@lerlan.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +25,7 @@
 /****************************************************************************/
 
 void wcmGestureFilter(WacomDevicePtr priv, int channel);
+Bool wcmTouchNeedSendEvents(WacomCommonPtr common);
 
 /****************************************************************************/
 #endif /* __XF86_WCMTOUCHFILTER_H */

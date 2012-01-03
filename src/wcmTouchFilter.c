@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 - 2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2011 by Alexey Osipov. <simba@lerlan.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,6 +35,8 @@
 #define GESTURE_SCROLL_MODE           2
 #define GESTURE_ZOOM_MODE             4
 #define GESTURE_LAG_MODE              8
+#define GESTURE_PREDRAG_MODE         16
+#define GESTURE_DRAG_MODE            32
 
 #define WCM_SCROLL_UP                 5	/* vertical up */
 #define WCM_SCROLL_DOWN               4	/* vertical down */
@@ -140,6 +143,23 @@ static void wcmFingerTapToClick(WacomDevicePtr priv)
 	}
 }
 
+static CARD32 wcmSingleFingerTapTimer(OsTimerPtr timer, CARD32 time, pointer arg)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)arg;
+	WacomCommonPtr common = priv->common;
+
+	if (common->wcmGestureMode == GESTURE_PREDRAG_MODE)
+	{
+		/* left button down */
+		wcmSendButtonClick(priv, 1, 1);
+
+		/* left button up */
+		wcmSendButtonClick(priv, 1, 0);
+		common->wcmGestureMode = GESTURE_NONE_MODE;
+	}
+
+	return 0;
+}
 
 /* A single finger tap is defined as 1 finger tap that lasts less than
  * wcmTapTime.  It results in a left button press.
@@ -178,11 +198,10 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 		    common->wcmGestureParameters.wcmTapTime &&
 		    ds[1].sample < dsLast[0].sample)
 		{
-			/* left button down */
-			wcmSendButtonClick(priv, 1, 1);
+			common->wcmGestureMode = GESTURE_PREDRAG_MODE;
 
-			/* left button up */
-			wcmSendButtonClick(priv, 1, 0);
+			/* Delay to detect possible drag operation */
+			TimerSet(NULL, 0, common->wcmGestureParameters.wcmTapTime, wcmSingleFingerTapTimer, priv);
 		}
 	}
 }
@@ -248,17 +267,19 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		if (common->wcmGestureMode == GESTURE_NONE_MODE)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
 	}
-	/* When only 1 finger is in proximity, it can be in either LAG mode
-	 * or NONE mode.
+	/* When only 1 finger is in proximity, it can be in either LAG mode,
+	 * NONE mode or DRAG mode.
 	 * 1 finger LAG mode is a very short time period mainly to debounce
 	 * initial touch.
-	 * NONE mode means cursor is allowed to move around.
+	 * NONE and DRAG mode means cursor is allowed to move around.
+	 * DRAG mode in addition means that left button pressed.
+	 * There is no need to bother about LAG_TIME while in DRAG mode.
 	 * TODO: This has to use dsLast[0] because of later logic that
 	 * wants mode to be NONE still when 1st entering proximity.
 	 * That could use some re-arranging/cleanup.
 	 *
 	 */
-	else if (dsLast[0].proximity)
+	else if (dsLast[0].proximity && common->wcmGestureMode != GESTURE_DRAG_MODE)
 	{
 		CARD32 ms = GetTimeInMillis();
 
@@ -297,6 +318,16 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		/* initialize the cursor position */
 		if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
 			goto ret;
+
+		/* got second touch in TapTime interval after first one,
+		 * switch to DRAG mode */
+		if (common->wcmGestureMode == GESTURE_PREDRAG_MODE)
+		{
+			/* left button down */
+			wcmSendButtonClick(priv, 1, 1);
+			common->wcmGestureMode = GESTURE_DRAG_MODE;
+			goto ret;
+		}
 	}
 
 	if (!ds[0].proximity && !ds[1].proximity)
@@ -306,6 +337,10 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		    common->wcmGestureMode != GESTURE_NONE_MODE)
 			/* send first finger out prox */
 			wcmSoftOutEvent(priv->pInfo);
+
+		/* if were in DRAG mode, send left button up now */
+		if (common->wcmGestureMode == GESTURE_DRAG_MODE)
+			wcmSendButtonClick(priv, 1, 0);
 
 		/* exit gesture mode when both fingers are out */
 		common->wcmGestureMode = GESTURE_NONE_MODE;
@@ -559,6 +594,11 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		wcmSendButtonClick (priv, button, 0);
 		wcmEmitKeycode (priv->pInfo->dev, 37 /*XK_Control_L*/, 0);
 	}
+}
+
+Bool wcmTouchNeedSendEvents(WacomCommonPtr common)
+{
+	return !(common->wcmGestureMode & ~GESTURE_DRAG_MODE);
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

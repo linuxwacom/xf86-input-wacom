@@ -812,8 +812,8 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	if (type == PAD_ID)
 		wcmSendPadEvents(pInfo, ds, 3, priv->naxes - 3, &valuators[3]); /* pad doesn't post x/y/z */
 	else {
-		/* don't move the cursor if in gesture mode */
-		if (!priv->common->wcmGestureMode)
+		/* don't move the cursor if in gesture mode (except drag mode) */
+		if ((type != TOUCH_ID) || wcmTouchNeedSendEvents(priv->common))
 			wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
 	}
 
