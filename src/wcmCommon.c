@@ -24,6 +24,7 @@
 #include "xf86Wacom.h"
 #include "Xwacom.h"
 #include "wcmFilter.h"
+#include "wcmTouchFilter.h"
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 

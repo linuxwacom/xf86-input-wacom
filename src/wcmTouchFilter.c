@@ -21,6 +21,7 @@
 #endif
 
 #include "xf86Wacom.h"
+#include "wcmTouchFilter.h"
 #include <math.h>
 
 /* Defines for 2FC Gesture */
