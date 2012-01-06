@@ -6,6 +6,7 @@
 set -e
 
 announce_list="linuxwacom-announce@lists.sourceforge.net"
+discuss_list="linuxwacom-discuss@lists.sourceforge.net"
 module=xf86-input-wacom
 user=${USER}@
 host=shell.sourceforge.net
@@ -53,6 +54,7 @@ SHA1SUM=`which sha1sum || which gsha1sum`
     cat <<RELEASE
 Subject: [ANNOUNCE] $module $version
 To: $announce_list
+Reply-To: $discuss_list
 
 `git log --no-merges "$range" | git shortlog`
 
