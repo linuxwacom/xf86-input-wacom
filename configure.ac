@@ -101,7 +101,7 @@ AC_ARG_WITH([xorg-conf-dir],
             [configdir="$withval"],
             [configdir="$sysconfigdir"])
 AC_SUBST(configdir)
-AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$sysconfigdir" != "x"])
+AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$configdir" != "x"])
 
 AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
                           [Enable unit-tests (default: auto)]),
