@@ -755,14 +755,16 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			common->wcmCursorProxoutDist = value;
 	} else if (property == prop_threshold)
 	{
-		CARD32 value;
+		INT32 value;
 
 		if (prop->size != 1 || prop->format != 32)
 			return BadValue;
 
-		value = *(CARD32*)prop->data;
+		value = *(INT32*)prop->data;
 
-		if ((value < 1) || (value > FILTER_PRESSURE_RES))
+		if (value == -1)
+			value = DEFAULT_THRESHOLD;
+		else if ((value < 1) || (value > FILTER_PRESSURE_RES))
 			return BadValue;
 
 		if (!checkonly)

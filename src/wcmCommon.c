@@ -28,10 +28,6 @@
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 
-/* Tested result for setting the pressure threshold to a reasonable value */
-#define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
-#define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
-
 /* X servers pre 1.9 didn't copy data passed into xf86Post*Event.
  * Data passed in would be modified, requiring the driver to copy the
  * data beforehand.

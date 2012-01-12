@@ -183,6 +183,10 @@ struct _WacomModel
 #define IsUSBDevice(common) ((common)->wcmDevCls == &gWacomUSBDevice)
 
 #define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
+/* Tested result for setting the pressure threshold to a reasonable value */
+#define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
+#define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
+
 #define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
 #define WCM_MAX_MOUSE_BUTTONS	16	/* maximum number of buttons-on-pointer
                                          * (which are treated as mouse buttons,
