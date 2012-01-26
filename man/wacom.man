@@ -251,6 +251,39 @@ generates button press and release events. Presses longer than
 .B TapTime
 do not generate button events, only motion events.
 .RE
+.SH "TOUCH GESTURES"
+.SS Single finger (1FG)
+.LP
+\fBLeft click:\fR
+tap, actual click happens after TapTime period elapses.
+.LP
+\fBLeft click drag:\fR
+tap to select, quickly (within TapTime period) touch selection again.  Then drag.
+Available on touchpads, e.g. BambooPT, not touchscreens.
+.PP
+.SS Two finger (2FG)
+.LP
+\fBRight click:\fR
+one finger down + tap second finger
+.LP
+\fBVertical scroll:\fR
+two fingers side by side (in any orientation) moving vertically with constant
+separation intitiates a vertical scroll.  By driver default a gesture up results
+in a scroll down event (the document moves up) and a gesture down results in a
+scroll up event (moving the document down).
+.LP
+\fBHorizontal scroll:\fR
+two fingers side by side held at a constant distance moving horizontally initiates
+a horizontal scroll.  A gesture to the left results in a scroll right event (the
+document moves left) and a gesture right results in a scroll left event (moving
+the document right).
+.LP
+\fBZoom in:\fR
+two separated fingers side by side, bring together i.e. pinch.
+.LP
+\fBZoom out:\fR
+two fingers side by side, spread.  Not all applications support zoom.
+.PP
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
 xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)
