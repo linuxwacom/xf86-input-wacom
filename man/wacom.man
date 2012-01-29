@@ -268,7 +268,7 @@ one finger down + tap second finger
 .LP
 \fBVertical scroll:\fR
 two fingers side by side (in any orientation) moving vertically with constant
-separation intitiates a vertical scroll.  By driver default a gesture up results
+separation initiates a vertical scroll.  By driver default a gesture up results
 in a scroll down event (the document moves up) and a gesture down results in a
 scroll up event (moving the document down).
 .LP
