@@ -122,9 +122,9 @@ static Atom InitWcmAtom(DeviceIntPtr dev, char *name, Atom type, int format, int
 {
 	int i;
 	Atom atom;
-	uint8_t val_8[WCM_MAX_MOUSE_BUTTONS];
-	uint16_t val_16[WCM_MAX_MOUSE_BUTTONS];
-	uint32_t val_32[WCM_MAX_MOUSE_BUTTONS];
+	uint8_t val_8[WCM_MAX_BUTTONS];
+	uint16_t val_16[WCM_MAX_BUTTONS];
+	uint32_t val_32[WCM_MAX_BUTTONS];
 	pointer converted = val_32;
 
 	for (i = 0; i < nvalues; i++)
@@ -156,7 +156,8 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
-	int values[WCM_MAX_MOUSE_BUTTONS];
+	int values[WCM_MAX_BUTTONS];
+	int nbuttons;
 
 	DBG(10, priv, "\n");
 
@@ -225,9 +226,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = MakeAtom(pInfo->type_name, strlen(pInfo->type_name), TRUE);
 	prop_tooltype = InitWcmAtom(pInfo->dev, WACOM_PROP_TOOL_TYPE, XA_ATOM, 32, 1, values);
 
+
 	/* default to no actions */
+	nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
 	memset(values, 0, sizeof(values));
-	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, WCM_MAX_MOUSE_BUTTONS, values);
+	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, nbuttons, values);
 
 	if (IsPad(priv)) {
 		memset(values, 0, sizeof(values));
@@ -288,7 +291,7 @@ static int wcmSanityCheckProperty(XIPropertyValuePtr prop)
 			case AC_KEY:
 				break;
 			case AC_BUTTON:
-				if (code > WCM_MAX_MOUSE_BUTTONS)
+				if (code > WCM_MAX_BUTTONS)
 					return BadValue;
 				break;
 			case AC_DISPLAYTOGGLE:
@@ -492,12 +495,12 @@ static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
 	switch (prop->format)
 	{
 		case 8:
-			if (values.v8[0] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[1] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[2] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[3] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[4] > WCM_MAX_MOUSE_BUTTONS ||
-			    values.v8[5] > WCM_MAX_MOUSE_BUTTONS)
+			if (values.v8[0] > WCM_MAX_BUTTONS ||
+			    values.v8[1] > WCM_MAX_BUTTONS ||
+			    values.v8[2] > WCM_MAX_BUTTONS ||
+			    values.v8[3] > WCM_MAX_BUTTONS ||
+			    values.v8[4] > WCM_MAX_BUTTONS ||
+			    values.v8[5] > WCM_MAX_BUTTONS)
 				return BadValue;
 
 			if (!checkonly) {
@@ -846,7 +849,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 #endif
 	} else if (property == prop_btnactions)
 	{
-		if (prop->size != WCM_MAX_MOUSE_BUTTONS)
+		if (prop->size != WCM_MAX_BUTTONS)
 			return BadMatch;
 		wcmSetPropertyButtonActions(dev, property, prop, checkonly);
 	} else
