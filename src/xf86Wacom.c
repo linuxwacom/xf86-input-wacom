@@ -375,12 +375,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	/* if more than 3 buttons, offset by the four scroll buttons,
 	 * otherwise, alloc 7 buttons for scroll wheel. */
-	nbbuttons = (nbbuttons > 3) ? nbbuttons + 4 : 7;
-
-	/* make sure nbbuttons stays in the range */
-	if (nbbuttons > WCM_MAX_BUTTONS)
-		nbbuttons = WCM_MAX_BUTTONS;
-
+	nbbuttons = min(max(nbbuttons + 4, 7), WCM_MAX_BUTTONS);
 	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
 	                             * configured as an either mouse button or key */
 
