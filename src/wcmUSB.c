@@ -40,6 +40,9 @@ typedef struct {
 	int wcmPrevChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
+	int nbuttons;                /* total number of buttons */
+	int npadkeys;                /* number of pad keys in the above array */
+	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
 } wcmUSBData;
 
 static Bool usbDetect(InputInfoPtr);
@@ -320,6 +323,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	struct input_id sID;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	wcmUSBData *usbdata;
 
 	DBG(1, priv, "initializing USB tablet\n");
 
@@ -331,6 +335,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		return !Success;
 	}
 
+	usbdata = common->private;
 	*version = 0.0;
 
 	/* fetch vendor, product, and model name */
@@ -355,10 +360,10 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	}
 
 	/* Find out supported button codes. */
-	common->npadkeys = 0;
+	usbdata->npadkeys = 0;
 	for (i = 0; i < ARRAY_SIZE(padkey_codes); i++)
 		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
-			common->padkey_code [common->npadkeys++] = padkey_codes [i];
+			usbdata->padkey_code [usbdata->npadkeys++] = padkey_codes [i];
 
 	if (!(ISBITSET (common->wcmKeys, BTN_TOOL_MOUSE)))
 	{
@@ -372,8 +377,8 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		/* Make sure room for fixed map mouse buttons.  This
 		 * means mappings may overlap with padkey_codes[].
 		 */
-		if (i != 0 && common->npadkeys < WCM_USB_MAX_MOUSE_BUTTONS)
-			common->npadkeys = WCM_USB_MAX_MOUSE_BUTTONS;
+		if (i != 0 && usbdata->npadkeys < WCM_USB_MAX_MOUSE_BUTTONS)
+			usbdata->npadkeys = WCM_USB_MAX_MOUSE_BUTTONS;
 	}
 
 	/* nbuttons tracks maximum buttons on all tools (stylus/mouse).
@@ -382,9 +387,9 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 	 * Stylus support tip and 2 stlyus buttons.
 	 */
 	if (ISBITSET (common->wcmKeys, BTN_TOOL_MOUSE))
-		common->nbuttons = WCM_USB_MAX_MOUSE_BUTTONS;
+		usbdata->nbuttons = WCM_USB_MAX_MOUSE_BUTTONS;
 	else
-		common->nbuttons = WCM_USB_MAX_STYLUS_BUTTONS;
+		usbdata->nbuttons = WCM_USB_MAX_STYLUS_BUTTONS;
 
 	return Success;
 }
@@ -600,12 +605,13 @@ static int usbDetectConfig(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	wcmUSBData *usbdata = common->private;
 
 	DBG(10, common, "\n");
 	if (IsPad (priv))
-		priv->nbuttons = common->npadkeys;
+		priv->nbuttons = usbdata->npadkeys;
 	else
-		priv->nbuttons = common->nbuttons;
+		priv->nbuttons = usbdata->nbuttons;
 
 	if (!common->wcmCursorProxoutDist)
 		common->wcmCursorProxoutDist
@@ -1303,6 +1309,7 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 {
 	int nkeys;
 	int change = 1;
+	wcmUSBData *usbdata = common->private;
 
 	switch (event->code)
 	{
@@ -1329,15 +1336,15 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 			break;
 
 		default:
-			for (nkeys = 0; nkeys < common->npadkeys; nkeys++)
+			for (nkeys = 0; nkeys < usbdata->npadkeys; nkeys++)
 			{
-				if (event->code == common->padkey_code[nkeys])
+				if (event->code == usbdata->padkey_code[nkeys])
 				{
 					ds->buttons = mod_buttons(ds->buttons, nkeys, event->value);
 					break;
 				}
 			}
-			if (nkeys >= common->npadkeys)
+			if (nkeys >= usbdata->npadkeys)
 				change = 0;
 	}
 	return change;
