@@ -456,14 +456,6 @@ static int wcmSetPropertyButtonActions(DeviceIntPtr dev, Atom property,
 }
 
 struct wheel_strip_update_t {
-	/* for CARD8 values, points to fields in struct to be updated */
-	int *up1;
-	int *dn1;
-	int *up2;
-	int *dn2;
-	int *up3;
-	int *dn3;
-
 	/* for CARD32 values, points to atom array of atoms to be
 	 * monitored.*/
 	Atom *handlers;
@@ -479,41 +471,13 @@ static int wcmSetWheelOrStripProperty(DeviceIntPtr dev, Atom property,
 {
 	int rc;
 
-	union multival {
-		CARD8 *v8;
-		CARD32 *v32;
-	} values;
-
 	if ((property == prop_strip_buttons && prop->size != 4) ||
 	    (property == prop_wheel_buttons && prop->size != 6))
 		return BadValue;
 
-	/* see wcmSetPropertyButtonActions for how this works. The wheel is
-	 * slightly different in that it allows for 8 bit properties for
-	 * pure buttons too */
-
-	values.v8 = (CARD8*)prop->data;
-
+	/* see wcmSetPropertyButtonActions for how this works. */
 	switch (prop->format)
 	{
-		case 8:
-			if (values.v8[0] > WCM_MAX_BUTTONS ||
-			    values.v8[1] > WCM_MAX_BUTTONS ||
-			    values.v8[2] > WCM_MAX_BUTTONS ||
-			    values.v8[3] > WCM_MAX_BUTTONS ||
-			    values.v8[4] > WCM_MAX_BUTTONS ||
-			    values.v8[5] > WCM_MAX_BUTTONS)
-				return BadValue;
-
-			if (!checkonly) {
-				*wsup->up1 = values.v8[0];
-				*wsup->dn1 = values.v8[1];
-				*wsup->up2 = values.v8[2];
-				*wsup->dn2 = values.v8[3];
-				*wsup->up3 = values.v8[4];
-				*wsup->dn3 = values.v8[5];
-			}
-			break;
 		case 32:
 			rc = wcmCheckActionProp(dev, property, prop);
 			if (rc != Success)
@@ -542,13 +506,6 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	struct wheel_strip_update_t wsup = {
-		.up1 = &priv->wheel_default[WHEEL_REL_UP],
-		.dn1 = &priv->wheel_default[WHEEL_REL_DN],
-		.up2 = &priv->wheel_default[WHEEL_ABS_UP],
-		.dn2 = &priv->wheel_default[WHEEL_ABS_DN],
-		.up3 = &priv->wheel_default[WHEEL2_ABS_UP],
-		.dn3 = &priv->wheel_default[WHEEL2_ABS_DN],
-
 		.handlers = priv->wheel_actions,
 		.keys	  = priv->wheel_keys,
 		.skeys    = 6,
@@ -564,13 +521,6 @@ static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	struct wheel_strip_update_t wsup = {
-		.up1 = &priv->strip_default[STRIP_LEFT_UP],
-		.dn1 = &priv->strip_default[STRIP_LEFT_DN],
-		.up2 = &priv->strip_default[STRIP_RIGHT_UP],
-		.dn2 = &priv->strip_default[STRIP_RIGHT_DN],
-		.up3 = NULL,
-		.dn3 = NULL,
-
 		.handlers = priv->strip_actions,
 		.keys	  = priv->strip_keys,
 		.skeys    = 4,
