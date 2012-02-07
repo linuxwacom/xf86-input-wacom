@@ -144,7 +144,6 @@ extern Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is
 extern int wcmParseSerials(InputInfoPtr pinfo);
 extern void wcmInitialCoordinates(InputInfoPtr pInfo, int axes);
 extern void wcmInitialScreens(InputInfoPtr pInfo);
-extern void wcmInitialScreens(InputInfoPtr pInfo);
 
 extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
