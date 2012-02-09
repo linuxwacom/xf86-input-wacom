@@ -849,7 +849,8 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 #endif
 	} else if (property == prop_btnactions)
 	{
-		if (prop->size != WCM_MAX_BUTTONS)
+		int nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
+		if (prop->size != nbuttons)
 			return BadMatch;
 		wcmSetPropertyButtonActions(dev, property, prop, checkonly);
 	} else
