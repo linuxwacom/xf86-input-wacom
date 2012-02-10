@@ -234,7 +234,7 @@ struct _WacomDeviceRec
 	/*  map zero based internal buttons to one based X buttons */
 	int button[WCM_MAX_BUTTONS];
 	/* map one based X buttons to keystrokes */
-	unsigned keys[WCM_MAX_BUTTONS+1][256];
+	unsigned keys[WCM_MAX_BUTTONS][256];
 	int relup;
 	int reldn;
 	int wheelup;
@@ -244,7 +244,7 @@ struct _WacomDeviceRec
 	/* keystrokes assigned to wheel events (default is the buttons above).
 	 * Order is relup, reldwn, wheelup, wheeldn, wheel2up, wheel2dn.
 	 * Like 'keys', this array is one-indexed */
-	unsigned wheel_keys[6+1][256];
+	unsigned wheel_keys[6][256];
 
 	int striplup;
 	int stripldn;
@@ -253,7 +253,7 @@ struct _WacomDeviceRec
 	/* keystrokes assigned to strip events (default is the buttons above).
 	 * Order is striplup, stripldn, striprup, striprdn. Like 'keys', this
 	 * array is one-indexed */
-	unsigned strip_keys[4+1][256];
+	unsigned strip_keys[4][256];
 	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
 				/* FIXME: always 6, and the code relies on that... */

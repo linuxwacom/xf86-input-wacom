@@ -286,23 +286,16 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
-	int mapped_button;
+	int mapped_button = button > 2 ? button + 4 : button; /* maintain prior "dead button" behavior */
 
-	if (!priv->button[button])  /* ignore this button event */
-		return;
-
-	mapped_button = priv->button[button];
-
-	DBG(4, priv, "TPCButton(%s) button=%d state=%d "
-		"mapped_button=%d\n",
-		common->wcmTPCButton ? "on" : "off",
-		button, mask, mapped_button);
+	DBG(4, priv, "TPCButton(%s) button=%d state=%d\n",
+	    common->wcmTPCButton ? "on" : "off", button, mask);
 
 	if (!priv->keys[mapped_button][0])
 	{
 		/* No button action configured, send button */
 		xf86PostButtonEventP(pInfo->dev, is_absolute(pInfo),
-				     mapped_button, (mask != 0),
+				     priv->button[button], (mask != 0),
 				     first_val, num_val,
 				     VCOPY(valuators, num_val));
 		return;
@@ -433,7 +426,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		DBG(10, priv, "Left touch strip scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->striplup, priv->stripldn,
-		                            priv->strip_keys[0+1], priv->strip_keys[1+1], &fakeKey);
+		                            priv->strip_keys[0], priv->strip_keys[1], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
 
@@ -443,7 +436,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		DBG(10, priv, "Right touch strip scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->striprup, priv->striprdn,
-		                            priv->strip_keys[2+1], priv->strip_keys[3+1], &fakeKey);
+		                            priv->strip_keys[2], priv->strip_keys[3], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
 
@@ -453,7 +446,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->relup, priv->reldn,
-		                            priv->wheel_keys[0+1], priv->wheel_keys[1+1], &fakeKey);
+		                            priv->wheel_keys[0], priv->wheel_keys[1], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
 
@@ -463,7 +456,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		DBG(10, priv, "Left touch wheel scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->wheelup, priv->wheeldn,
-		                            priv->wheel_keys[2+1], priv->wheel_keys[3+1], &fakeKey);
+		                            priv->wheel_keys[2], priv->wheel_keys[3], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
 
@@ -473,7 +466,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	{
 		DBG(10, priv, "Right touch wheel scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->wheel2up, priv->wheel2dn,
-		                            priv->wheel_keys[4+1], priv->wheel_keys[5+1], &fakeKey);
+		                            priv->wheel_keys[4], priv->wheel_keys[5], &fakeKey);
 		sendWheelStripEvent(fakeButton, fakeKey, pInfo, first_val, num_vals, valuators);
 	}
 }
