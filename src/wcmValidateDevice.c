@@ -735,8 +735,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	 */
 	if (IsPad(priv))
 	{
-		priv->wheelup = priv->wheel2up = 4;
-		priv->wheeldn = priv->wheel2dn = 5;
+		priv->wheel_default[WHEEL_ABS_UP] = priv->wheel_default[WHEEL2_ABS_UP] = 4;
+		priv->wheel_default[WHEEL_ABS_DN] = priv->wheel_default[WHEEL2_ABS_DN] = 5;
 		set_absolute(pInfo, TRUE);
 	}
 
@@ -916,15 +916,15 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	/* Swap stylus buttons 2 and 3 for Tablet PCs */
 	if (TabletHasFeature(common, WCM_TPC) && IsStylus(priv))
 	{
-		priv->button[1] = 3;
-		priv->button[2] = 2;
+		priv->button_default[1] = 3;
+		priv->button_default[2] = 2;
 	}
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
 		char b[12];
 		sprintf(b, "Button%d", i+1);
-		priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
+		priv->button_default[i] = xf86SetIntOption(pInfo->options, b, priv->button_default[i]);
 	}
 
 	/* Now parse class-specific options */

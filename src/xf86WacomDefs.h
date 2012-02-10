@@ -192,6 +192,18 @@ struct _WacomModel
 #define AXIS_INVERT  0x01               /* Flag describing an axis which increases "downward" */
 #define AXIS_BITWISE 0x02               /* Flag describing an axis which changes bitwise */
 
+/* Indicies into the wheel/strip default/keys/actions arrays */
+#define WHEEL_REL_UP      0
+#define WHEEL_REL_DN      1
+#define WHEEL_ABS_UP      2
+#define WHEEL_ABS_DN      3
+#define WHEEL2_ABS_UP     4
+#define WHEEL2_ABS_DN     5
+#define STRIP_LEFT_UP     0
+#define STRIP_LEFT_DN     1
+#define STRIP_RIGHT_UP    2
+#define STRIP_RIGHT_DN    3
+
 /* get/set/property */
 typedef struct _PROPINFO PROPINFO;
 
@@ -231,29 +243,23 @@ struct _WacomDeviceRec
 	int maxHeight;		/* max active screen height in screen coords */
 	int leftPadding;	/* left padding for virtual tablet in device coordinates*/
 	int topPadding;		/* top padding for virtual tablet in device coordinates*/
-	/*  map zero based internal buttons to one based X buttons */
-	int button[WCM_MAX_BUTTONS];
-	/* map one based X buttons to keystrokes */
-	unsigned keys[WCM_MAX_BUTTONS][256];
-	int relup;
-	int reldn;
-	int wheelup;
-	int wheeldn;
-	int wheel2up;
-	int wheel2dn;
-	/* keystrokes assigned to wheel events (default is the buttons above).
-	 * Order is relup, reldwn, wheelup, wheeldn, wheel2up, wheel2dn.
-	 * Like 'keys', this array is one-indexed */
-	unsigned wheel_keys[6][256];
 
-	int striplup;
-	int stripldn;
-	int striprup;
-	int striprdn;
-	/* keystrokes assigned to strip events (default is the buttons above).
-	 * Order is striplup, stripldn, striprup, striprdn. Like 'keys', this
-	 * array is one-indexed */
+	/* button mapping information
+	 *
+	 * 'button' variables are indexed by physical button number (0..nbuttons)
+	 * 'strip' variables are indexed by STRIP_* defines
+	 * 'wheel' variables are indexed by WHEEL_* defines
+	 */
+	int button_default[WCM_MAX_BUTTONS]; /* Default mappings set by ourselves (possibly overridden by xorg.conf) */
+	int strip_default[4];
+	int wheel_default[6];
+	unsigned keys[WCM_MAX_BUTTONS][256]; /* Action codes to perform when the associated event occurs */
 	unsigned strip_keys[4][256];
+	unsigned wheel_keys[6][256];
+	Atom btn_actions[WCM_MAX_BUTTONS];   /* Action references so we can update the action codes when a client makes a change */
+	Atom strip_actions[4];
+	Atom wheel_actions[6];
+
 	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
 				/* FIXME: always 6, and the code relies on that... */
@@ -296,11 +302,6 @@ struct _WacomDeviceRec
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
-
-	/* property handlers to listen to for action properties */
-	Atom btn_actions[WCM_MAX_BUTTONS];
-	Atom wheel_actions[6];
-	Atom strip_actions[4];
 
 	OsTimerPtr serial_timer; /* timer used for serial number property update */
 };

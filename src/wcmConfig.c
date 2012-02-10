@@ -71,21 +71,21 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	/* Default button and expresskey values, offset buttons 4 and higher
 	 * by the 4 scroll buttons. */
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
-		priv->button[i] = (i < 3) ? i + 1 : i + 5;
+		priv->button_default[i] = (i < 3) ? i + 1 : i + 5;
 
-	priv->nbuttons = WCM_MAX_BUTTONS;		/* Default number of buttons */
-	priv->relup = 5;			/* Default relative wheel up event */
-	priv->reldn = 4;			/* Default relative wheel down event */
+	priv->nbuttons = WCM_MAX_BUTTONS;       /* Default number of buttons */
+	priv->wheel_default[WHEEL_REL_UP] = 5;
+	priv->wheel_default[WHEEL_REL_DN] = 4;
 	/* wheel events are set to 0, but the pad overwrites this default
 	 * later in wcmParseOptions, when we have IsPad() available */
-	priv->wheelup = 0;			/* Default absolute wheel up event */
-	priv->wheeldn = 0;			/* Default absolute wheel down event */
-	priv->wheel2up = 0;                     /* Default absolute wheel2 up event */
-	priv->wheel2dn = 0;                     /* Default absolute wheel2 down event */
-	priv->striplup = 4;			/* Default left strip up event */
-	priv->stripldn = 5;			/* Default left strip down event */
-	priv->striprup = 4;			/* Default right strip up event */
-	priv->striprdn = 5;			/* Default right strip down event */
+	priv->wheel_default[WHEEL_ABS_UP] = 0;
+	priv->wheel_default[WHEEL_ABS_DN] = 0;
+	priv->wheel_default[WHEEL2_ABS_UP] = 0;
+	priv->wheel_default[WHEEL2_ABS_DN] = 0;
+	priv->strip_default[STRIP_LEFT_UP] = 4;
+	priv->strip_default[STRIP_LEFT_DN] = 5;
+	priv->strip_default[STRIP_RIGHT_UP] = 4;
+	priv->strip_default[STRIP_RIGHT_DN] = 5;
 	priv->naxes = 6;			/* Default number of axes */
 
 	/* JEJ - throttle sampling code */

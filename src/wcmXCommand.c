@@ -542,12 +542,12 @@ static int wcmSetWheelProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	struct wheel_strip_update_t wsup = {
-		.up1 = &priv->relup,
-		.dn1 = &priv->reldn,
-		.up2 = &priv->wheelup,
-		.dn2 = &priv->wheeldn,
-		.up3 = &priv->wheel2up,
-		.dn3 = &priv->wheel2dn,
+		.up1 = &priv->wheel_default[WHEEL_REL_UP],
+		.dn1 = &priv->wheel_default[WHEEL_REL_DN],
+		.up2 = &priv->wheel_default[WHEEL_ABS_UP],
+		.dn2 = &priv->wheel_default[WHEEL_ABS_DN],
+		.up3 = &priv->wheel_default[WHEEL2_ABS_UP],
+		.dn3 = &priv->wheel_default[WHEEL2_ABS_DN],
 
 		.handlers = priv->wheel_actions,
 		.keys	  = priv->wheel_keys,
@@ -564,10 +564,10 @@ static int wcmSetStripProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	struct wheel_strip_update_t wsup = {
-		.up1 = &priv->striplup,
-		.dn1 = &priv->stripldn,
-		.up2 = &priv->striprup,
-		.dn2 = &priv->striprdn,
+		.up1 = &priv->strip_default[STRIP_LEFT_UP],
+		.dn1 = &priv->strip_default[STRIP_LEFT_DN],
+		.up2 = &priv->strip_default[STRIP_RIGHT_UP],
+		.dn2 = &priv->strip_default[STRIP_RIGHT_DN],
 		.up3 = NULL,
 		.dn3 = NULL,
 
