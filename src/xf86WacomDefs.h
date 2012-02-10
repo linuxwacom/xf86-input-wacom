@@ -298,7 +298,7 @@ struct _WacomDeviceRec
 
 	/* property handlers to listen to for action properties */
 	Atom btn_actions[WCM_MAX_BUTTONS];
-	Atom wheel_actions[4];
+	Atom wheel_actions[6];
 	Atom strip_actions[4];
 
 	OsTimerPtr serial_timer; /* timer used for serial number property update */
