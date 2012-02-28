@@ -2356,7 +2356,6 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	int x, y;
 	unsigned int width, height;
 	int flags = XParseGeometry(argv[0], &x, &y, &width, &height);
-	Bool success = False;
 
 	if (argc != param->arg_count)
 	{
@@ -2366,15 +2365,15 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 	}
 
 	if (MaskIsSet(flags, XValue|YValue|WidthValue|HeightValue))
-		success = set_output_area(dpy, dev, x, y, width, height);
+		set_output_area(dpy, dev, x, y, width, height);
 	else if (strcasecmp(argv[0], "next") == 0)
-		success = set_output_next(dpy, dev);
+		set_output_next(dpy, dev);
 	else if (strcasecmp(argv[0], "desktop") == 0)
-		success = set_output_desktop(dpy, dev);
+		set_output_desktop(dpy, dev);
 	else if (!need_xinerama(dpy))
-		success = set_output_xrandr(dpy, dev, argv[0]);
+		set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
-		success = set_output_xinerama(dpy, dev, head_no);
+		set_output_xinerama(dpy, dev, head_no);
 	else
 		fprintf(stderr, "Unable to find an output '%s'.\n", argv[0]);
 }
