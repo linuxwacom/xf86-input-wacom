@@ -380,8 +380,8 @@ static param_t parameters[] =
 		.set_func = set_xydefault,
 	},
 	{
-		.name = "ToolID",
-		.desc = "Returns the ID of the associated device. ",
+		.name = "ToolType",
+		.desc = "Returns the tool type of the associated device. ",
 		.prop_name = WACOM_PROP_TOOL_TYPE,
 		.prop_format = 32,
 		.prop_offset = 0,
