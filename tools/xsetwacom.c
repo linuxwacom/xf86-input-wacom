@@ -398,6 +398,15 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
+		.name = "ToolID",
+		.desc = "Returns the tool ID of the current tool in proximity.",
+		.prop_name = WACOM_PROP_SERIALIDS,
+		.prop_format = 32,
+		.prop_offset = 4,
+		.arg_count = 1,
+		.prop_flags = PROP_FLAG_READONLY
+	},
+	{
 		.name = "ToolSerialPrevious",
 		.desc = "Returns the serial number of the previous device in proximity.",
 		.prop_name = WACOM_PROP_SERIALIDS,
@@ -2689,7 +2698,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 36);
+	assert(ARRAY_SIZE(parameters) == 37);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 
