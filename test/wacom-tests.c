@@ -603,7 +603,7 @@ static void test_set_type(void)
 #undef reset
 }
 
-static int test_flag_set(void)
+static void test_flag_set(void)
 {
 	int i;
 	unsigned int flags = 0;
