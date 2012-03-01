@@ -190,7 +190,8 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[1] = priv->old_serial;
 	values[2] = priv->old_device_id;
 	values[3] = priv->cur_serial;
-	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, XA_INTEGER, 32, 4, values);
+	values[4] = priv->cur_device_id;
+	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, XA_INTEGER, 32, 5, values);
 
 	values[0] = priv->serial;
 	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, XA_INTEGER, 32, 1, values);
@@ -718,7 +719,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		 * set it at runtime. If we get here from wcmUpdateSerial,
 		 * we know the serial has ben set internally already, so we
 		 * can reply with success. */
-		if (prop->size == 4 && prop->format == 32)
+		if (prop->size == 5 && prop->format == 32)
 			if (((CARD32*)prop->data)[3] == priv->cur_serial)
 				return Success;
 
@@ -875,11 +876,12 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		values[1] = priv->old_serial;
 		values[2] = priv->old_device_id;
 		values[3] = priv->cur_serial;
+		values[4] = priv->cur_device_id;
 
 		DBG(10, priv, "Update to serial: %d\n", priv->old_serial);
 
 		return XIChangeDeviceProperty(dev, property, XA_INTEGER, 32,
-					      PropModeReplace, 4,
+					      PropModeReplace, 5,
 					      values, FALSE);
 	}
 
@@ -892,14 +894,14 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 	InputInfoPtr pInfo = arg;
 	WacomDevicePtr priv = pInfo->private;
 	XIPropertyValuePtr prop;
-	CARD32 prop_value[4];
+	CARD32 prop_value[5];
 	int sigstate;
 	int rc;
 
 	sigstate = xf86BlockSIGIO();
 
 	rc = XIGetDeviceProperty(pInfo->dev, prop_serials, &prop);
-	if (rc != Success || prop->format != 32 || prop->size != 4)
+	if (rc != Success || prop->format != 32 || prop->size != 5)
 	{
 		xf86Msg(X_ERROR, "%s: Failed to update serial number.\n",
 			pInfo->name);
@@ -908,6 +910,7 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 
 	memcpy(prop_value, prop->data, sizeof(prop_value));
 	prop_value[3] = priv->cur_serial;
+	prop_value[4] = priv->cur_device_id;
 
 	XIChangeDeviceProperty(pInfo->dev, prop_serials, XA_INTEGER,
 			       prop->format, PropModeReplace,
@@ -919,7 +922,7 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 }
 
 void
-wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial)
+wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
 {
 	WacomDevicePtr priv = pInfo->private;
 
@@ -927,6 +930,7 @@ wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial)
 		return;
 
 	priv->cur_serial = serial;
+	priv->cur_device_id = id;
 
 	/* This function is called during SIGIO. Schedule timer for property
 	 * event delivery outside of signal handler. */
