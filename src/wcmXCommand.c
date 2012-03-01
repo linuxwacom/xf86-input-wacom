@@ -870,7 +870,7 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 
 	if (property == prop_serials)
 	{
-		uint32_t values[4];
+		uint32_t values[5];
 
 		values[0] = common->tablet_id;
 		values[1] = priv->old_serial;
