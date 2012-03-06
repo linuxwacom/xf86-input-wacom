@@ -98,6 +98,7 @@ DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5);
 DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5);
 DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5);
 DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5);
+DEFINE_MODEL(usbIntuos5,	"USB Intuos5",		5);
 DEFINE_MODEL(usbVolito,		"USB Volito",		4);
 DEFINE_MODEL(usbVolito2,	"USB Volito2",		4);
 DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5);
@@ -262,6 +263,12 @@ static struct
 	{ WACOM_VENDOR_ID, 0xBB, 200000, 200000, &usbIntuos4    }, /* Intuos4 12x19*/
 	{ WACOM_VENDOR_ID, 0xBC, 200000, 200000, &usbIntuos4    }, /* Intuos4 WL USB Endpoint */
 	{ WACOM_VENDOR_ID, 0xBD, 200000, 200000, &usbIntuos4    }, /* Intuos4 WL Bluetooth Endpoint */
+
+	{ WACOM_VENDOR_ID, 0x26, 200000, 200000, &usbIntuos5    }, /* Intuos5 touch S */
+	{ WACOM_VENDOR_ID, 0x27, 200000, 200000, &usbIntuos5    }, /* Intuos5 touch M */
+	{ WACOM_VENDOR_ID, 0x28, 200000, 200000, &usbIntuos5    }, /* Intuos5 touch L */
+	{ WACOM_VENDOR_ID, 0x29, 200000, 200000, &usbIntuos5    }, /* Intuos5 S */
+	{ WACOM_VENDOR_ID, 0x2A, 200000, 200000, &usbIntuos5    }, /* Intuos5 M */
 
 	{ WACOM_VENDOR_ID, 0x3F, 200000, 200000, &usbCintiqV5   }, /* Cintiq 21UX */
 	{ WACOM_VENDOR_ID, 0xC5, 200000, 200000, &usbCintiqV5   }, /* Cintiq 20WSX */

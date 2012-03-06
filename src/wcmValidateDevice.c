@@ -195,6 +195,11 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			TabletSetFeature(priv->common, WCM_DUALRING);
 			/* fall through */
 
+		case 0x26:  /* I5 */
+		case 0x27:  /* I5 */
+		case 0x28:  /* I5 */
+		case 0x29:  /* I5 */
+		case 0x2A:  /* I5 */
 		case 0xB8:  /* I4 */
 		case 0xB9:  /* I4 */
 		case 0xBA:  /* I4 */
