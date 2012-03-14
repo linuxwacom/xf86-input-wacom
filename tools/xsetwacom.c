@@ -1264,7 +1264,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		if (!prop)
 		{
 			char buff[64];
-			sprintf(buff, "Wacom button action %d", (offset + 1));
+			sprintf(buff, "%s action %d", XGetAtomName(dpy, btnact_prop), (offset + 1));
 			prop = XInternAtom(dpy, buff, False);
 			btnact_data[offset] = prop;
 		}
