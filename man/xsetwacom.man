@@ -34,7 +34,7 @@ Allowed commands are
 .B get,
 and
 .B set.
-The command may be specified with our without one or two preceding
+The command may be specified with or without one or two preceding
 dashes, i.e.
 .B --list
 is equivalent to
