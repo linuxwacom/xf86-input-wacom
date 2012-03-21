@@ -989,7 +989,8 @@ model_from_sysfs(const InputInfoPtr pInfo, int fd, int *id)
 out:
 	udev_device_unref(device);
 	udev_unref(udev);
-	fclose(file);
+	if (file)
+		fclose(file);
 	free(sysfs_path);
 	return model;
 }
