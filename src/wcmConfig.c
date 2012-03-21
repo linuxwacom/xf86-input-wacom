@@ -225,10 +225,12 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
-	WacomCommonPtr common = priv->common;
+	WacomCommonPtr common;
 
 	if (!priv)
 		goto out;
+
+	common = priv->common;
 
 	DBG(1, priv, "\n");
 
