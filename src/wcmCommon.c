@@ -1450,9 +1450,10 @@ WacomCommonPtr wcmNewCommon(void)
 {
 	WacomCommonPtr common;
 	common = calloc(1, sizeof(WacomCommonRec));
-	if (common)
-		common->refcnt = 1;
+	if (!common)
+		return NULL;;
 
+	common->refcnt = 1;
 	common->wcmFlags = 0;               /* various flags */
 	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */
 	common->wcmTPCButton = 0;          /* set Tablet PC button on/off */
