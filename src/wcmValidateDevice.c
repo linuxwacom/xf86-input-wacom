@@ -630,6 +630,7 @@ int wcmParseSerials (InputInfoPtr pInfo)
 			{
 				xf86Msg(X_ERROR, "%s: %s is invalid serial string.\n",
 					pInfo->name, tok);
+				free(ser);
 				return 1;
 			}
 
