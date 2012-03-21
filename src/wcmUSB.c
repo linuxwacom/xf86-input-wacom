@@ -370,7 +370,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		/* If mouse buttons detected but no mouse tool
 		 * then they must be associated with pad buttons.
 		 */
-		for (i = ARRAY_SIZE(mouse_codes); i > 0; i--)
+		for (i = ARRAY_SIZE(mouse_codes) - 1; i > 0; i--)
 			if (ISBITSET(common->wcmKeys, mouse_codes[i]))
 				break;
 
