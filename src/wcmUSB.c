@@ -1563,11 +1563,18 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (!ds->device_type && !dslast.proximity)
 	{
 		unsigned long keys[NBITS(KEY_MAX)] = { 0 };
+		int rc;
 
 		/* Retrieve the type by asking a resend from the kernel */
-		ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
+		rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
+		if (rc == -1)
+		{
+			xf86Msg(X_ERROR, "%s: failed to retrieve key bits\n",
+					pInfo->name);
+			return;
+		}
 
-		for (i=0; i < ARRAY_SIZE(wcmTypeToKey); i++)
+		for (i = 0; i < ARRAY_SIZE(wcmTypeToKey); i++)
 		{
 			if (ISBITSET(keys, wcmTypeToKey[i].tool_key))
 			{
