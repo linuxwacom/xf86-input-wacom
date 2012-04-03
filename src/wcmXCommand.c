@@ -506,6 +506,24 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 			Atom subproperty = ((Atom*)prop->data)[i];
 			XIPropertyValuePtr subprop;
 
+			if (subproperty == 0)
+			{ /* Interpret 'None' as meaning 'reset' */
+				if (property == prop_btnactions)
+				{
+					if (i < 3)
+						wcmResetButtonAction(pInfo, i, size);
+					else if (i > 6)
+						wcmResetButtonAction(pInfo, i-4, size);
+				}
+				else if (property == prop_strip_buttons)
+					wcmResetStripAction(pInfo, i);
+				else if (property == prop_wheel_buttons)
+					wcmResetWheelAction(pInfo, i);
+
+				if (subproperty != handlers[i])
+					subproperty = handlers[i];
+			}
+
 			XIGetDeviceProperty(dev, subproperty, &subprop);
 			wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[i], &actions[i]);
 		}
@@ -824,6 +842,25 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		return XIChangeDeviceProperty(dev, property, XA_INTEGER, 32,
 					      PropModeReplace, 5,
 					      values, FALSE);
+	}
+	else if (property == prop_btnactions)
+	{
+		int nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
+		return XIChangeDeviceProperty(dev, property, XA_ATOM, 32,
+		                              PropModeReplace, nbuttons,
+		                              priv->btn_actions, FALSE);
+	}
+	else if (property == prop_strip_buttons)
+	{
+		return XIChangeDeviceProperty(dev, property, XA_ATOM, 32,
+					      PropModeReplace, ARRAY_SIZE(priv->strip_actions),
+					      priv->strip_actions, FALSE);
+	}
+	else if (property == prop_wheel_buttons)
+	{
+		return XIChangeDeviceProperty(dev, property, XA_ATOM, 32,
+		                              PropModeReplace, ARRAY_SIZE(priv->wheel_actions),
+		                              priv->wheel_actions, FALSE);
 	}
 
 	return Success;

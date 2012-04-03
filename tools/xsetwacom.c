@@ -1216,9 +1216,10 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
  * the driver can understand.
  *
  * Once we have a list of actions, we can store it in the appropriate
- * child property. If none exists, we must first create one and update
- * the parent list. If we want no action to occur, we can delete the
- * child property and have the parent point to '0' instead.
+ * child property. Action atoms should be pre-created by the server,
+ * so it is an error if one does not exist. To reset the action to its
+ * default, we can have the parent point to '0' (which is a special
+ * signal to the Wacom driver).
  *
  * @param  dpy         X display we want to query
  * @param  dev         X device we want to modify
@@ -1259,16 +1260,20 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 
 	/* set or unset the property */
 	prop = btnact_data[offset];
-	if (nitems > 0)
-	{ /* Setting a new or existing property */
-		if (!prop)
-		{
-			char buff[64];
-			sprintf(buff, "%s action %d", XGetAtomName(dpy, btnact_prop), (offset + 1));
-			prop = XInternAtom(dpy, buff, False);
-			btnact_data[offset] = prop;
-		}
+	if (!prop)
+	{
+		/* The subproperty at the given offset is set to 'None',
+		 * meaning the device does not support its meaning. E.g.
+		 * buttons 4-7 are 'None' since the device doesn't have
+		 * physical buttons relating to them.
+		 */
+		fprintf(stderr, "Unsupported offset into '%s' property.\n",
+			XGetAtomName(dpy, btnact_prop));
+		goto out;
+	}
 
+	if (nitems > 0)
+	{ /* Setting an existing property */
 		/* FIXME: the property containing the key sequence must be
 		 * set before updating the button action properties */
 		XChangeDeviceProperty(dpy, dev, prop, XA_INTEGER, 32,
@@ -1288,8 +1293,6 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 					PropModeReplace,
 					(unsigned char*)btnact_data,
 					btnact_nitems);
-
-		XDeleteDeviceProperty(dpy, dev, prop);
 	}
 
 	XFlush(dpy);
