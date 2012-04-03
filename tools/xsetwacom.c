@@ -1244,7 +1244,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 				AnyPropertyType, &type, &format, &btnact_nitems,
 				&bytes_after, (unsigned char**)&btnact_data);
 
-	if (offset > btnact_nitems)
+	if (offset >= btnact_nitems)
 	{
 		fprintf(stderr, "Invalid offset into %s property.\n", XGetAtomName(dpy, btnact_prop));
 		goto out;
