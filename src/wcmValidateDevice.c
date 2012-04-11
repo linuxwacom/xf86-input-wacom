@@ -240,6 +240,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x37:  /* PL700 */
 		case 0x38:  /* PL510 */
 		case 0x39:  /* PL710 */
+		case 0x3A:  /* DTI520 */
 		case 0xC0:  /* DTF720 */
 		case 0xC2:  /* DTF720a */
 		case 0xC4:  /* DTF521 */
