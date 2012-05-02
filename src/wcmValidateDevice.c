@@ -570,13 +570,13 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
  */
 int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 {
-	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
+	char *source = xf86CheckStrOption(pInfo->options, "_source", NULL);
 	int i;
 
 	if (*type) /* type specified, don't hotplug */
 		return 0;
 
-	if (strcmp(source, "server/hal") && strcmp(source, "server/udev"))
+	if (source && strcmp(source, "server/hal") && strcmp(source, "server/udev"))
 		return 0;
 
 	/* no type specified, so we need to pick the first one applicable
