@@ -704,7 +704,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 {
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
-	char            *s, b[12];
+	char            *s;
 	int		i;
 	WacomToolPtr    tool = NULL;
 	int		tpc_button_is_on;
@@ -921,6 +921,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
+		char b[12];
 		sprintf(b, "Button%d", i+1);
 		priv->button[i] = xf86SetIntOption(pInfo->options, b, priv->button[i]);
 	}
