@@ -330,9 +330,9 @@ static int getScrollDelta(int current, int old, int wrap, int flags)
 
 	if (flags & AXIS_BITWISE)
 	{
-		current = (int)log2((current << 1) | 0x01);
-		old = (int)log2((old << 1) | 0x01);
-		wrap = (int)log2((wrap << 1) | 0x01);
+		current = log2((current << 1) | 0x01);
+		old = log2((old << 1) | 0x01);
+		wrap = log2((wrap << 1) | 0x01);
 	}
 
 	delta = current - old;
