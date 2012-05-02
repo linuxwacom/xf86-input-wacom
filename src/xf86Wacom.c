@@ -534,7 +534,7 @@ const char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
 		pInfo->name, i + 1, wait);
 	xf86Msg(X_ERROR, "%s: unable to probe device\n", pInfo->name);
-	return FALSE;
+	return NULL;
 }
 
 /*****************************************************************************
