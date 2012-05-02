@@ -81,10 +81,10 @@ int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 {
 	struct stat st;
 	int isInUse = 0;
-	char* lsource = xf86CheckStrOption(pInfo->options, "_source", "");
+	char* lsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
 
 	/* always allow xorg.conf defined tools to be added */
-	if (!strlen(lsource)) goto ret;
+	if (!lsource || !strlen(lsource)) goto ret;
 
 	if (stat(device, &st) == -1)
 	{
