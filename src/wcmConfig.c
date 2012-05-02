@@ -207,7 +207,7 @@ int wcmGetPhyDeviceID(WacomDevicePtr priv)
  * starts making sense again.
  */
 
-static char *default_options[] =
+static const char *default_options[] =
 {
 	"StopBits",    "1",
 	"DataBits",    "8",
