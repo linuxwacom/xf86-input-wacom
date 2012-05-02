@@ -164,7 +164,7 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
 	 * header byte */
 	if (!(data[0] & HEADER_BIT))
 	{
-		int n = wcmSkipInvalidBytes(data, common->wcmPktLength);
+		n = wcmSkipInvalidBytes(data, common->wcmPktLength);
 		xf86Msg(X_WARNING,
 			"%s: missing header bit. skipping %d bytes.\n",
 			pInfo->name, n);
