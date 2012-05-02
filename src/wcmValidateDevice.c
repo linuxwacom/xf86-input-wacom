@@ -33,15 +33,11 @@
 static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 {
 	int match = 0;
-	char* device;
-	char* fsource = xf86CheckStrOption(pInfo->options, "_source", "");
 	InputInfoPtr pDevices = xf86FirstLocalDevice();
-	WacomCommonPtr pCommon = NULL;
-	char* psource;
 
 	for (; pDevices != NULL; pDevices = pDevices->next)
 	{
-		device = xf86CheckStrOption(pDevices->options, "Device", NULL);
+		char* device = xf86CheckStrOption(pDevices->options, "Device", NULL);
 
 		/* device can be NULL on some distros */
 		if (!device || !strstr(pDevices->drv->driverName, "wacom"))
@@ -49,14 +45,17 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 
 		if (pInfo != pDevices)
 		{
-			psource = xf86CheckStrOption(pDevices->options, "_source", "");
-			pCommon = ((WacomDevicePtr)pDevices->private)->common;
+			WacomCommonPtr pCommon = ((WacomDevicePtr)pDevices->private)->common;
+			char* fsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
+			char* psource = xf86CheckStrOption(pDevices->options, "_source", NULL);
+
 			if (pCommon->min_maj &&
 				pCommon->min_maj == min_maj)
 			{
 				/* only add the new tool if the matching major/minor
 				* was from the same source */
-				if (strcmp(fsource, psource))
+				if ((!fsource && !psource) ||
+				    (fsource && psource && strcmp(fsource, psource)))
 				{
 					match = 1;
 					break;
