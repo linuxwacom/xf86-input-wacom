@@ -118,7 +118,7 @@ Atom prop_debuglevels;
  * @param values Pointer to 32 bit integer array of initial property values
  * @return Atom handle of property name
  */
-static Atom InitWcmAtom(DeviceIntPtr dev, char *name, Atom type, int format, int nvalues, int *values)
+static Atom InitWcmAtom(DeviceIntPtr dev, const char *name, Atom type, int format, int nvalues, int *values)
 {
 	int i;
 	Atom atom;
