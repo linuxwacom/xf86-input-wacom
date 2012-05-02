@@ -481,7 +481,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	const char*	type;
-	char*		device, *oldname;
+	const char*	device, *oldname;
 	int		need_hotplug = 0, is_dependent = 0;
 
 	gWacomModule.wcmDrv = drv;

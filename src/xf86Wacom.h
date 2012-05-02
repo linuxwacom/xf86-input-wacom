@@ -131,7 +131,7 @@ void wcmMappingFactor(InputInfoPtr pInfo);
 /* validation */
 extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);
 extern Bool wcmIsWacomDevice (char* fname);
-extern int wcmIsDuplicate(char* device, InputInfoPtr pInfo);
+extern int wcmIsDuplicate(const char* device, InputInfoPtr pInfo);
 extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
 
 /* hotplug */

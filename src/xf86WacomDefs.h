@@ -411,7 +411,7 @@ enum WacomProtocol {
 struct _WacomCommonRec 
 {
 	/* Do not move device_path, same offset as priv->name. Used by DBG macro */
-	char* device_path;           /* device file name */
+	const char* device_path;    /* device file name */
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;

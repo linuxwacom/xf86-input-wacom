@@ -78,7 +78,7 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
  * the xorg.conf and is then hotplugged through the server backend (HAL,
  * udev). In this case, the hotplugged one fails.
  */
-int wcmIsDuplicate(char* device, InputInfoPtr pInfo)
+int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 {
 	struct stat st;
 	int isInUse = 0;
