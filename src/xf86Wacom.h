@@ -107,7 +107,7 @@ struct _WacomModule
 extern Bool wcmOpen(InputInfoPtr pInfo);
 
 /* device autoprobing */
-char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
+const char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 
 /* common tablet initialization regime */
 int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version);

@@ -501,7 +501,7 @@ Bool wcmIsWacomDevice (char* fname)
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
+const char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 {
 	/* We are trying to find the right eventX device */
 	int i, wait = 0;
