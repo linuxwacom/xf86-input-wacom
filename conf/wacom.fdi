@@ -3,7 +3,7 @@
 <deviceinfo version="0.2">
   <device>
     <match key="info.category" contains="input">
-      <match key="info.product" contains_outof="Wacom;WALTOP;WACOM">
+      <match key="info.product" contains_outof="Wacom;WALTOP;WACOM;PTK-540WL">
 	<merge key="input.x11_driver" type="string">wacom</merge>
       </match>
     </match>
