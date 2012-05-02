@@ -1375,11 +1375,10 @@ static int usbParseBTNEvent(WacomCommonPtr common,
 static int usbInitToolType(const struct input_event *event_ptr, int nevents, int last_device_type)
 {
 	int i, device_type = 0;
-	struct input_event* event = (struct input_event *)event_ptr;
 
 	for (i = 0; (i < nevents) && !device_type; ++i)
 	{
-		switch (event->code)
+		switch (event_ptr->code)
 		{
 			case BTN_TOOL_PEN:
 			case BTN_TOOL_PENCIL:
@@ -1399,7 +1398,7 @@ static int usbInitToolType(const struct input_event *event_ptr, int nevents, int
 				break;
 		}
 
-		event++;
+		event_ptr++;
 	}
 
 	if (!device_type)
