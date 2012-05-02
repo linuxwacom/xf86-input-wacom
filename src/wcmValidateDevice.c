@@ -135,7 +135,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	int j, k, ret = FALSE;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	char* dsource = xf86CheckStrOption(pInfo->options, "_source", "");
+	char* dsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
 
 	if (!type)
 	{
@@ -162,7 +162,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 						    ret = FALSE;
 					}
 				}
-				else if (!strlen(dsource)) /* an user defined type */
+				else if (!dsource || !strlen(dsource)) /* an user defined type */
 				{
 					/* assume it is a valid type */
 					SETBIT(common->wcmKeys, wcmType[j].tool[k]);
