@@ -285,6 +285,8 @@ static struct
 	{ WACOM_VENDOR_ID, 0xE2, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE2 */
 	{ WACOM_VENDOR_ID, 0xE3, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE3 */
 	{ WACOM_VENDOR_ID, 0xE6, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xE6 */
+	{ WACOM_VENDOR_ID, 0xED, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xED */
+	{ WACOM_VENDOR_ID, 0xEF, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xEF */
 
 	/* IDs from Waltop's driver, available http://www.waltop.com.tw/download.asp?lv=0&id=2.
 	   Accessed 8 Apr 2010, driver release date 2009/08/11, fork of linuxwacom 0.8.4.
