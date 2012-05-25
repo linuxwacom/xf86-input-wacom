@@ -449,7 +449,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 
 	/* emulate events for relative wheel */
 	delta = getScrollDelta(ds->relwheel, 0, 0, 0);
-	if (delta && IsCursor(priv) && priv->oldProximity == ds->proximity)
+	if (delta && (IsCursor(priv) || IsPad(priv)) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
 		fakeButton = getWheelButton(delta, priv->relup, priv->reldn,
