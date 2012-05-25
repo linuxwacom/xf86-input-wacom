@@ -439,8 +439,8 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
  */
 static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
 {
-	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
-	return !strcmp(source, "_driver/wacom");
+	char *source = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	return (!source || !strcmp(source, "_driver/wacom"));
 }
 
 /* wcmPreInit - called for each input devices with the driver set to
