@@ -924,8 +924,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		if (priv == NULL || !IsTouch(priv))
 		{
 			priv = common->wcmDevices;
-			xf86Msg(X_ERROR, "could not find touch device "
-				"for device on %s.\n", common->device_path);
+			LogMessageVerbSigSafe(X_ERROR, 0, "could not find touch device "
+					      "for device on %s.\n", common->device_path);
 		}
 	}
 
@@ -1067,8 +1067,9 @@ normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 
 	if (p < priv->minPressure)
 	{
-		xf86Msg(X_ERROR, "%s: Pressure %d lower than expected minimum %d. This is a bug.\n",
-			priv->pInfo->name, ds->pressure, priv->minPressure);
+		LogMessageVerbSigSafe(X_ERROR, 0,
+				      "%s: Pressure %d lower than expected minimum %d. This is a bug.\n",
+				      priv->pInfo->name, ds->pressure, priv->minPressure);
 		p = priv->minPressure;
 	}
 
@@ -1154,7 +1155,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
 	if (!tool->enabled) {
-		xf86Msg(X_ERROR, "tool not initialized yet. Skipping event. \n");
+		LogMessageVerbSigSafe(X_ERROR, 0, "tool not initialized yet. Skipping event. \n");
 		return;
 	}
 

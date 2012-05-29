@@ -37,6 +37,11 @@
 #include <xf86Xinput.h>
 #include <mipointer.h>
 #include <X11/Xatom.h>
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 18
+#define LogMessageVerbSigSafe xf86MsgVerb
+#endif
+
 /*****************************************************************************
  * Unit test hack
  ****************************************************************************/

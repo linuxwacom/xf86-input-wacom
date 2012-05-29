@@ -652,7 +652,8 @@ void wcmReadPacket(InputInfoPtr pInfo)
 		/* for all other errors, hope that the hotplugging code will
 		 * remove the device */
 		if (errno != EAGAIN && errno != EINTR)
-			xf86Msg(X_ERROR, "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
+			LogMessageVerbSigSafe(X_ERROR, 0,
+					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
 		return;
 	}
 
