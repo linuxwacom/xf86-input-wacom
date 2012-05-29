@@ -110,12 +110,12 @@ static void memdump(InputInfoPtr pInfo, char *buffer, unsigned int len)
 	/* can't use DBG macro here, need to do it manually. */
 	for (i = 0 ; i < len && common->debugLevel >= 10; i++)
 	{
-		xf86Msg(X_NONE, "%#hhx ", buffer[i]);
+		LogMessageVerbSigSafe(X_NONE, 0, "%#hhx ", buffer[i]);
 		if (i % 8 == 7)
-			xf86Msg(X_NONE, "\n");
+			LogMessageVerbSigSafe(X_NONE, 0, "\n");
 	}
 
-	xf86Msg(X_NONE, "\n");
+	LogMessageVerbSigSafe(X_NONE, 0, "\n");
 #endif
 }
 
@@ -165,7 +165,7 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
 	if (!(data[0] & HEADER_BIT))
 	{
 		n = wcmSkipInvalidBytes(data, common->wcmPktLength);
-		xf86Msg(X_WARNING,
+		LogMessageVerbSigSafe(X_WARNING, 0,
 			"%s: missing header bit. skipping %d bytes.\n",
 			pInfo->name, n);
 		return n;
@@ -178,7 +178,7 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
 	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
 	n += 1; /* the header byte we already checked */
 	if (n != common->wcmPktLength) {
-		xf86Msg(X_WARNING, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
+		LogMessageVerbSigSafe(X_WARNING, 0, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
 			n, data[n], common->wcmPktLength);
 		return n;
 	}
@@ -605,8 +605,8 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 	rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
 	if (rc == -1)
 	{
-		xf86Msg(X_ERROR, "%s: failed to parse touch data.\n",
-				pInfo->name);
+		LogMessageVerbSigSafe(X_ERROR, 0, "%s: failed to parse touch data.\n",
+				      pInfo->name);
 		return -1;
 	}
 
@@ -676,7 +676,8 @@ static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
 
 	if (rc == -1)
 	{
-		xf86Msg(X_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
+		LogMessageVerbSigSafe(X_ERROR, 0,
+				      "%s: failed to parse coordinate data.\n", pInfo->name);
 		return -1;
 	}
 

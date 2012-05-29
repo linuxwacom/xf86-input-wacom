@@ -802,8 +802,8 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
-		xf86Msg(X_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
-			pInfo->name, private->wcmEventCnt);
+		LogMessageVerbSigSafe(X_ERROR, 0, "%s: usbParse: Exceeded event queue (%d) \n",
+				      pInfo->name, private->wcmEventCnt);
 		private->wcmEventCnt = 0;
 		return;
 	}
@@ -834,8 +834,9 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 		 * but we never report a serial number with a value of 0 */
 		if (event->value == 0)
 		{
-			xf86Msg(X_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
-				pInfo->name);
+			LogMessageVerbSigSafe(X_ERROR, 0,
+					      "%s: usbParse: Ignoring event from invalid serial 0\n",
+					      pInfo->name);
 			goto skipEvent;
 		}
 
@@ -1097,8 +1098,9 @@ static int mod_buttons(int buttons, int btn, int state)
 
 	if (btn >= sizeof(int) * 8)
 	{
-		xf86Msg(X_ERROR, "%s: Invalid button number %d. Insufficient "
-				"storage\n", __func__, btn);
+		LogMessageVerbSigSafe(X_ERROR, 0,
+				      "%s: Invalid button number %d. Insufficient storage\n",
+				      __func__, btn);
 		return buttons;
 	}
 
@@ -1556,8 +1558,9 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 				channel_change |= 1;
 			}
 			else
-				xf86Msg(X_ERROR, "%s: rel event recv'd (%d)!\n",
-					pInfo->name, event->code);
+				LogMessageVerbSigSafe(X_ERROR, 0,
+						      "%s: rel event recv'd (%d)!\n",
+						      pInfo->name, event->code);
 		}
 		else if (event->type == EV_KEY)
 		{
@@ -1580,8 +1583,9 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
 		if (rc == -1)
 		{
-			xf86Msg(X_ERROR, "%s: failed to retrieve key bits\n",
-					pInfo->name);
+			LogMessageVerbSigSafe(X_ERROR, 0,
+					      "%s: failed to retrieve key bits\n",
+					      pInfo->name);
 			return;
 		}
 
