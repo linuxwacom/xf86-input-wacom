@@ -1541,8 +1541,8 @@ static void set(Display *dpy, int argc, char **argv)
 	long *n;
 	char *b;
 	int i;
-	char **values;
-	int nvals;
+	char **values = NULL;
+	int nvals = 0;
 
 	if (argc < 2)
 	{
@@ -1647,10 +1647,10 @@ static void set(Display *dpy, int argc, char **argv)
 				PropModeReplace, data, nitems);
 	XFlush(dpy);
 
+out:
 	for (i = 0; i < nvals; i++)
 		free(values[i]);
 	free(values);
-out:
 	XCloseDevice(dpy, dev);
 	free(data);
 }
