@@ -137,6 +137,18 @@ static void wcmInitialToolSize(InputInfoPtr pInfo)
 	return;
 }
 
+static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int min_res, int max_res, int mode) {
+	InitValuatorAxisStruct(dev, axis,
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
+	                       label,
+#endif
+	                       min, max, res, min_res, max_res
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+	                       ,mode
+#endif
+	);
+}
+
 static int
 wcmInitAxes(DeviceIntPtr pWcm)
 {
@@ -157,15 +169,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	res = priv->resolX;
 	mode = Absolute;
 
-	InitValuatorAxisStruct(pInfo->dev, 0,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
+	wcmInitAxis(pInfo->dev, 0, label, min, max, res, min_res, max_res, mode);
+
 
 	/* second valuator: y */
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
@@ -176,19 +181,10 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	res = priv->resolY;
 	mode = Absolute;
 
-	InitValuatorAxisStruct(pInfo->dev, 1,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
+	wcmInitAxis(pInfo->dev, 1, label, min, max, res, min_res, max_res, mode);
 
 
 	/* third valuator: pressure */
-
 	mode = Absolute;
 	min_res = max_res = res = 1;
 	min = 0;
@@ -208,19 +204,10 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		max = 1;
 	}
 
+	wcmInitAxis(pInfo->dev, 2, label, min, max, res, min_res, max_res, mode);
 
-	InitValuatorAxisStruct(pInfo->dev, 2,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
 
 	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
-
 	if (IsCursor(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
@@ -246,18 +233,10 @@ wcmInitAxes(DeviceIntPtr pWcm)
 			mode = Absolute;
 	}
 
-	InitValuatorAxisStruct(pInfo->dev, 3,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
+	wcmInitAxis(pInfo->dev, 3, label, min, max, res, min_res, max_res, mode);
+
 
 	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
-
 	if (IsCursor(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
@@ -283,18 +262,10 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		mode = Absolute;
 	}
 
-	InitValuatorAxisStruct(pInfo->dev, 4,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
+	wcmInitAxis(pInfo->dev, 4, label, min, max, res, min_res, max_res, mode);
+
 
 	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
-
 	if (IsStylus(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
@@ -312,15 +283,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		mode = Absolute;
 	}
 
-	InitValuatorAxisStruct(pInfo->dev, 5,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-			       label,
-#endif
-			       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-			       , mode
-#endif
-			       );
+	wcmInitAxis(pInfo->dev, 5, label, min, max, res, min_res, max_res, mode);
+
 
 	/* seventh valuator: abswheel2 */
 	if ((TabletHasFeature(common, WCM_DUALRING)) && IsPad(priv))
@@ -332,15 +296,7 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		min_res = max_res = res = 1;
 		mode = Absolute;
 
-		InitValuatorAxisStruct(pInfo->dev, 6,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
-		                       label,
-#endif
-		                       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-		                       , mode
-#endif
-		                       );
+		wcmInitAxis(pInfo->dev, 6, label, min, max, res, min_res, max_res, mode);
 	}
 
 	return TRUE;
