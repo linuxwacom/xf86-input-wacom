@@ -375,10 +375,11 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
 			usbdata->padkey_code [usbdata->npadkeys++] = padkey_codes [i];
 
-	if (!(ISBITSET (common->wcmKeys, BTN_TOOL_MOUSE)))
-	{
-		/* If mouse buttons detected but no mouse tool
-		 * then they must be associated with pad buttons.
+	if (usbdata->npadkeys == 0) {
+		/* If no pad keys were detected, entertain the possibility that any
+		 * mouse buttons which exist may belong to the pad (e.g. Graphire4).
+		 * If we're wrong, this will over-state the capabilities of the pad
+		 * but that shouldn't actually cause problems.
 		 */
 		for (i = ARRAY_SIZE(mouse_codes) - 1; i > 0; i--)
 			if (ISBITSET(common->wcmKeys, mouse_codes[i]))
@@ -387,7 +388,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 		/* Make sure room for fixed map mouse buttons.  This
 		 * means mappings may overlap with padkey_codes[].
 		 */
-		if (i != 0 && usbdata->npadkeys < WCM_USB_MAX_MOUSE_BUTTONS)
+		if (i != 0)
 			usbdata->npadkeys = WCM_USB_MAX_MOUSE_BUTTONS;
 	}
 
