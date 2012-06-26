@@ -720,121 +720,88 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	return common->wcmPktLength;
 }
 
-/* Up to MAX_CHANNEL tools can be tracked concurrently by driver.
- * Chose a channel to use to track current batch of events.
+/**
+ * Returns a serial number for the provided device_type and serial, as
+ * through it came from from a Protocol 5 device.
+ *
+ * Protocol 5 serial numbers will be returned unchanged. Otherwise,
+ * anonymous tools (from Protocol 4 and Generic Protocol) will have
+ * serial numbers of: -1 (pad), 1 (pen/1st finger), 2 (2nd finger),
+ * etc.
+ *
+ * @param[in] device_type  Type of device (e.g. STYLUS_ID, TOUCH_ID, PAD_ID)
+ * @param[in] serial       Serial number of device
+ * @return                 Serial number of device as through from Protocol 5
+ */
+static int protocol5Serial(int device_type, unsigned int serial) {
+	if (!serial) {
+		/* Generic Protocol does not send serial numbers */
+		return device_type == PAD_ID ? -1 : 1;
+	}
+	else if (serial == 0xf0) {
+		/* Protocol 4 uses the expected anonymous serial
+		 * numbers, but has the wrong PAD serial number.
+		 * This could cause problem if 0xf0 is ever used
+		 * for a Protocol 5 serial number, but isn't a
+		 * problem as yet.
+		 */
+		return -1;
+	}
+	else {
+		/* Protocol 5 FTW */
+		return serial;
+	}
+}
+
+/**
+ * Find an appropriate channel to track the specified tool's state in.
+ * If the tool is already in proximity, the channel currently being used
+ * to store its state will be returned. Otherwise, an arbitrary available
+ * channel will be returned. Up to MAX_CHANNEL tools can be tracked
+ * concurrently by driver.
+ *
+ * @param[in] common
+ * @return             Channel number to track the tool's state
  */
 static int usbChooseChannel(WacomCommonPtr common)
 {
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
 	wcmUSBData* private = common->private;
-	unsigned int serial = private->wcmLastToolSerial;
+	unsigned int serial = protocol5Serial(private->wcmDeviceType, private->wcmLastToolSerial);
 
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
-	{
-		/* Generic Protocol devices do not use any form of
-		 * serial #'s to multiplex events over a single input
-		 * and so can always map to channel 0.  This means
-		 * only 1 tool can ever been in proximity at one time
-		 * (MT events are special case handled elsewhere).
-		 * It also means all buttons must be associated with
-		 * a single tool and can not send tablet buttons
-		 * as part of a pad tool.
-		 */
-		channel = 0;
-		serial = 1;
+	/* force events from PAD device to PAD_CHANNEL */
+	if (serial == -1)
+		channel = PAD_CHANNEL;
 
-		/* Generic devices need to map stylus buttons to "channel"
-		 * and all other button presses to PAD.  Hardcode PAD
-		 * channel here.
-		 */
-		private->wcmBTNChannel = PAD_CHANNEL;
-	}
-	else if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+	/* find existing channel */
+	if (channel < 0)
 	{
-		/* Protocol 4 devices support only 2 devices being
-		 * in proximity at the same time.  This includes
-		 * the PAD device as well as 1 other tool
-		 * (stylus, mouse, finger touch, etc).
-		 * There is a special case of Tablet PC that also
-		 * suport a 3rd tool (2nd finger touch) to also be
-		 * in proximity at same time but this should eventually
-		 * go away when its switched to MT events to fix loss of
-		 * events.
-		 *
-		 * Protocol 4 send fixed serial numbers along with events.
-		 * Events associated with PAD device
-		 * will send serial number of 0xf0 always.
-		 * Events associated with BTN_TOOL_TRIPLETAP (2nd finger
-		 * touch) send a serial number of 0x02 always.
-		 * Events associated with all other BTN_TOOL_*'s will
-		 * either send a serial # of 0x01 or we can act as if
-		 * they did send that value.
-		 *
-		 * Since its a fixed mapping, directly convert this to
-		 * channels 0 to 2 with last channel always used for
-		 * pad devices.
-		 */
-		if (serial == 0xf0)
-			channel = PAD_CHANNEL;
-		else if (serial)
-			channel = serial-1;
-		else
-			channel = 0;
-		/* All events go to same channel for Protocol 4 */
-		private->wcmBTNChannel = channel;
-	}
-	else if (serial) /* serial number should never be 0 for V5 devices */
-	{
-		/* Protocol 5 devices can support tracking 2 or 3
-		 * tools at once.  One is the PAD device
-		 * as well as a stylus and/or mouse.
-		 *
-		 * Events associated with PAD device
-		 * will send serial number of -1 (0xffffffff) always.
-		 * Events associated with all other BTN_TOOL_*'s will
-		 * send a dynamic serial #.
-		 *
-		 * Logic here is related to dynamically mapping
-		 * serial numbers to a fixed channel #.
-		 */
-		if (TabletHasFeature(common, WCM_DUALINPUT))
+		for (i=0; i<MAX_CHANNELS; i++)
 		{
-			/* find existing channel */
-			for (i=0; i<MAX_CHANNELS; ++i)
+			if (common->wcmChannel[i].work.proximity &&
+			    common->wcmChannel[i].work.serial_num == serial)
 			{
-				if (common->wcmChannel[i].work.proximity &&
-					common->wcmChannel[i].work.serial_num == serial)
-				{
-					channel = i;
-					break;
-				}
-			}
-
-			/* find an empty channel */
-			if (channel < 0)
-			{
-				for (i=0; i<MAX_CHANNELS; ++i)
-				{
-					if (!common->wcmChannel[i].work.proximity)
-					{
-						channel = i;
-						break;
-					}
-				}
+				channel = i;
+				break;
 			}
 		}
-		else  /* one transducer plus expresskey (pad) is supported */
+	}
+
+	/* find an empty channel */
+	if (channel < 0)
+	{
+		for (i=0; i<MAX_CHANNELS; i++)
 		{
-			if (serial == -1)  /* pad */
-				channel = 1;
-			else if ( (common->wcmChannel[0].work.proximity &&  /* existing transducer */
-				    (common->wcmChannel[0].work.serial_num == serial)) ||
-					!common->wcmChannel[0].work.proximity ) /* new transducer */
-				channel = 0;
+			if (i == PAD_CHANNEL)
+				continue;
+
+			if (!common->wcmChannel[i].work.proximity)
+			{
+				channel = i;
+				break;
+			}
 		}
-		/* All events go to same channel for Protocol 5 */
-		private->wcmBTNChannel = channel;
 	}
 
 	/* fresh out of channels */
@@ -843,10 +810,13 @@ static int usbChooseChannel(WacomCommonPtr common)
 		/* This should never happen in normal use.
 		 * Let's start over again. Force prox-out for all channels.
 		 */
-		for (i=0; i<MAX_CHANNELS; ++i)
+		for (i=0; i<MAX_CHANNELS; i++)
 		{
+			if (i == PAD_CHANNEL)
+				continue;
+
 			if (common->wcmChannel[i].work.proximity &&
-					(common->wcmChannel[i].work.serial_num != -1))
+			    (common->wcmChannel[i].work.serial_num != -1))
 			{
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
@@ -854,11 +824,13 @@ static int usbChooseChannel(WacomCommonPtr common)
 			}
 		}
 		DBG(1, common, "device with serial number: %u"
-			" at %d: Exceeded channel count; ignoring the events.\n",
-			serial, (int)GetTimeInMillis());
+		    " at %d: Exceeded channel count; ignoring the events.\n",
+		    serial, (int)GetTimeInMillis());
 	}
 	else
+	{
 		private->wcmLastToolSerial = serial;
+	}
 
 	return channel;
 }
