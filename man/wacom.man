@@ -197,6 +197,12 @@ paths on the tablet. There are 12 levels, specified by the integers between
 "number" will be logged into the Xorg log file. This option is only
 available if the driver was built with debugging support.
 .TP 4
+.B Option \fI"GrabDevice"\fP \fI"bool"\fP
+sets whether the underlying event device will be grabbed by the driver to
+prevent the data from leaking to /dev/input/mice. When enabled, while the
+X server is running, no other programs will be able to read the event
+stream.  Default: "false".
+.TP 4
 .B Option \fI"CursorProx"\fP \fI"number"\fP
 sets the max distance from tablet to stop reporting movement for cursor in relative mode. 
 Default for Intuos series is 10, for Graphire series (including Volitos) is

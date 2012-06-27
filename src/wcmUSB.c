@@ -138,16 +138,17 @@ usbStart(InputInfoPtr pInfo)
 {
 	int err;
 
-#ifdef EVIOCGRAB
-	/* Try to grab the event device so that data don't leak to /dev/input/mice */
-	SYSCALL(err = ioctl(pInfo->fd, EVIOCGRAB, (pointer)1));
+	if (xf86CheckBoolOption(pInfo->options, "GrabDevice", 0))
+	  {
+	    /* Try to grab the event device so that data don't leak to /dev/input/mice */
+	    SYSCALL(err = ioctl(pInfo->fd, EVIOCGRAB, (pointer)1));
 
-	/* this is called for all tools, so all but the first one fails with
-	 * EBUSY */
-	if (err < 0 && errno != EBUSY)
+	    /* this is called for all tools, so all but the first one fails with
+	     * EBUSY */
+	    if (err < 0 && errno != EBUSY)
 		xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device (%s)\n",
 				pInfo->name, strerror(errno));
-#endif
+	  }
 	return Success;
 }
 
