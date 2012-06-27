@@ -149,18 +149,28 @@ static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max
 	);
 }
 
-static int
-wcmInitAxes(DeviceIntPtr pWcm)
+/**
+ * Initialize the device axes with their proper attributes.
+ *
+ * For each axis on the device, we need to provide X with its attributes
+ * so that its values can be interpreted properly. To support older X
+ * servers without axis labels, each axis index has a de-facto meaning.
+ * Any de-facto defined axis index left unused is initialized with default
+ * attributes.
+ */
+static int wcmInitAxes(DeviceIntPtr pWcm)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	Atom label;
+	int index;
 	int min, max, min_res, max_res, res;
 	int mode;
 
 	/* first valuator: x */
+	index = 0;
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
 	min = priv->topX;
 	max = priv->bottomX;
@@ -169,10 +179,11 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	res = priv->resolX;
 	mode = Absolute;
 
-	wcmInitAxis(pInfo->dev, 0, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* second valuator: y */
+	index = 1;
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
 	min = priv->topY;
 	max = priv->bottomY;
@@ -181,10 +192,11 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	res = priv->resolY;
 	mode = Absolute;
 
-	wcmInitAxis(pInfo->dev, 1, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* third valuator: pressure */
+	index = 2;
 	label = None;
 	mode = Absolute;
 	min_res = max_res = res = 1;
@@ -194,64 +206,70 @@ wcmInitAxes(DeviceIntPtr pWcm)
 	if (!IsPad(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
-		/* pressure normalized to FILTER_PRESSURE_RES */
 		max = FILTER_PRESSURE_RES;
 	}
 
-	wcmInitAxis(pInfo->dev, 2, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
+	index = 3;
 	label = None;
 	mode = Absolute;
 	min_res = max_res = res = 1;
 	min = 0;
 	max = 1;
 
-	if (IsCursor(priv))
+	if (IsPen(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
+		min = -64;
+		max = 63;
+	}
+	else if (IsCursor(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
 		min = MIN_ROTATION;
 		max = MIN_ROTATION + MAX_ROTATION_RANGE - 1;
-	} else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
+	}
+	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
 	{ /* XXX: what is this axis label? */
 		max = common->wcmMaxStripX;
-	} else if (IsPen(priv))
-	{
-			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
-			min = -64;
-			max = 63;
 	}
 
-	wcmInitAxis(pInfo->dev, 3, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
+	index = 4;
 	label = None;
 	mode = Absolute;
 	min_res = max_res = res = 1;
 	min = 0;
 	max = 1;
 
-	if (IsCursor(priv))
-	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
-		min = -1023;
-		max = 1023;
-	} else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
-	{ /* XXX: what is this axis label? */
-			max = common->wcmMaxStripY;
-	} else if (IsPen(priv))
+	if (IsPen(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
 		min = -64;
 		max = 63;
 	}
+	else if (IsCursor(priv))
+	{
+		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
+		min = -1023;
+		max = 1023;
+	}
+	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
+	{ /* XXX: what is this axis label? */
+		max = common->wcmMaxStripY;
+	}
 
-	wcmInitAxis(pInfo->dev, 4, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
+	index = 5;
 	label = None;
 	mode = Absolute;
 	min_res = max_res = res = 1;
@@ -263,7 +281,8 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
 		max = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
 		min = MIN_ROTATION;
-	} else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
+	}
+	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
 	{
 		/* Touch ring */
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
@@ -271,10 +290,11 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		max = MAX_PAD_RING;
 	}
 
-	wcmInitAxis(pInfo->dev, 5, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 
 	/* seventh valuator: abswheel2 */
+	index = 6;
 	label = None;
 	mode = Absolute;
 	min_res = max_res = res = 1;
@@ -287,7 +307,7 @@ wcmInitAxes(DeviceIntPtr pWcm)
 		max = MAX_PAD_RING;
 	}
 
-	wcmInitAxis(pInfo->dev, 6, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 
 	return TRUE;
 }
