@@ -176,7 +176,9 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	}
 
 	values[0] = common->wcmRotate;
-	prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, XA_INTEGER, 8, 1, values);
+	if (!IsPad(priv)) {
+		prop_rotation = InitWcmAtom(pInfo->dev, WACOM_PROP_ROTATION, XA_INTEGER, 8, 1, values);
+	}
 
 	if (IsPen(priv) || IsTouch(priv)) {
 		values[0] = priv->nPressCtrl[0];
