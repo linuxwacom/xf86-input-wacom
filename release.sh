@@ -111,6 +111,12 @@ while [ $# != 0 ]; do
     esac
 done
 
+if [ -z "$tag_previous" ] || [ -z "$tag_current" ]; then
+    echo "error: missing previous or current tag"
+    usage
+    exit 1
+fi
+
 # Check for uncommitted/queued changes.
 if [ "x$ignorechanges" != "x1" ]; then
     set +e
@@ -168,8 +174,7 @@ tarbz2="$modulever.tar.bz2"
 announce="$tarball_dir/$modulever.announce"
 
 echo "checking parameters"
-if ! [ -f "$tarball_dir/$tarbz2" ] ||
-     [ -z "$tag_previous" ]; then
+if ! [ -f "$tarball_dir/$tarbz2" ]; then
     echo "error: incorrect parameters!"
     usage
     exit 1
