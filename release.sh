@@ -64,10 +64,6 @@ http://$webpath/$tarbz2/download
 MD5:  `cd $tarball_dir && $MD5SUM $tarbz2`
 SHA1: `cd $tarball_dir && $SHA1SUM $tarbz2`
 
-http://$webpath/$targz/download
-MD5:  `cd $tarball_dir && $MD5SUM $targz`
-SHA1: `cd $tarball_dir && $SHA1SUM $targz`
-
 RELEASE
 }
 
@@ -169,12 +165,10 @@ fi
 
 modulever=$module-$version
 tarbz2="$modulever.tar.bz2"
-targz="$modulever.tar.gz"
 announce="$tarball_dir/$modulever.announce"
 
 echo "checking parameters"
 if ! [ -f "$tarball_dir/$tarbz2" ] ||
-   ! [ -f "$tarball_dir/$targz" ] ||
      [ -z "$tag_previous" ]; then
     echo "error: incorrect parameters!"
     usage
@@ -201,8 +195,7 @@ echo "Sleeping for 30 seconds, because this sometimes helps against sourceforge'
 sleep 30
 
 echo "checking for an existing release"
-if ssh $user$host ls $srv_path/$module/$targz >/dev/null 2>&1 ||
-ssh $user$host_people ls $srv_path/$module/$tarbz2 >/dev/null 2>&1; then
+if ssh $user$host_people ls $srv_path/$module/$tarbz2 >/dev/null 2>&1; then
 if [ "x$force" = "xyes" ]; then
 echo "warning: overriding released file ... here be dragons."
 else
@@ -219,7 +212,7 @@ echo "Sleeping for 30 seconds, because this sometimes helps against sourceforge'
 sleep 30
 
 echo "installing release into server"
-scp $tarball_dir/$targz $tarball_dir/$tarbz2 $user$host:$srv_path
+scp $tarball_dir/$tarbz2 $user$host:$srv_path
 
 echo "pushing tag upstream"
 git push $remote $tag_current
