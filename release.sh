@@ -10,8 +10,6 @@ discuss_list="linuxwacom-discuss@lists.sourceforge.net"
 module=xf86-input-wacom
 user=${USER}@
 host=shell.sourceforge.net
-srv_path=/home/frs/project/l/li/linuxwacom/$module
-webpath=sourceforge.net/projects/linuxwacom/files/$module
 remote=origin
 
 usage()
@@ -25,6 +23,8 @@ Options:
   --help        this help message
   --ignore-local-changes        don't abort on uncommitted local changes
   --remote      git remote where the change should be pushed (default "origin")
+  --module <module>     release the given module. Default: xf86-input-wacom
+                        Supported modules: xf86-input-wacom, libwacom
 HELP
 }
 
@@ -93,6 +93,11 @@ while [ $# != 0 ]; do
         remote=$1
         shift
         ;;
+    --module)
+        shift
+        module=$1
+        shift
+        ;;
     --*)
         echo "error: unknown option"
         usage
@@ -111,11 +116,24 @@ while [ $# != 0 ]; do
     esac
 done
 
+case "$module" in
+    libwacom)
+        ;;
+    xf86-input-wacom)
+        ;;
+    input-wacom)
+        ;;
+    *)
+        echo "error: unknown module '$module'"
+        exit 1
+esac
+
 if [ -z "$tag_previous" ] || [ -z "$tag_current" ]; then
     echo "error: missing previous or current tag"
     usage
     exit 1
 fi
+
 
 # Check for uncommitted/queued changes.
 if [ "x$ignorechanges" != "x1" ]; then
@@ -172,6 +190,8 @@ fi
 modulever=$module-$version
 tarbz2="$modulever.tar.bz2"
 announce="$tarball_dir/$modulever.announce"
+srv_path=/home/frs/project/l/li/linuxwacom/$module
+webpath=sourceforge.net/projects/linuxwacom/files/$module
 
 echo "checking parameters"
 if ! [ -f "$tarball_dir/$tarbz2" ]; then
