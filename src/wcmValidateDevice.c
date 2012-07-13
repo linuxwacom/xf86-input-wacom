@@ -254,6 +254,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xC5:  /* CintiqV5 */
 		case 0xC6:  /* CintiqV5 */
 		case 0xCC:  /* CinitqV5 */
+		case 0xFA:  /* Cintiq 22HD */
 			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 		case 0xB0:  /* I3 */
