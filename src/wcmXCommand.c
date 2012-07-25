@@ -122,12 +122,11 @@ static void wcmResetButtonAction(InputInfoPtr pInfo, int button, int nbuttons)
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	unsigned int new_action[256] = {};
 	int x11_button = priv->button_default[button];
-	int index = button < 3 ? button : button + 4;
 	char name[64];
 
 	sprintf(name, "Wacom button action %d", button);
 	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | x11_button;
-	wcmResetAction(pInfo, name, index, priv->btn_actions, priv->keys, &new_action, prop_btnactions, nbuttons);
+	wcmResetAction(pInfo, name, button, priv->btn_actions, priv->keys, &new_action, prop_btnactions, nbuttons);
 }
 
 static void wcmResetStripAction(InputInfoPtr pInfo, int index)
@@ -209,7 +208,6 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int values[WCM_MAX_BUTTONS];
-	int nbuttons;
 	int i;
 
 	DBG(10, priv, "\n");
@@ -282,9 +280,8 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = MakeAtom(pInfo->type_name, strlen(pInfo->type_name), TRUE);
 	prop_tooltype = InitWcmAtom(pInfo->dev, WACOM_PROP_TOOL_TYPE, XA_ATOM, 32, 1, values);
 
-	nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
 	memset(values, 0, sizeof(values));
-	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, nbuttons, values);
+	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, priv->nbuttons, values);
 	for (i = 0; i < priv->nbuttons; i++)
 		wcmResetButtonAction(pInfo, i, priv->nbuttons);
 
@@ -503,29 +500,35 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 
 		for (i = 0; i < prop->size; i++)
 		{
+			int index = i;
 			Atom subproperty = ((Atom*)prop->data)[i];
 			XIPropertyValuePtr subprop;
+
+			if (property == prop_btnactions)
+			{ /* Driver uses physical -- not X11 -- button numbering internally */
+				if (i < 3)
+					index = i;
+				else if (i < 7)
+					continue;
+				else
+					index = i - 4;
+			}
 
 			if (subproperty == 0)
 			{ /* Interpret 'None' as meaning 'reset' */
 				if (property == prop_btnactions)
-				{
-					if (i < 3)
-						wcmResetButtonAction(pInfo, i, size);
-					else if (i > 6)
-						wcmResetButtonAction(pInfo, i-4, size);
-				}
+					wcmResetButtonAction(pInfo, index, size);
 				else if (property == prop_strip_buttons)
-					wcmResetStripAction(pInfo, i);
+					wcmResetStripAction(pInfo, index);
 				else if (property == prop_wheel_buttons)
-					wcmResetWheelAction(pInfo, i);
+					wcmResetWheelAction(pInfo, index);
 
-				if (subproperty != handlers[i])
-					subproperty = handlers[i];
+				if (subproperty != handlers[index])
+					subproperty = handlers[index];
 			}
 
 			XIGetDeviceProperty(dev, subproperty, &subprop);
-			wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[i], &actions[i]);
+			wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
 		}
 	}
 
@@ -804,7 +807,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 #endif
 	} else if (property == prop_btnactions)
 	{
-		int nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
+		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
 		return wcmSetActionsProperty(dev, property, prop, checkonly, nbuttons, priv->btn_actions, priv->keys);
 	} else
 	{
@@ -845,10 +848,28 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 	}
 	else if (property == prop_btnactions)
 	{
-		int nbuttons = min(max(priv->nbuttons + 4, 7), WCM_MAX_BUTTONS);
+		/* Convert the physical button representation used internally
+		 * to the X11 button representation we've historically used.
+		 * To do this, we need to skip X11 buttons 4-7 which would be
+		 * used by a scroll wheel rather than an actual button.
+		 */
+		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
+		Atom x11_btn_actions[nbuttons];
+		int i;
+
+		for (i = 0; i < nbuttons; i++)
+		{
+			if (i < 3)
+				x11_btn_actions[i] = priv->btn_actions[i];
+			else if (i < 7)
+				x11_btn_actions[i] = 0;
+			else
+				x11_btn_actions[i] = priv->btn_actions[i-4];
+		}
+
 		return XIChangeDeviceProperty(dev, property, XA_ATOM, 32,
 		                              PropModeReplace, nbuttons,
-		                              priv->btn_actions, FALSE);
+		                              x11_btn_actions, FALSE);
 	}
 	else if (property == prop_strip_buttons)
 	{

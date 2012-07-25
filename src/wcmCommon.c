@@ -286,16 +286,15 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
-	int mapped_button = button > 2 ? button + 4 : button; /* maintain prior "dead button" behavior */
 
 	DBG(4, priv, "TPCButton(%s) button=%d state=%d\n",
 	    common->wcmTPCButton ? "on" : "off", button, mask);
 
-	if (!priv->keys[mapped_button][0])
+	if (!priv->keys[button][0])
 		return;
 
-	sendAction(pInfo, (mask != 0), priv->keys[mapped_button],
-		   ARRAY_SIZE(priv->keys[mapped_button]),
+	sendAction(pInfo, (mask != 0), priv->keys[button],
+		   ARRAY_SIZE(priv->keys[button]),
 		   first_val, num_val, valuators);
 }
 
