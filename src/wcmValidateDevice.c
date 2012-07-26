@@ -842,7 +842,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 		if(toollist) /* Already have a tool with the same type/serial */
 		{
-			xf86Msg(X_ERROR, "%s: already have a tool with type/serial %d/%d.",
+			xf86Msg(X_ERROR, "%s: already have a tool with type/serial %d/%d.\n",
 					pInfo->name, tool->typeid, tool->serial);
 			goto error;
 		} else /* No match on existing tool/serial, add tool to the end of the list */
