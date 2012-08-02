@@ -1454,54 +1454,106 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 	channel->dirty |= change;
 }
 
-/***
- * Retrieve the tool type from an USB data packet by looking at the event
- * codes. Refer to linux/input.h for event codes that define tool types.
+/**
+ * Translates a tool code from the kernel (e.g. BTN_TOOL_PEN) into the
+ * corresponding device type for the driver (e.g. STYLUS_ID).
  *
- * @param event_ptr A pointer to the USB data packet that contains the
- * events to be processed.
- * @param nevents Number of events in the packet.
- * @param last_device_type The device type for the last event
- *
- * @return The tool type. last_device_type if no pen/touch/eraser event code
- *         in the event, or TOUCH_ID if last_device_type is not a tool.
+ * @param[in] type      Linux input tool type (e.g. EV_KEY)
+ * @param[in] code      Linux input tool code (e.g. BTN_STYLUS_PEN)
+ * @param[in] protocol  Wacom protocol type (e.g. WCM_PROTOCOL_GENERIC)
+ * @return              Wacom device ID (e.g. STYLUS_ID) or 0 if no match.
  */
-static int usbInitToolType(const struct input_event *event_ptr, int nevents, int last_device_type)
+static int toolTypeToDeviceType(int type, int code, int protocol)
 {
-	int i, device_type = 0;
-
-	for (i = 0; (i < nevents) && !device_type; ++i)
-	{
-		switch (event_ptr->code)
-		{
+	if (type == EV_KEY) {
+		switch(code) {
 			case BTN_TOOL_PEN:
 			case BTN_TOOL_PENCIL:
 			case BTN_TOOL_BRUSH:
 			case BTN_TOOL_AIRBRUSH:
-				device_type = STYLUS_ID;
-				break;
+				return STYLUS_ID;
 
 			case BTN_TOOL_FINGER:
-			case ABS_MT_SLOT:
-			case ABS_MT_TRACKING_ID:
-				device_type = TOUCH_ID;
-				break;
+				if (protocol != WCM_PROTOCOL_GENERIC)
+					return PAD_ID;
+				else
+					return TOUCH_ID;
 
 			case BTN_TOOL_RUBBER:
-				device_type = ERASER_ID;
-				break;
+				return ERASER_ID;
 		}
+	}
+	else if (type == EV_ABS) {
+		switch (code) {
+			case ABS_MT_SLOT:
+			case ABS_MT_TRACKING_ID:
+				return TOUCH_ID;
+		}
+	}
 
-		event_ptr++;
+	return 0;
+}
+
+/**
+ * Queries the kernel through EVIOCGKEY for the latest device type
+ * information. The result is the first tool type (e.g. STYLUS_ID)
+ * found associated with the in-prox tool.
+ *
+ * @param[in] common
+ * @return            A tool type (e.g. STYLUS_ID) associated with the in-prox tool
+ */
+static int refreshDeviceType(WacomCommonPtr common)
+{
+	int device_type = 0;
+	unsigned long keys[NBITS(KEY_MAX)] = { 0 };
+	int rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
+	int i;
+
+	if (rc == -1)
+		xf86Msg(X_ERROR, "%s: failed to retrieve key bits\n", common->device_path);
+		return 0;
+
+	for (i = 0; i < KEY_MAX; i++)
+	{
+		if (ISBITSET(keys, i))
+			device_type = toolTypeToDeviceType(EV_KEY, i, common->wcmProtocolLevel);
+		if (device_type)
+			return device_type;
+	}
+
+	return 0;
+}
+
+/***
+ * Retrieve the tool type from an USB data packet by looking at the event
+ * codes. Refer to linux/input.h for event codes that define tool types.
+ *
+ * @param[in] common
+ * @param[in] event_ptr A pointer to the USB data packet that contains the
+ * events to be processed.
+ * @param[in] nevents Number of events in the packet.
+ * @param[in] last_device_type The device type for the last event
+ *
+ * @return The tool type. This falls back on last_device_type if no
+ *         pen/touch/eraser event code in the event, and on EVIOCGKEY
+ *         if last_device_type is not a tool. If all else fails, '0'
+ *         is returned.
+ */
+static int usbInitToolType(WacomCommonPtr common, const struct input_event *event_ptr,
+                           int nevents, int last_device_type)
+{
+	int i, device_type = 0;
+
+	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
+	{
+		device_type = toolTypeToDeviceType(event_ptr->type, event_ptr->code, common->wcmProtocolLevel);
 	}
 
 	if (!device_type)
-	{
-		if (last_device_type)
-			device_type = last_device_type;
-		else
-			device_type = TOUCH_ID;
-	}
+		device_type = last_device_type;
+
+	if (!device_type)
+		device_type = refreshDeviceType(common);
 
 	return device_type;
 }
@@ -1534,10 +1586,10 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
-	if (private->wcmUseMT)
-		private->wcmDeviceType = usbInitToolType(private->wcmEvents,
-							 private->wcmEventCnt,
-							 dslast.device_type);
+	private->wcmDeviceType = usbInitToolType(common,
+	                                         private->wcmEvents,
+	                                         private->wcmEventCnt,
+	                                         dslast.device_type);
 
 	if (private->wcmPenTouch)
 	{
