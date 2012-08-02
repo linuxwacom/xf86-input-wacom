@@ -189,6 +189,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 	switch (priv->common->tablet_id)
 	{
+		case 0xF8:  /* Cintiq 24HDT */
 		case 0xF4:  /* Cintiq 24HD */
 			TabletSetFeature(priv->common, WCM_DUALRING | WCM_LCD);
 			/* fall through */
@@ -279,6 +280,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			break;
 
 		case 0x9F:
+		case 0xF6: /* Cintiq 24HDT Touch */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}
