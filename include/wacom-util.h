@@ -22,7 +22,9 @@
 /**
  * Get the number of elements in an array
  */
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+#endif
 
 /* to access kernel defined bits */
 #define BIT(x)		(1UL<<((x) & (BITS_PER_LONG - 1)))
