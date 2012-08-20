@@ -61,9 +61,9 @@
 #define DBG(lvl, priv, ...) \
 	do { \
 		if ((lvl) <= priv->debugLevel) { \
-			xf86Msg(X_INFO, "%s (%d:%s): ", \
+			LogMessageVerbSigSafe(X_INFO, -1, "%s (%d:%s): ", \
 				((WacomDeviceRec*)priv)->name, lvl, __func__); \
-			xf86Msg(X_NONE, __VA_ARGS__); \
+			LogMessageVerbSigSafe(X_NONE, -1, __VA_ARGS__); \
 		} \
 	} while (0)
 #else
