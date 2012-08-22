@@ -201,7 +201,7 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 			common->wcmGestureMode = GESTURE_PREDRAG_MODE;
 
 			/* Delay to detect possible drag operation */
-			TimerSet(NULL, 0, common->wcmGestureParameters.wcmTapTime, wcmSingleFingerTapTimer, priv);
+			TimerSet(priv->tap_timer, 0, common->wcmGestureParameters.wcmTapTime, wcmSingleFingerTapTimer, priv);
 		}
 	}
 }

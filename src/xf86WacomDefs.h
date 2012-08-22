@@ -303,6 +303,7 @@ struct _WacomDeviceRec
 	Atom strip_actions[4];
 
 	OsTimerPtr serial_timer; /* timer used for serial number property update */
+	OsTimerPtr tap_timer;   /* timer used for tap timing */
 };
 
 /******************************************************************************
