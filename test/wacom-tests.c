@@ -82,30 +82,24 @@ static void
 test_get_wheel_button(void)
 {
 	int delta;
-	int button_up, button_dn, action_up, action_dn;
+	unsigned int action_up, action_dn;
 
-	button_up = 100;
-	button_dn = 200;
 	action_up = 300;
 	action_dn = 400;
 
 	for (delta = -32; delta <= 32; delta++)
 	{
-		int *action;
-		int result = getWheelButton(delta, button_up, button_dn, &action_up, &action_dn, &action);
+		unsigned int *action = getWheelButton(delta, &action_up, &action_dn);
 		if (delta < 0)
 		{
-			assert(result == button_dn);
 			assert(action == &action_dn);
 		}
 		else if (delta == 0)
 		{
-			assert(result == 0);
 			assert(action == NULL);
 		}
 		else
 		{
-			assert(result == button_up);
 			assert(action == &action_up);
 		}
 	}
