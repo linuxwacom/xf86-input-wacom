@@ -89,7 +89,8 @@ test_get_wheel_button(void)
 
 	for (delta = -32; delta <= 32; delta++)
 	{
-		unsigned int *action = getWheelButton(delta, &action_up, &action_dn);
+		unsigned int *action;
+		getWheelButton(delta, &action_up, &action_dn, &action);
 		if (delta < 0)
 		{
 			assert(action == &action_dn);
