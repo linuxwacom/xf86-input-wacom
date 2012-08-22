@@ -102,6 +102,7 @@ static int wcmAllocate(InputInfoPtr pInfo)
 
 	/* timers */
 	priv->serial_timer = TimerSet(NULL, 0, 0, NULL, NULL);
+	priv->tap_timer = TimerSet(NULL, 0, 0, NULL, NULL);
 
 	return 1;
 
@@ -125,6 +126,7 @@ static void wcmFree(InputInfoPtr pInfo)
 		return;
 
 	TimerFree(priv->serial_timer);
+	TimerFree(priv->tap_timer);
 	free(priv->tool);
 	wcmFreeCommon(&priv->common);
 	free(priv);

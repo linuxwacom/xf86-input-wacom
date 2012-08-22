@@ -304,6 +304,7 @@ struct _WacomDeviceRec
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
 
 	OsTimerPtr serial_timer; /* timer used for serial number property update */
+	OsTimerPtr tap_timer;   /* timer used for tap timing */
 };
 
 /******************************************************************************
