@@ -298,16 +298,16 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 				    ds->device_type == ERASER_ID))
 	{
 		ds->tiltx = tx / common->wcmRawSample;
-		if (ds->tiltx > common->wcmMaxtiltX/2-1)
-			ds->tiltx = common->wcmMaxtiltX/2-1;
-		else if (ds->tiltx < -common->wcmMaxtiltX/2)
-			ds->tiltx = -common->wcmMaxtiltX/2;
+		if (ds->tiltx > common->wcmTiltMaxX)
+			ds->tiltx = common->wcmTiltMaxX;
+		else if (ds->tiltx < common->wcmTiltMinX)
+			ds->tiltx = common->wcmTiltMinX;
 
 		ds->tilty = ty / common->wcmRawSample;
-		if (ds->tilty > common->wcmMaxtiltY/2-1)
-			ds->tilty = common->wcmMaxtiltY/2-1;
-		else if (ds->tilty < -common->wcmMaxtiltY/2)
-			ds->tilty = -common->wcmMaxtiltY/2;
+		if (ds->tilty > common->wcmTiltMaxY)
+			ds->tilty = common->wcmTiltMaxY;
+		else if (ds->tilty < common->wcmTiltMinY)
+			ds->tilty = common->wcmTiltMinY;
 	}
 
 	return 0; /* lookin' good */

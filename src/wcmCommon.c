@@ -1432,8 +1432,6 @@ WacomCommonPtr wcmNewCommon(void)
 	common->wcmMaxTouchY = 1024;       /* max touch Y value */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
-	common->wcmMaxtiltX = 128;	   /* Max tilt in X directory */
-	common->wcmMaxtiltY = 128;	   /* Max tilt in Y directory */
 	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
 			/* default to Intuos */
 	common->wcmSuppress = DEFAULT_SUPPRESS;

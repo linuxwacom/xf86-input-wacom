@@ -43,6 +43,11 @@
 #define MAX_ROTATION_RANGE 1800 /* the maximum range of the marker pen rotation */
 #define MAX_ABS_WHEEL 1023      /* the maximum value of absolute wheel */
 
+#define TILT_RES (180/M_PI)	/* Reported tilt resolution in points/radian
+				   (1/degree) */
+#define TILT_MIN -64		/* Minimum reported tilt value */
+#define TILT_MAX 63		/* Maximum reported tilt value */
+
 #define MIN_PAD_RING 0		/* I4 absolute scroll ring min value */
 #define MAX_PAD_RING 71		/* I4 absolute scroll ring max value */
 
@@ -440,8 +445,19 @@ struct _WacomCommonRec
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100% pressure */
 	int wcmMaxDist;              /* tablet max distance value */
-	int wcmMaxtiltX;	     /* styli max tilt in X directory */ 
-	int wcmMaxtiltY;	     /* styli max tilt in Y directory */ 
+
+	/*
+	 * TODO Remove wcmTiltOff*, once the kernel drivers reporting
+	 * 	non-zero-centered tilt values are no longer in use.
+	 */
+	int wcmTiltOffX;	     /* styli tilt offset in X direction */
+	int wcmTiltOffY;	     /* styli tilt offset in Y direction */
+	double wcmTiltFactX;	     /* styli tilt factor in X direction */
+	double wcmTiltFactY;	     /* styli tilt factor in Y direction */
+	int wcmTiltMinX;	     /* styli min reported tilt in X direction */
+	int wcmTiltMinY;	     /* styli min reported tilt in Y direction */
+	int wcmTiltMaxX;	     /* styli max reported tilt in X direction */
+	int wcmTiltMaxY;	     /* styli max reported tilt in Y direction */
 
 	int wcmMaxStripX;            /* Maximum fingerstrip X */
 	int wcmMaxStripY;            /* Maximum fingerstrip Y */

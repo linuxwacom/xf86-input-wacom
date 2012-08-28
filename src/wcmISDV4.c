@@ -405,8 +405,18 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 		common->wcmMaxY = reply.y_max;
 		if (reply.tilt_x_max && reply.tilt_y_max)
 		{
-			common->wcmMaxtiltX = reply.tilt_x_max;
-			common->wcmMaxtiltY = reply.tilt_y_max;
+			common->wcmTiltOffX = 0 - reply.tilt_x_max / 2;
+			common->wcmTiltFactX = 1.0;
+			common->wcmTiltMinX = 0 + common->wcmTiltOffX;
+			common->wcmTiltMaxX = reply.tilt_x_max +
+					      common->wcmTiltOffX;
+
+			common->wcmTiltOffY = 0 - reply.tilt_y_max / 2;
+			common->wcmTiltFactY = 1.0;
+			common->wcmTiltMinY = 0 + common->wcmTiltOffY;
+			common->wcmTiltMaxY = reply.tilt_y_max +
+					      common->wcmTiltOffY;
+
 			common->wcmFlags |= TILT_ENABLED_FLAG;
 		}
 

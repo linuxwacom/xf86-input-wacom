@@ -223,8 +223,9 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	if (IsPen(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
-		min = -64;
-		max = 63;
+		min_res = max_res = res = round(TILT_RES);
+		min = TILT_MIN;
+		max = TILT_MAX;
 	}
 	else if (IsCursor(priv))
 	{
@@ -251,8 +252,9 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	if (IsPen(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
-		min = -64;
-		max = 63;
+		min_res = max_res = res = round(TILT_RES);
+		min = TILT_MIN;
+		max = TILT_MAX;
 	}
 	else if (IsCursor(priv))
 	{
