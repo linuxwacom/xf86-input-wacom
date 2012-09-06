@@ -325,6 +325,11 @@ InitProximityClassDeviceStruct(DeviceIntPtr dev)
     return 0;
 }
 
+_X_EXPORT void
+LogMessageVerbSigSafe(MessageType type, int verb, const char *format, ...)
+{
+	return;
+}
 
 _X_EXPORT void
 xf86MsgVerb(MessageType type, int verb, const char *format, ...)

@@ -121,6 +121,7 @@ XIRegisterPropertyHandler(DeviceIntPtr         dev,
                           int (*DeleteProperty) (DeviceIntPtr dev,
                                                  Atom property));
 extern int InitProximityClassDeviceStruct(DeviceIntPtr dev);
+extern void LogMessageVerbSigSafe(MessageType type, int verb, const char *format, ...);
 extern void xf86MsgVerb(MessageType type, int verb, const char *format, ...);
 extern void xf86Msg(MessageType type, const char *format, ...);
 
