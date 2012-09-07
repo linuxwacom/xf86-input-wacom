@@ -1012,18 +1012,17 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 
 	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
 	{
-		KeySym* ks;
 		int i;
 
-		ks = XkbKeySymsPtr(xkb, kc);
 		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, state.group); i++)
-			if (ks[i] == sym)
+			if (XKeycodeToKeysym(dpy, kc, i) == sym)
 				goto out;
 	}
 
 out:
 	return kc;
 }
+
 /*
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
