@@ -1657,6 +1657,11 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		unsigned long keys[NBITS(KEY_MAX)] = { 0 };
 		int rc;
 
+		if (!ds->proximity) {
+			DBG(3, common, "Unknown out-of-prox device leaving prox. Ignoring.\n");
+			return;
+		}
+
 		/* Retrieve the type by asking a resend from the kernel */
 		rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
 		if (rc == -1)
