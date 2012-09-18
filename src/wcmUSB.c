@@ -1176,15 +1176,18 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 	switch(event->code)
 	{
 		case ABS_MT_SLOT:
-			if (event->value >= 0 && event->value < MAX_FINGERS)
-				private->wcmMTChannel = event->value;
+			if (event->value >= 0) {
+				int serial = event->value + 1;
+				private->wcmMTChannel = usbChooseChannel(common, TOUCH_ID, serial);
+				ds = &common->wcmChannel[private->wcmMTChannel].work;
+				ds->serial_num = serial;
+			}
 			break;
 
 		case ABS_MT_TRACKING_ID:
 			ds->proximity = (event->value != -1);
 			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
-			ds->serial_num = private->wcmMTChannel+1;
 			ds->sample = (int)GetTimeInMillis();
 			break;
 
