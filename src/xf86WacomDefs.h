@@ -360,6 +360,7 @@ struct _WacomChannel
 	 * the work stage and the valid state. */
 
 	WacomDeviceState work;                         /* next state */
+	Bool dirty;
 
 	/* the following union contains the current known state of the
 	 * device channel, as well as the previous MAX_SAMPLES states
