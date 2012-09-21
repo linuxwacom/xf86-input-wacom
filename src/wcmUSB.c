@@ -61,7 +61,7 @@ static void usbParseEvent(InputInfoPtr pInfo,
 static void usbParseSynEvent(InputInfoPtr pInfo,
 			     const struct input_event *event);
 static void usbDispatchEvents(InputInfoPtr pInfo);
-static int usbChooseChannel(WacomCommonPtr common);
+static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial);
 
 	WacomDeviceClass gWacomUSBDevice =
 	{
@@ -761,14 +761,14 @@ static int protocol5Serial(int device_type, unsigned int serial) {
  * concurrently by driver.
  *
  * @param[in] common
- * @return             Channel number to track the tool's state
+ * @param[in] device_type  Type of tool (e.g. STYLUS_ID, TOUCH_ID, PAD_ID)
+ * @param[in] serial       Serial number of tool
+ * @return                 Channel number to track the tool's state
  */
-static int usbChooseChannel(WacomCommonPtr common)
+static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial)
 {
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
-	wcmUSBData* private = common->private;
-	unsigned int serial = protocol5Serial(private->wcmDeviceType, private->wcmLastToolSerial);
 
 	/* force events from PAD device to PAD_CHANNEL */
 	if (serial == -1)
@@ -780,6 +780,7 @@ static int usbChooseChannel(WacomCommonPtr common)
 		for (i=0; i<MAX_CHANNELS; i++)
 		{
 			if (common->wcmChannel[i].work.proximity &&
+			    common->wcmChannel[i].work.device_type == device_type &&
 			    common->wcmChannel[i].work.serial_num == serial)
 			{
 				channel = i;
@@ -826,10 +827,6 @@ static int usbChooseChannel(WacomCommonPtr common)
 		DBG(1, common, "device with serial number: %u"
 		    " at %d: Exceeded channel count; ignoring the events.\n",
 		    serial, (int)GetTimeInMillis());
-	}
-	else
-	{
-		private->wcmLastToolSerial = serial;
 	}
 
 	return channel;
@@ -1580,7 +1577,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		}
 	}
 
-	channel = usbChooseChannel(common);
+	private->wcmLastToolSerial = protocol5Serial(private->wcmDeviceType, private->wcmLastToolSerial);
+	channel = usbChooseChannel(common, private->wcmDeviceType, private->wcmLastToolSerial);
 
 	/* couldn't decide channel? invalid data */
 	if (channel == -1) {
