@@ -46,6 +46,55 @@
 static void wcmFingerScroll(WacomDevicePtr priv);
 static void wcmFingerZoom(WacomDevicePtr priv);
 
+/**
+ * Returns a pointer to the channel associated with the given contact
+ * number. The first contact made in a gesture will be number zero,
+ * the second number one, and so on.
+ *
+ * @param[in] common
+ * @param[in] num     Contact number to search for
+ * @return            Pointer to the associated channel, or NULL if none found
+ */
+static WacomChannelPtr getContactNumber(WacomCommonPtr common, int num)
+{
+	int i;
+
+	for (i = 0; i < MAX_CHANNELS; i++)
+	{
+		WacomChannelPtr channel = common->wcmChannel+i;
+		WacomDeviceState state  = channel->valid.state;
+		if (state.device_type == TOUCH_ID && state.serial_num == num + 1)
+			return channel;
+	}
+
+	DBG(10, common, "Channel for contact number %d not found.\n", num);
+	return NULL;
+}
+
+/**
+ * Returns the device state for the first num contacts with specified
+ * age.
+ *
+ * @param[in]  common
+ * @param[out] states  List of device states to fill with history
+ * @param[in]  num     Length of states list
+ * @param[in]  age     Age of state information, zero being the most-current
+ */
+static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], int num, int age)
+{
+	int i;
+	for (i = 0; i < num; i++)
+	{
+		WacomChannelPtr channel = getContactNumber(common, i);
+		if (channel == NULL || i > ARRAY_SIZE(channel->valid.states))
+		{
+			DBG(7, common, "Could not get state history for contact %d, age %d.\n", i, age);
+			continue;
+		}
+		states[i] = channel->valid.states[age];
+	}
+}
+
 static double touchDistance(WacomDeviceState ds0, WacomDeviceState ds1)
 {
 	int xDelta = ds0.x - ds1.x;
@@ -116,12 +165,10 @@ static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 static void wcmFingerTapToClick(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-				   secondChannel->valid.states[0] };
-	WacomDeviceState dsLast[2] = { firstChannel->valid.states[1],
-					secondChannel->valid.states[1] };
+	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
+	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
 
 	DBG(10, priv, "\n");
 
@@ -175,12 +222,10 @@ static CARD32 wcmSingleFingerTapTimer(OsTimerPtr timer, CARD32 time, pointer arg
 static void wcmSingleFingerTap(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-				   secondChannel->valid.states[0] };
-	WacomDeviceState dsLast[2] = { firstChannel->valid.states[1],
-					secondChannel->valid.states[1] };
+	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
+	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
 
 	DBG(10, priv, "\n");
 
@@ -215,10 +260,10 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 static void wcmSingleFingerPress(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-				   secondChannel->valid.states[0] };
+	WacomChannelPtr firstChannel = getContactNumber(common, 0);
+	WacomChannelPtr secondChannel = getContactNumber(common, 1);
+	Bool firstInProx = firstChannel && firstChannel->valid.states[0].proximity;
+	Bool secondInProx = secondChannel && secondChannel->valid.states[0].proximity;
 
 	DBG(10, priv, "\n");
 
@@ -226,9 +271,9 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 	if (!TabletHasFeature(priv->common, WCM_LCD))
 		return;
 
-	if (ds[0].proximity && !ds[1].proximity)
+	if (firstInProx && !secondInProx)
 		firstChannel->valid.states[0].buttons |= 1;
-	if (!ds[0].proximity && !ds[1].proximity)
+	if (!firstInProx && !secondInProx)
 		firstChannel->valid.states[0].buttons &= ~1;
 }
 
@@ -236,12 +281,10 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-				secondChannel->valid.states[0] };
-	WacomDeviceState dsLast[2] = { firstChannel->valid.states[1],
-				secondChannel->valid.states[1] };
+	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
+	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
 
 	DBG(10, priv, "\n");
 
@@ -405,10 +448,9 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 	WacomCommonPtr common = priv->common;
 	int count = (int)((1.0 * abs(dist)/
 		common->wcmGestureParameters.wcmScrollDistance) + 0.5);
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-				secondChannel->valid.states[0] };
+	WacomDeviceState ds[2] = {{0}};
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
 	/* user might have changed from up to down or vice versa */
 	if (count < common->wcmGestureParameters.wcmGestureUsed)
@@ -432,16 +474,14 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 static void wcmFingerScroll(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-		secondChannel->valid.states[0] };
-
+	WacomDeviceState ds[2] = {{0}};
 	int midPoint_new = 0;
 	int midPoint_old = 0;
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
 	DBG(10, priv, "\n");
 
@@ -532,14 +572,13 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 static void wcmFingerZoom(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomChannelPtr firstChannel = common->wcmChannel;
-	WacomChannelPtr secondChannel = common->wcmChannel + 1;
-	WacomDeviceState ds[2] = { firstChannel->valid.states[0],
-		secondChannel->valid.states[0] };
+	WacomDeviceState ds[2] = {{0}};
 	int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+
+	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
 	DBG(10, priv, "\n");
 
