@@ -250,6 +250,9 @@ static void wcmFingerTapToClick(WacomDevicePtr priv)
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
 
+	if (!common->wcmGesture)
+		return;
+
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
 
@@ -379,7 +382,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		return;
 	}
 
-	if (!common->wcmGesture)
+	if (common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)
 		goto ret;
 
 	/* When 2 fingers are in proximity, it must always be in one of
@@ -526,11 +529,7 @@ ret:
 
 	if (common->wcmGestureMode == GESTURE_NONE_MODE && touch_id == 0)
 	{
-		/* Since this is in ret block, can not rely on generic
-		 * wcmGesture enable check from above.
-		 */
-		if (common->wcmGesture)
-			wcmSingleFingerTap(priv);
+		wcmSingleFingerTap(priv);
 		wcmSingleFingerPress(priv);
 	}
 }
@@ -574,6 +573,9 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+
+	if (!common->wcmGesture)
+		return;
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
@@ -671,6 +673,9 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+
+	if (!common->wcmGesture)
+		return;
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
