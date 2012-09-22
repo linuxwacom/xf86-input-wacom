@@ -24,7 +24,7 @@
 
 /****************************************************************************/
 
-void wcmGestureFilter(WacomDevicePtr priv, int channel);
+void wcmGestureFilter(WacomDevicePtr priv, int touch_id);
 Bool wcmTouchNeedSendEvents(WacomCommonPtr common);
 
 /****************************************************************************/

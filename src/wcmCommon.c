@@ -970,10 +970,10 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
 
 	if ((ds.device_type == TOUCH_ID) && common->wcmTouch)
-		wcmGestureFilter(priv, channel);
+		wcmGestureFilter(priv, ds.serial_num - 1);
 
 	/* For touch, only first finger moves the cursor */
-	if ((ds.device_type == TOUCH_ID && common->wcmTouch && !channel) ||
+	if ((common->wcmTouch && ds.device_type == TOUCH_ID && ds.serial_num == 1) ||
 	    (ds.device_type != TOUCH_ID))
 		commonDispatchDevice(common,channel,pChannel, suppress);
 }

@@ -625,6 +625,7 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 	ds->proximity = touchdata.status;
 	ds->device_type = TOUCH_ID;
 	ds->device_id = TOUCH_DEVICE_ID;
+	ds->serial_num = 1;
 
 	if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
 	{
@@ -648,6 +649,7 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 			ds->y = touchdata.finger2.y;
 			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
+			ds->serial_num = 2;
 			ds->proximity = touchdata.finger2.status;
 			/* time stamp for 2FGT gesture events */
 			if ((ds->proximity && !lastTemp->proximity) ||
@@ -791,6 +793,7 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 			/* let touch go */
 			WacomDeviceState out = { 0 };
 			out.device_type = TOUCH_ID;
+			out.serial_num = 1;
 			wcmEvent(common, channel, &out);
 		}
 	}
@@ -807,8 +810,10 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 
 	if (common->wcmPktLength == ISDV4_PKGLEN_TPCPEN)
 		channel = isdv4ParsePenPacket(pInfo, data, len, ds);
-	else /* a touch */
+	else { /* a touch */
 		channel = isdv4ParseTouchPacket(pInfo, data, len, ds);
+		ds = &common->wcmChannel[channel].work;
+	}
 
 	if (channel < 0)
 		return 0;

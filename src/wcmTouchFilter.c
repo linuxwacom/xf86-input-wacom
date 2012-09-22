@@ -233,7 +233,7 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 }
 
 /* parsing gesture mode according to 2FGT data */
-void wcmGestureFilter(WacomDevicePtr priv, int channel)
+void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 {
 	WacomCommonPtr common = priv->common;
 	WacomChannelPtr firstChannel = common->wcmChannel;
@@ -316,7 +316,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		common->wcmGestureParameters.wcmGestureUsed  = 0;
 
 		/* initialize the cursor position */
-		if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
+		if (common->wcmGestureMode == GESTURE_NONE_MODE && touch_id == 0)
 			goto ret;
 
 		/* got second touch in TapTime interval after first one,
@@ -349,7 +349,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		goto ret;
 	}
 
-	if (!(common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE)) && channel)
+	if (!(common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE)) && touch_id == 1)
 		wcmFingerTapToClick(priv);
 
 	/* Change mode happens only when both fingers are out */
@@ -387,7 +387,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int channel)
 		}
 	}
 ret:
-	if (common->wcmGestureMode == GESTURE_NONE_MODE && !channel)
+	if (common->wcmGestureMode == GESTURE_NONE_MODE && touch_id == 0)
 	{
 		/* Since this is in ret block, can not rely on generic
 		 * wcmGesture enable check from above.
