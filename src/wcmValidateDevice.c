@@ -46,16 +46,15 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 		if (pInfo != pDevices)
 		{
 			WacomCommonPtr pCommon = ((WacomDevicePtr)pDevices->private)->common;
-			char* fsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
-			char* psource = xf86CheckStrOption(pDevices->options, "_source", NULL);
+			char* fsource = xf86CheckStrOption(pInfo->options, "_source", "");
+			char* psource = xf86CheckStrOption(pDevices->options, "_source", "");
 
 			if (pCommon->min_maj &&
 				pCommon->min_maj == min_maj)
 			{
 				/* only add the new tool if the matching major/minor
 				* was from the same source */
-				if ((!fsource && !psource) ||
-				    (fsource && psource && strcmp(fsource, psource)))
+				if (strcmp(fsource, psource))
 				{
 					match = 1;
 					break;
