@@ -934,7 +934,6 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 	return TRUE;
 error:
-	free(tool);
 	return FALSE;
 }
 
