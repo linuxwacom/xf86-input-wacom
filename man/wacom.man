@@ -232,8 +232,9 @@ The threshold applies to the normalised pressure range of [0..2048].
 The default is 27.
 .TP 4
 .B Option \fI"Gesture"\fP \fI"bool"\fP
-Enable or disable gesture support on the device. Default: off unless the
-tablet supports multi-touch.
+Enable or disable in-driver gesture support on the device. Default: off unless the
+tablet supports multi-touch. Note that disabling this option may allow the desktop
+environment to detect gestures instead.
 .TP 4
 .B Option \fI"ZoomDistance"\fP \fI"number"\fP
 If

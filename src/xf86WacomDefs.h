@@ -397,9 +397,9 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 
-#define MAX_CHANNELS 3
+#define MAX_CHANNELS 15
 #define PAD_CHANNEL (MAX_CHANNELS-1)
-#define MAX_FINGERS  2
+#define MAX_FINGERS (MAX_CHANNELS-1)
 
 typedef struct {
 	int wcmZoomDistance;	       /* minimum distance for a zoom touch gesture */
@@ -497,6 +497,8 @@ struct _WacomCommonRec
 
 	/* DO NOT TOUCH THIS. use wcmRefCommon() instead */
 	int refcnt;			/* number of devices sharing this struct */
+
+	ValuatorMask *touch_mask;
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)

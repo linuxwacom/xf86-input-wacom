@@ -37,12 +37,14 @@
 #define GESTURE_LAG_MODE              8
 #define GESTURE_PREDRAG_MODE         16
 #define GESTURE_DRAG_MODE            32
+#define GESTURE_MULTITOUCH_MODE      64
 
 #define WCM_SCROLL_UP                 5	/* vertical up */
 #define WCM_SCROLL_DOWN               4	/* vertical down */
 #define WCM_SCROLL_LEFT               6	/* horizontal left */
 #define WCM_SCROLL_RIGHT              7	/* horizontal right */
 
+static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state);
 static void wcmFingerScroll(WacomDevicePtr priv);
 static void wcmFingerZoom(WacomDevicePtr priv);
 
@@ -93,6 +95,87 @@ static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], in
 		}
 		states[i] = channel->valid.states[age];
 	}
+}
+
+/**
+ * Send a touch event for the provided contact ID. This makes use of
+ * the multitouch API available in XI2.2.
+ *
+ * @param[in] priv
+ * @param[in] channel    Channel to send a touch event for
+ * @param[in] no_update  If 'true', TouchUpdate events will not be created.
+ * This should be used when entering multitouch mode to ensure TouchBegin
+ * events are sent for already-in-prox contacts.
+ */
+static void
+wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
+{
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
+	ValuatorMask *mask = priv->common->touch_mask;
+	WacomDeviceState state = channel->valid.state;
+	WacomDeviceState oldstate = channel->valid.states[1];
+	int type = -1;
+
+	valuator_mask_set(mask, 0, state.x);
+	valuator_mask_set(mask, 1, state.y);
+
+	if (!state.proximity) {
+		DBG(6, priv->common, "This is a touch end event\n");
+		type = XI_TouchEnd;
+	}
+	else if (!oldstate.proximity || no_update) {
+		DBG(6, priv->common, "This is a touch begin event\n");
+		type = XI_TouchBegin;
+	}
+	else {
+		DBG(6, priv->common, "This is a touch update event\n");
+		type = XI_TouchUpdate;
+	}
+
+	xf86PostTouchEvent(priv->pInfo->dev, state.serial_num - 1, type, 0, mask);
+#endif
+}
+
+/**
+ * Send multitouch events. If entering multitouch mode (indicated by
+ * GESTURE_LAG_MODE), then touch events are sent for all in-prox
+ * contacts. Otherwise, only the specified contact has a touch event
+ * generated.
+ *
+ * @param[in] priv
+ * @param[in] contact_id  ID of the contact to send event for (at minimum)
+ */
+static void
+wcmFingerMultitouch(WacomDevicePtr priv, int contact_id) {
+	Bool lag_mode = priv->common->wcmGestureMode == GESTURE_LAG_MODE;
+	Bool prox = FALSE;
+	int i;
+
+	if (lag_mode && TabletHasFeature(priv->common, WCM_LCD)) {
+		/* wcmSingleFingerPress triggers a button press as
+		 * soon as a single finger appears. ensure we release
+		 * that button before getting too far along
+		 */
+		wcmSendButtonClick(priv, 1, 0);
+	}
+
+	for (i = 0; i < MAX_CHANNELS; i++) {
+		WacomChannelPtr channel = priv->common->wcmChannel+i;
+		WacomDeviceState state  = channel->valid.state;
+		if (state.device_type != TOUCH_ID)
+			continue;
+
+		if (lag_mode || state.serial_num == contact_id + 1) {
+			wcmSendTouchEvent(priv, channel, lag_mode);
+		}
+
+		prox |= state.proximity;
+	}
+
+	if (!prox)
+		priv->common->wcmGestureMode = GESTURE_NONE_MODE;
+	else if (lag_mode)
+		priv->common->wcmGestureMode = GESTURE_MULTITOUCH_MODE;
 }
 
 static double touchDistance(WacomDeviceState ds0, WacomDeviceState ds1)
@@ -430,6 +513,17 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		}
 	}
 ret:
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
+	/* Send multitouch data to X if appropriate */
+	if (!common->wcmGesture && ds[1].proximity && common->wcmGestureMode == GESTURE_NONE_MODE)
+		common->wcmGestureMode = GESTURE_LAG_MODE;
+	if (!common->wcmGesture && (common->wcmGestureMode == GESTURE_LAG_MODE ||
+	    common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)) {
+		wcmFingerMultitouch(priv, touch_id);
+	}
+#endif
+
 	if (common->wcmGestureMode == GESTURE_NONE_MODE && touch_id == 0)
 	{
 		/* Since this is in ret block, can not rely on generic
