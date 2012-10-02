@@ -694,8 +694,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		return;
 	}
 
-	if (priv->cur_serial != serial || priv->cur_device_id != id)
-		wcmUpdateSerial(pInfo, serial, id);
+	wcmUpdateSerial(pInfo, serial, id);
 
 	/* don't move the cursor when going out-prox */
 	if (!ds->proximity)

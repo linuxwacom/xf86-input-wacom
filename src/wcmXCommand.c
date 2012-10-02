@@ -925,7 +925,7 @@ wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
 {
 	WacomDevicePtr priv = pInfo->private;
 
-	if (priv->cur_serial == serial)
+	if (priv->cur_serial == serial && priv->cur_device_id == id)
 		return;
 
 	priv->cur_serial = serial;
