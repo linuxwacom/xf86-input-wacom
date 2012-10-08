@@ -90,6 +90,12 @@ xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt)
     return NULL;
 }
 
+_X_EXPORT int
+xf86CheckBoolOption(OPTTYPE list, const char *name, int deflt)
+{
+	return 0;
+}
+
 _X_EXPORT void
 xf86AddEnabledDevice(InputInfoPtr pInfo)
 {
@@ -504,5 +510,26 @@ input_option_free_list(InputOption **opts)
 		free((*opts));
 		*opts = tmp;
 	}
+}
+#endif
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
+_X_EXPORT Bool
+InitTouchClassDeviceStruct(DeviceIntPtr device, unsigned int max_touches,
+    unsigned int mode, unsigned int numAxes) {
+	return TRUE;
+}
+
+_X_EXPORT ValuatorMask *valuator_mask_new(int num_valuators) {
+	return NULL;
+}
+
+_X_EXPORT void valuator_mask_set(ValuatorMask *mask, int valuator, int data) {
+	return;
+}
+
+_X_EXPORT void xf86PostTouchEvent(DeviceIntPtr dev, uint32_t touchid, uint16_t type,
+    uint32_t flags, const ValuatorMask *mask) {
+	return;
 }
 #endif

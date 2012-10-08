@@ -22,6 +22,7 @@ extern char* xf86OptionName(OPTTYPE opt);
 extern CONST char* xf86FindOptionValue(OPTTYPE options, const char *name);
 extern int xf86NameCmp(const char *s1, const char *s2);
 extern char* xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt);
+extern int xf86CheckBoolOption(OPTTYPE list, const char *name, int deflt);
 
 
 extern char * xf86SetStrOption(OPTTYPE optlist, const char *name, CONST char *deflt);
@@ -193,3 +194,12 @@ extern void TimerFree(OsTimerPtr timer);
 
 extern int xf86BlockSIGIO (void);
 extern void xf86UnblockSIGIO (int wasset);
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
+extern Bool InitTouchClassDeviceStruct(DeviceIntPtr device, unsigned int max_touches,
+    unsigned int mode, unsigned int numAxes);
+extern ValuatorMask *valuator_mask_new(int num_valuators);
+extern void valuator_mask_set(ValuatorMask *mask, int valuator, int data);
+extern void xf86PostTouchEvent(DeviceIntPtr dev, uint32_t touchid, uint16_t type,
+    uint32_t flags, const ValuatorMask *mask);
+#endif
