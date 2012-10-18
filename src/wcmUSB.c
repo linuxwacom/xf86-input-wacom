@@ -768,12 +768,16 @@ static int protocol5Serial(int device_type, unsigned int serial) {
  */
 static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial)
 {
+	wcmUSBData* private = common->private;
+
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
 
 	/* force events from PAD device to PAD_CHANNEL */
-	if (serial == -1)
+	if (serial == -1) {
 		channel = PAD_CHANNEL;
+		private->wcmBTNChannel = channel;
+	}
 
 	/* find existing channel */
 	if (channel < 0)
