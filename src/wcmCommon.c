@@ -350,20 +350,18 @@ static int getScrollDelta(int current, int old, int wrap, int flags)
  * sent.
  * 
  * @param delta        Amount of change in the scrolling axis
- * @param action_up    Action to send on scroll up
- * @param action_dn    Action to send on scroll down
- * @return             Action that should be performed
+ * @param action_up    Array index of action to send on scroll up
+ * @param action_dn    Array index of action to send on scroll down
+ * @return             Array index of action that should be performed, or -1 if none.
  */
-static void getWheelButton(int delta, unsigned int *action_up,
-                                    unsigned int *action_dn,
-                                    unsigned int** action)
+static int getWheelButton(int delta, int action_up, int action_dn)
 {
 	if (delta > 0)
-		*action = action_up;
+		return action_up;
 	else if (delta < 0)
-		*action = action_dn;
+		return action_dn;
 	else
-		*action = NULL;
+		return -1;
 }
 
 /**
@@ -392,54 +390,53 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 				 int first_val, int num_vals, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int delta = 0;
-	unsigned int *fakeKey = NULL;
+	int delta = 0, idx = 0;
 
 	DBG(10, priv, "\n");
 
 	/* emulate events for left strip */
 	delta = getScrollDelta(ds->stripx, priv->oldStripX, 0, AXIS_INVERT | AXIS_BITWISE);
-	if (delta && IsPad(priv) && priv->oldProximity == ds->proximity)
+	idx = getWheelButton(delta, STRIP_LEFT_UP, STRIP_LEFT_DN);
+	if (idx >= 0 && IsPad(priv) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch strip scroll delta = %d\n", delta);
-		getWheelButton(delta, priv->strip_keys[STRIP_LEFT_UP], priv->strip_keys[STRIP_LEFT_DN], &fakeKey);
-		sendWheelStripEvent(fakeKey, pInfo, first_val, num_vals, valuators);
+		sendWheelStripEvent(priv->strip_keys[idx], pInfo, first_val, num_vals, valuators);
 	}
 
 	/* emulate events for right strip */
 	delta = getScrollDelta(ds->stripy, priv->oldStripY, 0, AXIS_INVERT | AXIS_BITWISE);
-	if (delta && IsPad(priv) && priv->oldProximity == ds->proximity)
+	idx = getWheelButton(delta, STRIP_RIGHT_UP, STRIP_RIGHT_DN);
+	if (idx >= 0 && IsPad(priv) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch strip scroll delta = %d\n", delta);
-		getWheelButton(delta, priv->strip_keys[STRIP_RIGHT_UP], priv->strip_keys[STRIP_RIGHT_DN], &fakeKey);
-		sendWheelStripEvent(fakeKey, pInfo, first_val, num_vals, valuators);
+		sendWheelStripEvent(priv->strip_keys[idx], pInfo, first_val, num_vals, valuators);
 	}
 
 	/* emulate events for relative wheel */
 	delta = getScrollDelta(ds->relwheel, 0, 0, 0);
-	if (delta && (IsCursor(priv) || IsPad(priv)) && priv->oldProximity == ds->proximity)
+	idx = getWheelButton(delta, WHEEL_REL_UP, WHEEL_REL_DN);
+	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
-		getWheelButton(delta, priv->wheel_keys[WHEEL_REL_UP], priv->wheel_keys[WHEEL_REL_DN], &fakeKey);
-		sendWheelStripEvent(fakeKey, pInfo, first_val, num_vals, valuators);
+		sendWheelStripEvent(priv->wheel_keys[idx], pInfo, first_val, num_vals, valuators);
 	}
 
 	/* emulate events for left touch ring */
 	delta = getScrollDelta(ds->abswheel, priv->oldWheel, MAX_PAD_RING, AXIS_INVERT);
-	if (delta && IsPad(priv) && priv->oldProximity == ds->proximity)
+	idx = getWheelButton(delta, WHEEL_ABS_UP, WHEEL_ABS_DN);
+	if (idx >= 0 && IsPad(priv) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch wheel scroll delta = %d\n", delta);
-		getWheelButton(delta, priv->wheel_keys[WHEEL_ABS_UP], priv->wheel_keys[WHEEL_ABS_DN], &fakeKey);
-		sendWheelStripEvent(fakeKey, pInfo, first_val, num_vals, valuators);
+		sendWheelStripEvent(priv->wheel_keys[idx], pInfo, first_val, num_vals, valuators);
 	}
 
 	/* emulate events for right touch ring */
 	delta = getScrollDelta(ds->abswheel2, priv->oldWheel2, MAX_PAD_RING, AXIS_INVERT);
-	if (delta && IsPad(priv) && priv->oldProximity == ds->proximity)
+	idx = getWheelButton(delta, WHEEL2_ABS_UP, WHEEL2_ABS_DN);
+	if (idx >= 0 && IsPad(priv) && priv->oldProximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch wheel scroll delta = %d\n", delta);
-		getWheelButton(delta, priv->wheel_keys[WHEEL2_ABS_UP], priv->wheel_keys[WHEEL2_ABS_DN], &fakeKey);
-		sendWheelStripEvent(fakeKey, pInfo, first_val, num_vals, valuators);
+		sendWheelStripEvent(priv->wheel_keys[idx], pInfo, first_val, num_vals, valuators);
 	}
 }
 
