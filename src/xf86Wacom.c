@@ -420,11 +420,13 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	}
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
-	if (!InitTouchClassDeviceStruct(pInfo->dev, 0, XIDependentTouch, 2)) {
-		xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
-		return FALSE;
+	if (IsTouch(priv)) {
+		if (!InitTouchClassDeviceStruct(pInfo->dev, 0, XIDependentTouch, 2)) {
+			xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
+			return FALSE;
+		}
+		priv->common->touch_mask = valuator_mask_new(2);
 	}
-	priv->common->touch_mask = valuator_mask_new(2);
 #endif
 
 	if (!IsPad(priv))
