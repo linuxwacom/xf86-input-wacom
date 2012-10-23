@@ -357,10 +357,14 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 	if (!TabletHasFeature(priv->common, WCM_LCD))
 		return;
 
-	if (firstInProx && !secondInProx)
+	if (firstInProx && !secondInProx) {
 		firstChannel->valid.states[0].buttons |= 1;
-	if (!firstInProx && !secondInProx)
+		common->wcmGestureMode = GESTURE_DRAG_MODE;
+	}
+	else {
 		firstChannel->valid.states[0].buttons &= ~1;
+		common->wcmGestureMode = GESTURE_NONE_MODE;
+	}
 }
 
 /* parsing gesture mode according to 2FGT data */
@@ -527,7 +531,8 @@ ret:
 	}
 #endif
 
-	if (common->wcmGestureMode == GESTURE_NONE_MODE && touch_id == 0)
+	if ((common->wcmGestureMode == GESTURE_NONE_MODE || common->wcmGestureMode == GESTURE_DRAG_MODE) &&
+	    touch_id == 0)
 	{
 		wcmSingleFingerTap(priv);
 		wcmSingleFingerPress(priv);
