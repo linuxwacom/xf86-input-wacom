@@ -578,6 +578,9 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	if (*type) /* type specified, don't hotplug */
 		return 0;
 
+	if (!source) /* xorg.conf device, don't auto-pick type */
+		return 0;
+
 	if (source && strcmp(source, "server/hal") && strcmp(source, "server/udev"))
 		return 0;
 
