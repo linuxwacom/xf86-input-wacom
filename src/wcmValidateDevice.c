@@ -267,8 +267,11 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			TabletSetFeature(priv->common, WCM_STRIP | WCM_ROTATION);
 			break;
 
+		case 0x100: /* TPC with MT */
+		case 0x101: /* TPC with MT */
 		case 0xE2: /* TPC with 2FGT */
 		case 0xE3: /* TPC with 2FGT */
+		case 0xE5: /* TPC with MT */
 		case 0xE6: /* TPC with 2FGT */
 		case 0x93: /* TPC with 1FGT */
 		case 0x9A: /* TPC with 1FGT */
