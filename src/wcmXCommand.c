@@ -433,7 +433,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 
 	if (!checkonly && prop)
 	{
-		memset(action, 0, sizeof(action));
+		memset(action, 0, sizeof(*action));
 		for (i = 0; i < prop->size; i++)
 			(*action)[i] = ((unsigned int*)prop->data)[i];
 		*handler = property;
