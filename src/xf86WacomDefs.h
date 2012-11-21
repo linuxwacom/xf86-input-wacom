@@ -397,7 +397,7 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 
-#define MAX_CHANNELS 15
+#define MAX_CHANNELS 17
 #define PAD_CHANNEL (MAX_CHANNELS-1)
 #define MAX_FINGERS (MAX_CHANNELS-1)
 
