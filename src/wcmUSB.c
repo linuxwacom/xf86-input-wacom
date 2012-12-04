@@ -681,6 +681,9 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	{
 		private->wcmUseMT = 1;
 
+		if (!ioctl(pInfo->fd, EVIOCGABS(ABS_MT_SLOT), &absinfo))
+			common->wcmMaxContacts = absinfo.maximum + 1;
+
 		/* pen and MT on the same logical port */
 		if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
 			private->wcmPenTouch = TRUE;

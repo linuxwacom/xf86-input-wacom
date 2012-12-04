@@ -323,6 +323,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common =	priv->common;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
@@ -421,7 +422,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	if (IsTouch(priv)) {
-		if (!InitTouchClassDeviceStruct(pInfo->dev, 0, XIDependentTouch, 2)) {
+		if (!InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts, XIDependentTouch, 2)) {
 			xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}

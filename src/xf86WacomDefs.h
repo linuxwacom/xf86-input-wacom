@@ -446,6 +446,7 @@ struct _WacomCommonRec
 	                             /* tablet Z resolution is equivalent
 	                              * to wcmMaxZ which is equal to 100% pressure */
 	int wcmMaxDist;              /* tablet max distance value */
+	int wcmMaxContacts;          /* MT device max number of contacts */
 
 	/*
 	 * TODO Remove wcmTiltOff*, once the kernel drivers reporting

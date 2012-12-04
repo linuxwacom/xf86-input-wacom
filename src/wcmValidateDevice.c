@@ -896,6 +896,11 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		else if (touch_is_on != common->wcmTouch)
 			xf86Msg(X_WARNING, "%s: Touch option can only be set "
 				"by a touch tool.\n", pInfo->name);
+
+		if (TabletHasFeature(common, WCM_1FGT))
+			common->wcmMaxContacts = 1;
+		else
+			common->wcmMaxContacts = 2;
 	}
 
 	/* 2FG touch device */
