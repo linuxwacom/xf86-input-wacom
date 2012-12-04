@@ -572,7 +572,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	{
 		if (is_touch)
 			common->wcmTouchResolX =
-				(int)(((double)common->wcmMaxTouchX * 10.0
+				(int)(((double)common->wcmMaxTouchX * 100000.0
 				 / (double)absinfo.maximum) + 0.5);
 		else
 			common->wcmMaxStripX = absinfo.maximum;
@@ -661,7 +661,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	{
 		if (is_touch)
 			common->wcmTouchResolY =
-				 (int)(((double)common->wcmMaxTouchY * 10.0
+				 (int)(((double)common->wcmMaxTouchY * 100000.0
 				 / (double)absinfo.maximum) + 0.5);
 		else
 			common->wcmMaxStripY = absinfo.maximum;
