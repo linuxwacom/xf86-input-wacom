@@ -448,6 +448,7 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
 	WacomDeviceState *ds;
 	int channel = PAD_CHANNEL;
 
@@ -459,6 +460,12 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 	ds->device_type = PAD_ID;
 	ds->device_id = PAD_DEVICE_ID;
 	ds->serial_num = channel;
+
+	/* wcmBTNChannel is only used for generic PAD device
+	 * and it is statically assigned to PAD_CHANNEL.
+	 */
+	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+		private->wcmBTNChannel = channel;
 }
 
 int usbWcmGetRanges(InputInfoPtr pInfo)
@@ -774,16 +781,12 @@ static int protocol5Serial(int device_type, unsigned int serial) {
  */
 static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial)
 {
-	wcmUSBData* private = common->private;
-
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
 
 	/* force events from PAD device to PAD_CHANNEL */
-	if (serial == -1) {
+	if (serial == -1)
 		channel = PAD_CHANNEL;
-		private->wcmBTNChannel = channel;
-	}
 
 	/* find existing channel */
 	if (channel < 0)
