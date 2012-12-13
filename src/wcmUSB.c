@@ -1444,13 +1444,15 @@ static void usbParseBTNEvent(WacomCommonPtr common,
  * Translates a tool code from the kernel (e.g. BTN_TOOL_PEN) into the
  * corresponding device type for the driver (e.g. STYLUS_ID).
  *
+ * @param[in] common
  * @param[in] type      Linux input tool type (e.g. EV_KEY)
  * @param[in] code      Linux input tool code (e.g. BTN_STYLUS_PEN)
- * @param[in] protocol  Wacom protocol type (e.g. WCM_PROTOCOL_GENERIC)
  * @return              Wacom device ID (e.g. STYLUS_ID) or 0 if no match.
  */
-static int toolTypeToDeviceType(int type, int code, int protocol)
+static int toolTypeToDeviceType(WacomCommonPtr common, int type, int code)
 {
+	wcmUSBData* private = common->private;
+
 	if (type == EV_KEY) {
 		switch(code) {
 			case BTN_TOOL_PEN:
@@ -1460,7 +1462,8 @@ static int toolTypeToDeviceType(int type, int code, int protocol)
 				return STYLUS_ID;
 
 			case BTN_TOOL_FINGER:
-				if (protocol != WCM_PROTOCOL_GENERIC)
+				if ((common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
+				    && !private->wcmUseMT)
 					return PAD_ID;
 				else
 					return TOUCH_ID;
@@ -1502,7 +1505,7 @@ static int refreshDeviceType(WacomCommonPtr common)
 	for (i = 0; i < KEY_MAX; i++)
 	{
 		if (ISBITSET(keys, i))
-			device_type = toolTypeToDeviceType(EV_KEY, i, common->wcmProtocolLevel);
+			device_type = toolTypeToDeviceType(common, EV_KEY, i);
 		if (device_type)
 			return device_type;
 	}
@@ -1532,7 +1535,7 @@ static int usbInitToolType(WacomCommonPtr common, const struct input_event *even
 
 	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
 	{
-		device_type = toolTypeToDeviceType(event_ptr->type, event_ptr->code, common->wcmProtocolLevel);
+		device_type = toolTypeToDeviceType(common, event_ptr->type, event_ptr->code);
 	}
 
 	if (!device_type)
