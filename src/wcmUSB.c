@@ -37,7 +37,6 @@ typedef struct {
 	Bool wcmPenTouch;
 	Bool wcmUseMT;
 	int wcmMTChannel;
-	int wcmPrevChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
 	int nbuttons;                /* total number of buttons */
@@ -1601,11 +1600,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		return;
 	}
 
-	/* Protocol 5 devices have some complications related to DUALINPUT
-	 * support and can not use below logic to recover from input
-	 * event filtering.  Instead, just live with occasional dropped
-	 * event.  Since tools are dynamically assigned a channel #, the
-	 * structure must be initialized to known starting values
+	/* Protocol 5 tools are dynamically assigned with channel numbers.
+	 * The structure must be initialized to known starting values
 	 * when first entering proximity to discard invalid data.
 	 */
 	if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
@@ -1613,32 +1609,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		if (!common->wcmChannel[channel].work.proximity)
 			memset(&common->wcmChannel[channel],0,
 			       sizeof(WacomChannel));
-	}
-	else
-	{
-		/* Because of linux input filtering, each switch to a new
-		 * tool is required to have its initial values match values
-		 * of previous tool.
-		 *
-		 * For normal case, all tools are in channel 0 and so
-		 * no issue.  Protocol 4 2FGT devices split between
-		 * two channels though and so need to copy data between
-		 * channels to prevent loss of events; which could
-		 * lead to cursor jumps.
-		 *
-		 * PAD device is special.  It shares no events
-		 * with other channels and is always in proximity.
-		 * So it requires no copying of data from other
-		 * channels.
-		 */
-		if (private->wcmPrevChannel != channel &&
-		    channel != PAD_CHANNEL &&
-		    private->wcmPrevChannel != PAD_CHANNEL)
-		{
-			common->wcmChannel[channel].work =
-				common->wcmChannel[private->wcmPrevChannel].work;
-			private->wcmPrevChannel = channel;
-		}
 	}
 
 	ds = &common->wcmChannel[channel].work;
