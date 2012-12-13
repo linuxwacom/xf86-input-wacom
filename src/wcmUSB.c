@@ -1655,6 +1655,19 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		{
 			usbParseKeyEvent(common, event, channel);
 			usbParseBTNEvent(common, event, private->wcmBTNChannel);
+
+			/* send PAD events now for generic devices. Otherwise,
+			 * they are filtered out when there are no motion events.
+			 */
+			if ((common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
+			    && (common->wcmChannel[private->wcmBTNChannel].dirty))
+			 {
+				DBG(10, common, "Dirty flag set on channel %d; "
+				    "sending event.\n", private->wcmBTNChannel);
+				common->wcmChannel[private->wcmBTNChannel].dirty = FALSE;
+				wcmEvent(common, private->wcmBTNChannel,
+					 &common->wcmChannel[private->wcmBTNChannel].work);
+			}
 		}
 	} /* next event */
 
