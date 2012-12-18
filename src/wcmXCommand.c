@@ -320,12 +320,9 @@ static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
 	/* check all properties used for button actions */
 	for (i = 0; i < nprops; i++)
 		if (prop_list[i] == property)
-			break;
+			return i;
 
-	if (i >= nprops)
-		return -BadAtom;
-
-	return i;
+	return -BadAtom;
 }
 
 /**
