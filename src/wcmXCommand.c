@@ -511,7 +511,7 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int rc;
+	int rc, i;
 
 	DBG(10, priv, "\n");
 
@@ -522,44 +522,39 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 	if (rc != Success)
 		return rc;
 
-	if (!checkonly)
+	for (i = 0; i < prop->size; i++)
 	{
-		int i;
+		int index = i;
+		Atom subproperty = ((Atom*)prop->data)[i];
+		XIPropertyValuePtr subprop;
 
-		for (i = 0; i < prop->size; i++)
-		{
-			int index = i;
-			Atom subproperty = ((Atom*)prop->data)[i];
-			XIPropertyValuePtr subprop;
-
-			if (property == prop_btnactions)
-			{ /* Driver uses physical -- not X11 -- button numbering internally */
-				if (i < 3)
-					index = i;
-				else if (i < 7)
-					continue;
-				else
-					index = i - 4;
-			}
-
-			if (subproperty == 0)
-			{ /* Interpret 'None' as meaning 'reset' */
-				if (property == prop_btnactions)
-					wcmResetButtonAction(pInfo, index, size);
-				else if (property == prop_strip_buttons)
-					wcmResetStripAction(pInfo, index);
-				else if (property == prop_wheel_buttons)
-					wcmResetWheelAction(pInfo, index);
-
-				if (subproperty != handlers[index])
-					subproperty = handlers[index];
-			}
-
-			XIGetDeviceProperty(dev, subproperty, &subprop);
-			rc = wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
-			if (rc != Success)
-				return rc;
+		if (property == prop_btnactions)
+		{ /* Driver uses physical -- not X11 -- button numbering internally */
+			if (i < 3)
+				index = i;
+			else if (i < 7)
+				continue;
+			else
+				index = i - 4;
 		}
+
+		if (subproperty == 0)
+		{ /* Interpret 'None' as meaning 'reset' */
+			if (property == prop_btnactions)
+				wcmResetButtonAction(pInfo, index, size);
+			else if (property == prop_strip_buttons)
+				wcmResetStripAction(pInfo, index);
+			else if (property == prop_wheel_buttons)
+				wcmResetWheelAction(pInfo, index);
+
+			if (subproperty != handlers[index])
+				subproperty = handlers[index];
+		}
+
+		XIGetDeviceProperty(dev, subproperty, &subprop);
+		rc = wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
+		if (rc != Success)
+			return rc;
 	}
 
 	return Success;
