@@ -367,16 +367,30 @@ static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	}
 }
 
-static int wcmCheckActionProperty(Atom property, XIPropertyValuePtr prop)
+static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIPropertyValuePtr prop)
 {
 	CARD32 *data;
 	int j;
 
-	if (!property)
+	if (!property) {
+		DBG(5, priv, "WARNING: property == 0\n");
 		return Success;
+	}
 
-	if (prop->size >= 255 || prop->format != 32 || prop->type != XA_INTEGER)
+	if (prop->size >= 255) {
+		DBG(3, priv, "ERROR: Too many values (%d > 255)\n", prop->size);
 		return BadMatch;
+	}
+
+	if (prop->format != 32) {
+		DBG(3, priv, "ERROR: Incorrect value format (%d != 32)\n", prop->format);
+		return BadMatch;
+	}
+
+	if (prop->type != XA_INTEGER) {
+		DBG(3, priv, "ERROR: Incorrect value type (%d != XA_INTEGER)\n", prop->type);
+		return BadMatch;
+	}
 
 	data = (CARD32*)prop->data;
 
@@ -385,19 +399,25 @@ static int wcmCheckActionProperty(Atom property, XIPropertyValuePtr prop)
 		int code = data[j] & AC_CODE;
 		int type = data[j] & AC_TYPE;
 
+		DBG(10, priv, "Index %d == %d (type: %d, code: %d)\n", j, data[j], type, code);
+
 		switch(type)
 		{
 			case AC_KEY:
 				break;
 			case AC_BUTTON:
-				if (code > WCM_MAX_BUTTONS)
+				if (code > WCM_MAX_BUTTONS) {
+					DBG(3, priv, "ERROR: AC_BUTTON code too high (%d > %d)\n", code, WCM_MAX_BUTTONS);
 					return BadValue;
+				}
 				break;
 			case AC_DISPLAYTOGGLE:
 			case AC_MODETOGGLE:
 				break;
 			default:
+				DBG(3, priv, "ERROR: Unknown command\n");
 				return BadValue;
+				break;
 		}
 	}
 
@@ -425,11 +445,19 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int rc, i;
 
-	DBG(10, priv, "\n");
+	DBG(5, priv, "%s new actions for Atom %d\n", checkonly ? "Checking" : "Setting", property);
 
-	rc = wcmCheckActionProperty(property, prop);
-	if (rc != Success)
+	rc = wcmCheckActionProperty(priv, property, prop);
+	if (rc != Success) {
+		char *msg = NULL;
+		switch (rc) {
+			case BadMatch: msg = "BadMatch"; break;
+			case BadValue: msg = "BadValue"; break;
+			default: msg = "UNKNOWN"; break;
+		}
+		DBG(3, priv, "Action validation failed with code %d (%s)\n", rc, msg);
 		return rc;
+	}
 
 	if (!checkonly && prop)
 	{
@@ -485,7 +513,10 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
                                  int size, Atom* handlers, unsigned int (*actions)[256])
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int rc;
+
+	DBG(10, priv, "\n");
 
 	if (prop->size != size)
 		return BadValue;
