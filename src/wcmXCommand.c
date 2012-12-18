@@ -356,7 +356,7 @@ static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	}
 
 	offset = wcmFindProp(property, priv->strip_actions, ARRAY_SIZE(priv->strip_actions));
-	if (offset < 0)
+	if (offset >= 0)
 	{
 		*handler = &priv->strip_actions[offset];
 		*action  = &priv->strip_keys[offset];
