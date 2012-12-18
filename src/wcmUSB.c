@@ -461,11 +461,7 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 	ds->device_id = PAD_DEVICE_ID;
 	ds->serial_num = channel;
 
-	/* wcmBTNChannel is only used for generic PAD device
-	 * and it is statically assigned to PAD_CHANNEL.
-	 */
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
-		private->wcmBTNChannel = channel;
+	private->wcmBTNChannel = channel;
 }
 
 int usbWcmGetRanges(InputInfoPtr pInfo)
