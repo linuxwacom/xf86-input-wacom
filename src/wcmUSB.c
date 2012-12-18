@@ -949,6 +949,8 @@ static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
 			{
 				case BTN_TOUCH:
 				case BTN_TOOL_FINGER:
+				case BTN_TOOL_DOUBLETAP:
+				case BTN_TOOL_TRIPLETAP:
 					return 1;
 			}
 		}
