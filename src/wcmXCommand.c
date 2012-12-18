@@ -556,7 +556,9 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 			}
 
 			XIGetDeviceProperty(dev, subproperty, &subprop);
-			wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
+			rc = wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
+			if (rc != Success)
+				return rc;
 		}
 	}
 
