@@ -1459,6 +1459,10 @@ static int toolTypeToDeviceType(WacomCommonPtr common, int type, int code)
 			case BTN_TOOL_AIRBRUSH:
 				return STYLUS_ID;
 
+			case BTN_TOOL_MOUSE:
+			case BTN_TOOL_LENS:
+				return CURSOR_ID;
+
 			case BTN_TOOL_FINGER:
 				if ((common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
 				    && !private->wcmUseMT)
