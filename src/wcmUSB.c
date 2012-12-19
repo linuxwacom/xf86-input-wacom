@@ -1500,9 +1500,10 @@ static int refreshDeviceType(WacomCommonPtr common)
 	int rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
 	int i;
 
-	if (rc == -1)
+	if (rc == -1) {
 		xf86Msg(X_ERROR, "%s: failed to retrieve key bits\n", common->device_path);
 		return 0;
+	}
 
 	for (i = 0; i < KEY_MAX; i++)
 	{
