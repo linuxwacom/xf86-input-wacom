@@ -1623,6 +1623,13 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	ds = &common->wcmChannel[channel].work;
 	dslast = common->wcmChannel[channel].valid.state;
 
+	/* no device type? tool was on the tablet at startup, force type and
+	   proximity */
+	if (!ds->device_type && private->wcmDeviceType) {
+		ds->device_type = private->wcmDeviceType;
+		ds->proximity = 1;
+	}
+
 	/* all USB data operates from previous context except relative values*/
 	ds->relwheel = 0;
 	ds->serial_num = private->wcmLastToolSerial;
