@@ -1126,7 +1126,8 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			break;
 		case ABS_THROTTLE:
 			/* 2nd touch ring comes in over ABS_THROTTLE for 24HD */
-			if (common->vendor_id == WACOM_VENDOR_ID && common->tablet_id == 0xF4)
+			if ((common->vendor_id == WACOM_VENDOR_ID) &&
+			    (common->tablet_id == 0xF4 || common->tablet_id == 0xF8))
 				ds->abswheel2 = event->value;
 			else
 				ds->throttle = event->value;
