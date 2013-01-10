@@ -113,7 +113,7 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 
 	priv->factorX = size_x / priv->bottomX;
 	priv->factorY = size_y / priv->bottomY;
-	DBG(2, priv, "X factor = %.3g, Y factor = %.3g\n",
+	DBG(2, priv, "X factor = %.3f, Y factor = %.3f\n",
 		priv->factorX, priv->factorY);
 }
 
