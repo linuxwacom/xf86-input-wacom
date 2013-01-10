@@ -99,10 +99,8 @@ void wcmMappingFactor(InputInfoPtr pInfo)
 	DBG(10, priv, "\n"); /* just prints function name */
 
 	DBG(10, priv,
-		"Active tablet area x=%d y=%d map"
-		" to maxWidth =%d maxHeight =%d\n",
-		priv->bottomX, priv->bottomY,
-		priv->maxWidth, priv->maxHeight);
+		"Active tablet area x=%d y=%d map\n",
+		priv->bottomX, priv->bottomY);
 
 	/* bottomX/bottomY are scaled values of maxX/maxY such that it
 	 * will scale tablet to screen ratio when passed to xf86AxisScale().
