@@ -370,8 +370,13 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 	int j;
 
 	if (!property) {
-		DBG(5, priv, "WARNING: property == 0\n");
-		return Success;
+		DBG(3, priv, "ERROR: Atom is NONE\n");
+		return BadMatch;
+	}
+
+	if (prop == NULL) {
+		DBG(3, priv, "ERROR: Value is NULL\n");
+		return BadMatch;
 	}
 
 	if (prop->size >= 255) {
@@ -456,7 +461,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 		return rc;
 	}
 
-	if (!checkonly && prop)
+	if (!checkonly)
 	{
 		memset(action, 0, sizeof(*action));
 		for (i = 0; i < prop->size; i++)
@@ -550,11 +555,13 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 			if (subproperty != handlers[index])
 				subproperty = handlers[index];
 		}
-
-		XIGetDeviceProperty(dev, subproperty, &subprop);
-		rc = wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
-		if (rc != Success)
-			return rc;
+		else
+		{
+			XIGetDeviceProperty(dev, subproperty, &subprop);
+			rc = wcmSetActionProperty(dev, subproperty, subprop, checkonly, &handlers[index], &actions[index]);
+			if (rc != Success)
+				return rc;
+		}
 	}
 
 	return Success;
