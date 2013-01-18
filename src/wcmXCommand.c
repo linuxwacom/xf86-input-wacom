@@ -406,8 +406,8 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 			case AC_KEY:
 				break;
 			case AC_BUTTON:
-				if (code > WCM_MAX_BUTTONS) {
-					DBG(3, priv, "ERROR: AC_BUTTON code too high (%d > %d)\n", code, WCM_MAX_BUTTONS);
+				if (code > WCM_MAX_X11BUTTON) {
+					DBG(3, priv, "ERROR: AC_BUTTON code too high (%d > %d)\n", code, WCM_MAX_X11BUTTON);
 					return BadValue;
 				}
 				break;

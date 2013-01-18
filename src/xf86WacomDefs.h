@@ -193,6 +193,7 @@ struct _WacomModel
 #define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
 
 #define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
+#define WCM_MAX_X11BUTTON	127	/* maximum button number X11 can handle */
 
 #define AXIS_INVERT  0x01               /* Flag describing an axis which increases "downward" */
 #define AXIS_BITWISE 0x02               /* Flag describing an axis which changes bitwise */
