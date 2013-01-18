@@ -549,15 +549,18 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 
 		if (subproperty == 0)
 		{ /* Interpret 'None' as meaning 'reset' */
-			if (property == prop_btnactions)
-				wcmResetButtonAction(pInfo, index, size);
-			else if (property == prop_strip_buttons)
-				wcmResetStripAction(pInfo, index);
-			else if (property == prop_wheel_buttons)
-				wcmResetWheelAction(pInfo, index);
+			if (!checkonly)
+			{
+				if (property == prop_btnactions)
+					wcmResetButtonAction(pInfo, index, size);
+				else if (property == prop_strip_buttons)
+					wcmResetStripAction(pInfo, index);
+				else if (property == prop_wheel_buttons)
+					wcmResetWheelAction(pInfo, index);
 
-			if (subproperty != handlers[index])
-				subproperty = handlers[index];
+				if (subproperty != handlers[index])
+					subproperty = handlers[index];
+			}
 		}
 		else
 		{
