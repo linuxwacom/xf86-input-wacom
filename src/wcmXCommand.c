@@ -843,7 +843,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		unsigned int (*action)[256] = NULL;
 		wcmFindActionHandler(priv, property, &handler, &action);
 		if (handler != NULL && action != NULL)
-			wcmSetActionProperty(dev, property, prop, checkonly, handler, action);
+			return wcmSetActionProperty(dev, property, prop, checkonly, handler, action);
 		/* backwards-compatible behavior silently ignores the not-found case */
 	}
 
