@@ -23,7 +23,6 @@
 #include <xorg-server.h>
 #include <xorgVersion.h>
 
-#include <wacom-util.h>
 #include "Xwacom.h"
 
 /* max number of input events to read in one read call */
@@ -37,6 +36,8 @@
 #include <xf86Xinput.h>
 #include <mipointer.h>
 #include <X11/Xatom.h>
+
+#include <wacom-util.h>
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 18
 #define LogMessageVerbSigSafe xf86MsgVerb
