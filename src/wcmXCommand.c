@@ -334,8 +334,10 @@ static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
  * @param property      The Action property that should be searched for
  * @param[out] handler  Returns a pointer to the property's handler
  * @param[out] action   Returns a pointer to the property's action list
+ * @return              'true' if the property was found. Neither out parameter
+ *                      will be null if this is the case.
  */
-static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **handler, unsigned int (**action)[256])
+static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **handler, unsigned int (**action)[256])
 {
 	int offset;
 
@@ -344,7 +346,7 @@ static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	{
 		*handler = &priv->btn_actions[offset];
 		*action  = &priv->keys[offset];
-		return;
+		return TRUE;
 	}
 
 	offset = wcmFindProp(property, priv->wheel_actions, ARRAY_SIZE(priv->wheel_actions));
@@ -352,7 +354,7 @@ static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	{
 		*handler = &priv->wheel_actions[offset];
 		*action  = &priv->wheel_keys[offset];
-		return;
+		return TRUE;
 	}
 
 	offset = wcmFindProp(property, priv->strip_actions, ARRAY_SIZE(priv->strip_actions));
@@ -360,8 +362,10 @@ static void wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	{
 		*handler = &priv->strip_actions[offset];
 		*action  = &priv->strip_keys[offset];
-		return;
+		return TRUE;
 	}
+
+	return FALSE;
 }
 
 static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIPropertyValuePtr prop)
@@ -845,8 +849,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		Atom *handler = NULL;
 		unsigned int (*action)[256] = NULL;
-		wcmFindActionHandler(priv, property, &handler, &action);
-		if (handler != NULL && action != NULL)
+		if (wcmFindActionHandler(priv, property, &handler, &action))
 			return wcmSetActionProperty(dev, property, prop, checkonly, handler, action);
 		/* backwards-compatible behavior silently ignores the not-found case */
 	}
