@@ -159,9 +159,9 @@ Default to "on" for Tablet PCs; "off" for all other models. Only available
 on the stylus tool.
 .TP 4
 .B Option \fI"Touch"\fP \fI"on"|"off"\fP
-enables the touch event for Tablet PC that supports touch feature,  i.e., 
-system cursor moves when user touches the tablet.  Default to "on" for 
-Tablet PCs with touch feature; "off" for all other models.
+enables touch events for touch devices,  i.e., system cursor moves when
+user touches the tablet.  Default to "on" for devices that support touch;
+"off" for all other models.
 .TP 4
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
 rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 

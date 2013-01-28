@@ -196,6 +196,11 @@ serial number is updated whenever the tool goes out of proximity. If the
 current tool went out of proximity once, this serial number is the one of
 the current tool. This is a read-only parameter.
 .TP
+\fBTouch\fR on|off
+If on, touch events are reported to userland, i.e., system cursor moves when
+user touches the tablet. If off, touch events are ignored. Default: on for
+devices that support touch; off for all other models.
+.TP
 \fBCursorProximity\fR distance
 sets the max distance from tablet to stop reporting movement for cursor in
 relative mode. Default for Intuos series is 10, for Graphire series (including
