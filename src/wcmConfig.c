@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -396,20 +396,17 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 	InputInfoPtr device = xf86FirstLocalDevice();
 	WacomCommonPtr tmpcommon = NULL;
 	WacomDevicePtr tmppriv = NULL;
-	Bool touch_device_assigned = FALSE;
 
-	/* Lookup to find the associated pen and touch */
+	/* Lookup to find the associated pen and touch with same product id */
 	for (; device != NULL; device = device->next)
 	{
 		if (!strcmp(device->drv->driverName, "wacom"))
 		{
 			tmppriv = (WacomDevicePtr) device->private;
 			tmpcommon = tmppriv->common;
-			touch_device_assigned = (common->wcmTouchDevice ||
-						tmpcommon->wcmTouchDevice);
 
 			/* skip the same tool or already linked devices */
-			if ((tmppriv == priv) || touch_device_assigned)
+			if ((tmppriv == priv) || tmpcommon->wcmTouchDevice)
 				continue;
 
 			if (tmpcommon->tablet_id == common->tablet_id)
@@ -426,6 +423,37 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 					TabletSetFeature(tmpcommon, WCM_PENTOUCH);
 				}
 			}
+
+			if (common->wcmTouchDevice)
+				return;
+		}
+	}
+
+	/* Lookup for pen and touch devices with different product ids */
+	for (; device != NULL; device = device->next)
+	{
+		if (!strcmp(device->drv->driverName, "wacom"))
+		{
+			tmppriv = (WacomDevicePtr) device->private;
+			tmpcommon = tmppriv->common;
+
+			/* skip the same tool or already linked devices */
+			if ((tmppriv == priv) || tmpcommon->wcmTouchDevice)
+				continue;
+
+			if (IsTouch(tmppriv) && IsTablet(priv))
+				common->wcmTouchDevice = tmppriv;
+			else if (IsTouch(priv) && IsTablet(tmppriv))
+				tmpcommon->wcmTouchDevice = priv;
+
+			if (common->wcmTouchDevice || tmpcommon->wcmTouchDevice)
+			{
+				TabletSetFeature(common, WCM_PENTOUCH);
+				TabletSetFeature(tmpcommon, WCM_PENTOUCH);
+			}
+
+			if (common->wcmTouchDevice)
+				return;
 		}
 	}
 }
