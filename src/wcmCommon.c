@@ -1178,13 +1178,13 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if (TabletHasFeature(common, WCM_PENTOUCH))
 	{
-		if (IsPen(priv))
+		if (IsTablet(priv))
 		{
 			common->wcmTouchDevice->common->wcmPenInProx = filtered.proximity;
 
-			/* send touch out when pen coming in-prox for devices
-			 * that provideboth pen and touch events so system
-			 * cursor won't jump between tools.
+			/* send touch out when tablet tool coming in-prox for
+			 * devices that provide both pen/puck and touch events
+			 * so system cursor won't jump between tools.
 			 */
 			if (common->wcmTouchDevice->oldProximity)
 			{
@@ -1194,7 +1194,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			}
 		}
 		else if (IsTouch(priv) && common->wcmPenInProx)
-			/* Ignore touch events when pen is in prox */
+			/* Ignore touch events when tablet tool is in prox */
 			return;
 	}
 

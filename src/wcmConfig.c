@@ -414,9 +414,9 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 
 			if (tmpcommon->tablet_id == common->tablet_id)
 			{
-				if (IsTouch(tmppriv) && IsPen(priv))
+				if (IsTouch(tmppriv) && IsTablet(priv))
 					common->wcmTouchDevice = tmppriv;
-				else if (IsTouch(priv) && IsPen(tmppriv))
+				else if (IsTouch(priv) && IsTablet(tmppriv))
 					tmpcommon->wcmTouchDevice = priv;
 
 				if (common->wcmTouchDevice ||
@@ -575,10 +575,10 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		pInfo->fd = -1;
 	}
 
-	/* only link them once per port. We need to try for both pen and touch
-	 * since we do not know which tool (touch or pen) will be added first.
+	/* only link them once per port. We need to try for both tablet tool
+	 * and touch since we do not know which tool will be added first.
 	 */
-	if (IsTouch(priv) || (IsPen(priv) && !common->wcmTouchDevice))
+	if (IsTouch(priv) || (IsTablet(priv) && !common->wcmTouchDevice))
 		wcmLinkTouchAndPen(pInfo);
 
 	return Success;

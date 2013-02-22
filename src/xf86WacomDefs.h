@@ -184,6 +184,7 @@ struct _WacomModel
 #define IsEraser(priv) (DEVICE_ID((priv)->flags) == ERASER_ID)
 #define IsPad(priv)    (DEVICE_ID((priv)->flags) == PAD_ID)
 #define IsPen(priv)    (IsStylus(priv) || IsEraser(priv))
+#define IsTablet(priv) (IsPen(priv) || IsCursor(priv))
 
 #define IsUSBDevice(common) ((common)->wcmDevCls == &gWacomUSBDevice)
 

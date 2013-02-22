@@ -1552,18 +1552,19 @@ static int usbInitToolType(WacomCommonPtr common, const struct input_event *even
 }
 
 /**
- * Check if the tool is a stylus/eraser and in-prox or not.
+ * Check if the tool is a stylus/eraser/cursor and in-prox or not.
  *
  * @param device_type The tool type stored in wcmChannel
  * @param proximity The tool's proximity state
 
- * @return True if stylus/eraser is in-prox; False otherwise.
+ * @return True if stylus/eraser/cursor is in-prox; False otherwise.
  */
-static Bool usbIsPenInProx(int device_type, int proximity)
+static Bool usbIsTabletToolInProx(int device_type, int proximity)
 {
-	Bool is_pen = (device_type == STYLUS_ID) ||
-			(device_type == ERASER_ID);
-	return (is_pen && proximity);
+	Bool is_tablet_tool = (device_type == STYLUS_ID) ||
+				(device_type == CURSOR_ID) ||
+				(device_type == ERASER_ID);
+	return (is_tablet_tool && proximity);
 }
 
 static void usbDispatchEvents(InputInfoPtr pInfo)
@@ -1586,15 +1587,15 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	if (private->wcmPenTouch)
 	{
-		/* We get both pen and touch data from the kernel when they
-		 * both are in/down. So, if we were (hence the need of dslast)
-		 * processing pen events, we should ignore touch events.
+		/* We get both tablet tool and touch data from the kernel when
+		 * both tools are in/down. So, if we were (hence the need of dslast)
+		 * processing tablet tool events, we should ignore touch events.
 		 *
 		 * MT events will be posted to the userland when XInput 2.1
 		 * is ready.
 		 */
 		if ((private->wcmDeviceType == TOUCH_ID) &&
-				usbIsPenInProx(dslast.device_type, dslast.proximity))
+				usbIsTabletToolInProx(dslast.device_type, dslast.proximity))
 		{
 			private->wcmEventCnt = 0;
 			return;
