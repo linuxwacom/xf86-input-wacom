@@ -1180,6 +1180,8 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	{
 		if (IsPen(priv))
 		{
+			common->wcmTouchDevice->common->wcmPenInProx = filtered.proximity;
+
 			/* send touch out when pen coming in-prox for devices
 			 * that provideboth pen and touch events so system
 			 * cursor won't jump between tools.
@@ -1195,9 +1197,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 			/* Ignore touch events when pen is in prox */
 			return;
 	}
-
-	if (IsPen(priv))
-		common->wcmPenInProx = filtered.proximity;
 
 	if ((IsPen(priv) || IsTouch(priv)) && common->wcmMaxZ)
 	{
