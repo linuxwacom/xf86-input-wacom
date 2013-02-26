@@ -384,7 +384,7 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 	}
 
 	if (prop->size >= 255) {
-		DBG(3, priv, "ERROR: Too many values (%d > 255)\n", prop->size);
+		DBG(3, priv, "ERROR: Too many values (%ld > 255)\n", prop->size);
 		return BadMatch;
 	}
 
