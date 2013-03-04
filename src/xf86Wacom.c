@@ -422,7 +422,10 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	if (IsTouch(priv)) {
-		if (!InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts, XIDependentTouch, 2)) {
+		if (!InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
+						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
+						2))
+		{
 			xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}
