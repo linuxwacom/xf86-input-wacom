@@ -858,7 +858,10 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			}
 			pWcm->public.on = FALSE;
 			break;
-
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) * 100 + GET_ABI_MINOR(ABI_XINPUT_VERSION) >= 1901
+		case DEVICE_ABORT:
+			break;
+#endif
 		default:
 			xf86Msg(X_ERROR, "%s: invalid mode=%d. This is an X server bug.\n",
 				pInfo->name, what);
