@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
  *                                                                            
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1223,25 +1223,6 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 	(&common->wcmChannel[private->wcmMTChannel])->dirty |= change;
 }
 
-static struct
-{
-	unsigned long device_type;
-	unsigned long tool_key;
-} wcmTypeToKey [] =
-{
-	{ STYLUS_ID, BTN_TOOL_PEN       },
-	{ STYLUS_ID, BTN_TOOL_PENCIL    },
-	{ STYLUS_ID, BTN_TOOL_BRUSH     },
-	{ STYLUS_ID, BTN_TOOL_AIRBRUSH  },
-	{ ERASER_ID, BTN_TOOL_RUBBER    },
-	{ CURSOR_ID, BTN_TOOL_MOUSE     },
-	{ CURSOR_ID, BTN_TOOL_LENS      },
-	{ TOUCH_ID,  BTN_TOOL_DOUBLETAP },
-	{ TOUCH_ID,  BTN_TOOL_TRIPLETAP },
-	{ PAD_ID,    BTN_FORWARD        },
-	{ PAD_ID,    BTN_0              }
-};
-
 static void usbParseKeyEvent(WacomCommonPtr common,
 			    struct input_event *event, int channel_number)
 {
@@ -1434,6 +1415,8 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 			}
 			if (nkeys >= usbdata->npadkeys)
 				change = 0;
+			else if (!ds->device_type) /* expresskey pressed at startup */
+				ds->device_type = PAD_ID;
 	}
 
 	channel->dirty |= change;
@@ -1625,9 +1608,9 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	ds = &common->wcmChannel[channel].work;
 	dslast = common->wcmChannel[channel].valid.state;
 
-	/* no device type? tool was on the tablet at startup, force type and
-	   proximity */
+	/* no device type? */
 	if (!ds->device_type && private->wcmDeviceType) {
+		/* tool was on tablet at startup, force type and proximity */
 		ds->device_type = private->wcmDeviceType;
 		ds->proximity = 1;
 	}
@@ -1685,38 +1668,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			}
 		}
 	} /* next event */
-
-	/* device type unknown? Tool may be on the tablet when X starts. */
-	if (!ds->device_type && !dslast.proximity)
-	{
-		unsigned long keys[NBITS(KEY_MAX)] = { 0 };
-		int rc;
-
-		if (!ds->proximity) {
-			DBG(3, common, "Unknown out-of-prox device leaving prox. Ignoring.\n");
-			return;
-		}
-
-		/* Retrieve the type by asking a resend from the kernel */
-		rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
-		if (rc == -1)
-		{
-			LogMessageVerbSigSafe(X_ERROR, 0,
-					      "%s: failed to retrieve key bits\n",
-					      pInfo->name);
-			return;
-		}
-
-		for (i = 0; i < ARRAY_SIZE(wcmTypeToKey); i++)
-		{
-			if (ISBITSET(keys, wcmTypeToKey[i].tool_key))
-			{
-				ds->device_type = wcmTypeToKey[i].device_type;
-				ds->proximity = 1;
-				break;
-			}
-		}
-	}
 
 	/* DTF720 and DTF720a don't support eraser */
 	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
