@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -397,9 +397,9 @@ extern WacomDeviceClass gWacomISDV4Device;
 #define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 
-#define MAX_CHANNELS 17
+#define MAX_FINGERS 16
+#define MAX_CHANNELS (MAX_FINGERS+2) /* one channel for stylus/mouse. The other one for pad */
 #define PAD_CHANNEL (MAX_CHANNELS-1)
-#define MAX_FINGERS (MAX_CHANNELS-1)
 
 typedef struct {
 	int wcmZoomDistance;	       /* minimum distance for a zoom touch gesture */
