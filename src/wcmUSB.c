@@ -32,7 +32,6 @@
 
 typedef struct {
 	int wcmLastToolSerial;
-	int wcmBTNChannel;
 	int wcmDeviceType;
 	Bool wcmPenTouch;
 	Bool wcmUseMT;
@@ -460,8 +459,6 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 	ds->device_type = PAD_ID;
 	ds->device_id = PAD_DEVICE_ID;
 	ds->serial_num = channel;
-
-	private->wcmBTNChannel = channel;
 }
 
 int usbWcmGetRanges(InputInfoPtr pInfo)
@@ -1651,8 +1648,12 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		}
 		else if (event->type == EV_KEY)
 		{
+			/* Button events can be from puck or expresskeys */
+			int btn_channel = (ds->device_type == CURSOR_ID) ?
+					   channel : PAD_CHANNEL;
+
 			usbParseKeyEvent(common, event, channel);
-			usbParseBTNEvent(common, event, private->wcmBTNChannel);
+			usbParseBTNEvent(common, event, btn_channel);
 		}
 	} /* next event */
 
