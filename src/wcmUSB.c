@@ -291,6 +291,7 @@ static struct
 	{ WACOM_VENDOR_ID, 0xEF, 100000, 100000, &usbTabletPC   }, /* TabletPC 0xEF */
 	{ WACOM_VENDOR_ID, 0x100,100000, 100000, &usbTabletPC   }, /* TabletPC 0x100 */
 	{ WACOM_VENDOR_ID, 0x101,100000, 100000, &usbTabletPC   }, /* TabletPC 0x101 */
+	{ WACOM_VENDOR_ID, 0x10D,100000, 100000, &usbTabletPC   }, /* TabletPC 0x10D */
 	{ WACOM_VENDOR_ID, 0x4001,100000, 100000, &usbTabletPC   }, /* TabletPC 0x4001 */
 
 	/* IDs from Waltop's driver, available http://www.waltop.com.tw/download.asp?lv=0&id=2.
