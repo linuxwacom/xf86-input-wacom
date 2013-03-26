@@ -72,7 +72,7 @@
 /* 32 bit, 1 value */
 #define WACOM_PROP_PRESSURE_THRESHOLD "Wacom Pressure Threshold"
 
-/* 32 bit, 2 values, sample, suppress */
+/* 32 bit, 2 values, suppress, sample */
 #define WACOM_PROP_SAMPLE "Wacom Sample and Suppress"
 
 /* BOOL, 1 value */
