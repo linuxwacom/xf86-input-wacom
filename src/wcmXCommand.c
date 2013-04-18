@@ -455,7 +455,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 
 	rc = wcmCheckActionProperty(priv, property, prop);
 	if (rc != Success) {
-		char *msg = NULL;
+		const char *msg = NULL;
 		switch (rc) {
 			case BadMatch: msg = "BadMatch"; break;
 			case BadValue: msg = "BadValue"; break;
