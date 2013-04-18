@@ -448,7 +448,6 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	wcmUSBData* private = common->private;
 	WacomDeviceState *ds;
 	int channel = PAD_CHANNEL;
 
