@@ -570,6 +570,9 @@ static struct modifier specialkeys[] = {
 
 	{"PgUp", "Prior"}, {"PgDn", "Next"},
 
+	{"del", "Delete"}, {"home", "Home"},
+	{"end", "End"},
+
 	{ NULL, NULL }
 };
 
