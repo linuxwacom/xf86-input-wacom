@@ -1078,7 +1078,15 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 		} else
 			need_press = need_release = 1;
 
+
 		ks = XStringToKeysym(key);
+		if (ks == 0) {
+			key = convert_specialkey(key);
+			ks = XStringToKeysym(key);
+			if (ks == 0)
+				fprintf(stderr, "Warning: unable to map '%s' to a keycode.\n", key);
+		}
+
 		kc = keysym_to_keycode(dpy, ks);
 
 		if (need_press)
