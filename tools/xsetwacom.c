@@ -573,6 +573,40 @@ static struct modifier specialkeys[] = {
 	{"del", "Delete"}, {"home", "Home"},
 	{"end", "End"},
 
+	{"`", "quoteleft"},
+	{"-", "minus"},
+	{"=", "equal"},
+	{"[", "bracketleft"},
+	{"]", "bracketright"},
+	{"\\", "backslash"},
+	{";", "semicolon"},
+	{"'", "apostrophe"},
+	{",", "comma"},
+	{".", "period"},
+	{"/", "slash"},
+
+	{"~", "asciitilde"},
+	{"!", "exclam"},
+	{"@", "at"},
+	{"#", "numbersign"},
+	{"$", "dollar"},
+	{"%", "percent"},
+	{"^", "asciicircum"},
+	{"&", "ampersand"},
+	{"*", "asterisk"},
+	{"(", "parenleft"},
+	{")", "parenright"},
+	{"_", "underscore"},
+	{"+", "plus"},
+	{"{", "braceleft"},
+	{"}", "braceright"},
+	{"|", "bar"},
+	{":", "colon"},
+	{"\"", "quotedbl"},
+	{"<", "less"},
+	{">", "greater"},
+	{"?", "question"},
+
 	{ NULL, NULL }
 };
 
@@ -2687,14 +2721,35 @@ static void test_convert_specialkey(void)
 	char buff[5];
 	struct modifier *m;
 
-	/* make sure at least the default keys (ascii 33 - 126) aren't
-	 * specialkeys */
-	for (i = '!'; i <= '~'; i++)
+	/* make sure a-zA-Z aren't specialkeys */
+	for (i = 'a'; i <= 'z'; i++)
 	{
 		sprintf(buff, "%c", i);
 		converted = convert_specialkey(buff);
 		assert(strcmp(converted, buff) == 0);
 	}
+
+	for (i = 'A'; i <= 'Z'; i++)
+	{
+		sprintf(buff, "%c", i);
+		converted = convert_specialkey(buff);
+		assert(strcmp(converted, buff) == 0);
+	}
+
+	/* punctuation are specialkeys */
+	for (i = '!'; i <= '/'; i++)
+	{
+		sprintf(buff, "%c", i);
+		converted = convert_specialkey(buff);
+		assert(strcmp(converted, buff) != 0);
+	}
+	for (i = ':'; i <= '?'; i++)
+	{
+		sprintf(buff, "%c", i);
+		converted = convert_specialkey(buff);
+		assert(strcmp(converted, buff) != 0);
+	}
+
 
 	for (m = specialkeys; m->name; m++)
 	{
