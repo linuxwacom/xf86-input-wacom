@@ -394,7 +394,6 @@ extern WacomDeviceClass gWacomISDV4Device;
  * WacomCommonRec
  *****************************************************************************/
 
-#define TILT_REQUEST_FLAG       1
 #define TILT_ENABLED_FLAG       2
 
 #define MAX_FINGERS 16

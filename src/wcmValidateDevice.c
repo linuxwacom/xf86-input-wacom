@@ -794,10 +794,6 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			common->wcmSuppress = DEFAULT_SUPPRESS;
 	}
 
-	if (xf86SetBoolOption(pInfo->options, "Tilt",
-			(common->wcmFlags & TILT_REQUEST_FLAG)))
-		common->wcmFlags |= TILT_REQUEST_FLAG;
-
 	/* pressure curve takes control points x1,y1,x2,y2
 	 * values in range from 0..100.
 	 * Linear curve is 0,0,100,100
