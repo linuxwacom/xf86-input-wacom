@@ -375,7 +375,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL;
 	char *name;
-	pointer options;
+	pointer options, o;
 	int rc;
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
@@ -413,13 +413,15 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 
 	free(name);
 
-	while(options)
+	o = options;
+	while(o)
 	{
 		iopts = input_option_new(iopts,
-					 xf86OptionName(options),
-					 xf86OptionValue(options));
-		options = xf86NextOption(options);
+					 xf86OptionName(o),
+					 xf86OptionValue(o));
+		o = xf86NextOption(o);
 	}
+	xf86OptionListFree(options);
 	return iopts;
 }
 
