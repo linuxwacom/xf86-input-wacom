@@ -513,7 +513,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	char		*type, *device;
-	const char	*oldname;
+	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
 
 	gWacomModule.wcmDrv = drv;
@@ -563,7 +563,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	common->debugLevel = xf86SetIntOption(pInfo->options,
 					      "CommonDBG", common->debugLevel);
-	oldname = pInfo->name;
+	oldname = strdup(pInfo->name);
 
 	if (wcmIsHotpluggedDevice(pInfo))
 		is_dependent = 1;
@@ -574,6 +574,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		char *new_name;
 		if (asprintf(&new_name, "%s %s", pInfo->name, type) == -1)
 			new_name = strdup(pInfo->name);
+		free(pInfo->name);
 		pInfo->name = priv->name = new_name;
 	}
 
@@ -612,6 +613,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		wcmLinkTouchAndPen(pInfo);
 
 	free(type);
+	free(oldname);
 
 	return Success;
 
@@ -627,6 +629,7 @@ SetupProc_fail:
 	}
 
 	free(type);
+	free(oldname);
 	return BadMatch;
 }
 
