@@ -35,12 +35,17 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 	int match = 0;
 	InputInfoPtr pDevices = xf86FirstLocalDevice();
 
-	for (; pDevices != NULL; pDevices = pDevices->next)
+	for (; !match && pDevices != NULL; pDevices = pDevices->next)
 	{
 		char* device = xf86CheckStrOption(pDevices->options, "Device", NULL);
 
 		/* device can be NULL on some distros */
-		if (!device || !strstr(pDevices->drv->driverName, "wacom"))
+		if (!device)
+			continue;
+
+		free(device);
+
+		if (!strstr(pDevices->drv->driverName, "wacom"))
 			continue;
 
 		if (pInfo != pDevices)
@@ -55,11 +60,10 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 				/* only add the new tool if the matching major/minor
 				* was from the same source */
 				if (strcmp(fsource, psource))
-				{
 					match = 1;
-					break;
-				}
 			}
+			free(fsource);
+			free(psource);
 		}
 	}
 	if (match)
@@ -112,6 +116,7 @@ int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 		isInUse = 4;
 	}
 ret:
+	free(lsource);
 	return isInUse;
 }
 
@@ -134,13 +139,15 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	int j, k, ret = FALSE;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	char* dsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	char* dsource;
 
 	if (!type)
 	{
 		xf86Msg(X_ERROR, "%s: No type specified\n", pInfo->name);
 		return FALSE;
 	}
+
+	dsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
 
 	/* walkthrough all types */
 	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
@@ -175,6 +182,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n",
 			pInfo->name, type);
 
+	free(dsource);
 	return ret;
 }
 
@@ -575,19 +583,20 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
  */
-int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
+int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type)
 {
 	char *source = xf86CheckStrOption(pInfo->options, "_source", NULL);
 	int i;
+	int rc = 0;
 
 	if (*type) /* type specified, don't hotplug */
-		return 0;
+		goto out;
 
 	if (!source) /* xorg.conf device, don't auto-pick type */
-		return 0;
+		goto out;
 
 	if (source && strcmp(source, "server/hal") && strcmp(source, "server/udev"))
-		return 0;
+		goto out;
 
 	/* no type specified, so we need to pick the first one applicable
 	 * for our device */
@@ -595,13 +604,14 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	{
 		if (wcmIsAValidType(pInfo, wcmType[i].type))
 		{
+			free(*type);
 			*type = strdup(wcmType[i].type);
 			break;
 		}
 	}
 
 	if (!*type)
-		return 0;
+		goto out;
 
 	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", pInfo->name, *type);
 	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", pInfo->name);
@@ -610,7 +620,11 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type)
 	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
 	pInfo->options = xf86ReplaceStrOption(pInfo->options, "_source", "_driver/wacom");
 
-	return 1;
+	rc = 1;
+
+	free(source);
+out:
+	return rc;
 }
 
 int wcmParseSerials (InputInfoPtr pInfo)
@@ -737,6 +751,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		 */
 	}
 
+	free(s);
+
 	/* Pad is always in absolute mode.
 	 * The pad also defaults to wheel scrolling, unlike the pens
 	 * (interesting effects happen on ArtPen and others with build-in
@@ -773,6 +789,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 					" device\n", pInfo->name);
 		else
 			wcmRotateTablet(pInfo, rotation);
+		free(s);
 	}
 
 	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
@@ -811,6 +828,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		else
 			wcmSetPressureCurve(priv,a,b,c,d);
 	}
+	free(s);
 
 	/*Serials of tools we want hotpluged*/
 	if (wcmParseSerials (pInfo) != 0)

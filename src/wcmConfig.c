@@ -470,7 +470,9 @@ static void wcmLinkTouchAndPen(InputInfoPtr pInfo)
 static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
 {
 	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
-	return !strcmp(source, "_driver/wacom");
+	int matches = (strcmp(source, "_driver/wacom") == 0);
+	free(source);
+	return matches;
 }
 
 /* wcmPreInit - called for each input devices with the driver set to
@@ -510,8 +512,8 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	const char*	type;
-	const char*	device, *oldname;
+	char		*type, *device;
+	const char	*oldname;
 	int		need_hotplug = 0, is_dependent = 0;
 
 	gWacomModule.wcmDrv = drv;
@@ -609,6 +611,8 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (IsTouch(priv) || (IsTablet(priv) && !common->wcmTouchDevice))
 		wcmLinkTouchAndPen(pInfo);
 
+	free(type);
+
 	return Success;
 
 SetupProc_fail:
@@ -622,6 +626,7 @@ SetupProc_fail:
 		pInfo->fd = -1;
 	}
 
+	free(type);
 	return BadMatch;
 }
 

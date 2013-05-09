@@ -113,7 +113,7 @@ struct _WacomModule
 extern Bool wcmOpen(InputInfoPtr pInfo);
 
 /* device autoprobing */
-const char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
+char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 
 /* common tablet initialization regime */
 int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version);
@@ -141,7 +141,7 @@ extern int wcmIsDuplicate(const char* device, InputInfoPtr pInfo);
 extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
 
 /* hotplug */
-extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, const char **type);
+extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type);
 extern void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename);
 
 /* setup */

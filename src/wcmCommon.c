@@ -1462,6 +1462,7 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 			free(common->serials);
 			common->serials = next;
 		}
+		free(common->device_path);
 		free(common);
 	}
 	*ptr = NULL;

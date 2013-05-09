@@ -483,7 +483,7 @@ Bool wcmIsWacomDevice (char* fname)
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-const char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
+char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 {
 	/* We are trying to find the right eventX device */
 	int i, wait = 0;
@@ -506,7 +506,7 @@ const char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 				xf86ReplaceStrOption(pInfo->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
-				return xf86FindOptionValue(pInfo->options, "Device");
+				return xf86CheckStrOption(pInfo->options, "Device", NULL);
 			}
 		}
 		wait += 100;
