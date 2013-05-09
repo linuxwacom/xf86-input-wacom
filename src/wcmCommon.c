@@ -1463,6 +1463,7 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 			common->serials = next;
 		}
 		free(common->device_path);
+		free(common->touch_mask);
 		free(common);
 	}
 	*ptr = NULL;
