@@ -296,20 +296,21 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 
 
 	/* seventh valuator: abswheel2 */
-	index = 6;
-	label = None;
-	mode = Absolute;
-	min_res = max_res = res = 1;
-	min = 0;
-	max = 1;
-
 	if ((TabletHasFeature(common, WCM_DUALRING)) && IsPad(priv))
-	{ /* XXX: what is this axis label? */
+	{
+		/* XXX: what is this axis label? */
+		index = 6;
+		label = None;
+		mode = Absolute;
+		min_res = max_res = res = 1;
+		min = 0;
+		max = 1;
+
 		min = MIN_PAD_RING;
 		max = MAX_PAD_RING;
-	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+		wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	}
 
 	return TRUE;
 }
