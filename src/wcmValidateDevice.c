@@ -437,10 +437,12 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
 {
 	int rc;
 	InputAttributes *attr;
+	char *product;
+
 	attr = DuplicateInputAttributes(pInfo->attrs);
-	rc = asprintf(&attr->product, "%s %s", attr->product, type);
-	if (rc == -1)
-		attr->product = NULL;
+	rc = asprintf(&product, "%s %s", attr->product, type);
+	free(attr->product);
+	attr->product = (rc != -1) ? product : NULL;
 	return attr;
 }
 #endif
