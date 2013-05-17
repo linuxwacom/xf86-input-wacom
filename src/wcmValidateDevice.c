@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 - 2010 by Ping Cheng, Wacom. <pingc@wacom.com>
+ * Copyright 2009 - 2013 by Ping Cheng, Wacom. <pingc@wacom.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -263,6 +263,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xC6:  /* CintiqV5 */
 		case 0xCC:  /* CinitqV5 */
 		case 0xFA:  /* Cintiq 22HD */
+		case 0x5B:  /* Cintiq 22HDT Pen */
 			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 		case 0xB0:  /* I3 */
@@ -294,6 +295,11 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 		case 0x9F:
 		case 0xF6: /* Cintiq 24HDT Touch */
+		case 0x57: /* DTK2241 */
+		case 0x59: /* DTH2242 Pen */
+		case 0x5D: /* DTH2242 Touch */
+		case 0x5E: /* Cintiq 22HDT Touch */
+		case 0x304:/* Cintiq 13HD */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}

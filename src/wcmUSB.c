@@ -277,6 +277,10 @@ static struct
 	{ WACOM_VENDOR_ID, 0xF4, 200000, 200000, &usbCintiqV5   }, /* Cintiq 24HD */
 	{ WACOM_VENDOR_ID, 0xFA, 200000, 200000, &usbCintiqV5   }, /* Cintiq 22HD */
 	{ WACOM_VENDOR_ID, 0xF8, 200000, 200000, &usbCintiqV5   }, /* Cintiq 24HD touch (EMR digitizer) */
+	{ WACOM_VENDOR_ID, 0x304,200000, 200000, &usbCintiqV5   }, /* Cintiq 13HD */
+	{ WACOM_VENDOR_ID, 0x57, 200000, 200000, &usbCintiqV5   }, /* DTK2241 */
+	{ WACOM_VENDOR_ID, 0x59, 200000, 200000, &usbCintiqV5   }, /* DTH2242 */
+	{ WACOM_VENDOR_ID, 0x5B, 200000, 200000, &usbCintiqV5   }, /* Cintiq 22HDT */
 
 	{ WACOM_VENDOR_ID, 0x90, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x90 */
 	{ WACOM_VENDOR_ID, 0x93, 100000, 100000, &usbTabletPC   }, /* TabletPC 0x93 */
