@@ -112,6 +112,8 @@ wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel)
 	WacomDeviceState oldstate = channel->valid.states[1];
 	int type = -1;
 
+	wcmRotateAndScaleCoordinates (priv->pInfo, &state.x, &state.y);
+
 	valuator_mask_set(mask, 0, state.x);
 	valuator_mask_set(mask, 1, state.y);
 
