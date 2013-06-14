@@ -60,6 +60,13 @@ xf86AddNewOption(OPTTYPE head, const char *name, const char *val)
 {
     return NULL;
 }
+
+_X_EXPORT void 
+xf86OptionListFree(OPTTYPE opt)
+{
+    return;
+}
+
 _X_EXPORT CONST char *
 xf86FindOptionValue(OPTTYPE options, const char *name)
 {
