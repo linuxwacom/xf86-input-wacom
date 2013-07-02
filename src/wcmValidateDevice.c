@@ -286,6 +286,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xE6: /* TPC with 2FGT */
 		case 0x93: /* TPC with 1FGT */
 		case 0x9A: /* TPC with 1FGT */
+		case 0xEC: /* TPC with 1FGT */
 		case 0xED: /* TPC with 1FGT */
 		case 0x90: /* TPC */
 		case 0x97: /* TPC */
