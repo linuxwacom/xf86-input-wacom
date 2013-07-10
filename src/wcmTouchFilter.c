@@ -101,41 +101,58 @@ static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], in
  * the multitouch API available in XI2.2.
  *
  * @param[in] priv
+ * @param[in] channel    Channel to send a touch event for
+ */
+static void
+wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel)
+{
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
+	ValuatorMask *mask = priv->common->touch_mask;
+	WacomDeviceState state = channel->valid.state;
+	WacomDeviceState oldstate = channel->valid.states[1];
+	int type = -1;
+
+	valuator_mask_set(mask, 0, state.x);
+	valuator_mask_set(mask, 1, state.y);
+
+	if (!state.proximity) {
+		DBG(6, priv->common, "This is a touch end event\n");
+		type = XI_TouchEnd;
+	}
+	else if (!oldstate.proximity) {
+		DBG(6, priv->common, "This is a touch begin event\n");
+		type = XI_TouchBegin;
+	}
+	else {
+		DBG(6, priv->common, "This is a touch update event\n");
+		type = XI_TouchUpdate;
+	}
+
+	xf86PostTouchEvent(priv->pInfo->dev, state.serial_num - 1, type, 0, mask);
+#endif
+}
+
+/**
+ * Send multitouch data to X server when ABI_XINPUT_VERSION >= 16 and
+ * in driver gesture is not enabled.
+ *
+ * @param[in] priv
  * @param[in] contact_id  ID of the contact to send event for
  */
 static void
-wcmSendTouchEvent(WacomDevicePtr priv, int contact_id)
-{
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
-	WacomChannelPtr channel = getContactNumber(priv->common, contact_id);
+wcmFingerMultitouch(WacomDevicePtr priv, int contact_id) {
+	int i;
 
-	if (channel) {
+	for (i = 0; i < MAX_CHANNELS; i++) {
+		WacomChannelPtr channel = priv->common->wcmChannel+i;
 		WacomDeviceState state  = channel->valid.state;
-		ValuatorMask *mask = priv->common->touch_mask;
-		WacomDeviceState oldstate = channel->valid.states[1];
-		int type = -1;
+		if (state.device_type != TOUCH_ID)
+			continue;
 
-		wcmRotateAndScaleCoordinates (priv->pInfo, &state.x, &state.y);
-
-		valuator_mask_set(mask, 0, state.x);
-		valuator_mask_set(mask, 1, state.y);
-
-		if (!state.proximity) {
-			DBG(6, priv->common, "This is a touch end event\n");
-			type = XI_TouchEnd;
+		if (state.serial_num == contact_id + 1) {
+			wcmSendTouchEvent(priv, channel);
 		}
-		else if (!oldstate.proximity) {
-			DBG(6, priv->common, "This is a touch begin event\n");
-			type = XI_TouchBegin;
-		}
-		else {
-			DBG(6, priv->common, "This is a touch update event\n");
-			type = XI_TouchUpdate;
-		}
-
-		xf86PostTouchEvent(priv->pInfo->dev, contact_id, type, 0, mask);
 	}
-#endif
 }
 
 static double touchDistance(WacomDeviceState ds0, WacomDeviceState ds1)
@@ -337,7 +354,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 	/* Send multitouch data to X if appropriate */
 	if (!common->wcmGesture)
 	{
-		wcmSendTouchEvent(priv, touch_id);
+		wcmFingerMultitouch(priv, touch_id);
 		return;
 	}
 #endif
