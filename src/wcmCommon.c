@@ -1469,7 +1469,9 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 			common->serials = next;
 		}
 		free(common->device_path);
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 		free(common->touch_mask);
+#endif
 		free(common);
 	}
 	*ptr = NULL;
