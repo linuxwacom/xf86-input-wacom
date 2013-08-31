@@ -182,6 +182,7 @@ extern void set_absolute(InputInfoPtr pInfo, Bool absolute);
 extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
 extern void wcmFreeCommon(WacomCommonPtr *common);
 extern WacomCommonPtr wcmNewCommon(void);
+extern void usbListModels(void);
 
 enum WacomSuppressMode {
 	SUPPRESS_NONE = 8,	/* Process event normally */
