@@ -345,8 +345,8 @@ input_option_new(InputOption *list, char *key, char *value)
 	InputOption *new;
 
 	new = calloc(1, sizeof(InputOption));
-	new->key = key;
-	new->value = value;
+	new->key = strdup(key);
+	new->value = strdup(value);
 	new->next = list;
 	return new;
 }
