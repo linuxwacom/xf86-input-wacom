@@ -97,6 +97,7 @@ DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5);
 DEFINE_MODEL(usbIntuos3,	"USB Intuos3",		5);
 DEFINE_MODEL(usbIntuos4,	"USB Intuos4",		5);
 DEFINE_MODEL(usbIntuos5,	"USB Intuos5",		5);
+DEFINE_MODEL(usbIntuosPro,	"USB Intuos Pro",	5);
 DEFINE_MODEL(usbVolito,		"USB Volito",		4);
 DEFINE_MODEL(usbVolito2,	"USB Volito2",		4);
 DEFINE_MODEL(usbCintiqV5,	"USB CintiqV5",		5);
@@ -270,6 +271,9 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x28, 200000, 200000, &usbIntuos5,    "Intuos5 touch L"	},
 	{ WACOM_VENDOR_ID, 0x29, 200000, 200000, &usbIntuos5,    "Intuos5 S"		},
 	{ WACOM_VENDOR_ID, 0x2A, 200000, 200000, &usbIntuos5,    "Intuos5 M"		},
+	{ WACOM_VENDOR_ID, 0x314,200000, 200000, &usbIntuosPro,  "Intuos Pro S"		},
+	{ WACOM_VENDOR_ID, 0x315,200000, 200000, &usbIntuosPro,  "Intuos Pro M"		},
+	{ WACOM_VENDOR_ID, 0x317,200000, 200000, &usbIntuosPro,  "Intuos Pro L"		},
 
 	{ WACOM_VENDOR_ID, 0x3F, 200000, 200000, &usbCintiqV5,   "Cintiq 21UX"		},
 	{ WACOM_VENDOR_ID, 0xC5, 200000, 200000, &usbCintiqV5,   "Cintiq 20WSX"		},

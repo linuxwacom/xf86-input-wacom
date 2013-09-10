@@ -202,6 +202,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			TabletSetFeature(priv->common, WCM_DUALRING | WCM_LCD);
 			/* fall through */
 
+		case 0x314: /* Intuos Pro S */
+		case 0x315: /* Intuos Pro M */
+		case 0x317: /* Intuos Pro L */
 		case 0x26:  /* I5 */
 		case 0x27:  /* I5 */
 		case 0x28:  /* I5 */
