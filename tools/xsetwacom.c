@@ -1021,7 +1021,7 @@ static int special_map_button(Display *dpy, int argc, char **argv, unsigned long
 			need_press = need_release = 1;
 
 		if (sscanf(btn, "%d", &button) != 1)
-			return nitems;
+			break;
 
 
 		TRACE("Button map %d [%s,%s]\n", abs(button),
@@ -1044,7 +1044,7 @@ static int special_map_button(Display *dpy, int argc, char **argv, unsigned long
 	}
 
 	*ndata += nitems;
-	return nitems;
+	return i;
 }
 
 /* Return the first keycode to have the required keysym in the current group.
