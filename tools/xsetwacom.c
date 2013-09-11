@@ -921,16 +921,16 @@ static int is_modifier(const char* keysym)
 	return (m->name != NULL);
 }
 
-static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
-static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data);
-static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
-static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
-static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data);
+static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data, const size_t size);
+static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data, const size_t size);
+static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
+static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
+static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
 
 /* Valid keywords for the --set ButtonX options */
 struct keywords {
 	const char *keyword;
-	int (*func)(Display*, int, char **, unsigned long*, unsigned long *);
+	int (*func)(Display*, int, char **, unsigned long*, unsigned long *, const size_t size);
 } keywords[] = {
 	{"key", special_map_keystrokes},
 	{"button", special_map_button},
@@ -942,7 +942,7 @@ struct keywords {
 
 /* the "core" keyword isn't supported anymore, we just have this here to
    tell people that. */
-static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
 {
 	static int once_only = 1;
 	if (once_only)
@@ -954,8 +954,12 @@ static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *
 	return 0;
 }
 
-static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
 {
+	if (*ndata + 1 > size) {
+		fprintf(stderr, "Insufficient space to store all commands.\n");
+		return 0;
+	}
 	data[*ndata] = AC_MODETOGGLE;
 
 	*ndata += 1;
@@ -963,8 +967,12 @@ static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned 
 	return 0;
 }
 
-static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
 {
+	if (*ndata + 1 > size) {
+		fprintf(stderr, "Insufficient space to store all commands.\n");
+		return 0;
+	}
 	data[*ndata] = AC_DISPLAYTOGGLE;
 
 	*ndata += 1;
@@ -985,7 +993,7 @@ static inline int is_valid_keyword(const char *keyword)
 	return 0;
 }
 
-static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data)
+static int special_map_button(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
 {
 	int nitems = 0;
 	int i;
@@ -1019,6 +1027,15 @@ static int special_map_button(Display *dpy, int argc, char **argv, unsigned long
 		TRACE("Button map %d [%s,%s]\n", abs(button),
 				need_press ?  "press" : "",
 				need_release ?  "release" : "");
+
+		if (need_press && need_release && *ndata + nitems + 2 > size) {
+			fprintf(stderr, "Insufficient space to store all commands.\n");
+			break;
+		}
+		else if ((need_press || need_release) && *ndata + nitems + 1 > size) {
+			fprintf(stderr, "Insufficient space to store all commands.\n");
+			break;
+		}
 
 		if (need_press)
 			data[*ndata + nitems++] = AC_BUTTON | AC_KEYBTNPRESS | abs(button);
@@ -1064,7 +1081,7 @@ out:
    Map gibberish like "ctrl alt f2" into the matching AC_KEY values.
    Returns 1 on success or 0 otherwise.
  */
-static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data)
+static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long* data, const size_t size)
 {
 	int i;
 	int nitems = 0;
@@ -1122,6 +1139,15 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 		}
 
 		kc = keysym_to_keycode(dpy, ks);
+
+		if (need_press && need_release && *ndata + nitems + 2 > size) {
+			fprintf(stderr, "Insufficient space to store all commands.\n");
+			break;
+		}
+		else if ((need_press || need_release) && *ndata + nitems + 1 > size) {
+			fprintf(stderr, "Insufficient space to store all commands.\n");
+			break;
+		}
 
 		if (need_press)
 			data[*ndata + nitems++] = AC_KEY | AC_KEYBTNPRESS | kc;
@@ -1193,7 +1219,7 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
  * @param data  Parsed action data
  * @return 'true' if the whole string was parsed sucessfully, else 'false'
  */
-static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* data, unsigned long *nitems)
+static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* data, unsigned long *nitems, const size_t size)
 {
 	int  i = 0;
 	int  nwords = 0;
@@ -1219,19 +1245,19 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 		nwords = 2;
 	}
 
-	for (i = 0; i < nwords; i++)
+	for (i = 0; i < nwords && *nitems < size; i++)
 	{
 		int j = 0;
 		int keyword_found = 0;
 
-		while (keywords[j].keyword && i < nwords)
+		while (keywords[j].keyword && i < nwords && *nitems < size)
 		{
 			int parsed = 0;
 			if (strcasecmp(words[i], keywords[j].keyword) == 0)
 			{
 				parsed = keywords[j].func(dpy, nwords - i - 1,
 							  &words[i + 1],
-							  nitems, data);
+							  nitems, data, size);
 				i += parsed;
 				keyword_found = 1;
 			}
@@ -1281,7 +1307,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	unsigned long nitems = 0;
 
 	data = calloc(256, sizeof(long));
-	if (!parse_actions(dpy, argc, argv, data, &nitems))
+	if (!parse_actions(dpy, argc, argv, data, &nitems, 256))
 		goto out;
 
 	/* obtain the button actions Atom */
