@@ -1464,11 +1464,13 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 			}
 			if (nkeys >= usbdata->npadkeys)
 				change = 0;
-			else if (!ds->device_type) /* expresskey pressed at startup */
-				ds->device_type = PAD_ID;
 	}
 
 	channel->dirty |= change;
+
+	/* expresskey pressed at startup or missing type */
+	if (!ds->device_type && channel->dirty)
+		ds->device_type = PAD_ID;
 }
 
 /**
@@ -1601,7 +1603,7 @@ static Bool usbIsTabletToolInProx(int device_type, int proximity)
 
 static void usbDispatchEvents(InputInfoPtr pInfo)
 {
-	int i;
+	int i, c;
 	WacomDeviceState *ds;
 	struct input_event* event;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -1722,17 +1724,16 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (!ds->proximity)
 		private->wcmLastToolSerial = 0;
 
-	/* don't send touch event when touch isn't enabled */
-	if (ds->device_type != TOUCH_ID || common->wcmTouch)
-	{
-		int c;
-		for (c = 0; c < MAX_CHANNELS; c++) {
-			DBG(10, common, "Checking if channel %d is dirty...\n", c);
-			if (common->wcmChannel[c].dirty) {
-				DBG(10, common, "Dirty flag set on channel %d; sending event.\n", c);
-				common->wcmChannel[c].dirty = FALSE;
-				wcmEvent(common, c, &common->wcmChannel[c].work);
-			}
+	for (c = 0; c < MAX_CHANNELS; c++) {
+		ds = &common->wcmChannel[c].work;
+
+		/* walk through all channels */
+		if (common->wcmChannel[c].dirty) {
+			DBG(10, common, "Dirty flag set on channel %d; sending event.\n", c);
+			common->wcmChannel[c].dirty = FALSE;
+			/* don't send touch event when touch isn't enabled */
+			if (ds->device_type != TOUCH_ID || common->wcmTouch)
+				wcmEvent(common, c, ds);
 		}
 	}
 }
