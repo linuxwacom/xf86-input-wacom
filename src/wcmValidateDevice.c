@@ -308,6 +308,15 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			break;
 	}
 
+#ifdef INPUT_PROP_DIRECT
+	{
+		unsigned long prop[NBITS(INPUT_PROP_MAX)] = {0};
+
+		ioctl(pInfo->fd, EVIOCGPROP(sizeof(prop)), prop);
+		if (ISBITSET(prop, INPUT_PROP_DIRECT))
+			TabletSetFeature(priv->common, WCM_LCD);
+	}
+#endif
 	if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
 		TabletSetFeature(priv->common, WCM_PEN);
 
