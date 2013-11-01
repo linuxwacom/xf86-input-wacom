@@ -310,10 +310,11 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 #ifdef INPUT_PROP_DIRECT
 	{
+		int rc;
 		unsigned long prop[NBITS(INPUT_PROP_MAX)] = {0};
 
-		ioctl(pInfo->fd, EVIOCGPROP(sizeof(prop)), prop);
-		if (ISBITSET(prop, INPUT_PROP_DIRECT))
+		rc = ioctl(pInfo->fd, EVIOCGPROP(sizeof(prop)), prop);
+		if (rc >= 0 && ISBITSET(prop, INPUT_PROP_DIRECT))
 			TabletSetFeature(priv->common, WCM_LCD);
 	}
 #endif
