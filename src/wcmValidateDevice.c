@@ -341,7 +341,6 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 	return ret;
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 14
 static InputOption*
 input_option_new(InputOption *list, char *key, char *value)
 {
@@ -367,7 +366,6 @@ input_option_free_list(InputOption **opts)
 		*opts = tmp;
 	}
 }
-#endif
 
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
