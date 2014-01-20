@@ -15,7 +15,7 @@
       </match>
     </match>
     <!-- N-Trig Duosense Electromagnetic Digitizer -->
-    <match key="info.product" contains="HID 1b96:0001">
+    <match key="info.product" contains_outof="HID 1b96:0001;N-Trig Pen;N-Trig DuoSense">
       <match key="info.parent" contains="if0">
        <merge key="input.x11_driver" type="string">wacom</merge>
       </match>
