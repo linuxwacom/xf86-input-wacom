@@ -1121,6 +1121,45 @@ setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
 	return buttons;
 }
 
+/*
+ * Broken pen with a broken tip might give high pressure values
+ * all the time. We want to warn about this. To avoid getting
+ * spurious warnings when the tablet is hit quickly will wait
+ * until the device goes out of proximity and check if the minimum
+ * pressure is still above a threshold of 20 percent of the maximum
+ * pressure. Also we make sure the device has seen a sufficient number
+ * of events while in proximity that it had a chance to see decreasing
+ * pressure values.
+ */
+#define LIMIT_LOW_PRESSURE 20 /* percentage of max value */
+#define MIN_EVENT_COUNT 15
+
+static void detectPressureIssue(WacomDevicePtr priv,
+				WacomCommonPtr common,
+				WacomDeviceStatePtr ds)
+{
+	/* pen is just going out of proximity */
+	if (priv->oldProximity && !ds->proximity) {
+
+		int pressureThreshold = common->wcmMaxZ * LIMIT_LOW_PRESSURE / 100;
+		/* check if minPressure has persisted all the time
+		   and is too close to the maximum pressure */
+		if (priv->oldMinPressure > pressureThreshold &&
+		    priv->eventCnt > MIN_EVENT_COUNT)
+			LogMessageVerbSigSafe(
+				X_WARNING, 0,
+				"On %s(%d) a base pressure of %d persists while the pen is in proximity.\n"
+				"\tThis is > %d percent of the maximum value (%d).\n"
+				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
+				"\thttp://sourceforge.net/apps/mediawiki/linuxwacom/index.php?title=Pen_Wear.\n",
+				priv->pInfo->name, priv->serial, priv->minPressure, LIMIT_LOW_PRESSURE, common->wcmMaxZ);
+	} else if (!priv->oldProximity)
+		priv->eventCnt = 0;
+
+	priv->oldMinPressure = priv->minPressure;
+	priv->eventCnt++;
+}
+
 static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 				 const WacomChannelPtr pChannel,
 				 enum WacomSuppressMode suppress)
@@ -1203,6 +1242,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if ((IsPen(priv) || IsTouch(priv)) && common->wcmMaxZ)
 	{
+		detectPressureIssue(priv, common, &filtered);
 		priv->minPressure = rebasePressure(priv, &filtered);
 		filtered.pressure = normalizePressure(priv, &filtered);
 		if (IsPen(priv))

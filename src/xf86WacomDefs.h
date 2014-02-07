@@ -303,7 +303,8 @@ struct _WacomDeviceRec
 	int pPressCurve[FILTER_PRESSURE_RES + 1]; /* pressure curve */
 	int nPressCtrl[4];      /* control points for curve */
 	int minPressure;	/* the minimum pressure a pen may hold */
-
+	int oldMinPressure;     /* to record the last minPressure before going out of proximity */
+	unsigned int eventCnt;  /* count number of events while in proximity */
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
