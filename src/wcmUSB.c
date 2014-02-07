@@ -881,6 +881,8 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
 				wcmEvent(common, i, &common->wcmChannel[i].work);
+				DBG(2, common, "free channels: dropping %u\n",
+						common->wcmChannel[i].work.serial_num);
 			}
 		}
 		DBG(1, common, "device with serial number: %u"
