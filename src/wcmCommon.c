@@ -1071,12 +1071,17 @@ normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 	WacomCommonPtr common = priv->common;
 	double pressure;
 	int p = ds->pressure;
+	int range_left;
 
 	/* normalize pressure to 0..FILTER_PRESSURE_RES */
-	pressure = xf86ScaleAxis(p - priv->minPressure,
-				 FILTER_PRESSURE_RES, 0,
-				 common->wcmMaxZ - priv->minPressure,
-				 0);
+	range_left = common->wcmMaxZ - priv->minPressure;
+	if (range_left >= 1)
+		pressure = xf86ScaleAxis(p - priv->minPressure,
+					 FILTER_PRESSURE_RES, 0,
+					 range_left,
+					 0);
+	else
+		pressure = FILTER_PRESSURE_RES;
 
 	return (int)pressure;
 }
