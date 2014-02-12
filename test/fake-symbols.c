@@ -345,7 +345,7 @@ XIRegisterPropertyHandler(DeviceIntPtr         dev,
                                               BOOL checkonly),
                           int (*GetProperty) (DeviceIntPtr dev,
                                               Atom property),
-                          int (*DeleteProperty) (DeviceIntPtr dev,
+                          int (*DelProperty) (DeviceIntPtr dev,
                                                  Atom property))
 {
     return 0;
