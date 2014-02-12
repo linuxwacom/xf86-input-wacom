@@ -43,12 +43,6 @@
 #define LogMessageVerbSigSafe xf86MsgVerb
 #endif
 
-/*****************************************************************************
- * Unit test hack
- ****************************************************************************/
-#ifdef DISABLE_STATIC
-#define static
-#endif
 
 /******************************************************************************
  * Debugging support
@@ -191,6 +185,35 @@ enum WacomSuppressMode {
 };
 
 /****************************************************************************/
+
+#ifndef UNIT_TESTS
+
+# define TEST_NON_STATIC static
+
+#else
+
+# define TEST_NON_STATIC
+
+/* For test suite */
+/* xf86Wacom.c */
+extern void wcmInitialToolSize(InputInfoPtr pInfo);
+
+/* wcmConfig.c */
+extern int wcmSetType(InputInfoPtr pInfo, const char *type);
+
+/* wcmCommon.c */
+extern int getScrollDelta(int current, int old, int wrap, int flags);
+extern int getWheelButton(int delta, int action_up, int action_dn);
+extern int rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds);
+extern int normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds);
+extern enum WacomSuppressMode wcmCheckSuppress(WacomCommonPtr common,
+						const WacomDeviceState* dsOrig,
+						WacomDeviceState* dsNew);
+
+/* wcmUSB.c */
+extern int mod_buttons(int buttons, int btn, int state);
+#endif /* UNIT_TESTS */
+
 #endif /* __XF86WACOM_H */
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

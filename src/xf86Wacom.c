@@ -107,7 +107,8 @@ void wcmVirtualTabletPadding(InputInfoPtr pInfo)
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
 
-static void wcmInitialToolSize(InputInfoPtr pInfo)
+TEST_NON_STATIC void
+wcmInitialToolSize(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;

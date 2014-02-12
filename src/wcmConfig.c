@@ -134,7 +134,8 @@ static void wcmFree(InputInfoPtr pInfo)
 	pInfo->private = NULL;
 }
 
-static int wcmSetType(InputInfoPtr pInfo, const char *type)
+TEST_NON_STATIC int
+wcmSetType(InputInfoPtr pInfo, const char *type)
 {
 	WacomDevicePtr priv = pInfo->private;
 

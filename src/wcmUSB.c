@@ -1205,7 +1205,8 @@ static void usbParseAbsEvent(WacomCommonPtr common,
  *
  * @return The new button mask
  */
-static int mod_buttons(int buttons, int btn, int state)
+TEST_NON_STATIC int
+mod_buttons(int buttons, int btn, int state)
 {
 	int mask;
 

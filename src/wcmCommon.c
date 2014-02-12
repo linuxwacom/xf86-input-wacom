@@ -307,7 +307,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
  * @param flags    Flags defining axis attributes: AXIS_INVERT and AXIS_BITWISE
  * @return         Relative change in axis value
  */
-static int getScrollDelta(int current, int old, int wrap, int flags)
+TEST_NON_STATIC int getScrollDelta(int current, int old, int wrap, int flags)
 {
 	int delta;
 
@@ -352,7 +352,7 @@ static int getScrollDelta(int current, int old, int wrap, int flags)
  * @param action_dn    Array index of action to send on scroll down
  * @return             Array index of action that should be performed, or -1 if none.
  */
-static int getWheelButton(int delta, int action_up, int action_dn)
+TEST_NON_STATIC int getWheelButton(int delta, int action_up, int action_dn)
 {
 	if (delta > 0)
 		return action_up;
@@ -815,7 +815,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
  * @retval SUPPRESS_NONE Process event normally.
  * @retval SUPPRESS_NON_MOTION Suppress all data but motion data.
  */
-static enum WacomSuppressMode
+TEST_NON_STATIC enum WacomSuppressMode
 wcmCheckSuppress(WacomCommonPtr common,
 		 const WacomDeviceState* dsOrig,
 		 WacomDeviceState* dsNew)
@@ -1036,7 +1036,7 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
  *
  * @see normalizePressure
  */
-static int
+TEST_NON_STATIC int
 rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
 	int min_pressure;
@@ -1065,7 +1065,7 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
  * @rebaes
  * @see rebasePressure
  */
-static int
+TEST_NON_STATIC int
 normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
 	WacomCommonPtr common = priv->common;
