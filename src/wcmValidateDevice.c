@@ -716,7 +716,7 @@ int wcmParseSerials (InputInfoPtr pInfo)
 					pInfo->name, serial, name);
 				ser->name = strdup(name);
 			}
-			else ser->name = ""; /*no name yet*/
+			else ser->name = strdup(""); /*no name yet*/
 
 			if (common->serials == NULL)
 				common->serials = ser;
