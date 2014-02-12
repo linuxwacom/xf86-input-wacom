@@ -22,7 +22,7 @@ extern void xf86OptionListFree(OPTTYPE optlist);
 extern char* xf86OptionName(OPTTYPE opt);
 extern CONST char* xf86FindOptionValue(OPTTYPE options, const char *name);
 extern int xf86NameCmp(const char *s1, const char *s2);
-extern char* xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt);
+extern char* xf86CheckStrOption(OPTTYPE optlist, const char *name, CONST char *deflt);
 extern int xf86CheckBoolOption(OPTTYPE list, const char *name, int deflt);
 
 

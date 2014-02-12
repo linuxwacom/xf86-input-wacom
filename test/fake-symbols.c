@@ -92,7 +92,7 @@ xf86NameCmp(const char *s1, const char *s2)
 }
 
 _X_EXPORT char *
-xf86CheckStrOption(OPTTYPE optlist, const char *name, char *deflt)
+xf86CheckStrOption(OPTTYPE optlist, const char *name, CONST char *deflt)
 {
     return NULL;
 }
