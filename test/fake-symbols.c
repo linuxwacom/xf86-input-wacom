@@ -26,7 +26,7 @@ xf86WaitForInput (int fd, int timeout)
 }
 
 _X_EXPORT int
-xf86OpenSerial (pointer options)
+xf86OpenSerial (OPTTYPE options)
 {
     return 0;
 }
@@ -61,7 +61,7 @@ xf86AddNewOption(OPTTYPE head, const char *name, const char *val)
     return NULL;
 }
 
-_X_EXPORT void 
+_X_EXPORT void
 xf86OptionListFree(OPTTYPE opt)
 {
     return;
@@ -116,7 +116,7 @@ xf86RemoveEnabledDevice(InputInfoPtr pInfo)
 }
 
 _X_EXPORT Atom
-XIGetKnownProperty(char *name)
+XIGetKnownProperty(CONST char *name)
 {
     return None;
 }
@@ -222,12 +222,24 @@ InitButtonClassDeviceStruct(DeviceIntPtr dev, int numButtons, Atom* labels,
     return FALSE;
 }
 
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 14
+_X_EXPORT Bool
+InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label,
+                       int minval, int maxval, int resolution,
+                       int min_res, int max_res, int mode)
+{
+    return TRUE;
+}
+#else
 _X_EXPORT void
-InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label, int minval, int maxval,
-		       int resolution, int min_res, int max_res, int mode)
+InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label,
+                       int minval, int maxval, int resolution,
+                       int min_res, int max_res, int mode)
 {
     return;
 }
+#endif
 
 _X_EXPORT void
 xf86PostKeyboardEvent(DeviceIntPtr      device,
@@ -267,7 +279,14 @@ InitPtrFeedbackClassDeviceStruct(DeviceIntPtr dev, PtrCtrlProcPtr controlProc)
 _X_EXPORT int
 XIChangeDeviceProperty (DeviceIntPtr dev, Atom property, Atom type,
                         int format, int mode, unsigned long len,
-                        pointer value, Bool sendevent)
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 16
+                        const void *
+#elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 12
+                        const pointer
+#else
+                        pointer
+#endif
+                        value, Bool sendevent)
 {
     return 0;
 }
