@@ -247,7 +247,9 @@ test_initial_size(void)
 	WacomDeviceRec priv = {0};
 	WacomCommonRec common = {0};
 
-	int minx, maxx, miny, maxy, xres, yres;
+	/* pin to some numbers */
+	int xres = 1920, yres = 1600;
+	int minx, maxx = 2 * xres, miny, maxy = 2 * yres;
 
 	info.private = &priv;
 	priv.common = &common;
