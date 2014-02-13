@@ -558,4 +558,9 @@ _X_EXPORT void xf86PostTouchEvent(DeviceIntPtr dev, uint32_t touchid, uint16_t t
     uint32_t flags, const ValuatorMask *mask) {
 	return;
 }
+
+_X_EXPORT void
+xf86PrintChipsets(const char *drvname, const char *drvmsg, SymTabPtr chips)
+{
+}
 #endif
