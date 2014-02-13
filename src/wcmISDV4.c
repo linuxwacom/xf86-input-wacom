@@ -936,51 +936,53 @@ static int set_keybits_fujitsu(int id, unsigned long *keys)
 	return tablet_id;
 }
 
-typedef struct {
-	const char *pattern; /* sscanf matching pattern to extract ID */
-	const int vendor_id;
-	/* set the bits in the given keys array based on the id. return the
-	 * tablet_id or the closest guess anyway */
-	int (*set_bits)(int id, unsigned long* keys);
-} ISDV4ModelDesc;
+/**
+ * Match the device id to a vendor, return the vendor ID, key bits and
+ * tablet ID.
+ *
+ * @param name device id string
+ * @param common set key bits, vendor_id and tablet_id
+ */
+static Bool get_keys_vendor_tablet_id(char *name, WacomCommonPtr common)
+{
+	int id;
 
-static ISDV4ModelDesc isdv4_models[] = {
-	{ "WACf%x", WACOM_VENDOR_ID, set_keybits_wacom },
-	{ "FUJ%x", 0 /* FIXME: */, set_keybits_fujitsu },
-	{ NULL, 0 }
-};
+	if (sscanf(name, "WACf%x", &id) == 1) {
+		common->vendor_id = WACOM_VENDOR_ID;
+		common->tablet_id = set_keybits_wacom(id, common->wcmKeys);
+	} else if (sscanf(name, "FUJ%x", &id) == 1) {
+		common->vendor_id = 0;
+		common->tablet_id = set_keybits_fujitsu(id, common->wcmKeys);
+	} else
+		return FALSE;
+
+	return TRUE;
+}
 
 /**
- * Query the model number from the sysfs /sys/.../device/id file and return
- * the matching model and the ID for the model we found.
+ * Return the content of id file from sysfs:  /sys/.../device/id
  *
- * @param pInfo Used for debugging purposes only.
- * @param fd File descriptor to the serial device.
- * @param[out] id On success, returns the numeric ID for this device
- * according to the model-specific matching pattern.
- *
- * @return The model description for the matching device or NULL if no
- * matching one could be found.
+ * @param pInfo for fd
+ * @param buf[out] preallocated buffer to return the result in.
+ * @param buf_size: size of preallocated buffer
  */
-static ISDV4ModelDesc*
-model_from_sysfs(const InputInfoPtr pInfo, int fd, int *id)
+static Bool get_sysfs_id(InputInfoPtr pInfo, char *buf, int buf_size)
 {
-	WacomDevicePtr priv = pInfo->private;
-	ISDV4ModelDesc* model = NULL;
+	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	struct udev *udev = NULL;
 	struct udev_device *device = NULL;
 	struct stat st;
 	char *sysfs_path = NULL;
 	FILE *file = NULL;
+	Bool ret = FALSE;
 
-	fstat(fd, &st);
+	fstat(pInfo->fd, &st);
 
 	udev = udev_new();
 	device = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
 
 	if (!device)
 		goto out;
-
 	if (asprintf(&sysfs_path, "%s/device/id",
 		     udev_device_get_syspath(device)) == -1)
 		goto out;
@@ -990,25 +992,17 @@ model_from_sysfs(const InputInfoPtr pInfo, int fd, int *id)
 	file = fopen(sysfs_path, "r");
 	if (!file)
 		goto out;
-
-	model = isdv4_models;
-
-	while(model->pattern && fscanf(file, model->pattern, id) <= 0)
-		model++;
-
-	if (!model->pattern)
-		model = NULL;
-
-	DBG(8, priv, "sysfs check found %s:%d\n",
-	    (model) ? model->pattern : "<unknown>", *id);
-
+	if (!fread(buf, 1, buf_size, file))
+		goto out;
+	ret = TRUE;
 out:
 	udev_device_unref(device);
 	udev_unref(udev);
 	if (file)
 		fclose(file);
 	free(sysfs_path);
-	return model;
+
+	return ret;
 }
 
 /**
@@ -1024,43 +1018,31 @@ out:
  */
 static int isdv4ProbeKeys(InputInfoPtr pInfo)
 {
-	int id = 0;
-	int tablet_id = 0x90;
 	struct serial_struct tmp;
 	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr  common = priv->common;
-	ISDV4ModelDesc *model = isdv4_models;
 
 	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
 		return 0;
 
-	/* check device name for ID first */
-	while (model->pattern && sscanf(pInfo->name, model->pattern, &id) < 1)
-		model++;
-
-	/* grab id from sysfs/.../device/id */
-	if (!model->pattern)
-		model = model_from_sysfs(pInfo, pInfo->fd, &id);
-
-	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
+	common->tablet_id = 0x90;
 
 	/* default to penabled */
+	memset(common->wcmKeys, 0, sizeof(common->wcmKeys));
+
 	SETBIT(common->wcmKeys, BTN_TOOL_PEN);
 	SETBIT(common->wcmKeys, BTN_TOOL_RUBBER);
-
-	if (model)
-	{
-		common->vendor_id = model->vendor_id;
-		if (model->set_bits)
-			tablet_id = model->set_bits(id, common->wcmKeys);
-	}
 
 	/* Change to generic protocol to match USB MT format */
 	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
-	common->tablet_id = tablet_id;
+	if (!get_keys_vendor_tablet_id(pInfo->name, common)) {
+		char buf[15] = {0};
+		if (get_sysfs_id(pInfo, buf, sizeof(buf)))
+			get_keys_vendor_tablet_id(buf, common);
+	}
 
-	return tablet_id;
+	return common->tablet_id;
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
