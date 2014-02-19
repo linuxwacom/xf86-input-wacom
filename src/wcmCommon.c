@@ -1499,6 +1499,7 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 					common->serials->serial,
 					common->serials->name);
 
+			free(common->serials->name);
 			next = common->serials->next;
 			free(common->serials);
 			common->serials = next;
