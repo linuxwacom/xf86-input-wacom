@@ -152,7 +152,7 @@ test_rebase_pressure(void)
 	ds.pressure = 10;
 
 	/* Pressure in out-of-proximity means get new preloaded pressure */
-	priv.oldProximity = 0;
+	priv.oldState.proximity = 0;
 
 	/* make sure we don't touch priv, not really needed, the compiler should
 	 * honor the consts but... */
@@ -164,7 +164,7 @@ test_rebase_pressure(void)
 	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
 
 	/* Pressure in-proximity means rebase to new minimum */
-	priv.oldProximity = 1;
+	priv.oldState.proximity = 1;
 
 	base = priv;
 

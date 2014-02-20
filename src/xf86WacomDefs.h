@@ -206,6 +206,33 @@ struct _WacomModel
 #define STRIP_RIGHT_UP    2
 #define STRIP_RIGHT_DN    3
 
+/******************************************************************************
+ * WacomDeviceState
+ *****************************************************************************/
+struct _WacomDeviceState
+{
+	InputInfoPtr pInfo;
+	int device_id;		/* tool id reported from the physical device */
+	int device_type;
+	unsigned int serial_num;
+	int x;
+	int y;
+	int buttons;
+	int pressure;
+	int tiltx;
+	int tilty;
+	int stripx;
+	int stripy;
+	int rotation;
+	int abswheel;
+	int abswheel2;
+	int relwheel;
+	int distance;
+	int throttle;
+	int proximity;
+	int sample;	/* wraps every 24 days */
+};
+
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
@@ -250,22 +277,8 @@ struct _WacomDeviceRec
 	WacomCommonPtr common;  /* common info pointer */
 
 	/* state fields in device coordinates */
-	int oldX;               /* previous X position */
-	int oldY;               /* previous Y position */
-	int oldZ;               /* previous pressure */
-	int oldTiltX;           /* previous tilt in x direction */
-	int oldTiltY;           /* previous tilt in y direction */    
-	int oldWheel;           /* previous wheel value */    
-	int oldWheel2;          /* previous wheel2 value */
-	int oldRot;             /* previous rotation value */
-	int oldStripX;          /* previous left strip value */
-	int oldStripY;          /* previous right strip value */
-	int oldThrottle;        /* previous throttle value */
-	int oldButtons;         /* previous buttons state */
-	int oldProximity;       /* previous proximity */
+	struct _WacomDeviceState oldState; /* previous state information */
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
-	int old_device_id;	/* last in prox device id */
-	unsigned int old_serial;/* last in prox tool serial number */
 
 	/* JEJ - filters */
 	int pPressCurve[FILTER_PRESSURE_RES + 1]; /* pressure curve */
@@ -283,36 +296,8 @@ struct _WacomDeviceRec
 	OsTimerPtr touch_timer; /* timer used for touch switch property update */
 };
 
-/******************************************************************************
- * WacomDeviceState
- *****************************************************************************/
-
 #define MAX_SAMPLES	20
 #define DEFAULT_SAMPLES 4
-
-struct _WacomDeviceState
-{
-	InputInfoPtr pInfo;
-	int device_id;		/* tool id reported from the physical device */
-	int device_type;
-	unsigned int serial_num;
-	int x;
-	int y;
-	int buttons;
-	int pressure;
-	int tiltx;
-	int tilty;
-	int stripx;
-	int stripy;
-	int rotation;
-	int abswheel;
-	int abswheel2;
-	int relwheel;
-	int distance;
-	int throttle;
-	int proximity;
-	int sample;	/* wraps every 24 days */
-};
 
 struct _WacomFilterState
 {

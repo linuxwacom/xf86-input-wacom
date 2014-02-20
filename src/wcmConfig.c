@@ -170,7 +170,7 @@ wcmSetType(InputInfoPtr pInfo, const char *type)
 		goto invalid;
 
 	/* Set the device id of the "last seen" device on this tool */
-	priv->old_device_id = wcmGetPhyDeviceID(priv);
+	priv->oldState.device_id = wcmGetPhyDeviceID(priv);
 
 	if (!priv->tool)
 		return 0;

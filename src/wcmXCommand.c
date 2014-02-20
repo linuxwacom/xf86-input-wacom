@@ -242,8 +242,8 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	}
 
 	values[0] = common->tablet_id;
-	values[1] = priv->old_serial;
-	values[2] = priv->old_device_id;
+	values[1] = priv->oldState.serial_num;
+	values[2] = priv->oldState.device_id;
 	values[3] = priv->cur_serial;
 	values[4] = priv->cur_device_id;
 	prop_serials = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIALIDS, XA_INTEGER, 32, 5, values);
@@ -965,12 +965,12 @@ int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		uint32_t values[5];
 
 		values[0] = common->tablet_id;
-		values[1] = priv->old_serial;
-		values[2] = priv->old_device_id;
+		values[1] = priv->oldState.serial_num;
+		values[2] = priv->oldState.device_id;
 		values[3] = priv->cur_serial;
 		values[4] = priv->cur_device_id;
 
-		DBG(10, priv, "Update to serial: %d\n", priv->old_serial);
+		DBG(10, priv, "Update to serial: %d\n", priv->oldState.serial_num);
 
 		return XIChangeDeviceProperty(dev, property, XA_INTEGER, 32,
 					      PropModeReplace, 5,
