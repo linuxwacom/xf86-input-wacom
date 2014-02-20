@@ -274,8 +274,6 @@ struct _WacomDeviceRec
 	/* state fields in device coordinates */
 	int currentX;           /* current X position */
 	int currentY;           /* current Y position */
-	int currentSX;          /* current screen X position in screen coords */
-	int currentSY;          /* current screen Y position in screen coords */
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
@@ -292,12 +290,6 @@ struct _WacomDeviceRec
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
 	int old_device_id;	/* last in prox device id */
 	unsigned int old_serial;/* last in prox tool serial number */
-	int devReverseCount;	/* Relative ReverseConvert called twice each movement*/
-
-	/* JEJ - throttle */
-	int throttleStart;      /* time in ticks for last wheel movement */
-	int throttleLimit;      /* time in ticks for next wheel movement */
-	int throttleValue;      /* current throttle value */
 
 	/* JEJ - filters */
 	int pPressCurve[FILTER_PRESSURE_RES + 1]; /* pressure curve */

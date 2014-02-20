@@ -794,7 +794,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		priv->oldStripY = 0;
 		priv->oldRot = 0;
 		priv->oldThrottle = 0;
-		priv->devReverseCount = 0;
 		priv->old_serial = serial;
 		priv->old_device_id = id;
 		wcmUpdateSerial(pInfo, 0, 0);

@@ -88,9 +88,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->strip_default[STRIP_RIGHT_DN] = 5;
 	priv->naxes = 6;			/* Default number of axes */
 
-	/* JEJ - throttle sampling code */
-	priv->throttleLimit = -1;
-
 	common->wcmDevices = priv;
 
 	/* tool */
