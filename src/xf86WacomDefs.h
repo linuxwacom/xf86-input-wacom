@@ -112,7 +112,6 @@ typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
 typedef struct _WacomFilterState WacomFilterState, *WacomFilterStatePtr;
 typedef struct _WacomDeviceClass WacomDeviceClass, *WacomDeviceClassPtr;
 typedef struct _WacomTool WacomTool, *WacomToolPtr;
-typedef struct _WacomToolArea WacomToolArea, *WacomToolAreaPtr;
 
 /******************************************************************************
  * WacomModel - model-specific device capabilities

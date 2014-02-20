@@ -127,10 +127,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceStat
 /* dispatches data to XInput event system */
 void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds);
 
-/* generic area check for xf86Wacom.c, wcmCommon.c and wcmXCommand.c */
-Bool wcmPointInArea(WacomToolAreaPtr area, int x, int y);
-Bool wcmAreaListOverlap(WacomToolAreaPtr area, WacomToolAreaPtr list);
-
 /* calculate the proper tablet to screen mapping factor */
 void wcmMappingFactor(InputInfoPtr pInfo);
 
