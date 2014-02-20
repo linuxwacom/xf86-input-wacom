@@ -485,16 +485,15 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 }
 
 static void wcmUpdateOldState(const InputInfoPtr pInfo,
-			      const WacomDeviceState *ds)
+			      const WacomDeviceState *ds, int currentX, int currentY)
 {
 	const WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	priv->oldWheel = ds->abswheel;
 	priv->oldWheel2 = ds->abswheel2;
 	priv->oldButtons = ds->buttons;
-
-	priv->oldX = priv->currentX;
-	priv->oldY = priv->currentY;
+	priv->oldX = currentX;
+	priv->oldY = currentY;
 	priv->oldZ = ds->pressure;
 	priv->oldTiltX = ds->tiltx;
 	priv->oldTiltY = ds->tilty;
@@ -695,13 +694,10 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		x, y, z, v3, v4, v5, v6, id, serial,
 		is_button ? "true" : "false", ds->buttons);
 
-	priv->currentX = x;
-	priv->currentY = y;
-
 	/* update the old records */
 	if(!priv->oldProximity)
 	{
-		wcmUpdateOldState(pInfo, ds);
+		wcmUpdateOldState(pInfo, ds, x, y);
 		priv->oldButtons = 0;
 	}
 
@@ -723,7 +719,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 
 	priv->oldProximity = ds->proximity;
 	if (ds->proximity)
-		wcmUpdateOldState(pInfo, ds);
+		wcmUpdateOldState(pInfo, ds, x, y);
 	else
 	{
 		priv->oldButtons = 0;

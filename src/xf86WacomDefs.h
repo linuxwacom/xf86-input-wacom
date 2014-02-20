@@ -250,8 +250,6 @@ struct _WacomDeviceRec
 	WacomCommonPtr common;  /* common info pointer */
 
 	/* state fields in device coordinates */
-	int currentX;           /* current X position */
-	int currentY;           /* current Y position */
 	int oldX;               /* previous X position */
 	int oldY;               /* previous Y position */
 	int oldZ;               /* previous pressure */
