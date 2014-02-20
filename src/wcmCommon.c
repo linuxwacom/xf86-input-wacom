@@ -489,18 +489,9 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 {
 	const WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
-	priv->oldState.abswheel = ds->abswheel;
-	priv->oldState.abswheel2 = ds->abswheel2;
-	priv->oldState.buttons = ds->buttons;
+	priv->oldState = *ds;
 	priv->oldState.x = currentX;
 	priv->oldState.y = currentY;
-	priv->oldState.pressure = ds->pressure;
-	priv->oldState.tiltx = ds->tilty;
-	priv->oldState.tilty = ds->tiltx;
-	priv->oldState.stripx = ds->stripx;
-	priv->oldState.stripy = ds->stripy;
-	priv->oldState.rotation = ds->rotation;
-	priv->oldState.throttle = ds->throttle;
 }
 
 static void
@@ -722,18 +713,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		wcmUpdateOldState(pInfo, ds, x, y);
 	else
 	{
-		priv->oldState.buttons = 0;
-		priv->oldState.abswheel = MAX_PAD_RING + 1;
-		priv->oldState.abswheel2 = MAX_PAD_RING + 1;
-		priv->oldState.x = 0;
-		priv->oldState.y = 0;
-		priv->oldState.pressure = 0;
-		priv->oldState.tiltx = 0;
-		priv->oldState.tilty = 0;
-		priv->oldState.stripx = 0;
-		priv->oldState.stripy = 0;
-		priv->oldState.rotation = 0;
-		priv->oldState.throttle = 0;
+		priv->oldState = OUTPROX_STATE;
 		priv->oldState.serial_num = serial;
 		priv->oldState.device_id = id;
 		wcmUpdateSerial(pInfo, 0, 0);

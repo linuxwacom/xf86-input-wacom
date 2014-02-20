@@ -233,6 +233,11 @@ struct _WacomDeviceState
 	int sample;	/* wraps every 24 days */
 };
 
+static const struct _WacomDeviceState OUTPROX_STATE = {
+  .abswheel = MAX_PAD_RING + 1,
+  .abswheel2 = MAX_PAD_RING + 1
+};
+
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
