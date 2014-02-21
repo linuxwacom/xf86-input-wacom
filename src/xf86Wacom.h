@@ -43,6 +43,9 @@
 #define LogMessageVerbSigSafe xf86MsgVerb
 #endif
 
+#ifndef SW_MUTE_DEVICE
+#define SW_MUTE_DEVICE	0x0e
+#endif
 
 /******************************************************************************
  * Debugging support
@@ -172,6 +175,7 @@ extern int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
 extern void wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id);
+extern void wcmUpdateHWTouchProperty(WacomDevicePtr priv, int touch);
 
 /* Utility functions */
 extern Bool is_absolute(InputInfoPtr pInfo);

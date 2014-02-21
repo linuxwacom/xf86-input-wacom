@@ -311,6 +311,7 @@ struct _WacomDeviceRec
 
 	OsTimerPtr serial_timer; /* timer used for serial number property update */
 	OsTimerPtr tap_timer;   /* timer used for tap timing */
+	OsTimerPtr touch_timer; /* timer used for touch switch property update */
 };
 
 /******************************************************************************
@@ -432,6 +433,8 @@ struct _WacomCommonRec
 	WacomDevicePtr wcmTouchDevice; /* The pointer for pen to access the
 					  touch tool of the same device id */
 	Bool wcmPenInProx;      /* Keep pen in-prox state for touch tool */
+	Bool wcmHasHWTouchSwitch;    /* Tablet has a touch on/off switch */
+	int wcmHWTouchSwitchState;   /* touch event disable/enabled by hardware switch */
 
 	/* These values are in tablet coordinates */
 	int wcmMaxX;                 /* tablet max X value */

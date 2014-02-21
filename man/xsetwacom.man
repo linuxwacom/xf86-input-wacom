@@ -209,6 +209,12 @@ If on, touch events are reported to userland, i.e., system cursor moves when
 user touches the tablet. If off, touch events are ignored. Default: on for
 devices that support touch; off for all other models.
 .TP
+\fBHWTouchSwitchState\fR on|off
+If on, it means touch switch is turned off. That is, touch events are reported
+to userland. If off, touch switch is turned on, i.e., touch events are ignored.
+This is a read-only parameter. Initial touch switch state is retrieved from the
+kernel when X driver starts.
+.TP
 \fBCursorProximity\fR distance
 sets the max distance from tablet to stop reporting movement for cursor in
 relative mode. Default for Intuos series is 10, for Graphire series (including

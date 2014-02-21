@@ -92,6 +92,7 @@ Atom prop_cursorprox;
 Atom prop_threshold;
 Atom prop_suppress;
 Atom prop_touch;
+Atom prop_hardware_touch;
 Atom prop_gesture;
 Atom prop_gesture_param;
 Atom prop_hover;
@@ -263,6 +264,11 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 
 	values[0] = common->wcmTouch;
 	prop_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_TOUCH, XA_INTEGER, 8, 1, values);
+
+	if (common->wcmHasHWTouchSwitch && IsTouch(priv)) {
+		values[0] = common->wcmHWTouchSwitchState;
+		prop_hardware_touch = InitWcmAtom(pInfo->dev, WACOM_PROP_HARDWARE_TOUCH, XA_INTEGER, 8, 1, values);
+	}
 
 	if (IsStylus(priv)) {
 		values[0] = !common->wcmTPCButton;
@@ -601,6 +607,56 @@ void wcmUpdateRotationProperty(WacomDevicePtr priv)
 	}
 }
 
+static CARD32
+touchTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
+{
+	InputInfoPtr pInfo = arg;
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+	XIPropertyValuePtr prop;
+	CARD8 prop_value;
+	int sigstate;
+	int rc;
+
+	sigstate = xf86BlockSIGIO();
+
+	rc = XIGetDeviceProperty(pInfo->dev, prop_hardware_touch, &prop);
+	if (rc != Success || prop->format != 8 || prop->size != 1)
+	{
+		xf86Msg(X_ERROR, "%s: Failed to update hardware touch state.\n",
+			pInfo->name);
+		return 0;
+	}
+
+	prop_value = common->wcmHWTouchSwitchState;
+	XIChangeDeviceProperty(pInfo->dev, prop_hardware_touch, XA_INTEGER,
+			       prop->format, PropModeReplace,
+			       prop->size, &prop_value, TRUE);
+
+	xf86UnblockSIGIO(sigstate);
+
+	return 0;
+}
+
+/**
+ * Update HW touch property when its state is changed by touch switch
+ */
+void
+wcmUpdateHWTouchProperty(WacomDevicePtr priv, int hw_touch)
+{
+	WacomCommonPtr common = priv->common;
+
+	if (hw_touch == common->wcmHWTouchSwitchState)
+		return;
+
+	common->wcmHWTouchSwitchState = hw_touch;
+
+	/* This function is called during SIGIO. Schedule timer for property
+	 * event delivery outside of signal handler. */
+	priv->touch_timer = TimerSet(priv->touch_timer, 0 /* reltime */,
+				      1, touchTimerFunc, priv->pInfo);
+}
+
 /**
  * Only allow deletion of a property if it is not being used by any of the
  * button actions.
@@ -781,6 +837,19 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly && common->wcmTouch != values[0])
 			common->wcmTouch = values[0];
+	} else if (property == prop_hardware_touch)
+	{
+		if (common->wcmHasHWTouchSwitch)
+		{
+			/* If we get here from wcmUpdateHWTouchProperty, we know
+			 * the wcmHWTouchSwitchState has been set internally
+			 * already, so we can reply with success. */
+			if (prop->size == 1 && prop->format == 8)
+				if (((CARD8*)prop->data)[0] == common->wcmHWTouchSwitchState)
+					return Success;
+		}
+
+		return BadValue; /* read-only */
 	} else if (property == prop_gesture)
 	{
 		CARD8 *values = (CARD8*)prop->data;

@@ -78,6 +78,9 @@
 /* BOOL, 1 value */
 #define WACOM_PROP_TOUCH "Wacom Enable Touch"
 
+/* BOOL, 1 value, read-only */
+#define WACOM_PROP_HARDWARE_TOUCH "Wacom Hardware Touch Switch"
+
 /* 8 bit, 1 values */
 #define WACOM_PROP_ENABLE_GESTURE "Wacom Enable Touch Gesture"
 

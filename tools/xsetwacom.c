@@ -204,6 +204,15 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
+		.name = "HWTouchSwitchState",
+		.desc = "Touch events turned on/off by hardware switch. ",
+		.prop_name = WACOM_PROP_HARDWARE_TOUCH,
+		.prop_format = 8,
+		.prop_offset = 0,
+		.arg_count = 1,
+		.prop_flags = PROP_FLAG_READONLY | PROP_FLAG_BOOLEAN
+	},
+	{
 		.name = "Gesture",
 		.desc = "Turns on/off multi-touch gesture events "
 		"(default is on). ",
@@ -2791,7 +2800,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 37);
+	assert(ARRAY_SIZE(parameters) == 38);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 

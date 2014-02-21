@@ -518,6 +518,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	struct input_absinfo absinfo;
 	unsigned long ev[NBITS(EV_MAX)] = {0};
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
+	unsigned long sw[NBITS(SW_MAX)] = {0};
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
 	wcmUSBData* private = common->private;
@@ -743,6 +744,26 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	/* A generic protocol device does not report ABS_MISC event */
 	if (!ISBITSET(abs, ABS_MISC))
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
+
+	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
+	{
+		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to ioctl "
+			"sw bits.\n", pInfo->name);
+		return 0;
+	}
+	else if (ISBITSET(sw, SW_MUTE_DEVICE))
+	{
+		common->wcmHasHWTouchSwitch = TRUE;
+
+		memset(sw, 0, sizeof(sw));
+
+		ioctl(pInfo->fd, EVIOCGSW(sizeof(sw)), sw);
+
+		if (ISBITSET(sw, SW_MUTE_DEVICE))
+			common->wcmHWTouchSwitchState = 0;
+		else
+			common->wcmHWTouchSwitchState = 1;
+	}
 
 	usbWcmInitPadState(pInfo);
 
@@ -1685,6 +1706,22 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		/* Check for events to be ignored and skip them up front. */
 		if (usbFilterEvent(common, event))
 			continue;
+
+		if (common->wcmHasHWTouchSwitch)
+		{
+			if ((event->type == EV_SW) &&
+			    (event->code == SW_MUTE_DEVICE))
+			{
+				/* touch is disabled when SW_MUTE_DEVICE is set */
+				int touch_enabled = (event->value == 0);
+
+				if (touch_enabled != common->wcmHWTouchSwitchState)
+				/* this property is only set for touch device */
+					wcmUpdateHWTouchProperty(
+						common->wcmTouchDevice,
+						touch_enabled);
+			}
+		}
 
 		/* absolute events */
 		if (event->type == EV_ABS)
