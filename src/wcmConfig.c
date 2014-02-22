@@ -464,8 +464,10 @@ wcmInitModel(InputInfoPtr pInfo)
 }
 
 /**
- * Link the touch tool to the pen of the same device
- * so we can arbitrate the events when posting them.
+ * Lookup to find the associated pen and touch for the same device.
+ * Store touch tool in wcmTouchDevice for pen and touch, respectively,
+ * of the same device. Update TabletFeature to indicate it is a hybrid
+ * of touch and pen.
  *
  * @return True if found a touch tool for hybrid devices.
  * false otherwise.
@@ -490,20 +492,29 @@ static Bool wcmLinkTouchAndPen(InputInfoPtr pInfo)
 		DBG(4, priv, "Considering link with %s...\n", tmppriv->name);
 
 		/* already linked devices */
-		if (tmpcommon->wcmTouchDevice)
+		if (tmpcommon->wcmTouchDevice && IsTablet(tmppriv))
 		{
 			DBG(4, priv, "A link is already in place. Ignoring.\n");
 			continue;
 		}
 
-		if (IsTouch(tmppriv) && IsTablet(priv))
+		if (IsTouch(tmppriv))
+		{
 			common->wcmTouchDevice = tmppriv;
-		else if (IsTouch(priv) && IsTablet(tmppriv))
+			tmpcommon->wcmTouchDevice = tmppriv;
+		}
+		else if (IsTouch(priv))
+		{
+			common->wcmTouchDevice = priv;
 			tmpcommon->wcmTouchDevice = priv;
+		}
 		else
+		{
 			DBG(4, priv, "A link is not necessary. Ignoring.\n");
+		}
 
-		if (common->wcmTouchDevice || tmpcommon->wcmTouchDevice)
+		if ((common->wcmTouchDevice && IsTablet(priv)) ||
+			(tmpcommon->wcmTouchDevice && IsTablet(tmppriv)))
 		{
 			TabletSetFeature(common, WCM_PENTOUCH);
 			TabletSetFeature(tmpcommon, WCM_PENTOUCH);
