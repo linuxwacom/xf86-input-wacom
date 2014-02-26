@@ -615,13 +615,6 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 		 */
 		if (!is_absolute(pInfo))
 			valuators[0] *= priv->factorY / priv->factorX;
-		else
-		{
-			/* Padding virtual values */
-			wcmVirtualTabletPadding(pInfo);
-			valuators[0] += priv->leftPadding;
-			valuators[1] += priv->topPadding;
-		}
 
 		/* don't emit proximity events if device does not support proximity */
 		if ((pInfo->dev->proximity && !priv->oldProximity))

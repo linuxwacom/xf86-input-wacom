@@ -90,23 +90,6 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 }
 
 /*****************************************************************************
- * wcmVirtualTabletPadding(InputInfoPtr pInfo)
- ****************************************************************************/
-
-void wcmVirtualTabletPadding(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
-	priv->leftPadding = 0;
-	priv->topPadding = 0;
-
-	if (!is_absolute(pInfo)) return;
-
-	DBG(10, priv, "x=%d y=%d \n", priv->leftPadding, priv->topPadding);
-	return;
-}
-
-/*****************************************************************************
  * wcmInitialToolSize --
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/

@@ -245,8 +245,6 @@ struct _WacomDeviceRec
 	unsigned int serial;	/* device serial number this device takes (if 0, any serial is ok) */
 	unsigned int cur_serial; /* current serial in prox */
 	int cur_device_id;	/* current device ID in prox */
-	int leftPadding;	/* left padding for virtual tablet in device coordinates*/
-	int topPadding;		/* top padding for virtual tablet in device coordinates*/
 
 	/* button mapping information
 	 *

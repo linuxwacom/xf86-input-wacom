@@ -152,7 +152,6 @@ extern void wcmSoftOutEvent(InputInfoPtr pInfo);
 
 extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
 extern void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y);
-extern void wcmVirtualTabletPadding(InputInfoPtr pInfo);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
