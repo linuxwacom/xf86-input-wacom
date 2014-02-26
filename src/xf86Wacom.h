@@ -25,9 +25,6 @@
 
 #include "Xwacom.h"
 
-/* max number of input events to read in one read call */
-#define MAX_EVENTS 50
-
 #define inline __inline__
 #include <xf86.h>
 #include <string.h>
@@ -144,21 +141,17 @@ extern void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename);
 extern Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent);
 extern Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent);
 extern int wcmParseSerials(InputInfoPtr pinfo);
-extern void wcmInitialCoordinates(InputInfoPtr pInfo, int axes);
-extern void wcmInitialScreens(InputInfoPtr pInfo);
 
 extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 
 /* run-time modifications */
-extern void wcmChangeScreen(InputInfoPtr pInfo, int value);
 extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 extern void wcmSoftOutEvent(InputInfoPtr pInfo);
 
 extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
 extern void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y);
-extern void wcmVirtualTabletSize(InputInfoPtr pInfo);
 extern void wcmVirtualTabletPadding(InputInfoPtr pInfo);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
