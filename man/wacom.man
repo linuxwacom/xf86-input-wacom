@@ -257,6 +257,16 @@ recognized as tap. A press and release event shorter than
 generates button press and release events. Presses longer than
 .B TapTime
 do not generate button events, only motion events.
+.TP 4
+.B Option \fI"PressureRecalibration"\fP \fI"bool"\fP
+Allows to disable pressure recalibration. Default: true.
+If the initial pressure of a device is != 0 the driver recalibrates
+the pressure range. This is to account for worn out devices.
+The downside is that when the user hits the tablet very hard the
+initial pressure reading may be unequal to zero even for a perfectly
+good pen. If the consecutive pressure readings are not higher than
+the initial pressure by a threshold no button event will be generated.
+This option allows to disable the recalibration.
 .RE
 .SH "TOUCH GESTURES"
 .SS Single finger (1FG)

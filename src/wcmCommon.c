@@ -1071,12 +1071,15 @@ normalizePressure(const WacomDevicePtr priv, const int raw_pressure)
 	WacomCommonPtr common = priv->common;
 	double pressure;
 	int p = raw_pressure;
-	int range_left;
+	int range_left = common->wcmMaxZ;
 
+	if (common->wcmPressureRecalibration) {
+		p -= priv->minPressure;
+		range_left -= priv->minPressure;
+	}
 	/* normalize pressure to 0..FILTER_PRESSURE_RES */
-	range_left = common->wcmMaxZ - priv->minPressure;
 	if (range_left >= 1)
-		pressure = xf86ScaleAxis(p - priv->minPressure,
+		pressure = xf86ScaleAxis(p,
 					 FILTER_PRESSURE_RES, 0,
 					 range_left,
 					 0);
@@ -1519,7 +1522,7 @@ WacomCommonPtr wcmNewCommon(void)
 			/* transmit position if increment is superior */
 	common->wcmRawSample = DEFAULT_SAMPLES;
 			/* number of raw data to be used to for filtering */
-
+	common->wcmPressureRecalibration = 1;
 	return common;
 }
 

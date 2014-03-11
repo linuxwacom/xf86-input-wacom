@@ -965,6 +965,12 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			common->wcmGestureParameters.wcmTapTime);
 	}
 
+	if (IsStylus(priv) || IsEraser(priv)) {
+		common->wcmPressureRecalibration
+			= xf86SetBoolOption(pInfo->options,
+					    "PressureRecalibration", 1);
+	}
+
 	/* Swap stylus buttons 2 and 3 for Tablet PCs */
 	if (TabletHasFeature(common, WCM_TPC) && IsStylus(priv))
 	{

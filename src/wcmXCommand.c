@@ -99,6 +99,7 @@ Atom prop_hover;
 Atom prop_tooltype;
 Atom prop_btnactions;
 Atom prop_product_id;
+Atom prop_pressure_recal;
 #ifdef DEBUG
 Atom prop_debuglevels;
 #endif
@@ -304,6 +305,13 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32, 6, values);
 		for (i = 0; i < 6; i++)
 			wcmResetWheelAction(pInfo, i);
+	}
+
+	if (IsStylus(priv) || IsEraser(priv)) {
+		values[0] = common->wcmPressureRecalibration;
+		prop_pressure_recal = InitWcmAtom(pInfo->dev,
+						  WACOM_PROP_PRESSURE_RECAL,
+						  XA_INTEGER, 8, 1, values);
 	}
 
 	values[0] = common->vendor_id;
@@ -917,6 +925,21 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	{
 		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
 		return wcmSetActionsProperty(dev, property, prop, checkonly, nbuttons, priv->btn_actions, priv->keys);
+	} else if (property == prop_pressure_recal)
+	{
+		CARD8 *values = (CARD8*)prop->data;
+
+		if (prop->size != 1 || prop->format != 8)
+			return BadValue;
+
+		if ((values[0] != 0) && (values[0] != 1))
+			return BadValue;
+
+		if (!IsStylus(priv) && !IsEraser(priv))
+			return BadMatch;
+
+		if (!checkonly)
+			common->wcmPressureRecalibration = values[0];
 	} else
 	{
 		Atom *handler = NULL;

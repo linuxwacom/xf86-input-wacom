@@ -442,6 +442,15 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_READONLY
 	},
 	{
+		.name = "PressureRecalibration",
+		.desc = "Turns on/off Tablet pressure recalibration",
+		.prop_name = WACOM_PROP_PRESSURE_RECAL,
+		.prop_format = 8,
+		.prop_offset = 0,
+		.arg_count = 1,
+		.prop_flags = PROP_FLAG_BOOLEAN
+	},
+	{
 		.name = "MapToOutput",
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,

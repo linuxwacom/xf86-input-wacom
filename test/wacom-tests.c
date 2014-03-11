@@ -185,6 +185,7 @@ test_normalize_pressure(void)
 	priv.common = &common;
 	priv.pInfo = &pInfo;
 	pInfo.name = strdupa("Wacom test device");
+	common.wcmPressureRecalibration = 1;
 
 	priv.minPressure = 0;
 

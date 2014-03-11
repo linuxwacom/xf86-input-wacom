@@ -233,6 +233,15 @@ code paths that are specific to a given tool. A higher level means more
 fine-grained debug messages, a level of 0 turns debugging off for this
 tool. Requires the driver to be built with debugging enabled. See also
 TabletDebugLevel.  Default:  0, range of 0 to 12.
+.TP
+\fBPressureRecalibration\fR on|off
+If the initial pressure of a device is != 0 the driver recalibrates
+the pressure range. This is to account for worn out devices.
+The downside is that when the user hits the tablet very hard the
+initial pressure reading may be unequal to zero even for a perfectly
+good pen. If the consecutive pressure readings are not higher than
+the initial pressure by a threshold no button event will be generated.
+This option allows to disable the recalibration.  Default:  on
 
 
 .SH "AUTHORS"

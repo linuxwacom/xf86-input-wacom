@@ -106,6 +106,10 @@
  */
 #define WACOM_PROP_DEBUGLEVELS "Wacom Debug Levels"
 
+/* BOOL, 1 value,
+   TRUE == pressure renormalization enabled, FALSE == pressure renormalization disabled
+*/
+#define WACOM_PROP_PRESSURE_RECAL "Wacom Pressure Recalibration"
 
 /* The following are tool types used by the driver in WACOM_PROP_TOOL_TYPE
  * or in the 'type' field for XI1 clients. Clients may check for one of
