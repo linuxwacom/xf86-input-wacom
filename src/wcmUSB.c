@@ -1531,11 +1531,11 @@ static int toolTypeToDeviceType(WacomCommonPtr common, int type, int code)
  * @param[in] common
  * @return            A tool type (e.g. STYLUS_ID) associated with the in-prox tool
  */
-static int refreshDeviceType(WacomCommonPtr common)
+static int refreshDeviceType(WacomCommonPtr common, int fd)
 {
 	int device_type = 0;
 	unsigned long keys[NBITS(KEY_MAX)] = { 0 };
-	int rc = ioctl(common->fd, EVIOCGKEY(sizeof(keys)), keys);
+	int rc = ioctl(fd, EVIOCGKEY(sizeof(keys)), keys);
 	int i;
 
 	if (rc == -1) {
@@ -1569,7 +1569,8 @@ static int refreshDeviceType(WacomCommonPtr common)
  *         if last_device_type is not a tool. If all else fails, '0'
  *         is returned.
  */
-static int usbInitToolType(WacomCommonPtr common, const struct input_event *event_ptr,
+static int usbInitToolType(WacomCommonPtr common, int fd,
+                           const struct input_event *event_ptr,
                            int nevents, int last_device_type)
 {
 	int i, device_type = 0;
@@ -1583,7 +1584,7 @@ static int usbInitToolType(WacomCommonPtr common, const struct input_event *even
 		device_type = last_device_type;
 
 	if (!device_type)
-		device_type = refreshDeviceType(common);
+		device_type = refreshDeviceType(common, fd);
 
 	return device_type;
 }
@@ -1617,7 +1618,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
-	private->wcmDeviceType = usbInitToolType(common,
+	private->wcmDeviceType = usbInitToolType(common, pInfo->fd,
 	                                         private->wcmEvents,
 	                                         private->wcmEventCnt,
 	                                         dslast.device_type);
