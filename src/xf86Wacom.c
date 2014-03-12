@@ -578,6 +578,10 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 
 	DBG(10, priv, "\n");
 
+	/* If fd management is done by the server, skip common fd handling */
+	if (pInfo->flags & XI86_SERVER_FD)
+		goto got_fd;
+
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
@@ -610,6 +614,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		common->fd_refs++;
 	}
 
+got_fd:
 	/* start the tablet data */
 	if (model->Start && (model->Start(pInfo) != Success))
 		return !Success;
@@ -753,6 +758,10 @@ static void wcmDevClose(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+
+	/* If fd management is done by the server, skip common fd handling */
+	if (pInfo->flags & XI86_SERVER_FD)
+		return;
 
 	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
 

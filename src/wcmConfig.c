@@ -634,7 +634,10 @@ InputDriverRec WACOM =
 	wcmUninit, /* un-init */
 	NULL,          /* module */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-	default_options
+	default_options,
+#endif
+#ifdef XI86_DRV_CAP_SERVER_FD
+	XI86_DRV_CAP_SERVER_FD,
 #endif
 };
 
