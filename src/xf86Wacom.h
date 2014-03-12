@@ -106,6 +106,9 @@ struct _WacomModule
 /* Open the device with the right serial parmeters */
 extern Bool wcmOpen(InputInfoPtr pInfo);
 
+/* Close the device */
+extern void wcmClose(InputInfoPtr pInfo);
+
 /* device autoprobing */
 char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 

@@ -55,6 +55,10 @@
 #define XIGetKnownProperty(prop) 0
 #endif
 
+#ifndef XI86_SERVER_FD
+#define XI86_SERVER_FD 0x20
+#endif
+
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static int wcmReady(InputInfoPtr pInfo);
 static void wcmDevReadInput(InputInfoPtr pInfo);
@@ -544,6 +548,22 @@ Bool wcmOpen(InputInfoPtr pInfo)
 }
 
 /*****************************************************************************
+ * wcmClose --
+ ****************************************************************************/
+
+void wcmClose(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+
+	DBG(1, priv, "closing device file\n");
+
+	if (pInfo->fd > -1 && !(pInfo->flags & XI86_SERVER_FD)) {
+		xf86CloseSerial(pInfo->fd);
+		pInfo->fd = -1;
+	}
+}
+
+/*****************************************************************************
  * wcmDevOpen --
  *    Open the physical device and init information structs.
  ****************************************************************************/
@@ -564,12 +584,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		if ((wcmOpen (pInfo) != Success) || !common->device_path)
 		{
 			DBG(1, priv, "Failed to open device (fd=%d)\n", pInfo->fd);
-			if (pInfo->fd >= 0)
-			{
-				DBG(1, priv, "Closing device\n");
-				xf86CloseSerial(pInfo->fd);
-			}
-			pInfo->fd = -1;
+			wcmClose(pInfo);
 			return FALSE;
 		}
 
@@ -745,10 +760,7 @@ static void wcmDevClose(InputInfoPtr pInfo)
 	{
 		pInfo->fd = -1;
 		if (!--common->fd_refs)
-		{
-			DBG(1, common, "Closing device; uninitializing.\n");
-			xf86CloseSerial (common->fd);
-		}
+			wcmClose(pInfo);
 	}
 }
 

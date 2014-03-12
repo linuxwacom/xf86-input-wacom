@@ -601,11 +601,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		wcmHotplugOthers(pInfo, oldname);
 	}
 
-	if (pInfo->fd != -1)
-	{
-		close(pInfo->fd);
-		pInfo->fd = -1;
-	}
+	wcmClose(pInfo);
 
 	/* only link them once per port. We need to try for both tablet tool
 	 * and touch since we do not know which tool will be added first.
@@ -623,12 +619,7 @@ SetupProc_fail:
 	if (common && priv)
 		common->wcmDevices = priv->next;
 
-	if (pInfo->fd != -1)
-	{
-		close(pInfo->fd);
-		pInfo->fd = -1;
-	}
-
+	wcmClose(pInfo);
 	free(type);
 	free(oldname);
 	return BadMatch;
