@@ -104,7 +104,6 @@ int set_serial_attr(int fd, unsigned int baud)
 	t.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	t.c_cflag &= ~(CSIZE|PARENB);
 	t.c_cflag |= CS8|CLOCAL;
-	tcsetattr(fd, TCSANOW, &t);
 
 	/* wacom-specific */
 	t.c_cflag &= ~(CSTOPB); /* stopbits 1 */
