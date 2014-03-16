@@ -74,7 +74,7 @@ int open_device(const char *path)
 	struct serial_struct ser;
 
 	TRACE("Opening device '%s'.\n", path);
-	fd = open(path, O_RDWR);
+	fd = open(path, O_RDWR | O_NOCTTY);
 
 	if (fd < 1)
 		perror("Failed to open device file");
