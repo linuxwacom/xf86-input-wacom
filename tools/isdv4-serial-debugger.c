@@ -68,17 +68,16 @@ static void version(void)
 			     PACKAGE_VERSION_PATCHLEVEL);
 }
 
-static int open_device(char *path)
+int open_device(const char *path)
 {
-	int fd, rc;
+	int fd;
 	struct serial_struct ser;
-	struct termios t;
 
 	TRACE("Opening device '%s'.\n", path);
 	fd = open(path, O_RDWR);
 
 	if (fd < 1)
-		perror("Failed to open device file.");
+		perror("Failed to open device file");
 
 	if (ioctl(fd, TIOCGSERIAL, &ser) == -1)
 	{
@@ -88,14 +87,16 @@ static int open_device(char *path)
 		goto out;
 	}
 
-	rc = tcgetattr(fd, &t);
-	if (rc == -1)
-	{
-		perror("Failed to get serial attributes.");
-		close(fd);
-		fd = -1;
-		goto out;
-	}
+out:
+        return fd;
+}
+
+int set_serial_attr(int fd, unsigned int baud)
+{
+	struct termios t;
+
+	if (tcgetattr(fd, &t) == -1)
+                memset(&t, 0, sizeof(t));
 
 	/* defaults from xf86OpenSerial */
 	t.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
@@ -110,21 +111,9 @@ static int open_device(char *path)
 	t.c_cflag &= ~(CSIZE); /* databits 8 */
 	t.c_cflag |= (CS8); /* databits 8 */
 	t.c_cflag &= ~(PARENB); /* parity none */
-	t.c_cc[VMIN] = 1; 	/* vmin 1 */
+	t.c_cc[VMIN] = 1;	/* vmin 1 */
 	t.c_cc[VTIME] = 10;	/* vtime 10 */
-	t.c_iflag |= IXOFF; 	/* flow controll xoff */
-
-
-	tcsetattr(fd, TCSANOW, &t);
-
-out:
-	return fd;
-}
-
-static int set_baud_rate(int fd, int baud)
-{
-	struct termios t;
-	int rc;
+	t.c_iflag |= IXOFF;	/* flow controll xoff */
 
 	TRACE("Baud rate is %d\n", baud);
 
@@ -137,15 +126,11 @@ static int set_baud_rate(int fd, int baud)
 			return -1;
 	}
 
-	rc = tcgetattr(fd, &t);
-
-	if (rc)
-		return rc;
-
 	cfsetispeed(&t, baud);
 	cfsetospeed(&t, baud);
 
 	return tcsetattr(fd, TCSANOW, &t);
+
 }
 
 static int write_to_tablet(int fd, char *command)
@@ -567,7 +552,7 @@ int main (int argc, char **argv)
 	if (fd < 0)
 		return 1;
 
-	rc = set_baud_rate(fd, baudrate);
+	rc = set_serial_attr(fd, baudrate);
 	if (rc < 0)
 		return 1;
 
