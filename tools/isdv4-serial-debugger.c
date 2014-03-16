@@ -81,7 +81,7 @@ int open_device(const char *path)
 
 	if (ioctl(fd, TIOCGSERIAL, &ser) == -1)
 	{
-		fprintf(stderr, "Not a serial device?");
+		perror("Not a serial device?");
 		close(fd);
 		fd = -1;
 		goto out;
