@@ -49,11 +49,13 @@ XORG_WITH_DOXYGEN(1.6.1)
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
 
+XPROTOS="xproto xext kbproto inputproto randrproto"
+
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] xproto xext kbproto inputproto randrproto)
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] $XPROTOS)
 
 # Obtain compiler/linker options for the xsetwacom tool
-PKG_CHECK_MODULES(X11, x11 xi xrandr xinerama)
+PKG_CHECK_MODULES(X11, x11 xi xrandr xinerama $XPROTOS)
 
 # Obtain compiler/linker options for libudev used by ISDV4 code
 PKG_CHECK_MODULES(UDEV, libudev)
