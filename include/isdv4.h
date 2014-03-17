@@ -20,6 +20,10 @@
 #ifndef ISDV4_H
 #define ISDV4_H
 
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
 #define ISDV4_QUERY "*"       /* ISDV4 query command */
 #define ISDV4_RESET "&"       /* ISDV4 touch panel reset command */
 #define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
