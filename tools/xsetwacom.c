@@ -1087,7 +1087,7 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 		int i;
 
 		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, state.group); i++)
-			if (XKeycodeToKeysym(dpy, kc, i) == sym)
+			if (XkbKeycodeToKeysym(dpy, kc, state.group, i) == sym)
 				goto out;
 	}
 
@@ -1904,7 +1904,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 				if (last_type != current_type)
 					strcat(buff, "key ");
 				is_press = !!(action & AC_KEYBTNPRESS);
-				detail = XKeycodeToKeysym(dpy, detail, 0);
+				detail = XkbKeycodeToKeysym(dpy, detail, 0, 0);
 				break;
 			case AC_BUTTON:
 				if (last_type != current_type)
