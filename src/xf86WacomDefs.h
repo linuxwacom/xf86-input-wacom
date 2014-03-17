@@ -305,6 +305,7 @@ struct _WacomDeviceRec
 	int minPressure;	/* the minimum pressure a pen may hold */
 	int oldMinPressure;     /* to record the last minPressure before going out of proximity */
 	unsigned int eventCnt;  /* count number of events while in proximity */
+	int maxRawPressure;     /* maximum 'raw' pressure seen until first button event */
 	WacomToolPtr tool;         /* The common tool-structure for this device */
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */

@@ -179,7 +179,6 @@ test_normalize_pressure(void)
 	InputInfoRec pInfo = {0};
 	WacomDeviceRec priv = {0};
 	WacomCommonRec common = {0};
-	WacomDeviceState ds = {0};
 	int pressure, prev_pressure = -1;
 	int i, j;
 
@@ -198,9 +197,9 @@ test_normalize_pressure(void)
 
 		for (i = 0; i <= common.wcmMaxZ; i++)
 		{
-			ds.pressure = i;
+			pressure = i;
 
-			pressure = normalizePressure(&priv, &ds);
+			pressure = normalizePressure(&priv, pressure);
 			assert(pressure >= 0);
 			assert(pressure <= FILTER_PRESSURE_RES);
 
@@ -216,14 +215,12 @@ test_normalize_pressure(void)
 	 * minPressure and ignores actual pressure. This would be a bug in the
 	 * driver code, but we might as well test for it. */
 	priv.minPressure = 10;
-	ds.pressure = 0;
 
-	prev_pressure = normalizePressure(&priv, &ds);
+	prev_pressure = normalizePressure(&priv, 0);
 	for (i = 0; i < priv.minPressure; i++)
 	{
-		ds.pressure = i;
 
-		pressure = normalizePressure(&priv, &ds);
+		pressure = normalizePressure(&priv, i);
 
 		assert(pressure >= 0);
 		assert(pressure < FILTER_PRESSURE_RES);

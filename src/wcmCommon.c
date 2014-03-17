@@ -1066,11 +1066,11 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
  * @see rebasePressure
  */
 TEST_NON_STATIC int
-normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
+normalizePressure(const WacomDevicePtr priv, const int raw_pressure)
 {
 	WacomCommonPtr common = priv->common;
 	double pressure;
-	int p = ds->pressure;
+	int p = raw_pressure;
 	int range_left;
 
 	/* normalize pressure to 0..FILTER_PRESSURE_RES */
@@ -1094,16 +1094,16 @@ normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
  * Returns the state of all buttons, but buttons other than button 1 are
  * unmodified.
  */
+#define PRESSURE_BUTTON 1
 static int
-setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
+setPressureButton(const WacomDevicePtr priv, int buttons, const int pressure)
 {
 	WacomCommonPtr common = priv->common;
-	int button = 1;
-	int buttons = ds->buttons;
+	int button = PRESSURE_BUTTON;
 
 	/* button 1 Threshold test */
 	/* set button1 (left click) on/off */
-	if (ds->pressure < common->wcmThreshold)
+	if (pressure < common->wcmThreshold)
 	{
 		buttons &= ~button;
 		if (priv->oldButtons & button) /* left click was on */
@@ -1111,7 +1111,7 @@ setPressureButton(const WacomDevicePtr priv, const WacomDeviceState *ds)
 			/* don't set it off if it is within the tolerance
 			   and threshold is larger than the tolerance */
 			if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
-			    (ds->pressure > common->wcmThreshold - THRESHOLD_TOLERANCE))
+			    (pressure > common->wcmThreshold - THRESHOLD_TOLERANCE))
 				buttons |= button;
 		}
 	}
@@ -1169,6 +1169,7 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState* ds = &pChannel->valid.states[0];
 	WacomDevicePtr priv = NULL;
 	WacomDeviceState filtered;
+	int raw_pressure = 0;
 
 	/* device_type should have been retrieved and set in the respective
 	 * models, wcmISDV4.c or wcmUSB.c. Once it comes here, something
@@ -1242,11 +1243,51 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 
 	if ((IsPen(priv) || IsTouch(priv)) && common->wcmMaxZ)
 	{
+		int prev_min_pressure = priv->oldProximity ? priv->minPressure : 0;
+
 		detectPressureIssue(priv, common, &filtered);
+
+		raw_pressure = filtered.pressure;
+		if (!priv->oldProximity)
+			priv->maxRawPressure = raw_pressure;
+
 		priv->minPressure = rebasePressure(priv, &filtered);
-		filtered.pressure = normalizePressure(priv, &filtered);
-		if (IsPen(priv))
-			filtered.buttons = setPressureButton(priv, &filtered);
+
+		filtered.pressure = normalizePressure(priv, filtered.pressure);
+		if (IsPen(priv)) {
+			filtered.buttons = setPressureButton(priv,
+							     filtered.buttons,
+							     filtered.pressure);
+
+			/* Here we run some heuristics to avoid losing button events if the
+			 * pen gets pushed onto the tablet so quickly that the first pressure
+			 * event read is non-zero and is thus interpreted as a pressure bias */
+			if (filtered.buttons & PRESSURE_BUTTON) {
+				/* If we triggered 'normally' reset max pressure to
+				 * avoid to trigger again while this device is in proximity */
+				priv->maxRawPressure = 0;
+			} else if (priv->maxRawPressure) {
+				int norm_max_pressure;
+
+				/* If we haven't triggered normally we record the maximal pressure
+				 * and see if this would have triggered with a lowered bias. */
+				if (priv->maxRawPressure < raw_pressure)
+					priv->maxRawPressure = raw_pressure;
+				norm_max_pressure = normalizePressure(priv, priv->maxRawPressure);
+				filtered.buttons = setPressureButton(priv, filtered.buttons,
+								     norm_max_pressure);
+
+				/* If minPressure is not decrementing any more or a button
+				 * press has been generated or minPressure has just become zero
+				 * reset maxRawPressure to avoid that worn devices
+				 * won't report a button release until going out of proximity */
+				if ((filtered.buttons & PRESSURE_BUTTON &&
+				     priv->minPressure == prev_min_pressure) ||
+				    !priv->minPressure)
+					priv->maxRawPressure = 0;
+
+			}
+		}
 		filtered.pressure = applyPressureCurve(priv,&filtered);
 	}
 	else if (IsCursor(priv) && !priv->oldCursorHwProx)

@@ -212,7 +212,7 @@ extern int wcmSetType(InputInfoPtr pInfo, const char *type);
 extern int getScrollDelta(int current, int old, int wrap, int flags);
 extern int getWheelButton(int delta, int action_up, int action_dn);
 extern int rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds);
-extern int normalizePressure(const WacomDevicePtr priv, const WacomDeviceState *ds);
+extern int normalizePressure(const WacomDevicePtr priv, const int raw_pressure);
 extern enum WacomSuppressMode wcmCheckSuppress(WacomCommonPtr common,
 						const WacomDeviceState* dsOrig,
 						WacomDeviceState* dsNew);
