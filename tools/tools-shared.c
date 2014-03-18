@@ -317,11 +317,11 @@ int query_tablet(int fd)
 		fprintf(stderr, "touch parsing error code %d\n", rc);
 		/* failure to parse touch query is not fatal */
 	} else {
-		printf("TOUCH version: %d\n", touch.version);
-		printf("TOUCH x max: %d y max %d\n", touch.x_max, touch.y_max);
-		printf("TOUCH panel resolution: %d\n", touch.panel_resolution);
-		printf("TOUCH capacity resolution: %d\n", touch.capacity_resolution);
-		printf("TOUCH sensor id: %d\n", touch.sensor_id);
+		printf("TOUCH: version: %d\n", touch.version);
+		printf("TOUCH: x max: %d y max %d\n", touch.x_max, touch.y_max);
+		printf("TOUCH: panel resolution: %d\n", touch.panel_resolution);
+		printf("TOUCH: capacity resolution: %d\n", touch.capacity_resolution);
+		printf("TOUCH: sensor id: %d\n", touch.sensor_id);
 	}
 
 	return touch.sensor_id;
