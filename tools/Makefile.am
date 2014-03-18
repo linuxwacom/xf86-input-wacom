@@ -24,6 +24,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CFLAGS = $(XORG_CFLAGS) $(X11_CFLAGS)
 AM_LDFLAGS = $(X11_LIBS)
 
+shared_sources = tools-shared.h tools-shared.c
+
+isdv4_serial_debugger_SOURCES = isdv4-serial-debugger.c $(shared_sources)
+
 
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
