@@ -45,10 +45,6 @@
 	do { if (verbose) printf("... " __VA_ARGS__); } while(0)
 
 static int verbose = 0;
-static int packetlength = ISDV4_PKGLEN_TPCPEN;
-static ISDV4QueryReply reply;
-static ISDV4TouchQueryReply touch;
-
 
 static void usage(void)
 {
@@ -285,6 +281,9 @@ redo:
 
 static int query_tablet(int fd)
 {
+	ISDV4QueryReply reply;
+	ISDV4TouchQueryReply touch;
+
 	unsigned char buffer[ISDV4_PKGLEN_TPCCTL];
 	int len, rc;
 
@@ -343,7 +342,7 @@ static int query_tablet(int fd)
 		printf("TOUCH sensor id: %d\n", touch.sensor_id);
 	}
 
-	return 0;
+	return touch.sensor_id;
 
 out:
 	fprintf(stderr, "error during query.\n");
@@ -419,10 +418,11 @@ static int parse_touch_packet(unsigned char* buffer, int packetlength)
 
 }
 
-int event_loop(int fd)
+int event_loop(int fd, int sensor_id)
 {
 	unsigned char buffer[256];
 	int dlen = 0;
+	int packetlength = ISDV4_PKGLEN_TPCPEN;
 
 	TRACE("Waiting for events\n");
 
@@ -450,7 +450,7 @@ int event_loop(int fd)
 		{
 			packetlength = ISDV4_PKGLEN_TPCPEN;
 			if (buffer[0] & TOUCH_CONTROL_BIT)
-				packetlength = ISDV4PacketLengths[touch.sensor_id];
+				packetlength = ISDV4PacketLengths[sensor_id];
 		} else {
 			int bytes = skip_garbage(buffer, dlen);
 			if (bytes > 0) {
@@ -508,6 +508,7 @@ int main (int argc, char **argv)
 	int baudrate = 38400;
 	int reset = 0;
 	int rc;
+	int sensor_id;
 
 	int c, optidx = 0;
 	struct option options[] = {
@@ -561,13 +562,13 @@ int main (int argc, char **argv)
 			return 1;
 	}
 
-	rc = query_tablet(fd);
-	if (rc < 0)
+	sensor_id = query_tablet(fd);
+	if (sensor_id < 0)
 		return 1;
 
 	start_tablet(fd);
 
-	return event_loop(fd);
+	return event_loop(fd, sensor_id);
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
