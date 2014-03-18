@@ -1,3 +1,4 @@
 #               Add & Override for this directory and it's subdirectories
 xsetwacom
 isdv4-serial-debugger
+isdv4-serial-inputattach
