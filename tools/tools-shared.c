@@ -164,7 +164,6 @@ int start_tablet(int fd)
 
 int wait_for_tablet(int fd)
 {
-#if 0
 	struct pollfd pfd = { fd, POLLIN, 0 };
 	int rc;
 
@@ -179,7 +178,6 @@ int wait_for_tablet(int fd)
 	} else if (pfd.revents & POLLIN)
 		TRACE("data available.\n");
 
-#endif
 	return 0;
 }
 
