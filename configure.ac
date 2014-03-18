@@ -146,6 +146,24 @@ if test "x$UNITTESTS" = xyes; then
 fi
 AM_CONDITIONAL(UNITTESTS, [test "x$UNITTESTS" = xyes])
 
+AC_ARG_WITH([systemd-unit-dir],
+            AS_HELP_STRING([--with-systemd-unit-dir=DIR],
+                           [systemd unit directory [[default=$libdir/systemd/system]]]),
+            [unitdir="$withval"],
+            [unitdir="$libdir/systemd/system"])
+SYSTEMD_UNIT_DIR=${unitdir}
+AC_SUBST(SYSTEMD_UNIT_DIR)
+AM_CONDITIONAL(HAVE_SYSTEMD_UNIT_DIR, [test "x$SYSTEMD_UNIT_DIR" != "xno"])
+
+AC_ARG_WITH(udev-rules-dir,                                                   
+            AS_HELP_STRING([--with-udev-rules-dir=DIR],
+                           [Directory where udev expects its rules files
+                           [[default=$libdir/udev/rules.d]]]),
+            [udevdir="$withval"],                   
+            [udevdir="$libdir/udev/rules.d"])
+UDEV_RULES_DIR=${udevdir}
+AC_SUBST(UDEV_RULES_DIR)                                               
+AM_CONDITIONAL(HAVE_UDEV_RULES_DIR, [test "x$UDEV_RULES_DIR" != "xno"])
 
 
 # -----------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+[Unit]
+Description=inputattach for Wacom ISDv4-compatible serial devices
+
+[Service]
+Type=simple
+ExecStart=__BIN_PREFIX__/isdv4-serial-inputattach /dev/%I
+Restart=on-success
