@@ -20,6 +20,10 @@
 #ifndef ISDV4_H
 #define ISDV4_H
 
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
 #define ISDV4_QUERY "*"       /* ISDV4 query command */
 #define ISDV4_RESET "&"       /* ISDV4 touch panel reset command */
 #define ISDV4_TOUCH_QUERY "%" /* ISDV4 touch query command */
@@ -99,8 +103,8 @@ typedef struct {
 	uint8_t tilt_y;
 } ISDV4CoordinateData;
 
-static int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
-		    ISDV4QueryReply *reply)
+static inline int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
+				  ISDV4QueryReply *reply)
 {
 	int header, control;
 
@@ -126,8 +130,8 @@ static int isdv4ParseQuery(const unsigned char *buffer, const size_t len,
 	return ISDV4_PKGLEN_TPCCTL;
 }
 
-static int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
-			 ISDV4TouchQueryReply *reply)
+static inline int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
+				       ISDV4TouchQueryReply *reply)
 {
 	int header, control;
 
@@ -153,8 +157,8 @@ static int isdv4ParseTouchQuery(const unsigned char *buffer, const size_t len,
 }
 
 /* pktlen defines what touch type we parse */
-static int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
-		        const size_t pktlen, ISDV4TouchData *touchdata)
+static inline int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_len,
+				      const size_t pktlen, ISDV4TouchData *touchdata)
 {
 	int header, touch;
 
@@ -187,8 +191,8 @@ static int isdv4ParseTouchData(const unsigned char *buffer, const size_t buff_le
 	return pktlen;
 }
 
-static int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
-			     ISDV4CoordinateData *coord)
+static inline int isdv4ParseCoordinateData(const unsigned char *buffer, const size_t len,
+					   ISDV4CoordinateData *coord)
 {
 	int header, control;
 
