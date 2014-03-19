@@ -2809,7 +2809,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 38);
+	assert(ARRAY_SIZE(parameters) == 39);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 
