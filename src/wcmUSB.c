@@ -41,6 +41,7 @@ typedef struct {
 	int nbuttons;                /* total number of buttons */
 	int npadkeys;                /* number of pad keys in the above array */
 	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
+	int lastChannel;
 } wcmUSBData;
 
 static Bool usbDetect(InputInfoPtr);
@@ -1636,8 +1637,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int channel;
-	WacomDeviceState dslast = common->wcmChannel[0].valid.state;
 	wcmUSBData* private = common->private;
+	WacomDeviceState dslast = common->wcmChannel[private->lastChannel].valid.state;
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
@@ -1766,6 +1767,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	/*reset the serial number when the tool is going out */
 	if (!ds->proximity)
 		private->wcmLastToolSerial = 0;
+
+	private->lastChannel = channel;
 
 	for (c = 0; c < MAX_CHANNELS; c++) {
 		ds = &common->wcmChannel[c].work;
