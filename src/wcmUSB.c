@@ -1272,6 +1272,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 
 		case ABS_MT_TRACKING_ID:
 			ds->proximity = (event->value != -1);
+			/* set this here as type for this channel doesn't get set in usbDispatchEvent() */
 			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->sample = (int)GetTimeInMillis();
@@ -1315,7 +1316,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 		case BTN_TOOL_PENCIL:
 		case BTN_TOOL_BRUSH:
 		case BTN_TOOL_AIRBRUSH:
-			ds->device_type = STYLUS_ID;
 			/* V5 tools use ABS_MISC to report device_id */
 			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = STYLUS_DEVICE_ID;
@@ -1326,7 +1326,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_TOOL_RUBBER:
-			ds->device_type = ERASER_ID;
 			/* V5 tools use ABS_MISC to report device_id */
 			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = ERASER_DEVICE_ID;
@@ -1343,7 +1342,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			DBG(6, common,
 			    "USB mouse detected %x (value=%d)\n",
 			    event->code, event->value);
-			ds->device_type = CURSOR_ID;
 			/* V5 tools use ABS_MISC to report device_id */
 			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = CURSOR_DEVICE_ID;
@@ -1361,7 +1359,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 					DBG(6, common,
 					    "USB 1FG Touch detected %x (value=%d)\n",
 					    event->code, event->value);
-					ds->device_type = TOUCH_ID;
 					ds->device_id = TOUCH_DEVICE_ID;
 					ds->proximity = event->value;
 				}
@@ -1375,7 +1372,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 				DBG(6, common,
 				    "USB Pad detected %x (value=%d)\n",
 				event->code, event->value);
-				ds->device_type = PAD_ID;
 				ds->device_id = PAD_DEVICE_ID;
 				ds->proximity = (event->value != 0);
 				break;
@@ -1386,7 +1382,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			DBG(6, common,
 			    "USB Touch detected %x (value=%d)\n",
 			    event->code, event->value);
-			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->proximity = event->value;
 			/* time stamp for 2FGT gesture events */
@@ -1399,7 +1394,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			DBG(6, common,
 			    "USB Touch second finger detected %x (value=%d)\n",
 			    event->code, event->value);
-			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->proximity = event->value;
 			/* time stamp for 2GT gesture events */
@@ -1525,13 +1519,27 @@ static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int va
 
 			case BTN_TOOL_FINGER:
 				if ((common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
-				    && !private->wcmUseMT)
+				    && !private->wcmUseMT)  /* this isn't in usbParseKeyEvent() */
 					return PAD_ID;
 				else
 					return TOUCH_ID;
 
 			case BTN_TOOL_RUBBER:
 				return ERASER_ID;
+
+			case BTN_TOOL_DOUBLETAP:
+			case BTN_TOOL_TRIPLETAP:
+				return TOUCH_ID;
+
+			case BTN_TOUCH:
+				if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC &&
+				    /* 1FG USB touchscreen */
+				    !TabletHasFeature(common, WCM_PEN) &&
+				    TabletHasFeature(common, WCM_1FGT) &&
+				    TabletHasFeature(common, WCM_LCD))
+					return TOUCH_ID;
+				else
+					break;
 		}
 	}
 	else if (type == EV_ABS) {
@@ -1687,9 +1695,12 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	ds = &common->wcmChannel[channel].work;
 	dslast = common->wcmChannel[channel].valid.state;
 
+	if (ds->device_type && ds->device_type != private->wcmDeviceType)
+		LogMessageVerbSigSafe(X_ERROR, 0,
+				      "usbDispatchEvents: Device Type mismatch - %d -> %d. This is a BUG.\n",
+				      ds->device_type, private->wcmDeviceType);
 	/* no device type? */
 	if (!ds->device_type && private->wcmDeviceType) {
-		/* tool was on tablet at startup, force type and proximity */
 		ds->device_type = private->wcmDeviceType;
 		ds->proximity = 1;
 	}
