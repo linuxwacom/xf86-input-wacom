@@ -1100,33 +1100,20 @@ static int usbIdToType(int id)
 }
 
 /**
- * Find the tool type (STYLUS_ID, etc.) based on the device_id or the
- *  current tool serial number if the device_id is unknown (0).
+ * Find the tool type (STYLUS_ID, etc.) based on the device_id.
  *
  * Protocol 5 devices report different IDs for different styli and pucks,
  * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
  *
  * @param ds The current device state received from the kernel.
- * @return The tool type associated with the tool id or the current
- * tool serial number.
+ * @return The tool type associated with the tool id.
  */
 static int usbFindDeviceType(const WacomCommonPtr common,
 			  const WacomDeviceState *ds)
 {
-	WacomToolPtr tool = NULL;
 	int device_type = 0;
 
-	if (!ds->device_id && ds->serial_num)
-	{
-		for (tool = common->wcmTool; tool; tool = tool->next)
-			if (ds->serial_num == tool->serial)
-			{
-				device_type = tool->typeid;
-				break;
-			}
-	}
-
-	if (device_type || !ds->device_id) return device_type;
+	if (!ds->device_id) return 0;
 
 	switch (ds->device_id)
 	{
