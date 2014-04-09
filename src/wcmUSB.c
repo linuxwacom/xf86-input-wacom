@@ -1108,6 +1108,35 @@ static int usbIdToType(int id)
  * Protocol 5 devices report different IDs for different styli and pucks,
  * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
  *
+ * @device_id id of the device
+ * @return device type
+ */
+static int usbFindDeviceTypeById(int device_id)
+{
+	switch (device_id)
+	{
+		case STYLUS_DEVICE_ID:
+			return STYLUS_ID;
+		case ERASER_DEVICE_ID:
+			return ERASER_ID;
+		case CURSOR_DEVICE_ID:
+			return CURSOR_ID;
+		case TOUCH_DEVICE_ID:
+			return TOUCH_ID;
+		case PAD_DEVICE_ID:
+			return PAD_ID;
+		default: /* protocol 5 */
+			return usbIdToType(device_id);
+	}
+	return 0;
+}
+
+/**
+ * Find the tool type (STYLUS_ID, etc.) based on the device_id.
+ *
+ * Protocol 5 devices report different IDs for different styli and pucks,
+ * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
+ *
  * @param ds The current device state received from the kernel.
  * @return The tool type associated with the tool id.
  */
@@ -1118,27 +1147,7 @@ static int usbFindDeviceType(const WacomCommonPtr common,
 
 	if (!ds->device_id) return 0;
 
-	switch (ds->device_id)
-	{
-		case STYLUS_DEVICE_ID:
-			device_type = STYLUS_ID;
-			break;
-		case ERASER_DEVICE_ID:
-			device_type = ERASER_ID;
-			break;
-		case CURSOR_DEVICE_ID:
-			device_type = CURSOR_ID;
-			break;
-		case TOUCH_DEVICE_ID:
-			device_type = TOUCH_ID;
-			break;
-		case PAD_DEVICE_ID:
-			device_type = PAD_ID;
-			break;
-		default: /* protocol 5 */
-			device_type = usbIdToType(ds->device_id);
-	}
-
+	device_type = usbFindDeviceTypeById(ds->device_id);
 	return device_type;
 }
 
@@ -1488,15 +1497,16 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 }
 
 /**
- * Translates a tool code from the kernel (e.g. BTN_TOOL_PEN) into the
- * corresponding device type for the driver (e.g. STYLUS_ID).
+ * Translates an event code from the kernel (e.g. type: EV_ABS code: ABS_MISC value: STYLUS_DEVICE_ID)
+ * into the corresponding device type for the driver (e.g. STYLUS_ID).
  *
  * @param[in] common
  * @param[in] type      Linux input tool type (e.g. EV_KEY)
  * @param[in] code      Linux input tool code (e.g. BTN_STYLUS_PEN)
+ * @param[in] value     Linux input tool value (e.g. STYLUS_DEVICE_ID)
  * @return              Wacom device ID (e.g. STYLUS_ID) or 0 if no match.
  */
-static int toolTypeToDeviceType(WacomCommonPtr common, int type, int code)
+static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int value)
 {
 	wcmUSBData* private = common->private;
 
@@ -1528,6 +1538,8 @@ static int toolTypeToDeviceType(WacomCommonPtr common, int type, int code)
 			case ABS_MT_SLOT:
 			case ABS_MT_TRACKING_ID:
 				return TOUCH_ID;
+			case ABS_MISC:
+				return usbFindDeviceTypeById(value);
 		}
 	}
 
@@ -1557,7 +1569,7 @@ static int refreshDeviceType(WacomCommonPtr common, int fd)
 	for (i = 0; i < KEY_MAX; i++)
 	{
 		if (ISBITSET(keys, i))
-			device_type = toolTypeToDeviceType(common, EV_KEY, i);
+			device_type = deviceTypeFromEvent(common, EV_KEY, i, 0);
 		if (device_type)
 			return device_type;
 	}
@@ -1588,7 +1600,7 @@ static int usbInitToolType(WacomCommonPtr common, int fd,
 
 	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
 	{
-		device_type = toolTypeToDeviceType(common, event_ptr->type, event_ptr->code);
+		device_type = deviceTypeFromEvent(common, event_ptr->type, event_ptr->code, event_ptr->value);
 	}
 
 	if (!device_type)
