@@ -1087,6 +1087,9 @@ static int usbIdToType(int id)
 {
 	int type = STYLUS_ID;
 
+	if (!id)
+		return 0;
+
 	/* The existing tool ids have the following patten: all pucks, except
 	 * one, have the third byte set to zero; all erasers have the fourth
 	 * bit set. The rest are styli.
