@@ -1132,26 +1132,6 @@ static int usbFindDeviceTypeById(int device_id)
 	return 0;
 }
 
-/**
- * Find the tool type (STYLUS_ID, etc.) based on the device_id.
- *
- * Protocol 5 devices report different IDs for different styli and pucks,
- * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
- *
- * @param ds The current device state received from the kernel.
- * @return The tool type associated with the tool id.
- */
-static int usbFindDeviceType(const WacomCommonPtr common,
-			  const WacomDeviceState *ds)
-{
-	int device_type = 0;
-
-	if (!ds->device_id) return 0;
-
-	device_type = usbFindDeviceTypeById(ds->device_id);
-	return device_type;
-}
-
 static void usbParseAbsEvent(WacomCommonPtr common,
 			    struct input_event *event, int channel_number)
 {
@@ -1207,10 +1187,7 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 		case ABS_MISC:
 			ds->proximity = (event->value != 0);
 			if (event->value)
-			{
 				ds->device_id = event->value;
-				ds->device_type = usbFindDeviceType(common, ds);
-			}
 			break;
 		default:
 			change = 0;
@@ -1485,10 +1462,6 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 	}
 
 	channel->dirty |= change;
-
-	/* expresskey pressed at startup or missing type */
-	if (!ds->device_type && channel->dirty)
-		ds->device_type = PAD_ID;
 }
 
 /**
@@ -1586,6 +1559,35 @@ static int refreshDeviceType(WacomCommonPtr common, int fd)
 	return 0;
 }
 
+static int deriveDeviceTypeFromButtonEvent(WacomCommonPtr common,
+					   const struct input_event *event_ptr)
+{
+	wcmUSBData *usbdata = common->private;
+	int nkeys;
+
+	if (event_ptr->type == EV_KEY) {
+
+		switch (event_ptr->code) {
+		case BTN_LEFT:
+		case BTN_MIDDLE:
+		case BTN_RIGHT:
+		case BTN_SIDE:
+		case BTN_BACK:
+		case BTN_EXTRA:
+		case BTN_FORWARD:
+			return PAD_ID;
+		default:
+			for (nkeys = 0; nkeys < usbdata->npadkeys; nkeys++)
+			{
+				if (event_ptr->code == usbdata->padkey_code[nkeys]) {
+					return PAD_ID;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 /***
  * Retrieve the tool type from an USB data packet by looking at the event
  * codes. Refer to linux/input.h for event codes that define tool types.
@@ -1617,6 +1619,10 @@ static int usbInitToolType(WacomCommonPtr common, int fd,
 
 	if (!device_type)
 		device_type = refreshDeviceType(common, fd);
+
+	if (!device_type) /* expresskey pressed at startup or missing type */
+		for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
+			device_type = deriveDeviceTypeFromButtonEvent(common, event_ptr);
 
 	return device_type;
 }
