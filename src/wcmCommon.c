@@ -488,27 +488,16 @@ static void wcmUpdateOldState(const InputInfoPtr pInfo,
 			      const WacomDeviceState *ds)
 {
 	const WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	int tx, ty;
 
 	priv->oldWheel = ds->abswheel;
 	priv->oldWheel2 = ds->abswheel2;
 	priv->oldButtons = ds->buttons;
 
-	if (IsPad(priv))
-	{
-		tx = ds->stripx;
-		ty = ds->stripy;
-	} else
-	{
-		tx = ds->tiltx;
-		ty = ds->tilty;
-	}
-
 	priv->oldX = priv->currentX;
 	priv->oldY = priv->currentY;
 	priv->oldZ = ds->pressure;
-	priv->oldTiltX = tx;
-	priv->oldTiltY = ty;
+	priv->oldTiltX = ds->tiltx;
+	priv->oldTiltY = ds->tilty;
 	priv->oldStripX = ds->stripx;
 	priv->oldStripY = ds->stripy;
 	priv->oldRot = ds->rotation;
