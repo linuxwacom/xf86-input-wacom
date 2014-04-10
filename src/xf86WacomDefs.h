@@ -240,8 +240,6 @@ struct _WacomDeviceRec
 	int resolY;             /* Y resolution */
 	int maxX;	        /* tool physical maxX in device coordinates*/
 	int maxY;	        /* tool physical maxY in device coordinates*/
-	double factorX;		/* X factor */
-	double factorY;		/* Y factor */
 	unsigned int serial;	/* device serial number this device takes (if 0, any serial is ok) */
 	unsigned int cur_serial; /* current serial in prox */
 	int cur_device_id;	/* current device ID in prox */

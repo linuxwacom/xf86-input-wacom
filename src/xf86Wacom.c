@@ -425,7 +425,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	if (!IsPad(priv))
 	{
 		wcmInitialToolSize(pInfo);
-		wcmMappingFactor(pInfo);
 	}
 
 	if (!wcmInitAxes(pWcm))

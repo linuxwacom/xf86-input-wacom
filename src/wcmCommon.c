@@ -86,38 +86,6 @@ void set_absolute(InputInfoPtr pInfo, Bool absolute)
 }
 
 /*****************************************************************************
- * wcmMappingFactor --
- *   calculate the proper tablet to screen mapping factor according to the 
- *   screen/desktop size and the tablet size 
- ****************************************************************************/
-
-void wcmMappingFactor(InputInfoPtr pInfo)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	double size_x, size_y;
-
-	DBG(10, priv, "\n"); /* just prints function name */
-
-	DBG(10, priv,
-		"Active tablet area x=%d y=%d map\n",
-		priv->bottomX, priv->bottomY);
-
-	/* bottomX/bottomY are scaled values of maxX/maxY such that it
-	 * will scale tablet to screen ratio when passed to xf86AxisScale().
-	 * Use this to compute similar factor for scaling in relative
-	 * mode.  If screen:tablet are 1:1 ratio then no scaling.
-	 */
-
-	size_x = priv->bottomX - priv->topX;
-	size_y = priv->bottomY - priv->topY;
-
-	priv->factorX = size_x / priv->bottomX;
-	priv->factorY = size_y / priv->bottomY;
-	DBG(2, priv, "X factor = %.3f, Y factor = %.3f\n",
-		priv->factorX, priv->factorY);
-}
-
-/*****************************************************************************
  * wcmSendButtons --
  *   Send button events by comparing the current button mask with the
  *   previous one.
@@ -610,12 +578,6 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 	/* coordinates are ready we can send events */
 	if (ds->proximity)
 	{
-		/* unify acceleration in both directions
-		 * for relative mode to draw a circle
-		 */
-		if (!is_absolute(pInfo))
-			valuators[0] *= priv->factorY / priv->factorX;
-
 		/* don't emit proximity events if device does not support proximity */
 		if ((pInfo->dev->proximity && !priv->oldProximity))
 			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals,
@@ -1310,8 +1272,6 @@ static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
 		 */
 		double deltx = filtered.x - priv->oldX;
 		double delty = filtered.y - priv->oldY;
-		deltx *= priv->factorX;
-		delty *= priv->factorY;
 
 		/* less than one device coordinate movement? */
 		if (abs(deltx)<1 && abs(delty)<1)

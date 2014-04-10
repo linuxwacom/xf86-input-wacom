@@ -124,9 +124,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceStat
 /* dispatches data to XInput event system */
 void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds);
 
-/* calculate the proper tablet to screen mapping factor */
-void wcmMappingFactor(InputInfoPtr pInfo);
-
 /* validation */
 extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);
 extern Bool wcmIsWacomDevice (char* fname);
