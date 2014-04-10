@@ -210,19 +210,6 @@ struct _WacomModel
 #define STRIP_RIGHT_UP    2
 #define STRIP_RIGHT_DN    3
 
-/* get/set/property */
-typedef struct _PROPINFO PROPINFO;
-
-struct _PROPINFO
-{
-	Atom wcmProp;
-	char paramName[32];
-	int nParamID;
-	int nFormat;
-	int nSize;
-	int nDefault;
-};
-
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
