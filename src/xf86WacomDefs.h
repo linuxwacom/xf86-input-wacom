@@ -96,10 +96,6 @@
 #define ABS_MT_SLOT 0x2f
 #endif
 
-/* defines to discriminate second side button and the eraser */
-#define ERASER_PROX     4
-#define OTHER_PROX      1
-
 /******************************************************************************
  * Forward Declarations
  *****************************************************************************/

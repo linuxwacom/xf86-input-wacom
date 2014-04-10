@@ -1307,8 +1307,6 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 				ds->device_id = ERASER_DEVICE_ID;
 			ds->proximity = (event->value != 0);
-			if (ds->proximity)
-				ds->proximity = ERASER_PROX;
 			DBG(6, common,
 			    "USB eraser detected %x (value=%d)\n",
 			    event->code, event->value);
