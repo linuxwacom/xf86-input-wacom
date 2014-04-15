@@ -796,7 +796,7 @@ static void list_one_device(Display *dpy, XDeviceInfo *info)
 			if (atoms[j] == wacom_prop)
 				break;
 
-		if (j <= natoms)
+		if (j < natoms)
 		{
 			unsigned char	*data;
 			Atom		type;
