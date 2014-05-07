@@ -303,7 +303,11 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x100,100000, 100000, &usbTabletPC,   "TabletPC 0x100"	},
 	{ WACOM_VENDOR_ID, 0x101,100000, 100000, &usbTabletPC,   "TabletPC 0x101"	},
 	{ WACOM_VENDOR_ID, 0x10D,100000, 100000, &usbTabletPC,   "TabletPC 0x10D"	},
+	{ WACOM_VENDOR_ID, 0x116,100000, 100000, &usbTabletPC,   "TabletPC 0x116"	},
 	{ WACOM_VENDOR_ID, 0x4001,100000, 100000, &usbTabletPC,  "TabletPC 0x4001"	},
+	{ WACOM_VENDOR_ID, 0x4004,100000, 100000, &usbTabletPC,  "TabletPC 0x4004"	},
+	{ WACOM_VENDOR_ID, 0x5000,100000, 100000, &usbTabletPC,  "TabletPC 0x5000"	},
+	{ WACOM_VENDOR_ID, 0x5002,100000, 100000, &usbTabletPC,  "TabletPC 0x5002"	},
 
 	/* IDs from Waltop's driver, available http://www.waltop.com.tw/download.asp?lv=0&id=2.
 	   Accessed 8 Apr 2010, driver release date 2009/08/11, fork of linuxwacom 0.8.4.
