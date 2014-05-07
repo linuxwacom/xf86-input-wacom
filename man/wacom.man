@@ -147,6 +147,8 @@ server will think they are the same physical button.
 The default action reported to the X server is mouse button M click. Because
 X uses buttons 4, 5, 6, and 7 as the four scrolling directions, physical
 buttons 4 and higher are mapped to 8 and higher by default.
+Only simple button presses can be configured here; for more complex
+actions, use xsetwacom(__appmansuffix__).
 To ignore the button click, i.e., to not report any button click event 
 to the X server,  use "0" or "button 0".
 .TP 4
