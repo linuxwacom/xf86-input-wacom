@@ -985,16 +985,17 @@ static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned 
 	return 0;
 }
 
+/* the "displaytoggle" keyword isn't supported anymore, we just have this
+   here to tell people that. */
 static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
 {
-	if (*ndata + 1 > size) {
-		fprintf(stderr, "Insufficient space to store all commands.\n");
-		return 0;
+	static int once_only = 1;
+	if (once_only)
+	{
+		printf ("Note: The \"displaytoggle\" keyword is not supported "
+			"anymore and will be ignored.\n");
+		once_only = 0;
 	}
-	data[*ndata] = AC_DISPLAYTOGGLE;
-
-	*ndata += 1;
-
 	return 0;
 }
 

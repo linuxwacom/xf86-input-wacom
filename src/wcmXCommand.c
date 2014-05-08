@@ -431,7 +431,6 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 					return BadValue;
 				}
 				break;
-			case AC_DISPLAYTOGGLE:
 			case AC_MODETOGGLE:
 				break;
 			default:
