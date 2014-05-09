@@ -842,8 +842,8 @@ static int protocol5Serial(int device_type, unsigned int serial) {
  * Find an appropriate channel to track the specified tool's state in.
  * If the tool is already in proximity, the channel currently being used
  * to store its state will be returned. Otherwise, an arbitrary available
- * channel will be returned. Up to MAX_CHANNEL tools can be tracked
- * concurrently by driver.
+ * channel will be cleaned and returned. Up to MAX_CHANNEL tools can be
+ * tracked concurrently by driver.
  *
  * @param[in] common
  * @param[in] device_type  Type of tool (e.g. STYLUS_ID, TOUCH_ID, PAD_ID)
@@ -874,7 +874,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 		}
 	}
 
-	/* find an empty channel */
+	/* find and clean an empty channel */
 	if (channel < 0)
 	{
 		for (i=0; i<MAX_CHANNELS; i++)
@@ -885,6 +885,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 			if (!common->wcmChannel[i].work.proximity)
 			{
 				channel = i;
+				memset(&common->wcmChannel[channel],0, sizeof(WacomChannel));
 				break;
 			}
 		}
@@ -1687,17 +1688,6 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	if (channel == -1) {
 		private->wcmEventCnt = 0;
 		return;
-	}
-
-	/* Protocol 5 tools are dynamically assigned with channel numbers.
-	 * The structure must be initialized to known starting values
-	 * when first entering proximity to discard invalid data.
-	 */
-	if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
-	{
-		if (!common->wcmChannel[channel].work.proximity)
-			memset(&common->wcmChannel[channel],0,
-			       sizeof(WacomChannel));
 	}
 
 	ds = &common->wcmChannel[channel].work;
