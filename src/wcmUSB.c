@@ -80,9 +80,9 @@ static struct _WacomModel mname =		\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\
 	.DetectConfig = usbDetectConfig,	\
-};
+}
 
-DEFINE_MODEL(usbUnknown,	"Unknown USB",		5)
+DEFINE_MODEL(usbUnknown,	"Unknown USB",		5);
 DEFINE_MODEL(usbPenPartner,	"USB PenPartner",	4);
 DEFINE_MODEL(usbGraphire,	"USB Graphire",		4);
 DEFINE_MODEL(usbGraphire2,	"USB Graphire2",	4);
