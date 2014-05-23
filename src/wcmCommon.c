@@ -685,10 +685,14 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 		x, y, z, v3, v4, v5, v6, id, serial,
 		is_button ? "true" : "false", ds->buttons);
 
-	/* update the old records */
+	/* when entering prox, replace the zeroed-out oldState with a copy of
+	 * the current state to prevent jumps. reset the prox and button state
+	 * to zero to properly detect changes.
+	 */
 	if(!priv->oldState.proximity)
 	{
 		wcmUpdateOldState(pInfo, ds, x, y);
+		priv->oldState.proximity = 0;
 		priv->oldState.buttons = 0;
 	}
 
@@ -708,7 +712,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 			wcmSendNonPadEvents(pInfo, ds, 0, priv->naxes, valuators);
 	}
 
-	priv->oldState.proximity = ds->proximity;
 	if (ds->proximity)
 		wcmUpdateOldState(pInfo, ds, x, y);
 	else
