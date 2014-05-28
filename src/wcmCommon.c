@@ -1355,7 +1355,7 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 /* Send a soft prox-out event for the device */
 void wcmSoftOutEvent(InputInfoPtr pInfo)
 {
-	WacomDeviceState out = { 0 };
+	WacomDeviceState out = OUTPROX_STATE;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	out.device_type = DEVICE_ID(priv->flags);

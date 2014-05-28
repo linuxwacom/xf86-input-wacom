@@ -720,7 +720,7 @@ static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
 				(ds->device_type == ERASER_ID))
 		{
 			/* send a prox-out for old device */
-			WacomDeviceState out = { 0 };
+			WacomDeviceState out = OUTPROX_STATE;
 			wcmEvent(common, 0, &out);
 			ds->device_type = cur_type;
 		}
@@ -791,7 +791,7 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 		if (last->proximity && last->device_id == TOUCH_DEVICE_ID)
 		{
 			/* let touch go */
-			WacomDeviceState out = { 0 };
+			WacomDeviceState out = OUTPROX_STATE;
 			out.device_type = TOUCH_ID;
 			out.serial_num = 1;
 			wcmEvent(common, channel, &out);
