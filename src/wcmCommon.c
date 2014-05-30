@@ -635,7 +635,7 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	if (!ds->proximity)
 	{
 		x = priv->oldState.x;
-		y = priv->oldState.x;
+		y = priv->oldState.y;
 	}
 
 	/* use tx and ty to report stripx and stripy */
