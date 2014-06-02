@@ -626,6 +626,7 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 	ds->device_type = TOUCH_ID;
 	ds->device_id = TOUCH_DEVICE_ID;
 	ds->serial_num = 1;
+	ds->time = (int)GetTimeInMillis();
 
 	if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
 	{
@@ -651,6 +652,7 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->serial_num = 2;
 			ds->proximity = touchdata.finger2.status;
+			ds->time = (int)GetTimeInMillis();
 			/* time stamp for 2FGT gesture events */
 			if ((ds->proximity && !lastTemp->proximity) ||
 			    (!ds->proximity && lastTemp->proximity))
@@ -693,6 +695,7 @@ static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
 		return -1;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	ds->proximity = coord.proximity;
 
 	/* x and y in "normal" orientetion (wide length is X) */

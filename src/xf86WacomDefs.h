@@ -231,6 +231,7 @@ struct _WacomDeviceState
 	int throttle;
 	int proximity;
 	int sample;	/* wraps every 24 days */
+	int time;
 };
 
 static const struct _WacomDeviceState OUTPROX_STATE = {

@@ -1201,6 +1201,7 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			change = 0;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1279,6 +1280,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			change = 0;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	(&common->wcmChannel[private->wcmMTChannel])->dirty |= change;
 }
 
@@ -1391,6 +1393,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			change = 0;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	channel->dirty |= change;
 
 	if (change)
@@ -1417,6 +1420,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			change = 0;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1467,6 +1471,7 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 				change = 0;
 	}
 
+	ds->time = (int)GetTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1749,6 +1754,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			if (event->code == REL_WHEEL)
 			{
 				ds->relwheel = -event->value;
+				ds->time = (int)GetTimeInMillis();
 				common->wcmChannel[channel].dirty |= TRUE;
 			}
 			else

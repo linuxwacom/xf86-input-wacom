@@ -859,8 +859,21 @@ static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
 		/* Pad may never be the "active" pointer controller */
 		return FALSE;
 	}
+	else if (IsCursor(active) && IsTouch(priv)) {
+		/* Cursor devices are often left idle in range, so allow touch to
+		 * grab control if the tool has not been used for some time.
+		 */
+		return (ds->time - active->oldState.time > 100);
+	}
+	else if (IsTouch(active) && IsCursor(priv)) {
+		/* An otherwise idle cursor may still occasionally jitter and send
+		 * events while the user is making active touches. Do not allow
+		 * the cursor to grab control in this particular case.
+		 */
+		return FALSE;
+	}
 	else {
-		/* Pen and cursor events may take control from touch at any time */
+		/* Non-touch input has priority over touch in general */
 		return !IsTouch(priv);
 	}
 }
