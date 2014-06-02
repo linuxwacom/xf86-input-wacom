@@ -50,7 +50,7 @@ static int *VCOPY(const int *valuators, int nvals)
  ****************************************************************************/
 
 static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState);
-static void commonDispatchDevice(WacomCommonPtr common,
+static void commonDispatchDevice(InputInfoPtr pInfo,
 				 const WacomChannelPtr pChannel,
 				 enum WacomSuppressMode suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
@@ -796,6 +796,42 @@ out:
 	return returnV;
 }
 
+/**
+ * Find the device the current events are meant for. If multiple tools are
+ * configured on this tablet, the one that matches the serial number for the
+ * current device state is returned. If none match, the tool that has a
+ * serial of 0 is returned.
+ *
+ * @param ds The current device state as read from the fd
+ * @return The tool that should be used to emit the current events.
+ */
+static WacomToolPtr findTool(const WacomCommonPtr common,
+			     const WacomDeviceState *ds)
+{
+	WacomToolPtr tooldefault = NULL;
+	WacomToolPtr tool = NULL;
+
+	/* 1: Find the tool (the one with correct serial or in second
+	 * hand, the one with serial set to 0 if no match with the
+	 * specified serial exists) that is used for this event */
+	for (tool = common->wcmTool; tool; tool = tool->next)
+	{
+		if (tool->typeid == ds->device_type)
+		{
+			if (tool->serial == ds->serial_num)
+				break;
+			else if (!tool->serial)
+				tooldefault = tool;
+		}
+	}
+
+	/* Use default tool (serial == 0) if no specific was found */
+	if (!tool)
+		tool = tooldefault;
+
+	return tool;
+}
+
 /*****************************************************************************
  * wcmEvent -
  *   Handles suppression, transformation, filtering, and event dispatch.
@@ -808,7 +844,9 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
 	enum WacomSuppressMode suppress;
-	WacomDevicePtr priv = common->wcmDevices;
+	InputInfoPtr pInfo;
+	WacomToolPtr tool;
+	WacomDevicePtr priv;
 	pChannel = common->wcmChannel + channel;
 	pLast = &pChannel->valid.state;
 
@@ -836,20 +874,25 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.proximity, ds.sample,
 		pChannel->nSamples);
 
-	/* touch device is needed for gesture later */
-	if ((ds.device_type == TOUCH_ID) && !IsTouch(priv) &&
-			TabletHasFeature(common, WCM_2FGT))
+	/* Find the device the current events are meant for */
+	tool = findTool(common, &ds);
+	if (!tool || !tool->device)
 	{
-
-		for (; priv != NULL && !IsTouch(priv); priv = priv->next);
-
-		if (priv == NULL || !IsTouch(priv))
-		{
-			priv = common->wcmDevices;
-			LogMessageVerbSigSafe(X_ERROR, 0, "could not find touch device "
-					      "for device on %s.\n", common->device_path);
-		}
+		DBG(11, common, "no device matches with id=%d, serial=%u\n",
+		    ds.device_type, ds.serial_num);
+		return;
 	}
+
+	/* Tool on the tablet when driver starts. This sometime causes
+	 * access errors to the device */
+	if (!tool->enabled) {
+		LogMessageVerbSigSafe(X_ERROR, 0, "tool not initialized yet. Skipping event. \n");
+		return;
+	}
+
+	pInfo = tool->device;
+	priv = pInfo->private;
+	DBG(11, common, "tool id=%d for %s\n", ds.device_type, pInfo->name);
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
 		TabletHasFeature(common, WCM_RING) &&
@@ -902,43 +945,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* For touch, only first finger moves the cursor */
 	if ((common->wcmTouch && ds.device_type == TOUCH_ID && ds.serial_num == 1) ||
 	    (ds.device_type != TOUCH_ID))
-		commonDispatchDevice(common, pChannel, suppress);
-}
-
-/**
- * Find the device the current events are meant for. If multiple tools are
- * configured on this tablet, the one that matches the serial number for the
- * current device state is returned. If none match, the tool that has a
- * serial of 0 is returned.
- *
- * @param ds The current device state as read from the fd
- * @return The tool that should be used to emit the current events.
- */
-static WacomToolPtr findTool(const WacomCommonPtr common,
-			     const WacomDeviceState *ds)
-{
-	WacomToolPtr tooldefault = NULL;
-	WacomToolPtr tool = NULL;
-
-	/* 1: Find the tool (the one with correct serial or in second
-	 * hand, the one with serial set to 0 if no match with the
-	 * specified serial exists) that is used for this event */
-	for (tool = common->wcmTool; tool; tool = tool->next)
-	{
-		if (tool->typeid == ds->device_type)
-		{
-			if (tool->serial == ds->serial_num)
-				break;
-			else if (!tool->serial)
-				tooldefault = tool;
-		}
-	}
-
-	/* Use default tool (serial == 0) if no specific was found */
-	if (!tool)
-		tool = tooldefault;
-
-	return tool;
+		commonDispatchDevice(pInfo, pChannel, suppress);
 }
 
 
@@ -1084,14 +1091,13 @@ static void detectPressureIssue(WacomDevicePtr priv,
 	priv->eventCnt++;
 }
 
-static void commonDispatchDevice(WacomCommonPtr common,
+static void commonDispatchDevice(InputInfoPtr pInfo,
 				 const WacomChannelPtr pChannel,
 				 enum WacomSuppressMode suppress)
 {
-	InputInfoPtr pInfo = NULL;
-	WacomToolPtr tool = NULL;
 	WacomDeviceState* ds = &pChannel->valid.states[0];
-	WacomDevicePtr priv = NULL;
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
 	WacomDeviceState filtered;
 	int raw_pressure = 0;
 
@@ -1108,33 +1114,9 @@ static void commonDispatchDevice(WacomCommonPtr common,
 
 	DBG(10, common, "device type = %d\n", ds->device_type);
 
-	/* Find the device the current events are meant for */
-	tool = findTool(common, ds);
-	/* if a device matched criteria, handle filtering per device
-	 * settings, and send event to XInput */
-	if (!tool || !tool->device)
-	{
-		DBG(11, common, "no device matches with"
-				" id=%d, serial=%u\n",
-				ds->device_type, ds->serial_num);
-		return;
-	}
-
-	/* Tool on the tablet when driver starts. This sometime causes
-	 * access errors to the device */
-	if (!tool->enabled) {
-		LogMessageVerbSigSafe(X_ERROR, 0, "tool not initialized yet. Skipping event. \n");
-		return;
-	}
-
-	pInfo = tool->device;
-	DBG(11, common, "tool id=%d for %s\n", ds->device_type, pInfo->name);
-
 	filtered = pChannel->valid.state;
 
 	/* Device transformations come first */
-	priv = pInfo->private;
-
 	if (priv->serial && filtered.serial_num != priv->serial)
 	{
 		DBG(10, priv, "serial number"
