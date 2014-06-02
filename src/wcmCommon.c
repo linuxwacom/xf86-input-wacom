@@ -51,7 +51,6 @@ static int *VCOPY(const int *valuators, int nvals)
 
 static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState);
 static void commonDispatchDevice(WacomCommonPtr common,
-				 unsigned int channel,
 				 const WacomChannelPtr pChannel,
 				 enum WacomSuppressMode suppress);
 static void sendAButton(InputInfoPtr pInfo, int button, int mask,
@@ -903,7 +902,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* For touch, only first finger moves the cursor */
 	if ((common->wcmTouch && ds.device_type == TOUCH_ID && ds.serial_num == 1) ||
 	    (ds.device_type != TOUCH_ID))
-		commonDispatchDevice(common,channel,pChannel, suppress);
+		commonDispatchDevice(common, pChannel, suppress);
 }
 
 /**
@@ -1085,7 +1084,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 	priv->eventCnt++;
 }
 
-static void commonDispatchDevice(WacomCommonPtr common, unsigned int channel,
+static void commonDispatchDevice(WacomCommonPtr common,
 				 const WacomChannelPtr pChannel,
 				 enum WacomSuppressMode suppress)
 {
