@@ -85,7 +85,7 @@ int get_baud_rate(int fd)
 	int id;
 	struct udev *udev;
 	struct udev_device *device, *parent;
-	const char *attr_id;
+	const char *attr_id = NULL;
 
 	fstat(fd, &st);
 
