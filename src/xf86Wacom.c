@@ -297,8 +297,6 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		label = None;
 		mode = Absolute;
 		min_res = max_res = res = 1;
-		min = 0;
-		max = 1;
 
 		min = MIN_PAD_RING;
 		max = MAX_PAD_RING;
