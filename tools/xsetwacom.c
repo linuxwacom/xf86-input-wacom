@@ -1758,14 +1758,15 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 	XValuatorInfoPtr v;
 
 	info = XListInputDevices(dpy, &ndevices);
-	while(ndevices--)
+
+	for (i = 0; i < ndevices; i++)
 	{
-		d = &info[ndevices];
+		d = &info[i];
 		if (d->id == dev->device_id)
 			break;
 	}
 
-	if (!ndevices) /* device id 0 is reserved and can't be our device */
+	if (i >= ndevices)
 	{
 		fprintf(stderr, "Unable to locate device.\n");
 		return;
