@@ -1289,6 +1289,7 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 		if (!keyword_found)
 		{
 			fprintf(stderr, "Cannot parse keyword '%s' at position %d\n", words[i], i+1);
+			free(words);
 			return False;
 		}
 	}
