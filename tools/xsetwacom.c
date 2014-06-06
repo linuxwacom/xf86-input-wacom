@@ -2119,7 +2119,7 @@ Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height, int *x
 	                   AnyPropertyType, &type, &format, &nitems,
 	                   &bytes_after, (unsigned char**)&data);
 
-	if (format != 32 || type != XInternAtom(dpy, "FLOAT", True))
+	if (format != 32 || type != XInternAtom(dpy, "FLOAT", True) || nitems != 9)
 	{
 		fprintf(stderr,"Property for '%s' has unexpected type - this is a bug.\n",
 			"Coordinate Transformation Matrix");
