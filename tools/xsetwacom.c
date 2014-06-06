@@ -1210,7 +1210,10 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 	for (tmp = buff; tmp && *tmp != '\0'; tmp = index((const char*)tmp, ' ') + 1)
 		(*nwords)++;
 
-	words = calloc(*nwords, sizeof(char*));
+	if (!*nwords)
+		return NULL;
+	else
+		words = calloc(*nwords, sizeof(char*));
 
 	*nwords = 0;
 	tok = strtok(buff, " ");
