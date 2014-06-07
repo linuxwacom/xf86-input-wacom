@@ -613,10 +613,10 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 	int channel = 0;
 
 	rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
-	if (rc == -1)
+	if (rc <= 0)
 	{
-		LogMessageVerbSigSafe(X_ERROR, 0, "%s: failed to parse touch data.\n",
-				      pInfo->name);
+		LogMessageVerbSigSafe(X_ERROR, 0, "%s: failed to parse touch data (err %d).\n",
+				      pInfo->name, rc);
 		return -1;
 	}
 

@@ -288,7 +288,7 @@ int query_tablet(int fd)
 
 	TRACE("Parsing query reply.\n");
 	rc = isdv4ParseQuery(buffer, len, &reply);
-	if (rc < 0)
+	if (rc <= 0)
 	{
 		fprintf(stderr, "parsing error code %d\n", rc);
 		goto out;
@@ -316,7 +316,7 @@ int query_tablet(int fd)
 
 		TRACE("Parsing touch query reply.\n");
 		rc = isdv4ParseTouchQuery(buffer, len, &touch);
-		if (rc < 0)
+		if (rc <= 0)
 		{
 			fprintf(stderr, "touch parsing error code %d\n", rc);
 			touch.sensor_id = 0;
@@ -386,7 +386,7 @@ int parse_touch_packet(unsigned char* buffer, int packetlength)
 	int rc;
 
 	rc = isdv4ParseTouchData(buffer, packetlength, packetlength, &touchdata);
-	if (rc == -1) {
+	if (rc <= 0) {
 		fprintf(stderr, "failed to parse touch data.\n");
 		return -1;
 	}
