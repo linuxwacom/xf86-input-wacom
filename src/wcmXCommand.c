@@ -708,8 +708,8 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			if ((values[0] == -1) && (values[1] == -1) &&
 					(values[2] == -1) && (values[3] == -1))
 			{
-				values[0] = 0;
-				values[1] = 0;
+				values[0] = priv->minX;
+				values[1] = priv->minX;
 				values[2] = priv->maxX;
 				values[3] = priv->maxY;
 			}

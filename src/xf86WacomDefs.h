@@ -253,8 +253,10 @@ struct _WacomDeviceRec
 	int bottomY;		/* Y bottom in device coordinates */
 	int resolX;             /* X resolution */
 	int resolY;             /* Y resolution */
-	int maxX;	        /* tool physical maxX in device coordinates*/
-	int maxY;	        /* tool physical maxY in device coordinates*/
+	int minX;	        /* tool physical minX in device coordinates */
+	int minY;	        /* tool physical minY in device coordinates */
+	int maxX;	        /* tool physical maxX in device coordinates */
+	int maxY;	        /* tool physical maxY in device coordinates */
 	unsigned int serial;	/* device serial number this device takes (if 0, any serial is ok) */
 	unsigned int cur_serial; /* current serial in prox */
 	int cur_device_id;	/* current device ID in prox */
@@ -396,6 +398,8 @@ struct _WacomCommonRec
 	int wcmHWTouchSwitchState;   /* touch event disable/enabled by hardware switch */
 
 	/* These values are in tablet coordinates */
+	int wcmMinX;                 /* tablet min X value */
+	int wcmMinY;                 /* tablet min Y value */
 	int wcmMaxX;                 /* tablet max X value */
 	int wcmMaxY;                 /* tablet max Y value */
 	int wcmMaxZ;                 /* tablet max Z value */
