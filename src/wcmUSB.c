@@ -1301,7 +1301,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 		case BTN_TOOL_BRUSH:
 		case BTN_TOOL_AIRBRUSH:
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+			if (common->wcmProtocolLevel != WCM_PROTOCOL_5)
 				ds->device_id = STYLUS_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			DBG(6, common,
@@ -1311,7 +1311,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 
 		case BTN_TOOL_RUBBER:
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+			if (common->wcmProtocolLevel != WCM_PROTOCOL_5)
 				ds->device_id = ERASER_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			DBG(6, common,
@@ -1325,7 +1325,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			    "USB mouse detected %x (value=%d)\n",
 			    event->code, event->value);
 			/* V5 tools use ABS_MISC to report device_id */
-			if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
+			if (common->wcmProtocolLevel != WCM_PROTOCOL_5)
 				ds->device_id = CURSOR_DEVICE_ID;
 			ds->proximity = (event->value != 0);
 			break;
