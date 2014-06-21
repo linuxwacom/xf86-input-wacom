@@ -283,6 +283,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x101: /* TPC with MT */
 		case 0x10D: /* TPC with MT */
 		case 0x116: /* TPC with 1FGT */
+		case 0x12C: /* TPC */
 		case 0x4001: /* TPC with MT */
 		case 0x4004: /* TPC with MT (no pen on Motion) */
 		case 0x5000: /* TPC with MT */

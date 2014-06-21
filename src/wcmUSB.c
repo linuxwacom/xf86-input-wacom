@@ -304,6 +304,7 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x101,100000, 100000, &usbTabletPC,   "TabletPC 0x101"	},
 	{ WACOM_VENDOR_ID, 0x10D,100000, 100000, &usbTabletPC,   "TabletPC 0x10D"	},
 	{ WACOM_VENDOR_ID, 0x116,100000, 100000, &usbTabletPC,   "TabletPC 0x116"	},
+	{ WACOM_VENDOR_ID, 0x12C,100000, 100000, &usbTabletPC,   "TabletPC 0x12C"	},
 	{ WACOM_VENDOR_ID, 0x4001,100000, 100000, &usbTabletPC,  "TabletPC 0x4001"	},
 	{ WACOM_VENDOR_ID, 0x4004,100000, 100000, &usbTabletPC,  "TabletPC 0x4004"	},
 	{ WACOM_VENDOR_ID, 0x5000,100000, 100000, &usbTabletPC,  "TabletPC 0x5000"	},
