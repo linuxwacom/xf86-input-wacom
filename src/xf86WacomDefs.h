@@ -378,6 +378,12 @@ enum WacomProtocol {
 	WCM_PROTOCOL_5
 };
 
+struct _WacomDriverRec
+{
+	WacomDevicePtr active;     /* Arbitrate motion through this pointer */
+};
+extern struct _WacomDriverRec WACOM_DRIVER; // Defined in wcmCommon.c
+
 struct _WacomCommonRec 
 {
 	/* Do not move device_path, same offset as priv->name. Used by DBG macro */
@@ -393,7 +399,7 @@ struct _WacomCommonRec
 	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */
 	WacomDevicePtr wcmTouchDevice; /* The pointer for pen to access the
 					  touch tool of the same device id */
-	Bool wcmPenInProx;      /* Keep pen in-prox state for touch tool */
+
 	Bool wcmHasHWTouchSwitch;    /* Tablet has a touch on/off switch */
 	int wcmHWTouchSwitchState;   /* touch event disable/enabled by hardware switch */
 

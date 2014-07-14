@@ -28,6 +28,11 @@
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 
+
+struct _WacomDriverRec WACOM_DRIVER = {
+	.active = NULL,
+};
+
 /* X servers pre 1.9 didn't copy data passed into xf86Post*Event.
  * Data passed in would be modified, requiring the driver to copy the
  * data beforehand.
@@ -832,6 +837,34 @@ static WacomToolPtr findTool(const WacomCommonPtr common,
 	return tool;
 }
 
+/**
+ * Check if the given device should grab control of the pointer in
+ * preference to whatever tool currently has access.
+ *
+ * @param pInfo  The device to check for access
+ * @param ds     The current state of the device
+ * @returns      'TRUE' if control of the pointer should be granted, FALSE otherwise
+ */
+static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
+{
+	WacomDevicePtr active = WACOM_DRIVER.active;
+	WacomDevicePtr priv = pInfo->private;
+
+	if (active == NULL || active->oldState.device_id == ds->device_id) {
+		DBG(11, priv, "Same device ID as active; allowing access.\n");
+		return TRUE;
+	}
+
+	if (IsPad(priv)) {
+		/* Pad may never be the "active" pointer controller */
+		return FALSE;
+	}
+	else {
+		/* Pen and cursor events may take control from touch at any time */
+		return !IsTouch(priv);
+	}
+}
+
 /*****************************************************************************
  * wcmEvent -
  *   Handles suppression, transformation, filtering, and event dispatch.
@@ -932,6 +965,20 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		sizeof(WacomDeviceState) * (common->wcmRawSample - 1));
 	pChannel->valid.state = ds; /*save last raw sample */
 	if (pChannel->nSamples < common->wcmRawSample) ++pChannel->nSamples;
+
+	/* arbitrate pointer control */
+	if (check_arbitrated_control(pInfo, &ds)) {
+		if (WACOM_DRIVER.active != NULL && priv != WACOM_DRIVER.active) {
+			wcmSoftOutEvent(WACOM_DRIVER.active->pInfo);
+		}
+		if (ds.proximity)
+			WACOM_DRIVER.active = priv;
+		else
+			WACOM_DRIVER.active = NULL;
+	}
+	else if (!IsPad(priv)) {
+		return;
+	}
 
 	if ((ds.device_type == TOUCH_ID) && common->wcmTouch)
 	{
@@ -1123,28 +1170,6 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 			" is %u but your system configured %u",
 			filtered.serial_num, priv->serial);
 		return;
-	}
-
-	if (TabletHasFeature(common, WCM_PENTOUCH))
-	{
-		if (IsTablet(priv))
-		{
-			common->wcmTouchDevice->common->wcmPenInProx = filtered.proximity;
-
-			/* send touch out when tablet tool coming in-prox for
-			 * devices that provide both pen/puck and touch events
-			 * so system cursor won't jump between tools.
-			 */
-			if (common->wcmTouchDevice->oldState.proximity)
-			{
-				common->wcmGestureMode = 0;
-				wcmSoftOutEvent(common->wcmTouchDevice->pInfo);
-				return;
-			}
-		}
-		else if (IsTouch(priv) && common->wcmPenInProx)
-			/* Ignore touch events when tablet tool is in prox */
-			return;
 	}
 
 	if ((IsPen(priv) || IsTouch(priv)) && common->wcmMaxZ)
