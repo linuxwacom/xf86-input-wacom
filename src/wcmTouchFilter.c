@@ -37,6 +37,7 @@
 #define GESTURE_LAG_MODE              8
 #define GESTURE_PREDRAG_MODE         16
 #define GESTURE_DRAG_MODE            32
+#define GESTURE_CANCEL_MODE          64
 
 #define WCM_SCROLL_UP                 5	/* vertical up */
 #define WCM_SCROLL_DOWN               4	/* vertical down */
@@ -327,6 +328,24 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 	}
 }
 
+
+/**
+ * Cancel any in-progress gesture, returning to GESTURE_NONE_MODE until new
+ * fingers enter proximity.
+ */
+void wcmCancelGesture(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+
+	if (!IsTouch(priv))
+		return;
+
+	if (common->wcmGestureMode == GESTURE_DRAG_MODE)
+		wcmSendButtonClick(priv, 1, 0);
+	common->wcmGestureMode = GESTURE_CANCEL_MODE;
+}
+
 /* parsing gesture mode according to 2FGT data */
 void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 {
@@ -353,6 +372,17 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		LogMessageVerbSigSafe(X_ERROR, 0, "WACOM: No touch device found for %s \n",
 			 common->device_path);
 		return;
+	}
+
+	/* Do not process gestures while in CANCEL mode. Only reset back to
+	 * NONE mode once all fingers have left the screen.
+	 */
+	if (common->wcmGestureMode == GESTURE_CANCEL_MODE)
+	{
+		if (ds[0].proximity || ds[1].proximity)
+			return;
+		else
+			common->wcmGestureMode = GESTURE_NONE_MODE;
 	}
 
 	/* When 2 fingers are in proximity, it must always be in one of

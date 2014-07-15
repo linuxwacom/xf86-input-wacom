@@ -970,6 +970,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	if (check_arbitrated_control(pInfo, &ds)) {
 		if (WACOM_DRIVER.active != NULL && priv != WACOM_DRIVER.active) {
 			wcmSoftOutEvent(WACOM_DRIVER.active->pInfo);
+			wcmCancelGesture(WACOM_DRIVER.active->pInfo);
 		}
 		if (ds.proximity)
 			WACOM_DRIVER.active = priv;

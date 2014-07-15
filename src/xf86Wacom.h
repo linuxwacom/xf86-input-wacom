@@ -146,6 +146,7 @@ extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 extern void wcmSoftOutEvent(InputInfoPtr pInfo);
+extern void wcmCancelGesture(InputInfoPtr pInfo);
 
 extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
 extern void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y);
