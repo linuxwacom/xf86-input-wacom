@@ -303,27 +303,31 @@ int query_tablet(int fd)
 	TRACE("Trying touch query\n");
 	if (stop_tablet(fd)) goto out;
 	if (write_to_tablet(fd, ISDV4_TOUCH_QUERY)) goto out;
-	if (wait_for_tablet(fd)) goto out;
-
-	memset(buffer, 0, sizeof(buffer));
-	len = read_data(fd, buffer, ISDV4_PKGLEN_TPCCTL);
-	if (len < 1 && errno != EAGAIN)
-		goto out;
-
-	TRACE("Parsing touch query reply.\n");
-	rc = isdv4ParseTouchQuery(buffer, len, &touch);
-	if (rc < 0)
-	{
-		fprintf(stderr, "touch parsing error code %d\n", rc);
-		/* failure to parse touch query is not fatal */
-	} else {
-		printf("TOUCH: version: %d\n", touch.version);
-		printf("TOUCH: x max: %d y max %d\n", touch.x_max, touch.y_max);
-		printf("TOUCH: panel resolution: %d\n", touch.panel_resolution);
-		printf("TOUCH: capacity resolution: %d\n", touch.capacity_resolution);
-		printf("TOUCH: sensor id: %d\n", touch.sensor_id);
+	if (wait_for_tablet(fd) < 0) {
+		fprintf(stderr, "ignoring touch query timeout\n");
+		touch.sensor_id = 0;
+		/* failure to recieve reply to touch query is not fatal */
 	}
+	else {
+		memset(buffer, 0, sizeof(buffer));
+		len = read_data(fd, buffer, ISDV4_PKGLEN_TPCCTL);
+		if (len < 1 && errno != EAGAIN)
+			goto out;
 
+		TRACE("Parsing touch query reply.\n");
+		rc = isdv4ParseTouchQuery(buffer, len, &touch);
+		if (rc < 0)
+		{
+			fprintf(stderr, "touch parsing error code %d\n", rc);
+			/* failure to parse touch query is not fatal */
+		} else {
+			printf("TOUCH: version: %d\n", touch.version);
+			printf("TOUCH: x max: %d y max %d\n", touch.x_max, touch.y_max);
+			printf("TOUCH: panel resolution: %d\n", touch.panel_resolution);
+			printf("TOUCH: capacity resolution: %d\n", touch.capacity_resolution);
+			printf("TOUCH: sensor id: %d\n", touch.sensor_id);
+		}
+	}
 	return touch.sensor_id;
 
 out:
