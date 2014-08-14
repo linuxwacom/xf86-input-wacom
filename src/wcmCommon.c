@@ -1055,7 +1055,7 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
  * @param priv The wacom device
  * @param ds Current device state
  *
- * @rebaes
+ * @return normalized pressure
  * @see rebasePressure
  */
 TEST_NON_STATIC int

@@ -1117,7 +1117,7 @@ static int usbIdToType(int id)
  * Protocol 5 devices report different IDs for different styli and pucks,
  * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
  *
- * @device_id id of the device
+ * @param device_id id of the device
  * @return device type
  */
 static int usbFindDeviceTypeById(int device_id)

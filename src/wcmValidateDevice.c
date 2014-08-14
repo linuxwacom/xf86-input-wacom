@@ -521,7 +521,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  *
  * Note that we don't actually hotplug the device here. We store the
  * information needed to hotplug the device later and then queue the
- * hotplug. The server will come back and call the @wcmHotplugDevice
+ * hotplug. The server will come back and call the @ref wcmHotplugDevice
  * later.
  *
  * @param pInfo The parent device
@@ -750,7 +750,7 @@ int wcmParseSerials (InputInfoPtr pInfo)
  * hotplugging, False if the device is a depent or xorg.conf device.
  * @param is_hotplugged True if the device is a dependent device, FALSE
  * otherwise.
- * @retvalue True on success or False otherwise.
+ * @retval True on success or False otherwise.
  */
 Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			    Bool is_dependent)
@@ -1017,7 +1017,7 @@ error:
  * hotplugging, False if the device is a depent or xorg.conf device.
  * @param is_hotplugged True if the device is a dependent device, FALSE
  * otherwise.
- * @retvalue True on success or False otherwise.
+ * @retval True on success or False otherwise.
  */
 Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			     Bool is_dependent)
