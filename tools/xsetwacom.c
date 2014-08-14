@@ -658,6 +658,7 @@ static void print_value(param_t *param, const char *msg, ...)
 			vprintf(msg, va_args);
 			printf("\"\n");
 			break;
+		case FORMAT_DEFAULT:
 		default:
 			vprintf(msg, va_args);
 			printf("\n");
