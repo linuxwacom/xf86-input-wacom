@@ -2096,7 +2096,7 @@ static Bool need_xinerama(Display *dpy)
  * @param y_org[out]   Offset from the desktop origin to the mapped area's top edge
  * @return             True if the function could determine the mapped area
  */
-Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height, int *x_org, int *y_org)
+static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height, int *x_org, int *y_org)
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
 	Atom type;

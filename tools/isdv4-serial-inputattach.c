@@ -78,7 +78,7 @@ static int bind_kernel_driver(int fd)
 	return 0;
 }
 
-int get_baud_rate(int fd)
+static int get_baud_rate(int fd)
 {
 	struct stat st;
 	int baudrate = 19200;
@@ -114,7 +114,7 @@ int get_baud_rate(int fd)
 	return baudrate;
 }
 
-void sighandler(int signum)
+static void sighandler(int signum)
 {
 	/* We don't need to do anything here, triggering the signal is
 	 * enough to trigger EINTR in read() and then reset the line
