@@ -2268,14 +2268,14 @@ static Bool set_output_area(Display *dpy, XDevice *dev,
  */
 static Bool set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 {
-	int i, found = 0;
+	int i, success = 0;
 	int x, y, width, height;
 	XRRScreenResources *res;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
 
 	res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
-	for (i = 0; i < res->noutput && !found; i++)
+	for (i = 0; i < res->noutput; i++)
 	{
 		output_info = XRRGetOutputInfo(dpy, res, res->outputs[i]);
 
@@ -2296,24 +2296,18 @@ static Bool set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 
 		if (strcmp(output_info->name, output_name) == 0)
 		{
-			found = 1;
+			TRACE("Setting CRTC %s\n", output_name);
+			success = set_output_area(dpy, dev, x, y, width, height);
 			break;
 		}
 	}
 	XRRFreeScreenResources(res);
 
-	/* crtc holds our screen info, need to compare to actual screen size */
-	if (found)
-	{
-		TRACE("Setting CRTC %s\n", output_name);
-		return set_output_area(dpy, dev, x, y, width, height);
-	} else
-	{
+	if (!success)
 		printf("Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
 
-		return False;
-	}
+	return success;
 }
 
 /**

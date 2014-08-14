@@ -478,7 +478,7 @@ Bool wcmIsWacomDevice (char* fname)
 char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 {
 	/* We are trying to find the right eventX device */
-	int i, wait = 0;
+	int i = 0, wait = 0;
 	const int max_wait = 2000;
 
 	/* If device is not available after Resume, wait some ms */

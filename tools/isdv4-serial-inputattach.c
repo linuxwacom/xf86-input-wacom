@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         int sensor_id;
 	char *filename;
 	int fd, rc = 1;
-	int baudrate;
+	int baudrate = 0;
 	int have_baudrate = 0;
 
 	int c, optidx = 0;
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 			case 'b':
 				have_baudrate = 1;
 				baudrate = atoi(optarg);
-				if (baudrate == 0) {
+				if (baudrate <= 0) {
 					usage();
 					return 1;
 				}
