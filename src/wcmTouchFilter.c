@@ -555,11 +555,17 @@ ret:
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	/* Send multitouch data to X if appropriate */
-	if (!common->wcmGesture && ds[1].proximity && common->wcmGestureMode == GESTURE_NONE_MODE)
-		common->wcmGestureMode = GESTURE_LAG_MODE;
-	if (!common->wcmGesture && (common->wcmGestureMode == GESTURE_LAG_MODE ||
-	    common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)) {
-		wcmFingerMultitouch(priv, touch_id);
+	if (!common->wcmGesture) {
+		if (common->wcmGestureMode == GESTURE_NONE_MODE) {
+			if (TabletHasFeature(common, WCM_LCD))
+				common->wcmGestureMode = GESTURE_MULTITOUCH_MODE;
+			else if (ds[1].proximity)
+				common->wcmGestureMode = GESTURE_LAG_MODE;
+		}
+
+		if (common->wcmGestureMode == GESTURE_LAG_MODE ||
+		    common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)
+			wcmFingerMultitouch(priv, touch_id);
 	}
 #endif
 
