@@ -1781,6 +1781,28 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 		return;
 	}
 
+	/* verify we have minimal data when entering prox */
+	if (ds->proximity && !dslast.proximity) {
+		struct input_absinfo absinfo;
+
+		if (!ds->x && !IsPad(priv)) {
+			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
+			{
+				DBG(-1, common, "unable to ioctl current x value.\n");
+				return;
+			}
+			ds->x = absinfo.value;
+		}
+		if (!ds->y && !IsPad(priv)) {
+			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
+			{
+				DBG(-1, common, "unable to ioctl current x value.\n");
+				return;
+			}
+			ds->y = absinfo.value;
+		}
+	}
+
 	/*reset the serial number when the tool is going out */
 	if (!ds->proximity)
 		private->wcmLastToolSerial = 0;
