@@ -236,6 +236,9 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	DBG(1, priv, "\n");
 
+	if (WACOM_DRIVER.active == priv)
+		WACOM_DRIVER.active = NULL;
+
 	/* Server 1.10 will UnInit all devices for us */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
 	if (priv->isParent)
