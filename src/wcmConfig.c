@@ -695,7 +695,7 @@ SetupProc_fail:
 	return BadMatch;
 }
 
-InputDriverRec WACOM =
+static InputDriverRec WACOM =
 {
 	1,             /* driver version */
 	"wacom",       /* driver name */

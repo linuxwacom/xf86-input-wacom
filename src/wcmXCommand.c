@@ -79,29 +79,29 @@ int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 	return wcmDevSwitchModeCall(pInfo, mode);
 }
 
-Atom prop_devnode;
-Atom prop_rotation;
-Atom prop_tablet_area;
-Atom prop_pressurecurve;
-Atom prop_serials;
-Atom prop_serial_binding;
-Atom prop_strip_buttons;
-Atom prop_wheel_buttons;
-Atom prop_tv_resolutions;
-Atom prop_cursorprox;
-Atom prop_threshold;
-Atom prop_suppress;
-Atom prop_touch;
-Atom prop_hardware_touch;
-Atom prop_gesture;
-Atom prop_gesture_param;
-Atom prop_hover;
-Atom prop_tooltype;
-Atom prop_btnactions;
-Atom prop_product_id;
-Atom prop_pressure_recal;
+static Atom prop_devnode;
+static Atom prop_rotation;
+static Atom prop_tablet_area;
+static Atom prop_pressurecurve;
+static Atom prop_serials;
+static Atom prop_serial_binding;
+static Atom prop_strip_buttons;
+static Atom prop_wheel_buttons;
+static Atom prop_tv_resolutions;
+static Atom prop_cursorprox;
+static Atom prop_threshold;
+static Atom prop_suppress;
+static Atom prop_touch;
+static Atom prop_hardware_touch;
+static Atom prop_gesture;
+static Atom prop_gesture_param;
+static Atom prop_hover;
+static Atom prop_tooltype;
+static Atom prop_btnactions;
+static Atom prop_product_id;
+static Atom prop_pressure_recal;
 #ifdef DEBUG
-Atom prop_debuglevels;
+static Atom prop_debuglevels;
 #endif
 
 /**

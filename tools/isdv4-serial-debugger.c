@@ -40,6 +40,7 @@
 
 #include "tools-shared.h"
 
+extern int verbose; /* quiet clang's -Wmissing-variable-declarations */
 int verbose = 0;
 
 static void usage(void)

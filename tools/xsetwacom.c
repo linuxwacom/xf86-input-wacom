@@ -471,7 +471,7 @@ static param_t parameters[] =
 /**
  * Deprecated parameters and their respective replacements.
  */
-struct deprecated
+static struct deprecated
 {
 	const char *name;
 	const char *replacement;
@@ -949,7 +949,7 @@ static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned 
 static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
 
 /* Valid keywords for the --set ButtonX options */
-struct keywords {
+static struct keywords {
 	const char *keyword;
 	int (*func)(Display*, int, char **, unsigned long*, unsigned long *, const size_t size);
 } keywords[] = {
