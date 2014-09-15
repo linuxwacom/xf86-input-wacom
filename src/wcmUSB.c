@@ -1137,7 +1137,6 @@ static int usbFindDeviceTypeById(int device_id)
 		default: /* protocol 5 */
 			return usbIdToType(device_id);
 	}
-	return 0;
 }
 
 static void usbParseAbsEvent(WacomCommonPtr common,
