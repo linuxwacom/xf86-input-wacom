@@ -436,7 +436,6 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 			default:
 				DBG(3, priv, "ERROR: Unknown command\n");
 				return BadValue;
-				break;
 		}
 	}
 
