@@ -19,7 +19,6 @@
 /* inputattach clone for ISDV4 serial devices */
 
 #ifdef HAVE_CONFIG_H
-#define WACOM_TOOLS
 #include "config.h"
 #endif
 

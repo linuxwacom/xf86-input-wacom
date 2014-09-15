@@ -17,7 +17,6 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#define WACOM_TOOLS
 #include "config.h"
 #endif
 
