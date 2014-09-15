@@ -251,7 +251,7 @@ static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 static void wcmFingerTapToClick(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+	WacomDeviceState ds[2] = {}, dsLast[2] = {};
 
 	if (!common->wcmGesture)
 		return;
@@ -311,7 +311,7 @@ static CARD32 wcmSingleFingerTapTimer(OsTimerPtr timer, CARD32 time, pointer arg
 static void wcmSingleFingerTap(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+	WacomDeviceState ds[2] = {}, dsLast[2] = {};
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
@@ -392,7 +392,7 @@ void wcmCancelGesture(InputInfoPtr pInfo)
 void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 {
 	WacomCommonPtr common = priv->common;
-	WacomDeviceState ds[2] = {{0}}, dsLast[2] = {{0}};
+	WacomDeviceState ds[2] = {}, dsLast[2] = {};
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 	getStateHistory(common, dsLast, ARRAY_SIZE(dsLast), 1);
@@ -584,7 +584,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 	WacomCommonPtr common = priv->common;
 	int count = (int)((1.0 * abs(dist)/
 		common->wcmGestureParameters.wcmScrollDistance) + 0.5);
-	WacomDeviceState ds[2] = {{0}};
+	WacomDeviceState ds[2] = {};
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
 
@@ -610,7 +610,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 static void wcmFingerScroll(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomDeviceState ds[2] = {{0}};
+	WacomDeviceState ds[2] = {};
 	int midPoint_new = 0;
 	int midPoint_old = 0;
 	int i = 0, dist = 0;
@@ -711,7 +711,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 static void wcmFingerZoom(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	WacomDeviceState ds[2] = {{0}};
+	WacomDeviceState ds[2] = {};
 	int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);

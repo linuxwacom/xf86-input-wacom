@@ -97,6 +97,7 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request);
 		isdv4GetRanges,       /* query ranges */
 		isdv4StartTablet,     /* start tablet */
 		isdv4Parse,
+		NULL,
 	};
 
 static void memdump(InputInfoPtr pInfo, char *buffer, unsigned int len)
