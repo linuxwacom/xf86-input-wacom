@@ -44,6 +44,9 @@
 #define TRACE(...) \
 	if (verbose) fprintf(stderr, "... " __VA_ARGS__)
 
+#define safe_realloc(p, n, s) \
+	((size_t)-1 / (n) < (s) ? NULL : realloc((p), (n)*(s)))
+
 static int verbose = False;
 
 enum printformat {
@@ -1191,36 +1194,29 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
  */
 static char** strjoinsplit(int argc, char **argv, int *nwords)
 {
-	char buff[1024] = { 0 };
-	char **words	= NULL;
-	char *tmp, *tok;
-
-	while(argc--)
-	{
-		if (strlen(buff) + strlen(*argv) + 2 >= sizeof(buff))
-			break;
-
-		strcat(buff, *argv);
-		strcat(buff, " ");
-		argv++;
-	}
+	char **words = NULL;
+	int i, n;
 
 	*nwords = 0;
+	for (i = 0; i < argc; i++) {
+		char *tok = strtok(argv[i], " ");
+		while (tok) {
+			char **p = safe_realloc(words, *nwords+1, sizeof(char*));
+			if (!p) {
+				fprintf(stderr, "Unable to reallocate memory.\n");
+				return words;
+			}
 
-	for (tmp = buff; tmp && *tmp != '\0'; tmp = index((const char*)tmp, ' ') + 1)
-		(*nwords)++;
+			words = p;
+			words[*nwords] = strdup(tok);
+			if (!words[*nwords]) {
+				fprintf(stderr, "Unable to allocate memory.\n");
+				return words;
+			}
 
-	if (!*nwords)
-		return NULL;
-	else
-		words = calloc(*nwords, sizeof(char*));
-
-	*nwords = 0;
-	tok = strtok(buff, " ");
-	while(tok)
-	{
-		words[(*nwords)++] = strdup(tok);
-		tok = strtok(NULL, " ");
+			(*nwords)++;
+			tok = strtok(NULL, " ");
+		}
 	}
 
 	return words;
