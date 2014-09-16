@@ -1252,7 +1252,7 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 
 	if (nwords==1 && sscanf(words[0], "%d", &i) == 1)
 	{ /* Mangle "simple" button maps into proper actions */
-		char **new_words = realloc(words, 2);
+		char **new_words = realloc(words, sizeof(char*)*2);
 		if (new_words == NULL)
 		{
 			fprintf(stderr, "Unable to reallocate memory.\n");
