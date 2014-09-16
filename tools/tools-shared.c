@@ -319,6 +319,7 @@ int query_tablet(int fd)
 		if (rc < 0)
 		{
 			fprintf(stderr, "touch parsing error code %d\n", rc);
+			touch.sensor_id = 0;
 			/* failure to parse touch query is not fatal */
 		} else {
 			printf("TOUCH: version: %d\n", touch.version);
