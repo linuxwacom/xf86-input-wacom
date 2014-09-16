@@ -1197,7 +1197,7 @@ static char** strjoinsplit(int argc, char **argv, int *nwords)
 
 	while(argc--)
 	{
-		if (strlen(buff) + strlen(*argv) + 1 >= sizeof(buff))
+		if (strlen(buff) + strlen(*argv) + 2 >= sizeof(buff))
 			break;
 
 		strcat(buff, *argv);
