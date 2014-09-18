@@ -347,7 +347,7 @@ struct _WacomDeviceClass
 {
 	Bool (*Detect)(InputInfoPtr pInfo); /* detect device */
 	Bool (*ParseOptions)(InputInfoPtr pInfo); /* parse class-specific options */
-	Bool (*Init)(InputInfoPtr pInfo, char* id, float *version);   /* initialize device */
+	Bool (*Init)(InputInfoPtr pInfo, char* id, size_t id_len, float *version);   /* initialize device */
 	int  (*ProbeKeys)(InputInfoPtr pInfo); /* set the bits for the keys supported */
 };
 

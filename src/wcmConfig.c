@@ -455,7 +455,7 @@ wcmInitModel(InputInfoPtr pInfo)
 	float version;
 
 	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(pInfo, id, &version) != Success ||
+	if(common->wcmDevCls->Init(pInfo, id, ARRAY_SIZE(id), &version) != Success ||
 		wcmInitTablet(pInfo, id, version) != Success)
 		return FALSE;
 

@@ -45,7 +45,7 @@ typedef struct {
 } wcmUSBData;
 
 static Bool usbDetect(InputInfoPtr);
-static Bool usbWcmInit(InputInfoPtr pDev, char* id, float *version);
+static Bool usbWcmInit(InputInfoPtr pDev, char* id, size_t id_len, float *version);
 static int usbProbeKeys(InputInfoPtr pInfo);
 static int usbStart(InputInfoPtr pInfo);
 static void usbInitProtocol5(WacomCommonPtr common, const char* id,
@@ -391,7 +391,7 @@ void usbListModels(void)
 }
 
 
-static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
+static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *version)
 {
 	int i;
 	struct input_id sID;
@@ -414,7 +414,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, float *version)
 
 	/* fetch vendor, product, and model name */
 	ioctl(pInfo->fd, EVIOCGID, &sID);
-	ioctl(pInfo->fd, EVIOCGNAME(sizeof(id)), id);
+	ioctl(pInfo->fd, EVIOCGNAME(id_len), id);
 
 	for (i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
 	{

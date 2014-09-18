@@ -70,7 +70,7 @@ typedef struct {
 
 static Bool isdv4Detect(InputInfoPtr);
 static Bool isdv4ParseOptions(InputInfoPtr pInfo);
-static Bool isdv4Init(InputInfoPtr, char* id, float *version);
+static Bool isdv4Init(InputInfoPtr, char* id, size_t id_len, float *version);
 static int isdv4ProbeKeys(InputInfoPtr pInfo);
 static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
 static int isdv4GetRanges(InputInfoPtr);
@@ -252,7 +252,7 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
  * isdv4Init --
  ****************************************************************************/
 
-static Bool isdv4Init(InputInfoPtr pInfo, char* id, float *version)
+static Bool isdv4Init(InputInfoPtr pInfo, char* id, size_t id_len, float *version)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
@@ -264,8 +264,10 @@ static Bool isdv4Init(InputInfoPtr pInfo, char* id, float *version)
 	if (xf86SetSerialSpeed(pInfo->fd, isdv4data->baudrate) < 0)
 		return !Success;
 
-	if(id)
-		strcpy(id, "ISDV4");
+	if(id) {
+		strncpy(id, "ISDV4", id_len);
+		id[id_len-1] = '\0';
+	}
 	if(version)
 		*version = common->wcmVersion;
 
