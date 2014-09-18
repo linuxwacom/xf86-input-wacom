@@ -850,14 +850,14 @@ static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
 	WacomDevicePtr active = WACOM_DRIVER.active;
 	WacomDevicePtr priv = pInfo->private;
 
-	if (active == NULL || active->oldState.device_id == ds->device_id) {
-		DBG(11, priv, "Same device ID as active; allowing access.\n");
-		return TRUE;
-	}
-
 	if (IsPad(priv)) {
 		/* Pad may never be the "active" pointer controller */
 		return FALSE;
+	}
+
+	if (active == NULL || active->oldState.device_id == ds->device_id) {
+		DBG(11, priv, "Same device ID as active; allowing access.\n");
+		return TRUE;
 	}
 	else if (IsCursor(active) && IsTouch(priv)) {
 		/* Cursor devices are often left idle in range, so allow touch to
