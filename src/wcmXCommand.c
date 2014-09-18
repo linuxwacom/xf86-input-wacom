@@ -87,7 +87,6 @@ static Atom prop_serials;
 static Atom prop_serial_binding;
 static Atom prop_strip_buttons;
 static Atom prop_wheel_buttons;
-static Atom prop_tv_resolutions;
 static Atom prop_cursorprox;
 static Atom prop_threshold;
 static Atom prop_suppress;
