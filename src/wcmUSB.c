@@ -546,6 +546,11 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (!ISBITSET(ev,EV_ABS))
 	{
+		/* may be an expresskey only interface */
+		if (ISBITSET(common->wcmKeys, BTN_FORWARD) ||
+		    ISBITSET(common->wcmKeys, BTN_0))
+			return Success;
+
 		xf86Msg(X_ERROR, "%s: no abs bits.\n", pInfo->name);
 		return !Success;
 	}
@@ -560,6 +565,11 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	/* max x */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
 	{
+		/* may be a PAD only interface */
+		if (ISBITSET(common->wcmKeys, BTN_FORWARD) ||
+		    ISBITSET(common->wcmKeys, BTN_0))
+			return Success;
+
 		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", pInfo->name);
 		return !Success;
 	}
