@@ -765,8 +765,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to ioctl "
-			"sw bits.\n", pInfo->name);
+		xf86Msg(X_ERROR, "%s: unable to ioctl sw bits.\n", pInfo->name);
 		return 0;
 	}
 	else if (ISBITSET(sw, SW_MUTE_DEVICE))
