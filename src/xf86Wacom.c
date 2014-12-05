@@ -753,9 +753,9 @@ static void wcmDevClose(InputInfoPtr pInfo)
 
 	if (pInfo->fd >= 0)
 	{
-		pInfo->fd = -1;
 		if (!--common->fd_refs)
 			wcmClose(pInfo);
+		pInfo->fd = -1;
 	}
 }
 
