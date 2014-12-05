@@ -593,6 +593,8 @@ static struct modifier specialkeys[] = {
 	{"del", "Delete"}, {"home", "Home"},
 	{"end", "End"},
 
+	{"insert", "Insert"},
+
 	{"`", "quoteleft"},
 	{"-", "minus"},
 	{"=", "equal"},
