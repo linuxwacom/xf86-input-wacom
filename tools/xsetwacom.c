@@ -1159,10 +1159,12 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 			key = convert_specialkey(key);
 			ks = XStringToKeysym(key);
 			if (ks == 0)
-				fprintf(stderr, "Warning: unable to map '%s' to a keycode.\n", key);
+				fprintf(stderr, "Warning: unable to map '%s' to a keysym.\n", key);
 		}
 
 		kc = keysym_to_keycode(dpy, ks);
+		if (kc == 0)
+			fprintf(stderr, "Warning: unable to map '%s' to a keycode.\n", key);
 
 		if (need_press && need_release && *ndata + nitems + 2 > size) {
 			fprintf(stderr, "Insufficient space to store all commands.\n");
