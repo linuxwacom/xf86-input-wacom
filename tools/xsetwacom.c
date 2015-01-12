@@ -1071,12 +1071,41 @@ static int special_map_button(Display *dpy, int argc, char **argv, unsigned long
 	return i;
 }
 
-/* Return the first keycode to have the required keysym in the current group.
-   TODOs:
-   - parse other groups as well (do we need this?)
-   - for keysyms not on level 0, return the keycodes for the modifiers as
-     well
-*/
+/**
+ * Return the effective group number for a given keycode and requested
+ * global group number. If the group number is in-range for the keycode,
+ * the returned value will be identical. If the group number is out of
+ * range, the returned value will be wrapped, clamped, or redirected as
+ * necessary.
+ */
+static int keycode_effective_group(XkbDescPtr xkb, int keycode, int group)
+{
+	unsigned char info = XkbKeyGroupInfo(xkb, keycode);
+	unsigned char action = XkbOutOfRangeGroupInfo(info);
+	int n = XkbKeyNumGroups(xkb, keycode);
+
+	if (n <= 0)
+		return 0;
+	else if (group < n && group >= 0)
+		return group;
+	else if (action == XkbRedirectIntoRange)
+		return XkbOutOfRangeGroupNumber(info);
+	else if (action == XkbClampIntoRange)
+		return group < 1 ? 0 : group-1;
+	else /* if XkbWrapIntoRange */
+		return group % n;
+}
+
+/**
+ * Return the first keycode to have the required keysym. The effective
+ * group number is used durring scanning to ensure that an appropriate
+ * keycode is returned even if the active group does not define all
+ * keycodes.
+ *
+ *  TODOs:
+ *  - for keysyms not on level 0, return the keycodes for the modifiers as
+ *    well
+ */
 static int keysym_to_keycode(Display *dpy, KeySym sym)
 {
 	static XkbDescPtr xkb = NULL;
@@ -1090,10 +1119,11 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 
 	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
 	{
+		int group = keycode_effective_group(xkb, kc, state.group);
 		int i;
 
-		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, state.group); i++)
-			if (XkbKeycodeToKeysym(dpy, kc, state.group, i) == sym)
+		for (i = 0; i < XkbKeyGroupWidth(xkb, kc, group); i++)
+			if (XkbKeycodeToKeysym(dpy, kc, group, i) == sym)
 				goto out;
 	}
 
