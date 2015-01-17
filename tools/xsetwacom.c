@@ -694,6 +694,35 @@ static void print_value(param_t *param, const char *msg, ...)
 	va_end(va_args);
 }
 
+static void print_button_value(param_t *param, int n, const char *msg, ...)
+{
+	va_list va_args;
+	va_start(va_args, msg);
+
+	n++; /* Property is 0-indexed, X buttons are 1-indexed */
+	switch(param->printformat)
+	{
+		case FORMAT_XORG_CONF:
+			printf("Option \"%s%d\" \"", param->name, n);
+			vprintf(msg, va_args);
+			printf("\"\n");
+			break;
+		case FORMAT_SHELL:
+			printf("xsetwacom set \"%s\" \"%s\" \"%d\" \"",
+					param->device_name, param->name, n);
+			vprintf(msg, va_args);
+			printf("\"\n");
+			break;
+		case FORMAT_DEFAULT:
+		default:
+			vprintf(msg, va_args);
+			printf("\n");
+			break;
+	}
+
+	va_end(va_args);
+}
+
 static void usage(void)
 {
 	printf(
@@ -1997,7 +2026,10 @@ static int get_actions(Display *dpy, XDevice *dev,
 
 	XFree(data);
 
-	print_value(param, "%s", buff);
+	if (param->printformat == FORMAT_XORG_CONF)
+		fprintf(stderr, "%s: Actions are not supported by xorg.conf. Try shell format (-s) instead.\n", param->name);
+	else
+		print_button_value(param, offset, "%s", buff);
 
 	return 1;
 }
@@ -2043,7 +2075,7 @@ static int get_button(Display *dpy, XDevice *dev, param_t *param, int offset)
 		return 0;
 	}
 
-	print_value(param, "%d", prop);
+	print_button_value(param, offset, "%d", prop);
 
 	return 1;
 }
