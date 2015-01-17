@@ -86,6 +86,7 @@ enum prop_flags {
 typedef struct _param
 {
 	const char *name;	/* param name as specified by the user */
+	const char *x11name;    /* param name used in xorg.conf */
 	const char *desc;	/* description */
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
@@ -120,6 +121,7 @@ static param_t parameters[] =
 {
 	{
 		.name = "Area",
+		.x11name = "Area",
 		.desc = "Valid tablet area in device coordinates. ",
 		.prop_name = WACOM_PROP_TABLET_AREA,
 		.prop_format = 32,
@@ -136,6 +138,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "ToolDebugLevel",
+		.x11name = "DebugLevel",
 		.desc = "Level of debugging trace for individual tools "
 		"(default is 0 [off]). ",
 		.prop_name = WACOM_PROP_DEBUGLEVELS,
@@ -145,6 +148,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "TabletDebugLevel",
+		.x11name = "CommonDBG",
 		.desc = "Level of debugging statements applied to shared "
 		"code paths between all tools "
 		"associated with the same tablet (default is 0 [off]). ",
@@ -155,6 +159,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Suppress",
+		.x11name = "Suppress",
 		.desc = "Number of points trimmed (default is 2). ",
 		.prop_name = WACOM_PROP_SAMPLE,
 		.prop_format = 32,
@@ -163,6 +168,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "RawSample",
+		.x11name = "RawSample",
 		.desc = "Number of raw data used to filter the points "
 		"(default is 4). ",
 		.prop_name = WACOM_PROP_SAMPLE,
@@ -172,6 +178,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "PressureCurve",
+		.x11name = "PressCurve",
 		.desc = "Bezier curve for pressure (default is 0 0 100 100 [linear]). ",
 		.prop_name = WACOM_PROP_PRESSURECURVE,
 		.prop_format = 32,
@@ -180,6 +187,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Mode",
+		.x11name = "Mode",
 		.desc = "Switches cursor movement mode (default is absolute). ",
 		.arg_count = 1,
 		.set_func = set_mode,
@@ -187,6 +195,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "TabletPCButton",
+		.x11name = "TPCButton",
 		.desc = "Turns on/off Tablet PC buttons "
 		"(default is off for regular tablets, "
 		"on for Tablet PC). ",
@@ -198,6 +207,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Touch",
+		.x11name = "Touch",
 		.desc = "Turns on/off Touch events (default is on). ",
 		.prop_name = WACOM_PROP_TOUCH,
 		.prop_format = 8,
@@ -216,6 +226,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Gesture",
+		.x11name = "Gesture",
 		.desc = "Turns on/off multi-touch gesture events "
 		"(default is on). ",
 		.prop_name = WACOM_PROP_ENABLE_GESTURE,
@@ -226,6 +237,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "ZoomDistance",
+		.x11name = "ZoomDistance",
 		.desc = "Minimum distance for a zoom gesture "
 		"(default is 50). ",
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
@@ -235,6 +247,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "ScrollDistance",
+		.x11name = "ScrollDistance",
 		.desc = "Minimum motion before sending a scroll gesture "
 		"(default is 20). ",
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
@@ -244,6 +257,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "TapTime",
+		.x11name = "TapTime",
 		.desc = "Minimum time between taps for a right click "
 		"(default is 250). ",
 		.prop_name = WACOM_PROP_GESTURE_PARAMETERS,
@@ -253,6 +267,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "CursorProximity",
+		.x11name = "CursorProx",
 		.desc = "Sets cursor distance for proximity-out "
 		"in distance from the tablet "
 		"(default is 10 for Intuos series, "
@@ -264,6 +279,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Rotate",
+		.x11name = "Rotate",
 		.desc = "Sets the rotation of the tablet. "
 		"Values = none, cw, ccw, half (default is none). ",
 		.prop_name = WACOM_PROP_ROTATION,
@@ -373,6 +389,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "Threshold",
+		.x11name = "Threshold",
 		.desc = "Sets tip/eraser pressure threshold "
 		"(default is 27). ",
 		.prop_name = WACOM_PROP_PRESSURE_THRESHOLD,
@@ -428,6 +445,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "BindToSerial",
+		.x11name = "Serial",
 		.desc = "Binds this device to the serial number.",
 		.prop_name = WACOM_PROP_SERIAL_BIND,
 		.prop_format = 32,
@@ -445,6 +463,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "PressureRecalibration",
+		.x11name = "PressureRecalibration",
 		.desc = "Turns on/off Tablet pressure recalibration",
 		.prop_name = WACOM_PROP_PRESSURE_RECAL,
 		.prop_format = 8,
@@ -649,7 +668,9 @@ static void print_value(param_t *param, const char *msg, ...)
 	switch(param->printformat)
 	{
 		case FORMAT_XORG_CONF:
-			printf("Option \"%s\" \"", param->name);
+			if (!param->x11name)
+				break;
+			printf("Option \"%s\" \"", param->x11name);
 			vprintf(msg, va_args);
 			printf("\"\n");
 			break;
