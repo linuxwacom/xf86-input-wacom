@@ -2570,7 +2570,27 @@ static void get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char *
 		{
 			p->device_name = param->device_name;
 			p->printformat = param->printformat;
-			get_param(dpy, dev, p, argc, argv);
+
+			if (p->prop_name && strcmp(p->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
+			{
+				int i;
+				int nmap = 256;
+				unsigned char map[nmap];
+
+				nmap = XGetDeviceButtonMapping(dpy, dev, map, nmap);
+				for (i = 1; i <= nmap; i++)
+				{
+					char tmparg[16];
+					char *tmpargv = &tmparg[0];
+
+					if (i > 3 && i < 8)
+						continue;
+					sprintf(tmparg, "%d", i);
+					get_param(dpy, dev, p, 1, &tmpargv);
+				}
+			}
+			else
+				get_param(dpy, dev, p, argc, argv);
 		}
 		p++;
 	}
