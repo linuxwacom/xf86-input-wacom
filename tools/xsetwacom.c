@@ -519,11 +519,11 @@ is_deprecated_parameter(const char *name)
 
 	if (is_deprecated)
 	{
-		printf("Parameter '%s' is no longer in use. ", name);
+		fprintf(stderr, "Parameter '%s' is no longer in use. ", name);
 		if (d->replacement != NULL)
-			printf("It was replaced with '%s'.\n", d->replacement);
+			fprintf(stderr, "It was replaced with '%s'.\n", d->replacement);
 		else
-			printf("Its use has been deprecated.\n");
+			fprintf(stderr, "Its use has been deprecated.\n");
 	}
 
 	return is_deprecated;
@@ -898,7 +898,7 @@ static void list(Display *dpy, int argc, char **argv)
 		 strcmp(argv[0], "modifiers") == 0)
 		list_mod(dpy);
 	else
-		printf("unknown argument to list.\n");
+		fprintf(stderr, "unknown argument to list.\n");
 }
 
 /**
@@ -1539,7 +1539,7 @@ static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 		mode = Absolute;
 	else
 	{
-		printf("Invalid device mode. Use 'Relative' or 'Absolute'.\n");
+		fprintf(stderr, "Invalid device mode. Use 'Relative' or 'Absolute'.\n");
 		return;
 	}
 
@@ -1681,7 +1681,7 @@ static void set(Display *dpy, int argc, char **argv)
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
 	{
-		printf("Cannot find device '%s'.\n", argv[0]);
+		fprintf(stderr, "Cannot find device '%s'.\n", argv[0]);
 		return;
 	}
 
@@ -1690,11 +1690,11 @@ static void set(Display *dpy, int argc, char **argv)
 	{
 		if (is_deprecated_parameter(argv[1]))
 			goto out;
-		printf("Unknown parameter name '%s'.\n", argv[1]);
+		fprintf(stderr, "Unknown parameter name '%s'.\n", argv[1]);
 		goto out;
 	} else if (param->prop_flags & PROP_FLAG_READONLY)
 	{
-		printf("'%s' is a read-only option.\n", argv[1]);
+		fprintf(stderr, "'%s' is a read-only option.\n", argv[1]);
 		goto out;
 	}
 
@@ -1703,7 +1703,7 @@ static void set(Display *dpy, int argc, char **argv)
 		prop = XInternAtom(dpy, param->prop_name, True);
 		if (!prop || !test_property(dpy, dev, prop))
 		{
-			printf("Property '%s' does not exist on device.\n",
+			fprintf(stderr, "Property '%s' does not exist on device.\n",
 				param->prop_name);
 			goto out;
 		}
@@ -2337,7 +2337,7 @@ static Bool set_output_xrandr(Display *dpy, XDevice *dev, char *output_name)
 	XRRFreeScreenResources(res);
 
 	if (!success)
-		printf("Unable to find output '%s'. "
+		fprintf(stderr, "Unable to find output '%s'. "
 			"Output may not be connected.\n", output_name);
 
 	return success;
@@ -2535,7 +2535,7 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
 	{
-		printf("Cannot find device '%s'.\n", argv[0]);
+		fprintf(stderr, "Cannot find device '%s'.\n", argv[0]);
 		return;
 	}
 
@@ -2544,11 +2544,11 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	{
 		if (is_deprecated_parameter(argv[1]))
 			return;
-		printf("Unknown parameter name '%s'.\n", argv[1]);
+		fprintf(stderr, "Unknown parameter name '%s'.\n", argv[1]);
 		return;
 	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
 	{
-		printf("'%s' is a write-only option.\n", argv[1]);
+		fprintf(stderr, "'%s' is a write-only option.\n", argv[1]);
 		return;
 	} else
 	{
@@ -2575,7 +2575,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 		prop = XInternAtom(dpy, param->prop_name, True);
 		if (!prop || !test_property(dpy, dev, prop))
 		{
-			printf("Property '%s' does not exist on device.\n",
+			fprintf(stderr, "Property '%s' does not exist on device.\n",
 				param->prop_name);
 			return;
 		}
@@ -2713,7 +2713,7 @@ int main (int argc, char **argv)
 	dpy = XOpenDisplay(display);
 	if (!dpy)
 	{
-		printf("Failed to open Display %s.\n", display ? display : "");
+		fprintf(stderr, "Failed to open Display %s.\n", display ? display : "");
 		return -1;
 	}
 
