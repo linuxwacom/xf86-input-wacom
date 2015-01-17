@@ -668,6 +668,8 @@ static void print_value(param_t *param, const char *msg, ...)
 	switch(param->printformat)
 	{
 		case FORMAT_XORG_CONF:
+			if (param->prop_flags & PROP_FLAG_READONLY)
+				break;
 			if (!param->x11name)
 				break;
 			printf("Option \"%s\" \"", param->x11name);
@@ -675,6 +677,8 @@ static void print_value(param_t *param, const char *msg, ...)
 			printf("\"\n");
 			break;
 		case FORMAT_SHELL:
+			if (param->prop_flags & PROP_FLAG_READONLY)
+				break;
 			printf("xsetwacom set \"%s\" \"%s\" \"",
 					param->device_name, param->name);
 			vprintf(msg, va_args);
