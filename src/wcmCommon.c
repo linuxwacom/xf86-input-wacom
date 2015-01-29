@@ -1266,7 +1266,7 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		double delty = filtered.y - priv->oldState.y;
 
 		/* less than one device coordinate movement? */
-		if (abs(deltx)<1 && abs(delty)<1)
+		if (fabs(deltx)<1 && fabs(delty)<1)
 		{
 			/* We have no other data in this event, skip */
 			if (suppress == SUPPRESS_NON_MOTION)

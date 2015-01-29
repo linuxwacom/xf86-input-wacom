@@ -627,7 +627,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 	if (common->wcmGestureMode != GESTURE_SCROLL_MODE)
 	{
-		if (abs(touchDistance(ds[0], ds[1]) -
+		if (fabs(touchDistance(ds[0], ds[1]) -
 			touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1])) < max_spread)
 		{
@@ -736,7 +736,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	if (common->wcmGestureMode != GESTURE_ZOOM_MODE)
 	{
 		/* two fingers moved apart from each other */
-		if (abs(touchDistance(ds[0], ds[1]) -
+		if (fabs(touchDistance(ds[0], ds[1]) -
 			touchDistance(common->wcmGestureState[0],
 				      common->wcmGestureState[1])) >
 			(3 * max_spread))
