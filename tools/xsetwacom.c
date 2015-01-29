@@ -2077,7 +2077,7 @@ static int get_button(Display *dpy, XDevice *dev, param_t *param, int offset)
 		return 0;
 	}
 
-	print_button_value(param, offset, "%d", prop);
+	print_button_value(param, offset, "%ld", prop);
 
 	return 1;
 }
