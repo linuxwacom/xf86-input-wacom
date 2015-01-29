@@ -111,7 +111,7 @@ int set_serial_attr(int fd, unsigned int baud)
 
 }
 
-int write_to_tablet(int fd, char *command)
+int write_to_tablet(int fd, const char *command)
 {
 	int len = 0;
 

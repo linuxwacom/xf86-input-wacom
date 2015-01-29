@@ -22,7 +22,7 @@
 void version(void);
 int open_device(const char *path);
 int set_serial_attr(int fd, unsigned int baud);
-int write_to_tablet(int fd, char *command);
+int write_to_tablet(int fd, const char *command);
 int stop_tablet(int fd);
 int start_tablet(int fd);
 int wait_for_tablet(int fd);

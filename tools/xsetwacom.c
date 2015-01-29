@@ -550,8 +550,8 @@ is_deprecated_parameter(const char *name)
 }
 
 struct modifier {
-	char *name;
-	char *converted;
+	const char *name;
+	const char *converted;
 };
 
 static struct modifier modifiers[] = {
@@ -964,7 +964,7 @@ static void list(Display *dpy, int argc, char **argv)
  * specialkeys.
  * @return The X Keysym representing specialkey.
  */
-static char *convert_specialkey(const char *specialkey)
+static const char *convert_specialkey(const char *specialkey)
 {
 	struct modifier *m = modifiers;
 
@@ -1201,7 +1201,7 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 		KeySym ks;
 		KeyCode kc;
 		int need_press = 0, need_release = 0;
-		char *key = argv[i];
+		const char *key = argv[i];
 
 		if (strlen(key) > 1)
 		{
@@ -1332,25 +1332,18 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 	int  i = 0;
 	int  nwords = 0;
 	char **words = NULL;
-
+	
 	/* translate cmdline commands */
 	words = strjoinsplit(argc, argv, &nwords);
 
 	if (nwords==1 && sscanf(words[0], "%d", &i) == 1)
 	{ /* Mangle "simple" button maps into proper actions */
-		char **new_words = realloc(words, sizeof(char*)*2);
-		if (new_words == NULL)
-		{
-			fprintf(stderr, "Unable to reallocate memory.\n");
-			return False;
-		}
-
-		sprintf(new_words[0], "+%d", i);
-		new_words[1] = new_words[0];
-		new_words[0] = "button";
-
-		words  = new_words;
-		nwords = 2;
+		char *nargv[1];
+		
+		free(words);
+		nargv[0] = alloca(32);
+		sprintf(nargv[0], "button +%d", i);
+		words = strjoinsplit(1, nargv, &nwords);
 	}
 
 	for (i = 0; i < nwords && *nitems < size; i++)
@@ -1876,7 +1869,7 @@ static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char 
 
 static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
-	char *rotation = NULL;
+	const char *rotation = NULL;
 	Atom prop, type;
 	int format;
 	unsigned char* data;
@@ -2870,7 +2863,7 @@ static void test_is_modifier(void)
 static void test_convert_specialkey(void)
 {
 	char i;
-	char *converted;
+	const char *converted;
 	char buff[5];
 	struct modifier *m;
 
