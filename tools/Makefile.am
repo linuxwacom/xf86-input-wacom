@@ -20,7 +20,8 @@
 
 bin_PROGRAMS = xsetwacom isdv4-serial-debugger isdv4-serial-inputattach
 
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include $(CWARNFLAGS)
+AM_CFLAGS = $(CWARNFLAGS)
 
 shared_sources = tools-shared.h tools-shared.c
 
