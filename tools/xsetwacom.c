@@ -2189,7 +2189,6 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 	unsigned long nitems, bytes_after;
 	float *data;
 	Bool matrix_is_valid = True;
-	int i;
 
 	int display_width = DisplayWidth(dpy, DefaultScreen(dpy));
 	int display_height = DisplayHeight(dpy, DefaultScreen(dpy));
@@ -2218,27 +2217,17 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 	TRACE("	[ %f %f %f ]\n", data[3], data[4], data[5]);
 	TRACE("	[ %f %f %f ]\n", data[6], data[7], data[8]);
 
-	for (i = 0; i < nitems && matrix_is_valid; i++)
-	{
-		switch (i) {
-			case 0: *width  = rint(display_width  * data[i]); break;
-			case 2: *x_org  = rint(display_width  * data[i]); break;
-			case 4: *height = rint(display_height * data[i]); break;
-			case 5: *y_org  = rint(display_height * data[i]); break;
-			case 8:
-				if (data[i] != 1)
-					matrix_is_valid = False;
-				break;
-			default:
-				if (data[i] != 0)
-					matrix_is_valid = False;
-				break;
-		}
-	}
-	XFree(data);
-
-	if (!matrix_is_valid)
+	*width  = rint(display_width  * data[0]);
+	*x_org  = rint(display_width  * data[2]);
+	*height = rint(display_height * data[4]);
+	*y_org  = rint(display_height * data[5]);
+	if ((data[1] != 0 || data[3] != 0 || data[6] != 0 || data[7] != 0) ||
+	    (data[8] != 1)) {
 		fprintf(stderr, "Non-rectangular transformation matrix detected.\n");
+		matrix_is_valid = False;
+	}
+
+	XFree(data);
 
 	return matrix_is_valid;
 }
