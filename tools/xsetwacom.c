@@ -1285,7 +1285,7 @@ static int special_map_keystrokes(Display *dpy, int argc, char **argv, unsigned 
 static char** strjoinsplit(int argc, char **argv, int *nwords)
 {
 	char **words = NULL;
-	int i, n;
+	int i;
 
 	*nwords = 0;
 	for (i = 0; i < argc; i++) {
