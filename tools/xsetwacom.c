@@ -661,6 +661,7 @@ static param_t* find_parameter(char *name)
 	return param->name ? param : NULL;
 }
 
+static void print_value(param_t *param, const char *msg, ...) __attribute__((format(printf, 2, 3)));
 static void print_value(param_t *param, const char *msg, ...)
 {
 	va_list va_args;
@@ -694,6 +695,7 @@ static void print_value(param_t *param, const char *msg, ...)
 	va_end(va_args);
 }
 
+static void print_button_value(param_t *param, int n, const char *msg, ...) __attribute__((format(printf, 3, 4)));
 static void print_button_value(param_t *param, int n, const char *msg, ...)
 {
 	va_list va_args;
