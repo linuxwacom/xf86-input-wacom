@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <libudev.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define RESET_RELATIVE(ds) do { (ds).relwheel = 0; } while (0)
 
