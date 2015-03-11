@@ -149,7 +149,7 @@ int stop_tablet(int fd)
 	{
 		while (read(fd, buffer, sizeof(buffer)) > 0)
 			TRACE("garbage flushed\n");
-		fcntl(fd, F_SETFL, fd_flags);
+		(void)fcntl(fd, F_SETFL, fd_flags);
 	}
 
 	return rc;

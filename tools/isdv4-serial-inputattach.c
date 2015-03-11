@@ -89,7 +89,8 @@ static int get_baud_rate(int fd)
 	struct udev_device *device, *parent;
 	const char *attr_id = NULL;
 
-	fstat(fd, &st);
+	if (fstat(fd, &st) == -1)
+		return -1;
 
 	udev = udev_new();
 	device = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
@@ -206,7 +207,7 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, sighandler);
 	signal(SIGHUP, sighandler);
-	read(fd, NULL, 0);
+	rc = (int)read(fd, NULL, 0); /* warning fix only, ignore error */
 
 	set_line_discipline(fd, 0);
 

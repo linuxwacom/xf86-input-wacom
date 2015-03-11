@@ -590,7 +590,7 @@ static int isdv4StopTablet(InputInfoPtr pInfo)
 		char buffer[10];
 		while (read(pInfo->fd, buffer, sizeof(buffer)) > 0)
 			DBG(10, common, "discarding garbage data.\n");
-		fcntl(pInfo->fd, F_SETFL, fd_flags);
+		(void)fcntl(pInfo->fd, F_SETFL, fd_flags);
 	}
 
 	return Success;
@@ -983,8 +983,10 @@ static Bool get_sysfs_id(InputInfoPtr pInfo, char *buf, int buf_size)
 	char *sysfs_path = NULL;
 	FILE *file = NULL;
 	Bool ret = FALSE;
+	int bytes_read;
 
-	fstat(pInfo->fd, &st);
+	if (fstat(pInfo->fd, &st) == -1)
+		goto out;
 
 	udev = udev_new();
 	device = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
@@ -1000,8 +1002,10 @@ static Bool get_sysfs_id(InputInfoPtr pInfo, char *buf, int buf_size)
 	file = fopen(sysfs_path, "r");
 	if (!file)
 		goto out;
-	if (!fread(buf, 1, buf_size, file))
+	bytes_read = fread(buf, 1, buf_size - 1, file);
+	if (bytes_read == 0)
 		goto out;
+	buf[bytes_read] = '\0';
 	ret = TRUE;
 out:
 	udev_device_unref(device);
