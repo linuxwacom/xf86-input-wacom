@@ -1259,6 +1259,8 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			if (event->value >= 0) {
 				int serial = event->value + 1;
 				private->wcmMTChannel = usbChooseChannel(common, TOUCH_ID, serial);
+				if (private->wcmMTChannel < 0)
+					return;
 				ds = &common->wcmChannel[private->wcmMTChannel].work;
 				ds->serial_num = serial;
 			}
