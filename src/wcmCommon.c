@@ -1475,6 +1475,9 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 {
 	WacomCommonPtr common = *ptr;
 
+	if (!common)
+		return;
+
 	DBG(10, common, "common refcount dec to %d\n", common->refcnt - 1);
 	if (--common->refcnt == 0)
 	{

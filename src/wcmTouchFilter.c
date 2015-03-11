@@ -360,6 +360,9 @@ static void wcmSingleFingerPress(WacomDevicePtr priv)
 	if (!TabletHasFeature(priv->common, WCM_LCD))
 		return;
 
+	if (!firstChannel)
+		return;
+
 	if (firstInProx && !secondInProx) {
 		firstChannel->valid.states[0].buttons |= 1;
 		common->wcmGestureMode = GESTURE_DRAG_MODE;
