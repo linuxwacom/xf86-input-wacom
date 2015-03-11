@@ -190,7 +190,7 @@ fi
 modulever=$module-$version
 tarbz2="$modulever.tar.bz2"
 announce="$tarball_dir/$modulever.announce"
-srv_path=/home/frs/project/l/li/linuxwacom/$module
+srv_path=/home/frs/project/linuxwacom/$module
 webpath=sourceforge.net/projects/linuxwacom/files/$module
 
 echo "checking parameters"
