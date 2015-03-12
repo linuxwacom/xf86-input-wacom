@@ -341,12 +341,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
 	                             * configured as an either mouse button or key */
 
-	if (!nbbuttons)
-		nbbuttons = nbkeys = 1;	    /* Xserver 1.5 or later crashes when 
-			            	     * nbbuttons = 0 while sending a beep 
-			             	     * This is only a workaround. 
-				     	     */
-
 	DBG(10, priv,
 		"(%s) %d buttons, %d keys, %d axes\n",
 		pInfo->type_name,
