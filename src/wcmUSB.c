@@ -553,7 +553,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		/* may be an expresskey only interface */
 		if (ISBITSET(common->wcmKeys, BTN_FORWARD) ||
 		    ISBITSET(common->wcmKeys, BTN_0))
-			return Success;
+			goto pad_init;
 
 		xf86Msg(X_ERROR, "%s: no abs bits.\n", pInfo->name);
 		return !Success;
@@ -572,7 +572,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		/* may be a PAD only interface */
 		if (ISBITSET(common->wcmKeys, BTN_FORWARD) ||
 		    ISBITSET(common->wcmKeys, BTN_0))
-			return Success;
+			goto pad_init;
 
 		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", pInfo->name);
 		return !Success;
@@ -787,6 +787,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			common->wcmHWTouchSwitchState = 1;
 	}
 
+pad_init:
 	usbWcmInitPadState(pInfo);
 
 	return Success;
