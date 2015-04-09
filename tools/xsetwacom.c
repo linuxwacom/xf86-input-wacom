@@ -1510,7 +1510,7 @@ static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, ch
 
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		if (sscanf(argv[0], "%d", &offset) != 1)
+		if (sscanf(argv[0], "%d", &offset) != 1 || offset <= 0)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
 			return;
@@ -2101,7 +2101,7 @@ static void get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char**
 
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		if (sscanf(argv[0], "%d", &offset) != 1)
+		if (sscanf(argv[0], "%d", &offset) != 1 || offset <= 0)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
 			return;
