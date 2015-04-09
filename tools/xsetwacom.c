@@ -2515,9 +2515,8 @@ out:
 static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	int head_no;
-	int x, y;
+	int x, y, flags;
 	unsigned int width, height;
-	int flags = XParseGeometry(argv[0], &x, &y, &width, &height);
 
 	if (argc != param->arg_count)
 	{
@@ -2525,6 +2524,8 @@ static void set_output(Display *dpy, XDevice *dev, param_t *param, int argc, cha
 			param->arg_count);
 		return;
 	}
+
+	flags = XParseGeometry(argv[0], &x, &y, &width, &height);
 
 	if (MaskIsSet(flags, XValue|YValue|WidthValue|HeightValue))
 		set_output_area(dpy, dev, x, y, width, height);
@@ -2585,13 +2586,13 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 	param_t *param;
 	XDevice *dev = NULL;
 
-	TRACE("'get' requested for '%s'.\n", argv[0]);
-
 	if (argc < 2)
 	{
 		usage();
 		return;
 	}
+
+	TRACE("'get' requested for '%s'.\n", argv[0]);
 
 	dev = find_device(dpy, argv[0]);
 	if (!dev)
