@@ -2697,6 +2697,49 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 
 
 #ifndef BUILD_TEST
+
+#ifdef BUILD_FUZZINTERFACE
+void argsfromstdin(int *argc, char ***argv)
+{
+	const int READSIZE = 256;
+	char *buf = strdup((*argv)[0]);
+	size_t len = strlen(buf)+1;
+
+	while (1) {
+		char *p = realloc(buf, len + READSIZE);
+		size_t n;
+
+		if (!p)
+			exit(1);
+		buf = p;
+
+		n = fread(buf+len, 1, READSIZE, stdin);
+		if (n > 0) {
+			len += n;
+		}
+		else {
+			buf[len] = '\0';
+			len++;
+			break;
+		}
+	}
+
+	*argc = 0;
+	*argv = NULL;
+	while (len) {
+		char **p = realloc(*argv, (*argc + 1) * sizeof(char**));
+		if (!p)
+			exit(1);
+		*argv = p;
+		(*argv)[*argc] = buf;
+		(*argc)++;
+
+		len -= strlen(buf) + 1;
+		buf += strlen(buf) + 1;
+	}
+}
+#endif /* BUILD_FUZZINTERFACE */
+
 int main (int argc, char **argv)
 {
 	int c;
@@ -2718,6 +2761,10 @@ int main (int argc, char **argv)
 		{"get", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
+
+#ifdef BUILD_FUZZINTERFACE
+	argsfromstdin(&argc, &argv);
+#endif /* BUILD FUZZINTERFACE */
 
 	if (argc < 2)
 	{

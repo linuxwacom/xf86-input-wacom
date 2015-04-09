@@ -35,6 +35,10 @@ xsetwacom_SOURCES = xsetwacom.c
 xsetwacom_CFLAGS = $(X11_CFLAGS)
 xsetwacom_LDADD = $(X11_LIBS)
 
+if FUZZINTERFACE
+xsetwacom_CFLAGS += -DBUILD_FUZZINTERFACE
+endif
+
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
 xsetwacom_test_SOURCES=xsetwacom.c
