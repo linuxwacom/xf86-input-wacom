@@ -2194,9 +2194,10 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
 	Atom type;
-	int format;
+	int format, i;
 	unsigned long nitems, bytes_after;
-	float *data;
+	unsigned long *data;
+	float matrix[9];
 	Bool matrix_is_valid = True;
 
 	int display_width = DisplayWidth(dpy, DefaultScreen(dpy));
@@ -2221,17 +2222,22 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 		return False;
 	}
 
-	TRACE("Current transformation matrix:\n");
-	TRACE("	[ %f %f %f ]\n", data[0], data[1], data[2]);
-	TRACE("	[ %f %f %f ]\n", data[3], data[4], data[5]);
-	TRACE("	[ %f %f %f ]\n", data[6], data[7], data[8]);
+	/* XI1 stores 32 bit properties (including float) as long,
+	 * regardless of architecture */
+	for (i = 0; i < ARRAY_SIZE(matrix); i++)
+		matrix[i] = *(float*)(&data[i]);
 
-	*width  = rint(display_width  * data[0]);
-	*x_org  = rint(display_width  * data[2]);
-	*height = rint(display_height * data[4]);
-	*y_org  = rint(display_height * data[5]);
-	if ((data[1] != 0 || data[3] != 0 || data[6] != 0 || data[7] != 0) ||
-	    (data[8] != 1)) {
+	TRACE("Current transformation matrix:\n");
+	TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
+	TRACE("	[ %f %f %f ]\n", matrix[3], matrix[4], matrix[5]);
+	TRACE("	[ %f %f %f ]\n", matrix[6], matrix[7], matrix[8]);
+
+	*width  = rint(display_width  * matrix[0]);
+	*x_org  = rint(display_width  * matrix[2]);
+	*height = rint(display_height * matrix[4]);
+	*y_org  = rint(display_height * matrix[5]);
+	if ((matrix[1] != 0 || matrix[3] != 0 || matrix[6] != 0 || matrix[7] != 0) ||
+	    (matrix[8] != 1)) {
 		fprintf(stderr, "Non-rectangular transformation matrix detected.\n");
 		matrix_is_valid = False;
 	}
