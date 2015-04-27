@@ -98,7 +98,7 @@ void set_absolute(InputInfoPtr pInfo, Bool absolute)
 static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
 			   int first_val, int num_vals, int *valuators)
 {
-	int button, mask, first_button;
+	unsigned int button, mask, first_button;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomCommonPtr common = priv->common;
 	DBG(6, priv, "buttons=%d\n", buttons);
@@ -134,7 +134,7 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
 
 	for (button = first_button; button < WCM_MAX_BUTTONS; button++)
 	{
-		mask = 1 << button;
+		mask = 1u << button;
 		if ((mask & priv->oldState.buttons) != (mask & buttons))
 			sendAButton(pInfo, button, (mask & buttons),
 					first_val, num_vals, valuators);
