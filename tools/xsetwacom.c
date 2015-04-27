@@ -1340,6 +1340,8 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 	{ /* Mangle "simple" button maps into proper actions */
 		char *nargv[1];
 		
+		for (i =  0; i < nwords; i++)
+			free(words[i]);
 		free(words);
 		nargv[0] = alloca(32);
 		sprintf(nargv[0], "button +%d", i);
@@ -1376,6 +1378,8 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 		}
 	}
 
+	for (i = 0; i < nwords; i++)
+		free(words[i]);
 	free(words);
 
 	return True;
@@ -1420,14 +1424,14 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	if (offset >= btnact_nitems)
 	{
 		fprintf(stderr, "Invalid offset into %s property.\n", XGetAtomName(dpy, btnact_prop));
-		goto out;
+		goto out2;
 	}
 
 	if (format != 32 || type != XA_ATOM)
 	{
 		fprintf(stderr, "Property '%s' in an unexpected format. This is a bug.\n",
 		        XGetAtomName(dpy, btnact_prop));
-		goto out;
+		goto out2;
 	}
 
 	/* set or unset the property */
@@ -1441,7 +1445,7 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 		 */
 		fprintf(stderr, "Unsupported offset into '%s' property.\n",
 			XGetAtomName(dpy, btnact_prop));
-		goto out;
+		goto out2;
 	}
 
 	if (nitems > 0)
@@ -1468,6 +1472,8 @@ static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, i
 	}
 
 	XFlush(dpy);
+out2:
+	XFree(btnact_data);
 out:
 	free(data);
 }
@@ -1544,7 +1550,7 @@ static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, 
 	{
 		fprintf(stderr, "Property for '%s' not available.\n",
 			param->name);
-		goto out;
+		return;
 	}
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
@@ -1566,7 +1572,7 @@ static void set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, 
 				PropModeReplace, data, nitems);
 	XFlush(dpy);
 out:
-	free(data);
+	XFree(data);
 }
 
 static void set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1644,14 +1650,15 @@ static void set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	{
 		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
 			param->name);
-		return;
+		goto out;
 	}
 
 	*data = rotation;
 	XChangeDeviceProperty(dpy, dev, prop, type, format,
 				PropModeReplace, data, nitems);
 	XFlush(dpy);
-
+out:
+	XFree(data);
 	return;
 }
 
@@ -1827,7 +1834,7 @@ out:
 		free(values[i]);
 	free(values);
 	XCloseDevice(dpy, dev);
-	free(data);
+	XFree(data);
 }
 
 static void get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1898,7 +1905,7 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	{
 		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
 			param->name);
-		return;
+		goto out;
 	}
 
 	switch(*data)
@@ -1919,6 +1926,8 @@ static void get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 
 	print_value(param, "%s", rotation);
 
+out:
+	XFree(data);
 	return;
 }
 
@@ -2607,11 +2616,11 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 		if (is_deprecated_parameter(argv[1]))
 			return;
 		fprintf(stderr, "Unknown parameter name '%s'.\n", argv[1]);
-		return;
+		goto out;
 	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
 	{
 		fprintf(stderr, "'%s' is a write-only option.\n", argv[1]);
-		return;
+		goto out;
 	} else
 	{
 		param->printformat = printformat;
@@ -2620,6 +2629,7 @@ static void get(Display *dpy, enum printformat printformat, int argc, char **arg
 
 	get_param(dpy, dev, param, argc - 2, &argv[2]);
 
+out:
 	XCloseDevice(dpy, dev);
 }
 
@@ -2658,7 +2668,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	if (nitems <= param->prop_offset)
 	{
 		fprintf(stderr, "Property offset doesn't exist.\n");
-		return;
+		goto out;
 	}
 
 
@@ -2694,6 +2704,9 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 			print_value(param, "%s", str);
 			break;
 	}
+
+out:
+	XFree(data);
 }
 
 
