@@ -706,7 +706,8 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	valuators[3] = v3;
 	valuators[4] = v4;
 	valuators[5] = v5;
-	valuators[6] = v6;
+	if (priv->naxes > 6)
+		valuators[6] = v6;
 
 	if (type == PAD_ID)
 		wcmSendPadEvents(pInfo, ds, 3, priv->naxes - 3, &valuators[3]); /* pad doesn't post x/y/z */
