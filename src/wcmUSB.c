@@ -815,11 +815,13 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	struct input_event event;
 
 	if (len < sizeof(struct input_event))
 		return 0;
 
-	usbParseEvent(pInfo, (const struct input_event*)data);
+	memcpy(&event, data, sizeof(event));
+	usbParseEvent(pInfo, &event);
 	return common->wcmPktLength;
 }
 
