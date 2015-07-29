@@ -1240,15 +1240,6 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		}
 		filtered.pressure = applyPressureCurve(priv,&filtered);
 	}
-	else if (IsCursor(priv) && !priv->oldCursorHwProx)
-	{
-		/* initial current max distance for Intuos series */
-		if ((TabletHasFeature(common, WCM_ROTATION)) ||
-				(TabletHasFeature(common, WCM_DUALINPUT)))
-			common->wcmMaxCursorDist = common->wcmMaxDist;
-		else
-			common->wcmMaxCursorDist = 0;
-	}
 
 	/* Store cursor hardware prox for next use */
 	if (IsCursor(priv))
@@ -1285,20 +1276,15 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 	/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
 	if (IsCursor(priv))
 	{
-		if (common->wcmProtocolLevel == WCM_PROTOCOL_5)
-		{
-			/* protocol 5 distance starts from the MaxDist
-			 * when getting in the prox.
-			 */
-			if (common->wcmMaxCursorDist > filtered.distance)
-				common->wcmMaxCursorDist = filtered.distance;
-		}
-		else
-		{
-			/* protocol 4 distance is 0 when getting in the prox */
-			if (common->wcmMaxCursorDist < filtered.distance)
-				common->wcmMaxCursorDist = filtered.distance;
-		}
+		/* Assume the the user clicks the puck buttons while
+		 * it is resting on the tablet. This works for both
+		 * tablets that have a normal distance scale (protocol
+		 * 5) as well as those with an inverted scale (protocol
+		 * 4 for many many kernel versions).
+		 */
+		if (filtered.buttons)
+			common->wcmMaxCursorDist = filtered.distance;
+
 		DBG(10, common, "Distance over"
 				" the tablet: %d, ProxoutDist: %d current"
 				" min/max %d hard prox: %d\n",
@@ -1307,21 +1293,23 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 				common->wcmMaxCursorDist,
 				ds->proximity);
 
-		if (priv->oldState.proximity)
-		{
-			if (abs(filtered.distance - common->wcmMaxCursorDist)
-					> common->wcmCursorProxoutDist)
-				filtered.proximity = 0;
-		}
-		/* once it is out. Don't let it in until a hard in */
-		/* or it gets inside wcmCursorProxoutDist */
-		else
-		{
-			if (abs(filtered.distance - common->wcmMaxCursorDist) >
-					common->wcmCursorProxoutDist && ds->proximity)
-				return;
-			if (!ds->proximity)
-				return;
+		if (common->wcmMaxCursorDist) {
+			if (priv->oldState.proximity)
+			{
+				if (abs(filtered.distance - common->wcmMaxCursorDist)
+						> common->wcmCursorProxoutDist)
+					filtered.proximity = 0;
+			}
+			/* once it is out. Don't let it in until a hard in */
+			/* or it gets inside wcmCursorProxoutDist */
+			else
+			{
+				if (abs(filtered.distance - common->wcmMaxCursorDist) >
+						common->wcmCursorProxoutDist && ds->proximity)
+					return;
+				if (!ds->proximity)
+					return;
+			}
 		}
 	}
 	wcmSendEvents(pInfo, &filtered);
