@@ -1801,10 +1801,10 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	}
 
 	/* verify we have minimal data when entering prox */
-	if (ds->proximity && !dslast.proximity) {
+	if (ds->proximity && !dslast.proximity && ds->device_type != PAD_ID) {
 		struct input_absinfo absinfo;
 
-		if (!ds->x && !IsPad(priv)) {
+		if (!ds->x) {
 			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
 			{
 				DBG(-1, common, "unable to ioctl current x value.\n");
@@ -1812,7 +1812,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			}
 			ds->x = absinfo.value;
 		}
-		if (!ds->y && !IsPad(priv)) {
+		if (!ds->y) {
 			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 			{
 				DBG(-1, common, "unable to ioctl current x value.\n");
