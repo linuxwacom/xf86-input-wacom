@@ -595,7 +595,7 @@ process_module() {
        [ x"$section" = xinput-wacom ] ||
        [ x"$section" = xlibwacom ]; then
         # input-wacom files are in a subdirectory for whatever reason
-        if [ x"%section" = xinput-wacom]; then
+        if [ x"$section" = xinput-wacom ]; then
             section="xf86-input-wacom/input-wacom"
         fi
 
