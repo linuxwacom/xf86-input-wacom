@@ -607,7 +607,7 @@ process_module() {
         list_cc=$list_linuxwacom
 
         echo "creating shell on sourceforge for $USER"
-        ssh ${USER_NAME%@},linuxwacom@$hostname create
+        ssh -t ${USER_NAME%@},linuxwacom@$hostname create
         #echo "Simply log out once you get to the prompt"
         #ssh -t ${USER_NAME%@},linuxwacom@$hostname create
         #echo "Sleeping for 30 seconds, because this sometimes helps against sourceforge's random authentication denials"
