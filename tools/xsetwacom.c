@@ -1951,6 +1951,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 	unsigned long nitems, bytes_after, *data;
 	int i;
 	char buff[1024] = {0};
+	int last_type;
 
 	prop = XInternAtom(dpy, param->prop_name, True);
 
@@ -1979,9 +1980,9 @@ static int get_actions(Display *dpy, XDevice *dev,
 		   AnyPropertyType, &type, &format, &nitems,
 		   &bytes_after, (unsigned char**)&data);
 
+	last_type = 0;
 	for (i = 0; i < nitems; i++)
 	{
-		static int last_type;
 		unsigned long action = data[i];
 		int current_type;
 		int detail;
