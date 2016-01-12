@@ -1026,7 +1026,7 @@ static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *
 	static int once_only = 1;
 	if (once_only)
 	{
-		printf ("Note: The \"core\" keyword is not supported anymore and "
+		fprintf(stderr, "Note: The \"core\" keyword is not supported anymore and "
 			"will be ignored.\n");
 		once_only = 0;
 	}
@@ -1053,7 +1053,7 @@ static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsign
 	static int once_only = 1;
 	if (once_only)
 	{
-		printf ("Note: The \"displaytoggle\" keyword is not supported "
+		fprintf(stderr, "Note: The \"displaytoggle\" keyword is not supported "
 			"anymore and will be ignored.\n");
 		once_only = 0;
 	}
