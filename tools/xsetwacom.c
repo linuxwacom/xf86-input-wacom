@@ -2022,7 +2022,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 		if (current_type == AC_KEY)
 			sprintf(str, "%c%s ", press_str,
 				XKeysymToString(detail));
-		else
+		else if (current_type == AC_BUTTON)
 			sprintf(str, "%c%d ", press_str, detail);
 		strcat(buff, str);
 		last_type = current_type;
