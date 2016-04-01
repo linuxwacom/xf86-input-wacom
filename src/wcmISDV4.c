@@ -625,8 +625,8 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 		return -1;
 	}
 
-	ds->x = touchdata.x;
-	ds->y = touchdata.y;
+	ds->x = touchdata.status ? touchdata.x : last->x;
+	ds->y = touchdata.status ? touchdata.y : last->y;
 	ds->proximity = touchdata.status;
 	ds->device_type = TOUCH_ID;
 	ds->device_id = TOUCH_DEVICE_ID;
@@ -651,8 +651,8 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
 			channel = 1;
 			ds = &common->wcmChannel[channel].work;
 			RESET_RELATIVE(*ds);
-			ds->x = touchdata.finger2.x;
-			ds->y = touchdata.finger2.y;
+			ds->x = touchdata.finger2.status ? touchdata.finger2.x : lastTemp->x;
+			ds->y = touchdata.finger2.status ? touchdata.finger2.y : lastTemp->y;
 			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->serial_num = 2;
