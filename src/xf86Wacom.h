@@ -40,6 +40,10 @@
 #define LogMessageVerbSigSafe xf86MsgVerb
 #endif
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 23
+#define HAVE_THREADED_INPUT 1
+#endif
+
 #ifndef SW_MUTE_DEVICE
 #define SW_MUTE_DEVICE	0x0e
 #endif
