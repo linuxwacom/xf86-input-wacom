@@ -180,7 +180,7 @@ struct _WacomModel
 
 #define IsUSBDevice(common) ((common)->wcmDevCls == &gWacomUSBDevice)
 
-#define FILTER_PRESSURE_RES	2048	/* maximum points in pressure curve */
+#define FILTER_PRESSURE_RES	65536	/* maximum points in pressure curve */
 /* Tested result for setting the pressure threshold to a reasonable value */
 #define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
 #define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)

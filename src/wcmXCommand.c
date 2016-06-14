@@ -104,6 +104,26 @@ static Atom prop_debuglevels;
 #endif
 
 /**
+ * Calculate a user-visible pressure level from a driver-internal pressure
+ * level. Pressure settings exposed to the user assume a range of 0-2047
+ * while the driver scales everything to a range of 0-FILTER_PRESSURE_RES.
+ */
+static inline int wcmInternalToUserPressure(int pressure)
+{
+	return pressure / (FILTER_PRESSURE_RES / 2048);
+}
+
+/**
+ * Calculate a driver-internal pressure level from a user-visible pressure
+ * level. Pressure settings exposed to the user assume a range of 0-2047
+ * while the driver scales everything to a range of 0-FILTER_PRESSURE_RES.
+ */
+static inline int wcmUserToInternalPressure(int pressure)
+{
+	return pressure * (FILTER_PRESSURE_RES / 2048);
+}
+
+/**
  * Resets an arbitrary Action property, given a pointer to the old
  * handler and information about the new Action.
  */
@@ -256,6 +276,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	}
 
 	values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
+	values[0] = wcmInternalToUserPressure(values[0]);
 	prop_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURE_THRESHOLD, XA_INTEGER, 32, 1, values);
 
 	values[0] = common->wcmSuppress;
@@ -827,6 +848,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			common->wcmCursorProxoutDist = value;
 	} else if (property == prop_threshold)
 	{
+		const INT32 MAXIMUM = wcmInternalToUserPressure(FILTER_PRESSURE_RES);
 		INT32 value;
 
 		if (prop->size != 1 || prop->format != 32)
@@ -836,8 +858,10 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (value == -1)
 			value = DEFAULT_THRESHOLD;
-		else if ((value < 1) || (value > FILTER_PRESSURE_RES))
+		else if ((value < 1) || (value > MAXIMUM))
 			return BadValue;
+		else
+			value = wcmUserToInternalPressure(value);
 
 		if (!checkonly)
 			common->wcmThreshold = value;
