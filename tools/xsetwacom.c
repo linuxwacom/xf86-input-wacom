@@ -605,6 +605,8 @@ static struct modifier specialkeys[] = {
 
 	{"backspace", "BackSpace"}, {"Backspace", "BackSpace"},
 
+	{"return", "Return"},
+
 	{"tab", "Tab"},
 
 	{"PgUp", "Prior"}, {"PgDn", "Next"},
