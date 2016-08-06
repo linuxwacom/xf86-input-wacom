@@ -109,7 +109,7 @@ button-number will produce a press of X11 button 3 (i.e. right click).
 Action mappings allow button presses to perform many events. They take the form
 of a string of keywords and arguments.
 
-The "key" keyword is following by a list of key names. These can optionally
+The "key" keyword is followed by a list of key names. These can optionally
 be preceded by "+" for press and "-" for release. If +/- is not given,
 press-and-release is assumed, except for modifier keys which are left pressed.
 Key names can be X11 KeySyms or some aliases such as 'shift' or 'f1' (the
@@ -117,9 +117,16 @@ full list can be seen with the
 .B list modifiers
 command).
 
-For example, "key +a +shift b -shift -a" converts the button into a series of
-keystrokes, in this example "press a, press shift, press and release b,
-release shift, release a".
+To assign a key that is not in the modifiers list, use the KeySym in
+/usr/include/X11/keysymdef.h with the XK_ prefix removed or its actual value
+as is. For example, XK_BackSpace should be specified as "BackSpace". "0xff80"
+can also be used to replace "BackSpace" since it's the unique KeySym value of
+Backspace key.
+
+Here is a combined example: "key +a shift b shift -a 0xff0d" converts the
+button into a series of keystrokes. In this example, "press a, press shift,
+press and release b, release shift, release a, then press and release enter".
+"key +a +shift b -shift -a 0xff0d" does the same thing.
 
 The "button" keyword is similar except that its arguments are X11 button
 numbers.
