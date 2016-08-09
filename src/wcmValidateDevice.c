@@ -498,11 +498,19 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 	WacomHotplugInfo *hotplug_info = closure;
 	DeviceIntPtr dev; /* dummy */
 
+#if HAVE_THREADED_INPUT
+	input_lock();
+#endif
+
 	NewInputDeviceRequest(hotplug_info->input_options,
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
 			      hotplug_info->attrs,
 #endif
 			      &dev);
+#if HAVE_THREADED_INPUT
+	input_unlock();
+#endif
+
 	input_option_free_list(&hotplug_info->input_options);
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
