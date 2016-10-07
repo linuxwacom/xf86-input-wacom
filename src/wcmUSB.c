@@ -652,6 +652,16 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			common->wcmMaxStripX = absinfo.maximum;
 	}
 
+	/* max touchring value for standalone pad tools */
+	common->wcmMinRing = 0;
+	common->wcmMaxRing = 71;
+	if (!ISBITSET(ev,EV_MSC) && ISBITSET(abs, ABS_WHEEL) &&
+			!ioctl(pInfo->fd, EVIOCGABS(ABS_WHEEL), &absinfo))
+	{
+		common->wcmMinRing = absinfo.minimum;
+		common->wcmMaxRing = absinfo.maximum;
+	}
+
 	/* X tilt range */
 	if (ISBITSET(abs, ABS_TILT_X) &&
 			!ioctl(pInfo->fd, EVIOCGABS(ABS_TILT_X), &absinfo))

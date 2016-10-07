@@ -282,8 +282,8 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	{
 		/* Touch ring */
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
-		min = MIN_PAD_RING;
-		max = MAX_PAD_RING;
+		min = common->wcmMinRing;
+		max = common->wcmMaxRing;
 	}
 
 	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
@@ -298,8 +298,8 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		mode = Absolute;
 		min_res = max_res = res = 1;
 
-		min = MIN_PAD_RING;
-		max = MAX_PAD_RING;
+		min = common->wcmMinRing;
+		max = common->wcmMaxRing;
 
 		wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
 	}

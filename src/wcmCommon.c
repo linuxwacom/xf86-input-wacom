@@ -361,6 +361,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 				 int first_val, int num_vals, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	WacomCommonPtr common = priv->common;
 	int delta = 0, idx = 0;
 
 	DBG(10, priv, "\n");
@@ -396,7 +397,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	}
 
 	/* emulate events for left touch ring */
-	delta = getScrollDelta(ds->abswheel, priv->oldState.abswheel, MAX_PAD_RING, AXIS_INVERT);
+	delta = getScrollDelta(ds->abswheel, priv->oldState.abswheel, common->wcmMaxRing, AXIS_INVERT);
 	idx = getWheelButton(delta, WHEEL_ABS_UP, WHEEL_ABS_DN);
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
@@ -406,7 +407,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	}
 
 	/* emulate events for right touch ring */
-	delta = getScrollDelta(ds->abswheel2, priv->oldState.abswheel2, MAX_PAD_RING, AXIS_INVERT);
+	delta = getScrollDelta(ds->abswheel2, priv->oldState.abswheel2, common->wcmMaxRing, AXIS_INVERT);
 	idx = getWheelButton(delta, WHEEL2_ABS_UP, WHEEL2_ABS_DN);
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{

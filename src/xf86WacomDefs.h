@@ -48,9 +48,6 @@
 #define TILT_MIN -64		/* Minimum reported tilt value */
 #define TILT_MAX 63		/* Maximum reported tilt value */
 
-#define MIN_PAD_RING 0		/* I4 absolute scroll ring min value */
-#define MAX_PAD_RING 71		/* I4 absolute scroll ring max value */
-
 /* I4 cursor tool has a rotation offset of 175 degrees */
 #define INTUOS4_CURSOR_ROTATION_OFFSET 175
 
@@ -235,8 +232,8 @@ struct _WacomDeviceState
 };
 
 static const struct _WacomDeviceState OUTPROX_STATE = {
-  .abswheel = MAX_PAD_RING + 1,
-  .abswheel2 = MAX_PAD_RING + 1
+  .abswheel = INT_MAX,
+  .abswheel2 = INT_MAX
 };
 
 struct _WacomDeviceRec
@@ -436,6 +433,8 @@ struct _WacomCommonRec
 
 	int wcmMaxStripX;            /* Maximum fingerstrip X */
 	int wcmMaxStripY;            /* Maximum fingerstrip Y */
+	int wcmMinRing;              /* Minimum touchring value */
+	int wcmMaxRing;              /* Maximum touchring value */
 
 	WacomDevicePtr wcmDevices;   /* list of devices sharing same port */
 	int wcmPktLength;            /* length of a packet */
