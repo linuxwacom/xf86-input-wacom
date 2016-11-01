@@ -865,7 +865,7 @@ static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
 		/* Cursor devices are often left idle in range, so allow touch to
 		 * grab control if the tool has not been used for some time.
 		 */
-		return (ds->time - active->oldState.time > 100);
+		return (ds->time - active->oldState.time > 100) && (active->oldState.buttons == 0);
 	}
 	else if (IsTouch(active) && IsCursor(priv)) {
 		/* An otherwise idle cursor may still occasionally jitter and send
