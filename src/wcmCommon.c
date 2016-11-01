@@ -1196,7 +1196,7 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 	if (priv->serial && filtered.serial_num != priv->serial)
 	{
 		DBG(10, priv, "serial number"
-			" is %u but your system configured %u",
+			" is %u but your system configured %u\n",
 			filtered.serial_num, priv->serial);
 		return;
 	}
