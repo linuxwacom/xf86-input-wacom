@@ -1395,7 +1395,10 @@ static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pSt
 	p = min(FILTER_PRESSURE_RES, p);
 
 	/* apply pressure curve function */
-	return pDev->pPressCurve[p];
+	if (pDev->pPressCurve == NULL)
+		return p;
+	else
+		return pDev->pPressCurve[p];
 }
 
 /*****************************************************************************

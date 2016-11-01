@@ -285,8 +285,7 @@ struct _WacomDeviceRec
 	struct _WacomDeviceState oldState; /* previous state information */
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
 
-	/* JEJ - filters */
-	int pPressCurve[FILTER_PRESSURE_RES + 1]; /* pressure curve */
+	int *pPressCurve;       /* pressure curve */
 	int nPressCtrl[4];      /* control points for curve */
 	int minPressure;	/* the minimum pressure a pen may hold */
 	int oldMinPressure;     /* to record the last minPressure before going out of proximity */

@@ -54,23 +54,35 @@ int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1)
 void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 	int x1, int y1)
 {
-	int i;
-
 	/* sanity check values */
 	if (!wcmCheckPressureCurveValues(x0, y0, x1, y1))
 		return;
 
-	/* linear by default */
-	for (i=0; i<=FILTER_PRESSURE_RES; ++i)
-		pDev->pPressCurve[i] = i;
+	/* A NULL pPressCurve indicates the (default) linear curve */
+	if (x0 == 0 && y0 == 0 && x1 == 100 && y1 == 100) {
+		free(pDev->pPressCurve);
+		pDev->pPressCurve = NULL;
+	}
+	else if (!pDev->pPressCurve) {
+		pDev->pPressCurve = calloc(FILTER_PRESSURE_RES+1, sizeof(*pDev->pPressCurve));
 
-	/* draw bezier line from bottom-left to top-right using ctrl points */
-	filterCurveToLine(pDev->pPressCurve,
-		FILTER_PRESSURE_RES,
-		0.0, 0.0,               /* bottom left  */
-		x0/100.0, y0/100.0,     /* control point 1 */
-		x1/100.0, y1/100.0,     /* control point 2 */
-		1.0, 1.0);              /* top right */
+		if (!pDev->pPressCurve) {
+			LogMessageVerbSigSafe(X_WARNING, 0,
+			                      "Unable to allocate memory for pressure curve; using default.\n");
+			x0 = 0;
+			y0 = 0;
+			x1 = 100;
+			y1 = 100;
+		}
+	}
+
+	if (pDev->pPressCurve)
+		filterCurveToLine(pDev->pPressCurve,
+				FILTER_PRESSURE_RES,
+				0.0, 0.0,               /* bottom left  */
+				x0/100.0, y0/100.0,     /* control point 1 */
+				x1/100.0, y1/100.0,     /* control point 2 */
+				1.0, 1.0);              /* top right */
 
 	pDev->nPressCtrl[0] = x0;
 	pDev->nPressCtrl[1] = y0;
