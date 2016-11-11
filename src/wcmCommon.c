@@ -854,29 +854,38 @@ static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
 
 	if (IsPad(priv)) {
 		/* Pad may never be the "active" pointer controller */
+		DBG(6, priv, "Event from pad; not yielding pointer control\n.");
 		return FALSE;
 	}
 
 	if (active == NULL || active->oldState.device_id == ds->device_id) {
-		DBG(11, priv, "Same device ID as active; allowing access.\n");
+		DBG(11, priv, "Event from active device; maintaining pointer control.\n");
 		return TRUE;
 	}
-	else if (IsCursor(active) && IsTouch(priv)) {
-		/* Cursor devices are often left idle in range, so allow touch to
-		 * grab control if the tool has not been used for some time.
+	else if (IsCursor(active)) {
+		/* Cursor devices are often left idle in range, so allow other devices
+		 * to grab control if the tool has not been used for some time.
 		 */
-		return (ds->time - active->oldState.time > 100) && (active->oldState.buttons == 0);
+		Bool yield = (ds->time - active->oldState.time > 100) && (active->oldState.buttons == 0);
+		DBG(6, priv, "Currently-active cursor %s idle; %s pointer control.\n",
+		    yield ? "is" : "is not", yield ? "yielding" : "not yielding");
+		return yield;
 	}
-	else if (IsTouch(active) && IsCursor(priv)) {
+	else if (IsCursor(priv)) {
 		/* An otherwise idle cursor may still occasionally jitter and send
-		 * events while the user is making active touches. Do not allow
-		 * the cursor to grab control in this particular case.
+		 * events while the user is actively using other tools or touching
+		 * the device. Do not allow the cursor to grab control in this
+		 * particular case.
 		 */
+		DBG(6, priv, "Event from non-active cursor; not yielding pointer control.\n");
 		return FALSE;
 	}
 	else {
 		/* Non-touch input has priority over touch in general */
-		return !IsTouch(priv);
+		Bool yield = !IsTouch(priv);
+		DBG(6, priv, "Event from non-active %s device; %s pointer control.\n",
+		    yield ? "non-touch" : "touch", yield ? "yielding" : "not yielding");
+		return yield;
 	}
 }
 
