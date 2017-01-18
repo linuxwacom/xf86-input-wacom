@@ -493,6 +493,7 @@ void TimerFree(OsTimerPtr timer)
 {
 }
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 24
 int
 xf86BlockSIGIO (void)
 {
@@ -503,6 +504,15 @@ void
 xf86UnblockSIGIO (int wasset)
 {
 }
+#else
+void input_lock (void)
+{
+}
+
+void input_unlock (void)
+{
+}
+#endif
 
 /* This is not the same as the X server one, but it'll do for the tests */
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
