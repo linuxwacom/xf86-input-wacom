@@ -320,10 +320,19 @@ static void wcmSplitName(char* devicename, char *basename, char *subdevice, char
 	{
 		*a = '\0';
 		b = strrchr(name, ' ');
-		if (b && (!strcmp(b, " Pen") || !strcmp(b, " Finger") || !strcmp(b, " Pad")))
+
+		while (b)
 		{
-			*b = '\0';
-			strncat(subdevice, b+1, len-1);
+			if (!strcmp(b, " Pen") || !strcmp(b, " Finger") ||
+			    !strcmp(b, " Pad") || !strcmp(b, " Touch"))
+			{
+				*b = '\0';
+				strncpy(subdevice, b+1, len-1);
+				subdevice[len-1] = '\0';
+				b = strrchr(name, ' ');
+			}
+			else
+				b = NULL;
 		}
 		strncat(tool, a+1, len-1);
 	}
