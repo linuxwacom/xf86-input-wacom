@@ -656,20 +656,22 @@ wcmSetHWTouchProperty(InputInfoPtr pInfo)
 			       prop->size, &prop_value, TRUE);
 }
 
-#if !HAVE_THREADED_INPUT
 static CARD32
 touchTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 {
 	InputInfoPtr pInfo = arg;
+#if !HAVE_THREADED_INPUT
 	int sigstate = xf86BlockSIGIO();
+#endif
 
 	wcmSetHWTouchProperty(pInfo);
 
+#if !HAVE_THREADED_INPUT
 	xf86UnblockSIGIO(sigstate);
+#endif
 
 	return 0;
 }
-#endif
 
 /**
  * Update HW touch property when its state is changed by touch switch
@@ -684,14 +686,10 @@ wcmUpdateHWTouchProperty(WacomDevicePtr priv, int hw_touch)
 
 	common->wcmHWTouchSwitchState = hw_touch;
 
-#if HAVE_THREADED_INPUT
-	wcmSetHWTouchProperty(priv->pInfo);
-#else
-	/* This function is called during SIGIO. Schedule timer for property
-	 * event delivery outside of signal handler. */
+	/* This function is called during SIGIO/InputThread. Schedule timer
+	 * for property event delivery by the main thread. */
 	priv->touch_timer = TimerSet(priv->touch_timer, 0 /* reltime */,
 				      1, touchTimerFunc, priv->pInfo);
-#endif
 }
 
 /**
@@ -1074,20 +1072,23 @@ wcmSetSerialProperty(InputInfoPtr pInfo)
 			       prop->size, prop_value, TRUE);
 }
 
-#if !HAVE_THREADED_INPUT
 static CARD32
 serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 {
 	InputInfoPtr pInfo = arg;
+
+#if !HAVE_THREADED_INPUT
 	int sigstate = xf86BlockSIGIO();
+#endif
 
 	wcmSetSerialProperty(pInfo);
 
+#if !HAVE_THREADED_INPUT
 	xf86UnblockSIGIO(sigstate);
+#endif
 
 	return 0;
 }
-#endif
 
 void
 wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
@@ -1100,14 +1101,10 @@ wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
 	priv->cur_serial = serial;
 	priv->cur_device_id = id;
 
-#if HAVE_THREADED_INPUT
-	wcmSetSerialProperty(pInfo);
-#else
-	/* This function is called during SIGIO. Schedule timer for property
-	 * event delivery outside of signal handler. */
+	/* This function is called during SIGIO/InputThread. Schedule timer
+	 * for property event delivery by the main thread. */
 	priv->serial_timer = TimerSet(priv->serial_timer, 0 /* reltime */,
 				      1, serialTimerFunc, pInfo);
-#endif
 }
 
 static void
