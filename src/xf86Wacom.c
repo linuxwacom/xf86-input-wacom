@@ -854,6 +854,9 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 
 		case DEVICE_OFF:
+			TimerCancel(priv->tap_timer);
+			TimerCancel(priv->serial_timer);
+			TimerCancel(priv->touch_timer);
 			wcmDisableTool(pWcm);
 			wcmUnlinkTouchAndPen(pInfo);
 			if (pInfo->fd >= 0)
