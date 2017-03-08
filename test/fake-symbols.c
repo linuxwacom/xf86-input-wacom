@@ -493,6 +493,10 @@ void TimerFree(OsTimerPtr timer)
 {
 }
 
+void TimerCancel(OsTimerPtr timer)
+{
+}
+
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 24
 int
 xf86BlockSIGIO (void)
