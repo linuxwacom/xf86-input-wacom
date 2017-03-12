@@ -823,9 +823,7 @@ static void wcmUnlinkTouchAndPen(InputInfoPtr pInfo)
 static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
-#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-#endif
 	Status rc = !Success;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
