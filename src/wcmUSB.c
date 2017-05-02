@@ -287,6 +287,14 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x57, 200000, 200000, &usbCintiqV5,   "DTK2241"		},
 	{ WACOM_VENDOR_ID, 0x59, 200000, 200000, &usbCintiqV5,   "DTH2242"		},
 	{ WACOM_VENDOR_ID, 0x5B, 200000, 200000, &usbCintiqV5,   "Cintiq 22HDT"		},
+	{ WACOM_VENDOR_ID, 0x34A, 200000, 200000, &usbCintiqV5,  "Mobilestudio Pro 13"	}, /* Touch */
+	{ WACOM_VENDOR_ID, 0x34B, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 16"	}, /* Touch */
+	{ WACOM_VENDOR_ID, 0x34D, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 13"	},
+	{ WACOM_VENDOR_ID, 0x34E, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 16"	},
+	{ WACOM_VENDOR_ID, 0x34F, 200000, 200000, &usbCintiqV5,  "Cintiq 13 FHD Pro"	},
+	{ WACOM_VENDOR_ID, 0x350, 200000, 200000, &usbCintiqV5,  "Cintiq 16 UHD Pro"	},
+	{ WACOM_VENDOR_ID, 0x353, 200000, 200000, &usbCintiqV5,  "Cintiq 13 FHD Pro"	}, /* Touch */
+	{ WACOM_VENDOR_ID, 0x354, 200000, 200000, &usbCintiqV5,  "Cintiq 16 UHD Pro"	}, /* Touch */
 
 	{ WACOM_VENDOR_ID, 0x90, 100000, 100000, &usbTabletPC,   "TabletPC 0x90"	},
 	{ WACOM_VENDOR_ID, 0x93, 100000, 100000, &usbTabletPC,   "TabletPC 0x93"	},

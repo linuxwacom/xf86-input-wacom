@@ -309,6 +309,14 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x5D: /* DTH2242 Touch */
 		case 0x5E: /* Cintiq 22HDT Touch */
 		case 0x304:/* Cintiq 13HD */
+		case 0x34A:/* MobileStudio Pro 13 Touch */
+		case 0x34B:/* MobileStudio Pro 16 Touch */
+		case 0x34D:/* MobileStudio Pro 13 */
+		case 0x34E:/* MobileStudio Pro 13 */
+		case 0x34F:/* Cintiq Pro 13 FHD */
+		case 0x350:/* Cintiq Pro 16 UHD */
+		case 0x353:/* Cintiq Pro 13 FHD Touch */
+		case 0x354:/* Cintiq Pro 13 UHD Touch */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}
