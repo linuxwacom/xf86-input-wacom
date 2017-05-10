@@ -1173,9 +1173,12 @@ static int keysym_to_keycode(Display *dpy, KeySym sym)
 	XkbStateRec state;
 	int kc = 0;
 
-
 	if (!xkb)
-		xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
+		xkb = XkbGetMap(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
+	if (!xkb) {
+		fprintf(stderr, "Warning: failed to query keyboard map\n");
+		goto out;
+	}
 	XkbGetState(dpy, XkbUseCoreKbd, &state);
 
 	for (kc = xkb->min_key_code; kc <= xkb->max_key_code; kc++)
