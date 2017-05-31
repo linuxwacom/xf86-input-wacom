@@ -875,6 +875,11 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	}
 	free(s);
 
+	if (xf86SetBoolOption(pInfo->options, "Pressure2K", 0)) {
+		xf86Msg(X_CONFIG, "%s: Using 2K pressure levels\n", pInfo->name);
+		priv->maxCurve = 2048;
+	}
+
 	/*Serials of tools we want hotpluged*/
 	if (wcmParseSerials (pInfo) != 0)
 		goto error;

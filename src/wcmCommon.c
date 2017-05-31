@@ -1056,7 +1056,7 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 
 /**
  * Instead of reporting the raw pressure, we normalize
- * the pressure from 0 to FILTER_PRESSURE_RES. This is
+ * the pressure from 0 to maxCurve. This is
  * mainly to deal with the case where heavily used
  * stylus may have a "pre-loaded" initial pressure. To
  * do so, we keep the in-prox pressure and subtract it
@@ -1081,14 +1081,14 @@ normalizePressure(const WacomDevicePtr priv, const int raw_pressure)
 		p -= priv->minPressure;
 		range_left -= priv->minPressure;
 	}
-	/* normalize pressure to 0..FILTER_PRESSURE_RES */
+	/* normalize pressure to 0..maxCurve */
 	if (range_left >= 1)
 		pressure = xf86ScaleAxis(p,
-					 FILTER_PRESSURE_RES, 0,
+					 priv->maxCurve, 0,
 					 range_left,
 					 0);
 	else
-		pressure = FILTER_PRESSURE_RES;
+		pressure = priv->maxCurve;
 
 	return (int)pressure;
 }
@@ -1117,8 +1117,8 @@ setPressureButton(const WacomDevicePtr priv, int buttons, const int pressure)
 		{
 			/* don't set it off if it is within the tolerance
 			   and threshold is larger than the tolerance */
-			if ((common->wcmThreshold > THRESHOLD_TOLERANCE) &&
-			    (pressure > common->wcmThreshold - THRESHOLD_TOLERANCE))
+			if ((common->wcmThreshold > (priv->maxCurve * THRESHOLD_TOLERANCE)) &&
+			    (pressure > common->wcmThreshold - (priv->maxCurve * THRESHOLD_TOLERANCE)))
 				buttons |= button;
 		}
 	}
@@ -1350,7 +1350,7 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 	if (common->wcmThreshold <= 0 && IsPen(priv))
 	{
 		/* Threshold for counting pressure as a button */
-		common->wcmThreshold = DEFAULT_THRESHOLD;
+		common->wcmThreshold = priv->maxCurve * DEFAULT_THRESHOLD;
 
 		xf86Msg(X_PROBED, "%s: using pressure threshold of %d for button 1\n",
 			pInfo->name, common->wcmThreshold);
@@ -1401,7 +1401,7 @@ static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pSt
 	/* clip the pressure */
 	int p = max(0, pState->pressure);
 
-	p = min(FILTER_PRESSURE_RES, p);
+	p = min(pDev->maxCurve, p);
 
 	/* apply pressure curve function */
 	if (pDev->pPressCurve == NULL)

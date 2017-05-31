@@ -182,8 +182,8 @@ struct _WacomModel
 
 #define FILTER_PRESSURE_RES	65536	/* maximum points in pressure curve */
 /* Tested result for setting the pressure threshold to a reasonable value */
-#define THRESHOLD_TOLERANCE (FILTER_PRESSURE_RES / 125)
-#define DEFAULT_THRESHOLD (FILTER_PRESSURE_RES / 75)
+#define THRESHOLD_TOLERANCE (0.008f)
+#define DEFAULT_THRESHOLD (0.013f)
 
 #define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
 #define WCM_MAX_X11BUTTON	127	/* maximum button number X11 can handle */
@@ -285,6 +285,7 @@ struct _WacomDeviceRec
 	struct _WacomDeviceState oldState; /* previous state information */
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
 
+	int maxCurve;		/* maximum pressure curve value */
 	int *pPressCurve;       /* pressure curve */
 	int nPressCtrl[4];      /* control points for curve */
 	int minPressure;	/* the minimum pressure a pen may hold */

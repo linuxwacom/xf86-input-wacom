@@ -78,7 +78,7 @@ void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 
 	if (pDev->pPressCurve)
 		filterCurveToLine(pDev->pPressCurve,
-				FILTER_PRESSURE_RES,
+				pDev->maxCurve,
 				0.0, 0.0,               /* bottom left  */
 				x0/100.0, y0/100.0,     /* control point 1 */
 				x1/100.0, y1/100.0,     /* control point 2 */

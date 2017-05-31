@@ -200,7 +200,7 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	if (!IsPad(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
-		max = FILTER_PRESSURE_RES;
+		max = priv->maxCurve;
 	}
 
 	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);

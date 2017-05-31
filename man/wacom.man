@@ -185,6 +185,14 @@ slightly raised curve (softer) might be "0,5,95,100".
 The pressure curve is only applicable to devices of type stylus or eraser,
 other devices do not honor this setting.
 .TP 4
+.B Option \fI"Pressure2K"\fP \fI"bool"\fP
+reduces the pressure range to the range of 0 to 2048 for backwards
+compatibility with applications that have this range hardcoded.
+See section
+.B BUGS.
+This option should not be used unless the user runs one or more
+applications that rely on a hardcoded pressure range.
+.TP 4
 .B Option \fI"DebugLevel"\fP \fI"number"\fP
 sets the level of debugging info for tool-specific messages.  There are 12
 levels, specified by the integers between 1 and 12.  All debug messages with
@@ -303,6 +311,19 @@ two separated fingers side by side, bring together i.e. pinch.
 \fBZoom out:\fR
 two fingers side by side, spread.  Not all applications support zoom.
 .PP
+.SH "BUGS"
+.SS "Pressure range increase leads to unexpected behavior"
+In version 0.34, the driver's pressure range increased from
+2048 steps to 65536 steps. The pressure axis range is advertised through the
+X Input Protocol but some applications have the previous pressure range
+hardcoded and cannot handle pressure values above 2048. This is an
+application bug but for backwards-compatibility with such applications, this
+driver provides the
+.B Pressure2K
+option to reduce the range to 2048 steps. Note that this setting applies to
+the device. Once applied, all applications will see the reduced pressure
+range. It is not possible to provide this setting on a per-application
+basis.
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
 xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)

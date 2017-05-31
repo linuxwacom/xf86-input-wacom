@@ -63,6 +63,7 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->pInfo = pInfo;
 	priv->common = common;       /* common info pointer */
 	priv->oldCursorHwProx = 0;   /* previous cursor hardware proximity */
+	priv->maxCurve = FILTER_PRESSURE_RES;
 	priv->nPressCtrl [0] = 0;    /* pressure curve x0 */
 	priv->nPressCtrl [1] = 0;    /* pressure curve y0 */
 	priv->nPressCtrl [2] = 100;  /* pressure curve x1 */
