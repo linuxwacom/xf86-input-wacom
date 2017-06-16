@@ -179,8 +179,9 @@ test_normalize_pressure(void)
 	InputInfoRec pInfo = {0};
 	WacomDeviceRec priv = {0};
 	WacomCommonRec common = {0};
+	int normalized_max = 65536;
 	int pressure, prev_pressure = -1;
-	int i, j;
+	int i, j, k;
 
 	priv.common = &common;
 	priv.pInfo = &pInfo;
@@ -189,33 +190,39 @@ test_normalize_pressure(void)
 
 	priv.minPressure = 0;
 
-	/* Some random loop to check various maxZ pressure values. Starting at
-	 * 1, because if wcmMaxZ is 0 we have other problems. */
-	for (j = 1; j <= 256; j += 17)
-	{
-		common.wcmMaxZ = j;
-		prev_pressure = -1;
+	/* Check various maxCurve values */
+	for (k = 512; k <= normalized_max; k += 239) {
+		priv.maxCurve = k;
 
-		for (i = 0; i <= common.wcmMaxZ; i++)
+		/* Some random loop to check various maxZ pressure values. Starting at
+		 * 1, because if wcmMaxZ is 0 we have other problems. */
+		for (j = 1; j <= 256; j += 17)
 		{
-			pressure = i;
+			common.wcmMaxZ = j;
+			prev_pressure = -1;
 
-			pressure = normalizePressure(&priv, pressure);
-			assert(pressure >= 0);
-			assert(pressure <= FILTER_PRESSURE_RES);
+			for (i = 0; i <= common.wcmMaxZ; i++)
+			{
+				pressure = i;
 
-			/* we count up, so assume normalised pressure goes up too */
-			assert(prev_pressure < pressure);
-			prev_pressure = pressure;
+				pressure = normalizePressure(&priv, pressure);
+				assert(pressure >= 0);
+				assert(pressure <= k);
+
+				/* we count up, so assume normalised pressure goes up too */
+				assert(prev_pressure < pressure);
+				prev_pressure = pressure;
+			}
+
+			assert(pressure == k);
 		}
-
-		assert(pressure == FILTER_PRESSURE_RES);
 	}
 
 	/* If minPressure is higher than ds->pressure, normalizePressure takes
 	 * minPressure and ignores actual pressure. This would be a bug in the
 	 * driver code, but we might as well test for it. */
 	priv.minPressure = 10;
+	priv.maxCurve = normalized_max;
 
 	prev_pressure = normalizePressure(&priv, 0);
 	for (i = 0; i < priv.minPressure; i++)
@@ -224,7 +231,7 @@ test_normalize_pressure(void)
 		pressure = normalizePressure(&priv, i);
 
 		assert(pressure >= 0);
-		assert(pressure < FILTER_PRESSURE_RES);
+		assert(pressure < normalized_max);
 
 		/* we count up, so assume normalised pressure goes up too */
 		assert(prev_pressure == pressure);
