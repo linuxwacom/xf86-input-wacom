@@ -317,6 +317,8 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x350:/* Cintiq Pro 16 UHD */
 		case 0x353:/* Cintiq Pro 13 FHD Touch */
 		case 0x354:/* Cintiq Pro 13 UHD Touch */
+		case 0x35A:/* DTH-1152*/
+		case 0x368:/* DTH-1152 Touch */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}

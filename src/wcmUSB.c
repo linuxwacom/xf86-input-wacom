@@ -91,7 +91,7 @@ DEFINE_MODEL(usbGraphire4,	"USB Graphire4",	4);
 DEFINE_MODEL(usbBamboo,		"USB Bamboo",		4);
 DEFINE_MODEL(usbBamboo1,	"USB Bamboo1",		4);
 DEFINE_MODEL(usbBambooFun,	"USB BambooFun",	4);
-DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq",	4);
+DEFINE_MODEL(usbCintiq,		"USB PL/Cintiq/DTU",	4);
 DEFINE_MODEL(usbCintiqPartner,	"USB CintiqPartner",	4);
 DEFINE_MODEL(usbIntuos,		"USB Intuos1",		5);
 DEFINE_MODEL(usbIntuos2,	"USB Intuos2",		5);
@@ -232,6 +232,8 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0xC7, 100000, 100000, &usbCintiq,     "DTU1931"		},
 	{ WACOM_VENDOR_ID, 0xCE, 100000, 100000, &usbCintiq,     "DTU2231"		},
 	{ WACOM_VENDOR_ID, 0xF0, 100000, 100000, &usbCintiq,     "DTU1631"		},
+	{ WACOM_VENDOR_ID, 0x35a, 100000, 100000, &usbCintiq,    "DTH1152"              },
+	{ WACOM_VENDOR_ID, 0x368, 100000, 100000, &usbCintiq,    "DTH1152"              }, /* Touch */
 
 	{ WACOM_VENDOR_ID, 0x41, 100000, 100000, &usbIntuos2,    "Intuos2 4x5"		},
 	{ WACOM_VENDOR_ID, 0x42, 100000, 100000, &usbIntuos2,    "Intuos2 6x8"		},
