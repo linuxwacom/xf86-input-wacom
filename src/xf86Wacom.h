@@ -120,7 +120,7 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version);
 
 /* standard packet handler */
-void wcmReadPacket(InputInfoPtr pInfo);
+Bool wcmReadPacket(InputInfoPtr pInfo);
 
 /* handles suppression, filtering, and dispatch. */
 void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
