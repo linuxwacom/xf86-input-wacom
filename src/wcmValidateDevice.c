@@ -199,7 +199,12 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 	{
 		case 0xF8:  /* Cintiq 24HDT */
 		case 0xF4:  /* Cintiq 24HD */
-			TabletSetFeature(priv->common, WCM_DUALRING | WCM_LCD);
+			TabletSetFeature(priv->common, WCM_DUALRING);
+			/* fall through */
+
+		case 0x34D: /* MobileStudio Pro 13 */
+		case 0x34E: /* MobileStudio Pro 13 */
+			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 
 		case 0x357: /* Intuos Pro 2 M */
@@ -300,23 +305,24 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xED: /* TPC with 1FGT */
 		case 0x90: /* TPC */
 		case 0x97: /* TPC */
+		case 0x9F: /* TPC */
 		case 0xEF: /* TPC */
 			TabletSetFeature(priv->common, WCM_TPC);
 			break;
 
-		case 0x9F:
+		case 0x304:/* Cintiq 13HD */
+		case 0x34F:/* Cintiq Pro 13 FHD */
+		case 0x350:/* Cintiq Pro 16 UHD */
+			TabletSetFeature(priv->common, WCM_ROTATION);
+			/* fall-through */
+
 		case 0xF6: /* Cintiq 24HDT Touch */
 		case 0x57: /* DTK2241 */
 		case 0x59: /* DTH2242 Pen */
 		case 0x5D: /* DTH2242 Touch */
 		case 0x5E: /* Cintiq 22HDT Touch */
-		case 0x304:/* Cintiq 13HD */
 		case 0x34A:/* MobileStudio Pro 13 Touch */
 		case 0x34B:/* MobileStudio Pro 16 Touch */
-		case 0x34D:/* MobileStudio Pro 13 */
-		case 0x34E:/* MobileStudio Pro 13 */
-		case 0x34F:/* Cintiq Pro 13 FHD */
-		case 0x350:/* Cintiq Pro 16 UHD */
 		case 0x353:/* Cintiq Pro 13 FHD Touch */
 		case 0x354:/* Cintiq Pro 13 UHD Touch */
 		case 0x35A:/* DTH-1152*/
