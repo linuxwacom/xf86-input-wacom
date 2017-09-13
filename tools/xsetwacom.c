@@ -581,6 +581,8 @@ static struct modifier modifiers[] = {
 	{"lhyper", "Hyper_L"},
 	{"rhyper", "Hyper_R"},
 
+	{"altgr", "ISO_Level3_Shift"},
+
 	{ NULL, NULL }
 };
 
