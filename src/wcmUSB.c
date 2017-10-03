@@ -1454,6 +1454,10 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			ds->buttons = mod_buttons(ds->buttons, 2, event->value);
 			break;
 
+		case BTN_STYLUS3:
+			ds->buttons = mod_buttons(ds->buttons, 3, event->value);
+			break;
+
 		default:
 			change = 0;
 	}
