@@ -175,6 +175,7 @@ struct _WacomModel
 #define ABSOLUTE_FLAG		0x00000100
 #define BAUD_19200_FLAG		0x00000400
 #define BUTTONS_ONLY_FLAG	0x00000800
+#define SCROLLMODE_FLAG		0x00001000
 
 #define IsCursor(priv) (DEVICE_ID((priv)->flags) == CURSOR_ID)
 #define IsStylus(priv) (DEVICE_ID((priv)->flags) == STYLUS_ID)
@@ -288,6 +289,7 @@ struct _WacomDeviceRec
 	WacomCommonPtr common;  /* common info pointer */
 
 	/* state fields in device coordinates */
+	struct _WacomDeviceState wcmPanscrollState; /* panscroll state tracking */
 	struct _WacomDeviceState oldState; /* previous state information */
 	int oldCursorHwProx;	/* previous cursor hardware proximity */
 
@@ -467,6 +469,7 @@ struct _WacomCommonRec
 	int wcmRawSample;	     /* Number of raw data used to filter an event */
 	int wcmPressureRecalibration; /* Determine if pressure recalibration of
 					 worn pens should be performed */
+	int wcmPanscrollThreshold;	/* distance pen must move to send a panscroll event */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */

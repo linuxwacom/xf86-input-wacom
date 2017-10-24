@@ -111,6 +111,9 @@
 */
 #define WACOM_PROP_PRESSURE_RECAL "Wacom Pressure Recalibration"
 
+/* 32 bit, 1 values */
+#define WACOM_PROP_PANSCROLL_THRESHOLD "Wacom Panscroll Threshold"
+
 /* The following are tool types used by the driver in WACOM_PROP_TOOL_TYPE
  * or in the 'type' field for XI1 clients. Clients may check for one of
  * these types to identify tool types.

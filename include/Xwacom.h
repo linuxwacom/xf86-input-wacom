@@ -60,6 +60,7 @@
 #define AC_MODETOGGLE       0x00020000	/* Toggle absolute/relative mode */
 #define AC_DBLCLICK         0x00030000	/* DEPRECATED: use two button events instead */
 #define AC_DISPLAYTOGGLE    0x00040000  /* DEPRECATED: has no effect (used to toggle among screens) */
+#define AC_PANSCROLL        0x00050000  /* Enter/exit panscroll mode */
 #define AC_BUTTON           0x00080000	/* Emit button events */
 #define AC_TYPE             0x000f0000	/* The mask to isolate event type bits */
 #define AC_KEYBTNPRESS      0x00100000  /* bit set for key/button presses */

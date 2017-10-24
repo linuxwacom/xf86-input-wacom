@@ -134,6 +134,13 @@ numbers.
 The "modetoggle" keyword is also recognized; it takes no arguments,
 and toggles the device mode between relative and absolute pointer tracking.
 
+The "pan" keyword causes the driver to send scroll events while the pen
+is dragged. This makes it easy to scroll through lists and documents,
+pan around 2D canvases, and zoom in/out of 3D scenes (exact behavior
+depends on application interpretation of scrollwheel events). Dragging
+the pen up/down will send scrollwheel down/up events; dragging it left/right
+will send scrollwheel right/left events.
+
 The events in the action mapping are sent when the physical button is pressed.
 If the action mapping leaves any buttons or keys pressed (such as a modifier
 key), they will be released when the physical button is released.
@@ -273,6 +280,13 @@ initial pressure reading may be unequal to zero even for a perfectly
 good pen. If the consecutive pressure readings are not higher than
 the initial pressure by a threshold no button event will be generated.
 This option allows to disable the recalibration.  Default:  on
+.TP
+\fBPanScrollThreshold\fR distance
+This specifies the distance the pen must move (in tablet units) before
+a scroll event is generated when using the "pan" action. Smaller values
+will require less distance and be more sensitive. Larger values will
+require more distance and be less sensitive.  Default: 1300 or 2600
+depending on tablet resolution (corresponds to 13 mm of distance).
 
 
 .SH "AUTHORS"

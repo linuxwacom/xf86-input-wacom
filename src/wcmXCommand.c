@@ -99,6 +99,7 @@ static Atom prop_tooltype;
 static Atom prop_btnactions;
 static Atom prop_product_id;
 static Atom prop_pressure_recal;
+static Atom prop_panscroll_threshold;
 #ifdef DEBUG
 static Atom prop_debuglevels;
 #endif
@@ -336,6 +337,9 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 						  XA_INTEGER, 8, 1, values);
 	}
 
+	values[0] = common->wcmPanscrollThreshold;
+	prop_panscroll_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PANSCROLL_THRESHOLD, XA_INTEGER, 32, 1, values);
+
 	values[0] = common->vendor_id;
 	values[1] = common->tablet_id;
 	prop_product_id = InitWcmAtom(pInfo->dev, XI_PROP_PRODUCT_ID, XA_INTEGER, 32, 2, values);
@@ -454,6 +458,8 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 				}
 				break;
 			case AC_MODETOGGLE:
+				break;
+			case AC_PANSCROLL:
 				break;
 			default:
 				DBG(3, priv, "ERROR: Unknown command\n");
@@ -972,6 +978,21 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 
 		if (!checkonly)
 			common->wcmPressureRecalibration = values[0];
+	} else if (property == prop_panscroll_threshold)
+	{
+		CARD32 *values = (CARD32*)prop->data;
+
+		if (prop->size != 1 || prop->format != 32)
+			return BadValue;
+
+		if (values[0] <= 0)
+			return BadValue;
+
+		if (IsTouch(priv))
+			return BadMatch;
+
+		if (!checkonly)
+			common->wcmPanscrollThreshold = values[0];
 	} else
 	{
 		Atom *handler = NULL;

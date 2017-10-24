@@ -472,6 +472,15 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_BOOLEAN
 	},
 	{
+		.name = "PanScrollThreshold",
+		.x11name = "PanScrollThreshold",
+		.desc = "Adjusts distance required for pan actions to generate a scroll event",
+		.prop_name = WACOM_PROP_PANSCROLL_THRESHOLD,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.arg_count = 1,
+	},
+	{
 		.name = "MapToOutput",
 		.desc = "Map the device to the given output. ",
 		.set_func = set_output,
@@ -1011,6 +1020,7 @@ static int special_map_button(Display *dpy, int argc, char **argv, unsigned long
 static int special_map_core(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
 static int special_map_modetoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
 static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
+static int special_map_panscroll(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size);
 
 /* Valid keywords for the --set ButtonX options */
 static struct keywords {
@@ -1022,6 +1032,7 @@ static struct keywords {
 	{"core", special_map_core},
 	{"modetoggle", special_map_modetoggle},
 	{"displaytoggle", special_map_displaytoggle},
+	{"pan", special_map_panscroll},
 	{ NULL, NULL }
 };
 
@@ -1063,6 +1074,19 @@ static int special_map_displaytoggle(Display *dpy, int argc, char **argv, unsign
 			"anymore and will be ignored.\n");
 		once_only = 0;
 	}
+	return 0;
+}
+
+static int special_map_panscroll(Display *dpy, int argc, char **argv, unsigned long *ndata, unsigned long *data, const size_t size)
+{
+	if (*ndata + 1 > size) {
+		fprintf(stderr, "Insufficient space to store all commands.\n");
+		return 0;
+	}
+	data[*ndata] = AC_PANSCROLL;
+
+	*ndata += 1;
+
 	return 0;
 }
 
@@ -2978,7 +3002,7 @@ static void test_parameter_number(void)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 39);
+	assert(ARRAY_SIZE(parameters) == 40);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 

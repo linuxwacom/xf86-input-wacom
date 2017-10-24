@@ -277,6 +277,13 @@ initial pressure reading may be unequal to zero even for a perfectly
 good pen. If the consecutive pressure readings are not higher than
 the initial pressure by a threshold no button event will be generated.
 This option allows to disable the recalibration.
+.TP 4
+.B Option \fI"PanScrollThreshold"\fP \fI"number"\fP
+Specifies the distance the pen must move (in tablet units) before a
+scroll event is generated when using the "pan" action. Smaller values
+will require less distance and be more sensitive. Larger values will
+require more distance and be less sensitive.  Default: 1300 or 2600
+depending on tablet resolution (corresponds to 13 mm of distance).
 .RE
 .SH "TOUCH GESTURES"
 .SS Single finger (1FG)
