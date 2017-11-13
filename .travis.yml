@@ -1,0 +1,27 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+addons:
+  apt:
+    packages:
+      - xutils-dev
+      - xserver-xorg-dev
+      - libx11-dev
+      - libxi-dev
+      - libxrandr-dev
+      - libxinerama-dev
+      - libudev-dev
+
+env:
+  - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter -Wno-error=missing-field-initializers -Wno-error=cast-qual"
+
+script:
+  # We don't want our CFLAGS (especially -Werror) to apply at `configure`
+  # time so short-circuit our environment at that moment and provide the
+  # flags to `make` instead. Not doing so results in an incorrect config:
+  # 'checking for rint in -lm... no' because of a builtin-declaration-mismatch
+  # warning (error) in the auto-generated feature test.
+  - CFLAGS="" ./autogen.sh && make CFLAGS="$CFLAGS" && make check
