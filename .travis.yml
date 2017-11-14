@@ -16,7 +16,7 @@ addons:
       - libudev-dev
 
 env:
-  - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter -Wno-error=missing-field-initializers -Wno-error=cast-qual"
+  - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter"
 
 script:
   # We don't want our CFLAGS (especially -Werror) to apply at `configure`
