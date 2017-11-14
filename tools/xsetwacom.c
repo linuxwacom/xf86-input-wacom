@@ -985,7 +985,7 @@ static const char *convert_specialkey(const char *specialkey)
 			m++;
 	}
 
-	return m->converted ? m->converted : (char*)specialkey;
+	return m->converted ? m->converted : specialkey;
 }
 
 /**
