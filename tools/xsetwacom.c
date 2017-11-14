@@ -484,7 +484,7 @@ static param_t parameters[] =
 		.get_func = get_all,
 		.prop_flags = PROP_FLAG_READONLY,
 	},
-	{}
+	{.name = NULL}
 };
 
 /**
