@@ -28,11 +28,11 @@ shared_sources = tools-shared.h tools-shared.c
 isdv4_serial_debugger_SOURCES = isdv4-serial-debugger.c $(shared_sources)
 
 isdv4_serial_inputattach_SOURCES = isdv4-serial-inputattach.c $(shared_sources)
-isdv4_serial_inputattach_CFLAGS = $(UDEV_CFLAGS)
+isdv4_serial_inputattach_CFLAGS = $(AM_CFLAGS) $(UDEV_CFLAGS)
 isdv4_serial_inputattach_LDADD = $(UDEV_LIBS)
 
 xsetwacom_SOURCES = xsetwacom.c
-xsetwacom_CFLAGS = $(X11_CFLAGS)
+xsetwacom_CFLAGS = $(AM_CFLAGS) $(X11_CFLAGS)
 xsetwacom_LDADD = $(X11_LIBS)
 
 if FUZZINTERFACE
@@ -42,7 +42,7 @@ endif
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
 xsetwacom_test_SOURCES=xsetwacom.c
-xsetwacom_test_CFLAGS=-DBUILD_TEST $(X11_CFLAGS)
+xsetwacom_test_CFLAGS=-DBUILD_TEST $(AM_CFLAGS) $(X11_CFLAGS) -Wno-error
 xsetwacom_test_LDADD = $(X11_LIBS)
 
 TESTS=$(check_PROGRAMS)
