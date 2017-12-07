@@ -738,6 +738,7 @@ static pointer wcmPlug(pointer module, pointer options, int* errmaj,
 {
 	xf86AddInputDriver(&WACOM, module, 0);
 
+	xf86Msg(X_INFO, "Build version: " BUILD_VERSION "\n");
 	usbListModels();
 
 	return module;

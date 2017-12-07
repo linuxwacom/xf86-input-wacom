@@ -1,0 +1,56 @@
+#!/bin/sh
+
+DIRECTORY=$(basename "$(dirname "$(readlink -mn "$0")")")
+VERFILE="version"
+DEF_VER="$DIRECTORY"
+TAG_PREFIX="xf86-input-wacom-"
+LF='
+'
+UPDATE=0
+FORCE=0
+
+
+for ARG in "$@"; do
+	if test "${ARG}" = "-u"; then UPDATE=1;
+	elif test "${ARG}" = "-f"; then UPDATE=1; FORCE=1;
+	fi
+done
+
+# First see if we're in a git directory and try git-describe, then
+# try the $VERFILE file if present (included in release tarballs),
+# and finally the default.
+if test -d "${GIT_DIR:-.git}" -o -f .git &&
+	VN=$(git describe --match "${TAG_PREFIX}*" --abbrev=7 HEAD 2>/dev/null) &&
+	case "${VN}" in
+	*${LF}*) (exit 1) ;;
+	${TAG_PREFIX}*)
+		git update-index -q --refresh
+		test -z "$(git diff-index --name-only HEAD --)" ||
+		VN="${VN}-dirty" ;;
+	esac
+then
+	VN=$(echo "${VN}" | sed -e "s/${TAG_PREFIX}//");
+	VN=$(echo "${VN}" | sed -e 's/-/./g');
+elif test -f "${VERFILE}"
+then
+	VN=$(cat ${VERFILE}) || VN="$DEF_VER"
+else
+	VN="${DEF_VER}"
+fi
+
+VN=$(expr "${VN}" : v*'\(.*\)')
+
+echo ${VN}
+
+if test "${UPDATE}" -ne 0; then
+	SAVED_VERSION=""
+	if test -f "${VERFILE}"; then
+		SAVED_VERSION=$(cat "${VERFILE}")
+	fi
+	if test "${SAVED_VERSION}" != "${VN}"; then
+		FORCE=1
+	fi
+	if test "${FORCE}" -ne 0; then
+		echo "${VN}" > "${VERFILE}"
+	fi
+fi

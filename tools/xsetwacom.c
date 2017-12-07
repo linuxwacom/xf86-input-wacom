@@ -753,8 +753,7 @@ static void usage(void)
 
 static void version(void)
 {
-	printf("%d.%d.%d\n", PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR,
-			     PACKAGE_VERSION_PATCHLEVEL);
+	printf(BUILD_VERSION "\n");
 }
 
 static XDevice* find_device(Display *display, char *name)
