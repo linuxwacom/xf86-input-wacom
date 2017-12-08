@@ -1239,6 +1239,15 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		if (!priv->oldState.proximity)
 			wcmResetSampleCounter(pChannel);
 
+		/* Reset filter whenever the tip is touched to the
+		 * screen to ensure clicks are sent from the pen's
+		 * actual position. Don't reset on other buttons or
+		 * tip-up, or else there may be a noticible jump/
+		 * hook produced in the middle/end of the stroke.
+		 */
+		if ((filtered.buttons & PRESSURE_BUTTON) && !(priv->oldState.buttons & PRESSURE_BUTTON))
+			wcmResetSampleCounter(pChannel);
+
 		wcmFilterCoord(common,pChannel,&filtered);
 	}
 
