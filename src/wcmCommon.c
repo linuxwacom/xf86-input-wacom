@@ -897,7 +897,6 @@ static Bool check_arbitrated_control(InputInfoPtr pInfo, WacomDeviceStatePtr ds)
 void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	const WacomDeviceState* pState)
 {
-	WacomDeviceState* pLast;
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
 	enum WacomSuppressMode suppress;
@@ -905,7 +904,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomToolPtr tool;
 	WacomDevicePtr priv;
 	pChannel = common->wcmChannel + channel;
-	pLast = &pChannel->valid.state;
 
 	DBG(10, common, "channel = %d\n", channel);
 
@@ -961,21 +959,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.tiltx = 0;
 		ds.tilty = 0;
 	}
-
-	/* Optionally filter values only while in proximity */
-	if (ds.proximity && ds.device_type != PAD_ID)
-	{
-		/* Start filter fresh when entering proximity */
-		if (!pLast->proximity)
-			wcmResetSampleCounter(pChannel);
-
-		wcmFilterCoord(common,pChannel,&ds);
-	}
-
-	/* skip event if we don't have enough movement */
-	suppress = wcmCheckSuppress(common, pLast, &ds);
-	if (suppress == SUPPRESS_ALL)
-		return;
 
 	/* JEJ - Do not move this code without discussing it with me.
 	 * The device state is invariant of any filtering performed below.
@@ -1250,6 +1233,21 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		}
 		filtered.pressure = applyPressureCurve(priv,&filtered);
 	}
+
+	/* Optionally filter values only while in proximity */
+	if (filtered.proximity && filtered.device_type != PAD_ID)
+	{
+		/* Start filter fresh when entering proximity */
+		if (!priv->oldState.proximity)
+			wcmResetSampleCounter(pChannel);
+
+		wcmFilterCoord(common,pChannel,&filtered);
+	}
+
+	/* skip event if we don't have enough movement */
+	suppress = wcmCheckSuppress(common, &priv->oldState, &filtered);
+	if (suppress == SUPPRESS_ALL)
+		return;
 
 	/* Store cursor hardware prox for next use */
 	if (IsCursor(priv))
