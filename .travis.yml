@@ -15,13 +15,28 @@ addons:
       - libxinerama-dev
       - libudev-dev
 
-env:
-  - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter"
+before_install:
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
-script:
+env:
+  global:
+    - secure: "o99zVPgb3kU80P6nC8gQWIr4UdRa7+d+K8g8Gclmzgy980NSk1MBLtD1oqoXThAx4BGnW6XDIFG8RRsl0QkE7gsZyOw5WwcRWrsK2ZdCMNngLxhG7QKF/l9y8WMmUaqSXW9WTgyheqIH5QuEYtkoGqjQBP3fNwPDpGT720H3jSxibRjkwUUyo5Shy5LS9I3d6uL1/7nwgcdAAocYCl5PWm/swVXwrFBvFENKCp8i/0LDXmJ9g/NrLqKljiMXoWxP8SUsTiUk+D3Q4s0/Izy7SbZxbQMoG+Z2Et6iu0r7boxqw2McWt6WqovoAFhm4ZSNmBYbRhNFxMCbabrBNWcr0k58BvnpDA/5TAbeesudY4Tb4tebq8oQJUcQqYgxI3YOnaQQTSjGWHdQLoYIJnGu2ctp7vP8pnxaEmPxoeXMojEXiIZe2426Ysf8DfQ9cKxXYKEwANHWu6Mwo7Kf9KZ0fgeSTU4KKgTIDuDpP7LIquWSuDp7lA9/zGqyjdHslps3VDFRPXkUUizqRE/clyZm4bmkWF5QFzbuuKDSSi+roGFEvBuL5SGOv13uq4stEo9k4Tkkv9dAP7nofSo5deWBHXcwaYlGMWzQKOykanxq/JIEUCPp+Cmfglee6kjRjeNwKwrrxg1nDDLarp/3B1Qnvua4CVrjPav39yHAKNFPtXg="
+    - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter"
+
+matrix:
+  include:
+    - compiler: "gcc"
+      env: BUILDTYPE="coverity", COVERITY_SCAN_PROJECT_NAME="linuxwacom/xf86-input-wacom", COVERITY_SCAN_NOTIFICATION_EMAIL="killertofu@gmail.com", COVERITY_SCAN_BUILD_COMMAND_PREPEND="", COVERITY_SCAN_BUILD_COMMAND="make", COVERITY_SCAN_BRANCH_PATTERN=".*", COVERITY_URL="https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh"
+
+before_script:
   # We don't want our CFLAGS (especially -Werror) to apply at `configure`
   # time so short-circuit our environment at that moment and provide the
   # flags to `make` instead. Not doing so results in an incorrect config:
   # 'checking for rint in -lm... no' because of a builtin-declaration-mismatch
   # warning (error) in the auto-generated feature test.
-  - CFLAGS="" ./autogen.sh && make CFLAGS="$CFLAGS" && make check
+  - CFLAGS="" ./autogen.sh
+
+script:
+  - if [[ x"$TRAVIS_EVENT_TYPE" = "xcron" ]]; then export DO_COVERITY="YES"; fi
+  - if [[ x"$BUILDTYPE" = "xcoverity" && x"$DO_COVERITY" = "xYES" ]]; then curl -s "$COVERITY_URL" | bash; fi
+  - if [[ x"$BUILDTYPE" != "xcoverity" ]]; then make CFLAGS="$CFLAGS" && make check; fi
