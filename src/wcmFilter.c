@@ -276,6 +276,18 @@ static void storeRawSample(WacomCommonPtr common, WacomChannelPtr pChannel,
 	}
 }
 
+static int wcmFilterAverage(int *samples, int n)
+{
+	int x = 0;
+	int i;
+
+	for (i = 0; i < n; i++)
+	{
+		x += samples[i];
+	}
+	return x / n;
+}
+
 /*****************************************************************************
  * wcmFilterCoord -- provide noise correction to all transducers
  ****************************************************************************/
@@ -283,7 +295,6 @@ static void storeRawSample(WacomCommonPtr common, WacomChannelPtr pChannel,
 int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 	WacomDeviceStatePtr ds)
 {
-	int x=0, y=0, tx=0, ty=0, i;
 	WacomFilterState *state;
 
 	DBG(10, common, "common->wcmRawSample = %d \n", common->wcmRawSample);
@@ -292,30 +303,18 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 
 	state = &pChannel->rawFilter;
 
-	for ( i=0; i<common->wcmRawSample; i++ )
-	{
-		x += state->x[i];
-		y += state->y[i];
-		if (HANDLE_TILT(common) && (ds->device_type == STYLUS_ID ||
-					    ds->device_type == ERASER_ID))
-		{
-			tx += state->tiltx[i];
-			ty += state->tilty[i];
-		}
-	}
-	ds->x = x / common->wcmRawSample;
-	ds->y = y / common->wcmRawSample;
-
+	ds->x = wcmFilterAverage(state->x, common->wcmRawSample);
+	ds->y = wcmFilterAverage(state->y, common->wcmRawSample);
 	if (HANDLE_TILT(common) && (ds->device_type == STYLUS_ID ||
 				    ds->device_type == ERASER_ID))
 	{
-		ds->tiltx = tx / common->wcmRawSample;
+		ds->tiltx = wcmFilterAverage(state->tiltx, common->wcmRawSample);
 		if (ds->tiltx > common->wcmTiltMaxX)
 			ds->tiltx = common->wcmTiltMaxX;
 		else if (ds->tiltx < common->wcmTiltMinX)
 			ds->tiltx = common->wcmTiltMinX;
 
-		ds->tilty = ty / common->wcmRawSample;
+		ds->tilty = wcmFilterAverage(state->tiltx, common->wcmRawSample);
 		if (ds->tilty > common->wcmTiltMaxY)
 			ds->tilty = common->wcmTiltMaxY;
 		else if (ds->tilty < common->wcmTiltMinY)
