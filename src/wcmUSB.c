@@ -289,6 +289,8 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x57, 200000, 200000, &usbCintiqV5,   "DTK2241"		},
 	{ WACOM_VENDOR_ID, 0x59, 200000, 200000, &usbCintiqV5,   "DTH2242"		},
 	{ WACOM_VENDOR_ID, 0x5B, 200000, 200000, &usbCintiqV5,   "Cintiq 22HDT"		},
+	{ WACOM_VENDOR_ID, 0x32B, 200000, 200000, &usbCintiqV5,  "Cintiq 27QHDT"	},
+	{ WACOM_VENDOR_ID, 0x32C, 200000, 200000, &usbCintiqV5,  "Cintiq 27QHDT"	}, /* Touch */
 	{ WACOM_VENDOR_ID, 0x34A, 200000, 200000, &usbCintiqV5,  "Mobilestudio Pro 13"	}, /* Touch */
 	{ WACOM_VENDOR_ID, 0x34B, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 16"	}, /* Touch */
 	{ WACOM_VENDOR_ID, 0x34D, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 13"	},

@@ -311,6 +311,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			break;
 
 		case 0x304:/* Cintiq 13HD */
+		case 0x32B:/* Cintiq 27QHDT Pen */
 		case 0x34F:/* Cintiq Pro 13 FHD */
 		case 0x350:/* Cintiq Pro 16 UHD */
 		case 0x351:/* Cintiq Pro 24 */
@@ -324,6 +325,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x59: /* DTH2242 Pen */
 		case 0x5D: /* DTH2242 Touch */
 		case 0x5E: /* Cintiq 22HDT Touch */
+		case 0x32C:/* Cintiq 27QHDT Touch */
 		case 0x34A:/* MobileStudio Pro 13 Touch */
 		case 0x34B:/* MobileStudio Pro 16 Touch */
 		case 0x353:/* Cintiq Pro 13 FHD Touch */
