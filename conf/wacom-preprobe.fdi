@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deviceinfo version="0.2">
+  <device>
+
+    <!-- Some Wacom devices (e.g. Cintiq Pro) have an EV_SW event which is
+         unsupported by HAL. To prevent the input prober from failing
+         on this event (hal/hald/linux/probing/probe-input.c:79) we
+         should pretend that it doesn't exist. -->
+    <match key="info.capabilities" contains="button">
+      <match key="info.product" contains_outof="Wacom;WACOM">
+        <merge key="button.has_state" type="bool">false</merge>
+      </match>
+    </match>
+
+  </device>
+</deviceinfo>

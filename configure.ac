@@ -107,6 +107,21 @@ AC_ARG_WITH([xorg-conf-dir],
 AC_SUBST(configdir)
 AM_CONDITIONAL(HAS_XORG_CONF_DIR, [test "x$configdir" != "x"])
 
+AC_ARG_ENABLE(hal-fdi-preprobe-quirk, AS_HELP_STRING([--enable-hal-fdi-preprobe-quirk],
+                          [Install HAL workaround for devices with unsupported EV_SW events (default: auto)]),
+                          [USE_HAL_FDI_PREPROBE_QUIRK=$enableval],
+                          [USE_HAL_FDI_PREPROBE_QUIRK=auto])
+if test "x$USE_HAL_FDI_PREPROBE_QUIRK" = xauto ; then
+       AC_CHECK_PROG([LSHAL], [lshal], [yes], [no])
+       AC_CHECK_PROG([HAL_SET_PROPERTY], [hal-set-property], [yes], [no])
+       AS_IF([test "x$LSHAL" = "xyes" -a "x$HAL_SET_PROPERTY" = "xyes"],
+             [USE_HAL_FDI_PREPROBE_QUIRK=yes],
+             [USE_HAL_FDI_PREPROBE_QUIRK=no])
+fi
+AC_MSG_CHECKING([if HAL preprobe quirk should be installed])
+AC_MSG_RESULT($USE_HAL_FDI_PREPROBE_QUIRK)
+AM_CONDITIONAL(USE_HAL_FDI_PREPROBE_QUIRK, [test "x$USE_HAL_FDI_PREPROBE_QUIRK" = xyes])
+
 AC_ARG_ENABLE(fuzz-interface, AS_HELP_STRING([--enable-fuzz-interface],
                           [Enable xsetwacom to take NUL-separated commands from stdin (default: no)]),
                           [FUZZINTERFACE=$enableval],

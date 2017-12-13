@@ -3,8 +3,13 @@ CLEANFILES=
 if HAS_XORG_CONF_DIR
 dist_config_DATA = 70-wacom.conf
 else
-fdidir = $(datadir)/hal/fdi/policy/20thirdparty
-dist_fdi_DATA = wacom.fdi
+fdipolicydir = $(datadir)/hal/fdi/policy/20thirdparty
+dist_fdipolicy_DATA = wacom.fdi
+endif
+
+if USE_HAL_FDI_PREPROBE_QUIRK
+fdipreprobedir = $(datadir)/hal/fdi/preprobe/20thirdparty
+dist_fdipreprobe_DATA = wacom-preprobe.fdi
 endif
 
 if HAVE_SYSTEMD_UNIT_DIR
