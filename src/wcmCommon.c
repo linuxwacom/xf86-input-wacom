@@ -57,8 +57,8 @@ static int *VCOPY(const int *valuators, int nvals)
 static int applyPressureCurve(WacomDevicePtr pDev, const WacomDeviceStatePtr pState);
 static void commonDispatchDevice(InputInfoPtr pInfo,
 				 const WacomChannelPtr pChannel);
-static void sendAButton(InputInfoPtr pInfo, int button, int mask,
-			int first_val, int num_vals, int *valuators);
+static void sendAButton(InputInfoPtr pInfo,  const WacomDeviceState* ds, int button,
+			int mask, int first_val, int num_vals, int *valuators);
 
 /*****************************************************************************
  * Utility functions
@@ -94,7 +94,7 @@ void set_absolute(InputInfoPtr pInfo, Bool absolute)
  *   previous one.
  ****************************************************************************/
 
-static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
+static void wcmSendButtons(InputInfoPtr pInfo, const WacomDeviceState* ds, int buttons,
 			   int first_val, int num_vals, int *valuators)
 {
 	unsigned int button, mask, first_button;
@@ -135,7 +135,7 @@ static void wcmSendButtons(InputInfoPtr pInfo, int buttons,
 	{
 		mask = 1u << button;
 		if ((mask & priv->oldState.buttons) != (mask & buttons))
-			sendAButton(pInfo, button, (mask & buttons),
+			sendAButton(pInfo, ds, button, (mask & buttons),
 					first_val, num_vals, valuators);
 	}
 
@@ -165,8 +165,8 @@ static int countPresses(int keybtn, unsigned int* keys, int size)
 	return count;
 }
 
-static void sendAction(InputInfoPtr pInfo, int press,
-		       unsigned int *keys, int nkeys,
+static void sendAction(InputInfoPtr pInfo,  const WacomDeviceState* ds,
+		       int press, unsigned int *keys, int nkeys,
 		       int first_val, int num_val, int *valuators)
 {
 	int i;
@@ -248,8 +248,8 @@ static void sendAction(InputInfoPtr pInfo, int press,
  * sendAButton --
  *   Send one button event, called by wcmSendButtons
  ****************************************************************************/
-static void sendAButton(InputInfoPtr pInfo, int button, int mask,
-			int first_val, int num_val, int *valuators)
+static void sendAButton(InputInfoPtr pInfo, const WacomDeviceState* ds, int button,
+			int mask, int first_val, int num_val, int *valuators)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 #ifdef DEBUG
@@ -262,7 +262,7 @@ static void sendAButton(InputInfoPtr pInfo, int button, int mask,
 	if (!priv->keys[button][0])
 		return;
 
-	sendAction(pInfo, (mask != 0), priv->keys[button],
+	sendAction(pInfo, ds, (mask != 0), priv->keys[button],
 		   ARRAY_SIZE(priv->keys[button]),
 		   first_val, num_val, valuators);
 }
@@ -344,11 +344,11 @@ TEST_NON_STATIC int getWheelButton(int delta, int action_up, int action_dn)
  * @param num_vals
  * @param valuators
  */
-static void sendWheelStripEvent(unsigned int *action, int nactions, InputInfoPtr pInfo,
-                                int first_val, int num_vals, int *valuators)
+static void sendWheelStripEvent(unsigned int *action, const WacomDeviceState* ds, int nactions,
+				InputInfoPtr pInfo, int first_val, int num_vals, int *valuators)
 {
-	sendAction(pInfo, 1, action, nactions, first_val, num_vals, valuators);
-	sendAction(pInfo, 0, action, nactions, first_val, num_vals, valuators);
+	sendAction(pInfo, ds, 1, action, nactions, first_val, num_vals, valuators);
+	sendAction(pInfo, ds, 0, action, nactions, first_val, num_vals, valuators);
 }
 
 /*****************************************************************************
@@ -371,7 +371,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch strip scroll delta = %d\n", delta);
-		sendWheelStripEvent(priv->strip_keys[idx], ARRAY_SIZE(priv->strip_keys[idx]),
+		sendWheelStripEvent(priv->strip_keys[idx], ds, ARRAY_SIZE(priv->strip_keys[idx]),
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -381,7 +381,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch strip scroll delta = %d\n", delta);
-		sendWheelStripEvent(priv->strip_keys[idx], ARRAY_SIZE(priv->strip_keys[idx]),
+		sendWheelStripEvent(priv->strip_keys[idx], ds, ARRAY_SIZE(priv->strip_keys[idx]),
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -391,7 +391,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(priv->wheel_keys[idx], ARRAY_SIZE(priv->wheel_keys[idx]),
+		sendWheelStripEvent(priv->wheel_keys[idx], ds, ARRAY_SIZE(priv->wheel_keys[idx]),
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -401,7 +401,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(priv->wheel_keys[idx], ARRAY_SIZE(priv->wheel_keys[idx]),
+		sendWheelStripEvent(priv->wheel_keys[idx], ds, ARRAY_SIZE(priv->wheel_keys[idx]),
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -411,7 +411,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(priv->wheel_keys[idx], ARRAY_SIZE(priv->wheel_keys[idx]),
+		sendWheelStripEvent(priv->wheel_keys[idx], ds, ARRAY_SIZE(priv->wheel_keys[idx]),
 		                    pInfo, first_val, num_vals, valuators);
 	}
 }
@@ -429,7 +429,7 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 
 	/* send button events when state changed or first time in prox and button unpresses */
 	if (priv->oldState.buttons != buttons || (!priv->oldState.proximity && !buttons))
-		wcmSendButtons(pInfo,buttons, first_val, num_vals, valuators);
+		wcmSendButtons(pInfo, ds, buttons, first_val, num_vals, valuators);
 
 	/* emulate wheel/strip events when defined */
 	if ( ds->relwheel || (ds->abswheel != priv->oldState.abswheel) || (ds->abswheel2 != priv->oldState.abswheel2) ||
@@ -525,7 +525,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	else
 	{
 		if (priv->oldState.buttons)
-			wcmSendButtons(pInfo, ds->buttons, first_val, num_vals, valuators);
+			wcmSendButtons(pInfo, ds, ds->buttons, first_val, num_vals, valuators);
 	}
 
 	if (priv->oldState.proximity && !ds->proximity)
@@ -593,7 +593,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 		/* reports button up when the device has been
 		 * down and becomes out of proximity */
 		if (priv->oldState.buttons)
-			wcmSendButtons(pInfo, buttons, first_val, num_vals, valuators);
+			wcmSendButtons(pInfo, ds, buttons, first_val, num_vals, valuators);
 
 		if (priv->oldState.proximity)
 			xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
