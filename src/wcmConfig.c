@@ -492,6 +492,12 @@ static Bool wcmLinkTouchAndPen(InputInfoPtr pInfo)
 	WacomCommonPtr tmpcommon = NULL;
 	WacomDevicePtr tmppriv = NULL;
 
+	if (IsPad(priv))
+	{
+		DBG(4, priv, "No need to link up pad devices.\n");
+		return FALSE;
+	}
+
 	/* Lookup to find the associated pen and touch */
 	for (; device != NULL; device = device->next)
 	{
@@ -504,7 +510,7 @@ static Bool wcmLinkTouchAndPen(InputInfoPtr pInfo)
 		DBG(4, priv, "Considering link with %s...\n", tmppriv->name);
 
 		/* already linked devices */
-		if (tmpcommon->wcmTouchDevice && IsTablet(tmppriv))
+		if (tmpcommon->wcmTouchDevice)
 		{
 			DBG(4, priv, "A link is already in place. Ignoring.\n");
 			continue;
