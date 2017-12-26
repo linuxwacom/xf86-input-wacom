@@ -167,7 +167,7 @@ static unsigned short padkey_codes [] = {
 /* Fixed mapped stylus and mouse buttons */
 
 #define WCM_USB_MAX_MOUSE_BUTTONS 5
-#define WCM_USB_MAX_STYLUS_BUTTONS 3
+#define WCM_USB_MAX_STYLUS_BUTTONS 4
 
 static unsigned short mouse_codes [] = {
 	BTN_LEFT, BTN_MIDDLE, BTN_RIGHT, BTN_BACK, BTN_FORWARD,
@@ -480,7 +480,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 	/* nbuttons tracks maximum buttons on all tools (stylus/mouse).
 	 *
 	 * Mouse support left, middle, right, side, and extra side button.
-	 * Stylus support tip and 2 stlyus buttons.
+	 * Stylus support tip and 3 stylus buttons.
 	 */
 	if (ISBITSET (common->wcmKeys, BTN_TOOL_MOUSE))
 		usbdata->nbuttons = WCM_USB_MAX_MOUSE_BUTTONS;
