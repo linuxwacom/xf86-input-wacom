@@ -234,6 +234,9 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0xF0, 100000, 100000, &usbCintiq,     "DTU1631"		},
 	{ WACOM_VENDOR_ID, 0x35a, 100000, 100000, &usbCintiq,    "DTH1152"              },
 	{ WACOM_VENDOR_ID, 0x368, 100000, 100000, &usbCintiq,    "DTH1152"              }, /* Touch */
+	{ WACOM_VENDOR_ID, 0x382, 100000, 100000, &usbCintiq,    "DTK2451"              },
+	{ WACOM_VENDOR_ID, 0x37D, 100000, 100000, &usbCintiq,    "DTH2452"              },
+	{ WACOM_VENDOR_ID, 0x37E, 100000, 100000, &usbCintiq,    "DTH2452"              }, /* Touch */
 
 	{ WACOM_VENDOR_ID, 0x41, 100000, 100000, &usbIntuos2,    "Intuos2 4x5"		},
 	{ WACOM_VENDOR_ID, 0x42, 100000, 100000, &usbIntuos2,    "Intuos2 6x8"		},

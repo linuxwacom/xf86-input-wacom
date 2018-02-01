@@ -334,6 +334,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x356:/* Cintiq Pro 32 Touch */
 		case 0x35A:/* DTH-1152*/
 		case 0x368:/* DTH-1152 Touch */
+		case 0x382:/* DTK-2451 */
+		case 0x37D:/* DTH-2452 */
+		case 0x37E:/* DTH-2452 Touch */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}
