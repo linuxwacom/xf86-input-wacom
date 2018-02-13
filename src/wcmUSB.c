@@ -932,7 +932,8 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 			if (i == PAD_CHANNEL)
 				continue;
 
-			if (!common->wcmChannel[i].work.proximity)
+			if (!common->wcmChannel[i].work.proximity &&
+			    !common->wcmChannel[i].valid.state.proximity)
 			{
 				channel = i;
 				memset(&common->wcmChannel[channel],0, sizeof(WacomChannel));
