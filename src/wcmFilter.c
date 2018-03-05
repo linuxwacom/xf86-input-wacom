@@ -314,7 +314,7 @@ int wcmFilterCoord(WacomCommonPtr common, WacomChannelPtr pChannel,
 		else if (ds->tiltx < common->wcmTiltMinX)
 			ds->tiltx = common->wcmTiltMinX;
 
-		ds->tilty = wcmFilterAverage(state->tiltx, common->wcmRawSample);
+		ds->tilty = wcmFilterAverage(state->tilty, common->wcmRawSample);
 		if (ds->tilty > common->wcmTiltMaxY)
 			ds->tilty = common->wcmTiltMaxY;
 		else if (ds->tilty < common->wcmTiltMinY)
