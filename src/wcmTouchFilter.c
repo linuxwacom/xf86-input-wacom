@@ -528,23 +528,18 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 	if (!dsLast[0].proximity || !dsLast[1].proximity)
 		goto ret;
 
-	/* was in zoom mode no time check needed */
+	/* continue zooming if already in zoom mode */
 	if ((common->wcmGestureMode & GESTURE_ZOOM_MODE) &&
 	    ds[0].proximity && ds[1].proximity)
 		wcmFingerZoom(priv);
 
-	/* was in scroll mode no time check needed */
+	/* continue scrollling if already in scroll mode */
 	else if (common->wcmGestureMode & GESTURE_SCROLL_MODE)
 		    wcmFingerScroll(priv);
 
 	/* process complex two finger gestures */
 	else {
-		CARD32 ms = GetTimeInMillis();
-		int taptime = common->wcmGestureParameters.wcmTapTime;
-
-		if (ds[0].proximity && ds[1].proximity &&
-		    (taptime < (ms - ds[0].sample)) &&
-		    (taptime < (ms - ds[1].sample)))
+		if (ds[0].proximity && ds[1].proximity)
 		{
 			/* scroll should be considered first since it requires
 			 * a finger distance check */
