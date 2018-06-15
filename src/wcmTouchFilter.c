@@ -617,12 +617,14 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {};
+	WacomDeviceState *start = common->wcmGestureState;
 	int midPoint_new = 0;
 	int midPoint_old = 0;
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
 	int gestureStart = 0;
+	int spread;
 
 	if (!common->wcmGesture)
 		return;
@@ -631,17 +633,17 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 	DBG(10, priv, "\n");
 
+	spread = fabs(touchDistance(ds[0], ds[1]) - touchDistance(start[0], start[1]));
+
 	if (common->wcmGestureMode != GESTURE_SCROLL_MODE)
 	{
-		if (fabs(touchDistance(ds[0], ds[1]) -
-			touchDistance(common->wcmGestureState[0],
-			common->wcmGestureState[1])) < max_spread)
+		if (spread < max_spread)
 		{
 			/* two fingers stay close to each other all the time and
 			 * move in vertical or horizontal direction together
 			 */
-			if (pointsInLine(common, ds[0], common->wcmGestureState[0])
-			    && pointsInLine(common, ds[1], common->wcmGestureState[1])
+			if (pointsInLine(common, ds[0], start[0])
+			    && pointsInLine(common, ds[1], start[1])
 			    && common->wcmGestureParameters.wcmScrollDirection)
 			{
 				/* left button might be down. Send it up first */
@@ -727,10 +729,12 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {};
+	WacomDeviceState *start = common->wcmGestureState;
 	int count, button;
 	int dist;
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
 	int gestureStart = 0;
+	int spread;
 
 	if (!common->wcmGesture)
 		return;
@@ -739,13 +743,12 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 
 	DBG(10, priv, "\n");
 
+	spread = fabs(touchDistance(ds[0], ds[1]) - touchDistance(start[0], start[1]));
+
 	if (common->wcmGestureMode != GESTURE_ZOOM_MODE)
 	{
 		/* two fingers moved apart from each other */
-		if (fabs(touchDistance(ds[0], ds[1]) -
-			touchDistance(common->wcmGestureState[0],
-				      common->wcmGestureState[1])) >
-			(3 * max_spread))
+		if (spread > (3 * max_spread))
 		{
 			/* left button might be down, send it up first */
 			wcmSendButtonClick(priv, 1, 0);
