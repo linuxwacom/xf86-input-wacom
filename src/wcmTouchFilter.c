@@ -435,6 +435,14 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		if (common->wcmGestureMode == GESTURE_NONE_MODE)
 			common->wcmGestureMode = GESTURE_LAG_MODE;
 	}
+	/* If we're in a multitouch mode but two fingers aren't in proximity
+	 * we should directly head to CANCEL mode and wait for both fingers
+	 * to leave the screen.
+	 */
+	else if (common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE))
+	{
+		common->wcmGestureMode = GESTURE_CANCEL_MODE;
+	}
 	/* When only 1 finger is in proximity, it can be in either LAG mode,
 	 * NONE mode or DRAG mode.
 	 * 1 finger LAG mode is a very short time period mainly to debounce
@@ -517,7 +525,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		goto ret;
 	}
 
-	if (!(common->wcmGestureMode & (GESTURE_SCROLL_MODE | GESTURE_ZOOM_MODE)) && touch_id == 1)
+	if ((common->wcmGestureMode & GESTURE_LAG_MODE) && touch_id == 1)
 		wcmFingerTapToClick(priv);
 
 	/* Change mode happens only when both fingers are out */
