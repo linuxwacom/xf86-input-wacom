@@ -29,6 +29,7 @@ matrix:
       env: BUILDTYPE="coverity", COVERITY_SCAN_PROJECT_NAME="linuxwacom/xf86-input-wacom", COVERITY_SCAN_NOTIFICATION_EMAIL="killertofu@gmail.com", COVERITY_SCAN_BUILD_COMMAND_PREPEND="", COVERITY_SCAN_BUILD_COMMAND="make", COVERITY_SCAN_BRANCH_PATTERN=".*", COVERITY_URL="https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh"
 
 before_script:
+  - if [[ -n "$COVERITY_URL" ]]; then curl -fs "$COVERITY_URL" > coverity.sh && sed -i 's/"$status_code" != "201"/"$status_code" -lt 200 -o "$status_code" -ge 300/' coverity.sh && chmod +x coverity.sh; fi
   # We don't want our CFLAGS (especially -Werror) to apply at `configure`
   # time so short-circuit our environment at that moment and provide the
   # flags to `make` instead. Not doing so results in an incorrect config:
@@ -38,5 +39,5 @@ before_script:
 
 script:
   - if [[ x"$TRAVIS_EVENT_TYPE" = "xcron" ]]; then export DO_COVERITY="YES"; fi
-  - if [[ x"$BUILDTYPE" = "xcoverity" && x"$DO_COVERITY" = "xYES" ]]; then COVERITY_SCRIPT=$(curl -fs "$COVERITY_URL") && echo "$COVERITY_SCRIPT" | bash; fi
+  - if [[ x"$BUILDTYPE" = "xcoverity" && x"$DO_COVERITY" = "xYES" ]]; then bash ./coverity.sh; fi
   - if [[ x"$BUILDTYPE" != "xcoverity" ]]; then make CFLAGS="$CFLAGS" && make check; fi
