@@ -1064,11 +1064,12 @@ error:
 	return FALSE;
 }
 
-/* The values were based on trail and error. */
-#define WCM_BAMBOO3_MAXX 4096.0
-#define WCM_BAMBOO3_ZOOM_DISTANCE 180.0
-#define WCM_BAMBOO3_SCROLL_DISTANCE 80.0
-#define WCM_BAMBOO3_SCROLL_SPREAD_DISTANCE 350.0
+/* The values were based on trial and error with a 3rd-gen Bamboo */
+#define WCM_DEFAULT_MM_XRES           (27.8 * 1000)
+#define WCM_DEFAULT_MM_YRES           (44.5 * 1000)
+#define WCM_ZOOM_DISTANCE_MM          6.5
+#define WCM_SCROLL_DISTANCE_MM        1.8
+#define WCM_SCROLL_SPREAD_DISTANCE_MM 12.6
 
 /**
  * Parse post-init options for this device. Useful for overriding HW
@@ -1095,10 +1096,11 @@ Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	/* 2FG touch device */
 	if (TabletHasFeature(common, WCM_2FGT) && IsTouch(priv))
 	{
-		int zoom_distance = common->wcmMaxTouchX *
-			(WCM_BAMBOO3_ZOOM_DISTANCE / WCM_BAMBOO3_MAXX);
-		int scroll_distance = common->wcmMaxTouchX *
-			(WCM_BAMBOO3_SCROLL_DISTANCE / WCM_BAMBOO3_MAXX);
+		int x_res = common->wcmTouchResolX ? common->wcmTouchResolX : WCM_DEFAULT_MM_XRES;
+		int y_res = common->wcmTouchResolY ? common->wcmTouchResolY : WCM_DEFAULT_MM_YRES;
+		int zoom_distance = WCM_ZOOM_DISTANCE_MM * x_res / 1000;
+		int scroll_distance = WCM_SCROLL_DISTANCE_MM * y_res / 1000;
+		int spread_distance = WCM_SCROLL_SPREAD_DISTANCE_MM * x_res / 1000;
 
 		common->wcmGestureParameters.wcmZoomDistance =
 			xf86SetIntOption(pInfo->options, "ZoomDistance",
@@ -1109,8 +1111,7 @@ Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 					 scroll_distance);
 
 		common->wcmGestureParameters.wcmMaxScrollFingerSpread =
-			common->wcmMaxTouchX *
-			(WCM_BAMBOO3_SCROLL_SPREAD_DISTANCE / WCM_BAMBOO3_MAXX);
+			spread_distance;
 	}
 
 
