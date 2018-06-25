@@ -639,7 +639,6 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
-	int gestureStart = 0;
 	int spread;
 
 	if (!common->wcmGesture)
@@ -666,7 +665,6 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 				/* left button might be down. Send it up first */
 				wcmSendButtonClick(priv, 1, 0);
 				common->wcmGestureMode = GESTURE_SCROLL_MODE;
-				gestureStart = 1;
 			}
 		}
 	}
@@ -674,13 +672,6 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	/* still not a scroll event yet? */
 	if (common->wcmGestureMode != GESTURE_SCROLL_MODE)
 		return;
-
-	/* forget history leading up to the beginning of the gesture */
-	if (gestureStart)
-	{
-		common->wcmGestureState[0] = ds[0];
-		common->wcmGestureState[1] = ds[1];
-	}
 
 	/* initialize the points so we can rotate them */
 	filterd.x[0] = ds[0].x;
@@ -748,9 +739,9 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	WacomDeviceState ds[2] = {};
 	WacomDeviceState *start = common->wcmGestureState;
 	int count, button;
-	int dist;
+	int dist = touchDistance(common->wcmGestureState[0],
+			common->wcmGestureState[1]);
 	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
-	int gestureStart = 0;
 	int spread;
 
 	if (!common->wcmGesture)
@@ -773,21 +764,13 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 			/* fingers moved apart more than 3 times
 			 * wcmMaxScrollFingerSpread, zoom mode is entered */
 			common->wcmGestureMode = GESTURE_ZOOM_MODE;
-			gestureStart = 1;
 		}
 	}
 
 	if (common->wcmGestureMode != GESTURE_ZOOM_MODE)
 		return;
 
-	/* forget history leading up to the beginning of the gesture */
-	if (gestureStart)
-	{
-		common->wcmGestureState[0] = ds[0];
-		common->wcmGestureState[1] = ds[1];
-	}
-
-	dist = touchDistance(ds[0], ds[1]) - touchDistance(common->wcmGestureState[0], common->wcmGestureState[1]);
+	dist = touchDistance(ds[0], ds[1]) - dist;
 	count = (int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance) + 0.5);
 
 	/* user might have changed from left to right or vice versa */
