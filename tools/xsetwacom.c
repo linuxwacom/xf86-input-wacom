@@ -513,7 +513,7 @@ static struct deprecated
 	{"GetTabletID", "TabletID"},
 	{"DebugLevel",	"ToolDebugLevel"},
 	{"CommonDBG",	"TabletDebugLevel"},
-	{"GetTabletID",	"TabletID"},
+	{"Serial",	"BindToSerial"},
 	{"PressCurve",	"PressureCurve"},
 	{"TPCButton",	"TabletPCButton"},
 	{"CursorProx",	"CursorProximity"},
