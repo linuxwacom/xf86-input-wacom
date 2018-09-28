@@ -332,6 +332,7 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x354:/* Cintiq Pro 13 UHD Touch */
 		case 0x355:/* Cintiq Pro 24 Touch */
 		case 0x356:/* Cintiq Pro 32 Touch */
+		case 0x359:/* DTU-1141B */
 		case 0x35A:/* DTH-1152*/
 		case 0x368:/* DTH-1152 Touch */
 		case 0x382:/* DTK-2451 */
