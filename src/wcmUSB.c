@@ -980,9 +980,7 @@ static void usbParseEvent(InputInfoPtr pInfo,
 
 	DBG(10, common, "\n");
 
-	/* store events until we receive the MSC_SERIAL containing
-	 * the serial number or a SYN_REPORT.
-	 */
+	/* store events until we receive a SYN_REPORT */
 
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
@@ -1036,7 +1034,7 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	}
 	else
 	{
-		/* not an SYN_REPORT and not an SYN_REPORT, bail out */
+		/* not a MSC_SERIAL and not a SYN_REPORT, bail out */
 		return;
 	}
 
