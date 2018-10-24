@@ -1041,9 +1041,8 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	/* ignore events without information */
 	if ((private->wcmEventCnt < 2) && private->wcmLastToolSerial)
 	{
-		DBG(3, common, "%s: dropping empty event"
-			" for serial %d\n", pInfo->name,
-			private->wcmLastToolSerial);
+		DBG(3, common, "%s: dropping empty event for serial %d\n",
+		    pInfo->name, private->wcmLastToolSerial);
 		goto skipEvent;
 	}
 
