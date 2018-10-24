@@ -59,6 +59,8 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event);
 static void usbParseSynEvent(InputInfoPtr pInfo,
 			     const struct input_event *event);
+static void usbParseMscEvent(InputInfoPtr pInfo,
+			     const struct input_event *event);
 static void usbDispatchEvents(InputInfoPtr pInfo);
 static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial);
 
@@ -994,8 +996,44 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	/* save it for later */
 	private->wcmEvents[private->wcmEventCnt++] = *event;
 
-	if (event->type == EV_MSC || event->type == EV_SYN)
-		usbParseSynEvent(pInfo, event);
+	switch (event->type)
+	{
+		case EV_MSC:
+			usbParseMscEvent(pInfo, event);
+			break;
+		case EV_SYN:
+			usbParseSynEvent(pInfo, event);
+			break;
+		default:
+			break;
+	}
+}
+
+static void usbParseMscEvent(InputInfoPtr pInfo,
+			     const struct input_event *event)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData* private = common->private;
+
+	if (event->code != MSC_SERIAL)
+		return;
+
+	if (event->value != 0)
+	{
+		/* save the serial number so we can look up the channel number later */
+		private->wcmLastToolSerial = event->value;
+	}
+	else
+	{
+		/* we don't report serial numbers for some tools but we never report
+		 * a serial number with a value of 0 - if that happens drop the
+		 * whole frame */
+		LogMessageVerbSigSafe(X_ERROR, 0,
+				      "%s: usbParse: Ignoring event from invalid serial 0\n",
+				      pInfo->name);
+		private->wcmEventCnt = 0;
+	}
 }
 
 /**
@@ -1011,32 +1049,8 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
-	if ((event->type == EV_MSC) && (event->code == MSC_SERIAL))
-	{
-		/* we don't report serial numbers for some tools
-		 * but we never report a serial number with a value of 0 */
-		if (event->value == 0)
-		{
-			LogMessageVerbSigSafe(X_ERROR, 0,
-					      "%s: usbParse: Ignoring event from invalid serial 0\n",
-					      pInfo->name);
-			goto skipEvent;
-		}
-
-		/* save the serial number so we can look up the channel number later */
-		private->wcmLastToolSerial = event->value;
-
+	if (event->code != SYN_REPORT)
 		return;
-
-	} else if ((event->type == EV_SYN) && (event->code == SYN_REPORT))
-	{
-		/* end of record. fall through to dispatch */
-	}
-	else
-	{
-		/* not a MSC_SERIAL and not a SYN_REPORT, bail out */
-		return;
-	}
 
 	/* ignore events without information */
 	if ((private->wcmEventCnt < 2) && private->wcmLastToolSerial)
