@@ -38,6 +38,7 @@ typedef struct {
 	int wcmMTChannel;
 	int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
+	uint32_t wcmEventFlags;      /* event types received in this frame */
 	int nbuttons;                /* total number of buttons */
 	int npadkeys;                /* number of pad keys in the above array */
 	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
@@ -973,6 +974,13 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 	return channel;
 }
 
+static inline void
+usbResetEventCounter(wcmUSBData *private)
+{
+	private->wcmEventCnt = 0;
+	private->wcmEventFlags = 0;
+}
+
 static void usbParseEvent(InputInfoPtr pInfo,
 	const struct input_event* event)
 {
@@ -989,12 +997,13 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	{
 		LogMessageVerbSigSafe(X_ERROR, 0, "%s: usbParse: Exceeded event queue (%d) \n",
 				      pInfo->name, private->wcmEventCnt);
-		private->wcmEventCnt = 0;
+		usbResetEventCounter(private);
 		return;
 	}
 
 	/* save it for later */
 	private->wcmEvents[private->wcmEventCnt++] = *event;
+	private->wcmEventFlags |= 1 << event->type;
 
 	switch (event->type)
 	{
@@ -1032,7 +1041,7 @@ static void usbParseMscEvent(InputInfoPtr pInfo,
 		LogMessageVerbSigSafe(X_ERROR, 0,
 				      "%s: usbParse: Ignoring event from invalid serial 0\n",
 				      pInfo->name);
-		private->wcmEventCnt = 0;
+		usbResetEventCounter(private);
 	}
 }
 
@@ -1048,6 +1057,7 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
+	const uint32_t significant_event_types = ~(1 << EV_SYN | 1 << EV_MSC);
 
 	if (event->code != SYN_REPORT)
 		return;
@@ -1060,9 +1070,11 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 		goto skipEvent;
 	}
 
-	/* ignore sync windows that contain no data */
-	if (private->wcmEventCnt == 1 &&
-	    private->wcmEvents->type == EV_SYN) {
+
+	/* If all we get in an event frame is EV_SYN/EV_MSC, we don't have
+	 * real data to process. */
+	if ((private->wcmEventFlags & significant_event_types) == 0)
+	{
 		DBG(6, common, "no real events received\n");
 		goto skipEvent;
 	}
@@ -1071,7 +1083,7 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	usbDispatchEvents(pInfo);
 
 skipEvent:
-	private->wcmEventCnt = 0;
+	usbResetEventCounter(private);
 }
 
 static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
