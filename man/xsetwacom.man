@@ -289,6 +289,14 @@ will require less distance and be more sensitive. Larger values will
 require more distance and be less sensitive.  Default: 1300 or 2600
 depending on tablet resolution (corresponds to 13 mm of distance).
 
+.SH WAYLAND SUPPORT
+
+This tool provides access to the device properties implemented in the
+\fBxf86-input-wacom\fR X server input module. It does not work under a
+Wayland compositor as the input module is not active.
+.TP
+See https://github.com/linuxwacom/xf86-input-wacom/wiki/Wayland for details.
+
 
 .SH "AUTHORS"
 Peter Hutterer <peter.hutterer@redhat.com>

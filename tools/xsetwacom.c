@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -2795,6 +2796,24 @@ void argsfromstdin(int *argc, char ***argv)
 }
 #endif /* BUILD_FUZZINTERFACE */
 
+static bool check_for_wayland(Display *dpy)
+{
+	bool		has_xwayland_devices = false;
+	XDeviceInfo	*info;
+	int		ndevices, i;
+
+	info = XListInputDevices(dpy, &ndevices);
+	for (i = 0; i < ndevices; i++) {
+		if (strncmp(info[i].name, "xwayland-", 9) == 0) {
+			has_xwayland_devices = true;
+			break;
+		}
+	}
+	XFreeDeviceList(info);
+
+	return has_xwayland_devices;
+}
+
 int main (int argc, char **argv)
 {
 	int c;
@@ -2878,6 +2897,13 @@ int main (int argc, char **argv)
 	{
 		fprintf(stderr, "Failed to open Display %s.\n", display ? display : "");
 		return -1;
+	}
+
+	if (check_for_wayland(dpy)) {
+		fprintf(stderr,
+			"Wayland devices found but this tool is incompatible with Wayland. See\n"
+			"https://github.com/linuxwacom/xf86-input-wacom/wiki/Wayland\n");
+		return 1;
 	}
 
 	if (!do_list && !do_get && !do_set)
