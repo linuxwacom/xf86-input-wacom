@@ -210,6 +210,11 @@ struct _WacomModel
 #define STRIP_RIGHT_UP    2
 #define STRIP_RIGHT_DN    3
 
+#define IDX_KEY_CONTROLPANEL		1
+#define IDX_KEY_ONSCREEN_KEYBOARD	2
+#define IDX_KEY_BUTTONCONFIG		3
+#define IDX_KEY_INFO			4
+
 /******************************************************************************
  * WacomDeviceState
  *****************************************************************************/
@@ -236,6 +241,7 @@ struct _WacomDeviceState
 	int proximity;
 	int sample;	/* wraps every 24 days */
 	int time;
+	unsigned int keys; /* bitmask for IDX_KEY_CONTROLPANEL, etc. */
 };
 
 static const struct _WacomDeviceState OUTPROX_STATE = {

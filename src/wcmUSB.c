@@ -1638,7 +1638,18 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 		case BTN_FORWARD:
 			ds->buttons = mod_buttons(ds->buttons, 4, event->value);
 			break;
-
+		case KEY_CONTROLPANEL:
+			ds->keys = mod_buttons(ds->keys, IDX_KEY_CONTROLPANEL, event->value);
+			break;
+		case KEY_ONSCREEN_KEYBOARD:
+			ds->keys = mod_buttons(ds->keys, IDX_KEY_ONSCREEN_KEYBOARD, event->value);
+			break;
+		case KEY_BUTTONCONFIG:
+			ds->keys = mod_buttons(ds->keys, IDX_KEY_BUTTONCONFIG, event->value);
+			break;
+		case KEY_INFO:
+			ds->keys = mod_buttons(ds->keys, IDX_KEY_INFO, event->value);
+			break;
 		default:
 			for (nkeys = 0; nkeys < usbdata->npadkeys; nkeys++)
 			{
