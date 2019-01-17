@@ -1359,7 +1359,6 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 				return;
 			}
 
-			/* send other events, such as button/wheel */
 			filtered.x = priv->oldState.x;
 			filtered.y = priv->oldState.y;
 		}
