@@ -195,6 +195,47 @@ static void wcmSendButtons(InputInfoPtr pInfo, const WacomDeviceState* ds, int b
 
 }
 
+static void wcmSendKeys (InputInfoPtr pInfo, unsigned int current, unsigned int previous)
+{
+	unsigned int mask, idx;
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+
+	DBG(6, priv, "current=%d previous=%d\n", current, previous);
+
+	for (idx = 0, mask = 0x1;
+	     mask && (mask <= current || mask <= previous);
+	     idx++, mask <<= 1)
+	{
+		if ((mask & previous) != (mask & current))
+		{
+			int key = 0;
+			int state = !!(mask & current);
+
+			switch (idx) {
+				/* Note: the evdev keycodes are > 255 and
+				 * get dropped by the server. So let's remap
+				 * those to KEY_PROG1-3 instead */
+				case IDX_KEY_CONTROLPANEL:
+					key = KEY_PROG1;
+					break;
+				case IDX_KEY_ONSCREEN_KEYBOARD:
+					key = KEY_PROG2;
+					break;
+				case IDX_KEY_BUTTONCONFIG:
+					key = KEY_PROG3;
+					break;
+				case IDX_KEY_INFO:
+					key = KEY_PROG4;
+					break;
+				default:
+					break;
+			}
+			if (key)
+				wcmEmitKeycode(pInfo->dev, key + 8, state);
+		}
+	}
+}
+
 void wcmEmitKeycode (DeviceIntPtr keydev, int keycode, int state)
 {
 	xf86PostKeyboardEvent (keydev, keycode, state);
@@ -600,6 +641,8 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 			wcmSendButtons(pInfo, ds, ds->buttons, first_val, num_vals, valuators);
 	}
 
+	wcmSendKeys(pInfo, ds->keys, priv->oldState.keys);
+
 	if (priv->oldState.proximity && !ds->proximity)
 		xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
 					VCOPY(valuators, num_vals));
@@ -772,9 +815,14 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	 */
 	if(!priv->oldState.proximity)
 	{
+		int old_key_state = priv->oldState.keys;
+
 		wcmUpdateOldState(pInfo, ds, x, y);
 		priv->oldState.proximity = 0;
 		priv->oldState.buttons = 0;
+
+		/* keys can happen without proximity */
+		priv->oldState.keys = old_key_state;
 	}
 
 	valuators[0] = x;
@@ -835,6 +883,7 @@ wcmCheckSuppress(WacomCommonPtr common,
 	if (dsOrig->proximity != dsNew->proximity) goto out;
 
 	if (dsOrig->buttons != dsNew->buttons) goto out;
+	if (dsOrig->keys != dsNew->keys) goto out;
 	if (dsOrig->stripx != dsNew->stripx) goto out;
 	if (dsOrig->stripy != dsNew->stripy) goto out;
 
