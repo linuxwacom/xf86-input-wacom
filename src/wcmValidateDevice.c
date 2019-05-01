@@ -209,6 +209,10 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 
 		case 0x357: /* Intuos Pro 2 M */
 		case 0x358: /* Intuos Pro 2 L */
+		case 0x360: /* Intuos Pro 2 M (Bluetooth) */
+		case 0x36a: /* Intuos Pro 2 L (Bluetooth) */
+		case 0x392: /* Intuos Pro 2 S */
+		case 0x393: /* Intuos Pro 2 S (Bluetooth) */
 		case 0x314: /* Intuos Pro S */
 		case 0x315: /* Intuos Pro M */
 		case 0x317: /* Intuos Pro L */
@@ -311,12 +315,18 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			break;
 
 		case 0x304:/* Cintiq 13HD */
+		case 0x307:/* Cintiq Companion Hybrid */
+		case 0x30A:/* Cintiq Companion */
+		case 0x325:/* Cintiq Companion 2 */
+		case 0x32A:/* Cintiq 27QHD */
 		case 0x32B:/* Cintiq 27QHDT Pen */
+		case 0x333:/* Cintiq 13HDT Pen */
 		case 0x34F:/* Cintiq Pro 13 FHD */
 		case 0x350:/* Cintiq Pro 16 UHD */
 		case 0x351:/* Cintiq Pro 24 */
 		case 0x352:/* Cintiq Pro 32 */
 		case 0x37C:/* Cintiq Pro 24 Pen-Only */
+		case 0x390:/* Cintiq 16 */
 			TabletSetFeature(priv->common, WCM_ROTATION);
 			/* fall-through */
 
@@ -325,7 +335,14 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x59: /* DTH2242 Pen */
 		case 0x5D: /* DTH2242 Touch */
 		case 0x5E: /* Cintiq 22HDT Touch */
+		case 0x309:/* Cintiq Companion Hybrid Touch */
+		case 0x30C:/* Cintiq Companion Touch */
+		case 0x326:/* Cintiq Companion 2 Touch */
 		case 0x32C:/* Cintiq 27QHDT Touch */
+		case 0x32F:/* DTU-1031X */
+		case 0x335:/* Cintiq 13HDT Touch */
+		case 0x336:/* DTU-1141 */
+		case 0x343:/* DTK-1651 */
 		case 0x34A:/* MobileStudio Pro 13 Touch */
 		case 0x34B:/* MobileStudio Pro 16 Touch */
 		case 0x353:/* Cintiq Pro 13 FHD Touch */
