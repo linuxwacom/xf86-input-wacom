@@ -1187,7 +1187,15 @@ static int usbFindDeviceTypeById(int device_id)
 	}
 }
 
-static void usbParseAbsEvent(WacomCommonPtr common,
+/**
+ * Handle ABS events strictly according to their definition as documented
+ * in the Linux kernel.
+ *
+ * @param common
+ * @param event
+ * @param channel_number
+ */
+static int usbParseGenericAbsEvent(WacomCommonPtr common,
 			    struct input_event *event, int channel_number)
 {
 	WacomChannel *channel = &common->wcmChannel[channel_number];
@@ -1201,12 +1209,6 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			break;
 		case ABS_Y:
 			ds->y = event->value;
-			break;
-		case ABS_RX:
-			ds->stripx = event->value;
-			break;
-		case ABS_RY:
-			ds->stripy = event->value;
 			break;
 		case ABS_RZ:
 			ds->rotation = event->value;
@@ -1228,6 +1230,39 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 		case ABS_WHEEL:
 			ds->abswheel = event->value;
 			break;
+		case ABS_THROTTLE:
+			ds->throttle = event->value;
+			break;
+		default:
+			change = 0;
+	}
+
+	return change;
+}
+
+/**
+ * Handle ABS events according to Wacom (protocol 4/5) conventions. Only
+ * those events which are not interpreted in the generic manner need to be
+ * handled here.
+ *
+ * @param common
+ * @param event
+ * @param channel_number
+ */
+static int usbParseWacomAbsEvent(WacomCommonPtr common,
+			    struct input_event *event, int channel_number)
+{
+	WacomChannel *channel = &common->wcmChannel[channel_number];
+	WacomDeviceState *ds = &channel->work;
+	int change = 1;
+
+	switch(event->code) {
+		case ABS_RX:
+			ds->stripx = event->value;
+			break;
+		case ABS_RY:
+			ds->stripy = event->value;
+			break;
 		case ABS_Z:
 			ds->abswheel = event->value;
 			break;
@@ -1236,8 +1271,6 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			if ((common->vendor_id == WACOM_VENDOR_ID) &&
 			    (common->tablet_id == 0xF4 || common->tablet_id == 0xF8))
 				ds->abswheel2 = event->value;
-			else
-				ds->throttle = event->value;
 			break;
 		case ABS_MISC:
 			ds->proximity = (event->value != 0);
@@ -1246,6 +1279,28 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 			break;
 		default:
 			change = 0;
+	}
+
+	return change;
+}
+
+/**
+ * Handle an incoming ABS event.
+ *
+ * @param common
+ * @param event
+ * @param channel_number
+ */
+static void usbParseAbsEvent(WacomCommonPtr common,
+			    struct input_event *event, int channel_number)
+{
+	WacomChannel *channel = &common->wcmChannel[channel_number];
+	WacomDeviceState *ds = &channel->work;
+	Bool change;
+
+	change = usbParseGenericAbsEvent(common, event, channel_number);
+	if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC) {
+		change |= usbParseWacomAbsEvent(common, event, channel_number);
 	}
 
 	ds->time = (int)GetTimeInMillis();
