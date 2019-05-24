@@ -1640,7 +1640,8 @@ static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int va
 			case ABS_MT_TRACKING_ID:
 				return TOUCH_ID;
 			case ABS_MISC:
-				return usbFindDeviceTypeById(value);
+				if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
+					return usbFindDeviceTypeById(value);
 		}
 	}
 
