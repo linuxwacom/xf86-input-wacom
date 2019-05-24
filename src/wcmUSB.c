@@ -793,8 +793,8 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 			private->wcmPenTouch = TRUE;
 	}
 
-	/* A generic protocol device does not report ABS_MISC event */
-	if (!ISBITSET(abs, ABS_MISC))
+	/* Non-wacom devices, and Wacom devices without an ABS_MISC should be treated as generic */
+	if (common->vendor_id != WACOM_VENDOR_ID || !ISBITSET(abs, ABS_MISC))
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
