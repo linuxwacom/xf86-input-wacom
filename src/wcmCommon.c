@@ -103,11 +103,13 @@ static int wcmButtonPerNotch(WacomDevicePtr priv, int value, int threshold, int 
 	return value % threshold;
 }
 
-static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds)
+static void wcmPanscroll(InputInfoPtr pInfo, const WacomDeviceState *ds, int x, int y)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int threshold = common->wcmPanscrollThreshold;
 	int *accumulated_x, *accumulated_y;
+	int delta_x, delta_y;
 
 	if (!(priv->flags & SCROLLMODE_FLAG) || !(ds->buttons & 1))
 		return;
@@ -120,11 +122,19 @@ static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds)
 		return;
 	}
 
+	if (!is_absolute(pInfo)) {
+		delta_x = x;
+		delta_y = y;
+	}
+	else {
+		delta_x = (x - priv->oldState.x);
+		delta_y = (y - priv->oldState.y);
+	}
+
 	accumulated_x = &priv->wcmPanscrollState.x;
 	accumulated_y = &priv->wcmPanscrollState.y;
-
-	*accumulated_x += (ds->x - priv->oldState.x);
-	*accumulated_y += (ds->y - priv->oldState.y);
+	*accumulated_x += delta_x;
+	*accumulated_y += delta_y;
 
 	DBG(6, priv, "pan x = %d, pan y = %d\n", *accumulated_x, *accumulated_y);
 
@@ -487,7 +497,7 @@ static void sendCommonEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	int buttons = ds->buttons;
 
 	/* send scrolling events if necessary */
-	wcmPanscroll(priv, ds);
+	wcmPanscroll(pInfo, ds, valuators[0], valuators[1]);
 
 	/* send button events when state changed or first time in prox and button unpresses */
 	if (priv->oldState.buttons != buttons || (!priv->oldState.proximity && !buttons))
