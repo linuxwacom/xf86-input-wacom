@@ -924,11 +924,11 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 	if (IsCursor(priv))
 	{
-		common->wcmCursorProxoutDist = xf86SetIntOption(pInfo->options, "CursorProx", 0);
-		if (common->wcmCursorProxoutDist < 0 ||
-				common->wcmCursorProxoutDist > common->wcmMaxDist)
+		priv->wcmProxoutDist = xf86SetIntOption(pInfo->options, "CursorProx", 0);
+		if (priv->wcmProxoutDist < 0 ||
+				priv->wcmProxoutDist > common->wcmMaxDist)
 			xf86Msg(X_CONFIG, "%s: CursorProx invalid %d \n",
-				pInfo->name, common->wcmCursorProxoutDist);
+				pInfo->name, priv->wcmProxoutDist);
 	}
 
 	priv->topX = xf86SetIntOption(pInfo->options, "TopX", 0);

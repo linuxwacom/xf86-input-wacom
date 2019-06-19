@@ -1365,7 +1365,7 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		}
 	}
 
-	/* force out-prox when distance is outside wcmCursorProxoutDist for pucks */
+	/* force out-prox when distance from surface exceeds wcmProxoutDist */
 	if (IsCursor(priv))
 	{
 		/* Assume the the user clicks the puck buttons while
@@ -1375,29 +1375,29 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 		 * 4 for many many kernel versions).
 		 */
 		if (filtered.buttons)
-			common->wcmMaxCursorDist = filtered.distance;
+			priv->wcmSurfaceDist = filtered.distance;
 
-		DBG(10, common, "Distance over"
+		DBG(10, priv, "Distance over"
 				" the tablet: %d, ProxoutDist: %d current"
-				" min/max %d hard prox: %d\n",
+				" surface %d hard prox: %d\n",
 				filtered.distance,
-				common->wcmCursorProxoutDist,
-				common->wcmMaxCursorDist,
+				priv->wcmProxoutDist,
+				priv->wcmSurfaceDist,
 				ds->proximity);
 
-		if (common->wcmMaxCursorDist) {
+		if (priv->wcmSurfaceDist) {
 			if (priv->oldState.proximity)
 			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist)
-						> common->wcmCursorProxoutDist)
+				if (abs(filtered.distance - priv->wcmSurfaceDist)
+						> priv->wcmProxoutDist)
 					filtered.proximity = 0;
 			}
 			/* once it is out. Don't let it in until a hard in */
-			/* or it gets inside wcmCursorProxoutDist */
+			/* or it gets inside wcmProxoutDist */
 			else
 			{
-				if (abs(filtered.distance - common->wcmMaxCursorDist) >
-						common->wcmCursorProxoutDist && ds->proximity)
+				if (abs(filtered.distance - priv->wcmSurfaceDist) >
+						priv->wcmProxoutDist && ds->proximity)
 					return;
 				if (!ds->proximity)
 					return;
@@ -1554,7 +1554,7 @@ WacomCommonPtr wcmNewCommon(void)
 	common->wcmMaxTouchY = 1024;       /* max touch Y value */
 	common->wcmMaxStripX = 4096;       /* Max fingerstrip X */
 	common->wcmMaxStripY = 4096;       /* Max fingerstrip Y */
-	common->wcmCursorProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
+	common->wcmProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
 			/* default to Intuos */
 	common->wcmSuppress = DEFAULT_SUPPRESS;
 			/* transmit position if increment is superior */

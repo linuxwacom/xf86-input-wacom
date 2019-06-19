@@ -298,6 +298,8 @@ struct _WacomDeviceRec
 	int nPressCtrl[4];      /* control points for curve */
 	int minPressure;	/* the minimum pressure a pen may hold */
 	int oldMinPressure;     /* to record the last minPressure before going out of proximity */
+	int wcmSurfaceDist;	/* Distance reported by hardware when tool at surface */
+	int wcmProxoutDist;     /* Distance from surface when proximity-out should be triggered */
 	unsigned int eventCnt;  /* count number of events while in proximity */
 	int maxRawPressure;     /* maximum 'raw' pressure seen until first button event */
 	WacomToolPtr tool;         /* The common tool-structure for this device */
@@ -462,9 +464,7 @@ struct _WacomCommonRec
 	int wcmGestureMode;	       /* data is in Gesture Mode? */
 	WacomDeviceState wcmGestureState[MAX_FINGERS]; /* inital state when in gesture mode */
 	WacomGesturesParameters wcmGestureParameters;
-	int wcmMaxCursorDist;	     /* Max mouse distance reported so far */
-	int wcmCursorProxoutDist;    /* Max mouse distance for proxy-out max/256 units */
-	int wcmCursorProxoutDistDefault; /* Default max mouse distance for proxy-out */
+	int wcmProxoutDistDefault;   /* Default value for wcmProxoutDist */
 	int wcmSuppress;        	 /* transmit position on delta > supress */
 	int wcmRawSample;	     /* Number of raw data used to filter an event */
 	int wcmPressureRecalibration; /* Determine if pressure recalibration of
