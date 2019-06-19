@@ -273,7 +273,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = priv->serial;
 	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, XA_INTEGER, 32, 1, values);
 
-	if (IsCursor(priv)) {
+	if (IsTablet(priv)) {
 		values[0] = priv->wcmProxoutDist;
 		prop_proxout = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, XA_INTEGER, 32, 1, values);
 	}
@@ -842,7 +842,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		if (prop->size != 1 || prop->format != 32)
 			return BadValue;
 
-		if (!IsCursor (priv))
+		if (!IsTablet (priv))
 			return BadValue;
 
 		value = *(CARD32*)prop->data;

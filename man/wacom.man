@@ -214,9 +214,9 @@ X server is running, no other programs will be able to read the event
 stream.  Default: "false".
 .TP 4
 .B Option \fI"CursorProx"\fP \fI"number"\fP
-sets the max distance from tablet to stop reporting movement for the cursor.
-Default for Intuos series is 10, for Graphire series (including Volitos) is
-42. Only available for the cursor/puck device.
+sets the distance at which a relative tool is treated as being out of proximity.
+Beyond this distance the cursor will stop responding to tool motion. The        
+default value is 10 for Intuos Pro devices and 42 for Intuos/Bamboo devices.
 .TP 4
 .B Option \fI"RawSample"\fP \fI"number"\fP
 Set  the  sample  window  size (a sliding average sampling window) for

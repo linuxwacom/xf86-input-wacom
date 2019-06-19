@@ -1366,15 +1366,17 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 	}
 
 	/* force out-prox when distance from surface exceeds wcmProxoutDist */
-	if (IsCursor(priv))
+	if (IsTablet(priv) && !is_absolute(pInfo))
 	{
 		/* Assume the the user clicks the puck buttons while
-		 * it is resting on the tablet. This works for both
+		 * it is resting on the tablet (and taps styli onto
+		 * the tablet surface). This works for both
 		 * tablets that have a normal distance scale (protocol
 		 * 5) as well as those with an inverted scale (protocol
 		 * 4 for many many kernel versions).
 		 */
-		if (filtered.buttons)
+		if ((IsCursor(priv) && filtered.buttons) ||
+		    (IsStylus(priv) && filtered.buttons & 0x01))
 			priv->wcmSurfaceDist = filtered.distance;
 
 		DBG(10, priv, "Distance over"
