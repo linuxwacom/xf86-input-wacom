@@ -23,7 +23,7 @@ This driver supports the Wacom IV and Wacom V protocols. Serial tablets only
 need this driver.  USB tablet support is available on some Linux platforms
 and requires the wacom kernel driver being loaded before this driver starts.
 .PP
-Please check http://linuxwacom.sourceforge.net for latest updates of Wacom X
+Please check https://github.com/linuxwacom for latest updates of Wacom X
 and kernel drivers.
 .SH DRIVER-INTERNAL DEVICE HOTPLUGGING
 When input device hotplugging in the X server is enabled and no
@@ -335,7 +335,7 @@ basis.
 __xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
 xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)
 .PP
-More information is available at http://linuxwacom.sourceforge.net
+More information is available at https://github.com/linuxwacom/xf86-input-wacom
 .SH AUTHORS
 Peter Hutterer <peter.hutterer@who-t.net>,
 Ping Cheng <pingc@wacom.com>,

@@ -1216,7 +1216,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 				"On %s(%d) a base pressure of %d persists while the pen is in proximity.\n"
 				"\tThis is > %d percent of the maximum value (%d).\n"
 				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
-				"\thttp://sourceforge.net/apps/mediawiki/linuxwacom/index.php?title=Pen_Wear.\n",
+				"\thttps://github.com/linuxwacom/xf86-input-wacom/wiki/Pen-Wear.\n",
 				priv->pInfo->name, priv->serial, priv->minPressure, LIMIT_LOW_PRESSURE, common->wcmMaxZ);
 	} else if (!priv->oldState.proximity)
 		priv->eventCnt = 0;
