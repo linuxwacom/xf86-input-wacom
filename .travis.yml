@@ -15,29 +15,46 @@ addons:
       - libxinerama-dev
       - libudev-dev
 
-before_install:
-  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+stages:
+  - test
+  - name: coverity
+    if: type = cron
 
 env:
   global:
-    - secure: "o99zVPgb3kU80P6nC8gQWIr4UdRa7+d+K8g8Gclmzgy980NSk1MBLtD1oqoXThAx4BGnW6XDIFG8RRsl0QkE7gsZyOw5WwcRWrsK2ZdCMNngLxhG7QKF/l9y8WMmUaqSXW9WTgyheqIH5QuEYtkoGqjQBP3fNwPDpGT720H3jSxibRjkwUUyo5Shy5LS9I3d6uL1/7nwgcdAAocYCl5PWm/swVXwrFBvFENKCp8i/0LDXmJ9g/NrLqKljiMXoWxP8SUsTiUk+D3Q4s0/Izy7SbZxbQMoG+Z2Et6iu0r7boxqw2McWt6WqovoAFhm4ZSNmBYbRhNFxMCbabrBNWcr0k58BvnpDA/5TAbeesudY4Tb4tebq8oQJUcQqYgxI3YOnaQQTSjGWHdQLoYIJnGu2ctp7vP8pnxaEmPxoeXMojEXiIZe2426Ysf8DfQ9cKxXYKEwANHWu6Mwo7Kf9KZ0fgeSTU4KKgTIDuDpP7LIquWSuDp7lA9/zGqyjdHslps3VDFRPXkUUizqRE/clyZm4bmkWF5QFzbuuKDSSi+roGFEvBuL5SGOv13uq4stEo9k4Tkkv9dAP7nofSo5deWBHXcwaYlGMWzQKOykanxq/JIEUCPp+Cmfglee6kjRjeNwKwrrxg1nDDLarp/3B1Qnvua4CVrjPav39yHAKNFPtXg="
     - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter"
 
-matrix:
-  include:
-    - compiler: "gcc"
-      env: BUILDTYPE="coverity", COVERITY_SCAN_PROJECT_NAME="linuxwacom/xf86-input-wacom", COVERITY_SCAN_NOTIFICATION_EMAIL="killertofu@gmail.com", COVERITY_SCAN_BUILD_COMMAND_PREPEND="", COVERITY_SCAN_BUILD_COMMAND="make", COVERITY_SCAN_BRANCH_PATTERN=".*", COVERITY_URL="https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh"
-
-before_script:
-  - if [[ -n "$COVERITY_URL" ]]; then curl -fs "$COVERITY_URL" > coverity.sh && sed -i 's/"$status_code" != "201"/"$status_code" -lt 200 -o "$status_code" -ge 300/' coverity.sh && chmod +x coverity.sh; fi
+script:
+  - mkdir _build
+  - pushd _build > /dev/null
   # We don't want our CFLAGS (especially -Werror) to apply at `configure`
   # time so short-circuit our environment at that moment and provide the
   # flags to `make` instead. Not doing so results in an incorrect config:
   # 'checking for rint in -lm... no' because of a builtin-declaration-mismatch
   # warning (error) in the auto-generated feature test.
-  - CFLAGS="" ./autogen.sh
+  - CFLAGS="" ../autogen.sh --disable-silent-rules
+  - make CFLAGS="$CFLAGS"
+  - make check || (cat **/test-suite.log && false)
+  - make distcheck
+  - popd > /dev/null
 
-script:
-  - if [[ x"$TRAVIS_EVENT_TYPE" = "xcron" ]]; then export DO_COVERITY="YES"; fi
-  - if [[ x"$BUILDTYPE" = "xcoverity" && x"$DO_COVERITY" = "xYES" ]]; then bash ./coverity.sh; fi
-  - if [[ x"$BUILDTYPE" != "xcoverity" ]]; then make CFLAGS="$CFLAGS" && make check; fi
+jobs:
+  include:
+    - stage: coverity
+      compiler: 'gcc'
+      env:
+        - COVERITY_SCAN_PROJECT_NAME="linuxwacom/xf86-input-wacom"
+        - COVERITY_SCAN_NOTIFICATION_EMAIL="killertofu@gmail.com"
+        - COVERITY_SCAN_BUILD_COMMAND_PREPEND=""
+        - COVERITY_SCAN_BUILD_COMMAND="make"
+        - COVERITY_SCAN_BRANCH_PATTERN=".*"
+        - COVERITY_URL="https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh"
+        - secure: "o99zVPgb3kU80P6nC8gQWIr4UdRa7+d+K8g8Gclmzgy980NSk1MBLtD1oqoXThAx4BGnW6XDIFG8RRsl0QkE7gsZyOw5WwcRWrsK2ZdCMNngLxhG7QKF/l9y8WMmUaqSXW9WTgyheqIH5QuEYtkoGqjQBP3fNwPDpGT720H3jSxibRjkwUUyo5Shy5LS9I3d6uL1/7nwgcdAAocYCl5PWm/swVXwrFBvFENKCp8i/0LDXmJ9g/NrLqKljiMXoWxP8SUsTiUk+D3Q4s0/Izy7SbZxbQMoG+Z2Et6iu0r7boxqw2McWt6WqovoAFhm4ZSNmBYbRhNFxMCbabrBNWcr0k58BvnpDA/5TAbeesudY4Tb4tebq8oQJUcQqYgxI3YOnaQQTSjGWHdQLoYIJnGu2ctp7vP8pnxaEmPxoeXMojEXiIZe2426Ysf8DfQ9cKxXYKEwANHWu6Mwo7Kf9KZ0fgeSTU4KKgTIDuDpP7LIquWSuDp7lA9/zGqyjdHslps3VDFRPXkUUizqRE/clyZm4bmkWF5QFzbuuKDSSi+roGFEvBuL5SGOv13uq4stEo9k4Tkkv9dAP7nofSo5deWBHXcwaYlGMWzQKOykanxq/JIEUCPp+Cmfglee6kjRjeNwKwrrxg1nDDLarp/3B1Qnvua4CVrjPav39yHAKNFPtXg="
+      before_install:
+        - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+        - curl -fs "$COVERITY_URL" > coverity.sh && sed -i 's/"$status_code" != "201"/"$status_code" -lt 200 -o "$status_code" -ge 300/' coverity.sh && chmod +x coverity.sh
+      script:
+        - CFLAGS="" ./autogen.sh --disable-silent-rules
+        - bash ./coverity.sh
+
+# vim: set expandtab tabstop=8 shiftwidth=2:
