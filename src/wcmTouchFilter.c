@@ -189,6 +189,22 @@ static double touchDistance(WacomDeviceState ds0, WacomDeviceState ds1)
 	return distance;
 }
 
+static Bool vectorsSameDirection(WacomCommonPtr common, WacomDeviceState ds00,
+		WacomDeviceState ds01, WacomDeviceState ds10, WacomDeviceState ds11)
+{
+	float dx0 = ds01.x - ds00.x;
+	float dy0 = ds01.y - ds00.y;
+	float m0 = sqrt(dx0*dx0 + dy0*dy0);
+	float dx1 = ds11.x - ds10.x;
+	float dy1 = ds11.y - ds10.y;
+	float m1 = sqrt(dx1*dx1 + dy1*dy1);
+
+	float dot = (dx0/m0 * dx1/m1) + (dy0/m0 * dy1/m1);
+	float angle = acos(dot);
+
+	return angle < (3.141592f / 2);
+}
+
 static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 		WacomDeviceState ds1)
 {
@@ -644,7 +660,8 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 			 */
 			if (pointsInLine(common, ds[0], start[0])
 			    && pointsInLine(common, ds[1], start[1])
-			    && common->wcmGestureParameters.wcmScrollDirection)
+			    && common->wcmGestureParameters.wcmScrollDirection
+			    && vectorsSameDirection(common, ds[0], start[0], ds[1], start[1]))
 			{
 				/* left button might be down. Send it up first */
 				wcmSendButtonClick(priv, 1, 0);
