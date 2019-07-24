@@ -605,7 +605,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 	int button = (dist > 0) ? buttonUp : buttonDn;
 	WacomCommonPtr common = priv->common;
 	int count = (int)((1.0 * abs(dist)/
-		common->wcmGestureParameters.wcmScrollDistance) + 0.5);
+		common->wcmGestureParameters.wcmScrollDistance));
 	WacomDeviceState ds[2] = {};
 
 	getStateHistory(common, ds, ARRAY_SIZE(ds), 0);
@@ -638,7 +638,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	int midPoint_old = 0;
 	int i = 0, dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
-	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+	int max_spread = common->wcmGestureParameters.wcmZoomDistance;
 	int spread;
 
 	if (!common->wcmGesture)
@@ -741,7 +741,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
-	int max_spread = common->wcmGestureParameters.wcmMaxScrollFingerSpread;
+	int max_spread = common->wcmGestureParameters.wcmZoomDistance;
 	int spread;
 
 	if (!common->wcmGesture)
@@ -756,13 +756,10 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	if (common->wcmGestureMode != GESTURE_ZOOM_MODE)
 	{
 		/* two fingers moved apart from each other */
-		if (spread > (3 * max_spread))
+		if (spread > max_spread)
 		{
 			/* left button might be down, send it up first */
 			wcmSendButtonClick(priv, 1, 0);
-
-			/* fingers moved apart more than 3 times
-			 * wcmMaxScrollFingerSpread, zoom mode is entered */
 			common->wcmGestureMode = GESTURE_ZOOM_MODE;
 		}
 	}
@@ -771,7 +768,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		return;
 
 	dist = touchDistance(ds[0], ds[1]) - dist;
-	count = (int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance) + 0.5);
+	count = (int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance));
 
 	/* user might have changed from left to right or vice versa */
 	if (count < common->wcmGestureParameters.wcmGestureUsed)

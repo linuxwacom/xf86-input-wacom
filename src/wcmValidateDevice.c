@@ -1069,7 +1069,6 @@ error:
 #define WCM_DEFAULT_MM_YRES           (44.5 * 1000)
 #define WCM_ZOOM_DISTANCE_MM          6.5
 #define WCM_SCROLL_DISTANCE_MM        1.8
-#define WCM_SCROLL_SPREAD_DISTANCE_MM 12.6
 
 /**
  * Parse post-init options for this device. Useful for overriding HW
@@ -1100,7 +1099,6 @@ Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		int y_res = common->wcmTouchResolY ? common->wcmTouchResolY : WCM_DEFAULT_MM_YRES;
 		int zoom_distance = WCM_ZOOM_DISTANCE_MM * x_res / 1000;
 		int scroll_distance = WCM_SCROLL_DISTANCE_MM * y_res / 1000;
-		int spread_distance = WCM_SCROLL_SPREAD_DISTANCE_MM * x_res / 1000;
 
 		common->wcmGestureParameters.wcmZoomDistance =
 			xf86SetIntOption(pInfo->options, "ZoomDistance",
@@ -1109,9 +1107,6 @@ Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		common->wcmGestureParameters.wcmScrollDistance =
 			xf86SetIntOption(pInfo->options, "ScrollDistance",
 					 scroll_distance);
-
-		common->wcmGestureParameters.wcmMaxScrollFingerSpread =
-			spread_distance;
 	}
 
 
