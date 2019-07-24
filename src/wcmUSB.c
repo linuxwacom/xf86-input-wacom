@@ -838,9 +838,12 @@ static int usbDetectConfig(InputInfoPtr pInfo)
 	else
 		priv->nbuttons = usbdata->nbuttons;
 
-	if (!priv->wcmProxoutDist)
+	if (!priv->wcmProxoutDist) {
 		priv->wcmProxoutDist
 			= common->wcmProxoutDistDefault;
+		if (IsStylus(priv))
+			priv->wcmProxoutDist = 30;
+	}
 	return TRUE;
 }
 

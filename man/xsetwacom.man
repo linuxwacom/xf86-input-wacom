@@ -256,8 +256,9 @@ kernel when X driver starts.
 .TP
 \fBCursorProximity\fR distance
 Set the distance at which a relative tool is treated as being out of proximity.
-Beyond this distance the cursor will stop responding to tool motion. The        
-default value is 10 for Intuos Pro devices and 42 for Intuos/Bamboo devices.
+Beyond this distance the cursor will stop responding to tool motion. The
+default value for pucks is 10 (Intuos Pro) or 42 (Intuos/Bamboo). The default
+value for pens is 30.
 .TP
 \fBThreshold\fR level
 Set the minimum pressure necessary to generate a Button event for the stylus
