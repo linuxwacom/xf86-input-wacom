@@ -1387,7 +1387,7 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
 				priv->wcmSurfaceDist,
 				ds->proximity);
 
-		if (priv->wcmSurfaceDist) {
+		if (priv->wcmSurfaceDist >= 0) {
 			if (priv->oldState.proximity)
 			{
 				if (abs(filtered.distance - priv->wcmSurfaceDist)

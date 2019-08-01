@@ -930,6 +930,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 				priv->wcmProxoutDist > common->wcmMaxDist)
 			xf86Msg(X_CONFIG, "%s: %s invalid %d \n",
 				pInfo->name, prop, priv->wcmProxoutDist);
+		priv->wcmSurfaceDist = -1;
 	}
 
 	priv->topX = xf86SetIntOption(pInfo->options, "TopX", 0);
