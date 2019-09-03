@@ -87,7 +87,7 @@ static Atom prop_serials;
 static Atom prop_serial_binding;
 static Atom prop_strip_buttons;
 static Atom prop_wheel_buttons;
-static Atom prop_cursorprox;
+static Atom prop_proxout;
 static Atom prop_threshold;
 static Atom prop_suppress;
 static Atom prop_touch;
@@ -273,9 +273,9 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = priv->serial;
 	prop_serial_binding = InitWcmAtom(pInfo->dev, WACOM_PROP_SERIAL_BIND, XA_INTEGER, 32, 1, values);
 
-	if (IsCursor(priv)) {
-		values[0] = common->wcmCursorProxoutDist;
-		prop_cursorprox = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, XA_INTEGER, 32, 1, values);
+	if (IsTablet(priv)) {
+		values[0] = priv->wcmProxoutDist;
+		prop_proxout = InitWcmAtom(pInfo->dev, WACOM_PROP_PROXIMITY_THRESHOLD, XA_INTEGER, 32, 1, values);
 	}
 
 	values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
@@ -835,14 +835,14 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->strip_actions), priv->strip_actions, priv->strip_keys);
 	else if (property == prop_wheel_buttons)
 		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->wheel_actions), priv->wheel_actions, priv->wheel_keys);
-	else if (property == prop_cursorprox)
+	else if (property == prop_proxout)
 	{
 		CARD32 value;
 
 		if (prop->size != 1 || prop->format != 32)
 			return BadValue;
 
-		if (!IsCursor (priv))
+		if (!IsTablet (priv))
 			return BadValue;
 
 		value = *(CARD32*)prop->data;
@@ -851,7 +851,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			return BadValue;
 
 		if (!checkonly)
-			common->wcmCursorProxoutDist = value;
+			priv->wcmProxoutDist = value;
 	} else if (property == prop_threshold)
 	{
 		const INT32 MAXIMUM = wcmInternalToUserPressure(pInfo, priv->maxCurve);

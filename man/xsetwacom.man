@@ -255,9 +255,10 @@ This is a read-only parameter. Initial touch switch state is retrieved from the
 kernel when X driver starts.
 .TP
 \fBCursorProximity\fR distance
-sets the max distance from tablet to stop reporting movement for cursor in
-relative mode. Default for Intuos series is 10, for Graphire series (including
-Volitos) is 42. Only available for the cursor/puck device.
+Set the distance at which a relative tool is treated as being out of proximity.
+Beyond this distance the cursor will stop responding to tool motion. The
+default value for pucks is 10 (Intuos Pro) or 42 (Intuos/Bamboo). The default
+value for pens is 30.
 .TP
 \fBThreshold\fR level
 Set the minimum pressure necessary to generate a Button event for the stylus
