@@ -203,7 +203,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 			/* fall through */
 
 		case 0x34D: /* MobileStudio Pro 13 */
-		case 0x34E: /* MobileStudio Pro 13 */
+		case 0x34E: /* MobileStudio Pro 16 */
+		case 0x398: /* MobileStudio Pro 13 */
+		case 0x399: /* MobileStudio Pro 16 */
 			TabletSetFeature(priv->common, WCM_LCD);
 			/* fall through */
 
@@ -355,6 +357,8 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x382:/* DTK-2451 */
 		case 0x37D:/* DTH-2452 */
 		case 0x37E:/* DTH-2452 Touch */
+		case 0x39A:/* MobileStudio Pro 13 Touch */
+		case 0x39B:/* MobileStudio Pro 16 Touch */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 	}

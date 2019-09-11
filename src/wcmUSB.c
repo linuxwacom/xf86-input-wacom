@@ -310,6 +310,10 @@ static struct WacomModelDesc
 	{ WACOM_VENDOR_ID, 0x355, 200000, 200000, &usbCintiqV5,  "Cintiq Pro 24"	}, /* Touch */
 	{ WACOM_VENDOR_ID, 0x356, 200000, 200000, &usbCintiqV5,  "Cintiq Pro 32"	}, /* Touch */
 	{ WACOM_VENDOR_ID, 0x37C, 200000, 200000, &usbCintiqV5,  "Cintiq Pro 24"	}, /* Pen-only model */
+	{ WACOM_VENDOR_ID, 0x398, 200000, 200000, &usbCintiqV5,  "Mobilestudio Pro 13"	},
+	{ WACOM_VENDOR_ID, 0x399, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 16"	},
+	{ WACOM_VENDOR_ID, 0x39A, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 13"	}, /* Touch */
+	{ WACOM_VENDOR_ID, 0x39B, 200000, 200000, &usbCintiqV5,  "MobileStudio Pro 16"	}, /* Touch */
 
 	{ WACOM_VENDOR_ID, 0x90, 100000, 100000, &usbTabletPC,   "TabletPC 0x90"	},
 	{ WACOM_VENDOR_ID, 0x93, 100000, 100000, &usbTabletPC,   "TabletPC 0x93"	},
