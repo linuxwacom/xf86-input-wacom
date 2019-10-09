@@ -154,14 +154,6 @@ wcmFingerMultitouch(WacomDevicePtr priv, int contact_id) {
 	Bool prox = FALSE;
 	int i;
 
-	if (lag_mode && TabletHasFeature(priv->common, WCM_LCD)) {
-		/* wcmSingleFingerPress triggers a button press as
-		 * soon as a single finger appears. ensure we release
-		 * that button before getting too far along
-		 */
-		wcmSendButtonClick(priv, 1, 0);
-	}
-
 	for (i = 0; i < MAX_CHANNELS; i++) {
 		WacomChannelPtr channel = priv->common->wcmChannel+i;
 		WacomDeviceState state  = channel->valid.state;
@@ -426,6 +418,30 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		return;
 	}
 
+	/* Send multitouch data to X if appropriate */
+	if (!common->wcmGesture) {
+		switch (common->wcmGestureMode) {
+		case GESTURE_CANCEL_MODE:
+			break;
+		case GESTURE_NONE_MODE:
+			if (TabletHasFeature(common, WCM_LCD))
+				common->wcmGestureMode = GESTURE_MULTITOUCH_MODE;
+			else if (ds[1].proximity)
+				common->wcmGestureMode = GESTURE_LAG_MODE;
+			/* fall through */
+		case GESTURE_LAG_MODE:
+		case GESTURE_MULTITOUCH_MODE:
+			if (common->wcmGestureMode != GESTURE_NONE_MODE)
+				wcmFingerMultitouch(priv, touch_id);
+			break;
+		default:
+			wcmCancelGesture(priv->pInfo);
+			break;
+		}
+	}
+	if (common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)
+		return;
+
 	/* Do not process gestures while in CANCEL mode. Only reset back to
 	 * NONE mode once all fingers have left the screen.
 	 */
@@ -436,9 +452,6 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		else
 			common->wcmGestureMode = GESTURE_NONE_MODE;
 	}
-
-	if (common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)
-		goto ret;
 
 	/* When 2 fingers are in proximity, it must always be in one of
 	 * the valid 2 fingers modes: LAG, SCROLL, or ZOOM.
@@ -548,23 +561,18 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 	if (common->wcmGestureMode & GESTURE_TAP_MODE)
 		goto ret;
 
-	/* skip initial finger event for scroll and zoom */
-	if (!dsLast[0].proximity || !dsLast[1].proximity)
-		goto ret;
-
 	/* continue zooming if already in zoom mode */
-	if ((common->wcmGestureMode & GESTURE_ZOOM_MODE) &&
-	    ds[0].proximity && ds[1].proximity)
+	if ((common->wcmGestureMode & GESTURE_ZOOM_MODE))
 		wcmFingerZoom(priv);
 
 	/* continue scrollling if already in scroll mode */
 	else if (common->wcmGestureMode & GESTURE_SCROLL_MODE)
-		    wcmFingerScroll(priv);
+		wcmFingerScroll(priv);
 
 	/* process complex two finger gestures */
-	else {
-		if (ds[0].proximity && ds[1].proximity)
-		{
+	else if (ds[0].proximity && ds[1].proximity)
+	{
+		if (dsLast[0].proximity && dsLast[1].proximity) {
 			/* scroll should be considered first since it requires
 			 * a finger distance check */
 			wcmFingerScroll(priv);
@@ -574,23 +582,6 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 		}
 	}
 ret:
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
-	/* Send multitouch data to X if appropriate */
-	if (!common->wcmGesture) {
-		if (common->wcmGestureMode == GESTURE_NONE_MODE) {
-			if (TabletHasFeature(common, WCM_LCD))
-				common->wcmGestureMode = GESTURE_MULTITOUCH_MODE;
-			else if (ds[1].proximity)
-				common->wcmGestureMode = GESTURE_LAG_MODE;
-		}
-
-		if (common->wcmGestureMode == GESTURE_LAG_MODE ||
-		    common->wcmGestureMode == GESTURE_MULTITOUCH_MODE)
-			wcmFingerMultitouch(priv, touch_id);
-	}
-#endif
-
 	if ((common->wcmGestureMode == GESTURE_NONE_MODE || common->wcmGestureMode == GESTURE_DRAG_MODE) &&
 	    touch_id == 0)
 	{

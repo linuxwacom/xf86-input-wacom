@@ -459,7 +459,6 @@ struct _WacomCommonRec
 	int wcmTouch;	             /* disable/enable touch event */
 	int wcmTouchDefault;	     /* default to disable when not supported */
 	int wcmGesture;	     	     /* disable/enable touch gesture */
-	int wcmGestureDefault;       /* default touch gesture to disable when not supported */
 	int wcmGestureMode;	       /* data is in Gesture Mode? */
 	WacomDeviceState wcmGestureState[MAX_FINGERS]; /* inital state when in gesture mode */
 	WacomGesturesParameters wcmGestureParameters;

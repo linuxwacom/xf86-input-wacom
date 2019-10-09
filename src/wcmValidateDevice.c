@@ -1019,13 +1019,10 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	if (TabletHasFeature(common, WCM_2FGT))
 	{
 		int gesture_is_on;
-
-		/* GestureDefault was off for all devices
-		 * except when multi-touch is supported */
-		common->wcmGestureDefault = 1;
+		Bool gesture_default = TabletHasFeature(priv->common, WCM_LCD) ? FALSE : TRUE;
 
 		gesture_is_on = xf86SetBoolOption(pInfo->options, "Gesture",
-					    common->wcmGestureDefault);
+					    gesture_default);
 
 		if (is_primary || IsTouch(priv))
 			common->wcmGesture = gesture_is_on;
