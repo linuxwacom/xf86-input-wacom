@@ -219,7 +219,7 @@ int read_data(int fd, unsigned char* buffer, int min_len)
 	TRACE("Reading %d bytes from device.\n", min_len);
 redo:
 	do {
-		int l = read(fd, &buffer[len], min_len);
+		int l = read(fd, &buffer[len], min_len - len);
 
 		if (l == -1) {
 			if (errno != EAGAIN) {
