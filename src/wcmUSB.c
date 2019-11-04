@@ -464,6 +464,21 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 		common->wcmResolX = common->wcmResolY = 1016;
 	}
 
+	/* Mark protocol 5 devices which predate the use of Intuos5 tech
+	 * as using legacy IDs. These legacy IDs do not conform to the
+	 * current format, in particular with respect to the use of the
+	 * 0th device ID bit signalling EMR/AES.
+	 */
+	if (common->wcmModel == &usbIntuos || common->wcmModel == &usbIntuos2 ||
+	    common->wcmModel == &usbIntuos3 || common->wcmModel == &usbIntuos4 ||
+	    (sID.vendor == WACOM_VENDOR_ID && sID.product == 0x3F) || // Cintiq 21UX (Intuos3-era)
+	    (sID.vendor == WACOM_VENDOR_ID && sID.product == 0xC5) || // Cintiq 20WSX (Intuos3-era)
+	    (sID.vendor == WACOM_VENDOR_ID && sID.product == 0xC6) || // Cintiq 12WX (Intuos3-era)
+	    (sID.vendor == WACOM_VENDOR_ID && sID.product == 0xCC))   // Cintiq 21UX2 (Intuos4-era)
+	{
+		TabletSetFeature(common, WCM_LEGACY_IDS);
+	}
+
 	/* Find out supported button codes. */
 	usbdata->npadkeys = 0;
 	for (i = 0; i < ARRAY_SIZE(padkey_codes); i++)
@@ -1161,30 +1176,54 @@ static int usbFilterEvent(WacomCommonPtr common, struct input_event *event)
 	return 0;
 }
 
+/**
+ * Determine if this is an AES tool or not from the tool ID. Bit 0
+ * of the device ID is currently defined to be such a flag, but
+ * older tablet pens used this bit for other purposes.
+ *
+ * @param common A reference to the device's common structure
+ * @param id The tool id received from the kernel.
+ * @return 'true' if the tool uses AES, 'false' otherwise.
+ */
+static Bool toolIdIsAes(WacomCommonPtr common, int id)
+{
+	if (TabletHasFeature(common, WCM_LEGACY_IDS))
+		return FALSE;
+
+	return id & 0x01;
+}
+
 #define ERASER_BIT      0x008
 #define PUCK_BITS	0xf00
 #define PUCK_EXCEPTION  0x806
 /**
  * Decide the tool type by its id for protocol 5 devices
  *
+ * @param common A reference to the device's common structure
  * @param id The tool id received from the kernel.
  * @return The tool type associated with the tool id.
  */
-static int usbIdToType(int id)
+static int usbIdToType(WacomCommonPtr common, int id)
 {
 	int type = STYLUS_ID;
 
 	if (!id)
 		return 0;
 
-	/* The existing tool ids have the following patten: all pucks, except
-	 * one, have the third byte set to zero; all erasers have the fourth
-	 * bit set. The rest are styli.
-	 */
-	if (id & ERASER_BIT)
-		type = ERASER_ID;
-	else if (!(id & PUCK_BITS) || (id == PUCK_EXCEPTION))
-		type = CURSOR_ID;
+	if (toolIdIsAes(common, id)) {
+		/* Type information is not available from the ID for AES */
+		return 0;
+	}
+	else {
+		/* The existing EMR tool ids have the following patten: all
+		 * pucks, except one, have the third byte set to zero; all
+		 * erasers have the fourth bit set. The rest are styli.
+		 */
+		if (id & ERASER_BIT)
+			type = ERASER_ID;
+		else if (!(id & PUCK_BITS) || (id == PUCK_EXCEPTION))
+			type = CURSOR_ID;
+	}
 
 	return type;
 }
@@ -1195,10 +1234,11 @@ static int usbIdToType(int id)
  * Protocol 5 devices report different IDs for different styli and pucks,
  * Protocol 4 devices simply report STYLUS_DEVICE_ID, etc.
  *
+ * @param common A reference to the device's common structure
  * @param device_id id of the device
  * @return device type
  */
-static int usbFindDeviceTypeById(int device_id)
+static int usbFindDeviceTypeById(WacomCommonPtr common, int device_id)
 {
 	switch (device_id)
 	{
@@ -1213,7 +1253,7 @@ static int usbFindDeviceTypeById(int device_id)
 		case PAD_DEVICE_ID:
 			return PAD_ID;
 		default: /* protocol 5 */
-			return usbIdToType(device_id);
+			return usbIdToType(common, device_id);
 	}
 }
 
@@ -1671,7 +1711,7 @@ static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int va
 				return TOUCH_ID;
 			case ABS_MISC:
 				if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
-					return usbFindDeviceTypeById(value);
+					return usbFindDeviceTypeById(common, value);
 		}
 	}
 

@@ -169,6 +169,7 @@ struct _WacomModel
 							  always an LCD) */
 #define WCM_PENTOUCH		0x00000400 /* Tablet supports pen and touch */
 #define WCM_DUALRING		0x00000800 /* Tablet has two touch rings */
+#define WCM_LEGACY_IDS		0x00001000 /* Tablet uses legacy device IDs */
 #define TabletHasFeature(common, feature) MaskIsSet((common)->tablet_type, (feature))
 #define TabletSetFeature(common, feature) MaskSet((common)->tablet_type, (feature))
 
