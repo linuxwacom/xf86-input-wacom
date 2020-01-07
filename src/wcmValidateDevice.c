@@ -271,6 +271,9 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0xC7:  /* DTU1931 */
 		case 0xCE:  /* DTU2231 */
 		case 0xF0:  /* DTU1631 */
+
+		/* Wacom One display tablet */
+		case 0x3A6: /* DTC133 */
 			TabletSetFeature(priv->common, WCM_LCD);
 			break;
 
