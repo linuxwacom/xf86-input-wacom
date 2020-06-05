@@ -236,8 +236,8 @@ device. The 'type' option may be any of "pen", "airbrush", "artpen", or "cursor"
 This option is only available on wacom V devices (Intuos series and Cintiq 21U).
 To see which serial number belongs to a device, you need to run the utility program,
 xsetwacom, that comes with this driver. In layman's terms, this option will add X
-slave pointers for this specific tool's tip (and eraser, if appliccable). This is 
-useful for programs like gimp (which remembers tools based on X device) to recall 
+(virtual) slave pointers for this specific tool's tip (and eraser, if applicable).
+This is useful for programs like gimp (which remembers tools based on X device) to recall 
 additional drawing tool selections for your airbrush+eraser, art pen, extra pen, etc. 
 .TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
