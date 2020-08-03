@@ -333,6 +333,10 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 		case 0x352:/* Cintiq Pro 32 */
 		case 0x37C:/* Cintiq Pro 24 Pen-Only */
 		case 0x390:/* Cintiq 16 */
+		case 0x391:/* Cintiq 22 */
+		case 0x396:/* DTK-1660E */
+		case 0x3AE:/* Cintiq 16 */
+		case 0x3B0:/* DTK-1660E */
 			TabletSetFeature(priv->common, WCM_ROTATION);
 			/* fall-through */
 
