@@ -640,7 +640,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 
 		/* Move the cursor to where it should be before sending button events */
 		if(!(priv->flags & BUTTONS_ONLY_FLAG) &&
-		   !(priv->flags & SCROLLMODE_FLAG && priv->oldState.buttons & 1))
+		   !(priv->flags & SCROLLMODE_FLAG && (!is_absolute(pInfo) || priv->oldState.buttons & 1)))
 		{
 			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
 					     first_val, num_vals,
