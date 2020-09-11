@@ -19,13 +19,15 @@ stages:
   - test
   - name: coverity
     if: type = cron
-
+arch:
+  - ppc64le
+  - amd64
 env:
   global:
     - CFLAGS="-Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter"
 
 script:
-  - mkdir _build
+  - mkdir -p _build
   - pushd _build > /dev/null
   # We don't want our CFLAGS (especially -Werror) to apply at `configure`
   # time so short-circuit our environment at that moment and provide the
