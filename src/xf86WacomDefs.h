@@ -26,7 +26,6 @@
 #include <wacom-util.h>
 #include <asm/types.h>
 #include <linux/input.h>
-#define MAX_USB_EVENTS 32
 
 /* vendor IDs on the kernel device */
 #define WACOM_VENDOR_ID 0x056a
