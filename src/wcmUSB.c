@@ -28,7 +28,7 @@
 #include <sys/utsname.h>
 #include <linux/version.h>
 
-#define MAX_USB_EVENTS 32
+#define MAX_USB_EVENTS 128
 
 typedef struct {
 	int wcmLastToolSerial;
