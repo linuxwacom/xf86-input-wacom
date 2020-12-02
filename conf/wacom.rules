@@ -1,4 +1,4 @@
-ACTION!="add|change", GOTO="wacom_end"
+ACTION=="remove", GOTO="wacom_end"
 
 # Match all serial wacom tablets with a serial ID starting with WACf
 # Notes: We assign NAME though we shouldn't, but currently the server requires it
