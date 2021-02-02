@@ -123,14 +123,14 @@ ret:
 static struct
 {
 	const char* type;
-	__u16 tool[3]; /* tool array is terminated by 0 */
+	__u16 tool[5]; /* tool array is terminated by 0 */
 } wcmType [] =
 {
 	{ "stylus", { BTN_TOOL_PEN,       0                  } },
 	{ "eraser", { BTN_TOOL_RUBBER,    0                  } },
 	{ "cursor", { BTN_TOOL_MOUSE,     0                  } },
 	{ "touch",  { BTN_TOOL_DOUBLETAP, BTN_TOOL_FINGER, 0 } },
-	{ "pad",    { BTN_FORWARD,        BTN_0,           0 } }
+	{ "pad",    { BTN_FORWARD,        BTN_0,           KEY_CONTROLPANEL, KEY_ONSCREEN_KEYBOARD, 0 } }
 };
 
 /* validate tool type for device/product */
