@@ -669,8 +669,10 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	}
 
 	/* check if the type is valid for those don't need hotplug */
-	if(!need_hotplug && !wcmIsAValidType(pInfo, type))
+	if(!need_hotplug && !wcmIsAValidType(pInfo, type)) {
+		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n", pInfo->name, type);
 		goto SetupProc_fail;
+	}
 
 	if (!wcmSetType(pInfo, type))
 		goto SetupProc_fail;

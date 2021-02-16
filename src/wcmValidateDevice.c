@@ -178,10 +178,6 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 		}
 	}
 
-	if (!ret)
-		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n",
-			pInfo->name, type);
-
 	free(dsource);
 	return ret;
 }
@@ -616,8 +612,38 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 }
 
 /**
+ * Attempt to hotplug a tool with a given type.
+ *
+ * If the tool does not claim to support the given type, ignore the
+ * request. Otherwise, verify that it is actually valid and then
+ * queue the hotplug.
+ *
+ * @param pInfo The parent device
+ * @param ser The tool pointer
+ * @param basename The kernel device name
+ * @param idflag Tool ID_XXXX flag to try to hotplug
+ * @param type Type name for this tool
+ */
+static void wcmTryHotplugSerialType(InputInfoPtr pInfo, WacomToolPtr ser, const char *basename, int idflag, const char *type)
+{
+	if (!(ser->typeid & idflag)) {
+		// No need to print an error message. The device doesn't
+		// claim to support this type so there's no problem.
+		return;
+	}
+
+	if (!wcmIsAValidType(pInfo, type)) {
+		xf86Msg(X_ERROR, "%s: invalid device type '%s'.\n", pInfo->name, type);
+		return;
+	}
+
+	wcmQueueHotplug(pInfo, basename, type, ser->serial);
+}
+
+/**
  * Hotplug all serial numbers configured on this device.
  *
+ * @param pInfo The parent device
  * @param basename The kernel device name
  */
 static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
@@ -629,18 +655,9 @@ static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
 	while (ser)
 	{
 		xf86Msg(X_INFO, "%s: hotplugging serial %d.\n", pInfo->name, ser->serial);
-
-		if (wcmIsAValidType(pInfo, "stylus") &&
-		    (ser->typeid & STYLUS_ID))
-			wcmQueueHotplug(pInfo, basename, "stylus", ser->serial);
-
-		if (wcmIsAValidType(pInfo, "eraser") &&
-		    (ser->typeid & ERASER_ID))
-			wcmQueueHotplug(pInfo, basename, "eraser", ser->serial);
-
-		if (wcmIsAValidType(pInfo, "cursor") &&
-		    (ser->typeid & CURSOR_ID))
-			wcmQueueHotplug(pInfo, basename, "cursor", ser->serial);
+		wcmTryHotplugSerialType(pInfo, ser, basename, STYLUS_ID, "stylus");
+		wcmTryHotplugSerialType(pInfo, ser, basename, ERASER_ID, "eraser");
+		wcmTryHotplugSerialType(pInfo, ser, basename, CURSOR_ID, "cursor");
 
 		ser = ser->next;
 	}
@@ -706,8 +723,11 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type)
 		}
 	}
 
-	if (!*type)
+	if (!*type) {
+		xf86Msg(X_ERROR, "%s: No valid type found for this device.\n",
+			pInfo->name);
 		goto out;
+	}
 
 	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", pInfo->name, *type);
 	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", pInfo->name);
