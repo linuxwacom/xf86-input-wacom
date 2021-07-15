@@ -136,10 +136,11 @@ static struct
 /* validate tool type for device/product */
 Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 {
-	int j, k, ret = FALSE;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
+	int i, j;
 	char* dsource;
+	Bool user_defined;
 
 	if (!type)
 	{
@@ -148,38 +149,65 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	}
 
 	dsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	user_defined = !dsource || !strlen(dsource);
+	free(dsource);
 
-	/* walkthrough all types */
-	for (j = 0; j < ARRAY_SIZE(wcmType); j++)
+	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (!strcmp(wcmType[j].type, type))
+		if (strcmp(wcmType[i].type, type) == 0)
 		{
-			for (k = 0; wcmType[j].tool[k] && !ret; k++)
-			{
-				if (ISBITSET (common->wcmKeys, wcmType[j].tool[k]))
-				{
-					ret = TRUE;
-
-					/* non GENERIC devices use BTN_TOOL_FINGER for pad */
-					if (common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC)
-					{
-						if (!strcmp(type, "touch") &&
-							wcmType[j].tool[k] == BTN_TOOL_FINGER)
-						    ret = FALSE;
-					}
-				}
-				else if (!dsource || !strlen(dsource)) /* an user defined type */
-				{
-					/* assume it is a valid type */
-					SETBIT(common->wcmKeys, wcmType[j].tool[k]);
-					ret = TRUE;
-				}
-			}
+			break;
 		}
 	}
 
-	free(dsource);
-	return ret;
+	if (i >= ARRAY_SIZE(wcmType))
+	{
+		/* No type with the given name was found. */
+		xf86Msg(X_ERROR, "%s: type '%s' is not known to the driver\n",
+			pInfo->name, type);
+		return FALSE;
+	}
+
+	for (j = 0; wcmType[i].tool[j]; j++)
+	{
+		/* Check if the device has this tool among its declared
+		 * keys. If it does, then this is (generally) a valid
+		 * type.
+		 *
+		 * Non-generic devices are an exception to this rule.
+		 * In particular, they set BTN_TOOL_FINGER on the
+		 * pad device. This means that we need to ignore
+		 * BTN_TOOL_FINGER when checking if "touch" is a
+		 * valid type since that would be a false-positive.
+		 * Note that "touch" can still be detected by another
+		 * key, e.g. BTN_TOOL_DOUBLETAP.
+		 */
+		Bool valid = ISBITSET (common->wcmKeys, wcmType[i].tool[j]);
+		Bool bypass = common->wcmProtocolLevel != WCM_PROTOCOL_GENERIC &&
+			      wcmType[i].tool[j] == BTN_TOOL_FINGER &&
+		              strcmp(type, "touch") == 0;
+
+		if (valid && !bypass) {
+			return TRUE;
+		}
+	}
+
+	if (user_defined)
+	{
+		/* This device does not appear to be the right type, but
+		 * maybe the user knows better than us...
+		 */
+		SETBIT(common->wcmKeys, wcmType[i].tool[0]);
+		xf86Msg(X_WARNING, "%s: user-defined type '%s' may not be valid\n",
+			pInfo->name, type);
+		return TRUE;
+	}
+
+	/* The driver is probably probing to see if this is a valid
+	 * type to associate with this device for hotplug. Let the
+	 * caller know it is invalid, but don't complain in the logs.
+	 */
+	return FALSE;
 }
 
 /* Choose valid types according to device ID. */
