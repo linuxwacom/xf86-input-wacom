@@ -944,7 +944,8 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 		{
 			if (common->wcmChannel[i].work.proximity &&
 			    common->wcmChannel[i].work.device_type == device_type &&
-			    common->wcmChannel[i].work.serial_num == serial)
+			    (common->wcmChannel[i].work.serial_num == 1 ||
+			    common->wcmChannel[i].work.serial_num == serial))
 			{
 				channel = i;
 				break;
