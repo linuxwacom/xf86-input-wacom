@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 
+#include <stdbool.h>
 #include <asm/types.h>
 #include <linux/input.h>
 #include <sys/utsname.h>
@@ -1796,13 +1797,48 @@ static int deriveDeviceTypeFromButtonEvent(WacomCommonPtr common,
  */
 static int usbInitToolType(WacomCommonPtr common, int fd,
                            const struct input_event *event_ptr,
-                           int nevents, int last_device_type)
+                           int nevents, int last_device_type, bool last_device_proximity)
 {
 	int i, device_type = 0;
+	unsigned int device_type_added = 0, device_type_removed = 0;
 
-	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
+	/* Some devices always set BTN_TOOL_PEN when the eraser button is down
+	 * and tip touches the surface. The events sequence is:
+	 *
+	 * BTN_TOOL_RUBBER 1
+	 * ...
+	 * BTN_TOUCH 1
+	 * BTN_TOOL_PEN 1
+	 * ...
+	 * BTN_TOUCH 0
+	 * BTN_TOOL_PEN 0
+	 * ...
+	 * BTN_TOOL_RUBBER 1
+	 *
+	 * We detect this case and ignore the change from the existing tool to
+	 * the new one.
+	 */
+	/* First, build a mask of the device types that changed in this event */
+	for (i = 0; i < nevents; ++i, event_ptr++)
 	{
-		device_type = deviceTypeFromEvent(common, event_ptr->type, event_ptr->code, event_ptr->value);
+		if (event_ptr->value)
+			device_type_added |= deviceTypeFromEvent(common, event_ptr->type, event_ptr->code, event_ptr->value);
+		else
+			device_type_removed |= deviceTypeFromEvent(common, event_ptr->type, event_ptr->code, event_ptr->value);
+	}
+
+	/* We had a device type, it didn't change in the current frame but a
+	 * new device was added. Let's ignore that new device type and stick
+	 * with the one we have instead.
+	 */
+	if (last_device_type && last_device_proximity &&
+	    device_type_added && (device_type_removed & last_device_type) == 0) {
+		DBG(5, common, "Ignoring device type change to %d\n", device_type_added);
+		device_type = last_device_type;
+	} else if (device_type_added) {
+		/* In case we get two BTN_TOOL_ 1 events in the same frame,
+		 * pick the one lowest one (usually stylus) */
+		device_type = 1 << (ffs(device_type_added) - 1);
 	}
 
 	if (!device_type)
@@ -1850,7 +1886,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	private->wcmDeviceType = usbInitToolType(common, pInfo->fd,
 	                                         private->wcmEvents,
 	                                         private->wcmEventCnt,
-	                                         dslast.device_type);
+	                                         dslast.device_type,
+						 dslast.proximity);
 
 	if (private->wcmPenTouch)
 	{
