@@ -934,6 +934,8 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 	/* figure out the channel to use based on serial number */
 	int i, channel = -1;
 
+	ErrorF("... looking for a channel for %d serial %d\n", device_type, serial);
+
 	/* force events from PAD device to PAD_CHANNEL */
 	if (serial == -1)
 		channel = PAD_CHANNEL;
@@ -948,6 +950,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 			    (common->wcmChannel[i].work.serial_num == 1 ||
 			    common->wcmChannel[i].work.serial_num == serial))
 			{
+				ErrorF("... channel found: %d\n" ,i);
 				channel = i;
 				break;
 			}
@@ -966,6 +969,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 			    !common->wcmChannel[i].valid.state.proximity)
 			{
 				channel = i;
+				ErrorF("... picking empty channel\n");
 				memset(&common->wcmChannel[channel],0, sizeof(WacomChannel));
 				break;
 			}
@@ -1481,6 +1485,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 		case BTN_TOOL_PENCIL:
 		case BTN_TOOL_BRUSH:
 		case BTN_TOOL_AIRBRUSH:
+			DBG(3, common, "::::::::::::::::::::::::::::::::::::::::::: BTN_TOOL_PEN\n");
 			ds->proximity = (event->value != 0);
 			DBG(6, common,
 			    "USB stylus detected %x\n",
@@ -1488,6 +1493,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
 		case BTN_TOOL_RUBBER:
+			DBG(3, common, "::::::::::::::::::::::::::::::::::::::::::: BTN_TOOL_RUBBER\n");
 			ds->proximity = (event->value != 0);
 			DBG(6, common,
 			    "USB eraser detected %x (value=%d)\n",
@@ -1503,6 +1509,8 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			break;
 
                case BTN_TOUCH:
+			DBG(3, common, "::::::::::::::::::::::::::::::::::::::::::: BTN_TOUCH\n");
+			LogMessageVerbSigSafe(X_ERROR, 0, "BTN_TOUCH %d\n", event->value);
 			if (common->wcmProtocolLevel == WCM_PROTOCOL_GENERIC)
 			{
 				/* 1FG USB touchscreen */
@@ -1841,6 +1849,8 @@ static int usbInitToolType(WacomCommonPtr common, int fd,
 		device_type = 1 << (ffs(device_type_added) - 1);
 	}
 
+	DBG(5, common, "........... device type: %x, last type %x\n", device_type, last_device_type);
+
 	if (!device_type)
 		device_type = last_device_type;
 
@@ -1938,6 +1948,7 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			case ERASER_ID: ds->device_id = ERASER_DEVICE_ID; break;
 			case PAD_ID: ds->device_id = PAD_DEVICE_ID; break;
 		}
+		DBG(6, common, "---------------------------- using  device id %d\n", ds->device_id);
 	}
 
 	/* all USB data operates from previous context except relative values*/
@@ -2003,8 +2014,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	} /* next event */
 
 	/* DTF720 and DTF720a don't support eraser */
-	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
-		(ds->device_type == ERASER_ID)) 
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) &&
+		(ds->device_type == ERASER_ID))
 	{
 		DBG(10, common,
 			"DTF 720 doesn't support eraser ");
