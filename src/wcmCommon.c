@@ -1463,32 +1463,30 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 		/* Threshold for counting pressure as a button */
 		common->wcmThreshold = priv->maxCurve * DEFAULT_THRESHOLD;
 
-		xf86Msg(X_PROBED, "%s: using pressure threshold of %d for button 1\n",
-			pInfo->name, common->wcmThreshold);
+		xf86IDrvMsg(pInfo, X_PROBED, "using pressure threshold of %d for button 1\n",
+			    common->wcmThreshold);
 	}
 
 	/* Calculate default panscroll threshold if not set */
-	xf86Msg(X_CONFIG, "%s: panscroll is %d\n", pInfo->name, common->wcmPanscrollThreshold);
+	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll is %d\n", common->wcmPanscrollThreshold);
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = common->wcmResolY * 13 / 1000; /* 13mm */
 	}
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = 1000;
 	}
-	xf86Msg(X_CONFIG, "%s: panscroll modified to %d\n", pInfo->name, common->wcmPanscrollThreshold);
+	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll modified to %d\n", common->wcmPanscrollThreshold);
 
 	/* output tablet state as probed */
 	if (IsPen(priv))
-		xf86Msg(X_PROBED, "%s: maxX=%d maxY=%d maxZ=%d "
+		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
-			pInfo->name,
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
 	else if (IsTouch(priv))
-		xf86Msg(X_PROBED, "%s: maxX=%d maxY=%d maxZ=%d "
+		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d \n",
-			pInfo->name,
 			common->wcmMaxTouchX, common->wcmMaxTouchY,
 			common->wcmMaxZ,
 			common->wcmTouchResolX, common->wcmTouchResolY);

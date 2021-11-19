@@ -359,6 +359,12 @@ xf86Msg(MessageType type, const char *format, ...)
 }
 
 _X_EXPORT void
+xf86IDrvMsg(InputInfoPtr pInfo, MessageType type, const char *format, ...)
+{
+    return;
+}
+
+_X_EXPORT void
 xf86PostMotionEventP(DeviceIntPtr	device,
                     int			is_absolute,
                     int			first_valuator,

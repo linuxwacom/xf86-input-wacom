@@ -344,26 +344,26 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 					btn_labels,
 					butmap) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Button class device\n");
 		return FALSE;
 	}
 
 	if (InitFocusClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init Focus class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init Focus class device\n");
 		return FALSE;
 	}
 
 	if (InitPtrFeedbackClassDeviceStruct(pInfo->dev,
 		wcmDevControlProc) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init ptr feedback\n");
 		return FALSE;
 	}
 
 	if (InitProximityClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-			xf86Msg(X_ERROR, "%s: unable to init proximity class device\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "unable to init proximity class device\n");
 			return FALSE;
 	}
 
@@ -377,17 +377,17 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 					  GetMotionHistorySize(),
 					  (is_absolute(pInfo) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Valuator class device\n");
 		return FALSE;
 	}
 
 
 	if (!InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
-		xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init kbd device struct\n");
 		return FALSE;
 	}
 	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
-		xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init led feedback device struct\n");
 		return FALSE;
 	}
 
@@ -397,7 +397,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
 						2))
 		{
-			xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
+			xf86IDrvMsg(pInfo, X_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}
 		priv->common->touch_mask = valuator_mask_new(2);
@@ -471,8 +471,8 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 			is_wacom = wcmIsWacomDevice(fname);
 			if (is_wacom)
 			{
-				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
-					pInfo->name, fname, wait);
+				xf86IDrvMsg(pInfo, X_PROBED,
+					    "probed device is %s (waited %d msec)\n", fname, wait);
 				xf86ReplaceStrOption(pInfo->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
@@ -480,12 +480,12 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 			}
 		}
 		wait += 100;
-		xf86Msg(X_ERROR, "%s: waiting 100 msec (total %dms) for device to become ready\n", pInfo->name, wait);
+		xf86IDrvMsg(pInfo, X_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
 		usleep(100*1000);
 	}
-	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
-		pInfo->name, i + 1, wait);
-	xf86Msg(X_ERROR, "%s: unable to probe device\n", pInfo->name);
+	xf86IDrvMsg(pInfo, X_ERROR,
+		    "no Wacom event device found (checked %d nodes, waited %d msec)\n", i + 1, wait);
+	xf86IDrvMsg(pInfo, X_ERROR, "unable to probe device\n");
 	return NULL;
 }
 
@@ -503,7 +503,7 @@ Bool wcmOpen(InputInfoPtr pInfo)
 	pInfo->fd = xf86OpenSerial(pInfo->options);
 	if (pInfo->fd < 0)
 	{
-		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", pInfo->name,
+		xf86IDrvMsg(pInfo, X_ERROR, "Error opening %s (%s)\n",
 			common->device_path, strerror(errno));
 		return !Success;
 	}
@@ -595,7 +595,7 @@ static int wcmReady(InputInfoPtr pInfo)
 	DBG(10, priv, "%d numbers of data\n", n);
 
 	if (n >= 0) return n ? 1 : 0;
-	xf86Msg(X_ERROR, "%s: select error: %s\n", pInfo->name, strerror(errno));
+	xf86IDrvMsg(pInfo, X_ERROR, "select error: %s\n", strerror(errno));
 	return 0;
 }
 
@@ -861,8 +861,8 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 #endif
 		default:
-			xf86Msg(X_ERROR, "%s: invalid mode=%d. This is an X server bug.\n",
-				pInfo->name, what);
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "invalid mode=%d. This is an X server bug.\n", what);
 			goto out;
 	} /* end switch */
 

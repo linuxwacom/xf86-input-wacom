@@ -653,8 +653,7 @@ wcmSetHWTouchProperty(InputInfoPtr pInfo)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_hardware_touch, &prop);
 	if (rc != Success || prop->format != 8 || prop->size != 1)
 	{
-		xf86Msg(X_ERROR, "%s: Failed to update hardware touch state.\n",
-			pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update hardware touch state.\n");
 		return;
 	}
 
@@ -1081,8 +1080,7 @@ wcmSetSerialProperty(InputInfoPtr pInfo)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_serials, &prop);
 	if (rc != Success || prop->format != 32 || prop->size != 5)
 	{
-		xf86Msg(X_ERROR, "%s: Failed to update serial number.\n",
-			pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update serial number.\n");
 		return;
 	}
 

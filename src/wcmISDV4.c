@@ -169,8 +169,8 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
 	{
 		n = wcmSkipInvalidBytes(data, common->wcmPktLength);
 		LogMessageVerbSigSafe(X_WARNING, 0,
-			"%s: missing header bit. skipping %d bytes.\n",
-			pInfo->name, n);
+			"missing header bit. skipping %d bytes.\n",
+			n);
 		return n;
 	}
 
@@ -228,9 +228,9 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
 			xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
 			break;
 		default:
-			xf86Msg(X_ERROR, "%s: Illegal speed value "
-					"(must be 19200 or 38400).",
-					pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "Illegal speed value (must be 19200 or 38400).");
+
 			return FALSE;
 	}
 
@@ -238,8 +238,7 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
 	{
 		if (!(common->private = calloc(1, sizeof(wcmISDV4Data))))
 		{
-			xf86Msg(X_ERROR, "%s: failed to alloc backend-specific data.\n",
-				pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "failed to alloc backend-specific data.\n");
 			return FALSE;
 		}
 		isdv4data = common->private;
@@ -366,8 +365,9 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 		/* Try with the other baudrate */
 		baud = (isdv4data->baudrate == 38400)? 19200 : 38400;
 
-		xf86Msg(X_WARNING, "%s: Query failed with %d baud. Trying %d.\n",
-				   pInfo->name, isdv4data->baudrate, baud);
+		xf86IDrvMsg(pInfo, X_WARNING,
+			    "Query failed with %d baud. Trying %d.\n",
+			    isdv4data->baudrate, baud);
 
 		if (xf86SetSerialSpeed(pInfo->fd, baud) < 0)
 		{
@@ -393,8 +393,8 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 		rc = isdv4ParseQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 query.\n",
-					pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "Error while parsing ISDV4 query.\n");
+
 			if (rc == 0)
 				DBG(2, common, "reply or len invalid.\n");
 			else
@@ -447,8 +447,8 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 		rc = isdv4ParseTouchQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86Msg(X_ERROR, "%s: Error while parsing ISDV4 touch query.\n",
-					pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "Error while parsing ISDV4 touch query.\n");
+
 			if (rc == 0)
 				DBG(2, common, "reply or len invalid.\n");
 			else
@@ -497,9 +497,9 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 					(common->tablet_id != 0x9F))
 
 				{
-				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
-					    " mismatch with data id (0x01) \n",
-					    pInfo->name, common->tablet_id);
+				    xf86IDrvMsg(pInfo, X_WARNING,
+						"tablet id(%x) mismatch with data id (0x01) \n",
+						common->tablet_id);
 				    goto out;
 				}
 				break;
@@ -508,9 +508,9 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 				if ((common->tablet_id != 0xE2) &&
 						(common->tablet_id != 0xE3))
 				{
-				    xf86Msg(X_WARNING, "%s: tablet id(%x)"
-					    " mismatch with data id (0x03) \n",
-					    pInfo->name, common->tablet_id);
+				    xf86IDrvMsg(pInfo, X_WARNING,
+						"tablet id(%x) mismatch with data id (0x03) \n",
+						common->tablet_id);
 				    goto out;
 				}
 				break;
@@ -539,7 +539,7 @@ static int isdv4GetRanges(InputInfoPtr pInfo)
 			common->wcmTouchResolY);
 	}
 
-	xf86Msg(X_INFO, "%s: serial tablet id 0x%X.\n", pInfo->name, common->tablet_id);
+	xf86IDrvMsg(pInfo, X_INFO, "serial tablet id 0x%X.\n", common->tablet_id);
 
 out:
 	if (ret == Success)
@@ -846,8 +846,8 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
 		len = xf86WriteSerial(pInfo->fd, request, strlen(request));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			xf86Msg(X_ERROR, "%s: wcmWriteWait error : %s\n",
-					pInfo->name, strerror(errno));
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "wcmWriteWait error : %s\n", strerror(errno));
 			return 0;
 		}
 
@@ -856,8 +856,9 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
 	} while ((len <= 0) && maxtry);
 
 	if (!maxtry)
-		xf86Msg(X_WARNING, "%s: Failed to issue command '%s' "
-				   "after %d tries.\n", pInfo->name, request, MAXTRY);
+		xf86IDrvMsg(pInfo, X_WARNING,
+			    "Failed to issue command '%s' after %d tries.\n",
+			    request, MAXTRY);
 
 	return maxtry;
 }
@@ -879,8 +880,9 @@ static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
 			len = xf86ReadSerial(pInfo->fd, answer, size);
 			if ((len == -1) && (errno != EAGAIN))
 			{
-				xf86Msg(X_ERROR, "%s: xf86ReadSerial error : %s\n",
-						pInfo->name, strerror(errno));
+				xf86IDrvMsg(pInfo, X_ERROR,
+					    "xf86ReadSerial error : %s\n",
+					    strerror(errno));
 				return 0;
 			}
 		}
@@ -888,9 +890,9 @@ static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
 	} while ((len <= 0) && maxtry);
 
 	if (!maxtry)
-		xf86Msg(X_WARNING, "%s: Waited too long for answer "
-				   "(failed after %d tries).\n",
-				   pInfo->name, MAXTRY);
+		xf86IDrvMsg(pInfo, X_WARNING,
+			    "Waited too long for answer (failed after %d tries).\n",
+			    MAXTRY);
 
 	return maxtry;
 }

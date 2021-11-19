@@ -181,9 +181,10 @@ wcmSetType(InputInfoPtr pInfo, const char *type)
 	return 1;
 
 invalid:
-	xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-			 "Must be one of stylus, touch, cursor, eraser, or pad\n",
-			 pInfo->name);
+	xf86IDrvMsg(pInfo, X_ERROR,
+		    "No type or invalid type specified.\n"
+		    "Must be one of stylus, touch, cursor, eraser, or pad\n");
+
 	return 0;
 }
 
@@ -426,7 +427,7 @@ wcmDetectDeviceClass(const InputInfoPtr pInfo)
 	else if (gWacomUSBDevice.Detect(pInfo))
 		common->wcmDevCls = &gWacomUSBDevice;
 	else
-		xf86Msg(X_ERROR, "%s: cannot identify device class.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "cannot identify device class.\n");
 
 	return (common->wcmDevCls != NULL);
 }
@@ -611,7 +612,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(pInfo, type)) {
-		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n", pInfo->name, type);
+		xf86IDrvMsg(pInfo, X_ERROR, "Invalid type '%s' for this device.\n", type);
 		goto SetupProc_fail;
 	}
 
