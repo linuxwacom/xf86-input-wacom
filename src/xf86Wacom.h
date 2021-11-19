@@ -69,25 +69,6 @@
 #define DBG(lvl, priv, ...)
 #endif
 
-/******************************************************************************
- * WacomModule - all globals are packed in a single structure to keep the
- *               global namespaces as clean as possible.
- *****************************************************************************/
-typedef struct _WacomModule WacomModule;
-
-struct _WacomModule
-{
-	int (*DevOpen)(DeviceIntPtr pWcm);
-	void (*DevReadInput)(InputInfoPtr pInfo);
-	void (*DevControlProc)(DeviceIntPtr device, PtrCtrl* ctrl);
-	int (*DevChangeControl)(InputInfoPtr pInfo, xDeviceCtl* control);
-	void (*DevClose)(InputInfoPtr pInfo);
-	int (*DevProc)(DeviceIntPtr pWcm, int what);
-	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
-};
-
-	extern WacomModule gWacomModule;
-
 /* The rest are defined in a separate .h-file */
 #include "xf86WacomDefs.h"
 
@@ -142,7 +123,12 @@ extern Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is
 extern int wcmParseSerials(InputInfoPtr pinfo);
 
 extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
+
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
+extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
+extern int wcmDevProc(DeviceIntPtr pWcm, int what);
+extern void wcmDevReadInput(InputInfoPtr pInfo);
 
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);

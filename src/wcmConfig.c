@@ -52,10 +52,10 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	if(!tool)
 		goto error;
 
-	pInfo->device_control = gWacomModule.DevProc;
-	pInfo->read_input = gWacomModule.DevReadInput;
-	pInfo->control_proc = gWacomModule.DevChangeControl;
-	pInfo->switch_mode = gWacomModule.DevSwitchMode;
+	pInfo->device_control = wcmDevProc;
+	pInfo->read_input = wcmDevReadInput;
+	pInfo->control_proc = wcmDevChangeControl;
+	pInfo->switch_mode = wcmDevSwitchMode;
 	pInfo->dev = NULL;
 	pInfo->private = priv;
 

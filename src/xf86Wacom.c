@@ -57,25 +57,7 @@
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static int wcmReady(InputInfoPtr pInfo);
-static void wcmDevReadInput(InputInfoPtr pInfo);
-static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
 static void wcmDevClose(InputInfoPtr pInfo);
-static int wcmDevProc(DeviceIntPtr pWcm, int what);
-
-WacomModule gWacomModule =
-{
-	NULL,           /* input driver pointer */
-
-	/* device procedures */
-	wcmDevOpen,
-	wcmDevReadInput,
-	wcmDevControlProc,
-	wcmDevChangeControl,
-	wcmDevClose,
-	wcmDevProc,
-	wcmDevSwitchMode,
-};
 
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
@@ -604,7 +586,7 @@ static int wcmReady(InputInfoPtr pInfo)
  *   Read the device on IO signal
  ****************************************************************************/
 
-static void wcmDevReadInput(InputInfoPtr pInfo)
+void wcmDevReadInput(InputInfoPtr pInfo)
 {
 	int loop=0;
 	#define MAX_READ_LOOPS 10
@@ -709,7 +691,7 @@ int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
  * wcmDevControlProc --
  ****************************************************************************/
 
-static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
+void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
 #ifdef DEBUG
 	InputInfoPtr pInfo = (InputInfoPtr)device->public.devicePrivate;
@@ -810,7 +792,7 @@ static void wcmUnlinkTouchAndPen(InputInfoPtr pInfo)
  *   and disabled. DEVICE_CLOSE is called before removal of the device.
  ****************************************************************************/
 
-static int wcmDevProc(DeviceIntPtr pWcm, int what)
+int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
