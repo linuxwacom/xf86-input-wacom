@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -338,7 +338,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	/* if more than 3 buttons, offset by the four scroll buttons,
 	 * otherwise, alloc 7 buttons for scroll wheel. */
 	nbbuttons = min(max(nbbuttons + 4, 7), WCM_MAX_BUTTONS);
-	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
+	nbkeys = nbbuttons;         /* Same number of keys since any button may be
 	                             * configured as an either mouse button or key */
 
 	DBG(10, priv,
@@ -476,16 +476,16 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 	const int max_wait = 2000;
 
 	/* If device is not available after Resume, wait some ms */
-	while (wait <= max_wait) 
+	while (wait <= max_wait)
 	{
-		for (i = 0; i < EVDEV_MINORS; i++) 
+		for (i = 0; i < EVDEV_MINORS; i++)
 		{
 			char fname[64];
 			Bool is_wacom;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
 			is_wacom = wcmIsWacomDevice(fname);
-			if (is_wacom) 
+			if (is_wacom)
 			{
 				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
 					pInfo->name, fname, wait);

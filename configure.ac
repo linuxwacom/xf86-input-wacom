@@ -178,14 +178,14 @@ SYSTEMD_UNIT_DIR=${unitdir}
 AC_SUBST(SYSTEMD_UNIT_DIR)
 AM_CONDITIONAL(HAVE_SYSTEMD_UNIT_DIR, [test "x$SYSTEMD_UNIT_DIR" != "xno"])
 
-AC_ARG_WITH(udev-rules-dir,                                                   
+AC_ARG_WITH(udev-rules-dir,
             AS_HELP_STRING([--with-udev-rules-dir=DIR],
                            [Directory where udev expects its rules files
                            [[default=$libdir/udev/rules.d]]]),
-            [udevdir="$withval"],                   
+            [udevdir="$withval"],
             [udevdir="$libdir/udev/rules.d"])
 UDEV_RULES_DIR=${udevdir}
-AC_SUBST(UDEV_RULES_DIR)                                               
+AC_SUBST(UDEV_RULES_DIR)
 AM_CONDITIONAL(HAVE_UDEV_RULES_DIR, [test "x$UDEV_RULES_DIR" != "xno"])
 
 

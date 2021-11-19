@@ -12,14 +12,14 @@ __drivername__ \- Wacom input driver
 .B EndSection
 .fi
 .SH DESCRIPTION
-.B wacom 
+.B wacom
 is an X input driver for Wacom devices.
 .PP
 The
 .B wacom
 driver functions as a pointer input device.
 .SH SUPPORTED HARDWARE
-This driver supports the Wacom IV and Wacom V protocols. Serial tablets only 
+This driver supports the Wacom IV and Wacom V protocols. Serial tablets only
 need this driver.  USB tablet support is available on some Linux platforms
 and requires the wacom kernel driver being loaded before this driver starts.
 .PP
@@ -68,15 +68,15 @@ supports the following entries:
 .RS 8
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"|"touch"\fP
-sets the type of tool the device represents. This option is mandatory.  
-The core options, such as "SendCoreEvents" or "AlwaysCore", are  
-unnecessary in Gimp if you don't need to move system cursor outside 
-of Gimp drawing area.  "pad" is for Intuos 3 or Cintiq 21UX tablet 
-ExpressKeys/menu strips, and Graphire 4 or Bamboo tablet buttons, wheel, 
-and/or ring.  It is required  for Intuos3,  CintiqV5, Graphire 4, and 
-Bamboo if you want to use keystroke features.  "pad" is reported as a 
-second tool in the driver. "touch" is for the tablet with touch support. 
-Right now only a few Tablet PCs have this feature. 
+sets the type of tool the device represents. This option is mandatory.
+The core options, such as "SendCoreEvents" or "AlwaysCore", are
+unnecessary in Gimp if you don't need to move system cursor outside
+of Gimp drawing area.  "pad" is for Intuos 3 or Cintiq 21UX tablet
+ExpressKeys/menu strips, and Graphire 4 or Bamboo tablet buttons, wheel,
+and/or ring.  It is required  for Intuos3,  CintiqV5, Graphire 4, and
+Bamboo if you want to use keystroke features.  "pad" is reported as a
+second tool in the driver. "touch" is for the tablet with touch support.
+Right now only a few Tablet PCs have this feature.
 .TP 4
 .B Option \fI"Device"\fP \fI"path"\fP
 sets the path to the special file which represents serial line where
@@ -87,9 +87,9 @@ This option is mandatory.
 .B Option \fI"Suppress"\fP \fI"number"\fP
 sets the position increment under which not to transmit coordinates.
 This entry must be specified only in the first Wacom subsection if you have
-multiple devices for one tablet. If you don't specify this entry, the default 
-value,  which is 2, will be used. To disable suppression, the entry should be 
-specified as 0.  When suppress is defined,  an event will be sent only when at 
+multiple devices for one tablet. If you don't specify this entry, the default
+value,  which is 2, will be used. To disable suppression, the entry should be
+specified as 0.  When suppress is defined,  an event will be sent only when at
 least one of the following conditions is met:
 
         the change between the current X coordinate and the previous one is
@@ -104,10 +104,10 @@ greater than suppress;
         the change between the  current degree of rotation and the previous
 one of the transducer is greater than suppress;
 
-        the change between the current absolute wheel value and the previous 
+        the change between the current absolute wheel value and the previous
 one is equal to or greater than suppress;
 
-        the change between the current tilt value and the previous one is equal 
+        the change between the current tilt value and the previous one is equal
 to or greater than suppress (if tilt is supported);
 
         relative wheel value has changed;
@@ -123,7 +123,7 @@ touch defaults to Relative for tablets with touch pads and Absolute for
 touch screens.
 .TP 4
 .B Option \fI"TopX"\fP \fI"number"\fP
-X coordinate of the top corner of the active zone.  Default to 0. 
+X coordinate of the top corner of the active zone.  Default to 0.
 .TP 4
 .B Option \fI"TopY"\fP \fI"number"\fP
 Y coordinate of the top corner of the active zone.  Default to 0.
@@ -138,8 +138,8 @@ Y coordinate of the bottom corner of the active zone.  Default to height of the 
 disables the device's motion events.  Default to off.
 .TP 4
 .B Option \fI"ButtonM"\fP \fI"AC"\fP
-reports an action AC when button M is pressed,  where M 
-is one of the device supported  button numbers,  it can be 1 
+reports an action AC when button M is pressed,  where M
+is one of the device supported  button numbers,  it can be 1
 to 32. Wacom uses a driver-internal button mapping, where any physical
 button appears to the X server as the button specified by the ButtonM
 mapping. Hence, if two physical buttons have the same ButtonM mapping, the
@@ -149,7 +149,7 @@ X uses buttons 4, 5, 6, and 7 as the four scrolling directions, physical
 buttons 4 and higher are mapped to 8 and higher by default.
 Only simple button presses can be configured here; for more complex
 actions, use xsetwacom(__appmansuffix__).
-To ignore the button click, i.e., to not report any button click event 
+To ignore the button click, i.e., to not report any button click event
 to the X server,  use "0" or "button 0".
 .TP 4
 .B Option \fI"TPCButton"\fP \fI"on"|"off"\fP
@@ -166,21 +166,21 @@ user touches the tablet.  Default to "on" for devices that support touch;
 "off" for all other models.
 .TP 4
 .B Option \fI"Rotate"\fP \fI"CW"|"CCW"|"HALF"|"NONE"\fP
-rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF). 
-If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be 
+rotates the tablet orientation counterclockwise (CCW) or clockwise (CW) or 180 degrees (HALF).
+If you have specific tablet mappings, i.e. TopX/Y or BottomX/Y were set, the mapping will be
 applied before rotation. Rotation must be applied to the parent device
 (usually the stylus), rotation settings on in-driver hotplugged devices (see
 .B DRIVER-INTERNAL DEVICE HOTPLUGGING
 ) will be ignored. The default is "NONE".
 .TP 4
 .B Option \fI"PressCurve"\fP \fI"x1,y1,x2,y2"\fP
-sets pressure curve by control points x1, y1, x2, and y2.  Their values are in range 
+sets pressure curve by control points x1, y1, x2, and y2.  Their values are in range
 from 0..100. The pressure curve is interpreted as Bezier curve with 4
 control points, the first and the last control point being fixed on the
 coordinates 0/0 and 100/100, respectively. The middle control points are
 adjustible by this setting and thus define the shape of the curve.
-The input for linear curve (default) is "0,0,100,100"; 
-slightly depressed curve (firmer) might be "5,0,100,95"; 
+The input for linear curve (default) is "0,0,100,100";
+slightly depressed curve (firmer) might be "5,0,100,95";
 slightly raised curve (softer) might be "0,5,95,100".
 The pressure curve is only applicable to devices of type stylus or eraser,
 other devices do not honor this setting.
@@ -226,20 +226,20 @@ incoming input tool raw data points.  Default:  4, range of 1 to 20.
 .B Option \fI"Serial"\fP \fI"number"\fP
 sets the serial number associated with the physical device. This allows
 to have multiple devices of the same type (i.e. multiple pens). This
-option is only available on wacom V devices (Intuos series and Cintiq 21U). 
-To see which serial number belongs to a device, you need to run the utility program, 
+option is only available on wacom V devices (Intuos series and Cintiq 21U).
+To see which serial number belongs to a device, you need to run the utility program,
 xsetwacom, which comes with linuxwacom package.
 .TP 4
 .B Option \fI"ToolSerials"\fP \fI"number[,type[,label]][;...]"\fP
 sets the list of serial numbered devices that need to be hotplugged for a physical
 device. The 'type' option may be any of "pen", "airbrush", "artpen", or "cursor".
-This option is only available on wacom V devices which are capable of reporting a 
+This option is only available on wacom V devices which are capable of reporting a
 serial number. To see if a connected device is supported, or to identify
 which serial number belongs to a device, you need to run the utility program,
-xsetwacom, that comes with this driver. In layman's terms, this option will add 
+xsetwacom, that comes with this driver. In layman's terms, this option will add
 additional X devices for this specific tool's tip (and eraser, if applicable).
-This is useful for programs like gimp (which remembers tools based on the X device) to recall 
-additional drawing tool selections for an airbrush+eraser, art pen, extra pen, etc. 
+This is useful for programs like gimp (which remembers tools based on the X device) to recall
+additional drawing tool selections for an airbrush+eraser, art pen, extra pen, etc.
 .TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
 sets the pressure threshold used to generate a button 1 events of stylus.

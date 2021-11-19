@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -427,7 +427,7 @@ TEST_NON_STATIC int getScrollDelta(int current, int old, int wrap, int flags)
  * Get the scroll button/action to send given the delta of
  * the scrolling axis and the possible events that can be
  * sent.
- * 
+ *
  * @param delta        Amount of change in the scrolling axis
  * @param action_up    Array index of action to send on scroll up
  * @param action_dn    Array index of action to send on scroll down
@@ -450,7 +450,7 @@ TEST_NON_STATIC int getWheelButton(int delta, int action_up, int action_dn)
  * @param action     Action to send
  * @param nactions   Length of action array
  * @param pInfo
- * @param first_val  
+ * @param first_val
  * @param num_vals
  * @param valuators
  */
@@ -897,7 +897,7 @@ wcmCheckSuppress(WacomCommonPtr common,
 	if (abs(dsOrig->rotation - dsNew->rotation) > suppress &&
 	    (1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) goto out;
 
-	/* look for change in absolute wheel position 
+	/* look for change in absolute wheel position
 	 * or any relative wheel movement
 	 */
 	if (abs(dsOrig->abswheel  - dsNew->abswheel)  > suppress) goto out;
@@ -911,8 +911,8 @@ out:
 	 * pointer x/y, suppress all but cursor movement. This return value
 	 * is used in commonDispatchDevice to short-cut event processing.
 	 */
-	if ((abs(dsOrig->x - dsNew->x) > suppress) || 
-			(abs(dsOrig->y - dsNew->y) > suppress)) 
+	if ((abs(dsOrig->x - dsNew->x) > suppress) ||
+			(abs(dsOrig->y - dsNew->y) > suppress))
 	{
 		if (returnV == SUPPRESS_ALL)
 			returnV = SUPPRESS_NON_MOTION;
@@ -1034,7 +1034,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
 		return;
-	
+
 	/* we must copy the state because certain types of filtering
 	 * will need to change the values (ie. for error correction) */
 	ds = *pState;
@@ -1477,7 +1477,7 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 	/* Get tablet range */
 	if (model->GetRanges && (model->GetRanges(pInfo) != Success))
 		return !Success;
-	
+
 	/* Default threshold value if not set */
 	if (common->wcmThreshold <= 0 && IsPen(priv))
 	{

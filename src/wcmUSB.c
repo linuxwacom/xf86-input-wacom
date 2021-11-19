@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
- *                                                                            
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -1967,8 +1967,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	} /* next event */
 
 	/* DTF720 and DTF720a don't support eraser */
-	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
-		(ds->device_type == ERASER_ID)) 
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) &&
+		(ds->device_type == ERASER_ID))
 	{
 		DBG(10, common,
 			"DTF 720 doesn't support eraser ");
