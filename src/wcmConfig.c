@@ -33,7 +33,7 @@
  * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo)
+static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -53,6 +53,7 @@ static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo)
 		goto error;
 
 	priv->next = NULL;
+	priv->name = strdup(name);
 	priv->pInfo = pInfo;
 	priv->common = common;       /* common info pointer */
 	priv->oldCursorHwProx = 0;   /* previous cursor hardware proximity */
@@ -101,6 +102,7 @@ static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo)
 error:
 	free(tool);
 	wcmFreeCommon(&common);
+	free(priv->name);
 	free(priv);
 	return NULL;
 }
@@ -122,6 +124,7 @@ static void wcmFree(InputInfoPtr pInfo)
 	TimerFree(priv->touch_timer);
 	free(priv->tool);
 	wcmFreeCommon(&priv->common);
+	free(priv->name);
 	free(priv);
 
 	pInfo->private = NULL;
@@ -559,7 +562,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	   - hotplug dependent devices if needed
 	 */
 
-	if (!(priv = wcmAllocate(pInfo)))
+	if (!(priv = wcmAllocate(pInfo, pInfo->name)))
 		goto SetupProc_fail;
 	pInfo->private = priv;
 
@@ -569,7 +572,6 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		goto SetupProc_fail;
 
 	priv->common->device_path = device;
-	priv->name = pInfo->name;
 	priv->debugLevel = xf86SetIntOption(pInfo->options,
 					    "DebugLevel", priv->debugLevel);
 
@@ -603,7 +605,9 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		if (asprintf(&new_name, "%s %s", pInfo->name, type) == -1)
 			new_name = strdup(pInfo->name);
 		free(pInfo->name);
-		pInfo->name = priv->name = new_name;
+		free(priv->name);
+		pInfo->name = new_name;
+		priv->name = strdup(new_name);
 	}
 
 	/* check if the type is valid for those don't need hotplug */
