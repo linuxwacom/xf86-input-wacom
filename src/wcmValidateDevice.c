@@ -486,17 +486,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	pointer options, o;
 	int rc;
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	options = xf86OptionListDuplicate(original);
-#else
-	{
-		InputInfoRec dummy;
-
-		memset(&dummy, 0, sizeof(dummy));
-		xf86CollectInputOptions(&dummy, NULL, original);
-		options = dummy.options;
-	}
-#endif
 	if (serial > -1)
 	{
 		while (ser->serial && ser->serial != serial)
@@ -533,8 +523,6 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	return iopts;
 }
 
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 /**
  * Duplicate the attributes of the given device. "product" gets the type
  * appended, so a device of product "Wacom" will then have a product "Wacom
@@ -553,7 +541,6 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
 	attr->product = (rc != -1) ? product : NULL;
 	return attr;
 }
-#endif
 
 /**
  * This struct contains the necessary info for hotplugging a device later.
@@ -561,9 +548,7 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
  */
 typedef struct {
 	InputOption *input_options;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
 	InputAttributes *attrs;
-#endif
 } WacomHotplugInfo;
 
 /**
@@ -586,9 +571,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 #endif
 
 	NewInputDeviceRequest(hotplug_info->input_options,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
 			      hotplug_info->attrs,
-#endif
 			      &dev);
 #if HAVE_THREADED_INPUT
 	input_unlock();
@@ -596,9 +579,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 
 	input_option_free_list(&hotplug_info->input_options);
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	FreeInputAttributes(hotplug_info->attrs);
-#endif
 	free(hotplug_info);
 
 	return TRUE;
@@ -633,9 +614,7 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 	}
 
 	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, serial);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
-#endif
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 

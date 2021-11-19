@@ -240,34 +240,6 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (WACOM_DRIVER.active == priv)
 		WACOM_DRIVER.active = NULL;
 
-	/* Server 1.10 will UnInit all devices for us */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
-	if (priv->isParent)
-	{
-		/* HAL removal sees the parent device removed first. */
-		WacomDevicePtr next;
-		dev = priv->common->wcmDevices;
-
-		xf86Msg(X_INFO, "%s: removing automatically added devices.\n",
-			pInfo->name);
-
-		while(dev)
-		{
-			next = dev->next;
-			if (!dev->isParent)
-			{
-				xf86Msg(X_INFO, "%s: removing dependent device '%s'\n",
-					pInfo->name, dev->pInfo->name);
-				DeleteInputDeviceRequest(dev->pInfo->dev);
-			}
-			dev = next;
-		}
-
-		free(pInfo->name);
-		pInfo->name = NULL;
-	}
-#endif
-
 	if (priv->tool)
 	{
 		WacomToolPtr *prev_tool = &common->wcmTool;
@@ -567,38 +539,7 @@ static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
-static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
-
-static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
-{
-	InputInfoPtr pInfo = NULL;
-
-	if (!(pInfo = xf86AllocateInput(drv, 0)))
-		return NULL;
-
-	pInfo->conf_idev = dev;
-	pInfo->name = dev->identifier;
-
-	/* Force default port options to exist because the init
-	 * phase is based on those values.
-	 */
-	xf86CollectInputOptions(pInfo, (const char**)default_options, NULL);
-	xf86ProcessCommonOptions(pInfo, pInfo->options);
-
-	if (NewWcmPreInit(drv, pInfo, flags) == Success) {
-		pInfo->flags |= XI86_CONFIGURED;
-		return pInfo;
-	} else {
-		xf86DeleteInput(pInfo, 0);
-		return NULL;
-	}
-}
-
-static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
-#else
 static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
-#endif
 {
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
@@ -724,9 +665,7 @@ static InputDriverRec WACOM =
 	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	default_options,
-#endif
 #ifdef XI86_DRV_CAP_SERVER_FD
 	XI86_DRV_CAP_SERVER_FD,
 #endif

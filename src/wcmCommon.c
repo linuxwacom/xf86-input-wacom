@@ -33,22 +33,6 @@ struct _WacomDriverRec WACOM_DRIVER = {
 	.active = NULL,
 };
 
-/* X servers pre 1.9 didn't copy data passed into xf86Post*Event.
- * Data passed in would be modified, requiring the driver to copy the
- * data beforehand.
- */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 11
-static int v[MAX_VALUATORS];
-static int *VCOPY(const int *valuators, int nvals)
-{
-	memcpy(v, valuators, nvals * sizeof(int));
-	return v;
-}
-#else /* ABI >= 11 */
-#define VCOPY(vals, nval) (vals)
-#endif
-
-
 
 /*****************************************************************************
  * Static functions
@@ -288,7 +272,7 @@ static void sendAction(InputInfoPtr pInfo,  const WacomDeviceState* ds,
 						xf86PostButtonEventP(pInfo->dev,
 								    is_absolute(pInfo), btn_no,
 								    is_press, first_val, num_val,
-								    VCOPY(valuators, num_val));
+								    valuators);
 					}
 				}
 				break;
@@ -332,7 +316,7 @@ static void sendAction(InputInfoPtr pInfo,  const WacomDeviceState* ds,
 						xf86PostButtonEventP(pInfo->dev,
 								is_absolute(pInfo), btn_no,
 								0, first_val, num_val,
-								VCOPY(valuators, num_val));
+								valuators);
 				}
 				break;
 			case AC_KEY:
@@ -619,7 +603,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	if (!priv->oldState.proximity && ds->proximity)
-		xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, VCOPY(valuators, num_vals));
+		xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, valuators);
 
 	for (i = 0; i < num_vals; i++)
 		if (valuators[i])
@@ -632,8 +616,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		/* xf86PostMotionEvent is only needed to post the valuators
 		 * It should NOT move the cursor.
 		 */
-		xf86PostMotionEventP(pInfo->dev, TRUE, first_val, num_vals,
-				     VCOPY(valuators, num_vals));
+		xf86PostMotionEventP(pInfo->dev, TRUE, first_val, num_vals, valuators);
 	}
 	else
 	{
@@ -644,8 +627,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	wcmSendKeys(pInfo, ds->keys, priv->oldState.keys);
 
 	if (priv->oldState.proximity && !ds->proximity)
-		xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
-					VCOPY(valuators, num_vals));
+		xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals, valuators);
 }
 
 /* Send events for all tools but pads */
@@ -678,16 +660,14 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 	{
 		/* don't emit proximity events if device does not support proximity */
 		if ((pInfo->dev->proximity && !priv->oldState.proximity))
-			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals,
-						VCOPY(valuators, num_vals));
+			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, valuators);
 
 		/* Move the cursor to where it should be before sending button events */
 		if(!(priv->flags & BUTTONS_ONLY_FLAG) &&
 		   !(priv->flags & SCROLLMODE_FLAG && (!is_absolute(pInfo) || priv->oldState.buttons & 1)))
 		{
 			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
-					     first_val, num_vals,
-					     VCOPY(valuators, num_vals));
+					     first_val, num_vals, valuators);
 			/* For relative events, do not repost
 			 * the valuators.  Otherwise, a button
 			 * event in sendCommonEvents will move the
@@ -712,8 +692,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 			wcmSendButtons(pInfo, ds, buttons, first_val, num_vals, valuators);
 
 		if (priv->oldState.proximity)
-			xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
-						VCOPY(valuators, num_vals));
+			xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals, valuators);
 	} /* not in proximity */
 }
 

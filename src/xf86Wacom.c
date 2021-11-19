@@ -47,13 +47,9 @@
 #include <xf86_OSproc.h>
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
 #include <X11/extensions/XKB.h>
 #include <xkbsrv.h>
-#else
-#define XIGetKnownProperty(prop) 0
-#endif
 
 #ifndef XI86_SERVER_FD
 #define XI86_SERVER_FD 0x20
@@ -133,13 +129,9 @@ wcmInitialToolSize(InputInfoPtr pInfo)
 
 static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int min_res, int max_res, int mode) {
 	InitValuatorAxisStruct(dev, axis,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	                       label,
-#endif
-	                       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-	                       ,mode
-#endif
+	                       min, max, res, min_res, max_res,
+	                       mode
 	);
 }
 
@@ -320,10 +312,8 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
         Atom btn_labels[WCM_MAX_BUTTONS] = {0};
         Atom axis_labels[MAX_VALUATORS] = {0};
-#endif
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -351,9 +341,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	/* FIXME: button labels would be nice */
 	if (InitButtonClassDeviceStruct(pInfo->dev, nbbuttons,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					btn_labels,
-#endif
 					butmap) == FALSE)
 	{
 		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", pInfo->name);
@@ -385,9 +373,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	/* axis_labels is just zeros, we set up each valuator with the
 	 * correct property later */
 	if (InitValuatorClassDeviceStruct(pInfo->dev, nbaxes,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					  axis_labels,
-#endif
 					  GetMotionHistorySize(),
 					  (is_absolute(pInfo) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
@@ -396,12 +382,10 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	}
 
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	if (!InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
 		xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", pInfo->name);
 		return FALSE;
 	}
-#endif
 	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
 		xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", pInfo->name);
 		return FALSE;

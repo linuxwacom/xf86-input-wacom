@@ -161,14 +161,11 @@ DeleteInputDeviceRequest(DeviceIntPtr pDev)
     return;
 }
 
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 _X_EXPORT void
 FreeInputAttributes(InputAttributes *attrs)
 {
     return;
 }
-#endif
 
 _X_EXPORT void
 xf86PostButtonEvent(DeviceIntPtr	device,
@@ -262,10 +259,7 @@ xf86PostButtonEventP(DeviceIntPtr	device,
                      int		is_down,
                      int		first_valuator,
                      int		num_valuators,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-                     const
-#endif
-                           int		*valuators)
+                     const int		*valuators)
 {
     return;
 }
@@ -279,14 +273,7 @@ InitPtrFeedbackClassDeviceStruct(DeviceIntPtr dev, PtrCtrlProcPtr controlProc)
 _X_EXPORT int
 XIChangeDeviceProperty (DeviceIntPtr dev, Atom property, Atom type,
                         int format, int mode, unsigned long len,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 16
-                        const void *
-#elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 12
-                        const pointer
-#else
-                        pointer
-#endif
-                        value, Bool sendevent)
+                        const void * value, Bool sendevent)
 {
     return 0;
 }
@@ -300,9 +287,7 @@ GetTimeInMillis (void)
 
 _X_EXPORT int
 NewInputDeviceRequest (InputOption *options,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
                        InputAttributes *attrs,
-#endif
                        DeviceIntPtr *pdev)
 {
     return 0;
@@ -316,13 +301,11 @@ InitLedFeedbackClassDeviceStruct (DeviceIntPtr dev, LedCtrlProcPtr controlProc)
 }
 
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 _X_EXPORT InputAttributes*
 DuplicateInputAttributes(InputAttributes *attrs)
 {
     return NULL;
 }
-#endif
 
 _X_EXPORT int
 ValidAtom(Atom atom)
@@ -380,10 +363,7 @@ xf86PostMotionEventP(DeviceIntPtr	device,
                     int			is_absolute,
                     int			first_valuator,
                     int			num_valuators,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-                    const
-#endif
-                          int		*valuators)
+                    const int		*valuators)
 {
     return;
 }
@@ -437,10 +417,7 @@ xf86PostProximityEventP(DeviceIntPtr	device,
                         int		is_in,
                         int		first_valuator,
                         int		num_valuators,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-                        const
-#endif
-                           int		*valuators)
+                        const int	*valuators)
 {
     return;
 }
@@ -451,26 +428,6 @@ InitFocusClassDeviceStruct(DeviceIntPtr dev)
 {
     return FALSE;
 }
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
-void
-xf86ProcessCommonOptions(InputInfoPtr pInfo, pointer list)
-{
-}
-
-void
-xf86CollectInputOptions(InputInfoPtr pInfo,
-                        const char **defaultOpts,
-                        pointer extraOpts)
-{
-}
-
-InputInfoPtr xf86AllocateInput(InputDriverPtr drv, int flags)
-{
-    return NULL;
-}
-
-#endif
 
 ClientPtr serverClient;
 
