@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -32,22 +32,6 @@
 struct _WacomDriverRec WACOM_DRIVER = {
 	.active = NULL,
 };
-
-/* X servers pre 1.9 didn't copy data passed into xf86Post*Event.
- * Data passed in would be modified, requiring the driver to copy the
- * data beforehand.
- */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 11
-static int v[MAX_VALUATORS];
-static int *VCOPY(const int *valuators, int nvals)
-{
-	memcpy(v, valuators, nvals * sizeof(int));
-	return v;
-}
-#else /* ABI >= 11 */
-#define VCOPY(vals, nval) (vals)
-#endif
-
 
 
 /*****************************************************************************
@@ -288,7 +272,7 @@ static void sendAction(InputInfoPtr pInfo,  const WacomDeviceState* ds,
 						xf86PostButtonEventP(pInfo->dev,
 								    is_absolute(pInfo), btn_no,
 								    is_press, first_val, num_val,
-								    VCOPY(valuators, num_val));
+								    valuators);
 					}
 				}
 				break;
@@ -332,7 +316,7 @@ static void sendAction(InputInfoPtr pInfo,  const WacomDeviceState* ds,
 						xf86PostButtonEventP(pInfo->dev,
 								is_absolute(pInfo), btn_no,
 								0, first_val, num_val,
-								VCOPY(valuators, num_val));
+								valuators);
 				}
 				break;
 			case AC_KEY:
@@ -427,7 +411,7 @@ TEST_NON_STATIC int getScrollDelta(int current, int old, int wrap, int flags)
  * Get the scroll button/action to send given the delta of
  * the scrolling axis and the possible events that can be
  * sent.
- * 
+ *
  * @param delta        Amount of change in the scrolling axis
  * @param action_up    Array index of action to send on scroll up
  * @param action_dn    Array index of action to send on scroll down
@@ -450,7 +434,7 @@ TEST_NON_STATIC int getWheelButton(int delta, int action_up, int action_dn)
  * @param action     Action to send
  * @param nactions   Length of action array
  * @param pInfo
- * @param first_val  
+ * @param first_val
  * @param num_vals
  * @param valuators
  */
@@ -619,7 +603,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 
 	if (!priv->oldState.proximity && ds->proximity)
-		xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, VCOPY(valuators, num_vals));
+		xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, valuators);
 
 	for (i = 0; i < num_vals; i++)
 		if (valuators[i])
@@ -632,8 +616,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 		/* xf86PostMotionEvent is only needed to post the valuators
 		 * It should NOT move the cursor.
 		 */
-		xf86PostMotionEventP(pInfo->dev, TRUE, first_val, num_vals,
-				     VCOPY(valuators, num_vals));
+		xf86PostMotionEventP(pInfo->dev, TRUE, first_val, num_vals, valuators);
 	}
 	else
 	{
@@ -644,8 +627,7 @@ wcmSendPadEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	wcmSendKeys(pInfo, ds->keys, priv->oldState.keys);
 
 	if (priv->oldState.proximity && !ds->proximity)
-		xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
-					VCOPY(valuators, num_vals));
+		xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals, valuators);
 }
 
 /* Send events for all tools but pads */
@@ -678,16 +660,14 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 	{
 		/* don't emit proximity events if device does not support proximity */
 		if ((pInfo->dev->proximity && !priv->oldState.proximity))
-			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals,
-						VCOPY(valuators, num_vals));
+			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, valuators);
 
 		/* Move the cursor to where it should be before sending button events */
 		if(!(priv->flags & BUTTONS_ONLY_FLAG) &&
 		   !(priv->flags & SCROLLMODE_FLAG && (!is_absolute(pInfo) || priv->oldState.buttons & 1)))
 		{
 			xf86PostMotionEventP(pInfo->dev, is_absolute(pInfo),
-					     first_val, num_vals,
-					     VCOPY(valuators, num_vals));
+					     first_val, num_vals, valuators);
 			/* For relative events, do not repost
 			 * the valuators.  Otherwise, a button
 			 * event in sendCommonEvents will move the
@@ -712,8 +692,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 			wcmSendButtons(pInfo, ds, buttons, first_val, num_vals, valuators);
 
 		if (priv->oldState.proximity)
-			xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals,
-						VCOPY(valuators, num_vals));
+			xf86PostProximityEventP(pInfo->dev, 0, first_val, num_vals, valuators);
 	} /* not in proximity */
 }
 
@@ -897,7 +876,7 @@ wcmCheckSuppress(WacomCommonPtr common,
 	if (abs(dsOrig->rotation - dsNew->rotation) > suppress &&
 	    (1800 - abs(dsOrig->rotation - dsNew->rotation)) >  suppress) goto out;
 
-	/* look for change in absolute wheel position 
+	/* look for change in absolute wheel position
 	 * or any relative wheel movement
 	 */
 	if (abs(dsOrig->abswheel  - dsNew->abswheel)  > suppress) goto out;
@@ -911,8 +890,8 @@ out:
 	 * pointer x/y, suppress all but cursor movement. This return value
 	 * is used in commonDispatchDevice to short-cut event processing.
 	 */
-	if ((abs(dsOrig->x - dsNew->x) > suppress) || 
-			(abs(dsOrig->y - dsNew->y) > suppress)) 
+	if ((abs(dsOrig->x - dsNew->x) > suppress) ||
+			(abs(dsOrig->y - dsNew->y) > suppress))
 	{
 		if (returnV == SUPPRESS_ALL)
 			returnV = SUPPRESS_NON_MOTION;
@@ -1034,7 +1013,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
 		return;
-	
+
 	/* we must copy the state because certain types of filtering
 	 * will need to change the values (ie. for error correction) */
 	ds = *pState;
@@ -1477,39 +1456,37 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 	/* Get tablet range */
 	if (model->GetRanges && (model->GetRanges(pInfo) != Success))
 		return !Success;
-	
+
 	/* Default threshold value if not set */
 	if (common->wcmThreshold <= 0 && IsPen(priv))
 	{
 		/* Threshold for counting pressure as a button */
 		common->wcmThreshold = priv->maxCurve * DEFAULT_THRESHOLD;
 
-		xf86Msg(X_PROBED, "%s: using pressure threshold of %d for button 1\n",
-			pInfo->name, common->wcmThreshold);
+		xf86IDrvMsg(pInfo, X_PROBED, "using pressure threshold of %d for button 1\n",
+			    common->wcmThreshold);
 	}
 
 	/* Calculate default panscroll threshold if not set */
-	xf86Msg(X_CONFIG, "%s: panscroll is %d\n", pInfo->name, common->wcmPanscrollThreshold);
+	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll is %d\n", common->wcmPanscrollThreshold);
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = common->wcmResolY * 13 / 1000; /* 13mm */
 	}
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = 1000;
 	}
-	xf86Msg(X_CONFIG, "%s: panscroll modified to %d\n", pInfo->name, common->wcmPanscrollThreshold);
+	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll modified to %d\n", common->wcmPanscrollThreshold);
 
 	/* output tablet state as probed */
 	if (IsPen(priv))
-		xf86Msg(X_PROBED, "%s: maxX=%d maxY=%d maxZ=%d "
+		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
-			pInfo->name,
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
 	else if (IsTouch(priv))
-		xf86Msg(X_PROBED, "%s: maxX=%d maxY=%d maxZ=%d "
+		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d \n",
-			pInfo->name,
 			common->wcmMaxTouchX, common->wcmMaxTouchY,
 			common->wcmMaxZ,
 			common->wcmTouchResolX, common->wcmTouchResolY);

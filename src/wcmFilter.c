@@ -1,6 +1,6 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
- * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com> 
+ * Copyright 2002-2008 by Ping Cheng, Wacom. <pingc@wacom.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -165,7 +165,7 @@ static void filterCurveToLine(int* pCurve, int nMax, double x0, double y0,
 
 	/* calc split point */
 	xm = (x1 + x2) / 2; ym = (y1 + y2) / 2;
-	
+
 	/* calc control points and midpoint */
 	c1 = (x01 + xm) / 2; d1 = (y01 + ym) / 2;
 	c2 = (x32 + xm) / 2; d2 = (y32 + ym) / 2;

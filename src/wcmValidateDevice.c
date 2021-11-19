@@ -67,8 +67,8 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 		}
 	}
 	if (match)
-		xf86Msg(X_WARNING, "%s: device file already in use by %s. "
-			"Ignoring.\n", pInfo->name, pDevices->name);
+		xf86IDrvMsg(pInfo, X_WARNING,
+			    "device file already in use by %s. Ignoring.\n", pDevices->name);
 	return match;
 }
 
@@ -92,8 +92,8 @@ int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 	if (stat(device, &st) == -1)
 	{
 		/* can not access major/minor to check device duplication */
-		xf86Msg(X_ERROR, "%s: stat failed (%s). cannot check for duplicates.\n",
-				pInfo->name, strerror(errno));
+		xf86IDrvMsg(pInfo, X_ERROR, "stat failed (%s). cannot check for duplicates.\n",
+			    strerror(errno));
 
 		/* older systems don't support the required ioctl.  let it pass */
 		goto ret;
@@ -111,8 +111,8 @@ int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 	else
 	{
 		/* major/minor can never be 0, right? */
-		xf86Msg(X_ERROR, "%s: device opened with a major/minor of 0. "
-			"Something was wrong.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "device opened with a major/minor of 0. Something was wrong.\n");
 		isInUse = 4;
 	}
 ret:
@@ -144,7 +144,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 
 	if (!type)
 	{
-		xf86Msg(X_ERROR, "%s: No type specified\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "No type specified\n");
 		return FALSE;
 	}
 
@@ -163,8 +163,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 	if (i >= ARRAY_SIZE(wcmType))
 	{
 		/* No type with the given name was found. */
-		xf86Msg(X_ERROR, "%s: type '%s' is not known to the driver\n",
-			pInfo->name, type);
+		xf86IDrvMsg(pInfo, X_ERROR, "type '%s' is not known to the driver\n", type);
 		return FALSE;
 	}
 
@@ -198,8 +197,7 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 		 * maybe the user knows better than us...
 		 */
 		SETBIT(common->wcmKeys, wcmType[i].tool[0]);
-		xf86Msg(X_WARNING, "%s: user-defined type '%s' may not be valid\n",
-			pInfo->name, type);
+		xf86IDrvMsg(pInfo, X_WARNING, "user-defined type '%s' may not be valid\n", type);
 		return TRUE;
 	}
 
@@ -486,17 +484,7 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	pointer options, o;
 	int rc;
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	options = xf86OptionListDuplicate(original);
-#else
-	{
-		InputInfoRec dummy;
-
-		memset(&dummy, 0, sizeof(dummy));
-		xf86CollectInputOptions(&dummy, NULL, original);
-		options = dummy.options;
-	}
-#endif
 	if (serial > -1)
 	{
 		while (ser->serial && ser->serial != serial)
@@ -533,8 +521,6 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
 	return iopts;
 }
 
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 /**
  * Duplicate the attributes of the given device. "product" gets the type
  * appended, so a device of product "Wacom" will then have a product "Wacom
@@ -553,7 +539,6 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
 	attr->product = (rc != -1) ? product : NULL;
 	return attr;
 }
-#endif
 
 /**
  * This struct contains the necessary info for hotplugging a device later.
@@ -561,9 +546,7 @@ static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
  */
 typedef struct {
 	InputOption *input_options;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
 	InputAttributes *attrs;
-#endif
 } WacomHotplugInfo;
 
 /**
@@ -586,9 +569,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 #endif
 
 	NewInputDeviceRequest(hotplug_info->input_options,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 9
 			      hotplug_info->attrs,
-#endif
 			      &dev);
 #if HAVE_THREADED_INPUT
 	input_unlock();
@@ -596,9 +577,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
 
 	input_option_free_list(&hotplug_info->input_options);
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	FreeInputAttributes(hotplug_info->attrs);
-#endif
 	free(hotplug_info);
 
 	return TRUE;
@@ -628,14 +607,12 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 
 	if (!hotplug_info)
 	{
-		xf86Msg(X_ERROR, "%s: OOM, cannot hotplug dependent devices\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "OOM, cannot hotplug dependent devices\n");
 		return;
 	}
 
 	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, serial);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 11
 	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
-#endif
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 
@@ -661,7 +638,7 @@ static void wcmTryHotplugSerialType(InputInfoPtr pInfo, WacomToolPtr ser, const 
 	}
 
 	if (!wcmIsAValidType(pInfo, type)) {
-		xf86Msg(X_ERROR, "%s: invalid device type '%s'.\n", pInfo->name, type);
+		xf86IDrvMsg(pInfo, X_ERROR, "invalid device type '%s'.\n", type);
 		return;
 	}
 
@@ -682,7 +659,7 @@ static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
 
 	while (ser)
 	{
-		xf86Msg(X_INFO, "%s: hotplugging serial %d.\n", pInfo->name, ser->serial);
+		xf86IDrvMsg(pInfo, X_INFO, "hotplugging serial %d.\n", ser->serial);
 		wcmTryHotplugSerialType(pInfo, ser, basename, STYLUS_ID, "stylus");
 		wcmTryHotplugSerialType(pInfo, ser, basename, ERASER_ID, "eraser");
 		wcmTryHotplugSerialType(pInfo, ser, basename, CURSOR_ID, "cursor");
@@ -695,7 +672,7 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
 {
 	int i, skip = 1;
 
-	xf86Msg(X_INFO, "%s: hotplugging dependent devices.\n", pInfo->name);
+	xf86IDrvMsg(pInfo, X_INFO, "hotplugging dependent devices.\n");
 
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
@@ -712,7 +689,7 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
 
 	wcmHotplugSerials(pInfo, basename);
 
-        xf86Msg(X_INFO, "%s: hotplugging completed.\n", pInfo->name);
+        xf86IDrvMsg(pInfo, X_INFO, "hotplugging completed.\n");
 }
 
 /**
@@ -752,13 +729,12 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type)
 	}
 
 	if (!*type) {
-		xf86Msg(X_ERROR, "%s: No valid type found for this device.\n",
-			pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "No valid type found for this device.\n");
 		goto out;
 	}
 
-	xf86Msg(X_INFO, "%s: type not specified, assuming '%s'.\n", pInfo->name, *type);
-	xf86Msg(X_INFO, "%s: other types will be automatically added.\n", pInfo->name);
+	xf86IDrvMsg(pInfo, X_INFO, "type not specified, assuming '%s'.\n", *type);
+	xf86IDrvMsg(pInfo, X_INFO, "other types will be automatically added.\n");
 
 	/* Note: wcmIsHotpluggedDevice() relies on this */
 	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
@@ -800,16 +776,14 @@ int wcmParseSerials (InputInfoPtr pInfo)
 
 			if (nmatch < 1)
 			{
-				xf86Msg(X_ERROR, "%s: %s is invalid serial string.\n",
-					pInfo->name, tok);
+				xf86IDrvMsg(pInfo, X_ERROR, "%s is invalid serial string.\n", tok);
 				free(ser);
 				return 1;
 			}
 
 			if (nmatch >= 1)
 			{
-				xf86Msg(X_CONFIG, "%s: Tool serial %d found.\n",
-					pInfo->name, serial);
+				xf86IDrvMsg(pInfo, X_CONFIG, "Tool serial %d found.\n", serial);
 
 				ser->serial = serial;
 
@@ -818,22 +792,19 @@ int wcmParseSerials (InputInfoPtr pInfo)
 
 			if (nmatch >= 2)
 			{
-				xf86Msg(X_CONFIG, "%s: Tool %d has type %s.\n",
-					pInfo->name, serial, type);
+				xf86IDrvMsg(pInfo, X_CONFIG, "Tool %d has type %s.\n", serial, type);
 				if ((strcmp(type, "pen") == 0) || (strcmp(type, "airbrush") == 0))
 					ser->typeid = STYLUS_ID | ERASER_ID;
 				else if (strcmp(type, "artpen") == 0)
 					ser->typeid = STYLUS_ID;
 				else if (strcmp(type, "cursor") == 0)
 					ser->typeid = CURSOR_ID;
-				else    xf86Msg(X_CONFIG, "%s: Invalid type %s, defaulting to pen.\n",
-					pInfo->name, type);
+				else    xf86IDrvMsg(pInfo, X_CONFIG, "Invalid type %s, defaulting to pen.\n", type);
 			}
 
 			if (nmatch == 3)
 			{
-				xf86Msg(X_CONFIG, "%s: Tool %d is named %s.\n",
-					pInfo->name, serial, name);
+				xf86IDrvMsg(pInfo, X_CONFIG, "Tool %d is named %s.\n", serial, name);
 				ser->name = strdup(name);
 			}
 			else ser->name = strdup(""); /*no name yet*/
@@ -887,8 +858,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	else
 	{
 		if (s)
-			xf86Msg(X_ERROR, "%s: invalid Mode (should be absolute"
-				" or relative). Using default.\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "invalid Mode (should be absolute"
+				" or relative). Using default.\n");
 
 		/* If Mode not specified or is invalid then rely on
 		 * Type specific defaults from initialization.
@@ -923,14 +894,12 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			rotation = ROTATE_HALF;
 		else if (xf86NameCmp(s, "NONE") !=0)
 		{
-			xf86Msg(X_ERROR, "%s: invalid Rotate option '%s'.\n",
-				pInfo->name, s);
+			xf86IDrvMsg(pInfo, X_ERROR, "invalid Rotate option '%s'.\n", s);
 			goto error;
 		}
 
 		if (is_dependent && rotation != common->wcmRotate)
-			xf86Msg(X_INFO, "%s: ignoring rotation of dependent"
-					" device\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_INFO, "ignoring rotation of dependent device\n");
 		else
 			wcmRotateTablet(pInfo, rotation);
 		free(s);
@@ -940,8 +909,9 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 			common->wcmRawSample);
 	if (common->wcmRawSample < 1 || common->wcmRawSample > MAX_SAMPLES)
 	{
-		xf86Msg(X_ERROR, "%s: RawSample setting '%d' out of range [1..%d]. Using default.\n",
-			pInfo->name, common->wcmRawSample, MAX_SAMPLES);
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "RawSample setting '%d' out of range [1..%d]. Using default.\n",
+			    common->wcmRawSample, MAX_SAMPLES);
 		common->wcmRawSample = DEFAULT_SAMPLES;
 	}
 
@@ -967,15 +937,14 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
 				!wcmCheckPressureCurveValues(a, b, c, d))
-			xf86Msg(X_CONFIG, "%s: PressCurve not valid\n",
-				pInfo->name);
+			xf86IDrvMsg(pInfo, X_CONFIG, "PressCurve not valid\n");
 		else
 			wcmSetPressureCurve(priv,a,b,c,d);
 	}
 	free(s);
 
 	if (xf86SetBoolOption(pInfo->options, "Pressure2K", 0)) {
-		xf86Msg(X_CONFIG, "%s: Using 2K pressure levels\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_CONFIG, "Using 2K pressure levels\n");
 		priv->maxCurve = 2048;
 	}
 
@@ -989,8 +958,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		priv->wcmProxoutDist = xf86SetIntOption(pInfo->options, prop, 0);
 		if (priv->wcmProxoutDist < 0 ||
 				priv->wcmProxoutDist > common->wcmMaxDist)
-			xf86Msg(X_CONFIG, "%s: %s invalid %d \n",
-				pInfo->name, prop, priv->wcmProxoutDist);
+			xf86IDrvMsg(pInfo, X_CONFIG, "%s invalid %d \n",
+				    prop, priv->wcmProxoutDist);
 		priv->wcmSurfaceDist = -1;
 	}
 
@@ -1019,8 +988,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 		if(toollist) /* Already have a tool with the same type/serial */
 		{
-			xf86Msg(X_ERROR, "%s: already have a tool with type/serial %d/%d.\n",
-					pInfo->name, tool->typeid, tool->serial);
+			xf86IDrvMsg(pInfo, X_ERROR, "already have a tool with type/serial %d/%d.\n",
+				    tool->typeid, tool->serial);
 			goto error;
 		} else /* No match on existing tool/serial, add tool to the end of the list */
 		{
@@ -1044,8 +1013,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	if (is_primary || IsStylus(priv))
 		common->wcmTPCButton = tpc_button_is_on;
 	else if (tpc_button_is_on != common->wcmTPCButton)
-		xf86Msg(X_WARNING, "%s: TPCButton option can only be set "
-			"by stylus.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_WARNING, "TPCButton option can only be set by stylus.\n");
 
 	/* a single or double touch device */
 	if (TabletHasFeature(common, WCM_1FGT) ||
@@ -1063,8 +1031,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		if (is_primary || IsTouch(priv))
 			common->wcmTouch = touch_is_on;
 		else if (touch_is_on != common->wcmTouch)
-			xf86Msg(X_WARNING, "%s: Touch option can only be set "
-				"by a touch tool.\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_WARNING,
+				    "Touch option can only be set by a touch tool.\n");
 
 		if (TabletHasFeature(common, WCM_1FGT))
 			common->wcmMaxContacts = 1;
@@ -1084,8 +1052,8 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		if (is_primary || IsTouch(priv))
 			common->wcmGesture = gesture_is_on;
 		else if (gesture_is_on != common->wcmGesture)
-			xf86Msg(X_WARNING, "%s: Touch gesture option can only "
-				"be set by a touch tool.\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_WARNING,
+				    "Touch gesture option can only be set by a touch tool.\n");
 
 		common->wcmGestureParameters.wcmTapTime =
 			xf86SetIntOption(pInfo->options, "TapTime",

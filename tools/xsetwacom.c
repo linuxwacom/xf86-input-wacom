@@ -1367,14 +1367,14 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 	int  nwords = 0;
 	char **words = NULL;
 	int n;
-	
+
 	/* translate cmdline commands */
 	words = strjoinsplit(argc, argv, &nwords);
 
 	if (nwords==1 && sscanf(words[0], "%d", &n) == 1)
 	{ /* Mangle "simple" button maps into proper actions */
 		char *nargv[1];
-		
+
 		for (i =  0; i < nwords; i++)
 			free(words[i]);
 		free(words);

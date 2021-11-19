@@ -53,7 +53,7 @@ AC_CHECK_LIB([m], [rint])
 XPROTOS="xproto xext kbproto inputproto randrproto"
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7.0] $XPROTOS)
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10.0] $XPROTOS)
 
 # Obtain compiler/linker options for the xsetwacom tool
 PKG_CHECK_MODULES(X11, x11 xi xrandr xinerama $XPROTOS)
@@ -178,14 +178,14 @@ SYSTEMD_UNIT_DIR=${unitdir}
 AC_SUBST(SYSTEMD_UNIT_DIR)
 AM_CONDITIONAL(HAVE_SYSTEMD_UNIT_DIR, [test "x$SYSTEMD_UNIT_DIR" != "xno"])
 
-AC_ARG_WITH(udev-rules-dir,                                                   
+AC_ARG_WITH(udev-rules-dir,
             AS_HELP_STRING([--with-udev-rules-dir=DIR],
                            [Directory where udev expects its rules files
                            [[default=$libdir/udev/rules.d]]]),
-            [udevdir="$withval"],                   
+            [udevdir="$withval"],
             [udevdir="$libdir/udev/rules.d"])
 UDEV_RULES_DIR=${udevdir}
-AC_SUBST(UDEV_RULES_DIR)                                               
+AC_SUBST(UDEV_RULES_DIR)
 AM_CONDITIONAL(HAVE_UDEV_RULES_DIR, [test "x$UDEV_RULES_DIR" != "xno"])
 
 

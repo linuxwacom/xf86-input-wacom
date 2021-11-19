@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
- *                                                                            
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -126,7 +126,7 @@ static Bool usbDetect(InputInfoPtr pInfo)
 
 	if (err < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbDetect: can not ioctl version\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "usbDetect: can not ioctl version\n");
 		return 0;
 	}
 
@@ -149,8 +149,9 @@ usbStart(InputInfoPtr pInfo)
 		/* this is called for all tools, so all but the first one fails with
 		 * EBUSY */
 		if (err < 0 && errno != EBUSY)
-			xf86Msg(X_ERROR, "%s: Wacom X driver can't grab event device (%s)\n",
-				pInfo->name, strerror(errno));
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "Wacom X driver can't grab event device (%s)\n",
+				    strerror(errno));
 	}
 	return Success;
 }
@@ -434,16 +435,14 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 	/* fetch vendor, product, and model name */
 	if (ioctl(pInfo->fd, EVIOCGID, &sID) == -1 ||
 	    ioctl(pInfo->fd, EVIOCGNAME(id_len), id) == -1) {
-		xf86Msg(X_ERROR, "%s: failed to ioctl ID or name.\n",
-					pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "failed to ioctl ID or name.\n");
 		return !Success;
 	}
 
 	if (!common->private &&
 	    !(common->private = calloc(1, sizeof(wcmUSBData))))
 	{
-		xf86Msg(X_ERROR, "%s: unable to alloc event queue.\n",
-					pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to alloc event queue.\n");
 		return !Success;
 	}
 
@@ -589,7 +588,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl event bits.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl event bits.\n");
 		return !Success;
 	}
 
@@ -600,14 +599,14 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		    ISBITSET(common->wcmKeys, BTN_0))
 			goto pad_init;
 
-		xf86Msg(X_ERROR, "%s: no abs bits.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "no abs bits.\n");
 		return !Success;
 	}
 
 	/* absolute values */
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl max values.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl max values.\n");
 		return !Success;
 	}
 
@@ -619,14 +618,14 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		    ISBITSET(common->wcmKeys, BTN_0))
 			goto pad_init;
 
-		xf86Msg(X_ERROR, "%s: unable to ioctl xmax value.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl xmax value.\n");
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: xmax value is %d, expected > 0.\n",
-			pInfo->name, absinfo.maximum);
+		xf86IDrvMsg(pInfo, X_ERROR, "xmax value is %d, expected > 0.\n",
+			absinfo.maximum);
 		return !Success;
 	}
 
@@ -653,14 +652,13 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	/* max y */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl ymax value.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl ymax value.\n");
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86Msg(X_ERROR, "%s: ymax value is %d, expected > 0.\n",
-			pInfo->name, absinfo.maximum);
+		xf86IDrvMsg(pInfo, X_ERROR, "ymax value is %d, expected > 0.\n", absinfo.maximum);
 		return !Success;
 	}
 
@@ -824,7 +822,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: unable to ioctl sw bits.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl sw bits.\n");
 		return 0;
 	}
 	else if (ISBITSET(sw, SW_MUTE_DEVICE))
@@ -834,7 +832,7 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 		memset(sw, 0, sizeof(sw));
 
 		if (ioctl(pInfo->fd, EVIOCGSW(sizeof(sw)), sw) < 0)
-			xf86Msg(X_ERROR, "%s: unable to ioctl sw state.\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl sw state.\n");
 
 		if (ISBITSET(sw, SW_MUTE_DEVICE))
 			common->wcmHWTouchSwitchState = 0;
@@ -1953,7 +1951,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 			else
 				LogMessageVerbSigSafe(X_ERROR, 0,
 						      "%s: rel event recv'd (%d)!\n",
-						      pInfo->name, event->code);
+						      pInfo->name,
+						      event->code);
 		}
 		else if (event->type == EV_KEY)
 		{
@@ -1967,8 +1966,8 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 	} /* next event */
 
 	/* DTF720 and DTF720a don't support eraser */
-	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) && 
-		(ds->device_type == ERASER_ID)) 
+	if (((common->tablet_id == 0xC0) || (common->tablet_id == 0xC2)) &&
+		(ds->device_type == ERASER_ID))
 	{
 		DBG(10, common,
 			"DTF 720 doesn't support eraser ");
@@ -2064,22 +2063,22 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to "
-				"ioctl USB key bits.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "usbProbeKeys unable to ioctl USB key bits.\n");
 		return 0;
 	}
 
 	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to "
-				"ioctl Device ID.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR,
+			"usbProbeKeys unable to ioctl Device ID.\n");
 		return 0;
 	}
 
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
-		xf86Msg(X_ERROR, "%s: usbProbeKeys unable to ioctl "
-			"abs bits.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "usbProbeKeys unable to ioctl abs bits.\n");
 		return 0;
 	}
 

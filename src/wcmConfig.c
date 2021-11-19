@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2013 by Ping Cheng, Wacom. <pingc@wacom.com>
- *                                                                            
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -52,10 +52,10 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	if(!tool)
 		goto error;
 
-	pInfo->device_control = gWacomModule.DevProc;
-	pInfo->read_input = gWacomModule.DevReadInput;
-	pInfo->control_proc = gWacomModule.DevChangeControl;
-	pInfo->switch_mode = gWacomModule.DevSwitchMode;
+	pInfo->device_control = wcmDevProc;
+	pInfo->read_input = wcmDevReadInput;
+	pInfo->control_proc = wcmDevChangeControl;
+	pInfo->switch_mode = wcmDevSwitchMode;
 	pInfo->dev = NULL;
 	pInfo->private = priv;
 
@@ -181,9 +181,10 @@ wcmSetType(InputInfoPtr pInfo, const char *type)
 	return 1;
 
 invalid:
-	xf86Msg(X_ERROR, "%s: No type or invalid type specified.\n"
-			 "Must be one of stylus, touch, cursor, eraser, or pad\n",
-			 pInfo->name);
+	xf86IDrvMsg(pInfo, X_ERROR,
+		    "No type or invalid type specified.\n"
+		    "Must be one of stylus, touch, cursor, eraser, or pad\n");
+
 	return 0;
 }
 
@@ -201,7 +202,7 @@ int wcmGetPhyDeviceID(WacomDevicePtr priv)
 		return PAD_DEVICE_ID;
 }
 
-/* 
+/*
  * Be sure to set vmin appropriately for your device's protocol. You want to
  * read a full packet before returning
  *
@@ -239,34 +240,6 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	if (WACOM_DRIVER.active == priv)
 		WACOM_DRIVER.active = NULL;
-
-	/* Server 1.10 will UnInit all devices for us */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
-	if (priv->isParent)
-	{
-		/* HAL removal sees the parent device removed first. */
-		WacomDevicePtr next;
-		dev = priv->common->wcmDevices;
-
-		xf86Msg(X_INFO, "%s: removing automatically added devices.\n",
-			pInfo->name);
-
-		while(dev)
-		{
-			next = dev->next;
-			if (!dev->isParent)
-			{
-				xf86Msg(X_INFO, "%s: removing dependent device '%s'\n",
-					pInfo->name, dev->pInfo->name);
-				DeleteInputDeviceRequest(dev->pInfo->dev);
-			}
-			dev = next;
-		}
-
-		free(pInfo->name);
-		pInfo->name = NULL;
-	}
-#endif
 
 	if (priv->tool)
 	{
@@ -454,7 +427,7 @@ wcmDetectDeviceClass(const InputInfoPtr pInfo)
 	else if (gWacomUSBDevice.Detect(pInfo))
 		common->wcmDevCls = &gWacomUSBDevice;
 	else
-		xf86Msg(X_ERROR, "%s: cannot identify device class.\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "cannot identify device class.\n");
 
 	return (common->wcmDevCls != NULL);
 }
@@ -567,46 +540,13 @@ static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
-static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
-
-static InputInfoPtr wcmPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
-{
-	InputInfoPtr pInfo = NULL;
-
-	if (!(pInfo = xf86AllocateInput(drv, 0)))
-		return NULL;
-
-	pInfo->conf_idev = dev;
-	pInfo->name = dev->identifier;
-
-	/* Force default port options to exist because the init
-	 * phase is based on those values.
-	 */
-	xf86CollectInputOptions(pInfo, (const char**)default_options, NULL);
-	xf86ProcessCommonOptions(pInfo, pInfo->options);
-
-	if (NewWcmPreInit(drv, pInfo, flags) == Success) {
-		pInfo->flags |= XI86_CONFIGURED;
-		return pInfo;
-	} else {
-		xf86DeleteInput(pInfo, 0);
-		return NULL;
-	}
-}
-
-static int NewWcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
-#else
 static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
-#endif
 {
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
 	char		*type, *device;
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
-
-	gWacomModule.wcmDrv = drv;
 
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86SetStrOption(pInfo->options, "Type", NULL);
@@ -670,7 +610,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(pInfo, type)) {
-		xf86Msg(X_ERROR, "%s: Invalid type '%s' for this device.\n", pInfo->name, type);
+		xf86IDrvMsg(pInfo, X_ERROR, "Invalid type '%s' for this device.\n", type);
 		goto SetupProc_fail;
 	}
 
@@ -724,9 +664,7 @@ static InputDriverRec WACOM =
 	wcmPreInit,    /* pre-init */
 	wcmUninit, /* un-init */
 	NULL,          /* module */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
 	default_options,
-#endif
 #ifdef XI86_DRV_CAP_SERVER_FD
 	XI86_DRV_CAP_SERVER_FD,
 #endif

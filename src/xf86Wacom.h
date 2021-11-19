@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -69,27 +69,6 @@
 #define DBG(lvl, priv, ...)
 #endif
 
-/******************************************************************************
- * WacomModule - all globals are packed in a single structure to keep the
- *               global namespaces as clean as possible.
- *****************************************************************************/
-typedef struct _WacomModule WacomModule;
-
-struct _WacomModule
-{
-	InputDriverPtr wcmDrv;
-
-	int (*DevOpen)(DeviceIntPtr pWcm);
-	void (*DevReadInput)(InputInfoPtr pInfo);
-	void (*DevControlProc)(DeviceIntPtr device, PtrCtrl* ctrl);
-	int (*DevChangeControl)(InputInfoPtr pInfo, xDeviceCtl* control);
-	void (*DevClose)(InputInfoPtr pInfo);
-	int (*DevProc)(DeviceIntPtr pWcm, int what);
-	int (*DevSwitchMode)(ClientPtr client, DeviceIntPtr dev, int mode);
-};
-
-	extern WacomModule gWacomModule;
-
 /* The rest are defined in a separate .h-file */
 #include "xf86WacomDefs.h"
 
@@ -144,7 +123,12 @@ extern Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is
 extern int wcmParseSerials(InputInfoPtr pinfo);
 
 extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
+
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
+extern int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
+extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
+extern int wcmDevProc(DeviceIntPtr pWcm, int what);
+extern void wcmDevReadInput(InputInfoPtr pInfo);
 
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);

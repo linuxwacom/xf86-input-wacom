@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org> 
+ * Copyright 1995-2002 by Frederic Lepied, France. <Lepied@XFree86.org>
  * Copyright 2002-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -47,13 +47,9 @@
 #include <xf86_OSproc.h>
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
 #include <X11/extensions/XKB.h>
 #include <xkbsrv.h>
-#else
-#define XIGetKnownProperty(prop) 0
-#endif
 
 #ifndef XI86_SERVER_FD
 #define XI86_SERVER_FD 0x20
@@ -61,25 +57,7 @@
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static int wcmReady(InputInfoPtr pInfo);
-static void wcmDevReadInput(InputInfoPtr pInfo);
-static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
 static void wcmDevClose(InputInfoPtr pInfo);
-static int wcmDevProc(DeviceIntPtr pWcm, int what);
-
-WacomModule gWacomModule =
-{
-	NULL,           /* input driver pointer */
-
-	/* device procedures */
-	wcmDevOpen,
-	wcmDevReadInput,
-	wcmDevControlProc,
-	wcmDevChangeControl,
-	wcmDevClose,
-	wcmDevProc,
-	wcmDevSwitchMode,
-};
 
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
@@ -133,13 +111,9 @@ wcmInitialToolSize(InputInfoPtr pInfo)
 
 static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int min_res, int max_res, int mode) {
 	InitValuatorAxisStruct(dev, axis,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	                       label,
-#endif
-	                       min, max, res, min_res, max_res
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
-	                       ,mode
-#endif
+	                       min, max, res, min_res, max_res,
+	                       mode
 	);
 }
 
@@ -320,10 +294,8 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
 	int loop;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
         Atom btn_labels[WCM_MAX_BUTTONS] = {0};
         Atom axis_labels[MAX_VALUATORS] = {0};
-#endif
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -338,7 +310,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	/* if more than 3 buttons, offset by the four scroll buttons,
 	 * otherwise, alloc 7 buttons for scroll wheel. */
 	nbbuttons = min(max(nbbuttons + 4, 7), WCM_MAX_BUTTONS);
-	nbkeys = nbbuttons;         /* Same number of keys since any button may be 
+	nbkeys = nbbuttons;         /* Same number of keys since any button may be
 	                             * configured as an either mouse button or key */
 
 	DBG(10, priv,
@@ -351,31 +323,29 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	/* FIXME: button labels would be nice */
 	if (InitButtonClassDeviceStruct(pInfo->dev, nbbuttons,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					btn_labels,
-#endif
 					butmap) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Button class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Button class device\n");
 		return FALSE;
 	}
 
 	if (InitFocusClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init Focus class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init Focus class device\n");
 		return FALSE;
 	}
 
 	if (InitPtrFeedbackClassDeviceStruct(pInfo->dev,
 		wcmDevControlProc) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to init ptr feedback\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init ptr feedback\n");
 		return FALSE;
 	}
 
 	if (InitProximityClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-			xf86Msg(X_ERROR, "%s: unable to init proximity class device\n", pInfo->name);
+			xf86IDrvMsg(pInfo, X_ERROR, "unable to init proximity class device\n");
 			return FALSE;
 	}
 
@@ -385,25 +355,21 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	/* axis_labels is just zeros, we set up each valuator with the
 	 * correct property later */
 	if (InitValuatorClassDeviceStruct(pInfo->dev, nbaxes,
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 					  axis_labels,
-#endif
 					  GetMotionHistorySize(),
 					  (is_absolute(pInfo) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
-		xf86Msg(X_ERROR, "%s: unable to allocate Valuator class device\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Valuator class device\n");
 		return FALSE;
 	}
 
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	if (!InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
-		xf86Msg(X_ERROR, "%s: unable to init kbd device struct\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init kbd device struct\n");
 		return FALSE;
 	}
-#endif
 	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
-		xf86Msg(X_ERROR, "%s: unable to init led feedback device struct\n", pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to init led feedback device struct\n");
 		return FALSE;
 	}
 
@@ -413,7 +379,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
 						2))
 		{
-			xf86Msg(X_ERROR, "Unable to init touch class device struct!\n");
+			xf86IDrvMsg(pInfo, X_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}
 		priv->common->touch_mask = valuator_mask_new(2);
@@ -476,19 +442,19 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 	const int max_wait = 2000;
 
 	/* If device is not available after Resume, wait some ms */
-	while (wait <= max_wait) 
+	while (wait <= max_wait)
 	{
-		for (i = 0; i < EVDEV_MINORS; i++) 
+		for (i = 0; i < EVDEV_MINORS; i++)
 		{
 			char fname[64];
 			Bool is_wacom;
 
 			sprintf(fname, DEV_INPUT_EVENT, i);
 			is_wacom = wcmIsWacomDevice(fname);
-			if (is_wacom) 
+			if (is_wacom)
 			{
-				xf86Msg(X_PROBED, "%s: probed device is %s (waited %d msec)\n",
-					pInfo->name, fname, wait);
+				xf86IDrvMsg(pInfo, X_PROBED,
+					    "probed device is %s (waited %d msec)\n", fname, wait);
 				xf86ReplaceStrOption(pInfo->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
@@ -496,12 +462,12 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
 			}
 		}
 		wait += 100;
-		xf86Msg(X_ERROR, "%s: waiting 100 msec (total %dms) for device to become ready\n", pInfo->name, wait);
+		xf86IDrvMsg(pInfo, X_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
 		usleep(100*1000);
 	}
-	xf86Msg(X_ERROR, "%s: no Wacom event device found (checked %d nodes, waited %d msec)\n",
-		pInfo->name, i + 1, wait);
-	xf86Msg(X_ERROR, "%s: unable to probe device\n", pInfo->name);
+	xf86IDrvMsg(pInfo, X_ERROR,
+		    "no Wacom event device found (checked %d nodes, waited %d msec)\n", i + 1, wait);
+	xf86IDrvMsg(pInfo, X_ERROR, "unable to probe device\n");
 	return NULL;
 }
 
@@ -519,7 +485,7 @@ Bool wcmOpen(InputInfoPtr pInfo)
 	pInfo->fd = xf86OpenSerial(pInfo->options);
 	if (pInfo->fd < 0)
 	{
-		xf86Msg(X_ERROR, "%s: Error opening %s (%s)\n", pInfo->name,
+		xf86IDrvMsg(pInfo, X_ERROR, "Error opening %s (%s)\n",
 			common->device_path, strerror(errno));
 		return !Success;
 	}
@@ -611,7 +577,7 @@ static int wcmReady(InputInfoPtr pInfo)
 	DBG(10, priv, "%d numbers of data\n", n);
 
 	if (n >= 0) return n ? 1 : 0;
-	xf86Msg(X_ERROR, "%s: select error: %s\n", pInfo->name, strerror(errno));
+	xf86IDrvMsg(pInfo, X_ERROR, "select error: %s\n", strerror(errno));
 	return 0;
 }
 
@@ -620,7 +586,7 @@ static int wcmReady(InputInfoPtr pInfo)
  *   Read the device on IO signal
  ****************************************************************************/
 
-static void wcmDevReadInput(InputInfoPtr pInfo)
+void wcmDevReadInput(InputInfoPtr pInfo)
 {
 	int loop=0;
 	#define MAX_READ_LOOPS 10
@@ -725,7 +691,7 @@ int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
  * wcmDevControlProc --
  ****************************************************************************/
 
-static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
+void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
 #ifdef DEBUG
 	InputInfoPtr pInfo = (InputInfoPtr)device->public.devicePrivate;
@@ -826,7 +792,7 @@ static void wcmUnlinkTouchAndPen(InputInfoPtr pInfo)
  *   and disabled. DEVICE_CLOSE is called before removal of the device.
  ****************************************************************************/
 
-static int wcmDevProc(DeviceIntPtr pWcm, int what)
+int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -877,8 +843,8 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 #endif
 		default:
-			xf86Msg(X_ERROR, "%s: invalid mode=%d. This is an X server bug.\n",
-				pInfo->name, what);
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "invalid mode=%d. This is an X server bug.\n", what);
 			goto out;
 	} /* end switch */
 

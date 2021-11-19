@@ -1,12 +1,12 @@
 if UNITTESTS
 include ../src/common.mk
 
-check_PROGRAMS = wacom-tests
-check_LTLIBRARIES = libwacom-test.la
+noinst_PROGRAMS = wacom-tests
+noinst_LTLIBRARIES = libwacom-test.la
 libwacom_test_la_SOURCES =$(DRIVER_SOURCES)
 libwacom_test_la_CFLAGS = -DUNIT_TESTS -I$(top_srcdir)/src $(XORG_CFLAGS) $(CWARNFLAGS) -fvisibility=default
 
-TESTS=$(check_PROGRAMS)
+TESTS=$(noinst_PROGRAMS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include
 AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS) $(UDEV_CFLAGS)

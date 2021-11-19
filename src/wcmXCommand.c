@@ -1,6 +1,6 @@
 /*
  * Copyright 2007-2010 by Ping Cheng, Wacom. <pingc@wacom.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software 
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
@@ -653,8 +653,7 @@ wcmSetHWTouchProperty(InputInfoPtr pInfo)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_hardware_touch, &prop);
 	if (rc != Success || prop->format != 8 || prop->size != 1)
 	{
-		xf86Msg(X_ERROR, "%s: Failed to update hardware touch state.\n",
-			pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update hardware touch state.\n");
 		return;
 	}
 
@@ -1081,8 +1080,7 @@ wcmSetSerialProperty(InputInfoPtr pInfo)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_serials, &prop);
 	if (rc != Success || prop->format != 32 || prop->size != 5)
 	{
-		xf86Msg(X_ERROR, "%s: Failed to update serial number.\n",
-			pInfo->name);
+		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update serial number.\n");
 		return;
 	}
 
