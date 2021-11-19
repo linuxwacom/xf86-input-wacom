@@ -33,7 +33,7 @@
  * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-static int wcmAllocate(InputInfoPtr pInfo)
+static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -51,13 +51,6 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	tool = calloc(1, sizeof(WacomTool));
 	if(!tool)
 		goto error;
-
-	pInfo->device_control = wcmDevProc;
-	pInfo->read_input = wcmDevReadInput;
-	pInfo->control_proc = wcmDevChangeControl;
-	pInfo->switch_mode = wcmDevSwitchMode;
-	pInfo->dev = NULL;
-	pInfo->private = priv;
 
 	priv->next = NULL;
 	priv->pInfo = pInfo;
@@ -103,13 +96,13 @@ static int wcmAllocate(InputInfoPtr pInfo)
 	priv->tap_timer = TimerSet(NULL, 0, 0, NULL, NULL);
 	priv->touch_timer = TimerSet(NULL, 0, 0, NULL, NULL);
 
-	return 1;
+	return priv;
 
 error:
 	free(tool);
 	wcmFreeCommon(&common);
 	free(priv);
-	return 0;
+	return NULL;
 }
 
 /*****************************************************************************
@@ -548,6 +541,12 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
 
+	pInfo->device_control = wcmDevProc;
+	pInfo->read_input = wcmDevReadInput;
+	pInfo->control_proc = wcmDevChangeControl;
+	pInfo->switch_mode = wcmDevSwitchMode;
+	pInfo->dev = NULL;
+
 	/*
 	   Init process:
 	   - allocate the generic struct used by all device types.
@@ -560,15 +559,15 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	   - hotplug dependent devices if needed
 	 */
 
-	if (!wcmAllocate(pInfo))
+	if (!(priv = wcmAllocate(pInfo)))
 		goto SetupProc_fail;
+	pInfo->private = priv;
 
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86SetStrOption(pInfo->options, "Type", NULL);
 	if (!device && !(device = wcmEventAutoDevProbe(pInfo)))
 		goto SetupProc_fail;
 
-	priv = (WacomDevicePtr) pInfo->private;
 	priv->common->device_path = device;
 	priv->name = pInfo->name;
 	priv->debugLevel = xf86SetIntOption(pInfo->options,
