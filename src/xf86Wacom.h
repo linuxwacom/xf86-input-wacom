@@ -201,7 +201,7 @@ enum WacomSuppressMode {
 extern void wcmInitialToolSize(WacomDevicePtr priv);
 
 /* wcmConfig.c */
-extern int wcmSetType(WacomDevicePtr priv, const char *type);
+extern int wcmSetFlags(WacomDevicePtr priv, const char *type);
 
 /* wcmCommon.c */
 extern int getScrollDelta(int current, int old, int wrap, int flags);

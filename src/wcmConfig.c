@@ -24,7 +24,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <wacom-properties.h>
 
 /*****************************************************************************
  * wcmAllocate --
@@ -126,18 +125,15 @@ static void wcmFree(WacomDevicePtr priv)
 	free(priv);
 }
 
-TEST_NON_STATIC int
-wcmSetType(WacomDevicePtr priv, const char *type)
+TEST_NON_STATIC Bool
+wcmSetFlags(WacomDevicePtr priv, const char *type)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-
 	if (!type)
 		goto invalid;
 
 	if (strcasecmp(type, "stylus") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
-		pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS;
 	} else if (strcasecmp(type, "touch") == 0)
 	{
 		int flags = TOUCH_ID;
@@ -146,19 +142,15 @@ wcmSetType(WacomDevicePtr priv, const char *type)
 			flags |= ABSOLUTE_FLAG;
 
 		priv->flags = flags;
-		pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH;
 	} else if (strcasecmp(type, "cursor") == 0)
 	{
 		priv->flags = CURSOR_ID;
-		pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR;
 	} else if (strcasecmp(type, "eraser") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
-		pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER;
 	} else if (strcasecmp(type, "pad") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|PAD_ID;
-		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
 	} else
 		goto invalid;
 
@@ -166,18 +158,18 @@ wcmSetType(WacomDevicePtr priv, const char *type)
 	priv->oldState.device_id = wcmGetPhyDeviceID(priv);
 
 	if (!priv->tool)
-		return 0;
+		return FALSE;
 
 	priv->tool->typeid = DEVICE_ID(priv->flags); /* tool type (stylus/touch/eraser/cursor/pad) */
 
-	return 1;
+	return TRUE;
 
 invalid:
 	wcmLog(priv, W_ERROR,
 		    "No type or invalid type specified.\n"
 		    "Must be one of stylus, touch, cursor, eraser, or pad\n");
 
-	return 0;
+	return FALSE;
 }
 
 int wcmGetPhyDeviceID(WacomDevicePtr priv)
@@ -751,7 +743,7 @@ int wcmPreInit(WacomDevicePtr priv)
 		goto SetupProc_fail;
 	}
 
-	if (!wcmSetType(priv, type))
+	if (!wcmSetFlags(priv, type))
 		goto SetupProc_fail;
 
 	if (!wcmPreInitParseOptions(priv, need_hotplug, is_dependent))

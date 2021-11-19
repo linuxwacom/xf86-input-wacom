@@ -541,11 +541,11 @@ static void test_set_type(void)
 
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, NULL);
+	rc = wcmSetFlags(&priv, NULL);
 	assert(rc == 0);
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "stylus");
+	rc = wcmSetFlags(&priv, "stylus");
 	assert(rc == 1);
 	assert(is_absolute(&priv));
 	assert(IsStylus(&priv));
@@ -555,7 +555,7 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "touch");
+	rc = wcmSetFlags(&priv, "touch");
 	assert(rc == 1);
 	/* only some touch screens are absolute */
 	assert(!is_absolute(&priv));
@@ -566,7 +566,7 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "eraser");
+	rc = wcmSetFlags(&priv, "eraser");
 	assert(rc == 1);
 	assert(is_absolute(&priv));
 	assert(!IsStylus(&priv));
@@ -576,7 +576,7 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "cursor");
+	rc = wcmSetFlags(&priv, "cursor");
 	assert(rc == 1);
 	assert(!is_absolute(&priv));
 	assert(!IsStylus(&priv));
@@ -586,7 +586,7 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "pad");
+	rc = wcmSetFlags(&priv, "pad");
 	assert(rc == 1);
 	assert(is_absolute(&priv));
 	assert(!IsStylus(&priv));
@@ -596,7 +596,7 @@ static void test_set_type(void)
 	assert(IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&priv, "foobar");
+	rc = wcmSetFlags(&priv, "foobar");
 	assert(rc == 0);
 
 #undef reset

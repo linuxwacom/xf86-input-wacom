@@ -48,6 +48,7 @@
 #include <exevents.h>           /* Needed for InitValuator/Proximity stuff */
 
 #include <xserver-properties.h>
+#include <wacom-properties.h>
 #include <X11/extensions/XKB.h>
 #include <xkbsrv.h>
 
@@ -771,6 +772,8 @@ static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
 	WacomDevicePtr priv = NULL;
+	const char *type = NULL;
+	Status status;
 
 	pInfo->device_control = wcmDevProc;
 	pInfo->read_input = wcmDevReadInput;
@@ -783,7 +786,27 @@ static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	pInfo->private = priv;
 
-	return wcmPreInit(priv);
+	if ((status = wcmPreInit(priv)) != Success)
+		return status;
+
+	if (strcasecmp(type, "stylus") == 0)
+		pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS;
+	else if (strcasecmp(type, "touch") == 0)
+		pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH;
+	else if (strcasecmp(type, "cursor") == 0)
+		pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR;
+	else if (strcasecmp(type, "eraser") == 0)
+		pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER;
+	else if (strcasecmp(type, "pad") == 0)
+		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
+	else {
+		xf86IDrvMsg(pInfo, X_ERROR,
+		       "No type or invalid type specified.\n"
+		       "Must be one of stylus, touch, cursor, eraser, or pad\n");
+		return BadValue;
+	}
+
+	return Success;
 }
 
 static void unInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
