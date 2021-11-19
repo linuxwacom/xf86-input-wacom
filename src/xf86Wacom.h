@@ -77,8 +77,6 @@ typedef struct _WacomModule WacomModule;
 
 struct _WacomModule
 {
-	InputDriverPtr wcmDrv;
-
 	int (*DevOpen)(DeviceIntPtr pWcm);
 	void (*DevReadInput)(InputInfoPtr pInfo);
 	void (*DevControlProc)(DeviceIntPtr device, PtrCtrl* ctrl);

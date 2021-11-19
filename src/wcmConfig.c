@@ -548,8 +548,6 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
 
-	gWacomModule.wcmDrv = drv;
-
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86SetStrOption(pInfo->options, "Type", NULL);
 
