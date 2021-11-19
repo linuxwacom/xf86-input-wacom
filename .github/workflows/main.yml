@@ -1,7 +1,7 @@
 on: [ push, pull_request ]
 
 env:
-  CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-error=unused-parameter
+  CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-unused-parameter
 
 jobs:
   compile:
