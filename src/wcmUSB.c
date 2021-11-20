@@ -42,9 +42,11 @@ typedef struct {
 	int npadkeys;                /* number of pad keys in the above array */
 	int padkey_code[WCM_MAX_BUTTONS];/* hardware codes for buttons */
 	int lastChannel;
+	Bool grabDevice;
 } wcmUSBData;
 
 static Bool usbDetect(InputInfoPtr);
+static Bool usbParseOptions(InputInfoPtr pInfo);
 static Bool usbWcmInit(InputInfoPtr pDev, char* id, size_t id_len, float *version);
 static int usbProbeKeys(InputInfoPtr pInfo);
 static int usbStart(InputInfoPtr pInfo);
@@ -67,7 +69,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 WacomDeviceClass gWacomUSBDevice =
 {
 	usbDetect,
-	NULL, /* no USB-specific options */
+	usbParseOptions,
 	usbWcmInit,
 	usbProbeKeys
 };
@@ -132,15 +134,37 @@ static Bool usbDetect(InputInfoPtr pInfo)
 	return 1;
 }
 
+static Bool usbParseOptions(InputInfoPtr pInfo)
+{
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData *usbdata;
+
+	if (!common->private &&
+	    !(common->private = calloc(1, sizeof(wcmUSBData))))
+	{
+		xf86IDrvMsg(pInfo, X_ERROR, "unable to alloc event queue.\n");
+		return FALSE;
+	}
+
+	usbdata = common->private;
+	usbdata->grabDevice = xf86CheckBoolOption(pInfo->options, "GrabDevice", FALSE);
+
+	return TRUE;
+}
+
 /*****************************************************************************
  * usbStart --
  ****************************************************************************/
 static int
 usbStart(InputInfoPtr pInfo)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomCommonPtr common = priv->common;
+	wcmUSBData *usbdata = common->private;
 	int err;
 
-	if (xf86CheckBoolOption(pInfo->options, "GrabDevice", 0))
+	if (usbdata->grabDevice)
 	{
 		/* Try to grab the event device so that data don't leak to /dev/input/mice */
 		SYSCALL(err = ioctl(pInfo->fd, EVIOCGRAB, (pointer)1));
