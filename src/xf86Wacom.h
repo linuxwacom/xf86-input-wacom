@@ -21,7 +21,6 @@
 #define __XF86_XF86WACOM_H
 
 #include <xorg-server.h>
-#include <xorgVersion.h>
 
 #include "Xwacom.h"
 
@@ -30,7 +29,6 @@
 
 #include <xf86.h>
 #include <xf86Xinput.h>
-#include <mipointer.h>
 #include <X11/Xatom.h>
 
 #include <wacom-util.h>
