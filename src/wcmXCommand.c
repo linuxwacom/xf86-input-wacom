@@ -23,6 +23,7 @@
 #include "wcmFilter.h"
 #include <exevents.h>
 #include <xf86_OSproc.h>
+#include <X11/Xatom.h>
 
 #ifndef XI_PROP_DEVICE_NODE
 #define XI_PROP_DEVICE_NODE "Device Node"
