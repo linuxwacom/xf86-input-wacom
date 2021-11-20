@@ -83,24 +83,24 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data);
 static int wcmWaitForTablet(InputInfoPtr pInfo, char * data, int size);
 static int wcmWriteWait(InputInfoPtr pInfo, const char* request);
 
-	WacomDeviceClass gWacomISDV4Device =
-	{
-		isdv4Detect,
-		isdv4ParseOptions,
-		isdv4Init,
-		isdv4ProbeKeys,
-	};
+WacomDeviceClass gWacomISDV4Device =
+{
+	isdv4Detect,
+	isdv4ParseOptions,
+	isdv4Init,
+	isdv4ProbeKeys,
+};
 
-	static WacomModel isdv4General =
-	{
-		"General ISDV4",
-		isdv4InitISDV4,
-		NULL,                 /* resolution not queried */
-		isdv4GetRanges,       /* query ranges */
-		isdv4StartTablet,     /* start tablet */
-		isdv4Parse,
-		NULL,
-	};
+static WacomModel isdv4General =
+{
+	"General ISDV4",
+	isdv4InitISDV4,
+	NULL,                 /* resolution not queried */
+	isdv4GetRanges,       /* query ranges */
+	isdv4StartTablet,     /* start tablet */
+	isdv4Parse,
+	NULL,
+};
 
 static void memdump(InputInfoPtr pInfo, char *buffer, unsigned int len)
 {
