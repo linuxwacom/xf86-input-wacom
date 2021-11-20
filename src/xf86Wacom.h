@@ -25,7 +25,6 @@
 
 #include "Xwacom.h"
 
-#define inline __inline__
 #include <xf86.h>
 #include <string.h>
 #include <errno.h>
