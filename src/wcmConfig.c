@@ -544,12 +544,9 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
 	WacomDevicePtr priv = NULL;
 	WacomCommonPtr common = NULL;
-	char		*type, *device;
+	char		*type = NULL, *device = NULL;
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
-
-	device = xf86SetStrOption(pInfo->options, "Device", NULL);
-	type = xf86SetStrOption(pInfo->options, "Type", NULL);
 
 	/*
 	   Init process:
@@ -566,6 +563,8 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (!wcmAllocate(pInfo))
 		goto SetupProc_fail;
 
+	device = xf86SetStrOption(pInfo->options, "Device", NULL);
+	type = xf86SetStrOption(pInfo->options, "Type", NULL);
 	if (!device && !(device = wcmEventAutoDevProbe(pInfo)))
 		goto SetupProc_fail;
 
