@@ -72,12 +72,6 @@ xf86OptionValue(OPTTYPE opt)
     return NULL;
 }
 
-_X_EXPORT int
-xf86NameCmp(const char *s1, const char *s2)
-{
-    return strcasecmp(s1, s2);
-}
-
 _X_EXPORT char *
 xf86CheckStrOption(OPTTYPE optlist, const char *name, CONST char *deflt)
 {

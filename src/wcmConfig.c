@@ -142,11 +142,11 @@ wcmSetType(InputInfoPtr pInfo, const char *type)
 	if (!type)
 		goto invalid;
 
-	if (xf86NameCmp(type, "stylus") == 0)
+	if (strcasecmp(type, "stylus") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS;
-	} else if (xf86NameCmp(type, "touch") == 0)
+	} else if (strcasecmp(type, "touch") == 0)
 	{
 		int flags = TOUCH_ID;
 
@@ -155,15 +155,15 @@ wcmSetType(InputInfoPtr pInfo, const char *type)
 
 		priv->flags = flags;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH;
-	} else if (xf86NameCmp(type, "cursor") == 0)
+	} else if (strcasecmp(type, "cursor") == 0)
 	{
 		priv->flags = CURSOR_ID;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR;
-	} else if (xf86NameCmp(type, "eraser") == 0)
+	} else if (strcasecmp(type, "eraser") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER;
-	} else if (xf86NameCmp(type, "pad") == 0)
+	} else if (strcasecmp(type, "pad") == 0)
 	{
 		priv->flags = ABSOLUTE_FLAG|PAD_ID;
 		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
