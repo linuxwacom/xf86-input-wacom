@@ -25,10 +25,10 @@
 
 #include "Xwacom.h"
 
-#include <xf86.h>
 #include <string.h>
 #include <errno.h>
 
+#include <xf86.h>
 #include <xf86Xinput.h>
 #include <mipointer.h>
 #include <X11/Xatom.h>
