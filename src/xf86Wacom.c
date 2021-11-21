@@ -629,8 +629,7 @@ Bool wcmReadPacket(InputInfoPtr pInfo)
 	DBG(1, common, "pos=%d remaining=%d\n", common->bufpos, remaining);
 
 	/* fill buffer with as much data as we can handle */
-	len = xf86ReadSerial(pInfo->fd,
-		common->buffer + common->bufpos, remaining);
+	SYSCALL((len = read(pInfo->fd, common->buffer + common->bufpos, remaining)));
 
 	if (len <= 0)
 	{
