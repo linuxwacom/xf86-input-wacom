@@ -1,18 +1,5 @@
 #include "fake-symbols.h"
 
-_X_EXPORT
-int xf86ReadSerial (int fd, void *buf, int count)
-{
-    return 0;
-}
-
-
-_X_EXPORT int
-xf86WriteSerial (int fd, const void *buf, int count)
-{
-    return 0;
-}
-
 _X_EXPORT int
 xf86CloseSerial (int fd)
 {

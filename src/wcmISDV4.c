@@ -843,7 +843,7 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
 	/* send request string */
 	do
 	{
-		len = xf86WriteSerial(pInfo->fd, request, strlen(request));
+		SYSCALL((len = write(pInfo->fd, request, strlen(request))));
 		if ((len == -1) && (errno != EAGAIN))
 		{
 			xf86IDrvMsg(pInfo, X_ERROR,
@@ -877,7 +877,7 @@ static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
 	{
 		if ((len = xf86WaitForInput(pInfo->fd, 1000000)) > 0)
 		{
-			len = xf86ReadSerial(pInfo->fd, answer, size);
+			SYSCALL((len = read(pInfo->fd, answer, size)));
 			if ((len == -1) && (errno != EAGAIN))
 			{
 				xf86IDrvMsg(pInfo, X_ERROR,
