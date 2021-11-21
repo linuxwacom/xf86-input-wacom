@@ -747,9 +747,8 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds)
 	if (!ds->proximity)
 		priv->flags &= ~SCROLLMODE_FLAG;
 
-	DBG(7, priv, "[%s] o_prox=%s x=%d y=%d z=%d "
+	DBG(7, priv, "o_prox=%s x=%d y=%d z=%d "
 		"b=%s b=%d tx=%d ty=%d wl=%d wl2=%d rot=%d th=%d\n",
-		pInfo->type_name,
 		priv->oldState.proximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", ds->buttons,
 		tx, ty, ds->abswheel, ds->abswheel2, ds->rotation, ds->throttle);
