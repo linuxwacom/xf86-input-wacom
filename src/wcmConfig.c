@@ -579,7 +579,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if (wcmIsDuplicate(device, pInfo))
 		goto SetupProc_fail;
 
-	if (wcmOpen(pInfo) != Success)
+	if (wcmOpen(pInfo) < 0)
 		goto SetupProc_fail;
 
 	/* Try to guess whether it's USB or ISDV4 */
