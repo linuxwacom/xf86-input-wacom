@@ -851,9 +851,9 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	/* Optional configuration */
 	s = xf86SetStrOption(pInfo->options, "Mode", NULL);
 
-	if (s && (xf86NameCmp(s, "absolute") == 0))
+	if (s && (strcasecmp(s, "absolute") == 0))
 		set_absolute(pInfo, TRUE);
-	else if (s && (xf86NameCmp(s, "relative") == 0))
+	else if (s && (strcasecmp(s, "relative") == 0))
 		set_absolute(pInfo, FALSE);
 	else
 	{
@@ -886,13 +886,13 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	{
 		int rotation = ROTATE_NONE;
 
-		if (xf86NameCmp(s, "CW") == 0)
+		if (strcasecmp(s, "CW") == 0)
 			rotation = ROTATE_CW;
-		else if (xf86NameCmp(s, "CCW") ==0)
+		else if (strcasecmp(s, "CCW") ==0)
 			rotation = ROTATE_CCW;
-		else if (xf86NameCmp(s, "HALF") ==0)
+		else if (strcasecmp(s, "HALF") ==0)
 			rotation = ROTATE_HALF;
-		else if (xf86NameCmp(s, "NONE") !=0)
+		else if (strcasecmp(s, "NONE") !=0)
 		{
 			xf86IDrvMsg(pInfo, X_ERROR, "invalid Rotate option '%s'.\n", s);
 			goto error;
