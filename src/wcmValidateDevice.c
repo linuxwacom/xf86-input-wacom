@@ -37,31 +37,31 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
 
 	for (; !match && pDevices != NULL; pDevices = pDevices->next)
 	{
-		char* device = xf86CheckStrOption(pDevices->options, "Device", NULL);
+		char *device;
+		WacomCommonPtr pCommon;
 
-		/* device can be NULL on some distros */
-		if (!device)
+		if (pInfo == pDevices)
 			continue;
-
-		free(device);
 
 		if (!strstr(pDevices->drv->driverName, "wacom"))
 			continue;
 
-		if (pInfo != pDevices)
+		device = xf86CheckStrOption(pDevices->options, "Device", NULL);
+		/* device can be NULL on some distros */
+		if (!device)
+			continue;
+		free(device);
+
+		pCommon = ((WacomDevicePtr)pDevices->private)->common;
+		if (pCommon->min_maj && pCommon->min_maj == min_maj)
 		{
-			WacomCommonPtr pCommon = ((WacomDevicePtr)pDevices->private)->common;
 			char* fsource = xf86CheckStrOption(pInfo->options, "_source", "");
 			char* psource = xf86CheckStrOption(pDevices->options, "_source", "");
 
-			if (pCommon->min_maj &&
-				pCommon->min_maj == min_maj)
-			{
-				/* only add the new tool if the matching major/minor
-				* was from the same source */
-				if (strcmp(fsource, psource))
-					match = 1;
-			}
+			/* only add the new tool if the matching major/minor
+			* was from the same source */
+			if (strcmp(fsource, psource))
+				match = 1;
 			free(fsource);
 			free(psource);
 		}
