@@ -475,7 +475,7 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
  * wcmOpen --
  ****************************************************************************/
 
-Bool wcmOpen(InputInfoPtr pInfo)
+int wcmOpen(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
@@ -485,12 +485,13 @@ Bool wcmOpen(InputInfoPtr pInfo)
 	pInfo->fd = xf86OpenSerial(pInfo->options);
 	if (pInfo->fd < 0)
 	{
+		int saved_errno = errno;
 		xf86IDrvMsg(pInfo, X_ERROR, "Error opening %s (%s)\n",
 			common->device_path, strerror(errno));
-		return !Success;
+		return -saved_errno;
 	}
 
-	return Success;
+	return pInfo->fd;
 }
 
 /*****************************************************************************
@@ -531,7 +532,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		if ((wcmOpen (pInfo) != Success) || !common->device_path)
+		if ((wcmOpen (pInfo) < 0) || !common->device_path)
 		{
 			DBG(1, priv, "Failed to open device (fd=%d)\n", pInfo->fd);
 			wcmClose(pInfo);
