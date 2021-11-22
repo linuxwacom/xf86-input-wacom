@@ -374,7 +374,7 @@ int wcmTilt2R(int x, int y, double offset)
 	rotation %= MAX_ROTATION_RANGE;
 
 	/* now scale back from 0...MAX to MIN..(MIN+MAX) */
-	rotation = xf86ScaleAxis(rotation,
+	rotation = wcmScaleAxis(rotation,
 				 MIN_ROTATION + MAX_ROTATION_RANGE,
 				 MIN_ROTATION,
 				 MAX_ROTATION_RANGE, 0);
