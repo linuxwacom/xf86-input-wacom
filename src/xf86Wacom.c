@@ -107,7 +107,18 @@ wcmInitialToolSize(InputInfoPtr pInfo)
 	return;
 }
 
-static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int min_res, int max_res, int mode) {
+static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int mode)
+{
+	int min_res, max_res;
+
+	if (res != 0)
+	{
+		max_res = res;
+		min_res = 0;
+	} else
+	{
+		res = max_res = min_res = 1;
+	}
 	InitValuatorAxisStruct(dev, axis,
 	                       label,
 	                       min, max, res, min_res, max_res,
@@ -132,7 +143,7 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 
 	Atom label;
 	int index;
-	int min, max, min_res, max_res, res;
+	int min, max, res;
 	int mode;
 
 	/* first valuator: x */
@@ -140,12 +151,10 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
 	min = priv->topX;
 	max = priv->bottomX;
-	min_res = 0;
-	max_res = priv->resolX;
 	res = priv->resolX;
 	mode = Absolute;
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* second valuator: y */
@@ -153,19 +162,17 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
 	min = priv->topY;
 	max = priv->bottomY;
-	min_res = 0;
-	max_res = priv->resolY;
 	res = priv->resolY;
 	mode = Absolute;
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* third valuator: pressure */
 	index = 2;
 	label = None;
 	mode = Absolute;
-	min_res = max_res = res = 1;
+	res = 0;
 	min = 0;
 	max = 1;
 
@@ -175,21 +182,21 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		max = priv->maxCurve;
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
 	index = 3;
 	label = None;
 	mode = Absolute;
-	min_res = max_res = res = 1;
+	res = 0;
 	min = 0;
 	max = 1;
 
 	if (IsPen(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
-		min_res = max_res = res = round(TILT_RES);
+		res = round(TILT_RES);
 		min = TILT_MIN;
 		max = TILT_MAX;
 	}
@@ -204,21 +211,21 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		max = common->wcmMaxStripX;
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
 	index = 4;
 	label = None;
 	mode = Absolute;
-	min_res = max_res = res = 1;
+	res = 0;
 	min = 0;
 	max = 1;
 
 	if (IsPen(priv))
 	{
 		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
-		min_res = max_res = res = round(TILT_RES);
+		res = round(TILT_RES);
 		min = TILT_MIN;
 		max = TILT_MAX;
 	}
@@ -233,14 +240,14 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		max = common->wcmMaxStripY;
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
 	index = 5;
 	label = None;
 	mode = Absolute;
-	min_res = max_res = res = 1;
+	res = 0;
 	min = 0;
 	max = 1;
 
@@ -258,7 +265,7 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		max = common->wcmMaxRing;
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 
 
 	/* seventh valuator: abswheel2 */
@@ -268,12 +275,12 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 		index = 6;
 		label = None;
 		mode = Absolute;
-		min_res = max_res = res = 1;
+		res = 1;
 
 		min = common->wcmMinRing;
 		max = common->wcmMaxRing;
 
-		wcmInitAxis(pInfo->dev, index, label, min, max, res, min_res, max_res, mode);
+		wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
 	}
 
 	return TRUE;
