@@ -586,7 +586,11 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
-		if ((wcmOpen (pInfo) < 0) || !common->device_path)
+		if (!common->device_path) {
+			DBG(1, priv, "Missing common device path\n");
+			return FALSE;
+		}
+		if (wcmOpen(pInfo) < 0)
 		{
 			DBG(1, priv, "Failed to open device (fd=%d)\n", pInfo->fd);
 			wcmClose(pInfo);
