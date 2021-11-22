@@ -652,13 +652,20 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 	/* move data until we exhaust the device */
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
+		int rc;
+
 		/* verify that there is still data in pipe */
 		if (wcmReady(pInfo) <= 0)
 			break;
 
 		/* dispatch */
-		if (!wcmReadPacket(pInfo))
+		if ((rc = wcmReadPacket(pInfo)) < 0) {
+			LogMessageVerbSigSafe(X_ERROR, 0,
+					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(-rc));
+			if (rc == -ENODEV)
+				xf86RemoveEnabledDevice(pInfo);
 			break;
+		}
 	}
 
 #ifdef DEBUG
@@ -675,7 +682,7 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 #endif
 }
 
-Bool wcmReadPacket(InputInfoPtr pInfo)
+int wcmReadPacket(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
@@ -692,15 +699,9 @@ Bool wcmReadPacket(InputInfoPtr pInfo)
 
 	if (len <= 0)
 	{
-		/* for all other errors, hope that the hotplugging code will
-		 * remove the device */
-		if (errno != EAGAIN && errno != EINTR)
-			LogMessageVerbSigSafe(X_ERROR, 0,
-					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(errno));
-		if (errno == ENODEV)
-			xf86RemoveEnabledDevice(pInfo);
-
-		return FALSE;
+		if (errno == EAGAIN || errno == EINTR)
+			return 0;
+		return -errno;
 	}
 
 	/* account for new data */
@@ -733,7 +734,7 @@ Bool wcmReadPacket(InputInfoPtr pInfo)
 
 	common->bufpos = len;
 
-	return TRUE;
+	return pos;
 }
 
 int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
