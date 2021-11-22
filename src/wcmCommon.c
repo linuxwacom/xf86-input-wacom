@@ -543,19 +543,24 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	DeviceIntPtr dev = pInfo->dev;
 	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
+	int xmax, xmin, ymax, ymin;
 
 	/* scale into on topX/topY area */
 	axis_x = &dev->valuator->axes[0];
 	axis_y = &dev->valuator->axes[1];
 
-	/* Don't try to scale relative axes */
-	if (axis_x->max_value > axis_x->min_value)
-		*x = xf86ScaleAxis(*x, axis_x->max_value, axis_x->min_value,
-				   priv->bottomX, priv->topX);
+	xmin = axis_x->min_value;
+	xmax = axis_x->max_value;
+	ymin = axis_y->min_value;
+	ymax = axis_y->max_value;
 
-	if (axis_y->max_value > axis_y->min_value)
-		*y = xf86ScaleAxis(*y, axis_y->max_value, axis_y->min_value,
-				   priv->bottomY, priv->topY);
+
+	/* Don't try to scale relative axes */
+	if (xmax > xmin)
+		*x = xf86ScaleAxis(*x, xmax, xmin, priv->bottomX, priv->topX);
+
+	if (ymax > ymin)
+		*y = xf86ScaleAxis(*y, ymax, ymin, priv->bottomY, priv->topY);
 
 	/* coordinates are now in the axis rage we advertise for the device */
 
@@ -563,22 +568,18 @@ void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y)
 	{
 		tmp_coord = *x;
 
-		*x = xf86ScaleAxis(*y,
-				   axis_x->max_value, axis_x->min_value,
-				   axis_y->max_value, axis_y->min_value);
-		*y = xf86ScaleAxis(tmp_coord,
-				   axis_y->max_value, axis_y->min_value,
-				   axis_x->max_value, axis_x->min_value);
+		*x = xf86ScaleAxis(*y, xmax, xmin, ymax, ymin);
+		*y = xf86ScaleAxis(tmp_coord, ymax, ymin, xmax, xmin);
 	}
 
 	if (common->wcmRotate == ROTATE_CW)
-		*y = axis_y->max_value - (*y - axis_y->min_value);
+		*y = ymax - (*y - ymin);
 	else if (common->wcmRotate == ROTATE_CCW)
-		*x = axis_x->max_value - (*x - axis_x->min_value);
+		*x = xmax - (*x - xmin);
 	else if (common->wcmRotate == ROTATE_HALF)
 	{
-		*x = axis_x->max_value - (*x - axis_x->min_value);
-		*y = axis_y->max_value - (*y - axis_y->min_value);
+		*x = xmax - (*x - xmin);
+		*y = ymax - (*y - ymin);
 	}
 
 
