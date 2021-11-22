@@ -625,6 +625,30 @@ static void sendCommonEvents(WacomDevicePtr priv, const WacomDeviceState* ds,
 		sendWheelStripEvents(priv, ds, first_val, num_vals, valuators);
 }
 
+/* 1:1 copy from xf86ScaleAxis */
+int wcmScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+{
+	int X;
+	int64_t to_width = to_max - to_min;
+	int64_t from_width = from_max - from_min;
+
+	if (from_width) {
+		X = (int)(((to_width * (Cx - from_min)) / from_width) + to_min);
+	}
+	else {
+		X = 0;
+		/*ErrorF ("Divide by Zero in xf86ScaleAxis\n");*/
+	}
+
+	if (X > to_max)
+		X = to_max;
+	if (X < to_min)
+		X = to_min;
+
+	return X;
+}
+
+
 /* rotate x and y before post X inout events */
 void wcmRotateAndScaleCoordinates(WacomDevicePtr priv, int* x, int* y)
 {
@@ -647,10 +671,10 @@ void wcmRotateAndScaleCoordinates(WacomDevicePtr priv, int* x, int* y)
 
 	/* Don't try to scale relative axes */
 	if (xmax > xmin)
-		*x = xf86ScaleAxis(*x, xmax, xmin, priv->bottomX, priv->topX);
+		*x = wcmScaleAxis(*x, xmax, xmin, priv->bottomX, priv->topX);
 
 	if (ymax > ymin)
-		*y = xf86ScaleAxis(*y, ymax, ymin, priv->bottomY, priv->topY);
+		*y = wcmScaleAxis(*y, ymax, ymin, priv->bottomY, priv->topY);
 
 	/* coordinates are now in the axis rage we advertise for the device */
 
@@ -658,8 +682,8 @@ void wcmRotateAndScaleCoordinates(WacomDevicePtr priv, int* x, int* y)
 	{
 		tmp_coord = *x;
 
-		*x = xf86ScaleAxis(*y, xmax, xmin, ymax, ymin);
-		*y = xf86ScaleAxis(tmp_coord, ymax, ymin, xmax, xmin);
+		*x = wcmScaleAxis(*y, xmax, xmin, ymax, ymin);
+		*y = wcmScaleAxis(tmp_coord, ymax, ymin, xmax, xmin);
 	}
 
 	if (common->wcmRotate == ROTATE_CW)
@@ -1264,10 +1288,7 @@ normalizePressure(const WacomDevicePtr priv, const int raw_pressure)
 	}
 	/* normalize pressure to 0..maxCurve */
 	if (range_left >= 1)
-		pressure = xf86ScaleAxis(p,
-					 priv->maxCurve, 0,
-					 range_left,
-					 0);
+		pressure = wcmScaleAxis(p, priv->maxCurve, 0, range_left, 0);
 	else
 		pressure = priv->maxCurve;
 
