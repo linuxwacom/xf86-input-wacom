@@ -109,16 +109,11 @@ static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], in
 static void
 wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-	ValuatorMask *mask = priv->common->touch_mask;
 	WacomDeviceState state = channel->valid.state;
 	WacomDeviceState oldstate = channel->valid.states[1];
 	int type = -1;
 
 	wcmRotateAndScaleCoordinates (priv, &state.x, &state.y);
-
-	valuator_mask_set(mask, 0, state.x);
-	valuator_mask_set(mask, 1, state.y);
 
 	if (!state.proximity) {
 		DBG(6, priv->common, "This is a touch end event\n");
@@ -133,7 +128,7 @@ wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
 		type = XI_TouchUpdate;
 	}
 
-	xf86PostTouchEvent(pInfo->dev, state.serial_num - 1, type, 0, mask);
+	wcmEmitTouch(priv, type, state.serial_num - 1, state.x, state.y);
 }
 
 /**
@@ -237,12 +232,11 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 /* send a button event */
 static void wcmSendButtonClick(WacomDevicePtr priv, int button, int state)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int mode = is_absolute(priv);
+	WacomAxisData axes = {0};
 
 	/* send button event in state */
-	xf86PostButtonEventP(pInfo->dev, mode,button,
-		state,0,0,0);
+	wcmEmitButton(priv, mode, button, state, &axes);
 
 	/* We have changed the button state (from down to up) for the device
 	 * so we need to update the record */
@@ -723,7 +717,6 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 
 static void wcmFingerZoom(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {};
 	WacomDeviceState *start = common->wcmGestureState;
@@ -782,10 +775,10 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	common->wcmGestureParameters.wcmGestureUsed += count;
 	while (count--)
 	{
-		wcmEmitKeycode (pInfo->dev, 37 /*XK_Control_L*/, 1);
+		wcmEmitKeycode (priv, 37 /*XK_Control_L*/, 1);
 		wcmSendButtonClick (priv, button, 1);
 		wcmSendButtonClick (priv, button, 0);
-		wcmEmitKeycode (pInfo->dev, 37 /*XK_Control_L*/, 0);
+		wcmEmitKeycode (priv, 37 /*XK_Control_L*/, 0);
 	}
 }
 

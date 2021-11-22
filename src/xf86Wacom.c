@@ -59,20 +59,110 @@
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static void wcmDevClose(WacomDevicePtr priv);
 
-enum WacomAxisType {
-	WACOM_AXIS_X		= (1 << 0),
-	WACOM_AXIS_Y		= (1 << 1),
-	WACOM_AXIS_PRESSURE	= (1 << 2),
-	WACOM_AXIS_TILT_X	= (1 << 3),
-	WACOM_AXIS_TILT_Y	= (1 << 4),
-	WACOM_AXIS_STRIP_X	= (1 << 5),
-	WACOM_AXIS_STRIP_Y	= (1 << 6),
-	WACOM_AXIS_ROTATION	= (1 << 7),
-	WACOM_AXIS_THROTTLE	= (1 << 8),
-	WACOM_AXIS_WHEEL	= (1 << 9),
-	WACOM_AXIS_RING		= (1 << 10),
-	WACOM_AXIS_RING2	= (1 << 11),
-};
+/*****************************************************************************
+ * Event helpers
+ ****************************************************************************/
+void wcmEmitKeycode(WacomDevicePtr priv, int keycode, int state)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	DeviceIntPtr keydev = pInfo->dev;
+
+	xf86PostKeyboardEvent (keydev, keycode, state);
+}
+
+static inline void
+convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuators[7])
+{
+	int first = 7;
+	int last = -1;
+
+	memset(valuators, 0, 7 * sizeof(valuators[0]));
+
+	for (enum WacomAxisType which = _WACOM_AXIS_LAST; which > 0; which >>= 1)
+	{
+		int value;
+		Bool has_value = wcmAxisGet(axes, which, &value);
+		int pos;
+
+		if (!has_value)
+			continue;
+
+		/* Positions need to match wcmInitAxis */
+		switch (which){
+		case WACOM_AXIS_X: pos = 0; break;
+		case WACOM_AXIS_Y: pos = 1; break;
+		case WACOM_AXIS_PRESSURE: pos = 2; break;
+		case WACOM_AXIS_TILT_X: pos = 3; break;
+		case WACOM_AXIS_TILT_Y: pos = 4; break;
+		case WACOM_AXIS_STRIP_X: pos = 3; break;
+		case WACOM_AXIS_STRIP_Y: pos = 4; break;
+		case WACOM_AXIS_ROTATION: pos = 3; break;
+		case WACOM_AXIS_THROTTLE: pos = 4; break;
+		case WACOM_AXIS_WHEEL: pos = 5; break;
+		case WACOM_AXIS_RING: pos = 5; break;
+		case WACOM_AXIS_RING2: pos = 6; break;
+			break;
+		default:
+			abort();
+		}
+
+		first = min(first, pos);
+		last = max(last, pos);
+		valuators[pos] = value;
+	}
+
+	if (last < 0)
+		first = 0;
+	*first_out = first;
+	*num_out = last - first + 1;
+}
+
+void wcmEmitProximity(WacomDevicePtr priv, Bool is_proximity_in,
+		      const WacomAxisData *axes)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	int valuators[7];
+	int first_val, num_vals;
+
+	convertAxes(axes, &first_val, &num_vals, valuators);
+
+	xf86PostProximityEventP(pInfo->dev, is_proximity_in, first_val, num_vals, valuators);
+}
+
+void wcmEmitMotion(WacomDevicePtr priv, Bool is_absolute, const WacomAxisData *axes)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	int valuators[7];
+	int first_val, num_vals;
+
+	convertAxes(axes, &first_val, &num_vals, valuators);
+
+	xf86PostMotionEventP(pInfo->dev, is_absolute, first_val, num_vals, valuators);
+}
+
+void wcmEmitButton(WacomDevicePtr priv, Bool is_absolute, int button, Bool is_press, const WacomAxisData *axes)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	int valuators[7];
+	int first_val, num_vals;
+
+	convertAxes(axes, &first_val, &num_vals, valuators);
+
+	xf86PostButtonEventP(pInfo->dev, is_absolute, button, is_press, first_val, num_vals, valuators);
+}
+
+void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	/* FIXME: this should be part of this interface here */
+	ValuatorMask *mask = priv->common->touch_mask;
+
+	valuator_mask_set(mask, 0, x);
+	valuator_mask_set(mask, 1, y);
+
+	xf86PostTouchEvent(pInfo->dev, touchid, type, 0, mask);
+}
+
 
 static void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 			int min, int max, int res)
@@ -355,7 +445,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	if (!wcmInitPointer(priv, nbaxes, is_absolute(priv) ? Absolute : Relative))
 	{
-		wcmLog(priv, X_ERROR, "unable to init Pointer class device\n");
+		wcmLog(priv, W_ERROR, "unable to init Pointer class device\n");
 		return FALSE;
 	}
 
