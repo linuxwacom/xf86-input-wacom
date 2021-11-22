@@ -167,7 +167,6 @@ extern void wcmUnlinkTouchAndPen(WacomDevicePtr priv);
 
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);
-extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
 extern void wcmSoftOutEvent(WacomDevicePtr priv);
 extern void wcmCancelGesture(WacomDevicePtr priv);
 
@@ -212,6 +211,93 @@ static inline void wcmActionSet(WacomAction *action, unsigned idx, unsigned act)
 	action->action[idx] = act;
 	action->nactions = idx + 1;
 }
+
+/* Axis and event handling */
+
+enum WacomAxisType {
+	WACOM_AXIS_X		= (1 << 0),
+	WACOM_AXIS_Y		= (1 << 1),
+	WACOM_AXIS_PRESSURE	= (1 << 2),
+	WACOM_AXIS_TILT_X	= (1 << 3),
+	WACOM_AXIS_TILT_Y	= (1 << 4),
+	WACOM_AXIS_STRIP_X	= (1 << 5),
+	WACOM_AXIS_STRIP_Y	= (1 << 6),
+	WACOM_AXIS_ROTATION	= (1 << 7),
+	WACOM_AXIS_THROTTLE	= (1 << 8),
+	WACOM_AXIS_WHEEL	= (1 << 9),
+	WACOM_AXIS_RING		= (1 << 10),
+	WACOM_AXIS_RING2	= (1 << 11),
+
+	_WACOM_AXIS_LAST = WACOM_AXIS_RING2,
+};
+
+typedef struct {
+	uint32_t mask;
+	int x, y;
+	int pressure;
+	int tilt_x, tilt_y;
+	int strip_x, strip_y;
+	int rotation;
+	int throttle;
+	int wheel;
+	int ring, ring2;
+} WacomAxisData;
+
+static inline void wcmAxisSet(WacomAxisData *data,
+			      enum WacomAxisType which, int value)
+{
+	data->mask |= which;
+	switch (which){
+	case WACOM_AXIS_X: data->x = value; break;
+	case WACOM_AXIS_Y: data->y = value; break;
+	case WACOM_AXIS_PRESSURE: data->pressure = value; break;
+	case WACOM_AXIS_TILT_X: data->tilt_x = value; break;
+	case WACOM_AXIS_TILT_Y: data->tilt_y = value; break;
+	case WACOM_AXIS_STRIP_X: data->strip_x = value; break;
+	case WACOM_AXIS_STRIP_Y: data->strip_y = value; break;
+	case WACOM_AXIS_ROTATION: data->rotation = value; break;
+	case WACOM_AXIS_THROTTLE: data->wheel = value; break;
+	case WACOM_AXIS_WHEEL: data->wheel = value; break;
+	case WACOM_AXIS_RING: data->ring = value; break;
+	case WACOM_AXIS_RING2: data->ring2 = value; break;
+	default:
+		abort();
+	}
+}
+
+static inline Bool wcmAxisGet(const WacomAxisData *data,
+			      enum WacomAxisType which, int *value_out)
+{
+	if (!(data->mask & which))
+		return FALSE;
+
+	switch (which){
+	case WACOM_AXIS_X: *value_out = data->x; break;
+	case WACOM_AXIS_Y: *value_out = data->y; break;
+	case WACOM_AXIS_PRESSURE: *value_out = data->pressure; break;
+	case WACOM_AXIS_TILT_X: *value_out = data->tilt_x; break;
+	case WACOM_AXIS_TILT_Y: *value_out = data->tilt_y; break;
+	case WACOM_AXIS_STRIP_X: *value_out = data->strip_x; break;
+	case WACOM_AXIS_STRIP_Y: *value_out = data->strip_y; break;
+	case WACOM_AXIS_ROTATION: *value_out = data->rotation; break;
+	case WACOM_AXIS_THROTTLE: *value_out = data->wheel; break;
+	case WACOM_AXIS_WHEEL: *value_out = data->wheel; break;
+	case WACOM_AXIS_RING: *value_out = data->ring; break;
+	case WACOM_AXIS_RING2: *value_out = data->ring2; break;
+	default:
+		abort();
+	}
+	return TRUE;
+}
+
+void wcmEmitKeycode(WacomDevicePtr priv, int keycode, int state);
+void wcmEmitMotion(WacomDevicePtr priv, Bool is_absolute, const WacomAxisData *axes);
+void wcmEmitButton(WacomDevicePtr priv, Bool is_absolute, int button, Bool is_press,
+		   const WacomAxisData *axes);
+void wcmEmitProximity(WacomDevicePtr priv, Bool is_proximity_in,
+		      const WacomAxisData *axes);
+void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y);
+
 
 enum WacomSuppressMode {
 	SUPPRESS_NONE = 8,	/* Process event normally */
