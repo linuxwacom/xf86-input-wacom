@@ -629,11 +629,14 @@ static int wcmReady(InputInfoPtr pInfo)
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 #endif
 	int n = xf86WaitForInput(pInfo->fd, 0);
-	DBG(10, priv, "%d numbers of data\n", n);
-
-	if (n >= 0) return n ? 1 : 0;
-	xf86IDrvMsg(pInfo, X_ERROR, "select error: %s\n", strerror(errno));
-	return 0;
+	if (n < 0) {
+		int saved_errno = errno;
+		xf86IDrvMsg(pInfo, X_ERROR, "select error: %s\n", strerror(errno));
+		return -saved_errno;
+	} else {
+		DBG(10, priv, "%d numbers of data\n", n);
+	}
+	return n;
 }
 
 /*****************************************************************************
@@ -650,7 +653,8 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 	for (loop=0; loop < MAX_READ_LOOPS; ++loop)
 	{
 		/* verify that there is still data in pipe */
-		if (!wcmReady(pInfo)) break;
+		if (wcmReady(pInfo) <= 0)
+			break;
 
 		/* dispatch */
 		if (!wcmReadPacket(pInfo))
