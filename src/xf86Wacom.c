@@ -302,6 +302,8 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		priv->common->wcmModel->DetectConfig (pInfo);
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
+	if (!nbaxes || nbaxes > 7)
+		nbaxes = priv->naxes = 7;
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
 
 	if (IsPad(priv) && TabletHasFeature(priv->common, WCM_DUALRING))
@@ -348,9 +350,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 			xf86IDrvMsg(pInfo, X_ERROR, "unable to init proximity class device\n");
 			return FALSE;
 	}
-
-	if (!nbaxes || nbaxes > 7)
-		nbaxes = priv->naxes = 7;
 
 	/* axis_labels is just zeros, we set up each valuator with the
 	 * correct property later */
