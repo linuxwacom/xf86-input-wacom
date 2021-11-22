@@ -659,8 +659,7 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 	/* coordinates are ready we can send events */
 	if (ds->proximity)
 	{
-		/* don't emit proximity events if device does not support proximity */
-		if ((pInfo->dev->proximity && !priv->oldState.proximity))
+		if (!priv->oldState.proximity)
 			xf86PostProximityEventP(pInfo->dev, 1, first_val, num_vals, valuators);
 
 		/* Move the cursor to where it should be before sending button events */
