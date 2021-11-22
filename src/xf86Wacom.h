@@ -157,8 +157,6 @@ extern int wcmParseSerials(WacomDevicePtr priv);
 
 extern int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode);
 
-extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-
 extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
 extern void wcmResetStripAction(WacomDevicePtr priv, int index);
 extern void wcmResetWheelAction(WacomDevicePtr priv, int index);

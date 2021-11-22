@@ -59,17 +59,29 @@
 static int wcmDevOpen(DeviceIntPtr pWcm);
 static void wcmDevClose(WacomDevicePtr priv);
 
-static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
-{
-}
+enum WacomAxisType {
+	WACOM_AXIS_X		= (1 << 0),
+	WACOM_AXIS_Y		= (1 << 1),
+	WACOM_AXIS_PRESSURE	= (1 << 2),
+	WACOM_AXIS_TILT_X	= (1 << 3),
+	WACOM_AXIS_TILT_Y	= (1 << 4),
+	WACOM_AXIS_STRIP_X	= (1 << 5),
+	WACOM_AXIS_STRIP_Y	= (1 << 6),
+	WACOM_AXIS_ROTATION	= (1 << 7),
+	WACOM_AXIS_THROTTLE	= (1 << 8),
+	WACOM_AXIS_WHEEL	= (1 << 9),
+	WACOM_AXIS_RING		= (1 << 10),
+	WACOM_AXIS_RING2	= (1 << 11),
+};
 
-static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
+static void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
+			int min, int max, int res)
 {
-}
 
-static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int mode)
-{
+	InputInfoPtr pInfo = priv->pInfo;
+	Atom label = None;
 	int min_res, max_res;
+	int index;
 
 	if (res != 0)
 	{
@@ -79,11 +91,110 @@ static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max
 	{
 		res = max_res = min_res = 1;
 	}
-	InitValuatorAxisStruct(dev, axis,
+
+	switch (type) {
+		case WACOM_AXIS_X:
+			index = 0;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+			break;
+		case WACOM_AXIS_Y:
+			index = 1;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+			break;
+		case WACOM_AXIS_PRESSURE:
+			index = 2;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
+			break;
+		case WACOM_AXIS_TILT_X:
+			index = 3;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X);
+			break;
+		case WACOM_AXIS_TILT_Y:
+			index = 4;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
+			break;
+		case WACOM_AXIS_STRIP_X:
+			index = 3;
+			break;
+		case WACOM_AXIS_STRIP_Y:
+			index = 4;
+			break;
+		case WACOM_AXIS_ROTATION:
+			index = 3;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
+			break;
+		case WACOM_AXIS_THROTTLE:
+			index = 4;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
+			break;
+		case WACOM_AXIS_WHEEL:
+		case WACOM_AXIS_RING:
+			index = 5;
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
+			break;
+		case WACOM_AXIS_RING2:
+			index = 6;
+			break;
+	}
+
+	InitValuatorAxisStruct(pInfo->dev, index,
 	                       label,
 	                       min, max, res, min_res, max_res,
-	                       mode
-	);
+	                       Absolute);
+}
+
+static Bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	unsigned char butmap[WCM_MAX_BUTTONS+1];
+	/* FIXME: button labels would be nice */
+	Atom btn_labels[WCM_MAX_BUTTONS] = {0};
+
+	for(unsigned char loop=1; loop<=nbuttons; loop++)
+		butmap[loop] = loop;
+
+	return InitButtonClassDeviceStruct(pInfo->dev, nbuttons,
+					   btn_labels,
+					   butmap);
+}
+
+static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp) { }
+static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl) { }
+
+static Bool wcmInitKeyboard(WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	return InitFocusClassDeviceStruct(pInfo->dev) &&
+		InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback) &&
+		InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback);
+}
+
+static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl) { }
+
+static Bool wcmInitPointer(WacomDevicePtr priv, int naxes, Bool is_absolute)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+        Atom axis_labels[MAX_VALUATORS] = {0};
+	int mode = is_absolute ? Absolute : Relative;
+
+	/* axis_labels is just zeros, we set up each valuator with the
+	 * correct property later */
+
+	return InitPtrFeedbackClassDeviceStruct(pInfo->dev, wcmDevControlProc) &&
+		InitProximityClassDeviceStruct(pInfo->dev) &&
+		InitValuatorClassDeviceStruct(pInfo->dev, naxes,
+					      axis_labels,
+					      GetMotionHistorySize(),
+					      mode | OutOfProximity);
+}
+
+static Bool wcmInitTouch(WacomDevicePtr priv, int ntouches, Bool is_direct_touch)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common = priv->common;
+	return InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
+					  is_direct_touch ? XIDirectTouch : XIDependentTouch,
+					  2);
 }
 
 /**
@@ -95,152 +206,101 @@ static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max
  * Any de-facto defined axis index left unused is initialized with default
  * attributes.
  */
-static int wcmInitAxes(DeviceIntPtr pWcm)
+static int wcmInitAxes(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-
-	Atom label;
-	int index;
 	int min, max, res;
-	int mode;
 
 	/* first valuator: x */
-	index = 0;
-	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
 	min = priv->topX;
 	max = priv->bottomX;
 	res = priv->resolX;
-	mode = Absolute;
-
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
+	wcmInitAxis(priv, WACOM_AXIS_X, min, max, res);
 
 
 	/* second valuator: y */
-	index = 1;
-	label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
 	min = priv->topY;
 	max = priv->bottomY;
 	res = priv->resolY;
-	mode = Absolute;
-
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
-
+	wcmInitAxis(priv, WACOM_AXIS_Y, min, max, res);
 
 	/* third valuator: pressure */
-	index = 2;
-	label = None;
-	mode = Absolute;
-	res = 0;
-	min = 0;
-	max = 1;
-
 	if (!IsPad(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
+		res = 0;
+		min = 0;
 		max = priv->maxCurve;
+		wcmInitAxis(priv, WACOM_AXIS_PRESSURE, min, max, res);
 	}
-
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
-
+	/* FIXME: how to set up this axis on the pad? */
 
 	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
-	index = 3;
-	label = None;
-	mode = Absolute;
 	res = 0;
-	min = 0;
-	max = 1;
-
 	if (IsPen(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X),
 		res = round(TILT_RES);
 		min = TILT_MIN;
 		max = TILT_MAX;
+		wcmInitAxis(priv, WACOM_AXIS_TILT_X, min, max, res);
 	}
 	else if (IsCursor(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
 		min = MIN_ROTATION;
 		max = MIN_ROTATION + MAX_ROTATION_RANGE - 1;
+		wcmInitAxis(priv, WACOM_AXIS_ROTATION, min, max, res);
 	}
 	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
-	{ /* XXX: what is this axis label? */
+	{
+		min = 0;
 		max = common->wcmMaxStripX;
+		wcmInitAxis(priv, WACOM_AXIS_STRIP_X, min, max, res);
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
-
-
 	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
-	index = 4;
-	label = None;
-	mode = Absolute;
 	res = 0;
-	min = 0;
-	max = 1;
-
 	if (IsPen(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
 		res = round(TILT_RES);
 		min = TILT_MIN;
 		max = TILT_MAX;
+		wcmInitAxis(priv, WACOM_AXIS_TILT_Y, min, max, res);
 	}
 	else if (IsCursor(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
 		min = -1023;
 		max = 1023;
+		wcmInitAxis(priv, WACOM_AXIS_THROTTLE, min, max, res);
 	}
 	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
-	{ /* XXX: what is this axis label? */
+	{
+		min = 0;
 		max = common->wcmMaxStripY;
+		wcmInitAxis(priv, WACOM_AXIS_STRIP_Y, min, max, res);
 	}
 
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
-
-
 	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
-	index = 5;
-	label = None;
-	mode = Absolute;
 	res = 0;
-	min = 0;
-	max = 1;
-
 	if (IsStylus(priv))
 	{
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
 		max = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
 		min = MIN_ROTATION;
+		wcmInitAxis(priv, WACOM_AXIS_WHEEL, min, max, res);
 	}
 	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
 	{
 		/* Touch ring */
-		label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
 		min = common->wcmMinRing;
 		max = common->wcmMaxRing;
+		wcmInitAxis(priv, WACOM_AXIS_RING, min, max, res);
 	}
-
-	wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
-
 
 	/* seventh valuator: abswheel2 */
 	if ((TabletHasFeature(common, WCM_DUALRING)) && IsPad(priv))
 	{
-		/* XXX: what is this axis label? */
-		index = 6;
-		label = None;
-		mode = Absolute;
-		res = 1;
-
+		res = 0;
 		min = common->wcmMinRing;
 		max = common->wcmMaxRing;
-
-		wcmInitAxis(pInfo->dev, index, label, min, max, res, mode);
+		wcmInitAxis(priv, WACOM_AXIS_RING2, min, max, res);
 	}
 
 	return TRUE;
@@ -256,11 +316,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
-	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	int nbaxes, nbbuttons, nbkeys;
-	int loop;
-        Atom btn_labels[WCM_MAX_BUTTONS] = {0};
-        Atom axis_labels[MAX_VALUATORS] = {0};
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -285,62 +341,27 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		pInfo->type_name,
 		nbbuttons, nbkeys, nbaxes);
 
-	for(loop=1; loop<=nbbuttons; loop++)
-		butmap[loop] = loop;
-
-	/* FIXME: button labels would be nice */
-	if (InitButtonClassDeviceStruct(pInfo->dev, nbbuttons,
-					btn_labels,
-					butmap) == FALSE)
+	if (!wcmInitButtons(priv, nbbuttons))
 	{
 		wcmLog(priv, W_ERROR, "unable to allocate Button class device\n");
 		return FALSE;
 	}
 
-	if (InitFocusClassDeviceStruct(pInfo->dev) == FALSE)
+	if (!wcmInitKeyboard(priv))
 	{
 		wcmLog(priv, W_ERROR, "unable to init Focus class device\n");
 		return FALSE;
 	}
 
-	if (InitPtrFeedbackClassDeviceStruct(pInfo->dev,
-		wcmDevControlProc) == FALSE)
+	if (!wcmInitPointer(priv, nbaxes, is_absolute(priv) ? Absolute : Relative))
 	{
-		wcmLog(priv, W_ERROR, "unable to init ptr feedback\n");
-		return FALSE;
-	}
-
-	if (InitProximityClassDeviceStruct(pInfo->dev) == FALSE)
-	{
-			wcmLog(priv, W_ERROR, "unable to init proximity class device\n");
-			return FALSE;
-	}
-
-	/* axis_labels is just zeros, we set up each valuator with the
-	 * correct property later */
-	if (InitValuatorClassDeviceStruct(pInfo->dev, nbaxes,
-					  axis_labels,
-					  GetMotionHistorySize(),
-					  (is_absolute(priv) ?  Absolute : Relative) | OutOfProximity) == FALSE)
-	{
-		wcmLog(priv, W_ERROR, "unable to allocate Valuator class device\n");
-		return FALSE;
-	}
-
-
-	if (!InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
-		wcmLog(priv, W_ERROR, "unable to init kbd device struct\n");
-		return FALSE;
-	}
-	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
-		wcmLog(priv, W_ERROR, "unable to init led feedback device struct\n");
+		wcmLog(priv, X_ERROR, "unable to init Pointer class device\n");
 		return FALSE;
 	}
 
 	if (IsTouch(priv)) {
-		if (!InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
-						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
-						2))
+		if (!wcmInitTouch(priv, common->wcmMaxContacts,
+				  TabletHasFeature(common, WCM_LCD)))
 		{
 			wcmLog(priv, W_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
@@ -348,7 +369,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		priv->common->touch_mask = valuator_mask_new(2);
 	}
 
-	if (!wcmInitAxes(pWcm))
+	if (!wcmInitAxes(priv))
 		return FALSE;
 
 	InitWcmDeviceProperties(priv);
@@ -519,21 +540,6 @@ static int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
 	DBG(3, priv, "\n");
 #endif
 	return Success;
-}
-
-/*****************************************************************************
- * wcmDevControlProc --
- ****************************************************************************/
-
-void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
-{
-#ifdef DEBUG
-	InputInfoPtr pInfo = (InputInfoPtr)device->public.devicePrivate;
-	WacomDevicePtr priv = pInfo->private;
-
-	DBG(4, priv, "called\n");
-#endif
-	return;
 }
 
 /*****************************************************************************
