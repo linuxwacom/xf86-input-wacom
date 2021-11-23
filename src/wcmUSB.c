@@ -345,46 +345,45 @@ static struct WacomModelDesc
 	/* IDs from Waltop's driver, available http://www.waltop.com.tw/download.asp?lv=0&id=2.
 	   Accessed 8 Apr 2010, driver release date 2009/08/11, fork of linuxwacom 0.8.4.
 	   Some more info would be nice for the ID's below... */
-	{ WALTOP_VENDOR_ID, 0x24,  80000,  80000, &usbGraphire,   NULL			},
-	{ WALTOP_VENDOR_ID, 0x25,  80000,  80000, &usbGraphire2,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x26,  80000,  80000, &usbGraphire2,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x27,  80000,  80000, &usbGraphire3,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x28,  80000,  80000, &usbGraphire3,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x30,  80000,  80000, &usbGraphire4,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x31,  80000,  80000, &usbGraphire4,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x32, 100000, 100000, &usbBambooFun,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x33, 100000, 100000, &usbBambooFun,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x34,  80000,  80000, &usbBamboo1,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x35,  80000,  80000, &usbGraphire4,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x36,  80000,  80000, &usbGraphire4,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x37,  80000,  80000, &usbGraphire4,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x38, 100000, 100000, &usbBambooFun,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x39, 100000, 100000, &usbBambooFun,  NULL			},
-	{ WALTOP_VENDOR_ID, 0x51, 100000, 100000, &usbBamboo,     NULL			},
-	{ WALTOP_VENDOR_ID, 0x52, 100000, 100000, &usbBamboo,     NULL			},
+	{ WALTOP_VENDOR_ID, 0x24,  80000,  80000, &usbGraphire,   "usb:172f:0024"	},
+	{ WALTOP_VENDOR_ID, 0x25,  80000,  80000, &usbGraphire2,  "usb:172f:0025"	},
+	{ WALTOP_VENDOR_ID, 0x26,  80000,  80000, &usbGraphire2,  "usb:172f:0026"	},
+	{ WALTOP_VENDOR_ID, 0x27,  80000,  80000, &usbGraphire3,  "usb:172f:0027"	},
+	{ WALTOP_VENDOR_ID, 0x28,  80000,  80000, &usbGraphire3,  "usb:172f:0028"	},
+	{ WALTOP_VENDOR_ID, 0x30,  80000,  80000, &usbGraphire4,  "usb:172f:0030"	},
+	{ WALTOP_VENDOR_ID, 0x31,  80000,  80000, &usbGraphire4,  "usb:172f:0031"	},
+	{ WALTOP_VENDOR_ID, 0x32, 100000, 100000, &usbBambooFun,  "usb:172f:0032"	},
+	{ WALTOP_VENDOR_ID, 0x33, 100000, 100000, &usbBambooFun,  "usb:172f:0033"	},
+	{ WALTOP_VENDOR_ID, 0x34,  80000,  80000, &usbBamboo1,    "usb:172f:0034"	},
+	{ WALTOP_VENDOR_ID, 0x35,  80000,  80000, &usbGraphire4,  "usb:172f:0035"	},
+	{ WALTOP_VENDOR_ID, 0x36,  80000,  80000, &usbGraphire4,  "usb:172f:0036"	},
+	{ WALTOP_VENDOR_ID, 0x37,  80000,  80000, &usbGraphire4,  "usb:172f:0037"	},
+	{ WALTOP_VENDOR_ID, 0x38, 100000, 100000, &usbBambooFun,  "usb:172f:0038"	},
+	{ WALTOP_VENDOR_ID, 0x39, 100000, 100000, &usbBambooFun,  "usb:172f:0039"	},
+	{ WALTOP_VENDOR_ID, 0x51, 100000, 100000, &usbBamboo,     "usb:172f:0051"	},
+	{ WALTOP_VENDOR_ID, 0x52, 100000, 100000, &usbBamboo,     "usb:172f:0052"	},
 
-	{ WALTOP_VENDOR_ID, 0x53,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x54,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x55,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x56,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x57,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x58,  100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x500, 100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x501, 100000, 100000, &usbBamboo,    NULL			},
-	{ WALTOP_VENDOR_ID, 0x502, 200000, 200000, &usbIntuos4,   NULL			},
-	{ WALTOP_VENDOR_ID, 0x503, 200000, 200000, &usbIntuos4,   NULL			},
+	{ WALTOP_VENDOR_ID, 0x53,  100000, 100000, &usbBamboo,    "usb:172f:0053"	},
+	{ WALTOP_VENDOR_ID, 0x54,  100000, 100000, &usbBamboo,    "usb:172f:0054"	},
+	{ WALTOP_VENDOR_ID, 0x55,  100000, 100000, &usbBamboo,    "usb:172f:0055"	},
+	{ WALTOP_VENDOR_ID, 0x56,  100000, 100000, &usbBamboo,    "usb:172f:0056"	},
+	{ WALTOP_VENDOR_ID, 0x57,  100000, 100000, &usbBamboo,    "usb:172f:0057"	},
+	{ WALTOP_VENDOR_ID, 0x58,  100000, 100000, &usbBamboo,    "usb:172f:0058"	},
+	{ WALTOP_VENDOR_ID, 0x500, 100000, 100000, &usbBamboo,    "usb:172f:0500"	},
+	{ WALTOP_VENDOR_ID, 0x501, 100000, 100000, &usbBamboo,    "usb:172f:0501"	},
+	{ WALTOP_VENDOR_ID, 0x502, 200000, 200000, &usbIntuos4,   "usb:172f:0502"	},
+	{ WALTOP_VENDOR_ID, 0x503, 200000, 200000, &usbIntuos4,   "usb:172f:0503"	},
 
 	/* N-Trig devices */
-	{ NTRIG_VENDOR_ID,  0x01, 44173, 36772, &usbTabletPC,     NULL			},
+	{ NTRIG_VENDOR_ID,  0x01, 44173, 36772, &usbTabletPC,     "usb:1b96:0001"	},
 
 	/* Add in Lenovo W700 Palmrest digitizer */
-	{ LENOVO_VENDOR_ID, 0x6004, 100000, 100000, &usbTabletPC, NULL			} /* Pen-only */
+	{ LENOVO_VENDOR_ID, 0x6004, 100000, 100000, &usbTabletPC, "usb:17ef:6004"	} /* Pen-only */
 };
 
 void usbListModels(void)
 {
 	int i;
-	char *usbnames[ARRAY_SIZE(WacomModelDesc)] = {0};
 	SymTabRec models[ARRAY_SIZE(WacomModelDesc) + 1];
 
 	for (i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
@@ -392,24 +391,7 @@ void usbListModels(void)
 		struct WacomModelDesc *m = &WacomModelDesc[i];
 
 		models[i].token = i;
-		if (m->name)
-			models[i].name = m->name;
-		else {
-			/* SymTabRec has a const char *name so we can't free
-			   without compiler warnings. keep allocated stuff
-			   in separate array.
-			 */
-			usbnames[i] = malloc(64);
-			if (!usbnames[i]) {
-				/* if malloc fails, xf86PrintChipsets() terminates
-				   here because models->name is NULL. then again,
-				   malloc failed, so the rest is academic. */
-				models[i].name = NULL;
-				break;
-			}
-			sprintf(usbnames[i], "usb:%04x:%04x", m->vendor_id, m->model_id);
-			models[i].name = usbnames[i];
-		}
+		models[i].name = m->name;
 	}
 
 	models[ARRAY_SIZE(models) - 1].name = NULL;
@@ -417,9 +399,6 @@ void usbListModels(void)
 	xf86PrintChipsets("wacom",
 			  "Driver for Wacom graphics tablets",
 			  models);
-
-	for (i = 0; i < ARRAY_SIZE(usbnames); i++)
-		free(usbnames[i]);
 }
 
 
