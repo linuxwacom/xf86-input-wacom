@@ -128,15 +128,19 @@ static inline int wcmUserToInternalPressure(InputInfoPtr pInfo, int pressure)
  * Resets an arbitrary Action property, given a pointer to the old
  * handler and information about the new Action.
  */
-static void wcmResetAction(InputInfoPtr pInfo, const char *name, int index,
-                           Atom *handler, unsigned int (*action)[256],
-                           unsigned int (*new_action)[256])
+static void wcmResetAction(InputInfoPtr pInfo, const char *name,
+                           Atom *handler, unsigned int action[256],
+                           unsigned int new_action[256])
 {
-	handler[index] = MakeAtom(name, strlen(name), TRUE);
-	memset(action[index], 0, sizeof(action[index]));
-	memcpy(action[index], *new_action, sizeof(*new_action));
-	XIChangeDeviceProperty(pInfo->dev, handler[index], XA_INTEGER, 32,
+	Atom prop;
+
+	memset(action, 0, 256 * sizeof(*action));
+	memcpy(action, new_action, 256 * sizeof(*new_action));
+
+	prop = MakeAtom(name, strlen(name), TRUE);
+	XIChangeDeviceProperty(pInfo->dev, prop, XA_INTEGER, 32,
 			       PropModeReplace, 1, (char*)new_action, FALSE);
+	*handler = prop;
 }
 
 static void wcmResetButtonAction(InputInfoPtr pInfo, int button)
@@ -148,7 +152,7 @@ static void wcmResetButtonAction(InputInfoPtr pInfo, int button)
 
 	sprintf(name, "Wacom button action %d", button);
 	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | x11_button;
-	wcmResetAction(pInfo, name, button, priv->btn_actions, priv->keys, &new_action);
+	wcmResetAction(pInfo, name, &priv->btn_actions[button], priv->keys[button], new_action);
 }
 
 static void wcmResetStripAction(InputInfoPtr pInfo, int index)
@@ -160,7 +164,7 @@ static void wcmResetStripAction(InputInfoPtr pInfo, int index)
 	sprintf(name, "Wacom strip action %d", index);
 	new_action[0] =	AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]);
 	new_action[1] = AC_BUTTON | (priv->strip_default[index]);
-	wcmResetAction(pInfo, name, index, priv->strip_actions, priv->strip_keys, &new_action);
+	wcmResetAction(pInfo, name, &priv->strip_actions[index], priv->strip_keys[index], new_action);
 }
 
 static void wcmResetWheelAction(InputInfoPtr pInfo, int index)
@@ -172,7 +176,7 @@ static void wcmResetWheelAction(InputInfoPtr pInfo, int index)
 	sprintf(name, "Wacom wheel action %d", index);
 	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]);
 	new_action[1] = AC_BUTTON | (priv->wheel_default[index]);
-	wcmResetAction(pInfo, name, index, priv->wheel_actions, priv->wheel_keys, &new_action);
+	wcmResetAction(pInfo, name, &priv->wheel_actions[index], priv->wheel_keys[index], new_action);
 }
 
 /**
