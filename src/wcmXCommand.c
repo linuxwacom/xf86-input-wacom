@@ -132,7 +132,7 @@ static inline int wcmUserToInternalPressure(InputInfoPtr pInfo, int pressure)
  */
 static void wcmResetAction(InputInfoPtr pInfo, const char *name, int index,
                            Atom *handler, unsigned int (*action)[256],
-                           unsigned int (*new_action)[256], Atom prop, int nprop)
+                           unsigned int (*new_action)[256])
 {
 	handler[index] = MakeAtom(name, strlen(name), TRUE);
 	memset(action[index], 0, sizeof(action[index]));
@@ -141,7 +141,7 @@ static void wcmResetAction(InputInfoPtr pInfo, const char *name, int index,
 			       PropModeReplace, 1, (char*)new_action, FALSE);
 }
 
-static void wcmResetButtonAction(InputInfoPtr pInfo, int button, int nbuttons)
+static void wcmResetButtonAction(InputInfoPtr pInfo, int button)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	unsigned int new_action[256] = {};
@@ -150,7 +150,7 @@ static void wcmResetButtonAction(InputInfoPtr pInfo, int button, int nbuttons)
 
 	sprintf(name, "Wacom button action %d", button);
 	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | x11_button;
-	wcmResetAction(pInfo, name, button, priv->btn_actions, priv->keys, &new_action, prop_btnactions, nbuttons);
+	wcmResetAction(pInfo, name, button, priv->btn_actions, priv->keys, &new_action);
 }
 
 static void wcmResetStripAction(InputInfoPtr pInfo, int index)
@@ -162,7 +162,7 @@ static void wcmResetStripAction(InputInfoPtr pInfo, int index)
 	sprintf(name, "Wacom strip action %d", index);
 	new_action[0] =	AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]);
 	new_action[1] = AC_BUTTON | (priv->strip_default[index]);
-	wcmResetAction(pInfo, name, index, priv->strip_actions, priv->strip_keys, &new_action, prop_strip_buttons, 4);
+	wcmResetAction(pInfo, name, index, priv->strip_actions, priv->strip_keys, &new_action);
 }
 
 static void wcmResetWheelAction(InputInfoPtr pInfo, int index)
@@ -174,7 +174,7 @@ static void wcmResetWheelAction(InputInfoPtr pInfo, int index)
 	sprintf(name, "Wacom wheel action %d", index);
 	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]);
 	new_action[1] = AC_BUTTON | (priv->wheel_default[index]);
-	wcmResetAction(pInfo, name, index, priv->wheel_actions, priv->wheel_keys, &new_action, prop_wheel_buttons, 6);
+	wcmResetAction(pInfo, name, index, priv->wheel_actions, priv->wheel_keys, &new_action);
 }
 
 /**
@@ -313,7 +313,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	memset(values, 0, sizeof(values));
 	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, priv->nbuttons, values);
 	for (i = 0; i < priv->nbuttons; i++)
-		wcmResetButtonAction(pInfo, i, priv->nbuttons);
+		wcmResetButtonAction(pInfo, i);
 
 	if (IsPad(priv)) {
 		memset(values, 0, sizeof(values));
@@ -592,7 +592,7 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 			if (!checkonly)
 			{
 				if (property == prop_btnactions)
-					wcmResetButtonAction(pInfo, index, size);
+					wcmResetButtonAction(pInfo, index);
 				else if (property == prop_strip_buttons)
 					wcmResetStripAction(pInfo, index);
 				else if (property == prop_wheel_buttons)
