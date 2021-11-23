@@ -129,54 +129,53 @@ static inline int wcmUserToInternalPressure(InputInfoPtr pInfo, int pressure)
  * handler and information about the new Action.
  */
 static void wcmResetAction(InputInfoPtr pInfo, const char *name,
-                           Atom *handler, unsigned int action[256],
-                           unsigned int new_action[256])
+                           Atom *handler, WacomAction *action,
+                           WacomAction *new_action)
 {
 	Atom prop;
 
-	memset(action, 0, 256 * sizeof(*action));
-	memcpy(action, new_action, 256 * sizeof(*new_action));
+	wcmActionCopy(action, new_action);
 
 	prop = MakeAtom(name, strlen(name), TRUE);
 	XIChangeDeviceProperty(pInfo->dev, prop, XA_INTEGER, 32,
-			       PropModeReplace, 1, (char*)new_action, FALSE);
+			       PropModeReplace, 1, (char*)wcmActionData(new_action), FALSE);
 	*handler = prop;
 }
 
 static void wcmResetButtonAction(InputInfoPtr pInfo, int button)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	unsigned int new_action[256] = {};
+	WacomAction new_action = {};
 	int x11_button = priv->button_default[button];
 	char name[64];
 
 	sprintf(name, "Wacom button action %d", button);
-	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | x11_button;
-	wcmResetAction(pInfo, name, &priv->btn_actions[button], priv->keys[button], new_action);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
+	wcmResetAction(pInfo, name, &priv->btn_actions[button], &priv->keys[button], &new_action);
 }
 
 static void wcmResetStripAction(InputInfoPtr pInfo, int index)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	unsigned int new_action[256] = {};
+	WacomAction new_action = {};
 	char name[64];
 
 	sprintf(name, "Wacom strip action %d", index);
-	new_action[0] =	AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]);
-	new_action[1] = AC_BUTTON | (priv->strip_default[index]);
-	wcmResetAction(pInfo, name, &priv->strip_actions[index], priv->strip_keys[index], new_action);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
+	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
+	wcmResetAction(pInfo, name, &priv->strip_actions[index], &priv->strip_keys[index], &new_action);
 }
 
 static void wcmResetWheelAction(InputInfoPtr pInfo, int index)
 {
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
-	unsigned int new_action[256] = {};
+	WacomAction new_action = {};
 	char name[64];
 
 	sprintf(name, "Wacom wheel action %d", index);
-	new_action[0] = AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]);
-	new_action[1] = AC_BUTTON | (priv->wheel_default[index]);
-	wcmResetAction(pInfo, name, &priv->wheel_actions[index], priv->wheel_keys[index], new_action);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
+	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
+	wcmResetAction(pInfo, name, &priv->wheel_actions[index], &priv->wheel_keys[index], &new_action);
 }
 
 /**
@@ -379,7 +378,8 @@ static int wcmFindProp(Atom property, Atom *prop_list, int nprops)
  * @return              'true' if the property was found. Neither out parameter
  *                      will be null if this is the case.
  */
-static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **handler, unsigned int (**action)[256])
+static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **handler,
+				 WacomAction **action)
 {
 	int offset;
 
@@ -487,7 +487,7 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
  */
 static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 				XIPropertyValuePtr prop, BOOL checkonly,
-				Atom *handler, unsigned int (*action)[256])
+				Atom *handler, WacomAction *action)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
@@ -509,9 +509,12 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 
 	if (!checkonly)
 	{
-		memset(action, 0, sizeof(*action));
+		WacomAction act = {};
+
 		for (i = 0; i < prop->size; i++)
-			(*action)[i] = ((unsigned int*)prop->data)[i];
+			wcmActionSet(&act, i, ((unsigned int*)prop->data)[i]);
+
+		wcmActionCopy(action, &act);
 		*handler = property;
 	}
 
@@ -558,7 +561,7 @@ static int wcmCheckActionsProperty(DeviceIntPtr dev, Atom property, XIPropertyVa
  */
 static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
                                  XIPropertyValuePtr prop, BOOL checkonly,
-                                 int size, Atom* handlers, unsigned int (*actions)[256])
+                                 int size, Atom* handlers, WacomAction *actions)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
@@ -997,7 +1000,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	} else
 	{
 		Atom *handler = NULL;
-		unsigned int (*action)[256] = NULL;
+		WacomAction *action = NULL;
 		if (wcmFindActionHandler(priv, property, &handler, &action))
 			return wcmSetActionProperty(dev, property, prop, checkonly, handler, action);
 		/* backwards-compatible behavior silently ignores the not-found case */

@@ -156,6 +156,27 @@ extern void wcmFreeCommon(WacomCommonPtr *common);
 extern WacomCommonPtr wcmNewCommon(void);
 extern void usbListModels(void);
 
+static inline void wcmActionCopy(WacomAction *dest, WacomAction *src)
+{
+	memset(dest, 0, sizeof(*dest));
+	memcpy(dest, src, sizeof(*src));
+}
+static inline const unsigned* wcmActionData(const WacomAction *action)
+{
+	return action->action;
+}
+static inline size_t wcmActionSize(const WacomAction *action)
+{
+	return action->nactions;
+}
+static inline void wcmActionSet(WacomAction *action, unsigned idx, unsigned act)
+{
+	if (idx >= ARRAY_SIZE(action->action))
+		return;
+	action->action[idx] = act;
+	action->nactions = idx + 1;
+}
+
 enum WacomSuppressMode {
 	SUPPRESS_NONE = 8,	/* Process event normally */
 	SUPPRESS_ALL,		/* Supress and discard the whole event */

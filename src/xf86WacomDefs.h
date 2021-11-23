@@ -27,6 +27,7 @@
 #include <asm/types.h>
 #include <linux/input.h>
 #include <limits.h>
+#include <string.h>
 
 /* vendor IDs on the kernel device */
 #define WACOM_VENDOR_ID 0x056a
@@ -159,6 +160,7 @@ struct _WacomModel
 
 #define WCM_MAX_BUTTONS		32	/* maximum number of tablet buttons */
 #define WCM_MAX_X11BUTTON	127	/* maximum button number X11 can handle */
+#define WCM_MAX_ACTIONS		256     /* maximum number of actions */
 
 #define AXIS_INVERT  0x01               /* Flag describing an axis which increases "downward" */
 #define AXIS_BITWISE 0x02               /* Flag describing an axis which changes bitwise */
@@ -214,6 +216,11 @@ static const struct _WacomDeviceState OUTPROX_STATE = {
   .abswheel2 = INT_MAX
 };
 
+typedef struct {
+	unsigned action[WCM_MAX_ACTIONS];
+	size_t nactions;
+} WacomAction;
+
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
@@ -246,9 +253,9 @@ struct _WacomDeviceRec
 	int button_default[WCM_MAX_BUTTONS]; /* Default mappings set by ourselves (possibly overridden by xorg.conf) */
 	int strip_default[4];
 	int wheel_default[6];
-	unsigned keys[WCM_MAX_BUTTONS][256]; /* Action codes to perform when the associated event occurs */
-	unsigned strip_keys[4][256];
-	unsigned wheel_keys[6][256];
+	WacomAction keys[WCM_MAX_BUTTONS]; /* Action codes to perform when the associated event occurs */
+	WacomAction strip_keys[4];
+	WacomAction wheel_keys[6];
 	Atom btn_actions[WCM_MAX_BUTTONS];   /* Action references so we can update the action codes when a client makes a change */
 	Atom strip_actions[4];
 	Atom wheel_actions[6];
