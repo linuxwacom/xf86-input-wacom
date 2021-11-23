@@ -1,5 +1,5 @@
 .ds q \N'34'
-.TH WACOM 4 __vendorversion__
+.TH WACOM 4 "@VERSION@" "X Version 11"
 .SH NAME
 wacom \- Wacom input driver
 .SH SYNOPSIS
