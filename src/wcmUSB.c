@@ -23,6 +23,7 @@
 
 #include "xf86Wacom.h"
 
+#include <math.h>
 #include <asm/types.h>
 #include <linux/input.h>
 #include <sys/utsname.h>
