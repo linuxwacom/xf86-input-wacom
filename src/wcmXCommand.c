@@ -687,15 +687,8 @@ touchTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
  * Update HW touch property when its state is changed by touch switch
  */
 void
-wcmUpdateHWTouchProperty(WacomDevicePtr priv, int hw_touch)
+wcmUpdateHWTouchProperty(WacomDevicePtr priv)
 {
-	WacomCommonPtr common = priv->common;
-
-	if (hw_touch == common->wcmHWTouchSwitchState)
-		return;
-
-	common->wcmHWTouchSwitchState = hw_touch;
-
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */
 	priv->touch_timer = TimerSet(priv->touch_timer, 0 /* reltime */,

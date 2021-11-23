@@ -1937,11 +1937,11 @@ static void usbDispatchEvents(InputInfoPtr pInfo)
 				/* touch is disabled when SW_MUTE_DEVICE is set */
 				int touch_enabled = (event->value == 0);
 
-				if (touch_enabled != common->wcmHWTouchSwitchState)
-				/* this property is only set for touch device */
-					wcmUpdateHWTouchProperty(
-						common->wcmTouchDevice,
-						touch_enabled);
+				if (touch_enabled != common->wcmHWTouchSwitchState) {
+					common->wcmHWTouchSwitchState = touch_enabled;
+					/* this property is only set for touch device */
+					wcmUpdateHWTouchProperty(common->wcmTouchDevice);
+				}
 			}
 		}
 

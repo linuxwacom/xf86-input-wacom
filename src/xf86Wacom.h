@@ -146,7 +146,7 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
 extern void wcmUpdateSerialProperty(WacomDevicePtr priv);
-extern void wcmUpdateHWTouchProperty(WacomDevicePtr priv, int touch);
+extern void wcmUpdateHWTouchProperty(WacomDevicePtr priv);
 
 /* Utility functions */
 extern Bool is_absolute(InputInfoPtr pInfo);
