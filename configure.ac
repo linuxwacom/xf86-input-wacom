@@ -45,7 +45,6 @@ m4_ifndef([XORG_MACROS_VERSION],
           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
 XORG_MACROS_VERSION([1.8])
 XORG_DEFAULT_OPTIONS
-XORG_WITH_DOXYGEN(1.6.1)
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
@@ -193,8 +192,6 @@ AM_CONDITIONAL(HAVE_UDEV_RULES_DIR, [test "x$UDEV_RULES_DIR" != "xno"])
 
 AC_CONFIG_FILES([Makefile
                  conf/Makefile
-                 doc/Makefile
-                 doc/doxygen.conf
                  src/Makefile
                  man/Makefile
                  include/Makefile
