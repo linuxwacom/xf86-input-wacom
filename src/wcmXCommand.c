@@ -133,12 +133,14 @@ static void wcmResetAction(InputInfoPtr pInfo, const char *name,
                            WacomAction *new_action)
 {
 	Atom prop;
+	size_t sz;
 
 	wcmActionCopy(action, new_action);
+	sz = wcmActionSize(action);
 
 	prop = MakeAtom(name, strlen(name), TRUE);
 	XIChangeDeviceProperty(pInfo->dev, prop, XA_INTEGER, 32,
-			       PropModeReplace, 1, (char*)wcmActionData(new_action), FALSE);
+			       PropModeReplace, sz, (char*)wcmActionData(new_action), FALSE);
 	*handler = prop;
 }
 
