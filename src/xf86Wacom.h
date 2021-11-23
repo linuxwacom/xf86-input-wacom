@@ -144,9 +144,6 @@ extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 
 /* device properties */
-extern int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
-extern int wcmGetProperty(DeviceIntPtr dev, Atom property);
-extern int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
 extern void wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id);

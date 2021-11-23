@@ -32,6 +32,9 @@
 #endif
 
 static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
+static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
+static int wcmGetProperty(DeviceIntPtr dev, Atom property);
+static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 
 /*****************************************************************************
 * wcmDevSwitchModeCall --
@@ -336,6 +339,8 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[1] = common->debugLevel;
 	prop_debuglevels = InitWcmAtom(pInfo->dev, WACOM_PROP_DEBUGLEVELS, XA_INTEGER, 8, 2, values);
 #endif
+
+	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, wcmGetProperty, wcmDeleteProperty);
 }
 
 /* Returns the offset of the property in the list given. If the property is
@@ -700,7 +705,7 @@ wcmUpdateHWTouchProperty(WacomDevicePtr priv, int hw_touch)
  * Only allow deletion of a property if it is not being used by any of the
  * button actions.
  */
-int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
+static int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
@@ -717,8 +722,8 @@ int wcmDeleteProperty(DeviceIntPtr dev, Atom property)
 	return (i >= 0) ? BadAccess : Success;
 }
 
-int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
-		BOOL checkonly)
+static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
+			  BOOL checkonly)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
@@ -1001,7 +1006,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	return Success;
 }
 
-int wcmGetProperty (DeviceIntPtr dev, Atom property)
+static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) dev->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
