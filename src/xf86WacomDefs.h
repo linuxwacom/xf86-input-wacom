@@ -187,7 +187,6 @@ struct _WacomModel
  *****************************************************************************/
 struct _WacomDeviceState
 {
-	InputInfoPtr pInfo;
 	int device_id;		/* tool id reported from the physical device */
 	int device_type;
 	unsigned int serial_num;
