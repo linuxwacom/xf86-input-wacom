@@ -1115,15 +1115,9 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 }
 
 void
-wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
+wcmUpdateSerialProperty(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
-
-	if (priv->cur_serial == serial && priv->cur_device_id == id)
-		return;
-
-	priv->cur_serial = serial;
-	priv->cur_device_id = id;
+	InputInfoPtr pInfo = priv->pInfo;
 
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */

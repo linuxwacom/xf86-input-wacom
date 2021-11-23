@@ -697,6 +697,20 @@ wcmSendNonPadEvents(InputInfoPtr pInfo, const WacomDeviceState *ds,
 
 #define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804 || ds->device_id == 0x100804)
 
+static void
+wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id)
+{
+	WacomDevicePtr priv = pInfo->private;
+
+	if (priv->cur_serial == serial && priv->cur_device_id == id)
+		return;
+
+	priv->cur_serial = serial;
+	priv->cur_device_id = id;
+
+	wcmUpdateSerialProperty(priv);
+}
+
 /*****************************************************************************
  * wcmSendEvents --
  *   Send events according to the device state.

@@ -145,7 +145,7 @@ extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 /* device properties */
 extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
 extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
-extern void wcmUpdateSerial(InputInfoPtr pInfo, unsigned int serial, int id);
+extern void wcmUpdateSerialProperty(WacomDevicePtr priv);
 extern void wcmUpdateHWTouchProperty(WacomDevicePtr priv, int touch);
 
 /* Utility functions */
