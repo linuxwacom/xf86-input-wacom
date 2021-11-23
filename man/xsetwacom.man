@@ -1,9 +1,9 @@
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH xsetwacom __appmansuffix__ __vendorversion__
+.TH xsetwacom 1 __vendorversion__
 .SH NAME
 .LP
-xsetwacom \- commandline utility to query and modify __drivername__ driver settings.
+xsetwacom \- commandline utility to query and modify wacom driver settings.
 .SH "SYNOPSIS"
 .LP
 xsetwacom [options] [command [arguments]]
@@ -11,12 +11,12 @@ xsetwacom [options] [command [arguments]]
 .SH "DESCRIPTION"
 .LP
 This program queries or changes properties on the devices loaded by the
-__drivername__ driver. The modification of properties happens at runtime
+wacom driver. The modification of properties happens at runtime
 and is not persistent through X server restarts.
 .SH "GENERAL OPTIONS"
 .TP
 \fB-d, --display\fR display_name
-Connect to the X server specified in display_name; see X(__miscmansuffix__).
+Connect to the X server specified in display_name; see X(7).
 .TP
 \fB-h, --help\fR
 Prints a short help.
@@ -45,7 +45,7 @@ and
 .SS "LIST COMMANDS"
 .TP
 \fBlist\fR devices
-List known devices. Only input devices managed by the __drivername__
+List known devices. Only input devices managed by the wacom
 driver are listed.
 .TP
 \fBlist\fR parameters
@@ -303,8 +303,8 @@ See https://github.com/linuxwacom/xf86-input-wacom/wiki/Wayland for details.
 Peter Hutterer <peter.hutterer@redhat.com>
 
 .SH "SEE ALSO"
-__xservername__(__appmansuffix__), __drivername__(__drivermansuffix__),
-xorg.conf(__filemansuffix__),
-X(__miscmansuffix__)
+Xorg(1), wacom(4),
+xorg.conf(5),
+X(7)
 .PP
 More information is available at https://github.com/linuxwacom/xf86-input-wacom
