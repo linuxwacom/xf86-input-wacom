@@ -1,7 +1,7 @@
 .ds q \N'34'
-.TH WACOM __drivermansuffix__ __vendorversion__
+.TH WACOM 4 __vendorversion__
 .SH NAME
-__drivername__ \- Wacom input driver
+wacom \- Wacom input driver
 .SH SYNOPSIS
 .nf
 .B "Section \*qInputDevice\*q"
@@ -148,7 +148,7 @@ The default action reported to the X server is mouse button M click. Because
 X uses buttons 4, 5, 6, and 7 as the four scrolling directions, physical
 buttons 4 and higher are mapped to 8 and higher by default.
 Only simple button presses can be configured here; for more complex
-actions, use xsetwacom(__appmansuffix__).
+actions, use xsetwacom(1).
 To ignore the button click, i.e., to not report any button click event
 to the X server,  use "0" or "button 0".
 .TP 4
@@ -337,8 +337,8 @@ the device. Once applied, all applications will see the reduced pressure
 range. It is not possible to provide this setting on a per-application
 basis.
 .SH "SEE ALSO"
-__xservername__(__appmansuffix__), xorg.conf(__filemansuffix__),
-xorg.conf.d(__filemansuffix__), X(__miscmansuffix__)
+__xservername__(1), xorg.conf(5),
+xorg.conf.d(5), X(7)
 .PP
 More information is available at https://github.com/linuxwacom/xf86-input-wacom
 .SH AUTHORS
