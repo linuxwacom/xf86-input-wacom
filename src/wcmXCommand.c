@@ -164,39 +164,6 @@ static void wcmInitWheelActionProp(WacomDevicePtr priv, int index)
 	wcmInitActionProp(priv, name, &priv->wheel_action_props[index], &priv->wheel_actions[index]);
 }
 
-static void wcmResetButtonAction(WacomDevicePtr priv, int button)
-{
-	WacomAction new_action = {};
-	int x11_button = priv->button_default[button];
-	char name[64];
-
-	sprintf(name, "Wacom button action %d", button);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
-	wcmActionCopy(&priv->key_actions[button], &new_action);
-}
-
-static void wcmResetStripAction(WacomDevicePtr priv, int index)
-{
-	WacomAction new_action = {};
-	char name[64];
-
-	sprintf(name, "Wacom strip action %d", index);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
-	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
-	wcmActionCopy(&priv->strip_actions[index], &new_action);
-}
-
-static void wcmResetWheelAction(WacomDevicePtr priv, int index)
-{
-	WacomAction new_action = {};
-	char name[64];
-
-	sprintf(name, "Wacom wheel action %d", index);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
-	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
-	wcmActionCopy(&priv->wheel_actions[index], &new_action);
-}
-
 /**
  * Registers a property for the input device. This function registers
  * the property name atom, as well as creates the property itself.
@@ -330,30 +297,24 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	values[0] = MakeAtom(pInfo->type_name, strlen(pInfo->type_name), TRUE);
 	prop_tooltype = InitWcmAtom(pInfo->dev, WACOM_PROP_TOOL_TYPE, XA_ATOM, 32, 1, values);
 
-	memset(values, 0, sizeof(values));
-	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32, priv->nbuttons, values);
-	for (i = 0; i < priv->nbuttons; i++) {
-		wcmResetButtonAction(priv, i);
+	for (i = 0; i < priv->nbuttons; i++)
 		wcmInitButtonActionProp(priv, i);
-	}
+	prop_btnactions = InitWcmAtom(pInfo->dev, WACOM_PROP_BUTTON_ACTIONS, XA_ATOM, 32,
+				      priv->nbuttons, (int*)priv->btn_action_props);
 
 	if (IsPad(priv)) {
-		memset(values, 0, sizeof(values));
-		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, XA_ATOM, 32, 4, values);
-		for (i = 0; i < 4; i++) {
-			wcmResetStripAction(priv, i);
+		for (i = 0; i < 4; i++)
 			wcmInitStripActionProp(priv, i);
-		}
+		prop_strip_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_STRIPBUTTONS, XA_ATOM, 32,
+						 4, (int*)priv->strip_action_props);
 	}
 
 	if (IsPad(priv) || IsCursor(priv))
 	{
-		memset(values, 0, sizeof(values));
-		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32, 6, values);
-		for (i = 0; i < 6; i++) {
-			wcmResetWheelAction(priv, i);
+		for (i = 0; i < 6; i++)
 			wcmInitWheelActionProp(priv, i);
-		}
+		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32,
+						 6, (int*)priv->wheel_action_props);
 	}
 
 	if (IsStylus(priv) || IsEraser(priv)) {

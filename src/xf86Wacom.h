@@ -127,6 +127,10 @@ extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 extern int wcmDevProc(DeviceIntPtr pWcm, int what);
 extern void wcmDevReadInput(InputInfoPtr pInfo);
 
+extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
+extern void wcmResetStripAction(WacomDevicePtr priv, int index);
+extern void wcmResetWheelAction(WacomDevicePtr priv, int index);
+
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
