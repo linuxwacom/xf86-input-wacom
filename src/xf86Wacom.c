@@ -443,7 +443,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	wcmInitActions(priv);
 	InitWcmDeviceProperties(pInfo);
-	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, wcmGetProperty, wcmDeleteProperty);
 
 	return TRUE;
 }
