@@ -31,7 +31,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xorg-wacom.pc
 
 EXTRA_DIST = GPL \
-             version
+             version \
+             config-ver.h.in
 
 .PHONY: ChangeLog INSTALL FORCE
 
@@ -43,11 +44,8 @@ ChangeLog:
 
 dist-hook: ChangeLog INSTALL
 
-config-ver.h: version
-	if ! grep -qs "^#define BUILD_VERSION \"$$(cat version)\"$$" "$@"; then \
-	    sed -i '/^#define BUILD_VERSION /d' "$@" 2>/dev/null; \
-	    echo "#define BUILD_VERSION \"$$(cat version | tr -d '\n')\"" >> "$@"; \
-	fi
+config-ver.h: config-ver.h.in version
+	sed -e 's/@GITVERSION@/$$(cat version)/' < $< > $@
 
 version: FORCE
 	if test -x $(srcdir)/git-version-gen; then $(srcdir)/git-version-gen -u; fi
