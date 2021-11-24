@@ -19,6 +19,8 @@
 
 #include <config.h>
 
+#include "config-ver.h" /* BUILD_VERSION */
+
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #include <sys/stat.h>

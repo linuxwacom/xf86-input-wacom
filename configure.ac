@@ -29,7 +29,6 @@ AC_INIT([xf86-input-wacom],
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
-AH_BOTTOM([#include "config-ver.h"])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip])
