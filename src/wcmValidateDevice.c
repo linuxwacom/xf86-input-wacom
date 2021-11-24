@@ -431,34 +431,6 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
 	return ret;
 }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 14
-static InputOption*
-input_option_new(InputOption *list, char *key, char *value)
-{
-	InputOption *new;
-
-	new = calloc(1, sizeof(InputOption));
-	new->key = strdup(key);
-	new->value = strdup(value);
-	new->next = list;
-	return new;
-}
-
-static void
-input_option_free_list(InputOption **opts)
-{
-	InputOption *tmp = *opts;
-	while(*opts)
-	{
-		tmp = (*opts)->next;
-		free((*opts)->key);
-		free((*opts)->value);
-		free((*opts));
-		*opts = tmp;
-	}
-}
-#endif
-
 /**
  * Duplicate xf86 options, replace the "type" option with the given type
  * (and the name with "$name $type" and convert them to InputOption

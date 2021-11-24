@@ -451,9 +451,7 @@ struct _WacomCommonRec
 	/* DO NOT TOUCH THIS. use wcmRefCommon() instead */
 	int refcnt;			/* number of devices sharing this struct */
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	ValuatorMask *touch_mask;
-#endif
 };
 
 #define HANDLE_TILT(comm) ((comm)->wcmFlags & TILT_ENABLED_FLAG)

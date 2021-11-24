@@ -52,7 +52,7 @@ protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
 foreach proto : protos
 	dep_protos += [dependency(proto)]
 endforeach
-dep_xserver = dependency('xorg-server', version: '>= 1.10.0')
+dep_xserver = dependency('xorg-server', version: '>= 1.13.0')
 xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
 dep_xlibs = []
 foreach xlib : xlibs

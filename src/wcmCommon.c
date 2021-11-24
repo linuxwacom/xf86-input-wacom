@@ -1092,14 +1092,12 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	if ((ds.device_type == TOUCH_ID) && common->wcmTouch)
 	{
 		wcmGestureFilter(priv, ds.serial_num - 1);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 		/*
 		 * When using XI 2.2 multitouch events don't do common dispatching
 		 * for direct touch devices
 		 */
 		if (!common->wcmGesture && TabletHasFeature(common, WCM_LCD))
 			return;
-#endif
 	}
 
 	/* For touch, only first finger moves the cursor */
@@ -1616,9 +1614,7 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 			common->serials = next;
 		}
 		free(common->device_path);
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 		free(common->touch_mask);
-#endif
 		free(common);
 	}
 	*ptr = NULL;

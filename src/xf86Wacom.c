@@ -370,7 +370,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		return FALSE;
 	}
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	if (IsTouch(priv)) {
 		if (!InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
 						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
@@ -381,7 +380,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		}
 		priv->common->touch_mask = valuator_mask_new(2);
 	}
-#endif
 
 	if (!IsPad(priv))
 	{

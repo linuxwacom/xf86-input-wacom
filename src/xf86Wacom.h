@@ -37,10 +37,6 @@
 #define _fallthrough_ __attribute__((fallthrough))
 #endif
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 18
-#define LogMessageVerbSigSafe xf86MsgVerb
-#endif
-
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 23
 #define HAVE_THREADED_INPUT 1
 #endif
