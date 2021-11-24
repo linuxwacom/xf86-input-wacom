@@ -2,6 +2,8 @@ on: [ push, pull_request ]
 
 env:
   CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-unused-parameter
+  UBUNTU_PACKAGES: xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev
+  PIP_PACKAGES: meson ninja
 
 jobs:
   compile:
@@ -12,18 +14,13 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
-
-      - name: Set up build environment / dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            xutils-dev xserver-xorg-dev libx11-dev libxi-dev \
-            libxrandr-dev libxinerama-dev libudev-dev \
-            ${{ matrix.compiler }}
-          mkdir _build
+      - uses: ./.github/actions/pkginstall
+        with:
+          apt: $UBUNTU_PACKAGES
 
       - name: Build the driver
         run: |
+          mkdir -p _build
           pushd _build > /dev/null
           # We don't want our CFLAGS (especially -Werror) to apply at `configure`
           # time so short-circuit our environment at that moment and provide the
@@ -45,3 +42,40 @@ jobs:
           pushd _build > /dev/null
           make distcheck
           popd > /dev/null
+  meson:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        compiler:
+          - gcc
+          - clang
+        meson_options:
+          - ''
+          # clang requires b_lundef=false for b_santize, see
+          # https://github.com/mesonbuild/meson/issues/764
+          - '-Db_sanitize=address,undefined -Db_lundef=false'
+    steps:
+      - uses: actions/checkout@v2
+      # install python so we get pip for meson
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+      - uses: ./.github/actions/pkginstall
+        with:
+          apt: $UBUNTU_PACKAGES
+          pip: $PIP_PACKAGES
+      - name: meson test ${{matrix.meson_options}}
+        uses: ./.github/actions/meson
+        with:
+          meson_args: ${{matrix.meson_options}}
+        env:
+          CC: ${{matrix.compiler}}
+      # Capture all the meson logs, even if we failed
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}  # even if we fail
+        with:
+          name: meson test logs
+          path: |
+            builddir/meson-logs/testlog*.txt
+            builddir/meson-logs/meson-log.txt
+
