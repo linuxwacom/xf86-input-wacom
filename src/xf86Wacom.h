@@ -33,6 +33,10 @@
 
 #include <wacom-util.h>
 
+#ifndef _fallthrough_
+#define _fallthrough_ __attribute__((fallthrough))
+#endif
+
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 18
 #define LogMessageVerbSigSafe xf86MsgVerb
 #endif

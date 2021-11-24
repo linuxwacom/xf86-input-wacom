@@ -426,7 +426,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 				common->wcmGestureMode = GESTURE_MULTITOUCH_MODE;
 			else if (ds[1].proximity)
 				common->wcmGestureMode = GESTURE_LAG_MODE;
-			/* fall through */
+			_fallthrough_;
 		case GESTURE_LAG_MODE:
 		case GESTURE_MULTITOUCH_MODE:
 			if (common->wcmGestureMode != GESTURE_NONE_MODE)
