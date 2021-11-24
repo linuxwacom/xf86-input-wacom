@@ -1514,8 +1514,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 				ds->proximity = (event->value != 0);
 				break;
 			}
-
-			/* fall through */
+			_fallthrough_;
 		case BTN_TOOL_DOUBLETAP:
 			DBG(6, common,
 			    "USB Touch detected %x (value=%d)\n",
