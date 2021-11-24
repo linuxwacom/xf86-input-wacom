@@ -253,9 +253,9 @@ struct _WacomDeviceRec
 	int button_default[WCM_MAX_BUTTONS]; /* Default mappings set by ourselves (possibly overridden by xorg.conf) */
 	int strip_default[4];
 	int wheel_default[6];
-	WacomAction keys[WCM_MAX_BUTTONS]; /* Action codes to perform when the associated event occurs */
-	WacomAction strip_keys[4];
-	WacomAction wheel_keys[6];
+	WacomAction key_actions[WCM_MAX_BUTTONS]; /* Action codes to perform when the associated event occurs */
+	WacomAction strip_actions[4];
+	WacomAction wheel_actions[6];
 	Atom btn_action_props[WCM_MAX_BUTTONS];   /* Action references so we can update the action codes when a client makes a change */
 	Atom strip_action_props[4];
 	Atom wheel_action_props[6];

@@ -145,7 +145,7 @@ static void wcmInitButtonActionProp(WacomDevicePtr priv, int button)
 	char name[64];
 
 	sprintf(name, "Wacom button action %d", button);
-	wcmInitActionProp(priv, name, &priv->btn_action_props[button], &priv->keys[button]);
+	wcmInitActionProp(priv, name, &priv->btn_action_props[button], &priv->key_actions[button]);
 }
 
 static void wcmInitStripActionProp(WacomDevicePtr priv, int index)
@@ -153,7 +153,7 @@ static void wcmInitStripActionProp(WacomDevicePtr priv, int index)
 	char name[64];
 
 	sprintf(name, "Wacom strip action %d", index);
-	wcmInitActionProp(priv, name, &priv->strip_action_props[index], &priv->strip_keys[index]);
+	wcmInitActionProp(priv, name, &priv->strip_action_props[index], &priv->strip_actions[index]);
 }
 
 static void wcmInitWheelActionProp(WacomDevicePtr priv, int index)
@@ -161,7 +161,7 @@ static void wcmInitWheelActionProp(WacomDevicePtr priv, int index)
 	char name[64];
 
 	sprintf(name, "Wacom wheel action %d", index);
-	wcmInitActionProp(priv, name, &priv->wheel_action_props[index], &priv->wheel_keys[index]);
+	wcmInitActionProp(priv, name, &priv->wheel_action_props[index], &priv->wheel_actions[index]);
 }
 
 static void wcmResetButtonAction(WacomDevicePtr priv, int button)
@@ -172,7 +172,7 @@ static void wcmResetButtonAction(WacomDevicePtr priv, int button)
 
 	sprintf(name, "Wacom button action %d", button);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
-	wcmActionCopy(&priv->keys[button], &new_action);
+	wcmActionCopy(&priv->key_actions[button], &new_action);
 }
 
 static void wcmResetStripAction(WacomDevicePtr priv, int index)
@@ -183,7 +183,7 @@ static void wcmResetStripAction(WacomDevicePtr priv, int index)
 	sprintf(name, "Wacom strip action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
-	wcmActionCopy(&priv->strip_keys[index], &new_action);
+	wcmActionCopy(&priv->strip_actions[index], &new_action);
 }
 
 static void wcmResetWheelAction(WacomDevicePtr priv, int index)
@@ -194,7 +194,7 @@ static void wcmResetWheelAction(WacomDevicePtr priv, int index)
 	sprintf(name, "Wacom wheel action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
-	wcmActionCopy(&priv->wheel_keys[index], &new_action);
+	wcmActionCopy(&priv->wheel_actions[index], &new_action);
 }
 
 /**
@@ -412,7 +412,7 @@ static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	if (offset >=0)
 	{
 		*handler = &priv->btn_action_props[offset];
-		*action  = &priv->keys[offset];
+		*action  = &priv->key_actions[offset];
 		return TRUE;
 	}
 
@@ -420,7 +420,7 @@ static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	if (offset >= 0)
 	{
 		*handler = &priv->wheel_action_props[offset];
-		*action  = &priv->wheel_keys[offset];
+		*action  = &priv->wheel_actions[offset];
 		return TRUE;
 	}
 
@@ -428,7 +428,7 @@ static BOOL wcmFindActionHandler(WacomDevicePtr priv, Atom property, Atom **hand
 	if (offset >= 0)
 	{
 		*handler = &priv->strip_action_props[offset];
-		*action  = &priv->strip_keys[offset];
+		*action  = &priv->strip_actions[offset];
 		return TRUE;
 	}
 
@@ -867,9 +867,9 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 			wcmBindToSerial(pInfo, serial);
 		}
 	} else if (property == prop_strip_buttons)
-		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->strip_action_props), priv->strip_action_props, priv->strip_keys);
+		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->strip_action_props), priv->strip_action_props, priv->strip_actions);
 	else if (property == prop_wheel_buttons)
-		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->wheel_action_props), priv->wheel_action_props, priv->wheel_keys);
+		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->wheel_action_props), priv->wheel_action_props, priv->wheel_actions);
 	else if (property == prop_proxout)
 	{
 		CARD32 value;
@@ -997,7 +997,7 @@ int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop,
 	} else if (property == prop_btnactions)
 	{
 		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
-		return wcmSetActionsProperty(dev, property, prop, checkonly, nbuttons, priv->btn_action_props, priv->keys);
+		return wcmSetActionsProperty(dev, property, prop, checkonly, nbuttons, priv->btn_action_props, priv->key_actions);
 	} else if (property == prop_pressure_recal)
 	{
 		CARD8 *values = (CARD8*)prop->data;

@@ -353,10 +353,10 @@ static void sendAButton(InputInfoPtr pInfo, const WacomDeviceState* ds, int butt
 	DBG(4, priv, "TPCButton(%s) button=%d state=%d\n",
 	    common->wcmTPCButton ? "on" : "off", button, mask);
 
-	if (wcmActionSize(&priv->keys[button]) == 0)
+	if (wcmActionSize(&priv->key_actions[button]) == 0)
 		return;
 
-	sendAction(pInfo, ds, (mask != 0), &priv->keys[button],
+	sendAction(pInfo, ds, (mask != 0), &priv->key_actions[button],
 		   first_val, num_val, valuators);
 }
 
@@ -464,7 +464,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch strip scroll delta = %d\n", delta);
-		sendWheelStripEvent(&priv->strip_keys[idx], ds,
+		sendWheelStripEvent(&priv->strip_actions[idx], ds,
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -474,7 +474,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch strip scroll delta = %d\n", delta);
-		sendWheelStripEvent(&priv->strip_keys[idx], ds,
+		sendWheelStripEvent(&priv->strip_actions[idx], ds,
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -484,7 +484,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(&priv->wheel_keys[idx], ds,
+		sendWheelStripEvent(&priv->wheel_actions[idx], ds,
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -494,7 +494,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Left touch wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(&priv->wheel_keys[idx], ds,
+		sendWheelStripEvent(&priv->wheel_actions[idx], ds,
 		                    pInfo, first_val, num_vals, valuators);
 	}
 
@@ -504,7 +504,7 @@ static void sendWheelStripEvents(InputInfoPtr pInfo, const WacomDeviceState* ds,
 	if (idx >= 0 && IsPad(priv) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Right touch wheel scroll delta = %d\n", delta);
-		sendWheelStripEvent(&priv->wheel_keys[idx], ds,
+		sendWheelStripEvent(&priv->wheel_actions[idx], ds,
 		                    pInfo, first_val, num_vals, valuators);
 	}
 }
