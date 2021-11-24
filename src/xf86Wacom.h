@@ -105,7 +105,6 @@ void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds);
 
 /* validation */
 extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);
-extern Bool wcmIsWacomDevice (char* fname);
 extern int wcmIsDuplicate(const char* device, InputInfoPtr pInfo);
 extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
 
