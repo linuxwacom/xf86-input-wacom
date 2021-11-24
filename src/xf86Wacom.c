@@ -591,11 +591,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 			return FALSE;
 		}
 		if (wcmOpen(pInfo) < 0)
-		{
-			DBG(1, priv, "Failed to open device (fd=%d)\n", pInfo->fd);
-			wcmClose(pInfo);
 			return FALSE;
-		}
 
 		if (fstat(pInfo->fd, &st) == -1)
 		{
