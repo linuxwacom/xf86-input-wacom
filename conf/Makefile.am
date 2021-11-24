@@ -17,7 +17,7 @@ unitdir = $(SYSTEMD_UNIT_DIR)
 unit_DATA = wacom-inputattach@.service
 
 $(unit_DATA): $(unit_DATA).in
-	$(AM_V_GEN)$(SED) -e 's|__BIN_PREFIX__|$(bindir)|g' < $< > $@
+	$(AM_V_GEN)$(SED) -e 's|@BIN_PREFIX@|$(bindir)|g' < $< > $@
 
 CLEANFILES += wacom-inputattach@.service
 endif
