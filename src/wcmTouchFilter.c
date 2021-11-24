@@ -109,7 +109,6 @@ static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], in
 static void
 wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
 {
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 	ValuatorMask *mask = priv->common->touch_mask;
 	WacomDeviceState state = channel->valid.state;
 	WacomDeviceState oldstate = channel->valid.states[1];
@@ -134,7 +133,6 @@ wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
 	}
 
 	xf86PostTouchEvent(priv->pInfo->dev, state.serial_num - 1, type, 0, mask);
-#endif
 }
 
 /**

@@ -13,7 +13,7 @@ xf86WaitForInput (int fd, int timeout)
 }
 
 _X_EXPORT int
-xf86OpenSerial (OPTTYPE options)
+xf86OpenSerial (XF86OptionPtr options)
 {
     return 0;
 }
@@ -24,62 +24,62 @@ xf86SetSerialSpeed (int fd, int speed)
     return 0;
 }
 
-_X_EXPORT OPTTYPE
-xf86ReplaceIntOption(OPTTYPE optlist, const char *name, const int val)
+_X_EXPORT XF86OptionPtr
+xf86ReplaceIntOption(XF86OptionPtr optlist, const char *name, const int val)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86SetStrOption(OPTTYPE optlist, const char *name, CONST char *deflt)
+xf86SetStrOption(XF86OptionPtr optlist, const char *name, const char *deflt)
 {
     return NULL;
 }
 
 _X_EXPORT int
-xf86SetBoolOption(OPTTYPE optlist, const char *name, int deflt)
+xf86SetBoolOption(XF86OptionPtr optlist, const char *name, int deflt)
 {
     return 0;
 }
 
-_X_EXPORT OPTTYPE
-xf86AddNewOption(OPTTYPE head, const char *name, const char *val)
+_X_EXPORT XF86OptionPtr
+xf86AddNewOption(XF86OptionPtr head, const char *name, const char *val)
 {
     return NULL;
 }
 
 _X_EXPORT void
-xf86OptionListFree(OPTTYPE opt)
+xf86OptionListFree(XF86OptionPtr opt)
 {
     return;
 }
 
-_X_EXPORT CONST char *
-xf86FindOptionValue(OPTTYPE options, const char *name)
+_X_EXPORT const char *
+xf86FindOptionValue(XF86OptionPtr options, const char *name)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86OptionName(OPTTYPE opt)
+xf86OptionName(XF86OptionPtr opt)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86OptionValue(OPTTYPE opt)
+xf86OptionValue(XF86OptionPtr opt)
 {
     return NULL;
 }
 
 _X_EXPORT char *
-xf86CheckStrOption(OPTTYPE optlist, const char *name, CONST char *deflt)
+xf86CheckStrOption(XF86OptionPtr optlist, const char *name, const char *deflt)
 {
     return NULL;
 }
 
 _X_EXPORT int
-xf86CheckBoolOption(OPTTYPE list, const char *name, int deflt)
+xf86CheckBoolOption(XF86OptionPtr list, const char *name, int deflt)
 {
 	return 0;
 }
@@ -97,7 +97,7 @@ xf86RemoveEnabledDevice(InputInfoPtr pInfo)
 }
 
 _X_EXPORT Atom
-XIGetKnownProperty(CONST char *name)
+XIGetKnownProperty(const char *name)
 {
     return None;
 }
@@ -187,8 +187,8 @@ xf86DeleteInput(InputInfoPtr pInp, int flags)
     return;
 }
 
-_X_EXPORT OPTTYPE
-xf86OptionListDuplicate(OPTTYPE options)
+_X_EXPORT XF86OptionPtr
+xf86OptionListDuplicate(XF86OptionPtr options)
 {
     return NULL;
 }
@@ -201,7 +201,6 @@ InitButtonClassDeviceStruct(DeviceIntPtr dev, int numButtons, Atom* labels,
 }
 
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) > 14
 _X_EXPORT Bool
 InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label,
                        int minval, int maxval, int resolution,
@@ -209,15 +208,6 @@ InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label,
 {
     return TRUE;
 }
-#else
-_X_EXPORT void
-InitValuatorAxisStruct(DeviceIntPtr dev, int axnum, Atom label,
-                       int minval, int maxval, int resolution,
-                       int min_res, int max_res, int mode)
-{
-    return;
-}
-#endif
 
 _X_EXPORT void
 xf86PostKeyboardEvent(DeviceIntPtr      device,
@@ -228,7 +218,7 @@ xf86PostKeyboardEvent(DeviceIntPtr      device,
 }
 
 _X_EXPORT int
-xf86SetIntOption(OPTTYPE optlist, const char *name, int deflt)
+xf86SetIntOption(XF86OptionPtr optlist, const char *name, int deflt)
 {
     return 0;
 }
@@ -364,15 +354,15 @@ InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
 }
 
 
-_X_EXPORT OPTTYPE
-xf86ReplaceStrOption(OPTTYPE optlist, const char *name, const char* val)
+_X_EXPORT XF86OptionPtr
+xf86ReplaceStrOption(XF86OptionPtr optlist, const char *name, const char* val)
 {
     return NULL;
 }
 
 
-_X_EXPORT OPTTYPE
-xf86NextOption(OPTTYPE list)
+_X_EXPORT XF86OptionPtr
+xf86NextOption(XF86OptionPtr list)
 {
     return NULL;
 }
@@ -463,7 +453,6 @@ void input_unlock (void)
 #endif
 
 /* This is not the same as the X server one, but it'll do for the tests */
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 14
 typedef struct _InputOption {
     struct _InputOption *next;
     char *key;
@@ -495,9 +484,7 @@ input_option_free_list(InputOption **opts)
 		*opts = tmp;
 	}
 }
-#endif
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 16
 _X_EXPORT Bool
 InitTouchClassDeviceStruct(DeviceIntPtr device, unsigned int max_touches,
     unsigned int mode, unsigned int numAxes) {
@@ -521,4 +508,3 @@ _X_EXPORT void
 xf86PrintChipsets(const char *drvname, const char *drvmsg, SymTabPtr chips)
 {
 }
-#endif
