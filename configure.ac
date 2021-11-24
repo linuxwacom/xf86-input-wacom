@@ -22,6 +22,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
+# bump version in meson.build
 AC_INIT([xf86-input-wacom],
         [0.40.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],

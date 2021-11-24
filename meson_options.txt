@@ -1,0 +1,41 @@
+option('sdkdir',
+	type: 'string',
+	value: '',
+	description: 'Directory to install header files in [default=from xorg-server pkgconf]'
+)
+option('xorg-module-dir',
+	type: 'string',
+	value: '',
+	description: 'Directory to install the driver in [default=$libdir/xorg/modules/]'
+)
+option('xorg-conf-dir',
+	type: 'string',
+	value: '',
+	description: 'Directory to install the xorg.conf.d snippets in [default=from xorg-server pkgconf]'
+)
+option('systemd-unit-dir',
+	type: 'string',
+	value: '',
+	description: 'Directory to install systemd service files in [default=$prefix/lib/systemd/system]'
+)
+option('udev-rules-dir',
+	type: 'string',
+	value: '',
+	description: 'Directory to install udev rules in [default=$prefix/lib/udev/rules.d]'
+)
+option('debug-messages',
+	type: 'boolean',
+	value: true,
+	description: 'Disable debugging log messages [default=enabled]'
+)
+option('unittests',
+	type: 'feature',
+	value: 'auto',
+	description: 'Enable unit-tests [default=auto]'
+)
+option('fuzzinterface',
+	type: 'boolean',
+	value: false,
+	description: 'Enable xsetwacom to take NUL-separated commands from stdin [default=no]'
+)
+

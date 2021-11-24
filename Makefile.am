@@ -32,7 +32,9 @@ pkgconfig_DATA = xorg-wacom.pc
 
 EXTRA_DIST = GPL \
              version \
-             config-ver.h.in
+             config-ver.h.in \
+             meson.build \
+             meson_options.txt
 
 .PHONY: ChangeLog INSTALL FORCE
 

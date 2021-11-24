@@ -1,0 +1,263 @@
+project('xf86-input-wacom', 'c',
+	version : '0.40.0', # bump version in configure.ac
+	license : 'MIT/Expat',
+	default_options : [ 'c_std=gnu99', 'warning_level=2' ],
+	meson_version : '>= 0.50.0')
+
+wacom_version = meson.project_version().split('.')
+
+dir_man1	= get_option('prefix') / get_option('mandir') / 'man1'
+dir_man4	= get_option('prefix') / get_option('mandir') / 'man4'
+dir_bin 	= get_option('prefix') / get_option('bindir')
+dir_lib_xorg	= get_option('prefix') / get_option('libdir') / 'xorg' / 'modules' / 'input'
+dir_x11_config	= get_option('prefix') / get_option('sysconfdir') / 'X11' / 'xorg.conf.d'
+dir_pkgconf	= get_option('prefix') / get_option('libdir') / 'pkgconfig'
+dir_udev	= get_option('prefix') / 'lib' / 'udev'
+dir_systemd	= get_option('prefix') / 'lib' / 'systemd'
+dir_src_test	= 'test'
+dir_src		= 'src'
+dir_include	= 'include'
+
+
+# Compiler setup
+cc = meson.get_compiler('c')
+
+cflags = [
+	'-Wno-unused-parameter',
+	'-Wno-sign-compare',	 # lots of work to get rid of this
+	'-Wmissing-prototypes',
+	'-Wstrict-prototypes',
+	'-Wlogical-op',
+	'-Wpointer-arith',
+	'-Wuninitialized',
+	'-Winit-self',
+	'-Wstrict-prototypes',
+	'-Wimplicit-fallthrough',
+	'-Wredundant-decls',
+	'-Wincompatible-pointer-types',
+	'-Wformat=2',
+	'-Wno-missing-field-initializers',
+	'-Wmissing-declarations',
+
+	'-fvisibility=hidden',
+]
+add_project_arguments(cc.get_supported_arguments(cflags), language : 'c')
+add_project_arguments('-D_GNU_SOURCE', language : 'c')
+
+
+# Dependencies
+pkgconfig = import('pkgconfig')
+dep_protos = []
+protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
+foreach proto : protos
+	dep_protos += [dependency(proto)]
+endforeach
+dep_xserver = dependency('xorg-server', version: '>= 1.10.0')
+xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
+dep_xlibs = []
+foreach xlib : xlibs
+	dep_xlibs += [dependency(xlib)]
+endforeach
+dep_libudev = dependency('libudev')
+dep_m = cc.find_library('m')
+
+dir_wacom_headers = get_option('sdkdir')
+if dir_wacom_headers == ''
+	dir_wacom_headers = dep_xserver.get_pkgconfig_variable('sdkdir')
+endif
+
+dir_xorg_modules = get_option('xorg-module-dir')
+if dir_xorg_modules == ''
+	dir_xorg_modules = dir_lib_xorg
+endif
+
+dir_xorg_conf = get_option('xorg-conf-dir')
+if dir_xorg_conf == ''
+	dir_xorg_conf = dir_x11_config
+endif
+
+dir_udev_rules = get_option('udev-rules-dir')
+if dir_udev_rules == ''
+	dir_udev_rules = dir_udev / 'rules.d'
+endif
+
+dir_systemd_unit = get_option('systemd-unit-dir')
+if dir_udev_rules == ''
+	dir_systemd_unit = dir_systemd / 'systemd'
+endif
+
+
+# config-ver.h
+config_ver_h = vcs_tag(command : ['git', 'describe'],
+			fallback : meson.project_version(),
+			input : 'config-ver.h.in',
+			output :'config-ver.h',
+			replace_string: '@GITVERSION@')
+
+
+# config.h
+config_h = configuration_data()
+config_h.set('_GNU_SOURCE', 1)
+config_h.set('PACKAGE_VERSION_MAJOR', wacom_version[0])
+config_h.set('PACKAGE_VERSION_MINOR', wacom_version[1])
+config_h.set('PACKAGE_VERSION_PATCHLEVEL', wacom_version[2])
+
+if get_option('debug-messages')
+	config_h.set10('DEBUG', true)
+endif
+
+if get_option('fuzzinterface')
+	config_h.set10('BUILD_FUZZINTERFACE')
+endif
+
+
+# Driver
+src_wacom = [
+	config_ver_h,
+	'src/wcmCommon.c',
+	'src/wcmConfig.c',
+	'src/wcmFilter.c',
+	'src/wcmFilter.h',
+	'src/wcmISDV4.c',
+	'src/wcmTouchFilter.c',
+	'src/wcmTouchFilter.h',
+	'src/wcmUSB.c',
+	'src/wcmValidateDevice.c',
+	'src/wcmXCommand.c',
+	'src/xf86Wacom.c',
+	'src/xf86WacomDefs.h',
+	'src/xf86Wacom.h',
+]
+deps_wacom = [
+	dep_xserver,
+	dep_libudev,
+] + dep_protos
+
+shared_module(
+	'wacom_drv',
+	src_wacom,
+	include_directories: [dir_src, dir_include],
+	dependencies: [dep_xserver],
+	name_prefix: '', # we want wacomdrv.so, not libwacomdrv.so
+	install_dir: dir_xorg_modules,
+	install: true,
+)
+
+conf_pkgconf = configuration_data()
+conf_pkgconf.set('PACKAGE_VERSION', meson.project_version())
+conf_pkgconf.set('sdkdir', dir_wacom_headers)
+
+configure_file(
+	input: 'xorg-wacom.pc.in',
+	output: 'xorg-wacom.pc',
+	configuration: conf_pkgconf,
+	install_dir: dir_pkgconf,
+)
+
+# Tools
+src_shared = [
+	'tools/tools-shared.h',
+	'tools/tools-shared.c',
+]
+
+executable(
+	'isdv4-serial-debugger',
+	'tools/isdv4-serial-debugger.c', src_shared,
+	dependencies: [dep_libudev],
+	include_directories: [dir_include],
+	install: true,
+)
+executable(
+	'isdv4-serial-inputattach',
+	'tools/isdv4-serial-inputattach.c', src_shared,
+	dependencies: [dep_libudev],
+	include_directories: [dir_include],
+	install: true,
+)
+
+xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
+src_xsetwacom = [
+	config_ver_h,
+	'tools/xsetwacom.c',
+]
+executable(
+	'xsetwacom',
+	src_xsetwacom,
+	dependencies: xsetwacom_deps,
+	include_directories: [dir_include],
+	install: true,
+)
+
+# Man pages
+config_man = configuration_data()
+config_man.set('VERSION', '@0@ @1@'.format(meson.project_name(), meson.project_version()))
+
+configure_file(
+	input: 'man/wacom.man',
+	output: 'wacom.4',
+	configuration: config_man,
+	install_dir: dir_man4
+)
+configure_file(
+	input: 'man/xsetwacom.man',
+	output: 'xsetwacom.1',
+	configuration: config_man,
+	install_dir: dir_man1,
+)
+
+# Config files
+install_data('conf/70-wacom.conf', install_dir: dir_xorg_conf)
+install_data('conf/wacom.rules', install_dir: dir_udev_rules)
+conf_service = configuration_data()
+conf_service.set('BIN_PREFIX', dir_bin)
+configure_file(
+	input: 'conf/wacom-inputattach@.service.in',
+	output: 'wacom-inputattach@.service',
+	configuration: conf_service,
+	install_dir: dir_systemd_unit,
+)
+
+
+# Tests
+have_wrap = cc.links('''
+void __wrap_exit (int s) {
+	__real_exit (0);
+}
+int main(void) {
+	exit(1);
+}''',
+args: '-Wl,-wrap,exit')
+
+if get_option('unittests').enabled() and not have_wrap
+	error('ld -wrap support required to build unit tests')
+endif
+build_unittests = have_wrap and not get_option('unittests').disabled()
+
+if build_unittests
+	xsetwacom_test = executable(
+		'xsetwacom-test',
+		src_xsetwacom,
+		c_args: ['-DBUILD_TEST', '-Wno-unused-function'],
+		dependencies: xsetwacom_deps,
+		include_directories: [dir_include],
+	)
+	test('xsetwacom-tests', xsetwacom_test)
+
+	src_wacom_tests = src_wacom + [
+			'test/fake-symbols.c',
+			'test/fake-symbols.h',
+			'test/wacom-tests.c',
+	]
+	wacom_tests = executable(
+			'wacom-tests',
+			src_wacom_tests,
+			c_args: ['-DUNIT_TESTS'],
+			dependencies: [dep_xserver, dep_libudev, dep_m],
+			include_directories: [dir_include, dir_src],
+	)
+	test('wacom-tests', wacom_tests)
+endif
+
+
+# Now generate config.h
+configure_file(output: 'config.h', configuration: config_h)
