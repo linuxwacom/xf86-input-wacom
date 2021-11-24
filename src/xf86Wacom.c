@@ -833,7 +833,7 @@ int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 		case DEVICE_CLOSE:
 			break;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) * 100 + GET_ABI_MINOR(ABI_XINPUT_VERSION) >= 1901
+#if ABI_XINPUT_VERSION >= SET_ABI_VERSION(19, 1)
 		case DEVICE_ABORT:
 			break;
 #endif
