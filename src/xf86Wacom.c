@@ -454,7 +454,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	return TRUE;
 }
 
-Bool wcmIsWacomDevice (char* fname)
+static Bool wcmIsWacomDevice (char* fname)
 {
 	int fd = -1;
 	struct input_id id;
