@@ -53,7 +53,7 @@
 #undef DBG
 #endif
 
-#if DEBUG
+#ifdef DEBUG
 #define DBG(lvl, priv, ...) \
 	do { \
 		if ((lvl) <= priv->debugLevel) { \

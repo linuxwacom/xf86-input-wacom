@@ -569,7 +569,7 @@ static int isdv4StartTablet(InputInfoPtr pInfo)
 
 static int isdv4StopTablet(InputInfoPtr pInfo)
 {
-#if DEBUG
+#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 #endif
