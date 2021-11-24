@@ -18,6 +18,8 @@
 
 #include "config.h"
 
+#include "config-ver.h" /* BUILD_VERSION */
+
 #include <wacom-properties.h>
 #include <wacom-util.h>
 #include "Xwacom.h"
