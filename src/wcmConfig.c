@@ -19,8 +19,6 @@
 
 #include <config.h>
 
-#include "config-ver.h" /* BUILD_VERSION */
-
 #include "xf86Wacom.h"
 #include "wcmFilter.h"
 #include <sys/stat.h>
@@ -28,16 +26,12 @@
 #include <unistd.h>
 #include <wacom-properties.h>
 
-#ifndef XI86_DRV_CAP_SERVER_FD
-#define XI86_DRV_CAP_SERVER_FD 0x01
-#endif
-
 /*****************************************************************************
  * wcmAllocate --
  * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
+WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -200,31 +194,8 @@ int wcmGetPhyDeviceID(WacomDevicePtr priv)
 		return PAD_DEVICE_ID;
 }
 
-/*
- * Be sure to set vmin appropriately for your device's protocol. You want to
- * read a full packet before returning
- *
- * JEJ - Actually, anything other than 1 is probably a bad idea since packet
- * errors can occur.  When that happens, bytes are read individually until it
- * starts making sense again.
- */
-
-static const char *default_options[] =
+void wcmUnInit(WacomDevicePtr priv)
 {
-	"StopBits",    "1",
-	"DataBits",    "8",
-	"Parity",      "None",
-	"Vmin",        "1",
-	"Vtime",       "10",
-	"FlowControl", "Xoff",
-	NULL
-};
-
-/* wcmUninit - called when the device is no longer needed. */
-
-static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
-{
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	WacomDevicePtr dev;
 	WacomDevicePtr *prev;
 	WacomCommonPtr common;
@@ -269,8 +240,6 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 out:
 	wcmFree(priv);
-	pInfo->private = NULL;
-	xf86DeleteInput(pInfo, 0);
 }
 
 /**
@@ -536,23 +505,16 @@ static int wcmIsHotpluggedDevice(WacomDevicePtr priv)
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
-static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
+int wcmPreInit(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = NULL;
+	InputInfoPtr   pInfo = priv->pInfo;
 	WacomCommonPtr common = NULL;
 	char		*type = NULL, *device = NULL;
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
 
-	pInfo->device_control = wcmDevProc;
-	pInfo->read_input = wcmDevReadInput;
-	pInfo->control_proc = wcmDevChangeControl;
-	pInfo->switch_mode = wcmDevSwitchMode;
-	pInfo->dev = NULL;
-
 	/*
 	   Init process:
-	   - allocate the generic struct used by all device types.
 	   - if no device is given, auto-probe for one (find a wacom device
 	     in /dev/input/event?
 	   - open the device file
@@ -561,10 +523,6 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	   - set the device type
 	   - hotplug dependent devices if needed
 	 */
-
-	if (!(priv = wcmAllocate(pInfo, pInfo->name)))
-		goto SetupProc_fail;
-	pInfo->private = priv;
 
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86SetStrOption(pInfo->options, "Type", NULL);
@@ -657,58 +615,5 @@ SetupProc_fail:
 	free(oldname);
 	return BadMatch;
 }
-
-static InputDriverRec WACOM =
-{
-	1,             /* driver version */
-	"wacom",       /* driver name */
-	NULL,          /* identify */
-	wcmPreInit,    /* pre-init */
-	wcmUninit, /* un-init */
-	NULL,          /* module */
-	default_options,
-	XI86_DRV_CAP_SERVER_FD,
-};
-
-
-/* wcmUnplug - Uninitialize the device */
-
-static void wcmUnplug(pointer p)
-{
-}
-
-/* wcmPlug - called by the module loader */
-
-static pointer wcmPlug(pointer module, pointer options, int* errmaj,
-		int* errmin)
-{
-	xf86AddInputDriver(&WACOM, module, 0);
-
-	xf86Msg(X_INFO, "Build version: " BUILD_VERSION "\n");
-	usbListModels();
-
-	return module;
-}
-
-static XF86ModuleVersionInfo wcmVersionRec =
-{
-	"wacom",
-	MODULEVENDORSTRING,
-	MODINFOSTRING1,
-	MODINFOSTRING2,
-	XORG_VERSION_CURRENT,
-	PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR, PACKAGE_VERSION_PATCHLEVEL,
-	ABI_CLASS_XINPUT,
-	ABI_XINPUT_VERSION,
-	MOD_CLASS_XINPUT,
-	{0, 0, 0, 0}  /* signature, to be patched into the file by a tool */
-};
-
-_X_EXPORT XF86ModuleData wacomModuleData =
-{
-	&wcmVersionRec,
-	wcmPlug,
-	wcmUnplug
-};
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

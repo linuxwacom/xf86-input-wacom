@@ -66,19 +66,6 @@ int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode)
 * wcmDevSwitchMode --
 *****************************************************************************/
 
-int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
-{
-	InputInfoPtr pInfo = (InputInfoPtr)dev->public.devicePrivate;
-#ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
-	DBG(3, priv, "dev=%p mode=%d\n",
-		(void *)dev, mode);
-#endif
-	/* Share this call with sendAButton in wcmCommon.c */
-	return wcmDevSwitchModeCall(priv, mode);
-}
-
 static Atom prop_devnode;
 static Atom prop_rotation;
 static Atom prop_tablet_area;
