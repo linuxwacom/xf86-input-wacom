@@ -1460,10 +1460,6 @@ int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
 	/* Initialize the tablet */
 	model->Initialize(common,id,version);
 
-	/* Get tablet resolution */
-	if (model->GetResolution)
-		model->GetResolution(pInfo);
-
 	/* Get tablet range */
 	if (model->GetRanges && (model->GetRanges(pInfo) != Success))
 		return !Success;

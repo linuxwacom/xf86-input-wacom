@@ -86,7 +86,6 @@ struct _WacomModel
 	const char* name;
 
 	void (*Initialize)(WacomCommonPtr common, const char* id, float version);
-	void (*GetResolution)(InputInfoPtr pInfo);
 	int (*GetRanges)(InputInfoPtr pInfo);
 	int (*Start)(InputInfoPtr pInfo);
 	int (*Parse)(InputInfoPtr pInfo, const unsigned char* data, int len);
