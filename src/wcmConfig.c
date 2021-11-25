@@ -698,6 +698,7 @@ int wcmPreInit(WacomDevicePtr priv)
 	char		*type = NULL, *device = NULL;
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
+	int		fd = -1;
 
 	/*
 	   Init process:
@@ -723,8 +724,9 @@ int wcmPreInit(WacomDevicePtr priv)
 	if (wcmIsDuplicate(device, priv))
 		goto SetupProc_fail;
 
-	if (wcmOpen(priv) < 0)
+	if ((fd = wcmOpen(priv)) < 0)
 		goto SetupProc_fail;
+	pInfo->fd = fd;
 
 	/* Try to guess whether it's USB or ISDV4 */
 	if (!wcmDetectDeviceClass(priv))

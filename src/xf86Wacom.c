@@ -475,11 +475,12 @@ int wcmOpen(WacomDevicePtr priv)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
+	int fd;
 
 	DBG(1, priv, "opening device file\n");
 
-	pInfo->fd = xf86OpenSerial(pInfo->options);
-	if (pInfo->fd < 0)
+	fd = xf86OpenSerial(pInfo->options);
+	if (fd < 0)
 	{
 		int saved_errno = errno;
 		wcmLog(priv, W_ERROR, "Error opening %s (%s)\n",
@@ -487,7 +488,7 @@ int wcmOpen(WacomDevicePtr priv)
 		return -saved_errno;
 	}
 
-	return pInfo->fd;
+	return fd;
 }
 
 /*****************************************************************************
@@ -527,14 +528,16 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
+		int fd = -1;
+
 		if (!common->device_path) {
 			DBG(1, priv, "Missing common device path\n");
 			return FALSE;
 		}
-		if (wcmOpen(priv) < 0)
+		if ((fd = wcmOpen(priv)) < 0)
 			return FALSE;
 
-		if (fstat(pInfo->fd, &st) == -1)
+		if (fstat(fd, &st) == -1)
 		{
 			/* can not access major/minor */
 			DBG(1, priv, "stat failed (%s).\n", strerror(errno));
@@ -545,7 +548,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		}
 		else
 			common->min_maj = st.st_rdev;
-		common->fd = pInfo->fd;
+		common->fd = fd;
 		common->fd_refs = 1;
 	}
 
