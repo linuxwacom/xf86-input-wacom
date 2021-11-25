@@ -521,10 +521,6 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 
 	DBG(10, priv, "\n");
 
-	/* If fd management is done by the server, skip common fd handling */
-	if (pInfo->flags & XI86_SERVER_FD)
-		return TRUE;
-
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
 	{
@@ -652,10 +648,6 @@ static void wcmDevClose(WacomDevicePtr priv)
 	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
-	/* If fd management is done by the server, skip common fd handling */
-	if (pInfo->flags & XI86_SERVER_FD)
-		return;
-
 	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
 
 	if (pInfo->fd >= 0)
@@ -698,7 +690,8 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 
 		case DEVICE_ON:
-			if (!wcmDevOpen(pWcm))
+			/* If fd management is done by the server, skip common fd handling */
+			if ((pInfo->flags & XI86_SERVER_FD) == 0 && !wcmDevOpen(pWcm))
 				goto out;
 			wcmStart(priv);
 			xf86AddEnabledDevice(pInfo);
@@ -714,7 +707,9 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			if (pInfo->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(pInfo);
-				wcmDevClose(priv);
+				/* If fd management is done by the server, skip common fd handling */
+				if ((pInfo->flags & XI86_SERVER_FD) == 0)
+					wcmDevClose(priv);
 			}
 			pWcm->public.on = FALSE;
 			break;
