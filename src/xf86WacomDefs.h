@@ -381,6 +381,7 @@ struct _WacomCommonRec
 	int fd;                      /* file descriptor to tablet */
 	int fd_refs;                 /* number of references to fd; if =0, fd is invalid */
 	unsigned long wcmKeys[NBITS(KEY_MAX)]; /* supported tool types for the device */
+	unsigned long wcmInputProps[NBITS(INPUT_PROP_MAX)]; /* supported INPUT_PROP_ bits */
 	WacomDevicePtr wcmTouchDevice; /* The pointer for pen to access the
 					  touch tool of the same device id */
 

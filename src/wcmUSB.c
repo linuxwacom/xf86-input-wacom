@@ -2059,6 +2059,13 @@ static int usbProbeKeys(InputInfoPtr pInfo)
 		return 0;
 	}
 
+	if (ioctl(pInfo->fd, EVIOCGPROP(sizeof(common->wcmInputProps)), common->wcmInputProps) < 0)
+	{
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "usbProbeKeys unable to ioctl input properties.\n");
+		return 0;
+	}
+
 	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
 	{
 		xf86IDrvMsg(pInfo, X_ERROR,
