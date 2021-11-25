@@ -874,6 +874,16 @@ Bool wcmDevStart(WacomDevicePtr priv)
 	return TRUE;
 }
 
+void wcmDevStop(WacomDevicePtr priv)
+{
+
+	TimerCancel(priv->tap_timer);
+	TimerCancel(priv->serial_timer);
+	TimerCancel(priv->touch_timer);
+	wcmDisableTool(priv);
+	wcmUnlinkTouchAndPen(priv);
+}
+
 /*****************************************************************************
  * wcmDevClose --
  ****************************************************************************/

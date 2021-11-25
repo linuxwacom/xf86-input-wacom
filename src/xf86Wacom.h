@@ -122,6 +122,7 @@ int wcmDevOpen(WacomDevicePtr priv);
 /* Close the **shared** fd, if necessary */
 void wcmDevClose(WacomDevicePtr priv);
 Bool wcmDevStart(WacomDevicePtr priv);
+void wcmDevStop(WacomDevicePtr priv);
 
 
 /* Open the device with the right serial parmeters */
