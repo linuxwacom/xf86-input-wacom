@@ -119,11 +119,11 @@ int wcmPreInit(WacomDevicePtr priv);
 void wcmUnInit(WacomDevicePtr priv);
 /* Open the **shared** fd, if necessary */
 int wcmDevOpen(WacomDevicePtr priv);
+int wcmDevInit(WacomDevicePtr priv);
 /* Close the **shared** fd, if necessary */
 void wcmDevClose(WacomDevicePtr priv);
 Bool wcmDevStart(WacomDevicePtr priv);
 void wcmDevStop(WacomDevicePtr priv);
-
 
 /* Open the device with the right serial parmeters */
 extern Bool wcmOpen(WacomDevicePtr priv);
@@ -296,6 +296,13 @@ static inline Bool wcmAxisGet(const WacomAxisData *data,
 	}
 	return TRUE;
 }
+
+void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type, int min, int max, int res);
+Bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons);
+Bool wcmInitKeyboard(WacomDevicePtr priv);
+Bool wcmInitPointer(WacomDevicePtr priv, int naxes, Bool is_absolute);
+Bool wcmInitTouch(WacomDevicePtr priv, int ntouches, Bool is_direct_touch);
+
 
 void wcmEmitKeycode(WacomDevicePtr priv, int keycode, int state);
 void wcmEmitMotion(WacomDevicePtr priv, Bool is_absolute, const WacomAxisData *axes);

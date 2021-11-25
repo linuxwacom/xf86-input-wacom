@@ -860,6 +860,178 @@ int wcmDevOpen(WacomDevicePtr priv)
 	return TRUE;
 }
 
+/**
+ * Initialize the device axes with their proper attributes.
+ *
+ * For each axis on the device, we need to provide X with its attributes
+ * so that its values can be interpreted properly. To support older X
+ * servers without axis labels, each axis index has a de-facto meaning.
+ * Any de-facto defined axis index left unused is initialized with default
+ * attributes.
+ */
+static int wcmInitAxes(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	int min, max, res;
+
+	/* first valuator: x */
+	min = priv->topX;
+	max = priv->bottomX;
+	res = priv->resolX;
+	wcmInitAxis(priv, WACOM_AXIS_X, min, max, res);
+
+
+	/* second valuator: y */
+	min = priv->topY;
+	max = priv->bottomY;
+	res = priv->resolY;
+	wcmInitAxis(priv, WACOM_AXIS_Y, min, max, res);
+
+	/* third valuator: pressure */
+	if (!IsPad(priv))
+	{
+		res = 0;
+		min = 0;
+		max = priv->maxCurve;
+		wcmInitAxis(priv, WACOM_AXIS_PRESSURE, min, max, res);
+	}
+	/* FIXME: how to set up this axis on the pad? */
+
+	/* fourth valuator: tilt-x, cursor:z-rotation, pad:strip-x */
+	res = 0;
+	if (IsPen(priv))
+	{
+		res = round(TILT_RES);
+		min = TILT_MIN;
+		max = TILT_MAX;
+		wcmInitAxis(priv, WACOM_AXIS_TILT_X, min, max, res);
+	}
+	else if (IsCursor(priv))
+	{
+		min = MIN_ROTATION;
+		max = MIN_ROTATION + MAX_ROTATION_RANGE - 1;
+		wcmInitAxis(priv, WACOM_AXIS_ROTATION, min, max, res);
+	}
+	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
+	{
+		min = 0;
+		max = common->wcmMaxStripX;
+		wcmInitAxis(priv, WACOM_AXIS_STRIP_X, min, max, res);
+	}
+
+	/* fifth valuator: tilt-y, cursor:throttle, pad:strip-y */
+	res = 0;
+	if (IsPen(priv))
+	{
+		res = round(TILT_RES);
+		min = TILT_MIN;
+		max = TILT_MAX;
+		wcmInitAxis(priv, WACOM_AXIS_TILT_Y, min, max, res);
+	}
+	else if (IsCursor(priv))
+	{
+		min = -1023;
+		max = 1023;
+		wcmInitAxis(priv, WACOM_AXIS_THROTTLE, min, max, res);
+	}
+	else if (IsPad(priv) && TabletHasFeature(common, WCM_STRIP))
+	{
+		min = 0;
+		max = common->wcmMaxStripY;
+		wcmInitAxis(priv, WACOM_AXIS_STRIP_Y, min, max, res);
+	}
+
+	/* sixth valuator: airbrush: abs-wheel, artpen: rotation, pad:abs-wheel */
+	res = 0;
+	if (IsStylus(priv))
+	{
+		max = MAX_ROTATION_RANGE + MIN_ROTATION - 1;
+		min = MIN_ROTATION;
+		wcmInitAxis(priv, WACOM_AXIS_WHEEL, min, max, res);
+	}
+	else if ((TabletHasFeature(common, WCM_RING)) && IsPad(priv))
+	{
+		/* Touch ring */
+		min = common->wcmMinRing;
+		max = common->wcmMaxRing;
+		wcmInitAxis(priv, WACOM_AXIS_RING, min, max, res);
+	}
+
+	/* seventh valuator: abswheel2 */
+	if ((TabletHasFeature(common, WCM_DUALRING)) && IsPad(priv))
+	{
+		res = 0;
+		min = common->wcmMinRing;
+		max = common->wcmMaxRing;
+		wcmInitAxis(priv, WACOM_AXIS_RING2, min, max, res);
+	}
+
+	return TRUE;
+}
+
+int wcmDevInit(WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common =	priv->common;
+	int nbaxes, nbbuttons, nbkeys;
+
+	/* Detect tablet configuration, if possible */
+	if (priv->common->wcmModel->DetectConfig)
+		priv->common->wcmModel->DetectConfig (priv);
+
+	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
+	if (!nbaxes || nbaxes > 7)
+		nbaxes = priv->naxes = 7;
+	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
+
+	if (IsPad(priv) && TabletHasFeature(priv->common, WCM_DUALRING))
+		nbaxes = priv->naxes = nbaxes + 1; /* ABS wheel 2 */
+
+	/* if more than 3 buttons, offset by the four scroll buttons,
+	 * otherwise, alloc 7 buttons for scroll wheel. */
+	nbbuttons = min(max(nbbuttons + 4, 7), WCM_MAX_BUTTONS);
+	nbkeys = nbbuttons;         /* Same number of keys since any button may be
+	                             * configured as an either mouse button or key */
+
+	DBG(10, priv,
+		"(%s) %d buttons, %d keys, %d axes\n",
+		pInfo->type_name,
+		nbbuttons, nbkeys, nbaxes);
+
+	if (!wcmInitButtons(priv, nbbuttons))
+	{
+		wcmLog(priv, W_ERROR, "unable to allocate Button class device\n");
+		return FALSE;
+	}
+
+	if (!wcmInitKeyboard(priv))
+	{
+		wcmLog(priv, W_ERROR, "unable to init Focus class device\n");
+		return FALSE;
+	}
+
+	if (!wcmInitPointer(priv, nbaxes, is_absolute(priv) ? Absolute : Relative))
+	{
+		wcmLog(priv, W_ERROR, "unable to init Pointer class device\n");
+		return FALSE;
+	}
+
+	if (IsTouch(priv)) {
+		if (!wcmInitTouch(priv, common->wcmMaxContacts,
+				  TabletHasFeature(common, WCM_LCD)))
+		{
+			wcmLog(priv, W_ERROR, "Unable to init touch class device struct!\n");
+			return FALSE;
+		}
+		priv->common->touch_mask = valuator_mask_new(2);
+	}
+
+	if (!wcmInitAxes(priv))
+		return FALSE;
+
+	return TRUE;
+}
+
 Bool wcmDevStart(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
