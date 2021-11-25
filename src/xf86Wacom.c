@@ -287,39 +287,6 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	return TRUE;
 }
 
-void wcmResetButtonAction(WacomDevicePtr priv, int button)
-{
-	WacomAction new_action = {};
-	int x11_button = priv->button_default[button];
-	char name[64];
-
-	sprintf(name, "Wacom button action %d", button);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
-	wcmActionCopy(&priv->key_actions[button], &new_action);
-}
-
-void wcmResetStripAction(WacomDevicePtr priv, int index)
-{
-	WacomAction new_action = {};
-	char name[64];
-
-	sprintf(name, "Wacom strip action %d", index);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
-	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
-	wcmActionCopy(&priv->strip_actions[index], &new_action);
-}
-
-void wcmResetWheelAction(WacomDevicePtr priv, int index)
-{
-	WacomAction new_action = {};
-	char name[64];
-
-	sprintf(name, "Wacom wheel action %d", index);
-	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
-	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
-	wcmActionCopy(&priv->wheel_actions[index], &new_action);
-}
-
 static void wcmInitActions(WacomDevicePtr priv)
 {
 	int i;
@@ -453,78 +420,6 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	InitWcmDeviceProperties(priv);
 
 	return TRUE;
-}
-
-static Bool wcmIsWacomDevice (char* fname)
-{
-	int fd = -1;
-	struct input_id id;
-
-	SYSCALL(fd = open(fname, O_RDONLY));
-	if (fd < 0)
-		return FALSE;
-
-	if (ioctl(fd, EVIOCGID, &id) < 0)
-	{
-		SYSCALL(close(fd));
-		return FALSE;
-	}
-
-	SYSCALL(close(fd));
-
-	switch(id.vendor)
-	{
-		case WACOM_VENDOR_ID:
-		case WALTOP_VENDOR_ID:
-		case HANWANG_VENDOR_ID:
-		case LENOVO_VENDOR_ID:
-			return TRUE;
-		default:
-			break;
-	}
-	return FALSE;
-}
-
-/*****************************************************************************
- * wcmEventAutoDevProbe -- Probe for right input device
- ****************************************************************************/
-#define DEV_INPUT_EVENT "/dev/input/event%d"
-#define EVDEV_MINORS    32
-char *wcmEventAutoDevProbe (WacomDevicePtr priv)
-{
-	InputInfoPtr pInfo = priv->pInfo;
-	/* We are trying to find the right eventX device */
-	int i = 0, wait = 0;
-	const int max_wait = 2000;
-
-	/* If device is not available after Resume, wait some ms */
-	while (wait <= max_wait)
-	{
-		for (i = 0; i < EVDEV_MINORS; i++)
-		{
-			char fname[64];
-			Bool is_wacom;
-
-			sprintf(fname, DEV_INPUT_EVENT, i);
-			is_wacom = wcmIsWacomDevice(fname);
-			if (is_wacom)
-			{
-				xf86IDrvMsg(pInfo, X_PROBED,
-					    "probed device is %s (waited %d msec)\n", fname, wait);
-				xf86ReplaceStrOption(pInfo->options, "Device", fname);
-
-				/* this assumes there is only one Wacom device on the system */
-				return xf86CheckStrOption(pInfo->options, "Device", NULL);
-			}
-		}
-		wait += 100;
-		xf86IDrvMsg(pInfo, X_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
-		usleep(100*1000);
-	}
-	xf86IDrvMsg(pInfo, X_ERROR,
-		    "no Wacom event device found (checked %d nodes, waited %d msec)\n", i + 1, wait);
-	xf86IDrvMsg(pInfo, X_ERROR, "unable to probe device\n");
-	return NULL;
 }
 
 /*****************************************************************************
@@ -683,61 +578,6 @@ static void wcmDevReadInput(InputInfoPtr pInfo)
 #endif
 }
 
-int wcmReadPacket(WacomDevicePtr priv)
-{
-	InputInfoPtr pInfo = priv->pInfo;
-	WacomCommonPtr common = priv->common;
-	int len, pos, cnt, remaining;
-
-	DBG(10, common, "fd=%d\n", pInfo->fd);
-
-	remaining = sizeof(common->buffer) - common->bufpos;
-
-	DBG(1, common, "pos=%d remaining=%d\n", common->bufpos, remaining);
-
-	/* fill buffer with as much data as we can handle */
-	SYSCALL((len = read(pInfo->fd, common->buffer + common->bufpos, remaining)));
-
-	if (len <= 0)
-	{
-		if (errno == EAGAIN || errno == EINTR)
-			return 0;
-		return -errno;
-	}
-
-	/* account for new data */
-	common->bufpos += len;
-	DBG(10, common, "buffer has %d bytes\n", common->bufpos);
-
-	len = common->bufpos;
-	pos = 0;
-
-	while (len > 0)
-	{
-		/* parse packet */
-		cnt = common->wcmModel->Parse(priv, common->buffer + pos, len);
-		if (cnt <= 0)
-		{
-			if (cnt < 0)
-				DBG(1, common, "Misbehaving parser returned %d\n",cnt);
-			break;
-		}
-		pos += cnt;
-		len -= cnt;
-	}
-
-	/* if half a packet remains, move it down */
-	if (len)
-	{
-		DBG(7, common, "MOVE %d bytes\n", common->bufpos - pos);
-		memmove(common->buffer,common->buffer+pos, len);
-	}
-
-	common->bufpos = len;
-
-	return pos;
-}
-
 static int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
 {
 #ifdef DEBUG
@@ -782,62 +622,6 @@ static void wcmDevClose(WacomDevicePtr priv)
 		if (!--common->fd_refs)
 			wcmClose(priv);
 		pInfo->fd = -1;
-	}
-}
-
-static void wcmEnableDisableTool(WacomDevicePtr priv, Bool enable)
-{
-	WacomToolPtr	tool	= priv->tool;
-
-	tool->enabled = enable;
-}
-
-static void wcmEnableTool(WacomDevicePtr priv)
-{
-	wcmEnableDisableTool(priv, TRUE);
-}
-static void wcmDisableTool(WacomDevicePtr priv)
-{
-	wcmEnableDisableTool(priv, FALSE);
-}
-
-/**
- * Unlink the touch tool from the pen of the same device
- */
-static void wcmUnlinkTouchAndPen(WacomDevicePtr priv)
-{
-	WacomCommonPtr common = priv->common;
-	InputInfoPtr device = xf86FirstLocalDevice();
-	WacomCommonPtr tmpcommon = NULL;
-	WacomDevicePtr tmppriv = NULL;
-	Bool touch_device = FALSE;
-
-	if (!TabletHasFeature(common, WCM_PENTOUCH))
-		return;
-
-	/* Lookup to find the associated pen and touch */
-	for (; device != NULL; device = device->next)
-	{
-		if (!strcmp(device->drv->driverName, "wacom"))
-		{
-			tmppriv = (WacomDevicePtr) device->private;
-			tmpcommon = tmppriv->common;
-			touch_device = (common->wcmTouchDevice ||
-						tmpcommon->wcmTouchDevice);
-
-			/* skip the same tool or unlinked devices */
-			if ((tmppriv == priv) || !touch_device)
-				continue;
-
-			if (tmpcommon->tablet_id == common->tablet_id)
-			{
-				common->wcmTouchDevice = NULL;
-				tmpcommon->wcmTouchDevice = NULL;
-				common->tablet_type &= ~WCM_PENTOUCH;
-				tmpcommon->tablet_type &= ~WCM_PENTOUCH;
-				return;
-			}
-		}
 	}
 }
 

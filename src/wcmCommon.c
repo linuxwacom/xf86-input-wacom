@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <unistd.h>
 #include "xf86Wacom.h"
 #include "Xwacom.h"
 #include "wcmFilter.h"
@@ -126,6 +127,95 @@ static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds, int x,
 
 	*accumulated_x = wcmButtonPerNotch(priv, *accumulated_x, threshold, 6, 7);
 	*accumulated_y = wcmButtonPerNotch(priv, *accumulated_y, threshold, 4, 5);
+}
+
+void wcmResetButtonAction(WacomDevicePtr priv, int button)
+{
+	WacomAction new_action = {};
+	int x11_button = priv->button_default[button];
+	char name[64];
+
+	sprintf(name, "Wacom button action %d", button);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
+	wcmActionCopy(&priv->key_actions[button], &new_action);
+}
+
+void wcmResetStripAction(WacomDevicePtr priv, int index)
+{
+	WacomAction new_action = {};
+	char name[64];
+
+	sprintf(name, "Wacom strip action %d", index);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
+	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
+	wcmActionCopy(&priv->strip_actions[index], &new_action);
+}
+
+void wcmResetWheelAction(WacomDevicePtr priv, int index)
+{
+	WacomAction new_action = {};
+	char name[64];
+
+	sprintf(name, "Wacom wheel action %d", index);
+	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
+	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
+	wcmActionCopy(&priv->wheel_actions[index], &new_action);
+}
+
+/* Main event hanlding function */
+int wcmReadPacket(WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common = priv->common;
+	int len, pos, cnt, remaining;
+
+	DBG(10, common, "fd=%d\n", pInfo->fd);
+
+	remaining = sizeof(common->buffer) - common->bufpos;
+
+	DBG(1, common, "pos=%d remaining=%d\n", common->bufpos, remaining);
+
+	/* fill buffer with as much data as we can handle */
+	SYSCALL((len = read(pInfo->fd, common->buffer + common->bufpos, remaining)));
+
+	if (len <= 0)
+	{
+		if (errno == EAGAIN || errno == EINTR)
+			return 0;
+		return -errno;
+	}
+
+	/* account for new data */
+	common->bufpos += len;
+	DBG(10, common, "buffer has %d bytes\n", common->bufpos);
+
+	len = common->bufpos;
+	pos = 0;
+
+	while (len > 0)
+	{
+		/* parse packet */
+		cnt = common->wcmModel->Parse(priv, common->buffer + pos, len);
+		if (cnt <= 0)
+		{
+			if (cnt < 0)
+				DBG(1, common, "Misbehaving parser returned %d\n",cnt);
+			break;
+		}
+		pos += cnt;
+		len -= cnt;
+	}
+
+	/* if half a packet remains, move it down */
+	if (len)
+	{
+		DBG(7, common, "MOVE %d bytes\n", common->bufpos - pos);
+		memmove(common->buffer,common->buffer+pos, len);
+	}
+
+	common->bufpos = len;
+
+	return pos;
 }
 
 /*****************************************************************************

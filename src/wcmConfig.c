@@ -242,6 +242,62 @@ out:
 	wcmFree(priv);
 }
 
+static void wcmEnableDisableTool(WacomDevicePtr priv, Bool enable)
+{
+	WacomToolPtr	tool	= priv->tool;
+
+	tool->enabled = enable;
+}
+
+void wcmEnableTool(WacomDevicePtr priv)
+{
+	wcmEnableDisableTool(priv, TRUE);
+}
+void wcmDisableTool(WacomDevicePtr priv)
+{
+	wcmEnableDisableTool(priv, FALSE);
+}
+
+/**
+ * Unlink the touch tool from the pen of the same device
+ */
+void wcmUnlinkTouchAndPen(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	InputInfoPtr device = xf86FirstLocalDevice();
+	WacomCommonPtr tmpcommon = NULL;
+	WacomDevicePtr tmppriv = NULL;
+	Bool touch_device = FALSE;
+
+	if (!TabletHasFeature(common, WCM_PENTOUCH))
+		return;
+
+	/* Lookup to find the associated pen and touch */
+	for (; device != NULL; device = device->next)
+	{
+		if (!strcmp(device->drv->driverName, "wacom"))
+		{
+			tmppriv = (WacomDevicePtr) device->private;
+			tmpcommon = tmppriv->common;
+			touch_device = (common->wcmTouchDevice ||
+						tmpcommon->wcmTouchDevice);
+
+			/* skip the same tool or unlinked devices */
+			if ((tmppriv == priv) || !touch_device)
+				continue;
+
+			if (tmpcommon->tablet_id == common->tablet_id)
+			{
+				common->wcmTouchDevice = NULL;
+				tmpcommon->wcmTouchDevice = NULL;
+				common->tablet_type &= ~WCM_PENTOUCH;
+				tmpcommon->tablet_type &= ~WCM_PENTOUCH;
+				return;
+			}
+		}
+	}
+}
+
 /**
  * Splits a wacom device name into its constituent pieces. For instance,
  * "Wacom Intuos Pro Finger touch" would be split into "Wacom Intuos Pro"
@@ -502,6 +558,79 @@ static int wcmIsHotpluggedDevice(WacomDevicePtr priv)
 	free(source);
 	return matches;
 }
+
+static Bool wcmIsWacomDevice (char* fname)
+{
+	int fd = -1;
+	struct input_id id;
+
+	SYSCALL(fd = open(fname, O_RDONLY));
+	if (fd < 0)
+		return FALSE;
+
+	if (ioctl(fd, EVIOCGID, &id) < 0)
+	{
+		SYSCALL(close(fd));
+		return FALSE;
+	}
+
+	SYSCALL(close(fd));
+
+	switch(id.vendor)
+	{
+		case WACOM_VENDOR_ID:
+		case WALTOP_VENDOR_ID:
+		case HANWANG_VENDOR_ID:
+		case LENOVO_VENDOR_ID:
+			return TRUE;
+		default:
+			break;
+	}
+	return FALSE;
+}
+
+/*****************************************************************************
+ * wcmEventAutoDevProbe -- Probe for right input device
+ ****************************************************************************/
+#define DEV_INPUT_EVENT "/dev/input/event%d"
+#define EVDEV_MINORS    32
+char *wcmEventAutoDevProbe (WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	/* We are trying to find the right eventX device */
+	int i = 0, wait = 0;
+	const int max_wait = 2000;
+
+	/* If device is not available after Resume, wait some ms */
+	while (wait <= max_wait)
+	{
+		for (i = 0; i < EVDEV_MINORS; i++)
+		{
+			char fname[64];
+			Bool is_wacom;
+
+			sprintf(fname, DEV_INPUT_EVENT, i);
+			is_wacom = wcmIsWacomDevice(fname);
+			if (is_wacom)
+			{
+				xf86IDrvMsg(pInfo, X_PROBED,
+					    "probed device is %s (waited %d msec)\n", fname, wait);
+				xf86ReplaceStrOption(pInfo->options, "Device", fname);
+
+				/* this assumes there is only one Wacom device on the system */
+				return xf86CheckStrOption(pInfo->options, "Device", NULL);
+			}
+		}
+		wait += 100;
+		xf86IDrvMsg(pInfo, X_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
+		usleep(100*1000);
+	}
+	xf86IDrvMsg(pInfo, X_ERROR,
+		    "no Wacom event device found (checked %d nodes, waited %d msec)\n", i + 1, wait);
+	xf86IDrvMsg(pInfo, X_ERROR, "unable to probe device\n");
+	return NULL;
+}
+
 
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
