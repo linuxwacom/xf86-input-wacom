@@ -77,9 +77,9 @@ static struct _WacomModel mname =		\
 {						\
 	.name = identifier,			\
 	.Initialize = usbInitProtocol##protocol,\
+	.DetectConfig = usbDetectConfig,	\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\
-	.DetectConfig = usbDetectConfig,	\
 }
 
 DEFINE_MODEL(usbUnknown,	"Unknown USB",		5);
