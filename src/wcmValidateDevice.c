@@ -31,8 +31,7 @@ struct checkData {
 
 static int checkSource(WacomDevicePtr other, void *data)
 {
-	InputInfoPtr pInfo = other->pInfo;
-	char *device = xf86CheckStrOption(pInfo->options, "Device", NULL);
+	char *device = wcmOptCheckStr(other, "Device", NULL);
 	WacomCommonPtr pCommon;
 	struct checkData *check = data;
 	Bool match = FALSE;
@@ -46,8 +45,7 @@ static int checkSource(WacomDevicePtr other, void *data)
 	pCommon = other->common;
 	if (pCommon->min_maj && pCommon->min_maj == check->min_maj)
 	{
-		char* source = xf86CheckStrOption(pInfo->options, "_source", "");
-
+		char* source = wcmOptCheckStr(other, "_source", "");
 		/* only add the new tool if the matching major/minor
 		 * was from the same source */
 		if (strcmp(check->source, source))
@@ -64,11 +62,10 @@ static int checkSource(WacomDevicePtr other, void *data)
  * with the same type to individualize tools with serial number or areas */
 static Bool wcmCheckSource(WacomDevicePtr priv, dev_t min_maj)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int nmatch;
 	struct checkData check = {
 		.min_maj = min_maj,
-		.source = xf86CheckStrOption(pInfo->options, "_source", ""),
+		.source = wcmOptCheckStr(priv, "_source", ""),
 	};
 
 	nmatch = wcmForeachDevice(priv, checkSource, &check);
@@ -89,10 +86,9 @@ static Bool wcmCheckSource(WacomDevicePtr priv, dev_t min_maj)
  */
 int wcmIsDuplicate(const char* device, WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	struct stat st;
 	int isInUse = 0;
-	char* lsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	char* lsource = wcmOptCheckStr(priv, "_source", NULL);
 
 	/* always allow xorg.conf defined tools to be added */
 	if (!lsource || !strlen(lsource)) goto ret;
@@ -145,7 +141,6 @@ static struct
 /* validate tool type for device/product */
 Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int i, j;
 	char* dsource;
@@ -157,7 +152,7 @@ Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 		return FALSE;
 	}
 
-	dsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	dsource = wcmOptCheckStr(priv, "_source", NULL);
 	user_defined = !dsource || !strlen(dsource);
 	free(dsource);
 
@@ -672,8 +667,7 @@ void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
  */
 int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-	char *source = xf86CheckStrOption(pInfo->options, "_source", NULL);
+	char *source = wcmOptCheckStr(priv, "_source", NULL);
 	int i;
 	int rc = 0;
 
@@ -707,8 +701,8 @@ int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 	wcmLog(priv, W_INFO, "other types will be automatically added.\n");
 
 	/* Note: wcmIsHotpluggedDevice() relies on this */
-	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
-	pInfo->options = xf86ReplaceStrOption(pInfo->options, "_source", "_driver/wacom");
+	wcmOptSetStr(priv, "Type", *type);
+	wcmOptSetStr(priv, "_source", "_driver/wacom");
 
 	rc = 1;
 
@@ -719,7 +713,6 @@ out:
 
 int wcmParseSerials (WacomDevicePtr priv)
 {
-	InputInfoPtr    pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	char            *s;
 
@@ -728,7 +721,7 @@ int wcmParseSerials (WacomDevicePtr priv)
 		return 0; /*Parse has been already done*/
 	}
 
-	s = xf86SetStrOption(pInfo->options, "ToolSerials", NULL);
+	s = wcmOptGetStr(priv, "ToolSerials", NULL);
 	if (s) /*Dont parse again, if the commons have values already*/
 	{
 		char* tok = strtok(s, ";");
@@ -811,7 +804,6 @@ int wcmParseSerials (WacomDevicePtr priv)
 Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			    Bool is_dependent)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	char            *s;
 	int		i;
@@ -819,7 +811,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	int		tpc_button_is_on;
 
 	/* Optional configuration */
-	s = xf86SetStrOption(pInfo->options, "Mode", NULL);
+	s = wcmOptGetStr(priv, "Mode", NULL);
 
 	if (s && (strcasecmp(s, "absolute") == 0))
 		set_absolute(priv, TRUE);
@@ -851,7 +843,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		set_absolute(priv, TRUE);
 	}
 
-	s = xf86SetStrOption(pInfo->options, "Rotate", NULL);
+	s = wcmOptGetStr(priv, "Rotate", NULL);
 
 	if (s)
 	{
@@ -876,7 +868,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		free(s);
 	}
 
-	common->wcmRawSample = xf86SetIntOption(pInfo->options, "RawSample",
+	common->wcmRawSample = wcmOptGetInt(priv, "RawSample",
 			common->wcmRawSample);
 	if (common->wcmRawSample < 1 || common->wcmRawSample > MAX_SAMPLES)
 	{
@@ -886,7 +878,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		common->wcmRawSample = DEFAULT_SAMPLES;
 	}
 
-	common->wcmSuppress = xf86SetIntOption(pInfo->options, "Suppress",
+	common->wcmSuppress = wcmOptGetInt(priv, "Suppress",
 			common->wcmSuppress);
 	if (common->wcmSuppress != 0) /* 0 disables suppression */
 	{
@@ -902,7 +894,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	 * Slightly depressed curve might be 5,0,100,95
 	 * Slightly raised curve might be 0,5,95,100
 	 */
-	s = xf86SetStrOption(pInfo->options, "PressCurve", "0,0,100,100");
+	s = wcmOptGetStr(priv, "PressCurve", "0,0,100,100");
 	if (s && (IsPen(priv) || IsTouch(priv)))
 	{
 		int a,b,c,d;
@@ -914,7 +906,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	}
 	free(s);
 
-	if (xf86SetBoolOption(pInfo->options, "Pressure2K", 0)) {
+	if (wcmOptGetBool(priv, "Pressure2K", 0)) {
 		wcmLog(priv, W_CONFIG, "Using 2K pressure levels\n");
 		priv->maxCurve = 2048;
 	}
@@ -926,7 +918,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	if (IsTablet(priv))
 	{
 		const char *prop = IsCursor(priv) ? "CursorProx" : "StylusProx";
-		priv->wcmProxoutDist = xf86SetIntOption(pInfo->options, prop, 0);
+		priv->wcmProxoutDist = wcmOptGetInt(priv, prop, 0);
 		if (priv->wcmProxoutDist < 0 ||
 				priv->wcmProxoutDist > common->wcmMaxDist)
 			wcmLog(priv, W_CONFIG, "%s invalid %d \n",
@@ -934,16 +926,16 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		priv->wcmSurfaceDist = -1;
 	}
 
-	priv->topX = xf86SetIntOption(pInfo->options, "TopX", 0);
-	priv->topY = xf86SetIntOption(pInfo->options, "TopY", 0);
-	priv->bottomX = xf86SetIntOption(pInfo->options, "BottomX", 0);
-	priv->bottomY = xf86SetIntOption(pInfo->options, "BottomY", 0);
-	priv->serial = xf86SetIntOption(pInfo->options, "Serial", 0);
+	priv->topX = wcmOptGetInt(priv, "TopX", 0);
+	priv->topY = wcmOptGetInt(priv, "TopY", 0);
+	priv->bottomX = wcmOptGetInt(priv, "BottomX", 0);
+	priv->bottomY = wcmOptGetInt(priv, "BottomY", 0);
+	priv->serial = wcmOptGetInt(priv, "Serial", 0);
 
 	tool = priv->tool;
 	tool->serial = priv->serial;
 
-	common->wcmPanscrollThreshold = xf86SetIntOption(pInfo->options, "PanScrollThreshold",
+	common->wcmPanscrollThreshold = wcmOptGetInt(priv, "PanScrollThreshold",
 			common->wcmPanscrollThreshold);
 
 	/* The first device doesn't need to add any tools/areas as it
@@ -972,14 +964,14 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		}
 	}
 
-	common->wcmThreshold = xf86SetIntOption(pInfo->options, "Threshold",
+	common->wcmThreshold = wcmOptGetInt(priv, "Threshold",
 			common->wcmThreshold);
 
-	if (xf86SetBoolOption(pInfo->options, "ButtonsOnly", 0))
+	if (wcmOptGetBool(priv, "ButtonsOnly", 0))
 		priv->flags |= BUTTONS_ONLY_FLAG;
 
 	/* TPCButton on for Tablet PC by default */
-	tpc_button_is_on = xf86SetBoolOption(pInfo->options, "TPCButton",
+	tpc_button_is_on = wcmOptGetBool(priv, "TPCButton",
 					TabletHasFeature(common, WCM_TPC));
 
 	if (is_primary || IsStylus(priv))
@@ -997,7 +989,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		 * except when touch is supported */
 		common->wcmTouchDefault = 1;
 
-		touch_is_on = xf86SetBoolOption(pInfo->options, "Touch",
+		touch_is_on = wcmOptGetBool(priv, "Touch",
 						common->wcmTouchDefault);
 
 		if (is_primary || IsTouch(priv))
@@ -1018,7 +1010,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		int gesture_is_on;
 		Bool gesture_default = TabletHasFeature(priv->common, WCM_LCD) ? FALSE : TRUE;
 
-		gesture_is_on = xf86SetBoolOption(pInfo->options, "Gesture",
+		gesture_is_on = wcmOptGetBool(priv, "Gesture",
 					    gesture_default);
 
 		if (is_primary || IsTouch(priv))
@@ -1028,13 +1020,13 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 				    "Touch gesture option can only be set by a touch tool.\n");
 
 		common->wcmGestureParameters.wcmTapTime =
-			xf86SetIntOption(pInfo->options, "TapTime",
+			wcmOptGetInt(priv, "TapTime",
 			common->wcmGestureParameters.wcmTapTime);
 	}
 
 	if (IsStylus(priv) || IsEraser(priv)) {
 		common->wcmPressureRecalibration
-			= xf86SetBoolOption(pInfo->options,
+			= wcmOptGetBool(priv,
 					    "PressureRecalibration", 1);
 	}
 
@@ -1049,7 +1041,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	{
 		char b[12];
 		sprintf(b, "Button%d", i+1);
-		priv->button_default[i] = xf86SetIntOption(pInfo->options, b, priv->button_default[i]);
+		priv->button_default[i] = wcmOptGetInt(priv, b, priv->button_default[i]);
 	}
 
 	/* Now parse class-specific options */
@@ -1084,10 +1076,9 @@ error:
 Bool wcmPostInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			     Bool is_dependent)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 
-	common->wcmMaxZ = xf86SetIntOption(pInfo->options, "MaxZ",
+	common->wcmMaxZ = wcmOptGetInt(priv, "MaxZ",
 					   common->wcmMaxZ);
 
 	/* 2FG touch device */
@@ -1099,11 +1090,11 @@ Bool wcmPostInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		int scroll_distance = WCM_SCROLL_DISTANCE_MM * y_res / 1000;
 
 		common->wcmGestureParameters.wcmZoomDistance =
-			xf86SetIntOption(pInfo->options, "ZoomDistance",
+			wcmOptGetInt(priv, "ZoomDistance",
 					 zoom_distance);
 
 		common->wcmGestureParameters.wcmScrollDistance =
-			xf86SetIntOption(pInfo->options, "ScrollDistance",
+			wcmOptGetInt(priv, "ScrollDistance",
 					 scroll_distance);
 	}
 
