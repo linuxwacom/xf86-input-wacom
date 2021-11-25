@@ -1936,7 +1936,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 			else
 				wcmLog(NULL, W_ERROR,
 						      "%s: rel event recv'd (%d)!\n",
-						      pInfo->name,
+						      priv->name,
 						      event->code);
 		}
 		else if (event->type == EV_KEY)

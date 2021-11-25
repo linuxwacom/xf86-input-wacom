@@ -739,7 +739,7 @@ int wcmPreInit(WacomDevicePtr priv)
 
 	common->debugLevel = wcmOptGetInt(priv,
 					      "CommonDBG", common->debugLevel);
-	oldname = strdup(pInfo->name);
+	oldname = strdup(priv->name);
 
 	if (wcmIsHotpluggedDevice(priv))
 		is_dependent = 1;
@@ -748,8 +748,8 @@ int wcmPreInit(WacomDevicePtr priv)
 		/* we need subdevices, change the name so all of them have a
 		   type. */
 		char *new_name;
-		if (asprintf(&new_name, "%s %s", pInfo->name, type) == -1)
-			new_name = strdup(pInfo->name);
+		if (asprintf(&new_name, "%s %s", priv->name, type) == -1)
+			new_name = strdup(priv->name);
 		free(pInfo->name);
 		free(priv->name);
 		pInfo->name = new_name;
