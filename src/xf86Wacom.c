@@ -73,6 +73,57 @@ wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
 	va_end(args);
 }
 
+char *wcmOptGetStr(WacomDevicePtr priv, const char *key, const char *default_value)
+{
+	return xf86SetStrOption(priv->pInfo->options, key, default_value);
+}
+
+int wcmOptGetInt(WacomDevicePtr priv, const char *key, int default_value)
+{
+	return xf86SetIntOption(priv->pInfo->options, key, default_value);
+}
+
+bool wcmOptGetBool(WacomDevicePtr priv, const char *key, bool default_value)
+{
+	return !!xf86SetBoolOption(priv->pInfo->options, key, default_value);
+}
+
+/* Get the option of the given type, quietly (without logging) */
+char *wcmOptCheckStr(WacomDevicePtr priv, const char *key, const char *default_value)
+{
+	return xf86CheckStrOption(priv->pInfo->options, key, default_value);
+}
+
+int wcmOptCheckInt(WacomDevicePtr priv, const char *key, int default_value)
+{
+	return xf86CheckIntOption(priv->pInfo->options, key, default_value);
+}
+
+bool wcmOptCheckBool(WacomDevicePtr priv, const char *key, bool default_value)
+{
+	return !!xf86CheckBoolOption(priv->pInfo->options, key, default_value);
+}
+
+/* Change the option to the new value */
+void wcmOptSetStr(WacomDevicePtr priv, const char *key, const char *value)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	pInfo->options = xf86ReplaceStrOption(pInfo->options, key, value);
+}
+
+void wcmOptSetInt(WacomDevicePtr priv, const char *key, int value)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	pInfo->options = xf86ReplaceIntOption(pInfo->options, key, value);
+}
+
+void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	pInfo->options = xf86ReplaceBoolOption(pInfo->options, key, value);
+}
+
+
 /*****************************************************************************
  * Event helpers
  ****************************************************************************/

@@ -30,6 +30,12 @@ xf86ReplaceIntOption(XF86OptionPtr optlist, const char *name, const int val)
     return NULL;
 }
 
+_X_EXPORT XF86OptionPtr
+xf86ReplaceBoolOption(XF86OptionPtr optlist, const char *name, Bool val)
+{
+    return NULL;
+}
+
 _X_EXPORT char *
 xf86SetStrOption(XF86OptionPtr optlist, const char *name, const char *deflt)
 {
@@ -80,6 +86,12 @@ xf86CheckStrOption(XF86OptionPtr optlist, const char *name, const char *deflt)
 
 _X_EXPORT int
 xf86CheckBoolOption(XF86OptionPtr list, const char *name, int deflt)
+{
+	return 0;
+}
+
+_X_EXPORT int
+xf86CheckIntOption(XF86OptionPtr list, const char *name, int deflt)
 {
 	return 0;
 }
