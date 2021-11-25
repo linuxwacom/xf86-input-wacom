@@ -1141,7 +1141,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
 	if (!tool->enabled) {
-		LogMessageVerbSigSafe(X_ERROR, 0, "tool not initialized yet. Skipping event. \n");
+		wcmLog(NULL, W_ERROR, "tool not initialized yet. Skipping event. \n");
 		return;
 	}
 
@@ -1334,8 +1334,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 		   and is too close to the maximum pressure */
 		if (priv->oldMinPressure > pressureThreshold &&
 		    priv->eventCnt > MIN_EVENT_COUNT)
-			LogMessageVerbSigSafe(
-				X_WARNING, 0,
+			wcmLog(NULL, W_WARNING,
 				"On %s(%d) a base pressure of %d persists while the pen is in proximity.\n"
 				"\tThis is > %d percent of the maximum value (%d).\n"
 				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
@@ -1536,7 +1535,6 @@ static void commonDispatchDevice(WacomDevicePtr priv,
 
 int wcmInitTablet(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomModelPtr model = common->wcmModel;
 
@@ -1550,29 +1548,29 @@ int wcmInitTablet(WacomDevicePtr priv)
 		/* Threshold for counting pressure as a button */
 		common->wcmThreshold = priv->maxCurve * DEFAULT_THRESHOLD;
 
-		xf86IDrvMsg(pInfo, X_PROBED, "using pressure threshold of %d for button 1\n",
+		wcmLog(priv, W_PROBED, "using pressure threshold of %d for button 1\n",
 			    common->wcmThreshold);
 	}
 
 	/* Calculate default panscroll threshold if not set */
-	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll is %d\n", common->wcmPanscrollThreshold);
+	wcmLog(priv, W_CONFIG, "panscroll is %d\n", common->wcmPanscrollThreshold);
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = common->wcmResolY * 13 / 1000; /* 13mm */
 	}
 	if (common->wcmPanscrollThreshold < 1) {
 		common->wcmPanscrollThreshold = 1000;
 	}
-	xf86IDrvMsg(pInfo, X_CONFIG, "panscroll modified to %d\n", common->wcmPanscrollThreshold);
+	wcmLog(priv, W_CONFIG, "panscroll modified to %d\n", common->wcmPanscrollThreshold);
 
 	/* output tablet state as probed */
 	if (IsPen(priv))
-		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
+		wcmLog(priv, W_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d  tilt=%s\n",
 			common->wcmMaxX, common->wcmMaxY, common->wcmMaxZ,
 			common->wcmResolX, common->wcmResolY,
 			HANDLE_TILT(common) ? "enabled" : "disabled");
 	else if (IsTouch(priv))
-		xf86IDrvMsg(pInfo, X_PROBED, "maxX=%d maxY=%d maxZ=%d "
+		wcmLog(priv, W_PROBED, "maxX=%d maxY=%d maxZ=%d "
 			"resX=%d resY=%d \n",
 			common->wcmMaxTouchX, common->wcmMaxTouchY,
 			common->wcmMaxZ,

@@ -122,7 +122,7 @@ static Bool usbDetect(WacomDevicePtr priv)
 
 	if (err < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "usbDetect: can not ioctl version\n");
+		wcmLog(priv, W_ERROR, "usbDetect: can not ioctl version\n");
 		return 0;
 	}
 
@@ -138,7 +138,7 @@ static Bool usbParseOptions(WacomDevicePtr priv)
 	if (!common->private &&
 	    !(common->private = calloc(1, sizeof(wcmUSBData))))
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to alloc event queue.\n");
+		wcmLog(priv, W_ERROR, "unable to alloc event queue.\n");
 		return FALSE;
 	}
 
@@ -167,7 +167,7 @@ usbStart(WacomDevicePtr priv)
 		/* this is called for all tools, so all but the first one fails with
 		 * EBUSY */
 		if (err < 0 && errno != EBUSY)
-			xf86IDrvMsg(pInfo, X_ERROR,
+			wcmLog(priv, W_ERROR,
 				    "Wacom X driver can't grab event device (%s)\n",
 				    strerror(errno));
 	}
@@ -441,14 +441,14 @@ static Bool usbWcmInit(WacomDevicePtr priv)
 
 	/* fetch vendor, product, and model name */
 	if (ioctl(pInfo->fd, EVIOCGID, &sID) == -1) {
-		xf86IDrvMsg(pInfo, X_ERROR, "failed to ioctl ID .\n");
+		wcmLog(priv, W_ERROR, "failed to ioctl ID .\n");
 		return !Success;
 	}
 
 	if (!common->private &&
 	    !(common->private = calloc(1, sizeof(wcmUSBData))))
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to alloc event queue.\n");
+		wcmLog(priv, W_ERROR, "unable to alloc event queue.\n");
 		return !Success;
 	}
 
@@ -598,7 +598,7 @@ int usbInitialize(WacomDevicePtr priv)
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl event bits.\n");
+		wcmLog(priv, W_ERROR, "unable to ioctl event bits.\n");
 		return !Success;
 	}
 
@@ -609,14 +609,14 @@ int usbInitialize(WacomDevicePtr priv)
 		    ISBITSET(common->wcmKeys, BTN_0))
 			goto pad_init;
 
-		xf86IDrvMsg(pInfo, X_ERROR, "no abs bits.\n");
+		wcmLog(priv, W_ERROR, "no abs bits.\n");
 		return !Success;
 	}
 
 	/* absolute values */
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl max values.\n");
+		wcmLog(priv, W_ERROR, "unable to ioctl max values.\n");
 		return !Success;
 	}
 
@@ -628,13 +628,13 @@ int usbInitialize(WacomDevicePtr priv)
 		    ISBITSET(common->wcmKeys, BTN_0))
 			goto pad_init;
 
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl xmax value.\n");
+		wcmLog(priv, W_ERROR, "unable to ioctl xmax value.\n");
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "xmax value is %d, expected > 0.\n",
+		wcmLog(priv, W_ERROR, "xmax value is %d, expected > 0.\n",
 			absinfo.maximum);
 		return !Success;
 	}
@@ -654,13 +654,13 @@ int usbInitialize(WacomDevicePtr priv)
 	/* max y */
 	if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl ymax value.\n");
+		wcmLog(priv, W_ERROR, "unable to ioctl ymax value.\n");
 		return !Success;
 	}
 
 	if (absinfo.maximum <= 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "ymax value is %d, expected > 0.\n", absinfo.maximum);
+		wcmLog(priv, W_ERROR, "ymax value is %d, expected > 0.\n", absinfo.maximum);
 		return !Success;
 	}
 
@@ -812,7 +812,7 @@ int usbInitialize(WacomDevicePtr priv)
 
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl sw bits.\n");
+		wcmLog(priv, W_ERROR, "unable to ioctl sw bits.\n");
 		return 0;
 	}
 	else if (ISBITSET(sw, SW_MUTE_DEVICE))
@@ -822,7 +822,7 @@ int usbInitialize(WacomDevicePtr priv)
 		memset(sw, 0, sizeof(sw));
 
 		if (ioctl(pInfo->fd, EVIOCGSW(sizeof(sw)), sw) < 0)
-			xf86IDrvMsg(pInfo, X_ERROR, "unable to ioctl sw state.\n");
+			wcmLog(priv, W_ERROR, "unable to ioctl sw state.\n");
 
 		if (ISBITSET(sw, SW_MUTE_DEVICE))
 			common->wcmHWTouchSwitchState = 0;
@@ -1006,8 +1006,8 @@ static void usbParseEvent(WacomDevicePtr priv,
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
-		LogMessageVerbSigSafe(X_ERROR, 0, "%s: usbParse: Exceeded event queue (%d) \n",
-				      pInfo->name, private->wcmEventCnt);
+		wcmLog(NULL, W_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
+		       pInfo->name, private->wcmEventCnt);
 		usbResetEventCounter(private);
 		return;
 	}
@@ -1049,8 +1049,7 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 		/* we don't report serial numbers for some tools but we never report
 		 * a serial number with a value of 0 - if that happens drop the
 		 * whole frame */
-		LogMessageVerbSigSafe(X_ERROR, 0,
-				      "%s: usbParse: Ignoring event from invalid serial 0\n",
+		wcmLog(NULL, W_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
 				      pInfo->name);
 		usbResetEventCounter(private);
 	}
@@ -1382,9 +1381,9 @@ mod_buttons(int buttons, int btn, int state)
 
 	if (btn >= sizeof(int) * 8)
 	{
-		LogMessageVerbSigSafe(X_ERROR, 0,
-				      "%s: Invalid button number %d. Insufficient storage\n",
-				      __func__, btn);
+		wcmLog(NULL, W_ERROR,
+		       "%s: Invalid button number %d. Insufficient storage\n",
+		       __func__, btn);
 		return buttons;
 	}
 
@@ -1728,7 +1727,6 @@ static int deviceTypeFromEvent(WacomDevicePtr priv, int type, int code, int valu
  */
 static int refreshDeviceType(WacomDevicePtr priv, int fd)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int device_type = 0;
 	unsigned long keys[NBITS(KEY_MAX)] = { 0 };
@@ -1736,7 +1734,7 @@ static int refreshDeviceType(WacomDevicePtr priv, int fd)
 	int i;
 
 	if (rc == -1) {
-		xf86IDrvMsg(pInfo, X_ERROR, "failed to retrieve key bits on %s\n", common->device_path);
+		wcmLog(priv, W_ERROR, "failed to retrieve key bits on %s\n", common->device_path);
 		return 0;
 	}
 
@@ -1884,7 +1882,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 	dslast = common->wcmChannel[channel].valid.state;
 
 	if (ds->device_type && ds->device_type != private->wcmDeviceType)
-		LogMessageVerbSigSafe(X_ERROR, 0,
+		wcmLog(NULL, W_ERROR,
 				      "usbDispatchEvents: Device Type mismatch - %d -> %d. This is a BUG.\n",
 				      ds->device_type, private->wcmDeviceType);
 	/* no device type? */
@@ -1940,7 +1938,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 				common->wcmChannel[channel].dirty |= TRUE;
 			}
 			else
-				LogMessageVerbSigSafe(X_ERROR, 0,
+				wcmLog(NULL, W_ERROR,
 						      "%s: rel event recv'd (%d)!\n",
 						      pInfo->name,
 						      event->code);
@@ -2054,28 +2052,28 @@ static int usbProbeKeys(WacomDevicePtr priv)
 	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			    "usbProbeKeys unable to ioctl USB key bits.\n");
 		return 0;
 	}
 
 	if (ioctl(pInfo->fd, EVIOCGPROP(sizeof(common->wcmInputProps)), common->wcmInputProps) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			    "usbProbeKeys unable to ioctl input properties.\n");
 		return 0;
 	}
 
 	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			"usbProbeKeys unable to ioctl Device ID.\n");
 		return 0;
 	}
 
         if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			    "usbProbeKeys unable to ioctl abs bits.\n");
 		return 0;
 	}

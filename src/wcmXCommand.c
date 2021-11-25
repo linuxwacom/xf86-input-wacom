@@ -639,7 +639,7 @@ wcmSetHWTouchProperty(WacomDevicePtr priv)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_hardware_touch, &prop);
 	if (rc != Success || prop->format != 8 || prop->size != 1)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update hardware touch state.\n");
+		wcmLog(priv, W_ERROR, "Failed to update hardware touch state.\n");
 		return;
 	}
 
@@ -1059,7 +1059,7 @@ wcmSetSerialProperty(WacomDevicePtr priv)
 	rc = XIGetDeviceProperty(pInfo->dev, prop_serials, &prop);
 	if (rc != Success || prop->format != 32 || prop->size != 5)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "Failed to update serial number.\n");
+		wcmLog(priv, W_ERROR, "Failed to update serial number.\n");
 		return;
 	}
 

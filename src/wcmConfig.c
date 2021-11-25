@@ -173,7 +173,7 @@ wcmSetType(WacomDevicePtr priv, const char *type)
 	return 1;
 
 invalid:
-	xf86IDrvMsg(pInfo, X_ERROR,
+	wcmLog(priv, W_ERROR,
 		    "No type or invalid type specified.\n"
 		    "Must be one of stylus, touch, cursor, eraser, or pad\n");
 
@@ -438,7 +438,6 @@ static Bool wcmMatchDevice(WacomDevicePtr priv, WacomCommonPtr *common_return)
 static Bool
 wcmDetectDeviceClass(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	if (common->wcmDevCls)
@@ -450,7 +449,7 @@ wcmDetectDeviceClass(WacomDevicePtr priv)
 	else if (gWacomUSBDevice.Detect(priv))
 		common->wcmDevCls = &gWacomUSBDevice;
 	else
-		xf86IDrvMsg(pInfo, X_ERROR, "cannot identify device class.\n");
+		wcmLog(priv, W_ERROR, "cannot identify device class.\n");
 
 	return (common->wcmDevCls != NULL);
 }
@@ -613,8 +612,7 @@ char *wcmEventAutoDevProbe (WacomDevicePtr priv)
 			is_wacom = wcmIsWacomDevice(fname);
 			if (is_wacom)
 			{
-				xf86IDrvMsg(pInfo, X_PROBED,
-					    "probed device is %s (waited %d msec)\n", fname, wait);
+				wcmLog(priv, W_PROBED, "probed device is %s (waited %d msec)\n", fname, wait);
 				xf86ReplaceStrOption(pInfo->options, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
@@ -622,12 +620,12 @@ char *wcmEventAutoDevProbe (WacomDevicePtr priv)
 			}
 		}
 		wait += 100;
-		xf86IDrvMsg(pInfo, X_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
+		wcmLog(priv, W_ERROR, "waiting 100 msec (total %dms) for device to become ready\n", wait);
 		usleep(100*1000);
 	}
-	xf86IDrvMsg(pInfo, X_ERROR,
+	wcmLog(priv, W_ERROR,
 		    "no Wacom event device found (checked %d nodes, waited %d msec)\n", i + 1, wait);
-	xf86IDrvMsg(pInfo, X_ERROR, "unable to probe device\n");
+	wcmLog(priv, W_ERROR, "unable to probe device\n");
 	return NULL;
 }
 
@@ -758,7 +756,7 @@ int wcmPreInit(WacomDevicePtr priv)
 
 	/* check if the type is valid for those don't need hotplug */
 	if(!need_hotplug && !wcmIsAValidType(priv, type)) {
-		xf86IDrvMsg(pInfo, X_ERROR, "Invalid type '%s' for this device.\n", type);
+		wcmLog(priv, W_ERROR, "Invalid type '%s' for this device.\n", type);
 		goto SetupProc_fail;
 	}
 
