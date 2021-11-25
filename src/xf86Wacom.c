@@ -120,7 +120,7 @@ void wcmOptSetInt(WacomDevicePtr priv, const char *key, int value)
 void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value)
 {
 	InputInfoPtr pInfo = priv->pInfo;
-	pInfo->options = xf86ReplaceBoolOption(pInfo->options, key, value);
+	pInfo->options = xf86ReplaceIntOption(pInfo->options, key, value);
 }
 
 

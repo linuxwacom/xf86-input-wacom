@@ -203,7 +203,6 @@ static Bool isdv4Detect(WacomDevicePtr priv)
  ****************************************************************************/
 static Bool isdv4ParseOptions(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmISDV4Data *isdv4data;
 	int baud;
@@ -211,14 +210,14 @@ static Bool isdv4ParseOptions(WacomDevicePtr priv)
 	/* Determine default baud rate */
 	baud = (common->tablet_id == 0x90)? 19200 : 38400;
 
-	baud = xf86SetIntOption(pInfo->options, "BaudRate", baud);
+	baud = wcmOptGetInt(priv, "BaudRate", baud);
 
 	switch (baud)
 	{
 		case 38400:
 		case 19200:
 			/* xf86OpenSerial() takes the baud rate from the options */
-			pInfo->options = xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
+			wcmOptSetInt(priv, "BaudRate", baud);
 			break;
 		default:
 			wcmLog(priv, W_ERROR,
@@ -355,7 +354,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 		if (ret == Success) {
 			isdv4data->baudrate = baud;
 			/* xf86OpenSerial() takes the baud rate from the options */
-			pInfo->options = xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
+			wcmOptSetInt(priv, "BaudRate", baud);
 		}
 
 	}

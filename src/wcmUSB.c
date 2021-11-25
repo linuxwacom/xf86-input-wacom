@@ -131,7 +131,6 @@ static Bool usbDetect(WacomDevicePtr priv)
 
 static Bool usbParseOptions(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata;
 
@@ -143,7 +142,7 @@ static Bool usbParseOptions(WacomDevicePtr priv)
 	}
 
 	usbdata = common->private;
-	usbdata->grabDevice = xf86CheckBoolOption(pInfo->options, "GrabDevice", FALSE);
+	usbdata->grabDevice = wcmOptCheckBool(priv, "GrabDevice", FALSE);
 
 	return TRUE;
 }

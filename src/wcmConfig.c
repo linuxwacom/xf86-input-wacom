@@ -542,8 +542,7 @@ static Bool wcmLinkTouchAndPen(WacomDevicePtr priv)
  */
 static int wcmIsHotpluggedDevice(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
+	char *source = wcmOptCheckStr(priv, "_source", "");
 	int matches = (strcmp(source, "_driver/wacom") == 0);
 	free(source);
 	return matches;
@@ -586,7 +585,6 @@ static Bool wcmIsWacomDevice (char* fname)
 #define EVDEV_MINORS    32
 char *wcmEventAutoDevProbe (WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	/* We are trying to find the right eventX device */
 	int i = 0, wait = 0;
 	const int max_wait = 2000;
@@ -604,10 +602,10 @@ char *wcmEventAutoDevProbe (WacomDevicePtr priv)
 			if (is_wacom)
 			{
 				wcmLog(priv, W_PROBED, "probed device is %s (waited %d msec)\n", fname, wait);
-				xf86ReplaceStrOption(pInfo->options, "Device", fname);
+				wcmOptSetStr(priv, "Device", fname);
 
 				/* this assumes there is only one Wacom device on the system */
-				return xf86CheckStrOption(pInfo->options, "Device", NULL);
+				return wcmOptCheckStr(priv, "Device", NULL);
 			}
 		}
 		wait += 100;
@@ -702,13 +700,13 @@ int wcmPreInit(WacomDevicePtr priv)
 	   - hotplug dependent devices if needed
 	 */
 
-	device = xf86SetStrOption(pInfo->options, "Device", NULL);
-	type = xf86SetStrOption(pInfo->options, "Type", NULL);
+	device = wcmOptGetStr(priv, "Device", NULL);
+	type = wcmOptGetStr(priv, "Type", NULL);
 	if (!device && !(device = wcmEventAutoDevProbe(priv)))
 		goto SetupProc_fail;
 
 	priv->common->device_path = device;
-	priv->debugLevel = xf86SetIntOption(pInfo->options,
+	priv->debugLevel = wcmOptGetInt(priv,
 					    "DebugLevel", priv->debugLevel);
 
 	/* check if the same device file has been added already */
@@ -728,7 +726,7 @@ int wcmPreInit(WacomDevicePtr priv)
 		/* initialize supported keys with the first tool on the port */
 		wcmDeviceTypeKeys(priv);
 
-	common->debugLevel = xf86SetIntOption(pInfo->options,
+	common->debugLevel = wcmOptGetInt(priv,
 					      "CommonDBG", common->debugLevel);
 	oldname = strdup(pInfo->name);
 
