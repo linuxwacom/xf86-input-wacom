@@ -67,47 +67,6 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
 {
 }
 
-/*****************************************************************************
- * wcmInitialToolSize --
- *    Initialize logical size and resolution for individual tool.
- ****************************************************************************/
-
-TEST_NON_STATIC void
-wcmInitialToolSize(WacomDevicePtr priv)
-{
-	WacomCommonPtr common = priv->common;
-
-	/* assign max and resolution here since we don't get them during
-	 * the configuration stage */
-	if (IsTouch(priv))
-	{
-		priv->maxX = common->wcmMaxTouchX;
-		priv->maxY = common->wcmMaxTouchY;
-		priv->resolX = common->wcmTouchResolX;
-		priv->resolY = common->wcmTouchResolY;
-	}
-	else
-	{
-		priv->minX = common->wcmMinX;
-		priv->minY = common->wcmMinY;
-		priv->maxX = common->wcmMaxX;
-		priv->maxY = common->wcmMaxY;
-		priv->resolX = common->wcmResolX;
-		priv->resolY = common->wcmResolY;
-	}
-
-	if (!priv->topX)
-		priv->topX = priv->minX;
-	if (!priv->topY)
-		priv->topY = priv->minY;
-	if (!priv->bottomX)
-		priv->bottomX = priv->maxX;
-	if (!priv->bottomY)
-		priv->bottomY = priv->maxY;
-
-	return;
-}
-
 static void wcmInitAxis(DeviceIntPtr dev, int axis, Atom label, int min, int max, int res, int mode)
 {
 	int min_res, max_res;
@@ -287,25 +246,6 @@ static int wcmInitAxes(DeviceIntPtr pWcm)
 	return TRUE;
 }
 
-static void wcmInitActions(WacomDevicePtr priv)
-{
-	int i;
-
-	for (i = 0; i < priv->nbuttons; i++)
-		wcmResetButtonAction(priv, i);
-
-	if (IsPad(priv)) {
-		for (i = 0; i < 4; i++)
-			wcmResetStripAction(priv, i);
-	}
-
-	if (IsPad(priv) || IsCursor(priv))
-	{
-		for (i = 0; i < 6; i++)
-			wcmResetWheelAction(priv, i);
-	}
-}
-
 /*****************************************************************************
  * wcmDevInit --
  *    Set up the device's buttons, axes and keys
@@ -408,15 +348,9 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 		priv->common->touch_mask = valuator_mask_new(2);
 	}
 
-	if (!IsPad(priv))
-	{
-		wcmInitialToolSize(priv);
-	}
-
 	if (!wcmInitAxes(pWcm))
 		return FALSE;
 
-	wcmInitActions(priv);
 	InitWcmDeviceProperties(priv);
 
 	return TRUE;
