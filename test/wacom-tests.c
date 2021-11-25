@@ -536,6 +536,7 @@ static void test_set_type(void)
 	memset(&(_info), 0, sizeof(_info)); \
 	memset(&(_priv), 0, sizeof(_priv)); \
 	memset(&(_tool), 0, sizeof(_tool)); \
+	(_priv).pInfo = &(_info); \
 	(_info).private = &(_priv); \
 	(_priv).tool = &(_tool); \
 	(_priv).common = &(_common);
