@@ -89,11 +89,11 @@ WacomDeviceClass gWacomISDV4Device =
 
 static WacomModel isdv4General =
 {
-	"General ISDV4",
-	isdv4InitISDV4,
-	isdv4StartTablet,     /* start tablet */
-	isdv4Parse,
-	NULL,
+	.name = "General ISDV4",
+	.Initialize = isdv4InitISDV4,
+	.Start = isdv4StartTablet,     /* start tablet */
+	.Parse = isdv4Parse,
+	.DetectConfig =NULL,
 };
 
 static void memdump(InputInfoPtr pInfo, char *buffer, unsigned int len)
