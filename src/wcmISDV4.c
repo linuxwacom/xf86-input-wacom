@@ -123,7 +123,7 @@ static int wcmWait(int t)
 	if (err != -1)
 		return Success;
 
-	xf86Msg(X_ERROR, "Wacom select error : %s\n", strerror(errno));
+	LogMessageVerbSigSafe(X_ERROR, 0, "Wacom select error : %s\n", strerror(errno));
 	return err;
 }
 
