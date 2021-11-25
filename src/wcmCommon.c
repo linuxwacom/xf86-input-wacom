@@ -1359,7 +1359,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 				"\tThis is > %d percent of the maximum value (%d).\n"
 				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
 				"\thttps://github.com/linuxwacom/xf86-input-wacom/wiki/Pen-Wear.\n",
-				priv->pInfo->name, priv->serial, priv->minPressure, LIMIT_LOW_PRESSURE, common->wcmMaxZ);
+				priv->name, priv->serial, priv->minPressure, LIMIT_LOW_PRESSURE, common->wcmMaxZ);
 	} else if (!priv->oldState.proximity)
 		priv->eventCnt = 0;
 

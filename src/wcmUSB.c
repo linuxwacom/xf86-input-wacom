@@ -995,7 +995,6 @@ usbResetEventCounter(wcmUSBData *private)
 static void usbParseEvent(WacomDevicePtr priv,
 	const struct input_event* event)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
@@ -1007,7 +1006,7 @@ static void usbParseEvent(WacomDevicePtr priv,
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
 		wcmLog(NULL, W_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
-		       pInfo->name, private->wcmEventCnt);
+		       priv->name, private->wcmEventCnt);
 		usbResetEventCounter(private);
 		return;
 	}
@@ -1032,7 +1031,6 @@ static void usbParseEvent(WacomDevicePtr priv,
 static void usbParseMscEvent(WacomDevicePtr priv,
 			     const struct input_event *event)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
@@ -1050,7 +1048,7 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 		 * a serial number with a value of 0 - if that happens drop the
 		 * whole frame */
 		wcmLog(NULL, W_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
-				      pInfo->name);
+				      priv->name);
 		usbResetEventCounter(private);
 	}
 }
@@ -1064,7 +1062,6 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 static void usbParseSynEvent(WacomDevicePtr priv,
 			     const struct input_event *event)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 	const uint32_t significant_event_types = ~(1 << EV_SYN | 1 << EV_MSC);
@@ -1076,7 +1073,7 @@ static void usbParseSynEvent(WacomDevicePtr priv,
 	if ((private->wcmEventCnt < 2) && private->wcmLastToolSerial)
 	{
 		DBG(3, common, "%s: dropping empty event for serial %d\n",
-		    pInfo->name, private->wcmLastToolSerial);
+		    priv->name, private->wcmLastToolSerial);
 		goto skipEvent;
 	}
 
