@@ -51,6 +51,7 @@
 
 #ifndef XI86_SERVER_FD
 #define XI86_SERVER_FD 0x20
+#define XI86_DRV_CAP_SERVER_FD 0x01
 #endif
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
