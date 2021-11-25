@@ -28,6 +28,10 @@
 #include <unistd.h>
 #include <wacom-properties.h>
 
+#ifndef XI86_DRV_CAP_SERVER_FD
+#define XI86_DRV_CAP_SERVER_FD 0x01
+#endif
+
 /*****************************************************************************
  * wcmAllocate --
  * Allocate the generic bits needed by any wacom device, regardless of type.
@@ -665,9 +669,7 @@ static InputDriverRec WACOM =
 	wcmUninit, /* un-init */
 	NULL,          /* module */
 	default_options,
-#ifdef XI86_DRV_CAP_SERVER_FD
 	XI86_DRV_CAP_SERVER_FD,
-#endif
 };
 
 
