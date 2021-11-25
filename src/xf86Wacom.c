@@ -51,6 +51,8 @@
 #include <X11/extensions/XKB.h>
 #include <xkbsrv.h>
 
+#include <stdbool.h>
+
 #ifndef XI86_SERVER_FD
 #define XI86_SERVER_FD 0x20
 #define XI86_DRV_CAP_SERVER_FD 0x01
@@ -129,7 +131,7 @@ convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuato
 	*num_out = last - first + 1;
 }
 
-void wcmEmitProximity(WacomDevicePtr priv, Bool is_proximity_in,
+void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 		      const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->pInfo;
@@ -141,7 +143,7 @@ void wcmEmitProximity(WacomDevicePtr priv, Bool is_proximity_in,
 	xf86PostProximityEventP(pInfo->dev, is_proximity_in, first_val, num_vals, valuators);
 }
 
-void wcmEmitMotion(WacomDevicePtr priv, Bool is_absolute, const WacomAxisData *axes)
+void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	int valuators[7];
@@ -152,7 +154,7 @@ void wcmEmitMotion(WacomDevicePtr priv, Bool is_absolute, const WacomAxisData *a
 	xf86PostMotionEventP(pInfo->dev, is_absolute, first_val, num_vals, valuators);
 }
 
-void wcmEmitButton(WacomDevicePtr priv, Bool is_absolute, int button, Bool is_press, const WacomAxisData *axes)
+void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_press, const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	int valuators[7];
@@ -245,7 +247,7 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 	                       Absolute);
 }
 
-Bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
+bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
@@ -263,7 +265,7 @@ Bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp) { }
 static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl) { }
 
-Bool wcmInitKeyboard(WacomDevicePtr priv)
+bool wcmInitKeyboard(WacomDevicePtr priv)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	return InitFocusClassDeviceStruct(pInfo->dev) &&
@@ -273,7 +275,7 @@ Bool wcmInitKeyboard(WacomDevicePtr priv)
 
 static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl) { }
 
-Bool wcmInitPointer(WacomDevicePtr priv, int naxes, Bool is_absolute)
+bool wcmInitPointer(WacomDevicePtr priv, int naxes, bool is_absolute)
 {
 	InputInfoPtr pInfo = priv->pInfo;
         Atom axis_labels[MAX_VALUATORS] = {0};
@@ -290,7 +292,7 @@ Bool wcmInitPointer(WacomDevicePtr priv, int naxes, Bool is_absolute)
 					      mode | OutOfProximity);
 }
 
-Bool wcmInitTouch(WacomDevicePtr priv, int ntouches, Bool is_direct_touch)
+bool wcmInitTouch(WacomDevicePtr priv, int ntouches, bool is_direct_touch)
 {
 	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;

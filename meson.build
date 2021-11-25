@@ -114,6 +114,7 @@ endif
 # Driver
 src_wacom = [
 	config_ver_h,
+	'src/WacomInterface.h',
 	'src/wcmCommon.c',
 	'src/wcmConfig.c',
 	'src/wcmFilter.c',
