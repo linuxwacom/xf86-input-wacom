@@ -1125,7 +1125,6 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 {
 	WacomDeviceState ds;
 	WacomChannelPtr pChannel;
-	InputInfoPtr pInfo;
 	WacomToolPtr tool;
 	WacomDevicePtr priv;
 	pChannel = common->wcmChannel + channel;
@@ -1170,9 +1169,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	pInfo = tool->device;
-	priv = pInfo->private;
-	DBG(11, common, "tool id=%d for %s\n", ds.device_type, pInfo->name);
+	priv = tool->device;
+	DBG(11, common, "tool id=%d for %s\n", ds.device_type, priv->name);
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
 		TabletHasFeature(common, WCM_RING) &&

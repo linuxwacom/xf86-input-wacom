@@ -466,7 +466,7 @@ struct _WacomTool
 	Bool enabled;
 	char *name;
 
-	InputInfoPtr device; /* The InputDevice connected to this tool */
+	WacomDevicePtr device; /* The InputDevice connected to this tool */
 };
 
 #endif /*__XF86_XF86WACOMDEFS_H */

@@ -87,7 +87,7 @@ WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 	priv->tool = tool;
 	common->wcmTool = tool;
 	tool->next = NULL;          /* next tool in list */
-	tool->device = pInfo;
+	tool->device = priv;
 	/* tool->typeid is set once we know the type - see wcmSetType */
 
 	/* timers */
