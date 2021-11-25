@@ -433,12 +433,10 @@ wcmInitModel(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
-	char id[BUFFER_SIZE];
-	float version;
 
 	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(pInfo, id, ARRAY_SIZE(id), &version) != Success ||
-		wcmInitTablet(pInfo, id, version) != Success)
+	if(common->wcmDevCls->Init(pInfo) != Success ||
+		wcmInitTablet(pInfo) != Success)
 		return FALSE;
 
 	return TRUE;

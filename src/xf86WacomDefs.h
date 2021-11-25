@@ -85,7 +85,7 @@ struct _WacomModel
 {
 	const char* name;
 
-	void (*Initialize)(WacomCommonPtr common, const char* id, float version);
+	void (*Initialize)(WacomCommonPtr common);
 	int (*GetRanges)(InputInfoPtr pInfo);
 	int (*Start)(InputInfoPtr pInfo);
 	int (*Parse)(InputInfoPtr pInfo, const unsigned char* data, int len);
@@ -332,7 +332,7 @@ struct _WacomDeviceClass
 	Bool (*Detect)(InputInfoPtr pInfo); /* detect device */
 	int  (*ProbeKeys)(InputInfoPtr pInfo); /* set the bits for the keys supported */
 	Bool (*ParseOptions)(InputInfoPtr pInfo); /* parse class-specific options */
-	Bool (*Init)(InputInfoPtr pInfo, char* id, size_t id_len, float *version);   /* initialize device */
+	Bool (*Init)(InputInfoPtr pInfo);   /* initialize device */
 };
 
 extern WacomDeviceClass gWacomUSBDevice;

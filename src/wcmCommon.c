@@ -1451,14 +1451,14 @@ static void commonDispatchDevice(InputInfoPtr pInfo,
  * wcmInitTablet -- common initialization for all tablets
  ****************************************************************************/
 
-int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version)
+int wcmInitTablet(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
-	model->Initialize(common,id,version);
+	model->Initialize(common);
 
 	/* Get tablet range */
 	if (model->GetRanges && (model->GetRanges(pInfo) != Success))

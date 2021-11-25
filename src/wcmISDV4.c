@@ -70,9 +70,9 @@ typedef struct {
 
 static Bool isdv4Detect(InputInfoPtr);
 static Bool isdv4ParseOptions(InputInfoPtr pInfo);
-static Bool isdv4Init(InputInfoPtr, char* id, size_t id_len, float *version);
+static Bool isdv4Init(InputInfoPtr);
 static int isdv4ProbeKeys(InputInfoPtr pInfo);
-static void isdv4InitISDV4(WacomCommonPtr, const char* id, float version);
+static void isdv4InitISDV4(WacomCommonPtr);
 static int isdv4GetRanges(InputInfoPtr);
 static int isdv4StartTablet(InputInfoPtr);
 static int isdv4StopTablet(InputInfoPtr);
@@ -251,7 +251,7 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
  * isdv4Init --
  ****************************************************************************/
 
-static Bool isdv4Init(InputInfoPtr pInfo, char* id, size_t id_len, float *version)
+static Bool isdv4Init(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
@@ -262,13 +262,6 @@ static Bool isdv4Init(InputInfoPtr pInfo, char* id, size_t id_len, float *versio
 	/* Set baudrate */
 	if (xf86SetSerialSpeed(pInfo->fd, isdv4data->baudrate) < 0)
 		return !Success;
-
-	if(id) {
-		strncpy(id, "ISDV4", id_len);
-		id[id_len-1] = '\0';
-	}
-	if(version)
-		*version = common->wcmVersion;
 
 	/*set the model */
 	common->wcmModel = &isdv4General;
@@ -315,7 +308,7 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
  * isdv4InitISDV4 -- Setup the device
  ****************************************************************************/
 
-static void isdv4InitISDV4(WacomCommonPtr common, const char* id, float version)
+static void isdv4InitISDV4(WacomCommonPtr common)
 {
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
