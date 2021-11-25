@@ -55,7 +55,7 @@
 #endif
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
-static void wcmDevClose(InputInfoPtr pInfo);
+static void wcmDevClose(WacomDevicePtr priv);
 
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
 {
@@ -71,9 +71,8 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl)
  ****************************************************************************/
 
 TEST_NON_STATIC void
-wcmInitialToolSize(InputInfoPtr pInfo)
+wcmInitialToolSize(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	/* assign max and resolution here since we don't get them during
@@ -356,7 +355,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
-		priv->common->wcmModel->DetectConfig (pInfo);
+		priv->common->wcmModel->DetectConfig (priv);
 
 	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	if (!nbaxes || nbaxes > 7)
@@ -413,7 +412,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 	if (InitValuatorClassDeviceStruct(pInfo->dev, nbaxes,
 					  axis_labels,
 					  GetMotionHistorySize(),
-					  (is_absolute(pInfo) ?  Absolute : Relative) | OutOfProximity) == FALSE)
+					  (is_absolute(priv) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
 		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Valuator class device\n");
 		return FALSE;
@@ -442,14 +441,14 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 
 	if (!IsPad(priv))
 	{
-		wcmInitialToolSize(pInfo);
+		wcmInitialToolSize(priv);
 	}
 
 	if (!wcmInitAxes(pWcm))
 		return FALSE;
 
 	wcmInitActions(priv);
-	InitWcmDeviceProperties(pInfo);
+	InitWcmDeviceProperties(priv);
 
 	return TRUE;
 }
@@ -489,8 +488,9 @@ static Bool wcmIsWacomDevice (char* fname)
  ****************************************************************************/
 #define DEV_INPUT_EVENT "/dev/input/event%d"
 #define EVDEV_MINORS    32
-char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
+char *wcmEventAutoDevProbe (WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	/* We are trying to find the right eventX device */
 	int i = 0, wait = 0;
 	const int max_wait = 2000;
@@ -529,9 +529,9 @@ char *wcmEventAutoDevProbe (InputInfoPtr pInfo)
  * wcmOpen --
  ****************************************************************************/
 
-int wcmOpen(InputInfoPtr pInfo)
+int wcmOpen(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	DBG(1, priv, "opening device file\n");
@@ -552,9 +552,9 @@ int wcmOpen(InputInfoPtr pInfo)
  * wcmClose --
  ****************************************************************************/
 
-void wcmClose(InputInfoPtr pInfo)
+void wcmClose(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 
 	DBG(1, priv, "closing device file\n");
 
@@ -572,7 +572,7 @@ void wcmClose(InputInfoPtr pInfo)
 static int wcmDevOpen(DeviceIntPtr pWcm)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomModelPtr model = common->wcmModel;
 	struct stat st;
@@ -590,7 +590,7 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 			DBG(1, priv, "Missing common device path\n");
 			return FALSE;
 		}
-		if (wcmOpen(pInfo) < 0)
+		if (wcmOpen(priv) < 0)
 			return FALSE;
 
 		if (fstat(pInfo->fd, &st) == -1)
@@ -617,16 +617,16 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 
 got_fd:
 	/* start the tablet data */
-	if (model->Start && (model->Start(pInfo) != Success))
+	if (model->Start && (model->Start(priv) != Success))
 		return !Success;
 
 	return TRUE;
 }
 
-static int wcmReady(InputInfoPtr pInfo)
+static int wcmReady(WacomDevicePtr priv)
 {
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 #endif
 	int n = xf86WaitForInput(pInfo->fd, 0);
 	if (n < 0) {
@@ -646,6 +646,7 @@ static int wcmReady(InputInfoPtr pInfo)
 
 void wcmDevReadInput(InputInfoPtr pInfo)
 {
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	int loop=0;
 	#define MAX_READ_LOOPS 10
 
@@ -655,11 +656,11 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 		int rc;
 
 		/* verify that there is still data in pipe */
-		if (wcmReady(pInfo) <= 0)
+		if (wcmReady(priv) <= 0)
 			break;
 
 		/* dispatch */
-		if ((rc = wcmReadPacket(pInfo)) < 0) {
+		if ((rc = wcmReadPacket(priv)) < 0) {
 			LogMessageVerbSigSafe(X_ERROR, 0,
 					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(-rc));
 			if (rc == -ENODEV)
@@ -672,8 +673,6 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 	/* report how well we're doing */
 	if (loop > 0)
 	{
-		WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
 		if (loop >= MAX_READ_LOOPS)
 			DBG(1, priv, "Can't keep up!!!\n");
 		else
@@ -682,9 +681,9 @@ void wcmDevReadInput(InputInfoPtr pInfo)
 #endif
 }
 
-int wcmReadPacket(InputInfoPtr pInfo)
+int wcmReadPacket(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
 
@@ -714,7 +713,7 @@ int wcmReadPacket(InputInfoPtr pInfo)
 	while (len > 0)
 	{
 		/* parse packet */
-		cnt = common->wcmModel->Parse(pInfo, common->buffer + pos, len);
+		cnt = common->wcmModel->Parse(priv, common->buffer + pos, len);
 		if (cnt <= 0)
 		{
 			if (cnt < 0)
@@ -754,7 +753,7 @@ void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
 {
 #ifdef DEBUG
 	InputInfoPtr pInfo = (InputInfoPtr)device->public.devicePrivate;
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	WacomDevicePtr priv = pInfo->private;
 
 	DBG(4, priv, "called\n");
 #endif
@@ -765,9 +764,9 @@ void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl)
  * wcmDevClose --
  ****************************************************************************/
 
-static void wcmDevClose(InputInfoPtr pInfo)
+static void wcmDevClose(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	/* If fd management is done by the server, skip common fd handling */
@@ -779,35 +778,32 @@ static void wcmDevClose(InputInfoPtr pInfo)
 	if (pInfo->fd >= 0)
 	{
 		if (!--common->fd_refs)
-			wcmClose(pInfo);
+			wcmClose(priv);
 		pInfo->fd = -1;
 	}
 }
 
-static void wcmEnableDisableTool(DeviceIntPtr dev, Bool enable)
+static void wcmEnableDisableTool(WacomDevicePtr priv, Bool enable)
 {
-	InputInfoPtr	pInfo	= dev->public.devicePrivate;
-	WacomDevicePtr	priv	= pInfo->private;
 	WacomToolPtr	tool	= priv->tool;
 
 	tool->enabled = enable;
 }
 
-static void wcmEnableTool(DeviceIntPtr dev)
+static void wcmEnableTool(WacomDevicePtr priv)
 {
-	wcmEnableDisableTool(dev, TRUE);
+	wcmEnableDisableTool(priv, TRUE);
 }
-static void wcmDisableTool(DeviceIntPtr dev)
+static void wcmDisableTool(WacomDevicePtr priv)
 {
-	wcmEnableDisableTool(dev, FALSE);
+	wcmEnableDisableTool(priv, FALSE);
 }
 
 /**
  * Unlink the touch tool from the pen of the same device
  */
-static void wcmUnlinkTouchAndPen(InputInfoPtr pInfo)
+static void wcmUnlinkTouchAndPen(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
 	InputInfoPtr device = xf86FirstLocalDevice();
 	WacomCommonPtr tmpcommon = NULL;
@@ -877,7 +873,7 @@ int wcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_ON:
 			if (!wcmDevOpen(pWcm))
 				goto out;
-			wcmEnableTool(pWcm);
+			wcmEnableTool(priv);
 			xf86AddEnabledDevice(pInfo);
 			pWcm->public.on = TRUE;
 			break;
@@ -886,12 +882,12 @@ int wcmDevProc(DeviceIntPtr pWcm, int what)
 			TimerCancel(priv->tap_timer);
 			TimerCancel(priv->serial_timer);
 			TimerCancel(priv->touch_timer);
-			wcmDisableTool(pWcm);
-			wcmUnlinkTouchAndPen(pInfo);
+			wcmDisableTool(priv);
+			wcmUnlinkTouchAndPen(priv);
 			if (pInfo->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(pInfo);
-				wcmDevClose(pInfo);
+				wcmDevClose(priv);
 			}
 			pWcm->public.on = FALSE;
 			break;

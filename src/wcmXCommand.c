@@ -32,7 +32,7 @@
 #define XI_PROP_PRODUCT_ID "Device Product ID"
 #endif
 
-static void wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial);
+static void wcmBindToSerial(WacomDevicePtr priv, unsigned int serial);
 static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr prop, BOOL checkonly);
 static int wcmGetProperty(DeviceIntPtr dev, Atom property);
 static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
@@ -41,20 +41,18 @@ static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 * wcmDevSwitchModeCall --
 *****************************************************************************/
 
-int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode)
+int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
 	DBG(3, priv, "to mode=%d\n", mode);
 
 	/* Pad is always in absolute mode.*/
 	if (IsPad(priv))
 		return (mode == Absolute) ? Success : XI_BadMode;
 
-	if ((mode == Absolute) && !is_absolute(pInfo))
-		set_absolute(pInfo, TRUE);
-	else if ((mode == Relative) && is_absolute(pInfo))
-		set_absolute(pInfo, FALSE);
+	if ((mode == Absolute) && !is_absolute(priv))
+		set_absolute(priv, TRUE);
+	else if ((mode == Relative) && is_absolute(priv))
+		set_absolute(priv, FALSE);
 	else if ( (mode != Absolute) && (mode != Relative))
 	{
 		DBG(10, priv, "invalid mode=%d\n", mode);
@@ -78,7 +76,7 @@ int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 		(void *)dev, mode);
 #endif
 	/* Share this call with sendAButton in wcmCommon.c */
-	return wcmDevSwitchModeCall(pInfo, mode);
+	return wcmDevSwitchModeCall(priv, mode);
 }
 
 static Atom prop_devnode;
@@ -111,9 +109,8 @@ static Atom prop_debuglevels;
  * level. Pressure settings exposed to the user assume a range of 0-2047
  * while the driver scales everything to a range of 0-maxCurve.
  */
-static inline int wcmInternalToUserPressure(InputInfoPtr pInfo, int pressure)
+static inline int wcmInternalToUserPressure(WacomDevicePtr priv, int pressure)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	return pressure / (priv->maxCurve / 2048);
 }
 
@@ -122,9 +119,8 @@ static inline int wcmInternalToUserPressure(InputInfoPtr pInfo, int pressure)
  * level. Pressure settings exposed to the user assume a range of 0-2047
  * while the driver scales everything to a range of 0-maxCurve.
  */
-static inline int wcmUserToInternalPressure(InputInfoPtr pInfo, int pressure)
+static inline int wcmUserToInternalPressure(WacomDevicePtr priv, int pressure)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	return pressure * (priv->maxCurve / 2048);
 }
 
@@ -218,9 +214,9 @@ static Atom InitWcmAtom(DeviceIntPtr dev, const char *name, Atom type, int forma
 	return atom;
 }
 
-void InitWcmDeviceProperties(InputInfoPtr pInfo)
+void InitWcmDeviceProperties(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int values[WCM_MAX_BUTTONS];
 	int i;
@@ -270,7 +266,7 @@ void InitWcmDeviceProperties(InputInfoPtr pInfo)
 	}
 
 	values[0] = (!common->wcmMaxZ) ? 0 : common->wcmThreshold;
-	values[0] = wcmInternalToUserPressure(pInfo, values[0]);
+	values[0] = wcmInternalToUserPressure(priv, values[0]);
 	prop_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_PRESSURE_THRESHOLD, XA_INTEGER, 32, 1, values);
 
 	values[0] = common->wcmSuppress;
@@ -645,9 +641,9 @@ void wcmUpdateRotationProperty(WacomDevicePtr priv)
 }
 
 static void
-wcmSetHWTouchProperty(InputInfoPtr pInfo)
+wcmSetHWTouchProperty(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	XIPropertyValuePtr prop;
 	CARD8 prop_value;
@@ -669,12 +665,12 @@ wcmSetHWTouchProperty(InputInfoPtr pInfo)
 static CARD32
 touchTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 {
-	InputInfoPtr pInfo = arg;
+	WacomDevicePtr priv = arg;
 #if !HAVE_THREADED_INPUT
 	int sigstate = xf86BlockSIGIO();
 #endif
 
-	wcmSetHWTouchProperty(pInfo);
+	wcmSetHWTouchProperty(priv);
 
 #if !HAVE_THREADED_INPUT
 	xf86UnblockSIGIO(sigstate);
@@ -692,7 +688,7 @@ wcmUpdateHWTouchProperty(WacomDevicePtr priv)
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */
 	priv->touch_timer = TimerSet(priv->touch_timer, 0 /* reltime */,
-				      1, touchTimerFunc, priv->pInfo);
+				      1, touchTimerFunc, priv);
 }
 
 /**
@@ -801,7 +797,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 			return BadValue;
 
 		if (!checkonly && common->wcmRotate != value)
-			wcmRotateTablet(pInfo, value);
+			wcmRotateTablet(priv, value);
 
 	} else if (property == prop_serials)
 	{
@@ -824,7 +820,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 		if (!checkonly)
 		{
 			serial = *(CARD32*)prop->data;
-			wcmBindToSerial(pInfo, serial);
+			wcmBindToSerial(priv, serial);
 		}
 	} else if (property == prop_strip_buttons)
 		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->strip_action_props), priv->strip_action_props, priv->strip_actions);
@@ -849,7 +845,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 			priv->wcmProxoutDist = value;
 	} else if (property == prop_threshold)
 	{
-		const INT32 MAXIMUM = wcmInternalToUserPressure(pInfo, priv->maxCurve);
+		const INT32 MAXIMUM = wcmInternalToUserPressure(priv, priv->maxCurve);
 		INT32 value;
 
 		if (prop->size != 1 || prop->format != 32)
@@ -862,7 +858,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 		else if ((value < 1) || (value > MAXIMUM))
 			return BadValue;
 		else
-			value = wcmUserToInternalPressure(pInfo, value);
+			value = wcmUserToInternalPressure(priv, value);
 
 		if (!checkonly)
 			common->wcmThreshold = value;
@@ -1066,9 +1062,9 @@ static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 }
 
 static void
-wcmSetSerialProperty(InputInfoPtr pInfo)
+wcmSetSerialProperty(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	XIPropertyValuePtr prop;
 	CARD32 prop_value[5];
 	int rc;
@@ -1092,13 +1088,13 @@ wcmSetSerialProperty(InputInfoPtr pInfo)
 static CARD32
 serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 {
-	InputInfoPtr pInfo = arg;
+	WacomDevicePtr priv = arg;
 
 #if !HAVE_THREADED_INPUT
 	int sigstate = xf86BlockSIGIO();
 #endif
 
-	wcmSetSerialProperty(pInfo);
+	wcmSetSerialProperty(priv);
 
 #if !HAVE_THREADED_INPUT
 	xf86UnblockSIGIO(sigstate);
@@ -1110,21 +1106,16 @@ serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
 void
 wcmUpdateSerialProperty(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */
 	priv->serial_timer = TimerSet(priv->serial_timer, 0 /* reltime */,
-				      1, serialTimerFunc, pInfo);
+				      1, serialTimerFunc, priv);
 }
 
 static void
-wcmBindToSerial(InputInfoPtr pInfo, unsigned int serial)
+wcmBindToSerial(WacomDevicePtr priv, unsigned int serial)
 {
-	WacomDevicePtr priv = pInfo->private;
-
 	priv->serial = serial;
-
 }
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

@@ -45,23 +45,23 @@ typedef struct {
 	Bool grabDevice;
 } wcmUSBData;
 
-static Bool usbDetect(InputInfoPtr);
-static Bool usbParseOptions(InputInfoPtr pInfo);
-static Bool usbWcmInit(InputInfoPtr pDev);
-static int usbProbeKeys(InputInfoPtr pInfo);
-static int usbStart(InputInfoPtr pInfo);
-static int usbInitProtocol5(InputInfoPtr pInfo);
-static int usbInitProtocol4(InputInfoPtr pInfo);
-static int usbInitialize(InputInfoPtr pInfo);
-static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
-static int usbDetectConfig(InputInfoPtr pInfo);
-static void usbParseEvent(InputInfoPtr pInfo,
+static Bool usbDetect(WacomDevicePtr priv);
+static Bool usbParseOptions(WacomDevicePtr priv);
+static Bool usbWcmInit(WacomDevicePtr priv);
+static int usbProbeKeys(WacomDevicePtr priv);
+static int usbStart(WacomDevicePtr priv);
+static int usbInitProtocol5(WacomDevicePtr priv);
+static int usbInitProtocol4(WacomDevicePtr priv);
+static int usbInitialize(WacomDevicePtr priv);
+static int usbParse(WacomDevicePtr priv, const unsigned char* data, int len);
+static int usbDetectConfig(WacomDevicePtr priv);
+static void usbParseEvent(WacomDevicePtr priv,
 	const struct input_event* event);
-static void usbParseSynEvent(InputInfoPtr pInfo,
+static void usbParseSynEvent(WacomDevicePtr priv,
 			     const struct input_event *event);
-static void usbParseMscEvent(InputInfoPtr pInfo,
+static void usbParseMscEvent(WacomDevicePtr priv,
 			     const struct input_event *event);
-static void usbDispatchEvents(InputInfoPtr pInfo);
+static void usbDispatchEvents(WacomDevicePtr priv);
 static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial);
 
 WacomDeviceClass gWacomUSBDevice =
@@ -109,13 +109,12 @@ DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4);
  *   Test if the attached device is USB.
  ****************************************************************************/
 
-static Bool usbDetect(InputInfoPtr pInfo)
+static Bool usbDetect(WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int version;
 	int err;
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-
 	DBG(1, priv, "\n");
 #endif
 
@@ -130,9 +129,9 @@ static Bool usbDetect(InputInfoPtr pInfo)
 	return 1;
 }
 
-static Bool usbParseOptions(InputInfoPtr pInfo)
+static Bool usbParseOptions(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata;
 
@@ -153,9 +152,9 @@ static Bool usbParseOptions(InputInfoPtr pInfo)
  * usbStart --
  ****************************************************************************/
 static int
-usbStart(InputInfoPtr pInfo)
+usbStart(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata = common->private;
 	int err;
@@ -430,11 +429,11 @@ void usbListModels(void)
 			  models);
 }
 
-static Bool usbWcmInit(InputInfoPtr pInfo)
+static Bool usbWcmInit(WacomDevicePtr priv)
 {
 	int i;
 	struct input_id sID;
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata;
 
@@ -523,9 +522,8 @@ static Bool usbWcmInit(InputInfoPtr pInfo)
 	return Success;
 }
 
-static int usbInitProtocol5(InputInfoPtr pInfo)
+static int usbInitProtocol5(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	common->wcmProtocolLevel = WCM_PROTOCOL_5;
@@ -535,12 +533,11 @@ static int usbInitProtocol5(InputInfoPtr pInfo)
 	/* tilt enabled */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
 
-	return usbInitialize(pInfo);
+	return usbInitialize(priv);
 }
 
-static int usbInitProtocol4(InputInfoPtr pInfo)
+static int usbInitProtocol4(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	common->wcmProtocolLevel = WCM_PROTOCOL_4;
@@ -550,7 +547,7 @@ static int usbInitProtocol4(InputInfoPtr pInfo)
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 
-	return usbInitialize(pInfo);
+	return usbInitialize(priv);
 }
 
 /* Initialize fixed PAD channel's state to in proximity.
@@ -564,9 +561,8 @@ static int usbInitProtocol4(InputInfoPtr pInfo)
  * driver sends out-of-proximity event for PAD since PAD is always on
  * its own channel, PAD_CHANNEL.
  */
-static void usbWcmInitPadState(InputInfoPtr pInfo)
+static void usbWcmInitPadState(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState *ds;
 	int channel = PAD_CHANNEL;
@@ -581,13 +577,13 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 	ds->serial_num = channel;
 }
 
-int usbInitialize(InputInfoPtr pInfo)
+int usbInitialize(WacomDevicePtr priv)
 {
 	struct input_absinfo absinfo;
 	unsigned long ev[NBITS(EV_MAX)] = {0};
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	unsigned long sw[NBITS(SW_MAX)] = {0};
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common =	priv->common;
 	wcmUSBData* private = common->private;
 	int is_touch = IsTouch(priv);
@@ -835,14 +831,13 @@ int usbInitialize(InputInfoPtr pInfo)
 	}
 
 pad_init:
-	usbWcmInitPadState(pInfo);
+	usbWcmInitPadState(priv);
 
 	return Success;
 }
 
-static int usbDetectConfig(InputInfoPtr pInfo)
+static int usbDetectConfig(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata = common->private;
 
@@ -861,9 +856,8 @@ static int usbDetectConfig(InputInfoPtr pInfo)
 	return TRUE;
 }
 
-static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
+static int usbParse(WacomDevicePtr priv, const unsigned char* data, int len)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	struct input_event event;
 
@@ -871,7 +865,7 @@ static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len)
 		return 0;
 
 	memcpy(&event, data, sizeof(event));
-	usbParseEvent(pInfo, &event);
+	usbParseEvent(priv, &event);
 	return common->wcmPktLength;
 }
 
@@ -998,10 +992,10 @@ usbResetEventCounter(wcmUSBData *private)
 	private->wcmEventFlags = 0;
 }
 
-static void usbParseEvent(InputInfoPtr pInfo,
+static void usbParseEvent(WacomDevicePtr priv,
 	const struct input_event* event)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
@@ -1025,20 +1019,20 @@ static void usbParseEvent(InputInfoPtr pInfo,
 	switch (event->type)
 	{
 		case EV_MSC:
-			usbParseMscEvent(pInfo, event);
+			usbParseMscEvent(priv, event);
 			break;
 		case EV_SYN:
-			usbParseSynEvent(pInfo, event);
+			usbParseSynEvent(priv, event);
 			break;
 		default:
 			break;
 	}
 }
 
-static void usbParseMscEvent(InputInfoPtr pInfo,
+static void usbParseMscEvent(WacomDevicePtr priv,
 			     const struct input_event *event)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
@@ -1068,10 +1062,10 @@ static void usbParseMscEvent(InputInfoPtr pInfo,
  * values and process them. At this point, all events up to the EV_SYN are
  * queued up in wcmEvents.
  */
-static void usbParseSynEvent(InputInfoPtr pInfo,
+static void usbParseSynEvent(WacomDevicePtr priv,
 			     const struct input_event *event)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 	const uint32_t significant_event_types = ~(1 << EV_SYN | 1 << EV_MSC);
@@ -1097,7 +1091,7 @@ static void usbParseSynEvent(InputInfoPtr pInfo,
 	}
 
 	/* dispatch all queued events */
-	usbDispatchEvents(pInfo);
+	usbDispatchEvents(priv);
 
 skipEvent:
 	usbResetEventCounter(private);
@@ -1838,12 +1832,12 @@ static Bool usbIsTabletToolInProx(int device_type, int proximity)
 	return (is_tablet_tool && proximity);
 }
 
-static void usbDispatchEvents(InputInfoPtr pInfo)
+static void usbDispatchEvents(WacomDevicePtr priv)
 {
 	int i, c;
 	WacomDeviceState *ds;
 	struct input_event* event;
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int channel;
 	wcmUSBData* private = common->private;
@@ -2046,10 +2040,10 @@ static void usbGenericTouchscreenQuirks(unsigned long *keys,
  * on success or 0 on failure.
  * For USB devices, we simply copy the information the kernel gives us.
  */
-static int usbProbeKeys(InputInfoPtr pInfo)
+static int usbProbeKeys(WacomDevicePtr priv)
 {
 	struct input_id wacom_id;
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 

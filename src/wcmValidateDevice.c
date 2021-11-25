@@ -28,8 +28,9 @@
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools
  * with the same type to individualize tools with serial number or areas */
-static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
+static Bool wcmCheckSource(WacomDevicePtr priv, dev_t min_maj)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int match = 0;
 	InputInfoPtr pDevices = xf86FirstLocalDevice();
 
@@ -78,8 +79,9 @@ static Bool wcmCheckSource(InputInfoPtr pInfo, dev_t min_maj)
  * the xorg.conf and is then hotplugged through the server backend (HAL,
  * udev). In this case, the hotplugged one fails.
  */
-int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
+int wcmIsDuplicate(const char* device, WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	struct stat st;
 	int isInUse = 0;
 	char* lsource = xf86CheckStrOption(pInfo->options, "_source", NULL);
@@ -100,7 +102,7 @@ int wcmIsDuplicate(const char* device, InputInfoPtr pInfo)
 	if (st.st_rdev)
 	{
 		/* device matches with another added port */
-		if (wcmCheckSource(pInfo, st.st_rdev))
+		if (wcmCheckSource(priv, st.st_rdev))
 		{
 			isInUse = 3;
 			goto ret;
@@ -132,9 +134,9 @@ static struct
 };
 
 /* validate tool type for device/product */
-Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
+Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int i, j;
 	char* dsource;
@@ -207,13 +209,12 @@ Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type)
 }
 
 /* Choose valid types according to device ID. */
-int wcmDeviceTypeKeys(InputInfoPtr pInfo)
+int wcmDeviceTypeKeys(WacomDevicePtr priv)
 {
 	int ret = 1;
-	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
 
-	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(pInfo);
+	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(priv);
 
 	switch (priv->common->tablet_id)
 	{
@@ -432,10 +433,10 @@ int wcmDeviceTypeKeys(InputInfoPtr pInfo)
  * @param type Tool type (cursor, eraser, etc.)
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename, const char *type, int serial)
+static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* basename, const char *type, int serial)
 {
-	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
+	InputInfoPtr pInfo = priv->pInfo;
 	pointer original = pInfo->options;
 	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL;
@@ -485,9 +486,10 @@ static InputOption *wcmOptionDupConvert(InputInfoPtr pInfo, const char* basename
  * appended, so a device of product "Wacom" will then have a product "Wacom
  * eraser", "Wacom cursor", etc.
  */
-static InputAttributes* wcmDuplicateAttributes(InputInfoPtr pInfo,
+static InputAttributes* wcmDuplicateAttributes(WacomDevicePtr priv,
 					       const char *type)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int rc;
 	InputAttributes *attr;
 	char *product;
@@ -553,13 +555,14 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * hotplug. The server will come back and call the @ref wcmHotplugDevice
  * later.
  *
- * @param pInfo The parent device
+ * @param priv The parent device
  * @param basename The base name for the device (type will be appended)
  * @param type Type name for this tool
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char *type, int serial)
+static void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const char *type, int serial)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomHotplugInfo *hotplug_info;
 
 	hotplug_info = calloc(1, sizeof(WacomHotplugInfo));
@@ -570,8 +573,8 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
 		return;
 	}
 
-	hotplug_info->input_options = wcmOptionDupConvert(pInfo, basename, type, serial);
-	hotplug_info->attrs = wcmDuplicateAttributes(pInfo, type);
+	hotplug_info->input_options = wcmOptionDupConvert(priv, basename, type, serial);
+	hotplug_info->attrs = wcmDuplicateAttributes(priv, type);
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
 
@@ -582,53 +585,55 @@ static void wcmQueueHotplug(InputInfoPtr pInfo, const char* basename, const char
  * request. Otherwise, verify that it is actually valid and then
  * queue the hotplug.
  *
- * @param pInfo The parent device
+ * @param priv The parent device
  * @param ser The tool pointer
  * @param basename The kernel device name
  * @param idflag Tool ID_XXXX flag to try to hotplug
  * @param type Type name for this tool
  */
-static void wcmTryHotplugSerialType(InputInfoPtr pInfo, WacomToolPtr ser, const char *basename, int idflag, const char *type)
+static void wcmTryHotplugSerialType(WacomDevicePtr priv, WacomToolPtr ser, const char *basename, int idflag, const char *type)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	if (!(ser->typeid & idflag)) {
 		// No need to print an error message. The device doesn't
 		// claim to support this type so there's no problem.
 		return;
 	}
 
-	if (!wcmIsAValidType(pInfo, type)) {
+	if (!wcmIsAValidType(priv, type)) {
 		xf86IDrvMsg(pInfo, X_ERROR, "invalid device type '%s'.\n", type);
 		return;
 	}
 
-	wcmQueueHotplug(pInfo, basename, type, ser->serial);
+	wcmQueueHotplug(priv, basename, type, ser->serial);
 }
 
 /**
  * Hotplug all serial numbers configured on this device.
  *
- * @param pInfo The parent device
+ * @param priv The parent device
  * @param basename The kernel device name
  */
-static void wcmHotplugSerials(InputInfoPtr pInfo, const char *basename)
+static void wcmHotplugSerials(WacomDevicePtr priv, const char *basename)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	WacomToolPtr    ser = common->serials;
 
 	while (ser)
 	{
 		xf86IDrvMsg(pInfo, X_INFO, "hotplugging serial %d.\n", ser->serial);
-		wcmTryHotplugSerialType(pInfo, ser, basename, STYLUS_ID, "stylus");
-		wcmTryHotplugSerialType(pInfo, ser, basename, ERASER_ID, "eraser");
-		wcmTryHotplugSerialType(pInfo, ser, basename, CURSOR_ID, "cursor");
+		wcmTryHotplugSerialType(priv, ser, basename, STYLUS_ID, "stylus");
+		wcmTryHotplugSerialType(priv, ser, basename, ERASER_ID, "eraser");
+		wcmTryHotplugSerialType(priv, ser, basename, CURSOR_ID, "cursor");
 
 		ser = ser->next;
 	}
 }
 
-void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
+void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int i, skip = 1;
 
 	xf86IDrvMsg(pInfo, X_INFO, "hotplugging dependent devices.\n");
@@ -637,16 +642,16 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
          * need to start at the second one */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(pInfo, wcmType[i].type))
+		if (wcmIsAValidType(priv, wcmType[i].type))
 		{
 			if (skip)
 				skip = 0;
 			else
-				wcmQueueHotplug(pInfo, basename, wcmType[i].type, -1);
+				wcmQueueHotplug(priv, basename, wcmType[i].type, -1);
 		}
 	}
 
-	wcmHotplugSerials(pInfo, basename);
+	wcmHotplugSerials(priv, basename);
 
         xf86IDrvMsg(pInfo, X_INFO, "hotplugging completed.\n");
 }
@@ -660,8 +665,9 @@ void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename)
  * This changes the source to _driver/wacom, all auto-hotplugged devices
  * will have the same source.
  */
-int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type)
+int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	char *source = xf86CheckStrOption(pInfo->options, "_source", NULL);
 	int i;
 	int rc = 0;
@@ -679,7 +685,7 @@ int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type)
 	 * for our device */
 	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
-		if (wcmIsAValidType(pInfo, wcmType[i].type))
+		if (wcmIsAValidType(priv, wcmType[i].type))
 		{
 			free(*type);
 			*type = strdup(wcmType[i].type);
@@ -706,9 +712,9 @@ out:
 	return rc;
 }
 
-int wcmParseSerials (InputInfoPtr pInfo)
+int wcmParseSerials (WacomDevicePtr priv)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr    pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	char            *s;
 
@@ -797,10 +803,10 @@ int wcmParseSerials (InputInfoPtr pInfo)
  * otherwise.
  * @retval True on success or False otherwise.
  */
-Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
+Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			    Bool is_dependent)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	char            *s;
 	int		i;
@@ -811,9 +817,9 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	s = xf86SetStrOption(pInfo->options, "Mode", NULL);
 
 	if (s && (strcasecmp(s, "absolute") == 0))
-		set_absolute(pInfo, TRUE);
+		set_absolute(priv, TRUE);
 	else if (s && (strcasecmp(s, "relative") == 0))
-		set_absolute(pInfo, FALSE);
+		set_absolute(priv, FALSE);
 	else
 	{
 		if (s)
@@ -836,7 +842,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	{
 		priv->wheel_default[WHEEL_ABS_UP] = priv->wheel_default[WHEEL2_ABS_UP] = 4;
 		priv->wheel_default[WHEEL_ABS_DN] = priv->wheel_default[WHEEL2_ABS_DN] = 5;
-		set_absolute(pInfo, TRUE);
+		set_absolute(priv, TRUE);
 	}
 
 	s = xf86SetStrOption(pInfo->options, "Rotate", NULL);
@@ -860,7 +866,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 		if (is_dependent && rotation != common->wcmRotate)
 			xf86IDrvMsg(pInfo, X_INFO, "ignoring rotation of dependent device\n");
 		else
-			wcmRotateTablet(pInfo, rotation);
+			wcmRotateTablet(priv, rotation);
 		free(s);
 	}
 
@@ -908,7 +914,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 	}
 
 	/*Serials of tools we want hotpluged*/
-	if (wcmParseSerials (pInfo) != 0)
+	if (wcmParseSerials (priv) != 0)
 		goto error;
 
 	if (IsTablet(priv))
@@ -1041,7 +1047,7 @@ Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
 
 	/* Now parse class-specific options */
 	if (common->wcmDevCls->ParseOptions &&
-	    !common->wcmDevCls->ParseOptions(pInfo))
+	    !common->wcmDevCls->ParseOptions(priv))
 		goto error;
 
 	return TRUE;
@@ -1068,10 +1074,10 @@ error:
  * otherwise.
  * @retval True on success or False otherwise.
  */
-Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary,
+Bool wcmPostInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			     Bool is_dependent)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 
 	common->wcmMaxZ = xf86SetIntOption(pInfo->options, "MaxZ",

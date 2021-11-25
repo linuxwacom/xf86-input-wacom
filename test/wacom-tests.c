@@ -246,7 +246,6 @@ test_normalize_pressure(void)
 static void
 test_initial_size(void)
 {
-	InputInfoRec info = {0};
 	WacomDeviceRec priv = {0};
 	WacomCommonRec common = {0};
 
@@ -254,7 +253,6 @@ test_initial_size(void)
 	int xres = 1920, yres = 1600;
 	int minx, maxx = 2 * xres, miny, maxy = 2 * yres;
 
-	info.private = &priv;
 	priv.common = &common;
 
 	/* FIXME: we currently assume min of 0 in the driver. we cannot cope
@@ -266,7 +264,7 @@ test_initial_size(void)
 	common.wcmResolX = xres;
 	common.wcmResolY = yres;
 
-	wcmInitialToolSize(&info);
+	wcmInitialToolSize(&priv);
 
 	assert(priv.topX == minx);
 	assert(priv.topY == minx);
@@ -286,7 +284,7 @@ test_initial_size(void)
 	common.wcmTouchResolX = xres;
 	common.wcmTouchResolY = yres;
 
-	wcmInitialToolSize(&info);
+	wcmInitialToolSize(&priv);
 
 	assert(priv.topX == minx);
 	assert(priv.topY == minx);
@@ -543,13 +541,13 @@ static void test_set_type(void)
 
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, NULL);
+	rc = wcmSetType(&priv, NULL);
 	assert(rc == 0);
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "stylus");
+	rc = wcmSetType(&priv, "stylus");
 	assert(rc == 1);
-	assert(is_absolute(&info));
+	assert(is_absolute(&priv));
 	assert(IsStylus(&priv));
 	assert(!IsTouch(&priv));
 	assert(!IsEraser(&priv));
@@ -557,10 +555,10 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "touch");
+	rc = wcmSetType(&priv, "touch");
 	assert(rc == 1);
 	/* only some touch screens are absolute */
-	assert(!is_absolute(&info));
+	assert(!is_absolute(&priv));
 	assert(!IsStylus(&priv));
 	assert(IsTouch(&priv));
 	assert(!IsEraser(&priv));
@@ -568,9 +566,9 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "eraser");
+	rc = wcmSetType(&priv, "eraser");
 	assert(rc == 1);
-	assert(is_absolute(&info));
+	assert(is_absolute(&priv));
 	assert(!IsStylus(&priv));
 	assert(!IsTouch(&priv));
 	assert(IsEraser(&priv));
@@ -578,9 +576,9 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "cursor");
+	rc = wcmSetType(&priv, "cursor");
 	assert(rc == 1);
-	assert(!is_absolute(&info));
+	assert(!is_absolute(&priv));
 	assert(!IsStylus(&priv));
 	assert(!IsTouch(&priv));
 	assert(!IsEraser(&priv));
@@ -588,9 +586,9 @@ static void test_set_type(void)
 	assert(!IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "pad");
+	rc = wcmSetType(&priv, "pad");
 	assert(rc == 1);
-	assert(is_absolute(&info));
+	assert(is_absolute(&priv));
 	assert(!IsStylus(&priv));
 	assert(!IsTouch(&priv));
 	assert(!IsEraser(&priv));
@@ -598,7 +596,7 @@ static void test_set_type(void)
 	assert(IsPad(&priv));
 
 	reset(info, priv, tool, common);
-	rc = wcmSetType(&info, "foobar");
+	rc = wcmSetType(&priv, "foobar");
 	assert(rc == 0);
 
 #undef reset

@@ -118,10 +118,8 @@ error:
  * Free the memory allocated by wcmAllocate
  ****************************************************************************/
 
-static void wcmFree(InputInfoPtr pInfo)
+static void wcmFree(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
-
 	if (!priv)
 		return;
 
@@ -135,9 +133,9 @@ static void wcmFree(InputInfoPtr pInfo)
 }
 
 TEST_NON_STATIC int
-wcmSetType(InputInfoPtr pInfo, const char *type)
+wcmSetType(WacomDevicePtr priv, const char *type)
 {
-	WacomDevicePtr priv = pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 
 	if (!type)
 		goto invalid;
@@ -270,7 +268,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	}
 
 out:
-	wcmFree(pInfo);
+	wcmFree(priv);
 	pInfo->private = NULL;
 	xf86DeleteInput(pInfo, 0);
 }
@@ -372,9 +370,9 @@ static Bool wcmIsSiblingDevice(InputInfoPtr a, InputInfoPtr b, Bool logical_only
  * Returns 1 on a found match or 0 otherwise.
  * Common_return is set to the common struct in use by this device.
  */
-static Bool wcmMatchDevice(InputInfoPtr pLocal, WacomCommonPtr *common_return)
+static Bool wcmMatchDevice(WacomDevicePtr priv, WacomCommonPtr *common_return)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pLocal->private;
+	InputInfoPtr pLocal = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	InputInfoPtr pMatch = xf86FirstLocalDevice();
 
@@ -413,18 +411,18 @@ static Bool wcmMatchDevice(InputInfoPtr pLocal, WacomCommonPtr *common_return)
  * behind the fd.
  */
 static Bool
-wcmDetectDeviceClass(const InputInfoPtr pInfo)
+wcmDetectDeviceClass(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	if (common->wcmDevCls)
 		return TRUE;
 
 	/* Bluetooth is also considered as USB */
-	if (gWacomISDV4Device.Detect(pInfo))
+	if (gWacomISDV4Device.Detect(priv))
 		common->wcmDevCls = &gWacomISDV4Device;
-	else if (gWacomUSBDevice.Detect(pInfo))
+	else if (gWacomUSBDevice.Detect(priv))
 		common->wcmDevCls = &gWacomUSBDevice;
 	else
 		xf86IDrvMsg(pInfo, X_ERROR, "cannot identify device class.\n");
@@ -433,14 +431,13 @@ wcmDetectDeviceClass(const InputInfoPtr pInfo)
 }
 
 static Bool
-wcmInitModel(InputInfoPtr pInfo)
+wcmInitModel(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 
 	/* Initialize the tablet */
-	if(common->wcmDevCls->Init(pInfo) != Success ||
-		wcmInitTablet(pInfo) != Success)
+	if(common->wcmDevCls->Init(priv) != Success ||
+		wcmInitTablet(priv) != Success)
 		return FALSE;
 
 	return TRUE;
@@ -455,9 +452,9 @@ wcmInitModel(InputInfoPtr pInfo)
  * @return True if found a touch tool for hybrid devices.
  * false otherwise.
  */
-static Bool wcmLinkTouchAndPen(InputInfoPtr pInfo)
+static Bool wcmLinkTouchAndPen(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	InputInfoPtr device = xf86FirstLocalDevice();
 	WacomCommonPtr tmpcommon = NULL;
@@ -528,8 +525,9 @@ static Bool wcmLinkTouchAndPen(InputInfoPtr pInfo)
  * @return True if the source for this device is the wacom driver itself or
  * false otherwise.
  */
-static int wcmIsHotpluggedDevice(InputInfoPtr pInfo)
+static int wcmIsHotpluggedDevice(WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	char *source = xf86CheckStrOption(pInfo->options, "_source", "");
 	int matches = (strcmp(source, "_driver/wacom") == 0);
 	free(source);
@@ -570,7 +568,7 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	device = xf86SetStrOption(pInfo->options, "Device", NULL);
 	type = xf86SetStrOption(pInfo->options, "Type", NULL);
-	if (!device && !(device = wcmEventAutoDevProbe(pInfo)))
+	if (!device && !(device = wcmEventAutoDevProbe(priv)))
 		goto SetupProc_fail;
 
 	priv->common->device_path = device;
@@ -578,28 +576,28 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 					    "DebugLevel", priv->debugLevel);
 
 	/* check if the same device file has been added already */
-	if (wcmIsDuplicate(device, pInfo))
+	if (wcmIsDuplicate(device, priv))
 		goto SetupProc_fail;
 
-	if (wcmOpen(pInfo) < 0)
+	if (wcmOpen(priv) < 0)
 		goto SetupProc_fail;
 
 	/* Try to guess whether it's USB or ISDV4 */
-	if (!wcmDetectDeviceClass(pInfo))
+	if (!wcmDetectDeviceClass(priv))
 		goto SetupProc_fail;
 
 	/* check if this is the first tool on the port */
-	if (!wcmMatchDevice(pInfo, &common))
+	if (!wcmMatchDevice(priv, &common))
 		/* initialize supported keys with the first tool on the port */
-		wcmDeviceTypeKeys(pInfo);
+		wcmDeviceTypeKeys(priv);
 
 	common->debugLevel = xf86SetIntOption(pInfo->options,
 					      "CommonDBG", common->debugLevel);
 	oldname = strdup(pInfo->name);
 
-	if (wcmIsHotpluggedDevice(pInfo))
+	if (wcmIsHotpluggedDevice(priv))
 		is_dependent = 1;
-	else if ((need_hotplug = wcmNeedAutoHotplug(pInfo, &type)))
+	else if ((need_hotplug = wcmNeedAutoHotplug(priv, &type)))
 	{
 		/* we need subdevices, change the name so all of them have a
 		   type. */
@@ -613,36 +611,36 @@ static int wcmPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	}
 
 	/* check if the type is valid for those don't need hotplug */
-	if(!need_hotplug && !wcmIsAValidType(pInfo, type)) {
+	if(!need_hotplug && !wcmIsAValidType(priv, type)) {
 		xf86IDrvMsg(pInfo, X_ERROR, "Invalid type '%s' for this device.\n", type);
 		goto SetupProc_fail;
 	}
 
-	if (!wcmSetType(pInfo, type))
+	if (!wcmSetType(priv, type))
 		goto SetupProc_fail;
 
-	if (!wcmPreInitParseOptions(pInfo, need_hotplug, is_dependent))
+	if (!wcmPreInitParseOptions(priv, need_hotplug, is_dependent))
 		goto SetupProc_fail;
 
-	if (!wcmInitModel(pInfo))
+	if (!wcmInitModel(priv))
 		goto SetupProc_fail;
 
-	if (!wcmPostInitParseOptions(pInfo, need_hotplug, is_dependent))
+	if (!wcmPostInitParseOptions(priv, need_hotplug, is_dependent))
 		goto SetupProc_fail;
 
 	if (need_hotplug)
 	{
 		priv->isParent = 1;
-		wcmHotplugOthers(pInfo, oldname);
+		wcmHotplugOthers(priv, oldname);
 	}
 
-	wcmClose(pInfo);
+	wcmClose(priv);
 
 	/* only link them once per port. We need to try for both tablet tool
 	 * and touch since we do not know which tool will be added first.
 	 */
 	if (IsTouch(priv) || (IsTablet(priv) && !common->wcmTouchDevice))
-		wcmLinkTouchAndPen(pInfo);
+		wcmLinkTouchAndPen(priv);
 
 	free(type);
 	free(oldname);
@@ -654,7 +652,7 @@ SetupProc_fail:
 	if (common && priv)
 		common->wcmDevices = priv->next;
 
-	wcmClose(pInfo);
+	wcmClose(priv);
 	free(type);
 	free(oldname);
 	return BadMatch;
