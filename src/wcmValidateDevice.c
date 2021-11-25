@@ -66,7 +66,7 @@ static Bool wcmCheckSource(WacomDevicePtr priv, dev_t min_maj)
 		}
 	}
 	if (match)
-		xf86IDrvMsg(pInfo, X_WARNING,
+		wcmLog(priv, W_WARNING,
 			    "device file already in use by %s. Ignoring.\n", pDevices->name);
 	return match;
 }
@@ -92,7 +92,8 @@ int wcmIsDuplicate(const char* device, WacomDevicePtr priv)
 	if (stat(device, &st) == -1)
 	{
 		/* can not access major/minor to check device duplication */
-		xf86IDrvMsg(pInfo, X_ERROR, "stat failed (%s). cannot check for duplicates.\n",
+		wcmLog(priv, W_ERROR,
+			    "stat failed (%s). cannot check for duplicates.\n",
 			    strerror(errno));
 
 		/* older systems don't support the required ioctl.  let it pass */
@@ -111,7 +112,7 @@ int wcmIsDuplicate(const char* device, WacomDevicePtr priv)
 	else
 	{
 		/* major/minor can never be 0, right? */
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			    "device opened with a major/minor of 0. Something was wrong.\n");
 		isInUse = 4;
 	}
@@ -144,7 +145,7 @@ Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 
 	if (!type)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "No type specified\n");
+		wcmLog(priv, W_ERROR, "No type specified\n");
 		return FALSE;
 	}
 
@@ -163,7 +164,7 @@ Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 	if (i >= ARRAY_SIZE(wcmType))
 	{
 		/* No type with the given name was found. */
-		xf86IDrvMsg(pInfo, X_ERROR, "type '%s' is not known to the driver\n", type);
+		wcmLog(priv, W_ERROR, "type '%s' is not known to the driver\n", type);
 		return FALSE;
 	}
 
@@ -197,7 +198,7 @@ Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 		 * maybe the user knows better than us...
 		 */
 		SETBIT(common->wcmKeys, wcmType[i].tool[0]);
-		xf86IDrvMsg(pInfo, X_WARNING, "user-defined type '%s' may not be valid\n", type);
+		wcmLog(priv, W_WARNING, "user-defined type '%s' may not be valid\n", type);
 		return TRUE;
 	}
 
@@ -562,14 +563,13 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  */
 static void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const char *type, int serial)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomHotplugInfo *hotplug_info;
 
 	hotplug_info = calloc(1, sizeof(WacomHotplugInfo));
 
 	if (!hotplug_info)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "OOM, cannot hotplug dependent devices\n");
+		wcmLog(priv, W_ERROR, "OOM, cannot hotplug dependent devices\n");
 		return;
 	}
 
@@ -593,7 +593,6 @@ static void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const cha
  */
 static void wcmTryHotplugSerialType(WacomDevicePtr priv, WacomToolPtr ser, const char *basename, int idflag, const char *type)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	if (!(ser->typeid & idflag)) {
 		// No need to print an error message. The device doesn't
 		// claim to support this type so there's no problem.
@@ -601,7 +600,7 @@ static void wcmTryHotplugSerialType(WacomDevicePtr priv, WacomToolPtr ser, const
 	}
 
 	if (!wcmIsAValidType(priv, type)) {
-		xf86IDrvMsg(pInfo, X_ERROR, "invalid device type '%s'.\n", type);
+		wcmLog(priv, W_ERROR, "invalid device type '%s'.\n", type);
 		return;
 	}
 
@@ -616,13 +615,12 @@ static void wcmTryHotplugSerialType(WacomDevicePtr priv, WacomToolPtr ser, const
  */
 static void wcmHotplugSerials(WacomDevicePtr priv, const char *basename)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	WacomToolPtr    ser = common->serials;
 
 	while (ser)
 	{
-		xf86IDrvMsg(pInfo, X_INFO, "hotplugging serial %d.\n", ser->serial);
+		wcmLog(priv, W_INFO, "hotplugging serial %d.\n", ser->serial);
 		wcmTryHotplugSerialType(priv, ser, basename, STYLUS_ID, "stylus");
 		wcmTryHotplugSerialType(priv, ser, basename, ERASER_ID, "eraser");
 		wcmTryHotplugSerialType(priv, ser, basename, CURSOR_ID, "cursor");
@@ -633,10 +631,9 @@ static void wcmHotplugSerials(WacomDevicePtr priv, const char *basename)
 
 void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int i, skip = 1;
 
-	xf86IDrvMsg(pInfo, X_INFO, "hotplugging dependent devices.\n");
+	wcmLog(priv, W_INFO, "hotplugging dependent devices.\n");
 
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
@@ -653,7 +650,7 @@ void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 
 	wcmHotplugSerials(priv, basename);
 
-        xf86IDrvMsg(pInfo, X_INFO, "hotplugging completed.\n");
+        wcmLog(priv, W_INFO, "hotplugging completed.\n");
 }
 
 /**
@@ -694,12 +691,12 @@ int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 	}
 
 	if (!*type) {
-		xf86IDrvMsg(pInfo, X_ERROR, "No valid type found for this device.\n");
+		wcmLog(priv, W_ERROR, "No valid type found for this device.\n");
 		goto out;
 	}
 
-	xf86IDrvMsg(pInfo, X_INFO, "type not specified, assuming '%s'.\n", *type);
-	xf86IDrvMsg(pInfo, X_INFO, "other types will be automatically added.\n");
+	wcmLog(priv, W_INFO, "type not specified, assuming '%s'.\n", *type);
+	wcmLog(priv, W_INFO, "other types will be automatically added.\n");
 
 	/* Note: wcmIsHotpluggedDevice() relies on this */
 	pInfo->options = xf86AddNewOption(pInfo->options, "Type", *type);
@@ -741,14 +738,14 @@ int wcmParseSerials (WacomDevicePtr priv)
 
 			if (nmatch < 1)
 			{
-				xf86IDrvMsg(pInfo, X_ERROR, "%s is invalid serial string.\n", tok);
+				wcmLog(priv, W_ERROR, "%s is invalid serial string.\n", tok);
 				free(ser);
 				return 1;
 			}
 
 			if (nmatch >= 1)
 			{
-				xf86IDrvMsg(pInfo, X_CONFIG, "Tool serial %d found.\n", serial);
+				wcmLog(priv, W_CONFIG, "Tool serial %d found.\n", serial);
 
 				ser->serial = serial;
 
@@ -757,19 +754,19 @@ int wcmParseSerials (WacomDevicePtr priv)
 
 			if (nmatch >= 2)
 			{
-				xf86IDrvMsg(pInfo, X_CONFIG, "Tool %d has type %s.\n", serial, type);
+				wcmLog(priv, W_CONFIG, "Tool %d has type %s.\n", serial, type);
 				if ((strcmp(type, "pen") == 0) || (strcmp(type, "airbrush") == 0))
 					ser->typeid = STYLUS_ID | ERASER_ID;
 				else if (strcmp(type, "artpen") == 0)
 					ser->typeid = STYLUS_ID;
 				else if (strcmp(type, "cursor") == 0)
 					ser->typeid = CURSOR_ID;
-				else    xf86IDrvMsg(pInfo, X_CONFIG, "Invalid type %s, defaulting to pen.\n", type);
+				else    wcmLog(priv, W_CONFIG, "Invalid type %s, defaulting to pen.\n", type);
 			}
 
 			if (nmatch == 3)
 			{
-				xf86IDrvMsg(pInfo, X_CONFIG, "Tool %d is named %s.\n", serial, name);
+				wcmLog(priv, W_CONFIG, "Tool %d is named %s.\n", serial, name);
 				ser->name = strdup(name);
 			}
 			else ser->name = strdup(""); /*no name yet*/
@@ -823,7 +820,8 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	else
 	{
 		if (s)
-			xf86IDrvMsg(pInfo, X_ERROR, "invalid Mode (should be absolute"
+			wcmLog(priv, W_ERROR,
+				"invalid Mode (should be absolute"
 				" or relative). Using default.\n");
 
 		/* If Mode not specified or is invalid then rely on
@@ -859,12 +857,12 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			rotation = ROTATE_HALF;
 		else if (strcasecmp(s, "NONE") !=0)
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "invalid Rotate option '%s'.\n", s);
+			wcmLog(priv, W_ERROR, "invalid Rotate option '%s'.\n", s);
 			goto error;
 		}
 
 		if (is_dependent && rotation != common->wcmRotate)
-			xf86IDrvMsg(pInfo, X_INFO, "ignoring rotation of dependent device\n");
+			wcmLog(priv, W_INFO, "ignoring rotation of dependent device\n");
 		else
 			wcmRotateTablet(priv, rotation);
 		free(s);
@@ -874,7 +872,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			common->wcmRawSample);
 	if (common->wcmRawSample < 1 || common->wcmRawSample > MAX_SAMPLES)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR,
+		wcmLog(priv, W_ERROR,
 			    "RawSample setting '%d' out of range [1..%d]. Using default.\n",
 			    common->wcmRawSample, MAX_SAMPLES);
 		common->wcmRawSample = DEFAULT_SAMPLES;
@@ -902,14 +900,14 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		int a,b,c,d;
 		if ((sscanf(s,"%d,%d,%d,%d",&a,&b,&c,&d) != 4) ||
 				!wcmCheckPressureCurveValues(a, b, c, d))
-			xf86IDrvMsg(pInfo, X_CONFIG, "PressCurve not valid\n");
+			wcmLog(priv, W_CONFIG, "PressCurve not valid\n");
 		else
 			wcmSetPressureCurve(priv,a,b,c,d);
 	}
 	free(s);
 
 	if (xf86SetBoolOption(pInfo->options, "Pressure2K", 0)) {
-		xf86IDrvMsg(pInfo, X_CONFIG, "Using 2K pressure levels\n");
+		wcmLog(priv, W_CONFIG, "Using 2K pressure levels\n");
 		priv->maxCurve = 2048;
 	}
 
@@ -923,7 +921,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		priv->wcmProxoutDist = xf86SetIntOption(pInfo->options, prop, 0);
 		if (priv->wcmProxoutDist < 0 ||
 				priv->wcmProxoutDist > common->wcmMaxDist)
-			xf86IDrvMsg(pInfo, X_CONFIG, "%s invalid %d \n",
+			wcmLog(priv, W_CONFIG, "%s invalid %d \n",
 				    prop, priv->wcmProxoutDist);
 		priv->wcmSurfaceDist = -1;
 	}
@@ -953,7 +951,8 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 
 		if(toollist) /* Already have a tool with the same type/serial */
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "already have a tool with type/serial %d/%d.\n",
+			wcmLog(priv, W_ERROR,
+				    "already have a tool with type/serial %d/%d.\n",
 				    tool->typeid, tool->serial);
 			goto error;
 		} else /* No match on existing tool/serial, add tool to the end of the list */
@@ -978,7 +977,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	if (is_primary || IsStylus(priv))
 		common->wcmTPCButton = tpc_button_is_on;
 	else if (tpc_button_is_on != common->wcmTPCButton)
-		xf86IDrvMsg(pInfo, X_WARNING, "TPCButton option can only be set by stylus.\n");
+		wcmLog(priv, W_WARNING, "TPCButton option can only be set by stylus.\n");
 
 	/* a single or double touch device */
 	if (TabletHasFeature(common, WCM_1FGT) ||
@@ -996,7 +995,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		if (is_primary || IsTouch(priv))
 			common->wcmTouch = touch_is_on;
 		else if (touch_is_on != common->wcmTouch)
-			xf86IDrvMsg(pInfo, X_WARNING,
+			wcmLog(priv, W_WARNING,
 				    "Touch option can only be set by a touch tool.\n");
 
 		if (TabletHasFeature(common, WCM_1FGT))
@@ -1017,7 +1016,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		if (is_primary || IsTouch(priv))
 			common->wcmGesture = gesture_is_on;
 		else if (gesture_is_on != common->wcmGesture)
-			xf86IDrvMsg(pInfo, X_WARNING,
+			wcmLog(priv, W_WARNING,
 				    "Touch gesture option can only be set by a touch tool.\n");
 
 		common->wcmGestureParameters.wcmTapTime =

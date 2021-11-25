@@ -106,12 +106,12 @@ static void memdump(WacomDevicePtr priv, char *buffer, unsigned int len)
 	/* can't use DBG macro here, need to do it manually. */
 	for (i = 0 ; i < len && common->debugLevel >= 10; i++)
 	{
-		LogMessageVerbSigSafe(X_NONE, 0, "%#hhx ", buffer[i]);
+		wcmLog(NULL, W_NONE, "%#hhx ", buffer[i]);
 		if (i % 8 == 7)
-			LogMessageVerbSigSafe(X_NONE, 0, "\n");
+			wcmLog(NULL, W_NONE, "\n");
 	}
 
-	LogMessageVerbSigSafe(X_NONE, 0, "\n");
+	wcmLog(NULL, W_NONE, "\n");
 #endif
 }
 
@@ -122,7 +122,7 @@ static int wcmWait(int t)
 	if (err != -1)
 		return Success;
 
-	LogMessageVerbSigSafe(X_ERROR, 0, "Wacom select error : %s\n", strerror(errno));
+	wcmLog(NULL, W_ERROR, "Wacom select error : %s\n", strerror(errno));
 	return err;
 }
 
@@ -161,7 +161,7 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 	if (!(data[0] & HEADER_BIT))
 	{
 		n = wcmSkipInvalidBytes(data, common->wcmPktLength);
-		LogMessageVerbSigSafe(X_WARNING, 0,
+		wcmLog(NULL, W_WARNING,
 			"missing header bit. skipping %d bytes.\n",
 			n);
 		return n;
@@ -174,7 +174,7 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
 	n += 1; /* the header byte we already checked */
 	if (n != common->wcmPktLength) {
-		LogMessageVerbSigSafe(X_WARNING, 0, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
+		wcmLog(NULL, W_WARNING, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
 			n, data[n], common->wcmPktLength);
 		return n;
 	}
@@ -222,7 +222,7 @@ static Bool isdv4ParseOptions(WacomDevicePtr priv)
 			pInfo->options = xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
 			break;
 		default:
-			xf86IDrvMsg(pInfo, X_ERROR,
+			wcmLog(priv, W_ERROR,
 				    "Illegal speed value (must be 19200 or 38400).");
 
 			return FALSE;
@@ -232,7 +232,7 @@ static Bool isdv4ParseOptions(WacomDevicePtr priv)
 	{
 		if (!(common->private = calloc(1, sizeof(wcmISDV4Data))))
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "failed to alloc backend-specific data.\n");
+			wcmLog(priv, W_ERROR, "failed to alloc backend-specific data.\n");
 			return FALSE;
 		}
 		isdv4data = common->private;
@@ -341,7 +341,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 		/* Try with the other baudrate */
 		baud = (isdv4data->baudrate == 38400)? 19200 : 38400;
 
-		xf86IDrvMsg(pInfo, X_WARNING,
+		wcmLog(priv, W_WARNING,
 			    "Query failed with %d baud. Trying %d.\n",
 			    isdv4data->baudrate, baud);
 
@@ -369,7 +369,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 		rc = isdv4ParseQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "Error while parsing ISDV4 query.\n");
+			wcmLog(priv, W_ERROR, "Error while parsing ISDV4 query.\n");
 
 			if (rc == 0)
 				DBG(2, common, "reply or len invalid.\n");
@@ -423,7 +423,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 		rc = isdv4ParseTouchQuery((unsigned char*)data, sizeof(data), &reply);
 		if (rc <= 0)
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "Error while parsing ISDV4 touch query.\n");
+			wcmLog(priv, W_ERROR, "Error while parsing ISDV4 touch query.\n");
 
 			if (rc == 0)
 				DBG(2, common, "reply or len invalid.\n");
@@ -473,7 +473,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 					(common->tablet_id != 0x9F))
 
 				{
-				    xf86IDrvMsg(pInfo, X_WARNING,
+				    wcmLog(priv, W_WARNING,
 						"tablet id(%x) mismatch with data id (0x01) \n",
 						common->tablet_id);
 				    goto out;
@@ -484,7 +484,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 				if ((common->tablet_id != 0xE2) &&
 						(common->tablet_id != 0xE3))
 				{
-				    xf86IDrvMsg(pInfo, X_WARNING,
+				    wcmLog(priv, W_WARNING,
 						"tablet id(%x) mismatch with data id (0x03) \n",
 						common->tablet_id);
 				    goto out;
@@ -515,7 +515,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 			common->wcmTouchResolY);
 	}
 
-	xf86IDrvMsg(pInfo, X_INFO, "serial tablet id 0x%X.\n", common->tablet_id);
+	wcmLog(priv, W_INFO, "serial tablet id 0x%X.\n", common->tablet_id);
 
 out:
 	if (ret == Success)
@@ -595,7 +595,7 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 	rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
 	if (rc <= 0)
 	{
-		LogMessageVerbSigSafe(X_ERROR, 0, "%s: failed to parse touch data (err %d).\n",
+		wcmLog(NULL, W_ERROR, "%s: failed to parse touch data (err %d).\n",
 				      pInfo->name, rc);
 		return -1;
 	}
@@ -670,8 +670,7 @@ static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 
 	if (rc == -1)
 	{
-		LogMessageVerbSigSafe(X_ERROR, 0,
-				      "%s: failed to parse coordinate data.\n", pInfo->name);
+		wcmLog(NULL, W_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
 		return -1;
 	}
 
@@ -821,7 +820,7 @@ static int wcmWriteWait(WacomDevicePtr priv, const char* request)
 		SYSCALL((len = write(pInfo->fd, request, strlen(request))));
 		if ((len == -1) && (errno != EAGAIN))
 		{
-			xf86IDrvMsg(pInfo, X_ERROR,
+			wcmLog(priv, W_ERROR,
 				    "wcmWriteWait error : %s\n", strerror(errno));
 			return 0;
 		}
@@ -831,7 +830,7 @@ static int wcmWriteWait(WacomDevicePtr priv, const char* request)
 	} while ((len <= 0) && maxtry);
 
 	if (!maxtry)
-		xf86IDrvMsg(pInfo, X_WARNING,
+		wcmLog(priv, W_WARNING,
 			    "Failed to issue command '%s' after %d tries.\n",
 			    request, MAXTRY);
 
@@ -856,7 +855,7 @@ static int wcmWaitForTablet(WacomDevicePtr priv, char* answer, int size)
 			SYSCALL((len = read(pInfo->fd, answer, size)));
 			if ((len == -1) && (errno != EAGAIN))
 			{
-				xf86IDrvMsg(pInfo, X_ERROR,
+				wcmLog(priv, W_ERROR,
 					    "xf86ReadSerial error : %s\n",
 					    strerror(errno));
 				return 0;
@@ -866,7 +865,7 @@ static int wcmWaitForTablet(WacomDevicePtr priv, char* answer, int size)
 	} while ((len <= 0) && maxtry);
 
 	if (!maxtry)
-		xf86IDrvMsg(pInfo, X_WARNING,
+		wcmLog(priv, W_WARNING,
 			    "Waited too long for answer (failed after %d tries).\n",
 			    MAXTRY);
 

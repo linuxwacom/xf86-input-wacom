@@ -293,26 +293,26 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 					btn_labels,
 					butmap) == FALSE)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Button class device\n");
+		wcmLog(priv, W_ERROR, "unable to allocate Button class device\n");
 		return FALSE;
 	}
 
 	if (InitFocusClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to init Focus class device\n");
+		wcmLog(priv, W_ERROR, "unable to init Focus class device\n");
 		return FALSE;
 	}
 
 	if (InitPtrFeedbackClassDeviceStruct(pInfo->dev,
 		wcmDevControlProc) == FALSE)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to init ptr feedback\n");
+		wcmLog(priv, W_ERROR, "unable to init ptr feedback\n");
 		return FALSE;
 	}
 
 	if (InitProximityClassDeviceStruct(pInfo->dev) == FALSE)
 	{
-			xf86IDrvMsg(pInfo, X_ERROR, "unable to init proximity class device\n");
+			wcmLog(priv, W_ERROR, "unable to init proximity class device\n");
 			return FALSE;
 	}
 
@@ -323,17 +323,17 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 					  GetMotionHistorySize(),
 					  (is_absolute(priv) ?  Absolute : Relative) | OutOfProximity) == FALSE)
 	{
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to allocate Valuator class device\n");
+		wcmLog(priv, W_ERROR, "unable to allocate Valuator class device\n");
 		return FALSE;
 	}
 
 
 	if (!InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback)) {
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to init kbd device struct\n");
+		wcmLog(priv, W_ERROR, "unable to init kbd device struct\n");
 		return FALSE;
 	}
 	if(InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback) == FALSE) {
-		xf86IDrvMsg(pInfo, X_ERROR, "unable to init led feedback device struct\n");
+		wcmLog(priv, W_ERROR, "unable to init led feedback device struct\n");
 		return FALSE;
 	}
 
@@ -342,7 +342,7 @@ static int wcmDevInit(DeviceIntPtr pWcm)
 						TabletHasFeature(common, WCM_LCD) ? XIDirectTouch : XIDependentTouch,
 						2))
 		{
-			xf86IDrvMsg(pInfo, X_ERROR, "Unable to init touch class device struct!\n");
+			wcmLog(priv, W_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}
 		priv->common->touch_mask = valuator_mask_new(2);
@@ -371,7 +371,7 @@ int wcmOpen(WacomDevicePtr priv)
 	if (pInfo->fd < 0)
 	{
 		int saved_errno = errno;
-		xf86IDrvMsg(pInfo, X_ERROR, "Error opening %s (%s)\n",
+		wcmLog(priv, W_ERROR, "Error opening %s (%s)\n",
 			common->device_path, strerror(errno));
 		return -saved_errno;
 	}
@@ -462,7 +462,7 @@ static int wcmReady(WacomDevicePtr priv)
 	int n = xf86WaitForInput(pInfo->fd, 0);
 	if (n < 0) {
 		int saved_errno = errno;
-		xf86IDrvMsg(pInfo, X_ERROR, "select error: %s\n", strerror(errno));
+		wcmLog(priv, W_ERROR, "select error: %s\n", strerror(errno));
 		return -saved_errno;
 	} else {
 		DBG(10, priv, "%d numbers of data\n", n);
@@ -492,7 +492,7 @@ static void wcmDevReadInput(InputInfoPtr pInfo)
 
 		/* dispatch */
 		if ((rc = wcmReadPacket(priv)) < 0) {
-			LogMessageVerbSigSafe(X_ERROR, 0,
+			wcmLog(NULL, W_ERROR,
 					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(-rc));
 			if (rc == -ENODEV)
 				xf86RemoveEnabledDevice(pInfo);
@@ -618,7 +618,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 #endif
 		default:
-			xf86IDrvMsg(pInfo, X_ERROR,
+			wcmLog(priv, W_ERROR,
 				    "invalid mode=%d. This is an X server bug.\n", what);
 			goto out;
 	} /* end switch */
