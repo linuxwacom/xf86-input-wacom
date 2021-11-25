@@ -125,6 +125,19 @@ void wcmDevClose(WacomDevicePtr priv);
 Bool wcmDevStart(WacomDevicePtr priv);
 void wcmDevStop(WacomDevicePtr priv);
 
+/**
+ * @retval 0 to abort the loop (counts as match)
+ * @retval -ENOENT if the device is not a match
+ * @retval 1 for success (counts as match).
+ * @retval -errno for an error (to abort)
+ */
+typedef int (*WacomDeviceCallback)(WacomDevicePtr priv, void *data);
+
+/**
+ * Returns the number of devices processed or a negative errno
+ */
+extern int wcmForeachDevice(WacomDevicePtr priv, WacomDeviceCallback func, void *data);
+
 /* Open the device with the right serial parmeters */
 extern Bool wcmOpen(WacomDevicePtr priv);
 
