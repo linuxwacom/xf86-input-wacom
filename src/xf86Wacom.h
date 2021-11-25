@@ -56,9 +56,9 @@
 #define DBG(lvl, priv, ...) \
 	do { \
 		if ((lvl) <= priv->debugLevel) { \
-			LogMessageVerbSigSafe(X_INFO, -1, "%s (%d:%s): ", \
+			wcmLog(NULL, W_INFO, "%s (%d:%s): ", \
 				((WacomDeviceRec*)priv)->name, lvl, __func__); \
-			LogMessageVerbSigSafe(X_NONE, -1, __VA_ARGS__); \
+			wcmLog(NULL, W_NONE, __VA_ARGS__); \
 		} \
 	} while (0)
 #else
@@ -67,6 +67,38 @@
 
 /* The rest are defined in a separate .h-file */
 #include "xf86WacomDefs.h"
+
+/* Identical to MessageType */
+typedef enum {
+      W_PROBED,                   /* Value was probed */
+      W_CONFIG,                   /* Value was given in the config file */
+      W_DEFAULT,                  /* Value is a default */
+      W_CMDLINE,                  /* Value was given on the command line */
+      W_NOTICE,                   /* Notice */
+      W_ERROR,                    /* Error message */
+      W_WARNING,                  /* Warning message */
+      W_INFO,                     /* Informational message */
+      W_NONE,                     /* No prefix */
+      W_NOT_IMPLEMENTED,          /* Not implemented */
+      W_DEBUG,                    /* Debug message */
+      W_UNKNOWN = -1              /* unknown -- this must always be last */
+} WacomLogType;
+
+_X_ATTRIBUTE_PRINTF(3, 4)
+static inline void
+wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
+{
+	MessageType xtype = (MessageType)type;
+	va_list args;
+
+	va_start(args, format);
+	if (!priv) {
+		LogVMessageVerbSigSafe(xtype, -1, format, args);
+	} else {
+		xf86VIDrvMsgVerb(priv->pInfo, xtype, 0, format, args);
+	}
+	va_end(args);
+}
 
 /*****************************************************************************
  * General Inlined functions and Prototypes

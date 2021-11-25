@@ -318,6 +318,12 @@ LogMessageVerbSigSafe(MessageType type, int verb, const char *format, ...)
 }
 
 _X_EXPORT void
+LogVMessageVerbSigSafe(MessageType type, int verb, const char *format, va_list args)
+{
+	return;
+}
+
+_X_EXPORT void
 xf86MsgVerb(MessageType type, int verb, const char *format, ...)
 {
     return;
@@ -331,6 +337,12 @@ xf86Msg(MessageType type, const char *format, ...)
 
 _X_EXPORT void
 xf86IDrvMsg(InputInfoPtr pInfo, MessageType type, const char *format, ...)
+{
+    return;
+}
+
+_X_EXPORT void
+xf86VIDrvMsgVerb(InputInfoPtr pInfo, MessageType type, int level, const char *format, va_list args)
 {
     return;
 }
