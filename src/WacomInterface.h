@@ -166,5 +166,22 @@ void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 		      const WacomAxisData *axes);
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y);
 
+/* X server interface emulations */
+
+/* Get the option of the given type */
+char *wcmOptGetStr(WacomDevicePtr priv, const char *key, const char *default_value);
+int wcmOptGetInt(WacomDevicePtr priv, const char *key, int default_value);
+bool wcmOptGetBool(WacomDevicePtr priv, const char *key, bool default_value);
+
+/* Get the option of the given type, quietly (without logging) */
+char *wcmOptCheckStr(WacomDevicePtr priv, const char *key, const char *default_value);
+int wcmOptCheckInt(WacomDevicePtr priv, const char *key, int default_value);
+bool wcmOptCheckBool(WacomDevicePtr priv, const char *key, bool default_value);
+
+/* Change the option to the new value */
+void wcmOptSetStr(WacomDevicePtr priv, const char *key, const char *value);
+void wcmOptSetInt(WacomDevicePtr priv, const char *key, int value);
+void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value);
+
 #endif
 
