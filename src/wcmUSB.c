@@ -79,7 +79,6 @@ static struct _WacomModel mname =		\
 {						\
 	.name = identifier,			\
 	.Initialize = usbInitProtocol##protocol,\
-	.GetResolution = NULL,			\
 	.GetRanges = usbWcmGetRanges,		\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\

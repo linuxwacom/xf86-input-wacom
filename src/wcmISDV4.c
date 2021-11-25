@@ -93,7 +93,6 @@ static WacomModel isdv4General =
 {
 	"General ISDV4",
 	isdv4InitISDV4,
-	NULL,                 /* resolution not queried */
 	isdv4GetRanges,       /* query ranges */
 	isdv4StartTablet,     /* start tablet */
 	isdv4Parse,
