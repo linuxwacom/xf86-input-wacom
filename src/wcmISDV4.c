@@ -83,10 +83,10 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request);
 
 WacomDeviceClass gWacomISDV4Device =
 {
-	isdv4Detect,
-	isdv4ParseOptions,
-	isdv4Init,
-	isdv4ProbeKeys,
+	.Detect = isdv4Detect,
+	.ProbeKeys = isdv4ProbeKeys,
+	.ParseOptions = isdv4ParseOptions,
+	.Init = isdv4Init,
 };
 
 static WacomModel isdv4General =
