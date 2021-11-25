@@ -645,20 +645,12 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	{
 		common->wcmMinX = absinfo.minimum;
 		common->wcmMaxX = absinfo.maximum;
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		if (absinfo.resolution > 0)
-			common->wcmResolX = absinfo.resolution * 1000;
-#endif
+		common->wcmResolX = absinfo.resolution * 1000;
 	}
 	else
 	{
 		common->wcmMaxTouchX = absinfo.maximum;
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		if (absinfo.resolution > 0)
-			common->wcmTouchResolX = absinfo.resolution * 1000;
-#endif
+		common->wcmTouchResolX = absinfo.resolution * 1000;
 	}
 
 	/* max y */
@@ -678,20 +670,12 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	{
 		common->wcmMinY = absinfo.minimum;
 		common->wcmMaxY = absinfo.maximum;
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		if (absinfo.resolution > 0)
-			common->wcmResolY = absinfo.resolution * 1000;
-#endif
+		common->wcmResolY = absinfo.resolution * 1000;
 	}
 	else
 	{
 		common->wcmMaxTouchY = absinfo.maximum;
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
-		if (absinfo.resolution > 0)
-			common->wcmTouchResolY = absinfo.resolution * 1000;
-#endif
+		common->wcmTouchResolY = absinfo.resolution * 1000;
 	}
 
 	/* max finger strip X for tablets with Expresskeys
@@ -721,7 +705,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ISBITSET(abs, ABS_TILT_X) &&
 			!ioctl(pInfo->fd, EVIOCGABS(ABS_TILT_X), &absinfo))
 	{
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
 		/* If resolution is specified */
 		if (absinfo.resolution > 0)
 		{
@@ -732,7 +715,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 					       (double)absinfo.resolution;
 		}
 		else
-#endif
 		{
 			/*
 			 * Center the reported range on zero to support
@@ -759,7 +741,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 	if (ISBITSET(abs, ABS_TILT_Y) &&
 			!ioctl(pInfo->fd, EVIOCGABS(ABS_TILT_Y), &absinfo))
 	{
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,30)
 		/* If resolution is specified */
 		if (absinfo.resolution > 0)
 		{
@@ -770,7 +751,6 @@ int usbWcmGetRanges(InputInfoPtr pInfo)
 					       (double)absinfo.resolution;
 		}
 		else
-#endif
 		{
 			/*
 			 * Center the reported range on zero to support
