@@ -649,8 +649,8 @@ wcmSetHWTouchProperty(WacomDevicePtr priv)
 			       prop->size, &prop_value, TRUE);
 }
 
-static CARD32
-touchTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
+static uint32_t
+touchTimerFunc(WacomTimerPtr timer, uint32_t now, pointer arg)
 {
 	WacomDevicePtr priv = arg;
 #if !HAVE_THREADED_INPUT
@@ -674,8 +674,7 @@ wcmUpdateHWTouchProperty(WacomDevicePtr priv)
 {
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */
-	priv->touch_timer = TimerSet(priv->touch_timer, 0 /* reltime */,
-				      1, touchTimerFunc, priv);
+	wcmTimerSet(priv->touch_timer, 1, touchTimerFunc, priv);
 }
 
 /**
@@ -1072,8 +1071,8 @@ wcmSetSerialProperty(WacomDevicePtr priv)
 			       prop->size, prop_value, TRUE);
 }
 
-static CARD32
-serialTimerFunc(OsTimerPtr timer, CARD32 now, pointer arg)
+static uint32_t
+serialTimerFunc(WacomTimerPtr timer, uint32_t now, pointer arg)
 {
 	WacomDevicePtr priv = arg;
 
@@ -1095,8 +1094,7 @@ wcmUpdateSerialProperty(WacomDevicePtr priv)
 {
 	/* This function is called during SIGIO/InputThread. Schedule timer
 	 * for property event delivery by the main thread. */
-	priv->serial_timer = TimerSet(priv->serial_timer, 0 /* reltime */,
-				      1, serialTimerFunc, priv);
+	wcmTimerSet(priv->serial_timer, 1, serialTimerFunc, priv);
 }
 
 static void

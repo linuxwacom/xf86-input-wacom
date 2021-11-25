@@ -91,9 +91,9 @@ WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 	/* tool->typeid is set once we know the type - see wcmSetType */
 
 	/* timers */
-	priv->serial_timer = TimerSet(NULL, 0, 0, NULL, NULL);
-	priv->tap_timer = TimerSet(NULL, 0, 0, NULL, NULL);
-	priv->touch_timer = TimerSet(NULL, 0, 0, NULL, NULL);
+	priv->serial_timer = wcmTimerNew();
+	priv->tap_timer = wcmTimerNew();
+	priv->touch_timer = wcmTimerNew();
 
 	return priv;
 
@@ -117,9 +117,9 @@ static void wcmFree(WacomDevicePtr priv)
 	if (!priv)
 		return;
 
-	TimerFree(priv->serial_timer);
-	TimerFree(priv->tap_timer);
-	TimerFree(priv->touch_timer);
+	wcmTimerFree(priv->serial_timer);
+	wcmTimerFree(priv->tap_timer);
+	wcmTimerFree(priv->touch_timer);
 	free(priv->tool);
 	wcmFreeCommon(&priv->common);
 	free(priv->name);
@@ -1038,9 +1038,9 @@ Bool wcmDevStart(WacomDevicePtr priv)
 void wcmDevStop(WacomDevicePtr priv)
 {
 
-	TimerCancel(priv->tap_timer);
-	TimerCancel(priv->serial_timer);
-	TimerCancel(priv->touch_timer);
+	wcmTimerCancel(priv->tap_timer);
+	wcmTimerCancel(priv->serial_timer);
+	wcmTimerCancel(priv->touch_timer);
 	wcmDisableTool(priv);
 	wcmUnlinkTouchAndPen(priv);
 }

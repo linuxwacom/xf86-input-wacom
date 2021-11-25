@@ -29,6 +29,7 @@
 #define __WACOM_INTERFACE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct _WacomDeviceRec *WacomDevicePtr;
 
@@ -182,6 +183,17 @@ bool wcmOptCheckBool(WacomDevicePtr priv, const char *key, bool default_value);
 void wcmOptSetStr(WacomDevicePtr priv, const char *key, const char *value);
 void wcmOptSetInt(WacomDevicePtr priv, const char *key, int value);
 void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value);
+
+typedef struct _WacomTimer *WacomTimerPtr;
+
+/* Return the new (relative) time in millis to set the timer for or 0 */
+typedef uint32_t (*WacomTimerCallback)(WacomTimerPtr timer, uint32_t millis, void *userdata);
+
+WacomTimerPtr wcmTimerNew(void);
+void wcmTimerFree(WacomTimerPtr timer);
+void wcmTimerCancel(WacomTimerPtr timer);
+void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, /* reltime */
+		 WacomTimerCallback func, void *userdata);
 
 #endif
 

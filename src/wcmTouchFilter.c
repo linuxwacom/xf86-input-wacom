@@ -279,7 +279,7 @@ static void wcmFingerTapToClick(WacomDevicePtr priv)
 	}
 }
 
-static CARD32 wcmSingleFingerTapTimer(OsTimerPtr timer, CARD32 time, pointer arg)
+static uint32_t wcmSingleFingerTapTimer(WacomTimerPtr timer, uint32_t time, pointer arg)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)arg;
 	WacomCommonPtr common = priv->common;
@@ -335,7 +335,8 @@ static void wcmSingleFingerTap(WacomDevicePtr priv)
 			common->wcmGestureMode = GESTURE_PREDRAG_MODE;
 
 			/* Delay to detect possible drag operation */
-			TimerSet(priv->tap_timer, 0, common->wcmGestureParameters.wcmTapTime, wcmSingleFingerTapTimer, priv);
+			wcmTimerSet(priv->tap_timer, common->wcmGestureParameters.wcmTapTime,
+				    wcmSingleFingerTapTimer, priv);
 		}
 	}
 }
