@@ -68,10 +68,10 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 
 WacomDeviceClass gWacomUSBDevice =
 {
-	usbDetect,
-	usbParseOptions,
-	usbWcmInit,
-	usbProbeKeys
+	.Detect = usbDetect,
+	.ProbeKeys = usbProbeKeys,
+	.ParseOptions = usbParseOptions,
+	.Init = usbWcmInit,
 };
 
 #define DEFINE_MODEL(mname, identifier, protocol) \

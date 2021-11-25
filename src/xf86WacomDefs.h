@@ -327,12 +327,13 @@ struct _WacomChannel
  * WacomDeviceClass
  *****************************************************************************/
 
+/* Functions are called in the order as listed in the struct */
 struct _WacomDeviceClass
 {
 	Bool (*Detect)(InputInfoPtr pInfo); /* detect device */
+	int  (*ProbeKeys)(InputInfoPtr pInfo); /* set the bits for the keys supported */
 	Bool (*ParseOptions)(InputInfoPtr pInfo); /* parse class-specific options */
 	Bool (*Init)(InputInfoPtr pInfo, char* id, size_t id_len, float *version);   /* initialize device */
-	int  (*ProbeKeys)(InputInfoPtr pInfo); /* set the bits for the keys supported */
 };
 
 extern WacomDeviceClass gWacomUSBDevice;
