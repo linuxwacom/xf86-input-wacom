@@ -117,6 +117,12 @@ wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
 WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name);
 int wcmPreInit(WacomDevicePtr priv);
 void wcmUnInit(WacomDevicePtr priv);
+/* Open the **shared** fd, if necessary */
+int wcmDevOpen(WacomDevicePtr priv);
+/* Close the **shared** fd, if necessary */
+void wcmDevClose(WacomDevicePtr priv);
+Bool wcmDevStart(WacomDevicePtr priv);
+
 
 /* Open the device with the right serial parmeters */
 extern Bool wcmOpen(WacomDevicePtr priv);

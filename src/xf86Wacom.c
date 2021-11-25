@@ -56,9 +56,6 @@
 #define XI86_DRV_CAP_SERVER_FD 0x01
 #endif
 
-static int wcmDevOpen(DeviceIntPtr pWcm);
-static void wcmDevClose(WacomDevicePtr priv);
-
 /*****************************************************************************
  * Event helpers
  ****************************************************************************/
@@ -507,71 +504,6 @@ void wcmClose(WacomDevicePtr priv)
 	}
 }
 
-/*****************************************************************************
- * wcmDevOpen --
- *    Open the physical device and init information structs.
- ****************************************************************************/
-
-static int wcmDevOpen(DeviceIntPtr pWcm)
-{
-	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
-	WacomDevicePtr priv = pInfo->private;
-	WacomCommonPtr common = priv->common;
-	struct stat st;
-
-	DBG(10, priv, "\n");
-
-	/* open file, if not already open */
-	if (common->fd_refs == 0)
-	{
-		int fd = -1;
-
-		if (!common->device_path) {
-			DBG(1, priv, "Missing common device path\n");
-			return FALSE;
-		}
-		if ((fd = wcmOpen(priv)) < 0)
-			return FALSE;
-
-		if (fstat(fd, &st) == -1)
-		{
-			/* can not access major/minor */
-			DBG(1, priv, "stat failed (%s).\n", strerror(errno));
-
-			/* older systems don't support the required ioctl.
-			 * So, we have to let it pass */
-			common->min_maj = 0;
-		}
-		else
-			common->min_maj = st.st_rdev;
-		common->fd = fd;
-		common->fd_refs = 1;
-	}
-
-	/* Grab the common descriptor, if it's available */
-	if (pInfo->fd < 0)
-	{
-		pInfo->fd = common->fd;
-		common->fd_refs++;
-	}
-
-	return TRUE;
-}
-
-static Bool wcmStart(WacomDevicePtr priv)
-{
-	WacomCommonPtr common = priv->common;
-	WacomModelPtr model = common->wcmModel;
-
-	/* start the tablet data */
-	if (model->Start && (model->Start(priv) != Success))
-		return FALSE;
-
-	wcmEnableTool(priv);
-
-	return TRUE;
-}
-
 static int wcmReady(WacomDevicePtr priv)
 {
 #ifdef DEBUG
@@ -640,25 +572,6 @@ static int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
 }
 
 /*****************************************************************************
- * wcmDevClose --
- ****************************************************************************/
-
-static void wcmDevClose(WacomDevicePtr priv)
-{
-	InputInfoPtr pInfo = priv->pInfo;
-	WacomCommonPtr common = priv->common;
-
-	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
-
-	if (pInfo->fd >= 0)
-	{
-		if (!--common->fd_refs)
-			wcmClose(priv);
-		pInfo->fd = -1;
-	}
-}
-
-/*****************************************************************************
  * wcmDevProc --
  *   Handle the initialization, etc. of a wacom tablet. Called by the server
  *   once with DEVICE_INIT when the device becomes available, then
@@ -691,9 +604,9 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 
 		case DEVICE_ON:
 			/* If fd management is done by the server, skip common fd handling */
-			if ((pInfo->flags & XI86_SERVER_FD) == 0 && !wcmDevOpen(pWcm))
+			if ((pInfo->flags & XI86_SERVER_FD) == 0 && !wcmDevOpen(priv))
 				goto out;
-			wcmStart(priv);
+			wcmDevStart(priv);
 			xf86AddEnabledDevice(pInfo);
 			pWcm->public.on = TRUE;
 			break;
