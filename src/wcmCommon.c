@@ -1458,10 +1458,7 @@ int wcmInitTablet(InputInfoPtr pInfo)
 	WacomModelPtr model = common->wcmModel;
 
 	/* Initialize the tablet */
-	model->Initialize(common);
-
-	/* Get tablet range */
-	if (model->GetRanges && (model->GetRanges(pInfo) != Success))
+	if (model->Initialize(pInfo) != Success)
 		return !Success;
 
 	/* Default threshold value if not set */

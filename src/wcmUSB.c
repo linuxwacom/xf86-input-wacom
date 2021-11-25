@@ -50,9 +50,9 @@ static Bool usbParseOptions(InputInfoPtr pInfo);
 static Bool usbWcmInit(InputInfoPtr pDev);
 static int usbProbeKeys(InputInfoPtr pInfo);
 static int usbStart(InputInfoPtr pInfo);
-static void usbInitProtocol5(WacomCommonPtr common);
-static void usbInitProtocol4(WacomCommonPtr common);
-int usbWcmGetRanges(InputInfoPtr pInfo);
+static int usbInitProtocol5(InputInfoPtr pInfo);
+static int usbInitProtocol4(InputInfoPtr pInfo);
+static int usbInitialize(InputInfoPtr pInfo);
 static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
 static int usbDetectConfig(InputInfoPtr pInfo);
 static void usbParseEvent(InputInfoPtr pInfo,
@@ -77,7 +77,6 @@ static struct _WacomModel mname =		\
 {						\
 	.name = identifier,			\
 	.Initialize = usbInitProtocol##protocol,\
-	.GetRanges = usbWcmGetRanges,		\
 	.Start = usbStart,			\
 	.Parse = usbParse,			\
 	.DetectConfig = usbDetectConfig,	\
@@ -524,24 +523,34 @@ static Bool usbWcmInit(InputInfoPtr pInfo)
 	return Success;
 }
 
-static void usbInitProtocol5(WacomCommonPtr common)
+static int usbInitProtocol5(InputInfoPtr pInfo)
 {
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+
 	common->wcmProtocolLevel = WCM_PROTOCOL_5;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmProxoutDistDefault = PROXOUT_INTUOS_DISTANCE;
 
 	/* tilt enabled */
 	common->wcmFlags |= TILT_ENABLED_FLAG;
+
+	return usbInitialize(pInfo);
 }
 
-static void usbInitProtocol4(WacomCommonPtr common)
+static int usbInitProtocol4(InputInfoPtr pInfo)
 {
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common = priv->common;
+
 	common->wcmProtocolLevel = WCM_PROTOCOL_4;
 	common->wcmPktLength = sizeof(struct input_event);
 	common->wcmProxoutDistDefault = PROXOUT_GRAPHIRE_DISTANCE;
 
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
+
+	return usbInitialize(pInfo);
 }
 
 /* Initialize fixed PAD channel's state to in proximity.
@@ -572,7 +581,7 @@ static void usbWcmInitPadState(InputInfoPtr pInfo)
 	ds->serial_num = channel;
 }
 
-int usbWcmGetRanges(InputInfoPtr pInfo)
+int usbInitialize(InputInfoPtr pInfo)
 {
 	struct input_absinfo absinfo;
 	unsigned long ev[NBITS(EV_MAX)] = {0};
