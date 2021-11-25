@@ -131,6 +131,10 @@ extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
 extern void wcmResetStripAction(WacomDevicePtr priv, int index);
 extern void wcmResetWheelAction(WacomDevicePtr priv, int index);
 
+extern void wcmEnableTool(WacomDevicePtr priv);
+extern void wcmDisableTool(WacomDevicePtr priv);
+extern void wcmUnlinkTouchAndPen(WacomDevicePtr priv);
+
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
