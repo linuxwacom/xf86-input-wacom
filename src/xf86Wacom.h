@@ -92,7 +92,7 @@ extern void wcmClose(InputInfoPtr pInfo);
 char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 
 /* common tablet initialization regime */
-int wcmInitTablet(InputInfoPtr pInfo, const char* id, float version);
+int wcmInitTablet(InputInfoPtr pInfo);
 
 /* standard packet handler */
 int wcmReadPacket(InputInfoPtr pInfo);

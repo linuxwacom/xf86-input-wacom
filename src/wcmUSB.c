@@ -47,13 +47,11 @@ typedef struct {
 
 static Bool usbDetect(InputInfoPtr);
 static Bool usbParseOptions(InputInfoPtr pInfo);
-static Bool usbWcmInit(InputInfoPtr pDev, char* id, size_t id_len, float *version);
+static Bool usbWcmInit(InputInfoPtr pDev);
 static int usbProbeKeys(InputInfoPtr pInfo);
 static int usbStart(InputInfoPtr pInfo);
-static void usbInitProtocol5(WacomCommonPtr common, const char* id,
-	float version);
-static void usbInitProtocol4(WacomCommonPtr common, const char* id,
-	float version);
+static void usbInitProtocol5(WacomCommonPtr common);
+static void usbInitProtocol4(WacomCommonPtr common);
 int usbWcmGetRanges(InputInfoPtr pInfo);
 static int usbParse(InputInfoPtr pInfo, const unsigned char* data, int len);
 static int usbDetectConfig(InputInfoPtr pInfo);
@@ -433,7 +431,7 @@ void usbListModels(void)
 			  models);
 }
 
-static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *version)
+static Bool usbWcmInit(InputInfoPtr pInfo)
 {
 	int i;
 	struct input_id sID;
@@ -444,9 +442,8 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 	DBG(1, priv, "initializing USB tablet\n");
 
 	/* fetch vendor, product, and model name */
-	if (ioctl(pInfo->fd, EVIOCGID, &sID) == -1 ||
-	    ioctl(pInfo->fd, EVIOCGNAME(id_len), id) == -1) {
-		xf86IDrvMsg(pInfo, X_ERROR, "failed to ioctl ID or name.\n");
+	if (ioctl(pInfo->fd, EVIOCGID, &sID) == -1) {
+		xf86IDrvMsg(pInfo, X_ERROR, "failed to ioctl ID .\n");
 		return !Success;
 	}
 
@@ -458,7 +455,6 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 	}
 
 	usbdata = common->private;
-	*version = 0.0;
 
 	for (i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
 	{
@@ -528,8 +524,7 @@ static Bool usbWcmInit(InputInfoPtr pInfo, char* id, size_t id_len, float *versi
 	return Success;
 }
 
-static void usbInitProtocol5(WacomCommonPtr common, const char* id,
-	float version)
+static void usbInitProtocol5(WacomCommonPtr common)
 {
 	common->wcmProtocolLevel = WCM_PROTOCOL_5;
 	common->wcmPktLength = sizeof(struct input_event);
@@ -539,8 +534,7 @@ static void usbInitProtocol5(WacomCommonPtr common, const char* id,
 	common->wcmFlags |= TILT_ENABLED_FLAG;
 }
 
-static void usbInitProtocol4(WacomCommonPtr common, const char* id,
-	float version)
+static void usbInitProtocol4(WacomCommonPtr common)
 {
 	common->wcmProtocolLevel = WCM_PROTOCOL_4;
 	common->wcmPktLength = sizeof(struct input_event);
