@@ -809,4 +809,88 @@ SetupProc_fail:
 	return BadMatch;
 }
 
+
+/*****************************************************************************
+ * wcmDevOpen --
+ *    Open the physical device and init information structs.
+ ****************************************************************************/
+
+int wcmDevOpen(WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common = priv->common;
+	struct stat st;
+
+	DBG(10, priv, "\n");
+
+	/* open file, if not already open */
+	if (common->fd_refs == 0)
+	{
+		int fd = -1;
+
+		if (!common->device_path) {
+			DBG(1, priv, "Missing common device path\n");
+			return FALSE;
+		}
+		if ((fd = wcmOpen(priv)) < 0)
+			return FALSE;
+
+		if (fstat(fd, &st) == -1)
+		{
+			/* can not access major/minor */
+			DBG(1, priv, "stat failed (%s).\n", strerror(errno));
+
+			/* older systems don't support the required ioctl.
+			 * So, we have to let it pass */
+			common->min_maj = 0;
+		}
+		else
+			common->min_maj = st.st_rdev;
+		common->fd = fd;
+		common->fd_refs = 1;
+	}
+
+	/* Grab the common descriptor, if it's available */
+	if (pInfo->fd < 0)
+	{
+		pInfo->fd = common->fd;
+		common->fd_refs++;
+	}
+
+	return TRUE;
+}
+
+Bool wcmDevStart(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomModelPtr model = common->wcmModel;
+
+	/* start the tablet data */
+	if (model->Start && (model->Start(priv) != Success))
+		return FALSE;
+
+	wcmEnableTool(priv);
+
+	return TRUE;
+}
+
+/*****************************************************************************
+ * wcmDevClose --
+ ****************************************************************************/
+
+void wcmDevClose(WacomDevicePtr priv)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common = priv->common;
+
+	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
+
+	if (pInfo->fd >= 0)
+	{
+		if (!--common->fd_refs)
+			wcmClose(priv);
+		pInfo->fd = -1;
+	}
+}
+
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
