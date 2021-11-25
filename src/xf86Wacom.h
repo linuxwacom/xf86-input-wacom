@@ -84,21 +84,10 @@ typedef enum {
       W_UNKNOWN = -1              /* unknown -- this must always be last */
 } WacomLogType;
 
-_X_ATTRIBUTE_PRINTF(3, 4)
-static inline void
-wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
-{
-	MessageType xtype = (MessageType)type;
-	va_list args;
 
-	va_start(args, format);
-	if (!priv) {
-		LogVMessageVerbSigSafe(xtype, -1, format, args);
-	} else {
-		xf86VIDrvMsgVerb(priv->pInfo, xtype, 0, format, args);
-	}
-	va_end(args);
-}
+_X_ATTRIBUTE_PRINTF(3, 4)
+void
+wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...);
 
 /*****************************************************************************
  * General Inlined functions and Prototypes
