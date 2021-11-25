@@ -55,7 +55,6 @@
 #endif
 
 static int wcmDevOpen(DeviceIntPtr pWcm);
-static int wcmReady(InputInfoPtr pInfo);
 static void wcmDevClose(InputInfoPtr pInfo);
 
 static void wcmKbdLedCallback(DeviceIntPtr di, LedCtrl * lcp)
