@@ -151,7 +151,6 @@ static int wcmSkipInvalidBytes(const unsigned char* data, int len)
 
 static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	int n;
@@ -174,7 +173,7 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
 	n += 1; /* the header byte we already checked */
 	if (n != common->wcmPktLength) {
-		wcmLog(NULL, W_WARNING, "%s: bad data at %d v=%x l=%d\n", pInfo->name,
+		wcmLog(NULL, W_WARNING, "%s: bad data at %d v=%x l=%d\n", priv->name,
 			n, data[n], common->wcmPktLength);
 		return n;
 	}
@@ -584,7 +583,6 @@ static int isdv4StopTablet(WacomDevicePtr priv)
 static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 				 int len, WacomDeviceState *ds)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* lastTemp = &common->wcmChannel[1].valid.state;
@@ -596,7 +594,7 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 	if (rc <= 0)
 	{
 		wcmLog(NULL, W_ERROR, "%s: failed to parse touch data (err %d).\n",
-				      pInfo->name, rc);
+				      priv->name, rc);
 		return -1;
 	}
 
@@ -658,7 +656,6 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 			       int len, WacomDeviceState *ds)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	int rc;
@@ -670,7 +667,7 @@ static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 
 	if (rc == -1)
 	{
-		wcmLog(NULL, W_ERROR, "%s: failed to parse coordinate data.\n", pInfo->name);
+		wcmLog(NULL, W_ERROR, "%s: failed to parse coordinate data.\n", priv->name);
 		return -1;
 	}
 
@@ -1026,7 +1023,7 @@ static int isdv4ProbeKeys(WacomDevicePtr priv)
 	/* Change to generic protocol to match USB MT format */
 	common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
-	if (!get_keys_vendor_tablet_id(pInfo->name, common)) {
+	if (!get_keys_vendor_tablet_id(priv->name, common)) {
 		char buf[15] = {0};
 		if (get_sysfs_id(priv, buf, sizeof(buf)))
 			get_keys_vendor_tablet_id(buf, common);

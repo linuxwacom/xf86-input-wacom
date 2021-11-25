@@ -604,7 +604,7 @@ static void wcmDevReadInput(InputInfoPtr pInfo)
 		/* dispatch */
 		if ((rc = wcmReadPacket(priv)) < 0) {
 			wcmLog(NULL, W_ERROR,
-					      "%s: Error reading wacom device : %s\n", pInfo->name, strerror(-rc));
+			       "%s: Error reading wacom device : %s\n", priv->name, strerror(-rc));
 			if (rc == -ENODEV)
 				xf86RemoveEnabledDevice(pInfo);
 			break;
