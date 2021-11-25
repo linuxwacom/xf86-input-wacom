@@ -62,7 +62,7 @@
 		} \
 	} while (0)
 #else
-#define DBG(lvl, priv, ...)
+#define DBG(lvl, priv, ...) do {} while(0)
 #endif
 
 /* The rest are defined in a separate .h-file */
