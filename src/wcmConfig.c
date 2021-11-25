@@ -130,8 +130,6 @@ static void wcmFree(InputInfoPtr pInfo)
 	wcmFreeCommon(&priv->common);
 	free(priv->name);
 	free(priv);
-
-	pInfo->private = NULL;
 }
 
 TEST_NON_STATIC int
@@ -271,6 +269,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 out:
 	wcmFree(pInfo);
+	pInfo->private = NULL;
 	xf86DeleteInput(pInfo, 0);
 }
 
