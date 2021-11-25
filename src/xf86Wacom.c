@@ -37,6 +37,8 @@
 
 #include <config.h>
 
+#include "config-ver.h" /* BUILD_VERSION */
+
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -644,7 +646,7 @@ static int wcmReady(WacomDevicePtr priv)
  *   Read the device on IO signal
  ****************************************************************************/
 
-void wcmDevReadInput(InputInfoPtr pInfo)
+static void wcmDevReadInput(InputInfoPtr pInfo)
 {
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	int loop=0;
@@ -736,7 +738,7 @@ int wcmReadPacket(WacomDevicePtr priv)
 	return pos;
 }
 
-int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
+static int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control)
 {
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -847,7 +849,7 @@ static void wcmUnlinkTouchAndPen(WacomDevicePtr priv)
  *   and disabled. DEVICE_CLOSE is called before removal of the device.
  ****************************************************************************/
 
-int wcmDevProc(DeviceIntPtr pWcm, int what)
+static int wcmDevProc(DeviceIntPtr pWcm, int what)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
@@ -910,5 +912,120 @@ out:
 		DBG(1, priv, "Failed during %d\n", what);
 	return rc;
 }
+
+static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
+{
+	InputInfoPtr pInfo = (InputInfoPtr)dev->public.devicePrivate;
+#ifdef DEBUG
+	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+
+	DBG(3, priv, "dev=%p mode=%d\n",
+		(void *)dev, mode);
+#endif
+	/* Share this call with sendAButton in wcmCommon.c */
+	return wcmDevSwitchModeCall(priv, mode);
+}
+
+static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
+{
+	WacomDevicePtr priv = NULL;
+
+	pInfo->device_control = wcmDevProc;
+	pInfo->read_input = wcmDevReadInput;
+	pInfo->control_proc = wcmDevChangeControl;
+	pInfo->switch_mode = wcmDevSwitchMode;
+	pInfo->dev = NULL;
+
+	if (!(priv = wcmAllocate(pInfo, pInfo->name)))
+		return BadAlloc;
+
+	pInfo->private = priv;
+
+	return wcmPreInit(priv);
+}
+
+static void unInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
+{
+	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
+
+	wcmUnInit(priv);
+	pInfo->private = NULL;
+	xf86DeleteInput(pInfo, 0);
+}
+
+
+/*
+ * Be sure to set vmin appropriately for your device's protocol. You want to
+ * read a full packet before returning
+ *
+ * JEJ - Actually, anything other than 1 is probably a bad idea since packet
+ * errors can occur.  When that happens, bytes are read individually until it
+ * starts making sense again.
+ */
+
+static const char *default_options[] =
+{
+	"StopBits",    "1",
+	"DataBits",    "8",
+	"Parity",      "None",
+	"Vmin",        "1",
+	"Vtime",       "10",
+	"FlowControl", "Xoff",
+	NULL
+};
+
+static InputDriverRec WACOM =
+{
+	1,             /* driver version */
+	"wacom",       /* driver name */
+	NULL,          /* identify */
+	preInit,       /* pre-init */
+	unInit,        /* un-init */
+	NULL,          /* module */
+	default_options,
+	XI86_DRV_CAP_SERVER_FD,
+};
+
+
+/* wcmUnplug - Uninitialize the device */
+
+static void wcmUnplug(pointer p)
+{
+}
+
+/* wcmPlug - called by the module loader */
+
+static pointer wcmPlug(pointer module, pointer options, int* errmaj,
+		int* errmin)
+{
+	xf86AddInputDriver(&WACOM, module, 0);
+
+	xf86Msg(X_INFO, "Build version: " BUILD_VERSION "\n");
+	usbListModels();
+
+	return module;
+}
+
+static XF86ModuleVersionInfo wcmVersionRec =
+{
+	"wacom",
+	MODULEVENDORSTRING,
+	MODINFOSTRING1,
+	MODINFOSTRING2,
+	XORG_VERSION_CURRENT,
+	PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR, PACKAGE_VERSION_PATCHLEVEL,
+	ABI_CLASS_XINPUT,
+	ABI_XINPUT_VERSION,
+	MOD_CLASS_XINPUT,
+	{0, 0, 0, 0}  /* signature, to be patched into the file by a tool */
+};
+
+_X_EXPORT XF86ModuleData wacomModuleData =
+{
+	&wcmVersionRec,
+	wcmPlug,
+	wcmUnplug
+};
+
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

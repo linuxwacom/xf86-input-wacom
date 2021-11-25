@@ -82,6 +82,10 @@
  */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
+WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name);
+int wcmPreInit(WacomDevicePtr priv);
+void wcmUnInit(WacomDevicePtr priv);
+
 /* Open the device with the right serial parmeters */
 extern Bool wcmOpen(WacomDevicePtr priv);
 
@@ -121,11 +125,7 @@ extern int wcmParseSerials(WacomDevicePtr priv);
 
 extern int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode);
 
-extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
-extern int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
 extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
-extern int wcmDevProc(DeviceIntPtr pWcm, int what);
-extern void wcmDevReadInput(InputInfoPtr priv);
 
 extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
 extern void wcmResetStripAction(WacomDevicePtr priv, int index);
