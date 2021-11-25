@@ -219,7 +219,7 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
 		case 38400:
 		case 19200:
 			/* xf86OpenSerial() takes the baud rate from the options */
-			xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
+			pInfo->options = xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
 			break;
 		default:
 			xf86IDrvMsg(pInfo, X_ERROR,
@@ -360,7 +360,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 		if (ret == Success) {
 			isdv4data->baudrate = baud;
 			/* xf86OpenSerial() takes the baud rate from the options */
-			xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
+			pInfo->options = xf86ReplaceIntOption(pInfo->options, "BaudRate", baud);
 		}
 
 	}
