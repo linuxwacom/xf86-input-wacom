@@ -126,33 +126,34 @@ static void wcmFree(WacomDevicePtr priv)
 }
 
 TEST_NON_STATIC Bool
-wcmSetFlags(WacomDevicePtr priv, const char *type)
+wcmSetFlags(WacomDevicePtr priv, WacomType type)
 {
-	if (!type)
-		goto invalid;
+	int flags = 0;
 
-	if (strcasecmp(type, "stylus") == 0)
+	switch (type)
 	{
-		priv->flags = ABSOLUTE_FLAG|STYLUS_ID;
-	} else if (strcasecmp(type, "touch") == 0)
-	{
-		int flags = TOUCH_ID;
+		case WTYPE_STYLUS:
+			flags = ABSOLUTE_FLAG|STYLUS_ID;
+			break;
+		case WTYPE_TOUCH:
+			flags = TOUCH_ID;
+			if (TabletHasFeature(priv->common, WCM_LCD))
+				flags |= ABSOLUTE_FLAG;
+			break;
+		case WTYPE_CURSOR:
+			flags = CURSOR_ID;
+			break;
+		case WTYPE_ERASER:
+			flags = ABSOLUTE_FLAG|ERASER_ID;
+			break;
+		case WTYPE_PAD:
+			flags = ABSOLUTE_FLAG|PAD_ID;
+			break;
+		default:
+			goto invalid;
+	}
 
-		if (TabletHasFeature(priv->common, WCM_LCD))
-			flags |= ABSOLUTE_FLAG;
-
-		priv->flags = flags;
-	} else if (strcasecmp(type, "cursor") == 0)
-	{
-		priv->flags = CURSOR_ID;
-	} else if (strcasecmp(type, "eraser") == 0)
-	{
-		priv->flags = ABSOLUTE_FLAG|ERASER_ID;
-	} else if (strcasecmp(type, "pad") == 0)
-	{
-		priv->flags = ABSOLUTE_FLAG|PAD_ID;
-	} else
-		goto invalid;
+	priv->flags = flags;
 
 	/* Set the device id of the "last seen" device on this tool */
 	priv->oldState.device_id = wcmGetPhyDeviceID(priv);
@@ -160,7 +161,7 @@ wcmSetFlags(WacomDevicePtr priv, const char *type)
 	if (!priv->tool)
 		return FALSE;
 
-	priv->tool->typeid = DEVICE_ID(priv->flags); /* tool type (stylus/touch/eraser/cursor/pad) */
+	priv->tool->typeid = DEVICE_ID(flags); /* tool type (stylus/touch/eraser/cursor/pad) */
 
 	return TRUE;
 
@@ -670,6 +671,24 @@ static void wcmInitActions(WacomDevicePtr priv)
 	}
 }
 
+static inline WacomType getType(const char *type)
+{
+	WacomType wtype = WTYPE_INVALID;
+
+	if (strcasecmp(type, "stylus") == 0)
+		wtype = WTYPE_STYLUS;
+	else if (strcasecmp(type, "touch") == 0)
+		wtype = WTYPE_TOUCH;
+	else if (strcasecmp(type, "cursor") == 0)
+		wtype = WTYPE_CURSOR;
+	else if (strcasecmp(type, "eraser") == 0)
+		wtype = WTYPE_ERASER;
+	else if (strcasecmp(type, "pad") == 0)
+		wtype = WTYPE_PAD;
+
+	return wtype;
+}
+
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
 int wcmPreInit(WacomDevicePtr priv)
@@ -743,7 +762,9 @@ int wcmPreInit(WacomDevicePtr priv)
 		goto SetupProc_fail;
 	}
 
-	if (!wcmSetFlags(priv, type))
+	priv->type = getType(type);
+
+	if (!wcmSetFlags(priv, priv->type))
 		goto SetupProc_fail;
 
 	if (!wcmPreInitParseOptions(priv, need_hotplug, is_dependent))
@@ -952,7 +973,6 @@ static int wcmInitAxes(WacomDevicePtr priv)
 
 int wcmDevInit(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common =	priv->common;
 	int nbaxes, nbbuttons, nbkeys;
 
@@ -975,9 +995,8 @@ int wcmDevInit(WacomDevicePtr priv)
 	                             * configured as an either mouse button or key */
 
 	DBG(10, priv,
-		"(%s) %d buttons, %d keys, %d axes\n",
-		pInfo->type_name,
-		nbbuttons, nbkeys, nbaxes);
+		"(type %d) %d buttons, %d keys, %d axes\n",
+		priv->type, nbbuttons, nbkeys, nbaxes);
 
 	if (!wcmInitButtons(priv, nbbuttons))
 	{
