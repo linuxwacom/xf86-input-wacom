@@ -258,44 +258,36 @@ void wcmDisableTool(WacomDevicePtr priv)
 	wcmEnableDisableTool(priv, FALSE);
 }
 
+static int unlinkDevice(WacomDevicePtr tmppriv, /* tmppriv is the iterated device */
+			void *data)
+{
+	WacomDevicePtr priv = data; /* our device is the data argument */
+	WacomCommonPtr common = priv->common;
+	WacomCommonPtr tmpcommon = tmppriv->common;
+	Bool touch_device = (common->wcmTouchDevice || tmpcommon->wcmTouchDevice);
+
+	if (!touch_device || tmpcommon->tablet_id != common->tablet_id)
+		return -ENODEV;
+
+	common->wcmTouchDevice = NULL;
+	tmpcommon->wcmTouchDevice = NULL;
+	common->tablet_type &= ~WCM_PENTOUCH;
+	tmpcommon->tablet_type &= ~WCM_PENTOUCH;
+	return 0;
+}
+
+
 /**
  * Unlink the touch tool from the pen of the same device
  */
 void wcmUnlinkTouchAndPen(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
-	InputInfoPtr device = xf86FirstLocalDevice();
-	WacomCommonPtr tmpcommon = NULL;
-	WacomDevicePtr tmppriv = NULL;
-	Bool touch_device = FALSE;
 
 	if (!TabletHasFeature(common, WCM_PENTOUCH))
 		return;
 
-	/* Lookup to find the associated pen and touch */
-	for (; device != NULL; device = device->next)
-	{
-		if (!strcmp(device->drv->driverName, "wacom"))
-		{
-			tmppriv = (WacomDevicePtr) device->private;
-			tmpcommon = tmppriv->common;
-			touch_device = (common->wcmTouchDevice ||
-						tmpcommon->wcmTouchDevice);
-
-			/* skip the same tool or unlinked devices */
-			if ((tmppriv == priv) || !touch_device)
-				continue;
-
-			if (tmpcommon->tablet_id == common->tablet_id)
-			{
-				common->wcmTouchDevice = NULL;
-				tmpcommon->wcmTouchDevice = NULL;
-				common->tablet_type &= ~WCM_PENTOUCH;
-				tmpcommon->tablet_type &= ~WCM_PENTOUCH;
-				return;
-			}
-		}
-	}
+	wcmForeachDevice(priv, unlinkDevice, priv);
 }
 
 /**
@@ -346,14 +338,9 @@ static void wcmSplitName(char* devicename, char *basename, char *subdevice, char
  * when a tablet reports 'pen' and 'touch' through separate device
  * nodes.
  */
-static Bool wcmIsSiblingDevice(InputInfoPtr a, InputInfoPtr b, Bool logical_only)
+static Bool wcmIsSiblingDevice(WacomDevicePtr privA,
+			       WacomDevicePtr privB, Bool logical_only)
 {
-	WacomDevicePtr privA = (WacomDevicePtr)a->private;
-	WacomDevicePtr privB = (WacomDevicePtr)b->private;
-
-	if (strcmp(a->drv->driverName, "wacom") || strcmp(b->drv->driverName, "wacom"))
-		return FALSE;
-
 	if (privA == privB)
 		return FALSE;
 
@@ -386,6 +373,30 @@ static Bool wcmIsSiblingDevice(InputInfoPtr a, InputInfoPtr b, Bool logical_only
 	return FALSE;
 }
 
+
+static int matchDevice(WacomDevicePtr privMatch, void *data)
+{
+	WacomDevicePtr priv = data;
+
+	if (!wcmIsSiblingDevice(priv, privMatch, TRUE))
+		return -ENODEV;
+
+	DBG(2, priv, "port share between %s and %s\n",
+	    priv->name, privMatch->name);
+	/* FIXME: we loose the common->wcmTool here but it
+	 * gets re-added during wcmParseOptions. This is
+	 * currently required by the code, adding the tool
+	 * again here means we trigger the duplicate tool
+	 * detection */
+	wcmFreeCommon(&priv->common);
+	priv->common = wcmRefCommon(privMatch->common);
+	priv->next = priv->common->wcmDevices;
+	priv->common->wcmDevices = priv;
+
+	return 0;
+}
+
+
 /* wcmMatchDevice - locate matching device and merge common structure. If an
  * already initialized device shares the same device file and driver, remove
  * the new device's "common" struct and point to the one of the already
@@ -397,36 +408,16 @@ static Bool wcmIsSiblingDevice(InputInfoPtr a, InputInfoPtr b, Bool logical_only
  */
 static Bool wcmMatchDevice(WacomDevicePtr priv, WacomCommonPtr *common_return)
 {
-	InputInfoPtr pLocal = priv->pInfo;
 	WacomCommonPtr common = priv->common;
-	InputInfoPtr pMatch = xf86FirstLocalDevice();
 
 	*common_return = common;
 
 	if (!common->device_path)
 		return 0;
 
-	for (; pMatch != NULL; pMatch = pMatch->next)
-	{
-		WacomDevicePtr privMatch = (WacomDevicePtr)pMatch->private;
-
-		if (wcmIsSiblingDevice(pLocal, pMatch, TRUE))
-		{
-			DBG(2, priv, "port share between %s and %s\n",
-					pLocal->name, pMatch->name);
-			/* FIXME: we loose the common->wcmTool here but it
-			 * gets re-added during wcmParseOptions. This is
-			 * currently required by the code, adding the tool
-			 * again here means we trigger the duplicate tool
-			 * detection */
-			wcmFreeCommon(&priv->common);
-			priv->common = wcmRefCommon(privMatch->common);
-			priv->next = priv->common->wcmDevices;
-			priv->common->wcmDevices = priv;
-			*common_return = priv->common;
-			return 1;
-		}
-	}
+	/* If a match is found, priv->common has been replaced */
+	if (wcmForeachDevice(priv, matchDevice, priv) == 0)
+		*common_return = priv->common;
 	return 0;
 }
 
@@ -467,6 +458,56 @@ wcmInitModel(WacomDevicePtr priv)
 	return TRUE;
 }
 
+static int linkDevice(WacomDevicePtr tmppriv, /* the device iterated on */
+		      void *data) /* our device */
+{
+	WacomDevicePtr priv = data;
+	WacomCommonPtr common = priv->common;
+	WacomCommonPtr tmpcommon = tmppriv->common;
+
+	if (!wcmIsSiblingDevice(priv, tmppriv, FALSE))
+		return -ENODEV;
+
+	DBG(4, priv, "Considering link with %s...\n", tmppriv->name);
+
+	/* already linked devices */
+	if (tmpcommon->wcmTouchDevice)
+	{
+		DBG(4, priv, "A link is already in place. Ignoring.\n");
+		return -ENODEV;
+	}
+
+	if (IsTouch(tmppriv))
+	{
+		common->wcmTouchDevice = tmppriv;
+		tmpcommon->wcmTouchDevice = tmppriv;
+	}
+	else if (IsTouch(priv))
+	{
+		common->wcmTouchDevice = priv;
+		tmpcommon->wcmTouchDevice = priv;
+	}
+	else
+	{
+		DBG(4, priv, "A link is not necessary. Ignoring.\n");
+	}
+
+	if ((common->wcmTouchDevice && IsTablet(priv)) ||
+	    (tmpcommon->wcmTouchDevice && IsTablet(tmppriv)))
+	{
+		TabletSetFeature(common, WCM_PENTOUCH);
+		TabletSetFeature(tmpcommon, WCM_PENTOUCH);
+	}
+
+	if (common->wcmTouchDevice)
+	{
+		DBG(4, priv, "Link created!\n");
+		return 0;
+	}
+
+	return -ENODEV;
+}
+
 /**
  * Lookup to find the associated pen and touch for the same device.
  * Store touch tool in wcmTouchDevice for pen and touch, respectively,
@@ -478,65 +519,15 @@ wcmInitModel(WacomDevicePtr priv)
  */
 static Bool wcmLinkTouchAndPen(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
-	WacomCommonPtr common = priv->common;
-	InputInfoPtr device = xf86FirstLocalDevice();
-	WacomCommonPtr tmpcommon = NULL;
-	WacomDevicePtr tmppriv = NULL;
-
 	if (IsPad(priv))
 	{
 		DBG(4, priv, "No need to link up pad devices.\n");
 		return FALSE;
 	}
 
-	/* Lookup to find the associated pen and touch */
-	for (; device != NULL; device = device->next)
-	{
-		if (!wcmIsSiblingDevice(pInfo, device, FALSE))
-			continue;
+	if (wcmForeachDevice(priv, linkDevice, priv) <= 0)
+		DBG(4, priv, "No suitable device to link with found.\n");
 
-		tmppriv = (WacomDevicePtr) device->private;
-		tmpcommon = tmppriv->common;
-
-		DBG(4, priv, "Considering link with %s...\n", tmppriv->name);
-
-		/* already linked devices */
-		if (tmpcommon->wcmTouchDevice)
-		{
-			DBG(4, priv, "A link is already in place. Ignoring.\n");
-			continue;
-		}
-
-		if (IsTouch(tmppriv))
-		{
-			common->wcmTouchDevice = tmppriv;
-			tmpcommon->wcmTouchDevice = tmppriv;
-		}
-		else if (IsTouch(priv))
-		{
-			common->wcmTouchDevice = priv;
-			tmpcommon->wcmTouchDevice = priv;
-		}
-		else
-		{
-			DBG(4, priv, "A link is not necessary. Ignoring.\n");
-		}
-
-		if ((common->wcmTouchDevice && IsTablet(priv)) ||
-			(tmpcommon->wcmTouchDevice && IsTablet(tmppriv)))
-		{
-			TabletSetFeature(common, WCM_PENTOUCH);
-			TabletSetFeature(tmpcommon, WCM_PENTOUCH);
-		}
-
-		if (common->wcmTouchDevice)
-		{
-			DBG(4, priv, "Link created!\n");
-			return TRUE;
-		}
-	}
-	DBG(4, priv, "No suitable device to link with found.\n");
 	return FALSE;
 }
 

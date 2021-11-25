@@ -284,6 +284,33 @@ Bool wcmInitTouch(WacomDevicePtr priv, int ntouches, Bool is_direct_touch)
 					  2);
 }
 
+int wcmForeachDevice(WacomDevicePtr priv, WacomDeviceCallback func, void *data)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pOther;
+	int nmatch = 0;
+
+	for (pOther = xf86FirstLocalDevice(); pOther; pOther = pOther->next)
+	{
+		WacomDevicePtr pPriv;
+		int rc;
+
+		if (pInfo == pOther || !strstr(pOther->drv->driverName, "wacom"))
+			continue;
+
+		pPriv = pOther->private;
+		rc = func(pPriv, data);
+		if (rc == -ENODEV)
+			continue;
+		if (rc < 0)
+			return -rc;
+		nmatch += 1; /* zero counts as matched */
+		if (rc == 0)
+			break;
+	}
+
+	return nmatch;
+}
 
 /*****************************************************************************
  * wcmOpen --

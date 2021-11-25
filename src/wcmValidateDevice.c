@@ -24,6 +24,40 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+struct checkData {
+	dev_t min_maj;
+	const char *source;
+};
+
+static int checkSource(WacomDevicePtr other, void *data)
+{
+	InputInfoPtr pInfo = other->pInfo;
+	char *device = xf86CheckStrOption(pInfo->options, "Device", NULL);
+	WacomCommonPtr pCommon;
+	struct checkData *check = data;
+	Bool match = FALSE;
+
+	/* device can be NULL on some distros */
+	if (!device)
+		return -ENODEV;
+
+	free(device);
+
+	pCommon = other->common;
+	if (pCommon->min_maj && pCommon->min_maj == check->min_maj)
+	{
+		char* source = xf86CheckStrOption(pInfo->options, "_source", "");
+
+		/* only add the new tool if the matching major/minor
+		 * was from the same source */
+		if (strcmp(check->source, source))
+			match = TRUE;
+		free(source);
+	}
+
+	return match ? 0 : -ENODEV;
+}
+
 /* wcmCheckSource - Check if there is another source defined this device
  * before or not: don't add the tool by hal/udev if user has defined at least
  * one tool for the device in xorg.conf. One device can have multiple tools
@@ -31,44 +65,18 @@
 static Bool wcmCheckSource(WacomDevicePtr priv, dev_t min_maj)
 {
 	InputInfoPtr pInfo = priv->pInfo;
-	int match = 0;
-	InputInfoPtr pDevices = xf86FirstLocalDevice();
+	int nmatch;
+	struct checkData check = {
+		.min_maj = min_maj,
+		.source = xf86CheckStrOption(pInfo->options, "_source", ""),
+	};
 
-	for (; !match && pDevices != NULL; pDevices = pDevices->next)
-	{
-		char *device;
-		WacomCommonPtr pCommon;
-
-		if (pInfo == pDevices)
-			continue;
-
-		if (!strstr(pDevices->drv->driverName, "wacom"))
-			continue;
-
-		device = xf86CheckStrOption(pDevices->options, "Device", NULL);
-		/* device can be NULL on some distros */
-		if (!device)
-			continue;
-		free(device);
-
-		pCommon = ((WacomDevicePtr)pDevices->private)->common;
-		if (pCommon->min_maj && pCommon->min_maj == min_maj)
-		{
-			char* fsource = xf86CheckStrOption(pInfo->options, "_source", "");
-			char* psource = xf86CheckStrOption(pDevices->options, "_source", "");
-
-			/* only add the new tool if the matching major/minor
-			* was from the same source */
-			if (strcmp(fsource, psource))
-				match = 1;
-			free(fsource);
-			free(psource);
-		}
-	}
-	if (match)
+	nmatch = wcmForeachDevice(priv, checkSource, &check);
+	if (nmatch > 0)
 		wcmLog(priv, W_WARNING,
-			    "device file already in use by %s. Ignoring.\n", pDevices->name);
-	return match;
+			    "device file already in use. Ignoring.\n");
+	free((char*)check.source);
+	return nmatch;
 }
 
 /* check if the device has been added.
