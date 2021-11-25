@@ -772,7 +772,6 @@ static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
 	WacomDevicePtr priv = NULL;
-	const char *type = NULL;
 	Status status;
 
 	pInfo->device_control = wcmDevProc;
@@ -789,17 +788,13 @@ static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	if ((status = wcmPreInit(priv)) != Success)
 		return status;
 
-	if (strcasecmp(type, "stylus") == 0)
-		pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS;
-	else if (strcasecmp(type, "touch") == 0)
-		pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH;
-	else if (strcasecmp(type, "cursor") == 0)
-		pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR;
-	else if (strcasecmp(type, "eraser") == 0)
-		pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER;
-	else if (strcasecmp(type, "pad") == 0)
-		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD;
-	else {
+	switch (priv->type) {
+	case WTYPE_STYLUS:	pInfo->type_name = WACOM_PROP_XI_TYPE_STYLUS; break;
+	case WTYPE_ERASER:	pInfo->type_name = WACOM_PROP_XI_TYPE_ERASER; break;
+	case WTYPE_CURSOR:	pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR; break;
+	case WTYPE_PAD:		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD; break;
+	case WTYPE_TOUCH:	pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH; break;
+	default:
 		xf86IDrvMsg(pInfo, X_ERROR,
 		       "No type or invalid type specified.\n"
 		       "Must be one of stylus, touch, cursor, eraser, or pad\n");

@@ -218,9 +218,19 @@ typedef struct {
 	size_t nactions;
 } WacomAction;
 
+typedef enum  {
+	WTYPE_INVALID = 0,
+	WTYPE_STYLUS,
+	WTYPE_ERASER,
+	WTYPE_CURSOR,
+	WTYPE_PAD,
+	WTYPE_TOUCH,
+} WacomType;
+
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
+	WacomType type;
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
 	InputInfoPtr pInfo;
