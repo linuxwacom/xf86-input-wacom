@@ -85,10 +85,10 @@ struct _WacomModel
 {
 	const char* name;
 
-	int (*Initialize)(InputInfoPtr pInfo);
-	int (*DetectConfig)(InputInfoPtr pInfo);
-	int (*Start)(InputInfoPtr pInfo);
-	int (*Parse)(InputInfoPtr pInfo, const unsigned char* data, int len);
+	int (*Initialize)(WacomDevicePtr priv);
+	int (*DetectConfig)(WacomDevicePtr priv);
+	int (*Start)(WacomDevicePtr priv);
+	int (*Parse)(WacomDevicePtr priv, const unsigned char* data, int len);
 };
 
 /******************************************************************************
@@ -326,10 +326,10 @@ struct _WacomChannel
 /* Functions are called in the order as listed in the struct */
 struct _WacomDeviceClass
 {
-	Bool (*Detect)(InputInfoPtr pInfo); /* detect device */
-	int  (*ProbeKeys)(InputInfoPtr pInfo); /* set the bits for the keys supported */
-	Bool (*ParseOptions)(InputInfoPtr pInfo); /* parse class-specific options */
-	Bool (*Init)(InputInfoPtr pInfo);   /* initialize device */
+	Bool (*Detect)(WacomDevicePtr priv); /* detect device */
+	int  (*ProbeKeys)(WacomDevicePtr priv); /* set the bits for the keys supported */
+	Bool (*ParseOptions)(WacomDevicePtr priv); /* parse class-specific options */
+	Bool (*Init)(WacomDevicePtr priv);   /* initialize device */
 };
 
 extern WacomDeviceClass gWacomUSBDevice;

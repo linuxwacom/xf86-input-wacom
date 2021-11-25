@@ -67,17 +67,17 @@ typedef struct {
 	int baudrate;
 } wcmISDV4Data;
 
-static Bool isdv4Detect(InputInfoPtr);
-static Bool isdv4ParseOptions(InputInfoPtr pInfo);
-static Bool isdv4Init(InputInfoPtr);
-static int isdv4ProbeKeys(InputInfoPtr pInfo);
-static int isdv4InitISDV4(InputInfoPtr pInfo);
-static int isdv4StartTablet(InputInfoPtr);
-static int isdv4StopTablet(InputInfoPtr);
-static int isdv4Parse(InputInfoPtr, const unsigned char* data, int len);
-static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data);
-static int wcmWaitForTablet(InputInfoPtr pInfo, char * data, int size);
-static int wcmWriteWait(InputInfoPtr pInfo, const char* request);
+static Bool isdv4Detect(WacomDevicePtr priv);
+static Bool isdv4ParseOptions(WacomDevicePtr priv);
+static Bool isdv4Init(WacomDevicePtr priv);
+static int isdv4ProbeKeys(WacomDevicePtr priv);
+static int isdv4InitISDV4(WacomDevicePtr priv);
+static int isdv4StartTablet(WacomDevicePtr priv);
+static int isdv4StopTablet(WacomDevicePtr priv);
+static int isdv4Parse(WacomDevicePtr priv, const unsigned char* data, int len);
+static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data);
+static int wcmWaitForTablet(WacomDevicePtr priv, char * data, int size);
+static int wcmWriteWait(WacomDevicePtr priv, const char* request);
 
 WacomDeviceClass gWacomISDV4Device =
 {
@@ -96,10 +96,9 @@ static WacomModel isdv4General =
 	.Parse = isdv4Parse,
 };
 
-static void memdump(InputInfoPtr pInfo, char *buffer, unsigned int len)
+static void memdump(WacomDevicePtr priv, char *buffer, unsigned int len)
 {
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	int i;
 
@@ -150,9 +149,9 @@ static int wcmSkipInvalidBytes(const unsigned char* data, int len)
  *   positive number of bytes to skip on error.
  ****************************************************************************/
 
-static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
+static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	int n;
@@ -187,8 +186,9 @@ static int wcmSerialValidate(InputInfoPtr pInfo, const unsigned char* data)
  * isdv4Detect -- Test if the attached device is ISDV4.
  ****************************************************************************/
 
-static Bool isdv4Detect(InputInfoPtr pInfo)
+static Bool isdv4Detect(WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	struct serial_struct ser;
 	int rc;
 
@@ -202,9 +202,9 @@ static Bool isdv4Detect(InputInfoPtr pInfo)
 /*****************************************************************************
  * isdv4ParseOptions -- parse ISDV4-specific options
  ****************************************************************************/
-static Bool isdv4ParseOptions(InputInfoPtr pInfo)
+static Bool isdv4ParseOptions(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmISDV4Data *isdv4data;
 	int baud;
@@ -248,9 +248,9 @@ static Bool isdv4ParseOptions(InputInfoPtr pInfo)
  * isdv4Init --
  ****************************************************************************/
 
-static Bool isdv4Init(InputInfoPtr pInfo)
+static Bool isdv4Init(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 
@@ -270,30 +270,26 @@ static Bool isdv4Init(InputInfoPtr pInfo)
  * isdv4Query -- Query the device
  ****************************************************************************/
 
-static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
+static int isdv4Query(WacomDevicePtr priv, const char* query, char* data)
 {
-#ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-#endif
-
 	DBG(1, priv, "Querying ISDV4 tablet\n");
 
-	if (isdv4StopTablet(pInfo) != Success)
+	if (isdv4StopTablet(priv) != Success)
 		return !Success;
 
 	/* Send query command to the tablet */
-	if (!wcmWriteWait(pInfo, query))
+	if (!wcmWriteWait(priv, query))
 		return !Success;
 
 	/* Read the control data */
-	if (!wcmWaitForTablet(pInfo, data, ISDV4_PKGLEN_TPCCTL))
+	if (!wcmWaitForTablet(priv, data, ISDV4_PKGLEN_TPCCTL))
 		return !Success;
 
 	/* Control data bit check */
 	if ( !(data[0] & 0x40) )
 	{
 		/* Reread the control data since it may fail the first time */
-		wcmWaitForTablet(pInfo, data, ISDV4_PKGLEN_TPCCTL);
+		wcmWaitForTablet(priv, data, ISDV4_PKGLEN_TPCCTL);
 		if ( !(data[0] & 0x40) )
 			return !Success;
 	}
@@ -305,10 +301,10 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
  * isdv4InitISDV4 -- Setup the device
  ****************************************************************************/
 
-static int isdv4InitISDV4(InputInfoPtr pInfo)
+static int isdv4InitISDV4(WacomDevicePtr priv)
 {
 	char data[BUFFER_SIZE];
-	WacomDevicePtr priv = pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common =	priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 	int ret = Success;
@@ -337,7 +333,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 	}
 
 	/* Send query command to the tablet */
-	ret = isdv4Query(pInfo, ISDV4_QUERY, data);
+	ret = isdv4Query(priv, ISDV4_QUERY, data);
 	if (ret != Success)
 	{
 		int baud;
@@ -355,7 +351,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 			goto out;
 		}
 
-		ret = isdv4Query(pInfo, ISDV4_QUERY, data);
+		ret = isdv4Query(priv, ISDV4_QUERY, data);
 
 		if (ret == Success) {
 			isdv4data->baudrate = baud;
@@ -379,7 +375,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 				DBG(2, common, "reply or len invalid.\n");
 			else
 				DBG(2, common, "header data corrupt.\n");
-			memdump(pInfo, data, sizeof(reply));
+			memdump(priv, data, sizeof(reply));
 			ret = BadAlloc;
 			goto out;
 		}
@@ -419,7 +415,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 
 	/* Touch might be supported. Send a touch query command */
 	if (isdv4data->baudrate == 38400 &&
-	    isdv4Query(pInfo, ISDV4_TOUCH_QUERY, data) == Success)
+	    isdv4Query(priv, ISDV4_TOUCH_QUERY, data) == Success)
 	{
 		ISDV4TouchQueryReply reply;
 		int rc;
@@ -433,7 +429,7 @@ static int isdv4InitISDV4(InputInfoPtr pInfo)
 				DBG(2, common, "reply or len invalid.\n");
 			else
 				DBG(2, common, "header data corrupt.\n");
-			memdump(pInfo, data, sizeof(reply));
+			memdump(priv, data, sizeof(reply));
 			ret = BadAlloc;
 			goto out;
 		}
@@ -531,9 +527,8 @@ out:
 	return ret;
 }
 
-static int isdv4StartTablet(InputInfoPtr pInfo)
+static int isdv4StartTablet(WacomDevicePtr priv)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common =	priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 
@@ -541,22 +536,22 @@ static int isdv4StartTablet(InputInfoPtr pInfo)
 		return Success;
 
 	/* Tell the tablet to start sending coordinates */
-	if (!wcmWriteWait(pInfo, ISDV4_SAMPLING))
+	if (!wcmWriteWait(priv, ISDV4_SAMPLING))
 		return !Success;
 
 	return Success;
 }
 
-static int isdv4StopTablet(InputInfoPtr pInfo)
+static int isdv4StopTablet(WacomDevicePtr priv)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 #ifdef DEBUG
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 #endif
 	int fd_flags;
 
 	/* Send stop command to the tablet */
-	if (!wcmWriteWait(pInfo, ISDV4_STOP))
+	if (!wcmWriteWait(priv, ISDV4_STOP))
 		return !Success;
 
 	/* Wait 250 mSecs */
@@ -586,10 +581,10 @@ static int isdv4StopTablet(InputInfoPtr pInfo)
  * @return The channel number of -1 on error.
  */
 
-static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
+static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 				 int len, WacomDeviceState *ds)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* lastTemp = &common->wcmChannel[1].valid.state;
@@ -660,10 +655,10 @@ static int isdv4ParseTouchPacket(InputInfoPtr pInfo, const unsigned char *data,
  *
  * @return The channel number.
  */
-static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
+static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 			       int len, WacomDeviceState *ds)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	int rc;
@@ -733,9 +728,8 @@ static int isdv4ParsePenPacket(InputInfoPtr pInfo, const unsigned char *data,
 }
 
 
-static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
+static int isdv4Parse(WacomDevicePtr priv, const unsigned char* data, int len)
 {
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState* last = &common->wcmChannel[0].valid.state;
 	WacomDeviceState* ds;
@@ -789,7 +783,7 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	/* Coordinate data bit check */
 	if (data[0] & CONTROL_BIT) /* control data */
 		return common->wcmPktLength;
-	else if ((n = wcmSerialValidate(pInfo,data)) > 0)
+	else if ((n = wcmSerialValidate(priv,data)) > 0)
 		return n;
 
 	/* pick up where we left off, minus relative values */
@@ -797,9 +791,9 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
 	RESET_RELATIVE(*ds);
 
 	if (common->wcmPktLength == ISDV4_PKGLEN_TPCPEN)
-		channel = isdv4ParsePenPacket(pInfo, data, len, ds);
+		channel = isdv4ParsePenPacket(priv, data, len, ds);
 	else { /* a touch */
-		channel = isdv4ParseTouchPacket(pInfo, data, len, ds);
+		channel = isdv4ParseTouchPacket(priv, data, len, ds);
 		if (channel >= 0)
 			ds = &common->wcmChannel[channel].work;
 	}
@@ -816,8 +810,9 @@ static int isdv4Parse(InputInfoPtr pInfo, const unsigned char* data, int len)
  *   send a request
  ****************************************************************************/
 
-static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
+static int wcmWriteWait(WacomDevicePtr priv, const char* request)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int len, maxtry = MAXTRY;
 
 	/* send request string */
@@ -848,8 +843,9 @@ static int wcmWriteWait(InputInfoPtr pInfo, const char* request)
  *   wait for tablet data
  ****************************************************************************/
 
-static int wcmWaitForTablet(InputInfoPtr pInfo, char* answer, int size)
+static int wcmWaitForTablet(WacomDevicePtr priv, char* answer, int size)
 {
+	InputInfoPtr pInfo = priv->pInfo;
 	int len, maxtry = MAXTRY;
 
 	/* Read size bytes of the answer */
@@ -957,9 +953,9 @@ static Bool get_keys_vendor_tablet_id(char *name, WacomCommonPtr common)
  * @param buf[out] preallocated buffer to return the result in.
  * @param buf_size: size of preallocated buffer
  */
-static Bool get_sysfs_id(InputInfoPtr pInfo, char *buf, int buf_size)
+static Bool get_sysfs_id(WacomDevicePtr priv, char *buf, int buf_size)
 {
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	struct udev *udev = NULL;
 	struct udev_device *device = NULL;
 	struct stat st;
@@ -1011,10 +1007,10 @@ out:
  * device ID. This matching only works for known devices (see the
  * isdv4_model list), all others are simply assumed to be pen + erasor.
  */
-static int isdv4ProbeKeys(InputInfoPtr pInfo)
+static int isdv4ProbeKeys(WacomDevicePtr priv)
 {
 	struct serial_struct tmp;
-	WacomDevicePtr  priv = (WacomDevicePtr)pInfo->private;
+	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 
 	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
@@ -1033,7 +1029,7 @@ static int isdv4ProbeKeys(InputInfoPtr pInfo)
 
 	if (!get_keys_vendor_tablet_id(pInfo->name, common)) {
 		char buf[15] = {0};
-		if (get_sysfs_id(pInfo, buf, sizeof(buf)))
+		if (get_sysfs_id(priv, buf, sizeof(buf)))
 			get_keys_vendor_tablet_id(buf, common);
 	}
 

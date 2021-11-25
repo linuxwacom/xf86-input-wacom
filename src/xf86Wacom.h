@@ -83,49 +83,49 @@
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
 /* Open the device with the right serial parmeters */
-extern Bool wcmOpen(InputInfoPtr pInfo);
+extern Bool wcmOpen(WacomDevicePtr priv);
 
 /* Close the device */
-extern void wcmClose(InputInfoPtr pInfo);
+extern void wcmClose(WacomDevicePtr priv);
 
 void wcmRemoveActive(WacomDevicePtr priv);
 
 /* device autoprobing */
-char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
+char *wcmEventAutoDevProbe (WacomDevicePtr priv);
 
 /* common tablet initialization regime */
-int wcmInitTablet(InputInfoPtr pInfo);
+int wcmInitTablet(WacomDevicePtr priv);
 
 /* standard packet handler */
-int wcmReadPacket(InputInfoPtr pInfo);
+int wcmReadPacket(WacomDevicePtr priv);
 
 /* handles suppression, filtering, and dispatch. */
 void wcmEvent(WacomCommonPtr common, unsigned int channel, const WacomDeviceState* ds);
 
 /* dispatches data to XInput event system */
-void wcmSendEvents(InputInfoPtr pInfo, const WacomDeviceState* ds);
+void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds);
 
 /* validation */
-extern Bool wcmIsAValidType(InputInfoPtr pInfo, const char* type);
-extern int wcmIsDuplicate(const char* device, InputInfoPtr pInfo);
-extern int wcmDeviceTypeKeys(InputInfoPtr pInfo);
+extern Bool wcmIsAValidType(WacomDevicePtr priv, const char* type);
+extern int wcmIsDuplicate(const char* device, WacomDevicePtr priv);
+extern int wcmDeviceTypeKeys(WacomDevicePtr priv);
 
 /* hotplug */
-extern int wcmNeedAutoHotplug(InputInfoPtr pInfo, char **type);
-extern void wcmHotplugOthers(InputInfoPtr pInfo, const char *basename);
+extern int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type);
+extern void wcmHotplugOthers(WacomDevicePtr priv, const char *basename);
 
 /* setup */
-extern Bool wcmPreInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent);
-extern Bool wcmPostInitParseOptions(InputInfoPtr pInfo, Bool is_primary, Bool is_dependent);
-extern int wcmParseSerials(InputInfoPtr pinfo);
+extern Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary, Bool is_dependent);
+extern Bool wcmPostInitParseOptions(WacomDevicePtr priv, Bool is_primary, Bool is_dependent);
+extern int wcmParseSerials(WacomDevicePtr priv);
 
-extern int wcmDevSwitchModeCall(InputInfoPtr pInfo, int mode);
+extern int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode);
 
 extern int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode);
 extern int wcmDevChangeControl(InputInfoPtr pInfo, xDeviceCtl * control);
 extern void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl);
 extern int wcmDevProc(DeviceIntPtr pWcm, int what);
-extern void wcmDevReadInput(InputInfoPtr pInfo);
+extern void wcmDevReadInput(InputInfoPtr priv);
 
 extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
 extern void wcmResetStripAction(WacomDevicePtr priv, int index);
@@ -134,24 +134,24 @@ extern void wcmResetWheelAction(WacomDevicePtr priv, int index);
 /* run-time modifications */
 extern int wcmTilt2R(int x, int y, double offset);
 extern void wcmEmitKeycode(DeviceIntPtr keydev, int keycode, int state);
-extern void wcmSoftOutEvent(InputInfoPtr pInfo);
-extern void wcmCancelGesture(InputInfoPtr pInfo);
+extern void wcmSoftOutEvent(WacomDevicePtr priv);
+extern void wcmCancelGesture(WacomDevicePtr priv);
 
-extern void wcmRotateTablet(InputInfoPtr pInfo, int value);
-extern void wcmRotateAndScaleCoordinates(InputInfoPtr pInfo, int* x, int* y);
+extern void wcmRotateTablet(WacomDevicePtr priv, int value);
+extern void wcmRotateAndScaleCoordinates(WacomDevicePtr priv, int* x, int* y);
 
 extern int wcmCheckPressureCurveValues(int x0, int y0, int x1, int y1);
 extern int wcmGetPhyDeviceID(WacomDevicePtr priv);
 
 /* device properties */
-extern void InitWcmDeviceProperties(InputInfoPtr pInfo);
+extern void InitWcmDeviceProperties(WacomDevicePtr priv);
 extern void wcmUpdateRotationProperty(WacomDevicePtr priv);
 extern void wcmUpdateSerialProperty(WacomDevicePtr priv);
 extern void wcmUpdateHWTouchProperty(WacomDevicePtr priv);
 
 /* Utility functions */
-extern Bool is_absolute(InputInfoPtr pInfo);
-extern void set_absolute(InputInfoPtr pInfo, Bool absolute);
+extern Bool is_absolute(WacomDevicePtr priv);
+extern void set_absolute(WacomDevicePtr priv, Bool absolute);
 extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
 extern void wcmFreeCommon(WacomCommonPtr *common);
 extern WacomCommonPtr wcmNewCommon(void);
@@ -196,10 +196,10 @@ enum WacomSuppressMode {
 
 /* For test suite */
 /* xf86Wacom.c */
-extern void wcmInitialToolSize(InputInfoPtr pInfo);
+extern void wcmInitialToolSize(WacomDevicePtr priv);
 
 /* wcmConfig.c */
-extern int wcmSetType(InputInfoPtr pInfo, const char *type);
+extern int wcmSetType(WacomDevicePtr priv, const char *type);
 
 /* wcmCommon.c */
 extern int getScrollDelta(int current, int old, int wrap, int flags);
