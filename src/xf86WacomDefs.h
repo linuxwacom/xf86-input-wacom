@@ -29,6 +29,8 @@
 #include <limits.h>
 #include <string.h>
 
+#include <WacomInterface.h>
+
 /* vendor IDs on the kernel device */
 #define WACOM_VENDOR_ID 0x056a
 #define WALTOP_VENDOR_ID 0x172F
@@ -279,9 +281,9 @@ struct _WacomDeviceRec
 
 	int isParent;		/* set to 1 if the device is not auto-hotplugged */
 
-	OsTimerPtr serial_timer; /* timer used for serial number property update */
-	OsTimerPtr tap_timer;   /* timer used for tap timing */
-	OsTimerPtr touch_timer; /* timer used for touch switch property update */
+	WacomTimerPtr serial_timer; /* timer used for serial number property update */
+	WacomTimerPtr tap_timer;   /* timer used for tap timing */
+	WacomTimerPtr touch_timer; /* timer used for touch switch property update */
 };
 
 #define MAX_SAMPLES	20

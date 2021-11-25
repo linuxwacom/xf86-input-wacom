@@ -123,6 +123,49 @@ void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value)
 	pInfo->options = xf86ReplaceIntOption(pInfo->options, key, value);
 }
 
+struct _WacomTimer {
+	OsTimerPtr timer;
+	WacomTimerCallback func;
+	void *userdata;
+};
+
+static CARD32 xserverTimerFunc(OsTimerPtr ostimer, CARD32 time, void *arg)
+{
+	WacomTimerPtr timer = arg;
+
+	return timer->func(timer, (uint32_t)time, timer->userdata);
+}
+
+WacomTimerPtr wcmTimerNew(void)
+{
+	uint32_t flags = 0; /* relative */
+	WacomTimerPtr timer = calloc(1, sizeof(*timer));
+
+	timer->timer = TimerSet(timer->timer, flags, 0, NULL, NULL);
+
+	return timer;
+}
+
+void wcmTimerFree(WacomTimerPtr timer)
+{
+	TimerCancel(timer->timer);
+	TimerFree(timer->timer);
+	free(timer);
+}
+
+void wcmTimerCancel(WacomTimerPtr timer)
+{
+	TimerCancel(timer->timer);
+}
+
+void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, WacomTimerCallback func, void *userdata)
+{
+	uint32_t flags = 0; /* relative */
+
+	timer->func = func;
+	timer->userdata = userdata;
+	TimerSet(timer->timer, flags, millis, xserverTimerFunc, timer);
+}
 
 /*****************************************************************************
  * Event helpers
