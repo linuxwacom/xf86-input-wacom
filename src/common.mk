@@ -1,6 +1,7 @@
 # shared makefile between src/Makefile.am and test/Makefile.am
 
 DRIVER_SOURCES= \
+	$(top_srcdir)/src/WacomInterface.h \
 	$(top_srcdir)/src/xf86Wacom.c \
 	$(top_srcdir)/src/xf86Wacom.h \
 	$(top_srcdir)/src/wcmCommon.c \

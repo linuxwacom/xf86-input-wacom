@@ -69,7 +69,7 @@
  *****************************************************************************/
 
 typedef struct _WacomModel WacomModel, *WacomModelPtr;
-typedef struct _WacomDeviceRec WacomDeviceRec, *WacomDevicePtr;
+typedef struct _WacomDeviceRec WacomDeviceRec;
 typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
 typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
 typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
