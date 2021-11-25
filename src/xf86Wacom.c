@@ -516,14 +516,13 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 	InputInfoPtr pInfo = (InputInfoPtr)pWcm->public.devicePrivate;
 	WacomDevicePtr priv = pInfo->private;
 	WacomCommonPtr common = priv->common;
-	WacomModelPtr model = common->wcmModel;
 	struct stat st;
 
 	DBG(10, priv, "\n");
 
 	/* If fd management is done by the server, skip common fd handling */
 	if (pInfo->flags & XI86_SERVER_FD)
-		goto got_fd;
+		return TRUE;
 
 	/* open file, if not already open */
 	if (common->fd_refs == 0)
@@ -557,10 +556,19 @@ static int wcmDevOpen(DeviceIntPtr pWcm)
 		common->fd_refs++;
 	}
 
-got_fd:
+	return TRUE;
+}
+
+static Bool wcmStart(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+	WacomModelPtr model = common->wcmModel;
+
 	/* start the tablet data */
 	if (model->Start && (model->Start(priv) != Success))
-		return !Success;
+		return FALSE;
+
+	wcmEnableTool(priv);
 
 	return TRUE;
 }
@@ -689,7 +697,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 		case DEVICE_ON:
 			if (!wcmDevOpen(pWcm))
 				goto out;
-			wcmEnableTool(priv);
+			wcmStart(priv);
 			xf86AddEnabledDevice(pInfo);
 			pWcm->public.on = TRUE;
 			break;
