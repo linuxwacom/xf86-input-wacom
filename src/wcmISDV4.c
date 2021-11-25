@@ -49,7 +49,6 @@
    have one model).
 
    5. isdv4InitISDV4 - do whatever device-specific init is necessary
-   6. isdv4GetRanges - Query axis ranges
 
    --- end of PreInit ---
 
@@ -72,8 +71,7 @@ static Bool isdv4Detect(InputInfoPtr);
 static Bool isdv4ParseOptions(InputInfoPtr pInfo);
 static Bool isdv4Init(InputInfoPtr);
 static int isdv4ProbeKeys(InputInfoPtr pInfo);
-static void isdv4InitISDV4(WacomCommonPtr);
-static int isdv4GetRanges(InputInfoPtr);
+static int isdv4InitISDV4(InputInfoPtr pInfo);
 static int isdv4StartTablet(InputInfoPtr);
 static int isdv4StopTablet(InputInfoPtr);
 static int isdv4Parse(InputInfoPtr, const unsigned char* data, int len);
@@ -93,7 +91,6 @@ static WacomModel isdv4General =
 {
 	"General ISDV4",
 	isdv4InitISDV4,
-	isdv4GetRanges,       /* query ranges */
 	isdv4StartTablet,     /* start tablet */
 	isdv4Parse,
 	NULL,
@@ -308,8 +305,19 @@ static int isdv4Query(InputInfoPtr pInfo, const char* query, char* data)
  * isdv4InitISDV4 -- Setup the device
  ****************************************************************************/
 
-static void isdv4InitISDV4(WacomCommonPtr common)
+static int isdv4InitISDV4(InputInfoPtr pInfo)
 {
+	char data[BUFFER_SIZE];
+	WacomDevicePtr priv = pInfo->private;
+	WacomCommonPtr common =	priv->common;
+	wcmISDV4Data *isdv4data = common->private;
+	int ret = Success;
+
+	if (isdv4data->tablet_initialized)
+		goto out;
+
+	DBG(2, priv, "Initializing ISDV4\n");
+
 	/* length of a packet */
 	common->wcmPktLength = ISDV4_PKGLEN_TPCPEN;
 
@@ -320,24 +328,6 @@ static void isdv4InitISDV4(WacomCommonPtr common)
 
 	/* tilt disabled */
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
-}
-
-/*****************************************************************************
- * isdv4GetRanges -- get ranges of the device
- ****************************************************************************/
-
-static int isdv4GetRanges(InputInfoPtr pInfo)
-{
-	char data[BUFFER_SIZE];
-	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
-	WacomCommonPtr common =	priv->common;
-	wcmISDV4Data *isdv4data = common->private;
-	int ret = Success;
-
-	DBG(2, priv, "getting ISDV4 Ranges\n");
-
-	if (isdv4data->tablet_initialized)
-		goto out;
 
 	/* Set baudrate to configured value */
 	if (xf86SetSerialSpeed(pInfo->fd, isdv4data->baudrate) < 0)
