@@ -1656,14 +1656,15 @@ static void usbParseBTNEvent(WacomCommonPtr common,
  * Translates an event code from the kernel (e.g. type: EV_ABS code: ABS_MISC value: STYLUS_DEVICE_ID)
  * into the corresponding device type for the driver (e.g. STYLUS_ID).
  *
- * @param[in] common
+ * @param[in] priv
  * @param[in] type      Linux input tool type (e.g. EV_KEY)
  * @param[in] code      Linux input tool code (e.g. BTN_STYLUS_PEN)
  * @param[in] value     Linux input tool value (e.g. STYLUS_DEVICE_ID)
  * @return              Wacom device ID (e.g. STYLUS_ID) or 0 if no match.
  */
-static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int value)
+static int deviceTypeFromEvent(WacomDevicePtr priv, int type, int code, int value)
 {
+	WacomCommonPtr common = priv->common;
 	wcmUSBData* private = common->private;
 
 	if (type == EV_KEY) {
@@ -1722,25 +1723,27 @@ static int deviceTypeFromEvent(WacomCommonPtr common, int type, int code, int va
  * information. The result is the first tool type (e.g. STYLUS_ID)
  * found associated with the in-prox tool.
  *
- * @param[in] common
+ * @param[in] priv
  * @return            A tool type (e.g. STYLUS_ID) associated with the in-prox tool
  */
-static int refreshDeviceType(WacomCommonPtr common, int fd)
+static int refreshDeviceType(WacomDevicePtr priv, int fd)
 {
+	InputInfoPtr pInfo = priv->pInfo;
+	WacomCommonPtr common = priv->common;
 	int device_type = 0;
 	unsigned long keys[NBITS(KEY_MAX)] = { 0 };
 	int rc = ioctl(fd, EVIOCGKEY(sizeof(keys)), keys);
 	int i;
 
 	if (rc == -1) {
-		xf86Msg(X_ERROR, "%s: failed to retrieve key bits\n", common->device_path);
+		xf86IDrvMsg(pInfo, X_ERROR, "failed to retrieve key bits on %s\n", common->device_path);
 		return 0;
 	}
 
 	for (i = 0; i < KEY_MAX; i++)
 	{
 		if (ISBITSET(keys, i))
-			device_type = deviceTypeFromEvent(common, EV_KEY, i, 0);
+			device_type = deviceTypeFromEvent(priv, EV_KEY, i, 0);
 		if (device_type)
 			return device_type;
 	}
@@ -1748,9 +1751,10 @@ static int refreshDeviceType(WacomCommonPtr common, int fd)
 	return 0;
 }
 
-static int deriveDeviceTypeFromButtonEvent(WacomCommonPtr common,
+static int deriveDeviceTypeFromButtonEvent(WacomDevicePtr priv,
 					   const struct input_event *event_ptr)
 {
+	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata = common->private;
 	int nkeys;
 
@@ -1781,7 +1785,7 @@ static int deriveDeviceTypeFromButtonEvent(WacomCommonPtr common,
  * Retrieve the tool type from an USB data packet by looking at the event
  * codes. Refer to linux/input.h for event codes that define tool types.
  *
- * @param[in] common
+ * @param[in] priv
  * @param[in] event_ptr A pointer to the USB data packet that contains the
  * events to be processed.
  * @param[in] nevents Number of events in the packet.
@@ -1792,7 +1796,7 @@ static int deriveDeviceTypeFromButtonEvent(WacomCommonPtr common,
  *         if last_device_type is not a tool. If all else fails, '0'
  *         is returned.
  */
-static int usbInitToolType(WacomCommonPtr common, int fd,
+static int usbInitToolType(WacomDevicePtr priv, int fd,
                            const struct input_event *event_ptr,
                            int nevents, int last_device_type)
 {
@@ -1800,18 +1804,18 @@ static int usbInitToolType(WacomCommonPtr common, int fd,
 
 	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
 	{
-		device_type = deviceTypeFromEvent(common, event_ptr->type, event_ptr->code, event_ptr->value);
+		device_type = deviceTypeFromEvent(priv, event_ptr->type, event_ptr->code, event_ptr->value);
 	}
 
 	if (!device_type)
 		device_type = last_device_type;
 
 	if (!device_type)
-		device_type = refreshDeviceType(common, fd);
+		device_type = refreshDeviceType(priv, fd);
 
 	if (!device_type) /* expresskey pressed at startup or missing type */
 		for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
-			device_type = deriveDeviceTypeFromButtonEvent(common, event_ptr);
+			device_type = deriveDeviceTypeFromButtonEvent(priv, event_ptr);
 
 	return device_type;
 }
@@ -1845,7 +1849,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
-	private->wcmDeviceType = usbInitToolType(common, pInfo->fd,
+	private->wcmDeviceType = usbInitToolType(priv, pInfo->fd,
 	                                         private->wcmEvents,
 	                                         private->wcmEventCnt,
 	                                         dslast.device_type);
