@@ -612,11 +612,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 			break;
 
 		case DEVICE_OFF:
-			TimerCancel(priv->tap_timer);
-			TimerCancel(priv->serial_timer);
-			TimerCancel(priv->touch_timer);
-			wcmDisableTool(priv);
-			wcmUnlinkTouchAndPen(priv);
+			wcmDevStop(priv);
 			if (pInfo->fd >= 0)
 			{
 				xf86RemoveEnabledDevice(pInfo);
