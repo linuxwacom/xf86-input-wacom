@@ -56,6 +56,21 @@
 #define XI86_DRV_CAP_SERVER_FD 0x01
 #endif
 
+void
+wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
+{
+	MessageType xtype = (MessageType)type;
+	va_list args;
+
+	va_start(args, format);
+	if (!priv) {
+		LogVMessageVerbSigSafe(xtype, -1, format, args);
+	} else {
+		xf86VIDrvMsgVerb(priv->pInfo, xtype, 0, format, args);
+	}
+	va_end(args);
+}
+
 /*****************************************************************************
  * Event helpers
  ****************************************************************************/
