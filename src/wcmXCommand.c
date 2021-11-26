@@ -118,7 +118,7 @@ static inline int wcmUserToInternalPressure(WacomDevicePtr priv, int pressure)
 static void wcmInitActionProp(WacomDevicePtr priv, const char *name,
 			      Atom *handler, WacomAction *action)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	Atom prop = MakeAtom(name, strlen(name), TRUE);
 	size_t sz = wcmActionSize(action);
 
@@ -203,7 +203,7 @@ static Atom InitWcmAtom(DeviceIntPtr dev, const char *name, Atom type, int forma
 
 void InitWcmDeviceProperties(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	WacomCommonPtr common = priv->common;
 	int values[WCM_MAX_BUTTONS];
 	int i;
@@ -618,7 +618,7 @@ void wcmUpdateRotationProperty(WacomDevicePtr priv)
 		if (other == priv)
 			continue;
 
-		pInfo = other->pInfo;
+		pInfo = other->frontend;
 		dev = pInfo->dev;
 
 		XIChangeDeviceProperty(dev, prop_rotation, XA_INTEGER, 8,
@@ -630,7 +630,7 @@ void wcmUpdateRotationProperty(WacomDevicePtr priv)
 static void
 wcmSetHWTouchProperty(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	WacomCommonPtr common = priv->common;
 	XIPropertyValuePtr prop;
 	CARD8 prop_value;
@@ -1050,7 +1050,7 @@ static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 static void
 wcmSetSerialProperty(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	XIPropertyValuePtr prop;
 	CARD32 prop_value[5];
 	int rc;

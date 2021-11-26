@@ -69,58 +69,64 @@ wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
 	if (!priv) {
 		LogVMessageVerbSigSafe(xtype, -1, format, args);
 	} else {
-		xf86VIDrvMsgVerb(priv->pInfo, xtype, 0, format, args);
+		xf86VIDrvMsgVerb(priv->frontend, xtype, 0, format, args);
 	}
 	va_end(args);
 }
 
 char *wcmOptGetStr(WacomDevicePtr priv, const char *key, const char *default_value)
 {
-	return xf86SetStrOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return xf86SetStrOption(pInfo->options, key, default_value);
 }
 
 int wcmOptGetInt(WacomDevicePtr priv, const char *key, int default_value)
 {
-	return xf86SetIntOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return xf86SetIntOption(pInfo->options, key, default_value);
 }
 
 bool wcmOptGetBool(WacomDevicePtr priv, const char *key, bool default_value)
 {
-	return !!xf86SetBoolOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return !!xf86SetBoolOption(pInfo->options, key, default_value);
 }
 
 /* Get the option of the given type, quietly (without logging) */
 char *wcmOptCheckStr(WacomDevicePtr priv, const char *key, const char *default_value)
 {
-	return xf86CheckStrOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return xf86CheckStrOption(pInfo->options, key, default_value);
 }
 
 int wcmOptCheckInt(WacomDevicePtr priv, const char *key, int default_value)
 {
-	return xf86CheckIntOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return xf86CheckIntOption(pInfo->options, key, default_value);
 }
 
 bool wcmOptCheckBool(WacomDevicePtr priv, const char *key, bool default_value)
 {
-	return !!xf86CheckBoolOption(priv->pInfo->options, key, default_value);
+	InputInfoPtr pInfo = priv->frontend;
+	return !!xf86CheckBoolOption(pInfo->options, key, default_value);
 }
 
 /* Change the option to the new value */
 void wcmOptSetStr(WacomDevicePtr priv, const char *key, const char *value)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	pInfo->options = xf86ReplaceStrOption(pInfo->options, key, value);
 }
 
 void wcmOptSetInt(WacomDevicePtr priv, const char *key, int value)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	pInfo->options = xf86ReplaceIntOption(pInfo->options, key, value);
 }
 
 void wcmOptSetBool(WacomDevicePtr priv, const char *key, bool value)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	pInfo->options = xf86ReplaceIntOption(pInfo->options, key, value);
 }
 
@@ -180,7 +186,7 @@ void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, WacomTimerCallback func, 
 static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* basename, const char *type, int serial)
 {
 	WacomCommonPtr common = priv->common;
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	pointer original = pInfo->options;
 	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL;
@@ -233,7 +239,7 @@ static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* basenam
 static InputAttributes* wcmDuplicateAttributes(WacomDevicePtr priv,
 					       const char *type)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	int rc;
 	InputAttributes *attr;
 	char *product;
@@ -326,7 +332,7 @@ void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const char *type
  ****************************************************************************/
 void wcmEmitKeycode(WacomDevicePtr priv, int keycode, int state)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	DeviceIntPtr keydev = pInfo->dev;
 
 	xf86PostKeyboardEvent (keydev, keycode, state);
@@ -382,7 +388,7 @@ convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuato
 void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 		      const WacomAxisData *axes)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	int valuators[7];
 	int first_val, num_vals;
 
@@ -393,7 +399,7 @@ void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 
 void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *axes)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	int valuators[7];
 	int first_val, num_vals;
 
@@ -404,7 +410,7 @@ void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *a
 
 void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_press, const WacomAxisData *axes)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	int valuators[7];
 	int first_val, num_vals;
 
@@ -415,7 +421,7 @@ void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_pr
 
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	/* FIXME: this should be part of this interface here */
 	ValuatorMask *mask = priv->common->touch_mask;
 
@@ -430,7 +436,7 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 			int min, int max, int res)
 {
 
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	Atom label = None;
 	int min_res, max_res;
 	int index;
@@ -497,7 +503,7 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 
 bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	unsigned char butmap[WCM_MAX_BUTTONS+1];
 	/* FIXME: button labels would be nice */
 	Atom btn_labels[WCM_MAX_BUTTONS] = {0};
@@ -515,7 +521,7 @@ static void wcmKbdCtrlCallback(DeviceIntPtr di, KeybdCtrl* ctrl) { }
 
 bool wcmInitKeyboard(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	return InitFocusClassDeviceStruct(pInfo->dev) &&
 		InitKeyboardDeviceStruct(pInfo->dev, NULL, NULL, wcmKbdCtrlCallback) &&
 		InitLedFeedbackClassDeviceStruct (pInfo->dev, wcmKbdLedCallback);
@@ -525,7 +531,7 @@ static void wcmDevControlProc(DeviceIntPtr device, PtrCtrl* ctrl) { }
 
 bool wcmInitPointer(WacomDevicePtr priv, int naxes, bool is_absolute)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
         Atom axis_labels[MAX_VALUATORS] = {0};
 	int mode = is_absolute ? Absolute : Relative;
 
@@ -542,7 +548,7 @@ bool wcmInitPointer(WacomDevicePtr priv, int naxes, bool is_absolute)
 
 bool wcmInitTouch(WacomDevicePtr priv, int ntouches, bool is_direct_touch)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	WacomCommonPtr common = priv->common;
 	return InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
 					  is_direct_touch ? XIDirectTouch : XIDependentTouch,
@@ -551,7 +557,7 @@ bool wcmInitTouch(WacomDevicePtr priv, int ntouches, bool is_direct_touch)
 
 int wcmForeachDevice(WacomDevicePtr priv, WacomDeviceCallback func, void *data)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	InputInfoPtr pOther;
 	int nmatch = 0;
 
@@ -579,17 +585,19 @@ int wcmForeachDevice(WacomDevicePtr priv, WacomDeviceCallback func, void *data)
 
 int wcmGetFd(WacomDevicePtr priv)
 {
-	return priv->pInfo->fd;
+	InputInfoPtr pInfo = priv->frontend;
+	return pInfo->fd;
 }
 
 void wcmSetFd(WacomDevicePtr priv, int fd)
 {
-	priv->pInfo->fd = fd;
+	InputInfoPtr pInfo = priv->frontend;
+	pInfo->fd = fd;
 }
 
 void wcmSetName(WacomDevicePtr priv, const char *name)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 
 	free(pInfo->name);
 	pInfo->name = strdup(name);
@@ -601,7 +609,7 @@ void wcmSetName(WacomDevicePtr priv, const char *name)
 
 int wcmOpen(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 	WacomCommonPtr common = priv->common;
 	int fd;
 
@@ -625,7 +633,7 @@ int wcmOpen(WacomDevicePtr priv)
 
 void wcmClose(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 
 	DBG(1, priv, "closing device file\n");
 
@@ -638,7 +646,7 @@ void wcmClose(WacomDevicePtr priv)
 static int wcmReady(WacomDevicePtr priv)
 {
 #ifdef DEBUG
-	InputInfoPtr pInfo = priv->pInfo;
+	InputInfoPtr pInfo = priv->frontend;
 #endif
 	int n = xf86WaitForInput(pInfo->fd, 0);
 	if (n < 0) {

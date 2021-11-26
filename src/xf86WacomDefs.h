@@ -233,7 +233,7 @@ struct _WacomDeviceRec
 	WacomType type;
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
-	InputInfoPtr pInfo;
+	void *frontend;
 	int debugLevel;
 
 	unsigned int flags;	/* various flags (type, abs, touch...) */

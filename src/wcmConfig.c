@@ -30,7 +30,7 @@
  * Allocate the generic bits needed by any wacom device, regardless of type.
  ****************************************************************************/
 
-WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
+WacomDevicePtr wcmAllocate(void *frontend, const char *name)
 {
 	WacomDevicePtr   priv   = NULL;
 	WacomCommonPtr   common = NULL;
@@ -51,7 +51,7 @@ WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 
 	priv->next = NULL;
 	priv->name = strdup(name);
-	priv->pInfo = pInfo;
+	priv->frontend = frontend;
 	priv->common = common;       /* common info pointer */
 	priv->oldCursorHwProx = 0;   /* previous cursor hardware proximity */
 	priv->maxCurve = FILTER_PRESSURE_RES;

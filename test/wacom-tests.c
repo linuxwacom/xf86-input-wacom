@@ -182,7 +182,7 @@ test_normalize_pressure(void)
 	int i, j, k;
 
 	priv.common = &common;
-	priv.pInfo = &pInfo;
+	priv.frontend = &pInfo;
 	pInfo.name = strdupa("Wacom test device");
 	common.wcmPressureRecalibration = 1;
 
@@ -534,7 +534,7 @@ static void test_set_type(void)
 	memset(&(_info), 0, sizeof(_info)); \
 	memset(&(_priv), 0, sizeof(_priv)); \
 	memset(&(_tool), 0, sizeof(_tool)); \
-	(_priv).pInfo = &(_info); \
+	(_priv).frontend = &(_info); \
 	(_info).private = &(_priv); \
 	(_priv).tool = &(_tool); \
 	(_priv).common = &(_common);
