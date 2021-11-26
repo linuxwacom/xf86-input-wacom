@@ -587,6 +587,14 @@ void wcmSetFd(WacomDevicePtr priv, int fd)
 	priv->pInfo->fd = fd;
 }
 
+void wcmSetName(WacomDevicePtr priv, const char *name)
+{
+	InputInfoPtr pInfo = priv->pInfo;
+
+	free(pInfo->name);
+	pInfo->name = strdup(name);
+}
+
 /*****************************************************************************
  * wcmOpen --
  ****************************************************************************/
