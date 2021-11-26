@@ -88,6 +88,8 @@ extern Bool wcmOpen(InputInfoPtr pInfo);
 /* Close the device */
 extern void wcmClose(InputInfoPtr pInfo);
 
+void wcmRemoveActive(WacomDevicePtr priv);
+
 /* device autoprobing */
 char *wcmEventAutoDevProbe (InputInfoPtr pInfo);
 
