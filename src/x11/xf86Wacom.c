@@ -246,7 +246,6 @@ static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, c
 	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL;
 	pointer options, o;
-	int rc;
 
 	options = xf86OptionListDuplicate(original);
 	options = xf86ReplaceStrOption(options, "Type", type);

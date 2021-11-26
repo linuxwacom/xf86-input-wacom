@@ -98,9 +98,15 @@ config_ver_h = vcs_tag(command : ['git', 'describe'],
 # config.h
 config_h = configuration_data()
 config_h.set('_GNU_SOURCE', 1)
+config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 config_h.set('PACKAGE_VERSION_MAJOR', wacom_version[0])
 config_h.set('PACKAGE_VERSION_MINOR', wacom_version[1])
 config_h.set('PACKAGE_VERSION_PATCHLEVEL', wacom_version[2])
+
+# shortcut to avoid linking to _Xasprintf if xorg-server isn't included
+if cc.has_function('asprintf', prefix: '#define _GNU_SOURCE')
+	config_h.set10('HAVE_ASPRINTF', true)
+endif
 
 if get_option('debug-messages')
 	config_h.set10('DEBUG', true)
@@ -112,7 +118,7 @@ endif
 
 
 # Driver
-src_wacom = [
+src_wacom_core = [
 	config_ver_h,
 	'src/WacomInterface.h',
 	'src/wcmCommon.c',
@@ -126,6 +132,9 @@ src_wacom = [
 	'src/xf86WacomDefs.h',
 	'src/xf86Wacom.h',
 	'src/wcmUSB.c',
+]
+
+src_wacom = src_wacom_core + [
 	'src/x11/xf86WacomProperties.c',
 	'src/x11/xf86Wacom.c',
 ]
@@ -161,6 +170,86 @@ configure_file(
 	configuration: conf_pkgconf,
 	install_dir: dir_pkgconf,
 )
+
+# GWacom library
+# This is not a stable library interface
+
+dep_glib = dependency('glib-2.0', required: get_option('wacom-gobject'))
+dep_gobject = dependency('gobject-2.0', required: get_option('wacom-gobject'))
+dep_gio = dependency('gio-2.0', required: get_option('wacom-gobject'))
+dep_gio_unix = dependency('gio-unix-2.0', required: get_option('wacom-gobject'))
+dep_object_ir = dependency('gobject-introspection-1.0', required: get_option('wacom-gobject'))
+
+build_gwacom = dep_glib.found() and dep_gobject.found() and dep_gio.found() and dep_gio_unix.found() and dep_object_ir.found()
+
+if build_gwacom
+	gnome = import('gnome')
+
+	src_gwacom = [
+		'src/gwacom/wacom-driver.h',
+		'src/gwacom/wacom-driver.c',
+		'src/gwacom/wacom-device.h',
+		'src/gwacom/wacom-device.c',
+	]
+
+	src_libgwacom = src_wacom_core + src_gwacom + [
+		'src/wcmISDV4-stub.c',
+	]
+
+	deps_gwacom = [
+		dep_xserver,
+		dep_m,
+		dep_glib,
+		dep_gobject,
+		dep_gio,
+		dep_gio_unix,
+	]
+
+	lib_gwacom = both_libraries(
+		'gwacom',
+		src_libgwacom + src_wacom_core,
+		include_directories: [dir_src, dir_include],
+		dependencies: deps_gwacom,
+		install: false,
+		c_args: ['-fvisibility=default'],
+	)
+
+	dep_gwacom = declare_dependency(
+		link_with: lib_gwacom,
+		dependencies: deps_gwacom,
+		include_directories: ['src/gwacom/'],
+	)
+
+	# GIR bindings are not installed, use
+	# export GI_TYPELIB_PATH="$PWD/builddir:$LD_LIBRARY_PATH"
+	# export LD_LIBRARY_PATH="$PWD/builddir:$LD_LIBRARY_PATH"
+	dep_gir = gnome.generate_gir(lib_gwacom,
+		sources: src_gwacom,
+		dependencies: [deps_gwacom],
+		namespace: 'wacom',
+		nsversion: '@0@.@1@'.format(wacom_version[0], wacom_version[1]),
+		identifier_prefix: 'Wacom',
+		symbol_prefix: 'wacom',
+		includes: 'GObject-2.0',
+		install: false,
+	)
+
+	# A custom target that forces the GIR bindings to be built. Usually
+	# those get built on install but we don't install ours.
+	custom_target('force GIR build',
+		build_by_default: true,
+		command: ['echo'],
+		output: 'force-gir-build.dummy',
+		capture: true,
+		depends: [dep_gir])
+
+	executable('wacom-record',
+		'tools/wacom-record.c',
+		config_ver_h,
+		dependencies: [dep_libudev, dep_glib, dep_gwacom],
+		install: false,
+	)
+endif
 
 # Tools
 if get_option('serial-device-support')
