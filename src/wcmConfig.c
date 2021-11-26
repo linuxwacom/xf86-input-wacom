@@ -1034,7 +1034,6 @@ int wcmDevInit(WacomDevicePtr priv)
 			wcmLog(priv, W_ERROR, "Unable to init touch class device struct!\n");
 			return FALSE;
 		}
-		priv->common->touch_mask = valuator_mask_new(2);
 	}
 
 	if (!wcmInitAxes(priv))
