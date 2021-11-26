@@ -603,6 +603,11 @@ void wcmSetName(WacomDevicePtr priv, const char *name)
 	pInfo->name = strdup(name);
 }
 
+uint32_t wcmTimeInMillis(void)
+{
+	return GetTimeInMillis();
+}
+
 /*****************************************************************************
  * wcmOpen --
  ****************************************************************************/

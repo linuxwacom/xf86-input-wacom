@@ -954,7 +954,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 		}
 		DBG(1, common, "device with serial number: %u"
 		    " at %d: Exceeded channel count; ignoring the events.\n",
-		    serial, (int)GetTimeInMillis());
+		    serial, (int)wcmTimeInMillis());
 	}
 
 	return channel;
@@ -1333,7 +1333,7 @@ static void usbParseAbsEvent(WacomCommonPtr common,
 		change |= usbParseWacomAbsEvent(common, event, channel_number);
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1395,7 +1395,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			/* set this here as type for this channel doesn't get set in usbDispatchEvent() */
 			ds->device_type = TOUCH_ID;
 			ds->device_id = TOUCH_DEVICE_ID;
-			ds->sample = (int)GetTimeInMillis();
+			ds->sample = (int)wcmTimeInMillis();
 			break;
 
 		case ABS_MT_POSITION_X:
@@ -1414,7 +1414,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 			change = 0;
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	(&common->wcmChannel[private->wcmMTChannel])->dirty |= change;
 }
 
@@ -1505,7 +1505,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			/* time stamp for 2FGT gesture events */
 			if ((ds->proximity && !dslast->proximity) ||
 			    (!ds->proximity && dslast->proximity))
-				ds->sample = (int)GetTimeInMillis();
+				ds->sample = (int)wcmTimeInMillis();
 			break;
 
 		case BTN_TOOL_TRIPLETAP:
@@ -1517,7 +1517,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			/* time stamp for 2GT gesture events */
 			if ((ds->proximity && !dslast->proximity) ||
 			    (!ds->proximity && dslast->proximity))
-				ds->sample = (int)GetTimeInMillis();
+				ds->sample = (int)wcmTimeInMillis();
 			/* Second finger events will be considered in
 			 * combination with the first finger data */
 			break;
@@ -1526,7 +1526,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			change = 0;
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	channel->dirty |= change;
 
 	if (change)
@@ -1557,7 +1557,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 			change = 0;
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1619,7 +1619,7 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 				change = 0;
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	channel->dirty |= change;
 }
 
@@ -1905,7 +1905,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 			if (event->code == REL_WHEEL)
 			{
 				ds->relwheel = -event->value;
-				ds->time = (int)GetTimeInMillis();
+				ds->time = (int)wcmTimeInMillis();
 				common->wcmChannel[channel].dirty |= TRUE;
 			}
 			else

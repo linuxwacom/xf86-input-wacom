@@ -110,6 +110,7 @@ void wcmSetFd(WacomDevicePtr priv, int fd);
 /* Update the driver implementation's name, if any */
 void wcmSetName(WacomDevicePtr priv, const char *name);
 
+uint32_t wcmTimeInMillis(void);
 
 static inline void wcmAxisSet(WacomAxisData *data,
 			      enum WacomAxisType which, int value)

@@ -600,7 +600,7 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 	ds->device_type = TOUCH_ID;
 	ds->device_id = TOUCH_DEVICE_ID;
 	ds->serial_num = 1;
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 
 	if (common->wcmPktLength == ISDV4_PKGLEN_TOUCH2FG)
 	{
@@ -613,7 +613,7 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 				/* time stamp for 2FGT gesture events */
 				if ((ds->proximity && !last->proximity) ||
 				    (!ds->proximity && last->proximity))
-					ds->sample = (int)GetTimeInMillis();
+					ds->sample = (int)wcmTimeInMillis();
 				wcmEvent(common, channel, ds);
 			}
 
@@ -626,11 +626,11 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 			ds->device_id = TOUCH_DEVICE_ID;
 			ds->serial_num = 2;
 			ds->proximity = touchdata.finger2.status;
-			ds->time = (int)GetTimeInMillis();
+			ds->time = (int)wcmTimeInMillis();
 			/* time stamp for 2FGT gesture events */
 			if ((ds->proximity && !lastTemp->proximity) ||
 			    (!ds->proximity && lastTemp->proximity))
-				ds->sample = (int)GetTimeInMillis();
+				ds->sample = (int)wcmTimeInMillis();
 		}
 	}
 
@@ -667,7 +667,7 @@ static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 		return -1;
 	}
 
-	ds->time = (int)GetTimeInMillis();
+	ds->time = (int)wcmTimeInMillis();
 	ds->proximity = coord.proximity;
 
 	/* x and y in "normal" orientetion (wide length is X) */
