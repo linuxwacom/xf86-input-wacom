@@ -263,7 +263,7 @@ static void wcmFingerTapToClick(WacomDevicePtr priv)
 
 	/* process second finger tap if matched */
 	if ((ds[0].sample < ds[1].sample) &&
-	    ((GetTimeInMillis() -
+	    ((wcmTimeInMillis() -
 	    dsLast[1].sample) <= common->wcmGestureParameters.wcmTapTime) &&
 	    !ds[1].proximity && dsLast[1].proximity)
 	{
@@ -478,7 +478,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 	 */
 	else if (dsLast[0].proximity && common->wcmGestureMode != GESTURE_DRAG_MODE)
 	{
-		CARD32 ms = GetTimeInMillis();
+		CARD32 ms = wcmTimeInMillis();
 
 		if ((ms - ds[0].sample) < WACOM_GESTURE_LAG_TIME)
 		{
