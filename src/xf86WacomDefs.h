@@ -149,8 +149,6 @@ struct _WacomModel
 #define IsPen(priv)    (IsStylus(priv) || IsEraser(priv))
 #define IsTablet(priv) (IsPen(priv) || IsCursor(priv))
 
-#define IsUSBDevice(common) ((common)->wcmDevCls == &gWacomUSBDevice)
-
 #define FILTER_PRESSURE_RES	65536	/* maximum points in pressure curve */
 /* Tested result for setting the pressure threshold to a reasonable value */
 #define THRESHOLD_TOLERANCE (0.008f)
