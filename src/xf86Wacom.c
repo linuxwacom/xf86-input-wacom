@@ -550,6 +550,14 @@ bool wcmInitTouch(WacomDevicePtr priv, int ntouches, bool is_direct_touch)
 {
 	InputInfoPtr pInfo = priv->frontend;
 	WacomCommonPtr common = priv->common;
+
+	/* Ugly. This needs to be allocated outside the event processing path,
+	 * it should really be part of the driver layer but for that we'd need
+	 * yet another struct to handle (or a server ABI change).
+	 * Let's just allocate here and live with it
+	 */
+	priv->common->touch_mask = valuator_mask_new(2);
+
 	return InitTouchClassDeviceStruct(pInfo->dev, common->wcmMaxContacts,
 					  is_direct_touch ? XIDirectTouch : XIDependentTouch,
 					  2);
