@@ -726,7 +726,7 @@ int wcmPreInit(WacomDevicePtr priv)
 
 	if ((fd = wcmOpen(priv)) < 0)
 		goto SetupProc_fail;
-	pInfo->fd = fd;
+	wcmSetFd(priv, fd);
 
 	/* Try to guess whether it's USB or ISDV4 */
 	if (!wcmDetectDeviceClass(priv))
@@ -819,7 +819,6 @@ SetupProc_fail:
 
 int wcmDevOpen(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	struct stat st;
 
@@ -853,9 +852,9 @@ int wcmDevOpen(WacomDevicePtr priv)
 	}
 
 	/* Grab the common descriptor, if it's available */
-	if (pInfo->fd < 0)
+	if (wcmGetFd(priv) < 0)
 	{
-		pInfo->fd = common->fd;
+		wcmSetFd(priv, common->fd);
 		common->fd_refs++;
 	}
 
@@ -1062,16 +1061,15 @@ void wcmDevStop(WacomDevicePtr priv)
 
 void wcmDevClose(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 
 	DBG(4, priv, "Wacom number of open devices = %d\n", common->fd_refs);
 
-	if (pInfo->fd >= 0)
+	if (wcmGetFd(priv) >= 0)
 	{
 		if (!--common->fd_refs)
 			wcmClose(priv);
-		pInfo->fd = -1;
+		wcmSetFd(priv, -1);
 	}
 }
 

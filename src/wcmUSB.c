@@ -111,14 +111,13 @@ DEFINE_MODEL(usbTabletPC,	"USB TabletPC",		4);
 
 static Bool usbDetect(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int version;
 	int err;
 #ifdef DEBUG
 	DBG(1, priv, "\n");
 #endif
 
-	SYSCALL(err = ioctl(pInfo->fd, EVIOCGVERSION, &version));
+	SYSCALL(err = ioctl(wcmGetFd(priv), EVIOCGVERSION, &version));
 
 	if (err < 0)
 	{
@@ -153,7 +152,6 @@ static Bool usbParseOptions(WacomDevicePtr priv)
 static int
 usbStart(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata = common->private;
 	int err;
@@ -161,7 +159,7 @@ usbStart(WacomDevicePtr priv)
 	if (usbdata->grabDevice)
 	{
 		/* Try to grab the event device so that data don't leak to /dev/input/mice */
-		SYSCALL(err = ioctl(pInfo->fd, EVIOCGRAB, (pointer)1));
+		SYSCALL(err = ioctl(wcmGetFd(priv), EVIOCGRAB, (pointer)1));
 
 		/* this is called for all tools, so all but the first one fails with
 		 * EBUSY */
@@ -432,14 +430,13 @@ static Bool usbWcmInit(WacomDevicePtr priv)
 {
 	int i;
 	struct input_id sID;
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata;
 
 	DBG(1, priv, "initializing USB tablet\n");
 
 	/* fetch vendor, product, and model name */
-	if (ioctl(pInfo->fd, EVIOCGID, &sID) == -1) {
+	if (ioctl(wcmGetFd(priv), EVIOCGID, &sID) == -1) {
 		wcmLog(priv, W_ERROR, "failed to ioctl ID .\n");
 		return !Success;
 	}
@@ -582,7 +579,6 @@ int usbInitialize(WacomDevicePtr priv)
 	unsigned long ev[NBITS(EV_MAX)] = {0};
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 	unsigned long sw[NBITS(SW_MAX)] = {0};
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common =	priv->common;
 	wcmUSBData* private = common->private;
 	int is_touch = IsTouch(priv);
@@ -595,7 +591,7 @@ int usbInitialize(WacomDevicePtr priv)
 	     && ISBITSET(common->wcmKeys, BTN_FORWARD))
 		is_touch = 1;
 
-	if (ioctl(pInfo->fd, EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGBIT(0 /*EV*/, sizeof(ev)), ev) < 0)
 	{
 		wcmLog(priv, W_ERROR, "unable to ioctl event bits.\n");
 		return !Success;
@@ -613,14 +609,14 @@ int usbInitialize(WacomDevicePtr priv)
 	}
 
 	/* absolute values */
-        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
+        if (ioctl(wcmGetFd(priv), EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
 		wcmLog(priv, W_ERROR, "unable to ioctl max values.\n");
 		return !Success;
 	}
 
 	/* max x */
-	if (ioctl(pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGABS(ABS_X), &absinfo) < 0)
 	{
 		/* may be a PAD only interface */
 		if (ISBITSET(common->wcmKeys, BTN_FORWARD) ||
@@ -651,7 +647,7 @@ int usbInitialize(WacomDevicePtr priv)
 	}
 
 	/* max y */
-	if (ioctl(pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGABS(ABS_Y), &absinfo) < 0)
 	{
 		wcmLog(priv, W_ERROR, "unable to ioctl ymax value.\n");
 		return !Success;
@@ -678,7 +674,7 @@ int usbInitialize(WacomDevicePtr priv)
 	/* max finger strip X for tablets with Expresskeys
 	 * or physical X for touch devices in hundredths of a mm */
 	if (ISBITSET(abs, ABS_RX) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_RX), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_RX), &absinfo))
 	{
 		if (is_touch)
 			common->wcmTouchResolX =
@@ -692,7 +688,7 @@ int usbInitialize(WacomDevicePtr priv)
 	common->wcmMinRing = 0;
 	common->wcmMaxRing = 71;
 	if (!ISBITSET(ev,EV_MSC) && ISBITSET(abs, ABS_WHEEL) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_WHEEL), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_WHEEL), &absinfo))
 	{
 		common->wcmMinRing = absinfo.minimum;
 		common->wcmMaxRing = absinfo.maximum;
@@ -700,7 +696,7 @@ int usbInitialize(WacomDevicePtr priv)
 
 	/* X tilt range */
 	if (ISBITSET(abs, ABS_TILT_X) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_TILT_X), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_TILT_X), &absinfo))
 	{
 		/* If resolution is specified */
 		if (absinfo.resolution > 0)
@@ -736,7 +732,7 @@ int usbInitialize(WacomDevicePtr priv)
 
 	/* Y tilt range */
 	if (ISBITSET(abs, ABS_TILT_Y) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_TILT_Y), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_TILT_Y), &absinfo))
 	{
 		/* If resolution is specified */
 		if (absinfo.resolution > 0)
@@ -773,7 +769,7 @@ int usbInitialize(WacomDevicePtr priv)
 	/* max finger strip Y for tablets with Expresskeys
 	 * or physical Y for touch devices in hundredths of a mm */
 	if (ISBITSET(abs, ABS_RY) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_RY), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_RY), &absinfo))
 	{
 		if (is_touch)
 			common->wcmTouchResolY =
@@ -785,19 +781,19 @@ int usbInitialize(WacomDevicePtr priv)
 
 	/* max z cannot be configured */
 	if (ISBITSET(abs, ABS_PRESSURE) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_PRESSURE), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_PRESSURE), &absinfo))
 		common->wcmMaxZ = absinfo.maximum;
 
 	/* max distance */
 	if (ISBITSET(abs, ABS_DISTANCE) &&
-			!ioctl(pInfo->fd, EVIOCGABS(ABS_DISTANCE), &absinfo))
+			!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_DISTANCE), &absinfo))
 		common->wcmMaxDist = absinfo.maximum;
 
 	if (ISBITSET(abs, ABS_MT_SLOT))
 	{
 		private->wcmUseMT = 1;
 
-		if (!ioctl(pInfo->fd, EVIOCGABS(ABS_MT_SLOT), &absinfo))
+		if (!ioctl(wcmGetFd(priv), EVIOCGABS(ABS_MT_SLOT), &absinfo))
 			common->wcmMaxContacts = absinfo.maximum + 1;
 
 		/* pen and MT on the same logical port */
@@ -809,7 +805,7 @@ int usbInitialize(WacomDevicePtr priv)
 	if (common->vendor_id != WACOM_VENDOR_ID || !ISBITSET(abs, ABS_MISC))
 		common->wcmProtocolLevel = WCM_PROTOCOL_GENERIC;
 
-	if (ioctl(pInfo->fd, EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGBIT(EV_SW, sizeof(sw)), sw) < 0)
 	{
 		wcmLog(priv, W_ERROR, "unable to ioctl sw bits.\n");
 		return 0;
@@ -820,7 +816,7 @@ int usbInitialize(WacomDevicePtr priv)
 
 		memset(sw, 0, sizeof(sw));
 
-		if (ioctl(pInfo->fd, EVIOCGSW(sizeof(sw)), sw) < 0)
+		if (ioctl(wcmGetFd(priv), EVIOCGSW(sizeof(sw)), sw) < 0)
 			wcmLog(priv, W_ERROR, "unable to ioctl sw state.\n");
 
 		if (ISBITSET(sw, SW_MUTE_DEVICE))
@@ -1835,7 +1831,6 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 	int i, c;
 	WacomDeviceState *ds;
 	struct input_event* event;
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int channel;
 	wcmUSBData* private = common->private;
@@ -1843,7 +1838,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 
 	DBG(6, common, "%d events received\n", private->wcmEventCnt);
 
-	private->wcmDeviceType = usbInitToolType(priv, pInfo->fd,
+	private->wcmDeviceType = usbInitToolType(priv, wcmGetFd(priv),
 	                                         private->wcmEvents,
 	                                         private->wcmEventCnt,
 	                                         dslast.device_type);
@@ -1964,7 +1959,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 		struct input_absinfo absinfo;
 
 		if (!ds->x) {
-			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_X), &absinfo) < 0)
+			if (ioctl(wcmGetFd(priv), EVIOCGABS(ABS_X), &absinfo) < 0)
 			{
 				DBG(-1, common, "unable to ioctl current x value.\n");
 				return;
@@ -1972,7 +1967,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 			ds->x = absinfo.value;
 		}
 		if (!ds->y) {
-			if (ioctl(priv->pInfo->fd, EVIOCGABS(ABS_Y), &absinfo) < 0)
+			if (ioctl(wcmGetFd(priv), EVIOCGABS(ABS_Y), &absinfo) < 0)
 			{
 				DBG(-1, common, "unable to ioctl current x value.\n");
 				return;
@@ -2041,11 +2036,10 @@ static void usbGenericTouchscreenQuirks(unsigned long *keys,
 static int usbProbeKeys(WacomDevicePtr priv)
 {
 	struct input_id wacom_id;
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 	unsigned long abs[NBITS(ABS_MAX)] = {0};
 
-	if (ioctl(pInfo->fd, EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
+	if (ioctl(wcmGetFd(priv), EVIOCGBIT(EV_KEY, (sizeof(unsigned long)
 						* NBITS(KEY_MAX))), common->wcmKeys) < 0)
 	{
 		wcmLog(priv, W_ERROR,
@@ -2053,21 +2047,21 @@ static int usbProbeKeys(WacomDevicePtr priv)
 		return 0;
 	}
 
-	if (ioctl(pInfo->fd, EVIOCGPROP(sizeof(common->wcmInputProps)), common->wcmInputProps) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGPROP(sizeof(common->wcmInputProps)), common->wcmInputProps) < 0)
 	{
 		wcmLog(priv, W_ERROR,
 			    "usbProbeKeys unable to ioctl input properties.\n");
 		return 0;
 	}
 
-	if (ioctl(pInfo->fd, EVIOCGID, &wacom_id) < 0)
+	if (ioctl(wcmGetFd(priv), EVIOCGID, &wacom_id) < 0)
 	{
 		wcmLog(priv, W_ERROR,
 			"usbProbeKeys unable to ioctl Device ID.\n");
 		return 0;
 	}
 
-        if (ioctl(pInfo->fd, EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
+        if (ioctl(wcmGetFd(priv), EVIOCGBIT(EV_ABS, sizeof(abs)), abs) < 0)
 	{
 		wcmLog(priv, W_ERROR,
 			    "usbProbeKeys unable to ioctl abs bits.\n");

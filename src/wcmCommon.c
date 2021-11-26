@@ -166,18 +166,17 @@ void wcmResetWheelAction(WacomDevicePtr priv, int index)
 /* Main event hanlding function */
 int wcmReadPacket(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	int len, pos, cnt, remaining;
 
-	DBG(10, common, "fd=%d\n", pInfo->fd);
+	DBG(10, common, "fd=%d\n", wcmGetFd(priv));
 
 	remaining = sizeof(common->buffer) - common->bufpos;
 
 	DBG(1, common, "pos=%d remaining=%d\n", common->bufpos, remaining);
 
 	/* fill buffer with as much data as we can handle */
-	SYSCALL((len = read(pInfo->fd, common->buffer + common->bufpos, remaining)));
+	SYSCALL((len = read(wcmGetFd(priv), common->buffer + common->bufpos, remaining)));
 
 	if (len <= 0)
 	{
