@@ -137,7 +137,7 @@ shared_module(
 	'wacom_drv',
 	src_wacom,
 	include_directories: [dir_src, dir_include],
-	dependencies: [dep_xserver],
+	dependencies: [dep_xserver, dep_m],
 	name_prefix: '', # we want wacomdrv.so, not libwacomdrv.so
 	install_dir: dir_xorg_modules,
 	install: true,
