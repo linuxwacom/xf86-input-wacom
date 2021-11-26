@@ -38,4 +38,8 @@ option('fuzzinterface',
 	value: false,
 	description: 'Enable xsetwacom to take NUL-separated commands from stdin [default=no]'
 )
-
+option('serial-device-support',
+	type: 'boolean',
+	value: true,
+	description: 'Build with ISDV4 serial support'
+)

@@ -423,19 +423,25 @@ static Bool
 wcmDetectDeviceClass(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
+	WacomHWClass *classes[] = {
+		WacomGetClassISDV4(),
+		WacomGetClassUSB(),
+	};
 
 	if (common->wcmDevCls)
 		return TRUE;
 
-	/* Bluetooth is also considered as USB */
-	if (gWacomISDV4Device.Detect(priv))
-		common->wcmDevCls = &gWacomISDV4Device;
-	else if (gWacomUSBDevice.Detect(priv))
-		common->wcmDevCls = &gWacomUSBDevice;
-	else
-		wcmLog(priv, W_ERROR, "cannot identify device class.\n");
+	for (size_t i = 0; i < ARRAY_SIZE(classes); i++) {
+		WacomHWClass *cls = classes[i];
+		if (cls && cls->Detect(priv)) {
+			common->wcmDevCls = cls;
+			return TRUE;
+		}
+	}
 
-	return (common->wcmDevCls != NULL);
+	wcmLog(priv, W_ERROR, "cannot identify device class.\n");
+
+	return FALSE;
 }
 
 static Bool
