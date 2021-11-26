@@ -43,3 +43,8 @@ option('serial-device-support',
 	value: true,
 	description: 'Build with ISDV4 serial support'
 )
+option('wacom-gobject',
+	type: 'feature',
+	value: 'auto',
+	description: 'Build the Wacom GObject library and associated tools [default: auto]'
+)
