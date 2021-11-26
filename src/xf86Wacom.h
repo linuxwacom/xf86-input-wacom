@@ -84,7 +84,7 @@
  */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
-WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name);
+WacomDevicePtr wcmAllocate(void *frontend, const char *name);
 int wcmPreInit(WacomDevicePtr priv);
 void wcmUnInit(WacomDevicePtr priv);
 /* Open the **shared** fd, if necessary */
