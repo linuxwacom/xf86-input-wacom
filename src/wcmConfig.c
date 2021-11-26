@@ -238,8 +238,7 @@ static void wcmUninit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 
 	DBG(1, priv, "\n");
 
-	if (WACOM_DRIVER.active == priv)
-		WACOM_DRIVER.active = NULL;
+	wcmRemoveActive(priv);
 
 	if (priv->tool)
 	{

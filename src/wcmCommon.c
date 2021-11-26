@@ -27,10 +27,18 @@
 #include <xf86_OSproc.h>
 
 
-struct _WacomDriverRec WACOM_DRIVER = {
+static struct _WacomDriverRec
+{
+	WacomDevicePtr active;     /* Arbitrate motion through this pointer */
+} WACOM_DRIVER = {
 	.active = NULL,
 };
 
+void wcmRemoveActive(WacomDevicePtr priv)
+{
+	if (WACOM_DRIVER.active == priv)
+		WACOM_DRIVER.active = NULL;
+}
 
 /*****************************************************************************
  * Static functions
