@@ -156,7 +156,7 @@ extern void set_absolute(WacomDevicePtr priv, Bool absolute);
 extern WacomCommonPtr wcmRefCommon(WacomCommonPtr common);
 extern void wcmFreeCommon(WacomCommonPtr *common);
 extern WacomCommonPtr wcmNewCommon(void);
-extern void usbListModels(void);
+extern size_t wcmListModels(const char **names, size_t len);
 extern int wcmScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
 
 static inline void wcmActionCopy(WacomAction *dest, WacomAction *src)
