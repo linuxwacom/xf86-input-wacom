@@ -395,7 +395,7 @@ static struct WacomModelDesc
 	{ LENOVO_VENDOR_ID, 0x6004, 100000, 100000, &usbTabletPC, "usb:17ef:6004"	} /* Pen-only */
 };
 
-static size_t wcmListModels(const char **names, size_t len)
+size_t wcmListModels(const char **names, size_t len)
 {
 	for (size_t i = 0; i < min(len, ARRAY_SIZE(WacomModelDesc)); i++)
 	{
@@ -403,27 +403,6 @@ static size_t wcmListModels(const char **names, size_t len)
 		names[i] = m->name;
 	}
 	return ARRAY_SIZE(WacomModelDesc);
-}
-
-void usbListModels(void)
-{
-	const char *wmodels[512];
-	size_t nmodels;
-	SymTabRec models[512 + 1] = {0};
-
-	nmodels = wcmListModels(wmodels, ARRAY_SIZE(models));
-
-	for (size_t i = 0; i < min(nmodels, ARRAY_SIZE(models)); i++)
-	{
-		models[i].token = i;
-		models[i].name = wmodels[i];
-	}
-
-	models[nmodels].name = NULL;
-
-	xf86PrintChipsets("wacom",
-			  "Driver for Wacom graphics tablets",
-			  models);
 }
 
 static Bool usbWcmInit(WacomDevicePtr priv)

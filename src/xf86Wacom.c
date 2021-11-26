@@ -871,6 +871,27 @@ static void wcmUnplug(pointer p)
 {
 }
 
+static void usbListModels(void)
+{
+	const char *wmodels[512];
+	size_t nmodels;
+	SymTabRec models[512 + 1] = {0};
+
+	nmodels = wcmListModels(wmodels, ARRAY_SIZE(models));
+
+	for (size_t i = 0; i < min(nmodels, ARRAY_SIZE(models)); i++)
+	{
+		models[i].token = i;
+		models[i].name = wmodels[i];
+	}
+
+	models[nmodels].name = NULL;
+
+	xf86PrintChipsets("wacom",
+			  "Driver for Wacom graphics tablets",
+			  models);
+}
+
 /* wcmPlug - called by the module loader */
 
 static pointer wcmPlug(pointer module, pointer options, int* errmaj,
