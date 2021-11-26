@@ -107,6 +107,8 @@ void wcmClose(WacomDevicePtr priv);
 
 int wcmGetFd(WacomDevicePtr priv);
 void wcmSetFd(WacomDevicePtr priv, int fd);
+/* Update the driver implementation's name, if any */
+void wcmSetName(WacomDevicePtr priv, const char *name);
 
 
 static inline void wcmAxisSet(WacomAxisData *data,

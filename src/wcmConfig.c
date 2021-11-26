@@ -693,7 +693,6 @@ static inline WacomType getType(const char *type)
  * "wacom" */
 int wcmPreInit(WacomDevicePtr priv)
 {
-	InputInfoPtr   pInfo = priv->pInfo;
 	WacomCommonPtr common = NULL;
 	char		*type = NULL, *device = NULL;
 	char		*oldname = NULL;
@@ -750,10 +749,9 @@ int wcmPreInit(WacomDevicePtr priv)
 		char *new_name;
 		if (asprintf(&new_name, "%s %s", priv->name, type) == -1)
 			new_name = strdup(priv->name);
-		free(pInfo->name);
 		free(priv->name);
-		pInfo->name = new_name;
-		priv->name = strdup(new_name);
+		priv->name = new_name;
+		wcmSetName(priv, new_name);
 	}
 
 	/* check if the type is valid for those don't need hotplug */
