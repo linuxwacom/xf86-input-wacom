@@ -247,6 +247,10 @@ struct _WacomDeviceRec
 	int minY;	        /* tool physical minY in device coordinates */
 	int maxX;	        /* tool physical maxX in device coordinates */
 	int maxY;	        /* tool physical maxY in device coordinates */
+	int valuatorMinX;	/* X valuator minimum value, as initialized */
+	int valuatorMaxX;	/* X valuator maximum value, as initialized */
+	int valuatorMinY;	/* Y valuator minimum value, as initialized */
+	int valuatorMaxY;	/* Y valuator maximum value, as initialized */
 	unsigned int serial;	/* device serial number this device takes (if 0, any serial is ok) */
 	unsigned int cur_serial; /* current serial in prox */
 	int cur_device_id;	/* current device ID in prox */

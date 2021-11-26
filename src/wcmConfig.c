@@ -878,6 +878,10 @@ static int wcmInitAxes(WacomDevicePtr priv)
 	max = priv->bottomX;
 	res = priv->resolX;
 	wcmInitAxis(priv, WACOM_AXIS_X, min, max, res);
+	/* We need to store this so we can scale into the right range if top
+	 * x/y changes later */
+	priv->valuatorMinX = min;
+	priv->valuatorMaxX = max;
 
 
 	/* second valuator: y */
@@ -885,6 +889,10 @@ static int wcmInitAxes(WacomDevicePtr priv)
 	max = priv->bottomY;
 	res = priv->resolY;
 	wcmInitAxis(priv, WACOM_AXIS_Y, min, max, res);
+	/* We need to store this so we can scale into the right range if top
+	 * x/y changes later */
+	priv->valuatorMinY = min;
+	priv->valuatorMaxY = max;
 
 	/* third valuator: pressure */
 	if (!IsPad(priv))

@@ -634,22 +634,16 @@ int wcmScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
 /* rotate x and y before post X inout events */
 void wcmRotateAndScaleCoordinates(WacomDevicePtr priv, int* x, int* y)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
-	DeviceIntPtr dev = pInfo->dev;
-	AxisInfoPtr axis_x, axis_y;
 	int tmp_coord;
 	int xmax, xmin, ymax, ymin;
 
-	/* scale into on topX/topY area */
-	axis_x = &dev->valuator->axes[0];
-	axis_y = &dev->valuator->axes[1];
-
-	xmin = axis_x->min_value;
-	xmax = axis_x->max_value;
-	ymin = axis_y->min_value;
-	ymax = axis_y->max_value;
-
+	/* scale into the topX/topY area we had when we initialized the
+	 * valuator */
+	xmin = priv->valuatorMinX;
+	xmax = priv->valuatorMaxX;
+	ymin = priv->valuatorMinY;
+	ymax = priv->valuatorMaxY;
 
 	/* Don't try to scale relative axes */
 	if (xmax > xmin)
