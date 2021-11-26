@@ -38,31 +38,6 @@ static int wcmGetProperty(DeviceIntPtr dev, Atom property);
 static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 
 /*****************************************************************************
-* wcmDevSwitchModeCall --
-*****************************************************************************/
-
-int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode)
-{
-	DBG(3, priv, "to mode=%d\n", mode);
-
-	/* Pad is always in absolute mode.*/
-	if (IsPad(priv))
-		return (mode == Absolute) ? Success : XI_BadMode;
-
-	if ((mode == Absolute) && !is_absolute(priv))
-		set_absolute(priv, TRUE);
-	else if ((mode == Relative) && is_absolute(priv))
-		set_absolute(priv, FALSE);
-	else if ( (mode != Absolute) && (mode != Relative))
-	{
-		DBG(10, priv, "invalid mode=%d\n", mode);
-		return XI_BadMode;
-	}
-
-	return Success;
-}
-
-/*****************************************************************************
 * wcmDevSwitchMode --
 *****************************************************************************/
 

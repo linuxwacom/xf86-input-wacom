@@ -76,6 +76,32 @@ void set_absolute(WacomDevicePtr priv, Bool absolute)
 		priv->flags &= ~ABSOLUTE_FLAG;
 }
 
+/*****************************************************************************
+* wcmDevSwitchModeCall --
+*****************************************************************************/
+
+int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode)
+{
+	DBG(3, priv, "to mode=%d\n", mode);
+
+	/* Pad is always in absolute mode.*/
+	if (IsPad(priv))
+		return (mode == Absolute) ? Success : XI_BadMode;
+
+	if ((mode == Absolute) && !is_absolute(priv))
+		set_absolute(priv, TRUE);
+	else if ((mode == Relative) && is_absolute(priv))
+		set_absolute(priv, FALSE);
+	else if ( (mode != Absolute) && (mode != Relative))
+	{
+		DBG(10, priv, "invalid mode=%d\n", mode);
+		return XI_BadMode;
+	}
+
+	return Success;
+}
+
+
 static int wcmButtonPerNotch(WacomDevicePtr priv, int value, int threshold, int btn_positive, int btn_negative)
 {
 	int mode = is_absolute(priv);
