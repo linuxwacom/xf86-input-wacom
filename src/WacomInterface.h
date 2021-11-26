@@ -105,6 +105,10 @@ int wcmOpen(WacomDevicePtr priv);
 /* Close the device */
 void wcmClose(WacomDevicePtr priv);
 
+int wcmGetFd(WacomDevicePtr priv);
+void wcmSetFd(WacomDevicePtr priv, int fd);
+
+
 static inline void wcmAxisSet(WacomAxisData *data,
 			      enum WacomAxisType which, int value)
 {

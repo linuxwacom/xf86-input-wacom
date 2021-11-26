@@ -577,6 +577,16 @@ int wcmForeachDevice(WacomDevicePtr priv, WacomDeviceCallback func, void *data)
 	return nmatch;
 }
 
+int wcmGetFd(WacomDevicePtr priv)
+{
+	return priv->pInfo->fd;
+}
+
+void wcmSetFd(WacomDevicePtr priv, int fd)
+{
+	priv->pInfo->fd = fd;
+}
+
 /*****************************************************************************
  * wcmOpen --
  ****************************************************************************/

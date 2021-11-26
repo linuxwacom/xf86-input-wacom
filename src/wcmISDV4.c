@@ -187,11 +187,10 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 
 static Bool isdv4Detect(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	struct serial_struct ser;
 	int rc;
 
-	rc = ioctl(pInfo->fd, TIOCGSERIAL, &ser);
+	rc = ioctl(wcmGetFd(priv), TIOCGSERIAL, &ser);
 	if (rc == -1)
 		return FALSE;
 
@@ -248,14 +247,13 @@ static Bool isdv4ParseOptions(WacomDevicePtr priv)
 
 static Bool isdv4Init(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common = priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 
 	DBG(1, priv, "initializing ISDV4 tablet\n");
 
 	/* Set baudrate */
-	if (xf86SetSerialSpeed(pInfo->fd, isdv4data->baudrate) < 0)
+	if (xf86SetSerialSpeed(wcmGetFd(priv), isdv4data->baudrate) < 0)
 		return !Success;
 
 	/*set the model */
@@ -302,7 +300,6 @@ static int isdv4Query(WacomDevicePtr priv, const char* query, char* data)
 static int isdv4InitISDV4(WacomDevicePtr priv)
 {
 	char data[BUFFER_SIZE];
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr common =	priv->common;
 	wcmISDV4Data *isdv4data = common->private;
 	int ret = Success;
@@ -324,7 +321,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 	common->wcmFlags &= ~TILT_ENABLED_FLAG;
 
 	/* Set baudrate to configured value */
-	if (xf86SetSerialSpeed(pInfo->fd, isdv4data->baudrate) < 0)
+	if (xf86SetSerialSpeed(wcmGetFd(priv), isdv4data->baudrate) < 0)
 	{
 		ret = !Success;
 		goto out;
@@ -343,7 +340,7 @@ static int isdv4InitISDV4(WacomDevicePtr priv)
 			    "Query failed with %d baud. Trying %d.\n",
 			    isdv4data->baudrate, baud);
 
-		if (xf86SetSerialSpeed(pInfo->fd, baud) < 0)
+		if (xf86SetSerialSpeed(wcmGetFd(priv), baud) < 0)
 		{
 			ret = !Success;
 			goto out;
@@ -542,7 +539,6 @@ static int isdv4StartTablet(WacomDevicePtr priv)
 
 static int isdv4StopTablet(WacomDevicePtr priv)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 #ifdef DEBUG
 	WacomCommonPtr common = priv->common;
 #endif
@@ -557,13 +553,13 @@ static int isdv4StopTablet(WacomDevicePtr priv)
 		return !Success;
 
 	/* discard potential data on the line */
-	fd_flags = fcntl(pInfo->fd, F_GETFL);
-	if (fcntl(pInfo->fd, F_SETFL, fd_flags | O_NONBLOCK) == 0)
+	fd_flags = fcntl(wcmGetFd(priv), F_GETFL);
+	if (fcntl(wcmGetFd(priv), F_SETFL, fd_flags | O_NONBLOCK) == 0)
 	{
 		char buffer[10];
-		while (read(pInfo->fd, buffer, sizeof(buffer)) > 0)
+		while (read(wcmGetFd(priv), buffer, sizeof(buffer)) > 0)
 			DBG(10, common, "discarding garbage data.\n");
-		(void)fcntl(pInfo->fd, F_SETFL, fd_flags);
+		(void)fcntl(wcmGetFd(priv), F_SETFL, fd_flags);
 	}
 
 	return Success;
@@ -807,13 +803,12 @@ static int isdv4Parse(WacomDevicePtr priv, const unsigned char* data, int len)
 
 static int wcmWriteWait(WacomDevicePtr priv, const char* request)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int len, maxtry = MAXTRY;
 
 	/* send request string */
 	do
 	{
-		SYSCALL((len = write(pInfo->fd, request, strlen(request))));
+		SYSCALL((len = write(wcmGetFd(priv), request, strlen(request))));
 		if ((len == -1) && (errno != EAGAIN))
 		{
 			wcmLog(priv, W_ERROR,
@@ -840,15 +835,14 @@ static int wcmWriteWait(WacomDevicePtr priv, const char* request)
 
 static int wcmWaitForTablet(WacomDevicePtr priv, char* answer, int size)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	int len, maxtry = MAXTRY;
 
 	/* Read size bytes of the answer */
 	do
 	{
-		if ((len = xf86WaitForInput(pInfo->fd, 1000000)) > 0)
+		if ((len = xf86WaitForInput(wcmGetFd(priv), 1000000)) > 0)
 		{
-			SYSCALL((len = read(pInfo->fd, answer, size)));
+			SYSCALL((len = read(wcmGetFd(priv), answer, size)));
 			if ((len == -1) && (errno != EAGAIN))
 			{
 				wcmLog(priv, W_ERROR,
@@ -950,7 +944,6 @@ static Bool get_keys_vendor_tablet_id(char *name, WacomCommonPtr common)
  */
 static Bool get_sysfs_id(WacomDevicePtr priv, char *buf, int buf_size)
 {
-	InputInfoPtr pInfo = priv->pInfo;
 	struct udev *udev = NULL;
 	struct udev_device *device = NULL;
 	struct stat st;
@@ -959,7 +952,7 @@ static Bool get_sysfs_id(WacomDevicePtr priv, char *buf, int buf_size)
 	Bool ret = FALSE;
 	int bytes_read;
 
-	if (fstat(pInfo->fd, &st) == -1)
+	if (fstat(wcmGetFd(priv), &st) == -1)
 		goto out;
 
 	udev = udev_new();
@@ -1005,10 +998,9 @@ out:
 static int isdv4ProbeKeys(WacomDevicePtr priv)
 {
 	struct serial_struct tmp;
-	InputInfoPtr pInfo = priv->pInfo;
 	WacomCommonPtr  common = priv->common;
 
-	if (ioctl(pInfo->fd, TIOCGSERIAL, &tmp) < 0)
+	if (ioctl(wcmGetFd(priv), TIOCGSERIAL, &tmp) < 0)
 		return 0;
 
 	common->tablet_id = 0x90;
