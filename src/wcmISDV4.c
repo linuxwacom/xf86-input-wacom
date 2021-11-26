@@ -79,13 +79,14 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data);
 static int wcmWaitForTablet(WacomDevicePtr priv, char * data, int size);
 static int wcmWriteWait(WacomDevicePtr priv, const char* request);
 
-WacomDeviceClass gWacomISDV4Device =
+static WacomHWClass gWacomISDV4Device =
 {
 	.Detect = isdv4Detect,
 	.ProbeKeys = isdv4ProbeKeys,
 	.ParseOptions = isdv4ParseOptions,
 	.Init = isdv4Init,
 };
+WacomHWClass *WacomGetClassISDV4(void) { return &gWacomISDV4Device; }
 
 static WacomModel isdv4General =
 {

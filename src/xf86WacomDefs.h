@@ -76,7 +76,7 @@ typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
 typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
 typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
 typedef struct _WacomFilterState WacomFilterState, *WacomFilterStatePtr;
-typedef struct _WacomDeviceClass WacomDeviceClass, *WacomDeviceClassPtr;
+typedef struct _WacomHWClass WacomHWClass, *WacomHWClassPtr;
 typedef struct _WacomTool WacomTool, *WacomToolPtr;
 
 /******************************************************************************
@@ -336,11 +336,11 @@ struct _WacomChannel
 };
 
 /******************************************************************************
- * WacomDeviceClass
+ * WacomHWClass
  *****************************************************************************/
 
 /* Functions are called in the order as listed in the struct */
-struct _WacomDeviceClass
+struct _WacomHWClass
 {
 	Bool (*Detect)(WacomDevicePtr priv); /* detect device */
 	int  (*ProbeKeys)(WacomDevicePtr priv); /* set the bits for the keys supported */
@@ -348,8 +348,8 @@ struct _WacomDeviceClass
 	Bool (*Init)(WacomDevicePtr priv);   /* initialize device */
 };
 
-extern WacomDeviceClass gWacomUSBDevice;
-extern WacomDeviceClass gWacomISDV4Device;
+extern WacomHWClass *WacomGetClassISDV4(void);
+extern WacomHWClass *WacomGetClassUSB(void);
 
 /******************************************************************************
  * WacomCommonRec
@@ -438,7 +438,7 @@ struct _WacomCommonRec
 	int wcmThreshold;            /* Threshold for button pressure */
 	WacomChannel wcmChannel[MAX_CHANNELS]; /* channel device state */
 
-	WacomDeviceClassPtr wcmDevCls; /* device class functions */
+	WacomHWClassPtr wcmDevCls; /* device class functions */
 	WacomModelPtr wcmModel;        /* model-specific functions */
 	int wcmTPCButton;	     /* set Tablet PC button on/off */
 	int wcmTouch;	             /* disable/enable touch event */

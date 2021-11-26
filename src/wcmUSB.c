@@ -64,13 +64,14 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 static void usbDispatchEvents(WacomDevicePtr priv);
 static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int serial);
 
-WacomDeviceClass gWacomUSBDevice =
+static WacomHWClass gWacomUSBDevice =
 {
 	.Detect = usbDetect,
 	.ProbeKeys = usbProbeKeys,
 	.ParseOptions = usbParseOptions,
 	.Init = usbWcmInit,
 };
+WacomHWClass *WacomGetClassUSB(void) { return &gWacomUSBDevice; }
 
 #define DEFINE_MODEL(mname, identifier, protocol) \
 static struct _WacomModel mname =		\

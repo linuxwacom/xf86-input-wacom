@@ -119,7 +119,6 @@ src_wacom = [
 	'src/wcmConfig.c',
 	'src/wcmFilter.c',
 	'src/wcmFilter.h',
-	'src/wcmISDV4.c',
 	'src/wcmTouchFilter.c',
 	'src/wcmTouchFilter.h',
 	'src/wcmUSB.c',
@@ -128,7 +127,15 @@ src_wacom = [
 	'src/xf86Wacom.c',
 	'src/xf86WacomDefs.h',
 	'src/xf86Wacom.h',
+	'src/wcmUSB.c',
 ]
+
+if get_option('serial-device-support')
+	src_wacom += ['src/wcmISDV4.c']
+else
+	src_wacom += ['src/wcmISDV4-stub.c']
+endif
+
 deps_wacom = [
 	dep_xserver,
 	dep_libudev,
@@ -156,25 +163,27 @@ configure_file(
 )
 
 # Tools
-src_shared = [
-	'tools/tools-shared.h',
-	'tools/tools-shared.c',
-]
+if get_option('serial-device-support')
+	src_shared = [
+		'tools/tools-shared.h',
+		'tools/tools-shared.c',
+	]
 
-executable(
-	'isdv4-serial-debugger',
-	'tools/isdv4-serial-debugger.c', src_shared,
-	dependencies: [dep_libudev],
-	include_directories: [dir_include],
-	install: true,
-)
-executable(
-	'isdv4-serial-inputattach',
-	'tools/isdv4-serial-inputattach.c', src_shared,
-	dependencies: [dep_libudev],
-	include_directories: [dir_include],
-	install: true,
-)
+	executable(
+		'isdv4-serial-debugger',
+		'tools/isdv4-serial-debugger.c', src_shared,
+		dependencies: [dep_libudev],
+		include_directories: [dir_include],
+		install: true,
+	)
+	executable(
+		'isdv4-serial-inputattach',
+		'tools/isdv4-serial-inputattach.c', src_shared,
+		dependencies: [dep_libudev],
+		include_directories: [dir_include],
+		install: true,
+	)
+endif
 
 xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
 src_xsetwacom = [
@@ -208,16 +217,17 @@ configure_file(
 
 # Config files
 install_data('conf/70-wacom.conf', install_dir: dir_xorg_conf)
-install_data('conf/wacom.rules', install_dir: dir_udev_rules)
-conf_service = configuration_data()
-conf_service.set('BIN_PREFIX', dir_bin)
-configure_file(
-	input: 'conf/wacom-inputattach@.service.in',
-	output: 'wacom-inputattach@.service',
-	configuration: conf_service,
-	install_dir: dir_systemd_unit,
-)
-
+if get_option('serial-device-support')
+	install_data('conf/wacom.rules', install_dir: dir_udev_rules)
+	conf_service = configuration_data()
+	conf_service.set('BIN_PREFIX', dir_bin)
+	configure_file(
+		input: 'conf/wacom-inputattach@.service.in',
+		output: 'wacom-inputattach@.service',
+		configuration: conf_service,
+		install_dir: dir_systemd_unit,
+	)
+endif
 
 # Tests
 have_wrap = cc.links('''
