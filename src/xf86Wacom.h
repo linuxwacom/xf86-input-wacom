@@ -89,7 +89,7 @@ int wcmPreInit(WacomDevicePtr priv);
 void wcmUnInit(WacomDevicePtr priv);
 /* Open the **shared** fd, if necessary */
 int wcmDevOpen(WacomDevicePtr priv);
-int wcmDevInit(WacomDevicePtr priv);
+Bool wcmDevInit(WacomDevicePtr priv);
 /* Close the **shared** fd, if necessary */
 void wcmDevClose(WacomDevicePtr priv);
 Bool wcmDevStart(WacomDevicePtr priv);
