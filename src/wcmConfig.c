@@ -982,7 +982,7 @@ static int wcmInitAxes(WacomDevicePtr priv)
 	return TRUE;
 }
 
-int wcmDevInit(WacomDevicePtr priv)
+Bool wcmDevInit(WacomDevicePtr priv)
 {
 	WacomCommonPtr common =	priv->common;
 	int nbaxes, nbbuttons, nbkeys;
