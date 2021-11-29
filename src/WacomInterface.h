@@ -175,13 +175,13 @@ void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y);
 
 /**
- * Queue the addition of a new device with the given basename (sans type) and
+ * Queue the addition of a new device with the device's name, type and
  * the serial, if any. Otherwise the device should be a copy of priv.
  *
  * This is a **queuing** function, the device must be hotplugged when the
  * frontend is idle later.
  */
-void wcmQueueHotplug(WacomDevicePtr priv, const char *basename,
+void wcmQueueHotplug(WacomDevicePtr priv, const char *name,
 		     const char *type, int serial);
 
 /* X server interface emulations */

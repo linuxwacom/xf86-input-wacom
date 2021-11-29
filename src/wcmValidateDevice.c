@@ -429,6 +429,28 @@ int wcmDeviceTypeKeys(WacomDevicePtr priv)
 	return ret;
 }
 
+static void
+wcmAddHotpluggedDevice(WacomDevicePtr priv, const char *basename, const char *type,
+		       WacomToolPtr ser)
+{
+	char *name;
+	int rc;
+
+	if (ser == NULL)
+		rc = asprintf(&name, "%s %s", basename, type);
+	else if (strlen(ser->name) > 0)
+		rc = asprintf(&name, "%s %s %s", basename, ser->name, type);
+	else
+		rc = asprintf(&name, "%s %d %s", basename, ser->serial, type);
+
+	if (rc == -1)
+		return;
+
+	wcmQueueHotplug(priv, name, type, ser ? ser->serial : -1);
+
+	free(name);
+}
+
 /**
  * Attempt to hotplug a tool with a given type.
  *
@@ -455,7 +477,7 @@ static void wcmTryHotplugSerialType(WacomDevicePtr priv, WacomToolPtr ser, const
 		return;
 	}
 
-	wcmQueueHotplug(priv, basename, type, ser->serial);
+	wcmAddHotpluggedDevice(priv, basename, type, ser);
 }
 
 /**
@@ -495,7 +517,7 @@ void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 			if (skip)
 				skip = 0;
 			else
-				wcmQueueHotplug(priv, basename, wcmType[i].type, -1);
+				wcmAddHotpluggedDevice(priv, basename, wcmType[i].type, NULL);
 		}
 	}
 
