@@ -183,41 +183,22 @@ void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, WacomTimerCallback func, 
  * @param type Tool type (cursor, eraser, etc.)
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* basename, const char *type, int serial)
+static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, const char *type, int serial)
 {
 	WacomCommonPtr common = priv->common;
 	InputInfoPtr pInfo = priv->frontend;
 	pointer original = pInfo->options;
 	WacomToolPtr ser = common->serials;
 	InputOption *iopts = NULL;
-	char *name;
 	pointer options, o;
 	int rc;
 
 	options = xf86OptionListDuplicate(original);
-	if (serial > -1)
-	{
-		while (ser->serial && ser->serial != serial)
-			ser = ser->next;
-
-		if (strlen(ser->name) > 0)
-			rc = asprintf(&name, "%s %s %s", basename, ser->name, type);
-		else
-			rc = asprintf(&name, "%s %d %s", basename, ser->serial, type);
-	}
-	else
-		rc = asprintf(&name, "%s %s", basename, type);
-
-	if (rc == -1) /* if asprintf fails, strdup will probably too... */
-		name = strdup("unknown");
-
 	options = xf86ReplaceStrOption(options, "Type", type);
 	options = xf86ReplaceStrOption(options, "Name", name);
 
 	if (serial > -1)
 		options = xf86ReplaceIntOption(options, "Serial", ser->serial);
-
-	free(name);
 
 	o = options;
 	while(o)
@@ -310,7 +291,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * @param type Type name for this tool
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const char *type, int serial)
+void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, int serial)
 {
 	WacomHotplugInfo *hotplug_info;
 
@@ -322,7 +303,7 @@ void wcmQueueHotplug(WacomDevicePtr priv, const char* basename, const char *type
 		return;
 	}
 
-	hotplug_info->input_options = wcmOptionDupConvert(priv, basename, type, serial);
+	hotplug_info->input_options = wcmOptionDupConvert(priv, name, type, serial);
 	hotplug_info->attrs = wcmDuplicateAttributes(priv, type);
 	QueueWorkProc(wcmHotplugDevice, serverClient, hotplug_info);
 }
