@@ -117,7 +117,7 @@ static void memdump(WacomDevicePtr priv, char *buffer, unsigned int len)
 }
 
 
-static int wcmWait(int t)
+static int wcmWait(WacomDevicePtr priv, int t)
 {
 	int err = xf86WaitForInput(-1, ((t) * 1000));
 	if (err != -1)
@@ -550,7 +550,7 @@ static int isdv4StopTablet(WacomDevicePtr priv)
 		return !Success;
 
 	/* Wait 250 mSecs */
-	if (wcmWait(250))
+	if (wcmWait(priv, 250))
 		return !Success;
 
 	/* discard potential data on the line */

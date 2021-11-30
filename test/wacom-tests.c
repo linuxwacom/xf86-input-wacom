@@ -510,16 +510,17 @@ test_tilt_to_rotation(void)
 static void
 test_mod_buttons(void)
 {
+	WacomCommonRec common = {0};
 	int i;
 	for (i = 0; i < sizeof(int) * 8; i++)
 	{
-		int buttons = mod_buttons(0, i, 1);
+		int buttons = mod_buttons(&common, 0, i, 1);
 		assert(buttons == (1 << i));
-		buttons = mod_buttons(0, i, 0);
+		buttons = mod_buttons(&common, 0, i, 0);
 		assert(buttons == 0);
 	}
 
-	assert(mod_buttons(0, sizeof(int) * 8, 1) == 0);
+	assert(mod_buttons(&common, 0, sizeof(int) * 8, 1) == 0);
 }
 
 static void test_set_type(void)
