@@ -980,7 +980,7 @@ static void usbParseEvent(WacomDevicePtr priv,
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
-		wcmLog(NULL, W_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
+		wcmLogSafe(priv, W_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
 		       priv->name, private->wcmEventCnt);
 		usbResetEventCounter(private);
 		return;
@@ -1022,7 +1022,7 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 		/* we don't report serial numbers for some tools but we never report
 		 * a serial number with a value of 0 - if that happens drop the
 		 * whole frame */
-		wcmLog(NULL, W_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
+		wcmLogSafe(priv, W_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
 				      priv->name);
 		usbResetEventCounter(private);
 	}
@@ -1353,7 +1353,7 @@ mod_buttons(WacomCommonPtr common, int buttons, int btn, int state)
 
 	if (btn >= sizeof(int) * 8)
 	{
-		wcmLog(NULL, W_ERROR,
+		wcmLogCommonSafe(common, W_ERROR,
 		       "%s: Invalid button number %d. Insufficient storage\n",
 		       __func__, btn);
 		return buttons;
@@ -1853,7 +1853,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 	dslast = common->wcmChannel[channel].valid.state;
 
 	if (ds->device_type && ds->device_type != private->wcmDeviceType)
-		wcmLog(NULL, W_ERROR,
+		wcmLogSafe(priv, W_ERROR,
 				      "usbDispatchEvents: Device Type mismatch - %d -> %d. This is a BUG.\n",
 				      ds->device_type, private->wcmDeviceType);
 	/* no device type? */
@@ -1909,7 +1909,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 				common->wcmChannel[channel].dirty |= TRUE;
 			}
 			else
-				wcmLog(NULL, W_ERROR,
+				wcmLogSafe(priv, W_ERROR,
 						      "%s: rel event recv'd (%d)!\n",
 						      priv->name,
 						      event->code);

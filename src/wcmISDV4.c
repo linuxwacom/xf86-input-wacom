@@ -107,12 +107,12 @@ static void memdump(WacomDevicePtr priv, char *buffer, unsigned int len)
 	/* can't use DBG macro here, need to do it manually. */
 	for (i = 0 ; i < len && common->debugLevel >= 10; i++)
 	{
-		wcmLog(NULL, W_NONE, "%#hhx ", buffer[i]);
+		wcmLogSafe(priv, W_NONE, "%#hhx ", buffer[i]);
 		if (i % 8 == 7)
-			wcmLog(NULL, W_NONE, "\n");
+			wcmLogSafe(priv, W_NONE, "\n");
 	}
 
-	wcmLog(NULL, W_NONE, "\n");
+	wcmLogSafe(priv, W_NONE, "\n");
 #endif
 }
 
@@ -123,7 +123,7 @@ static int wcmWait(WacomDevicePtr priv, int t)
 	if (err != -1)
 		return Success;
 
-	wcmLog(NULL, W_ERROR, "Wacom select error : %s\n", strerror(errno));
+	wcmLogSafe(priv, W_ERROR, "Wacom select error : %s\n", strerror(errno));
 	return err;
 }
 
@@ -161,7 +161,7 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 	if (!(data[0] & HEADER_BIT))
 	{
 		n = wcmSkipInvalidBytes(data, common->wcmPktLength);
-		wcmLog(NULL, W_WARNING,
+		wcmLogSafe(priv, W_WARNING,
 			"missing header bit. skipping %d bytes.\n",
 			n);
 		return n;
@@ -174,7 +174,7 @@ static int wcmSerialValidate(WacomDevicePtr priv, const unsigned char* data)
 	n = wcmSkipInvalidBytes(&data[1], common->wcmPktLength - 1);
 	n += 1; /* the header byte we already checked */
 	if (n != common->wcmPktLength) {
-		wcmLog(NULL, W_WARNING, "%s: bad data at %d v=%x l=%d\n", priv->name,
+		wcmLogSafe(priv, W_WARNING, "%s: bad data at %d v=%x l=%d\n", priv->name,
 			n, data[n], common->wcmPktLength);
 		return n;
 	}
@@ -589,7 +589,7 @@ static int isdv4ParseTouchPacket(WacomDevicePtr priv, const unsigned char *data,
 	rc = isdv4ParseTouchData(data, len, common->wcmPktLength, &touchdata);
 	if (rc <= 0)
 	{
-		wcmLog(NULL, W_ERROR, "%s: failed to parse touch data (err %d).\n",
+		wcmLogSafe(priv, W_ERROR, "%s: failed to parse touch data (err %d).\n",
 				      priv->name, rc);
 		return -1;
 	}
@@ -663,7 +663,7 @@ static int isdv4ParsePenPacket(WacomDevicePtr priv, const unsigned char *data,
 
 	if (rc == -1)
 	{
-		wcmLog(NULL, W_ERROR, "%s: failed to parse coordinate data.\n", priv->name);
+		wcmLogSafe(priv, W_ERROR, "%s: failed to parse coordinate data.\n", priv->name);
 		return -1;
 	}
 

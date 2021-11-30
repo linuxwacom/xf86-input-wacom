@@ -74,7 +74,7 @@ typedef struct _WacomModel WacomModel, *WacomModelPtr;
 typedef struct _WacomDeviceRec WacomDeviceRec;
 typedef struct _WacomDeviceState WacomDeviceState, *WacomDeviceStatePtr;
 typedef struct _WacomChannel  WacomChannel, *WacomChannelPtr;
-typedef struct _WacomCommonRec WacomCommonRec, *WacomCommonPtr;
+typedef struct _WacomCommonRec WacomCommonRec;
 typedef struct _WacomFilterState WacomFilterState, *WacomFilterStatePtr;
 typedef struct _WacomHWClass WacomHWClass, *WacomHWClassPtr;
 typedef struct _WacomTool WacomTool, *WacomToolPtr;
@@ -230,6 +230,8 @@ typedef enum  {
 struct _WacomDeviceRec
 {
 	char *name;		/* Do not move, same offset as common->device_path. Used by DBG macro */
+	bool is_common_rec;	/* Do not move, same offset as common->is_common_rec. Used by DBG macro */
+
 	WacomType type;
 	/* configuration fields */
 	struct _WacomDeviceRec *next;
@@ -379,6 +381,8 @@ struct _WacomCommonRec
 {
 	/* Do not move device_path, same offset as priv->name. Used by DBG macro */
 	char* device_path;          /* device file name */
+	/* Do not move is_common_rec, same offset as priv->is_common_rec. Used by DBG macro */
+	bool is_common_rec;
 	dev_t min_maj;               /* minor/major number */
 	unsigned char wcmFlags;     /* various flags (handle tilt) */
 	int debugLevel;

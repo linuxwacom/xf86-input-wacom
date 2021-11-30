@@ -65,7 +65,7 @@ void wcmSetPressureCurve(WacomDevicePtr pDev, int x0, int y0,
 		pDev->pPressCurve = calloc(FILTER_PRESSURE_RES+1, sizeof(*pDev->pPressCurve));
 
 		if (!pDev->pPressCurve) {
-			wcmLog(NULL, W_WARNING,
+			wcmLogSafe(pDev, W_WARNING,
 			       "Unable to allocate memory for pressure curve; using default.\n");
 			x0 = 0;
 			y0 = 0;

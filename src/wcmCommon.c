@@ -1181,14 +1181,14 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
+	priv = tool->device;
 	/* Tool on the tablet when driver starts. This sometime causes
 	 * access errors to the device */
 	if (!tool->enabled) {
-		wcmLog(NULL, W_ERROR, "tool not initialized yet. Skipping event. \n");
+		wcmLogSafe(priv, W_ERROR, "tool not initialized yet. Skipping event. \n");
 		return;
 	}
 
-	priv = tool->device;
 	DBG(11, common, "tool id=%d for %s\n", ds.device_type, priv->name);
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
@@ -1373,7 +1373,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 		   and is too close to the maximum pressure */
 		if (priv->oldMinPressure > pressureThreshold &&
 		    priv->eventCnt > MIN_EVENT_COUNT)
-			wcmLog(NULL, W_WARNING,
+			wcmLogSafe(priv, W_WARNING,
 				"On %s(%d) a base pressure of %d persists while the pen is in proximity.\n"
 				"\tThis is > %d percent of the maximum value (%d).\n"
 				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
@@ -1690,6 +1690,7 @@ WacomCommonPtr wcmNewCommon(void)
 	if (!common)
 		return NULL;;
 
+	common->is_common_rec = true;
 	common->refcnt = 1;
 	common->wcmFlags = 0;               /* various flags */
 	common->wcmProtocolLevel = WCM_PROTOCOL_4; /* protocol level */

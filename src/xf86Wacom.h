@@ -58,9 +58,11 @@
 #define DBG(lvl, priv, ...) \
 	do { \
 		if ((lvl) <= priv->debugLevel) { \
-			wcmLog(NULL, W_INFO, "%s (%d:%s): ", \
-				((WacomDeviceRec*)priv)->name, lvl, __func__); \
-			wcmLog(NULL, W_NONE, __VA_ARGS__); \
+			if (((WacomDeviceRec*)(priv))->is_common_rec) { \
+				wcmLogDebugCommon((WacomCommonRec*)priv, lvl, __func__, __VA_ARGS__); \
+			} else { \
+				wcmLogDebugDevice((WacomDeviceRec*)priv, lvl, __func__, __VA_ARGS__); \
+			} \
 		} \
 	} while (0)
 #else
