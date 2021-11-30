@@ -1347,7 +1347,7 @@ static void usbParseAbsEvent(WacomCommonPtr common,
  * @return The new button mask
  */
 TEST_NON_STATIC int
-mod_buttons(int buttons, int btn, int state)
+mod_buttons(WacomCommonPtr common, int buttons, int btn, int state)
 {
 	int mask;
 
@@ -1542,15 +1542,15 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 	switch (event->code)
 	{
 		case BTN_STYLUS:
-			ds->buttons = mod_buttons(ds->buttons, 1, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 1, event->value);
 			break;
 
 		case BTN_STYLUS2:
-			ds->buttons = mod_buttons(ds->buttons, 2, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 2, event->value);
 			break;
 
 		case BTN_STYLUS3:
-			ds->buttons = mod_buttons(ds->buttons, 3, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 3, event->value);
 			break;
 
 		default:
@@ -1574,44 +1574,44 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 	switch (event->code)
 	{
 		case BTN_LEFT:
-			ds->buttons = mod_buttons(ds->buttons, 0, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 0, event->value);
 			break;
 
 		case BTN_MIDDLE:
-			ds->buttons = mod_buttons(ds->buttons, 1, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 1, event->value);
 			break;
 
 		case BTN_RIGHT:
-			ds->buttons = mod_buttons(ds->buttons, 2, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 2, event->value);
 			break;
 
 		case BTN_SIDE:
 		case BTN_BACK:
-			ds->buttons = mod_buttons(ds->buttons, 3, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 3, event->value);
 			break;
 
 		case BTN_EXTRA:
 		case BTN_FORWARD:
-			ds->buttons = mod_buttons(ds->buttons, 4, event->value);
+			ds->buttons = mod_buttons(common, ds->buttons, 4, event->value);
 			break;
 		case KEY_CONTROLPANEL:
-			ds->keys = mod_buttons(ds->keys, IDX_KEY_CONTROLPANEL, event->value);
+			ds->keys = mod_buttons(common, ds->keys, IDX_KEY_CONTROLPANEL, event->value);
 			break;
 		case KEY_ONSCREEN_KEYBOARD:
-			ds->keys = mod_buttons(ds->keys, IDX_KEY_ONSCREEN_KEYBOARD, event->value);
+			ds->keys = mod_buttons(common, ds->keys, IDX_KEY_ONSCREEN_KEYBOARD, event->value);
 			break;
 		case KEY_BUTTONCONFIG:
-			ds->keys = mod_buttons(ds->keys, IDX_KEY_BUTTONCONFIG, event->value);
+			ds->keys = mod_buttons(common, ds->keys, IDX_KEY_BUTTONCONFIG, event->value);
 			break;
 		case KEY_INFO:
-			ds->keys = mod_buttons(ds->keys, IDX_KEY_INFO, event->value);
+			ds->keys = mod_buttons(common, ds->keys, IDX_KEY_INFO, event->value);
 			break;
 		default:
 			for (nkeys = 0; nkeys < usbdata->npadkeys; nkeys++)
 			{
 				if (event->code == usbdata->padkey_code[nkeys])
 				{
-					ds->buttons = mod_buttons(ds->buttons, nkeys, event->value);
+					ds->buttons = mod_buttons(common, ds->buttons, nkeys, event->value);
 					break;
 				}
 			}

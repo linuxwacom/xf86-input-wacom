@@ -213,7 +213,7 @@ extern enum WacomSuppressMode wcmCheckSuppress(WacomCommonPtr common,
 						WacomDeviceState* dsNew);
 
 /* wcmUSB.c */
-extern int mod_buttons(int buttons, int btn, int state);
+extern int mod_buttons(WacomCommonPtr common, int buttons, int btn, int state);
 #endif /* UNIT_TESTS */
 
 #endif /* __XF86WACOM_H */
