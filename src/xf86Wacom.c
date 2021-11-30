@@ -59,6 +59,14 @@
 #define XI86_DRV_CAP_SERVER_FD 0x01
 #endif
 
+__attribute__((__format__(__printf__ , 2, 0)))
+static void
+log_sigsafe(WacomLogType type, const char *format, va_list args)
+{
+	MessageType xtype = (MessageType)type;
+	LogVMessageVerbSigSafe(xtype, -1, format, args);
+}
+
 void
 wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
 {
@@ -66,13 +74,60 @@ wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	if (!priv) {
-		LogVMessageVerbSigSafe(xtype, -1, format, args);
-	} else {
-		xf86VIDrvMsgVerb(priv->frontend, xtype, 0, format, args);
-	}
+	xf86VIDrvMsgVerb(priv->frontend, xtype, 0, format, args);
 	va_end(args);
 }
+
+void wcmLogSafe(WacomDevicePtr priv, WacomLogType type, const char *format, ...)
+{
+	va_list args;
+
+	va_start(args, format);
+	log_sigsafe(type, format, args);
+	va_end(args);
+}
+
+void wcmLogCommon(WacomCommonPtr common, WacomLogType type, const char *format, ...)
+{
+	MessageType xtype = (MessageType)type;
+	va_list args;
+
+	va_start(args, format);
+	LogVMessageVerb(xtype, -1, format, args);
+	va_end(args);
+}
+
+void wcmLogCommonSafe(WacomCommonPtr common, WacomLogType type, const char *format, ...)
+{
+	va_list args;
+
+	va_start(args, format);
+	log_sigsafe(type, format, args);
+	va_end(args);
+}
+
+void
+wcmLogDebugDevice(WacomDevicePtr priv, int debug_level, const char *func, const char *format, ...)
+{
+	va_list args;
+
+	LogMessageVerbSigSafe(X_INFO, -1, "%s (%d:%s): ", priv->name, debug_level, func);
+	va_start(args, format);
+	log_sigsafe(W_NONE, format, args);
+	va_end(args);
+}
+
+void
+wcmLogDebugCommon(WacomCommonPtr common, int debug_level, const char *func, const char *format, ...)
+{
+	va_list args;
+
+	LogMessageVerbSigSafe(X_INFO, -1, "%s (%d:%s): ", common->device_path, debug_level, func);
+	va_start(args, format);
+	log_sigsafe(W_NONE, format, args);
+	va_end(args);
+}
+
 
 char *wcmOptGetStr(WacomDevicePtr priv, const char *key, const char *default_value)
 {
@@ -675,7 +730,7 @@ static void wcmDevReadInput(InputInfoPtr pInfo)
 
 		/* dispatch */
 		if ((rc = wcmReadPacket(priv)) < 0) {
-			wcmLog(NULL, W_ERROR,
+			wcmLogSafe(priv, W_ERROR,
 			       "%s: Error reading wacom device : %s\n", priv->name, strerror(-rc));
 			if (rc == -ENODEV)
 				xf86RemoveEnabledDevice(pInfo);

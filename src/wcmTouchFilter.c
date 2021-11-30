@@ -405,7 +405,7 @@ void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
 	if (!IsTouch(priv))
 	{
 		/* this should never happen */
-		wcmLog(NULL, W_ERROR, "WACOM: No touch device found for %s \n",
+		wcmLogSafe(priv, W_ERROR, "WACOM: No touch device found for %s \n",
 			 common->device_path);
 		return;
 	}

@@ -32,6 +32,7 @@
 #include <stdint.h>
 
 typedef struct _WacomDeviceRec *WacomDevicePtr;
+typedef struct _WacomCommonRec *WacomCommonPtr;
 
 /* Identical to MessageType */
 typedef enum {
@@ -80,11 +81,44 @@ typedef struct {
 
 
 /**
- * General logging function. If priv is NULL, use a generic logging method,
- * otherwise priv is the device to log the message for.
+ * General logging function for a device.
  */
-__attribute__((__format__(__printf__ ,3, 4)))
+__attribute__((__format__(__printf__ , 3, 4)))
 void wcmLog(WacomDevicePtr priv, WacomLogType type, const char *format, ...);
+
+/**
+ * Same as the above but uses the sigsafe logging function if needed.
+ */
+__attribute__((__format__(__printf__ , 3, 4)))
+void wcmLogSafe(WacomDevicePtr priv, WacomLogType type, const char *format, ...);
+
+/**
+ * General logging function for the driver.
+ */
+__attribute__((__format__(__printf__ , 3, 4)))
+void wcmLogCommon(WacomCommonPtr priv, WacomLogType type, const char *format, ...);
+
+/**
+ * Same as the above but uses the sigsafe logging function if needed.
+ */
+__attribute__((__format__(__printf__ , 3, 4)))
+void wcmLogCommonSafe(WacomCommonPtr priv, WacomLogType type, const char *format, ...);
+
+/**
+ * Identical to wcmLog but used for debug messages inside the driver for a
+ * specific device. This must use a sigsafe path.
+ */
+__attribute__((__format__(__printf__ , 4, 5)))
+void wcmLogDebugDevice(WacomDevicePtr priv, int debug_level, const char *func,
+		       const char *format, ...);
+
+/**
+ * Identical to wcmLog but used for debug messages inside the driver from the
+ * common shared path. This must use a sigsafe path.
+ */
+__attribute__((__format__(__printf__ , 4, 5)))
+void wcmLogDebugCommon(WacomCommonPtr common, int debug_level, const char *func,
+		       const char *format, ...);
 
 /**
  * @retval 0 to abort the loop (counts as match)
