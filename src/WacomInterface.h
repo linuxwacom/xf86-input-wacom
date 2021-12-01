@@ -208,6 +208,10 @@ void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 		      const WacomAxisData *axes);
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y);
 
+
+struct input_event;
+void wcmNotifyEvdev(WacomDevicePtr priv, const struct input_event *event);
+
 /**
  * Queue the addition of a new device with the device's name, type and
  * the serial, if any. Otherwise the device should be a copy of priv.

@@ -974,6 +974,8 @@ static void usbParseEvent(WacomDevicePtr priv,
 
 	DBG(10, common, "\n");
 
+	wcmNotifyEvdev(priv, event);
+
 	/* store events until we receive a SYN_REPORT */
 
 	/* space left? bail if not. */

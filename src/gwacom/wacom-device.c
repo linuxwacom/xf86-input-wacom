@@ -167,6 +167,7 @@ enum {
 	SIGNAL_DBGMSG, /* A debug message from the driver */
 
 	SIGNAL_READ_ERROR,
+	SIGNAL_EVDEV,
 
 	LAST_SIGNAL,
 };
@@ -500,6 +501,12 @@ void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, in
 			  abort();
 	}
 	g_signal_emit(device, signals[SIGNAL_TOUCH], 0, state, touchid, x, y);
+}
+
+void wcmNotifyEvdev(WacomDevicePtr priv, const struct input_event *event)
+{
+	WacomDevice *device = priv->frontend;
+	g_signal_emit(device, signals[SIGNAL_EVDEV], 0, event);
 }
 
 void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
@@ -916,6 +923,22 @@ wacom_device_class_init(WacomDeviceClass *klass)
 			     0, NULL, NULL, NULL, G_TYPE_NONE,
 			     /* errno */
 			     1, G_TYPE_INT);
+	/**
+	 * WacomDevice::evdev-event:
+	 * @device: the device that sent the event
+	 * @event: the struct input_event
+	 *
+	 * The evdev signal is emitted whenever an evdev event is about to be
+	 * processed by the driver
+	 */
+	signals[SIGNAL_EVDEV] =
+		g_signal_new("evdev-event",
+			     G_TYPE_FROM_CLASS(klass),
+			     G_SIGNAL_RUN_FIRST,
+			     0, NULL, NULL, NULL, G_TYPE_NONE,
+			     /* struct input_event */
+			     1, G_TYPE_POINTER);
+
 }
 
 static void
