@@ -123,11 +123,11 @@ src_wacom = [
 	'src/wcmTouchFilter.h',
 	'src/wcmUSB.c',
 	'src/wcmValidateDevice.c',
-	'src/wcmXCommand.c',
-	'src/xf86Wacom.c',
 	'src/xf86WacomDefs.h',
 	'src/xf86Wacom.h',
 	'src/wcmUSB.c',
+	'src/x11/xf86WacomProperties.c',
+	'src/x11/xf86Wacom.c',
 ]
 
 if get_option('serial-device-support')
