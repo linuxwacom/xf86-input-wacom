@@ -466,6 +466,11 @@ void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, in
 	xf86PostTouchEvent(pInfo->dev, touchid, type, 0, mask);
 }
 
+void wcmNotifyEvdev(WacomDevicePtr priv, const struct input_event *event)
+{
+	/* NOOP */
+}
+
 
 void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 			int min, int max, int res)

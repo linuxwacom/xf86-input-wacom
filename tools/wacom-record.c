@@ -24,6 +24,7 @@
 #include <glib.h>
 #include <glib-unix.h>
 #include <libudev.h>
+#include <libevdev/libevdev.h>
 #include "wacom-driver.h"
 #include "wacom-device.h"
 
@@ -32,6 +33,7 @@
 static guint debug_level = 0;
 static gboolean print_version = false;
 static gboolean grab_device = false;
+static gboolean log_evdev = false;
 static const char *driver_options = NULL;
 
 static GOptionEntry opts[] =
@@ -40,6 +42,7 @@ static GOptionEntry opts[] =
 	{ "debug-level", 'v', 0, G_OPTION_ARG_INT, &debug_level, "Set the debug level", NULL },
 	{ "options", 0, 0, G_OPTION_ARG_STRING, &driver_options, "Driver options in the form \"Foo=bar,Baz=bat\"", NULL },
 	{ "grab", 0, 0, G_OPTION_ARG_NONE, &grab_device, "Grab the device while recording", NULL },
+	{ "evdev", 0, 0, G_OPTION_ARG_NONE, &log_evdev, "Log evdev events", NULL },
 	{ NULL },
 };
 
@@ -103,6 +106,21 @@ static void key(WacomDevice *device, gboolean keycode, gboolean is_press)
 	       keycode, strbool(is_press));
 }
 
+static void evdev(WacomDevice *device, const struct input_event *evdev)
+{
+	printf("    - { source: %d, event: evdev, data: [%6ld, %6ld, %3d, %3d, %10d] } # %s / %-20s %5d\n",
+	       wacom_device_get_id(device),
+	       evdev->input_event_sec,
+	       evdev->input_event_usec,
+	       evdev->type,
+	       evdev->code,
+	       evdev->value,
+	       libevdev_event_type_get_name(evdev->type),
+	       libevdev_event_code_get_name(evdev->type, evdev->code),
+	       evdev->value
+	);
+}
+
 static void device_added(WacomDriver *driver, WacomDevice *device)
 {
 	printf("    - source: %d\n"
@@ -116,6 +134,8 @@ static void device_added(WacomDriver *driver, WacomDevice *device)
 	g_signal_connect(device, "proximity", G_CALLBACK(proximity), NULL);
 	g_signal_connect(device, "button", G_CALLBACK(button), NULL);
 	g_signal_connect(device, "keycode", G_CALLBACK(key), NULL);
+	if (log_evdev)
+		g_signal_connect(device, "evdev-event", G_CALLBACK(evdev), NULL);
 
 	if (!wacom_device_preinit(device))
 		fprintf(stderr, "Failed to preinit device %s\n", wacom_device_get_name(device));

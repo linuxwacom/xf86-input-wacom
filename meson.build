@@ -179,8 +179,9 @@ dep_gobject = dependency('gobject-2.0', required: get_option('wacom-gobject'))
 dep_gio = dependency('gio-2.0', required: get_option('wacom-gobject'))
 dep_gio_unix = dependency('gio-unix-2.0', required: get_option('wacom-gobject'))
 dep_object_ir = dependency('gobject-introspection-1.0', required: get_option('wacom-gobject'))
+dep_libevdev = dependency('libevdev', required: get_option('wacom-gobject'))
 
-build_gwacom = dep_glib.found() and dep_gobject.found() and dep_gio.found() and dep_gio_unix.found() and dep_object_ir.found()
+build_gwacom = dep_glib.found() and dep_gobject.found() and dep_gio.found() and dep_gio_unix.found() and dep_object_ir.found() and dep_libevdev.found()
 
 if build_gwacom
 	gnome = import('gnome')
@@ -203,6 +204,7 @@ if build_gwacom
 		dep_gobject,
 		dep_gio,
 		dep_gio_unix,
+		dep_libevdev,
 	]
 
 	lib_gwacom = both_libraries(
