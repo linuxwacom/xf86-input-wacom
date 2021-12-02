@@ -143,8 +143,8 @@ release_to_github() {
     # Upload the tar to the release
     upload_result=`curl -s -u $GH_USERNAME \
         -H "Content-Type: application/x-bzip" \
-        --data-binary @$tarbz2 \
-        "https://uploads.github.com/repos/$GH_REPO/$PROJECT/releases/$GH_RELEASE_ID/assets?name=$tarbz2"`
+        --data-binary @$tarball \
+        "https://uploads.github.com/repos/$GH_REPO/$PROJECT/releases/$GH_RELEASE_ID/assets?name=$tarball"`
     DL_URL=`echo $upload_result | jq -r '.browser_download_url'`
 
     check_json_message "$upload_result"
@@ -152,8 +152,8 @@ release_to_github() {
     # Upload the sig to the release
     sig_result=`curl -s -u $GH_USERNAME \
         -H "Content-Type: application/pgp-signature" \
-        --data-binary @$tarbz2.sig \
-        "https://uploads.github.com/repos/$GH_REPO/$PROJECT/releases/$GH_RELEASE_ID/assets?name=$tarbz2.sig"`
+        --data-binary @$tarball.sig \
+        "https://uploads.github.com/repos/$GH_REPO/$PROJECT/releases/$GH_RELEASE_ID/assets?name=$tarball.sig"`
     PGP_URL=`echo $sig_result | jq -r '.browser_download_url'`
 
     check_json_message "$sig_result"
@@ -182,9 +182,9 @@ RELEASE
 
 	cat <<RELEASE
 $DL_URL
- MD5:  `$MD5SUM $tarbz2`
- SHA1: `$SHA1SUM $tarbz2`
- SHA256: `$SHA256SUM $tarbz2`
+ MD5:  `$MD5SUM $tarball`
+ SHA1: `$SHA1SUM $tarball`
+ SHA256: `$SHA256SUM $tarball`
  PGP: $PGP_URL
 
 RELEASE
@@ -446,15 +446,15 @@ process_module() {
 	return 1
     fi
 
+    # Only one of the tarballs exists
+    tarball=${tarbz2:-$tarxz}
+
     tag_name="$tar_name"
 
     gpgsignerr=0
-    sigbz2="$(sign_or_fail ${tarbz2})"
-    gpgsignerr=$((${gpgsignerr} + $?))
-    sigxz="$(sign_or_fail ${tarxz})"
-    gpgsignerr=$((${gpgsignerr} + $?))
-    if [ ${gpgsignerr} -ne 0 ]; then
-        echo "Error: unable to sign at least one of the tarballs."
+    sig="$(sign_or_fail ${tarball})"
+    if [ $? -ne 0 ]; then
+        echo "Error: unable to sign tarball."
         cd $top_src
         return 1
     fi
