@@ -379,6 +379,12 @@ process_module() {
 	return 1
     fi
 
+    # Check for uncommitted/queued changes.
+    check_local_changes
+    if [ $? -ne 0 ]; then
+	return 1
+    fi
+
     # Change directory to be in the git build directory (could be out-of-source)
     # More than one can be found when distcheck has run and failed
     configNum=`find . -name config.status -type f | wc -l | sed 's:^ *::'`
@@ -400,13 +406,6 @@ process_module() {
     fi
 
     # ----- Now in the git module *build* directory ----- #
-
-    # Check for uncommitted/queued changes.
-    check_local_changes
-    if [ $? -ne 0 ]; then
-	cd $top_src
-	return 1
-    fi
 
     # Determine what is the current branch and the remote name
     current_branch=`git branch | $GREP "\*" | sed -e "s/\* //"`
