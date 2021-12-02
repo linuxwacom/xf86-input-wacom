@@ -37,7 +37,7 @@ check_local_changes() {
 	echo "Make sure to rebuild and run 'make distcheck' again."
 	echo ""
 	echo "Alternatively, you can clone the module in another directory"
-	echo "and run ./configure. No need to build if testing was finished."
+	echo "and run ./configure or meson setup. No need to build if testing was finished."
 	echo ""
 	return 1
     fi
@@ -385,19 +385,29 @@ process_module() {
 	return 1
     fi
 
+    if [ -e "$top_src/configure.ac" ]; then
+	echo "Using autotools to build"
+	use_meson=false
+	buildfile="config.status"
+    else
+	echo "Using meson to build"
+	use_meson=true
+	buildfile="build.ninja"
+    fi
+
     # Change directory to be in the git build directory (could be out-of-source)
     # More than one can be found when distcheck has run and failed
-    configNum=`find . -name config.status -type f | wc -l | sed 's:^ *::'`
+    configNum=`find . -name $buildfile -type f | wc -l | sed 's:^ *::'`
     if [ $? -ne 0 -o "$configNum" = "0" ]; then
-	echo "Error: failed to locate config.status."
+	echo "Error: failed to locate $buildfile."
 	echo "Has the module been configured?"
 	return 1
     elif [ x"$configNum" != x1 ]; then
-	echo "Error: more than one config.status file was found,"
+	echo "Error: more than one $buildfile file was found,"
 	echo "       clean-up previously failed attempts at distcheck"
 	return 1
     fi
-    build_dir=`find . -name config.status -type f -printf "%h\n"`
+    build_dir=`find . -name $buildfile -type f -printf "%h\n"`
     cd $build_dir
     if [ $? -ne 0 ]; then
 	echo "Error: failed to cd to $MODULE_RPATH/$build_dir."
@@ -422,17 +432,35 @@ process_module() {
 
     # Run 'make dist/distcheck' to ensure the tarball matches the git module content
     # Important to run make dist/distcheck before looking in Makefile, may need to reconfigure
-    echo "Info: running \"make $MAKE_DIST_CMD\" to create tarballs:"
-    ${MAKE} $MAKEFLAGS $MAKE_DIST_CMD > /dev/null
-    if [ $? -ne 0 ]; then
-	echo "Error: \"$MAKE $MAKEFLAGS $MAKE_DIST_CMD\" failed."
-	cd $top_src
-	return 1
+    if $use_meson; then
+	echo "Info: running \"ninja dist\" to create tarballs:"
+	ninja dist
+	if [ $? -ne 0 ]; then
+		echo "Error: \"ninja dist\" failed."
+		cd $top_src
+		return 1
+	fi
+
+	# Find out the tarname from meson
+	pkg_name=`meson introspect . --projectinfo | jq -r .descriptive_name`
+	pkg_version=`meson introspect . --projectinfo | jq -r .version`
+
+	# tarballs are in builddir/meson-dist
+	cd meson-dist
+    else
+	echo "Info: running \"make $MAKE_DIST_CMD\" to create tarballs:"
+	${MAKE} $MAKEFLAGS $MAKE_DIST_CMD > /dev/null
+	if [ $? -ne 0 ]; then
+		echo "Error: \"$MAKE $MAKEFLAGS $MAKE_DIST_CMD\" failed."
+		cd $top_src
+		return 1
+	fi
+
+	# Find out the tarname from the makefile
+	pkg_name=`$GREP '^PACKAGE = ' Makefile | sed 's|PACKAGE = ||'`
+	pkg_version=`$GREP '^VERSION = ' Makefile | sed 's|VERSION = ||'`
     fi
 
-    # Find out the tarname from the makefile
-    pkg_name=`$GREP '^PACKAGE = ' Makefile | sed 's|PACKAGE = ||'`
-    pkg_version=`$GREP '^VERSION = ' Makefile | sed 's|VERSION = ||'`
     tar_name="$pkg_name-$pkg_version"
     tarbz2=$tar_name.tar.bz2
     tarxz=$tar_name.tar.xz
