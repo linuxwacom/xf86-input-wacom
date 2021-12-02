@@ -391,8 +391,7 @@ process_module() {
 	echo "       clean-up previously failed attempts at distcheck"
 	return 1
     fi
-    status_file=`find . -name config.status -type f`
-    build_dir=`dirname $status_file`
+    build_dir=`find . -name config.status -type f -printf "%h\n"`
     cd $build_dir
     if [ $? -ne 0 ]; then
 	echo "Error: failed to cd to $MODULE_RPATH/$build_dir."
