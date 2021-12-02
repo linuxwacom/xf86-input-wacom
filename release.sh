@@ -434,15 +434,13 @@ process_module() {
     pkg_name=`$GREP '^PACKAGE = ' Makefile | sed 's|PACKAGE = ||'`
     pkg_version=`$GREP '^VERSION = ' Makefile | sed 's|VERSION = ||'`
     tar_name="$pkg_name-$pkg_version"
-    targz=$tar_name.tar.gz
     tarbz2=$tar_name.tar.bz2
     tarxz=$tar_name.tar.xz
 
-    [ -e $targz ] && ls -l $targz || unset targz
     [ -e $tarbz2 ] && ls -l $tarbz2 || unset tarbz2
     [ -e $tarxz ] && ls -l $tarxz || unset tarxz
 
-    if [ -z "$targz" -a -z "$tarbz2" -a -z "$tarxz" ]; then
+    if [ -z "$tarbz2" -a -z "$tarxz" ]; then
 	echo "Error: no compatible tarballs found."
 	cd $top_src
 	return 1
@@ -451,8 +449,6 @@ process_module() {
     tag_name="$tar_name"
 
     gpgsignerr=0
-    siggz="$(sign_or_fail ${targz})"
-    gpgsignerr=$((${gpgsignerr} + $?))
     sigbz2="$(sign_or_fail ${tarbz2})"
     gpgsignerr=$((${gpgsignerr} + $?))
     sigxz="$(sign_or_fail ${tarxz})"
