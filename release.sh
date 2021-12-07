@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#		Creates and upload a git module tarball
+#                Creates and upload a git module tarball
 #
 # Release script for xf86-input-wacom.
 # This is essentially a copy of the X.Org util/modular/release.sh script
@@ -15,7 +15,7 @@
 export LC_ALL=C
 
 #------------------------------------------------------------------------------
-#			Function: check_for_jq
+#                        Function: check_for_jq
 #------------------------------------------------------------------------------
 #
 check_for_jq() {
@@ -23,29 +23,29 @@ check_for_jq() {
 }
 
 #------------------------------------------------------------------------------
-#			Function: check_local_changes
+#                        Function: check_local_changes
 #------------------------------------------------------------------------------
 #
 check_local_changes() {
     git diff --quiet HEAD > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-	echo ""
-	echo "Uncommitted changes found. Did you forget to commit? Aborting."
-	echo ""
-	echo "You can perform a 'git stash' to save your local changes and"
-	echo "a 'git stash apply' to recover them after the tarball release."
-	echo "Make sure to rebuild and run 'make distcheck' again."
-	echo ""
-	echo "Alternatively, you can clone the module in another directory"
-	echo "and run ./configure or meson setup. No need to build if testing was finished."
-	echo ""
-	return 1
+        echo ""
+        echo "Uncommitted changes found. Did you forget to commit? Aborting."
+        echo ""
+        echo "You can perform a 'git stash' to save your local changes and"
+        echo "a 'git stash apply' to recover them after the tarball release."
+        echo "Make sure to rebuild and run 'make distcheck' again."
+        echo ""
+        echo "Alternatively, you can clone the module in another directory"
+        echo "and run ./configure or meson setup. No need to build if testing was finished."
+        echo ""
+        return 1
     fi
     return 0
 }
 
 #------------------------------------------------------------------------------
-#			Function: check_option_args
+#                        Function: check_option_args
 #------------------------------------------------------------------------------
 #
 # perform sanity checks on cmdline args which require arguments
@@ -61,43 +61,43 @@ check_option_args() {
 
     # check for an argument
     if [ x"$arg" = x ]; then
-	echo ""
-	echo "Error: the '$option' option is missing its required argument."
-	echo ""
-	usage
-	exit 1
+        echo ""
+        echo "Error: the '$option' option is missing its required argument."
+        echo ""
+        usage
+        exit 1
     fi
 
     # does the argument look like an option?
     echo $arg | $GREP "^-" > /dev/null
     if [ $? -eq 0 ]; then
-	echo ""
-	echo "Error: the argument '$arg' of option '$option' looks like an option itself."
-	echo ""
-	usage
-	exit 1
+        echo ""
+        echo "Error: the argument '$arg' of option '$option' looks like an option itself."
+        echo ""
+        usage
+        exit 1
     fi
 }
 
 #------------------------------------------------------------------------------
-#			Function: check_modules_specification
+#                        Function: check_modules_specification
 #------------------------------------------------------------------------------
 #
 check_modules_specification() {
 
 if [ x"$MODFILE" = x ]; then
     if [ x"${INPUT_MODULES}" = x ]; then
-	echo ""
-	echo "Error: no modules specified (blank command line)."
-	usage
-	exit 1
+        echo ""
+        echo "Error: no modules specified (blank command line)."
+        usage
+        exit 1
     fi
 fi
 
 }
 
 #------------------------------------------------------------------------------
-#			Function: check_json_message
+#                        Function: check_json_message
 #------------------------------------------------------------------------------
 #
 # if we get json with a "message" from github there was an error
@@ -112,7 +112,7 @@ check_json_message() {
 }
 
 #------------------------------------------------------------------------------
-#			Function: release_to_github
+#                        Function: release_to_github
 #------------------------------------------------------------------------------
 #
 release_to_github() {
@@ -162,7 +162,7 @@ release_to_github() {
 }
 
 #------------------------------------------------------------------------------
-#			Function: generate_announce
+#                        Function: generate_announce
 #------------------------------------------------------------------------------
 #
 generate_announce()
@@ -180,7 +180,7 @@ git tag: $tag_name
 
 RELEASE
 
-	cat <<RELEASE
+        cat <<RELEASE
 $DL_URL
  MD5:  `$MD5SUM $tarball`
  SHA1: `$SHA1SUM $tarball`
@@ -191,7 +191,7 @@ RELEASE
 }
 
 #------------------------------------------------------------------------------
-#			Function: read_modfile
+#                        Function: read_modfile
 #------------------------------------------------------------------------------
 #
 # Read the module names from the file and set a variable to hold them
@@ -200,40 +200,40 @@ RELEASE
 read_modfile() {
 
     if [ x"$MODFILE" != x ]; then
-	# Make sure the file is sane
-	if [ ! -r "$MODFILE" ]; then
-	    echo "Error: module file '$MODFILE' is not readable or does not exist."
-	    exit 1
-	fi
-	# read from input file, skipping blank and comment lines
-	while read line; do
-	    # skip blank lines
-	    if [ x"$line" = x ]; then
-		continue
-	    fi
-	    # skip comment lines
-	    if echo "$line" | $GREP -q "^#" ; then
-		continue;
-	    fi
-	    INPUT_MODULES="$INPUT_MODULES $line"
-	done <"$MODFILE"
+        # Make sure the file is sane
+        if [ ! -r "$MODFILE" ]; then
+            echo "Error: module file '$MODFILE' is not readable or does not exist."
+            exit 1
+        fi
+        # read from input file, skipping blank and comment lines
+        while read line; do
+            # skip blank lines
+            if [ x"$line" = x ]; then
+                continue
+            fi
+            # skip comment lines
+            if echo "$line" | $GREP -q "^#" ; then
+                continue;
+            fi
+            INPUT_MODULES="$INPUT_MODULES $line"
+        done <"$MODFILE"
     fi
     return 0
 }
 
 #------------------------------------------------------------------------------
-#			Function: print_epilog
+#                        Function: print_epilog
 #------------------------------------------------------------------------------
 #
 print_epilog() {
 
     epilog="========  Successful Completion"
     if [ x"$NO_QUIT" != x ]; then
-	if [ x"$failed_modules" != x ]; then
-	    epilog="========  Partial Completion"
-	fi
+        if [ x"$failed_modules" != x ]; then
+            epilog="========  Partial Completion"
+        fi
     elif [ x"$failed_modules" != x ]; then
-	epilog="========  Stopped on Error"
+        epilog="========  Stopped on Error"
     fi
 
     echo ""
@@ -241,17 +241,17 @@ print_epilog() {
 
     # Report about modules that failed for one reason or another
     if [ x"$failed_modules" != x ]; then
-	echo "	List of failed modules:"
-	for mod in $failed_modules; do
-	    echo "	$mod"
-	done
-	echo "========"
-	echo ""
+        echo "        List of failed modules:"
+        for mod in $failed_modules; do
+            echo "        $mod"
+        done
+        echo "========"
+        echo ""
     fi
 }
 
 #------------------------------------------------------------------------------
-#			Function: process_modules
+#                        Function: process_modules
 #------------------------------------------------------------------------------
 #
 # Loop through each module to release
@@ -259,19 +259,19 @@ print_epilog() {
 #
 process_modules() {
     for MODULE_RPATH in ${INPUT_MODULES}; do
-	if ! process_module ; then
-	    echo "Error: processing module \"$MODULE_RPATH\" failed."
-	    failed_modules="$failed_modules $MODULE_RPATH"
-	    if [ x"$NO_QUIT" = x ]; then
-		print_epilog
-		exit 1
-	    fi
-	fi
+        if ! process_module ; then
+            echo "Error: processing module \"$MODULE_RPATH\" failed."
+            failed_modules="$failed_modules $MODULE_RPATH"
+            if [ x"$NO_QUIT" = x ]; then
+                print_epilog
+                exit 1
+            fi
+        fi
     done
 }
 
 #------------------------------------------------------------------------------
-#			Function: get_section
+#                        Function: get_section
 #------------------------------------------------------------------------------
 # Code 'return 0' on success
 # Code 'return 1' on error
@@ -283,42 +283,42 @@ get_section() {
     # Obtain the git url in order to find the section to which this module belongs
     full_module_url=`git config --get remote.$remote_name.url | sed 's:\.git$::'`
     if [ $? -ne 0 ]; then
-	echo "Error: unable to obtain git url for remote \"$remote_name\"."
-	return 1
+        echo "Error: unable to obtain git url for remote \"$remote_name\"."
+        return 1
     fi
 
     # The last part of the git url will tell us the section. Look for xorg first
     echo "$full_module_url"
     module_url=`echo "$full_module_url" | $GREP -o "/xorg/.*"`
     if [ $? -eq 0 ]; then
-	module_url=`echo $module_url | cut -d'/' -f3,4`
+        module_url=`echo $module_url | cut -d'/' -f3,4`
     else
-	# The look for mesa, xcb, etc...
-	module_url=`echo "$full_module_url" | $GREP -o -e "linuxwacom/.*"`
-	if [ $? -eq 0 ]; then
-	     module_url=`echo $module_url | cut -d'/' -f2,3`
-	else
-	    echo "Error: unable to locate a valid project url from \"$full_module_url\"."
-	    echo "Cannot establish url as linuxwacom"
-	    cd $top_src
-	    return 1
-	fi
+        # The look for mesa, xcb, etc...
+        module_url=`echo "$full_module_url" | $GREP -o -e "linuxwacom/.*"`
+        if [ $? -eq 0 ]; then
+             module_url=`echo $module_url | cut -d'/' -f2,3`
+        else
+            echo "Error: unable to locate a valid project url from \"$full_module_url\"."
+            echo "Cannot establish url as linuxwacom"
+            cd $top_src
+            return 1
+        fi
     fi
 
     # Find the section (subdirs) where the tarballs are to be uploaded
     # The module relative path can be app/xfs, xserver, or mesa/drm for example
     section=`echo $module_url | cut -d'/' -f1`
     if [ $? -ne 0 ]; then
-	echo "Error: unable to extract section from $module_url first field."
-	return 1
+        echo "Error: unable to extract section from $module_url first field."
+        return 1
     fi
 
     if [ x"$section" = xlinuxwacom ]; then
-	section=`echo $module_url | cut -d'/' -f2`
-	if [ $? -ne 0 ]; then
-	    echo "Error: unable to extract section from $module_url second field."
-	    return 1
-	fi
+        section=`echo $module_url | cut -d'/' -f2`
+        if [ $? -ne 0 ]; then
+            echo "Error: unable to extract section from $module_url second field."
+            return 1
+        fi
     fi
 
     return 0
@@ -334,20 +334,20 @@ get_section() {
 #
 sign_or_fail() {
     if [ -n "$1" ]; then
-	sig=$1.sig
-	rm -f $sig
-	$GPG -b $1 1>&2
-	if [ $? -ne 0 ]; then
-	    echo "Error: failed to sign $1." >&2
-	    return 1
-	fi
-	echo $sig
+        sig=$1.sig
+        rm -f $sig
+        $GPG -b $1 1>&2
+        if [ $? -ne 0 ]; then
+            echo "Error: failed to sign $1." >&2
+            return 1
+        fi
+        echo $sig
     fi
     return 0
 }
 
 #------------------------------------------------------------------------------
-#			Function: process_module
+#                        Function: process_module
 #------------------------------------------------------------------------------
 # Code 'return 0' on success to process the next module
 # Code 'return 1' on error to process next module if invoked with --no-quit
@@ -360,59 +360,59 @@ process_module() {
 
     # This is the location where the script has been invoked
     if [ ! -d $MODULE_RPATH ] ; then
-	echo "Error: $MODULE_RPATH cannot be found under $top_src."
-	return 1
+        echo "Error: $MODULE_RPATH cannot be found under $top_src."
+        return 1
     fi
 
     # Change directory to be in the git module
     cd $MODULE_RPATH
     if [ $? -ne 0 ]; then
-	echo "Error: failed to cd to $MODULE_RPATH."
-	return 1
+        echo "Error: failed to cd to $MODULE_RPATH."
+        return 1
     fi
 
     # ----- Now in the git module *root* directory ----- #
 
     # Check that this is indeed a git module
     if [ ! -d .git ]; then
-	echo "Error: there is no git module here: `pwd`"
-	return 1
+        echo "Error: there is no git module here: `pwd`"
+        return 1
     fi
 
     # Check for uncommitted/queued changes.
     check_local_changes
     if [ $? -ne 0 ]; then
-	return 1
+        return 1
     fi
 
     if [ -e "$top_src/configure.ac" ]; then
-	echo "Using autotools to build"
-	use_meson=false
-	buildfile="config.status"
+        echo "Using autotools to build"
+        use_meson=false
+        buildfile="config.status"
     else
-	echo "Using meson to build"
-	use_meson=true
-	buildfile="build.ninja"
+        echo "Using meson to build"
+        use_meson=true
+        buildfile="build.ninja"
     fi
 
     # Change directory to be in the git build directory (could be out-of-source)
     # More than one can be found when distcheck has run and failed
     configNum=`find . -name $buildfile -type f | wc -l | sed 's:^ *::'`
     if [ $? -ne 0 -o "$configNum" = "0" ]; then
-	echo "Error: failed to locate $buildfile."
-	echo "Has the module been configured?"
-	return 1
+        echo "Error: failed to locate $buildfile."
+        echo "Has the module been configured?"
+        return 1
     elif [ x"$configNum" != x1 ]; then
-	echo "Error: more than one $buildfile file was found,"
-	echo "       clean-up previously failed attempts at distcheck"
-	return 1
+        echo "Error: more than one $buildfile file was found,"
+        echo "       clean-up previously failed attempts at distcheck"
+        return 1
     fi
     build_dir=`find . -name $buildfile -type f -printf "%h\n"`
     cd $build_dir
     if [ $? -ne 0 ]; then
-	echo "Error: failed to cd to $MODULE_RPATH/$build_dir."
-	cd $top_src
-	return 1
+        echo "Error: failed to cd to $MODULE_RPATH/$build_dir."
+        cd $top_src
+        return 1
     fi
 
     # ----- Now in the git module *build* directory ----- #
@@ -426,39 +426,39 @@ process_module() {
     # Obtain the section
     get_section
     if [ $? -ne 0 ]; then
-	cd $top_src
-	return 1
+        cd $top_src
+        return 1
     fi
 
     # Run 'make dist/distcheck' to ensure the tarball matches the git module content
     # Important to run make dist/distcheck before looking in Makefile, may need to reconfigure
     if $use_meson; then
-	echo "Info: running \"ninja dist\" to create tarballs:"
-	ninja dist
-	if [ $? -ne 0 ]; then
-		echo "Error: \"ninja dist\" failed."
-		cd $top_src
-		return 1
-	fi
+        echo "Info: running \"ninja dist\" to create tarballs:"
+        ninja dist
+        if [ $? -ne 0 ]; then
+                echo "Error: \"ninja dist\" failed."
+                cd $top_src
+                return 1
+        fi
 
-	# Find out the tarname from meson
-	pkg_name=`meson introspect . --projectinfo | jq -r .descriptive_name`
-	pkg_version=`meson introspect . --projectinfo | jq -r .version`
+        # Find out the tarname from meson
+        pkg_name=`meson introspect . --projectinfo | jq -r .descriptive_name`
+        pkg_version=`meson introspect . --projectinfo | jq -r .version`
 
-	# tarballs are in builddir/meson-dist
-	cd meson-dist
+        # tarballs are in builddir/meson-dist
+        cd meson-dist
     else
-	echo "Info: running \"make $MAKE_DIST_CMD\" to create tarballs:"
-	${MAKE} $MAKEFLAGS $MAKE_DIST_CMD > /dev/null
-	if [ $? -ne 0 ]; then
-		echo "Error: \"$MAKE $MAKEFLAGS $MAKE_DIST_CMD\" failed."
-		cd $top_src
-		return 1
-	fi
+        echo "Info: running \"make $MAKE_DIST_CMD\" to create tarballs:"
+        ${MAKE} $MAKEFLAGS $MAKE_DIST_CMD > /dev/null
+        if [ $? -ne 0 ]; then
+                echo "Error: \"$MAKE $MAKEFLAGS $MAKE_DIST_CMD\" failed."
+                cd $top_src
+                return 1
+        fi
 
-	# Find out the tarname from the makefile
-	pkg_name=`$GREP '^PACKAGE = ' Makefile | sed 's|PACKAGE = ||'`
-	pkg_version=`$GREP '^VERSION = ' Makefile | sed 's|VERSION = ||'`
+        # Find out the tarname from the makefile
+        pkg_name=`$GREP '^PACKAGE = ' Makefile | sed 's|PACKAGE = ||'`
+        pkg_version=`$GREP '^VERSION = ' Makefile | sed 's|VERSION = ||'`
     fi
 
     tar_name="$pkg_name-$pkg_version"
@@ -469,9 +469,9 @@ process_module() {
     [ -e $tarxz ] && ls -l $tarxz || unset tarxz
 
     if [ -z "$tarbz2" -a -z "$tarxz" ]; then
-	echo "Error: no compatible tarballs found."
-	cd $top_src
-	return 1
+        echo "Error: no compatible tarballs found."
+        cd $top_src
+        return 1
     fi
 
     # Only one of the tarballs exists
@@ -491,92 +491,92 @@ process_module() {
     # It should not have been tagged yet (the script will do it later)
     local_top_commit_sha=`git  rev-list --max-count=1 HEAD`
     if [ $? -ne 0 ]; then
-	echo "Error: unable to obtain the local top commit id."
-	cd $top_src
-	return 1
+        echo "Error: unable to obtain the local top commit id."
+        cd $top_src
+        return 1
     fi
 
     # Check that the top commit looks like a version bump
     git diff --unified=0 HEAD^ | $GREP -F $pkg_version >/dev/null 2>&1
     if [ $? -ne 0 ]; then
-	# Wayland repos use  m4_define([wayland_major_version], [0])
-	git diff --unified=0 HEAD^ | $GREP -E "(major|minor|micro)_version" >/dev/null 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Error: the local top commit does not look like a version bump."
-	    echo "       the diff does not contain the string \"$pkg_version\"."
-	    local_top_commit_descr=`git log --oneline --max-count=1 $local_top_commit_sha`
-	    echo "       the local top commit is: \"$local_top_commit_descr\""
-	    cd $top_src
-	    return 1
-	fi
+        # Wayland repos use  m4_define([wayland_major_version], [0])
+        git diff --unified=0 HEAD^ | $GREP -E "(major|minor|micro)_version" >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "Error: the local top commit does not look like a version bump."
+            echo "       the diff does not contain the string \"$pkg_version\"."
+            local_top_commit_descr=`git log --oneline --max-count=1 $local_top_commit_sha`
+            echo "       the local top commit is: \"$local_top_commit_descr\""
+            cd $top_src
+            return 1
+        fi
     fi
 
     # Check that the top commit has been pushed to remote
     remote_top_commit_sha=`git  rev-list --max-count=1 $remote_name/$remote_branch`
     if [ $? -ne 0 ]; then
-	echo "Error: unable to obtain top commit from the remote repository."
-	cd $top_src
-	return 1
+        echo "Error: unable to obtain top commit from the remote repository."
+        cd $top_src
+        return 1
     fi
     if [ x"$remote_top_commit_sha" != x"$local_top_commit_sha" ]; then
-	echo "Error: the local top commit has not been pushed to the remote."
-	local_top_commit_descr=`git log --oneline --max-count=1 $local_top_commit_sha`
-	echo "       the local top commit is: \"$local_top_commit_descr\""
-	cd $top_src
-	return 1
+        echo "Error: the local top commit has not been pushed to the remote."
+        local_top_commit_descr=`git log --oneline --max-count=1 $local_top_commit_sha`
+        echo "       the local top commit is: \"$local_top_commit_descr\""
+        cd $top_src
+        return 1
     fi
 
     # If a tag exists with the the tar name, ensure it is tagging the top commit
     # It may happen if the version set in configure.ac has been previously released
     tagged_commit_sha=`git  rev-list --max-count=1 $tag_name 2>/dev/null`
     if [ $? -eq 0 ]; then
-	# Check if the tag is pointing to the top commit
-	if [ x"$tagged_commit_sha" != x"$remote_top_commit_sha" ]; then
-	    echo "Error: the \"$tag_name\" already exists."
-	    echo "       this tag is not tagging the top commit."
-	    remote_top_commit_descr=`git log --oneline --max-count=1 $remote_top_commit_sha`
-	    echo "       the top commit is: \"$remote_top_commit_descr\""
-	    local_tag_commit_descr=`git log --oneline --max-count=1 $tagged_commit_sha`
-	    echo "       tag \"$tag_name\" is tagging some other commit: \"$local_tag_commit_descr\""
-	    cd $top_src
-	    return 1
-	else
-	    echo "Info: module already tagged with \"$tag_name\"."
-	fi
+        # Check if the tag is pointing to the top commit
+        if [ x"$tagged_commit_sha" != x"$remote_top_commit_sha" ]; then
+            echo "Error: the \"$tag_name\" already exists."
+            echo "       this tag is not tagging the top commit."
+            remote_top_commit_descr=`git log --oneline --max-count=1 $remote_top_commit_sha`
+            echo "       the top commit is: \"$remote_top_commit_descr\""
+            local_tag_commit_descr=`git log --oneline --max-count=1 $tagged_commit_sha`
+            echo "       tag \"$tag_name\" is tagging some other commit: \"$local_tag_commit_descr\""
+            cd $top_src
+            return 1
+        else
+            echo "Info: module already tagged with \"$tag_name\"."
+        fi
     else
-	# Tag the top commit with the tar name
-	if [ x"$DRY_RUN" = x ]; then
-	    git tag -s -m $tag_name $tag_name
-	    if [ $? -ne 0 ]; then
-		echo "Error:  unable to tag module with \"$tag_name\"."
-		cd $top_src
-		return 1
-	    else
-		echo "Info: module tagged with \"$tag_name\"."
-	    fi
-	else
-	    echo "Info: skipping the commit tagging in dry-run mode."
-	fi
+        # Tag the top commit with the tar name
+        if [ x"$DRY_RUN" = x ]; then
+            git tag -s -m $tag_name $tag_name
+            if [ $? -ne 0 ]; then
+                echo "Error:  unable to tag module with \"$tag_name\"."
+                cd $top_src
+                return 1
+            else
+                echo "Info: module tagged with \"$tag_name\"."
+            fi
+        else
+            echo "Info: skipping the commit tagging in dry-run mode."
+        fi
     fi
 
     # Pushing the top commit tag to the remote repository
     if [ x$DRY_RUN = x ]; then
-	echo "Info: pushing tag \"$tag_name\" to remote \"$remote_name\":"
-	git push $remote_name $tag_name
-	if [ $? -ne 0 ]; then
-	    echo "Error: unable to push tag \"$tag_name\" to the remote repository."
-	    echo "       it is recommended you fix this manually and not run the script again"
-	    cd $top_src
-	    return 1
-	fi
+        echo "Info: pushing tag \"$tag_name\" to remote \"$remote_name\":"
+        git push $remote_name $tag_name
+        if [ $? -ne 0 ]; then
+            echo "Error: unable to push tag \"$tag_name\" to the remote repository."
+            echo "       it is recommended you fix this manually and not run the script again"
+            cd $top_src
+            return 1
+        fi
     else
-	echo "Info: skipped pushing tag \"$tag_name\" to the remote repository in dry-run mode."
+        echo "Info: skipped pushing tag \"$tag_name\" to the remote repository in dry-run mode."
     fi
 
     if [ x$DRY_RUN = x ]; then
         release_to_github $pkg_name
     else
-	echo "Info: skipped pushing release to github in dry-run mode."
+        echo "Info: skipped pushing release to github in dry-run mode."
     fi
 
     # --------- Generate the announce e-mail ------------------
@@ -587,17 +587,17 @@ process_module() {
     tag_previous=`git describe --abbrev=0 HEAD^ 2>/dev/null`
     # Git fails with rc=128 if no tags can be found prior to HEAD^
     if [ $? -ne 0 ]; then
-	if [ $? -ne 0 ]; then
-	    echo "Warning: unable to find a previous tag."
-	    echo "         perhaps a first release on this branch."
-	    echo "         Please check the commit history in the announce."
-	fi
+        if [ $? -ne 0 ]; then
+            echo "Warning: unable to find a previous tag."
+            echo "         perhaps a first release on this branch."
+            echo "         Please check the commit history in the announce."
+        fi
     fi
     if [ x"$tag_previous" != x ]; then
-	# The top commit may not have been tagged in dry-run mode. Use commit.
-	tag_range=$tag_previous..$local_top_commit_sha
+        # The top commit may not have been tagged in dry-run mode. Use commit.
+        tag_range=$tag_previous..$local_top_commit_sha
     else
-	tag_range=$tag_name
+        tag_range=$tag_name
     fi
     generate_announce > "$tar_name.announce"
     echo "Info: [ANNOUNCE] template generated in \"$tar_name.announce\" file."
@@ -629,7 +629,7 @@ process_module() {
 }
 
 #------------------------------------------------------------------------------
-#			Function: usage
+#                        Function: usage
 #------------------------------------------------------------------------------
 # Displays the script usage and exits successfully
 #
@@ -660,7 +660,7 @@ HELP
 }
 
 #------------------------------------------------------------------------------
-#			Script main line
+#                        Script main line
 #------------------------------------------------------------------------------
 #
 
@@ -673,18 +673,18 @@ check_for_jq
 # Choose which grep program to use (on Solaris, must be gnu grep)
 if [ "x$GREP" = "x" ] ; then
     if [ -x /usr/gnu/bin/grep ] ; then
-	GREP=/usr/gnu/bin/grep
+        GREP=/usr/gnu/bin/grep
     else
-	GREP=grep
+        GREP=grep
     fi
 fi
 
 # Find path for GnuPG v2
 if [ "x$GPG" = "x" ] ; then
     if [ -x /usr/bin/gpg2 ] ; then
-	GPG=/usr/bin/gpg2
+        GPG=/usr/bin/gpg2
     else
-	GPG=gpg
+        GPG=gpg
     fi
 fi
 
@@ -699,73 +699,73 @@ do
     # You really only want to do this if you're releasing a module you can't
     # possibly build-test.  Please consider carefully the wisdom of doing so.
     --dist)
-	MAKE_DIST_CMD=dist
-	;;
+        MAKE_DIST_CMD=dist
+        ;;
     # Use 'distcheck' to create tarballs
     --distcheck)
-	MAKE_DIST_CMD=distcheck
-	;;
+        MAKE_DIST_CMD=distcheck
+        ;;
     # Does everything except uploading tarball
     --dry-run)
-	DRY_RUN=yes
-	;;
+        DRY_RUN=yes
+        ;;
     # Force overwriting an existing release
     # Use only if nothing changed in the git repo
     --force)
-	FORCE=yes
-	;;
+        FORCE=yes
+        ;;
     # Display this help and exit successfully
     --help)
-	usage
-	exit 0
-	;;
+        usage
+        exit 0
+        ;;
     # Release the git modules specified in <file>
     --modfile)
-	check_option_args $1 $2
-	shift
-	MODFILE=$1
-	;;
+        check_option_args $1 $2
+        shift
+        MODFILE=$1
+        ;;
     # The jhbuild moduleset to update with relase info
     --moduleset)
-	check_option_args $1 $2
-	shift
-	JH_MODULESET=$1
-	;;
+        check_option_args $1 $2
+        shift
+        JH_MODULESET=$1
+        ;;
     # Do not quit after error; just print error message
     --no-quit)
-	NO_QUIT=yes
-	;;
+        NO_QUIT=yes
+        ;;
     # Github username. Optional. Append colon and Personal
     # Access Token to username if 2FA is enabled on the user
     # account doing the release
     --github)
-	GH_USERNAME=$2
-	shift
-	;;
+        GH_USERNAME=$2
+        shift
+        ;;
     --*)
-	echo ""
-	echo "Error: unknown option: $1"
-	echo ""
-	usage
-	exit 1
-	;;
+        echo ""
+        echo "Error: unknown option: $1"
+        echo ""
+        usage
+        exit 1
+        ;;
     -*)
-	echo ""
-	echo "Error: unknown option: $1"
-	echo ""
-	usage
-	exit 1
-	;;
+        echo ""
+        echo "Error: unknown option: $1"
+        echo ""
+        usage
+        exit 1
+        ;;
     *)
-	if [ x"${MODFILE}" != x ]; then
-	    echo ""
-	    echo "Error: specifying both modules and --modfile is not permitted"
-	    echo ""
-	    usage
-	    exit 1
-	fi
-	INPUT_MODULES="${INPUT_MODULES} $1"
-	;;
+        if [ x"${MODFILE}" != x ]; then
+            echo ""
+            echo "Error: specifying both modules and --modfile is not permitted"
+            echo ""
+            usage
+            exit 1
+        fi
+        INPUT_MODULES="${INPUT_MODULES} $1"
+        ;;
     esac
 
     shift
