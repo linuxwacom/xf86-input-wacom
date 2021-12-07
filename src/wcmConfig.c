@@ -106,7 +106,9 @@ static WacomDevicePtr wcmAllocate(InputInfoPtr pInfo, const char *name)
 error:
 	free(tool);
 	wcmFreeCommon(&common);
-	free(priv->name);
+	if (priv) {
+		free(priv->name);
+	}
 	free(priv);
 	return NULL;
 }
