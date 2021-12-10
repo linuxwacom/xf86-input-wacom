@@ -251,9 +251,6 @@ void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, /* reltime */
 		 WacomTimerCallback func, void *userdata);
 
 
-/* The driver has implementations for these in wcmXCommand.c. If you're not
- * linking that file, then you need to provide the implementations for these
- */
 void wcmUpdateRotationProperty(WacomDevicePtr priv);
 void wcmUpdateSerialProperty(WacomDevicePtr priv);
 void wcmUpdateHWTouchProperty(WacomDevicePtr priv);
