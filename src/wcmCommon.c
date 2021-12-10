@@ -80,25 +80,16 @@ void set_absolute(WacomDevicePtr priv, Bool absolute)
 * wcmDevSwitchModeCall --
 *****************************************************************************/
 
-int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode)
+Bool wcmDevSwitchModeCall(WacomDevicePtr priv, Bool absolute)
 {
-	DBG(3, priv, "to mode=%d\n", mode);
+	DBG(3, priv, "to mode=%s\n", absolute ? "absolute" : "relative");
 
 	/* Pad is always in absolute mode.*/
 	if (IsPad(priv))
-		return (mode == Absolute) ? Success : XI_BadMode;
-
-	if ((mode == Absolute) && !is_absolute(priv))
-		set_absolute(priv, TRUE);
-	else if ((mode == Relative) && is_absolute(priv))
-		set_absolute(priv, FALSE);
-	else if ( (mode != Absolute) && (mode != Relative))
-	{
-		DBG(10, priv, "invalid mode=%d\n", mode);
-		return XI_BadMode;
-	}
-
-	return Success;
+		return absolute;
+	else
+		set_absolute(priv, absolute);
+	return TRUE;
 }
 
 
