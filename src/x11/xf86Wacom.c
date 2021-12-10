@@ -851,7 +851,6 @@ static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 		is_absolute = FALSE;
 	}
 
-	/* Share this call with sendAButton in wcmCommon.c */
 	return wcmDevSwitchModeCall(priv, is_absolute) ? Success : XI_BadMode;
 }
 
