@@ -47,7 +47,7 @@ ChangeLog:
 dist-hook: ChangeLog INSTALL
 
 config-ver.h: config-ver.h.in version
-	sed -e 's/@GITVERSION@/$$(cat version)/' < $< > $@
+	sed -e "s/@GITVERSION@/$$(cat version)/" < $< > $@
 
 version: FORCE
 	if test -x $(srcdir)/git-version-gen; then $(srcdir)/git-version-gen -u; fi
