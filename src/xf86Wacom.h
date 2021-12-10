@@ -128,7 +128,7 @@ extern Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary, Bool is
 extern Bool wcmPostInitParseOptions(WacomDevicePtr priv, Bool is_primary, Bool is_dependent);
 extern int wcmParseSerials(WacomDevicePtr priv);
 
-extern int wcmDevSwitchModeCall(WacomDevicePtr priv, int mode);
+extern Bool wcmDevSwitchModeCall(WacomDevicePtr priv, Bool absolute);
 
 extern void wcmResetButtonAction(WacomDevicePtr priv, int button);
 extern void wcmResetStripAction(WacomDevicePtr priv, int index);

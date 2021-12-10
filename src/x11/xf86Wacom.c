@@ -838,14 +838,21 @@ out:
 static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)dev->public.devicePrivate;
+	Bool is_absolute = TRUE;
 #ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
 	DBG(3, priv, "dev=%p mode=%d\n",
 		(void *)dev, mode);
 #endif
+	if (mode != Absolute) {
+		if (mode != Relative)
+			return XI_BadMode;
+		is_absolute = FALSE;
+	}
+
 	/* Share this call with sendAButton in wcmCommon.c */
-	return wcmDevSwitchModeCall(priv, mode);
+	return wcmDevSwitchModeCall(priv, is_absolute) ? Success : XI_BadMode;
 }
 
 static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
