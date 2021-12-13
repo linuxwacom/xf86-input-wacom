@@ -533,6 +533,8 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 		case WACOM_AXIS_RING2:
 			index = 6;
 			break;
+		default:
+			abort();
 	}
 
 	InitValuatorAxisStruct(pInfo->dev, index,
