@@ -1347,15 +1347,15 @@ static void usbParseAbsEvent(WacomCommonPtr common,
  *
  * @return The new button mask
  */
-static int
-mod_buttons(WacomCommonPtr common, int buttons, int btn, int state)
+static unsigned int
+mod_buttons(WacomCommonPtr common, unsigned int buttons, unsigned int btn, Bool state)
 {
-	int mask;
+	unsigned int mask;
 
 	if (btn >= sizeof(int) * 8)
 	{
 		wcmLogCommonSafe(common, W_ERROR,
-		       "%s: Invalid button number %d. Insufficient storage\n",
+		       "%s: Invalid button number %u. Insufficient storage\n",
 		       __func__, btn);
 		return buttons;
 	}
@@ -2073,8 +2073,8 @@ TEST_CASE(test_mod_buttons)
 	WacomCommonRec common = {0};
 	for (size_t i = 0; i < sizeof(int) * 8; i++)
 	{
-		int buttons = mod_buttons(&common, 0, i, 1);
-		assert(buttons == (1 << i));
+		unsigned int buttons = mod_buttons(&common, 0, i, 1);
+		assert(buttons == (1u << i));
 		buttons = mod_buttons(&common, 0, i, 0);
 		assert(buttons == 0);
 	}

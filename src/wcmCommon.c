@@ -245,12 +245,12 @@ int wcmReadPacket(WacomDevicePtr priv)
  *   previous one.
  ****************************************************************************/
 
-static void wcmSendButtons(WacomDevicePtr priv, const WacomDeviceState* ds, int buttons,
+static void wcmSendButtons(WacomDevicePtr priv, const WacomDeviceState* ds, unsigned int buttons,
 			   const WacomAxisData *axes)
 {
 	unsigned int button, mask, first_button;
 	WacomCommonPtr common = priv->common;
-	DBG(6, priv, "buttons=%d\n", buttons);
+	DBG(6, priv, "buttons=%u\n", buttons);
 
 	 /* button behaviour (TPC button on):
 		if only tip is pressed/released, send button 1 events
@@ -607,7 +607,7 @@ static void sendWheelStripEvents(WacomDevicePtr priv, const WacomDeviceState* ds
 static void sendCommonEvents(WacomDevicePtr priv, const WacomDeviceState* ds,
 			     const WacomAxisData *axes)
 {
-	int buttons = ds->buttons;
+	unsigned int buttons = ds->buttons;
 	int x = 0, y = 0;
 
 	wcmAxisGet(axes, WACOM_AXIS_X, &x);
@@ -905,7 +905,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 
 	wcmAxisDump(&axes, dump, sizeof(dump));
 	DBG(6, priv, "%s o_prox=%d\tprox=%d\t%s\tid=%d"
-		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
+		"\tserial=%u\tbutton=%s\tbuttons=%u\n",
 		is_absolute(priv) ? "abs" : "rel", priv->oldState.proximity,
 		ds->proximity, dump, id, serial, is_button ? "true" : "false",
 		ds->buttons);
@@ -1130,7 +1130,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	ds = *pState;
 
 	DBG(10, common,
-		"c=%u i=%d t=%d s=0x%x x=%d y=%d b=%d "
+		"c=%u i=%d t=%d s=0x%x x=%d y=%d b=%u "
 		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
 		"t=%d px=%d st=%d cs=%d \n",
 		channel,
