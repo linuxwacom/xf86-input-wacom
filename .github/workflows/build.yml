@@ -6,7 +6,7 @@ env:
   PIP_PACKAGES: meson ninja
 
 jobs:
-  compile:
+  compile-with-autotools:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -42,7 +42,7 @@ jobs:
           pushd _build > /dev/null
           make distcheck
           popd > /dev/null
-  meson:
+  compile-with-meson:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
