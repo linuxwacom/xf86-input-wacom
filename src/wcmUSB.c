@@ -38,7 +38,7 @@ typedef struct {
 	Bool wcmPenTouch;
 	Bool wcmUseMT;
 	int wcmMTChannel;
-	int wcmEventCnt;
+	unsigned int wcmEventCnt;
 	struct input_event wcmEvents[MAX_USB_EVENTS];
 	uint32_t wcmEventFlags;      /* event types received in this frame */
 	int nbuttons;                /* total number of buttons */
@@ -981,7 +981,7 @@ static void usbParseEvent(WacomDevicePtr priv,
 	/* space left? bail if not. */
 	if (private->wcmEventCnt >= ARRAY_SIZE(private->wcmEvents))
 	{
-		wcmLogSafe(priv, W_ERROR, "%s: usbParse: Exceeded event queue (%d) \n",
+		wcmLogSafe(priv, W_ERROR, "%s: usbParse: Exceeded event queue (%u) \n",
 		       priv->name, private->wcmEventCnt);
 		usbResetEventCounter(private);
 		return;
@@ -1809,7 +1809,7 @@ static Bool usbIsTabletToolInProx(int device_type, int proximity)
 
 static void usbDispatchEvents(WacomDevicePtr priv)
 {
-	int i, c;
+	int c;
 	WacomDeviceState *ds;
 	struct input_event* event;
 	WacomCommonPtr common = priv->common;
@@ -1817,7 +1817,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 	wcmUSBData* private = common->private;
 	WacomDeviceState dslast = common->wcmChannel[private->lastChannel].valid.state;
 
-	DBG(6, common, "%d events received\n", private->wcmEventCnt);
+	DBG(6, common, "%u events received\n", private->wcmEventCnt);
 
 	private->wcmDeviceType = usbInitToolType(priv, wcmGetFd(priv),
 	                                         private->wcmEvents,
@@ -1868,11 +1868,11 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 	ds->serial_num = private->wcmLastToolSerial;
 
 	/* loop through all events in group */
-	for (i=0; i<private->wcmEventCnt; ++i)
+	for (unsigned int i = 0; i < private->wcmEventCnt; ++i)
 	{
 		event = private->wcmEvents + i;
 		DBG(11, common,
-			"event[%d]->type=%d code=%d value=%d\n",
+			"event[%u]->type=%d code=%d value=%d\n",
 			i, event->type, event->code, event->value);
 
 		/* Check for events to be ignored and skip them up front. */
