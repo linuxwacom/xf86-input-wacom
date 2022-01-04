@@ -91,7 +91,7 @@ typedef struct _param
 	const char *desc;	/* description */
 	const char *prop_name;	/* property name */
 	const int prop_format;	/* property format */
-	const int prop_offset;	/* offset (index) into the property values */
+	const unsigned int prop_offset;	/* offset (index) into the property values */
 	const int arg_count;   /* extra number of items after first one */
 	const unsigned int prop_flags;
 	void (*set_func)(Display *dpy, XDevice *dev, struct _param *param, int argc, char **argv); /* handler function, if appropriate */
@@ -849,7 +849,7 @@ static Bool test_property(Display *dpy, XDevice* dev, Atom prop)
 
 static void list_one_device(Display *dpy, XDeviceInfo *info)
 {
-	static int	wacom_prop = 0;
+	static unsigned int wacom_prop = 0;
 	int		natoms;
 	Atom		*atoms;
 	XDevice		*dev;
@@ -1442,7 +1442,7 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
  * @param  argc        Number of command line arguments we've been passed
  * @param  argv        Command line arguments we need to parse
  */
-static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, int offset, int argc, char **argv)
+static void special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, unsigned int offset, int argc, char **argv)
 {
 	unsigned long *data, *btnact_data;
 	Atom type, prop = 0;
@@ -1535,7 +1535,7 @@ out:
 static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
 {
 	Atom action_prop;
-	int offset = param->prop_offset;
+	unsigned int offset = param->prop_offset;
 
 	TRACE("Mapping %s for device %lu.\n", param->name, dev->device_id);
 
@@ -1554,7 +1554,7 @@ static void map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, ch
 
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
 	{
-		if (sscanf(argv[0], "%d", &offset) != 1 || offset <= 0)
+		if (sscanf(argv[0], "%u", &offset) != 1 || offset <= 0)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
 			return;
@@ -1981,7 +1981,7 @@ out:
  * @return       0 on failure, 1 otherwise
  */
 static int get_actions(Display *dpy, XDevice *dev,
-				  param_t *param, int offset)
+				  param_t *param, unsigned int offset)
 {
 	Atom prop, type;
 	int format;
@@ -2087,7 +2087,7 @@ static int get_actions(Display *dpy, XDevice *dev,
  * @param offset Offset into the property specified in param
  * @return       0 on failure, 1 otherwise
  */
-static int get_button(Display *dpy, XDevice *dev, param_t *param, int offset)
+static int get_button(Display *dpy, XDevice *dev, param_t *param, unsigned int offset)
 {
 	Atom prop, type;
 	int format;
@@ -2707,7 +2707,7 @@ static void get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	}
 
 
-	TRACE("Getting property %lu, offset %d\n", prop, param->prop_offset);
+	TRACE("Getting property %lu, offset %u\n", prop, param->prop_offset);
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
 				&type, &format, &nitems, &bytes_after, &data);
 
