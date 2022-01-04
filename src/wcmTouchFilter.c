@@ -56,7 +56,7 @@ static void wcmFingerZoom(WacomDevicePtr priv);
  * @param[in] num     Contact number to search for
  * @return            Pointer to the associated channel, or NULL if none found
  */
-static WacomChannelPtr getContactNumber(WacomCommonPtr common, int num)
+static WacomChannelPtr getContactNumber(WacomCommonPtr common, unsigned int num)
 {
 	for (size_t i = 0; i < MAX_CHANNELS; i++)
 	{
@@ -66,7 +66,7 @@ static WacomChannelPtr getContactNumber(WacomCommonPtr common, int num)
 			return channel;
 	}
 
-	DBG(10, common, "Channel for contact number %d not found.\n", num);
+	DBG(10, common, "Channel for contact number %u not found.\n", num);
 	return NULL;
 }
 
@@ -79,15 +79,14 @@ static WacomChannelPtr getContactNumber(WacomCommonPtr common, int num)
  * @param[in]  num     Length of states list
  * @param[in]  age     Age of state information, zero being the most-current
  */
-static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], int num, int age)
+static void getStateHistory(WacomCommonPtr common, WacomDeviceState states[], unsigned int num, unsigned int age)
 {
-	int i;
-	for (i = 0; i < num; i++)
+	for (unsigned int i = 0; i < num; i++)
 	{
 		WacomChannelPtr channel = getContactNumber(common, i);
 		if (channel == NULL || i > ARRAY_SIZE(channel->valid.states))
 		{
-			DBG(7, common, "Could not get state history for contact %d, age %d.\n", i, age);
+			DBG(7, common, "Could not get state history for contact %u, age %u.\n", i, age);
 			continue;
 		}
 		states[i] = channel->valid.states[age];
@@ -139,7 +138,7 @@ wcmSendTouchEvent(WacomDevicePtr priv, WacomChannelPtr channel, Bool no_update)
  * @param[in] contact_id  ID of the contact to send event for (at minimum)
  */
 static void
-wcmFingerMultitouch(WacomDevicePtr priv, int contact_id) {
+wcmFingerMultitouch(WacomDevicePtr priv, unsigned int contact_id) {
 	Bool lag_mode = priv->common->wcmGestureMode == GESTURE_LAG_MODE;
 	Bool prox = FALSE;
 
@@ -389,7 +388,7 @@ void wcmCancelGesture(WacomDevicePtr priv)
 }
 
 /* parsing gesture mode according to 2FGT data */
-void wcmGestureFilter(WacomDevicePtr priv, int touch_id)
+void wcmGestureFilter(WacomDevicePtr priv, unsigned int touch_id)
 {
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {}, dsLast[2] = {};
