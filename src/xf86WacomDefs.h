@@ -363,10 +363,10 @@ extern WacomHWClass *WacomGetClassUSB(void);
 #define PAD_CHANNEL (MAX_CHANNELS-1)
 
 typedef struct {
-	int wcmZoomDistance;	       /* minimum distance for a zoom touch gesture */
-	int wcmScrollDistance;	       /* minimum motion before sending a scroll gesture */
-	int wcmScrollDirection;	       /* store the vertical or horizontal bit in use */
-	int wcmGestureUsed;	       /* retain used gesture count within one in-prox event */
+	unsigned int wcmZoomDistance;        /* minimum distance for a zoom touch gesture */
+	unsigned int wcmScrollDistance;      /* minimum motion before sending a scroll gesture */
+	unsigned int wcmScrollDirection;     /* store the vertical or horizontal bit in use */
+	unsigned int wcmGestureUsed;         /* retain used gesture count within one in-prox event */
 	int wcmTapTime;	   	       /* minimum time between taps for a right click */
 } WacomGesturesParameters;
 
