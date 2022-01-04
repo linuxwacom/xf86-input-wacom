@@ -1227,7 +1227,7 @@ TEST_CASE(test_flag_set)
 
 	for (size_t i = 0; i < sizeof(flags); i++)
 	{
-		int mask = 1 << i;
+		unsigned int mask = 1 << i;
 		flags = 0;
 
 		assert(!MaskIsSet(flags, mask));

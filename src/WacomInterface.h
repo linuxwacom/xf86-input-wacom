@@ -198,12 +198,15 @@ static inline void wcmAxisValue(const WacomAxisData *data,
 			       char *buf, size_t len)
 {
 	int val = 0;
+	int rc;
 
 	if (!wcmAxisGet(data, which, &val)) {
-		assert(snprintf(buf, len, "N/A") < len);
+		rc = snprintf(buf, len, "N/A");
+		assert(rc > 0 && (size_t)rc < len);
 		return;
 	}
-	assert(snprintf(buf, len, "%d", val) < len);
+	rc = snprintf(buf, len, "%d", val);
+	assert(rc > 0 && (size_t)rc < len);
 }
 
 static inline const char* wcmAxisName(enum WacomAxisType which)
