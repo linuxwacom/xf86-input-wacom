@@ -191,11 +191,11 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 	Bool ret = FALSE;
 	Bool rotated = common->wcmRotate == ROTATE_CW ||
 			common->wcmRotate == ROTATE_CCW;
-	int horizon_rotated = (rotated) ?
+	unsigned int horizon_rotated = (rotated) ?
 			WACOM_HORIZ_ALLOWED : WACOM_VERT_ALLOWED;
-	int vertical_rotated = (rotated) ?
+	unsigned int vertical_rotated = (rotated) ?
 			WACOM_VERT_ALLOWED : WACOM_HORIZ_ALLOWED;
-	int scroll_threshold = common->wcmGestureParameters.wcmScrollDistance;
+	unsigned int scroll_threshold = common->wcmGestureParameters.wcmScrollDistance;
 
 	if (!common->wcmGestureParameters.wcmScrollDirection)
 	{
@@ -583,7 +583,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 {
 	int button = (dist > 0) ? buttonUp : buttonDn;
 	WacomCommonPtr common = priv->common;
-	int count = (int)((1.0 * abs(dist)/
+	unsigned int count = (unsigned int)((1.0 * abs(dist)/
 		common->wcmGestureParameters.wcmScrollDistance));
 	WacomDeviceState ds[2] = {};
 
@@ -604,7 +604,7 @@ static void wcmSendScrollEvent(WacomDevicePtr priv, int dist,
 	{
 		wcmSendButtonClick(priv, button, 1);
 		wcmSendButtonClick(priv, button, 0);
-		DBG(10, priv, "loop count = %d \n", count);
+		DBG(10, priv, "loop count = %u \n", count);
 	}
 }
 
@@ -718,7 +718,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 	WacomCommonPtr common = priv->common;
 	WacomDeviceState ds[2] = {};
 	WacomDeviceState *start = common->wcmGestureState;
-	int count, button;
+	unsigned int count, button;
 	int dist = touchDistance(common->wcmGestureState[0],
 			common->wcmGestureState[1]);
 	int max_spread = common->wcmGestureParameters.wcmZoomDistance;
@@ -748,7 +748,7 @@ static void wcmFingerZoom(WacomDevicePtr priv)
 		return;
 
 	dist = touchDistance(ds[0], ds[1]) - dist;
-	count = (int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance));
+	count = (unsigned int)((1.0 * abs(dist)/common->wcmGestureParameters.wcmZoomDistance));
 
 	/* user might have changed from left to right or vice versa */
 	if (count < common->wcmGestureParameters.wcmGestureUsed)
