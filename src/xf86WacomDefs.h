@@ -190,7 +190,7 @@ struct _WacomDeviceState
 	unsigned int serial_num;
 	int x;
 	int y;
-	int buttons;
+	unsigned int buttons;
 	int pressure;
 	int tiltx;
 	int tilty;
