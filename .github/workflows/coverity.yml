@@ -16,6 +16,7 @@ jobs:
   coverity:
     runs-on: ubuntu-20.04
     environment: coverity
+    if: ${{ github.repository == '$COVERITY_SCAN_PROJECT_NAME' }}
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
