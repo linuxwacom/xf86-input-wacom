@@ -415,16 +415,14 @@ static Bool wcmMatchDevice(WacomDevicePtr priv, WacomCommonPtr *common_return)
 }
 
 /**
- * Detect the device's device class. We only support two classes right now,
- * USB and ISDV4. Let each class try to detect the type by checking what's
- * behind the fd.
+ * Detect the device's device class. We now only support USB so this is
+ * somewhat superfluous and should be refactored.
  */
 static Bool
 wcmDetectDeviceClass(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
 	WacomHWClass *classes[] = {
-		WacomGetClassISDV4(),
 		WacomGetClassUSB(),
 	};
 
@@ -733,7 +731,6 @@ int wcmPreInit(WacomDevicePtr priv)
 		goto SetupProc_fail;
 	wcmSetFd(priv, fd);
 
-	/* Try to guess whether it's USB or ISDV4 */
 	if (!wcmDetectDeviceClass(priv))
 		goto SetupProc_fail;
 

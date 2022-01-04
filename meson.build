@@ -139,12 +139,6 @@ src_wacom = src_wacom_core + [
 	'src/x11/xf86Wacom.c',
 ]
 
-if get_option('serial-device-support')
-	src_wacom += ['src/wcmISDV4.c']
-else
-	src_wacom += ['src/wcmISDV4-stub.c']
-endif
-
 deps_wacom = [
 	dep_xserver,
 	dep_libudev,
@@ -193,9 +187,7 @@ if build_gwacom
 		'src/gwacom/wacom-device.c',
 	]
 
-	src_libgwacom = src_wacom_core + src_gwacom + [
-		'src/wcmISDV4-stub.c',
-	]
+	src_libgwacom = src_wacom_core + src_gwacom
 
 	deps_gwacom = [
 		dep_xserver,
