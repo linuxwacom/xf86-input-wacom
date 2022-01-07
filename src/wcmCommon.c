@@ -884,7 +884,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		wcmAxisSet(&axes, WACOM_AXIS_ROTATION, ds->rotation);
 		wcmAxisSet(&axes, WACOM_AXIS_THROTTLE, ds->throttle);
 		v3 = ds->rotation;
-		v4 = ds->rotation;
+		v4 = ds->throttle;
 	} else
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_TILT_X, tx);
