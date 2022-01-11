@@ -700,9 +700,7 @@ void wcmClose(WacomDevicePtr priv)
 
 static int wcmReady(WacomDevicePtr priv)
 {
-#ifdef DEBUG
 	InputInfoPtr pInfo = priv->frontend;
-#endif
 	int n = xf86WaitForInput(pInfo->fd, 0);
 	if (n < 0) {
 		int saved_errno = errno;
@@ -842,12 +840,10 @@ static int wcmDevSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)dev->public.devicePrivate;
 	Bool is_absolute = TRUE;
-#ifdef DEBUG
 	WacomDevicePtr priv = (WacomDevicePtr)pInfo->private;
 
-	DBG(3, priv, "dev=%p mode=%d\n",
-		(void *)dev, mode);
-#endif
+	DBG(3, priv, "dev=%p mode=%d\n", (void *)dev, mode);
+
 	if (mode != Absolute) {
 		if (mode != Relative)
 			return XI_BadMode;

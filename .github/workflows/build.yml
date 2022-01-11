@@ -51,6 +51,7 @@ jobs:
           - clang
         meson_options:
           - ''
+          - '-Ddebug-messages=false'
           # clang requires b_lundef=false for b_santize, see
           # https://github.com/mesonbuild/meson/issues/764
           - '-Db_sanitize=address,undefined -Db_lundef=false'
