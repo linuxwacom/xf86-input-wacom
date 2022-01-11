@@ -840,7 +840,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	int z = ds->pressure;
 	int tx = ds->tiltx;
 	int ty = ds->tilty;
-	int v3, v4, v5, v6;
+	int v[7] = {0};
 	WacomAxisData axes = {0};
 
 	if (priv->serial && serial != priv->serial)
@@ -872,8 +872,8 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_Y, ds->stripy);
 		wcmAxisSet(&axes, WACOM_AXIS_RING, ds->abswheel);
 		wcmAxisSet(&axes, WACOM_AXIS_RING2, ds->abswheel2);
-		v3 = ds->stripx;
-		v4 = ds->stripy;
+		v[3] = ds->stripx;
+		v[4] = ds->stripy;
 		/* use tx and ty to report stripx and stripy for the DBG below */
 		tx = ds->stripx;
 		ty = ds->stripy;
@@ -881,14 +881,14 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_ROTATION, ds->rotation);
 		wcmAxisSet(&axes, WACOM_AXIS_THROTTLE, ds->throttle);
-		v3 = ds->rotation;
-		v4 = ds->throttle;
+		v[3] = ds->rotation;
+		v[4] = ds->throttle;
 	} else
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_TILT_X, tx);
 		wcmAxisSet(&axes, WACOM_AXIS_TILT_Y, ty);
-		v3 = tx;
-		v4 = ty;
+		v[3] = tx;
+		v[4] = ty;
 	}
 
 
@@ -905,19 +905,19 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	if (ds->proximity)
 		wcmRotateAndScaleCoordinates(priv, &x, &y);
 
-	v5 = ds->abswheel;
-	v6 = ds->abswheel2;
+	v[5] = ds->abswheel;
+	v[6] = ds->abswheel2;
 	if (IsStylus(priv) && !IsArtPen(ds))
 	{
 		/* Normalize abswheel airbrush data to Art Pen rotation range.
 		 * We do not normalize Art Pen. They are already at the range.
 		 */
-		v5 = ds->abswheel * MAX_ROTATION_RANGE/
+		v[5] = ds->abswheel * MAX_ROTATION_RANGE/
 				(double)MAX_ABS_WHEEL + MIN_ROTATION;
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v5);
+		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v[5]);
 	} else if (IsStylus(priv) && IsArtPen(ds))
 	{
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v5);
+		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v[5]);
 	}
 
 	DBG(6, priv, "%s prox=%d\tx=%d"
@@ -925,7 +925,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
 		is_absolute(priv) ? "abs" : "rel",
 		ds->proximity,
-		x, y, z, v3, v4, v5, v6, id, serial,
+		x, y, z, v[3], v[4], v[5], v[6], id, serial,
 		is_button ? "true" : "false", ds->buttons);
 
 	/* when entering prox, replace the zeroed-out oldState with a copy of
