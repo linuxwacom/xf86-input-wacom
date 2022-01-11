@@ -874,8 +874,6 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		wcmAxisSet(&axes, WACOM_AXIS_RING2, ds->abswheel2);
 		v3 = ds->stripx;
 		v4 = ds->stripy;
-		v5 = ds->abswheel;
-		v6 = ds->abswheel2;
 		/* use tx and ty to report stripx and stripy for the DBG below */
 		tx = ds->stripx;
 		ty = ds->stripy;
