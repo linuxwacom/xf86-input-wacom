@@ -447,6 +447,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 
 	rc = wcmCheckActionProperty(priv, property, prop);
 	if (rc != Success) {
+#ifdef DEBUG
 		const char *msg = NULL;
 		switch (rc) {
 			case BadMatch: msg = "BadMatch"; break;
@@ -454,6 +455,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 			default: msg = "UNKNOWN"; break;
 		}
 		DBG(3, priv, "Action validation failed with code %d (%s)\n", rc, msg);
+#endif
 		return rc;
 	}
 
