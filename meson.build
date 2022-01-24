@@ -9,7 +9,6 @@ wacom_version = meson.project_version().split('.')
 dir_man1	= get_option('prefix') / get_option('mandir') / 'man1'
 dir_man4	= get_option('prefix') / get_option('mandir') / 'man4'
 dir_bin 	= get_option('prefix') / get_option('bindir')
-dir_lib_xorg	= get_option('prefix') / get_option('libdir') / 'xorg' / 'modules' / 'input'
 dir_x11_config	= get_option('prefix') / get_option('sysconfdir') / 'X11' / 'xorg.conf.d'
 dir_pkgconf	= get_option('prefix') / get_option('libdir') / 'pkgconfig'
 dir_udev	= get_option('prefix') / 'lib' / 'udev'
@@ -68,7 +67,7 @@ endif
 
 dir_xorg_modules = get_option('xorg-module-dir')
 if dir_xorg_modules == ''
-	dir_xorg_modules = dir_lib_xorg
+	dir_xorg_modules = dep_xserver.get_pkgconfig_variable('moduledir') / 'input'
 endif
 
 dir_xorg_conf = get_option('xorg-conf-dir')

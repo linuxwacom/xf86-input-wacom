@@ -6,7 +6,7 @@ option('sdkdir',
 option('xorg-module-dir',
 	type: 'string',
 	value: '',
-	description: 'Directory to install the driver in [default=$libdir/xorg/modules/]'
+	description: 'Directory to install the driver in [default=from xorg-server pkgconf]'
 )
 option('xorg-conf-dir',
 	type: 'string',
