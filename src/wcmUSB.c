@@ -56,7 +56,7 @@ static int usbStart(WacomDevicePtr priv);
 static int usbInitProtocol5(WacomDevicePtr priv);
 static int usbInitProtocol4(WacomDevicePtr priv);
 static int usbInitialize(WacomDevicePtr priv);
-static int usbParse(WacomDevicePtr priv, const unsigned char* data, int len);
+static int usbParse(WacomDevicePtr priv, const unsigned char* data, unsigned long len);
 static int usbDetectConfig(WacomDevicePtr priv);
 static void usbParseEvent(WacomDevicePtr priv,
 	const struct input_event* event);
@@ -830,7 +830,7 @@ static int usbDetectConfig(WacomDevicePtr priv)
 	return TRUE;
 }
 
-static int usbParse(WacomDevicePtr priv, const unsigned char* data, int len)
+static int usbParse(WacomDevicePtr priv, const unsigned char* data, unsigned long len)
 {
 	WacomCommonPtr common = priv->common;
 	struct input_event event;
