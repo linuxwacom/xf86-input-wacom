@@ -1758,9 +1758,8 @@ TEST_CASE(test_get_scroll_delta)
 		{128, 4, 256, AXIS_BITWISE,  5}, {4, 128, 256, AXIS_BITWISE, -5},
 		{256, 4, 256, AXIS_BITWISE, -4}, {4, 256, 256, AXIS_BITWISE,  4}
 	};
-	int i;
 
-	for (i = 0; i < ARRAY_SIZE(test_table); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(test_table); i++)
 	{
 		int delta;
 		int current, old, wrap, flags;

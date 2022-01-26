@@ -142,7 +142,7 @@ static struct
 Bool wcmIsAValidType(WacomDevicePtr priv, const char* type)
 {
 	WacomCommonPtr common = priv->common;
-	int i, j;
+	size_t i, j;
 	char* dsource;
 	Bool user_defined;
 
@@ -504,18 +504,18 @@ static void wcmHotplugSerials(WacomDevicePtr priv, const char *basename)
 
 void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 {
-	int i, skip = 1;
+	Bool skip = TRUE;
 
 	wcmLog(priv, W_INFO, "hotplugging dependent devices.\n");
 
         /* same loop is used to init the first device, if we get here we
          * need to start at the second one */
-	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
 		if (wcmIsAValidType(priv, wcmType[i].type))
 		{
 			if (skip)
-				skip = 0;
+				skip = FALSE;
 			else
 				wcmAddHotpluggedDevice(priv, basename, wcmType[i].type, NULL);
 		}
@@ -523,7 +523,7 @@ void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 
 	wcmHotplugSerials(priv, basename);
 
-        wcmLog(priv, W_INFO, "hotplugging completed.\n");
+	wcmLog(priv, W_INFO, "hotplugging completed.\n");
 }
 
 /**
@@ -538,7 +538,6 @@ void wcmHotplugOthers(WacomDevicePtr priv, const char *basename)
 int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 {
 	char *source = wcmOptCheckStr(priv, "_source", NULL);
-	int i;
 	int rc = 0;
 
 	if (*type) /* type specified, don't hotplug */
@@ -552,7 +551,7 @@ int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type)
 
 	/* no type specified, so we need to pick the first one applicable
 	 * for our device */
-	for (i = 0; i < ARRAY_SIZE(wcmType); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(wcmType); i++)
 	{
 		if (wcmIsAValidType(priv, wcmType[i].type))
 		{
