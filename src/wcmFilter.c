@@ -484,9 +484,8 @@ TEST_CASE(test_tilt_to_rotation)
 		{ -156, 987, 70}, { -139, 990, 65}, { -121, 992, 60}, { -104, 994, 55}, { -87, 996, 50},
 		{ -69, 997, 45}, { -52, 998, 40}, { -34, 999, 35}, { -17, 999, 30},
 	};
-	int i;
 
-	for (i = 0; i < ARRAY_SIZE(rotation_table); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(rotation_table); i++)
 	{
 		int rotation;
 		int x, y;

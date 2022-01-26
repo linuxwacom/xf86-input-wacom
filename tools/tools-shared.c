@@ -197,7 +197,7 @@ void memdump(const unsigned char *buffer, int len)
 
 int skip_garbage(unsigned char *buffer, size_t len)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < len; i++)
 		if (buffer[i] & HEADER_BIT)
 			break;

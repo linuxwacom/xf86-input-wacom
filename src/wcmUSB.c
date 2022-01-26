@@ -411,7 +411,6 @@ size_t wcmListModels(const char **names, size_t len)
 
 static Bool usbWcmInit(WacomDevicePtr priv)
 {
-	int i;
 	struct input_id sID;
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata;
@@ -433,7 +432,7 @@ static Bool usbWcmInit(WacomDevicePtr priv)
 
 	usbdata = common->private;
 
-	for (i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(WacomModelDesc); i++)
 	{
 		if (sID.vendor == WacomModelDesc[i].vendor_id &&
 		    sID.product == WacomModelDesc [i].model_id)
@@ -467,7 +466,7 @@ static Bool usbWcmInit(WacomDevicePtr priv)
 
 	/* Find out supported button codes. */
 	usbdata->npadkeys = 0;
-	for (i = 0; i < ARRAY_SIZE(padkey_codes); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(padkey_codes); i++)
 		if (ISBITSET (common->wcmKeys, padkey_codes [i]))
 			usbdata->padkey_code [usbdata->npadkeys++] = padkey_codes [i];
 
@@ -477,15 +476,12 @@ static Bool usbWcmInit(WacomDevicePtr priv)
 		 * If we're wrong, this will over-state the capabilities of the pad
 		 * but that shouldn't actually cause problems.
 		 */
-		for (i = ARRAY_SIZE(mouse_codes) - 1; i > 0; i--)
-			if (ISBITSET(common->wcmKeys, mouse_codes[i]))
+		for (size_t i = ARRAY_SIZE(mouse_codes) - 1; i > 0; i--) {
+			if (ISBITSET(common->wcmKeys, mouse_codes[i])) {
+				usbdata->npadkeys = WCM_USB_MAX_MOUSE_BUTTONS;
 				break;
-
-		/* Make sure room for fixed map mouse buttons.  This
-		 * means mappings may overlap with padkey_codes[].
-		 */
-		if (i != 0)
-			usbdata->npadkeys = WCM_USB_MAX_MOUSE_BUTTONS;
+			}
+		}
 	}
 
 	/* nbuttons tracks maximum buttons on all tools (stylus/mouse).
@@ -2075,8 +2071,7 @@ static int usbProbeKeys(WacomDevicePtr priv)
 TEST_CASE(test_mod_buttons)
 {
 	WacomCommonRec common = {0};
-	int i;
-	for (i = 0; i < sizeof(int) * 8; i++)
+	for (size_t i = 0; i < sizeof(int) * 8; i++)
 	{
 		int buttons = mod_buttons(&common, 0, i, 1);
 		assert(buttons == (1 << i));

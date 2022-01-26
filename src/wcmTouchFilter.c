@@ -58,9 +58,7 @@ static void wcmFingerZoom(WacomDevicePtr priv);
  */
 static WacomChannelPtr getContactNumber(WacomCommonPtr common, int num)
 {
-	int i;
-
-	for (i = 0; i < MAX_CHANNELS; i++)
+	for (size_t i = 0; i < MAX_CHANNELS; i++)
 	{
 		WacomChannelPtr channel = common->wcmChannel+i;
 		WacomDeviceState state  = channel->valid.state;
@@ -144,9 +142,8 @@ static void
 wcmFingerMultitouch(WacomDevicePtr priv, int contact_id) {
 	Bool lag_mode = priv->common->wcmGestureMode == GESTURE_LAG_MODE;
 	Bool prox = FALSE;
-	int i;
 
-	for (i = 0; i < MAX_CHANNELS; i++) {
+	for (size_t i = 0; i < MAX_CHANNELS; i++) {
 		WacomChannelPtr channel = priv->common->wcmChannel+i;
 		WacomDeviceState state  = channel->valid.state;
 		if (state.device_type != TOUCH_ID)
@@ -619,7 +616,7 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	WacomDeviceState *start = common->wcmGestureState;
 	int midPoint_new = 0;
 	int midPoint_old = 0;
-	int i = 0, dist = 0;
+	int dist = 0;
 	WacomFilterState filterd;  /* borrow this struct */
 	int max_spread = common->wcmGestureParameters.wcmZoomDistance;
 	int spread;
@@ -667,8 +664,9 @@ static void wcmFingerScroll(WacomDevicePtr priv)
 	filterd.y[3] = common->wcmGestureState[1].y;
 
 	/* scrolling has directions so rotation has to be considered first */
-	for (i=0; i<6; i++)
+	for (unsigned int i = 0; i < 6; i++) {
 		wcmRotateAndScaleCoordinates(priv, &filterd.x[i], &filterd.y[i]);
+	}
 
 	/* check vertical direction */
 	if (common->wcmGestureParameters.wcmScrollDirection == WACOM_VERT_ALLOWED)

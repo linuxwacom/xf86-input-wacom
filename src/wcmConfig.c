@@ -1223,10 +1223,9 @@ TEST_CASE(test_set_type)
 
 TEST_CASE(test_flag_set)
 {
-	int i;
 	unsigned int flags = 0;
 
-	for (i = 0; i < sizeof(flags); i++)
+	for (size_t i = 0; i < sizeof(flags); i++)
 	{
 		int mask = 1 << i;
 		flags = 0;

@@ -1986,7 +1986,6 @@ static int get_actions(Display *dpy, XDevice *dev,
 	Atom prop, type;
 	int format;
 	unsigned long nitems, bytes_after, *data;
-	int i;
 	char buff[1024] = {0};
 	int last_type;
 
@@ -2018,7 +2017,7 @@ static int get_actions(Display *dpy, XDevice *dev,
 		   &bytes_after, (unsigned char**)&data);
 
 	last_type = 0;
-	for (i = 0; i < nitems; i++)
+	for (unsigned int i = 0; i < nitems; i++)
 	{
 		unsigned long action = data[i];
 		int current_type;
@@ -2263,8 +2262,9 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 
 	/* XI1 stores 32 bit properties (including float) as long,
 	 * regardless of architecture */
-	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++) {
 		matrix[i] = *(float*)(&data[i]);
+	}
 
 	TRACE("Current transformation matrix:\n");
 	TRACE("	[ %f %f %f ]\n", matrix[0], matrix[1], matrix[2]);
@@ -2313,8 +2313,10 @@ static Bool _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 
 	/* XI1 expects 32 bit properties (including float) as long,
 	 * regardless of architecture */
-	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++)
+
+	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++) {
 		*(float*)(matrix + i) = fmatrix[i];
+	}
 
 	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
 				AnyPropertyType, &type, &format, &nitems,
