@@ -90,7 +90,7 @@ struct _WacomModel
 	int (*Initialize)(WacomDevicePtr priv);
 	int (*DetectConfig)(WacomDevicePtr priv);
 	int (*Start)(WacomDevicePtr priv);
-	int (*Parse)(WacomDevicePtr priv, const unsigned char* data, int len);
+	int (*Parse)(WacomDevicePtr priv, const unsigned char* data, unsigned long len);
 };
 
 /******************************************************************************
