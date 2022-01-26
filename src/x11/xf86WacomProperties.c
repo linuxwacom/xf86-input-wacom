@@ -788,7 +788,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 		return wcmSetActionsProperty(dev, property, prop, checkonly, ARRAY_SIZE(priv->wheel_action_props), priv->wheel_action_props, priv->wheel_actions);
 	else if (property == prop_proxout)
 	{
-		CARD32 value;
+		INT32 value;
 
 		if (prop->size != 1 || prop->format != 32)
 			return BadValue;
@@ -796,9 +796,9 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 		if (!IsTablet (priv))
 			return BadValue;
 
-		value = *(CARD32*)prop->data;
+		value = *(INT32*)prop->data;
 
-		if (value > common->wcmMaxDist)
+		if (value > common->wcmMaxDist || value < 0)
 			return BadValue;
 
 		if (!checkonly)
