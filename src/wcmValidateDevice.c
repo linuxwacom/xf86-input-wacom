@@ -446,7 +446,7 @@ wcmAddHotpluggedDevice(WacomDevicePtr priv, const char *basename, const char *ty
 	if (rc == -1)
 		return;
 
-	wcmQueueHotplug(priv, name, type, ser ? ser->serial : -1);
+	wcmQueueHotplug(priv, name, type, ser ? ser->serial : UINT_MAX);
 
 	free(name);
 }

@@ -33,7 +33,7 @@
 #define MAX_USB_EVENTS 128
 
 typedef struct {
-	int wcmLastToolSerial;
+	unsigned int wcmLastToolSerial;
 	int wcmDeviceType;
 	Bool wcmPenTouch;
 	Bool wcmUseMT;
@@ -856,10 +856,10 @@ static int usbParse(WacomDevicePtr priv, const unsigned char* data, unsigned lon
  * @param[in] serial       Serial number of device
  * @return                 Serial number of device as through from Protocol 5
  */
-static int protocol5Serial(int device_type, unsigned int serial) {
+static unsigned int protocol5Serial(int device_type, unsigned int serial) {
 	if (!serial) {
 		/* Generic Protocol does not send serial numbers */
-		return device_type == PAD_ID ? -1 : 1;
+		return device_type == PAD_ID ? DEFAULT_TOOL_SERIAL : 1;
 	}
 	else if (serial == 0xf0) {
 		/* Protocol 4 uses the expected anonymous serial
@@ -868,7 +868,7 @@ static int protocol5Serial(int device_type, unsigned int serial) {
 		 * for a Protocol 5 serial number, but isn't a
 		 * problem as yet.
 		 */
-		return -1;
+		return DEFAULT_TOOL_SERIAL;
 	}
 	else {
 		/* Protocol 5 FTW */
@@ -894,7 +894,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 	int i, channel = -1;
 
 	/* force events from PAD device to PAD_CHANNEL */
-	if (serial == -1)
+	if (serial == DEFAULT_TOOL_SERIAL)
 		channel = PAD_CHANNEL;
 
 	/* find existing channel */
@@ -942,7 +942,7 @@ static int usbChooseChannel(WacomCommonPtr common, int device_type, unsigned int
 				continue;
 
 			if (common->wcmChannel[i].work.proximity &&
-			    (common->wcmChannel[i].work.serial_num != -1))
+			    (common->wcmChannel[i].work.serial_num != DEFAULT_TOOL_SERIAL))
 			{
 				common->wcmChannel[i].work.proximity = 0;
 				/* dispatch event */
@@ -1048,7 +1048,7 @@ static void usbParseSynEvent(WacomDevicePtr priv,
 	/* ignore events without information */
 	if ((private->wcmEventCnt < 2) && private->wcmLastToolSerial)
 	{
-		DBG(3, common, "%s: dropping empty event for serial %d\n",
+		DBG(3, common, "%s: dropping empty event for serial %u\n",
 		    priv->name, private->wcmLastToolSerial);
 		goto skipEvent;
 	}
@@ -1382,7 +1382,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 	{
 		case ABS_MT_SLOT:
 			if (event->value >= 0) {
-				int serial = event->value + 1;
+				unsigned int serial = event->value + 1;
 				private->wcmMTChannel = usbChooseChannel(common, TOUCH_ID, serial);
 				if (private->wcmMTChannel < 0)
 					return;

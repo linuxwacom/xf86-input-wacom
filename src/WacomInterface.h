@@ -276,7 +276,7 @@ void wcmNotifyEvdev(WacomDevicePtr priv, const struct input_event *event);
  * frontend is idle later.
  */
 void wcmQueueHotplug(WacomDevicePtr priv, const char *name,
-		     const char *type, int serial);
+		     const char *type, unsigned int serial);
 
 /* X server interface emulations */
 
