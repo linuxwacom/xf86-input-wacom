@@ -709,7 +709,7 @@ static gboolean hotplugDevice(gpointer data)
 	return FALSE;
 }
 
-void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, int serial)
+void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, unsigned int serial)
 {
 	WacomDevice *device = priv->frontend;
 	struct hotplug *hotplug = g_new0(struct hotplug, 1);
@@ -717,7 +717,7 @@ void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, in
 	char buf[64] = {0};
 
 	wacom_options_set(new_opts, "Type", type);
-	if (serial > -1) {
+	if (serial != UINT_MAX) {
 		snprintf(buf, sizeof(buf), "0x%x", serial);
 		wacom_options_set(new_opts, "Serial", buf);
 	}

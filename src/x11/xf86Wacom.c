@@ -342,7 +342,7 @@ wcmHotplugDevice(ClientPtr client, pointer closure )
  * @param type Type name for this tool
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, int serial)
+void wcmQueueHotplug(WacomDevicePtr priv, const char* name, const char *type, unsigned int serial)
 {
 	WacomHotplugInfo *hotplug_info;
 
