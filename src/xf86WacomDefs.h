@@ -203,8 +203,8 @@ struct _WacomDeviceState
 	int distance;
 	int throttle;
 	int proximity;
-	int sample;	/* wraps every 24 days */
-	int time;
+	unsigned int sample;	/* wraps every 24 days */
+	unsigned int time;
 	unsigned int keys; /* bitmask for IDX_KEY_CONTROLPANEL, etc. */
 };
 
@@ -367,7 +367,7 @@ typedef struct {
 	unsigned int wcmScrollDistance;      /* minimum motion before sending a scroll gesture */
 	unsigned int wcmScrollDirection;     /* store the vertical or horizontal bit in use */
 	unsigned int wcmGestureUsed;         /* retain used gesture count within one in-prox event */
-	int wcmTapTime;	   	       /* minimum time between taps for a right click */
+	unsigned int wcmTapTime;             /* minimum time between taps for a right click */
 } WacomGesturesParameters;
 
 enum WacomProtocol {
