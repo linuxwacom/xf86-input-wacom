@@ -827,6 +827,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 			goto error;
 		} else /* No match on existing tool/serial, add tool to the end of the list */
 		{
+			assert(common->wcmTool != NULL);
 			toollist = common->wcmTool;
 			while(toollist->next)
 				toollist = toollist->next;
