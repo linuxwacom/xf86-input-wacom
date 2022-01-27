@@ -1099,14 +1099,12 @@ TEST_CASE(test_initial_size)
 
 	/* pin to some numbers */
 	int xres = 1920, yres = 1600;
-	int minx, maxx = 2 * xres, miny, maxy = 2 * yres;
+	int minx = 100, maxx = 2 * xres, miny = 200, maxy = 2 * yres;
 
 	priv.common = &common;
 
-	/* FIXME: we currently assume min of 0 in the driver. we cannot cope
-	 * with non-zero devices */
-	minx = miny = 0;
-
+	common.wcmMinX = minx;
+	common.wcmMinY = miny;
 	common.wcmMaxX = maxx;
 	common.wcmMaxY = maxy;
 	common.wcmResolX = xres;
@@ -1122,8 +1120,14 @@ TEST_CASE(test_initial_size)
 	assert(priv.resolY == yres);
 
 	/* Same thing for a touch-enabled device */
+	memset(&priv, 0, sizeof(priv));
 	memset(&common, 0, sizeof(common));
 
+	/* FIXME: we currently assume min of 0 in the driver for touch.
+	 * we cannot cope with non-zero devices */
+	minx = miny = 0;
+
+	priv.common = &common;
 	priv.flags = TOUCH_ID;
 	assert(IsTouch(&priv));
 
