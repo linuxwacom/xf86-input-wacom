@@ -1390,19 +1390,22 @@ static Bool parse_actions(Display *dpy, int argc, char **argv, unsigned long* da
 
 		while (keywords[j].keyword && i < nwords && *nitems < size)
 		{
-			int parsed = 0;
 			if (strcasecmp(words[i], keywords[j].keyword) == 0)
 			{
-				parsed = keywords[j].func(dpy, nwords - i - 1,
+				int parsed = keywords[j].func(dpy, nwords - i - 1,
 							  &words[i + 1],
 							  nitems, data, size);
 				i += parsed;
 				keyword_found = 1;
+
+				if (parsed)
+				{
+					/* restart with first keyword */
+					j = 0;
+					continue;
+				}
 			}
-			if (parsed)
-				j = parsed = 0; /* restart with first keyword */
-			else
-				j++;
+			j++;
 		}
 
 		if (!keyword_found)
