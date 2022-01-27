@@ -1132,7 +1132,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	DBG(10, common,
 		"c=%u i=%d t=%d s=0x%x x=%d y=%d b=%u "
 		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
-		"t=%d px=%d st=%d cs=%d \n",
+		"t=%d px=%d st=%u cs=%d \n",
 		channel,
 		ds.device_id,
 		ds.device_type,
