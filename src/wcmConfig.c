@@ -1003,7 +1003,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 	nbbuttons = min(max(nbbuttons + 4, 7), WCM_MAX_BUTTONS);
 
 	DBG(10, priv,
-		"(type %d) %d buttons, %d axes\n",
+		"(type %u) %d buttons, %d axes\n",
 		priv->type, nbbuttons, nbaxes);
 
 	if (!wcmInitButtons(priv, nbbuttons))

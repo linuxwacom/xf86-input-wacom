@@ -386,7 +386,7 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 	}
 
 	if (prop->type != XA_INTEGER) {
-		DBG(3, priv, "ERROR: Incorrect value type (%d != XA_INTEGER)\n", prop->type);
+		DBG(3, priv, "ERROR: Incorrect value type (%u != XA_INTEGER)\n", prop->type);
 		return BadMatch;
 	}
 
@@ -397,7 +397,7 @@ static int wcmCheckActionProperty(WacomDevicePtr priv, Atom property, XIProperty
 		int code = data[j] & AC_CODE;
 		int type = data[j] & AC_TYPE;
 
-		DBG(10, priv, "Index %d == %d (type: %d, code: %d)\n", j, data[j], type, code);
+		DBG(10, priv, "Index %d == %u (type: %d, code: %d)\n", j, data[j], type, code);
 
 		switch(type)
 		{
@@ -443,7 +443,7 @@ static int wcmSetActionProperty(DeviceIntPtr dev, Atom property,
 	WacomDevicePtr priv = (WacomDevicePtr) pInfo->private;
 	int rc, i;
 
-	DBG(5, priv, "%s new actions for Atom %d\n", checkonly ? "Checking" : "Setting", property);
+	DBG(5, priv, "%s new actions for Atom %u\n", checkonly ? "Checking" : "Setting", property);
 
 	rc = wcmCheckActionProperty(priv, property, prop);
 	if (rc != Success) {
@@ -974,7 +974,7 @@ static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		values[3] = priv->cur_serial;
 		values[4] = priv->cur_device_id;
 
-		DBG(10, priv, "Update to serial: %d\n", priv->oldState.serial_num);
+		DBG(10, priv, "Update to serial: %u\n", priv->oldState.serial_num);
 
 		return XIChangeDeviceProperty(dev, property, XA_INTEGER, 32,
 					      PropModeReplace, 5,
