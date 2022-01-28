@@ -876,6 +876,7 @@ static int preInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	case WTYPE_CURSOR:	pInfo->type_name = WACOM_PROP_XI_TYPE_CURSOR; break;
 	case WTYPE_PAD:		pInfo->type_name = WACOM_PROP_XI_TYPE_PAD; break;
 	case WTYPE_TOUCH:	pInfo->type_name = WACOM_PROP_XI_TYPE_TOUCH; break;
+	case WTYPE_INVALID:
 	default:
 		xf86IDrvMsg(pInfo, X_ERROR,
 		       "No type or invalid type specified.\n"
