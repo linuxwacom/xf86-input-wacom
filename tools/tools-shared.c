@@ -93,7 +93,7 @@ int set_serial_attr(int fd, unsigned int baud)
 	t.c_cc[VTIME] = 10;	/* vtime 10 */
 	t.c_iflag |= IXOFF;	/* flow controll xoff */
 
-	TRACE("Baud rate is %d\n", baud);
+	TRACE("Baud rate is %u\n", baud);
 
 	switch(baud)
 	{

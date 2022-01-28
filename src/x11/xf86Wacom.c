@@ -776,7 +776,7 @@ static int wcmDevProc(DeviceIntPtr pWcm, int what)
 	Status rc = !Success;
 
 	DBG(2, priv, "BEGIN dev=%p priv=%p "
-			"type=%s flags=%d fd=%d what=%s\n",
+			"type=%s flags=%u fd=%d what=%s\n",
 			(void *)pWcm, (void *)priv,
 			pInfo->type_name,
 			priv->flags, pInfo ? pInfo->fd : -1,

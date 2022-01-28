@@ -294,7 +294,7 @@ static void wcmSendKeys (WacomDevicePtr priv, unsigned int current, unsigned int
 {
 	unsigned int mask, idx;
 
-	DBG(6, priv, "current=%d previous=%d\n", current, previous);
+	DBG(6, priv, "current=%u previous=%u\n", current, previous);
 
 	for (idx = 0, mask = 0x1;
 	     mask && (mask <= current || mask <= previous);
@@ -847,7 +847,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	{
 		DBG(10, priv, "serial number"
 				" is %u but your system configured %u",
-				serial, (int)priv->serial);
+				serial, priv->serial);
 		return;
 	}
 
@@ -1016,7 +1016,7 @@ out:
 	}
 
 	DBG(10, common, "level = %d"
-		" return value = %d\n", suppress, returnV);
+		" return value = %u\n", suppress, returnV);
 	return returnV;
 }
 
@@ -1119,7 +1119,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	WacomDevicePtr priv;
 	pChannel = common->wcmChannel + channel;
 
-	DBG(10, common, "channel = %d\n", channel);
+	DBG(10, common, "channel = %u\n", channel);
 
 	/* sanity check the channel */
 	if (channel >= MAX_CHANNELS)
@@ -1130,7 +1130,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	ds = *pState;
 
 	DBG(10, common,
-		"c=%d i=0x%x t=0x%x s=0x%x x=%d y=%d b=%d "
+		"c=%u i=%d t=%d s=0x%x x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
 		"t=%d px=%d st=%d cs=%d \n",
 		channel,
@@ -1345,7 +1345,7 @@ static void detectPressureIssue(WacomDevicePtr priv,
 		if (priv->oldMinPressure > pressureThreshold &&
 		    priv->eventCnt > MIN_EVENT_COUNT)
 			wcmLogSafe(priv, W_WARNING,
-				"On %s(%d) a base pressure of %d persists while the pen is in proximity.\n"
+				"On %s(%u) a base pressure of %d persists while the pen is in proximity.\n"
 				"\tThis is > %d percent of the maximum value (%d).\n"
 				"\tThis indicates a worn out pen, it is time to change your tool. Also see:\n"
 				"\thttps://github.com/linuxwacom/xf86-input-wacom/wiki/Pen-Wear.\n",
@@ -1702,7 +1702,7 @@ void wcmFreeCommon(WacomCommonPtr *ptr)
 		{
 			WacomToolPtr next;
 
-			DBG(10, common, "Free common serial: %d %s\n",
+			DBG(10, common, "Free common serial: %u %s\n",
 					common->serials->serial,
 					common->serials->name);
 

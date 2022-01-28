@@ -82,7 +82,7 @@ static unsigned int get_baud_rate(int fd)
 {
 	struct stat st;
 	unsigned int baudrate = 19200;
-	int id;
+	unsigned int id;
 	struct udev *udev;
 	struct udev_device *device, *parent;
 	const char *attr_id = NULL;
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 		/* query failed, maybe the wrong baud rate? */
 		baudrate = (baudrate == 19200) ? 38400 : 19200;
 
-		printf("Initial tablet query failed. Trying with baud rate %d.\n", baudrate);
+		printf("Initial tablet query failed. Trying with baud rate %u.\n", baudrate);
 
 		set_serial_attr(fd, baudrate);
 		sensor_id = query_tablet(fd);

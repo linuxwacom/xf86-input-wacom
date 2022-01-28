@@ -441,7 +441,7 @@ wcmAddHotpluggedDevice(WacomDevicePtr priv, const char *basename, const char *ty
 	else if (strlen(ser->name) > 0)
 		rc = asprintf(&name, "%s %s %s", basename, ser->name, type);
 	else
-		rc = asprintf(&name, "%s %d %s", basename, ser->serial, type);
+		rc = asprintf(&name, "%s %u %s", basename, ser->serial, type);
 
 	if (rc == -1)
 		return;
@@ -493,7 +493,7 @@ static void wcmHotplugSerials(WacomDevicePtr priv, const char *basename)
 
 	while (ser)
 	{
-		wcmLog(priv, W_INFO, "hotplugging serial %d.\n", ser->serial);
+		wcmLog(priv, W_INFO, "hotplugging serial %u.\n", ser->serial);
 		wcmTryHotplugSerialType(priv, ser, basename, STYLUS_ID, "stylus");
 		wcmTryHotplugSerialType(priv, ser, basename, ERASER_ID, "eraser");
 		wcmTryHotplugSerialType(priv, ser, basename, CURSOR_ID, "cursor");
@@ -822,7 +822,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 		if(toollist) /* Already have a tool with the same type/serial */
 		{
 			wcmLog(priv, W_ERROR,
-				    "already have a tool with type/serial %d/%d.\n",
+				    "already have a tool with type/serial %d/%u.\n",
 				    tool->typeid, tool->serial);
 			goto error;
 		} else /* No match on existing tool/serial, add tool to the end of the list */
