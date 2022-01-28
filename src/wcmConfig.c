@@ -153,6 +153,7 @@ wcmSetFlags(WacomDevicePtr priv, WacomType type)
 		case WTYPE_PAD:
 			flags = ABSOLUTE_FLAG|PAD_ID;
 			break;
+		case WTYPE_INVALID:
 		default:
 			goto invalid;
 	}
