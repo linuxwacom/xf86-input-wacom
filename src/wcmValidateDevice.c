@@ -910,7 +910,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 
 	for (i=0; i<WCM_MAX_BUTTONS; i++)
 	{
-		char b[12];
+		char b[20];
 		sprintf(b, "Button%d", i+1);
 		priv->button_default[i] = wcmOptGetInt(priv, b, priv->button_default[i]);
 	}
