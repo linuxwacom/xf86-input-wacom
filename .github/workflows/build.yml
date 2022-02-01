@@ -42,6 +42,15 @@ jobs:
           pushd _build > /dev/null
           make distcheck
           popd > /dev/null
+
+      - name: move tarball to top level
+        run: |
+          mv _build/xf86-input-wacom-*tar.bz2 .
+      - uses: actions/upload-artifact@v2
+        with:
+          name: tarball
+          path: xf86-input-wacom-*tar.bz2
+
   compile-with-meson:
     runs-on: ubuntu-20.04
     strategy:
@@ -80,3 +89,66 @@ jobs:
             builddir/meson-logs/testlog*.txt
             builddir/meson-logs/meson-log.txt
 
+  ###
+  #
+  # tarball verification
+  #
+  build-from-tarball-autotools:
+    needs: compile-with-autotools
+    runs-on: ubuntu-20.04
+    env:
+      TARBALLDIR: '_tarball_dir'
+      INSTALLDIR: '/tmp/_inst'
+    steps:
+      - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
+        with:
+          apt: $UBUNTU_PACKAGES
+      - name: fetch tarball from previous job(s)
+        uses: actions/download-artifact@v2
+        with:
+          name: tarball
+      - name: extract tarball
+        run: |
+          mkdir -p "$TARBALLDIR"
+          tar xf xf86-input-wacom-*.tar.bz2 -C "$TARBALLDIR"
+      - run: mkdir -p "$INSTALLDIR"
+      - name: build from tarball with autotools
+        run: |
+          pushd "$TARBALLDIR"/xf86-input-wacom*/
+          autoreconf -ivf
+          # See comment in compile-with-autotools
+          CFLAGS="" ./configure --disable-silent-rules --prefix="$INSTALLDIR"
+          make CFLAGS="$CFLAGS"
+          make check || (cat **/test-suite.log && false)
+          popd > /dev/null
+
+  build-from-tarball-meson:
+    needs: compile-with-autotools
+    runs-on: ubuntu-20.04
+    env:
+      TARBALLDIR: '_tarball_dir'
+      INSTALLDIR: '/tmp/_inst'
+    steps:
+      # install python so we get pip for meson
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+      - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
+        with:
+          apt: $UBUNTU_PACKAGES
+          pip: $PIP_PACKAGES
+      - name: fetch tarball from previous job(s)
+        uses: actions/download-artifact@v2
+        with:
+          name: tarball
+      - name: extract tarball
+        run: |
+          mkdir -p "$TARBALLDIR"
+          tar xf xf86-input-wacom-*.tar.bz2 -C "$TARBALLDIR"
+      - run: mkdir -p "$INSTALLDIR"
+      - name: build from tarball with meson
+        uses: linuxwacom/libwacom/.github/actions/meson@master
+        with:
+          srcdir: $TARBALLDIR/xf86-input-wacom-*/
+          meson_args: --prefix="$INSTALLDIR"
+          ninja_args: test
