@@ -35,3 +35,11 @@ AM_CPPFLAGS=-I$(top_srcdir)/include/
 AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS) $(UDEV_CFLAGS)
 
 @DRIVER_NAME@_drv_la_SOURCES = $(DRIVER_SOURCES)
+
+EXTRA_DIST = \
+	gwacom/wacom-device.c \
+	gwacom/wacom-device.h \
+	gwacom/wacom-driver.c
+	gwacom/wacom-driver.h \
+	gwacom/wacom-private.h \
+	$(NULL)
