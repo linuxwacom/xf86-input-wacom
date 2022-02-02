@@ -991,4 +991,88 @@ _X_EXPORT XF86ModuleData wacomModuleData =
 };
 
 
+#ifdef ENABLE_TESTS
+#include "wacom-test-suite.h"
+
+TEST_CASE(test_convert_axes)
+{
+	WacomAxisData axes = {0};
+	int first, num;
+	int valuators[7];
+
+#define reset(v) \
+	for (size_t _i = 0; _i < ARRAY_SIZE(v); _i++) \
+	    v[_i] = 0xab;
+
+	reset(valuators);
+
+	convertAxes(&axes, &first, &num, valuators);
+	assert(first == 0);
+	assert(num == 0);
+	for (size_t i = 0; i< ARRAY_SIZE(valuators); i++)
+		assert(valuators[i] == 0xab);
+
+	reset(valuators);
+	memset(&axes, 0, sizeof(axes));
+
+	/* Check conversion for single value with first_valuator != 0 */
+	wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, 1); /* pos 2 */
+	convertAxes(&axes, &first, &num, valuators);
+	assert(first == 2);
+	assert(num == 1);
+	assert(valuators[0] == 1);
+	assert(valuators[1] == 0xab);
+	assert(valuators[2] == 0xab);
+	assert(valuators[3] == 0xab);
+	assert(valuators[4] == 0xab);
+	assert(valuators[5] == 0xab);
+	assert(valuators[6] == 0xab);
+
+	reset(valuators);
+	memset(&axes, 0, sizeof(axes));
+
+	/* Check conversion for gaps with first_valuator != 0 */
+	wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, 1); /* pos 2 */
+	wcmAxisSet(&axes, WACOM_AXIS_WHEEL, 2); /* pos 5 */
+
+	convertAxes(&axes, &first, &num, valuators);
+	assert(first == 2);
+	assert(num == 4);
+	assert(valuators[0] == 1);
+	assert(valuators[1] == 0);
+	assert(valuators[2] == 0);
+	assert(valuators[3] == 2);
+	assert(valuators[4] == 0xab);
+	assert(valuators[5] == 0xab);
+	assert(valuators[6] == 0xab);
+
+	reset(valuators);
+	memset(&axes, 0, sizeof(axes));
+
+	/* Check conversion for valuators with duplicate uses. Note that this
+	 * test is implementation-dependent: the loop in convertAxes decides
+	 */
+	wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, 1); /* pos 2 */
+	wcmAxisSet(&axes, WACOM_AXIS_STRIP_X, 20); /* pos 3 */
+	wcmAxisSet(&axes, WACOM_AXIS_STRIP_Y, 21); /* pos 4 */
+	wcmAxisSet(&axes, WACOM_AXIS_TILT_X, 10); /* also pos 3 */
+	wcmAxisSet(&axes, WACOM_AXIS_TILT_Y, 11); /* also pos 4 */
+	wcmAxisSet(&axes, WACOM_AXIS_RING, 3); /* pos 5 */
+	wcmAxisSet(&axes, WACOM_AXIS_WHEEL, 2); /* also pos 5 */
+
+	convertAxes(&axes, &first, &num, valuators);
+	assert(first == 2);
+	assert(num == 4);
+	assert(valuators[0] == 1);
+	assert(valuators[1] == 10);
+	assert(valuators[2] == 11);
+	assert(valuators[3] == 2);
+	assert(valuators[4] == 0xab);
+	assert(valuators[5] == 0xab);
+	assert(valuators[6] == 0xab);
+
+}
+
+#endif
+
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
