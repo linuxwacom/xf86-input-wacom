@@ -370,7 +370,7 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		if (--argc == 0)
+		if (--argc <= 0)
 			break;
 
 		g_free(path);
