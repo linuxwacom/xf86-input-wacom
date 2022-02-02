@@ -364,6 +364,8 @@ int main(int argc, char **argv)
 
 	++argv; --argc; /* first arg is already in path */
 	while (true) {
+		g_autofree char *path = NULL;
+
 		device = wacom_device_new(driver, name, options);
 		if (!device) {
 			fprintf(stderr, "Unable to record device %s - is this a Wacom tablet?\n", path);
@@ -373,7 +375,6 @@ int main(int argc, char **argv)
 		if (--argc <= 0)
 			break;
 
-		g_free(path);
 		path = strdup(*(++argv));
 		wacom_options_set(options, "device", path);
 	}
