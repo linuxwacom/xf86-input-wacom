@@ -21,6 +21,10 @@
 
 #include "xf86Wacom.h"
 
+#if ENABLE_TESTS
+#include "wacom-test-suite.h"
+#endif
+
 #include <math.h>
 #include <asm/types.h>
 #include <linux/input.h>
@@ -1347,7 +1351,7 @@ static void usbParseAbsEvent(WacomCommonPtr common,
  *
  * @return The new button mask
  */
-TEST_NON_STATIC int
+static int
 mod_buttons(WacomCommonPtr common, int buttons, int btn, int state)
 {
 	int mask;
@@ -2065,5 +2069,25 @@ static int usbProbeKeys(WacomDevicePtr priv)
 	return wacom_id.product;
 }
 
+
+#ifdef ENABLE_TESTS
+
+TEST_CASE(test_mod_buttons)
+{
+	WacomCommonRec common = {0};
+	int i;
+	for (i = 0; i < sizeof(int) * 8; i++)
+	{
+		int buttons = mod_buttons(&common, 0, i, 1);
+		assert(buttons == (1 << i));
+		buttons = mod_buttons(&common, 0, i, 0);
+		assert(buttons == 0);
+	}
+
+	assert(mod_buttons(&common, 0, sizeof(int) * 8, 1) == 0);
+}
+
+
+#endif
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

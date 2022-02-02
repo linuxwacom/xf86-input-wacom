@@ -151,6 +151,12 @@ if test "x$UNITTESTS" != xno ; then
                      [linker_can_wrap="no"])
        AC_MSG_RESULT([$linker_can_wrap])
        LDFLAGS="$save_LDFLAGS"
+
+       # Check for the availability of dlsym and friends
+       AC_CHECK_LIB([dl], [dlsym],
+           [libdl_available="yes"],
+           [libdl_available="no"]
+       )
 fi
 
 if test "x$UNITTESTS" = xauto; then
@@ -163,6 +169,9 @@ fi
 if test "x$UNITTESTS" = xyes; then
        if test "x$linker_can_wrap" = xno; then
            AC_MSG_ERROR([ld -wrap support required to build unit tests])
+       fi
+       if test "x$libdl_available" = xno; then
+           AC_MSG_ERROR([dlsym required to build unit tests])
        fi
        AC_DEFINE(UNITTESTS, 1, [Enable unit tests])
 fi

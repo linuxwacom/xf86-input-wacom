@@ -331,19 +331,31 @@ if build_unittests
 	)
 	test('xsetwacom-tests', xsetwacom_test)
 
-	src_wacom_tests = src_wacom + [
-			'test/fake-symbols.c',
-			'test/fake-symbols.h',
-			'test/wacom-tests.c',
-	]
-	wacom_tests = executable(
-			'wacom-tests',
-			src_wacom_tests,
-			c_args: ['-DUNIT_TESTS'],
-			dependencies: [dep_xserver, dep_m],
-			include_directories: [dir_include, dir_src],
+	# Rebuild the driver with -DENABLE_TESTS to enable all the various
+	# local tests in the files. This is built as a module (like the
+	# driver) so we don't need to resolve any symbols until runtime.
+	# Look at wacom-test-suite.(c|h) for the magic sauce.
+	wacom_drv_test = shared_module(
+		'wacom_drv_test',
+		src_wacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
+		include_directories: [dir_src, dir_include, dir_src_test],
+		dependencies: [dep_xserver, dep_m],
+		name_prefix: '', # we want wacom_drv_test.so, not libwacom_drv_test.so
+		install: false,
+		c_args: ['-DENABLE_TESTS', '-fvisibility=default'],
 	)
-	test('wacom-tests', wacom_tests)
+	dep_wacom_drv_test = declare_dependency(link_with: wacom_drv_test)
+	dep_dl = cc.find_library('dl')
+	# wacom-tests.c is just a stub to load the above driver and run the
+	# entry point.
+	test('wacom-tests',
+		executable(
+		'wacom-tests',
+		'test/wacom-tests.c',
+		dependencies: [dep_wacom_drv_test, dep_dl],
+		install: false)
+	)
+
 endif
 
 

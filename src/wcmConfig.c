@@ -25,6 +25,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#ifdef ENABLE_TESTS
+#include "wacom-test-suite.h"
+#endif
+
 /*****************************************************************************
  * wcmAllocate --
  * Allocate the generic bits needed by any wacom device, regardless of type.
@@ -125,7 +129,7 @@ static void wcmFree(WacomDevicePtr priv)
 	free(priv);
 }
 
-TEST_NON_STATIC Bool
+static Bool
 wcmSetFlags(WacomDevicePtr priv, WacomType type)
 {
 	int flags = 0;
@@ -620,7 +624,7 @@ char *wcmEventAutoDevProbe (WacomDevicePtr priv)
  *    Initialize logical size and resolution for individual tool.
  ****************************************************************************/
 
-TEST_NON_STATIC void
+static void
 wcmInitialToolSize(WacomDevicePtr priv)
 {
 	WacomCommonPtr common = priv->common;
@@ -1078,5 +1082,163 @@ void wcmDevClose(WacomDevicePtr priv)
 		wcmSetFd(priv, -1);
 	}
 }
+
+#ifdef ENABLE_TESTS
+
+/**
+ * After a call to wcmInitialToolSize, the min/max and resolution must be
+ * set up correctly.
+ *
+ * wcmInitialToolSize takes the data from the common rec, so test that the
+ * priv has all the values of the common.
+ */
+TEST_CASE(test_initial_size)
+{
+	WacomDeviceRec priv = {0};
+	WacomCommonRec common = {0};
+
+	/* pin to some numbers */
+	int xres = 1920, yres = 1600;
+	int minx, maxx = 2 * xres, miny, maxy = 2 * yres;
+
+	priv.common = &common;
+
+	/* FIXME: we currently assume min of 0 in the driver. we cannot cope
+	 * with non-zero devices */
+	minx = miny = 0;
+
+	common.wcmMaxX = maxx;
+	common.wcmMaxY = maxy;
+	common.wcmResolX = xres;
+	common.wcmResolY = yres;
+
+	wcmInitialToolSize(&priv);
+
+	assert(priv.topX == minx);
+	assert(priv.topY == minx);
+	assert(priv.bottomX == maxx);
+	assert(priv.bottomY == maxy);
+	assert(priv.resolX == xres);
+	assert(priv.resolY == yres);
+
+	/* Same thing for a touch-enabled device */
+	memset(&common, 0, sizeof(common));
+
+	priv.flags = TOUCH_ID;
+	assert(IsTouch(&priv));
+
+	common.wcmMaxTouchX = maxx;
+	common.wcmMaxTouchY = maxy;
+	common.wcmTouchResolX = xres;
+	common.wcmTouchResolY = yres;
+
+	wcmInitialToolSize(&priv);
+
+	assert(priv.topX == minx);
+	assert(priv.topY == minx);
+	assert(priv.bottomX == maxx);
+	assert(priv.bottomY == maxy);
+	assert(priv.resolX == xres);
+	assert(priv.resolY == yres);
+
+}
+
+TEST_CASE(test_set_type)
+{
+	InputInfoRec info = {0};
+	WacomDeviceRec priv = {0};
+	WacomTool tool = {0};
+	WacomCommonRec common = {0};
+	int rc;
+
+#define reset(_info, _priv, _tool, _common) \
+	memset(&(_info), 0, sizeof(_info)); \
+	memset(&(_priv), 0, sizeof(_priv)); \
+	memset(&(_tool), 0, sizeof(_tool)); \
+	(_priv).frontend = &(_info); \
+	(_info).private = &(_priv); \
+	(_priv).tool = &(_tool); \
+	(_priv).common = &(_common);
+
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_STYLUS);
+	assert(rc == 1);
+	assert(is_absolute(&priv));
+	assert(IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_TOUCH);
+	assert(rc == 1);
+	/* only some touch screens are absolute */
+	assert(!is_absolute(&priv));
+	assert(!IsStylus(&priv));
+	assert(IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_ERASER);
+	assert(rc == 1);
+	assert(is_absolute(&priv));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_CURSOR);
+	assert(rc == 1);
+	assert(!is_absolute(&priv));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(IsCursor(&priv));
+	assert(!IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_PAD);
+	assert(rc == 1);
+	assert(is_absolute(&priv));
+	assert(!IsStylus(&priv));
+	assert(!IsTouch(&priv));
+	assert(!IsEraser(&priv));
+	assert(!IsCursor(&priv));
+	assert(IsPad(&priv));
+
+	reset(info, priv, tool, common);
+	rc = wcmSetFlags(&priv, WTYPE_INVALID);
+	assert(rc == 0);
+
+#undef reset
+}
+
+TEST_CASE(test_flag_set)
+{
+	int i;
+	unsigned int flags = 0;
+
+	for (i = 0; i < sizeof(flags); i++)
+	{
+		int mask = 1 << i;
+		flags = 0;
+
+		assert(!MaskIsSet(flags, mask));
+		MaskSet(flags, mask);
+		assert(flags != 0);
+		assert(MaskIsSet(flags, mask));
+		MaskClear(flags, mask);
+		assert(!MaskIsSet(flags, mask));
+		assert(flags == 0);
+	}
+}
+
+#endif
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */

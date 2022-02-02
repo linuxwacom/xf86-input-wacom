@@ -190,34 +190,6 @@ enum WacomSuppressMode {
 
 /****************************************************************************/
 
-#ifndef UNIT_TESTS
-
-# define TEST_NON_STATIC static
-
-#else
-
-# define TEST_NON_STATIC
-
-/* For test suite */
-/* xf86Wacom.c */
-extern void wcmInitialToolSize(WacomDevicePtr priv);
-
-/* wcmConfig.c */
-extern int wcmSetFlags(WacomDevicePtr priv, WacomType type);
-
-/* wcmCommon.c */
-extern int getScrollDelta(int current, int old, int wrap, int flags);
-extern int getWheelButton(int delta, int action_up, int action_dn);
-extern int rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds);
-extern int normalizePressure(const WacomDevicePtr priv, const int raw_pressure);
-extern enum WacomSuppressMode wcmCheckSuppress(WacomCommonPtr common,
-						const WacomDeviceState* dsOrig,
-						WacomDeviceState* dsNew);
-
-/* wcmUSB.c */
-extern int mod_buttons(WacomCommonPtr common, int buttons, int btn, int state);
-#endif /* UNIT_TESTS */
-
 #endif /* __XF86WACOM_H */
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
