@@ -1,5 +1,6 @@
+
 /*
- * Copyright 2022 © Red Hat, Inc.
+ * Copyright 2022 Red Hat, Inc
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,18 +24,19 @@
 #include <stdio.h>
 
 #define TESTDRV "wacom_drv_test.so"
-#define TESTFUNC "wcm_run_tests"
+#define TESTFUNC "run_tests"
+
+void *serverClient;
 
 int main(void) {
 	void *handle = dlopen(TESTDRV, RTLD_LAZY);
-	void (*func)(void);
-
 	if (handle == NULL) {
 		fprintf(stderr, "Failed to open %s: %s\n", TESTDRV, dlerror());
 		return 1;
 	}
 
-	func = dlsym(handle, TESTFUNC);
+	void (*func)(void)  = dlsym(handle, TESTFUNC);
+
 	if (func == NULL) {
 		fprintf(stderr, "Failed to load %s: %s\n", TESTFUNC, dlerror());
 		return 1;
@@ -44,5 +46,3 @@ int main(void) {
 
 	return 0;
 }
-
-/* vim: set noexpandtab tabstop=8 shiftwidth=8: */

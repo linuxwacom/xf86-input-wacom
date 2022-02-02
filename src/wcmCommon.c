@@ -27,6 +27,9 @@
 #include <xkbsrv.h>
 #include <xf86_OSproc.h>
 
+#ifdef ENABLE_TESTS
+#include "wacom-test-suite.h"
+#endif
 
 static struct _WacomDriverRec
 {
@@ -468,7 +471,7 @@ static void sendAButton(WacomDevicePtr priv, const WacomDeviceState* ds, int but
  * @param flags    Flags defining axis attributes: AXIS_INVERT and AXIS_BITWISE
  * @return         Relative change in axis value
  */
-TEST_NON_STATIC int getScrollDelta(int current, int old, int wrap, int flags)
+static int getScrollDelta(int current, int old, int wrap, int flags)
 {
 	int delta;
 
@@ -513,7 +516,7 @@ TEST_NON_STATIC int getScrollDelta(int current, int old, int wrap, int flags)
  * @param action_dn    Array index of action to send on scroll down
  * @return             Array index of action that should be performed, or -1 if none.
  */
-TEST_NON_STATIC int getWheelButton(int delta, int action_up, int action_dn)
+static int getWheelButton(int delta, int action_up, int action_dn)
 {
 	if (delta > 0)
 		return action_up;
@@ -977,7 +980,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
  * @retval SUPPRESS_NONE Process event normally.
  * @retval SUPPRESS_NON_MOTION Suppress all data but motion data.
  */
-TEST_NON_STATIC enum WacomSuppressMode
+static enum WacomSuppressMode
 wcmCheckSuppress(WacomCommonPtr common,
 		 const WacomDeviceState* dsOrig,
 		 WacomDeviceState* dsNew)
@@ -1252,7 +1255,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
  *
  * @see normalizePressure
  */
-TEST_NON_STATIC int
+static int
 rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
 	int min_pressure;
@@ -1281,7 +1284,7 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
  * @return normalized pressure
  * @see rebasePressure
  */
-TEST_NON_STATIC int
+static int
 normalizePressure(const WacomDevicePtr priv, const int raw_pressure)
 {
 	WacomCommonPtr common = priv->common;
@@ -1745,5 +1748,309 @@ WacomCommonPtr wcmRefCommon(WacomCommonPtr common)
 	DBG(10, common, "common refcount inc to %d\n", common->refcnt);
 	return common;
 }
+
+#ifdef ENABLE_TESTS
+
+TEST_CASE(test_get_scroll_delta)
+{
+	int test_table[][5] = {
+		{ 100,  25, 0, 0,  75}, { 25,  100, 0, 0, -75},
+		{-100, -25, 0, 0, -75}, {-25, -100, 0, 0,  75},
+		{ 100, -25, 0, 0, 125}, {-25,  100, 0, 0,-125},
+		{ 100, 100, 0, 0,   0}, {-25,  -25, 0, 0,   0},
+
+		{23, 0, 50, 0,  23}, {0, 23, 50, 0, -23},
+		{24, 0, 50, 0,  24}, {0, 24, 50, 0, -24},
+		{25, 0, 50, 0,  25}, {0, 25, 50, 0, -25},
+		{26, 0, 50, 0, -25}, {0, 26, 50, 0,  25},
+		{27, 0, 50, 0, -24}, {0, 27, 50, 0,  24},
+		{28, 0, 50, 0, -23}, {0, 28, 50, 0,  23},
+
+		{1024, 0, 0, AXIS_BITWISE, 11}, {0, 1024, 0, AXIS_BITWISE, -11},
+
+		{  0, 4, 256, AXIS_BITWISE, -3}, {4,   0, 256, AXIS_BITWISE,  3},
+		{  1, 4, 256, AXIS_BITWISE, -2}, {4,   1, 256, AXIS_BITWISE,  2},
+		{  2, 4, 256, AXIS_BITWISE, -1}, {4,   2, 256, AXIS_BITWISE,  1},
+		{  4, 4, 256, AXIS_BITWISE,  0}, {4,   4, 256, AXIS_BITWISE,  0},
+		{  8, 4, 256, AXIS_BITWISE,  1}, {4,   8, 256, AXIS_BITWISE, -1},
+		{ 16, 4, 256, AXIS_BITWISE,  2}, {4,  16, 256, AXIS_BITWISE, -2},
+		{ 32, 4, 256, AXIS_BITWISE,  3}, {4,  32, 256, AXIS_BITWISE, -3},
+		{ 64, 4, 256, AXIS_BITWISE,  4}, {4,  64, 256, AXIS_BITWISE, -4},
+		{128, 4, 256, AXIS_BITWISE,  5}, {4, 128, 256, AXIS_BITWISE, -5},
+		{256, 4, 256, AXIS_BITWISE, -4}, {4, 256, 256, AXIS_BITWISE,  4}
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(test_table); i++)
+	{
+		int delta;
+		int current, old, wrap, flags;
+		current = test_table[i][0];
+		old     = test_table[i][1];
+		wrap    = test_table[i][2];
+		flags   = test_table[i][3];
+
+		delta = getScrollDelta(current, old, wrap, flags);
+		assert(delta == test_table[i][4]);
+
+		flags |= AXIS_INVERT;
+		delta = getScrollDelta(current, old, wrap, flags);
+		assert(delta == -1 * test_table[i][4]);
+	}
+}
+
+TEST_CASE(test_get_wheel_button)
+{
+	int delta;
+	int action_up, action_dn;
+
+	action_up = 300;
+	action_dn = 400;
+
+	for (delta = -32; delta <= 32; delta++)
+	{
+		int action;
+		action = getWheelButton(delta, action_up, action_dn);
+		if (delta < 0)
+		{
+			assert(action == action_dn);
+		}
+		else if (delta == 0)
+		{
+			assert(action == -1);
+		}
+		else
+		{
+			assert(action == action_up);
+		}
+	}
+}
+
+
+TEST_CASE(test_common_ref)
+{
+	WacomCommonPtr common;
+	WacomCommonPtr second;
+
+	common = wcmNewCommon();
+	assert(common);
+	assert(common->refcnt == 1);
+
+	second = wcmRefCommon(common);
+
+	assert(second == common);
+	assert(second->refcnt == 2);
+
+	wcmFreeCommon(&second);
+	assert(common);
+	assert(!second);
+	assert(common->refcnt == 1);
+
+	second = wcmRefCommon(NULL);
+	assert(common != second);
+	assert(second->refcnt == 1);
+	assert(common->refcnt == 1);
+
+	wcmFreeCommon(&second);
+	wcmFreeCommon(&common);
+	assert(!second && !common);
+}
+
+TEST_CASE(test_rebase_pressure)
+{
+	WacomDeviceRec priv = {0};
+	WacomDeviceRec base = {0};
+	WacomDeviceState ds = {0};
+	int pressure;
+
+	priv.minPressure = 4;
+	ds.pressure = 10;
+
+	/* Pressure in out-of-proximity means get new preloaded pressure */
+	priv.oldState.proximity = 0;
+
+	/* make sure we don't touch priv, not really needed, the compiler should
+	 * honor the consts but... */
+	base = priv;
+
+	pressure = rebasePressure(&priv, &ds);
+	assert(pressure == ds.pressure);
+
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+
+	/* Pressure in-proximity means rebase to new minimum */
+	priv.oldState.proximity = 1;
+
+	base = priv;
+
+	pressure = rebasePressure(&priv, &ds);
+	assert(pressure == priv.minPressure);
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+}
+
+TEST_CASE(test_normalize_pressure)
+{
+	InputInfoRec pInfo = {0};
+	WacomDeviceRec priv = {0};
+	WacomCommonRec common = {0};
+	int normalized_max = 65536;
+	int pressure, prev_pressure = -1;
+	int i, j, k;
+
+	priv.common = &common;
+	priv.frontend = &pInfo;
+	pInfo.name = strdupa("Wacom test device");
+	common.wcmPressureRecalibration = 1;
+
+	priv.minPressure = 0;
+
+	/* Check various maxCurve values */
+	for (k = 512; k <= normalized_max; k += 239) {
+		priv.maxCurve = k;
+
+		/* Some random loop to check various maxZ pressure values. Starting at
+		 * 1, because if wcmMaxZ is 0 we have other problems. */
+		for (j = 1; j <= 256; j += 17)
+		{
+			common.wcmMaxZ = j;
+			prev_pressure = -1;
+
+			for (i = 0; i <= common.wcmMaxZ; i++)
+			{
+				pressure = i;
+
+				pressure = normalizePressure(&priv, pressure);
+				assert(pressure >= 0);
+				assert(pressure <= k);
+
+				/* we count up, so assume normalised pressure goes up too */
+				assert(prev_pressure < pressure);
+				prev_pressure = pressure;
+			}
+
+			assert(pressure == k);
+		}
+	}
+
+	/* If minPressure is higher than ds->pressure, normalizePressure takes
+	 * minPressure and ignores actual pressure. This would be a bug in the
+	 * driver code, but we might as well test for it. */
+	priv.minPressure = 10;
+	priv.maxCurve = normalized_max;
+
+	prev_pressure = normalizePressure(&priv, 0);
+	for (i = 0; i < priv.minPressure; i++)
+	{
+
+		pressure = normalizePressure(&priv, i);
+
+		assert(pressure >= 0);
+		assert(pressure < normalized_max);
+
+		/* we count up, so assume normalised pressure goes up too */
+		assert(prev_pressure == pressure);
+	}
+}
+
+TEST_CASE(test_suppress)
+{
+	enum WacomSuppressMode rc;
+	WacomCommonRec common = {0};
+	WacomDeviceState old = {0},
+			 new = {0};
+
+	common.wcmSuppress = 2;
+
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_ALL);
+
+	/* proximity, buttons and strip send for any change */
+
+#define test_any_suppress(field) \
+	old.field = 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	assert(rc == SUPPRESS_NONE); \
+	new.field = old.field;
+
+	test_any_suppress(proximity);
+	test_any_suppress(buttons);
+	test_any_suppress(stripx);
+	test_any_suppress(stripy);
+
+#undef test_any_suppress
+
+	/* pressure, capacity, throttle, rotation, abswheel only when
+	 * difference is above suppress */
+
+	/* test negative and positive transition */
+#define test_above_suppress(field) \
+	old.field = common.wcmSuppress; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	assert(rc == SUPPRESS_ALL); \
+	old.field = common.wcmSuppress + 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	assert(rc == SUPPRESS_NONE); \
+	old.field = -common.wcmSuppress; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	assert(rc == SUPPRESS_ALL); \
+	old.field = -common.wcmSuppress - 1; \
+	rc = wcmCheckSuppress(&common, &old, &new); \
+	assert(rc == SUPPRESS_NONE); \
+	new.field = old.field;
+
+	test_above_suppress(pressure);
+	test_above_suppress(throttle);
+	test_above_suppress(rotation);
+	test_above_suppress(abswheel);
+
+#undef test_above_suppress
+
+	/* any movement on relwheel counts */
+	new.relwheel = 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NONE);
+	new.relwheel = 0;
+
+	/* x axis movement */
+
+	/* not enough movement */
+	new.x = common.wcmSuppress;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_ALL);
+	assert(old.x == new.x);
+	assert(old.y == new.y);
+
+	/* only x axis above thresh */
+	new.x = common.wcmSuppress + 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NON_MOTION);
+
+	/* x and other field above thres */
+	new.pressure = ~old.pressure;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NONE);
+
+	new.pressure = old.pressure;
+	new.x = old.x;
+
+	/* y axis movement */
+	new.y = common.wcmSuppress;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_ALL);
+	assert(old.x == new.x);
+	assert(old.y == new.y);
+
+	new.y = common.wcmSuppress + 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NON_MOTION);
+
+	new.pressure = ~old.pressure;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NONE);
+	new.pressure = old.pressure;
+}
+
+
+#endif
 
 /* vim: set noexpandtab tabstop=8 shiftwidth=8: */
