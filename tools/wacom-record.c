@@ -82,7 +82,10 @@ static void proximity(WacomDevice *device, gboolean is_prox_in, WacomEventData *
 static void motion(WacomDevice *device, gboolean is_absolute, WacomEventData *data)
 {
 	printf("    - source: %d\n"
-	       "      event: motion\n", wacom_device_get_id(device));
+	       "      mode: %s\n"
+	       "      event: motion\n",
+	       wacom_device_get_id(device),
+	       is_absolute ? "absolute" : "relative");
 	print_axes(data);
 }
 
