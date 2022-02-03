@@ -138,11 +138,6 @@ src_wacom = src_wacom_core + [
 	'src/x11/xf86Wacom.c',
 ]
 
-deps_wacom = [
-	dep_xserver,
-	dep_libudev,
-] + dep_protos
-
 shared_module(
 	'wacom_drv',
 	src_wacom,
