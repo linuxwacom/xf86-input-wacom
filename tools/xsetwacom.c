@@ -2752,7 +2752,7 @@ out:
 }
 
 
-#ifndef BUILD_TEST
+#ifndef ENABLE_TESTS
 
 #ifdef BUILD_FUZZINTERFACE
 void argsfromstdin(int *argc, char ***argv)
@@ -2939,15 +2939,16 @@ int main (int argc, char **argv)
 	XCloseDisplay(dpy);
 	return 0;
 }
-#endif
+#endif /* ENABLE_TESTS */
 
-#ifdef BUILD_TEST
+#ifdef ENABLE_TESTS
+#include "wacom-test-suite.h"
 #include <assert.h>
 /**
  * Below are unit-tests to ensure xsetwacom continues to work as expected.
  */
 
-static void test_is_modifier(void)
+TEST_CASE(test_is_modifier)
 {
 	char i;
 	char buff[5];
@@ -2977,7 +2978,7 @@ static void test_is_modifier(void)
 	}
 }
 
-static void test_convert_specialkey(void)
+TEST_CASE(test_convert_specialkey)
 {
 	char i;
 	const char *converted;
@@ -3021,7 +3022,7 @@ static void test_convert_specialkey(void)
 	}
 }
 
-static void test_parameter_number(void)
+TEST_CASE(test_parameter_number)
 {
 	/* If either of those two fails, a parameter was added or removed.
 	 * This test simply exists so that we remember to properly
@@ -3061,7 +3062,7 @@ static void _test_conversion(const param_t *param, const char **words,
 	}
 }
 
-static void test_convert_value_from_user(void)
+TEST_CASE(test_convert_value_from_user)
 {
 	param_t test_nonbool =
 	{
@@ -3107,12 +3108,11 @@ static void test_convert_value_from_user(void)
 }
 
 
+extern void wcm_run_tests(void); /* see wacom-test-suite.c */
+
 int main(int argc, char** argv)
 {
-	test_parameter_number();
-	test_is_modifier();
-	test_convert_specialkey();
-	test_convert_value_from_user();
+	wcm_run_tests();
 	return 0;
 }
 

@@ -324,10 +324,10 @@ build_unittests = have_wrap and not get_option('unittests').disabled()
 if build_unittests
 	xsetwacom_test = executable(
 		'xsetwacom-test',
-		src_xsetwacom,
-		c_args: ['-DBUILD_TEST', '-Wno-unused-function'],
+		src_xsetwacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
+		c_args: ['-DENABLE_TESTS', '-Wno-unused-function'],
 		dependencies: xsetwacom_deps,
-		include_directories: [dir_include],
+		include_directories: [dir_include, dir_src, dir_src_test],
 	)
 	test('xsetwacom-tests', xsetwacom_test)
 
