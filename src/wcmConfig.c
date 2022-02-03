@@ -1115,7 +1115,7 @@ TEST_CASE(test_initial_size)
 	wcmInitialToolSize(&priv);
 
 	assert(priv.topX == minx);
-	assert(priv.topY == minx);
+	assert(priv.topY == miny);
 	assert(priv.bottomX == maxx);
 	assert(priv.bottomY == maxy);
 	assert(priv.resolX == xres);
@@ -1135,7 +1135,7 @@ TEST_CASE(test_initial_size)
 	wcmInitialToolSize(&priv);
 
 	assert(priv.topX == minx);
-	assert(priv.topY == minx);
+	assert(priv.topY == miny);
 	assert(priv.bottomX == maxx);
 	assert(priv.bottomY == maxy);
 	assert(priv.resolX == xres);
