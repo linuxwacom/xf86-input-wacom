@@ -340,7 +340,7 @@ if build_unittests
 			'wacom-tests',
 			src_wacom_tests,
 			c_args: ['-DUNIT_TESTS'],
-			dependencies: [dep_xserver, dep_libudev, dep_m],
+			dependencies: [dep_xserver, dep_m],
 			include_directories: [dir_include, dir_src],
 	)
 	test('wacom-tests', wacom_tests)
