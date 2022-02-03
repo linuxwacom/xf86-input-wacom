@@ -18,9 +18,6 @@
  */
 
 /*
- * This driver is currently able to handle USB Wacom IV and V, serial ISDV4,
- * and bluetooth protocols.
- *
  * Wacom V protocol work done by Raph Levien <raph@gtk.org> and
  * Frédéric Lepied <lepied@xfree86.org>.
  *

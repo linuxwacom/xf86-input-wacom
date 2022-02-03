@@ -350,7 +350,6 @@ struct _WacomHWClass
 	Bool (*Init)(WacomDevicePtr priv);   /* initialize device */
 };
 
-extern WacomHWClass *WacomGetClassISDV4(void);
 extern WacomHWClass *WacomGetClassUSB(void);
 
 /******************************************************************************
