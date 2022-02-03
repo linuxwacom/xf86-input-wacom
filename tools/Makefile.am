@@ -41,8 +41,8 @@ endif
 
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
-xsetwacom_test_SOURCES=xsetwacom.c
-xsetwacom_test_CFLAGS=-DBUILD_TEST $(AM_CFLAGS) $(X11_CFLAGS) -Wno-error
+xsetwacom_test_SOURCES=xsetwacom.c $(top_srcdir)/test/wacom-test-suite.c $(top_srcdir)/test/wacom-test-suite.h
+xsetwacom_test_CFLAGS=-DENABLE_TESTS -I$(top_srcdir)/test $(AM_CFLAGS) $(X11_CFLAGS) -Wno-error
 xsetwacom_test_LDADD = $(X11_LIBS)
 
 TESTS=$(check_PROGRAMS)
