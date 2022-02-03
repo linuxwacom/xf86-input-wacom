@@ -100,6 +100,8 @@ enum WacomEventAxis {
 	WACOM_WHEEL	= (1 << 9),
 	WACOM_RING	= (1 << 10),
 	WACOM_RING2	= (1 << 11),
+
+	_WACOM_EVENT_AXIS_LAST = WACOM_RING2,
 };
 
 /* The pointer argument to all the event signals. If the mask is set for
