@@ -25,7 +25,7 @@ AC_PREREQ([2.60])
 # bump version in meson.build
 AC_INIT([xf86-input-wacom],
         [0.99.1],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [https://github.com/linuxwacom/xf86-input-wacom/issues/],
         [xf86-input-wacom])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([Makefile.am])
