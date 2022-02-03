@@ -1385,7 +1385,7 @@ static void commonDispatchDevice(WacomDevicePtr priv,
 	int raw_pressure = 0;
 
 	/* device_type should have been retrieved and set in the respective
-	 * models, wcmISDV4.c or wcmUSB.c. Once it comes here, something
+	 * models, e.g. wcmUSB.c. Once it comes here, something
 	 * must have been wrong. Ignore the events.
 	 */
 	if (!ds->device_type)
