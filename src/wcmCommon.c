@@ -863,6 +863,9 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		y = priv->oldState.y;
 	}
 
+	if (ds->proximity)
+		wcmRotateAndScaleCoordinates(priv, &x, &y);
+
 	if (!IsPad(priv)) { /* pad doesn't post x/y */
 		wcmAxisSet(&axes, WACOM_AXIS_X, x);
 		wcmAxisSet(&axes, WACOM_AXIS_Y, y);
@@ -904,9 +907,6 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		priv->oldState.proximity ? "true" : "false",
 		x, y, z, is_button ? "true" : "false", ds->buttons,
 		tx, ty, ds->abswheel, ds->abswheel2, ds->rotation, ds->throttle);
-
-	if (ds->proximity)
-		wcmRotateAndScaleCoordinates(priv, &x, &y);
 
 	v[5] = ds->abswheel;
 	v[6] = ds->abswheel2;
