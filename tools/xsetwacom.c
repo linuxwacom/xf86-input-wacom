@@ -2230,7 +2230,7 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 {
 	Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
 	Atom type;
-	int format, i;
+	int format;
 	unsigned long nitems, bytes_after;
 	unsigned long *data;
 	float matrix[9];
@@ -2260,7 +2260,7 @@ static Bool get_mapped_area(Display *dpy, XDevice *dev, int *width, int *height,
 
 	/* XI1 stores 32 bit properties (including float) as long,
 	 * regardless of architecture */
-	for (i = 0; i < ARRAY_SIZE(matrix); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++)
 		matrix[i] = *(float*)(&data[i]);
 
 	TRACE("Current transformation matrix:\n");
@@ -2301,7 +2301,6 @@ static Bool _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 	unsigned long nitems, bytes_after;
 	float *data;
 	long matrix[9] = {0};
-	int i;
 
 	if (!matrix_prop)
 	{
@@ -2311,7 +2310,7 @@ static Bool _set_matrix_prop(Display *dpy, XDevice *dev, const float fmatrix[9])
 
 	/* XI1 expects 32 bit properties (including float) as long,
 	 * regardless of architecture */
-	for (i = 0; i < ARRAY_SIZE(matrix); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(matrix); i++)
 		*(float*)(matrix + i) = fmatrix[i];
 
 	XGetDeviceProperty(dpy, dev, matrix_prop, 0, 9, False,
