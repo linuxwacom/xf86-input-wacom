@@ -840,11 +840,8 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	unsigned int serial = ds->serial_num;
 	int x = ds->x;
 	int y = ds->y;
-	int z = ds->pressure;
-	int tx = ds->tiltx;
-	int ty = ds->tilty;
-	int v[7] = {0};
 	WacomAxisData axes = {0};
+	char dump[1024];
 
 	if (priv->serial && serial != priv->serial)
 	{
@@ -869,7 +866,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	if (!IsPad(priv)) { /* pad doesn't post x/y */
 		wcmAxisSet(&axes, WACOM_AXIS_X, x);
 		wcmAxisSet(&axes, WACOM_AXIS_Y, y);
-		wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, z);
+		wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, ds->pressure);
 	}
 
 	if (type == PAD_ID)
@@ -878,23 +875,14 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_Y, ds->stripy);
 		wcmAxisSet(&axes, WACOM_AXIS_RING, ds->abswheel);
 		wcmAxisSet(&axes, WACOM_AXIS_RING2, ds->abswheel2);
-		v[3] = ds->stripx;
-		v[4] = ds->stripy;
-		/* use tx and ty to report stripx and stripy for the DBG below */
-		tx = ds->stripx;
-		ty = ds->stripy;
 	} else if (IsCursor(priv))
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_ROTATION, ds->rotation);
 		wcmAxisSet(&axes, WACOM_AXIS_THROTTLE, ds->throttle);
-		v[3] = ds->rotation;
-		v[4] = ds->throttle;
 	} else
 	{
-		wcmAxisSet(&axes, WACOM_AXIS_TILT_X, tx);
-		wcmAxisSet(&axes, WACOM_AXIS_TILT_Y, ty);
-		v[3] = tx;
-		v[4] = ty;
+		wcmAxisSet(&axes, WACOM_AXIS_TILT_X, ds->tiltx);
+		wcmAxisSet(&axes, WACOM_AXIS_TILT_Y, ds->tilty);
 	}
 
 
@@ -902,34 +890,25 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	if (!ds->proximity)
 		priv->flags &= ~SCROLLMODE_FLAG;
 
-	DBG(7, priv, "o_prox=%s x=%d y=%d z=%d "
-		"b=%s b=%d tx=%d ty=%d wl=%d wl2=%d rot=%d th=%d\n",
-		priv->oldState.proximity ? "true" : "false",
-		x, y, z, is_button ? "true" : "false", ds->buttons,
-		tx, ty, ds->abswheel, ds->abswheel2, ds->rotation, ds->throttle);
-
-	v[5] = ds->abswheel;
-	v[6] = ds->abswheel2;
 	if (IsStylus(priv) && !IsArtPen(ds))
 	{
 		/* Normalize abswheel airbrush data to Art Pen rotation range.
 		 * We do not normalize Art Pen. They are already at the range.
 		 */
-		v[5] = ds->abswheel * MAX_ROTATION_RANGE/
+		int wheel = ds->abswheel * MAX_ROTATION_RANGE/
 				(double)MAX_ABS_WHEEL + MIN_ROTATION;
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v[5]);
+		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, wheel);
 	} else if (IsStylus(priv) && IsArtPen(ds))
 	{
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, v[5]);
+		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, ds->abswheel);
 	}
 
-	DBG(6, priv, "%s prox=%d\tx=%d"
-		"\ty=%d\tz=%d\tv3=%d\tv4=%d\tv5=%d\tv6=%d\tid=%d"
+	wcmAxisDump(&axes, dump, sizeof(dump));
+	DBG(6, priv, "%s o_prox=%d\tprox=%d\t%s\tid=%d"
 		"\tserial=%u\tbutton=%s\tbuttons=%d\n",
-		is_absolute(priv) ? "abs" : "rel",
-		ds->proximity,
-		x, y, z, v[3], v[4], v[5], v[6], id, serial,
-		is_button ? "true" : "false", ds->buttons);
+		is_absolute(priv) ? "abs" : "rel", priv->oldState.proximity,
+		ds->proximity, dump, id, serial, is_button ? "true" : "false",
+		ds->buttons);
 
 	/* when entering prox, replace the zeroed-out oldState with a copy of
 	 * the current state to prevent jumps. reset the prox and button state

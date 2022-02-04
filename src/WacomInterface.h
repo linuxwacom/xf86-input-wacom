@@ -193,6 +193,62 @@ static inline bool wcmAxisGet(const WacomAxisData *data,
 	return TRUE;
 }
 
+static inline void wcmAxisValue(const WacomAxisData *data,
+			       enum WacomAxisType which,
+			       char *buf, size_t len)
+{
+	int val = 0;
+
+	if (!wcmAxisGet(data, which, &val)) {
+		assert(snprintf(buf, len, "N/A") < len);
+		return;
+	}
+	assert(snprintf(buf, len, "%d", val) < len);
+}
+
+static inline const char* wcmAxisName(enum WacomAxisType which)
+{
+	switch (which){
+	case WACOM_AXIS_X: return "x";
+	case WACOM_AXIS_Y: return "y";
+	case WACOM_AXIS_PRESSURE: return "pressure";
+	case WACOM_AXIS_TILT_X: return "tilt-x";
+	case WACOM_AXIS_TILT_Y: return "tilt-y";
+	case WACOM_AXIS_STRIP_X: return "strip-x";
+	case WACOM_AXIS_STRIP_Y: return "strip-y";
+	case WACOM_AXIS_ROTATION: return "rotation";
+	case WACOM_AXIS_THROTTLE: return "throttle";
+	case WACOM_AXIS_WHEEL: return "wheel";
+	case WACOM_AXIS_RING: return "ring";
+	case WACOM_AXIS_RING2: return "ring2";
+	default:
+		abort();
+	}
+}
+
+static inline void wcmAxisDump(const WacomAxisData *data, char *buf, size_t len)
+{
+	uint32_t mask = data->mask;
+	const char *prefix = "";
+	size_t count = 0;
+
+	assert(len > 0);
+	buf[0] = '\0';
+	for (uint32_t flag = 0x1; flag <= _WACOM_AXIS_LAST; flag <<= 1) {
+		const char *name = wcmAxisName(flag);
+		char value[32];
+
+		if ((mask & flag) == 0)
+			continue;
+
+		wcmAxisValue(data, flag, value, sizeof(data));
+
+		count += snprintf(buf + count, len - count, "%s%s: %s", prefix, name, value);
+		assert(count < len);
+		prefix = ", ";
+	}
+}
+
 void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type, int min, int max, int res);
 bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons);
 bool wcmInitKeyboard(WacomDevicePtr priv);
