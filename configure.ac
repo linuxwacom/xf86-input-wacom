@@ -36,6 +36,8 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects])
 AM_MAINTAINER_MODE([enable])
 AC_USE_SYSTEM_EXTENSIONS
 
+AC_PROG_CC_STDC
+
 # Initialize libtool
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
