@@ -2,7 +2,7 @@ project('xf86-input-wacom', 'c',
 	version : '0.99.1', # bump version in configure.ac
 	license : 'MIT/Expat',
 	default_options : [ 'c_std=gnu99', 'warning_level=2' ],
-	meson_version : '>= 0.50.0')
+	meson_version : '>= 0.51.0')
 
 wacom_version = meson.project_version().split('.')
 
@@ -62,12 +62,12 @@ dep_m = cc.find_library('m')
 
 dir_wacom_headers = get_option('sdkdir')
 if dir_wacom_headers == ''
-	dir_wacom_headers = dep_xserver.get_pkgconfig_variable('sdkdir')
+	dir_wacom_headers = dep_xserver.get_variable(pkgconfig: 'sdkdir')
 endif
 
 dir_xorg_modules = get_option('xorg-module-dir')
 if dir_xorg_modules == ''
-	dir_xorg_modules = dep_xserver.get_pkgconfig_variable('moduledir') / 'input'
+	dir_xorg_modules = dep_xserver.get_variable(pkgconfig: 'moduledir') / 'input'
 endif
 
 dir_xorg_conf = get_option('xorg-conf-dir')
