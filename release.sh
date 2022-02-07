@@ -167,25 +167,36 @@ release_to_github() {
 #
 generate_announce()
 {
-    MD5SUM=`which md5sum || which gmd5sum`
-    SHA1SUM=`which sha1sum || which gsha1sum`
-    SHA256SUM=`which sha256sum || which gsha256sum`
+    MD5SUM_BIN=$(which md5sum || which gmd5sum)
+    SHA1SUM_BIN=$(which sha1sum || which gsha1sum)
+    SHA256SUM_BIN=$(which sha256sum || which gsha256sum)
+    MD5SUM=$($MD5SUM_BIN $tarball)
+    SHA1SUM=$($SHA1SUM_BIN $tarball)
+    SHA256SUM=$($SHA256SUM_BIN $tarball)
+    BT='`'
+    BT3='```'
 
     cat <<RELEASE
-Subject: [ANNOUNCE] $pkg_name $pkg_version
 
-`git log --no-merges "$tag_range" | git shortlog`
+## Tag
 
-git tag: $tag_name
+git tag: ${BT}${tag_name}${BT}
 
-RELEASE
+## Downloads
 
-        cat <<RELEASE
-$DL_URL
- MD5:  `$MD5SUM $tarball`
- SHA1: `$SHA1SUM $tarball`
- SHA256: `$SHA256SUM $tarball`
- PGP: $PGP_URL
+${DL_URL}
+
+Checksums:
+
+- **MD5**:  ${BT}$MD5SUM${BT}
+- **SHA1**: ${BT}$SHA1SUM${BT}
+- **SHA256**: ${BT}$SHA256SUM${BT}
+- **PGP**: $PGP_URL
+
+## Log
+${BT3}
+$(git log --no-merges "$tag_range" | git shortlog)
+${BT3}
 
 RELEASE
 }
