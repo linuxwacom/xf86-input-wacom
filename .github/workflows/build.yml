@@ -7,6 +7,7 @@ env:
     libgirepository1.0-dev libevdev-dev
     python3-pip
   PIP_PACKAGES: meson ninja
+  MESON_REQUIRED_VERSION: 0.51.0
 
 jobs:
   compile-with-autotools:
@@ -84,6 +85,29 @@ jobs:
         if: ${{ always() }}  # even if we fail
         with:
           name: meson-test-logs-${{github.job}}-${{matrix.compiler}}-${{matrix.meson_options}}
+          path: |
+            builddir/meson-logs/testlog*.txt
+            builddir/meson-logs/meson-log.txt
+
+  compile-with-meson-exact-version:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
+        with:
+          apt: $UBUNTU_PACKAGES
+          pip: $PIP_PACKAGES
+      - name: install exact meson version
+        run: pip install "meson == $MESON_REQUIRED_VERSION"
+      - name: meson test
+        uses: linuxwacom/libwacom/./.github/actions/meson@master
+        with:
+          meson_args: -Dauto_features=enabled
+      # Capture all the meson logs, even if we failed
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}  # even if we fail
+        with:
+          name: meson-test-logs-${{github.job}}
           path: |
             builddir/meson-logs/testlog*.txt
             builddir/meson-logs/meson-log.txt
