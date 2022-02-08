@@ -356,6 +356,29 @@ if build_unittests
 		]
 	)
 
+	devenv = environment()
+	devenv.set('LD_LIBRARY_PATH', meson.current_build_dir())
+	devenv.set('GI_TYPELIB_PATH', meson.current_build_dir())
+
+	# pytest doesn't like asan or ubsan
+	if build_gwacom and get_option('b_sanitize') == 'none'
+		pymod = import('python')
+		pymod.find_installation(
+			'python3',
+			modules: ['libevdev', 'pytest', 'yaml', 'attr', 'gi']
+		)
+
+		pytest = find_program('pytest', 'pytest-3')
+		test('pytest',
+		     pytest,
+		     env: devenv,
+		     workdir: meson.current_source_dir(),
+		)
+	endif
+
+	if meson.version().version_compare('>= 0.58.0')
+		meson.add_devenv(devenv)
+	endif
 endif
 
 

@@ -1,0 +1,76 @@
+# Wacom Intuos Pro (PTH660)
+name: "PTH660"
+devices:
+  # Pen device
+  - type: "pen"  # one out of pen, pad, finger
+    name: "Wacom Intuos Pro M Pen"
+    id: ["0x3", "0x56a", "0x357", "0x110"]
+    bits:
+    - BTN_TOOL_PEN
+    - BTN_TOOL_RUBBER
+    - BTN_TOOL_AIRBRUSH
+    - BTN_STYLUS
+    - BTN_STYLUS2
+    - BTN_STYLUS3
+    - BTN_TOUCH
+    - MSC_SERIAL
+    abs:
+      # value, min, max, fuzz, flat, resolution
+      ABS_X: [0, 44800, 4, 0, 200]
+      ABS_Y: [0, 29600, 4, 0, 200]
+      ABS_Z: [-900, 899, 0, 0, 287]
+      ABS_WHEEL: [0, 2047, 0, 0, 0]
+      ABS_PRESSURE: [0, 8191, 0, 0, 0]
+      ABS_DISTANCE: [0, 63, 0, 0, 0]
+      ABS_TILT_X: [-64, 63, 0, 0, 57]
+      ABS_TILT_Y: [-64, 63, 0, 0, 57]
+      ABS_MISC: [-2147483648, 2147483647, 0, 0, 0]
+    props: [INPUT_PROP_POINTER]
+  # Pad device
+  - type: "pad"
+    name: "Wacom Intuos Pro M Pad"
+    id: ["0x3", "0x56a", "0x357", "0x110"]
+    bits:
+    - BTN_0
+    - BTN_1
+    - BTN_2
+    - BTN_3
+    - BTN_4
+    - BTN_5
+    - BTN_6
+    - BTN_7
+    - BTN_8
+    - BTN_8
+    - BTN_STYLUS
+    abs:
+      # value, min, max, fuzz, flat, resolution
+      ABS_X: [0, 1, 0, 0, 0]
+      ABS_Y: [0, 1, 0, 0, 0]
+      ABS_WHEEL: [0, 71, 0, 0, 11]
+      ABS_MISC: [0, 0, 0, 0, 0]
+    props: [INPUT_PROP_POINTER]
+  # Finger device
+  - type: "finger"
+    name: "Wacom Intuos Pro M Finger"
+    id: ["0x3", "0x56a", "0x357", "0x110"]
+    bits:
+    - BTN_TOOL_FINGER
+    - BTN_TOOL_DOUBLETAP
+    - BTN_TOOL_TRIPLETAP
+    - BTN_TOOL_QUADTAP
+    - BTN_TOOL_QUINTTAP
+    - BTN_TOUCH
+    - SW_MUTE_DEVICE
+    abs:
+      # value, min, max, fuzz, flat, resolution
+      ABS_X: [0, 8960, 0, 0, 40]
+      ABS_Y: [0, 5920, 0, 0, 40]
+      ABS_MT_SLOT: [0, 9, 0, 0, 0]
+      ABS_MT_TOUCH_MAJOR: [0, 31, 0, 0, 2]
+      ABS_MT_TOUCH_MINOR: [0, 31, 0, 0, 2]
+      ABS_MT_ORIENTATION: [0, 1, 0, 0, 0]
+      ABS_MT_POSITION_X: [0, 8960, 0, 0, 40]
+      ABS_MT_POSITION_Y: [0, 5920, 0, 0, 40]
+      ABS_MT_TRACKING_ID: [0, 65535, 0, 0, 0]
+    props: [INPUT_PROP_POINTER]
+

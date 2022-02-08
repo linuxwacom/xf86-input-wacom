@@ -5,8 +5,8 @@ env:
   UBUNTU_PACKAGES: |
     xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev
     libgirepository1.0-dev libevdev-dev
-    python3-pip
-  PIP_PACKAGES: meson ninja
+    python3-pip python3-gi python3-pytest
+  PIP_PACKAGES: meson ninja libevdev pytest pyyaml attrs
   MESON_REQUIRED_VERSION: 0.51.0
 
 jobs:
