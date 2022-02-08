@@ -17,3 +17,10 @@ wacom_tests_SOURCES = wacom-tests.c
 TESTS=$(check_PROGRAMS)
 
 endif
+
+EXTRA_DIST= \
+	    __init__.py \
+	    conftest.py \
+	    test_wacom.py \
+	    devices/wacom-pth660.yml \
+	    $(NULL)

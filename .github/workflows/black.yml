@@ -1,0 +1,15 @@
+on: [ push, pull_request ]
+
+jobs:
+  python-black:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+           python-version: '3.x'
+      - run: pip install black
+      - run: black test/
+      - run: git diff --exit-code || (echo "Please run black to reformat Python files" && false)
+
