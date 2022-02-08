@@ -67,6 +67,7 @@ struct _WacomDevice {
 
 G_DEFINE_TYPE (WacomOptions, wacom_options, G_TYPE_OBJECT)
 G_DEFINE_TYPE (WacomDevice, wacom_device, G_TYPE_OBJECT)
+G_DEFINE_BOXED_TYPE (WacomEventData, wacom_event_data, wacom_event_data_copy, wacom_event_data_free)
 G_DEFINE_BOXED_TYPE (WacomAxis, wacom_axis, wacom_axis_copy, wacom_axis_free)
 
 WacomOptions *wacom_options_new(const char *key, ...)
@@ -819,7 +820,7 @@ wacom_device_class_init(WacomDeviceClass *klass)
 			     0, NULL, NULL, NULL, G_TYPE_NONE,
 			     /* is_absolute, button, is_press, axes */
 			     4, G_TYPE_BOOLEAN, G_TYPE_UINT,
-			     G_TYPE_BOOLEAN, G_TYPE_POINTER);
+			     G_TYPE_BOOLEAN, WACOM_TYPE_EVENT_DATA);
 
 	/**
 	 * WacomDevice::motion:
@@ -835,7 +836,7 @@ wacom_device_class_init(WacomDeviceClass *klass)
 			     G_SIGNAL_RUN_FIRST,
 			     0, NULL, NULL, NULL, G_TYPE_NONE,
 			     /* is_absolute, axes */
-			     2, G_TYPE_BOOLEAN, G_TYPE_POINTER);
+			     2, G_TYPE_BOOLEAN, WACOM_TYPE_EVENT_DATA);
 
 	/**
 	 * WacomDevice::touch:
@@ -870,7 +871,7 @@ wacom_device_class_init(WacomDeviceClass *klass)
 			     G_SIGNAL_RUN_FIRST,
 			     0, NULL, NULL, NULL, G_TYPE_NONE,
 			     /* is_prox_in, axes */
-			     2, G_TYPE_BOOLEAN, G_TYPE_POINTER);
+			     2, G_TYPE_BOOLEAN, WACOM_TYPE_EVENT_DATA);
 
 	/**
 	 * WacomDevice::log-message:
@@ -956,4 +957,16 @@ WacomAxis* wacom_axis_copy(const WacomAxis *axis)
 void wacom_axis_free(WacomAxis *axis)
 {
 	free(axis);
+}
+
+WacomEventData* wacom_event_data_copy(const WacomEventData *event_data)
+{
+	WacomEventData *new_event_data = malloc(sizeof(*event_data));
+	memcpy(new_event_data, event_data, sizeof(*event_data));
+	return new_event_data;
+}
+
+void wacom_event_data_free(WacomEventData *event_data)
+{
+	free(event_data);
 }

@@ -118,6 +118,11 @@ typedef struct {
 	int ring, ring2;
 } WacomEventData;
 
+#define WACOM_TYPE_EVENT_DATA (wacom_event_data_get_type())
+GType wacom_event_data_get_type(void);
+WacomEventData *wacom_event_data_copy(const WacomEventData *data);
+void wacom_event_data_free(WacomEventData *data);
+
 #define WACOM_TYPE_AXIS (wacom_axis_get_type())
 
 typedef struct {
