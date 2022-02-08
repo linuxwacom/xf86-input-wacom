@@ -45,7 +45,7 @@ struct _WacomDevice {
 	char *name;
 	char *path;
 
-	enum WacomToolType type;
+	WacomToolType type;
 
 	gboolean enabled;
 
@@ -207,7 +207,7 @@ wacom_device_preinit(WacomDevice *device)
 {
 	gboolean rc = wcmPreInit(device->priv) == Success;
 
-	device->type = (enum WacomToolType)device->priv->type;
+	device->type = (WacomToolType)device->priv->type;
 
 	return rc;
 }
@@ -492,12 +492,12 @@ void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_pr
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y)
 {
 	WacomDevice *device = priv->frontend;
-	enum WacomTouchState state;
+	WacomTouchState state;
 
 	switch (type) {
-	case XI_TouchBegin: state = WACOM_TOUCH_BEGIN; break;
-	case XI_TouchUpdate: state = WACOM_TOUCH_UPDATE; break;
-	case XI_TouchEnd: state = WACOM_TOUCH_END; break;
+	case XI_TouchBegin: state = WTOUCH_BEGIN; break;
+	case XI_TouchUpdate: state = WTOUCH_UPDATE; break;
+	case XI_TouchEnd: state = WTOUCH_END; break;
 	default:
 			  abort();
 	}
@@ -515,13 +515,13 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 {
 	WacomDevice *device = priv->frontend;
 	WacomAxis ax = {
-		.type = (enum WacomEventAxis)type,
+		.type = (WacomEventAxis)type,
 		.min = min,
 		.max = max,
 		.res = res,
 	};
 	device->axes[ffs(type)] = ax;
-	device->axis_mask |= (enum WacomEventAxis)type;
+	device->axis_mask |= (WacomEventAxis)type;
 }
 
 bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
@@ -564,15 +564,15 @@ const char *wacom_device_get_name(WacomDevice *device)
 	return device->name;
 }
 
-enum WacomToolType wacom_device_get_tool_type(WacomDevice *device)
+WacomToolType wacom_device_get_tool_type(WacomDevice *device)
 {
 	return device->type;
 }
 
 const WacomAxis *wacom_device_get_axis(WacomDevice *device,
-				       enum WacomEventAxis which)
+				       WacomEventAxis which)
 {
-	g_return_val_if_fail(which <= WACOM_RING2, NULL);
+	g_return_val_if_fail(which <= _WAXIS_LAST, NULL);
 
 	return (device->axis_mask & which) ? &device->axes[ffs(which)] : NULL;
 }

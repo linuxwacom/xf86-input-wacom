@@ -72,37 +72,37 @@ void wacom_options_set(WacomOptions *opts, const char *key, const char *value);
 #define WACOM_TYPE_DEVICE (wacom_device_get_type())
 G_DECLARE_FINAL_TYPE (WacomDevice, wacom_device, WACOM, DEVICE, GObject)
 
-enum WacomToolType {
-	WACOM_TOOL_INVALID = 0,
-	WACOM_TOOL_STYLUS,
-	WACOM_TOOL_ERASER,
-	WACOM_TOOL_CURSOR,
-	WACOM_TOOL_PAD,
-	WACOM_TOOL_TOUCH,
-};
+typedef enum {
+	WTOOL_INVALID = 0,
+	WTOOL_STYLUS,
+	WTOOL_ERASER,
+	WTOOL_CURSOR,
+	WTOOL_PAD,
+	WTOOL_TOUCH,
+} WacomToolType;
 
-enum WacomTouchState {
-	WACOM_TOUCH_BEGIN,
-	WACOM_TOUCH_UPDATE,
-	WACOM_TOUCH_END,
-};
+typedef enum {
+	WTOUCH_BEGIN,
+	WTOUCH_UPDATE,
+	WTOUCH_END,
+} WacomTouchState;
 
-enum WacomEventAxis {
-	WACOM_X		= (1 << 0),
-	WACOM_Y		= (1 << 1),
-	WACOM_PRESSURE	= (1 << 2),
-	WACOM_TILT_X	= (1 << 3),
-	WACOM_TILT_Y	= (1 << 4),
-	WACOM_STRIP_X	= (1 << 5),
-	WACOM_STRIP_Y	= (1 << 6),
-	WACOM_ROTATION	= (1 << 7),
-	WACOM_THROTTLE	= (1 << 8),
-	WACOM_WHEEL	= (1 << 9),
-	WACOM_RING	= (1 << 10),
-	WACOM_RING2	= (1 << 11),
+typedef enum {
+	WAXIS_X		= (1 << 0),
+	WAXIS_Y		= (1 << 1),
+	WAXIS_PRESSURE	= (1 << 2),
+	WAXIS_TILT_X	= (1 << 3),
+	WAXIS_TILT_Y	= (1 << 4),
+	WAXIS_STRIP_X	= (1 << 5),
+	WAXIS_STRIP_Y	= (1 << 6),
+	WAXIS_ROTATION	= (1 << 7),
+	WAXIS_THROTTLE	= (1 << 8),
+	WAXIS_WHEEL	= (1 << 9),
+	WAXIS_RING	= (1 << 10),
+	WAXIS_RING2	= (1 << 11),
 
-	_WACOM_EVENT_AXIS_LAST = WACOM_RING2,
-};
+	_WAXIS_LAST = WAXIS_RING2,
+} WacomEventAxis;
 
 /* The pointer argument to all the event signals. If the mask is set for
  * a given axis, that value contains the current state of the axis */
@@ -126,7 +126,7 @@ void wacom_event_data_free(WacomEventData *data);
 #define WACOM_TYPE_AXIS (wacom_axis_get_type())
 
 typedef struct {
-	enum WacomEventAxis type;
+	WacomEventAxis type;
 	int min, max;
 	int res;
 } WacomAxis;
@@ -180,7 +180,7 @@ void wacom_device_disable(WacomDevice *device);
  */
 guint wacom_device_get_id(WacomDevice *device);
 const char *wacom_device_get_name(WacomDevice *device);
-enum WacomToolType wacom_device_get_tool_type(WacomDevice *device);
+WacomToolType wacom_device_get_tool_type(WacomDevice *device);
 
 /* The following getters are only available after wacom_device_setup() */
 
@@ -200,6 +200,6 @@ int wacom_device_get_num_axes(WacomDevice *device);
  * index.
  */
 const WacomAxis* wacom_device_get_axis(WacomDevice *device,
-				       enum WacomEventAxis which);
+				       WacomEventAxis which);
 
 G_END_DECLS
