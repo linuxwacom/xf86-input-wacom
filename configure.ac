@@ -136,24 +136,6 @@ AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
 
 # If unittests aren't explicitly disabled, check for required support
 if test "x$UNITTESTS" != xno ; then
-       # Check if linker supports -wrap, passed via compiler flags
-       # When cross-compiling, reports no, since unit tests run from
-       # "make check", so would be running on build machine,  not target
-       AC_MSG_CHECKING([whether the linker supports -wrap])
-       save_LDFLAGS="$LDFLAGS"
-       LDFLAGS="$LDFLAGS -Wl,-wrap,exit"
-       AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-        void __wrap_exit (int s)
-        {
-            __real_exit (0);
-        }]],
-        [[exit (1);]])],
-                     [linker_can_wrap="yes"],
-                     [linker_can_wrap="no"],
-                     [linker_can_wrap="no"])
-       AC_MSG_RESULT([$linker_can_wrap])
-       LDFLAGS="$save_LDFLAGS"
-
        # Check for the availability of dlsym and friends
        AC_CHECK_LIB([dl], [dlsym],
            [libdl_available="yes"],

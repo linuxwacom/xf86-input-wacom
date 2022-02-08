@@ -307,19 +307,7 @@ if get_option('serial-device-support')
 endif
 
 # Tests
-have_wrap = cc.links('''
-void __wrap_exit (int s) {
-	__real_exit (0);
-}
-int main(void) {
-	exit(1);
-}''',
-args: '-Wl,-wrap,exit')
-
-if get_option('unittests').enabled() and not have_wrap
-	error('ld -wrap support required to build unit tests')
-endif
-build_unittests = have_wrap and not get_option('unittests').disabled()
+build_unittests = not get_option('unittests').disabled()
 
 if build_unittests
 	xsetwacom_test = executable(
