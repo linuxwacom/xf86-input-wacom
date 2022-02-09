@@ -84,7 +84,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}  # even if we fail
         with:
-          name: meson test logs
+          name: meson-test-logs-${{github.job}}-${{matrix.compiler}}-${{matrix.meson_options}}
           path: |
             builddir/meson-logs/testlog*.txt
             builddir/meson-logs/meson-log.txt
