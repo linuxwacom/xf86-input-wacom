@@ -344,7 +344,6 @@ if build_unittests
 		install: false,
 		c_args: ['-DENABLE_TESTS', '-fvisibility=default'],
 	)
-	dep_wacom_drv_test = declare_dependency(link_with: wacom_drv_test)
 	dep_dl = cc.find_library('dl')
 	# wacom-tests.c is just a stub to load the above driver and run the
 	# entry point.
@@ -352,8 +351,11 @@ if build_unittests
 		executable(
 		'wacom-tests',
 		'test/wacom-tests.c',
-		dependencies: [dep_wacom_drv_test, dep_dl],
-		install: false)
+		dependencies: [dep_dl],
+		install: false),
+		env: [
+			'LD_LIBRARY_PATH=@0@'.format(meson.current_build_dir()),
+		]
 	)
 
 endif
