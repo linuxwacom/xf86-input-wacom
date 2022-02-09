@@ -144,3 +144,60 @@ def test_relative_motion(mainloop, opts, rotate):
         pytest.fail("Invalid rotation mode")
 
     assert all([m == motions[0] for m in motions])
+
+
+@pytest.mark.parametrize("axis", ["x", "y", "pressure", "tilt_x", "tilt_y"])
+def test_axis_updates(mainloop, opts, axis):
+    """
+    Check that the various axes come through correctly
+    """
+    dev = Device.from_name("PTH660", "Pen")
+    monitor = Monitor.new_from_device(dev, opts)
+
+    # This is merely our local mapping into the axes array in the loop,
+    # nothing to do with the driver
+    map = {
+        "x": 0,
+        "y": 1,
+        "pressure": 2,
+        "tilt_x": 3,
+        "tilt_y": 4,
+    }
+
+    # Send a bunch of events with only one axis changing, the rest remains at
+    # the device's logical center
+    for i in range(10):
+        axes = [0] * len(map)
+        axes[map[axis]] = i
+
+        def axval(axis: str) -> int:
+            return axes[map[axis]]
+
+        ev = [
+            Sev("ABS_X", 50 + axval("x")),
+            Sev("ABS_Y", 50 + axval("y")),
+            Sev("ABS_Z", 50),  # FIXME: what is this axis??
+            Sev("ABS_PRESSURE", 50 + axval("pressure")),
+            Sev("ABS_DISTANCE", 0),  # Distance isn't exported
+            Sev("ABS_TILT_X", 50 + axval("tilt_x")),
+            Sev("ABS_TILT_Y", 50 + axval("tilt_y")),
+            Sev("BTN_TOOL_PEN", 1),
+            Sev("SYN_REPORT", 0),
+        ]
+
+        monitor.write_events(ev)
+
+    mainloop.run()
+    logger.debug(f"We have {len(monitor.events)} events")
+
+    # ignore the initial proximity event since all axes change there
+    # by necessity
+    first = {name: getattr(monitor.events[1].axes, name) for name in map}
+
+    for e in monitor.events[2:]:
+        current = {name: getattr(e.axes, name) for name in map}
+        for name in map:
+            if name == axis:
+                assert first[name] < current[name]
+            else:
+                assert first[name] == current[name]
