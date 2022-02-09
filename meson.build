@@ -103,7 +103,9 @@ config_h.set('PACKAGE_VERSION_MINOR', wacom_version[1])
 config_h.set('PACKAGE_VERSION_PATCHLEVEL', wacom_version[2])
 
 # shortcut to avoid linking to _Xasprintf if xorg-server isn't included
-if cc.has_function('asprintf', prefix: '#define _GNU_SOURCE')
+if cc.has_function('asprintf',
+	prefix: '#define _GNU_SOURCE',
+	args: ['-Wno-error=format'])
 	config_h.set10('HAVE_ASPRINTF', true)
 endif
 
