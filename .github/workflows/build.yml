@@ -1,7 +1,7 @@
 on: [ push, pull_request ]
 
 env:
-  CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-unused-parameter
+  CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-unused-parameter -Wno-error=missing-field-initializers
   UBUNTU_PACKAGES: xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev
   PIP_PACKAGES: meson ninja
 
