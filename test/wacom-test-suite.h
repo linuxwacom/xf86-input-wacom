@@ -21,6 +21,14 @@
 
 #include <config.h>
 
+/* Only clang supports no_sanitize_address on global variables but GCC doesn't
+ * need this attr anyway for our tests */
+#if defined(__clang__)
+#define attr_no_sanitize_address __attribute__((no_sanitize_address))
+#else
+#define attr_no_sanitize_address
+#endif
+
 struct test_case_decl {
 	const char *name;
 	void (*func)(void);
@@ -36,6 +44,7 @@ struct test_case_decl {
 #define TEST_CASE(tname) \
         static void (tname)(void); \
         static const struct test_case_decl _decl_##tname \
+        attr_no_sanitize_address \
         __attribute__((used)) \
         __attribute((section("test_section"))) = { \
            .name = #tname, \
