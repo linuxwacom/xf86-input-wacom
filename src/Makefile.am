@@ -39,7 +39,7 @@ AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
 EXTRA_DIST = \
 	gwacom/wacom-device.c \
 	gwacom/wacom-device.h \
-	gwacom/wacom-driver.c
+	gwacom/wacom-driver.c \
 	gwacom/wacom-driver.h \
 	gwacom/wacom-private.h \
 	$(NULL)
