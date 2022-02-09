@@ -47,3 +47,5 @@ xsetwacom_test_LDADD = $(X11_LIBS)
 
 TESTS=$(check_PROGRAMS)
 endif
+
+EXTRA_DIST = wacom-record.c
