@@ -291,6 +291,11 @@ void *wacom_device_get_impl(WacomDevice *device)
 	return device->priv;
 }
 
+WacomOptions *wacom_device_get_options(WacomDevice *device)
+{
+	return device->options;
+}
+
 /****************** Driver layer *****************/
 
 int

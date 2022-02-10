@@ -190,6 +190,13 @@ guint wacom_device_get_id(WacomDevice *device);
 const char *wacom_device_get_name(WacomDevice *device);
 WacomToolType wacom_device_get_tool_type(WacomDevice *device);
 
+/**
+ * wacom_device_get_options:
+ *
+ * Returns: (transfer none): the options applied to this device
+ */
+WacomOptions *wacom_device_get_options(WacomDevice *device);
+
 /* The following getters are only available after wacom_device_setup() */
 
 int wacom_device_get_num_buttons(WacomDevice *device);
