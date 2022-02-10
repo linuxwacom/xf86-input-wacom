@@ -2,7 +2,10 @@ on: [ push, pull_request ]
 
 env:
   CFLAGS: -Werror -Wall -Wextra -Wno-error=sign-compare -Wno-unused-parameter -Wno-error=missing-field-initializers
-  UBUNTU_PACKAGES: xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev libgirepository1.0-dev libevdev-dev
+  UBUNTU_PACKAGES: |
+    xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev
+    libgirepository1.0-dev libevdev-dev
+    python3-pip
   PIP_PACKAGES: meson ninja
 
 jobs:
@@ -66,10 +69,6 @@ jobs:
           - '-Db_sanitize=address,undefined -Db_lundef=false'
     steps:
       - uses: actions/checkout@v2
-      # install python so we get pip for meson
-      - uses: actions/setup-python@v1
-        with:
-          python-version: '3.8'
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
         with:
           apt: $UBUNTU_PACKAGES
@@ -129,10 +128,6 @@ jobs:
       TARBALLDIR: '_tarball_dir'
       INSTALLDIR: '/tmp/_inst'
     steps:
-      # install python so we get pip for meson
-      - uses: actions/setup-python@v1
-        with:
-          python-version: '3.8'
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
         with:
           apt: $UBUNTU_PACKAGES
