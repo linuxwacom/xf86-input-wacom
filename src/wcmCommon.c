@@ -1130,7 +1130,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 	ds = *pState;
 
 	DBG(10, common,
-		"c=%d i=%d t=%d s=%u x=%d y=%d b=%d "
+		"c=%d i=0x%x t=0x%x s=0x%x x=%d y=%d b=%d "
 		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
 		"t=%d px=%d st=%d cs=%d \n",
 		channel,
