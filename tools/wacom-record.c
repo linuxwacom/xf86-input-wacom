@@ -399,10 +399,7 @@ int main(int argc, char **argv)
 		g_autofree char *path = NULL;
 
 		device = wacom_device_new(driver, name, options);
-		if (!device) {
-			fprintf(stderr, "Unable to record device %s - is this a Wacom tablet?\n", path);
-			return 1;
-		}
+		assert(device);
 
 		if (--argc <= 0)
 			break;
