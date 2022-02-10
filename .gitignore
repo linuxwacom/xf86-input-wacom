@@ -1,3 +1,10 @@
+conf/wacom-inputattach@.service
+tools/xsetwacom
+tools/xsetwacom-test
+tools/isdv4-serial-debugger
+tools/isdv4-serial-inputattach
+test/wacom-tests
+
 #
 #		X.Org module default exclusion patterns
 #		The next section if for module specific patterns
