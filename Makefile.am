@@ -34,7 +34,10 @@ EXTRA_DIST = GPL \
              version \
              config-ver.h.in \
              meson.build \
-             meson_options.txt
+             meson_options.txt \
+             autogen.sh \
+             README.md \
+             $(NULL)
 
 .PHONY: ChangeLog INSTALL FORCE
 
