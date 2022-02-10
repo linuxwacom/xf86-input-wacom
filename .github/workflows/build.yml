@@ -160,3 +160,34 @@ jobs:
           path: |
             builddir/meson-logs/testlog*.txt
             builddir/meson-logs/meson-log.txt
+
+  check-tarball-files:
+    needs: compile-with-autotools
+    runs-on: ubuntu-20.04
+    env:
+      TARBALLDIR: '_tarball_dir'
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - name: fetch tarball from previous job(s)
+        uses: actions/download-artifact@v2
+        with:
+          name: tarball
+      - name: list git files
+        run: git ls-files | grep -v -e '.gitignore' -e '.github' -e '.editorconfig' -e 'release.sh' -e 'git-version-gen' > files-in-git.txt
+      - name: list tarball files
+        run: |
+          tar ft xf86-input-wacom-*.tar.bz2 | sed -e 's|^[^/]*/||' | sort > files-in-tarball.txt
+      - name: check for missing files
+        run: |
+          rm -f missing-files.txt
+          for filename in $(cat files-in-git.txt); do
+            if ! grep -q "$filename" files-in-tarball.txt; then
+                echo "$filename" >> missing-files.txt
+            fi
+          done
+          if [[ -e missing-files.txt ]]; then
+            echo "Files missing from tarball:"
+            cat missing-files.txt
+            exit 1
+          fi
