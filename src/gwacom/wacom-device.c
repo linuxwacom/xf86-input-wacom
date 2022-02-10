@@ -377,11 +377,17 @@ void
 wcmLogDebugCommon(WacomCommonPtr common, int debug_level, const char *func, const char *format, ...)
 {
 	/* We just log the common ones through the first device in the list,
-	 * probably good enough */
-	WacomDevice *device = common->wcmDevices->frontend;
+	 * probably good enough. Unless there are no devices (setup error on
+	 * first device), then we silently discard the message */
+
+	WacomDevice *device = NULL;
 	g_autofree char *str = NULL;
 	va_list args;
 
+	if (!common->wcmDevices)
+		return;
+
+	device = common->wcmDevices->frontend;
 	va_start(args, format);
 	str = g_strdup_vprintf(format, args);
 	va_end(args);
