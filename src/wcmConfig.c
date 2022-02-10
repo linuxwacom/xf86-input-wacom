@@ -54,7 +54,7 @@ WacomDevicePtr wcmAllocate(void *frontend, const char *name)
 		goto error;
 
 	priv->next = NULL;
-	priv->name = strdup(name);
+	priv->name = strdup(name ? name : "unnamed device");
 	priv->frontend = frontend;
 	priv->common = common;       /* common info pointer */
 	priv->oldCursorHwProx = 0;   /* previous cursor hardware proximity */
