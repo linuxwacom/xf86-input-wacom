@@ -19,6 +19,7 @@
 #include <config.h>
 #include "config-ver.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <glib.h>
@@ -155,10 +156,21 @@ static void evdev(WacomDevice *device, const struct input_event *evdev)
 
 static void device_added(WacomDriver *driver, WacomDevice *device)
 {
+	WacomOptions *options = wacom_device_get_options(device);
+	GSList *opts = wacom_options_list_keys(options);
+
 	printf("    - source: %d\n"
 	       "      event: new-device\n"
 	       "      name: \"%s\"\n",
 	       wacom_device_get_id(device), wacom_device_get_name(device));
+
+	printf("      options:\n");
+	for (guint i = 0; i < g_slist_length(opts); i++) {
+		gchar *key = g_slist_nth_data(opts, i);
+		printf("      - %s: \"%s\"\n", key, wacom_options_get(options, key));
+	}
+
+	g_slist_free_full(g_steal_pointer(&opts), g_free);
 
 	g_signal_connect(device, "log-message", G_CALLBACK(log_message), NULL);
 	g_signal_connect(device, "debug-message", G_CALLBACK(debug_message), NULL);
@@ -285,13 +297,6 @@ static char *find_device(void)
 	return g_strdup_printf("/dev/input/event%d", selected_device);
 }
 
-static void print_device_info(const char *path, char *name)
-{
-	printf("  device:\n");
-	printf("    path: %s\n", path);
-	printf("    name: \"%s\"\n", name);
-}
-
 static char *get_device_name(const char *path)
 {
 	struct udev *udev;
@@ -333,8 +338,7 @@ int main(int argc, char **argv)
 	g_autoptr(GMainLoop) loop = NULL;
 	g_autoptr(GOptionContext) context = g_option_context_new("- record events from a Wacom device");
 	GError *error = NULL;
-	g_autofree char *path = NULL;
-	g_autofree char *name = NULL;
+	g_autofree char *autopath = NULL;
 
 	g_option_context_add_main_entries(context, opts, NULL);
 	if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -347,25 +351,20 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (argc <= 1)
-		path = find_device();
-	else
-		path = strdup(argv[1]);
-
-	if (!path) {
-		fprintf(stderr, "Invalid device path or unable to find device");
-		return 1;
+	if (argc <= 1) {
+		autopath = find_device();
+		if (!autopath) {
+			fprintf(stderr, "Invalid device path or unable to find device");
+			return 1;
+		}
 	}
 
 	printf("wacom-record:\n");
 	printf("  version: %s\n", PACKAGE_VERSION);
 	printf("  git: %s\n", BUILD_VERSION);
 
-	name = get_device_name(path);
-	print_device_info(path, name);
-
 	driver = wacom_driver_new();
-	options	= wacom_options_new("device", path, NULL);
+	options	= wacom_options_new(NULL, NULL);
 	if (grab_device)
 		wacom_options_set(options, "Grab", "true");
 	if (debug_level) {
@@ -377,13 +376,11 @@ int main(int argc, char **argv)
 		g_auto(GStrv) strv = g_strsplit(driver_options, ",", -1);
 		char **opt = strv;
 
-		printf("  options:\n");
 
 		while (*opt) {
 			g_auto(GStrv) kv = g_strsplit(*opt, "=", 2);
 			g_return_val_if_fail(kv[0] != NULL, 1);
 			g_return_val_if_fail(kv[1] != NULL, 1);
-			printf("    - %s: \"%s\"\n", kv[0], kv[1]);
 			wacom_options_set(options, kv[0], kv[1]);
 			opt++;
 		}
@@ -396,16 +393,21 @@ int main(int argc, char **argv)
 
 	++argv; --argc; /* first arg is already in path */
 	while (true) {
-		g_autofree char *path = NULL;
+		g_autofree char *path = (autopath) ? autopath : strdup(*argv);
+		g_autofree char *name = get_device_name(path);
+
+		wacom_options_set(options, "device", path);
+		name = get_device_name(path);
+		if (!name)
+			name = g_strdup_printf("Unamed device %s", path);
 
 		device = wacom_device_new(driver, name, options);
 		assert(device);
 
 		if (--argc <= 0)
 			break;
+		argv++;
 
-		path = strdup(*(++argv));
-		wacom_options_set(options, "device", path);
 	}
 
 
