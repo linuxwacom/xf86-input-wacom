@@ -68,6 +68,14 @@ const char *wacom_options_get(WacomOptions *opts, const char *key);
  */
 void wacom_options_set(WacomOptions *opts, const char *key, const char *value);
 
+/***
+ * wacom_options_list_keys:
+ *
+ * Returns: (element-type utf8) (transfer full): The List of keys in these
+ * options
+ */
+GSList *wacom_options_list_keys(WacomOptions *opts);
+
 
 #define WACOM_TYPE_DEVICE (wacom_device_get_type())
 G_DECLARE_FINAL_TYPE (WacomDevice, wacom_device, WACOM, DEVICE, GObject)

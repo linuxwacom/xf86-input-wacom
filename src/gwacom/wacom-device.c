@@ -118,6 +118,27 @@ void wacom_options_set(WacomOptions *opts, const char *key, const char *value)
 	g_hash_table_replace(opts->ht, g_ascii_strdown(key, -1), g_strdup(value));
 }
 
+
+static void append_slist(gpointer key, gpointer value, gpointer user_data)
+{
+	GSList **list = user_data;
+	*list = g_slist_append(*list, g_strdup(key));
+}
+
+/**
+ * wacom_options_list_keys:
+ *
+ * Returns: (element-type utf8) (transfer full):
+ */
+GSList *wacom_options_list_keys(WacomOptions *opts)
+{
+	GSList *list = NULL;
+
+	g_hash_table_foreach(opts->ht, append_slist, &list);
+
+	return list;
+}
+
 static void
 wacom_options_finalize(GObject *gobject)
 {
