@@ -134,26 +134,18 @@ AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
                           [UNITTESTS=$enableval],
                           [UNITTESTS=auto])
 
-# If unittests aren't explicitly disabled, check for required support
-if test "x$UNITTESTS" != xno ; then
-       # Check for the availability of dlsym and friends
-       AC_CHECK_LIB([dl], [dlsym],
-           [libdl_available="yes"],
-           [libdl_available="no"]
-       )
+# Check for the availability of dlsym and friends
+AC_CHECK_LIB([dl], [dlsym],
+    [libdl_available="yes"],
+    [libdl_available="no"]
+)
+
+# If unittests aren't explicitly enabled, check for required support
+if test "x$UNITTESTS" = xauto; then
+    UNITTESTS=$libdl_available
 fi
 
-if test "x$UNITTESTS" = xauto; then
-       if test "x$linker_can_wrap" = xyes; then
-           UNITTESTS=yes
-       else
-           UNITTESTS=no
-       fi
-fi
 if test "x$UNITTESTS" = xyes; then
-       if test "x$linker_can_wrap" = xno; then
-           AC_MSG_ERROR([ld -wrap support required to build unit tests])
-       fi
        if test "x$libdl_available" = xno; then
            AC_MSG_ERROR([dlsym required to build unit tests])
        fi
