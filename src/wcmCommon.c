@@ -769,7 +769,7 @@ wcmSendNonPadEvents(WacomDevicePtr priv, const WacomDeviceState *ds,
 		if (wcmAxisGet(axes, WACOM_AXIS_RING, &val))
 			wcmAxisSet(axes, WACOM_AXIS_RING, val - priv->oldState.abswheel);
 		val = 0;
-		if (wcmAxisGet(axes, WACOM_AXIS_RING, &val))
+		if (wcmAxisGet(axes, WACOM_AXIS_RING2, &val))
 			wcmAxisSet(axes, WACOM_AXIS_RING2, val - priv->oldState.abswheel2);
 	}
 
