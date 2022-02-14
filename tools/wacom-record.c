@@ -302,7 +302,7 @@ static char *get_device_name(const char *path)
 	struct udev *udev;
 	struct udev_device *dev, *parent;
 	g_autofree char *basename = g_path_get_basename(path);
-	g_autofree char *syspath;
+	g_autofree char *syspath = NULL;
 	char *name = NULL;
 
 	udev = udev_new();
