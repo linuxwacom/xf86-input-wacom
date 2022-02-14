@@ -31,7 +31,8 @@ int main(void) {
 
 	if (handle == NULL) {
 		fprintf(stderr, "Failed to open %s: %s\n", TESTDRV, dlerror());
-		return 1;
+		fprintf(stderr, "This test suite relies on dlopen(RTLD_LAZY) which may be disabled by your compiler/linker flags\n");
+		return 77;
 	}
 
 	func = dlsym(handle, TESTFUNC);
