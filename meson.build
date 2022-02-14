@@ -161,6 +161,14 @@ configure_file(
 	install_dir: dir_pkgconf,
 )
 
+install_headers(
+	'include/Xwacom.h',
+	'include/wacom-properties.h',
+	'include/isdv4.h',
+	'include/wacom-util.h',
+	install_dir: dir_wacom_headers
+)
+
 # GWacom library
 # This is not a stable library interface
 
