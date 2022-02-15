@@ -560,9 +560,6 @@ static int wcmSetActionsProperty(DeviceIntPtr dev, Atom property,
 					wcmResetWheelAction(priv, index);
 					wcmInitWheelActionProp(priv, index);
 				}
-
-				if (subproperty != handlers[index])
-					subproperty = handlers[index];
 			}
 		}
 		else
