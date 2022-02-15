@@ -205,7 +205,7 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, sighandler);
 	signal(SIGHUP, sighandler);
-	rc = (int)read(fd, NULL, 0); /* warning fix only, ignore error */
+	(void)read(fd, NULL, 0); /* warning fix only, ignore error */
 
 	set_line_discipline(fd, 0);
 
