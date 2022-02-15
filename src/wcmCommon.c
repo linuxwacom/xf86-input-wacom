@@ -1873,7 +1873,7 @@ TEST_CASE(test_normalize_pressure)
 	WacomDeviceRec priv = {0};
 	WacomCommonRec common = {0};
 	int normalized_max = 65536;
-	int pressure, prev_pressure = -1;
+	int pressure = 0, prev_pressure = -1;
 	int i, j, k;
 
 	priv.common = &common;
