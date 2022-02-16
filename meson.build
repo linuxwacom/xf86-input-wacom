@@ -114,7 +114,7 @@ if get_option('debug-messages')
 endif
 
 if get_option('fuzzinterface')
-	config_h.set10('BUILD_FUZZINTERFACE')
+	config_h.set10('BUILD_FUZZINTERFACE', true)
 endif
 
 
