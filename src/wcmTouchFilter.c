@@ -196,17 +196,17 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 	unsigned int vertical_rotated = (rotated) ?
 			WACOM_VERT_ALLOWED : WACOM_HORIZ_ALLOWED;
 	unsigned int scroll_threshold = common->wcmGestureParameters.wcmScrollDistance;
+	unsigned int dx = abs(ds0.x - ds1.x);
+	unsigned int dy = abs(ds0.y - ds1.y);
 
 	if (!common->wcmGestureParameters.wcmScrollDirection)
 	{
-		if ((abs(ds0.x - ds1.x) < scroll_threshold) &&
-			(abs(ds0.y - ds1.y) > scroll_threshold))
+		if (dx < scroll_threshold && dy > scroll_threshold)
 		{
 			common->wcmGestureParameters.wcmScrollDirection = horizon_rotated;
 			ret = TRUE;
 		}
-		if ((abs(ds0.y - ds1.y) < scroll_threshold) &&
-			(abs(ds0.x - ds1.x) > scroll_threshold))
+		if (dy < scroll_threshold && dx > scroll_threshold)
 		{
 			common->wcmGestureParameters.wcmScrollDirection = vertical_rotated;
 			ret = TRUE;
@@ -214,12 +214,12 @@ static Bool pointsInLine(WacomCommonPtr common, WacomDeviceState ds0,
 	}
 	else if (common->wcmGestureParameters.wcmScrollDirection == vertical_rotated)
 	{
-		if (abs(ds0.y - ds1.y) < scroll_threshold)
+		if (dy < scroll_threshold)
 			ret = TRUE;
 	}
 	else if (common->wcmGestureParameters.wcmScrollDirection == horizon_rotated)
 	{
-		if (abs(ds0.x - ds1.x) < scroll_threshold)
+		if (dx < scroll_threshold)
 			ret = TRUE;
 	}
 	return ret;
