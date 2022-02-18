@@ -30,11 +30,8 @@ include common.mk
 @DRIVER_NAME@_drv_la_LTLIBRARIES = @DRIVER_NAME@_drv.la
 @DRIVER_NAME@_drv_la_LDFLAGS = -module -avoid-version
 @DRIVER_NAME@_drv_ladir = @inputdir@
-
-AM_CPPFLAGS=-I$(top_srcdir)/include/
-AM_CFLAGS = $(XORG_CFLAGS) $(CWARNFLAGS)
-
 @DRIVER_NAME@_drv_la_SOURCES = $(DRIVER_SOURCES)
+@DRIVER_NAME@_drv_la_CFLAGS = $(AM_CFLAGS) $(XORG_CFLAGS) -I$(top_srcdir)/include
 
 EXTRA_DIST = \
 	gwacom/wacom-device.c \

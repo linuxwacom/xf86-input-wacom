@@ -20,19 +20,17 @@
 
 bin_PROGRAMS = xsetwacom isdv4-serial-debugger isdv4-serial-inputattach
 
-AM_CPPFLAGS = -I$(top_srcdir)/include $(CWARNFLAGS)
-AM_CFLAGS = $(CWARNFLAGS)
-
 shared_sources = tools-shared.h tools-shared.c
 
 isdv4_serial_debugger_SOURCES = isdv4-serial-debugger.c $(shared_sources)
+isdv4_serial_debugger_CFLAGS = $(AM_CFLAGS) -I$(top_srcdir)/include
 
 isdv4_serial_inputattach_SOURCES = isdv4-serial-inputattach.c $(shared_sources)
-isdv4_serial_inputattach_CFLAGS = $(AM_CFLAGS) $(UDEV_CFLAGS)
+isdv4_serial_inputattach_CFLAGS = $(AM_CFLAGS) $(UDEV_CFLAGS) -I$(top_srcdir)/include
 isdv4_serial_inputattach_LDADD = $(UDEV_LIBS)
 
 xsetwacom_SOURCES = xsetwacom.c
-xsetwacom_CFLAGS = $(AM_CFLAGS) $(X11_CFLAGS)
+xsetwacom_CFLAGS = $(AM_CFLAGS) $(X11_CFLAGS) -I$(top_srcdir)/include
 xsetwacom_LDADD = $(X11_LIBS)
 
 if FUZZINTERFACE
@@ -42,7 +40,7 @@ endif
 if UNITTESTS
 check_PROGRAMS = xsetwacom-test
 xsetwacom_test_SOURCES=xsetwacom.c $(top_srcdir)/test/wacom-test-suite.c $(top_srcdir)/test/wacom-test-suite.h
-xsetwacom_test_CFLAGS=-DENABLE_TESTS -I$(top_srcdir)/test $(AM_CFLAGS) $(X11_CFLAGS) -Wno-error
+xsetwacom_test_CFLAGS=$(AM_CFLAGS) $(X11_CFLAGS) -I$(top_srcdir)/include -DENABLE_TESTS -I$(top_srcdir)/test -Wno-unused-function
 xsetwacom_test_LDADD = $(X11_LIBS)
 
 TESTS=$(check_PROGRAMS)

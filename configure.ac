@@ -38,9 +38,40 @@ AC_USE_SYSTEM_EXTENSIONS
 
 AC_PROG_CC_STDC
 
+m4_include([m4/ax_check_compile_flag.m4])
+
 # Initialize libtool
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
+
+# -----------------------------------------------------------------------------
+#                      Compiler Flags / Libraries
+# -----------------------------------------------------------------------------
+m4_define(COMPILER_FLAGS, [
+          -Wno-unused-parameter
+          -Wno-sign-compare         dnl lots of work to get rid of this
+          -Wmissing-prototypes
+          -Wstrict-prototypes
+          -Wlogical-op
+          -Wpointer-arith
+          -Wuninitialized
+          -Winit-self
+          -Wstrict-prototypes
+          -Wimplicit-fallthrough
+          -Wredundant-decls
+          -Wincompatible-pointer-types
+          -Wformat=2
+          -Wno-missing-field-initializers
+          -Wmissing-declarations
+
+          -fvisibility=hidden
+])
+m4_foreach_w([_flag], COMPILER_FLAGS, [
+    AX_CHECK_COMPILE_FLAG(_flag, AVAILABLE_FLAGS="$AVAILABLE_FLAGS _flag", [], [-Werror])
+])
+AM_CFLAGS="$AM_CFLAGS $AVAILABLE_FLAGS"
+AM_CFLAGS="$AM_CFLAGS -D_GNU_SOURCE"
+AC_SUBST(AM_CFLAGS)
 
 # Initialize X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
