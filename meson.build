@@ -22,6 +22,8 @@ dir_include	= 'include'
 cc = meson.get_compiler('c')
 
 cflags = [
+	'-Wall',
+	'-Wextra',
 	'-Wno-unused-parameter',
 	'-Wno-sign-compare',	 # lots of work to get rid of this
 	'-Wmissing-prototypes',
