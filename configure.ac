@@ -48,6 +48,8 @@ AC_PROG_LIBTOOL
 #                      Compiler Flags / Libraries
 # -----------------------------------------------------------------------------
 m4_define(COMPILER_FLAGS, [
+          -Wall
+          -Wextra
           -Wno-unused-parameter
           -Wno-sign-compare         dnl lots of work to get rid of this
           -Wmissing-prototypes
