@@ -25,7 +25,6 @@ cflags = [
 	'-Wall',
 	'-Wextra',
 	'-Wno-unused-parameter',
-	'-Wno-sign-compare',	 # lots of work to get rid of this
 	'-Wmissing-prototypes',
 	'-Wstrict-prototypes',
 	'-Wlogical-op',
@@ -37,8 +36,13 @@ cflags = [
 	'-Wredundant-decls',
 	'-Wincompatible-pointer-types',
 	'-Wformat=2',
-	'-Wno-missing-field-initializers',
+	'-Wformat-overflow=2',
+	'-Wformat-signedness',
+	'-Wformat-truncation=2',
 	'-Wmissing-declarations',
+	'-Wshift-overflow=2',
+	'-Wstrict-overflow=2',
+	'-Wswitch-enum',
 
 	'-fvisibility=hidden',
 ]
