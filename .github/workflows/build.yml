@@ -1,7 +1,7 @@
 on: [ push, pull_request ]
 
 env:
-  CFLAGS: -Werror -Wno-error=sign-compare -Wno-error=missing-field-initializers
+  CFLAGS: -Werror
   UBUNTU_PACKAGES: |
     xutils-dev xserver-xorg-dev libx11-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev
     libgirepository1.0-dev libevdev-dev
