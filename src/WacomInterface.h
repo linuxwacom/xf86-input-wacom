@@ -233,21 +233,23 @@ static inline void wcmAxisDump(const WacomAxisData *data, char *buf, size_t len)
 {
 	uint32_t mask = data->mask;
 	const char *prefix = "";
-	size_t count = 0;
 
 	assert(len > 0);
 	buf[0] = '\0';
 	for (uint32_t flag = 0x1; flag <= _WACOM_AXIS_LAST; flag <<= 1) {
 		const char *name = wcmAxisName(flag);
 		char value[32];
+		int rc;
 
 		if ((mask & flag) == 0)
 			continue;
 
 		wcmAxisValue(data, flag, value, sizeof(value));
 
-		count += snprintf(buf + count, len - count, "%s%s: %s", prefix, name, value);
-		assert(count < len);
+		rc = snprintf(buf, len, "%s%s: %s", prefix, name, value);
+		assert(rc > 0 && (size_t)rc < len);
+		buf += rc;
+		len -= rc;
 		prefix = ", ";
 	}
 }
