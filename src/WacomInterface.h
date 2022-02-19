@@ -244,7 +244,7 @@ static inline void wcmAxisDump(const WacomAxisData *data, char *buf, size_t len)
 		if ((mask & flag) == 0)
 			continue;
 
-		wcmAxisValue(data, flag, value, sizeof(data));
+		wcmAxisValue(data, flag, value, sizeof(value));
 
 		count += snprintf(buf + count, len - count, "%s%s: %s", prefix, name, value);
 		assert(count < len);
