@@ -44,7 +44,7 @@ static GOptionEntry opts[] =
 	{ "options", 0, 0, G_OPTION_ARG_STRING, &driver_options, "Driver options in the form \"Foo=bar,Baz=bat\"", NULL },
 	{ "grab", 0, 0, G_OPTION_ARG_NONE, &grab_device, "Grab the device while recording", NULL },
 	{ "evdev", 0, 0, G_OPTION_ARG_NONE, &log_evdev, "Log evdev events", NULL },
-	{ NULL },
+	{ 0 },
 };
 
 static void log_message(WacomDevice *device, const char *type, const char *message)
