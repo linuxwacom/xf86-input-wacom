@@ -155,7 +155,10 @@ wcmSetFlags(WacomDevicePtr priv, WacomType type)
 			break;
 		case WTYPE_INVALID:
 		default:
-			goto invalid;
+			wcmLog(priv, W_ERROR,
+			    "No type or invalid type specified.\n"
+			    "Must be one of stylus, touch, cursor, eraser, or pad\n");
+			return FALSE;
 	}
 
 	priv->flags = flags;
@@ -169,13 +172,6 @@ wcmSetFlags(WacomDevicePtr priv, WacomType type)
 	priv->tool->typeid = DEVICE_ID(flags); /* tool type (stylus/touch/eraser/cursor/pad) */
 
 	return TRUE;
-
-invalid:
-	wcmLog(priv, W_ERROR,
-		    "No type or invalid type specified.\n"
-		    "Must be one of stylus, touch, cursor, eraser, or pad\n");
-
-	return FALSE;
 }
 
 int wcmGetPhyDeviceID(WacomDevicePtr priv)
