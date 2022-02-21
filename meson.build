@@ -43,8 +43,6 @@ cflags = [
 	'-Wshift-overflow=2',
 	'-Wstrict-overflow=2',
 	'-Wswitch-enum',
-
-	'-fvisibility=hidden',
 ]
 add_project_arguments(cc.get_supported_arguments(cflags), language : 'c')
 add_project_arguments('-D_GNU_SOURCE', language : 'c')
@@ -154,6 +152,9 @@ shared_module(
 	name_prefix: '', # we want wacomdrv.so, not libwacomdrv.so
 	install_dir: dir_xorg_modules,
 	install: true,
+	# Note: xorg-xserver.pc always appends -fvisibility=hidden so
+	# this correct but superfluous
+	gnu_symbol_visibility: 'hidden',
 )
 
 conf_pkgconf = configuration_data()
@@ -215,6 +216,8 @@ if build_gwacom
 		include_directories: [dir_src, dir_include],
 		dependencies: deps_gwacom,
 		install: false,
+		# Note: xorg-xserver.pc always appends -fvisibility=hidden so
+		# this is the only way to force default visibility
 		c_args: ['-fvisibility=default'],
 	)
 
@@ -346,6 +349,8 @@ if build_unittests
 		dependencies: [dep_xserver, dep_m],
 		name_prefix: '', # we want wacom_drv_test.so, not libwacom_drv_test.so
 		install: false,
+		# Note: xorg-xserver.pc always appends -fvisibility=hidden so
+		# this is the only way to force default visibility
 		c_args: ['-DENABLE_TESTS', '-fvisibility=default'],
 	)
 	dep_dl = cc.find_library('dl')
