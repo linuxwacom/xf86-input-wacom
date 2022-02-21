@@ -209,7 +209,7 @@ if build_gwacom
 		dep_libevdev,
 	]
 
-	lib_gwacom = both_libraries(
+	lib_gwacom = shared_library(
 		'gwacom',
 		src_libgwacom + src_wacom_core,
 		include_directories: [dir_src, dir_include],
