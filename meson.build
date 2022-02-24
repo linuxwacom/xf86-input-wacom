@@ -22,8 +22,8 @@ dir_include	= 'include'
 cc = meson.get_compiler('c')
 
 cflags = [
-	'-Wall',
-	'-Wextra',
+	# '-Wall', handled through meson's warning_level option
+	# '-Wextra', handled through meson's warning_level option
 	'-Wno-unused-parameter',
 	'-Wmissing-prototypes',
 	'-Wstrict-prototypes',
