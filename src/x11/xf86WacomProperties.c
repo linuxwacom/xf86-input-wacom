@@ -931,16 +931,21 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 			common->wcmPressureRecalibration = values[0];
 	} else if (property == prop_panscroll_threshold)
 	{
-		CARD32 *values = (CARD32*)prop->data;
+		INT32 *values = (INT32*)prop->data;
 
 		if (prop->size != 1 || prop->format != 32)
 			return BadValue;
 
-		if (values[0] <= 0)
-			return BadValue;
-
 		if (IsTouch(priv))
 			return BadMatch;
+
+		/* Reset to default if set to 0 */
+		if (values[0] == 0) {
+			values[0] = common->wcmResolY * 13 / 1000; /* 13mm */
+		}
+		if (values[0] == 0) {
+			values[0] = 1000;
+		}
 
 		if (!checkonly)
 			common->wcmPanscrollThreshold = values[0];

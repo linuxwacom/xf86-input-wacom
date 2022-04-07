@@ -1564,10 +1564,10 @@ int wcmInitTablet(WacomDevicePtr priv)
 
 	/* Calculate default panscroll threshold if not set */
 	wcmLog(priv, W_CONFIG, "panscroll is %d\n", common->wcmPanscrollThreshold);
-	if (common->wcmPanscrollThreshold < 1) {
+	if (common->wcmPanscrollThreshold == 0) {
 		common->wcmPanscrollThreshold = common->wcmResolY * 13 / 1000; /* 13mm */
 	}
-	if (common->wcmPanscrollThreshold < 1) {
+	if (common->wcmPanscrollThreshold == 0) {
 		common->wcmPanscrollThreshold = 1000;
 	}
 	wcmLog(priv, W_CONFIG, "panscroll modified to %d\n", common->wcmPanscrollThreshold);
