@@ -23,4 +23,5 @@ EXTRA_DIST= \
 	    conftest.py \
 	    test_wacom.py \
 	    devices/wacom-pth660.yml \
+	    wacom-test-env.sh \
 	    $(NULL)
