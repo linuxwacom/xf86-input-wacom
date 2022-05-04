@@ -190,6 +190,14 @@ def test_axis_updates(mainloop, opts, axis):
     mainloop.run()
     logger.debug(f"We have {len(monitor.events)} events")
 
+    # Force a prox-out so we don't get stuck buttons. We don't call
+    # mainloop.run() because we don't want to collect the prox out.
+    ev = [
+        Sev("BTN_TOOL_PEN", 0),
+        Sev("SYN_REPORT", 0),
+    ]
+    monitor.write_events(ev)
+
     events = iter(monitor.events)
     # Ignore the proximity event since all axes change there by necessity
     _ = next(events)
