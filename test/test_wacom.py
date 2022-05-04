@@ -166,7 +166,7 @@ def test_axis_updates(mainloop, opts, axis):
 
     # Send a bunch of events with only one axis changing, the rest remains at
     # the device's logical center
-    for i in range(10):
+    for i in range(0, 30, 2):
         axes = [0] * len(map)
         axes[map[axis]] = i
 
