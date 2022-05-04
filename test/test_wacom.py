@@ -190,11 +190,13 @@ def test_axis_updates(mainloop, opts, axis):
     mainloop.run()
     logger.debug(f"We have {len(monitor.events)} events")
 
-    # ignore the initial proximity event since all axes change there
-    # by necessity
-    first = {name: getattr(monitor.events[1].axes, name) for name in map}
+    events = iter(monitor.events)
+    # Ignore the proximity event since all axes change there by necessity
+    _ = next(events)
 
-    for e in monitor.events[2:]:
+    first = {name: getattr(next(events).axes, name) for name in map}
+
+    for e in events:
         current = {name: getattr(e.axes, name) for name in map}
         for name in map:
             if name == axis:
