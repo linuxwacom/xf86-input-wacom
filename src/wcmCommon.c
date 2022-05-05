@@ -1160,7 +1160,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		return;
 	}
 
-	DBG(11, common, "tool id=%d for %s\n", ds.device_type, priv->name);
+	DBG(11, common, "device_type=%d tool_id=%d for %s\n", ds.device_type, ds.device_id, priv->name);
 
 	if (TabletHasFeature(common, WCM_ROTATION) &&
 		TabletHasFeature(common, WCM_RING) &&
