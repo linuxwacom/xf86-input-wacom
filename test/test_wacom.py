@@ -16,7 +16,7 @@
 
 
 from typing import Dict
-from . import Device, Monitor, Sev, Proximity
+from . import Device, Monitor, Ev, Sev, Proximity, PenId
 
 import pytest
 import logging
@@ -146,7 +146,7 @@ def test_relative_motion(mainloop, opts, rotate):
     assert all([m == motions[0] for m in motions])
 
 
-@pytest.mark.parametrize("axis", ["x", "y", "pressure", "tilt_x", "tilt_y"])
+@pytest.mark.parametrize("axis", ["x", "y", "pressure", "tilt_x", "tilt_y", "wheel"])
 def test_axis_updates(mainloop, opts, axis):
     """
     Check that the various axes come through correctly
@@ -162,6 +162,7 @@ def test_axis_updates(mainloop, opts, axis):
         "pressure": 2,
         "tilt_x": 3,
         "tilt_y": 4,
+        "wheel": 5,
     }
 
     # Send a bunch of events with only one axis changing, the rest remains at
@@ -174,9 +175,15 @@ def test_axis_updates(mainloop, opts, axis):
             return axes[map[axis]]
 
         ev = [
+            Ev("ABS_MISC", PenId.ARTPEN),
+            Ev("MSC_SERIAL", 0x123456),
             Sev("ABS_X", 50 + axval("x")),
             Sev("ABS_Y", 50 + axval("y")),
-            Sev("ABS_Z", 50),  # FIXME: what is this axis??
+            # ABS_Z sets ds->abswheel in the driver which is used for artpen
+            # physical rotation and airbrush wheel - both share the
+            # same valuator. This is *not* rotation, that axis is for the
+            # cursor rotation only.
+            Sev("ABS_Z", 50 + axval("wheel")),
             Sev("ABS_PRESSURE", 50 + axval("pressure")),
             Sev("ABS_DISTANCE", 0),  # Distance isn't exported
             Sev("ABS_TILT_X", 50 + axval("tilt_x")),

@@ -42,6 +42,10 @@ except ValueError as e:
 logger = logging.getLogger(__name__)
 
 
+class PenId(enum.IntEnum):
+    ARTPEN = 0x100804
+
+
 @attr.s
 class InputId:
     product: int = attr.ib()
