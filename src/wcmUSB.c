@@ -1266,6 +1266,7 @@ static int usbParseGenericAbsEvent(WacomCommonPtr common,
 			break;
 		default:
 			change = 0;
+			break;
 	}
 
 	return change;
@@ -1310,6 +1311,7 @@ static int usbParseWacomAbsEvent(WacomCommonPtr common,
 			break;
 		default:
 			change = 0;
+			break;
 	}
 
 	return change;
@@ -1413,6 +1415,7 @@ static void usbParseAbsMTEvent(WacomCommonPtr common, struct input_event *event)
 
 		default:
 			change = 0;
+			break;
 	}
 
 	ds->time = wcmTimeInMillis();
@@ -1525,6 +1528,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 
 		default:
 			change = 0;
+			break;
 	}
 
 	ds->time = wcmTimeInMillis();
@@ -1556,6 +1560,7 @@ static void usbParseKeyEvent(WacomCommonPtr common,
 
 		default:
 			change = 0;
+			break;
 	}
 
 	ds->time = wcmTimeInMillis();
@@ -1618,6 +1623,7 @@ static void usbParseBTNEvent(WacomCommonPtr common,
 			}
 			if (nkeys >= usbdata->npadkeys)
 				change = 0;
+			break;
 	}
 
 	ds->time = wcmTimeInMillis();
@@ -1747,6 +1753,7 @@ static int deriveDeviceTypeFromButtonEvent(WacomDevicePtr priv,
 					return PAD_ID;
 				}
 			}
+			break;
 		}
 	}
 	return 0;
