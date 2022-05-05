@@ -58,9 +58,9 @@ enum WacomAxisType {
 	WACOM_AXIS_TILT_Y	= (1 << 4),
 	WACOM_AXIS_STRIP_X	= (1 << 5),
 	WACOM_AXIS_STRIP_Y	= (1 << 6),
-	WACOM_AXIS_ROTATION	= (1 << 7),
+	WACOM_AXIS_ROTATION	= (1 << 7), /* Cursor rotation only */
 	WACOM_AXIS_THROTTLE	= (1 << 8),
-	WACOM_AXIS_WHEEL	= (1 << 9),
+	WACOM_AXIS_WHEEL	= (1 << 9), /* Artpen rotation or airbrush wheel */
 	WACOM_AXIS_RING		= (1 << 10),
 	WACOM_AXIS_RING2	= (1 << 11),
 
