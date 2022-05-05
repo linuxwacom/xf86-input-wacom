@@ -49,6 +49,11 @@ class InputId:
     vendor: int = attr.ib(default=0x56A)
     version: int = attr.ib(default=0)
 
+    @classmethod
+    def from_list(cls, ids: List[int]) -> "InputId":
+        bus, vid, pid, version = ids
+        return cls(bustype=bus, vendor=vid, product=pid, version=vid)
+
 
 @attr.s
 class Device:
@@ -117,7 +122,7 @@ class Device:
                         continue
 
                     name = d["name"]
-                    id = InputId(*[int(i, 16) for i in d["id"]])
+                    id = InputId.from_list([int(i, 16) for i in d["id"]])
                     bits = [libevdev.evbit(b) for b in d["bits"]]
                     abs = {
                         libevdev.evbit(n): libevdev.InputAbsInfo(*v)
