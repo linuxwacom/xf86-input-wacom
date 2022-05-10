@@ -47,6 +47,8 @@
 #define safe_realloc(p, n, s) \
 	((size_t)-1 / (n) < (s) ? NULL : realloc((p), (n)*(s)))
 
+#define EXIT_INVALID_USAGE 2;
+
 static int verbose = False;
 
 enum printformat {
@@ -971,9 +973,9 @@ static int list(Display *dpy, int argc, char **argv)
 		list_mod(dpy);
 	else{
 		fprintf(stderr, "unknown argument to list.\n");
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 /**
@@ -1452,11 +1454,11 @@ static int special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, un
 	int format;
 	unsigned long btnact_nitems, bytes_after;
 	unsigned long nitems = 0;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	data = calloc(256, sizeof(unsigned long));
 	if (!parse_actions(dpy, argc, argv, data, &nitems, 256)){
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -1468,7 +1470,7 @@ static int special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, un
 	if (offset >= btnact_nitems)
 	{
 		fprintf(stderr, "Invalid offset into %s property.\n", XGetAtomName(dpy, btnact_prop));
-		status = -1;
+		status = EXIT_INVALID_USAGE;
 		goto out2;
 	}
 
@@ -1476,7 +1478,7 @@ static int special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, un
 	{
 		fprintf(stderr, "Property '%s' in an unexpected format. This is a bug.\n",
 		        XGetAtomName(dpy, btnact_prop));
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out2;
 	}
 
@@ -1491,7 +1493,7 @@ static int special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, un
 		 */
 		fprintf(stderr, "Unsupported offset into '%s' property.\n",
 			XGetAtomName(dpy, btnact_prop));
-		status = -1;
+		status = EXIT_INVALID_USAGE;
 		goto out2;
 	}
 
@@ -1553,13 +1555,13 @@ static int map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 	if (!action_prop)
 	{
 		fprintf(stderr, "Unable to locate property '%s'\n", param->prop_name);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	if (argc < param->arg_count)
 	{
 		fprintf(stderr, "Too few arguments provided.\n");
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
@@ -1567,7 +1569,7 @@ static int map_actions(Display *dpy, XDevice *dev, param_t* param, int argc, cha
 		if (sscanf(argv[0], "%u", &offset) != 1 || offset <= 0)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
-			return -1;
+			return EXIT_INVALID_USAGE;
 		}
 
 		offset--;        /* Property is 0-indexed, X buttons are 1-indexed */
@@ -1585,13 +1587,13 @@ static int set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	unsigned char* data = NULL;
 	unsigned long nitems, bytes_after;
 	long *ldata;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (argc != param->arg_count)
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
@@ -1599,7 +1601,7 @@ static int set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	{
 		fprintf(stderr, "Property for '%s' not available.\n",
 			param->name);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
@@ -1608,7 +1610,7 @@ static int set_xydefault(Display *dpy, XDevice *dev, param_t* param, int argc, c
 	if (nitems <= param->prop_offset)
 	{
 		fprintf(stderr, "Property offset doesn't exist, this is a bug.\n");
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -1634,7 +1636,7 @@ static int set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char *
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	TRACE("Set mode '%s' for device %lu.\n", argv[0], dev->device_id);
@@ -1646,13 +1648,13 @@ static int set_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char *
 	else
 	{
 		fprintf(stderr, "Invalid device mode. Use 'Relative' or 'Absolute'.\n");
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 
 	XSetDeviceMode(dpy, dev, mode);
 	XFlush(dpy);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 static int set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1662,13 +1664,13 @@ static int set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (argc != param->arg_count)
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	TRACE("Rotate '%s' for device %lu.\n", argv[0], dev->device_id);
@@ -1685,7 +1687,7 @@ static int set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	{
 		fprintf(stderr, "'%s' is not a valid value for the '%s' property.\n",
 		        argv[0], param->name);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
@@ -1693,7 +1695,7 @@ static int set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	{
 		fprintf(stderr, "Property for '%s' not available.\n",
 			param->name);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
@@ -1703,7 +1705,7 @@ static int set_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	{
 		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
 			param->name);
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -1779,12 +1781,12 @@ static int set(Display *dpy, int argc, char **argv)
 	int i;
 	char **values = NULL;
 	int nvals = 0;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (argc < 2)
 	{
 		usage();
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	TRACE("'set' requested for '%s'.\n", argv[0]);
@@ -1793,13 +1795,13 @@ static int set(Display *dpy, int argc, char **argv)
 	if (!dev)
 	{
 		fprintf(stderr, "Cannot find device '%s'.\n", argv[0]);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
-		status = -1;
+		status = EXIT_FAILURE;
 		if (is_deprecated_parameter(argv[1]))
 			goto out;
 		fprintf(stderr, "Unknown parameter name '%s'.\n", argv[1]);
@@ -1807,7 +1809,7 @@ static int set(Display *dpy, int argc, char **argv)
 	} else if (param->prop_flags & PROP_FLAG_READONLY)
 	{
 		fprintf(stderr, "'%s' is a read-only option.\n", argv[1]);
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -1818,7 +1820,7 @@ static int set(Display *dpy, int argc, char **argv)
 		{
 			fprintf(stderr, "Property '%s' does not exist on device.\n",
 				param->prop_name);
-			status = -1;
+			status = EXIT_FAILURE;
 			goto out;
 		}
 	}
@@ -1835,7 +1837,7 @@ static int set(Display *dpy, int argc, char **argv)
 	if (nitems <= param->prop_offset)
 	{
 		fprintf(stderr, "Property offset doesn't exist.\n");
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -1845,7 +1847,7 @@ static int set(Display *dpy, int argc, char **argv)
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
-		status = -1;
+		status = EXIT_INVALID_USAGE;
 		goto out;
 	}
 
@@ -1859,7 +1861,7 @@ static int set(Display *dpy, int argc, char **argv)
 		{
 			fprintf(stderr, "'%s' is not a valid value for the '%s' property.\n",
 				values[i], param->name);
-			status = -1;
+			status = EXIT_INVALID_USAGE;
 			goto out;
 		}
 
@@ -1917,7 +1919,7 @@ static int get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char *
 	if (i >= ndevices)
 	{
 		fprintf(stderr, "Unable to locate device.\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	TRACE("Getting mode for device %lu.\n", dev->device_id);
@@ -1934,7 +1936,7 @@ static int get_mode(Display *dpy, XDevice *dev, param_t* param, int argc, char *
 	}
 
 	XFreeDeviceList(info);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 static int get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char **argv)
@@ -1944,12 +1946,12 @@ static int get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	int format;
 	unsigned char* data;
 	unsigned long nitems, bytes_after;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (argc != 0)
 	{
 		fprintf(stderr, "Incorrect number of arguments supplied.\n");
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	prop = XInternAtom(dpy, param->prop_name, True);
@@ -1957,7 +1959,7 @@ static int get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	{
 		fprintf(stderr, "Property for '%s' not available.\n",
 			param->name);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	TRACE("Getting rotation for device %lu.\n", dev->device_id);
@@ -1969,7 +1971,7 @@ static int get_rotate(Display *dpy, XDevice *dev, param_t* param, int argc, char
 	{
 		fprintf(stderr, "Property for '%s' has no or wrong value - this is a bug.\n",
 			param->name);
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -2170,7 +2172,7 @@ static int get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char** 
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 		        param->arg_count);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	if (strcmp(param->prop_name, WACOM_PROP_BUTTON_ACTIONS) == 0)
@@ -2178,7 +2180,7 @@ static int get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char** 
 		if (sscanf(argv[0], "%d", &offset) != 1 || offset <= 0)
 		{
 			fprintf(stderr, "'%s' is not a valid button number.\n", argv[0]);
-			return -1;
+			return EXIT_INVALID_USAGE;
 		}
 
 		offset--;        /* Property is 0-indexed, X buttons are 1-indexed */
@@ -2188,9 +2190,9 @@ static int get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char** 
 
 
 	if (get_actions(dpy, dev, param, offset))
-		return 0;
+		return EXIT_SUCCESS;
 	else if (get_button(dpy, dev, param, offset))
-		return 0;
+		return EXIT_SUCCESS;
 	else
 	{
 		int nmap = 256;
@@ -2201,14 +2203,14 @@ static int get_map(Display *dpy, XDevice *dev, param_t *param, int argc, char** 
 		if (offset >= nmap)
 		{
 			fprintf(stderr, "Button number does not exist on device.\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 
 		print_value(param, "%d", map[offset]);
 
 		XSetDeviceButtonMapping(dpy, dev, map, nmap);
 		XFlush(dpy);
-		return 0;
+		return EXIT_SUCCESS;
 	}
 }
 
@@ -2605,7 +2607,7 @@ static int set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char
 	{
 		fprintf(stderr, "'%s' requires exactly %d value(s).\n", param->name,
 			param->arg_count);
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	flags = XParseGeometry(argv[0], &x, &y, &width, &height);
@@ -2620,22 +2622,23 @@ static int set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char
 		success = set_output_xrandr(dpy, dev, argv[0]);
 	else if  (convert_value_from_user(param, argv[0], &head_no))
 		success = set_output_xinerama(dpy, dev, head_no);
-	else{
+	else
+	{
 		fprintf(stderr, "Unable to find an output '%s'.\n", argv[0]);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	if(success)
-		return 0;
+		return EXIT_SUCCESS;
 	else
-		return -1;
+		return EXIT_FAILURE;
 }
 
 
 static int get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **argv)
 {
 	param_t *p = parameters;
-	int status = -1, success = -1;
+	int status = EXIT_FAILURE, success = 1;
 
 	if (param->printformat == FORMAT_DEFAULT)
 		param->printformat = FORMAT_XORG_CONF;
@@ -2670,7 +2673,7 @@ static int get_all(Display *dpy, XDevice *dev, param_t *param, int argc, char **
 		}
 		p++;
 		if(success == 0)
-			status = 0;
+			status = EXIT_SUCCESS;
 	}
 	return status;
 }
@@ -2679,12 +2682,12 @@ static int get(Display *dpy, enum printformat printformat, int argc, char **argv
 {
 	param_t *param;
 	XDevice *dev = NULL;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (argc < 2)
 	{
 		usage();
-		return -1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	TRACE("'get' requested for '%s'.\n", argv[0]);
@@ -2693,21 +2696,21 @@ static int get(Display *dpy, enum printformat printformat, int argc, char **argv
 	if (!dev)
 	{
 		fprintf(stderr, "Cannot find device '%s'.\n", argv[0]);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	param = find_parameter(argv[1]);
 	if (!param)
 	{
 		if (is_deprecated_parameter(argv[1]))
-			return -1;
+			return EXIT_FAILURE;
 		fprintf(stderr, "Unknown parameter name '%s'.\n", argv[1]);
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	} else if (param->prop_flags & PROP_FLAG_WRITEONLY)
 	{
 		fprintf(stderr, "'%s' is a write-only option.\n", argv[1]);
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	} else
 	{
@@ -2730,7 +2733,7 @@ static int get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char 
 	unsigned long nitems, bytes_after;
 	int i;
 	char str[100] = {0};
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	if (param->prop_name)
 	{
@@ -2739,7 +2742,7 @@ static int get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char 
 		{
 			fprintf(stderr, "Property '%s' does not exist on device.\n",
 				param->prop_name);
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -2757,7 +2760,7 @@ static int get_param(Display *dpy, XDevice *dev, param_t *param, int argc, char 
 	if (nitems <= param->prop_offset)
 	{
 		fprintf(stderr, "Property offset doesn't exist.\n");
-		status = -1;
+		status = EXIT_FAILURE;
 		goto out;
 	}
 
@@ -2871,7 +2874,7 @@ int main (int argc, char **argv)
 	Display *dpy;
 	int do_list = 0, do_set = 0, do_get = 0;
 	enum printformat format = FORMAT_DEFAULT;
-	int status = 0;
+	int status = EXIT_SUCCESS;
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
@@ -2893,7 +2896,7 @@ int main (int argc, char **argv)
 	if (argc < 2)
 	{
 		usage();
-		return 1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	while ((c = getopt_long(argc, argv, "+hvVd:sx", options, &optidx)) != -1) {
@@ -2902,9 +2905,9 @@ int main (int argc, char **argv)
 			case 0:
 				switch(optidx)
 				{
-					case 0: usage(); return 0;
+					case 0: usage(); return EXIT_SUCCESS;
 					case 1: verbose = True; break;
-					case 2: version(); return 0;
+					case 2: version(); return EXIT_SUCCESS;
 					case 3: /* display */
 						break;
 					case 4:
@@ -2932,11 +2935,11 @@ int main (int argc, char **argv)
 				break;
 			case 'V':
 				version();
-				return 0;
+				return EXIT_SUCCESS;
 			case 'h':
 			default:
 				usage();
-				return 0;
+				return EXIT_SUCCESS;
 		}
 	}
 
@@ -2946,14 +2949,14 @@ int main (int argc, char **argv)
 	if (!dpy)
 	{
 		fprintf(stderr, "Failed to open Display %s.\n", display ? display : "");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	if (check_for_wayland(dpy)) {
 		fprintf(stderr,
 			"Wayland devices found but this tool is incompatible with Wayland. See\n"
 			"https://github.com/linuxwacom/xf86-input-wacom/wiki/Wayland\n");
-		return 1;
+		return EXIT_INVALID_USAGE;
 	}
 
 	if (!do_list && !do_get && !do_set)
