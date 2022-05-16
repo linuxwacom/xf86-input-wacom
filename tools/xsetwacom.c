@@ -1457,7 +1457,7 @@ static int special_map_property(Display *dpy, XDevice *dev, Atom btnact_prop, un
 	int status = EXIT_SUCCESS;
 
 	data = calloc(256, sizeof(unsigned long));
-	if (!parse_actions(dpy, argc, argv, data, &nitems, 256)){
+	if (!parse_actions(dpy, argc, argv, data, &nitems, 256)) {
 		status = EXIT_FAILURE;
 		goto out;
 	}
