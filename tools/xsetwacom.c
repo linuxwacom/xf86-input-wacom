@@ -2990,7 +2990,7 @@ int main (int argc, char **argv)
 		status = get(dpy, format, argc - optind, &argv[optind]);
 
 	XCloseDisplay(dpy);
-	return status == 0 ? 0 : 1;
+	return status;
 }
 #endif /* ENABLE_TESTS */
 
