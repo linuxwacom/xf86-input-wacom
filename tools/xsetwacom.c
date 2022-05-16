@@ -971,7 +971,7 @@ static int list(Display *dpy, int argc, char **argv)
 	else if (strcmp(argv[0], "mod") == 0 ||
 		 strcmp(argv[0], "modifiers") == 0)
 		list_mod(dpy);
-	else{
+	else {
 		fprintf(stderr, "unknown argument to list.\n");
 		return EXIT_INVALID_USAGE;
 	}
