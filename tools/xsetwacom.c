@@ -47,7 +47,7 @@
 #define safe_realloc(p, n, s) \
 	((size_t)-1 / (n) < (s) ? NULL : realloc((p), (n)*(s)))
 
-#define EXIT_INVALID_USAGE 2;
+#define EXIT_INVALID_USAGE 2
 
 static int verbose = False;
 
@@ -2628,10 +2628,7 @@ static int set_output(Display *dpy, XDevice *dev, param_t *param, int argc, char
 		return EXIT_FAILURE;
 	}
 
-	if(success)
-		return EXIT_SUCCESS;
-	else
-		return EXIT_FAILURE;
+	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 
