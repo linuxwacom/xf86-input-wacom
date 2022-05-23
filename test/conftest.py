@@ -1,3 +1,4 @@
+import os
 import pytest
 
 # We set up hooks to count how many tests actually ran. Since we need uinput
@@ -29,3 +30,8 @@ def pytest_sessionfinish(session, exitstatus):
         reporter = session.config.pluginmanager.get_plugin("terminalreporter")
         reporter.section("Session errors", sep="-", red=True, bold=True)
         reporter.line(f"{session.count_skipped} tests were skipped, none were run")
+
+
+@pytest.fixture(autouse=True)
+def set_environment():
+    os.environ["WACOM_RUNNING_TEST_SUITE"] = "1"

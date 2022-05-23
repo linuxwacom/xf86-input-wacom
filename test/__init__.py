@@ -233,6 +233,7 @@ class Monitor:
             pytest.skip("Insufficient permissions to open event node")
 
         opts["Device"] = uidev.devnode
+        opts["_testdevice"] = "true"
         wacom_options = wacom.Options()
         for name, value in opts.items():
             wacom_options.set(name, value)
