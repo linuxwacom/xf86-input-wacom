@@ -143,7 +143,7 @@ class Device:
 @attr.s
 class UinputDevice:
     """
-    A warpper around a uinput device.
+    A wrapper around a uinput device.
     """
 
     uidev: libevdev.Device = attr.ib()
