@@ -694,6 +694,22 @@ static inline WacomType getType(const char *type)
 	return wtype;
 }
 
+static inline Bool filter_test_suite(WacomDevicePtr priv)
+{
+	bool is_test_device = wcmOptGetBool(priv, "_testdevice", FALSE);
+	bool is_test_suite_run = getenv("WACOM_RUNNING_TEST_SUITE") != NULL;
+
+	if (is_test_device == is_test_suite_run)
+		return FALSE;
+
+	if (is_test_device)
+		wcmLog(priv, W_INFO, "Ignoring test device '%s'\n", priv->name);
+	else if (is_test_suite_run)
+		wcmLog(priv, W_INFO, "Ignoring device '%s' during test suite run\n", priv->name);
+
+	return TRUE;
+}
+
 /* wcmPreInit - called for each input devices with the driver set to
  * "wacom" */
 int wcmPreInit(WacomDevicePtr priv)
@@ -703,6 +719,11 @@ int wcmPreInit(WacomDevicePtr priv)
 	char		*oldname = NULL;
 	int		need_hotplug = 0, is_dependent = 0;
 	int		fd = -1;
+
+	/* Ignore real devices during test suite runs, or test devices during
+	 * normal operation */
+	if (filter_test_suite(priv))
+		goto SetupProc_fail;
 
 	/*
 	   Init process:
