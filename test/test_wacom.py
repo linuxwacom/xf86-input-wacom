@@ -218,3 +218,75 @@ def test_axis_updates(mainloop, opts, axis):
                 assert first[name] < current[name]
             else:
                 assert first[name] == current[name]
+
+
+@pytest.mark.parametrize("axis", ["x", "y", "pressure", "tilt_x", "tilt_y"])
+def test_no_wheel_on_std_pen(mainloop, opts, axis):
+    """
+    Check that the various axes come through correctly
+    """
+    dev = Device.from_name("PTH660", "Pen")
+    monitor = Monitor.new_from_device(dev, opts)
+
+    # This is merely our local mapping into the axes array in the loop,
+    # nothing to do with the driver
+    map = {
+        "x": 0,
+        "y": 1,
+        "pressure": 2,
+        "tilt_x": 3,
+        "tilt_y": 4,
+        "wheel": 5,
+    }
+
+    # Send a bunch of events with only one axis changing, the rest remains at
+    # the device's logical center
+    for i in range(0, 30, 2):
+        axes = [0] * len(map)
+        axes[map[axis]] = i
+
+        def axval(axis: str) -> int:
+            return axes[map[axis]]
+
+        ev = [
+            Ev("ABS_MISC", PenId.CINTIQ_13_PEN),
+            Ev("MSC_SERIAL", 0x123456),
+            Sev("ABS_X", 50 + axval("x")),
+            Sev("ABS_Y", 50 + axval("y")),
+            # ABS_Z sets ds->abswheel in the driver which is used for artpen
+            # physical rotation and airbrush wheel - both share the
+            # same valuator. This is *not* rotation, that axis is for the
+            # cursor rotation only.
+            #Sev("ABS_Z", 50 + axval("wheel")),
+            Sev("ABS_PRESSURE", 50 + axval("pressure")),
+            Sev("ABS_DISTANCE", 0),  # Distance isn't exported
+            Sev("ABS_TILT_X", 50 + axval("tilt_x")),
+            Sev("ABS_TILT_Y", 50 + axval("tilt_y")),
+            Sev("BTN_TOOL_PEN", 1),
+            Sev("SYN_REPORT", 0),
+        ]
+
+        monitor.write_events(ev)
+
+    mainloop.run()
+    logger.debug(f"We have {len(monitor.events)} events")
+
+    # Force a prox-out so we don't get stuck buttons. We don't call
+    # mainloop.run() because we don't want to collect the prox out.
+    ev = [
+        Sev("BTN_TOOL_PEN", 0),
+        Sev("SYN_REPORT", 0),
+    ]
+    monitor.write_events(ev)
+
+    events = iter(monitor.events)
+    # Ignore the proximity event since all axes change there by necessity
+    _ = next(events)
+
+    first = {name: getattr(next(events).axes, name) for name in map}
+
+    for e in events:
+        current = {name: getattr(e.axes, name) for name in map}
+        print(current)
+        for name in current:
+          assert name != "wheel"
