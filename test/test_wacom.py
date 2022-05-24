@@ -20,7 +20,11 @@ from . import Device, Monitor, Ev, Sev, Proximity, PenId
 
 import pytest
 import logging
+import gi
 from gi.repository import GLib
+
+gi.require_version("wacom", "1.0")
+from gi.repository import wacom
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +151,8 @@ def test_relative_motion(mainloop, opts, rotate):
 
 
 @pytest.mark.parametrize("axis", ["x", "y", "pressure", "tilt_x", "tilt_y", "wheel"])
-def test_axis_updates(mainloop, opts, axis):
+@pytest.mark.parametrize("stylus_type", [PenId.ARTPEN, PenId.CINTIQ_13_PEN])
+def test_axis_updates(mainloop, opts, axis, stylus_type):
     """
     Check that the various axes come through correctly
     """
@@ -175,7 +180,7 @@ def test_axis_updates(mainloop, opts, axis):
             return axes[map[axis]]
 
         ev = [
-            Ev("ABS_MISC", PenId.ARTPEN),
+            Ev("ABS_MISC", stylus_type),
             Ev("MSC_SERIAL", 0x123456),
             Sev("ABS_X", 50 + axval("x")),
             Sev("ABS_Y", 50 + axval("y")),
@@ -183,6 +188,8 @@ def test_axis_updates(mainloop, opts, axis):
             # physical rotation and airbrush wheel - both share the
             # same valuator. This is *not* rotation, that axis is for the
             # cursor rotation only.
+            # Here we send this event even for the Cintiq Pen to ensure it
+            # gets correctly ignored by the driver
             Sev("ABS_Z", 50 + axval("wheel")),
             Sev("ABS_PRESSURE", 50 + axval("pressure")),
             Sev("ABS_DISTANCE", 0),  # Distance isn't exported
@@ -209,12 +216,28 @@ def test_axis_updates(mainloop, opts, axis):
     # Ignore the proximity event since all axes change there by necessity
     _ = next(events)
 
+    # bitflags to indicate which axis is actually present in the event
+    mask_map = {
+        "x": wacom.EventAxis.AXIS_X,
+        "y": wacom.EventAxis.AXIS_Y,
+        "pressure": wacom.EventAxis.AXIS_PRESSURE,
+        "tilt_x": wacom.EventAxis.AXIS_TILT_X,
+        "tilt_y": wacom.EventAxis.AXIS_TILT_X,
+        "wheel": wacom.EventAxis.AXIS_WHEEL,
+    }
+
     first = {name: getattr(next(events).axes, name) for name in map}
 
     for e in events:
         current = {name: getattr(e.axes, name) for name in map}
         for name in map:
-            if name == axis:
-                assert first[name] < current[name]
+            # Artpen has rotation via our 'wheel' axis but the cintiq pen does
+            # not send that axis even when the kernel sends events for it
+            pen_has_axis = name != "wheel" or stylus_type == PenId.ARTPEN
+            event_has_axis = e.axes.mask & mask_map[name] != 0
+
+            assert event_has_axis == pen_has_axis, f"for axis {name}"
+            if event_has_axis and name == axis:
+                assert first[name] < current[name], f"for axis {name}"
             else:
-                assert first[name] == current[name]
+                assert first[name] == current[name], f"for axis {name}"
