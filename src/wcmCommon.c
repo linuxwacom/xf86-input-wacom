@@ -812,6 +812,7 @@ wcmSendNonPadEvents(WacomDevicePtr priv, const WacomDeviceState *ds,
 }
 
 #define IsArtPen(ds)    (ds->device_id == 0x885 || ds->device_id == 0x804 || ds->device_id == 0x100804)
+#define IsAirBrush(ds)  (ds->device_id == 0x902 || ds->device_id == 0x100902)
 
 static void
 wcmUpdateSerial(WacomDevicePtr priv, unsigned int serial, int id)
@@ -890,17 +891,21 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	if (!ds->proximity)
 		priv->flags &= ~SCROLLMODE_FLAG;
 
-	if (IsStylus(priv) && !IsArtPen(ds))
+	if (IsStylus(priv))
 	{
-		/* Normalize abswheel airbrush data to Art Pen rotation range.
-		 * We do not normalize Art Pen. They are already at the range.
-		 */
-		int wheel = ds->abswheel * MAX_ROTATION_RANGE/
-				(double)MAX_ABS_WHEEL + MIN_ROTATION;
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, wheel);
-	} else if (IsStylus(priv) && IsArtPen(ds))
-	{
-		wcmAxisSet(&axes, WACOM_AXIS_WHEEL, ds->abswheel);
+		if (IsAirBrush(ds))
+		{
+			/* Normalize abswheel airbrush data to Art Pen rotation range.
+			* We do not normalize Art Pen. They are already at the range.
+			*/
+			int wheel = ds->abswheel * MAX_ROTATION_RANGE/
+					(double)MAX_ABS_WHEEL + MIN_ROTATION;
+			wcmAxisSet(&axes, WACOM_AXIS_WHEEL, wheel);
+		}
+		else if (IsArtPen(ds))
+		{
+			wcmAxisSet(&axes, WACOM_AXIS_WHEEL, ds->abswheel);
+		}
 	}
 
 	wcmAxisDump(&axes, dump, sizeof(dump));
