@@ -17,12 +17,20 @@
 from typing import Dict, List, Union
 from pathlib import Path
 
-import attr
 import enum
-import pytest
-import libevdev
 import logging
-import yaml
+
+try:
+    import attr
+    import pytest
+    import libevdev
+    import yaml
+except ImportError as e:
+    print("One or more modules are missing.")
+    print(
+        "PIP-installed packages must be installed as root if the test suite is run as root"
+    )
+    raise (e)
 
 import gi
 
