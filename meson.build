@@ -382,6 +382,7 @@ if build_unittests
 		pytest = find_program('pytest', 'pytest-3')
 		test('pytest',
 		     pytest,
+		     args: ['--verbose', '--log-level=DEBUG'],
 		     env: devenv,
 		     workdir: meson.current_source_dir(),
 		)
