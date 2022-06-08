@@ -1,0 +1,29 @@
+on: [ push ]
+
+env:
+  # whot/xf86-input-wacom-ci
+  project: https://gitlab.freedesktop.org/api/v4/projects/16121
+
+jobs:
+  gitlab-testsuite:
+    name: Run test suite on gitlab
+    runs-on: ubuntu-latest
+    steps:
+      - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
+        with:
+          apt: jq coreutils
+      - run: curl -X POST --fail -F token="$token" -F "ref=main" $project/trigger/pipeline | tee pipeline.json
+        env:
+          token: ${{ secrets.GITLAB_WORKFLOW_TOKEN }}
+      - run: jq -r .id pipeline.json | tee pipeline-id.txt
+      - run: |
+          while true; do
+            curl --header "PRIVATE-TOKEN: $token" $project/pipelines/$(cat pipeline-id.txt) | tee pipeline-status.json
+            if [ $(jq -r '.finished_at' pipeline-status.json) != "null" ]; then
+              break
+            fi
+            sleep 60
+          done
+        env:
+          token: ${{ secrets.GITLAB_PIPELINE_CHECK_TOKEN }}
+      - run: test $(jq -r '.status' pipeline-status.json) = "success"
