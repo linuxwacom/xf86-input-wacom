@@ -243,4 +243,88 @@ def test_axis_updates(mainloop, opts, axis, stylus_type):
                 assert first[name] == current[name], f"for axis {name}"
 
 
+@pytest.mark.parametrize(
+    "stylus_type", [PenId.ARTPEN, PenId.CINTIQ_13_PEN, PenId.AIRBRUSH]
+)
+def test_axis_updates_wheel(mainloop, opts, stylus_type):
+    """
+    Same as the above test but tests the wheel axis only, since that one is
+    multiplexed through a single valuator.
+    """
+    dev = Device.from_name("PTH660", "Pen")
+    monitor = Monitor.new_from_device(dev, opts)
+
+    # Send a bunch of events with only one the wheel axis changing, the rest
+    # remains at the device's logical center
+    for i in range(0, 30, 2):
+        extra_events = []
+
+        # FIXME: there's a bug in the driver - because *both* ABS_Z (artpen)
+        # and ABS_WHEEL (airbrush) unconditionally update ds->abswheel
+        # regardless of the tool currently in prox, we must not send the
+        # respective "other" axis for the current tool. Exception is the
+        # default pen which is supposed to ignore both ABS_Z and ABS_WHEEL.
+
+        # ABS_WHEEL sets ds->abswheel in the driver which is used for airbrush
+        # physical wheel - both artpen and airbrush share the same valuator.
+        # This is *not* the wheel for touchring. That axis is for the pad.
+        if stylus_type != PenId.ARTPEN:
+            extra_events.append(Sev("ABS_WHEEL", 50 + i))
+
+        # ABS_Z sets ds->abswheel in the driver which is used for artpen
+        # physical rotation - artpen shares the same valuator with airbrush.
+        # This is *not* rotation. That axis is for the cursor rotation only.
+        if stylus_type != PenId.AIRBRUSH:
+            extra_events.append(Sev("ABS_Z", 50 + i))
+
+        ev = [
+            Ev("ABS_MISC", stylus_type),
+            Ev("MSC_SERIAL", 0x123456),
+            Sev("ABS_X", 50),
+            Sev("ABS_Y", 50),
+            # expands to ABS_Z, ABS_WHEEL or both
+            *extra_events,
+            Sev("ABS_PRESSURE", 50),
+            Sev("ABS_DISTANCE", 0),  # Distance isn't exported
+            Sev("ABS_TILT_X", 50),
+            Sev("ABS_TILT_Y", 50),
+            Sev("BTN_TOOL_PEN", 1),
+            Sev("SYN_REPORT", 0),
+        ]
+
+        monitor.write_events(ev)
+
+    mainloop.run()
+    logger.debug(f"We have {len(monitor.events)} events")
+
+    # Force a prox-out so we don't get stuck buttons. We don't call
+    # mainloop.run() because we don't want to collect the prox out.
+    ev = [
+        Sev("BTN_TOOL_PEN", 0),
+        Sev("SYN_REPORT", 0),
+    ]
+    monitor.write_events(ev)
+
+    events = iter(monitor.events)
+    # Ignore the proximity event since all axes change there by necessity
+    _ = next(events)
+
+    first = next(events).axes
+    first_wheel = first.wheel
+
+    for e in events:
+        current = e.axes
+        current_wheel = current.wheel
+
+        # The default pen doesn't have the axis, artpen and airbrush have it
+        # and we sent events for it, so expect it to be present
+        pen_has_axis = stylus_type in [PenId.ARTPEN, PenId.AIRBRUSH]
+        event_has_axis = e.axes.mask & wacom.EventAxis.AXIS_WHEEL != 0
+        assert event_has_axis == pen_has_axis
+        if pen_has_axis:
+            assert first_wheel < current_wheel
+        else:
+            assert first_wheel == current_wheel
+
+
 # vim: set expandtab tabstop=4 shiftwidth=4:
