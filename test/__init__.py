@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 class PenId(enum.IntEnum):
     ARTPEN = 0x100804
     CINTIQ_13_PEN = 0x16802
+    AIRBRUSH = 0x100902
 
 
 @attr.s
