@@ -363,3 +363,6 @@ class Touch:
     id: int = attr.ib()
     x: int = attr.ib()
     y: int = attr.ib()
+
+
+# vim: set expandtab tabstop=4 shiftwidth=4:

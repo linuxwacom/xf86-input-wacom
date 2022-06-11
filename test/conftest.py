@@ -35,3 +35,6 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(autouse=True)
 def set_environment():
     os.environ["WACOM_RUNNING_TEST_SUITE"] = "1"
+
+
+# vim: set expandtab tabstop=4 shiftwidth=4:

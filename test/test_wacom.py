@@ -241,3 +241,6 @@ def test_axis_updates(mainloop, opts, axis, stylus_type):
                 assert first[name] < current[name], f"for axis {name}"
             else:
                 assert first[name] == current[name], f"for axis {name}"
+
+
+# vim: set expandtab tabstop=4 shiftwidth=4:
