@@ -88,3 +88,4 @@ core
 config-ver.h
 test-driver
 version
+__pycache__
