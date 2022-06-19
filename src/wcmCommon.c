@@ -1852,26 +1852,49 @@ TEST_CASE(test_rebase_pressure)
 {
 	WacomDeviceRec priv = {0};
 	WacomDeviceRec base = {0};
+	WacomCommonRec common = {0};
 	WacomDeviceState ds = {0};
 	int pressure;
 
-	priv.minPressure = 4;
-	ds.pressure = 10;
+	priv.common = &common;
+	common.wcmMaxZ = 2000;
 
 	/* Pressure in out-of-proximity means get new preloaded pressure */
 	priv.oldState.proximity = 0;
+
+	/* pressure < pressure_threshold */
+	ds.pressure = 10;
 
 	/* make sure we don't touch priv, not really needed, the compiler should
 	 * honor the consts but... */
 	base = priv;
 
 	pressure = rebasePressure(&priv, &ds);
-	assert(pressure == ds.pressure);
+	assert(pressure > ds.pressure);
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
 
+	/* pre-registered pressure > pressure_threshold */
+	ds.pressure = 100;
+
+	base = priv;
+
+	pressure = rebasePressure(&priv, &ds);
+	assert(pressure == ds.pressure);
 	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
 
 	/* Pressure in-proximity means rebase to new minimum */
 	priv.oldState.proximity = 1;
+
+	priv.minPressure = 20;
+	ds.pressure = 10;
+
+	base = priv;
+
+	pressure = rebasePressure(&priv, &ds);
+	assert(pressure == priv.minPressure);
+	assert(memcmp(&priv, &base, sizeof(priv)) == 0);
+
+	ds.pressure = 100;
 
 	base = priv;
 
