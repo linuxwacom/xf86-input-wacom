@@ -1226,11 +1226,14 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 /**
  * Return the minimum pressure based on the current minimum pressure and the
- * hardware state. This is mainly to deal with the case where heavily used
- * stylus may have a "pre-loaded" initial pressure. In that case, the tool
- * comes into proximity with a pressure > 0 to begin with and thus offsets
- * the pressure values. This preloaded pressure must be known for pressure
- * normalisation to work.
+ * hardware state. The hardware state is mainly to deal with the case where
+ * heavily used stylus may have a "pre-loaded" initial pressure. In that case,
+ * the tool comes into proximity with a pressure > 0 to begin with and thus
+ * offsets the pressure values. This preloaded pressure must be known for
+ * pressure normalisation to work. Another hardware related factor is, when
+ * the tool comes into proximity even without a preloaded pressure, we filter
+ * the pressure value that is below 1% of the maxmum pressure to reduce the
+ * potential initial electronic noise.
  *
  * @param priv The wacom device
  * @param ds Current device state
@@ -1242,6 +1245,8 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 static int
 rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 {
+	WacomCommonPtr common = priv->common;
+	int min_pressure_threshold = common->wcmMaxZ * 0.01f; /* 1% of the range */;
 	int min_pressure;
 
 	/* set the minimum pressure when in prox */
@@ -1249,6 +1254,10 @@ rebasePressure(const WacomDevicePtr priv, const WacomDeviceState *ds)
 		min_pressure = ds->pressure;
 	else
 		min_pressure = min(priv->minPressure, ds->pressure);
+
+	/* filter pressure lower than pressure threshold */
+	if (min_pressure < min_pressure_threshold)
+		min_pressure = min_pressure_threshold;
 
 	return min_pressure;
 }
