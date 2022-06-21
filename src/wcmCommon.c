@@ -1859,7 +1859,7 @@ TEST_CASE(test_rebase_pressure)
 	priv.common = &common;
 	common.wcmMaxZ = 2000;
 
-	/* Pressure in out-of-proximity means get new preloaded pressure */
+	/* Pressure in an out-of-proximity event means get new preloaded pressure */
 	priv.oldState.proximity = 0;
 
 	/* pressure < pressure_threshold */
