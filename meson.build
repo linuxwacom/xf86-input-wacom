@@ -234,7 +234,7 @@ if build_gwacom
 		sources: src_gwacom,
 		dependencies: [deps_gwacom],
 		namespace: 'wacom',
-		nsversion: '@0@.@1@'.format(wacom_version[0], wacom_version[1]),
+		nsversion: '1.0',
 		identifier_prefix: 'Wacom',
 		symbol_prefix: 'wacom',
 		includes: 'GObject-2.0',
