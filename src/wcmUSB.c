@@ -1020,11 +1020,18 @@ static void usbParseMscEvent(WacomDevicePtr priv,
 	}
 	else
 	{
-		/* we don't report serial numbers for some tools but we never report
-		 * a serial number with a value of 0 - if that happens drop the
-		 * whole frame */
-		wcmLogSafe(priv, W_ERROR, "%s: usbParse: Ignoring event from invalid serial 0\n",
-				      priv->name);
+		/* If this is the first time to set wcmLastToolSerial and serial
+		 * number is 0, it means the value is not ready. Just wait for a
+		 * non-zero one. However, if we are in the middle of an established
+		 * established reporting process, serial number should never be 0.
+		 * Report the error and show the serial number that we expect.
+		 *
+		 * In both cases, we drop the whole frame.
+		 */
+		if (private->wcmLastToolSerial)
+			wcmLogSafe(priv, W_ERROR,
+				      "%s: usbParse: Ignoring packet for serial=0. It should be %ud \n",
+				      priv->name, private->wcmLastToolSerial);
 		usbResetEventCounter(private);
 	}
 }
