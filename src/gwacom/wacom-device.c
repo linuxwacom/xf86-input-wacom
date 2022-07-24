@@ -196,6 +196,12 @@ enum {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
+ValuatorMask *
+valuator_mask_new(int num_valuators)
+{
+	return NULL;
+}
+
 WacomDevice*
 wacom_device_new(WacomDriver *driver,
 		 const char *name,

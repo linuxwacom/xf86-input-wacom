@@ -98,6 +98,9 @@ WacomDevicePtr wcmAllocate(void *frontend, const char *name)
 	priv->tap_timer = wcmTimerNew();
 	priv->touch_timer = wcmTimerNew();
 
+	/* reusable valuator mask */
+	priv->valuator_mask = valuator_mask_new(7);
+
 	return priv;
 
 error:
