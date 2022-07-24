@@ -99,7 +99,7 @@ WacomDevicePtr wcmAllocate(void *frontend, const char *name)
 	priv->touch_timer = wcmTimerNew();
 
 	/* reusable valuator mask */
-	priv->valuator_mask = valuator_mask_new(7);
+	priv->valuator_mask = valuator_mask_new(8);
 
 	return priv;
 
@@ -1220,6 +1220,14 @@ static int wcmInitAxes(WacomDevicePtr priv)
 		wcmInitAxis(priv, WACOM_AXIS_RING2, min, max, res);
 	}
 
+	if (IsPen(priv)) {
+		/* seventh valuator: scroll_x */
+		wcmInitAxis(priv, WACOM_AXIS_SCROLL_X, -1, -1, 0);
+
+		/* eighth valuator: scroll_y */
+		wcmInitAxis(priv, WACOM_AXIS_SCROLL_Y, -1, -1, 0);
+	}
+
 	return TRUE;
 }
 
@@ -1232,13 +1240,16 @@ Bool wcmDevInit(WacomDevicePtr priv)
 	if (priv->common->wcmModel->DetectConfig)
 		priv->common->wcmModel->DetectConfig (priv);
 
-	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
+	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel, Scroll-X, Scroll-Y */
 	if (!nbaxes || nbaxes > 6)
 		nbaxes = priv->naxes = 6;
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
 
 	if (IsPad(priv) && TabletHasFeature(priv->common, WCM_DUALRING))
 		nbaxes = priv->naxes = nbaxes + 1; /* ABS wheel 2 */
+
+	if (IsPen(priv))
+		nbaxes = priv->naxes = nbaxes + 2; /* Scroll X and Y */
 
 	/* if more than 3 buttons, offset by the four scroll buttons,
 	 * otherwise, alloc 7 buttons for scroll wheel. */
