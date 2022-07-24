@@ -233,6 +233,8 @@ static void device_added(WacomDriver *driver, WacomDevice *device)
 				case WAXIS_WHEEL: typestr = "wheel"; break;
 				case WAXIS_RING: typestr = "ring"; break;
 				case WAXIS_RING2: typestr = "ring2"; break;
+				case WAXIS_SCROLL_X: typestr = "scroll_x"; break;
+				case WAXIS_SCROLL_Y: typestr = "scroll_y"; break;
 			}
 
 			printf("          - {type: %-12s, range: [%5d, %5d], resolution: %5d}\n",
