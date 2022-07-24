@@ -388,6 +388,8 @@ valuatorNumber(enum WacomAxisType which)
 	case WACOM_AXIS_WHEEL: pos = 5; break;
 	case WACOM_AXIS_RING: pos = 5; break;
 	case WACOM_AXIS_RING2: pos = 6; break;
+	case WACOM_AXIS_SCROLL_X: pos = 6; break;
+	case WACOM_AXIS_SCROLL_Y: pos = 7; break;
 		break;
 	default:
 		abort();
@@ -518,15 +520,28 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 			break;
 		case WACOM_AXIS_RING2:
 			break;
+		case WACOM_AXIS_SCROLL_X:
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_HSCROLL);
+			break;
+		case WACOM_AXIS_SCROLL_Y:
+			label = XIGetKnownProperty(AXIS_LABEL_PROP_REL_VSCROLL);
+			break;
+
 		default:
 			abort();
 	}
 
 	index = valuatorNumber(type);
 	InitValuatorAxisStruct(pInfo->dev, index,
-	                       label,
-	                       min, max, res, min_res, max_res,
-	                       Absolute);
+			       label,
+			       min, max, res, min_res, max_res,
+			       Absolute);
+
+	if (type == WACOM_AXIS_SCROLL_X)
+		SetScrollValuator(pInfo->dev, index, SCROLL_TYPE_HORIZONTAL, PANSCROLL_INCREMENT, 0);
+	else if (type == WACOM_AXIS_SCROLL_Y)
+		SetScrollValuator(pInfo->dev, index, SCROLL_TYPE_VERTICAL, PANSCROLL_INCREMENT, 0);
+
 }
 
 bool wcmInitButtons(WacomDevicePtr priv, unsigned int nbuttons)
@@ -1119,7 +1134,7 @@ valuator_mask_get(const ValuatorMask *mask, int valuator)
 TEST_CASE(test_convert_axes)
 {
 	WacomAxisData axes = {0};
-	ValuatorMask *mask = valuator_mask_new(7);
+	ValuatorMask *mask = valuator_mask_new(8);
 
 	convertAxes(&axes, mask);
 	assert(valuator_mask_num_valuators(mask) == 0);
@@ -1165,6 +1180,7 @@ TEST_CASE(test_convert_axes)
 	assert(valuator_mask_isset(mask, 5));
 	assert(valuator_mask_get(mask, 5) == 2);
 	assert(!valuator_mask_isset(mask, 6));
+	assert(!valuator_mask_isset(mask, 7));
 
 	memset(&axes, 0, sizeof(axes));
 	valuator_mask_zero(mask);
@@ -1195,6 +1211,7 @@ TEST_CASE(test_convert_axes)
 	assert(valuator_mask_get(mask, 5) == 2);
 	assert(!valuator_mask_isset(mask, 6));
 	assert(!valuator_mask_isset(mask, 7));
+	assert(!valuator_mask_isset(mask, 8));
 
 	free(mask);
 }
