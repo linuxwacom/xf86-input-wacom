@@ -397,11 +397,9 @@ valuatorNumber(enum WacomAxisType which)
 }
 
 static inline void
-convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuators_out[7])
+convertAxes(const WacomAxisData *axes, ValuatorMask *mask)
 {
-	int first = 7;
-	int last = -1;
-	int valuators[7] = {0};
+
 
 	for (enum WacomAxisType which = _WACOM_AXIS_LAST; which > 0; which >>= 1)
 	{
@@ -414,51 +412,43 @@ convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuato
 
 		/* Positions need to match wcmInitAxis */
 		pos = valuatorNumber(which);
-		first = min(first, pos);
-		last = max(last, pos);
-		valuators[pos] = value;
+		valuator_mask_set(mask, pos, value);
 	}
-
-	if (last < 0)
-		first = 0;
-	*first_out = first;
-	*num_out = last - first + 1;
-
-	memcpy(valuators_out, &valuators[first], *num_out * sizeof(valuators[0]));
 }
 
 void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 		      const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->frontend;
-	int valuators[7] = {0};
-	int first_val, num_vals;
 
-	convertAxes(axes, &first_val, &num_vals, valuators);
+	ValuatorMask *mask = priv->valuator_mask;
+	valuator_mask_zero(mask);
+	convertAxes(axes, mask);
 
-	xf86PostProximityEventP(pInfo->dev, is_proximity_in, first_val, num_vals, valuators);
+	xf86PostProximityEventM(pInfo->dev, is_proximity_in, mask);
 }
 
 void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->frontend;
-	int valuators[7] = {0};
-	int first_val, num_vals;
 
-	convertAxes(axes, &first_val, &num_vals, valuators);
+	ValuatorMask *mask = priv->valuator_mask;
+	valuator_mask_zero(mask);
+	convertAxes(axes, mask);
 
-	xf86PostMotionEventP(pInfo->dev, is_absolute, first_val, num_vals, valuators);
+	xf86PostMotionEventM(pInfo->dev, is_absolute, mask);
 }
 
 void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_press, const WacomAxisData *axes)
 {
 	InputInfoPtr pInfo = priv->frontend;
-	int valuators[7] = {0};
-	int first_val, num_vals;
 
-	convertAxes(axes, &first_val, &num_vals, valuators);
+	ValuatorMask *mask = priv->valuator_mask;
+	valuator_mask_zero(mask);
+	convertAxes(axes, mask);
 
-	xf86PostButtonEventP(pInfo->dev, is_absolute, button, is_press, first_val, num_vals, valuators);
+
+	xf86PostButtonEventM(pInfo->dev, is_absolute, button, is_press, mask);
 }
 
 void wcmEmitTouch(WacomDevicePtr priv, int type, unsigned int touchid, int x, int y)
@@ -993,60 +983,191 @@ _X_EXPORT XF86ModuleData wacomModuleData =
 #ifdef ENABLE_TESTS
 #include "wacom-test-suite.h"
 
+#define MAX_VALUATORS 36
+
+struct _ValuatorMask {
+	int8_t last_bit;            /* highest bit set in mask */
+	int8_t has_unaccelerated;
+	uint8_t mask[(MAX_VALUATORS + 7) / 8];
+	double valuators[MAX_VALUATORS];    /* valuator data */
+	double unaccelerated[MAX_VALUATORS];    /* valuator data */
+};
+
+// The following functions are copied from https://gitlab.freedesktop.org/xorg/xserver/-/blob/master/dix/inpututils.c
+
+int
+CountBits(const uint8_t * mask, int len)
+{
+	int i;
+	int ret = 0;
+
+	for (i = 0; i < len; i++)
+		if (BitIsOn(mask, i))
+			ret++;
+
+	return ret;
+}
+
+
+/**
+ * Alloc a valuator mask large enough for num_valuators.
+ */
+ValuatorMask *
+valuator_mask_new(int num_valuators)
+{
+	/* alloc a fixed size mask for now and ignore num_valuators. in the
+	 * flying-car future, when we can dynamically alloc the masks and are
+	 * not constrained by signals, we can start using num_valuators */
+	ValuatorMask *mask = calloc(1, sizeof(ValuatorMask));
+
+	if (mask == NULL)
+		return NULL;
+
+	mask->last_bit = -1;
+	return mask;
+}
+
+/**
+ * Reset mask to zero.
+ */
+void
+valuator_mask_zero(ValuatorMask *mask)
+{
+	memset(mask, 0, sizeof(*mask));
+	mask->last_bit = -1;
+}
+
+/**
+ * Returns the current size of the mask (i.e. the highest number of
+ * valuators currently set + 1).
+ */
+int
+valuator_mask_size(const ValuatorMask *mask)
+{
+	return mask->last_bit + 1;
+}
+
+/**
+ * Returns the number of valuators set in the given mask.
+ */
+int
+valuator_mask_num_valuators(const ValuatorMask *mask)
+{
+	return CountBits(mask->mask, min(mask->last_bit + 1, MAX_VALUATORS));
+}
+
+/**
+ * Return true if the valuator is set in the mask, or false otherwise.
+ */
+int
+valuator_mask_isset(const ValuatorMask *mask, int valuator)
+{
+	return mask->last_bit >= valuator && BitIsOn(mask->mask, valuator);
+}
+
+static inline void
+_valuator_mask_set_double(ValuatorMask *mask, int valuator, double data)
+{
+	mask->last_bit = max(valuator, mask->last_bit);
+	SetBit(mask->mask, valuator);
+	mask->valuators[valuator] = data;
+}
+
+/**
+ * Set the valuator to the given floating-point data.
+ */
+void
+valuator_mask_set_double(ValuatorMask *mask, int valuator, double data)
+{
+	if (mask->has_unaccelerated) {
+		wcmLog(null, 0, "Do not mix valuator types, zero mask first\n");
+	}
+	_valuator_mask_set_double(mask, valuator, data);
+}
+
+/**
+ * Set the valuator to the given integer data.
+ */
+void
+valuator_mask_set(ValuatorMask *mask, int valuator, int data)
+{
+	valuator_mask_set_double(mask, valuator, data);
+}
+
+/**
+ * Return the requested valuator value as a double. If the mask bit is not
+ * set for the given valuator, the returned value is undefined.
+ */
+	double
+valuator_mask_get_double(const ValuatorMask *mask, int valuator)
+{
+	return mask->valuators[valuator];
+}
+
+/**
+ * Return the requested valuator value as an integer, rounding towards zero.
+ * If the mask bit is not set for the given valuator, the returned value is
+ * undefined.
+ */
+int
+valuator_mask_get(const ValuatorMask *mask, int valuator)
+{
+	return trunc(valuator_mask_get_double(mask, valuator));
+}
+
+
 TEST_CASE(test_convert_axes)
 {
 	WacomAxisData axes = {0};
-	int first, num;
-	int valuators[7];
+	ValuatorMask *mask = valuator_mask_new(7);
 
-#define reset(v) \
-	for (size_t _i = 0; _i < ARRAY_SIZE(v); _i++) \
-	    v[_i] = 0xab;
+	convertAxes(&axes, mask);
+	assert(valuator_mask_num_valuators(mask) == 0);
+	assert(valuator_mask_size(mask) == 0);
+	for (size_t i = 0; i< 9; i++)
+		assert(!valuator_mask_isset(mask, i));
 
-	reset(valuators);
-
-	convertAxes(&axes, &first, &num, valuators);
-	assert(first == 0);
-	assert(num == 0);
-	for (size_t i = 0; i< ARRAY_SIZE(valuators); i++)
-		assert(valuators[i] == 0xab);
-
-	reset(valuators);
 	memset(&axes, 0, sizeof(axes));
+	valuator_mask_zero(mask);
 
 	/* Check conversion for single value with first_valuator != 0 */
 	wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, 1); /* pos 2 */
-	convertAxes(&axes, &first, &num, valuators);
-	assert(first == 2);
-	assert(num == 1);
-	assert(valuators[0] == 1);
-	assert(valuators[1] == 0xab);
-	assert(valuators[2] == 0xab);
-	assert(valuators[3] == 0xab);
-	assert(valuators[4] == 0xab);
-	assert(valuators[5] == 0xab);
-	assert(valuators[6] == 0xab);
+	convertAxes(&axes, mask);
+	assert(valuator_mask_num_valuators(mask) == 1);
+	assert(valuator_mask_size(mask) == 3);
+	assert(!valuator_mask_isset(mask, 0));
+	assert(!valuator_mask_isset(mask, 1));
+	assert(valuator_mask_isset(mask, 2));
+	assert(valuator_mask_get(mask, 2) == 1);
+	assert(!valuator_mask_isset(mask, 3));
+	assert(!valuator_mask_isset(mask, 4));
+	assert(!valuator_mask_isset(mask, 5));
+	assert(!valuator_mask_isset(mask, 6));
+	assert(!valuator_mask_isset(mask, 7));
+	assert(!valuator_mask_isset(mask, 8));
 
-	reset(valuators);
 	memset(&axes, 0, sizeof(axes));
+	valuator_mask_zero(mask);
 
 	/* Check conversion for gaps with first_valuator != 0 */
 	wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, 1); /* pos 2 */
 	wcmAxisSet(&axes, WACOM_AXIS_WHEEL, 2); /* pos 5 */
 
-	convertAxes(&axes, &first, &num, valuators);
-	assert(first == 2);
-	assert(num == 4);
-	assert(valuators[0] == 1);
-	assert(valuators[1] == 0);
-	assert(valuators[2] == 0);
-	assert(valuators[3] == 2);
-	assert(valuators[4] == 0xab);
-	assert(valuators[5] == 0xab);
-	assert(valuators[6] == 0xab);
+ 	convertAxes(&axes, mask);
+	assert(valuator_mask_num_valuators(mask) == 2);
+	assert(valuator_mask_size(mask) == 6);
+	assert(!valuator_mask_isset(mask, 0));
+	assert(!valuator_mask_isset(mask, 1));
+	assert(valuator_mask_isset(mask, 2));
+	assert(valuator_mask_get(mask, 2) == 1);
+	assert(!valuator_mask_isset(mask, 3));
+	assert(!valuator_mask_isset(mask, 4));
+	assert(valuator_mask_isset(mask, 5));
+	assert(valuator_mask_get(mask, 5) == 2);
+	assert(!valuator_mask_isset(mask, 6));
 
-	reset(valuators);
 	memset(&axes, 0, sizeof(axes));
+	valuator_mask_zero(mask);
 
 	/* Check conversion for valuators with duplicate uses. Note that this
 	 * test is implementation-dependent: the loop in convertAxes decides
@@ -1059,17 +1180,23 @@ TEST_CASE(test_convert_axes)
 	wcmAxisSet(&axes, WACOM_AXIS_RING, 3); /* pos 5 */
 	wcmAxisSet(&axes, WACOM_AXIS_WHEEL, 2); /* also pos 5 */
 
-	convertAxes(&axes, &first, &num, valuators);
-	assert(first == 2);
-	assert(num == 4);
-	assert(valuators[0] == 1);
-	assert(valuators[1] == 10);
-	assert(valuators[2] == 11);
-	assert(valuators[3] == 2);
-	assert(valuators[4] == 0xab);
-	assert(valuators[5] == 0xab);
-	assert(valuators[6] == 0xab);
+	convertAxes(&axes, mask);
+	assert(valuator_mask_num_valuators(mask) == 4);
+	assert(valuator_mask_size(mask) == 6);
+	assert(!valuator_mask_isset(mask, 0));
+	assert(!valuator_mask_isset(mask, 1));
+	assert(valuator_mask_isset(mask, 2));
+	assert(valuator_mask_get(mask, 2) == 1);
+	assert(valuator_mask_isset(mask, 3));
+	assert(valuator_mask_get(mask, 3) == 10);
+	assert(valuator_mask_isset(mask, 4));
+	assert(valuator_mask_get(mask, 4) == 11);
+	assert(valuator_mask_isset(mask, 5));
+	assert(valuator_mask_get(mask, 5) == 2);
+	assert(!valuator_mask_isset(mask, 6));
+	assert(!valuator_mask_isset(mask, 7));
 
+	free(mask);
 }
 
 #endif
