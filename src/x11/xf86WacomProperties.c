@@ -37,10 +37,6 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 static int wcmGetProperty(DeviceIntPtr dev, Atom property);
 static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 
-/*****************************************************************************
-* wcmDevSwitchMode --
-*****************************************************************************/
-
 static Atom prop_devnode;
 static Atom prop_rotation;
 static Atom prop_tablet_area;
