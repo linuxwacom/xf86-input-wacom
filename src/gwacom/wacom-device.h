@@ -197,6 +197,16 @@ WacomToolType wacom_device_get_tool_type(WacomDevice *device);
  */
 WacomOptions *wacom_device_get_options(WacomDevice *device);
 
+/**
+ * wacom_device_set_runtime_option:
+ *
+ * Some options like button actions are runtime-only and cannot be set through.
+ * WacomOptionx (which maps to the xorg.conf support of the driver).
+ * This is a hack to set some of those options, however the options
+ * and values supported are very specific to the implementation.
+ */
+void wacom_device_set_runtime_option(WacomDevice *device, const char *name, const char *value);
+
 /* The following getters are only available after wacom_device_setup() */
 
 int wacom_device_get_num_buttons(WacomDevice *device);
