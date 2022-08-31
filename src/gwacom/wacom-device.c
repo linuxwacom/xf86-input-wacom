@@ -296,6 +296,21 @@ WacomOptions *wacom_device_get_options(WacomDevice *device)
 	return device->options;
 }
 
+void wacom_device_set_runtime_option(WacomDevice *device, const char *name, const char *value)
+{
+	WacomDevicePtr priv = device->priv;
+
+	wcmLog(priv, W_ERROR, "Setting special option %s=%s\n", name, value);
+
+	if (g_str_equal(name, "PanButton")) {
+		guint btn = atoi(value) - 1; /* array is zero-indexed, config options use 1-indexed ones */
+		assert(btn < sizeof(priv->key_actions));
+		wcmActionSet(&priv->key_actions[btn], 0, AC_PANSCROLL);
+	} else {
+		wcmLog(priv, W_ERROR, ":::::::::::::::: Unsupported runtime option %s ::::::::::::::::\n", name);
+	}
+}
+
 /****************** Driver layer *****************/
 
 int
