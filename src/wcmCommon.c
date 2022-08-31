@@ -154,9 +154,7 @@ void wcmResetButtonAction(WacomDevicePtr priv, int button)
 {
 	WacomAction new_action = {};
 	int x11_button = priv->button_default[button];
-	char name[64];
 
-	sprintf(name, "Wacom button action %d", button);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
 	wcmActionCopy(&priv->key_actions[button], &new_action);
 }
@@ -164,9 +162,7 @@ void wcmResetButtonAction(WacomDevicePtr priv, int button)
 void wcmResetStripAction(WacomDevicePtr priv, int index)
 {
 	WacomAction new_action = {};
-	char name[64];
 
-	sprintf(name, "Wacom strip action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
 	wcmActionCopy(&priv->strip_actions[index], &new_action);
@@ -175,9 +171,7 @@ void wcmResetStripAction(WacomDevicePtr priv, int index)
 void wcmResetWheelAction(WacomDevicePtr priv, int index)
 {
 	WacomAction new_action = {};
-	char name[64];
 
-	sprintf(name, "Wacom wheel action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
 	wcmActionCopy(&priv->wheel_actions[index], &new_action);
