@@ -370,6 +370,32 @@ void wcmEmitKeycode(WacomDevicePtr priv, int keycode, int state)
 	xf86PostKeyboardEvent (keydev, keycode, state);
 }
 
+static inline int
+valuatorNumber(enum WacomAxisType which)
+{
+	int pos;
+
+	switch (which){
+	case WACOM_AXIS_X: pos = 0; break;
+	case WACOM_AXIS_Y: pos = 1; break;
+	case WACOM_AXIS_PRESSURE: pos = 2; break;
+	case WACOM_AXIS_TILT_X: pos = 3; break;
+	case WACOM_AXIS_TILT_Y: pos = 4; break;
+	case WACOM_AXIS_STRIP_X: pos = 3; break;
+	case WACOM_AXIS_STRIP_Y: pos = 4; break;
+	case WACOM_AXIS_ROTATION: pos = 3; break;
+	case WACOM_AXIS_THROTTLE: pos = 4; break;
+	case WACOM_AXIS_WHEEL: pos = 5; break;
+	case WACOM_AXIS_RING: pos = 5; break;
+	case WACOM_AXIS_RING2: pos = 6; break;
+		break;
+	default:
+		abort();
+	}
+
+	return pos;
+}
+
 static inline void
 convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuators_out[7])
 {
@@ -387,24 +413,7 @@ convertAxes(const WacomAxisData *axes, int *first_out, int *num_out, int valuato
 			continue;
 
 		/* Positions need to match wcmInitAxis */
-		switch (which){
-		case WACOM_AXIS_X: pos = 0; break;
-		case WACOM_AXIS_Y: pos = 1; break;
-		case WACOM_AXIS_PRESSURE: pos = 2; break;
-		case WACOM_AXIS_TILT_X: pos = 3; break;
-		case WACOM_AXIS_TILT_Y: pos = 4; break;
-		case WACOM_AXIS_STRIP_X: pos = 3; break;
-		case WACOM_AXIS_STRIP_Y: pos = 4; break;
-		case WACOM_AXIS_ROTATION: pos = 3; break;
-		case WACOM_AXIS_THROTTLE: pos = 4; break;
-		case WACOM_AXIS_WHEEL: pos = 5; break;
-		case WACOM_AXIS_RING: pos = 5; break;
-		case WACOM_AXIS_RING2: pos = 6; break;
-			break;
-		default:
-			abort();
-		}
-
+		pos = valuatorNumber(which);
 		first = min(first, pos);
 		last = max(last, pos);
 		valuators[pos] = value;
@@ -490,51 +499,40 @@ void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 
 	switch (type) {
 		case WACOM_AXIS_X:
-			index = 0;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
 			break;
 		case WACOM_AXIS_Y:
-			index = 1;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
 			break;
 		case WACOM_AXIS_PRESSURE:
-			index = 2;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
 			break;
 		case WACOM_AXIS_TILT_X:
-			index = 3;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X);
 			break;
 		case WACOM_AXIS_TILT_Y:
-			index = 4;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
 			break;
 		case WACOM_AXIS_STRIP_X:
-			index = 3;
-			break;
 		case WACOM_AXIS_STRIP_Y:
-			index = 4;
 			break;
 		case WACOM_AXIS_ROTATION:
-			index = 3;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_RZ);
 			break;
 		case WACOM_AXIS_THROTTLE:
-			index = 4;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_THROTTLE);
 			break;
 		case WACOM_AXIS_WHEEL:
 		case WACOM_AXIS_RING:
-			index = 5;
 			label = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
 			break;
 		case WACOM_AXIS_RING2:
-			index = 6;
 			break;
 		default:
 			abort();
 	}
 
+	index = valuatorNumber(type);
 	InitValuatorAxisStruct(pInfo->dev, index,
 	                       label,
 	                       min, max, res, min_res, max_res,
