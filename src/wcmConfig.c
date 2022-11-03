@@ -710,25 +710,21 @@ static inline Bool filter_test_suite(WacomDevicePtr priv)
 	return TRUE;
 }
 
-/* Choose valid types according to device ID. */
-static void wcmDeviceTypeKeys(WacomDevicePtr priv)
+/* Wacom 0x056a specific types */
+static void wcmSpecialTypeKeys(WacomCommonPtr common)
 {
-	WacomCommonPtr common = priv->common;
-
-	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(priv);
-
-	switch (priv->common->tablet_id)
+	switch (common->tablet_id)
 	{
 		case 0xF8:  /* Cintiq 24HDT */
 		case 0xF4:  /* Cintiq 24HD */
-			TabletSetFeature(priv->common, WCM_DUALRING);
+			TabletSetFeature(common, WCM_DUALRING);
 			_fallthrough_;
 		case 0x34D: /* MobileStudio Pro 13 */
 		case 0x34E: /* MobileStudio Pro 16 */
 		case 0x398: /* MobileStudio Pro 13 */
 		case 0x399: /* MobileStudio Pro 16 */
 		case 0x3AA: /* MobileStudio Pro 16 */
-			TabletSetFeature(priv->common, WCM_LCD);
+			TabletSetFeature(common, WCM_LCD);
 			_fallthrough_;
 		case 0x357: /* Intuos Pro 2 M */
 		case 0x358: /* Intuos Pro 2 L */
@@ -750,12 +746,12 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0xBB:  /* I4 */
 		case 0xBC:  /* I4 */
 		case 0xBD:  /* I4 */
-			TabletSetFeature(priv->common, WCM_ROTATION);
+			TabletSetFeature(common, WCM_ROTATION);
 			_fallthrough_;
 		/* tablets with touch ring */
 		case 0x17:  /* BambooFun */
 		case 0x18:  /* BambooFun */
-			TabletSetFeature(priv->common, WCM_RING);
+			TabletSetFeature(common, WCM_RING);
 			break;
 
 		/* tablets support dual input */
@@ -770,7 +766,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0x44:  /* I2 */
 		case 0x45:  /* I2 */
 		case 0x47:  /* I2 */
-			TabletSetFeature(priv->common, WCM_DUALINPUT);
+			TabletSetFeature(common, WCM_DUALINPUT);
 			break;
 
 		/* P4 display tablets */
@@ -793,7 +789,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 
 		/* Wacom One display tablet */
 		case 0x3A6: /* DTC133 */
-			TabletSetFeature(priv->common, WCM_LCD);
+			TabletSetFeature(common, WCM_LCD);
 			break;
 
 		/* tablets support menu strips */
@@ -803,7 +799,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0xCC:  /* CinitqV5 */
 		case 0xFA:  /* Cintiq 22HD */
 		case 0x5B:  /* Cintiq 22HDT Pen */
-			TabletSetFeature(priv->common, WCM_LCD);
+			TabletSetFeature(common, WCM_LCD);
 			_fallthrough_;
 		case 0xB0:  /* I3 */
 		case 0xB1:  /* I3 */
@@ -812,7 +808,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0xB4:  /* I3 */
 		case 0xB5:  /* I3 */
 		case 0xB7:  /* I3 */
-			TabletSetFeature(priv->common, WCM_STRIP | WCM_ROTATION);
+			TabletSetFeature(common, WCM_STRIP | WCM_ROTATION);
 			break;
 
 		case 0x100: /* TPC with MT */
@@ -836,7 +832,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0x97: /* TPC */
 		case 0x9F: /* TPC */
 		case 0xEF: /* TPC */
-			TabletSetFeature(priv->common, WCM_TPC);
+			TabletSetFeature(common, WCM_TPC);
 			break;
 
 		case 0x304:/* Cintiq 13HD */
@@ -856,7 +852,7 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0x396:/* DTK-1660E */
 		case 0x3AE:/* Cintiq 16 */
 		case 0x3B0:/* DTK-1660E */
-			TabletSetFeature(priv->common, WCM_ROTATION);
+			TabletSetFeature(common, WCM_ROTATION);
 			_fallthrough_;
 		case 0xF6: /* Cintiq 24HDT Touch */
 		case 0x57: /* DTK2241 */
@@ -886,9 +882,20 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 		case 0x39A:/* MobileStudio Pro 13 Touch */
 		case 0x39B:/* MobileStudio Pro 16 Touch */
 		case 0x3AC:/* MobileStudio Pro 16 Touch */
-			TabletSetFeature(priv->common, WCM_LCD);
+			TabletSetFeature(common, WCM_LCD);
 			break;
 	}
+}
+
+/* Choose valid types according to vendor ID and device ID. */
+static void wcmDeviceTypeKeys(WacomDevicePtr priv)
+{
+	WacomCommonPtr common = priv->common;
+
+	priv->common->tablet_id = common->wcmDevCls->ProbeKeys(priv);
+
+	if (priv->common->vendor_id == WACOM_VENDOR_ID)
+		wcmSpecialTypeKeys(common);
 
 	if (ISBITSET(common->wcmInputProps, INPUT_PROP_DIRECT))
 		TabletSetFeature(priv->common, WCM_LCD);
