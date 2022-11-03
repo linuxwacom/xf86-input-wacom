@@ -117,7 +117,6 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds);
 /* validation */
 extern Bool wcmIsAValidType(WacomDevicePtr priv, const char* type);
 extern int wcmIsDuplicate(const char* device, WacomDevicePtr priv);
-extern int wcmDeviceTypeKeys(WacomDevicePtr priv);
 
 /* hotplug */
 extern int wcmNeedAutoHotplug(WacomDevicePtr priv, char **type);
