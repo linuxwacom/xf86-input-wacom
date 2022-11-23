@@ -388,6 +388,8 @@ valuatorNumber(enum WacomAxisType which)
 	case WACOM_AXIS_WHEEL: pos = 5; break;
 	case WACOM_AXIS_RING: pos = 5; break;
 	case WACOM_AXIS_RING2: pos = 6; break;
+	case WACOM_AXIS_SCROLL_X: pos = 6; break;
+	case WACOM_AXIS_SCROLL_Y: pos = 7; break;
 		break;
 	default:
 		abort();

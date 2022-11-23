@@ -382,4 +382,5 @@ def test_scroll(mainloop, opts):
             have_we_scrolled = True
     assert have_we_scrolled
 
+
 # vim: set expandtab tabstop=4 shiftwidth=4:
