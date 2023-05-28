@@ -65,7 +65,6 @@ section only covers configuration details specific to this driver.
 .PP
 Multiple instances of the Wacom devices can cohabit. Each device
 supports the following entries:
-.RS 8
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"|"touch"\fP
 sets the type of tool the device represents. This option is mandatory.
@@ -289,7 +288,6 @@ scroll event is generated when using the "pan" action. Smaller values
 will require less distance and be more sensitive. Larger values will
 require more distance and be less sensitive.  Default: 1300 or 2600
 depending on tablet resolution (corresponds to 13 mm of distance).
-.RE
 .SH "TOUCH GESTURES"
 .SS Single finger (1FG)
 .LP
