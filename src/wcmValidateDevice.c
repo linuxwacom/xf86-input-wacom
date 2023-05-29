@@ -589,6 +589,10 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 
 	common->wcmPanscrollThreshold = wcmOptGetInt(priv, "PanScrollThreshold",
 			common->wcmPanscrollThreshold);
+	common->wcmPanscrollIsSmooth = wcmOptGetBool(priv, "SmoothPanscrollingEnabled",
+						     TRUE);
+	wcmLog(priv, W_CONFIG, "Smooth panscrolling is %s\n",
+		common->wcmPanscrollIsSmooth ? "enabled" : "disabled");
 
 	/* The first device doesn't need to add any tools/areas as it
 	 * will be the first anyway. So if different, add tool

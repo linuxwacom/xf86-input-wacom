@@ -95,14 +95,35 @@ Bool wcmDevSwitchModeCall(WacomDevicePtr priv, Bool absolute)
 	return TRUE;
 }
 
+static int wcmButtonPerNotch(WacomDevicePtr priv, int value, int threshold, int btn_positive, int btn_negative)
+{
+	int mode = is_absolute(priv);
+	int notches = value / threshold;
+	int button = (notches > 0) ? btn_positive : btn_negative;
+	int i;
+	WacomAxisData axes = {0};
+
+	for (i = 0; i < abs(notches); i++) {
+		wcmEmitButton(priv, mode, button, 1, &axes);
+		wcmEmitButton(priv, mode, button, 0, &axes);
+	}
+
+	return value % threshold;
+}
+
 static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds, int x, int y)
 {
 	WacomCommonPtr common = priv->common;
 	int threshold = common->wcmPanscrollThreshold;
 	int delta_x, delta_y;
+	bool smooth_scrolling = priv->common->wcmPanscrollIsSmooth;
 
-	if (!(priv->flags & SCROLLMODE_FLAG) || !(ds->buttons & 1))
+	if (!(priv->flags & SCROLLMODE_FLAG) || !(ds->buttons & 1)) {
+		priv->wcmPanscrollState = *ds;
+		priv->wcmPanscrollState.x = 0;
+		priv->wcmPanscrollState.y = 0;
 		return;
+	}
 
 	/* Tip has gone down down; don't send pan event yet */
 	if (!(priv->oldState.buttons & 1)) {
@@ -120,10 +141,21 @@ static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds, int x,
 
 	DBG(6, priv, "pan x = %d, pan y = %d\n", delta_x, delta_y);
 
-	WacomAxisData axes = {0};
-	wcmAxisSet(&axes, WACOM_AXIS_SCROLL_X, -delta_x * PANSCROLL_INCREMENT/threshold);
-	wcmAxisSet(&axes, WACOM_AXIS_SCROLL_Y, -delta_y * PANSCROLL_INCREMENT/threshold);
-	wcmEmitMotion(priv, FALSE, &axes);
+	if (smooth_scrolling) {
+		WacomAxisData axes = {0};
+		wcmAxisSet(&axes, WACOM_AXIS_SCROLL_X, -delta_x * PANSCROLL_INCREMENT/threshold);
+		wcmAxisSet(&axes, WACOM_AXIS_SCROLL_Y, -delta_y * PANSCROLL_INCREMENT/threshold);
+		wcmEmitMotion(priv, FALSE, &axes);
+	} else {
+		int accumulated_x = priv->wcmPanscrollState.x + delta_x;
+		int accumulated_y = priv->wcmPanscrollState.y + delta_y;
+
+		int remainder_x = wcmButtonPerNotch(priv, accumulated_x, threshold, 6, 7);
+		int remainder_y = wcmButtonPerNotch(priv, accumulated_y, threshold, 4, 5);
+
+		priv->wcmPanscrollState.x = remainder_x;
+		priv->wcmPanscrollState.y = remainder_y;
+	}
 }
 
 void wcmResetButtonAction(WacomDevicePtr priv, int button)

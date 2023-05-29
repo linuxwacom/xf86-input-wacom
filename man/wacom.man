@@ -288,6 +288,17 @@ scroll event is generated when using the "pan" action. Smaller values
 will require less distance and be more sensitive. Larger values will
 require more distance and be less sensitive.  Default: 1300 or 2600
 depending on tablet resolution (corresponds to 13 mm of distance).
+.TP 4
+.B Option \fI"SmoothPanscrollingEnabled"\fP \fI"bool"\fP
+Allows to disable smooth panscrolling. Default: true.
+If disabled, panscrolling sends legacy button events instead.
+This option exists for backwards compatibility with
+applications that have the number of axes on a device limited to 6.
+See section
+.B BUGS
+for more details. This option should not be used unless the user runs one or
+more applications that do not support more than six axes.
+
 .SH "TOUCH GESTURES"
 .SS Single finger (1FG)
 .LP
@@ -334,6 +345,17 @@ option to reduce the range to 2048 steps. Note that this setting applies to
 the device. Once applied, all applications will see the reduced pressure
 range. It is not possible to provide this setting on a per-application
 basis.
+.SS "Smooth panscrolling exceeds the axis limits"
+In version 1.2.0, the driver's support for smooth panscrolling added two axes
+to the stylus device, bringing the total axis count to eight. The number of
+axes is advertised through the X Input Protocol but some applications (notably
+GIMP 2.xx) cannot handle more than six axes. This is an application bug but for
+backwards-compatibility with such applications, this driver provides the
+.B SmoothPanscrollingEnabled
+option to disable this feature and thus limit the axis count to six. Note that
+this setting applies to the device. Once applied, the driver will not send
+smooth panscroll events at all. It is not possible to provide this setting on a
+per-application basis.
 .SH "SEE ALSO"
 __xservername__(1), xorg.conf(5),
 xorg.conf.d(5), X(7)
