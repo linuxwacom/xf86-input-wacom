@@ -1240,7 +1240,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 	if (priv->common->wcmModel->DetectConfig)
 		priv->common->wcmModel->DetectConfig (priv);
 
-	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel, Scroll-X, Scroll-Y */
+	nbaxes = priv->naxes;       /* X, Y, Pressure, Tilt-X, Tilt-Y, Wheel */
 	if (!nbaxes || nbaxes > 6)
 		nbaxes = priv->naxes = 6;
 	nbbuttons = priv->nbuttons; /* Use actual number of buttons, if possible */
@@ -1248,6 +1248,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 	if (IsPad(priv) && TabletHasFeature(priv->common, WCM_DUALRING))
 		nbaxes = priv->naxes = nbaxes + 1; /* ABS wheel 2 */
 
+	/* For smooth scrolling we set up two additional axes */
 	if (IsPen(priv))
 		nbaxes = priv->naxes = nbaxes + 2; /* Scroll X and Y */
 
