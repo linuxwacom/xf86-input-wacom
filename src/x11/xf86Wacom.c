@@ -425,7 +425,8 @@ void wcmEmitProximity(WacomDevicePtr priv, bool is_proximity_in,
 	valuator_mask_zero(mask);
 	convertAxes(axes, mask);
 
-	xf86PostProximityEventM(pInfo->dev, is_proximity_in, mask);
+	if (valuator_mask_num_valuators(mask))
+		xf86PostProximityEventM(pInfo->dev, is_proximity_in, mask);
 }
 
 void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *axes)
@@ -436,7 +437,8 @@ void wcmEmitMotion(WacomDevicePtr priv, bool is_absolute, const WacomAxisData *a
 	valuator_mask_zero(mask);
 	convertAxes(axes, mask);
 
-	xf86PostMotionEventM(pInfo->dev, is_absolute, mask);
+	if (valuator_mask_num_valuators(mask))
+		xf86PostMotionEventM(pInfo->dev, is_absolute, mask);
 }
 
 void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_press, const WacomAxisData *axes)
