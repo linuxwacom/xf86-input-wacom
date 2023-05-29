@@ -401,8 +401,6 @@ valuatorNumber(enum WacomAxisType which)
 static inline void
 convertAxes(const WacomAxisData *axes, ValuatorMask *mask)
 {
-
-
 	for (enum WacomAxisType which = _WACOM_AXIS_LAST; which > 0; which >>= 1)
 	{
 		int value;
@@ -449,7 +447,6 @@ void wcmEmitButton(WacomDevicePtr priv, bool is_absolute, int button, bool is_pr
 	valuator_mask_zero(mask);
 	convertAxes(axes, mask);
 
-
 	xf86PostButtonEventM(pInfo->dev, is_absolute, button, is_press, mask);
 }
 
@@ -469,7 +466,6 @@ void wcmNotifyEvdev(WacomDevicePtr priv, const struct input_event *event)
 {
 	/* NOOP */
 }
-
 
 void wcmInitAxis(WacomDevicePtr priv, enum WacomAxisType type,
 			int min, int max, int res)
