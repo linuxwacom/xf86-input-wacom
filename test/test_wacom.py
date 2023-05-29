@@ -16,7 +16,7 @@
 
 
 from typing import Dict
-from . import Device, Monitor, Ev, Sev, Proximity, PenId
+from . import Button, Device, Monitor, Ev, Sev, Proximity, PenId
 
 import pytest
 import logging
@@ -327,13 +327,15 @@ def test_axis_updates_wheel(mainloop, opts, stylus_type):
             assert first_wheel == current_wheel
 
 
+@pytest.mark.parametrize("smooth", (True, False))
 @pytest.mark.parametrize("vertical", (True, False))
-def test_scroll(mainloop, opts, vertical):
+def test_scroll(mainloop, opts, vertical, smooth):
     """
     Check panscrolling works correctly
     """
     dev = Device.from_name("PTH660", "Pen")
     opts["PanScrollThreshold"] = "150"
+    opts["SmoothPanscrollingEnabled"] = "true" if smooth else "false"
 
     prox_in = [
         Sev("ABS_X", 50),
@@ -379,17 +381,30 @@ def test_scroll(mainloop, opts, vertical):
     monitor.write_events(prox_out)
 
     mainloop.run()
-    have_we_scrolled = False
-    for event in monitor.events:
-        if vertical:
-            if event.axes.scroll_y != 0:
-                assert event.axes.scroll_y == -808265
-                have_we_scrolled = True
-        else:
-            if event.axes.scroll_x != 0:
-                assert event.axes.scroll_x == -1223320
-                have_we_scrolled = True
-    assert have_we_scrolled
+    if smooth:
+        have_we_scrolled = False
+        for event in monitor.events:
+            if vertical:
+                if event.axes.scroll_y != 0:
+                    assert event.axes.scroll_y == -808265
+                    have_we_scrolled = True
+            else:
+                if event.axes.scroll_x != 0:
+                    assert event.axes.scroll_x == -1223320
+                    have_we_scrolled = True
+        assert have_we_scrolled
+    else:
+        have_button_events = False
+        for event in monitor.events:
+            if isinstance(event, Button):
+                print(event.button)
+                if vertical:
+                    if event.button == 4:  # we're moving bottom-to-top
+                        have_button_events = True
+                else:
+                    if event.button == 6:  # we're moving right-to-left
+                        have_button_events = True
+        assert have_button_events
 
 
 # vim: set expandtab tabstop=4 shiftwidth=4:

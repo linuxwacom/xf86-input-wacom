@@ -1115,7 +1115,7 @@ int wcmDevOpen(WacomDevicePtr priv)
  * Any de-facto defined axis index left unused is initialized with default
  * attributes.
  */
-static int wcmInitAxes(WacomDevicePtr priv)
+static int wcmInitAxes(WacomDevicePtr priv, Bool use_smooth_panscrolling)
 {
 	WacomCommonPtr common = priv->common;
 	int min, max, res;
@@ -1220,7 +1220,7 @@ static int wcmInitAxes(WacomDevicePtr priv)
 		wcmInitAxis(priv, WACOM_AXIS_RING2, min, max, res);
 	}
 
-	if (IsPen(priv)) {
+	if (use_smooth_panscrolling && IsPen(priv)) {
 		/* seventh valuator: scroll_x */
 		wcmInitAxis(priv, WACOM_AXIS_SCROLL_X, -1, -1, 0);
 
@@ -1235,6 +1235,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 {
 	WacomCommonPtr common =	priv->common;
 	int nbaxes, nbbuttons;
+	Bool use_smooth_panscrolling = priv->common->wcmPanscrollIsSmooth;
 
 	/* Detect tablet configuration, if possible */
 	if (priv->common->wcmModel->DetectConfig)
@@ -1249,7 +1250,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 		nbaxes = priv->naxes = nbaxes + 1; /* ABS wheel 2 */
 
 	/* For smooth scrolling we set up two additional axes */
-	if (IsPen(priv))
+	if (use_smooth_panscrolling && IsPen(priv))
 		nbaxes = priv->naxes = nbaxes + 2; /* Scroll X and Y */
 
 	/* if more than 3 buttons, offset by the four scroll buttons,
@@ -1287,7 +1288,7 @@ Bool wcmDevInit(WacomDevicePtr priv)
 		}
 	}
 
-	if (!wcmInitAxes(priv))
+	if (!wcmInitAxes(priv, use_smooth_panscrolling))
 		return FALSE;
 
 	return TRUE;

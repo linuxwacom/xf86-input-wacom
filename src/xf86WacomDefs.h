@@ -465,6 +465,7 @@ struct _WacomCommonRec
 	int wcmPressureRecalibration; /* Determine if pressure recalibration of
 					 worn pens should be performed */
 	int wcmPanscrollThreshold;	/* distance pen must move to send a panscroll event */
+	int wcmPanscrollIsSmooth;	/* nonzero if smooth panscrolling is enabled */
 
 	int bufpos;                        /* position with buffer */
 	unsigned char buffer[BUFFER_SIZE]; /* data read from device */
