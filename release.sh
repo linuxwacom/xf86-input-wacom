@@ -45,55 +45,16 @@ check_local_changes() {
 }
 
 #------------------------------------------------------------------------------
-#                        Function: check_option_args
-#------------------------------------------------------------------------------
-#
-# perform sanity checks on cmdline args which require arguments
-# arguments:
-#   $1 - the option being examined
-#   $2 - the argument to the option
-# returns:
-#   if it returns, everything is good
-#   otherwise it exit's
-check_option_args() {
-    option=$1
-    arg=$2
-
-    # check for an argument
-    if [ x"$arg" = x ]; then
-        echo ""
-        echo "Error: the '$option' option is missing its required argument."
-        echo ""
-        usage
-        exit 1
-    fi
-
-    # does the argument look like an option?
-    echo $arg | $GREP "^-" > /dev/null
-    if [ $? -eq 0 ]; then
-        echo ""
-        echo "Error: the argument '$arg' of option '$option' looks like an option itself."
-        echo ""
-        usage
-        exit 1
-    fi
-}
-
-#------------------------------------------------------------------------------
 #                        Function: check_modules_specification
 #------------------------------------------------------------------------------
 #
 check_modules_specification() {
-
-if [ x"$MODFILE" = x ]; then
     if [ x"${INPUT_MODULES}" = x ]; then
         echo ""
         echo "Error: no modules specified (blank command line)."
         usage
         exit 1
     fi
-fi
-
 }
 
 #------------------------------------------------------------------------------
@@ -199,37 +160,6 @@ $(git log --no-merges "$tag_range" | git shortlog)
 ${BT3}
 
 RELEASE
-}
-
-#------------------------------------------------------------------------------
-#                        Function: read_modfile
-#------------------------------------------------------------------------------
-#
-# Read the module names from the file and set a variable to hold them
-# This will be the same interface as cmd line supplied modules
-#
-read_modfile() {
-
-    if [ x"$MODFILE" != x ]; then
-        # Make sure the file is sane
-        if [ ! -r "$MODFILE" ]; then
-            echo "Error: module file '$MODFILE' is not readable or does not exist."
-            exit 1
-        fi
-        # read from input file, skipping blank and comment lines
-        while read line; do
-            # skip blank lines
-            if [ x"$line" = x ]; then
-                continue
-            fi
-            # skip comment lines
-            if echo "$line" | $GREP -q "^#" ; then
-                continue;
-            fi
-            INPUT_MODULES="$INPUT_MODULES $line"
-        done <"$MODFILE"
-    fi
-    return 0
 }
 
 #------------------------------------------------------------------------------
@@ -658,7 +588,6 @@ Options:
   --dry-run              Does everything except tagging and uploading tarballs
   --force                Force overwriting an existing release
   --help                 Display this help and exit successfully
-  --modfile <file>       Release the git modules specified in <file>
   --moduleset <file>     The jhbuild moduleset full pathname to be updated
   --no-quit              Do not quit after error; just print error message
   --github <name[:pat]>  Release project to Github with username / token
@@ -730,18 +659,6 @@ do
         usage
         exit 0
         ;;
-    # Release the git modules specified in <file>
-    --modfile)
-        check_option_args $1 $2
-        shift
-        MODFILE=$1
-        ;;
-    # The jhbuild moduleset to update with relase info
-    --moduleset)
-        check_option_args $1 $2
-        shift
-        JH_MODULESET=$1
-        ;;
     # Do not quit after error; just print error message
     --no-quit)
         NO_QUIT=yes
@@ -768,13 +685,6 @@ do
         exit 1
         ;;
     *)
-        if [ x"${MODFILE}" != x ]; then
-            echo ""
-            echo "Error: specifying both modules and --modfile is not permitted"
-            echo ""
-            usage
-            exit 1
-        fi
         INPUT_MODULES="${INPUT_MODULES} $1"
         ;;
     esac
@@ -789,9 +699,6 @@ fi
 
 # If no modules specified (blank cmd line) display help
 check_modules_specification
-
-# Read the module file and normalize input in INPUT_MODULES
-read_modfile
 
 # Loop through each module to release
 # Exit on error if --no-quit no specified
