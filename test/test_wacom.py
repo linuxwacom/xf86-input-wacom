@@ -327,7 +327,8 @@ def test_axis_updates_wheel(mainloop, opts, stylus_type):
             assert first_wheel == current_wheel
 
 
-def test_scroll(mainloop, opts):
+@pytest.mark.parametrize("vertical", (True, False))
+def test_scroll(mainloop, opts, vertical):
     """
     Check panscrolling works correctly
     """
@@ -357,7 +358,10 @@ def test_scroll(mainloop, opts):
         Sev("SYN_REPORT", 0),
     ]
 
-    move_pen_x = [Sev("ABS_X", 75), Sev("SYN_REPORT", 0)]
+    if vertical:
+        move_pen = [Sev("ABS_Y", 75), Sev("SYN_REPORT", 0)]
+    else:
+        move_pen = [Sev("ABS_X", 75), Sev("SYN_REPORT", 0)]
 
     up_pen = [Sev("BTN_TOUCH", 0), Sev("ABS_PRESSURE", 0), Sev("SYN_REPORT", 0)]
 
@@ -369,7 +373,7 @@ def test_scroll(mainloop, opts):
     monitor.write_events(prox_in)
     monitor.write_events(press_button2)
     monitor.write_events(touchdown_pen)  # Pen touchdown
-    monitor.write_events(move_pen_x)  # Move pen 25% towards positive x
+    monitor.write_events(move_pen)  # Move pen 25% towards positive x or y
     monitor.write_events(up_pen)  # Pen up
     monitor.write_events(depress_button2)  # Depress button2
     monitor.write_events(prox_out)
@@ -377,9 +381,14 @@ def test_scroll(mainloop, opts):
     mainloop.run()
     have_we_scrolled = False
     for event in monitor.events:
-        if event.axes.scroll_x != 0:
-            assert event.axes.scroll_x == -1223320
-            have_we_scrolled = True
+        if vertical:
+            if event.axes.scroll_y != 0:
+                assert event.axes.scroll_y == -808265
+                have_we_scrolled = True
+        else:
+            if event.axes.scroll_x != 0:
+                assert event.axes.scroll_x == -1223320
+                have_we_scrolled = True
     assert have_we_scrolled
 
 
