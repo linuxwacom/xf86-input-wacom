@@ -130,6 +130,7 @@ src_wacom_core = [
 	'src/wcmConfig.c',
 	'src/wcmFilter.c',
 	'src/wcmFilter.h',
+	'src/wcmPressureCurve.c',
 	'src/wcmTouchFilter.c',
 	'src/wcmTouchFilter.h',
 	'src/wcmUSB.c',
