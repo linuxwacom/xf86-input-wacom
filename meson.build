@@ -295,6 +295,13 @@ executable(
 	install: true,
 )
 
+executable(
+	'pressurecurve',
+	['tools/pressurecurve.c',
+	 'src/wcmPressureCurve.c'],
+	include_directories: [dir_src],
+	install: false)
+
 # Man pages
 config_man = configuration_data()
 config_man.set('VERSION', '@0@ @1@'.format(meson.project_name(), meson.project_version()))
