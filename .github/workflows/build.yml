@@ -1,5 +1,8 @@
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 env:
   CFLAGS: -Werror
   UBUNTU_PACKAGES: |

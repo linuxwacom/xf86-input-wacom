@@ -3,6 +3,9 @@ on:
     - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   COVERITY_SCAN_PROJECT_NAME: linuxwacom/xf86-input-wacom
   COVERITY_SCAN_NOTIFICATION_EMAIL: killertofu@gmail.com
