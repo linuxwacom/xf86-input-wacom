@@ -1361,7 +1361,7 @@ mod_buttons(WacomCommonPtr common, unsigned int buttons, unsigned int btn, Bool 
 {
 	unsigned int mask;
 
-	if (btn >= sizeof(int) * 8)
+	if (btn >= sizeof(int) * 8 - 1)
 	{
 		wcmLogCommonSafe(common, W_ERROR,
 		       "%s: Invalid button number %u. Insufficient storage\n",
@@ -2085,7 +2085,7 @@ static int usbProbeKeys(WacomDevicePtr priv)
 TEST_CASE(test_mod_buttons)
 {
 	WacomCommonRec common = {0};
-	for (size_t i = 0; i < sizeof(int) * 8; i++)
+	for (size_t i = 0; i < sizeof(int) * 8 - 1; i++)
 	{
 		unsigned int buttons = mod_buttons(&common, 0, i, 1);
 		assert(buttons == (1u << i));
@@ -2093,6 +2093,7 @@ TEST_CASE(test_mod_buttons)
 		assert(buttons == 0);
 	}
 
+	assert(mod_buttons(&common, 0, sizeof(int) * 8 - 1, 1) == 0);
 	assert(mod_buttons(&common, 0, sizeof(int) * 8, 1) == 0);
 }
 
