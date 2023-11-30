@@ -1369,7 +1369,7 @@ mod_buttons(WacomCommonPtr common, unsigned int buttons, unsigned int btn, Bool 
 		return buttons;
 	}
 
-	mask = 1 << btn;
+	mask = 1u << btn;
 
 	if (state)
 		buttons |= mask;
