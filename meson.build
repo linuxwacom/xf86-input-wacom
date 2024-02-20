@@ -47,20 +47,24 @@ cflags = [
 add_project_arguments(cc.get_supported_arguments(cflags), language : 'c')
 add_project_arguments('-D_GNU_SOURCE', language : 'c')
 
+build_xsetwacom = get_option('xsetwacom')
 
 # Dependencies
 pkgconfig = import('pkgconfig')
-dep_protos = []
-protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
-foreach proto : protos
-	dep_protos += [dependency(proto)]
-endforeach
 dep_xserver = dependency('xorg-server', version: '>= 1.13.0')
-xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
-dep_xlibs = []
-foreach xlib : xlibs
-	dep_xlibs += [dependency(xlib)]
-endforeach
+if build_xsetwacom
+	dep_protos = []
+	protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
+	foreach proto : protos
+		dep_protos += [dependency(proto)]
+	endforeach
+
+	xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
+	dep_xlibs = []
+	foreach xlib : xlibs
+		dep_xlibs += [dependency(xlib)]
+	endforeach
+endif
 dep_libudev = dependency('libudev')
 dep_m = cc.find_library('m')
 
@@ -282,18 +286,20 @@ if get_option('serial-device-support')
 	)
 endif
 
-xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
-src_xsetwacom = [
-	config_ver_h,
-	'tools/xsetwacom.c',
-]
-executable(
-	'xsetwacom',
-	src_xsetwacom,
-	dependencies: xsetwacom_deps,
-	include_directories: [dir_include],
-	install: true,
-)
+if build_xsetwacom
+	xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
+	src_xsetwacom = [
+		config_ver_h,
+		'tools/xsetwacom.c',
+	]
+	executable(
+		'xsetwacom',
+		src_xsetwacom,
+		dependencies: xsetwacom_deps,
+		include_directories: [dir_include],
+		install: true,
+	)
+endif
 
 executable(
 	'pressurecurve',
@@ -337,14 +343,16 @@ endif
 build_unittests = not get_option('unittests').disabled()
 
 if build_unittests
-	xsetwacom_test = executable(
-		'xsetwacom-test',
-		src_xsetwacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
-		c_args: ['-DENABLE_TESTS', '-Wno-unused-function'],
-		dependencies: xsetwacom_deps,
-		include_directories: [dir_include, dir_src, dir_src_test],
-	)
-	test('xsetwacom-tests', xsetwacom_test)
+	if build_xsetwacom
+		xsetwacom_test = executable(
+			'xsetwacom-test',
+			src_xsetwacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
+			c_args: ['-DENABLE_TESTS', '-Wno-unused-function'],
+			dependencies: xsetwacom_deps,
+			include_directories: [dir_include, dir_src, dir_src_test],
+		)
+		test('xsetwacom-tests', xsetwacom_test)
+	endif
 
 	# Rebuild the driver with -DENABLE_TESTS to enable all the various
 	# local tests in the files. This is built as a module (like the

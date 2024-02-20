@@ -48,3 +48,8 @@ option('wacom-gobject',
 	value: 'auto',
 	description: 'Build the Wacom GObject library and associated tools [default: auto]'
 )
+option('xsetwacom',
+	type: 'boolean',
+	value: 'true',
+	description: 'Build the xsetwacom tool [default: true]'
+)
