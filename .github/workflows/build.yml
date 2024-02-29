@@ -14,7 +14,7 @@ env:
 
 jobs:
   compile-with-autotools:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         compiler: [ gcc, clang ]
@@ -59,7 +59,7 @@ jobs:
           path: xf86-input-wacom-*tar.bz2
 
   compile-with-meson:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         compiler:
@@ -93,7 +93,7 @@ jobs:
             builddir/meson-logs/meson-log.txt
 
   compile-with-meson-exact-version:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
@@ -121,7 +121,7 @@ jobs:
   #
   build-from-tarball-autotools:
     needs: compile-with-autotools
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       TARBALLDIR: '_tarball_dir'
       INSTALLDIR: '/tmp/_inst'
@@ -150,7 +150,7 @@ jobs:
 
   build-from-tarball-meson:
     needs: compile-with-autotools
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       TARBALLDIR: '_tarball_dir'
       INSTALLDIR: '/tmp/_inst'
@@ -185,7 +185,7 @@ jobs:
 
   check-tarball-files:
     needs: compile-with-autotools
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       TARBALLDIR: '_tarball_dir'
     steps:
