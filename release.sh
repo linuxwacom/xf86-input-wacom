@@ -583,9 +583,7 @@ Options:
   --dist                 make 'dist' instead of 'distcheck'; use with caution
   --distcheck            Default, ignored for compatibility
   --dry-run              Does everything except tagging and uploading tarballs
-  --force                Force overwriting an existing release
   --help                 Display this help and exit successfully
-  --moduleset <file>     The jhbuild moduleset full pathname to be updated
   --no-quit              Do not quit after error; just print error message
   --token <tokenval>     GitHub personal access token value
 
@@ -645,11 +643,6 @@ do
     # Does everything except uploading tarball
     --dry-run)
         DRY_RUN=yes
-        ;;
-    # Force overwriting an existing release
-    # Use only if nothing changed in the git repo
-    --force)
-        FORCE=yes
         ;;
     # Display this help and exit successfully
     --help)
