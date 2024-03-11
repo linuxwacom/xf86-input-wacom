@@ -45,19 +45,6 @@ check_local_changes() {
 }
 
 #------------------------------------------------------------------------------
-#                        Function: check_modules_specification
-#------------------------------------------------------------------------------
-#
-check_modules_specification() {
-    if [ x"${INPUT_MODULES}" = x ]; then
-        echo ""
-        echo "Error: no modules specified (blank command line)."
-        usage
-        exit 1
-    fi
-}
-
-#------------------------------------------------------------------------------
 #                        Function: check_json_message
 #------------------------------------------------------------------------------
 #
@@ -588,9 +575,9 @@ usage() {
     basename="`expr "//$0" : '.*/\([^/]*\)'`"
     cat <<HELP
 
-Usage: $basename [options] path...
+Usage: $basename [options] [path...]
 
-Where "path" is a relative path to a git module, including '.'.
+Where "path" is a relative path to a git module, including '.' (the default).
 
 Options:
   --dist                 make 'dist' instead of 'distcheck'; use with caution
@@ -701,7 +688,11 @@ do
 done
 
 # If no modules specified (blank cmd line) display help
-check_modules_specification
+if [ -z "$INPUT_MODULES" ]; then
+    echo ""
+    echo "No modules specified, using \$PWD."
+    INPUT_MODULES=" ."
+fi
 
 # Loop through each module to release
 # Exit on error if --no-quit no specified
