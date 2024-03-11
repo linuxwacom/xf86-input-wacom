@@ -163,11 +163,11 @@ RELEASE
 print_epilog() {
 
     epilog="========  Successful Completion"
-    if [ x"$NO_QUIT" != x ]; then
-        if [ x"$failed_modules" != x ]; then
+    if [ -n "$NO_QUIT" ]; then
+        if [ -n "$failed_modules" ]; then
             epilog="========  Partial Completion"
         fi
-    elif [ x"$failed_modules" != x ]; then
+    elif [ -n "$failed_modules" ]; then
         epilog="========  Stopped on Error"
     fi
 
@@ -175,7 +175,7 @@ print_epilog() {
     echo "$epilog `date`"
 
     # Report about modules that failed for one reason or another
-    if [ x"$failed_modules" != x ]; then
+    if [ -n "$failed_modules" ]; then
         echo "        List of failed modules:"
         for mod in $failed_modules; do
             echo "        $mod"
@@ -197,7 +197,7 @@ process_modules() {
         if ! process_module ; then
             echo "Error: processing module \"$MODULE_RPATH\" failed."
             failed_modules="$failed_modules $MODULE_RPATH"
-            if [ x"$NO_QUIT" = x ]; then
+            if [ -z "$NO_QUIT" ]; then
                 print_epilog
                 exit 1
             fi
@@ -248,7 +248,7 @@ get_section() {
         return 1
     fi
 
-    if [ x"$section" = xlinuxwacom ]; then
+    if [ "$section" = "linuxwacom" ]; then
         section=`echo $module_url | cut -d'/' -f2`
         if [ $? -ne 0 ]; then
             echo "Error: unable to extract section from $module_url second field."
@@ -337,7 +337,7 @@ process_module() {
         echo "Error: failed to locate $buildfile."
         echo "Has the module been configured?"
         return 1
-    elif [ x"$configNum" != x1 ]; then
+    elif [ "$configNum" != "1" ]; then
         echo "Error: more than one $buildfile file was found,"
         echo "       clean-up previously failed attempts at distcheck"
         return 1
@@ -453,7 +453,7 @@ process_module() {
         cd $top_src
         return 1
     fi
-    if [ x"$remote_top_commit_sha" != x"$local_top_commit_sha" ]; then
+    if [ "$remote_top_commit_sha" != "$local_top_commit_sha" ]; then
         echo "Error: the local top commit has not been pushed to the remote."
         local_top_commit_descr=`git log --oneline --max-count=1 $local_top_commit_sha`
         echo "       the local top commit is: \"$local_top_commit_descr\""
@@ -466,7 +466,7 @@ process_module() {
     tagged_commit_sha=`git  rev-list --max-count=1 $tag_name 2>/dev/null`
     if [ $? -eq 0 ]; then
         # Check if the tag is pointing to the top commit
-        if [ x"$tagged_commit_sha" != x"$remote_top_commit_sha" ]; then
+        if [ "$tagged_commit_sha" != "$remote_top_commit_sha" ]; then
             echo "Error: the \"$tag_name\" already exists."
             echo "       this tag is not tagging the top commit."
             remote_top_commit_descr=`git log --oneline --max-count=1 $remote_top_commit_sha`
@@ -480,7 +480,7 @@ process_module() {
         fi
     else
         # Tag the top commit with the tar name
-        if [ x"$DRY_RUN" = x ]; then
+        if [ -z "$DRY_RUN" ]; then
             git tag -s -m $tag_name $tag_name
             if [ $? -ne 0 ]; then
                 echo "Error:  unable to tag module with \"$tag_name\"."
@@ -528,7 +528,7 @@ process_module() {
             echo "         Please check the commit history in the announce."
         fi
     fi
-    if [ x"$tag_previous" != x ]; then
+    if [ -n "$tag_previous" ]; then
         # The top commit may not have been tagged in dry-run mode. Use commit.
         tag_range=$tag_previous..$local_top_commit_sha
     else
@@ -606,7 +606,7 @@ MAKE=${MAKE:="make"}
 check_for_jq
 
 # Choose which grep program to use (on Solaris, must be gnu grep)
-if [ "x$GREP" = "x" ] ; then
+if [ -z "$GREP" ] ; then
     if [ -x /usr/gnu/bin/grep ] ; then
         GREP=/usr/gnu/bin/grep
     else
@@ -615,7 +615,7 @@ if [ "x$GREP" = "x" ] ; then
 fi
 
 # Find path for GnuPG v2
-if [ "x$GPG" = "x" ] ; then
+if [ -z "$GPG" ] ; then
     if [ -x /usr/bin/gpg2 ] ; then
         GPG=/usr/bin/gpg2
     else
