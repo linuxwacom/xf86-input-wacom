@@ -413,7 +413,7 @@ static Bool wcmMatchDevice(WacomDevicePtr priv, WacomCommonPtr *common_return)
 		return 0;
 
 	/* If a match is found, priv->common has been replaced */
-	if (wcmForeachDevice(priv, matchDevice, priv) == 0)
+	if (wcmForeachDevice(priv, matchDevice, priv) > 0)
 		*common_return = priv->common;
 	return 0;
 }
