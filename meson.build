@@ -1,5 +1,5 @@
 project('xf86-input-wacom', 'c',
-	version : '1.2.1', # bump version in configure.ac
+	version : '1.2.2', # bump version in configure.ac
 	license : 'MIT/Expat',
 	default_options : [ 'c_std=gnu99', 'warning_level=2' ],
 	meson_version : '>= 0.51.0')
