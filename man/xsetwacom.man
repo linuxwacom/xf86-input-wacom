@@ -112,9 +112,21 @@ applied.
 .TQ
 \fBAbsWheel2Down\fR [mapping]
 .TQ
+\fBDialCW\fR [mapping]
+.TQ
+\fBDialCCW\fR [mapping]
+.TQ
+\fBDial2CW\fR [mapping]
+.TQ
+\fBDial2CCW\fR [mapping]
+.TQ
 \fBRelWheelUp\fR [mapping]
 .TQ
 \fBRelWheelDown\fR [mapping]
+.TQ
+\fBRelWheel2Up\fR [mapping]
+.TQ
+\fBRelWheel2Down\fR [mapping]
 Set a mapping for the specified control. Mappings take the form of
 either a single numeric button or an 'action' to be performed. If no mapping
 is provided, the default mapping is restored. If a control is mapped
