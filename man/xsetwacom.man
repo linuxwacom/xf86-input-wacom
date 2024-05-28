@@ -103,10 +103,22 @@ The set is defined device's native orientation, regardless of the actual rotatio
 applied.
 .TP
 \fBButton\fR button-number [mapping]
-Set a mapping for the specified button-number. Mappings take the form of
+.TQ
+\fBAbsWheelUp\fR [mapping]
+.TQ
+\fBAbsWheelDown\fR [mapping]
+.TQ
+\fBAbsWheel2Up\fR [mapping]
+.TQ
+\fBAbsWheel2Down\fR [mapping]
+.TQ
+\fBRelWheelUp\fR [mapping]
+.TQ
+\fBRelWheelDown\fR [mapping]
+Set a mapping for the specified control. Mappings take the form of
 either a single numeric button or an 'action' to be performed. If no mapping
-is provided, the default mapping is restored. If button-number is mapped
-to 0, the Button event is ignored.
+is provided, the default mapping is restored. If a control is mapped
+to 0, the event is ignored.
 
 Numeric button mappings indicate what X11 button number the given button-number
 should correspond to. For example, a mapping of "3" means a press of the given
