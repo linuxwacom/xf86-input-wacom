@@ -332,7 +332,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "AbsWheel2Up",
-		.desc = "X11 event to which absolute wheel up should be mapped. ",
+		.desc = "X11 event to which 2nd absolute wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 4,
@@ -342,7 +342,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "AbsWheel2Down",
-		.desc = "X11 event to which absolute wheel down should be mapped. ",
+		.desc = "X11 event to which 2nd absolute wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 5,
