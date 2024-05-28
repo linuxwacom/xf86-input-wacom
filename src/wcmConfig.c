@@ -72,6 +72,8 @@ WacomDevicePtr wcmAllocate(void *frontend, const char *name)
 	priv->nbuttons = WCM_MAX_BUTTONS;       /* Default number of buttons */
 	priv->wheel_default[WHEEL_REL_UP] = 4;  /* scroll up */
 	priv->wheel_default[WHEEL_REL_DN] = 5;  /* scroll down */
+	priv->wheel_default[WHEEL2_REL_UP] = 7; /* scroll right */
+	priv->wheel_default[WHEEL2_REL_DN] = 6; /* scroll left */
 	/* wheel events are set to 0, but the pad overwrites this default
 	 * later in wcmParseOptions, when we have IsPad() available */
 	priv->wheel_default[WHEEL_ABS_UP] = 0;
@@ -674,7 +676,7 @@ static void wcmInitActions(WacomDevicePtr priv)
 
 	if (IsPad(priv) || IsCursor(priv))
 	{
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < 8; i++)
 			wcmResetWheelAction(priv, i);
 	}
 }

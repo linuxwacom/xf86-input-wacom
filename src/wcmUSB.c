@@ -1766,7 +1766,9 @@ static Bool eventCouldBeFromPad(WacomDevicePtr priv,
 	if (event_ptr->type == EV_REL) {
 		switch (event_ptr->code) {
 		case REL_WHEEL:
+		case REL_HWHEEL:
 		case REL_WHEEL_HI_RES:
+		case REL_HWHEEL_HI_RES:
 			return TRUE;
 		}
 	}
@@ -1895,6 +1897,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 
 	/* all USB data operates from previous context except relative values*/
 	ds->relwheel = 0;
+	ds->relwheel2 = 0;
 	ds->serial_num = private->wcmLastToolSerial;
 
 	/* loop through all events in group */
@@ -1942,11 +1945,20 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 			case REL_WHEEL_HI_RES:
 				/* unsupported */
 				break;
+			case REL_HWHEEL:
+				ds->relwheel2 = event->value;
+				ds->time = wcmTimeInMillis();
+				common->wcmChannel[channel].dirty |= TRUE;
+				break;
+			case REL_HWHEEL_HI_RES:
+				/* unsupported */
+				break;
 			default:
 				wcmLogSafe(priv, W_ERROR,
 						      "%s: rel event recv'd (%d)!\n",
 						      priv->name,
 						      event->code);
+				break;
 			}
 		}
 		else if (event->type == EV_KEY)

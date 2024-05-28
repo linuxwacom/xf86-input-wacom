@@ -177,6 +177,8 @@ struct _WacomModel
 #define WHEEL_ABS_DN      3
 #define WHEEL2_ABS_UP     4
 #define WHEEL2_ABS_DN     5
+#define WHEEL2_REL_UP     6
+#define WHEEL2_REL_DN     7
 #define STRIP_LEFT_UP     0
 #define STRIP_LEFT_DN     1
 #define STRIP_RIGHT_UP    2
@@ -207,6 +209,7 @@ struct _WacomDeviceState
 	int abswheel;
 	int abswheel2;
 	int relwheel;
+	int relwheel2;
 	int distance;
 	int throttle;
 	int proximity;
@@ -272,13 +275,13 @@ struct _WacomDeviceRec
 	 */
 	int button_default[WCM_MAX_BUTTONS]; /* Default mappings set by ourselves (possibly overridden by xorg.conf) */
 	int strip_default[4];
-	int wheel_default[6];
+	int wheel_default[8];
 	WacomAction key_actions[WCM_MAX_BUTTONS]; /* Action codes to perform when the associated event occurs */
 	WacomAction strip_actions[4];
-	WacomAction wheel_actions[6];
+	WacomAction wheel_actions[8];
 	Atom btn_action_props[WCM_MAX_BUTTONS];   /* Action references so we can update the action codes when a client makes a change */
 	Atom strip_action_props[4];
-	Atom wheel_action_props[6];
+	Atom wheel_action_props[8];
 
 	int nbuttons;           /* number of buttons for this subdevice */
 	int naxes;              /* number of axes */
