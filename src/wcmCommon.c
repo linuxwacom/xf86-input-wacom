@@ -531,9 +531,7 @@ static int getWheelButton(int delta, int action_up, int action_dn)
 /**
  * Send button or actions for a scrolling axis.
  *
- * @param button     X button number to send if no action is defined
  * @param action     Action to send
- * @param nactions   Length of action array
  */
 static void sendWheelStripEvent(WacomDevicePtr priv, const WacomAction *action,
 				const WacomDeviceState* ds, const WacomAxisData *axes)
