@@ -4,10 +4,12 @@
 wacom \- Wacom input driver
 .SH SYNOPSIS
 .nf
-.B "Section \*qInputDevice\*q"
+.B "Section \*qInputClass\*q"
 .BI "  Identifier \*q" idevname \*q
+.B  "  MatchUSBID \*q056a:*\*q"
+.BI "  MatchDevicePath \*q" devpath \*q
 .B  "  Driver \*qwacom\*q"
-.BI "  Option \*qDevice\*q   \*q" devpath \*q
+.B  "  Option \*q...\*q \*q ...\*q"
 \ \ ...
 .B EndSection
 .fi
@@ -26,9 +28,6 @@ and requires the wacom kernel driver being loaded before this driver starts.
 Please check https://github.com/linuxwacom for latest updates of Wacom X
 and kernel drivers.
 .SH DRIVER-INTERNAL DEVICE HOTPLUGGING
-When input device hotplugging in the X server is enabled and no
-.B InputDevice
-section exists for a compatible tablet device and an
 .B InputClass
 section (see xorg.conf.d(5x)) assigns this driver for the device, the
 .B wacom
