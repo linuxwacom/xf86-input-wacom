@@ -6,7 +6,7 @@ wacom \- Wacom input driver
 .nf
 .B "Section \*qInputClass\*q"
 .BI "  Identifier \*q" idevname \*q
-.B  "  MatchUSBID \*q056a:*\*q"
+.B  "  MatchIsTablet \*qon\*q"
 .BI "  MatchDevicePath \*q" devpath \*q
 .B  "  Driver \*qwacom\*q"
 .B  "  Option \*q...\*q \*q ...\*q"
