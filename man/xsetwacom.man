@@ -97,6 +97,11 @@ device's native orientation, regardless of the actual rotation currently
 applied. Input outside of these coordinates will be clipped to the edges
 of the area defined.  Default:  0 0 x2 y2; with x2 and y2 tablet specific.
 .TP
+\fBResetArea
+Set the tablet input area to the default set.
+The set is defined device's native orientation, regardless of the actual rotation currently
+applied.
+.TP
 \fBButton\fR button-number [mapping]
 Set a mapping for the specified button-number. Mappings take the form of
 either a single numeric button or an 'action' to be performed. If no mapping
