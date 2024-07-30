@@ -1935,7 +1935,7 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 		{
 			switch (event->code) {
 			case REL_WHEEL:
-				ds->relwheel = -event->value;
+				ds->relwheel = event->value;
 				ds->time = wcmTimeInMillis();
 				common->wcmChannel[channel].dirty |= TRUE;
 				break;

@@ -513,17 +513,17 @@ static int getScrollDelta(int current, int old, int wrap, int flags)
  * the scrolling axis and the possible events that can be
  * sent.
  *
- * @param delta        Amount of change in the scrolling axis
- * @param action_up    Array index of action to send on scroll up
- * @param action_dn    Array index of action to send on scroll down
- * @return             Array index of action that should be performed, or -1 if none.
+ * @param delta            Amount of change in the scrolling axis
+ * @param action_positive  Array index of action to send on a positive delta
+ * @param action_negative  Array index of action to send on negative delta
+ * @return                 Array index of action that should be performed, or -1 if none.
  */
-static int getWheelButton(int delta, int action_up, int action_dn)
+static int getWheelButton(int delta, int action_positive, int action_negative)
 {
 	if (delta > 0)
-		return action_up;
+		return action_positive;
 	else if (delta < 0)
-		return action_dn;
+		return action_negative;
 	else
 		return -1;
 }
@@ -571,7 +571,8 @@ static void sendWheelStripEvents(WacomDevicePtr priv, const WacomDeviceState* ds
 		sendWheelStripEvent(priv, &priv->strip_actions[idx], ds, axes);
 	}
 
-	/* emulate events for relative wheel */
+	/* emulate events for relative wheel:
+	 * positive delta = scroll up */
 	delta = getScrollDelta(ds->relwheel, 0, 0, 0);
 	idx = getWheelButton(delta, WHEEL_REL_UP, WHEEL_REL_DN);
 	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldState.proximity == ds->proximity)
