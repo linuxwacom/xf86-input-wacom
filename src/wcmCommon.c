@@ -1077,7 +1077,7 @@ static Bool check_arbitrated_control(WacomDevicePtr priv, WacomDeviceStatePtr ds
 
 	if (IsPad(priv)) {
 		/* Pad may never be the "active" pointer controller */
-		DBG(6, priv, "Event from pad; not yielding pointer control\n.");
+		DBG(6, priv, "Event from pad; not yielding pointer control.\n");
 		return FALSE;
 	}
 
