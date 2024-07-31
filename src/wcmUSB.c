@@ -1735,8 +1735,8 @@ static int refreshDeviceType(WacomDevicePtr priv, int fd)
 	return 0;
 }
 
-static int deriveDeviceTypeFromButtonEvent(WacomDevicePtr priv,
-					   const struct input_event *event_ptr)
+static Bool eventCouldBeFromPad(WacomDevicePtr priv,
+			       const struct input_event *event_ptr)
 {
 	WacomCommonPtr common = priv->common;
 	wcmUSBData *usbdata = common->private;
@@ -1752,18 +1752,33 @@ static int deriveDeviceTypeFromButtonEvent(WacomDevicePtr priv,
 		case BTN_BACK:
 		case BTN_EXTRA:
 		case BTN_FORWARD:
-			return PAD_ID;
+			return TRUE;
 		default:
 			for (nkeys = 0; nkeys < usbdata->npadkeys; nkeys++)
 			{
 				if (event_ptr->code == usbdata->padkey_code[nkeys]) {
-					return PAD_ID;
+					return TRUE;
 				}
 			}
 			break;
 		}
 	}
-	return 0;
+	if (event_ptr->type == EV_REL) {
+		switch (event_ptr->code) {
+		case REL_WHEEL:
+		case REL_WHEEL_HI_RES:
+			return TRUE;
+		}
+	}
+	if (event_ptr->type == EV_ABS) {
+		switch (event_ptr->code) {
+		case ABS_WHEEL:
+		case ABS_THROTTLE:
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 /***
@@ -1800,7 +1815,8 @@ static int usbInitToolType(WacomDevicePtr priv, int fd,
 
 	if (!device_type) /* expresskey pressed at startup or missing type */
 		for (i = 0; (i < nevents) && !device_type; ++i)
-			device_type = deriveDeviceTypeFromButtonEvent(priv, &event_ptr[i]);
+			if (eventCouldBeFromPad(priv, &event_ptr[i]))
+				device_type = PAD_ID;
 
 	return device_type;
 }
