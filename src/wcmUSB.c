@@ -1787,9 +1787,9 @@ static int usbInitToolType(WacomDevicePtr priv, int fd,
 {
 	int i, device_type = 0;
 
-	for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
+	for (i = 0; (i < nevents) && !device_type; ++i)
 	{
-		device_type = deviceTypeFromEvent(priv, event_ptr->type, event_ptr->code, event_ptr->value);
+		device_type = deviceTypeFromEvent(priv, event_ptr[i].type, event_ptr[i].code, event_ptr[i].value);
 	}
 
 	if (!device_type)
@@ -1799,8 +1799,8 @@ static int usbInitToolType(WacomDevicePtr priv, int fd,
 		device_type = refreshDeviceType(priv, fd);
 
 	if (!device_type) /* expresskey pressed at startup or missing type */
-		for (i = 0; (i < nevents) && !device_type; ++i, event_ptr++)
-			device_type = deriveDeviceTypeFromButtonEvent(priv, event_ptr);
+		for (i = 0; (i < nevents) && !device_type; ++i)
+			device_type = deriveDeviceTypeFromButtonEvent(priv, &event_ptr[i]);
 
 	return device_type;
 }
