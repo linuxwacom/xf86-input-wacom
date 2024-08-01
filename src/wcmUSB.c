@@ -1917,17 +1917,21 @@ static void usbDispatchEvents(WacomDevicePtr priv)
 		}
 		else if (event->type == EV_REL)
 		{
-			if (event->code == REL_WHEEL)
-			{
+			switch (event->code) {
+			case REL_WHEEL:
 				ds->relwheel = -event->value;
 				ds->time = wcmTimeInMillis();
 				common->wcmChannel[channel].dirty |= TRUE;
-			}
-			else
+				break;
+			case REL_WHEEL_HI_RES:
+				/* unsupported */
+				break;
+			default:
 				wcmLogSafe(priv, W_ERROR,
 						      "%s: rel event recv'd (%d)!\n",
 						      priv->name,
 						      event->code);
+			}
 		}
 		else if (event->type == EV_KEY)
 		{
