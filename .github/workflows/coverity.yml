@@ -22,7 +22,7 @@ jobs:
     if: ${{ github.repository == '$COVERITY_SCAN_PROJECT_NAME' }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up build environment / dependencies
         run: |
