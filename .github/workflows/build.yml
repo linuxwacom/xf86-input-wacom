@@ -20,7 +20,7 @@ jobs:
         compiler: [ gcc, clang ]
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
         with:
           apt: $UBUNTU_PACKAGES
@@ -73,7 +73,7 @@ jobs:
           # https://github.com/mesonbuild/meson/issues/764
           - '-Db_sanitize=address,undefined -Db_lundef=false'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
         with:
           apt: $UBUNTU_PACKAGES
@@ -96,7 +96,7 @@ jobs:
   compile-with-meson-exact-version:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: linuxwacom/libwacom/.github/actions/pkginstall@master
         with:
           apt: $UBUNTU_PACKAGES
@@ -191,7 +191,7 @@ jobs:
       TARBALLDIR: '_tarball_dir'
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: fetch tarball from previous job(s)
         uses: actions/download-artifact@v4
         with:
