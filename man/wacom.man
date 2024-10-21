@@ -21,18 +21,22 @@ The
 .B wacom
 driver functions as a pointer input device.
 .SH SUPPORTED HARDWARE
-This driver supports the Wacom IV and Wacom V protocols. Serial tablets only
-need this driver.  USB tablet support is available on some Linux platforms
-and requires the wacom kernel driver being loaded before this driver starts.
+This driver supports virtually all tablet devices that are supported
+by the Linux kernel.
 .PP
 Please check https://github.com/linuxwacom for latest updates of Wacom X
 and kernel drivers.
 .SH DRIVER-INTERNAL DEVICE HOTPLUGGING
-The
+Configuration via
+.B "Section \*qInputDevice\*q"
+is discouraged as such devices cannot be hotplugged at runtime. Instead
+users should use
+.B "Section \*qInputClass\*q"
+as in the example above. The
 .B InputClass
 section (see xorg.conf.d(5)) assigns this driver for the device, the
 .B wacom
-driver creates multiple X devices for each a physical device, one X device
+driver creates multiple X devices for each physical device, one X device
 for each available tool. The list of tools is hardware-dependent. See
 .B Option "Type"
 as outlined in the
@@ -81,7 +85,8 @@ Right now only a few Tablet PCs have this feature.
 sets the path to the special file which represents serial line where
 the tablet is plugged.  You have to specify it for each subsection with
 the same value if you want to have multiple devices with the same tablet.
-This option is mandatory.
+This option is mandatory only if using
+.B "Section \*qInputDevice\*q" for static configuration.
 .TP 4
 .B Option \fI"Suppress"\fP \fI"number"\fP
 sets the position increment under which not to transmit coordinates.
