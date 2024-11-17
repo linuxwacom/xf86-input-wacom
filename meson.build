@@ -89,8 +89,8 @@ if dir_udev_rules == ''
 endif
 
 dir_systemd_unit = get_option('systemd-unit-dir')
-if dir_udev_rules == ''
-	dir_systemd_unit = dir_systemd / 'systemd'
+if dir_systemd_unit == ''
+	dir_systemd_unit = dir_systemd / 'system'
 endif
 
 
