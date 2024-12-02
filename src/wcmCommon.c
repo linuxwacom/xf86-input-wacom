@@ -932,7 +932,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		}
 	}
 
-   if (type == PAD_ID)
+	if (type == PAD_ID)
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_X, ds->stripx);
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_Y, ds->stripy);
@@ -977,7 +977,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		ds->proximity, dump, id, serial, is_button ? "true" : "false",
 		ds->buttons);
 
-   if (!supressing)
+	if (!supressing)
 	{
 	  /* when entering prox, replace the zeroed-out oldState with a copy of
 		* the current state to prevent jumps. reset the prox and button state
