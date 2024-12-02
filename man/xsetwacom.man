@@ -97,6 +97,21 @@ device's native orientation, regardless of the actual rotation currently
 applied. Input outside of these coordinates will be clipped to the edges
 of the area defined.  Default:  0 0 x2 y2; with x2 and y2 tablet specific.
 .TP
+\fBDeJitterEnable\fR on|off
+Enable or disable the de-jittering feature. When enabled, the device will
+attempt to suppress small, erratic movements based on the thresholds defined
+below. Default: off.
+.TP
+\fBDeJitterThreshold\fR distance
+Set the spatial threshold for de-jittering in device units. Movements below
+this distance will be suppressed if de-jittering is enabled. Default: 150,
+range: 0 to 1000.
+.TP
+\fBDeJitterTimeThreshold\fR milliseconds
+Set the time threshold for de-jittering in milliseconds. Movements that occur
+within this time and below the spatial threshold will be suppressed. Default:
+100 ms, range: 0 to 10000 ms.
+.TP
 \fBButton\fR button-number [mapping]
 Set a mapping for the specified button-number. Mappings take the form of
 either a single numeric button or an 'action' to be performed. If no mapping

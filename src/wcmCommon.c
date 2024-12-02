@@ -870,7 +870,59 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		wcmAxisSet(&axes, WACOM_AXIS_PRESSURE, ds->pressure);
 	}
 
-	if (type == PAD_ID)
+	bool supressing = false;
+	if (priv->wcmDejitterEnabled)
+	{
+		CARD32 now = GetTimeInMillis();
+		const int Thresh = priv->wcmDejitterThreshold == 0 ? 150 : priv->wcmDejitterThreshold;
+		const int TimeThresh = priv->wcmDejitterTimeThreshold == 0 ? 100 : priv->wcmDejitterTimeThreshold;
+		if (ds->buttons > 0)
+		{
+			if (priv->dejitterState.is_suppresed)
+			{
+				int dx = priv->dejitterState.x - x;
+				int dy = priv->dejitterState.y - y;
+				if (now < priv->dejitterState.suppress_start + TimeThresh &&
+					dx * dx + dy * dy < Thresh * Thresh)
+				{
+					DBG(10, priv, "suppressing\n");
+					x = priv->dejitterState.x;
+					y = priv->dejitterState.y;
+					wcmAxisSet(&axes, WACOM_AXIS_X, x);
+					wcmAxisSet(&axes, WACOM_AXIS_Y, y);
+					supressing = true;
+				}
+			}
+			else
+			{
+				DBG(10, priv, "start suppressing\n");
+				priv->dejitterState.is_suppresed = true;
+				priv->dejitterState.x = x;
+				priv->dejitterState.y = y;
+				priv->dejitterState.suppress_start = now;
+			}
+		}
+		else
+		{
+			if (priv->dejitterState.is_suppresed)
+			{
+				DBG(10, priv, "stop suppressing\n");
+				priv->dejitterState.is_suppresed = false;
+				int dx = priv->dejitterState.x - x;
+				int dy = priv->dejitterState.y - y;
+				if (now < priv->dejitterState.suppress_start + TimeThresh &&
+					dx * dx + dy * dy < Thresh * Thresh)
+				{
+					x = priv->dejitterState.x;
+					y = priv->dejitterState.y;
+					wcmAxisSet(&axes, WACOM_AXIS_X, x);
+					wcmAxisSet(&axes, WACOM_AXIS_Y, y);
+				}
+			}
+		}
+	}
+
+   if (type == PAD_ID)
 	{
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_X, ds->stripx);
 		wcmAxisSet(&axes, WACOM_AXIS_STRIP_Y, ds->stripy);
@@ -915,28 +967,31 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 		ds->proximity, dump, id, serial, is_button ? "true" : "false",
 		ds->buttons);
 
-	/* when entering prox, replace the zeroed-out oldState with a copy of
-	 * the current state to prevent jumps. reset the prox and button state
-	 * to zero to properly detect changes.
-	 */
-	if(!priv->oldState.proximity)
+   if (!supressing)
 	{
-		int old_key_state = priv->oldState.keys;
+	  /* when entering prox, replace the zeroed-out oldState with a copy of
+		* the current state to prevent jumps. reset the prox and button state
+		* to zero to properly detect changes.
+		*/
+	  if (!priv->oldState.proximity)
+	  {
+		 int old_key_state = priv->oldState.keys;
 
-		wcmUpdateOldState(priv, ds, x, y);
-		priv->oldState.proximity = 0;
-		priv->oldState.buttons = 0;
+		 wcmUpdateOldState(priv, ds, x, y);
+		 priv->oldState.proximity = 0;
+		 priv->oldState.buttons = 0;
 
-		/* keys can happen without proximity */
-		priv->oldState.keys = old_key_state;
-	}
+		 /* keys can happen without proximity */
+		 priv->oldState.keys = old_key_state;
+	  }
 
-	if (type == PAD_ID)
-		wcmSendPadEvents(priv, ds, &axes);
-	else {
-		/* don't move the cursor if in gesture mode (except drag mode) */
-		if ((type != TOUCH_ID) || wcmTouchNeedSendEvents(priv->common))
+	  if (type == PAD_ID)
+		 wcmSendPadEvents(priv, ds, &axes);
+	  else {
+		 /* don't move the cursor if in gesture mode (except drag mode) */
+		 if ((type != TOUCH_ID) || wcmTouchNeedSendEvents(priv->common))
 			wcmSendNonPadEvents(priv, ds, &axes);
+	  }
 	}
 
 	if (ds->proximity)
