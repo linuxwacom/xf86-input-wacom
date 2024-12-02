@@ -1,12 +1,15 @@
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 jobs:
   python-black:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
            python-version: '3.x'
       - run: pip install black

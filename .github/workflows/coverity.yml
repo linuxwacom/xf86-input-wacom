@@ -3,6 +3,9 @@ on:
     - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   COVERITY_SCAN_PROJECT_NAME: linuxwacom/xf86-input-wacom
   COVERITY_SCAN_NOTIFICATION_EMAIL: killertofu@gmail.com
@@ -14,12 +17,12 @@ env:
 
 jobs:
   coverity:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     environment: coverity
     if: ${{ github.repository == '$COVERITY_SCAN_PROJECT_NAME' }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up build environment / dependencies
         run: |

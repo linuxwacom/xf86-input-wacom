@@ -63,8 +63,10 @@ enum WacomAxisType {
 	WACOM_AXIS_WHEEL	= (1 << 9), /* Artpen rotation or airbrush wheel */
 	WACOM_AXIS_RING		= (1 << 10),
 	WACOM_AXIS_RING2	= (1 << 11),
+	WACOM_AXIS_SCROLL_X	= (1 << 12),
+	WACOM_AXIS_SCROLL_Y	= (1 << 13),
 
-	_WACOM_AXIS_LAST = WACOM_AXIS_RING2,
+	_WACOM_AXIS_LAST = WACOM_AXIS_SCROLL_Y,
 };
 
 typedef struct {
@@ -77,6 +79,7 @@ typedef struct {
 	int throttle;
 	int wheel;
 	int ring, ring2;
+	int scroll_x, scroll_y;
 } WacomAxisData;
 
 
@@ -163,6 +166,8 @@ static inline void wcmAxisSet(WacomAxisData *data,
 	case WACOM_AXIS_WHEEL: data->wheel = value; break;
 	case WACOM_AXIS_RING: data->ring = value; break;
 	case WACOM_AXIS_RING2: data->ring2 = value; break;
+	case WACOM_AXIS_SCROLL_X: data->scroll_x = value; break;
+	case WACOM_AXIS_SCROLL_Y: data->scroll_y = value; break;
 	default:
 		abort();
 	}
@@ -187,6 +192,8 @@ static inline bool wcmAxisGet(const WacomAxisData *data,
 	case WACOM_AXIS_WHEEL: *value_out = data->wheel; break;
 	case WACOM_AXIS_RING: *value_out = data->ring; break;
 	case WACOM_AXIS_RING2: *value_out = data->ring2; break;
+	case WACOM_AXIS_SCROLL_X: *value_out = data->scroll_x; break;
+	case WACOM_AXIS_SCROLL_Y: *value_out = data->scroll_y; break;
 	default:
 		abort();
 	}
@@ -224,6 +231,8 @@ static inline const char* wcmAxisName(enum WacomAxisType which)
 	case WACOM_AXIS_WHEEL: return "wheel";
 	case WACOM_AXIS_RING: return "ring";
 	case WACOM_AXIS_RING2: return "ring2";
+	case WACOM_AXIS_SCROLL_X: return "scroll-x";
+	case WACOM_AXIS_SCROLL_Y: return "scroll-y";
 	default:
 		abort();
 	}

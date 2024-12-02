@@ -16,7 +16,7 @@
 
 
 from typing import Dict
-from . import Device, Monitor, Ev, Sev, Proximity, PenId
+from . import Button, Device, Monitor, Ev, Sev, Proximity, PenId
 
 import pytest
 import logging
@@ -325,6 +325,86 @@ def test_axis_updates_wheel(mainloop, opts, stylus_type):
             assert first_wheel < current_wheel
         else:
             assert first_wheel == current_wheel
+
+
+@pytest.mark.parametrize("smooth", (True, False))
+@pytest.mark.parametrize("vertical", (True, False))
+def test_scroll(mainloop, opts, vertical, smooth):
+    """
+    Check panscrolling works correctly
+    """
+    dev = Device.from_name("PTH660", "Pen")
+    opts["PanScrollThreshold"] = "150"
+    opts["SmoothPanscrollingEnabled"] = "true" if smooth else "false"
+
+    prox_in = [
+        Sev("ABS_X", 50),
+        Sev("ABS_Y", 50),
+        Sev("BTN_TOOL_PEN", 1),
+        Sev("SYN_REPORT", 0),
+    ]
+
+    prox_out = [
+        Sev("BTN_TOOL_PEN", 0),
+        Sev("SYN_REPORT", 0),
+    ]
+
+    press_button2 = [
+        Sev("BTN_STYLUS", 1),
+        Sev("SYN_REPORT", 0),
+    ]
+
+    touchdown_pen = [
+        Sev("BTN_TOUCH", 1),
+        Sev("ABS_PRESSURE", 20),
+        Sev("SYN_REPORT", 0),
+    ]
+
+    if vertical:
+        move_pen = [Sev("ABS_Y", 75), Sev("SYN_REPORT", 0)]
+    else:
+        move_pen = [Sev("ABS_X", 75), Sev("SYN_REPORT", 0)]
+
+    up_pen = [Sev("BTN_TOUCH", 0), Sev("ABS_PRESSURE", 0), Sev("SYN_REPORT", 0)]
+
+    depress_button2 = [Sev("BTN_STYLUS", 0), Sev("SYN_REPORT", 0)]
+
+    monitor = Monitor.new_from_device(dev, opts)
+    monitor.wacom_device.set_runtime_option("PanButton", "2")
+
+    monitor.write_events(prox_in)
+    monitor.write_events(press_button2)
+    monitor.write_events(touchdown_pen)  # Pen touchdown
+    monitor.write_events(move_pen)  # Move pen 25% towards positive x or y
+    monitor.write_events(up_pen)  # Pen up
+    monitor.write_events(depress_button2)  # Depress button2
+    monitor.write_events(prox_out)
+
+    mainloop.run()
+    if smooth:
+        have_we_scrolled = False
+        for event in monitor.events:
+            if vertical:
+                if event.axes.scroll_y != 0:
+                    assert event.axes.scroll_y == -808265
+                    have_we_scrolled = True
+            else:
+                if event.axes.scroll_x != 0:
+                    assert event.axes.scroll_x == -1223320
+                    have_we_scrolled = True
+        assert have_we_scrolled
+    else:
+        have_button_events = False
+        for event in monitor.events:
+            if isinstance(event, Button):
+                print(event.button)
+                if vertical:
+                    if event.button == 4:  # we're moving bottom-to-top
+                        have_button_events = True
+                else:
+                    if event.button == 6:  # we're moving right-to-left
+                        have_button_events = True
+        assert have_button_events
 
 
 # vim: set expandtab tabstop=4 shiftwidth=4:

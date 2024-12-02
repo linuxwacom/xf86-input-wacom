@@ -1,5 +1,5 @@
 project('xf86-input-wacom', 'c',
-	version : '1.1.0', # bump version in configure.ac
+	version : '1.2.3', # bump version in configure.ac
 	license : 'MIT/Expat',
 	default_options : [ 'c_std=gnu99', 'warning_level=2' ],
 	meson_version : '>= 0.51.0')
@@ -47,20 +47,24 @@ cflags = [
 add_project_arguments(cc.get_supported_arguments(cflags), language : 'c')
 add_project_arguments('-D_GNU_SOURCE', language : 'c')
 
+build_xsetwacom = get_option('xsetwacom')
 
 # Dependencies
 pkgconfig = import('pkgconfig')
-dep_protos = []
-protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
-foreach proto : protos
-	dep_protos += [dependency(proto)]
-endforeach
 dep_xserver = dependency('xorg-server', version: '>= 1.13.0')
-xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
-dep_xlibs = []
-foreach xlib : xlibs
-	dep_xlibs += [dependency(xlib)]
-endforeach
+if build_xsetwacom
+	dep_protos = []
+	protos = ['xproto', 'xext', 'kbproto', 'inputproto', 'randrproto']
+	foreach proto : protos
+		dep_protos += [dependency(proto)]
+	endforeach
+
+	xlibs = ['x11', 'xi', 'xrandr', 'xinerama']
+	dep_xlibs = []
+	foreach xlib : xlibs
+		dep_xlibs += [dependency(xlib)]
+	endforeach
+endif
 dep_libudev = dependency('libudev')
 dep_m = cc.find_library('m')
 
@@ -85,8 +89,8 @@ if dir_udev_rules == ''
 endif
 
 dir_systemd_unit = get_option('systemd-unit-dir')
-if dir_udev_rules == ''
-	dir_systemd_unit = dir_systemd / 'systemd'
+if dir_systemd_unit == ''
+	dir_systemd_unit = dir_systemd / 'system'
 endif
 
 
@@ -130,6 +134,7 @@ src_wacom_core = [
 	'src/wcmConfig.c',
 	'src/wcmFilter.c',
 	'src/wcmFilter.h',
+	'src/wcmPressureCurve.c',
 	'src/wcmTouchFilter.c',
 	'src/wcmTouchFilter.h',
 	'src/wcmUSB.c',
@@ -281,18 +286,27 @@ if get_option('serial-device-support')
 	)
 endif
 
-xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
-src_xsetwacom = [
-	config_ver_h,
-	'tools/xsetwacom.c',
-]
+if build_xsetwacom
+	xsetwacom_deps = [dep_xlibs, dep_protos, dep_m]
+	src_xsetwacom = [
+		config_ver_h,
+		'tools/xsetwacom.c',
+	]
+	executable(
+		'xsetwacom',
+		src_xsetwacom,
+		dependencies: xsetwacom_deps,
+		include_directories: [dir_include],
+		install: true,
+	)
+endif
+
 executable(
-	'xsetwacom',
-	src_xsetwacom,
-	dependencies: xsetwacom_deps,
-	include_directories: [dir_include],
-	install: true,
-)
+	'pressurecurve',
+	['tools/pressurecurve.c',
+	 'src/wcmPressureCurve.c'],
+	include_directories: [dir_src],
+	install: false)
 
 # Man pages
 config_man = configuration_data()
@@ -329,14 +343,16 @@ endif
 build_unittests = not get_option('unittests').disabled()
 
 if build_unittests
-	xsetwacom_test = executable(
-		'xsetwacom-test',
-		src_xsetwacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
-		c_args: ['-DENABLE_TESTS', '-Wno-unused-function'],
-		dependencies: xsetwacom_deps,
-		include_directories: [dir_include, dir_src, dir_src_test],
-	)
-	test('xsetwacom-tests', xsetwacom_test)
+	if build_xsetwacom
+		xsetwacom_test = executable(
+			'xsetwacom-test',
+			src_xsetwacom + ['test/wacom-test-suite.c', 'test/wacom-test-suite.h'],
+			c_args: ['-DENABLE_TESTS', '-Wno-unused-function'],
+			dependencies: xsetwacom_deps,
+			include_directories: [dir_include, dir_src, dir_src_test],
+		)
+		test('xsetwacom-tests', xsetwacom_test)
+	endif
 
 	# Rebuild the driver with -DENABLE_TESTS to enable all the various
 	# local tests in the files. This is built as a module (like the

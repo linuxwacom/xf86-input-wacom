@@ -301,8 +301,28 @@ static param_t parameters[] =
 		.get_func = get_map,
 	},
 	{
+		.name = "DialCCW",
+		.desc = "X11 event to which counter-clockwise motion of the dial should be mapped." ,
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 0,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
 		.name = "RelWheelDown",
 		.desc = "X11 event to which relative wheel down should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 1,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "DialCW",
+		.desc = "X11 event to which clockwise motion of the dial should be mapped." ,
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 1,
@@ -332,7 +352,7 @@ static param_t parameters[] =
 	},
 	{
 		.name = "AbsWheel2Up",
-		.desc = "X11 event to which absolute wheel up should be mapped. ",
+		.desc = "X11 event to which 2nd absolute wheel up should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 4,
@@ -342,10 +362,50 @@ static param_t parameters[] =
 	},
 	{
 		.name = "AbsWheel2Down",
-		.desc = "X11 event to which absolute wheel down should be mapped. ",
+		.desc = "X11 event to which 2nd absolute wheel down should be mapped. ",
 		.prop_name = WACOM_PROP_WHEELBUTTONS,
 		.prop_format = 8,
 		.prop_offset = 5,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "RelWheel2Up",
+		.desc = "X11 event to which 2nd relative wheel up should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 6,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "Dial2CW",
+		.desc = "X11 event to which clockwise motion of the 2nd dial should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 6,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "RelWheel2Down",
+		.desc = "X11 event to which 2nd relative wheel down should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 7,
+		.arg_count = 0,
+		.set_func = map_actions,
+		.get_func = get_map,
+	},
+	{
+		.name = "Dial2CCW",
+		.desc = "X11 event to which counter-clockwise motion of the 2nd dial should be mapped. ",
+		.prop_name = WACOM_PROP_WHEELBUTTONS,
+		.prop_format = 8,
+		.prop_offset = 7,
 		.arg_count = 0,
 		.set_func = map_actions,
 		.get_func = get_map,
@@ -3104,7 +3164,7 @@ TEST_CASE(test_parameter_number)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 40);
+	assert(ARRAY_SIZE(parameters) == 46);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 

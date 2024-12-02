@@ -4,10 +4,12 @@
 wacom \- Wacom input driver
 .SH SYNOPSIS
 .nf
-.B "Section \*qInputDevice\*q"
+.B "Section \*qInputClass\*q"
 .BI "  Identifier \*q" idevname \*q
+.B  "  MatchIsTablet \*qon\*q"
+.BI "  MatchDevicePath \*q" devpath \*q
 .B  "  Driver \*qwacom\*q"
-.BI "  Option \*qDevice\*q   \*q" devpath \*q
+.B  "  Option \*q...\*q \*q ...\*q"
 \ \ ...
 .B EndSection
 .fi
@@ -19,20 +21,22 @@ The
 .B wacom
 driver functions as a pointer input device.
 .SH SUPPORTED HARDWARE
-This driver supports the Wacom IV and Wacom V protocols. Serial tablets only
-need this driver.  USB tablet support is available on some Linux platforms
-and requires the wacom kernel driver being loaded before this driver starts.
+This driver supports virtually all tablet devices that are supported
+by the Linux kernel.
 .PP
 Please check https://github.com/linuxwacom for latest updates of Wacom X
 and kernel drivers.
 .SH DRIVER-INTERNAL DEVICE HOTPLUGGING
-When input device hotplugging in the X server is enabled and no
-.B InputDevice
-section exists for a compatible tablet device and an
+Configuration via
+.B "Section \*qInputDevice\*q"
+is discouraged as such devices cannot be hotplugged at runtime. Instead
+users should use
+.B "Section \*qInputClass\*q"
+as in the example above. The
 .B InputClass
-section (see xorg.conf.d(5x)) assigns this driver for the device, the
+section (see xorg.conf.d(5)) assigns this driver for the device, the
 .B wacom
-driver creates multiple X devices for each a physical device, one X device
+driver creates multiple X devices for each physical device, one X device
 for each available tool. The list of tools is hardware-dependent. See
 .B Option "Type"
 as outlined in the
@@ -59,13 +63,12 @@ possible to use a
 .B MatchProduct
 directive to match against this appended type name.
 .SH CONFIGURATION DETAILS
-Please refer to xorg.conf(5x) or xorg.conf.d(5x) for general configuration
+Please refer to xorg.conf(5) or xorg.conf.d(5) for general configuration
 details and for options that can be used with all input drivers.  This
 section only covers configuration details specific to this driver.
 .PP
 Multiple instances of the Wacom devices can cohabit. Each device
 supports the following entries:
-.RS 8
 .TP 4
 .B Option \fI"Type"\fP \fI"stylus"|"eraser"|"cursor"|"pad"|"touch"\fP
 sets the type of tool the device represents. This option is mandatory.
@@ -82,7 +85,8 @@ Right now only a few Tablet PCs have this feature.
 sets the path to the special file which represents serial line where
 the tablet is plugged.  You have to specify it for each subsection with
 the same value if you want to have multiple devices with the same tablet.
-This option is mandatory.
+This option is mandatory only if using
+.B "Section \*qInputDevice\*q" for static configuration.
 .TP 4
 .B Option \fI"Suppress"\fP \fI"number"\fP
 sets the position increment under which not to transmit coordinates.
@@ -289,7 +293,17 @@ scroll event is generated when using the "pan" action. Smaller values
 will require less distance and be more sensitive. Larger values will
 require more distance and be less sensitive.  Default: 1300 or 2600
 depending on tablet resolution (corresponds to 13 mm of distance).
-.RE
+.TP 4
+.B Option \fI"SmoothPanscrollingEnabled"\fP \fI"bool"\fP
+Allows to disable smooth panscrolling. Default: true.
+If disabled, panscrolling sends legacy button events instead.
+This option exists for backwards compatibility with
+applications that have the number of axes on a device limited to 6.
+See section
+.B BUGS
+for more details. This option should not be used unless the user runs one or
+more applications that do not support more than six axes.
+
 .SH "TOUCH GESTURES"
 .SS Single finger (1FG)
 .LP
@@ -336,6 +350,17 @@ option to reduce the range to 2048 steps. Note that this setting applies to
 the device. Once applied, all applications will see the reduced pressure
 range. It is not possible to provide this setting on a per-application
 basis.
+.SS "Smooth panscrolling exceeds the axis limits"
+In version 1.2.0, the driver's support for smooth panscrolling added two axes
+to the stylus device, bringing the total axis count to eight. The number of
+axes is advertised through the X Input Protocol but some applications (notably
+GIMP 2.xx) cannot handle more than six axes. This is an application bug but for
+backwards-compatibility with such applications, this driver provides the
+.B SmoothPanscrollingEnabled
+option to disable this feature and thus limit the axis count to six. Note that
+this setting applies to the device. Once applied, the driver will not send
+smooth panscroll events at all. It is not possible to provide this setting on a
+per-application basis.
 .SH "SEE ALSO"
 __xservername__(1), xorg.conf(5),
 xorg.conf.d(5), X(7)

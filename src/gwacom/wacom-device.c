@@ -196,6 +196,12 @@ enum {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
+ValuatorMask *
+valuator_mask_new(int num_valuators)
+{
+	return NULL;
+}
+
 WacomDevice*
 wacom_device_new(WacomDriver *driver,
 		 const char *name,
@@ -294,6 +300,21 @@ void *wacom_device_get_impl(WacomDevice *device)
 WacomOptions *wacom_device_get_options(WacomDevice *device)
 {
 	return device->options;
+}
+
+void wacom_device_set_runtime_option(WacomDevice *device, const char *name, const char *value)
+{
+	WacomDevicePtr priv = device->priv;
+
+	wcmLog(priv, W_ERROR, "Setting special option %s=%s\n", name, value);
+
+	if (g_str_equal(name, "PanButton")) {
+		guint btn = atoi(value) - 1; /* array is zero-indexed, config options use 1-indexed ones */
+		assert(btn < sizeof(priv->key_actions));
+		wcmActionSet(&priv->key_actions[btn], 0, AC_PANSCROLL);
+	} else {
+		wcmLog(priv, W_ERROR, ":::::::::::::::: Unsupported runtime option %s ::::::::::::::::\n", name);
+	}
 }
 
 /****************** Driver layer *****************/

@@ -95,7 +95,6 @@ Bool wcmDevSwitchModeCall(WacomDevicePtr priv, Bool absolute)
 	return TRUE;
 }
 
-
 static int wcmButtonPerNotch(WacomDevicePtr priv, int value, int threshold, int btn_positive, int btn_negative)
 {
 	int mode = is_absolute(priv);
@@ -116,17 +115,18 @@ static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds, int x,
 {
 	WacomCommonPtr common = priv->common;
 	int threshold = common->wcmPanscrollThreshold;
-	int *accumulated_x, *accumulated_y;
 	int delta_x, delta_y;
+	bool smooth_scrolling = priv->common->wcmPanscrollIsSmooth;
 
-	if (!(priv->flags & SCROLLMODE_FLAG) || !(ds->buttons & 1))
-		return;
-
-	/* Tip has gone down down; store state for dragging */
-	if (!(priv->oldState.buttons & 1)) {
+	if (!(priv->flags & SCROLLMODE_FLAG) || !(ds->buttons & 1)) {
 		priv->wcmPanscrollState = *ds;
 		priv->wcmPanscrollState.x = 0;
 		priv->wcmPanscrollState.y = 0;
+		return;
+	}
+
+	/* Tip has gone down down; don't send pan event yet */
+	if (!(priv->oldState.buttons & 1)) {
 		return;
 	}
 
@@ -139,24 +139,30 @@ static void wcmPanscroll(WacomDevicePtr priv, const WacomDeviceState *ds, int x,
 		delta_y = (y - priv->oldState.y);
 	}
 
-	accumulated_x = &priv->wcmPanscrollState.x;
-	accumulated_y = &priv->wcmPanscrollState.y;
-	*accumulated_x += delta_x;
-	*accumulated_y += delta_y;
+	DBG(6, priv, "pan x = %d, pan y = %d\n", delta_x, delta_y);
 
-	DBG(6, priv, "pan x = %d, pan y = %d\n", *accumulated_x, *accumulated_y);
+	if (smooth_scrolling) {
+		WacomAxisData axes = {0};
+		wcmAxisSet(&axes, WACOM_AXIS_SCROLL_X, -delta_x * PANSCROLL_INCREMENT/threshold);
+		wcmAxisSet(&axes, WACOM_AXIS_SCROLL_Y, -delta_y * PANSCROLL_INCREMENT/threshold);
+		wcmEmitMotion(priv, FALSE, &axes);
+	} else {
+		int accumulated_x = priv->wcmPanscrollState.x + delta_x;
+		int accumulated_y = priv->wcmPanscrollState.y + delta_y;
 
-	*accumulated_x = wcmButtonPerNotch(priv, *accumulated_x, threshold, 6, 7);
-	*accumulated_y = wcmButtonPerNotch(priv, *accumulated_y, threshold, 4, 5);
+		int remainder_x = wcmButtonPerNotch(priv, accumulated_x, threshold, 6, 7);
+		int remainder_y = wcmButtonPerNotch(priv, accumulated_y, threshold, 4, 5);
+
+		priv->wcmPanscrollState.x = remainder_x;
+		priv->wcmPanscrollState.y = remainder_y;
+	}
 }
 
 void wcmResetButtonAction(WacomDevicePtr priv, int button)
 {
 	WacomAction new_action = {};
 	int x11_button = priv->button_default[button];
-	char name[64];
 
-	sprintf(name, "Wacom button action %d", button);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | x11_button);
 	wcmActionCopy(&priv->key_actions[button], &new_action);
 }
@@ -164,9 +170,7 @@ void wcmResetButtonAction(WacomDevicePtr priv, int button)
 void wcmResetStripAction(WacomDevicePtr priv, int index)
 {
 	WacomAction new_action = {};
-	char name[64];
 
-	sprintf(name, "Wacom strip action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->strip_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->strip_default[index]));
 	wcmActionCopy(&priv->strip_actions[index], &new_action);
@@ -175,9 +179,7 @@ void wcmResetStripAction(WacomDevicePtr priv, int index)
 void wcmResetWheelAction(WacomDevicePtr priv, int index)
 {
 	WacomAction new_action = {};
-	char name[64];
 
-	sprintf(name, "Wacom wheel action %d", index);
 	wcmActionSet(&new_action, 0, AC_BUTTON | AC_KEYBTNPRESS | (priv->wheel_default[index]));
 	wcmActionSet(&new_action, 1, AC_BUTTON | (priv->wheel_default[index]));
 	wcmActionCopy(&priv->wheel_actions[index], &new_action);
@@ -511,17 +513,17 @@ static int getScrollDelta(int current, int old, int wrap, int flags)
  * the scrolling axis and the possible events that can be
  * sent.
  *
- * @param delta        Amount of change in the scrolling axis
- * @param action_up    Array index of action to send on scroll up
- * @param action_dn    Array index of action to send on scroll down
- * @return             Array index of action that should be performed, or -1 if none.
+ * @param delta            Amount of change in the scrolling axis
+ * @param action_positive  Array index of action to send on a positive delta
+ * @param action_negative  Array index of action to send on negative delta
+ * @return                 Array index of action that should be performed, or -1 if none.
  */
-static int getWheelButton(int delta, int action_up, int action_dn)
+static int getWheelButton(int delta, int action_positive, int action_negative)
 {
 	if (delta > 0)
-		return action_up;
+		return action_positive;
 	else if (delta < 0)
-		return action_dn;
+		return action_negative;
 	else
 		return -1;
 }
@@ -529,9 +531,7 @@ static int getWheelButton(int delta, int action_up, int action_dn)
 /**
  * Send button or actions for a scrolling axis.
  *
- * @param button     X button number to send if no action is defined
  * @param action     Action to send
- * @param nactions   Length of action array
  */
 static void sendWheelStripEvent(WacomDevicePtr priv, const WacomAction *action,
 				const WacomDeviceState* ds, const WacomAxisData *axes)
@@ -571,12 +571,22 @@ static void sendWheelStripEvents(WacomDevicePtr priv, const WacomDeviceState* ds
 		sendWheelStripEvent(priv, &priv->strip_actions[idx], ds, axes);
 	}
 
-	/* emulate events for relative wheel */
+	/* emulate events for relative wheel:
+	 * positive delta = scroll up */
 	delta = getScrollDelta(ds->relwheel, 0, 0, 0);
 	idx = getWheelButton(delta, WHEEL_REL_UP, WHEEL_REL_DN);
 	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldState.proximity == ds->proximity)
 	{
 		DBG(10, priv, "Relative wheel scroll delta = %d\n", delta);
+		sendWheelStripEvent(priv, &priv->wheel_actions[idx], ds, axes);
+	}
+
+	/* emulate events for 2nd relative wheel */
+	delta = getScrollDelta(ds->relwheel2, 0, 0, 0);
+	idx = getWheelButton(delta, WHEEL2_REL_UP, WHEEL2_REL_DN);
+	if (idx >= 0 && (IsCursor(priv) || IsPad(priv)) && priv->oldState.proximity == ds->proximity)
+	{
+		DBG(10, priv, "Relative wheel 2 scroll delta = %d\n", delta);
 		sendWheelStripEvent(priv, &priv->wheel_actions[idx], ds, axes);
 	}
 
@@ -621,7 +631,7 @@ static void sendCommonEvents(WacomDevicePtr priv, const WacomDeviceState* ds,
 		wcmSendButtons(priv, ds, buttons, axes);
 
 	/* emulate wheel/strip events when defined */
-	if ( ds->relwheel || (ds->abswheel != priv->oldState.abswheel) || (ds->abswheel2 != priv->oldState.abswheel2) ||
+	if ( ds->relwheel || ds->relwheel2 || (ds->abswheel != priv->oldState.abswheel) || (ds->abswheel2 != priv->oldState.abswheel2) ||
 		( (ds->stripx - priv->oldState.stripx) && ds->stripx && priv->oldState.stripx) ||
 			((ds->stripy - priv->oldState.stripy) && ds->stripy && priv->oldState.stripy) )
 		sendWheelStripEvents(priv, ds, axes);
@@ -710,7 +720,7 @@ wcmSendPadEvents(WacomDevicePtr priv, const WacomDeviceState* ds, const WacomAxi
 	if (!priv->oldState.proximity && ds->proximity)
 		wcmEmitProximity(priv, TRUE, axes);
 
-	if (axes->mask || ds->buttons || ds->relwheel ||
+	if (axes->mask || ds->buttons || ds->relwheel || ds->relwheel2 ||
 	    (ds->abswheel != priv->oldState.abswheel) || (ds->abswheel2 != priv->oldState.abswheel2))
 	{
 		sendCommonEvents(priv, ds, axes);
@@ -1055,6 +1065,7 @@ wcmCheckSuppress(WacomCommonPtr common,
 	if (abs(dsOrig->abswheel  - dsNew->abswheel)  > suppress) goto out;
 	if (abs(dsOrig->abswheel2 - dsNew->abswheel2) > suppress) goto out;
 	if (dsNew->relwheel != 0) goto out;
+	if (dsNew->relwheel2 != 0) goto out;
 
 	returnV = SUPPRESS_ALL;
 
@@ -1130,7 +1141,7 @@ static Bool check_arbitrated_control(WacomDevicePtr priv, WacomDeviceStatePtr ds
 
 	if (IsPad(priv)) {
 		/* Pad may never be the "active" pointer controller */
-		DBG(6, priv, "Event from pad; not yielding pointer control\n.");
+		DBG(6, priv, "Event from pad; not yielding pointer control.\n");
 		return FALSE;
 	}
 
@@ -1191,7 +1202,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 
 	DBG(10, common,
 		"c=%u i=%d t=%d s=0x%x x=%d y=%d b=%u "
-		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d "
+		"p=%d rz=%d tx=%d ty=%d aw=%d aw2=%d rw=%d rw2=%d "
 		"t=%d px=%d st=%u cs=%d \n",
 		channel,
 		ds.device_id,
@@ -1199,7 +1210,7 @@ void wcmEvent(WacomCommonPtr common, unsigned int channel,
 		ds.serial_num,
 		ds.x, ds.y, ds.buttons,
 		ds.pressure, ds.rotation, ds.tiltx,
-		ds.tilty, ds.abswheel, ds.abswheel2, ds.relwheel, ds.throttle,
+		ds.tilty, ds.abswheel, ds.abswheel2, ds.relwheel, ds.relwheel2, ds.throttle,
 		ds.proximity, ds.sample,
 		pChannel->nSamples);
 
@@ -2048,6 +2059,12 @@ TEST_CASE(test_suppress)
 	rc = wcmCheckSuppress(&common, &old, &new);
 	assert(rc == SUPPRESS_NONE);
 	new.relwheel = 0;
+
+	/* any movement on relwheel2 counts */
+	new.relwheel2 = 1;
+	rc = wcmCheckSuppress(&common, &old, &new);
+	assert(rc == SUPPRESS_NONE);
+	new.relwheel2 = 0;
 
 	/* x axis movement */
 

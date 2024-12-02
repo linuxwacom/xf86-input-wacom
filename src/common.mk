@@ -9,6 +9,8 @@ DRIVER_SOURCES= \
 	$(top_srcdir)/src/wcmConfig.c \
 	$(top_srcdir)/src/wcmFilter.c \
 	$(top_srcdir)/src/wcmFilter.h \
+	$(top_srcdir)/src/wcmPressureCurve.c \
+	$(top_srcdir)/src/wcmPressureCurve.h \
 	$(top_srcdir)/src/xf86WacomDefs.h \
 	$(top_srcdir)/src/wcmUSB.c \
 	$(top_srcdir)/src/wcmValidateDevice.c \

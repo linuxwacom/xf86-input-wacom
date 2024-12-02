@@ -37,10 +37,6 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 static int wcmGetProperty(DeviceIntPtr dev, Atom property);
 static int wcmDeleteProperty(DeviceIntPtr dev, Atom property);
 
-/*****************************************************************************
-* wcmDevSwitchMode --
-*****************************************************************************/
-
 static Atom prop_devnode;
 static Atom prop_rotation;
 static Atom prop_tablet_area;
@@ -276,10 +272,10 @@ void InitWcmDeviceProperties(WacomDevicePtr priv)
 
 	if (IsPad(priv) || IsCursor(priv))
 	{
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < 8; i++)
 			wcmInitWheelActionProp(priv, i);
 		prop_wheel_buttons = InitWcmAtom(pInfo->dev, WACOM_PROP_WHEELBUTTONS, XA_ATOM, 32,
-						 6, (int*)priv->wheel_action_props);
+						 8, (int*)priv->wheel_action_props);
 	}
 
 	if (IsStylus(priv) || IsEraser(priv)) {
