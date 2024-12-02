@@ -301,11 +301,11 @@ void InitWcmDeviceProperties(WacomDevicePtr priv)
 	values[0] = priv->wcmDejitterEnabled;
 	prop_dejitter_enabled = InitWcmAtom(pInfo->dev, WACOM_PROP_DEJITTER_ENABLED, XA_INTEGER, 8, 1, values);
 
-   values[0] = priv->wcmDejitterThreshold;
-   prop_dejitter_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_DEJITTER_THRESHOLD, XA_INTEGER, 32, 1, values);
+	values[0] = priv->wcmDejitterThreshold;
+	prop_dejitter_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_DEJITTER_THRESHOLD, XA_INTEGER, 32, 1, values);
 
-   values[0] = priv->wcmDejitterTimeThreshold;
-   prop_dejitter_time_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_DEJITTER_TIME_THRESHOLD, XA_INTEGER, 32, 1, values);
+	values[0] = priv->wcmDejitterTimeThreshold;
+	prop_dejitter_time_threshold = InitWcmAtom(pInfo->dev, WACOM_PROP_DEJITTER_TIME_THRESHOLD, XA_INTEGER, 32, 1, values);
 
 	XIRegisterPropertyHandler(pInfo->dev, wcmSetProperty, wcmGetProperty, wcmDeleteProperty);
 }
@@ -993,7 +993,7 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 
 		if (!checkonly && priv->wcmDejitterTimeThreshold != values[0])
 			priv->wcmDejitterTimeThreshold = values[0];
-   } else
+	} else
 	{
 		Atom *handler = NULL;
 		WacomAction *action = NULL;
@@ -1065,7 +1065,7 @@ static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		return XIChangeDeviceProperty(dev, property, XA_ATOM, 32,
 		                              PropModeReplace, ARRAY_SIZE(priv->wheel_action_props),
 		                              priv->wheel_action_props, FALSE);
-   }
+	}
 
 	return Success;
 }
