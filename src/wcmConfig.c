@@ -729,8 +729,6 @@ static void wcmSpecialTypeKeys(WacomCommonPtr common)
 		case 0x398: /* MobileStudio Pro 13 */
 		case 0x399: /* MobileStudio Pro 16 */
 		case 0x3AA: /* MobileStudio Pro 16 */
-			TabletSetFeature(common, WCM_LCD);
-			_fallthrough_;
 		case 0x357: /* Intuos Pro 2 M */
 		case 0x358: /* Intuos Pro 2 L */
 		case 0x360: /* Intuos Pro 2 M (Bluetooth) */
@@ -774,29 +772,6 @@ static void wcmSpecialTypeKeys(WacomCommonPtr common)
 			TabletSetFeature(common, WCM_DUALINPUT);
 			break;
 
-		/* P4 display tablets */
-		case 0x30:  /* PL400 */
-		case 0x31:  /* PL500 */
-		case 0x32:  /* PL600 */
-		case 0x33:  /* PL600SX */
-		case 0x34:  /* PL550 */
-		case 0x35:  /* PL800 */
-		case 0x37:  /* PL700 */
-		case 0x38:  /* PL510 */
-		case 0x39:  /* PL710 */
-		case 0x3A:  /* DTI520 */
-		case 0xC0:  /* DTF720 */
-		case 0xC2:  /* DTF720a */
-		case 0xC4:  /* DTF521 */
-		case 0xC7:  /* DTU1931 */
-		case 0xCE:  /* DTU2231 */
-		case 0xF0:  /* DTU1631 */
-
-		/* Wacom One display tablet */
-		case 0x3A6: /* DTC133 */
-			TabletSetFeature(common, WCM_LCD);
-			break;
-
 		/* tablets support menu strips */
 		case 0x3F:  /* CintiqV5 */
 		case 0xC5:  /* CintiqV5 */
@@ -804,8 +779,6 @@ static void wcmSpecialTypeKeys(WacomCommonPtr common)
 		case 0xCC:  /* CinitqV5 */
 		case 0xFA:  /* Cintiq 22HD */
 		case 0x5B:  /* Cintiq 22HDT Pen */
-			TabletSetFeature(common, WCM_LCD);
-			_fallthrough_;
 		case 0xB0:  /* I3 */
 		case 0xB1:  /* I3 */
 		case 0xB2:  /* I3 */
@@ -858,36 +831,6 @@ static void wcmSpecialTypeKeys(WacomCommonPtr common)
 		case 0x3AE:/* Cintiq 16 */
 		case 0x3B0:/* DTK-1660E */
 			TabletSetFeature(common, WCM_ROTATION);
-			_fallthrough_;
-		case 0xF6: /* Cintiq 24HDT Touch */
-		case 0x57: /* DTK2241 */
-		case 0x59: /* DTH2242 Pen */
-		case 0x5D: /* DTH2242 Touch */
-		case 0x5E: /* Cintiq 22HDT Touch */
-		case 0x309:/* Cintiq Companion Hybrid Touch */
-		case 0x30C:/* Cintiq Companion Touch */
-		case 0x326:/* Cintiq Companion 2 Touch */
-		case 0x32C:/* Cintiq 27QHDT Touch */
-		case 0x32F:/* DTU-1031X */
-		case 0x335:/* Cintiq 13HDT Touch */
-		case 0x336:/* DTU-1141 */
-		case 0x343:/* DTK-1651 */
-		case 0x34A:/* MobileStudio Pro 13 Touch */
-		case 0x34B:/* MobileStudio Pro 16 Touch */
-		case 0x353:/* Cintiq Pro 13 FHD Touch */
-		case 0x354:/* Cintiq Pro 13 UHD Touch */
-		case 0x355:/* Cintiq Pro 24 Touch */
-		case 0x356:/* Cintiq Pro 32 Touch */
-		case 0x359:/* DTU-1141B */
-		case 0x35A:/* DTH-1152*/
-		case 0x368:/* DTH-1152 Touch */
-		case 0x382:/* DTK-2451 */
-		case 0x37D:/* DTH-2452 */
-		case 0x37E:/* DTH-2452 Touch */
-		case 0x39A:/* MobileStudio Pro 13 Touch */
-		case 0x39B:/* MobileStudio Pro 16 Touch */
-		case 0x3AC:/* MobileStudio Pro 16 Touch */
-			TabletSetFeature(common, WCM_LCD);
 			break;
 	}
 }
