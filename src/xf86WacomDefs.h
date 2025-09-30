@@ -121,7 +121,6 @@ struct _WacomModel
 /* Each tablet may have one or more of the following
  * features */
 #define WCM_PEN			0x00000001 /* Tablet supports pens */
-#define WCM_PAD			0x00000002 /* Has a pad tool */
 
 #define WCM_1FGT		0x00000004 /* One finger touch */
 #define WCM_2FGT		0x00000008 /* Two finger touch */
