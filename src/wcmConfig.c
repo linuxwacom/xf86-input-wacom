@@ -851,12 +851,6 @@ static void wcmDeviceTypeKeys(WacomDevicePtr priv)
 	if (ISBITSET(common->wcmKeys, BTN_TOOL_PEN))
 		TabletSetFeature(priv->common, WCM_PEN);
 
-	if (ISBITSET (common->wcmKeys, BTN_0) ||
-			ISBITSET (common->wcmKeys, BTN_FORWARD))
-	{
-		TabletSetFeature(priv->common, WCM_PAD);
-	}
-
 	/* This handles both protocol 4 and 5 meanings of wcmKeys */
 	if (common->wcmProtocolLevel == WCM_PROTOCOL_4)
 	{
