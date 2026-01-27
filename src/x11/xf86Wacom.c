@@ -249,7 +249,12 @@ static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, c
 	options = xf86ReplaceStrOption(options, "Name", name);
 
 	if (serial > -1)
+	{
+		while (ser->serial && ser->serial != (unsigned int)(serial))
+			ser = ser->next;
+
 		options = xf86ReplaceIntOption(options, "Serial", ser->serial);
+	}
 
 	o = options;
 	while(o)
