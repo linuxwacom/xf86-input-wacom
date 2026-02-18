@@ -39,8 +39,6 @@ isdv4inputattachdir = $(APP_MAN_DIR)
 isdv4inputattach_PRE = isdv4-serial-inputattach.man
 isdv4inputattach_DATA = $(isdv4inputattach_PRE:man=@APP_MAN_SUFFIX@)
 
-EXTRA_DIST = @DRIVER_NAME@.man xsetwacom.man isdv4-serial-debugger.man isdv4-serial-inputattach.man
-
 CLEANFILES = $(driverman_DATA) $(xsetwacomman_DATA) $(isdv4debugger_DATA) $(isdv4inputattach_DATA)
 
 SUFFIXES = .$(DRIVER_MAN_SUFFIX) $(APP_MAN_SUFFIX) .man
