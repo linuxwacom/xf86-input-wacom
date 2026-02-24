@@ -1,0 +1,51 @@
+.TH isdv4-serial-debugger 1 "@VERSION@" "X Version 11"
+.SH NAME
+isdv4-serial-debugger \- ISDV4 serial protocol debugger
+.SH SYNOPSIS
+.nf
+.B isdv4-serial-debugger
+[options] device
+.fi
+.SH DESCRIPTION
+.B isdv4-serial-debugger
+is a protocol debugger for ISDV4 serial Wacom devices. It connects to a Wacom
+tablet via a serial port, queries its capabilities, and displays real-time pen
+and touch events. This tool is useful for debugging and understanding the ISDV4
+protocol used by Wacom tablets.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Display usage information.
+.TP
+.B \-v, \-\-verbose
+Enable verbose output for debugging.
+.TP
+.B \-V, \-\-version
+Display version information and exit.
+.TP
+.B \-b, \-\-baudrate baudrate
+Set the baud rate for the serial connection. Default is 38400.
+.TP
+.B \-\-reset
+Send a reset command to the tablet before starting.
+.SH USAGE
+To use isdv4-serial-debugger, specify the serial device
+file (typically /dev/ttyS0 or similar) and any desired options:
+
+.B isdv4-serial-debugger /dev/ttyS0
+
+This will connect to the tablet, query its capabilities, and display real-time events.
+.SH EXAMPLES
+.TP
+.B isdv4-serial-debugger \-b 19200 /dev/ttyS0
+Connect to tablet at 19200 baud.
+.TP
+.B isdv4-serial-debugger \-v \-\-reset /dev/ttyS1
+Connect with verbose output and reset the tablet first.
+.SH NOTES
+This tool requires direct access to the serial device, which requires
+appropriate permissions.
+.SH SEE ALSO
+isdv4-serial-inputattach (1), xsetwacom (1), wacom (4)
+.SH AUTHORS
+Written by Peter Hutterer <peter.hutterer@redhat.com> and other contributors.

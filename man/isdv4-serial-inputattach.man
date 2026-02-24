@@ -1,0 +1,59 @@
+.TH isdv4-serial-inputattach 1 "@VERSION@" "X Version 11"
+.SH NAME
+isdv4-serial-inputattach \- ISDV4 serial input device setup tool
+.SH SYNOPSIS
+.nf
+.B isdv4-serial-inputattach
+[options] device
+.fi
+.SH DESCRIPTION
+.B isdv4-serial-inputattach
+is an inputattach clone for ISDV4 serial Wacom devices. It sets up the serial
+connection to a Wacom tablet and binds it to the kernel input system, making
+the tablet available as a standard input device. This tool is used to configure
+serial Wacom tablets so they can be used with the Linux input system.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Display usage information.
+.TP
+.B \-\-verbose
+Enable verbose output for debugging.
+.TP
+.B \-\-version
+Display version information and exit.
+.TP
+.B \-\-baudrate <19200|38400>
+Set the baud rate for the serial connection. If not specified, the tool
+attempts to auto-detect the baud rate based on the device ID.
+.SH USAGE
+To use isdv4-serial-inputattach, specify the serial device
+file (typically /dev/ttyS0 or similar) and any desired options:
+
+.B isdv4-serial-inputattach /dev/ttyS0
+This will connect to the tablet, query its capabilities, set up the appropriate line discipline, and bind the device to the kernel input system.
+.SH BAUD RATE DETECTION
+The tool can automatically detect the appropriate baud rate based on the device ID:
+.TP
+\- Devices with ID up to WACf007 use 19200 baud
+.TP
+\- Devices with ID WACf008 and higher use 38400 baud
+.TP
+\- FUJ devices use 19200 baud
+
+If auto-detection fails, the tool will try the alternative baud rate.
+.SH EXAMPLES
+.TP
+.B isdv4-serial-inputattach \-\-baudrate 19200 /dev/ttyS0
+Connect to tablet at 19200 baud.
+.TP
+.B isdv4-serial-inputattach \-\-verbose /dev/ttyS1
+Connect with verbose output and auto-detect baud rate.
+.SH NOTES
+This tool requires direct access to the serial device with appropriate
+permissions. It sets up the device to work with the Linux input system and
+should be used when the tablet is not automatically detected by the kernel.
+.SH SEE ALSO
+isdv4-serial-debugger (1), xsetwacom (1), wacom (4), inputattach (1)
+.SH AUTHORS
+Written by Peter Hutterer <peter.hutterer@redhat.com> and other contributors.

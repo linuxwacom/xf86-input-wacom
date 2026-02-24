@@ -324,6 +324,18 @@ configure_file(
 	configuration: config_man,
 	install_dir: dir_man1,
 )
+configure_file(
+	input: 'man/isdv4-serial-debugger.man',
+	output: 'isdv4-serial-debugger.1',
+	configuration: config_man,
+	install_dir: dir_man1,
+)
+configure_file(
+	input: 'man/isdv4-serial-inputattach.man',
+	output: 'isdv4-serial-inputattach.1',
+	configuration: config_man,
+	install_dir: dir_man1,
+)
 
 # Config files
 install_data('conf/70-wacom.conf', install_dir: dir_xorg_conf)
