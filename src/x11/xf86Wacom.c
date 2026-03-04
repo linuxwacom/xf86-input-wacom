@@ -235,7 +235,7 @@ void wcmTimerSet(WacomTimerPtr timer, uint32_t millis, WacomTimerCallback func, 
  * @param type Tool type (cursor, eraser, etc.)
  * @param serial Serial number this device should be bound to (-1 for "any")
  */
-static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, const char *type, int serial)
+static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, const char *type, unsigned int serial)
 {
 	WacomCommonPtr common = priv->common;
 	InputInfoPtr pInfo = priv->frontend;
@@ -248,9 +248,9 @@ static InputOption *wcmOptionDupConvert(WacomDevicePtr priv, const char* name, c
 	options = xf86ReplaceStrOption(options, "Type", type);
 	options = xf86ReplaceStrOption(options, "Name", name);
 
-	if (serial > -1)
+	if (serial != DEFAULT_TOOL_SERIAL)
 	{
-		while (ser->serial && ser->serial != (unsigned int)(serial))
+		while (ser->serial && ser->serial != serial)
 			ser = ser->next;
 
 		options = xf86ReplaceIntOption(options, "Serial", ser->serial);
