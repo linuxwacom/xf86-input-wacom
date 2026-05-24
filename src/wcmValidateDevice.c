@@ -590,7 +590,7 @@ Bool wcmPreInitParseOptions(WacomDevicePtr priv, Bool is_primary,
 	common->wcmPanscrollThreshold = wcmOptGetInt(priv, "PanScrollThreshold",
 			common->wcmPanscrollThreshold);
 	common->wcmPanscrollIsSmooth = wcmOptGetBool(priv, "SmoothPanscrollingEnabled",
-						     TRUE);
+						     FALSE);
 	wcmLog(priv, W_CONFIG, "Smooth panscrolling is %s\n",
 		common->wcmPanscrollIsSmooth ? "enabled" : "disabled");
 

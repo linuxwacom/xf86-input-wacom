@@ -3164,7 +3164,7 @@ TEST_CASE(test_parameter_number)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 46);
+	assert(ARRAY_SIZE(parameters) == 49);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 

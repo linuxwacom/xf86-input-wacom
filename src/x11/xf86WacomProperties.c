@@ -150,6 +150,13 @@ static Atom InitWcmAtom(DeviceIntPtr dev, const char *name, Atom type, int forma
 	uint32_t val_32[WCM_MAX_BUTTONS];
 	pointer converted = val_32;
 
+	if (nvalues > WCM_MAX_BUTTONS)
+	{
+		ErrorF("Wacom: Property '%s' has %d values, but only %d are supported. Truncating.\n",
+		       name, nvalues, WCM_MAX_BUTTONS);
+		nvalues = WCM_MAX_BUTTONS;
+	}
+
 	for (i = 0; i < nvalues; i++)
 	{
 		switch(format)
@@ -921,6 +928,8 @@ static int wcmSetProperty(DeviceIntPtr dev, Atom property, XIPropertyValuePtr pr
 	} else if (property == prop_btnactions)
 	{
 		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
+		if (nbuttons > WCM_MAX_BUTTONS)
+			nbuttons = WCM_MAX_BUTTONS;
 		return wcmSetActionsProperty(dev, property, prop, checkonly, nbuttons, priv->btn_action_props, priv->key_actions);
 	} else if (property == prop_pressure_recal)
 	{
@@ -1037,6 +1046,8 @@ static int wcmGetProperty (DeviceIntPtr dev, Atom property)
 		 * used by a scroll wheel rather than an actual button.
 		 */
 		int nbuttons = priv->nbuttons < 4 ? priv->nbuttons : priv->nbuttons + 4;
+		if (nbuttons > WCM_MAX_BUTTONS)
+			nbuttons = WCM_MAX_BUTTONS;
 		Atom x11_btn_action_props[nbuttons];
 		int i;
 

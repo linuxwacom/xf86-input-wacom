@@ -883,7 +883,7 @@ void wcmSendEvents(WacomDevicePtr priv, const WacomDeviceState* ds)
 	bool supressing = false;
 	if (priv->wcmDejitterEnabled)
 	{
-		CARD32 now = GetTimeInMillis();
+		unsigned int now = ds->time;
 		const int Thresh = priv->wcmDejitterThreshold == 0 ? 150 : priv->wcmDejitterThreshold;
 		const int TimeThresh = priv->wcmDejitterTimeThreshold == 0 ? 100 : priv->wcmDejitterTimeThreshold;
 		if (ds->buttons > 0)
