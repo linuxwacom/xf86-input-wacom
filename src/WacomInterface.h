@@ -256,7 +256,11 @@ static inline void wcmAxisDump(const WacomAxisData *data, char *buf, size_t len)
 		wcmAxisValue(data, flag, value, sizeof(value));
 
 		rc = snprintf(buf, len, "%s%s: %s", prefix, name, value);
-		assert(rc > 0 && (size_t)rc < len);
+		if (rc >= (int)len)
+			rc = len - 1;
+		if (rc <= 0)
+			break;
+
 		buf += rc;
 		len -= rc;
 		prefix = ", ";

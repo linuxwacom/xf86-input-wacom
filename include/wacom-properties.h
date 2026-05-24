@@ -122,4 +122,13 @@
 #define WACOM_PROP_XI_TYPE_PAD    "PAD"
 #define WACOM_PROP_XI_TYPE_TOUCH  "TOUCH"
 
+/* BOOL, 1 value */
+#define WACOM_PROP_DEJITTER_ENABLED "Wacom DeJitter Enabled"
+
+/* 32 bit, 1 value */
+#define WACOM_PROP_DEJITTER_THRESHOLD "Wacom DeJitter Threshold"
+
+/* 32 bit, 1 value */
+#define WACOM_PROP_DEJITTER_TIME_THRESHOLD "Wacom DeJitter Time Threshold"
+
 #endif

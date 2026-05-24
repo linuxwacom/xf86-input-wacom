@@ -217,6 +217,14 @@ struct _WacomDeviceState
 	unsigned int keys; /* bitmask for IDX_KEY_CONTROLPANEL, etc. */
 };
 
+struct _WacomDejitterState
+{
+	int x;
+	int y;
+	bool is_suppresed;
+	CARD32 suppress_start;
+};
+
 static const struct _WacomDeviceState OUTPROX_STATE = {
   .abswheel = INT_MAX,
   .abswheel2 = INT_MAX
@@ -309,8 +317,11 @@ struct _WacomDeviceRec
 	WacomTimerPtr serial_timer; /* timer used for serial number property update */
 	WacomTimerPtr tap_timer;   /* timer used for tap timing */
 	WacomTimerPtr touch_timer; /* timer used for touch switch property update */
-
 	ValuatorMask *valuator_mask; /* reusable valuator mask for sending events without reallocation */
+	struct _WacomDejitterState dejitterState;
+	int wcmDejitterEnabled;
+	int wcmDejitterThreshold;
+	int wcmDejitterTimeThreshold;
 };
 
 #define MAX_SAMPLES	20

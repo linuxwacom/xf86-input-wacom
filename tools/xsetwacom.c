@@ -551,6 +551,31 @@ static param_t parameters[] =
 		.prop_flags = PROP_FLAG_WRITEONLY | PROP_FLAG_OUTPUT,
 	},
 	{
+		.name = "DeJitterEnable",
+		.desc = "Enable or disable de-jittering (default is off).",
+		.prop_name = WACOM_PROP_DEJITTER_ENABLED,
+		.prop_format = 8,
+		.prop_offset = 0,
+		.arg_count = 1,
+		.prop_flags = PROP_FLAG_BOOLEAN,
+	},
+	{
+		.name = "DeJitterThreshold",
+		.desc = "Set the spatial threshold for de-jittering (default is 150).",
+		.prop_name = WACOM_PROP_DEJITTER_THRESHOLD,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.arg_count = 1,
+	},
+	{
+		.name = "DeJitterTimeThreshold",
+		.desc = "Set the time threshold (in ms) for de-jittering (default is 100).",
+		.prop_name = WACOM_PROP_DEJITTER_TIME_THRESHOLD,
+		.prop_format = 32,
+		.prop_offset = 0,
+		.arg_count = 1,
+	},
+	{
 		.name = "all",
 		.desc = "Get value for all parameters. ",
 		.get_func = get_all,
@@ -3139,7 +3164,7 @@ TEST_CASE(test_parameter_number)
 	 * deprecated them.
 	 * Numbers include trailing NULL entry.
 	 */
-	assert(ARRAY_SIZE(parameters) == 46);
+	assert(ARRAY_SIZE(parameters) == 49);
 	assert(ARRAY_SIZE(deprecated_parameters) == 17);
 }
 
